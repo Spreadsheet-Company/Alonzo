@@ -108,7 +108,7 @@ Three cells, and no wall clock anywhere (`AD-4`: Frazaro has no clock, Alonzo is
 |---|---|---|---|
 | 1 | `frame` | the frame number: 0 after load, then `n` during and after the `n`th step | the engine, as the first act of every step |
 | 2 | `rate` | the cartridge's frames per second, the manifest's `(rate ...)` | the engine, at load |
-| 3 | `seed` | the dice: the manifest's `(seed ...)`, or the number the host chose when the manifest says `(seed host)` | the engine, at load; the host's one write of the wall clock, recorded by the replay |
+| 3 | `seed` | the dice: the manifest's `(seed ...)`, or the number the host chose when the manifest says `(seed host)`, a whole number from 1 to 2147483646, so that a Park and Miller cell seeded from it never sticks at 0 | the engine, at load; the host's one write of the wall clock, recorded by the replay |
 
 The frame number is the only clock (`ROADMAP.md`, `SPEC.1`). Elapsed time is `=Clock!B1/Clock!B2`, a formula the cartridge writes if it wants seconds. Random numbers are a formula over the seed and the last frame's state, in the open: Park and Miller's minimal standard, `=MOD(Clock.last!B4*16807, 2147483647)` in a fourth cell the cartridge adds with the seed as its first value, is exact in doubles, since 16807 times 2^31 is under 2^53, and is published ground (*math exists*: Park and Miller 1988, §14; *derived* for the exactness). The engine supplies no random function, and a cartridge naming Excel's volatile functions, `NOW`, `TODAY`, `RAND` or `RANDBETWEEN`, is refused at load by name with the Clock sheet named in the refusal, since a cell that reads the wall clock is a cell no replay can reproduce (*recommendation*; decision 7).
 
@@ -426,3 +426,97 @@ The shape and not the fixture: `CART.1` picks its soup and its gun, and this is 
 - **A button's rising edge** (`CART.4`): `=AND(Input!B5=1, Input.last!B5=0)`.
 - **A counter that wraps with the clock**: `=MOD(Clock!B1, 8)`, the phase of an eight-frame cycle.
 - **A position under velocity** (the falling-block game, the sand): `=State.last!B2 + State.last!B3 / Clock!B2`, the last frame's position plus the last frame's velocity over the rate, with the collision as the comparison that clamps it.
+
+## Appendix C. A Fragments patch, in VLA
+
+*Added 2026-10-08 at the owner's word, after the approval: what `CART.5`'s patch looks like as a file a person writes, shares and modifies, in the shape §12 names. The shape, not the fixture; `CART.5`'s scoping picks the music.*
+
+A patch is two files. The first is the one a person writes: a list of module calls, each a template macro from a module library, with every row and every name chosen by the caller, which is the prelude's own rule against hidden bindings (*shelf*: `scripts/prelude.vla`, the anti-gensym doctrine). A module is a row of the `Patch` sheet, its label in column A, its output in column B and its knobs from column C, so that turning a knob is editing a cell in the viewport, live, under `AD-6`, and `save` writes the turned patch back out as a cartridge. A cable is a defined name, so a formula reads `bar` and `dice` and not `B3` and `B5`. The clock is the Clock sheet, the dice is §3.5's cell, and the previous frame is the twin.
+
+**C.1 The patch, `fragments.vla`.**
+
+```text
+; SPDX-License-Identifier: 0BSD
+; fragments.vla - a patch for the Audio device (SPEC.md, section 12 and Appendix C).
+; A module is a macro from modular.vla; a cable is a name; a knob is a cell.
+(include "modular.vla")
+
+(cartridge "fragments"
+  (spec 1) (title "Fragments") (rate 30) (screen plane 320 200) (seed host) (licence "0BSD"))
+
+(vlaensuresheet "Patch") (activate-sheet "Patch")      ; Work on sheet Patch.
+;;         row  name     the module, then its knobs
+(divide    2    "beat"   15)                           ; a pulse every 15 frames, 120 to the minute
+(divide    3    "bar"    60)                           ; and every 60, a bar
+(lfo       4    "drift"  sine 1800)                    ; a sine a minute long, 0 to 1
+(dice      5    "dice")                                ; Park and Miller over Clock!B3, a roll a frame
+(hold      6    "held"   dice bar)                     ; take dice when bar is 1, else keep last frame's
+(quantize  7    "note"   held Scale!$A$1:$A$10)        ; the held voltage onto the scale
+(envelope  8    "age"    9 "env" beat 2 20)            ; retriggered by beat: 2 frames up, 20 down
+
+(vlaensuresheet "Scale") (activate-sheet "Scale")
+(scale "a" 48 50 52 55 57 60 62 64 67 69)              ; C3 pentatonic, two octaves, MIDI numbers
+
+(audio)                                                ; the Audio sheet's header row and voice numbers
+(voice 1 triangle note          env)                   ; the melody
+(voice 2 sine     (- note 12)   (* 0.3 drift))         ; a drone an octave below, swelling with the drift
+(voice 3 sawtooth (+ note 7)    (* 0.2 env (- 1 drift))) ; a fifth above, fading as the drift rises
+
+(roll 10)                                              ; the visualizer: ten rows of the Screen, the note's
+                                                       ; row lit at a playhead that sweeps and leaves a trail
+```
+
+**C.2 What it expands to.** Frazaro expands the macros at build time and prints the sheets as rows (§7.4), and the rows are the second file, the cartridge the engine loads. Three modules, one voice and the roll, so that the shape is visible; the rest follows the same pattern:
+
+```text
+(cell "Patch" "A2" "beat")  (cell "Patch" "C2" 15)
+(formula "Patch" "B2" "=IF(MOD(Clock!B1,C2)=0,1,0)")
+(name "beat" "Patch!$B$2")
+(cell "Patch" "A5" "dice")
+(formula "Patch" "B5" "=MOD(IF(Clock!B1=1,Clock!B3,Patch.last!B5)*16807,2147483647)")
+(name "dice" "Patch!$B$5")
+(cell "Patch" "A6" "held")
+(formula "Patch" "B6" "=IF(bar=1,dice,Patch.last!B6)")
+(name "held" "Patch!$B$6")
+(cell "Patch" "A7" "note")
+(formula "Patch" "B7" "=INDEX(Scale!$A$1:$A$10,1+INT(held/2147483647*10))")
+(name "note" "Patch!$B$7")
+(cell "Patch" "A8" "age")
+(formula "Patch" "B8" "=IF(beat=1,0,Patch.last!B8+1)")
+(name "age" "Patch!$B$8")
+(cell "Patch" "A9" "env")  (cell "Patch" "C9" 2)  (cell "Patch" "D9" 20)
+(formula "Patch" "B9" "=IF(age<C9,age/C9,MAX(0,1-(age-C9)/D9))")
+(name "env" "Patch!$B$9")
+(cell "Audio" "B3" "sine")  (formula "Audio" "C3" "=note-12")  (formula "Audio" "D3" "=0.3*drift")
+(formula "Screen" "A1:LH10" "=IF(COLUMN()=MOD(Clock!B1-1,320)+1,IF(ROW()=11-MATCH(note,Scale!$A$1:$A$10,0),15,0),Screen.last!A1)")
+```
+
+Every row above is a formula of this frame's cells and the twin, so the whole patch is one dependency graph with no cycle: `held` reads `bar` and `dice` this frame and its own last value; `env` reads `age` this frame; the roll's cells each keep their own last value except the one column under the playhead, which is how a trail is drawn with no state but cells. The dice is exact in doubles, since the seed and every later value are below 2^31 and 16807 times 2^31 is below 2^53 (*derived*; §3.5).
+
+**C.3 The module library, `modular.vla`.** Template macros in the prelude's style, each writing its row through the forms the build walker already holds, a value into a cell and a formula's text into a cell of the sheet worked on (*shelf*: the compile golden's `set-formula` and `set!` of a `cells` reference). Three of them; a template macro cannot loop, so a scale is ten named notes, which a pentatonic over two octaves happens to be:
+
+```text
+(defmacro (divide row name n)
+  "a pulse: 1 on the frame a cycle of n frames begins, else 0"
+  (begin
+    (set! (cells row "a") name)
+    (set! (cells row "c") n)
+    (set-formula (cells row "b") (& "=IF(MOD(Clock!B1,C" row ")=0,1,0)"))
+    (cable name row)))
+
+(defmacro (hold row name source when)
+  "sample and hold: take the source when the trigger is 1, else keep the last frame's value"
+  (begin
+    (set! (cells row "a") name)
+    (set-formula (cells row "b") (& "=IF(" when "=1," source ",Patch.last!B" row ")"))
+    (cable name row)))
+
+(defmacro (scale col n1 n2 n3 n4 n5 n6 n7 n8 n9 n10)
+  "ten notes down a column, MIDI numbers, lowest first"
+  (begin
+    (set! (cells 1 col) n1) (set! (cells 2 col) n2) (set! (cells 3 col) n3) (set! (cells 4 col) n4)
+    (set! (cells 5 col) n5) (set! (cells 6 col) n6) (set! (cells 7 col) n7) (set! (cells 8 col) n8)
+    (set! (cells 9 col) n9) (set! (cells 10 col) n10)))
+```
+
+**C.4 What exists, and what waits.** The forms the macros expand into are the compile golden's own, so the walker holds them today, and template macros and `include` are the language's (*shelf*). A formula's text with a knob's row spliced in is a chain of literals, which the build folds (*shelf*: `build.rs`, folding over literals; the cut confirms the fold reaches `&`). A `voice` form's expression arguments go through the formula dialect the emitter `deflambda` already uses, which is how `(- note 12)` becomes `=note-12` (*shelf*: `core/src/emit/formula.rs`). The `(name ...)` row is in the cartridge format (§7.3), so a cable works the day the cut lands; `cable` is written as a row by the flattening tool, or by hand, until `KERNEL.10` gives a sentence that defines a name. `Patch.last` and `Screen.last` are the cut's (§2). `SIN` for the oscillator is `KERNEL.7`'s registry; `INDEX` and `MATCH` for the quantizer and the roll are `KERNEL.8`'s, with `CHOOSE` as the stand-in (§13). The `age` and `env` rows show why the caller names every cell: an envelope is two cells, and a macro that invented a hidden one would break the rule the whole language keeps. What a modder shares is either file: the patch as written, or the saved cartridge with the knobs as turned; both are text in the one notation, so they diff in git, load, view and reflect.
