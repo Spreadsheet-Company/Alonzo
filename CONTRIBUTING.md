@@ -30,14 +30,18 @@ of the file it touches, as declared in `REUSE.toml`:
 
 ## What a change needs
 
-- **A device** is an import named by hand, an `extern "C"` function the
-  host shim provides under the one module name `alonzo`, with its sheet's
-  layout written into `SPEC.md` and its name added, as `alonzo.<function>`,
-  to the allowlist `tools/check_host_imports.ps1` holds, with the count
-  beside it. An import that is not on the list fails the check on every
-  push, a forbidden name (`fetch` first) fails even when listed, a listed
-  name the engine no longer imports fails too, and the list grows by a
-  reviewed line, never by a generated one (`AD-5`).
+- **A device** is a sheet's layout written into `SPEC.md` first, with its
+  direction, input or effect, and its row among the host's duties; then
+  its code in the shim, and in the engine where a layout is checked
+  (`AD-6`). The first specification has no import at all: every device is
+  a read or a write through the module's exports (`SPEC.md`, section 8).
+  A device that needs one is an `extern "C"` function the host shim
+  provides under the one module name `alonzo`, its name added, as
+  `alonzo.<function>`, to the allowlist `tools/check_host_imports.ps1`
+  holds, with the count beside it. An import that is not on the list fails
+  the check on every push, a forbidden name (`fetch` first) fails even when
+  listed, a listed name the engine no longer imports fails too, and the
+  list grows by a reviewed line, never by a generated one (`AD-5`).
 - **A cartridge** is a VLA program and its sheets, with a Palette sheet.
   One that ships in this repository is a fixture of a floor or a demo, and
   carries 0BSD. A game is a repository of its own, under its author's name

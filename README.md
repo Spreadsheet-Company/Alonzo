@@ -43,9 +43,10 @@ and the checks that hold it there.
 
 | File | What it is |
 |---|---|
-| `CHARTER.md` | the thesis, the honest bottom, the five rules and the frame, the lineage, the social hypothesis stated so that it can fail, the first numbers, what is not built, the licence |
-| `ROADMAP.md` | the open items, in the order each makes the next cheap, with the standing decisions `AD-1` to `AD-5` |
+| `CHARTER.md` | the thesis, the honest bottom, the six rules and the frame, the lineage, the social hypothesis stated so that it can fail, the first numbers, what is not built, the licence |
+| `ROADMAP.md` | the open items, in the order each makes the next cheap, with the standing decisions `AD-1` to `AD-6` |
 | `REARVIEW.md` | the closed ledger, the sittings, and each item's full scoping before it is built |
+| `SPEC.md` | the specification, version 1: the cell as the unit, the device sheets cell by cell, the four calls and their records, the frame's order, the determinism rules, the cartridge's one file, the host's duties, reflection |
 | `engine/` | the `alonzo` crate |
 | `tools/` | the checks: the import allowlist read off the wasm, the licence map verified against the tree, and the runner that reports one total |
 | `.github/workflows/checks.yml` | the checks and the crate's build, lint and tests on every push and pull request |
@@ -86,7 +87,13 @@ empty crate, the count is zero.
    the language's or Frazaro's; what can only be measured is the engine's.
 5. **The engine's imports are the host's functions, named by hand and held
    to a list; the engine crate depends on the language crate and nothing
-   else.** No generated glue, and no outbound network call, ever.
+   else.** No generated glue, and no outbound network call, ever. The first
+   specification needs no import at all: every device is a sheet read or
+   written through the module's exports.
+6. **Everything the engine holds is a cell of a named sheet, viewable and
+   writable through the two calls.** The key map, the palette, the clock
+   and the previous frame are sheets a person can open and change;
+   `SPEC.md` is the page that lays them out.
 
 ## Contributing, security, the name
 
