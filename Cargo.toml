@@ -9,10 +9,10 @@
 #
 # Build the engine for the browser with
 #   cargo build --release -p alonzo --target wasm32-unknown-unknown
-# and tools/check_host_imports.ps1 (REPO.2) then holds the module's import
-# section to its allowlist. Until that check exists, Frazaro's
-# tools/check_core_imports.ps1 -Path <the wasm> reads the same section and
-# must print zero on this empty crate.
+# and tools/check_host_imports.ps1 then holds the module's import section to
+# its allowlist, exactly: every import listed under the one module name
+# alonzo, every listed name imported, and the count pinned beside the list,
+# zero today, until SPEC.1 names the first (REPO.2).
 
 [workspace]
 resolver = "2"

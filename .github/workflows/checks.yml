@@ -1,0 +1,55 @@
+# The checks, on every push to main and every pull request (REPO.2).
+#
+# Two jobs, in Frazaro's shape. The ratchets job runs tools/run_checks.ps1
+# under Windows PowerShell 5.1, the house's floor for every check, with the
+# floor on the count and the controls that prove each check on mutants; with
+# no Rust toolchain on that job the import check says SKIPPED, and the crate
+# job is where it bites. The crate job builds, formats, lints and tests the
+# workspace, builds the engine for the browser, and runs the same runner
+# under pwsh, so that the engine's import section is read off the artifact
+# itself and held to the allowlist written in tools/check_host_imports.ps1:
+# AD-4 (zero imports in the language, an allowlist here) and AD-5 (the
+# imports named by hand, never generated) are checked on the file, not taken
+# on faith, and SD-13 crosses the road with them. The wasm is kept as an
+# artifact of the run.
+name: checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  ratchets:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: every tools/check_*.ps1 under Windows PowerShell 5.1, the floor and the controls
+        shell: pwsh
+        run: |
+          & powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_checks.ps1 -WithExtras
+          exit $LASTEXITCODE
+  crate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+      - name: build, format-check, lint and test the workspace
+        run: |
+          cargo build --workspace
+          cargo fmt --all -- --check
+          cargo clippy --workspace --all-targets -- -D warnings
+          cargo test --workspace
+      - name: build the wasm engine
+        run: cargo build --release -p alonzo --target wasm32-unknown-unknown
+      - name: the engine imports exactly its allowlist (AD-5, read off the artifact), and every check under pwsh
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File tools/run_checks.ps1 -WithExtras
+          exit $LASTEXITCODE
+      - name: keep the wasm engine
+        uses: actions/upload-artifact@v4
+        with:
+          name: alonzo.wasm
+          path: target/wasm32-unknown-unknown/release/alonzo.wasm

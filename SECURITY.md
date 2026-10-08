@@ -29,12 +29,18 @@ the road into this repository (`CHARTER.md`, section 8), and a multiplayer
 game is fiction here, by file, if it is ever anything. A WebAssembly module
 can reach the outside world only through the functions its host hands it,
 listed in the module's import section, so the rule is a property of the
-file. The check `tools/check_host_imports.ps1` (`REPO.2`) reads that
-section and holds it to an allowlist written in the script, the canvas, the
-audio graph, the input events, the animation frame and the file picker, and
-fails on any other, `fetch` first among them, on every push. Until it
-exists, Frazaro's `tools/check_core_imports.ps1 -Path <the wasm>` reads the
-same section and must print zero on the empty engine. The host shim that
+file. The check `tools/check_host_imports.ps1` reads that section on every
+push and holds it to an allowlist written in the script: one module name,
+`alonzo`, and under it the host's functions as `SPEC.md` names them, the
+canvas, the audio graph, the input events, the animation frame and the file
+picker, and nothing else. A name the list does not hold fails. A forbidden
+name fails even if someone lists it: `fetch` first among them, then
+`XMLHttpRequest`, `WebSocket` and anything that opens a socket, any WASI
+module, and the names generated glue writes. And the section must equal the
+list exactly, so a listed function the engine no longer calls fails too.
+Today the list is empty and the count is pinned at zero: the empty engine
+imports nothing, which Frazaro's `tools/check_core_imports.ps1 -Path <the
+wasm>` confirms with the same reading of the same bytes. The host shim that
 provides those functions is written by hand and read in review; the engine
 takes no generated glue (`AD-5`).
 

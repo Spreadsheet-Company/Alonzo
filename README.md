@@ -37,8 +37,9 @@ sixty can draw one.
 
 ## What exists today
 
-The first commit: the constitution, the work and the record, and an empty
-crate that builds for the browser with an import section of zero entries.
+The first commits: the constitution, the work and the record, an empty
+crate that builds for the browser with an import section of zero entries,
+and the checks that hold it there.
 
 | File | What it is |
 |---|---|
@@ -46,6 +47,8 @@ crate that builds for the browser with an import section of zero entries.
 | `ROADMAP.md` | the open items, in the order each makes the next cheap, with the standing decisions `AD-1` to `AD-5` |
 | `REARVIEW.md` | the closed ledger, the sittings, and each item's full scoping before it is built |
 | `engine/` | the `alonzo` crate |
+| `tools/` | the checks: the import allowlist read off the wasm, the licence map verified against the tree, and the runner that reports one total |
+| `.github/workflows/checks.yml` | the checks and the crate's build, lint and tests on every push and pull request |
 
 What the first release shows: Conway's Life on a 320 by 200 sheet at thirty
 frames a second, every cell the same formula of its eight neighbours; the

@@ -7,8 +7,11 @@
 # the engine, the owner's decision of 2026-10-08) and REARVIEW.md's scoping
 # of REPO.1, decision 2: the cartridges carry the lightest terms in the
 # repository, as Frazaro's examples/ do, because a cartridge is made to be
-# copied. A tools/check_spdx.ps1 in Frazaro's shape verifies the map
-# against the tree once the tools folder exists (REPO.2).
+# copied. tools/check_spdx.ps1 verifies this map against the tree on every
+# push: every tracked file resolves to one identifier here, every identifier
+# has its text under LICENSES/, and every text file under cartridges/ carries
+# its 0BSD header in its first twelve lines, so the notice travels with a
+# copy (REPO.2).
 
 version = 1
 SPDX-PackageName = "Alonzo"

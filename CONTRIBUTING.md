@@ -31,10 +31,13 @@ of the file it touches, as declared in `REUSE.toml`:
 ## What a change needs
 
 - **A device** is an import named by hand, an `extern "C"` function the
-  host shim provides, with its sheet's layout written into `SPEC.md` and
-  its name added to the allowlist `tools/check_host_imports.ps1` holds. An
-  import that is not on the list fails the check on every push, and the
-  list grows by a reviewed line, never by a generated one (`AD-5`).
+  host shim provides under the one module name `alonzo`, with its sheet's
+  layout written into `SPEC.md` and its name added, as `alonzo.<function>`,
+  to the allowlist `tools/check_host_imports.ps1` holds, with the count
+  beside it. An import that is not on the list fails the check on every
+  push, a forbidden name (`fetch` first) fails even when listed, a listed
+  name the engine no longer imports fails too, and the list grows by a
+  reviewed line, never by a generated one (`AD-5`).
 - **A cartridge** is a VLA program and its sheets, with a Palette sheet.
   One that ships in this repository is a fixture of a floor or a demo, and
   carries 0BSD. A game is a repository of its own, under its author's name
@@ -53,10 +56,14 @@ of the file it touches, as declared in `REUSE.toml`:
   gives the defect and the fix, then `Pins:`, `Floors:` and `Docs:`.
 
 Run the checks before you open a pull request: `tools/run_checks.ps1`, one
-line a check and one total (`REPO.2`). Until it exists, the oracle is
-`cargo build --workspace`, `cargo fmt --all -- --check`,
+line a check and one total, and `-WithExtras` for the controls that prove
+each check on mutants; beside it the Cargo oracle, `cargo build --workspace`,
+`cargo fmt --all -- --check`,
 `cargo clippy --workspace --all-targets -- -D warnings`,
-`cargo test --workspace`, and the wasm build with its import section read.
+`cargo test --workspace`, and the wasm build, whose import section the first
+check reads. CI runs all of it on every push and pull request
+(`.github/workflows/checks.yml`): the checks under Windows PowerShell 5.1,
+and again under pwsh beside the wasm it builds.
 
 ## The devices and the cartridges are the seams
 
