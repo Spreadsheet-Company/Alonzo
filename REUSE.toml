@@ -1,0 +1,37 @@
+# REUSE.toml - the licence map (reuse.software, specification 3.3).
+#
+# One repository, three licence territories, no directory moves: path globs
+# resolve every file to one SPDX identifier. Later [[annotations]] tables
+# win when more than one matches a file, so the specific entries sit below
+# the general ones. The reasoning is CHARTER.md section 9 (Apache-2.0 for
+# the engine, the owner's decision of 2026-10-08) and REARVIEW.md's scoping
+# of REPO.1, decision 2: the cartridges carry the lightest terms in the
+# repository, as Frazaro's examples/ do, because a cartridge is made to be
+# copied. A tools/check_spdx.ps1 in Frazaro's shape verifies the map
+# against the tree once the tools folder exists (REPO.2).
+
+version = 1
+SPDX-PackageName = "Alonzo"
+SPDX-PackageSupplier = "Spreadsheet Company <english@spreadsheet.company>"
+SPDX-PackageDownloadLocation = "https://github.com/Spreadsheet-Company/Alonzo"
+
+# The engine: the crate, the host shim and its page template, the checks
+# and the builders, the workspace's own files, and this map itself. A
+# crate's README stays with the crate, as Frazaro keeps core/README.md.
+[[annotations]]
+path = ["engine/**", "web/**", "tools/**", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "REUSE.toml", ".gitignore", ".gitattributes", ".github/**"]
+SPDX-FileCopyrightText = "2026 Spreadsheet Company"
+SPDX-License-Identifier = "Apache-2.0"
+
+# The cartridges: Life first (CART.1), and every demo beside it. 0BSD, so
+# that a stranger copies one to start their own with no notice to carry.
+[[annotations]]
+path = ["cartridges/**"]
+SPDX-FileCopyrightText = "2026 Spreadsheet Company"
+SPDX-License-Identifier = "0BSD"
+
+# Documentation, including the governance files at the repository root.
+[[annotations]]
+path = ["*.md", "docs/**", "NOTICE"]
+SPDX-FileCopyrightText = "2026 Spreadsheet Company"
+SPDX-License-Identifier = "CC-BY-4.0"

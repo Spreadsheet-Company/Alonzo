@@ -1,0 +1,17 @@
+Alonzo
+Copyright 2026 Spreadsheet Company
+
+This product includes software developed by Spreadsheet Company.
+
+Licensed under the Apache License, Version 2.0 (the engine, the host shim,
+the tooling and this repository's own manifests). The cartridges under
+cartridges/ are licensed separately under the BSD Zero Clause License, so
+that one may be copied to start a cartridge of your own without ceremony.
+Documentation is CC-BY-4.0. See LICENSES/ for the full texts and
+REUSE.toml for the per-file map.
+
+A game written on Alonzo is its author's; the file that says so in the
+licence's own terms is written the day the first game ships (CHARTER.md,
+section 9).
+
+"Alonzo" is a name held by Spreadsheet Company; see TRADEMARK.md.

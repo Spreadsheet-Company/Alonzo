@@ -1,0 +1,20 @@
+# Line endings, made deterministic for every clone regardless of the
+# cloner's core.autocrlf, in Frazaro's shape. The repository stores LF; the
+# working copy gets what each consumer needs:
+#   - Rust, its manifests, the toolchain file and the host shim are LF on
+#     every platform, as rustfmt writes them.
+#   - A cartridge is VLA (.vla) and gets CRLF on checkout, as Frazaro's
+#     corpus files do, so that the language's reference implementation,
+#     whose line reader treats a bare LF as text, can read a cartridge too.
+#   - A built .wasm is bytes.
+# Everything else is ordinary text (LF in the repo, the platform's default
+# on checkout) or binary.
+* text=auto
+*.rs text eol=lf
+*.toml text eol=lf
+Cargo.lock text eol=lf
+*.js text eol=lf
+*.html text eol=lf
+*.vla text eol=crlf
+*.wasm binary
+*.png binary

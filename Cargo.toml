@@ -1,0 +1,45 @@
+# The Cargo workspace: the engine, and later the native runner the frame
+# floors need (ROADMAP.md, CART.1). CHARTER.md section 4 is the constitution.
+# Its first rule puts the language in its own crate, vla-lang, cut out of
+# frazaro-core in the Frazaro repository, which this workspace will pin
+# exactly under [workspace.dependencies] the day ENGINE.1 needs it. Its
+# fifth rule, AD-5, is why the engine's [dependencies] is otherwise empty:
+# the engine's imports are the host's functions, named by hand, and the
+# crate depends on the language crate and nothing else.
+#
+# Build the engine for the browser with
+#   cargo build --release -p alonzo --target wasm32-unknown-unknown
+# and tools/check_host_imports.ps1 (REPO.2) then holds the module's import
+# section to its allowlist. Until that check exists, Frazaro's
+# tools/check_core_imports.ps1 -Path <the wasm> reads the same section and
+# must print zero on this empty crate.
+
+[workspace]
+resolver = "2"
+members = ["engine"]
+
+[workspace.package]
+# Alonzo's own line, not the corpus's: the engine is not an implementation
+# of the language, so its version is its own, and vla-lang is pinned exactly
+# when it becomes a dependency.
+version = "0.1.0"
+# The same edition and floor as frazaro-core, and so as vla-lang, so that the
+# three crates build under one toolchain.
+edition = "2021"
+rust-version = "1.75"
+license = "Apache-2.0"
+repository = "https://github.com/Spreadsheet-Company/Alonzo"
+
+[workspace.dependencies]
+# ENGINE.1 adds, exactly pinned, the language crate and nothing else (AD-5):
+# vla-lang = "=0.9.0"
+
+[profile.release]
+# Small, deterministic, and without an unwinder: a panic aborts, so the wasm
+# module imports nothing to unwind with and nothing to print with. Copied
+# from Frazaro's workspace, where it is what keeps the import section empty.
+panic = "abort"
+lto = true
+codegen-units = 1
+opt-level = "s"
+strip = true

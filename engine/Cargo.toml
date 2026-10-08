@@ -1,0 +1,27 @@
+[package]
+name = "alonzo"
+description = "The browser's Lisp machine: a game engine in WebAssembly whose language is VLA, whose scene is a grid of cells, and whose devices are sheets"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+# What crates.io will show and index. The page is this directory's README,
+# written for a first-time visitor, as frazaro-core's is.
+readme = "README.md"
+keywords = ["wasm", "game-engine", "spreadsheet", "lisp", "cellular-automaton"]
+categories = ["game-engines", "wasm"]
+# Nothing to publish until the engine renders: the first release removes
+# this line as one of its steps (REARVIEW.md, REPO.1, decision 6), so that
+# no rehearsal can upload an engine that draws nothing.
+publish = false
+
+[lib]
+# rlib for the workspace's own native runner to come; cdylib for the wasm32
+# build the browser loads.
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
+# Empty on purpose (AD-5): the language crate joins at ENGINE.1, and nothing
+# else ever does. The engine's imports are the host's functions, declared by
+# hand as extern "C" and held to tools/check_host_imports.ps1's list.

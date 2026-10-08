@@ -1,0 +1,21 @@
+# == Alonzo ==
+
+# REPO.1: the Cargo workspace's build output, including the wasm the
+# allowlist check reads. Cargo.lock is NOT ignored: the workspace will hold
+# a binary (the native runner the frame floors need), so the lockfile is
+# committed from the first build.
+target/
+
+# ENGINE.1: the page tools/build_web.ps1 will write from
+# web/index.template.html and the wasm engine, Frazaro's split: the template
+# is source, the filled page is output.
+web/index.html
+
+# Scratch area for throwaway experiments, so they never clutter history.
+scratch/
+
+# Editor and operating-system residue.
+~$*
+*.tmp
+.DS_Store
+Thumbs.db
