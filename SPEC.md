@@ -392,7 +392,10 @@ A noise voice, envelopes and samples (Varvara has them; the Web Audio graph has 
 - The WebAssembly Component Model, the canonical ABI: a resource handle is an `i32` index into a per-instance table. https://github.com/WebAssembly/component-model/blob/main/design/mvp/CanonicalABI.md
 - Sestoft, P., *Spreadsheet Implementation Technology*, MIT Press, 2014 (topological recalculation), as `CHARTER.md` §10 cites it.
 - MDN, the Web Audio API: the `AudioNode` graph, `AudioParam` automation and audio-rate connections; and the Web MIDI API, in Chromium, and in Firefox since 108 behind a site permission, not in Safari. https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API https://developer.mozilla.org/en-US/docs/Web/API/Web_MIDI_API
-- State Azure, a generative ambient performance on a modular synthesizer, the owner's reference for *Fragments*, named 2026-10-08. https://www.youtube.com/watch?v=8V71sATDTqs
+- State Azure, a generative ambient performance on a modular synthesizer, the owner's reference for *Fragments*, named 2026-10-08; the artist's patch notes for the track, as the owner pasted them on 2026-10-08, are what Appendix C.5 quotes and codifies. https://www.youtube.com/watch?v=8V71sATDTqs
+- Lorenz, E. N., "Deterministic Nonperiodic Flow", *Journal of the Atmospheric Sciences* 20(2), 1963, 130-141: a weather model of three variables, deterministic and never repeating.
+- Csound (Vercoe, B., MIT Media Lab, 1986): the orchestra file, which defines the instruments, apart from the score file, which plays them. https://csound.com/
+- VCV Rack, whose patches are `.vcv` files, and Pure Data, whose patches are `.pd` text files, both traded between people; VCV Rack's library, where makers publish their own modules' ports (Mutable Instruments' open-source firmware as Audible Instruments, Vult, Instruō, Nonlinearcircuits); the Standard MIDI File (MIDI Manufacturers Association, 1988), the log a generative patch leaves. https://vcvrack.com/ https://library.vcvrack.com/ https://puredata.info/
 - In the Frazaro repository: `core/src/abi.rs`, `core/src/view.rs`, `core/src/kernel.rs`, `core/src/sheet/mod.rs`, `core/src/distro.rs`, `core/src/refers.rs`, `core/src/reflect/print.rs`, `web/index.template.html`, `web/CALLOSUM.md` §7, `conformance/README.md` (oracle 11), `docs/BETA_ROADMAP.md` (`KERNEL.5`, `KERNEL.7`, `KERNEL.8`, `KERNEL.12`, `KERNEL.20`, the `SD` register), `docs/HORIZON.md` §12.2. In this repository: `CHARTER.md` §2 to §8, `ROADMAP.md`, `REARVIEW.md` (`REPO.2`'s decisions 1 and 5, `CART.4`).
 
 ---
@@ -431,7 +434,7 @@ The shape and not the fixture: `CART.1` picks its soup and its gun, and this is 
 
 *Added 2026-10-08 at the owner's word, after the approval: what `CART.5`'s patch looks like as a file a person writes, shares and modifies, in the shape §12 names. The shape, not the fixture; `CART.5`'s scoping picks the music.*
 
-A patch is two files. The first is the one a person writes: a list of module calls, each a template macro from a module library, with every row and every name chosen by the caller, which is the prelude's own rule against hidden bindings (*shelf*: `scripts/prelude.vla`, the anti-gensym doctrine). A module is a row of the `Patch` sheet, its label in column A, its output in column B and its knobs from column C, so that turning a knob is editing a cell in the viewport, live, under `AD-6`, and `save` writes the turned patch back out as a cartridge. A cable is a defined name, so a formula reads `bar` and `dice` and not `B3` and `B5`. The clock is the Clock sheet, the dice is §3.5's cell, and the previous frame is the twin.
+A patch is two files. The first is the one a person writes: a list of module calls, each a template macro from a module library, with every row and every name chosen by the caller, which is the prelude's own rule against hidden bindings (*shelf*: `scripts/prelude.vla`, the anti-gensym doctrine). A module call is written one argument a line, each followed by a comment that says what the argument is, so that the patch reads without the library open, as a rack's patch sheet lists each cable; a list of like things, the ten notes of a scale, stays on one line (the owner's rule, 2026-10-08). A module is a row of the `Patch` sheet, its label in column A, its output in column B and its knobs from column C, so that turning a knob is editing a cell in the viewport, live, under `AD-6`, and `save` writes the turned patch back out as a cartridge. A cable is a defined name, so a formula reads `bar` and `dice` and not `B3` and `B5`. The clock is the Clock sheet, the dice is §3.5's cell, and the previous frame is the twin.
 
 **C.1 The patch, `fragments.vla`.**
 
@@ -439,31 +442,90 @@ A patch is two files. The first is the one a person writes: a list of module cal
 ; SPDX-License-Identifier: 0BSD
 ; fragments.vla - a patch for the Audio device (SPEC.md, section 12 and Appendix C).
 ; A module is a macro from modular.vla; a cable is a name; a knob is a cell.
+; One argument a line, each with what it is, so the patch reads without the library.
 (include "modular.vla")
 
 (cartridge "fragments"
-  (spec 1) (title "Fragments") (rate 30) (screen plane 320 200) (seed host) (licence "0BSD"))
+  (spec 1)                        ; the version of this page the patch is written to
+  (title "Fragments")
+  (rate 30)                       ; frames a second; every period below is in frames
+  (screen plane 320 200)          ; the roll draws on the top ten rows
+  (seed host)                     ; the dice: the host rolls one at load, the replay records it
+  (licence "0BSD"))
 
-(vlaensuresheet "Patch") (activate-sheet "Patch")      ; Work on sheet Patch.
-;;         row  name     the module, then its knobs
-(divide    2    "beat"   15)                           ; a pulse every 15 frames, 120 to the minute
-(divide    3    "bar"    60)                           ; and every 60, a bar
-(lfo       4    "drift"  sine 1800)                    ; a sine a minute long, 0 to 1
-(dice      5    "dice")                                ; Park and Miller over Clock!B3, a roll a frame
-(hold      6    "held"   dice bar)                     ; take dice when bar is 1, else keep last frame's
-(quantize  7    "note"   held Scale!$A$1:$A$10)        ; the held voltage onto the scale
-(envelope  8    "age"    9 "env" beat 2 20)            ; retriggered by beat: 2 frames up, 20 down
+(vlaensuresheet "Patch")          ; Work on sheet Patch: every module below is a row of it
+(activate-sheet "Patch")
 
-(vlaensuresheet "Scale") (activate-sheet "Scale")
-(scale "a" 48 50 52 55 57 60 62 64 67 69)              ; C3 pentatonic, two octaves, MIDI numbers
+(divide                           ; a pulse: 1 on the frame a cycle begins, else 0
+  2                               ; the row of the Patch sheet
+  "beat"                          ; the name, the cable the others read
+  15)                             ; the period in frames: 120 pulses a minute
 
-(audio)                                                ; the Audio sheet's header row and voice numbers
-(voice 1 triangle note          env)                   ; the melody
-(voice 2 sine     (- note 12)   (* 0.3 drift))         ; a drone an octave below, swelling with the drift
-(voice 3 sawtooth (+ note 7)    (* 0.2 env (- 1 drift))) ; a fifth above, fading as the drift rises
+(divide                           ; the bar
+  3                               ; the row
+  "bar"                           ; the name
+  60)                             ; the period: four beats, two seconds
 
-(roll 10)                                              ; the visualizer: ten rows of the Screen, the note's
-                                                       ; row lit at a playhead that sweeps and leaves a trail
+(lfo                              ; a slow oscillator, 0 to 1
+  4                               ; the row
+  "drift"                         ; the name
+  sine                            ; the shape: sine, triangle, sawtooth or square
+  1800)                           ; the period in frames: a minute
+
+(dice                             ; the random voltage: Park and Miller over Clock!B3, a roll a frame
+  5                               ; the row
+  "dice")                         ; the name
+
+(hold                             ; sample and hold
+  6                               ; the row
+  "held"                          ; the name
+  dice                            ; the source
+  bar)                            ; the trigger: take the source when it is 1, else keep the last frame's
+
+(quantize                         ; a voltage onto a scale
+  7                               ; the row
+  "note"                          ; the name
+  held                            ; the voltage, 0 to 2147483646
+  Scale!$A$1:$A$10)               ; the scale, lowest note first
+
+(envelope                         ; attack then decay, retriggered
+  8                               ; the row of the age, the frames since the trigger
+  "age"                           ; its name
+  9                               ; the row of the envelope, 0 to 1
+  "env"                           ; its name
+  beat                            ; the trigger
+  2                               ; the attack, in frames
+  20)                             ; the decay, in frames
+
+(vlaensuresheet "Scale")          ; Work on sheet Scale.
+(activate-sheet "Scale")
+
+(scale                            ; ten notes down a column, MIDI numbers, lowest first
+  "a"                             ; the column
+  48 50 52 55 57 60 62 64 67 69)  ; C3 pentatonic over two octaves
+
+(audio)                           ; the Audio sheet's header row and voice numbers
+
+(voice                            ; the melody
+  1                               ; the voice, 1 to 4
+  triangle                        ; the wave, the oscillator's own word
+  note                            ; the note, a MIDI number, or an expression of names
+  env)                            ; the volume, 0 to 1, or an expression
+
+(voice                            ; a drone an octave below, swelling with the drift
+  2                               ; the voice
+  sine                            ; the wave
+  (- note 12)                     ; the note
+  (* 0.3 drift))                  ; the volume
+
+(voice                            ; a fifth above, fading as the drift rises
+  3                               ; the voice
+  sawtooth                        ; the wave
+  (+ note 7)                      ; the note
+  (* 0.2 env (- 1 drift)))        ; the volume
+
+(roll                             ; the visualizer: the note's row lit at a playhead that sweeps and leaves a trail
+  10)                             ; the rows of the Screen it uses, from the top
 ```
 
 **C.2 What it expands to.** Frazaro expands the macros at build time and prints the sheets as rows (§7.4), and the rows are the second file, the cartridge the engine loads. Three modules, one voice and the roll, so that the shape is visible; the rest follows the same pattern:
@@ -520,3 +582,169 @@ Every row above is a formula of this frame's cells and the twin, so the whole pa
 ```
 
 **C.4 What exists, and what waits.** The forms the macros expand into are the compile golden's own, so the walker holds them today, and template macros and `include` are the language's (*shelf*). A formula's text with a knob's row spliced in is a chain of literals, which the build folds (*shelf*: `build.rs`, folding over literals; the cut confirms the fold reaches `&`). A `voice` form's expression arguments go through the formula dialect the emitter `deflambda` already uses, which is how `(- note 12)` becomes `=note-12` (*shelf*: `core/src/emit/formula.rs`). The `(name ...)` row is in the cartridge format (§7.3), so a cable works the day the cut lands; `cable` is written as a row by the flattening tool, or by hand, until `KERNEL.10` gives a sentence that defines a name. `Patch.last` and `Screen.last` are the cut's (§2). `SIN` for the oscillator is `KERNEL.7`'s registry; `INDEX` and `MATCH` for the quantizer and the roll are `KERNEL.8`'s, with `CHOOSE` as the stand-in (§13). The `age` and `env` rows show why the caller names every cell: an envelope is two cells, and a macro that invented a hidden one would break the rule the whole language keeps. What a modder shares is either file: the patch as written, or the saved cartridge with the knobs as turned; both are text in the one notation, so they diff in git, load, view and reflect.
+
+**C.5 Fragments in Fragments.** *Added 2026-10-08 at the owner's word, from the sitting's answer to two questions: how `fragments.vla` and `modular.vla` map onto a modular synthesizer, since the example seems to add no sine wave and no effect; and whether the artist's patch notes for the track, which the owner read as "an unstructured version of what I hope VLA could codify so that modular synth artists can pass around VLA patch files in the same way pianists pass around sheet music", can be so codified. The notes are quoted as the owner pasted them (§14).*
+
+*Where the sine waves are, and why there is no effect.* A rack carries two kinds of signal. Control voltages move at the speed of a hand or a cloud: clocks, random voltages, envelopes, slow oscillators, probability. Audio moves at the speed of a string. This page puts the first kind in cells and rents the second from the Web Audio graph (§12). So `(lfo 4 "drift" sine 1800)` is a sine computed by a formula, one value a frame, a minute a cycle, a control signal; and `(voice 2 sine ...)` is a sine at audio rate, the host's oscillator, named by a word in the `wave` cell rather than computed. There is no effect because version 1's Audio sheet is a chip-tune voice, one oscillator and one gain per voice, the scope `ENGINE.4` was given; a filter, a delay, a reverb and a crossfader are rows of the patch sheet §12 names, the later version in which the graph itself becomes data. What the example shows in full is the control side of a modular system, which is where the artist says the week went: "most of that to fine tune many aspects, especially probability and setting attenuation and offsets to get just the right range of CV".
+
+*The eurorack reading.* Each module of the notes, by its role, against the construct that is it in cells, and whether version 1 holds it:
+
+| In the rack | In VLA | Today, or later |
+|---|---|---|
+| a clock and its dividers | `divide`: `MOD` over `Clock!B1` | today |
+| a probability skipper, its probability under CV | `skip`: `=IF(AND(trig=1, dice/2147483647<p),1,0)`, with `p` a cell, so a cable can drive it | today |
+| random voltages and random triggers | `dice` (§3.5) with `hold` on a trigger | today |
+| a random sequence that loops and slowly mutates | a row of sixteen held values, each re-rolled with a small probability and otherwise its last value | today |
+| a quantizer with a harmonic context, chords that progress | `quantize` into a Scale sheet; a progression is a row of scales picked by a bar counter | `INDEX`, `KERNEL.8` |
+| an envelope with CV on attack and decay | `envelope`: an age cell and a shape cell; a knob is a cell, so the decay can be a cable | today |
+| eight slow oscillators | `lfo`, eight rows with eight periods | `SIN`, `KERNEL.7` |
+| three slow chaotic oscillators, the notes' weather, with X, Y and Z outputs | three formulas of the last frame integrating a chaotic system, Lorenz's for one | today (*math exists*, §14) |
+| a slew limiter, for pitch bends | `=last+MIN(rate,MAX(-rate,target-last))` | today |
+| an attenuator, an offset, a VCA, a mixer | arithmetic in the formula dialect; `(+ 0.15 (* 0.85 env))` is a VCA with a floor | today |
+| a mult | a name read by several cells, free where a rack pays a module for it | today |
+| oscillators with shaping and folding, a resonator, a granular voice | version 1's four voice shapes alone | shaping, FM and resonance: rows of the patch sheet |
+| a filter opened by the envelope | none in version 1 | a filter row of the patch sheet |
+| a delay, a reverb, tape wow and flutter, a dry/wet balance | none in version 1 | rows of the patch sheet; a reverb's impulse response is data |
+| samplers and a looper, rain and harbour and a music box | none in version 1 | a version that carries audio data in a cartridge, named in §12 and not yet designed |
+
+The chaotic line is exact rather than cute. Lorenz's system of 1963 was a weather model, three variables integrated step by step, deterministic and never repeating (*exhibit*, §14). Three cells, each reading the other two's previous values at a slowed timestep, are that system, and give the notes' slow peaks and valleys under §6's rules intact: the same seed, the same weather, on every machine.
+
+*The patch notes, codified.* The control structure of the notes in the shape of C.1, by their paragraphs. Everything below runs on version 1's calls, except the lines marked:
+
+```text
+; the bass: a sequencer into a quantizer into an oscillator; its gate through a skipper into an
+; envelope; the envelope's decay from a random voltage; no VCA, so a floor keeps the bass audible
+(sequence                         ; a step sequencer: INDEX over a row, KERNEL.8
+  2                               ; the row
+  "bass-step"                     ; the name
+  beat                            ; the clock that steps it
+  Seq!$A$1:$A$8)                  ; the steps, eight voltages in a row of the Seq sheet
+
+(quantize                         ; the step onto the scale
+  3                               ; the row
+  "bass-note"                     ; the name
+  bass-step                       ; the voltage
+  Scale!$A$1:$A$10)               ; the scale
+
+(skip                             ; a probability skipper: the trigger passes with probability p
+  4                               ; the row
+  "bass-gate"                     ; the name
+  beat                            ; the trigger in
+  0.2)                            ; p, a low probability
+
+(hold                             ; a random voltage into the decay knob
+  5                               ; the row
+  "decay"                         ; the name
+  dice                            ; the source
+  bass-gate)                      ; the trigger: a new decay on every gate
+
+(envelope                         ; the bass envelope
+  6                               ; the row of the age
+  "bass-age"                      ; its name
+  7                               ; the row of the envelope
+  "bass-env"                      ; its name
+  bass-gate                       ; the trigger
+  3                               ; the attack, in frames
+  decay)                          ; the decay, in frames: the knob is a cable
+
+(voice                            ; the bass
+  1                               ; the voice
+  sawtooth                        ; the wave
+  bass-note                       ; the note
+  (+ 0.15 (* 0.85 bass-env)))     ; the volume: a floor of 0.15, so the bass is always audible
+; the filter the envelope opens: a row of the patch sheet, later
+
+; random triggers and voltages, through the quantizer, into two voices; the triggers' probability
+; modulated by a slow chaotic voltage, so that "sometimes stuff isn't triggering very much"
+(skip                             ; the first random trigger
+  8                               ; the row
+  "t1"                            ; the name
+  beat                            ; the trigger in
+  (+ 0.05 (* 0.1 apathy-x)))      ; p: 0.05 to 0.15, following a chaotic voltage
+
+(skip                             ; the second
+  9                               ; the row
+  "t2"                            ; the name
+  beat                            ; the trigger in
+  (+ 0.05 (* 0.1 apathy-x)))      ; p, the same cable
+
+(hold                             ; the first random voltage, sampled on its trigger
+  10                              ; the row
+  "x1"                            ; the name
+  dice                            ; the source
+  t1)                             ; the trigger
+
+(quantize                         ; onto the scale
+  11                              ; the row
+  "note1"                         ; the name
+  x1                              ; the voltage
+  Scale!$A$1:$A$10)               ; the scale
+
+(hold                             ; the second random voltage
+  12                              ; the row
+  "x2"                            ; the name
+  dice                            ; the source
+  t2)                             ; the trigger
+
+(quantize                         ; onto the scale
+  13                              ; the row
+  "note2"                         ; the name
+  x2                              ; the voltage
+  Scale!$A$1:$A$10)               ; the scale
+
+(voice                            ; the first music-box voice
+  2                               ; the voice
+  triangle                        ; the wave
+  note1                           ; the note
+  (* env1 (- 1 torpor-y)))        ; the volume: its envelope, held down by a chaotic voltage
+
+(voice                            ; the second
+  3                               ; the voice
+  sine                            ; the wave
+  note2                           ; the note
+  (* env2 (- 1 torpor-y)))        ; the volume
+
+; three chaotic systems, three cells each; slow oscillators; a slew for the bends
+(sloth                            ; a chaotic oscillator, Lorenz's system integrated a frame at a time
+  20                              ; the row of x
+  "apathy-x"                      ; its name
+  21                              ; the row of y
+  "apathy-y"                      ; its name
+  22                              ; the row of z
+  "apathy-z"                      ; its name
+  0.002)                          ; the timestep: smaller is slower
+
+(sloth                            ; a slower one
+  23                              ; the row of x
+  "inertia-x"                     ; its name
+  24                              ; the row of y
+  "inertia-y"                     ; its name
+  25                              ; the row of z
+  "inertia-z"                     ; its name
+  0.0005)                         ; the timestep
+
+(lfo                              ; a slow oscillator
+  30                              ; the row
+  "ochd-2"                        ; the name
+  triangle                        ; the shape
+  2400)                           ; the period in frames: 80 seconds
+
+(slew                             ; a slew limiter, for the pitch bends
+  31                              ; the row
+  "bend"                          ; the name
+  ochd-2                          ; the target it follows
+  0.01)                           ; the most it moves a frame
+; the weather samples, their crossfaders, the reverb's dry/wet on a chaotic voltage: the patch sheet, and samples
+```
+
+*On sheet music.* The analogy holds exactly, and it says where the line is. A score fixes pitches, durations and dynamics and leaves the timbre to the instrument and the room; a VLA patch fixes every control voltage, every probability and every knob, and leaves the sound to the host's graph. What the notes cannot do, the file does: the same patch with the same seed produces the same control log on any machine, frame for frame (§6), which no rack and no page of notes can promise, and a week of attenuation and offsets becomes numbers in labelled cells another artist can diff, fork and turn. The practice exists in neighbouring forms (*exhibits*, §14): Csound has split the instrument from the score since 1986; VCV Rack and Pure Data patches are text files people trade; a Standard MIDI File is the output of a generative patch, where the VLA file is the patch. What VLA adds is the spreadsheet as the substrate, every value visible, every knob a cell, the previous frame a sheet, determinism by construction, and English through Frazaro; what it lacks today is the audio half, which is why the first Fragments sounds like a music box over a drone rather than like the track, and why the patch sheet is the version that matters to the artists the owner means.
+
+*The golden patch.* Fragments is the golden patch of `modular.vla`, the owner's reading of 2026-10-08, so the dictionary a scoping will build on is written here before it starts. A module is a row of the Patch sheet: its knobs are the cells to the right of its output, its inputs are the references inside its formula, its output is the named cell. A cable is a reference. A mult is several formulas reading one name, free where a rack pays a module. A feedback cable, an output looped into its own input, is a `.last` reference, one frame late, which is the only way a loop is stable without a slew. A VCA, an attenuator, an offset and a CV mixer are arithmetic inside the formula and never rows. The cable list of a whole patch is a relation the house already prints, `reflect`'s `refers` rows, every cell against every cell it reads (*shelf*: oracle 8), so the patch sheet printed that way is the patch bay drawn as text:
+
+```text
+(refers "Patch!B6" "Patch!B3")        ; the cable from bar
+(refers "Patch!B6" "Patch!B5")        ; the cable from dice
+(refers "Patch!B6" "Patch.last!B6")   ; the feedback cable, a frame late
+```
+
+The distance between C.1 and the rack in the owner's screenshot of the performance is quantitative, not categorical. The notes name about forty-five control functions and about twenty-five audio ones, and the plumbing between them, the mults and attenuators and offsets, costs nothing in cells; so a faithful Fragments is on the order of seventy module rows and a hundred connections, five or six hundred lines in the layout above, of which the audio rows and their connections are the patch sheet's and not version 1's (*prediction*, 2026-10-08, for `CART.5`'s scoping to count). Software duplicates every module of that rack in kind, and several already exist in VCV Rack's library as their makers' own ports, Mutable Instruments' Marbles and Rings, Vult's filters, Instruō's modules and the chaotic Sloths (*exhibit*, §14); MIDI alone does not, since MIDI carries control and not audio, which is why the replay is MIDI-shaped and the sound is the graph's. The one categorical gap is the recordings, the rain, the harbour, the music box and the looped improvisation, which no patch synthesizes and a cartridge must carry as data (§12). And the render itself is beyond every substrate including the rack: three analog chaotic oscillators and probability on every trigger mean it never plays the piece the same way twice, where the cell version reproduces one performance exactly and forever; the file duplicates the patch, never the night. The oracle follows (*recommendation*): `modular.vla` is held by two goldens of Fragments in the house's shape, the expansion golden, the rows `fragments.vla` expands into, and the replay golden, the Audio sheet's log over a fixed number of frames under a fixed seed, so that a change to a macro that changes a row or a note is caught on every push; a new module enters the library with its row in C.5's table and its line in the goldens.
