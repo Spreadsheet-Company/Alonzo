@@ -34,7 +34,30 @@ Environment: Google Chrome 154.0.8037.93 on Windows; pixel ratio 1.5; screen 256
 | DOM (virtualized) | full-screen (71 x 26) | 71 | 1.2 | 16.7 | 16.6 | 16.7 | 16.8 | 16.6 | 8 of 120 | 0 of 120 | no |
 | canvas | full-screen (71 x 26) | 71 | 1.2 | 16.4 | 16.5 | 16.6 | 16.7 | 16.7 | 5 of 120 | 0 of 120 | yes |
 
-The reading is in `CHARTER.md` §7: the rule's 16.7 ms threshold is the display's own interval, so its yes-or-no column reads timer jitter; by the page's robust column both renderers clear both windows; by the rule's letter only the canvas clears the full-screen window; the choice is canvas under either reading, subject to the crispness check by eye, which the owner reports separately. The same table belongs in `PROTOCOL.md` §9.2 and `CALLOSUM.md`'s slot, Frazaro's edits.
+The reading is in `CHARTER.md` §7: the rule's 16.7 ms threshold is the display's own interval, so its yes-or-no column reads timer jitter; by the page's robust column both renderers clear both windows; by the rule's letter only the canvas clears the full-screen window; the choice is canvas under either reading, subject to the crispness check by eye, which the owner reports separately. This table is kept here alone: it is the run that exposed the instrument's clock, and `PROTOCOL.md` §9.2's header was amended before anything was pasted into it.
+
+**The renderer benchmark, measured again, the instrument amended.** `PROTOCOL.md` §7 as amended 2026-10-08 after the run above (a draw's cost read on the main thread from a task queued after the frame's rendering; a dropped frame read off the next animation frame, later than one and a half intervals; holds the frame when no step was dropped and both the three-row step's and the whole-page step's p95 are under one interval; the sparse record at the protocol's two windows, then a dense record of 600 rows by 52 columns, every cell filled, at full screen at four cell sizes), run by the owner on 2026-10-08, the twelve rows and the summary as the page printed them:
+
+Environment: Google Chrome 154.0.8037.93 on Windows, a 2560 by 1440 CSS screen at a ratio of 1.5, 60 Hz (a 16.7 ms interval), fullscreen; the native debug door 0.8.0; the sparse record 20,006 lines, the dense record 62,406 lines.
+
+| renderer | record | cell px | window (rows x cols) | cells with text | first draw ms | step p50 ms | step p95 ms | page p95 ms | max ms | sync p50 ms | dropped of N | holds the frame |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| DOM (virtualized) | sparse | 20 x 96 | normal (40 x 15) | 40 | 3.2 | 1.6 | 1.8 | 1.9 | 2.4 | 0.1 | 0 of 140 | yes |
+| canvas | sparse | 20 x 96 | normal (40 x 15) | 40 | 1.4 | 0.4 | 0.9 | 0.7 | 1.0 | 0.2 | 0 of 140 | yes |
+| DOM (virtualized) | sparse | 20 x 96 | full-screen (71 x 26) | 71 | 7.5 | 3.6 | 4.1 | 3.8 | 4.4 | 0.1 | 0 of 140 | yes |
+| canvas | sparse | 20 x 96 | full-screen (71 x 26) | 71 | 1.7 | 0.6 | 1.1 | 1.4 | 1.4 | 0.4 | 0 of 140 | yes |
+| DOM (virtualized) | dense | 20 x 96 | full-screen (71 x 26) | 1846 | 19.1 | 6.9 | 7.4 | 14.3 | 15.4 | 0.2 | 0 of 140 | yes |
+| canvas | dense | 20 x 96 | full-screen (71 x 26) | 1846 | 6.6 | 3.0 | 3.7 | 5.5 | 5.5 | 1.5 | 0 of 140 | yes |
+| DOM (virtualized) | dense | 16 x 80 | full-screen (89 x 31) | 2759 | 23.1 | 10.2 | 10.6 | 24.9 | 25.6 | 0.2 | 0 of 140 | no |
+| canvas | dense | 16 x 80 | full-screen (89 x 31) | 2759 | 8.9 | 4.4 | 5.0 | 7.6 | 8.1 | 2.3 | 0 of 140 | yes |
+| DOM (virtualized) | dense | 12 x 64 | full-screen (119 x 39) | 4641 | 43.3 | 17.3 | 17.7 | 39.5 | 41.9 | 0.2 | 8 of 140 | no |
+| canvas | dense | 12 x 64 | full-screen (119 x 39) | 4641 | 16.3 | 7.5 | 8.2 | 13.1 | 13.6 | 3.9 | 0 of 140 | yes |
+| DOM (virtualized) | dense | 10 x 48 | full-screen (143 x 52) | 7436 | 68.3 | 28.8 | 29.4 | 61.1 | 69.2 | 0.3 | 41 of 140 | no |
+| canvas | dense | 10 x 48 | full-screen (143 x 52) | 7436 | 25.5 | 13.0 | 13.9 | 22.5 | 23.7 | 6.1 | 0 of 140 | no |
+
+DOM (virtualized): step cost 3.92 ms per 1,000 cells (-0.6 ms fixed); page cost 8.19 ms per 1,000 cells (0.8 ms fixed); largest dense load that held the frame: 1,846 cells; capacity at one frame interval, by the page cost: about 1,942 cells. Canvas: step cost 1.79 ms per 1,000 cells (-0.5 ms fixed); page cost 3.07 ms per 1,000 cells (-0.6 ms fixed); largest dense load that held the frame: 4,641 cells; capacity at one frame interval, by the page cost: about 5,644 cells. The page's verdict: neither holds the frame at 7,436 cells with text; the DOM held 1,846 and canvas 4,641; the larger capacity decides (§8.1 step 4), and the viewport caps its density there.
+
+The reading is in `CHARTER.md` §7: canvas, by §8.1 step 4 as amended; the DOM's cost is the browser's paint walk over every element on screen, its script's part 0.3 ms at every size. The same run outside fullscreen gave the same shape and the same decision; the backing store is the CSS size times the ratio by the page's own line, and the eye's verdict on crispness is the owner's to add. Recorded on the Frazaro side the same day, uncommitted on the day of writing: `PROTOCOL.md` §9.2 and §9.3's dated entries, `CALLOSUM.md`'s slot as a dated measurement, and canvas in `KERNEL.5`'s roadmap entry.
 
 **Why the roadmap's order.** As Frazaro's rear-view chooses an order: how many later steps each makes cheap, times how much of it already stands, over its size.
 
