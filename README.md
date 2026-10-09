@@ -39,7 +39,9 @@ sixty can draw one.
 
 The first commits: the constitution, the work and the record, an empty
 crate that builds for the browser with an import section of zero entries,
-and the checks that hold it there.
+and the checks that hold it there; then the first brick, the viewport, the
+Screen device in grid mode over the view record (`KERNEL.5`, a Frazaro item
+laid here), with its page and the checks that hold it.
 
 | File | What it is |
 |---|---|
@@ -48,8 +50,9 @@ and the checks that hold it there.
 | `REARVIEW.md` | the closed ledger, the sittings, and each item's full scoping before it is built |
 | `SPEC.md` | the specification, version 1: the cell as the unit, the device sheets cell by cell, the four calls and their records, the frame's order, the determinism rules, the cartridge's one file, the host's duties, reflection |
 | `engine/` | the `alonzo` crate |
-| `tools/` | the checks: the import allowlist read off the wasm, the licence map verified against the tree, and the runner that reports one total |
-| `.github/workflows/checks.yml` | the checks and the crate's build, lint and tests on every push and pull request |
+| `web/` | the viewport, `viewport.js`, one plain script the first game takes as a file, and its page, built from `index.template.html` over seven records the door printed, with the render oracle and the floors' instrument as its modes; `web/README.md` is the page and the API |
+| `tools/` | the checks: the import allowlist read off the wasm, the licence map verified against the tree, the page's offline doctrine, the fixtures' pins, the render oracle under a headless browser and the render floors; the builder of the page; and the runner that reports one total |
+| `.github/workflows/checks.yml` | the checks, the crate's build, lint and tests, and the page's build and oracle on every push and pull request |
 
 What the first release shows: Conway's Life on a 320 by 200 sheet at thirty
 frames a second, every cell the same formula of its eight neighbours; the

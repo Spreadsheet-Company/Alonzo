@@ -54,6 +54,15 @@ of the file it touches, as declared in `REUSE.toml`:
 - **A floor** never goes down. The frame floors and the render floors are
   hand-maintained baselines in `tools/`; raising one is a commit, and
   lowering one is a reviewed act with its reason in the message.
+- **The viewport** (`web/viewport.js`, the Screen device in grid mode) is
+  held by the render oracle, every draw where the record puts it under
+  `tools/check_render_oracle.ps1`, whose expectations live in the page and
+  are never the viewport's own; by the fixtures' pins, the door's records
+  byte for byte; by the offline doctrine over its source; and by the render
+  floors, the owner's measurement in a real browser. A draw that moves on
+  purpose is first reworded in the page's oracle; a draw that slows is
+  measured before it is merged. Frazaro's page takes the file as a copy, so
+  a change here is a copy there.
 - **A roadmap ID** is minted in `ROADMAP.md`, in its family, and never
   reused; an item that is Frazaro's by ID keeps Frazaro's ID.
 - **A commit** is titled `<ID>: <the claim, in plain English>`; its body

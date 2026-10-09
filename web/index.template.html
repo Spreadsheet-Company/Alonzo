@@ -1,0 +1,825 @@
+<!doctype html>
+<!--
+  SPDX-FileCopyrightText: 2026 Spreadsheet Company
+  SPDX-License-Identifier: Apache-2.0
+
+  web/index.template.html - the viewport's page (KERNEL.5, laid here): the Screen
+  device in grid mode over the view record, drawn by web/viewport.js from the
+  fixtures inlined below. tools/build_web.ps1 fills the placeholders, VIEWPORT_JS
+  with the viewport's source once and each FIXTURE place with a record the door
+  printed, and writes web/index.html, one file that runs from disk. The page loads
+  nothing from the network, writes nothing anywhere and executes nothing but the
+  script below: tools/check_web_offline.ps1 holds this file and web/viewport.js
+  to that doctrine on every push, as Frazaro's page is held.
+
+  Three modes, one page. Opened plainly, it is the viewport over the fixtures: a
+  record picked, its sheets as tabs, scroll, select, resize a column, freeze panes,
+  a record of one's own pasted in. With ?oracle=1 it runs the render oracle, the
+  viewport's draw list held equal to what each record says, cell for cell, at the
+  machine's pixel ratio, and prints the result into one element,
+  <pre id="oracle">, which tools/check_render_oracle.ps1 reads under a headless
+  browser. With ?bench=1 it is the floors' instrument, the renderer benchmark of
+  KERNEL.3 (Frazaro/tools/bench_view.template.html) over the viewport: the
+  10,000-line record at the normal window and at full screen, 120 steps of three
+  rows and 20 page steps, each draw's main-thread cost, printed as the table
+  tools/check_render_floors.ps1 holds as its baseline, which the owner measures in
+  a real browser in fullscreen, never a shared runner. The engine's wasm joins this
+  page at ENGINE.1.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alonzo</title>
+<style>
+  :root {
+    color-scheme: light;
+    /* Frazaro Lavender's three shades, as the benchmark page carries them:
+       the selection's fill and border in the viewport, the one button's hue. */
+    --lavender: #e2d8f6;
+    --lavender-whisper: #f7f4fc;
+    --lavender-deep: #6b4fc8;
+  }
+  html, body { margin: 0; padding: 0; background: #fafaf7; color: #1d1d1b; font: 15px/1.45 system-ui, "Segoe UI", sans-serif; }
+  header, main { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+  header { padding-top: 24px; }
+  main { padding-bottom: 30px; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: 0.01em; }
+  h1 em { font-weight: 400; }
+  .lede { margin: 0 0 6px; color: #4b4b47; }
+  .about { margin: 0 0 14px; color: #6b6b66; font-size: 13px; min-height: 1.4em; }
+  .controls { margin: 10px 0; display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; font-size: 14px; color: #4b4b47; }
+  .controls label { display: inline-flex; align-items: center; gap: 6px; }
+  .controls select, .controls input { font: inherit; font-size: 13px; color: #1d1d1b; padding: 2px 4px; border: 1px solid #c8c8c0; border-radius: 3px; background: #fff; }
+  .controls input[type="number"] { width: 4em; }
+  button { font: inherit; font-size: 13px; padding: 3px 12px; border: 1px solid #c8c8c0; background: #fff; border-radius: 3px; cursor: pointer; }
+  button:hover { background: #f3f3ee; }
+  button:disabled { color: #9a9a94; background: #fff; cursor: default; }
+  #run:enabled { background: var(--lavender-deep); color: #fff; border-color: var(--lavender-deep); font-weight: 600; }
+  #run:enabled:hover { filter: brightness(1.1); }
+  .status { color: #4b4b47; font-size: 14px; min-height: 1.4em; margin: 6px 0; }
+  .status.refused { color: #a2262b; }
+  /* The viewport's box: the viewport fills it with its canvas, its scroller and its tabs. */
+  .grid { height: 520px; border: 1px solid #d9d9d2; background: #fff; }
+  details { margin: 14px 0; border: 1px solid #d9d9d2; background: #fff; padding: 8px 12px; font-size: 14px; color: #4b4b47; }
+  summary { cursor: pointer; font-weight: 600; color: #1d1d1b; }
+  details p { margin: 6px 0; }
+  details li { margin: 4px 0; }
+  textarea { display: block; width: 100%; box-sizing: border-box; font: 12.5px/1.4 ui-monospace, Consolas, "Cascadia Mono", monospace; border: 1px solid #c8c8c0; padding: 8px; margin: 8px 0; white-space: pre; overflow: auto; color: #2a2a28; background: #fff; }
+  code { font: 12.5px/1.4 ui-monospace, Consolas, "Cascadia Mono", monospace; }
+  .panel { border: 1px solid #d9d9d2; background: #fff; margin: 14px 0; }
+  .panel .bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: #f3f3ee; border-bottom: 1px solid #d9d9d2; font-size: 12px; font-weight: 600; color: #6b6b66; }
+  .panel .inner { padding: 10px; font-size: 13px; color: #4b4b47; }
+  .panel textarea { border: 0; margin: 0; }
+  .hd { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+  .hd .cell-dom { width: 160px; height: 20px; box-sizing: border-box; border-right: 1px solid #d9d9d2; border-bottom: 1px solid #d9d9d2; padding: 0 4px; font: 13px/20px system-ui, "Segoe UI", sans-serif; color: #1d1d1b; white-space: nowrap; overflow: hidden; background: #fff; }
+  .hd canvas { display: block; }
+  .hd span { font-size: 12px; color: #6b6b66; }
+  /* The stage: a case's box sits at the top left of the browser's viewport while it runs. */
+  #stage { position: fixed; left: 0; top: 0; z-index: 10; }
+  #stage:empty { display: none; }
+  #stage .case { background: #fff; }
+  pre.result { display: none; margin: 14px 0; padding: 10px; border: 1px solid #d9d9d2; background: #fff; font: 12.5px/1.4 ui-monospace, Consolas, "Cascadia Mono", monospace; white-space: pre-wrap; word-break: break-word; }
+  body.oracle pre#oracle, body.bench pre#bench { display: block; }
+  body.oracle .page-only, body.bench .page-only { display: none; }
+  body:not(.bench) .bench-only { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Alonzo: <em>the viewport</em></h1>
+  <p class="lede">A window of a sheet, drawn from the view record alone: the lines <code>frazaro view</code> prints, read here and painted on a canvas, every cell where the record puts it. Pick a record, scroll, select a cell or a range, drag a column's edge, freeze panes, switch sheets; nothing you do writes the record, and the selection is spelled as the grammar spells it. Nothing on this page leaves it: it reads nothing from the network, writes nothing anywhere, and the records inside are the door's own output.</p>
+  <p id="about" class="about"></p>
+</header>
+<main>
+  <p class="controls page-only">
+    <label>Record <select id="fixture" aria-label="the record to draw">
+      <optgroup label="fixture.txt, the build golden's program">
+        <option value="fixture_frazaro" selected>Frazaro, the whole sheet</option>
+        <option value="fixture_output">Output, the window A1:F20</option>
+        <option value="fixture_output_b2_c3">Output, the window B2:C3</option>
+        <option value="fixture_data">Data</option>
+      </optgroup>
+      <optgroup label="into.txt, built into a model">
+        <option value="into_output">Output</option>
+        <option value="into_checks">Checks</option>
+      </optgroup>
+      <optgroup label="the benchmark's program, 10,000 lines">
+        <option value="sparse_10000">Output, 20,006 record lines</option>
+      </optgroup>
+    </select></label>
+    <label>Freeze rows <input type="number" id="freeze-rows" min="0" value="0"></label>
+    <label>columns <input type="number" id="freeze-cols" min="0" value="0"></label>
+    <button type="button" id="freeze">Freeze</button>
+    <span id="status" class="status"></span>
+  </p>
+  <div id="grid" class="grid page-only" aria-label="the viewport"></div>
+  <p id="selection" class="status page-only"></p>
+  <details class="page-only">
+    <summary>Paste a record</summary>
+    <p>A view record of your own, the lines <code>frazaro view &lt;program&gt; --sheet &lt;name&gt;</code> prints: it is read here, drawn, and never saved. An unknown row is counted and the status line says how many.</p>
+    <textarea id="paste" rows="8" spellcheck="false" placeholder="(sheet &quot;Output&quot; visible)&#10;(window &quot;Output&quot; &quot;A1:B3&quot;)&#10;(extent &quot;Output&quot; &quot;A1:B3&quot;)&#10;(gridlines &quot;Output&quot; on)&#10;(format 0 none general nowrap)&#10;(cell &quot;Output&quot; &quot;A1&quot; &quot;west&quot;)"></textarea>
+    <button type="button" id="load">Load</button>
+  </details>
+  <details class="page-only">
+    <summary>How the viewport reads the record</summary>
+    <ul>
+      <li><b>sheet</b> rows are the tabs; a hidden or very-hidden sheet shows under the tabs' toggle. A tab without a record asks the host for one: here, the fixture of the same program if there is one.</li>
+      <li><b>window</b> is the record's scope, the scroll's extent, never less than a screen; <b>extent</b> is the sheet's used rectangle; <b>gridlines</b> on or off.</li>
+      <li><b>column</b> rows give widths in characters, the file's own unit, turned into pixels by ECMA-376's rule (72 is 504 px, 60 is 420 px; a column without a row is 64 px, Excel's default); a hidden column is skipped; a column's format fills its empty cells.</li>
+      <li><b>format</b> rows give a fill, general or text, wrap or nowrap. <b>cell</b> rows show their value as the reader spells it, numbers right, text left, TRUE and FALSE and errors centred; <b>formula</b> rows show the formula's text, in green, until the value row lands (KERNEL.7). A nowrap text spills into empty neighbours to the right; a number never does.</li>
+      <li><b>style</b> and <b>sentence</b> rows ride on their cell: the sentence's row is in the selection's line below the grid, and in the <code>select</code> event the first game's chrome reads.</li>
+    </ul>
+  </details>
+  <section class="panel bench-only" aria-label="the benchmark's controls">
+    <div class="bar"><span>The floors' instrument &middot; the 10,000-line record at the normal window and at full screen</span></div>
+    <div class="inner">
+      <p class="controls"><button type="button" id="run">Run</button> <button type="button" id="fullscreen">Fullscreen</button> <span id="bench-status" class="status"></span></p>
+      <p>The page runs once on opening, not in fullscreen; press Fullscreen to enter it and run again. The full-screen row is honest only in fullscreen, since a browser culls painting outside its viewport. Copy takes the table and the baseline lines for <code>tools/check_render_floors.ps1</code>.</p>
+    </div>
+  </section>
+  <section class="panel" aria-label="HiDPI crispness">
+    <div class="bar"><span>HiDPI &middot; the same text in a DOM cell and in the viewport's canvas, 13 px, at the machine's ratio</span></div>
+    <div class="inner">
+      <div class="hd"><span>DOM</span><div class="cell-dom" id="hd-dom"></div><span>canvas</span><canvas id="hd-canvas" width="160" height="20"></canvas></div>
+      <div id="hd-line"></div>
+    </div>
+  </section>
+  <section class="panel bench-only" aria-label="the results">
+    <div class="bar"><span>Results &middot; the table to paste, and the baseline lines</span><button type="button" id="copy">Copy</button></div>
+    <textarea id="out" readonly rows="16" spellcheck="false"></textarea>
+  </section>
+  <pre id="oracle" class="result"></pre>
+  <pre id="bench" class="result"></pre>
+  <div id="stage"></div>
+</main>
+<script type="text/plain" id="fixture-fixture_frazaro">{{FIXTURE:fixture_frazaro}}</script>
+<script type="text/plain" id="fixture-fixture_output">{{FIXTURE:fixture_output}}</script>
+<script type="text/plain" id="fixture-fixture_output_b2_c3">{{FIXTURE:fixture_output_b2_c3}}</script>
+<script type="text/plain" id="fixture-fixture_data">{{FIXTURE:fixture_data}}</script>
+<script type="text/plain" id="fixture-into_output">{{FIXTURE:into_output}}</script>
+<script type="text/plain" id="fixture-into_checks">{{FIXTURE:into_checks}}</script>
+<script type="text/plain" id="fixture-sparse_10000">{{FIXTURE:sparse_10000}}</script>
+<script>
+{{VIEWPORT_JS}}
+</script>
+<script>
+(function () {
+  'use strict';
+  var MODE = /[?&]oracle=1(&|$)/.test(location.search) ? 'oracle' : (/[?&]bench=1(&|$)/.test(location.search) ? 'bench' : 'page');
+  document.body.className = MODE;
+  var VP = window.AlonzoViewport;
+  // The fixtures: each a record the door printed, by its program and the sheet it holds.
+  var FIXTURES = {
+    fixture_frazaro: { program: 'fixture', sheet: 'Frazaro' },
+    fixture_output: { program: 'fixture', sheet: 'Output' },
+    fixture_output_b2_c3: { program: 'fixture', sheet: 'Output' },
+    fixture_data: { program: 'fixture', sheet: 'data' },
+    into_output: { program: 'into', sheet: 'Output' },
+    into_checks: { program: 'into', sheet: 'checks' },
+    sparse_10000: { program: 'sparse', sheet: 'Output' }
+  };
+  // What a program's other sheets load when a tab without a record is clicked.
+  var PROGRAMS = {
+    fixture: { frazaro: 'fixture_frazaro', output: 'fixture_output', data: 'fixture_data' },
+    into: { output: 'into_output', checks: 'into_checks' },
+    sparse: { output: 'sparse_10000' }
+  };
+  function fixtureText(name) {
+    var el = document.getElementById('fixture-' + name);
+    return el ? el.textContent : '';
+  }
+  function thousands(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function fmt1(x) { return (Math.round(x * 10) / 10).toFixed(1); }
+  var built = true;
+  for (var fx in FIXTURES) {
+    if (!Object.prototype.hasOwnProperty.call(FIXTURES, fx)) continue;
+    var t = fixtureText(fx);
+    if (!t.trim() || t.indexOf('{{FIXTURE') >= 0) built = false;
+  }
+  if (!VP) { built = false; }
+  var aboutEl = document.getElementById('about');
+  if (!built) {
+    aboutEl.textContent = 'This page was not built: run tools/build_web.ps1 to fill it.';
+    if (MODE === 'oracle') document.getElementById('oracle').textContent = 'oracle failed: the page was not built';
+    return;
+  }
+  aboutEl.textContent = 'The viewport, version ' + VP.version + ', over seven records the door printed: the six view goldens of Frazaro\'s scripts/view/ and the 10,000-line program\'s, ' + thousands(fixtureText('sparse_10000').split('\n').length - 1) + ' lines. Device pixel ratio ' + (window.devicePixelRatio || 1) + '.';
+
+  // ---- the HiDPI panel: the same text in a DOM cell and in a canvas cell, drawn as the viewport draws ----
+  function hidpiPanel() {
+    var dpr = window.devicePixelRatio || 1;
+    var text = 'Revenue 12,345.67';
+    document.getElementById('hd-dom').textContent = text;
+    var cv = document.getElementById('hd-canvas');
+    cv.width = Math.round(160 * dpr);
+    cv.height = Math.round(20 * dpr);
+    cv.style.width = '160px';
+    cv.style.height = '20px';
+    var ctx = cv.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.strokeStyle = '#d9d9d2';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cv.width - 0.5, 0); ctx.lineTo(cv.width - 0.5, cv.height);
+    ctx.moveTo(0, cv.height - 0.5); ctx.lineTo(cv.width, cv.height - 0.5);
+    ctx.stroke();
+    ctx.font = Math.round(13 * dpr) + 'px system-ui, "Segoe UI", sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#1d1d1b';
+    ctx.fillText(text, Math.round(4 * dpr), Math.round(10 * dpr));
+    var ok = cv.width === Math.round(cv.clientWidth * dpr) && cv.height === Math.round(cv.clientHeight * dpr);
+    document.getElementById('hd-line').textContent = 'devicePixelRatio ' + dpr + '. canvas backing store = CSS size x ratio: ' + (ok ? 'yes' : 'no') +
+      ' (width attribute ' + cv.width + ', clientWidth ' + cv.clientWidth + ' x ' + dpr + '); the text at integer device pixels, the lines at a half.';
+  }
+  hidpiPanel();
+
+  // ---- the page: the viewport over the fixtures ----
+  if (MODE === 'page') {
+    var gridEl = document.getElementById('grid');
+    var statusEl = document.getElementById('status');
+    var selEl = document.getElementById('selection');
+    var fixtureEl = document.getElementById('fixture');
+    var vp = null, program = null, current = '';
+    function status(text, refused) { statusEl.textContent = text; statusEl.className = refused ? 'status refused' : 'status'; }
+    function cellWords(c) {
+      if (c.kind === 'empty') return 'an empty cell';
+      return (c.kind === 'formula' ? 'the formula ' : 'the value ') + c.text + (c.sentence ? ', written by row ' + c.sentence : '');
+    }
+    function newViewport() {
+      if (vp) vp.destroy();
+      vp = new VP(gridEl);
+      vp.on('select', function (s) {
+        selEl.textContent = 'Selected ' + s.text + ' (' + s.kind + '): ' + cellWords(s.focus) + '.';
+      });
+      vp.on('sheet', function (e) {
+        if (e.loaded) { status('Sheet ' + e.name + '.'); return; }
+        var fx = program ? program[e.name.toLowerCase()] : null;
+        if (fx) { loadFixture(fx, true); return; }
+        status('No record for the sheet ' + e.name + ' in this program: a host would ask the door for one here.', true);
+      });
+      vp.on('columnresize', function (e) {
+        status('Column ' + e.column + ' resized to ' + e.width + ' px: the host\'s state, the record unchanged.');
+      });
+      vp.on('cellopen', function (e) {
+        status('Open ' + e.address + ': ' + cellWords(e.cell) + '. The first game\'s chrome opens the pane at the sentence here (SD-28).');
+      });
+      vp.on('scroll', function (e) {
+        var cur = document.getElementById('scroll-line');
+        if (cur) cur.textContent = 'Window ' + e.window + '.';
+      });
+    }
+    function describe(name, r) {
+      var parts = [name + '.vla: ' + thousands(r.lines) + ' lines, ' + r.cells + ' value' + (r.cells === 1 ? '' : 's') + ', ' + r.formulas + ' formula' + (r.formulas === 1 ? '' : 's') +
+        ', ' + r.styles + ' style row' + (r.styles === 1 ? '' : 's') + ', ' + r.sentences + ' sentence row' + (r.sentences === 1 ? '' : 's') + '; window ' + r.window + ', extent ' + r.extent + '; read in ' + fmt1(r.readMs) + ' ms'];
+      if (r.unknown) parts.push(r.unknown + ' unknown row' + (r.unknown === 1 ? '' : 's') + ' ignored');
+      if (r.malformed) parts.push(r.malformed + ' malformed row' + (r.malformed === 1 ? '' : 's') + ' ignored');
+      return parts.join('; ') + '.';
+    }
+    function loadFixture(name, keep) {
+      if (!keep) { newViewport(); program = PROGRAMS[FIXTURES[name].program]; current = name; }
+      var r = vp.load(fixtureText(name));
+      vp.show(r.sheet);
+      status(describe(name, r));
+      selEl.textContent = 'Selected ' + vp.selection().text + '.';
+    }
+    fixtureEl.addEventListener('change', function () { loadFixture(fixtureEl.value, false); });
+    document.getElementById('freeze').addEventListener('click', function () {
+      if (!vp) return;
+      vp.freeze(parseInt(document.getElementById('freeze-rows').value, 10) || 0, parseInt(document.getElementById('freeze-cols').value, 10) || 0);
+      var f = vp.frozen();
+      status('Frozen: ' + f.rows + ' row' + (f.rows === 1 ? '' : 's') + ' and ' + f.cols + ' column' + (f.cols === 1 ? '' : 's') + '.');
+    });
+    document.getElementById('load').addEventListener('click', function () {
+      var text = document.getElementById('paste').value;
+      if (!text.trim()) { status('Paste a record first.', true); return; }
+      newViewport();
+      program = null;
+      current = 'pasted';
+      var r = vp.load(text);
+      vp.show(r.sheet);
+      status(describe('the pasted record', r), r.unknown + r.malformed > 0);
+      selEl.textContent = 'Selected ' + vp.selection().text + '.';
+    });
+    loadFixture(fixtureEl.value, false);
+    return;
+  }
+
+  // ---- the oracle: the viewport's draw list held to the record, cell for cell ----
+  // The expectations below are computed from the record and the rules of the
+  // scoping's decision 8, in this script and never by calling the viewport's
+  // layout: the two meet on the draw list. The constants are the oracle's own.
+  var R = { column: 64, row: 20, font: 13, pad: 4, digit: 7, headerMin: 32, headerPad: 12, headerDigit: 7, lineHeight: 1.2 };
+  var GRIDLINE = [217, 217, 210], WHITE = [255, 255, 255];
+  var measureCtx = document.createElement('canvas').getContext('2d');
+  function columnPixelsRule(width) { return Math.floor(((256 * width + Math.floor(128 / R.digit)) / 256) * R.digit); }
+  function colName(c) { var s = ''; while (c > 0) { var r = (c - 1) % 26; s = String.fromCharCode(65 + r) + s; c = (c - 1 - r) / 26; } return s; }
+  function hexOf(fill) { return [parseInt(fill.substr(1, 2), 16), parseInt(fill.substr(3, 2), 16), parseInt(fill.substr(5, 2), 16)]; }
+  function same(a, b, tol) { return Math.abs(a[0] - b[0]) <= tol && Math.abs(a[1] - b[1]) <= tol && Math.abs(a[2] - b[2]) <= tol; }
+  function isInt(v) { return typeof v === 'number' && Math.floor(v) === v; }
+  function isHalf(v) { return typeof v === 'number' && Math.floor(v) + 0.5 === v; }
+
+  // The layout the oracle expects, from the record and the host's state.
+  function expectLayout(model, env, st) {
+    var dpr = env.dpr;
+    var L = { dpr: dpr };
+    L.rowH = Math.round(R.row * dpr); L.headH = L.rowH; L.pad = Math.round(R.pad * dpr);
+    L.fontPx = Math.round(R.font * dpr); L.font = L.fontPx + 'px system-ui, "Segoe UI", sans-serif';
+    L.lineH = Math.round(R.font * R.lineHeight * dpr);
+    L.rows = model.rows + Math.ceil(env.clientH / R.row) + 1;
+    L.cols = model.cols + Math.ceil(env.clientW / R.column) + 1;
+    var digits = String(L.rows).length;
+    L.rhW = Math.round(Math.max(R.headerMin, R.headerPad + R.headerDigit * digits) * dpr);
+    L.colW = [0]; L.colX = [0, 0];
+    var x = 0;
+    for (var c = 1; c <= L.cols; c++) {
+      var letters = colName(c), css = R.column;
+      if (Object.prototype.hasOwnProperty.call(st.widths, letters)) css = st.widths[letters];
+      else { var col = model.columns[c]; if (col) { if (col.hidden) css = 0; else if (col.width !== null) css = columnPixelsRule(col.width); } }
+      var w = Math.round(css * dpr);
+      L.colW.push(w); x += w; L.colX.push(x);
+    }
+    L.fr = Math.max(0, Math.min(st.frozenRows, L.rows - 1)); L.fc = Math.max(0, Math.min(st.frozenCols, L.cols - 1));
+    L.frozenH = L.fr * L.rowH; L.frozenW = L.colX[L.fc + 1];
+    L.sx = Math.round(env.scrollLeft * dpr); L.sy = Math.round(env.scrollTop * dpr);
+    L.ox = L.rhW; L.oy = L.headH;
+    L.W = env.canvasW; L.H = env.canvasH;
+    return L;
+  }
+  function fmtOf(model, cell, c) {
+    if (cell && cell.style !== 0 && model.formats[cell.style]) return model.formats[cell.style];
+    if (!cell) { var col = model.columns[c]; if (col && col.style !== null && model.formats[col.style]) return model.formats[col.style]; }
+    return model.formats[0];
+  }
+  function alignRule(cell, fmt) {
+    if (fmt.num === 'text') return 'left';
+    if (cell.vkind === 'number' || cell.vkind === 'date') return 'right';
+    if (cell.vkind === 'bool' || cell.vkind === 'error') return 'center';
+    return 'left';
+  }
+  function colAt(L, x, c0) { var c = Math.max(1, c0); while (c <= L.cols && L.colX[c + 1] <= x) c++; return c; }
+  function rowAt(L, y, r0) { return Math.max(r0, Math.floor(y / L.rowH) + 1); }
+  // The expected draws of one quadrant.
+  function expectQuadrant(model, L, clip, r1, r2, c1, c2, sx, sy, name, E) {
+    if (clip.w <= 0 || clip.h <= 0) return;
+    var ox = L.ox, oy = L.oy, rowH = L.rowH;
+    var rowStart = Math.max(r1, rowAt(L, clip.y - oy + sy, r1)), rowEnd = Math.min(r2, rowAt(L, clip.y + clip.h - 1 - oy + sy, r1));
+    var colStart = Math.max(c1, colAt(L, clip.x - ox + sx, c1)), colEnd = Math.min(c2, colAt(L, clip.x + clip.w - 1 - ox + sx, c1));
+    if (rowStart > rowEnd || colStart > colEnd) return;
+    var r, c, cell, y, left, w;
+    measureCtx.font = L.font;
+    for (r = rowStart; r <= rowEnd; r++) {
+      y = oy + (r - 1) * rowH - sy;
+      for (c = colStart; c <= colEnd; c++) {
+        w = L.colW[c];
+        if (w === 0) continue;
+        cell = model.cells.get(r + ',' + c) || null;
+        var f = fmtOf(model, cell, c);
+        if (f.fill) E.fills.push({ key: name + ':' + r + ',' + c, x: ox + L.colX[c] - sx, y: y, w: w, h: rowH, color: f.fill });
+      }
+    }
+    if (model.gridlines) {
+      for (c = colStart; c <= colEnd; c++) { if (L.colW[c] === 0) continue; E.vlines.push(name + ':' + (ox + L.colX[c + 1] - sx - 0.5)); }
+      for (r = rowStart; r <= rowEnd; r++) E.hlines.push(name + ':' + (oy + (r - 1) * rowH + rowH - sy - 0.5));
+    }
+    for (r = rowStart; r <= rowEnd; r++) {
+      y = oy + (r - 1) * rowH - sy;
+      var from = Math.max(c1, colStart - 8);
+      for (c = from; c <= colEnd; c++) {
+        if (L.colW[c] === 0) continue;
+        cell = model.cells.get(r + ',' + c) || null;
+        if (!cell || cell.text === '') continue;
+        var fmt = fmtOf(model, cell, c), align = alignRule(cell, fmt);
+        w = L.colW[c]; left = ox + L.colX[c] - sx;
+        if (c < colStart && (fmt.wrap || align !== 'left')) continue;
+        if (fmt.wrap) {
+          if (left + w <= clip.x || left >= clip.x + clip.w) continue;
+          E.wraps.push({ key: name + ':' + r + ',' + c, text: cell.text, x: align === 'left' ? left + L.pad : (align === 'right' ? left + w - L.pad : left + Math.round(w / 2)), y: y + Math.round(L.lineH / 2), align: align, clip: { x: left, y: y, w: w, h: rowH } });
+          continue;
+        }
+        var textW = measureCtx.measureText(cell.text).width, clipW = w;
+        if (align === 'left' && textW + 2 * L.pad > w) {
+          var cc = c + 1;
+          while (cc <= c2 && clipW < textW + 2 * L.pad) { var e = model.cells.get(r + ',' + cc); if (e && e.text !== '') break; clipW += L.colW[cc]; cc++; }
+        }
+        if (left + clipW <= clip.x || left >= clip.x + clip.w) continue;
+        E.texts.push({ key: name + ':' + r + ',' + c, text: cell.text, x: align === 'left' ? left + L.pad : (align === 'right' ? left + w - L.pad : left + Math.round(w / 2)), y: y + Math.round(rowH / 2), align: align, clip: { x: left, y: y, w: clipW, h: rowH }, kind: cell.kind });
+      }
+    }
+    // the visible headers of the quadrant's rows and columns
+    for (c = colStart; c <= colEnd; c++) if (L.colW[c] !== 0) E.colHeaders[colName(c)] = true;
+    for (r = rowStart; r <= rowEnd; r++) E.rowHeaders[String(r)] = true;
+    E.visible.push({ name: name, rowStart: rowStart, rowEnd: rowEnd, colStart: colStart, colEnd: colEnd, sx: sx, sy: sy });
+  }
+  function expectAll(model, L) {
+    var E = { fills: [], vlines: [], hlines: [], texts: [], wraps: [], colHeaders: {}, rowHeaders: {}, visible: [] };
+    var ox = L.ox, oy = L.oy, fx = ox + L.frozenW, fy = oy + L.frozenH, W = L.W, H = L.H;
+    expectQuadrant(model, L, { x: fx, y: fy, w: W - fx, h: H - fy }, L.fr + 1, L.rows, L.fc + 1, L.cols, L.sx, L.sy, 'body', E);
+    if (L.fr > 0) expectQuadrant(model, L, { x: fx, y: oy, w: W - fx, h: L.frozenH }, 1, L.fr, L.fc + 1, L.cols, L.sx, 0, 'frozen-rows', E);
+    if (L.fc > 0) expectQuadrant(model, L, { x: ox, y: fy, w: L.frozenW, h: H - fy }, L.fr + 1, L.rows, 1, L.fc, 0, L.sy, 'frozen-cols', E);
+    if (L.fr > 0 && L.fc > 0) expectQuadrant(model, L, { x: ox, y: oy, w: L.frozenW, h: L.frozenH }, 1, L.fr, 1, L.fc, 0, 0, 'frozen-corner', E);
+    return E;
+  }
+  // The rectangle of a range in a quadrant, or null when it does not meet it.
+  function rangeRect(L, range, q) {
+    var top = range.top, bottom = range.bottom, left = range.left, right = range.right;
+    if (range.columns) { top = 1; bottom = L.rows; }
+    if (range.rows) { left = 1; right = L.cols; }
+    if (range.sheet) { top = 1; bottom = L.rows; left = 1; right = L.cols; }
+    var r1 = q.name === 'body' || q.name === 'frozen-cols' ? L.fr + 1 : 1, r2 = q.name === 'body' || q.name === 'frozen-cols' ? L.rows : L.fr;
+    var c1 = q.name === 'body' || q.name === 'frozen-rows' ? L.fc + 1 : 1, c2 = q.name === 'body' || q.name === 'frozen-rows' ? L.cols : L.fc;
+    var t = Math.max(top, r1), b = Math.min(bottom, r2), l = Math.max(left, c1), rr = Math.min(right, c2);
+    if (t > b || l > rr) return null;
+    return { x: L.ox + L.colX[l] - q.sx, y: L.oy + (t - 1) * L.rowH - q.sy, w: L.colX[rr + 1] - L.colX[l], h: (b - t + 1) * L.rowH, top: t, bottom: b, left: l, right: rr };
+  }
+
+  function runCase(cs, out) {
+    var stage = document.getElementById('stage');
+    var box = document.createElement('div');
+    box.className = 'case';
+    box.style.cssText = 'width:' + cs.w + 'px;height:' + cs.h + 'px;';
+    stage.appendChild(box);
+    var problems = [], counts = { texts: 0, wraps: 0, fills: 0, lines: 0, headers: 0, selection: 0, marks: 0, probes: 0 };
+    var vp = null;
+    try {
+      vp = new VP(box);
+      var text = fixtureText(cs.fixture);
+      var model = VP.readRecord(text);
+      vp.load(text);
+      var st = { widths: {}, frozenRows: 0, frozenCols: 0 };
+      if (cs.freeze) { vp.freeze(cs.freeze[0], cs.freeze[1]); st.frozenRows = cs.freeze[0]; st.frozenCols = cs.freeze[1]; }
+      if (cs.columnWidth) { vp.columnWidth(cs.columnWidth[0], cs.columnWidth[1]); st.widths[cs.columnWidth[0]] = cs.columnWidth[1]; }
+      if (cs.select) vp.select(cs.select);
+      if (cs.mark) vp.mark(cs.mark[0], cs.mark[1], cs.mark[2]);
+      if (cs.scrollTo) vp.scrollTo(cs.scrollTo[0], cs.scrollTo[1]);
+      var g = vp.geometry();
+      var env = { dpr: g.dpr, canvasW: g.canvasW, canvasH: g.canvasH, clientW: g.clientW, clientH: g.clientH, scrollLeft: g.scrollLeft, scrollTop: g.scrollTop };
+      var L = expectLayout(model, env, st);
+      var E = expectAll(model, L);
+      var ops = vp.draws();
+      var i, op, k;
+      // (1) every coordinate integral, every line at a half
+      var fractional = 0;
+      for (i = 0; i < ops.length; i++) {
+        op = ops[i];
+        if (op.op === 'line') { if (!isHalf(op.x1) && !isInt(op.x1)) fractional++; if (!isHalf(op.y1) && !isInt(op.y1)) fractional++; }
+        else if (op.op === 'text' || op.op === 'header-text') { if (!isInt(op.x) || !isInt(op.y)) fractional++; }
+        else if (op.x !== undefined) { if (!isInt(op.x) || !isInt(op.y) || !isInt(op.w) || !isInt(op.h)) fractional++; }
+      }
+      if (fractional) problems.push(fractional + ' coordinate(s) not on device pixels');
+      // (2) the texts: the set drawn equals the set expected, position by position
+      var drawn = {}, drawnWraps = {};
+      for (i = 0; i < ops.length; i++) {
+        op = ops[i];
+        if (op.op !== 'text') continue;
+        k = op.quadrant + ':' + op.row + ',' + op.col;
+        if (op.wrap) { (drawnWraps[k] = drawnWraps[k] || []).push(op); continue; }
+        if (drawn[k]) problems.push('cell ' + k + ' drawn twice');
+        drawn[k] = op;
+      }
+      for (i = 0; i < E.texts.length; i++) {
+        var ex = E.texts[i], got = drawn[ex.key];
+        if (!got) { problems.push('cell ' + ex.key + ' (' + ex.text + ') not drawn'); continue; }
+        if (got.text !== ex.text) problems.push('cell ' + ex.key + ' shows ' + got.text + ', the record says ' + ex.text);
+        else if (got.x !== ex.x || got.y !== ex.y) problems.push('cell ' + ex.key + ' at ' + got.x + ',' + got.y + ', expected ' + ex.x + ',' + ex.y);
+        else if (got.align !== ex.align) problems.push('cell ' + ex.key + ' aligned ' + got.align + ', expected ' + ex.align);
+        else if (got.clip.x !== ex.clip.x || got.clip.y !== ex.clip.y || got.clip.w !== ex.clip.w || got.clip.h !== ex.clip.h) problems.push('cell ' + ex.key + ' clipped to ' + got.clip.x + ',' + got.clip.y + ' ' + got.clip.w + 'x' + got.clip.h + ', expected ' + ex.clip.x + ',' + ex.clip.y + ' ' + ex.clip.w + 'x' + ex.clip.h);
+        else if ((got.kind === 'formula') !== (ex.kind === 'formula')) problems.push('cell ' + ex.key + ' drawn as a ' + got.kind);
+        else counts.texts++;
+        delete drawn[ex.key];
+      }
+      for (k in drawn) if (Object.prototype.hasOwnProperty.call(drawn, k)) problems.push('a text drawn at ' + k + ' (' + drawn[k].text + ') that the record does not put there');
+      for (i = 0; i < E.wraps.length; i++) {
+        var wx = E.wraps[i], lines = drawnWraps[wx.key];
+        if (!lines) { problems.push('wrapped cell ' + wx.key + ' not drawn'); continue; }
+        lines.sort(function (a, b) { return a.line - b.line; });
+        var joined = lines.map(function (l) { return l.text; }).join(' ');
+        var sameText = joined === wx.text || joined.replace(/ /g, '') === wx.text.replace(/ /g, '');
+        if (!sameText) problems.push('wrapped cell ' + wx.key + ' shows ' + joined + ', the record says ' + wx.text);
+        else if (lines[0].x !== wx.x || lines[0].y !== wx.y) problems.push('wrapped cell ' + wx.key + ' at ' + lines[0].x + ',' + lines[0].y + ', expected ' + wx.x + ',' + wx.y);
+        else if (lines[0].clip.x !== wx.clip.x || lines[0].clip.w !== wx.clip.w) problems.push('wrapped cell ' + wx.key + ' clipped to ' + lines[0].clip.w + ', expected ' + wx.clip.w);
+        else counts.wraps++;
+        delete drawnWraps[wx.key];
+      }
+      for (k in drawnWraps) if (Object.prototype.hasOwnProperty.call(drawnWraps, k)) problems.push('a wrapped text drawn at ' + k + ' that the record does not put there');
+      // (3) the fills
+      var fills = {};
+      for (i = 0; i < ops.length; i++) { op = ops[i]; if (op.op === 'fill') fills[op.quadrant + ':' + op.row + ',' + op.col] = op; }
+      for (i = 0; i < E.fills.length; i++) {
+        var ef = E.fills[i], gf = fills[ef.key];
+        if (!gf) { problems.push('fill ' + ef.key + ' not drawn'); continue; }
+        if (gf.x !== ef.x || gf.y !== ef.y || gf.w !== ef.w || gf.h !== ef.h) problems.push('fill ' + ef.key + ' at ' + gf.x + ',' + gf.y + ' ' + gf.w + 'x' + gf.h + ', expected ' + ef.x + ',' + ef.y + ' ' + ef.w + 'x' + ef.h);
+        else if (String(gf.color).toLowerCase() !== ef.color.toLowerCase()) problems.push('fill ' + ef.key + ' is ' + gf.color + ', expected ' + ef.color);
+        else counts.fills++;
+        delete fills[ef.key];
+      }
+      for (k in fills) if (Object.prototype.hasOwnProperty.call(fills, k)) problems.push('a fill drawn at ' + k + ' that the record does not declare');
+      // (4) the gridlines, as sets of coordinates per quadrant
+      var vl = {}, hl = {};
+      for (i = 0; i < ops.length; i++) {
+        op = ops[i];
+        if (op.op !== 'line' || String(op.kind).indexOf('grid-') !== 0) continue;
+        var qn = op.kind.slice(5);
+        if (op.x1 === op.x2) vl[qn + ':' + op.x1] = true; else hl[qn + ':' + op.y1] = true;
+      }
+      for (i = 0; i < E.vlines.length; i++) { if (!vl[E.vlines[i]]) problems.push('no vertical gridline at ' + E.vlines[i]); else { counts.lines++; delete vl[E.vlines[i]]; } }
+      for (i = 0; i < E.hlines.length; i++) { if (!hl[E.hlines[i]]) problems.push('no horizontal gridline at ' + E.hlines[i]); else { counts.lines++; delete hl[E.hlines[i]]; } }
+      for (k in vl) if (Object.prototype.hasOwnProperty.call(vl, k)) problems.push('a vertical gridline at ' + k + ' the record does not ask for');
+      for (k in hl) if (Object.prototype.hasOwnProperty.call(hl, k)) problems.push('a horizontal gridline at ' + k + ' the record does not ask for');
+      // (5) the headers
+      var ch = {}, rh = {};
+      for (i = 0; i < ops.length; i++) { op = ops[i]; if (op.op === 'header-text') { if (op.kind === 'column') ch[colName(op.index)] = true; else rh[String(op.index)] = true; } }
+      for (k in E.colHeaders) if (Object.prototype.hasOwnProperty.call(E.colHeaders, k)) { if (!ch[k]) problems.push('no column header ' + k); else counts.headers++; }
+      for (k in E.rowHeaders) if (Object.prototype.hasOwnProperty.call(E.rowHeaders, k)) { if (!rh[k]) problems.push('no row header ' + k); else counts.headers++; }
+      // (6) the selection and the marks
+      var selRange = cs.select ? VP.parseRange(cs.select) : { top: 1, left: 1, bottom: 1, right: 1 };
+      var selOps = [];
+      for (i = 0; i < ops.length; i++) if (ops[i].op === 'selection') selOps.push(ops[i]);
+      for (i = 0; i < E.visible.length; i++) {
+        var q = E.visible[i], sr = rangeRect(L, selRange, q);
+        var found = null;
+        for (var j = 0; j < selOps.length; j++) if (selOps[j].quadrant === q.name) found = selOps[j];
+        if (!sr) { if (found) problems.push('a selection drawn in ' + q.name + ' where the range does not reach'); continue; }
+        if (!found) problems.push('no selection drawn in ' + q.name);
+        else if (found.x !== sr.x || found.y !== sr.y || found.w !== sr.w || found.h !== sr.h) problems.push('the selection in ' + q.name + ' at ' + found.x + ',' + found.y + ' ' + found.w + 'x' + found.h + ', expected ' + sr.x + ',' + sr.y + ' ' + sr.w + 'x' + sr.h);
+        else counts.selection++;
+      }
+      if (cs.mark) {
+        var mr = VP.parseRange(cs.mark[1][0]), markOps = [];
+        for (i = 0; i < ops.length; i++) if (ops[i].op === 'mark' && ops[i].name === cs.mark[0]) markOps.push(ops[i]);
+        var bodyQ = E.visible[0], mrect = rangeRect(L, mr, bodyQ);
+        if (!mrect) problems.push('the mark is outside the body');
+        else if (!markOps.length) problems.push('the mark ' + cs.mark[0] + ' was not drawn');
+        else if (markOps[0].x !== mrect.x || markOps[0].y !== mrect.y || markOps[0].w !== mrect.w || markOps[0].h !== mrect.h) problems.push('the mark at ' + markOps[0].x + ',' + markOps[0].y + ', expected ' + mrect.x + ',' + mrect.y);
+        else counts.marks++;
+      }
+      // (7) the pixel probes, each at a corner inside the cell, off the glyphs and off a neighbour's spilled
+      // text: a styled cell's corner is its fill, a plain cell's is white, its bottom edge a gridline's colour
+      var ctx = vp.canvas.getContext('2d');
+      function pixel(x, y) { var d = ctx.getImageData(x, y, 1, 1).data; return [d[0], d[1], d[2]]; }
+      function inRange(rg, r, c) { return r >= rg.top && r <= rg.bottom && c >= rg.left && c <= rg.right; }
+      var probed = 0;
+      for (i = 0; i < E.fills.length && probed < 2; i++) {
+        var pf = E.fills[i], pk = pf.key.split(':')[1].split(','), pr = +pk[0], pc = +pk[1];
+        if (inRange(selRange, pr, pc)) continue;
+        if (cs.mark && inRange(VP.parseRange(cs.mark[1][0]), pr, pc)) continue;
+        var cx = pf.x + 1, cy = pf.y + 1;
+        if (cx < 0 || cy < 0 || cx >= L.W || cy >= L.H || pf.w < 3 || pf.h < 3) continue;
+        var px = pixel(cx, cy), want = hexOf(pf.color);
+        if (!same(px, want, 0)) problems.push('the pixel inside ' + pf.key + ' is ' + px.join(',') + ', its fill is ' + want.join(','));
+        else { counts.probes++; probed++; }
+      }
+      // a plain cell: the first expected text's cell without a fill and outside the selection, or any visible empty cell
+      var body = E.visible[0];
+      if (body) {
+        for (var rr = body.rowStart; rr <= body.rowEnd; rr++) {
+          var done = false;
+          for (var cc2 = body.colStart; cc2 <= body.colEnd; cc2++) {
+            if (L.colW[cc2] === 0 || inRange(selRange, rr, cc2)) continue;
+            var cellHere = model.cells.get(rr + ',' + cc2) || null;
+            if (fmtOf(model, cellHere, cc2).fill) continue;
+            if (cellHere && cellHere.text !== '') continue;
+            var lx = L.ox + L.colX[cc2] - body.sx, ly = L.oy + (rr - 1) * L.rowH - body.sy, lw = L.colW[cc2];
+            var mx = lx + 1, my = ly + 1;
+            if (lw < 3 || mx < 0 || my < 0 || mx >= L.W || ly + L.rowH >= L.H || lx + lw - 1 >= L.W) continue;
+            var white = pixel(mx, my);
+            if (!same(white, WHITE, 0)) problems.push('the empty cell ' + rr + ',' + cc2 + ' is ' + white.join(',') + ', not white');
+            else counts.probes++;
+            var edge = pixel(mx, ly + L.rowH - 1);
+            var wantEdge = model.gridlines ? GRIDLINE : WHITE;
+            if (!same(edge, wantEdge, 0)) problems.push('the bottom edge of ' + rr + ',' + cc2 + ' is ' + edge.join(',') + ', expected ' + wantEdge.join(',') + (model.gridlines ? ' (a gridline)' : ' (gridlines off)'));
+            else counts.probes++;
+            done = true;
+            break;
+          }
+          if (done) break;
+        }
+      }
+    } catch (e) {
+      problems.push('error: ' + (e && e.message ? e.message : e));
+    } finally {
+      if (vp) { try { vp.destroy(); } catch (e2) { } }
+      if (box.parentNode) box.parentNode.removeChild(box);
+    }
+    var head = 'case ' + cs.name + ' [' + cs.w + 'x' + cs.h + ' css]: texts ' + counts.texts + ', wrapped ' + counts.wraps + ', fills ' + counts.fills + ', lines ' + counts.lines + ', headers ' + counts.headers + ', selection ' + counts.selection + ', marks ' + counts.marks + ', probes ' + counts.probes + ': ';
+    if (problems.length === 0) { out.push(head + 'OK'); return true; }
+    out.push(head + 'FAIL: ' + problems.slice(0, 6).join('; ') + (problems.length > 6 ? '; and ' + (problems.length - 6) + ' more' : ''));
+    return false;
+  }
+  function rulesLine() {
+    var r = VP.RULES;
+    return 'pad=' + r.pad + ' row=' + r.row + ' column=' + r.column + ' font=' + r.font + ' digit=' + r.digit + ' header=' + r.headerPad + '+' + r.headerDigit + 'd min ' + r.headerMin + ' lineheight=' + r.lineHeight;
+  }
+  function runOracle() {
+    var out = [];
+    var dpr = window.devicePixelRatio || 1;
+    out.push('oracle: viewport ' + VP.version + ', rules ' + rulesLine() + '; dpr=' + dpr + '; ' + navigator.userAgent);
+    var normalW = 47 + 15 * 64 + 20, normalH = 20 + 40 * 20;
+    var cases = [
+      { name: 'fixture_frazaro', fixture: 'fixture_frazaro', w: 1100, h: 400 },
+      { name: 'fixture_output', fixture: 'fixture_output', w: 1100, h: 400 },
+      { name: 'fixture_output_b2_c3', fixture: 'fixture_output_b2_c3', w: 1100, h: 400 },
+      { name: 'fixture_data', fixture: 'fixture_data', w: 1100, h: 400 },
+      { name: 'into_output', fixture: 'into_output', w: 1100, h: 400 },
+      { name: 'into_checks', fixture: 'into_checks', w: 1100, h: 400 },
+      { name: 'sparse_top', fixture: 'sparse_10000', w: normalW, h: normalH },
+      { name: 'sparse_middle', fixture: 'sparse_10000', w: normalW, h: normalH, scrollTo: [5000, 1] },
+      { name: 'sparse_end', fixture: 'sparse_10000', w: normalW, h: normalH, scrollTo: [9961, 1] },
+      { name: 'sparse_frozen', fixture: 'sparse_10000', w: normalW, h: normalH, freeze: [2, 1], scrollTo: [100, 1] },
+      { name: 'sparse_resized', fixture: 'sparse_10000', w: normalW, h: normalH, columnWidth: ['A', 200] },
+      { name: 'fixture_frazaro_selected', fixture: 'fixture_frazaro', w: 1100, h: 400, select: 'B2:C3', mark: ['precedents', ['B4'], { fill: 'rgba(10, 107, 79, 0.15)', border: '#0a6b4f' }] }
+    ];
+    var ok = 0;
+    for (var i = 0; i < cases.length; i++) if (runCase(cases[i], out)) ok++;
+    out.push(ok === cases.length ? 'oracle ok cases=' + cases.length + ' dpr=' + dpr : 'oracle failed: ' + (cases.length - ok) + ' of ' + cases.length + ' cases dpr=' + dpr);
+    document.getElementById('oracle').textContent = out.join('\n');
+  }
+  if (MODE === 'oracle') {
+    try { runOracle(); } catch (e) { document.getElementById('oracle').textContent = 'oracle failed: ' + (e && e.message ? e.message : e); }
+    return;
+  }
+
+  // ---- the floors' instrument: the harness of KERNEL.3 over the viewport ----
+  var SMOKE = /[?&]smoke=1(&|$)/.test(location.search);
+  var STEPS = SMOKE ? 8 : 120, PAGE_STEPS = SMOKE ? 2 : 20, STEP_ROWS = 3;
+  var benchStatus = document.getElementById('bench-status'), outEl = document.getElementById('out'), benchPre = document.getElementById('bench');
+  var runBtn = document.getElementById('run'), fsBtn = document.getElementById('fullscreen'), copyBtn = document.getElementById('copy');
+  function setStatus(t) { benchStatus.textContent = t; }
+  // A frame, or in smoke mode a task: under a headless browser's virtual time no animation frame
+  // follows a scroll (found 2026-10-08), and a smoke run's numbers are not a measurement, so it
+  // waits on a 0 ms timer and exercises the harness's path, the scroll included, for its shape.
+  function nextFrame() {
+    if (SMOKE) return new Promise(function (res) { setTimeout(function () { res(performance.now()); }, 0); });
+    return new Promise(function (res) { requestAnimationFrame(function (ts) { res(ts); }); });
+  }
+  function afterRendering() { return new Promise(function (res) { setTimeout(function () { res(performance.now()); }, 0); }); }
+  function percentile(sorted, q) { if (!sorted.length) return 0; var k = Math.min(sorted.length - 1, Math.max(0, Math.ceil(q * sorted.length) - 1)); return sorted[k]; }
+  function sortedCopy(a) { return a.slice().sort(function (x, y) { return x - y; }); }
+  async function measuredDraw(fn, interval) {
+    var t0 = performance.now();
+    fn();
+    var sync = performance.now() - t0;
+    var afterP = afterRendering();
+    var ts = await nextFrame();
+    var after = await afterP;
+    return { main: after - t0, sync: sync, frame: ts - t0, dropped: (ts - t0) > 1.5 * interval };
+  }
+  async function frameInterval(frames) {
+    var deltas = [], prev = await nextFrame();
+    for (var i = 0; i < frames; i++) { var ts = await nextFrame(); deltas.push(ts - prev); prev = ts; }
+    return percentile(sortedCopy(deltas), 0.5);
+  }
+  var sparseModel = VP.readRecord(fixtureText('sparse_10000'));
+  function cellsWithText(rows, cols) {
+    var n = 0;
+    for (var r = 1; r <= rows; r++) for (var c = 1; c <= cols; c++) { var e = sparseModel.cells.get(r + ',' + c); if (e && e.text) n++; }
+    return n;
+  }
+  async function runBenchCase(win, interval) {
+    var stage = document.getElementById('stage');
+    var box = document.createElement('div');
+    box.className = 'case';
+    box.style.cssText = 'width:' + win.W + 'px;height:' + win.H + 'px;';
+    stage.appendChild(box);
+    var vp = null;
+    try {
+      vp = new VP(box);
+      var text = fixtureText('sparse_10000');
+      setProgress(win.name + ': before the first frame');
+      await nextFrame();
+      setProgress(win.name + ': the first draw');
+      var first = await measuredDraw(function () { vp.load(text); }, interval);
+      var g = vp.geometry();
+      var rows = Math.floor((g.canvasH - g.headH) / g.rowH), cols = Math.floor((g.canvasW - g.rhW) / (g.colW[1] || 1));
+      var mains = [], syncs = [], pages = [], dropped = 0, i, m;
+      var stepPx = STEP_ROWS * 20;
+      for (i = 1; i <= STEPS; i++) {
+        if (i === 1 || i % 20 === 0) setProgress(win.name + ': step ' + i + ' of ' + STEPS);
+        m = await measuredDraw(stepTo(vp, i * stepPx), interval);
+        mains.push(m.main); syncs.push(m.sync); if (m.dropped) dropped++;
+      }
+      var midPx = Math.floor(sparseModel.rows / 2) * 20;
+      for (i = 1; i <= PAGE_STEPS; i++) {
+        if (i === 1) setProgress(win.name + ': the page steps');
+        m = await measuredDraw(stepTo(vp, (i % 2) ? midPx : 0), interval);
+        pages.push(m.main); if (m.dropped) dropped++;
+      }
+      var sm = sortedCopy(mains), sp = sortedCopy(pages), ss = sortedCopy(syncs);
+      var p95 = percentile(sm, 0.95), page95 = percentile(sp, 0.95);
+      var max = Math.max(sm.length ? sm[sm.length - 1] : 0, sp.length ? sp[sp.length - 1] : 0);
+      return { name: win.name, rows: rows, cols: cols, cells: cellsWithText(rows, cols), firstDraw: first.main, p50: percentile(sm, 0.5), p95: p95, page95: page95, max: max, sync50: percentile(ss, 0.5), dropped: dropped, n: STEPS + PAGE_STEPS, holds: dropped === 0 && p95 < interval && page95 < interval };
+    } finally {
+      if (vp) vp.destroy();
+      if (box.parentNode) box.parentNode.removeChild(box);
+    }
+  }
+  function stepTo(vp, top) { return function () { vp.scrollToPixels(0, top); }; }
+  async function browserLine() {
+    var uad = navigator.userAgentData;
+    if (!uad || !uad.getHighEntropyValues) return navigator.userAgent;
+    try {
+      var hv = await uad.getHighEntropyValues(['fullVersionList']);
+      var list = (hv && hv.fullVersionList) || uad.brands || [];
+      var named = [], chromium = [];
+      for (var i = 0; i < list.length; i++) {
+        var b = list[i];
+        if (!b || !b.brand || /^not.a.brand$/i.test(b.brand)) continue;
+        (b.brand === 'Chromium' ? chromium : named).push(b.brand + ' ' + b.version);
+      }
+      var parts = named.concat(chromium);
+      if (!parts.length) return navigator.userAgent;
+      return parts.join(', ') + (uad.platform ? ' on ' + uad.platform : '');
+    } catch (e) { return navigator.userAgent; }
+  }
+  function tableOf(results) {
+    var lines = ['| renderer | record | cell px | window (rows x cols) | cells with text | first draw ms | step p50 ms | step p95 ms | page p95 ms | max ms | sync p50 ms | dropped of N | holds the frame |',
+                 '|---|---|---|---|---|---|---|---|---|---|---|---|---|'];
+    for (var i = 0; i < results.length; i++) {
+      var x = results[i];
+      lines.push('| viewport (canvas) | sparse | 20 x 64 | ' + x.name + ' (' + x.rows + ' x ' + x.cols + ') | ' + x.cells + ' | ' + fmt1(x.firstDraw) + ' | ' + fmt1(x.p50) + ' | ' + fmt1(x.p95) + ' | ' + fmt1(x.page95) + ' | ' + fmt1(x.max) + ' | ' + fmt1(x.sync50) + ' | ' + x.dropped + ' of ' + x.n + ' | ' + (x.holds ? 'yes' : 'no') + ' |');
+    }
+    return lines.join('\n');
+  }
+  function baselineOf(results, interval, env) {
+    var lines = ['# tools/check_render_floors.ps1: the baseline lines, as this page printed them', '$baselineInterval = ' + fmt1(interval), "$baselineEnvironment = '" + env.replace(/'/g, "''") + "'", '$baseline = @('];
+    for (var i = 0; i < results.length; i++) {
+      var x = results[i];
+      lines.push("    @{ Case = '" + x.name + "'; Rows = " + x.rows + '; Cols = ' + x.cols + '; Cells = ' + x.cells + '; FirstDraw = ' + fmt1(x.firstDraw) + '; StepP50 = ' + fmt1(x.p50) + '; StepP95 = ' + fmt1(x.p95) + '; PageP95 = ' + fmt1(x.page95) + '; Max = ' + fmt1(x.max) + '; SyncP50 = ' + fmt1(x.sync50) + '; Dropped = ' + x.dropped + '; N = ' + x.n + "; Holds = '" + (x.holds ? 'yes' : 'no') + "' }" + (i < results.length - 1 ? ',' : ''));
+    }
+    lines.push(')');
+    return lines.join('\n');
+  }
+  // Smoke mode only: a headless browser under a virtual-time budget lets its clock leap
+  // ahead to the next timer whenever the page waits, so the run keeps a 0 ms timer chain
+  // alive, which gives the clock nothing to leap to while a frame is pending, and arms one
+  // watchdog that reports a run that stalls; no other timer may be pending during a run,
+  // since each one would be a leap and the budget would be spent before the run ends.
+  var running = false, pacing = false, progress = '';
+  function pace() { if (pacing) setTimeout(pace, 0); }
+  // Where the run is: the status line, and what a stalled headless dump says.
+  function setProgress(text) { progress = text; setStatus('Running: ' + text + '...'); }
+  window.addEventListener('error', function (ev) { setStatus('Script error: ' + (ev.message || ev.error) + (progress ? ' (at ' + progress + ')' : '')); benchPre.textContent = 'bench failed: ' + (ev.message || ev.error); });
+  window.addEventListener('unhandledrejection', function (ev) { var r = ev.reason && ev.reason.message ? ev.reason.message : ev.reason; setStatus('Script error: ' + r + (progress ? ' (at ' + progress + ')' : '')); benchPre.textContent = 'bench failed: ' + r; });
+  async function runBench() {
+    if (running) return;
+    running = true; runBtn.disabled = true; fsBtn.disabled = true;
+    var fullscreen = !!document.fullscreenElement;
+    if (SMOKE) {
+      pacing = true;
+      setTimeout(pace, 0);
+      setTimeout(function () { if (running) { setStatus('the run had not finished after 300 s of the page\'s clock (at ' + progress + ')'); benchPre.textContent = 'bench failed: stalled at ' + progress; } }, 300000);
+    }
+    try {
+      hidpiPanel();
+      setProgress('the browser line');
+      var browser = await browserLine();
+      setProgress('the warm-up');
+      await runBenchCase({ name: 'warm-up', W: 400, H: 240 }, 16.7);
+      await nextFrame();
+      setProgress('the frame interval');
+      var interval = await frameInterval(30);
+      var rhW = 47, sb = 20;
+      var wins = [
+        { name: 'normal', W: rhW + 15 * 64 + sb, H: 20 + 40 * 20 },
+        { name: 'full-screen', W: screen.width, H: screen.height }
+      ];
+      var results = [];
+      for (var i = 0; i < wins.length; i++) {
+        setProgress('case ' + (i + 1) + ' of ' + wins.length + ', ' + wins[i].name);
+        results.push(await runBenchCase(wins[i], interval));
+        await nextFrame();
+      }
+      var hz = interval > 0 ? Math.round(1000 / interval) : 0;
+      var env = 'Environment: ' + browser + ' | DPR ' + (window.devicePixelRatio || 1) + ' | screen ' + screen.width + 'x' + screen.height + ' | fullscreen ' + (fullscreen ? 'yes' : 'no') + ' | frame interval ' + fmt1(interval) + ' ms (about ' + hz + ' Hz) | sparse record ' + thousands(sparseModel.lines) + ' lines, extent ' + sparseModel.extentText + ', ' + thousands(sparseModel.counts.cells + sparseModel.counts.formulas) + ' cells, read in ' + fmt1(sparseModel.readMs) + ' ms';
+      var md = env + '\n\n' + tableOf(results) + '\n\n' + baselineOf(results, interval, env);
+      outEl.value = md;
+      benchPre.textContent = (SMOKE ? 'smoke ok (a virtual clock: numbers, not a measurement)\n' : 'bench ok\n') + md;
+      running = false;
+      setStatus('Done: ' + wins.length + ' cases, ' + STEPS + ' scroll steps and ' + PAGE_STEPS + ' page steps each' + (fullscreen ? ', in fullscreen.' : ', not in fullscreen.'));
+    } catch (e) {
+      running = false;
+      setStatus('Script error: ' + (e && e.message ? e.message : e) + (progress ? ' (at ' + progress + ')' : ''));
+      benchPre.textContent = 'bench failed: ' + (e && e.message ? e.message : e);
+    }
+    pacing = false; progress = ''; runBtn.disabled = false; fsBtn.disabled = false;
+  }
+  runBtn.addEventListener('click', function () { runBench(); });
+  fsBtn.addEventListener('click', function () {
+    var el = document.documentElement;
+    if (!el.requestFullscreen) { setStatus('This browser offers no fullscreen.'); return; }
+    el.requestFullscreen().then(function () { setStatus('In fullscreen: the run starts in a moment.'); setTimeout(runBench, 600); }, function (e) { setStatus('Fullscreen refused: ' + (e && e.message ? e.message : e)); });
+  });
+  copyBtn.addEventListener('click', function () {
+    var text = outEl.value;
+    var done = function () { copyBtn.textContent = 'Copied'; setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1200); };
+    var select = function () { outEl.focus(); outEl.select(); var copied = false; try { copied = document.execCommand('copy'); } catch (e) { copied = false; } if (copied) done(); else setStatus('Selected: press Ctrl+C'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, select); else select();
+  });
+  window.addEventListener('load', function () { runBench(); });
+})();
+</script>
+</body>
+</html>

@@ -26,7 +26,7 @@ the header, so a run under each is the oracle's "under both" (REPO.2,
 decision 6).
 
 -WithExtras runs the hardcoded list below of the verifiers that take
-arguments, today the two controls, each proving its check on mutants, and
+arguments, today the six controls, each proving its check on mutants, and
 says so separately: pretending a control is interchangeable with a plain
 pass/fail scan would hide what each one asserts.
 
@@ -63,15 +63,27 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # first among them) and check_spdx.ps1 (every tracked file resolves to one
 # licence through REUSE.toml, every licence has its text, every cartridge
 # carries its 0BSD header).
-$expectedAtLeast = 2
+# 2026-10-08, KERNEL.5 (laid here): 6 - check_web_offline.ps1 (the page and
+# the viewport's source load nothing and link nowhere, the placeholders in
+# their places), check_view_fixtures.ps1 (the fixtures are the door's
+# records, pinned by hash, never shorter, in oracle 11's order, the
+# 10,000-line record the rule's), check_render_oracle.ps1 (the viewport draws
+# every cell where the record puts it, under a headless browser at two
+# ratios; SKIPPED without a built page or a browser) and
+# check_render_floors.ps1 (the owner's measured baseline held to the bars).
+$expectedAtLeast = 6
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
 # --- The other verifiers, each with the arguments it needs. ---
 # Hand-maintained for the same reason: a list that discovers itself would
 # quietly stop covering something the day a file was renamed.
 $extras = @(
-    @{ Script = 'check_host_imports.ps1'; Args = @('-Control'); What = 'REPO.2 import reader and judgment: twelve modules built in memory, an unknown kind, a non-module' },
-    @{ Script = 'check_spdx.ps1';         Args = @('-Control'); What = 'REPO.2 licence map: a clean scratch tree passes, four mutants fail' }
+    @{ Script = 'check_host_imports.ps1';  Args = @('-Control'); What = 'REPO.2 import reader and judgment: twelve modules built in memory, an unknown kind, a non-module' },
+    @{ Script = 'check_spdx.ps1';          Args = @('-Control'); What = 'REPO.2 licence map: a clean scratch tree passes, four mutants fail' },
+    @{ Script = 'check_web_offline.ps1';   Args = @('-Control'); What = 'KERNEL.5 offline doctrine: the real pair passes, seven mutants fail' },
+    @{ Script = 'check_view_fixtures.ps1'; Args = @('-Control'); What = 'KERNEL.5 fixtures: a clean scratch folder passes, four mutants fail each for its own reason' },
+    @{ Script = 'check_render_oracle.ps1'; Args = @('-Control'); What = 'KERNEL.5 render oracle: the real page passes, three mutant pages fail under the browser (SKIPPED without one)' },
+    @{ Script = 'check_render_floors.ps1'; Args = @('-Control'); What = 'KERNEL.5 render floors: a clean table passes, seven mutants fail' }
 )
 
 # --- The shell each check runs under. ---

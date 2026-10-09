@@ -1,17 +1,23 @@
-# The checks, on every push to main and every pull request (REPO.2).
+# The checks, on every push to main and every pull request (REPO.2; the
+# viewport's page and its oracle since KERNEL.5).
 #
-# Two jobs, in Frazaro's shape. The ratchets job runs tools/run_checks.ps1
-# under Windows PowerShell 5.1, the house's floor for every check, with the
-# floor on the count and the controls that prove each check on mutants; with
-# no Rust toolchain on that job the import check says SKIPPED, and the crate
-# job is where it bites. The crate job builds, formats, lints and tests the
-# workspace, builds the engine for the browser, and runs the same runner
+# Two jobs, in Frazaro's shape. The ratchets job builds the viewport's page
+# (tools/build_web.ps1, which needs no cargo: the page carries no module until
+# ENGINE.1) and runs tools/run_checks.ps1 under Windows PowerShell 5.1, the
+# house's floor for every check, with the floor on the count and the controls
+# that prove each check on mutants; the render oracle runs the page under the
+# image's Chrome or Edge, headless, at two pixel ratios; with no Rust toolchain
+# on that job the import check says SKIPPED, and the crate job is where it
+# bites. The crate job builds, formats, lints and tests the workspace, builds
+# the engine for the browser, builds the page again, and runs the same runner
 # under pwsh, so that the engine's import section is read off the artifact
-# itself and held to the allowlist written in tools/check_host_imports.ps1:
-# AD-4 (zero imports in the language, an allowlist here) and AD-5 (the
-# imports named by hand, never generated) are checked on the file, not taken
-# on faith, and SD-13 crosses the road with them. The wasm is kept as an
-# artifact of the run.
+# itself and held to the allowlist written in tools/check_host_imports.ps1 and
+# the oracle runs under the image's Chrome on Linux: AD-4 (zero imports in the
+# language, an allowlist here) and AD-5 (the imports named by hand, never
+# generated) are checked on the file, not taken on faith, and SD-13 crosses
+# the road with them. The wasm and the page are kept as artifacts of the run.
+# The render floors are the owner's measurement in a real browser, pasted
+# into tools/check_render_floors.ps1; no job times anything.
 name: checks
 on:
   push:
@@ -22,6 +28,11 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: build the viewport's page (KERNEL.5; no cargo needed, the page has no module yet)
+        shell: pwsh
+        run: |
+          & powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_web.ps1
+          exit $LASTEXITCODE
       - name: every tools/check_*.ps1 under Windows PowerShell 5.1, the floor and the controls
         shell: pwsh
         run: |
@@ -43,7 +54,12 @@ jobs:
           cargo test --workspace
       - name: build the wasm engine
         run: cargo build --release -p alonzo --target wasm32-unknown-unknown
-      - name: the engine imports exactly its allowlist (AD-5, read off the artifact), and every check under pwsh
+      - name: build the viewport's page (KERNEL.5)
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File tools/build_web.ps1
+          exit $LASTEXITCODE
+      - name: the engine imports exactly its allowlist (AD-5, read off the artifact), the oracle under Chrome, and every check under pwsh
         shell: pwsh
         run: |
           pwsh -NoProfile -File tools/run_checks.ps1 -WithExtras
@@ -53,3 +69,8 @@ jobs:
         with:
           name: alonzo.wasm
           path: target/wasm32-unknown-unknown/release/alonzo.wasm
+      - name: keep the viewport's page
+        uses: actions/upload-artifact@v4
+        with:
+          name: index.html
+          path: web/index.html
