@@ -1,0 +1,103 @@
+; SPDX-License-Identifier: 0BSD
+; life.vla - Conway's Life on a 320 by 200 plane: the engine's own cartridge, the fixture
+; its floors are measured on (CART.1) and the first one its host loads (ENGINE.1). Every
+; cell of the interior, B2:LG199, is one formula of its eight neighbours in the previous
+; frame, the twin sheet Screen.last; the border stays empty, which the plane reads as 0,
+; dead. The format is SPEC.md section 7; the shape is its Appendix A.
+
+(cartridge "life"
+  (spec 2)                          ; the version of SPEC.md this cartridge is written to
+  (title "Life")                    ; what the host shows
+  (rate 30)                         ; frames a second
+  (screen plane 320 200)            ; plane mode, 320 cells wide and 200 high: A1:LH200
+  (seed 1)                          ; the dice, Clock!B3: the soup of the first frame
+  (author "Spreadsheet Company")    ; who wrote it
+  (licence "0BSD")                  ; the header's twin: copy this file to start a cartridge of your own
+  (notes "Conway's Life, every cell one formula of its eight neighbours in the previous frame. The first frame is a soup from the seed; change (seed 1) for another."))
+
+; The sheets, in tab order: the Screen the rule draws on, the Palette it draws with.
+(sheet "Screen" visible)
+(sheet "Palette" visible)
+
+; The Palette (SPEC.md section 3.2): column A the index, B the colour as #RRGGBB, C a name.
+; Index 0 is a dead cell and index 1 a live one, so the rule's arithmetic over 0 and 1 is
+; the colour; the CGA's other fourteen follow, blue to yellow, for a modder to use.
+; index 0, black: a dead cell
+(cell "Palette" "A1" 0)
+(cell "Palette" "B1" "#000000")
+(cell "Palette" "C1" "dead")
+; index 1, white: a live cell
+(cell "Palette" "A2" 1)
+(cell "Palette" "B2" "#FFFFFF")
+(cell "Palette" "C2" "alive")
+; index 2
+(cell "Palette" "A3" 2)
+(cell "Palette" "B3" "#0000AA")
+(cell "Palette" "C3" "blue")
+; index 3
+(cell "Palette" "A4" 3)
+(cell "Palette" "B4" "#00AA00")
+(cell "Palette" "C4" "green")
+; index 4
+(cell "Palette" "A5" 4)
+(cell "Palette" "B5" "#00AAAA")
+(cell "Palette" "C5" "cyan")
+; index 5
+(cell "Palette" "A6" 5)
+(cell "Palette" "B6" "#AA0000")
+(cell "Palette" "C6" "red")
+; index 6
+(cell "Palette" "A7" 6)
+(cell "Palette" "B7" "#AA00AA")
+(cell "Palette" "C7" "magenta")
+; index 7
+(cell "Palette" "A8" 7)
+(cell "Palette" "B8" "#AA5500")
+(cell "Palette" "C8" "brown")
+; index 8
+(cell "Palette" "A9" 8)
+(cell "Palette" "B9" "#AAAAAA")
+(cell "Palette" "C9" "light grey")
+; index 9
+(cell "Palette" "A10" 9)
+(cell "Palette" "B10" "#555555")
+(cell "Palette" "C10" "dark grey")
+; index 10
+(cell "Palette" "A11" 10)
+(cell "Palette" "B11" "#5555FF")
+(cell "Palette" "C11" "light blue")
+; index 11
+(cell "Palette" "A12" 11)
+(cell "Palette" "B12" "#55FF55")
+(cell "Palette" "C12" "light green")
+; index 12
+(cell "Palette" "A13" 12)
+(cell "Palette" "B13" "#55FFFF")
+(cell "Palette" "C13" "light cyan")
+; index 13
+(cell "Palette" "A14" 13)
+(cell "Palette" "B14" "#FF5555")
+(cell "Palette" "C14" "light red")
+; index 14
+(cell "Palette" "A15" 14)
+(cell "Palette" "B15" "#FF55FF")
+(cell "Palette" "C15" "light magenta")
+; index 15
+(cell "Palette" "A16" 15)
+(cell "Palette" "B16" "#FFFF55")
+(cell "Palette" "C16" "yellow")
+
+; The rule, one row over the interior B2:LG199. Every reference is relative but the
+; Clock's, so the row is one shape over 62,964 cells, the shape KERNEL.20 vectorizes.
+;   The first frame, Clock!B1 = 1, is a soup from the seed. Two linear forms of the seed,
+;   ROW() and COLUMN() are reduced modulo the prime P = 2^26 - 5 = 67108859 and
+;   multiplied, h = MOD(a*b, P), and a cell is alive when MOD(h*h, P) < 25165822, three
+;   eighths of P. Every sum and product stays under 2^53, so the hash is exact in doubles
+;   for any seed up to 2147483646. The square is what makes it a soup: h alone is a
+;   quadratic in the row and the column, which fixes the fourth cell of every 2x2 block
+;   from the other three, and its square does not (measured 2026-10-08 for the seed 1,
+;   outside the engine: 23,683 of 62,964 cells alive, a 2x2 chi-square of 17.1 on 15
+;   degrees of freedom against 300.7 without the square).
+;   Every later frame is Conway's rule over the previous frame: a cell is alive when its
+;   eight neighbours hold three live cells, or two and it was alive itself.
+(formula "Screen" "B2:LG199" "=IF(Clock!$B$1=1,IF(MOD(MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)*MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859),67108859)<25165822,1,0),IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,AND(Screen.last!B2=1,SUM(Screen.last!A1:C3)-Screen.last!B2=2)),1,0))")

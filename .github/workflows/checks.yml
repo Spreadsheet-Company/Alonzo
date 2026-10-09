@@ -1,14 +1,16 @@
 # The checks, on every push to main and every pull request (REPO.2; the
-# viewport's page and its oracle since KERNEL.5).
+# viewport's page and its oracle since KERNEL.5; the host's loop, the
+# cartridges and the blit floors since ENGINE.1).
 #
-# Two jobs, in Frazaro's shape. The ratchets job builds the viewport's page
-# (tools/build_web.ps1, which needs no cargo: the page carries no module until
-# ENGINE.1) and runs tools/run_checks.ps1 under Windows PowerShell 5.1, the
-# house's floor for every check, with the floor on the count and the controls
-# that prove each check on mutants; the render oracle runs the page under the
-# image's Chrome or Edge, headless, at two pixel ratios; with no Rust toolchain
-# on that job the import check says SKIPPED, and the crate job is where it
-# bites. The crate job builds, formats, lints and tests the workspace, builds
+# Two jobs, in Frazaro's shape. The ratchets job builds the engine's page
+# (tools/build_web.ps1, which needs no cargo: without the wasm artifact the
+# page carries no engine module and says so, and the host's loop runs against
+# the fake module either way) and runs tools/run_checks.ps1 under Windows
+# PowerShell 5.1, the house's floor for every check, with the floor on the
+# count and the controls that prove each check on mutants; the render oracle
+# and the host loop's oracle run the page under the image's Chrome or Edge,
+# headless, at two pixel ratios; with no Rust toolchain on that job the import
+# check says SKIPPED, and the crate job is where it bites. The crate job builds, formats, lints and tests the workspace, builds
 # the engine for the browser, builds the page again, and runs the same runner
 # under pwsh, so that the engine's import section is read off the artifact
 # itself and held to the allowlist written in tools/check_host_imports.ps1 and
@@ -16,8 +18,9 @@
 # language, an allowlist here) and AD-5 (the imports named by hand, never
 # generated) are checked on the file, not taken on faith, and SD-13 crosses
 # the road with them. The wasm and the page are kept as artifacts of the run.
-# The render floors are the owner's measurement in a real browser, pasted
-# into tools/check_render_floors.ps1; no job times anything.
+# The render floors and the blit floors are the owner's measurements in a
+# real browser, pasted into tools/check_render_floors.ps1 and
+# tools/check_blit_floors.ps1; no job times anything.
 name: checks
 on:
   push:
@@ -28,7 +31,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: build the viewport's page (KERNEL.5; no cargo needed, the page has no module yet)
+      - name: build the engine's page (KERNEL.5, ENGINE.1; no cargo needed, the page says when it carries no module)
         shell: pwsh
         run: |
           & powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_web.ps1
@@ -54,7 +57,7 @@ jobs:
           cargo test --workspace
       - name: build the wasm engine
         run: cargo build --release -p alonzo --target wasm32-unknown-unknown
-      - name: build the viewport's page (KERNEL.5)
+      - name: build the engine's page, the wasm built in (KERNEL.5, ENGINE.1)
         shell: pwsh
         run: |
           pwsh -NoProfile -File tools/build_web.ps1

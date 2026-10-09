@@ -287,6 +287,17 @@
     return m;
   }
 
+  // The forms of a text, each a datum as the reader reads it: a list (an
+  // array), a string, a number ({ num, text }) or a symbol ({ sym }); a
+  // comment is skipped. The host's one reader (web/host.js, ENGINE.1): the
+  // rows the engine's four calls answer, and the cells of a device sheet's
+  // record with its value rows, which readRecord counts and does not keep.
+  function readForms(text) {
+    var rd = new Reader(String(text || '')), out = [], f;
+    while ((f = rd.readForm()) !== null) out.push(f);
+    return out;
+  }
+
   // ---- (2) the geometry: the layout in device pixels ----
   // env: { dpr, canvasW, canvasH } in device pixels and { clientW, clientH }
   // in CSS pixels, the scroller's client area. state: the host's state.
@@ -1197,6 +1208,7 @@
 
   // The helpers a host or an oracle may want, beside the constructor.
   Viewport.readRecord = readRecord;
+  Viewport.readForms = readForms;
   Viewport.columnPixels = columnPixels;
   Viewport.parseRange = parseRange;
   Viewport.rangeText = rangeText;

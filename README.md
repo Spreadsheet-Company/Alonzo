@@ -42,7 +42,10 @@ The first commits: the constitution, the work and the record, an empty
 crate that builds for the browser with an import section of zero entries,
 and the checks that hold it there; then the first brick, the viewport, the
 Screen device in grid mode over the view record (`KERNEL.5`, a Frazaro item
-laid here), with its page and the checks that hold it.
+laid here), with its page and the checks that hold it; then the host half
+of the loop (`ENGINE.1`'s first slice), run against a fake module of the
+engine's exports until the language crate's four calls exist, with the Life
+cartridge as its fixture.
 
 | File | What it is |
 |---|---|
@@ -52,8 +55,9 @@ laid here), with its page and the checks that hold it.
 | `SPEC.md` | the specification, version 2: the cell as the unit with two renderers of one model, the device sheets cell by cell with the Camera and the Write sheet among them, the four calls and their records, the frame's order and rate zero, the determinism rules, the cartridge's one file, the host's duties, reflection and the rule that the step computes values and never formulas |
 | `docs/ALGEBRA.md` | the horizon: design theory marked per idea and never a source of items; four readers of the engine, the course corrections a later specification might take, the crowds, and linear algebra as a first-class paradigm of the formula language, with its ladder |
 | `engine/` | the `alonzo` crate |
-| `web/` | the viewport, `viewport.js`, one plain script the first game takes as a file, and its page, built from `index.template.html` over seven records the door printed, with the render oracle and the floors' instrument as its modes; `web/README.md` is the page and the API |
-| `tools/` | the checks: the import allowlist read off the wasm, the licence map verified against the tree, the page's offline doctrine, the fixtures' pins, the render oracle under a headless browser and the render floors; the builder of the page; and the runner that reports one total |
+| `web/` | the host shim, `host.js`, the loop of the specification's section 5; the fake module, `fake.js`, a double of the engine's eleven exports; the viewport, `viewport.js`, one plain script the first game takes as a file; and the page, built from `index.template.html` with the Life cartridge and seven records the door printed, with the loop's oracle, the blit's instrument, the render oracle and the render floors' instrument as its modes; `web/README.md` is the page and the APIs |
+| `cartridges/` | the cartridges this repository ships, 0BSD so that one may be copied: `life/life.vla`, Conway's Life on a 320 by 200 plane, the fixture of the engine's floors |
+| `tools/` | the checks: the import allowlist read off the wasm, the licence map verified against the tree, the page's offline doctrine, the fixtures' pins, the render oracle and the host loop's oracle under a headless browser, the cartridges held to the specification's section 7, and the render and blit floors; the builder of the page; and the runner that reports one total |
 | `.github/workflows/checks.yml` | the checks, the crate's build, lint and tests, and the page's build and oracle on every push and pull request |
 
 What the first release shows: Conway's Life on a 320 by 200 sheet at thirty

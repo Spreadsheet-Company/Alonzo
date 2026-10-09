@@ -16,24 +16,27 @@ need a network the day someone adds one for convenience. Unlike Frazaro's
 page, this one has no link at all: there is no allowed anchor, and a bare
 address fails as any other reaching out does.
 
-WHAT IT HOLDS, on web/index.template.html (the source) and web/viewport.js
-(the viewport's source, inlined into the page at build, so its text is the
-page's code): no external reference of any kind - script, link, img, iframe,
-form, anchor, @import, url(), http(s)://, fetch, XMLHttpRequest, WebSocket,
-EventSource, sendBeacon, dynamic import, importScripts; a charset
-declaration; {{VIEWPORT_JS}} exactly once; each {{FIXTURE:name}} once, a
-file web/fixtures/<name>.vla, with no file of that folder left without its
-place, so a built page is whole and the page and the fixtures cannot drift
-apart. When web/index.html exists beside the template, its markup is held to
-the same list of tags (a record cannot spell a tag) and no placeholder is
-left in it.
+WHAT IT HOLDS, on web/index.template.html (the source) and the three
+scripts the builder inlines into the page, so that their text is the page's
+code: web/viewport.js, web/fake.js and web/host.js (ENGINE.1): no external
+reference of any kind - script, link, img, iframe, form, anchor, @import,
+url(), http(s)://, fetch, XMLHttpRequest, WebSocket, EventSource,
+sendBeacon, dynamic import, importScripts; a charset declaration;
+{{VIEWPORT_JS}}, {{FAKE_JS}}, {{HOST_JS}} and {{ALONZO_WASM}} exactly once
+each; each {{FIXTURE:name}} once, a file web/fixtures/<name>.vla, and each
+{{CARTRIDGE:name}} once, a file cartridges/<name>/<name>.vla, with no file of
+either folder left without its place, so a built page is whole and the page
+and its sources cannot drift apart. When web/index.html exists beside the
+template, its markup is held to the same list of tags (a record or a
+cartridge cannot spell a tag) and no placeholder is left in it.
 
--Control proves the check on scratch copies of the template and the script:
-the real pair passes; a template with a script tag's src appended, one with
-a fetch call, one with the viewport's placeholder removed, one with an
-anchor appended, one with an image, one with a FIXTURE place for a file the
-folder does not hold, and a viewport source with a fetch call appended must
-each fail.
+-Control proves the check on scratch copies of the template and the
+scripts: the real set passes; a template with a script tag's src appended,
+one with a fetch call, one with the viewport's placeholder removed, one with
+an anchor appended, one with an image, one with a FIXTURE place for a file
+the folder does not hold, one with a CARTRIDGE place for a cartridge the
+folder does not hold, a viewport source with a fetch call appended and a
+host source with a fetch call appended must each fail.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named.
@@ -48,8 +51,11 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $templatePath = Join-Path $repoRoot 'web/index.template.html'
 $scriptPath = Join-Path $repoRoot 'web/viewport.js'
+$fakePath = Join-Path $repoRoot 'web/fake.js'
+$hostPath = Join-Path $repoRoot 'web/host.js'
 $builtPath = Join-Path $repoRoot 'web/index.html'
 $fixturesDir = Join-Path $repoRoot 'web/fixtures'
+$cartridgesDir = Join-Path $repoRoot 'cartridges'
 
 # Markup that reaches out: held on the template and on a built page alike.
 # There is no allowed anchor on this page, so '<a href' is forbidden outright.
@@ -57,8 +63,9 @@ $tagTokens = @('<script src', '<script type="module" src', '<link ', '<img ', '<
 # Code and style that reach out: held on the template and on the viewport's
 # source, which the builder inlines into the page.
 $codeTokens = @('fetch(', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'sendBeacon', 'import(', 'importScripts', '@import', 'url(', 'http://', 'https://')
-# The placeholder the builder fills once with the viewport's source.
+# The placeholders the builder fills once each: the three scripts and the engine's module.
 $viewportPlaceholder = '{{VIEWPORT_JS}}'
+$oncePlaceholders = @($viewportPlaceholder, '{{FAKE_JS}}', '{{HOST_JS}}', '{{ALONZO_WASM}}')
 
 function Get-FixtureNames([string]$dir) {
     $names = @()
@@ -67,8 +74,32 @@ function Get-FixtureNames([string]$dir) {
     }
     return ,$names
 }
+# A cartridge is a folder holding its file of the same name: cartridges/life/life.vla.
+function Get-CartridgeNames([string]$dir) {
+    $names = @()
+    if (Test-Path -LiteralPath $dir) {
+        foreach ($d in (Get-ChildItem -LiteralPath $dir -Directory | Sort-Object Name)) { if (Test-Path -LiteralPath (Join-Path $d.FullName ($d.Name + '.vla'))) { $names += $d.Name } }
+    }
+    return ,$names
+}
+# A family of places, {{KIND:name}}, held to the names of a folder both ways.
+function Test-Places([string]$text, [string]$kind, $names, [string]$dir) {
+    $problems = @()
+    if ($names.Count -eq 0) { $problems += ("no {0} read from {1}" -f $kind.ToLowerInvariant(), $dir) }
+    $seen = @{}
+    foreach ($m in [regex]::Matches($text, '\{\{' + $kind + ':([a-z0-9_-]+)\}\}')) {
+        $name = $m.Groups[1].Value
+        if ($seen.ContainsKey($name)) { $problems += ("placeholder repeated: {0}" -f $m.Value) }
+        $seen[$name] = $true
+        if ($names -notcontains $name) { $problems += ("{0} has no {1} under {2}" -f $m.Value, $name, $dir) }
+    }
+    foreach ($name in $names) {
+        if (-not $seen.ContainsKey($name)) { $problems += ("{0} under {1} has no {{{{{2}:{0}}}}} place in the template" -f $name, $dir, $kind) }
+    }
+    return $problems
+}
 
-function Test-Template([string]$path, [string]$script, [string]$fixtures) {
+function Test-Template([string]$path, [string]$script, [string]$fixtures, [string]$fake = $fakePath, [string]$hostjs = $hostPath, [string]$cartridges = $cartridgesDir) {
     $problems = @()
     $text = [System.IO.File]::ReadAllText($path)
     $lower = $text.ToLowerInvariant()
@@ -76,27 +107,19 @@ function Test-Template([string]$path, [string]$script, [string]$fixtures) {
         if ($lower.Contains($t.ToLowerInvariant())) { $problems += ("the template reaches out: '{0}'" -f $t) }
     }
     if (-not $lower.Contains('<meta charset="utf-8">')) { $problems += 'no <meta charset="utf-8">' }
-    $n = ([regex]::Matches($text, [regex]::Escape($viewportPlaceholder))).Count
-    if ($n -ne 1) { $problems += ("placeholder {0} appears {1} time(s), and the template has one place for it" -f $viewportPlaceholder, $n) }
-    # The fixtures' places: each {{FIXTURE:name}} once, each a file of the folder, and each file with its place.
-    $names = Get-FixtureNames $fixtures
-    if ($names.Count -eq 0) { $problems += ("no fixtures read from {0}" -f $fixtures) }
-    $seen = @{}
-    foreach ($m in [regex]::Matches($text, '\{\{FIXTURE:([a-z0-9_]+)\}\}')) {
-        $name = $m.Groups[1].Value
-        if ($seen.ContainsKey($name)) { $problems += ("placeholder repeated: {0}" -f $m.Value) }
-        $seen[$name] = $true
-        if ($names -notcontains $name) { $problems += ("{0} has no file {1}.vla under {2}" -f $m.Value, $name, $fixtures) }
+    foreach ($ph in $oncePlaceholders) {
+        $n = ([regex]::Matches($text, [regex]::Escape($ph))).Count
+        if ($n -ne 1) { $problems += ("placeholder {0} appears {1} time(s), and the template has one place for it" -f $ph, $n) }
     }
-    foreach ($name in $names) {
-        if (-not $seen.ContainsKey($name)) { $problems += ("the fixture {0}.vla has no {{{{FIXTURE:{0}}}}} place in the template" -f $name) }
-    }
-    # The viewport's source: the code tokens, since it is the page's code once inlined.
-    if (-not (Test-Path -LiteralPath $script)) { $problems += ("no viewport source at {0}" -f $script) }
-    else {
-        $js = [System.IO.File]::ReadAllText($script).ToLowerInvariant()
+    # The fixtures' and the cartridges' places: each once, each a file of its folder, and each file with its place.
+    $problems += @(Test-Places $text 'FIXTURE' (Get-FixtureNames $fixtures) $fixtures)
+    $problems += @(Test-Places $text 'CARTRIDGE' (Get-CartridgeNames $cartridges) $cartridges)
+    # The scripts' sources: the code tokens, since each is the page's code once inlined.
+    foreach ($pair in @(@("the viewport's source", $script), @("the fake module's source", $fake), @("the host's source", $hostjs))) {
+        if (-not (Test-Path -LiteralPath $pair[1])) { $problems += ("no file for {0} at {1}" -f $pair[0], $pair[1]); continue }
+        $js = [System.IO.File]::ReadAllText($pair[1]).ToLowerInvariant()
         foreach ($t in $codeTokens) {
-            if ($js.Contains($t.ToLowerInvariant())) { $problems += ("the viewport's source reaches out: '{0}'" -f $t) }
+            if ($js.Contains($t.ToLowerInvariant())) { $problems += ("{0} reaches out: '{1}'" -f $pair[0], $t) }
         }
     }
     # Returned without the comma, as Frazaro's twin returns it: the callers wrap the result in @().
@@ -109,7 +132,7 @@ function Test-Built([string]$path) {
     foreach ($t in $tagTokens) {
         if ($lower.Contains($t.ToLowerInvariant())) { $problems += ("the built page reaches out: '{0}'" -f $t) }
     }
-    foreach ($ph in @($viewportPlaceholder, '{{FIXTURE:')) {
+    foreach ($ph in ($oncePlaceholders + @('{{FIXTURE:', '{{CARTRIDGE:'))) {
         if ($lower.Contains($ph.ToLowerInvariant())) { $problems += ("the built page has {0} left in it" -f $ph) }
     }
     return $problems
@@ -130,12 +153,19 @@ if ($Control) {
         $e = Join-Path $tmp 'e.html'; [System.IO.File]::WriteAllText($e, ($text + "`n<img src=""data:image/png;base64,AAAA"">`n"), $utf8)
         $f = Join-Path $tmp 'f.html'; [System.IO.File]::WriteAllText($f, $text.Replace('{{FIXTURE:fixture_data}}', '{{FIXTURE:nowhere}}'), $utf8)
         $gjs = Join-Path $tmp 'g.js'; [System.IO.File]::WriteAllText($gjs, ($js + "`nfetch('x');`n"), $utf8)
+        $anchorH = '{{CARTRIDGE:life}}'
+        if (([regex]::Matches($text, [regex]::Escape($anchorH))).Count -ne 1) { Write-Output "FAIL: the anchor $anchorH is not in the template exactly once"; exit 1 }
+        $h = Join-Path $tmp 'h.html'; [System.IO.File]::WriteAllText($h, $text.Replace($anchorH, '{{CARTRIDGE:nowhere}}'), $utf8)
+        $ijs = Join-Path $tmp 'i.js'; [System.IO.File]::WriteAllText($ijs, ([System.IO.File]::ReadAllText($hostPath) + "`nfetch('x');`n"), $utf8)
         $ra = @(Test-Template $a $scriptPath $fixturesDir); $rb = @(Test-Template $b $scriptPath $fixturesDir); $rc = @(Test-Template $c $scriptPath $fixturesDir)
         $rd = @(Test-Template $d $scriptPath $fixturesDir); $re = @(Test-Template $e $scriptPath $fixturesDir); $rf = @(Test-Template $f $scriptPath $fixturesDir)
-        $rg = @(Test-Template $templatePath $gjs $fixturesDir)
-        Write-Output ("control: the real pair has {0} problem(s); the script src {1}, the fetch {2}, the missing placeholder {3}, the anchor {4}, the image {5}, the stray fixture place {6}, the fetch in the viewport {7}" -f $real.Count, $ra.Count, $rb.Count, $rc.Count, $rd.Count, $re.Count, $rf.Count, $rg.Count)
-        if ($real.Count -eq 0 -and $ra.Count -ge 1 -and $rb.Count -ge 1 -and $rc.Count -ge 1 -and $rd.Count -ge 1 -and $re.Count -ge 1 -and $rf.Count -ge 1 -and $rg.Count -ge 1) {
-            Write-Output 'OK: the check passes the template and the viewport and fails each of the seven mutants'
+        $rg = @(Test-Template $templatePath $gjs $fixturesDir); $rh = @(Test-Template $h $scriptPath $fixturesDir)
+        $ri = @(Test-Template $templatePath $scriptPath $fixturesDir $fakePath $ijs)
+        $hHit = @($rh | Where-Object { $_ -like '*CARTRIDGE:nowhere*' }).Count
+        $iHit = @($ri | Where-Object { $_ -like "the host's source reaches out*" }).Count
+        Write-Output ("control: the real set has {0} problem(s); the script src {1}, the fetch {2}, the missing placeholder {3}, the anchor {4}, the image {5}, the stray fixture place {6}, the fetch in the viewport {7}, the stray cartridge place {8}, the fetch in the host {9}" -f $real.Count, $ra.Count, $rb.Count, $rc.Count, $rd.Count, $re.Count, $rf.Count, $rg.Count, $hHit, $iHit)
+        if ($real.Count -eq 0 -and $ra.Count -ge 1 -and $rb.Count -ge 1 -and $rc.Count -ge 1 -and $rd.Count -ge 1 -and $re.Count -ge 1 -and $rf.Count -ge 1 -and $rg.Count -ge 1 -and $hHit -ge 1 -and $iHit -ge 1) {
+            Write-Output 'OK: the check passes the template and the three scripts and fails each of the nine mutants'
             exit 0
         }
         Write-Output 'FAIL: the control did not behave'
@@ -155,7 +185,8 @@ if (Test-Path -LiteralPath $builtPath) {
 }
 if ($problems.Count -eq 0) {
     $names = Get-FixtureNames $fixturesDir
-    Write-Output ("OK: web/index.template.html and web/viewport.js load nothing and link nowhere, the viewport's placeholder in its one place and the {0} fixture places the folder's files; {1}" -f $names.Count, $builtNote)
+    $carts = Get-CartridgeNames $cartridgesDir
+    Write-Output ("OK: web/index.template.html, web/viewport.js, web/fake.js and web/host.js load nothing and link nowhere, the scripts' and the module's placeholders each in its one place, the {0} fixture places the folder's files and the {1} cartridge places the cartridges'; {2}" -f $names.Count, $carts.Count, $builtNote)
     exit 0
 }
 Write-Output ("FAIL: the web page has {0} problem(s):" -f $problems.Count)

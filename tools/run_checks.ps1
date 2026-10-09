@@ -26,7 +26,7 @@ the header, so a run under each is the oracle's "under both" (REPO.2,
 decision 6).
 
 -WithExtras runs the hardcoded list below of the verifiers that take
-arguments, today the six controls, each proving its check on mutants, and
+arguments, today the nine controls, each proving its check on mutants, and
 says so separately: pretending a control is interchangeable with a plain
 pass/fail scan would hide what each one asserts.
 
@@ -71,7 +71,15 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # every cell where the record puts it, under a headless browser at two
 # ratios; SKIPPED without a built page or a browser) and
 # check_render_floors.ps1 (the owner's measured baseline held to the bars).
-$expectedAtLeast = 6
+# 2026-10-08, ENGINE.1's first slice: 9 - check_cartridge.ps1 (every
+# cartridge under cartridges/ holds to SPEC.md section 7, read without an
+# engine; the count and each one's rows pinned), check_host_loop.ps1 (the
+# host's loop over a fixed log against the fake module, under a headless
+# browser at two ratios; SKIPPED without a built page or a browser) and
+# check_blit_floors.ps1 (the owner's measured baseline of the blit, the
+# engine's second number, held to its bars; empty, and so failing, until the
+# owner's first fullscreen run is pasted in).
+$expectedAtLeast = 9
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
 # --- The other verifiers, each with the arguments it needs. ---
@@ -80,10 +88,13 @@ if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 $extras = @(
     @{ Script = 'check_host_imports.ps1';  Args = @('-Control'); What = 'REPO.2 import reader and judgment: twelve modules built in memory, an unknown kind, a non-module' },
     @{ Script = 'check_spdx.ps1';          Args = @('-Control'); What = 'REPO.2 licence map: a clean scratch tree passes, four mutants fail' },
-    @{ Script = 'check_web_offline.ps1';   Args = @('-Control'); What = 'KERNEL.5 offline doctrine: the real pair passes, seven mutants fail' },
+    @{ Script = 'check_web_offline.ps1';   Args = @('-Control'); What = 'KERNEL.5 and ENGINE.1 offline doctrine: the template and the three scripts pass, nine mutants fail' },
     @{ Script = 'check_view_fixtures.ps1'; Args = @('-Control'); What = 'KERNEL.5 fixtures: a clean scratch folder passes, four mutants fail each for its own reason' },
     @{ Script = 'check_render_oracle.ps1'; Args = @('-Control'); What = 'KERNEL.5 render oracle: the real page passes, three mutant pages fail under the browser (SKIPPED without one)' },
-    @{ Script = 'check_render_floors.ps1'; Args = @('-Control'); What = 'KERNEL.5 render floors: a clean table passes, seven mutants fail' }
+    @{ Script = 'check_render_floors.ps1'; Args = @('-Control'); What = 'KERNEL.5 render floors: a clean table passes, seven mutants fail' },
+    @{ Script = 'check_cartridge.ps1';     Args = @('-Control'); What = 'ENGINE.1 cartridges: a clean scratch copy passes, thirteen mutants of Life fail' },
+    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1 host loop: the real page passes, three mutant pages fail under the browser (SKIPPED without one)' },
+    @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 blit floors: a clean table passes, seven mutants fail' }
 )
 
 # --- The shell each check runs under. ---

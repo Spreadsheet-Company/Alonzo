@@ -1,8 +1,78 @@
-# The viewport, and its page
+# The engine's page: the host's loop, and the viewport
 
-**One window of a sheet, drawn on a canvas from the view record alone: the
-Screen device in grid mode, which the first game on Alonzo, Frazaro, the
+**The host shim, `host.js`, runs a cartridge on the loop of `SPEC.md`
+section 5 over the engine's module, every input a cell it writes and every
+effect a cell it reads, and blits the Screen as a plane of colour indices.
+Until the language crate's four calls exist it runs against `fake.js`, a
+double of the module's eleven exports. The viewport, `viewport.js`, draws
+one window of a sheet on a canvas from the view record alone: the Screen
+device in grid mode, which the first game on Alonzo, Frazaro, the
 spreadsheet, draws its grid through.**
+
+## The host shim and the fake module (`ENGINE.1`)
+
+`host.js` is one plain script in the viewport's shape: no module syntax, no
+import, no library, nothing fetched; `AlonzoHost` the one global. It reads
+every record with the viewport's reader, `AlonzoViewport.readForms`, so
+`viewport.js` loads first. It is handed a module's exports, the engine's own
+or the fake's, and asks the ABI number before anything else:
+
+```js
+var host = new AlonzoHost({ canvas: document.getElementById('plane') });
+var a = host.attach(AlonzoFake.create({}).exports);   // or an instance's exports
+if (a.ok && host.load(cartridgeText, 'life.vla').ok) host.start();
+host.on('status', function (s) { /* s.text, a sentence; s.kind 'event' or 'progress' */ });
+```
+
+What it does each frame, in section 5's order: the derived writes of the
+Write sheet, each its own write of one `derived` row; the Input sheet's
+eighteen rows from the keys it holds through the Keys sheet, the pointer
+over the canvas, the wheel and the last key; a person's edits, each its own
+write; the step with a budget in cells, which may yield and continue on the
+next tick, the progress a sentence; then the effects, the Camera first and
+the Palette, so the frame is drawn through its own Camera and colours, the
+Screen as the plane through the Camera's window, the Keys, the Audio rows,
+the File's save cell and the Write sheet. The loop is a fixed timestep with
+an accumulator capped at 250 ms, no interpolation and no skipped frame,
+paused while the page is hidden. At rate 0 there is no tick: one step for
+each edit, and no Input. The blit puts the bytes through the palette into
+one `ImageData` and draws it at a whole number of device pixels a cell with
+smoothing off; a byte past the palette is magenta.
+
+| Method | What it does |
+|---|---|
+| `new AlonzoHost(options)` | `canvas` the plane's canvas (it takes the keys while focused); `box` the element the blit fits, the canvas's parent by default; `scale` a fixed number of device pixels a cell; `budget` a fixed budget in cells a step call, 0 for none; `callsPerTick` a fixed count of step calls a tick in place of the time slice; `now` the clock the budget is measured by; `drive: 'manual'` when the caller calls `tick` itself (the oracles) |
+| `attach(exports)` | asks `alonzo_abi_version` and refuses another number, then every export the loop calls: `{ ok, abi, version }` or `{ ok: false, sentence }` |
+| `load(text, name)` / `loadBytes(bytes, name)` | loads a cartridge, then `describe`, and reads the Camera, the Palette and the Keys: `{ ok, handle, title, mode, w, h, rate }` or the refusal's sentence |
+| `start()` / `stop()` | the animation-frame loop |
+| `tick(ts)` | one animation frame's work at its timestamp, what the loop calls |
+| `edit(row)` | a person's edit, one `cell` or `formula` row, issued after the next frame's inputs; at rate 0 it steps once |
+| `keyDown(code, key)` / `keyUp(code)` / `releaseKeys()` | the keys held, by `KeyboardEvent.code` |
+| `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer in Screen cells, 0 when off the Screen |
+| `runFrameSync()` | one whole frame now, whatever the clock (the blit's instrument) |
+| `viewRecord(sheet, window)` | a sheet's record as the module prints it, for a page to show |
+| `counters()` / `sentences()` | what the host has done; every sentence said, in order |
+| `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last }` for a page that draws the log in place |
+| `unload()` / `destroy()` | frees the handle; removes the listeners |
+| `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line), `frame` (`{ frame, window, scale }`), `load` |
+
+`AlonzoHost.instantiate(bytes)` and `instantiateSync(bytes)` instantiate a
+module with the empty import object of section 8.1; `AlonzoHost.RULES` holds
+the loop's constants.
+
+`fake.js` is the permanent test double: `AlonzoFake.create(options)` answers
+`{ exports, stats, digest, peek, frame }`, the exports the eleven names of
+section 4.6 over a real `WebAssembly.Memory`. It reads a cartridge's
+manifest, the engine's own duty, and never a row after it, and it evaluates
+nothing (`AD-1`); its grid is hard-coded and declared in `AlonzoFake.RULES`:
+the Screen's bytes as eight-by-eight tiles cycling through the sixteen
+colours with one row swept by a byte past the palette, the CGA palette,
+TIC-80's keys, a Write sheet whose rows land or are refused on a rule of the
+frame, and a history cell that makes the end state's digest witness the
+order of every write. Its memory grows by zero pages at every load and every
+seventeenth allocation, detaching the buffer, and its allocator counts what
+is live and what is freed wrongly. `options.abi`, `options.omit` and
+`options.growEvery` make the doubles the loop's oracle refuses or strains.
 
 The viewport is `viewport.js`, one plain script: no framework, no module
 syntax, no import, nothing fetched. It reads a view record, the lines
@@ -16,10 +86,11 @@ counted, never refused. What the viewport owns is the state no program sees:
 the scroll, the selection, the widths a person dragged, the frozen panes and
 the marks a host asked for. The record is never written.
 
-The page, `index.template.html` built into `index.html`, is the viewport
-over seven records the door printed: the six view goldens of Frazaro's
-`scripts/view/` and the record of the 10,000-line program the renderer
-benchmark measured. It runs from disk and reads nothing from the network.
+The page, `index.template.html` built into `index.html`, is the engine's
+panel, Life running on the host's loop, and below it the viewport over seven
+records the door printed: the six view goldens of Frazaro's `scripts/view/`
+and the record of the 10,000-line program the renderer benchmark measured.
+It runs from disk and reads nothing from the network.
 
 ## Try it
 
@@ -29,7 +100,15 @@ From a clone:
 powershell -File tools\build_web.ps1
 ```
 
-writes `web/index.html`; open it from disk. Pick a record, scroll on both
+writes `web/index.html`; open it from disk. The engine's panel runs Life
+against the fake module: click the plane to give it the keys, type a row in
+the edit box and press Write (`(cell "Camera" "B1" 7)` moves the window),
+watch the log for the derived writes the module refuses, each repeat
+counted in its first line, and press Copy the log to take it as text; pick a
+device sheet
+to see its record live, and edit the cartridge's `(rate 30)` to `(rate 0)`
+and press Load the cartridge to see a step on every edit. Below it, pick a
+record, scroll on both
 axes, click a cell or drag a range, click a column or row header or the
 corner, drag a column's right edge in the header, set rows and columns and
 press Freeze, switch sheets on the tabs, double-click a cell or press Enter,
@@ -50,9 +129,20 @@ each record says, cell for cell, every coordinate on a device pixel. And the
 frame holds: `tools/check_render_floors.ps1` holds the owner's measured
 baseline to the roadmap's bars.
 
-## The three modes
+## The five modes
 
-- Opened plainly, the page is the viewport over the fixtures, above.
+- Opened plainly, the page is the engine's panel and the viewport over the
+  fixtures, above.
+- `index.html?loop=1` runs the host loop's oracle: the host driven over a
+  fixed input log against the fake module, its frames, writes, windows,
+  sentences and end state held to what the page computes from the log, and
+  from a second fake module it drives with no host between, one line a case
+  into `<pre id="loop">`, which `tools/check_host_loop.ps1` reads.
+- `index.html?blit=1` is the blit's instrument, the engine's second number:
+  a 320 by 200 plane drawn through the host's whole frame 120 times at the
+  scale that fits the screen and 120 at a scale of 1, each frame's
+  main-thread cost, printed as the table and the baseline lines for
+  `tools/check_blit_floors.ps1`. Run it in Chrome in fullscreen.
 - `index.html?oracle=1` runs the render oracle and prints one line a case
   into `<pre id="oracle">`, which the check reads under a headless browser.
 - `index.html?bench=1` is the floors' instrument, the renderer benchmark of
@@ -77,6 +167,9 @@ vp.on('select', function (s) { /* s.text is 'B2:C3'; s.focus.sentence the row th
 `AlonzoViewport` is a global set by the script; `AlonzoViewport.version` is
 1. The options: `record`, a record's text to load at once; `colors`, any of
 the defaults below; `showHidden`, whether hidden sheets' tabs show at first.
+Beside the constructor, `AlonzoViewport.readRecord(text)` reads a record
+into the model the viewport draws, and `AlonzoViewport.readForms(text)`
+reads any text of forms into data, the host shim's one reader.
 
 | Method | What it does |
 |---|---|
@@ -152,12 +245,21 @@ viewport, not an Excel clone.
 
 ## For contributors
 
-- **The template and the script are the source**, `index.template.html`
-  and `viewport.js`; `index.html` is a build artifact (gitignored).
-  `tools/build_web.ps1` fills `{{VIEWPORT_JS}}` once and each
-  `{{FIXTURE:name}}` with `fixtures/<name>.vla`, the two sets held equal
-  both ways; `-Template`, `-ViewportJs`, `-FixturesDir` and `-Out` exist for
-  a check that builds a page from mutated sources, never for the real page.
+- **The template and the scripts are the source**, `index.template.html`,
+  `viewport.js`, `fake.js` and `host.js`; `index.html` is a build artifact
+  (gitignored). `tools/build_web.ps1` fills `{{VIEWPORT_JS}}`,
+  `{{FAKE_JS}}` and `{{HOST_JS}}` once each, `{{ALONZO_WASM}}` with the
+  engine's module as base64 when it is built and with nothing when it is
+  not, each `{{CARTRIDGE:name}}` with `cartridges/<name>/<name>.vla` and
+  each `{{FIXTURE:name}}` with `fixtures/<name>.vla`, each family held to
+  its folder both ways; `-Template`, `-ViewportJs`, `-FakeJs`, `-HostJs`,
+  `-FixturesDir`, `-CartridgesDir`, `-Wasm`, `-NoWasm` and `-Out` exist for a
+  check that builds a page from mutated sources, never for the real page.
+- **A change to the host** is held by the loop's oracle, whose expectations
+  are the page's own and never the host's, under
+  `tools/check_host_loop.ps1`, and the blit by the owner's measurement under
+  `tools/check_blit_floors.ps1`. A loop that changes on purpose is first
+  reworded in `SPEC.md` section 5, then in the page's oracle.
 - **The fixtures are the door's records**, never typed or edited: a change
   in Frazaro's goldens is a copy here and a new pin in
   `tools/check_view_fixtures.ps1`.
@@ -166,6 +268,9 @@ viewport, not an Excel clone.
   the floors, the owner's measurement, under `tools/check_render_floors.ps1`.
   A draw that moves on purpose is first reworded in the page's oracle, whose
   expectations are its own and never the viewport's.
-- **Where it is going:** `ENGINE.1` puts the engine's wasm into this page and
-  writes the loop beside this file; `ENGINE.2` adds the plane, a game's
-  Screen blitted as bytes; the viewport stays the grid projection's.
+- **Where it is going:** `ENGINE.1`'s second slice runs the same host over
+  the engine's own module once the language crate's four calls exist and
+  are published, the fake module staying the double the shim is tested
+  against; `ENGINE.2` holds the plane equal to the record of the same
+  window; the viewport stays the grid projection's, and a grid cartridge
+  is drawn through it.
