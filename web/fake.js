@@ -48,6 +48,7 @@
   var PAGE = 65536;
   var BASE = 16;                         // the first address handed out; 0 is never a pointer
   var MAX_ROW = 1048576, MAX_COL = 16384;
+  var MAX_CELLS = 1048576;               // the cells one grid holds beside its twins, the language's CELLS
   var enc = new TextEncoder();
   var strict = new TextDecoder('utf-8', { fatal: true });
 
@@ -133,16 +134,27 @@
   }
   function addrOf(r, c) { return colName(c) + r; }
   function rcOf(addr) { var m = /^([A-Z]+)(\d+)$/.exec(addr); return m ? { r: +m[2], c: colIndex(m[1]) } : null; }
-  function inRects(rects, r, c) {
-    if (!rects) return false;
-    for (var i = 0; i < rects.length; i++) { var q = rects[i]; if (r >= q[0] && r <= q[2] && c >= q[1] && c <= q[3]) return true; }
-    return false;
-  }
   function anyCell(R, fn) {   // true when fn holds for some cell of R
     for (var r = R.top; r <= R.bottom; r++) for (var c = R.left; c <= R.right; c++) if (fn(r, c)) return true;
     return false;
   }
   function area(R) { return (R.bottom - R.top + 1) * (R.right - R.left + 1); }
+  // A range inside a layout of row bands sorted from the top, as engine/src/cartridge.rs's within.
+  function within(R, bands) {
+    var row = R.top;
+    for (;;) {
+      var b = null;
+      for (var i = 0; i < bands.length; i++) if (bands[i][0] <= row && row <= bands[i][2]) { b = bands[i]; break; }
+      if (!b || R.left < b[1] || R.right > b[3]) return false;
+      if (R.bottom <= b[2]) return true;
+      row = b[2] + 1;
+    }
+  }
+  function meets(R, rects) {
+    if (!rects) return false;
+    for (var i = 0; i < rects.length; i++) { var q = rects[i]; if (R.top <= q[2] && q[0] <= R.bottom && R.left <= q[3] && q[1] <= R.right) return true; }
+    return false;
+  }
 
   // ---- values, as the record spells them ----
   function quote(s) { return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; }
@@ -367,7 +379,7 @@
     }
     function cartOf(handle, outLen) {
       var c = carts[handle >>> 0];
-      return c ? { c: c } : { rec: refuse('cart-handle-unknown', 'no cartridge is loaded under the handle ' + (handle >>> 0), 0, outLen) };
+      return c ? { c: c } : { rec: refuse('grid-handle-unknown', 'no cartridge is loaded under the handle ' + (handle >>> 0), 0, outLen) };
     }
     function sheetKey(name) {
       var lower = String(name).toLowerCase(), twin = /\.last$/.test(lower), base = twin ? lower.slice(0, -5) : lower;
@@ -411,38 +423,44 @@
       var c = x.c;
       var inp = input(ptr, len, 'the rows', outLen);
       if (inp.rec) return inp.rec;
-      if (c.progress) return refuse('cart-write-during-step', 'frame ' + (c.frame + 1) + ' is in progress, ' + thousands(c.progress.evaluated) + ' of ' + thousands(c.progress.of) + ' cells; a write waits until the step is done', 0, outLen);
-      var lines = inp.text.split('\n'), ops = [];
-      for (var i = 0; i < lines.length; i++) {   // every row checked first: a write that refuses a row changes nothing
+      if (c.progress) return refuse('grid-write-during-step', 'frame ' + (c.frame + 1) + ' is in progress, ' + thousands(c.progress.evaluated) + ' of ' + thousands(c.progress.of) + ' cells; a write waits until the step is done', 0, outLen);
+      // In the engine's order (engine/src/cartridge.rs): the engine's own checks over every row
+      // first, the device layouts and the cells the host writes, then the language's, the row's
+      // shape, the sheet, the twins, the cap and a derived row over a formula; so a write refused
+      // by both names the engine's, and a write that refuses a row changes nothing.
+      var lines = inp.text.split('\n'), ops = [], language = null;
+      function later(id, text, ln) { if (!language) language = { id: id, text: text, ln: ln }; }
+      for (var i = 0; i < lines.length; i++) {
         var t = lines[i].trim();
         if (t === '' || t.charAt(0) === ';') continue;
         var m = ROW.exec(t), ln = i + 1;
         if (!m) {
-          if (/^\((cell|formula|derived)\b/.test(t)) return refuse('grid-row-malformed', 'the row ' + t + ' is not (kind "sheet" "address" value)', ln, outLen);
-          return refuse('grid-row-unknown', 'the row ' + t + ' is not a cell, formula or derived row', ln, outLen);
+          if (/^\((cell|formula|derived)\b/.test(t)) later('grid-row-malformed', 'the row ' + t + ' is not (kind "sheet" "address" value)', ln);
+          else later('grid-row-unknown', 'the row ' + t + ' is not a cell, formula or derived row', ln);
+          continue;
         }
         var kind = m[1], name = unquote(m[2]), where = unquote(m[3]), R = parseRange(where), val = parseValue(m[4]);
-        if (!R) return refuse('grid-row-malformed', 'the address "' + where + '" is not a cell or a range', ln, outLen);
-        if (!val.ok) return refuse('grid-row-malformed', 'the value ' + m[4] + ' is not a number, a text, true or false', ln, outLen);
-        if (kind === 'formula' && (typeof val.v !== 'string' || val.v.charAt(0) !== '=')) return refuse('grid-row-malformed', 'a formula row holds a text that begins with =', ln, outLen);
+        if (!R) { later('grid-row-malformed', 'the address "' + where + '" is not a cell or a range', ln); continue; }
+        if (!val.ok) { later('grid-row-malformed', 'the value ' + m[4] + ' is not a number, a text, true or false', ln); continue; }
+        if (kind === 'formula' && (typeof val.v !== 'string' || val.v.charAt(0) !== '=')) { later('grid-row-malformed', 'a formula row holds a text that begins with =', ln); continue; }
         var sk = sheetKey(name), target = name + '!' + where;
-        if (kind === 'derived') {
-          var why = null;
-          if (!sk) why = 'the grid holds no sheet ' + name;
-          else if (sk.twin) why = 'a twin: the previous frame is read-only';
-          else if (sk.key !== 'screen' && sk.key !== 'state' && !(area(R) <= 100000 && !anyCell(R, function (r, cc) { return !inRects(LAYOUT[sk.key], r, cc); }))) why = 'a cell outside the layout of the ' + sk.name + ' sheet';
-          else if (anyCell(R, function (r, cc) { return inRects(DERIVED_BLOCKED[sk.key], r, cc); })) why = 'a cell the host writes';
-          else if (area(R) > 100000) why = 'a range past the limits of a derived write';
-          else if (anyCell(R, function (r, cc) { var e = c.content(sk.key, r, cc, false); return !!(e && e.f); })) why = 'a formula cell: the step computes values and never formulas, and a derived write replaces none';
-          if (why) return refuse('cart-write-derived', 'a derived write into ' + target + ' was refused: it is ' + why, ln, outLen);
-        } else {
-          if (!sk) return refuse('view-sheet-unknown', 'the grid holds no sheet ' + name + '; it holds ' + sheetList(), ln, outLen);
-          if (sk.twin) return refuse('cart-write-last', 'the sheet ' + sk.name + ' is a twin: the previous frame is read-only', ln, outLen);
-          if (LAYOUT[sk.key] && (area(R) > 100000 || anyCell(R, function (r, cc) { return !inRects(LAYOUT[sk.key], r, cc); }))) return refuse('cart-device-cell-outside', target + ' is outside the layout of the ' + sk.name + ' sheet (SPEC.md section 3)', ln, outLen);
-          if (kind === 'formula' && anyCell(R, function (r, cc) { return inRects(HOST_CELLS[sk.key], r, cc); })) return refuse('cart-device-cell-formula', target + ' is a cell the host writes, which holds values and never formulas', ln, outLen);
+        if (!sk) { later('grid-sheet-unknown', 'the grid holds no sheet ' + name + '; it holds ' + sheetList() + ', and a write makes no sheet', ln); continue; }
+        if (sk.twin) {
+          later('grid-write-last', kind === 'derived' ? 'a derived write into ' + target + ' was refused: it is a twin: the previous frame is read-only'
+                                                       : target + ' is a cell of ' + sk.name + ', the previous frame, which is read-only', ln);
+          continue;
+        }
+        if (LAYOUT[sk.key] && !within(R, LAYOUT[sk.key])) return refuse('cart-device-cell-outside', target + ' is outside the layout of the ' + sk.name + ' sheet (SPEC.md section 3)', ln, outLen);
+        if (kind === 'formula' && meets(R, HOST_CELLS[sk.key])) return refuse('cart-device-cell-formula', target + ' is a cell the host writes, which holds values and never formulas', ln, outLen);
+        if (kind === 'derived' && meets(R, DERIVED_BLOCKED[sk.key])) return refuse('cart-write-derived', 'a derived write into ' + target + ' was refused: it is a cell the host writes', ln, outLen);
+        if (area(R) > MAX_CELLS) { later('grid-too-many-cells', target + ' would bring the grid past the ' + thousands(MAX_CELLS) + ' cells one grid holds', ln); continue; }
+        if (kind === 'derived' && anyCell(R, function (r, cc) { var e = c.content(sk.key, r, cc, false); return !!(e && e.f); })) {
+          later('grid-write-derived', 'a derived write into ' + target + ' was refused: it is a formula cell: the step computes values and never formulas, and a derived write replaces none', ln);
+          continue;
         }
         ops.push({ kind: kind, key: sk.key, R: R, v: val.v });
       }
+      if (language) return refuse(language.id, language.text, language.ln, outLen);
       var written = 0;
       for (var j = 0; j < ops.length; j++) {
         var op = ops[j], map = c.cells[op.key];
@@ -482,7 +500,7 @@
       var pj = input(projPtr, projLen, 'the projection', outLen); if (pj.rec) return pj.rec;
       var sh = input(sheetPtr, sheetLen, 'the sheet', outLen); if (sh.rec) return sh.rec;
       var wn = input(winPtr, winLen, 'the window', outLen); if (wn.rec) return wn.rec;
-      if (pj.text !== 'plane' && pj.text !== 'grid') return refuse('cart-projection-unknown', 'the projection ' + pj.text + '; this version has plane and grid', 0, outLen);
+      if (pj.text !== 'plane' && pj.text !== 'grid') return refuse('view-projection-unknown', 'the projection ' + pj.text + '; this version has plane and grid', 0, outLen);
       var sk = sheetKey(sh.text);
       if (!sk) return refuse('view-sheet-unknown', 'the grid holds no sheet ' + sh.text + '; it holds ' + sheetList(), 0, outLen);
       var R = wn.text === '' ? (c.extent(sk.key, sk.twin) || parseRange('A1')) : parseRange(wn.text);

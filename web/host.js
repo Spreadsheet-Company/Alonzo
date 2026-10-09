@@ -29,10 +29,11 @@
   the derived rows waiting for the next frame. Every value is the module's.
   Every refusal and every event is a sentence, the latest new one in the
   status and the last twenty events in a log, a repeat of an event counted in
-  the line it first made rather than pushing the others out (SD-30). Every
-  view over the module's memory is
-  made fresh for each read, since any growth of the memory detaches the
-  buffer the earlier views were made over.
+  the line it first made rather than pushing the others out (SD-30), and a
+  refusal or a failure is marked as one, so that a page paints every refusal
+  one colour. Every view over the module's memory is made fresh for each
+  read, since any growth of the memory detaches the buffer the earlier views
+  were made over.
 
   It reads every record with the viewport's reader (web/viewport.js,
   AlonzoViewport.readForms), which must load first: the shim holds no
@@ -46,7 +47,9 @@
 
   // ---- the rules of the loop, as ENGINE.1's scoping states them (decisions 4 to 8) ----
   var ACCUMULATOR_CAP_MS = 250;      // Fiedler's cap, on a tick's time and on the backlog: a stall runs seven frames at 30, never thirty
-  var FIRST_BUDGET = 16000;          // the cells of a step call before a rate is measured
+  var FIRST_BUDGET = 2000;           // the cells of a step call before a rate is measured: about 9 ms of the
+                                     // engine's own module (226,000 to 236,000 cells a second in Chrome,
+                                     // measured 2026-10-09), where 16,000 held the page for about 70 ms
   var MIN_BUDGET = 1000;             // the least a measured budget asks for
   var SLICE_FRACTION = 0.5;          // the share of the display's interval the steps of one tick may spend
   var INTERVAL_SAMPLES = 30;         // the display's interval is the median of the first thirty deltas
@@ -85,8 +88,10 @@
   function spell(v) { return typeof v === 'string' ? quote(v) : (typeof v === 'boolean' ? (v ? 'true' : 'false') : String(v)); }
   function thousands(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
   // A refusal as the host prints it: the module's words once, then its id; the line only when a
-  // write held more than one row, since a one-row write's line is always 1.
-  function words(r, oneRow) { return r.status === 2 ? r.text : r.text + (r.line && !oneRow ? ' (line ' + r.line + ')' : '') + ' [' + r.id + ']'; }
+  // write held more than one row, since a one-row write's line is always 1, and only when the
+  // module's words do not already name it, as the language's grid texts do ("Line 47 writes ...").
+  function namesLine(text, line) { return new RegExp('\\b[Ll]ine ' + line + '\\b').test(text); }
+  function words(r, oneRow) { return r.status === 2 ? r.text : r.text + (r.line && !oneRow && !namesLine(r.text, r.line) ? ' (line ' + r.line + ')' : '') + ' [' + r.id + ']'; }
   function first(text, head) { var f = VP().readForms(text)[0]; return Array.isArray(f) && sym(f[0]) === head ? f : null; }
   function rangeOf(row, col, h, w) { return VP().rangeText({ top: row, left: col, bottom: row + h - 1, right: col + w - 1 }); }
   // A sentence's frame, and the rest of it: the log's key, so that a repeat is the same event at another frame.
@@ -225,15 +230,20 @@
                        : 'The budget: ' + thousands(bd.cells) + ' formula cells a step, one step an edit.');
     }
     if (c.mode !== 'plane') this._say('This slice blits the plane alone; a grid cartridge is drawn by the viewport, which the host takes up after it.');
+    if (c.seed === 'host') this._say('The cartridge asks the host for its seed, which this host does not choose yet (the Clock is ENGINE.3\'s): Clock!B3 stays empty until it does.');
     if (c.devices.camera) this._readCamera();
     if (c.devices.palette) this._readPalette();
     if (c.devices.keys) this._readKeys();
-    this._emit('load', { handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate });
+    // The new grid drawn at once, frame 0 with nothing computed (a formula with no value yet reads
+    // 0, a value cell its value): a load completes no frame, and without this draw the canvas kept
+    // the last run's picture, a grid that no longer exists (the owner's hand test, 2026-10-09).
+    if (c.mode === 'plane') this._drawPlane();   // frame 0, drawn at the load
+    this._emit('load', { handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate, window: this.window, scale: this.scale || 0 });
     return { ok: true, handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate };
   };
   Host.prototype._describe = function () {
     var r = this.m.call('alonzo_describe', [this.handle]);
-    if (r.status !== 0) { this._say('The describe was refused: ' + words(r) + '.'); return; }
+    if (r.status !== 0) { this._refuse('The describe was refused: ' + words(r) + '.'); return; }
     var forms = VP().readForms(r.text), c = this.cart;
     for (var i = 0; i < forms.length; i++) {
       var f = forms[i], head = Array.isArray(f) ? sym(f[0]) : null;
@@ -246,8 +256,16 @@
     if (!this.m || !this.handle) return;
     this.stop();
     var r = this.m.call('alonzo_unload', [this.handle]);
-    if (r.status !== 0) this._say('The unload was refused: ' + words(r) + '.');
-    this.handle = 0; this.cart = null; this.inFrame = false; this.progress = null;
+    if (r.status !== 0) this._refuse('The unload was refused: ' + words(r) + '.');
+    this.handle = 0; this.cart = null; this.inFrame = false; this.progress = null; this.plane = null;
+    this._clear();
+  };
+  // The canvas emptied when its grid is unloaded: what it showed is gone, and a load refused after
+  // it leaves no picture of a grid the module no longer holds.
+  Host.prototype._clear = function () {
+    if (!this.canvas) return;
+    var ctx = this.ctx || this.canvas.getContext('2d');
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   };
 
   // ---- the loop (section 5) ----
@@ -258,7 +276,7 @@
     var self = this;
     var loop = function (ts) {
       if (!self.running) return;
-      try { self.tick(ts); } catch (e) { self.stop(); self._say('The loop stopped: ' + (e && e.message ? e.message : e) + '.'); return; }
+      try { self.tick(ts); } catch (e) { self.stop(); self._refuse('The loop stopped: ' + (e && e.message ? e.message : e) + '.'); return; }
       self.raf = global.requestAnimationFrame(loop);
     };
     this.raf = global.requestAnimationFrame(loop);
@@ -342,7 +360,7 @@
     var f = r.status === 0 ? first(r.text, 'step') : null;
     if (!f) {
       this.inFrame = false; this.progress = null; this.stop();
-      this._say('frame ' + (this.frame + 1) + ': the step was refused: ' + (r.status === 0 ? 'the module answered ' + r.text.trim() : words(r)) + '; the loop stops.');
+      this._refuse('frame ' + (this.frame + 1) + ': the step was refused: ' + (r.status === 0 ? 'the module answered ' + r.text.trim() : words(r)) + '; the loop stops.');
       return 'refused';
     }
     var evaluated = num(f[2]), of = num(f[3]), before = this.progress ? this.progress.evaluated : 0;
@@ -372,14 +390,14 @@
       this.c.derivedRefused++;
       // the module's words name the cell when they can; the host names it only when they do not
       var said = r.text.indexOf(rows[i].where) >= 0 ? words(r, true) : 'a derived write into ' + rows[i].where + ' was refused: ' + words(r, true);
-      this._say('frame ' + (this.frame + 1) + ': ' + said + '.');
+      this._refuse('frame ' + (this.frame + 1) + ': ' + said + '.');
     }
   };
   Host.prototype._issueInputs = function () {
     if (this.cart.rate > 0) {
       var r = this._write(this._inputRows());
       this.c.inputs++;
-      if (r.status !== 0) this._say('frame ' + (this.frame + 1) + ': the Input rows were refused: ' + words(r) + '.');
+      if (r.status !== 0) this._refuse('frame ' + (this.frame + 1) + ': the Input rows were refused: ' + words(r) + '.');
       this.notches = 0; this.lastKey = null;
     }
     while (this.edits.length) this._issueEdit(this.edits.shift(), false);
@@ -392,7 +410,7 @@
       return true;
     }
     this.c.editsRefused++;
-    this._say('frame ' + (this.frame + 1) + ': the edit ' + row + ' was refused: ' + words(r, true) + (atRateZero ? '; no step.' : '.'));
+    this._refuse('frame ' + (this.frame + 1) + ': the edit ' + row + ' was refused: ' + words(r, true) + (atRateZero ? '; no step.' : '.'));
     return false;
   };
   // The Input sheet's eighteen rows (section 3.3): ten buttons for four players through the key map,
@@ -428,7 +446,7 @@
   };
   Host.prototype._record = function (sheet) {
     var r = this.m.texts('alonzo_view', [this.handle], ['grid', sheet, '']);
-    if (r.status !== 0) { this._sayOnce('view-' + sheet, 'frame ' + this.frame + ': the view of ' + sheet + ' was refused: ' + words(r) + '.'); return null; }
+    if (r.status !== 0) { this._sayOnce('view-' + sheet, 'frame ' + this.frame + ': the view of ' + sheet + ' was refused: ' + words(r) + '.', true); return null; }
     return r.text;
   };
   Host.prototype._cells = function (sheet) { var t = this._record(sheet); return t === null ? null : sheetCells(t); };
@@ -468,8 +486,8 @@
     var c = this.cart, t0 = this.now();
     var r = this.m.texts('alonzo_view', [this.handle], ['plane', 'Screen', this.window], true);
     var t1 = this.now();
-    if (r.status !== 0) { this._sayOnce('plane', 'frame ' + this.frame + ': the plane was refused: ' + words(r) + '.'); return; }
-    if (r.bytes.length !== c.w * c.h) { this._sayOnce('plane-size', 'frame ' + this.frame + ': the plane holds ' + r.bytes.length + ' bytes, not the window\'s ' + (c.w * c.h) + '.'); return; }
+    if (r.status !== 0) { this._sayOnce('plane', 'frame ' + this.frame + ': the plane was refused: ' + words(r) + '.', true); return; }
+    if (r.bytes.length !== c.w * c.h) { this._sayOnce('plane-size', 'frame ' + this.frame + ': the plane holds ' + r.bytes.length + ' bytes, not the window\'s ' + (c.w * c.h) + '.', true); return; }
     if (!this.windowsSeen[this.window]) { this.windowsSeen[this.window] = true; this.c.windows++; }
     this.plane = r.bytes;
     if (this.canvas) this._blit(r.bytes);
@@ -540,7 +558,7 @@
       var r = rows[i], sheet = cells['A' + r], addr = cells['B' + r], val = cells['C' + r];
       if (typeof addr !== 'string' || addr === '') continue;
       if (typeof sheet !== 'string' || sheet === '' || val === undefined || val === null || typeof val === 'object') {
-        this._sayOnce('write-' + r, 'frame ' + this.frame + ': Write!A' + r + ':C' + r + ' is not a sheet, an address and a value; no write.');
+        this._sayOnce('write-' + r, 'frame ' + this.frame + ': Write!A' + r + ':C' + r + ' is not a sheet, an address and a value; no write.', true);
         continue;
       }
       list.push({ text: '(derived ' + quote(sheet) + ' ' + quote(addr) + ' ' + spell(val) + ')', where: sheet + '!' + addr });
@@ -554,8 +572,8 @@
   Host.prototype.edit = function (row) {
     var t = String(row || '').trim(), forms = VP().readForms(t);
     var head = forms.length === 1 && Array.isArray(forms[0]) ? sym(forms[0][0]) : null;
-    if (head !== 'cell' && head !== 'formula') { this._say('An edit is one cell or formula row, as (cell "Camera" "B1" 7); ' + (t || 'an empty line') + ' is not one.'); return false; }
-    if (!this.handle) { this._say('No cartridge is loaded to edit.'); return false; }
+    if (head !== 'cell' && head !== 'formula') { this._refuse('An edit is one cell or formula row, as (cell "Palette" "B1" "#FF8800"); ' + (t || 'an empty line') + ' is not one.'); return false; }
+    if (!this.handle) { this._refuse('No cartridge is loaded to edit.'); return false; }
     this.edits.push(t);
     if (this.cart.rate === 0 && !this.inFrame) this._editFrames(this._window());
     return true;
@@ -620,7 +638,7 @@
   Host.prototype.viewRecord = function (sheet, win) {
     if (!this.m || !this.handle || this.inFrame) return null;
     var r = this.m.texts('alonzo_view', [this.handle], ['grid', sheet, win || '']);
-    if (r.status !== 0) { this._sayOnce('record-' + sheet, 'The view of ' + sheet + ' was refused: ' + words(r) + '.'); return null; }
+    if (r.status !== 0) { this._sayOnce('record-' + sheet, 'The view of ' + sheet + ' was refused: ' + words(r) + '.', true); return null; }
     return r.text;
   };
   Host.prototype.counters = function () {
@@ -634,7 +652,7 @@
   // counted in the line it first made and pushes nothing out (the owner's hand test, 2026-10-09).
   Host.prototype.log = function () { return this.order.map(entryText); };
   Host.prototype.logEntries = function () {
-    return this.order.map(function (e) { return { id: e.id, text: entryText(e), key: e.key, count: e.count, first: e.first, last: e.last }; });
+    return this.order.map(function (e) { return { id: e.id, text: entryText(e), key: e.key, count: e.count, first: e.first, last: e.last, refusal: e.refusal }; });
   };
   Host.prototype.destroy = function () {
     this.stop();
@@ -645,28 +663,31 @@
 
   // ---- sentences and events ----
   // Every sentence goes into the history; an event goes into the log as well, a new line for a new
-  // event and a count for a repeat; a repeat leaves the status line to the last new event.
-  Host.prototype._say = function (text, kind) {
-    kind = kind || 'event';
-    this.history.push({ text: text, kind: kind });
+  // event and a count for a repeat; a repeat leaves the status line to the last new event. A refusal
+  // or a failure is marked as one, the module's or the host's, so that a page paints it so (the
+  // owner's word, 2026-10-09: every refusal one colour); a notice of a value coerced is not one.
+  Host.prototype._say = function (text, kind, refusal) {
+    kind = kind || 'event'; refusal = !!refusal;
+    this.history.push({ text: text, kind: kind, refusal: refusal });
     if (this.history.length > HISTORY_LINES) this.history.shift();
-    if (kind !== 'event') { this.status = text; this._emit('status', { text: text, kind: kind, repeat: false }); return; }
+    if (kind !== 'event') { this.status = text; this._emit('status', { text: text, kind: kind, repeat: false, refusal: refusal }); return; }
     this.said++;
     var m = FRAME_PREFIX.exec(text), key = m ? text.slice(m[0].length) : text, frame = m ? +m[1] : null;
     var e = this.entries.get(key);
     if (e) {
       e.count++; e.last = frame;
-      this._emit('status', { text: text, kind: kind, repeat: true, entry: e.id });
+      this._emit('status', { text: text, kind: kind, repeat: true, entry: e.id, refusal: refusal });
       return;
     }
-    e = { id: ++this.entryId, key: key, count: 1, first: frame, last: frame };
+    e = { id: ++this.entryId, key: key, count: 1, first: frame, last: frame, refusal: refusal };
     this.entries.set(key, e); this.order.push(e);
     if (this.order.length > LOG_LINES) this.entries.delete(this.order.shift().key);
     this.status = text;
-    this._emit('status', { text: text, kind: kind, repeat: false, entry: e.id });
+    this._emit('status', { text: text, kind: kind, repeat: false, entry: e.id, refusal: refusal });
   };
-  Host.prototype._sayOnce = function (key, text) { if (this.said1[key] === text) return; this.said1[key] = text; this._say(text); };
-  Host.prototype._fail = function (text) { this._say(text); return { ok: false, sentence: text }; };
+  Host.prototype._refuse = function (text) { this._say(text, 'event', true); };
+  Host.prototype._sayOnce = function (key, text, refusal) { if (this.said1[key] === text) return; this.said1[key] = text; this._say(text, 'event', refusal); };
+  Host.prototype._fail = function (text) { this._refuse(text); return { ok: false, sentence: text }; };
   Host.prototype.on = function (name, fn) { (this.listeners[name] = this.listeners[name] || []).push(fn); return this; };
   Host.prototype.off = function (name, fn) {
     var l = this.listeners[name];

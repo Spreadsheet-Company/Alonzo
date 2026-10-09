@@ -1,11 +1,12 @@
 # The Cargo workspace: the engine, and later the native runner the frame
 # floors need (ROADMAP.md, CART.1). CHARTER.md section 4 is the constitution.
 # Its first rule puts the language in its own crate, vla-lang, cut out of
-# frazaro-core in the Frazaro repository, which this workspace will pin
-# exactly under [workspace.dependencies] the day ENGINE.1 needs it. Its
-# fifth rule, AD-5, is why the engine's [dependencies] is otherwise empty:
-# the engine's imports are the host's functions, named by hand, and the
-# crate depends on the language crate and nothing else.
+# frazaro-core in the Frazaro repository, which this workspace pins under
+# [workspace.dependencies] since ENGINE.1's second slice. Its fifth rule,
+# AD-5, is why the engine's [dependencies] holds that one line: the engine's
+# imports are the host's functions, named by hand, and the crate depends on
+# the language crate and nothing else, which tools/check_engine_deps.ps1
+# holds on this file, the engine's manifest and Cargo.lock.
 #
 # Build the engine for the browser with
 #   cargo build --release -p alonzo --target wasm32-unknown-unknown
@@ -21,7 +22,7 @@ members = ["engine"]
 [workspace.package]
 # Alonzo's own line, not the corpus's: the engine is not an implementation
 # of the language, so its version is its own, and vla-lang is pinned exactly
-# when it becomes a dependency.
+# below.
 version = "0.1.0"
 # The same edition and floor as frazaro-core, and so as vla-lang, so that the
 # three crates build under one toolchain.
@@ -31,8 +32,12 @@ license = "Apache-2.0"
 repository = "https://github.com/Spreadsheet-Company/Alonzo"
 
 [workspace.dependencies]
-# ENGINE.1 adds, exactly pinned, the language crate and nothing else (AD-5):
-# vla-lang = "=0.9.0"
+# The language crate and nothing else (AD-5), pinned to one commit: the
+# handle and the four calls, KERNEL.22 in Frazaro, by git until vla-lang is on
+# crates.io, when this line becomes the exact registry pin `"=0.9.0"` (the
+# owner's route, 2026-10-09; REARVIEW.md, ENGINE.1's second slice, decision 1).
+# A rev and never a branch, since a branch moves.
+vla-lang = { git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "6cca2e1" }
 
 [profile.release]
 # Small, deterministic, and without an unwinder: a panic aborts, so the wasm

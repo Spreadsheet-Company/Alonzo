@@ -38,15 +38,28 @@ name fails even if someone lists it: `fetch` first among them, then
 `XMLHttpRequest`, `WebSocket` and anything that opens a socket, any WASI
 module, and the names generated glue writes. And the section must equal the
 list exactly, so a listed function the engine no longer calls fails too.
-Today the list is empty and the count is pinned at zero: the empty engine
-imports nothing, which Frazaro's `tools/check_core_imports.ps1 -Path <the
-wasm>` confirms with the same reading of the same bytes. The host shim that
-provides those functions is written by hand and read in review; the engine
-takes no generated glue (`AD-5`).
+Today the list is empty and the count is pinned at zero: the engine, the
+language crate's machine inside it, imports nothing, which Frazaro's
+`tools/check_core_imports.ps1 -Path <the wasm>` confirms with the same
+reading of the same bytes. The host shim that provides those functions is
+written by hand and read in review; the engine takes no generated glue
+(`AD-5`).
 
-A cartridge is a VLA program and its sheets. The engine reads no VLA and
-evaluates no cell itself; every value is the language crate's, which has no
-imports at all. What a cartridge can do is therefore what the devices let
+The other way through the module's boundary is what it exports, and
+`tools/check_host_exports.ps1` reads that section on every push and holds
+it to the specification's eleven names exactly: the four calls, `describe`,
+`unload`, the memory pair, the ABI number, the version and the memory. The
+language crate carries a C surface of its own, compiled into every module
+built on it and exported only under a feature nothing here turns on; were
+it ever exported, a page could write the grid past the engine's device
+checks, and the check fails it by name. And the engine depends on the
+language crate and nothing else, pinned to one commit in `Cargo.toml` and
+`Cargo.lock`, which `tools/check_engine_deps.ps1` holds on both: no second
+dependency, no branch that moves, never Frazaro's core.
+
+A cartridge is a VLA program and its sheets. The engine reads its manifest
+and checks its device sheets, and evaluates no cell itself; every value is
+the language crate's, which has no imports at all. What a cartridge can do is therefore what the devices let
 it do: draw, sound, read the keys and the mouse, and read a file the person
 picked. Nothing else exists to it. And a cartridge's formulas are the ones
 it was loaded with: the step computes values and never formulas (`AD-7`),

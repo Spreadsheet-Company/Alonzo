@@ -14,20 +14,30 @@ re-done over the timestamps (a stall of a second runs seven frames at 30
 and no more), the Input rows from the key events, the derived writes from
 the fake module's declared rule, issued before the inputs so that a
 person's edit wins, and the end state from a second fake module the page
-drives with no host between, compared by digest. Seven cases: rate30 (the
+drives with no host between, compared by digest. Nine cases: rate30 (the
 Camera moved by an edit and the window following, a derived write refused
 and printed, a refused edit, a Camera cell that is not a number, a save
 edge, the stall), rate0 (four edits, four steps, the Input sheet never
 written), yield (a budget of 1,000 over 64,000 cells, the progress a
 sentence, an edit held until the frame is done), memory (every allocation
-detaches the buffer and the host keeps no view), abi (a module at ABI 2,
-two without an export, and the module built into the page refused), the
-refusals by id, and scale (the backing store at a whole number of device
-pixels a cell, and pixels read back through the palette, magenta past it).
-It prints one line a case into <pre id="loop"> and a last line,
-'loop ok cases=N'. This check runs the page under a headless Chromium at a
-device scale factor of 1 and of 1.5, reads that element off the dump, and
-holds every case to OK and its counts to the floors below.
+detaches the buffer and the host keeps no view), abi (a module at ABI 2 and
+two without an export refused, and the engine's module built into the page
+attached at ABI 1 with its version), the refusals by id, scale (the backing
+store at a whole number of device pixels a cell, and pixels read back
+through the palette, magenta past it), and since ENGINE.1's second slice
+two over the engine's own module when the page holds one: engine (the same
+host loads Life on the real module and steps it eleven frames, the plane at
+frames 1 and 11 equal byte for byte to a reference Life the page computes,
+generations 0 and 10, frame 2 again on a second host in budgets of 2,000
+cells equal to the unchunked frame, the module's memory grown at the load)
+and parity (eleven refusals issued to the fake module and the engine's,
+each answered with the same status and id). It prints one line a case into
+<pre id="loop"> and a last line, 'loop ok cases=N'. This check runs the
+page under a headless Chromium at a device scale factor of 1 and of 1.5,
+reads that element off the dump, and holds every case to OK and its counts
+to the floors below; the floors over the engine's module apply when the page
+holds one, as abi's module count says, and a page built beside the engine's
+artifact must hold that artifact, byte count for byte count, or it is stale.
 
 THE BROWSER, as tools/check_render_oracle.ps1 finds and launches it:
 -Browser, else $env:ALONZO_BROWSER, else Google Chrome, Microsoft Edge or
@@ -38,13 +48,21 @@ frame, so the virtual-time budget only bounds the run. SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds three mutant pages through tools/build_web.ps1 and runs
+-Control builds seven mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
-State!B1 must lose to the derived write and fail by name; and a template
+State!B1 must lose to the derived write and fail by name; a template
 whose loop element is cut, which this check must fail for want of the
-block. The real page must pass first.
+block; when the real page holds the engine's module, a template whose
+reference Life lets a cell survive on three neighbours alone, which the
+engine case must fail by name at frame 11, proving the comparison bites
+(not applicable to a page without a module); a host that draws no frame 0
+at a load, whose scale case must fail after its reload; a host that
+leaves the canvas as it was at an unload, whose scale case must fail after
+its refused load; and a host that says a refusal without marking it one,
+whose rate30 case must fail by name, since the page paints every marked
+refusal red. The real page must pass first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A headless run's clock is
@@ -77,18 +95,33 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # detachments, one an allocation; abi 4 refusals with the module built in (3
 # without one); refusals 5; scale 2 at a ratio of 1 and 3 at 1.5, 6 pixels
 # read back. Live allocations and misfrees are held at exactly zero.
+# 2026-10-09, ENGINE.1's second slice: nine cases, under headless Chrome 154
+# at both ratios over the engine's module of about 456 KB, the first seven's
+# counts unchanged and their digests the same; abi 3 refusals and the module
+# attached; engine 11 frames, 2 planes equal to the reference Life (23,683 and
+# 14,482 live cells at generations 0 and 10), frame 2 equal in 64 calls of
+# 2,000 cells, the memory grown, 5 devices; parity 11 of 11; 5.5 s a run.
+# WithModule floors hold only when the page holds the engine's module. The
+# same day, from the owner's hand test (a reload at rate 0 left the last run's
+# picture on the canvas): scale's 6 cells read opaque black after a reload,
+# frame 0 drawn at the load, and transparent after a refused load, the canvas
+# emptied at the unload; engine's reload holds frame 0's empty plane.
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100 } },
     @{ Case = 'rate0';    Min = @{ frames = 4; applied = 3; edits = 4; windows = 3 } },
     @{ Case = 'yield';    Min = @{ frames = 9; calls = 600; yields = 590; edits = 1 } },
     @{ Case = 'memory';   Min = @{ frames = 14; edits = 1; detaches = 600 } },
-    @{ Case = 'abi';      Min = @{ refused = 3 } },
-    @{ Case = 'refusals'; Min = @{ refused = 5 } },
-    @{ Case = 'scale';    Min = @{ scale = 2; probes = 6 } }
+    @{ Case = 'abi';      Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
+    @{ Case = 'refusals'; Min = @{ refused = 5; marked = 5 } },
+    @{ Case = 'scale';    Min = @{ scale = 2; probes = 6; reloaded = 6; cleared = 6 } },
+    @{ Case = 'engine';   Min = @{}; WithModule = @{ frames = 11; equal = 2; live1 = 23683; live11 = 14482; chunked = 1; grown = 1; devices = 5; reloaded = 1 } },
+    @{ Case = 'parity';   Min = @{}; WithModule = @{ same = 11 } }
 )
 $zero = @('live', 'misfrees')
-$expectedCases = 7
+$expectedCases = 9
+# The engine's artifact: a page built beside it must hold it.
+$artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
 
 function Find-Browser([string]$named) {
     if ($named -ne '') { if (Test-Path -LiteralPath $named) { return $named }; return '' }
@@ -159,13 +192,24 @@ function Test-Loop([string]$text, [string]$scale) {
         $cases[$m.Groups[1].Value] = @{ Counts = $counts; Verdict = $m.Groups[3].Value }
         $caseLines.Add(("  {0}: {1}" -f $m.Groups[1].Value, ($l -replace '^case \S+: ', '')))
     }
+    # The engine's module, as the abi case counts its bytes: 0 when the page holds none.
+    $module = 0
+    if ($cases.ContainsKey('abi') -and $cases['abi'].Counts.ContainsKey('module')) { $module = [double]$cases['abi'].Counts['module'] }
+    if (Test-Path -LiteralPath $artifact) {
+        $size = (Get-Item -LiteralPath $artifact).Length
+        if ($module -ne $size) { $problems.Add("the page holds an engine module of $module bytes and $artifact is $size; a page built beside the artifact holds it, so rebuild the page (tools/build_web.ps1)") }
+    }
     foreach ($f in $floors) {
         $c = $cases[$f.Case]
         if ($null -eq $c) { $problems.Add("the case $($f.Case) was not run"); continue }
         if ($c.Verdict -ne 'OK') { $problems.Add("the case $($f.Case) at a ratio of $scale`: $($c.Verdict)") }
-        foreach ($k in $f.Min.Keys) {
+        $mins = @{}
+        foreach ($k in $f.Min.Keys) { $mins[$k] = $f.Min[$k] }
+        if ($f.ContainsKey('WithModule') -and $module -gt 0) { foreach ($k in $f.WithModule.Keys) { $mins[$k] = $f.WithModule[$k] } }
+        if ($f.ContainsKey('WithModule') -and $c.Counts.ContainsKey('module') -and [double]$c.Counts['module'] -ne $module) { $problems.Add("the case $($f.Case) ran over a module of $($c.Counts['module']) bytes and abi over $module") }
+        foreach ($k in $mins.Keys) {
             if (-not $c.Counts.ContainsKey($k)) { $problems.Add("the case $($f.Case) printed no count of $k"); continue }
-            if ([double]$c.Counts[$k] -lt $f.Min[$k]) { $problems.Add("the case $($f.Case) at a ratio of $scale counted $($c.Counts[$k]) $k, below its floor of $($f.Min[$k])") }
+            if ([double]$c.Counts[$k] -lt $mins[$k]) { $problems.Add("the case $($f.Case) at a ratio of $scale counted $($c.Counts[$k]) $k, below its floor of $($mins[$k])") }
         }
         foreach ($k in $zero) { if ($c.Counts.ContainsKey($k) -and [double]$c.Counts[$k] -ne 0) { $problems.Add("the case $($f.Case) at a ratio of $scale counted $($c.Counts[$k]) $k, where it must count none") } }
     }
@@ -223,9 +267,53 @@ if ($Control) {
         $tplC = Join-Path $tmp 'c.template.html'; [System.IO.File]::WriteAllText($tplC, $tpl.Replace($anchorC, '<pre id="loop-cut" class="result">'), $utf8)
         $rC = Invoke-Loop $browser (New-MutantPage 'c' $tplC $hostJs) '1'
         $cNoBlock = ($rC.Text -eq '') -and ($rC.Reason -like 'no loop block*')
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5})" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock) {
-            Write-Output 'OK: the check passes the real page and fails each of the three mutants for its own reason, each proving it applied'
+        # mutant D, when the real page holds the engine's module: the reference Life lets a cell
+        # survive on three neighbours alone; the engine case must fail by name at frame 11
+        $moduleReal = 0
+        if ($r0.Text -ne '') { $am = [regex]::Match($r0.Text, 'case abi: [^\n]*module (\d+)'); if ($am.Success) { $moduleReal = [int]$am.Groups[1].Value } }
+        $dApplied = $false; $dFailed = 0; $dNote = 'not applicable, the real page holding no engine module'
+        if ($moduleReal -gt 0) {
+            $anchorD = 'next[i] = (others === 3 || (me === 1 && others === 2)) ? 1 : 0;'
+            if (([regex]::Matches($tpl, [regex]::Escape($anchorD))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorD' is not in the template exactly once"; exit 1 }
+            $mutD = $tpl.Replace($anchorD, 'next[i] = (others === 3 || (me === 1 && others === 3)) ? 1 : 0;')
+            $dApplied = $mutD -cne $tpl
+            $tplD = Join-Path $tmp 'd.template.html'; [System.IO.File]::WriteAllText($tplD, $mutD, $utf8)
+            $rD = Invoke-Loop $browser (New-MutantPage 'd' $tplD $hostJs) '1'
+            $jD = if ($rD.Text -ne '') { Test-Loop $rD.Text '1' } else { @{ Problems = @($rD.Reason) } }
+            $dFailed = @($jD.Problems | Where-Object { $_ -like '*case engine*frame 11 differs from the reference Life*' }).Count
+            $dNote = "applied ($dApplied) and failed the engine case at frame 11 ($dFailed)"
+        }
+        $dOk = ($moduleReal -eq 0) -or ($dApplied -and $dFailed -ge 1)
+        # mutant E: no frame 0 drawn at a load; the scale case's reload must fail by name
+        $anchorE = "    if (c.mode === 'plane') this._drawPlane();   // frame 0, drawn at the load"
+        if (([regex]::Matches($js, [regex]::Escape($anchorE))).Count -ne 1) { Write-Output "FAIL: the frame-0 draw is not in web/host.js exactly once"; exit 1 }
+        $mutE = $js.Replace($anchorE, '    // the frame-0 draw cut by the control')
+        $eApplied = $mutE -cne $js
+        $jsE = Join-Path $tmp 'e.js'; [System.IO.File]::WriteAllText($jsE, $mutE, $utf8)
+        $rE = Invoke-Loop $browser (New-MutantPage 'e' $template $jsE) '1'
+        $jE = if ($rE.Text -ne '') { Test-Loop $rE.Text '1' } else { @{ Problems = @($rE.Reason) } }
+        $eFailed = @($jE.Problems | Where-Object { $_ -like '*case scale*after the reload the cell*' }).Count
+        # mutant F: the canvas left as it was at an unload; the scale case's refused load must fail by name
+        $anchorF = '    this._clear();'
+        if (([regex]::Matches($js, [regex]::Escape($anchorF))).Count -ne 1) { Write-Output "FAIL: the clear at an unload is not in web/host.js exactly once"; exit 1 }
+        $mutF = $js.Replace($anchorF, '    // the clear cut by the control')
+        $fApplied = $mutF -cne $js
+        $jsF = Join-Path $tmp 'f.js'; [System.IO.File]::WriteAllText($jsF, $mutF, $utf8)
+        $rF = Invoke-Loop $browser (New-MutantPage 'f' $template $jsF) '1'
+        $jF = if ($rF.Text -ne '') { Test-Loop $rF.Text '1' } else { @{ Problems = @($rF.Reason) } }
+        $fFailed = @($jF.Problems | Where-Object { $_ -like '*case scale*after a refused load the cell*' }).Count
+        # mutant G: a refusal said without its mark; the rate30 case must fail, a refusal not marked as one
+        $anchorG = "Host.prototype._refuse = function (text) { this._say(text, 'event', true); };"
+        if (([regex]::Matches($js, [regex]::Escape($anchorG))).Count -ne 1) { Write-Output "FAIL: the refusal's mark is not in web/host.js exactly once"; exit 1 }
+        $mutG = $js.Replace($anchorG, "Host.prototype._refuse = function (text) { this._say(text, 'event', false); };")
+        $gApplied = $mutG -cne $js
+        $jsG = Join-Path $tmp 'g.js'; [System.IO.File]::WriteAllText($jsG, $mutG, $utf8)
+        $rG = Invoke-Loop $browser (New-MutantPage 'g' $template $jsG) '1'
+        $jG = if ($rG.Text -ne '') { Test-Loop $rG.Text '1' } else { @{ Problems = @($rG.Reason) } }
+        $gFailed = @($jG.Problems | Where-Object { $_ -like '*case rate30*a refusal is not marked as one*' }).Count
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12})" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1) {
+            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'seven' } else { 'six applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -233,13 +321,17 @@ if ($Control) {
         foreach ($p in @($jA.Problems) | Select-Object -First 3) { Write-Output ('  raised cap: ' + $p) }
         foreach ($p in @($jB.Problems) | Select-Object -First 3) { Write-Output ('  swapped writes: ' + $p) }
         Write-Output ('  cut element: ' + $rC.Reason)
+        if ($moduleReal -gt 0) { foreach ($p in @($jD.Problems) | Select-Object -First 3) { Write-Output ('  survival rule: ' + $p) } }
+        foreach ($p in @($jE.Problems) | Select-Object -First 3) { Write-Output ('  frame-0 draw cut: ' + $p) }
+        foreach ($p in @($jF.Problems) | Select-Object -First 3) { Write-Output ('  clear cut: ' + $p) }
+        foreach ($p in @($jG.Problems) | Select-Object -First 3) { Write-Output ('  mark cut: ' + $p) }
         exit 1
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
     }
 }
 
-Write-Output "=== THE HOST'S LOOP: SECTION 5 OVER A FIXED LOG AGAINST THE FAKE MODULE, UNDER A HEADLESS BROWSER AT TWO RATIOS (ENGINE.1) ==="
+Write-Output "=== THE HOST'S LOOP: SECTION 5 OVER A FIXED LOG AGAINST THE FAKE MODULE, AND OVER THE ENGINE'S MODULE WHEN THE PAGE HOLDS ONE, UNDER A HEADLESS BROWSER AT TWO RATIOS (ENGINE.1) ==="
 if (-not (Test-Path -LiteralPath $Page)) { Write-Output ("  SKIPPED: no built page at {0} (tools/build_web.ps1 writes it; CI builds it before the runner)" -f $Page); exit 0 }
 if ($browser -eq '') { Write-Output '  SKIPPED: no browser found (Google Chrome, Microsoft Edge or Chromium at their known paths or on the PATH; set ALONZO_BROWSER, or -Browser, to name one)'; exit 0 }
 if ($floors.Count -ne $expectedCases) { Write-Output ("FAIL: the floors table holds {0} case(s), not the {1} pinned here" -f $floors.Count, $expectedCases); exit 1 }

@@ -79,7 +79,13 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # check_blit_floors.ps1 (the owner's measured baseline of the blit, the
 # engine's second number, held to its bars; empty, and so failing, until the
 # owner's first fullscreen run is pasted in).
-$expectedAtLeast = 9
+# 2026-10-09, ENGINE.1's second slice: 11 - check_host_exports.ps1 (the
+# engine exports exactly SPEC.md section 8.1's eleven names, read off the
+# wasm artifact, the twin of the import check; SKIPPED without one) and
+# check_engine_deps.ps1 (AD-5's second sentence on the manifests and the
+# lock: the language crate and nothing else, pinned to one commit, never
+# frazaro-core).
+$expectedAtLeast = 11
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
 # --- The other verifiers, each with the arguments it needs. ---
@@ -93,8 +99,10 @@ $extras = @(
     @{ Script = 'check_render_oracle.ps1'; Args = @('-Control'); What = 'KERNEL.5 render oracle: the real page passes, three mutant pages fail under the browser (SKIPPED without one)' },
     @{ Script = 'check_render_floors.ps1'; Args = @('-Control'); What = 'KERNEL.5 render floors: a clean table passes, seven mutants fail' },
     @{ Script = 'check_cartridge.ps1';     Args = @('-Control'); What = 'ENGINE.1 cartridges: a clean scratch copy passes, thirteen mutants of Life fail' },
-    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1 host loop: the real page passes, three mutant pages fail under the browser (SKIPPED without one)' },
-    @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 blit floors: a clean table passes, seven mutants fail' }
+    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1 host loop: the real page passes, seven mutant pages fail under the browser, the fourth only over the engine''s module (SKIPPED without a browser)' },
+    @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 blit floors: a clean table passes, seven mutants fail' },
+    @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 export reader and judgment: eight modules built in memory, a non-module' },
+    @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, seven mutants fail' }
 )
 
 # --- The shell each check runs under. ---

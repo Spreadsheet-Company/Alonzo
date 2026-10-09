@@ -5,3 +5,11 @@ version = 3
 [[package]]
 name = "alonzo"
 version = "0.1.0"
+dependencies = [
+ "vla-lang",
+]
+
+[[package]]
+name = "vla-lang"
+version = "0.8.0"
+source = "git+https://github.com/Spreadsheet-Company/Frazaro?rev=6cca2e1#6cca2e18260871d0930306e1a8f81c2976ff662a"

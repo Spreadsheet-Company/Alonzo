@@ -42,6 +42,14 @@ of the file it touches, as declared in `REUSE.toml`:
   the check on every push, a forbidden name (`fetch` first) fails even when
   listed, a listed name the engine no longer imports fails too, and the
   list grows by a reviewed line, never by a generated one (`AD-5`).
+- **A refusal** the engine raises is an entry of its own catalogue,
+  `engine/data/messages.vla`, the `cart` family, an id, a number, a source
+  and a template whose slots the code fills, read by the language crate's
+  mechanism; its text names the cell it stands on as `sheet!addr` and
+  leaves the row's line to the record's field. A refusal of the grid, the
+  view or recalculation is the language crate's and changes in Frazaro,
+  never here. An export added to the engine is a line in `SPEC.md`'s table
+  first, then in `tools/check_host_exports.ps1`'s list with its count.
 - **A cartridge** is a VLA program and its sheets, with a Palette sheet.
   One that ships in this repository is a fixture of a floor or a demo, and
   carries 0BSD. A game is a repository of its own, under its author's name

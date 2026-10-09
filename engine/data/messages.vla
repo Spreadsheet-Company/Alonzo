@@ -1,0 +1,18 @@
+; messages.vla - the engine's own refusals, the cart family (ENGINE.1's second
+; slice, 2026-10-09; SPEC.md section 4.7). One (message <id> <number> "<source>"
+; "<template>") form an entry, the shape of the language's catalogue, read by
+; its mechanism, vla_lang::messages::Catalogue, which fills each {slot}; an id
+; this file does not hold is the language's (the grid, view and calc families).
+; Each text names its target as sheet!addr where it has one, so that the host
+; prints the module's words alone, and leaves the row's line to the record's
+; line field. Embedded at build time by engine/src/cartridge.rs; its test holds
+; every id the engine raises to this file.
+
+(message cart-manifest-invalid 5 "Alonzo-Cart" "The cartridge's manifest {what}. A cartridge begins with (cartridge \"name\" ...), the name in lowercase letters, digits and hyphens, and gives (spec ...), (title ...), (rate ...), (screen ...) and (seed ...) once each, nothing defaulted (SPEC.md section 7.2).")
+(message cart-spec-unsupported 5 "Alonzo-Cart" "The cartridge is written to (spec {spec}), and this engine reads (spec 1) and (spec 2); a cartridge written to a later page waits for an engine that reads it.")
+(message cart-screen-outside 5 "Alonzo-Cart" "{target} is outside the Screen's window, {window}, which the manifest's (screen ...) declares; without a Camera sheet the Screen holds cells only inside that window (SPEC.md section 3.1).")
+(message cart-palette-invalid 5 "Alonzo-Cart" "{what}. A plane cartridge's Palette holds sixteen rows, column A the index from 0 to 15 in order and column B its colour as #RRGGBB, or a formula that computes one (SPEC.md section 3.2).")
+(message cart-device-cell-formula 5 "Alonzo-Cart" "A formula cannot go into {target}: {cells} are the host's to write, and hold values, since the host would write over a formula there and nobody would see why (SPEC.md section 3).")
+(message cart-device-cell-outside 5 "Alonzo-Cart" "{target} is outside the layout of the {sheet} sheet, {layout}: a device sheet holds its cells where SPEC.md section 3 lays them out, so that a later version can add a row without colliding with a cartridge.")
+(message cart-formula-volatile 5 "Alonzo-Cart" "The formula in {cell} calls {function}, which reads the wall clock or the dice, so no replay could reproduce it. The engine's clock is the frame in Clock!B1 and its dice the seed in Clock!B3; a random number is a formula of the seed and the last frame (SPEC.md section 3.5).")
+(message cart-write-derived 5 "Alonzo-Cart" "A derived write cannot go into {target}: {cells} are the host's to write, so a derived write lands only in a value cell the host does not write (SPEC.md section 3.9).")

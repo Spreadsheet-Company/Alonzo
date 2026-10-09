@@ -44,8 +44,11 @@ and the checks that hold it there; then the first brick, the viewport, the
 Screen device in grid mode over the view record (`KERNEL.5`, a Frazaro item
 laid here), with its page and the checks that hold it; then the host half
 of the loop (`ENGINE.1`'s first slice), run against a fake module of the
-engine's exports until the language crate's four calls exist, with the Life
-cartridge as its fixture.
+engine's exports, with the Life cartridge as its fixture; then the engine's
+own module (`ENGINE.1`'s second slice), the `alonzo` crate over the language
+crate's machine, so that the same host runs Life as the language computes it,
+every cell of every frame, and the fake module stays the double its oracle
+drives.
 
 | File | What it is |
 |---|---|
@@ -54,10 +57,10 @@ cartridge as its fixture.
 | `REARVIEW.md` | the closed ledger, the sittings, and each item's full scoping before it is built |
 | `SPEC.md` | the specification, version 2: the cell as the unit with two renderers of one model, the device sheets cell by cell with the Camera and the Write sheet among them, the four calls and their records, the frame's order and rate zero, the determinism rules, the cartridge's one file, the host's duties, reflection and the rule that the step computes values and never formulas |
 | `docs/ALGEBRA.md` | the horizon: design theory marked per idea and never a source of items; four readers of the engine, the course corrections a later specification might take, the crowds, and linear algebra as a first-class paradigm of the formula language, with its ladder |
-| `engine/` | the `alonzo` crate |
+| `engine/` | the `alonzo` crate: the engine's eleven exports over `vla-lang`'s machine (`src/abi.rs`), what the engine adds to it, the manifest, the device sheets' checks, its own sheets and the Clock's frame (`src/cartridge.rs`), and its own refusals (`data/messages.vla`); the language crate its one dependency |
 | `web/` | the host shim, `host.js`, the loop of the specification's section 5; the fake module, `fake.js`, a double of the engine's eleven exports; the viewport, `viewport.js`, one plain script the first game takes as a file; and the page, built from `index.template.html` with the Life cartridge and seven records the door printed, with the loop's oracle, the blit's instrument, the render oracle and the render floors' instrument as its modes; `web/README.md` is the page and the APIs |
 | `cartridges/` | the cartridges this repository ships, 0BSD so that one may be copied: `life/life.vla`, Conway's Life on a 320 by 200 plane, the fixture of the engine's floors |
-| `tools/` | the checks: the import allowlist read off the wasm, the licence map verified against the tree, the page's offline doctrine, the fixtures' pins, the render oracle and the host loop's oracle under a headless browser, the cartridges held to the specification's section 7, and the render and blit floors; the builder of the page; and the runner that reports one total |
+| `tools/` | the checks: the import allowlist and the eleven exports read off the wasm, the one dependency held on the manifests and the lock, the licence map verified against the tree, the page's offline doctrine, the fixtures' pins, the render oracle and the host loop's oracle under a headless browser, the cartridges held to the specification's section 7, and the render and blit floors; the builder of the page; and the runner that reports one total |
 | `.github/workflows/checks.yml` | the checks, the crate's build, lint and tests, and the page's build and oracle on every push and pull request |
 
 What the first release shows: Conway's Life on a 320 by 200 sheet at thirty
@@ -76,10 +79,14 @@ cargo build --workspace
 cargo build --release -p alonzo --target wasm32-unknown-unknown
 ```
 
-The second writes `target/wasm32-unknown-unknown/release/alonzo.wasm`, the
-module a page loads. Its import section is read on every push and held to a
-list of the host's functions and nothing else (`REPO.2`); today, on the
-empty crate, the count is zero.
+The first fetches the language crate, `vla-lang`, from Frazaro's repository
+at the commit `Cargo.toml` pins, until it is on crates.io. The second writes
+`target/wasm32-unknown-unknown/release/alonzo.wasm`, the module a page
+loads. Its import section is read on every push and held to a list of the
+host's functions and nothing else (`REPO.2`), the count zero today; its
+export section to the specification's eleven names; and the engine's
+dependencies, in the manifests and the lock, to the language crate alone.
+`tools/build_web.ps1` then builds the page with the module in it.
 
 ## The rules
 

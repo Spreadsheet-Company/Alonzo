@@ -16,14 +16,17 @@
   held.
 
   Five modes, one page. Opened plainly, it is the engine's panel, the Life
-  cartridge running on the host's loop against the fake module (the engine's own
-  exports refuse until the language crate's four calls exist), with the cartridge
-  editable, an edit row, Run and Pause, and a device sheet shown live; then the
-  viewport over the fixtures: a record picked, its sheets as tabs, scroll, select,
-  resize a column, freeze panes, a record of one's own pasted in. With ?loop=1 it
-  runs the host loop's oracle, the host driven over a fixed input log against the
-  fake module, its writes, frames, windows and sentences held to expectations the
-  page computes from the log, and prints the result into <pre id="loop">, which
+  cartridge running on the host's loop over the engine's own module, the language
+  computing every cell (ENGINE.1's second slice), or over the fake module when no
+  engine is built in, with the cartridge editable, an edit row, Run and Pause, and
+  any sheet of the grid shown live; then the viewport over the fixtures: a record
+  picked, its sheets as tabs, scroll, select, resize a column, freeze panes, a
+  record of one's own pasted in. With ?loop=1 it runs the host loop's oracle, the
+  host driven over a fixed input log against the fake module, its writes, frames,
+  windows and sentences held to expectations the page computes from the log, and,
+  when the page holds the engine's module, the same host over it, Life held byte
+  for byte to a reference Life the page computes and the refusals of the double and
+  the module compared id for id; it prints the result into <pre id="loop">, which
   tools/check_host_loop.ps1 reads under a headless browser. With ?blit=1 it is the
   blit's instrument, a 320 by 200 plane drawn 120 times at the scale that fits the
   screen and at a scale of 1, each frame's main-thread cost, printed as the table
@@ -106,6 +109,7 @@
   .engine-log { margin: 6px 0 0; padding: 6px 8px 6px 26px; height: 250px; overflow: auto; border: 1px solid #d9d9d2; background: #fafaf7; font-size: 12.5px; color: #4b4b47; }
   .engine-log li { margin: 2px 0; }
   .frame-line { font-size: 13px; color: #6b6b66; margin: 6px 0 0; min-height: 1.4em; }
+  .frame-line.refused, .engine-log li.refused { color: #a2262b; }
   .grid.small { height: 220px; }
 </style>
 </head>
@@ -126,17 +130,17 @@
         </div>
         <div class="engine-side">
           <p class="controls"><button type="button" id="eng-run">Run</button> <button type="button" id="eng-pause">Pause</button> <button type="button" id="eng-load">Load the cartridge</button> <button type="button" id="eng-copy">Copy the log</button></p>
-          <p class="controls"><label style="flex:1 1 100%">An edit, one row: <input type="text" id="eng-edit" spellcheck="false" value="(cell &quot;Camera&quot; &quot;B1&quot; 7)"></label> <button type="button" id="eng-write">Write</button></p>
+          <p class="controls"><label style="flex:1 1 100%">An edit, one row: <input type="text" id="eng-edit" spellcheck="false" value="(cell &quot;Palette&quot; &quot;B1&quot; &quot;#FF8800&quot;)"></label> <button type="button" id="eng-write">Write</button></p>
           <p id="eng-status" class="status"></p>
           <ol id="eng-log" class="engine-log" aria-label="the host's sentences"></ol>
         </div>
       </div>
       <details>
         <summary>The cartridge</summary>
-        <p>The file the host loads, <code>cartridges/life/life.vla</code>. Edit it and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The fake module reads the manifest alone, as the engine's own duty is, and draws its declared tiles whatever the rows say.</p>
+        <p>The file the host loads, <code>cartridges/life/life.vla</code>. Edit it and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
         <textarea id="eng-cart" rows="14" spellcheck="false"></textarea>
       </details>
-      <p class="controls"><label>A device sheet, live <select id="eng-sheet" aria-label="the device sheet to show">
+      <p class="controls"><label>A sheet, live <select id="eng-sheet" aria-label="the sheet to show">
         <option value="Write" selected>Write</option><option value="Camera">Camera</option><option value="Clock">Clock</option><option value="Input">Input</option>
         <option value="Keys">Keys</option><option value="Palette">Palette</option><option value="Audio">Audio</option><option value="File">File</option><option value="State">State</option>
       </select></label> <span class="status">Click the plane to give it the keys: the arrows, Z, X, A, S, Enter and Space are player 1's.</span></p>
@@ -268,7 +272,9 @@
     if (MODE === 'oracle' || MODE === 'loop' || MODE === 'blit') document.getElementById(MODE).textContent = MODE + ' failed: the page was not built';
     return;
   }
-  aboutEl.textContent = 'The host, version ' + HOST.version + ', over the fake module, version ' + FAKE.version + ', and the viewport, version ' + VP.version + ', over seven records the door printed: the six view goldens of Frazaro\'s scripts/view/ and the 10,000-line program\'s, ' + thousands(fixtureText('sparse_10000').split('\n').length - 1) + ' lines. Device pixel ratio ' + (window.devicePixelRatio || 1) + '.';
+  var engineB64 = builtModule().replace(/\s+/g, '');
+  var engineBytes = engineB64 ? engineB64.length / 4 * 3 - (/==$/.test(engineB64) ? 2 : /=$/.test(engineB64) ? 1 : 0) : 0;
+  aboutEl.textContent = 'The host, version ' + HOST.version + (engineBytes ? ', over the engine\'s module built into this page, ' + thousands(engineBytes) + ' bytes, with the fake module, version ' + FAKE.version + ', for its oracle' : ', over the fake module, version ' + FAKE.version + ', no engine module being built into this page') + '; and the viewport, version ' + VP.version + ', over seven records the door printed: the six view goldens of Frazaro\'s scripts/view/ and the 10,000-line program\'s, ' + thousands(fixtureText('sparse_10000').split('\n').length - 1) + ' lines. Device pixel ratio ' + (window.devicePixelRatio || 1) + '.';
 
   // ---- the HiDPI panel: the same text in a DOM cell and in a canvas cell, drawn as the viewport draws ----
   function hidpiPanel() {
@@ -318,7 +324,7 @@
     cartEl.value = lifeText;
     var host = new HOST({ canvas: planeCv, box: planeBox });
     var dvp = new VP(document.getElementById('eng-grid'));
-    var shownAt = -1, rate = -1, items = {};
+    var shownAt = -1, shownTime = -1e9, rate = -1, items = {};
     // The log drawn in place: a new event appends a line, a repeat changes only its own line's
     // count, so the other lines stay put to be read, selected and copied; the list follows a new
     // line only when it was already at its bottom.
@@ -328,28 +334,75 @@
       for (var i = 0; i < entries.length; i++) {
         var e = entries[i], li = items[e.id];
         keep[e.id] = true;
-        if (!li) { li = document.createElement('li'); items[e.id] = li; logEl.appendChild(li); added = true; }
+        if (!li) { li = document.createElement('li'); items[e.id] = li; logEl.appendChild(li); added = true; if (e.refusal) li.className = 'refused'; }
         if (li.textContent !== e.text) li.textContent = e.text;
       }
       for (var id in items) if (Object.prototype.hasOwnProperty.call(items, id) && !keep[id]) { logEl.removeChild(items[id]); delete items[id]; }
       if (added && atBottom) logEl.scrollTop = logEl.scrollHeight;
     }
-    // A device sheet's record, as the module prints it, in a viewport of its own: AD-6 seen.
+    // Any sheet's record, as the module prints it, in a viewport of its own: AD-6 seen. The Screen
+    // and its twin through a 20 by 20 window at the Camera's place, since a whole Screen's record
+    // is a formula row a cell, tens of megabytes for Life, which nothing here asks for.
+    function windowOf(name) {
+      if (!/^screen(\.last)?$/i.test(name)) return '';
+      var cam = host.camera || { row: 1, col: 1 };
+      return VP.rangeText({ top: cam.row, left: cam.col, bottom: cam.row + 19, right: cam.col + 19 });
+    }
     function showSheet() {
-      var t = host.viewRecord(sheetEl.value);
+      var t = host.viewRecord(sheetEl.value, windowOf(sheetEl.value));
       if (t) { dvp.load(t); dvp.show(sheetEl.value); }
     }
-    host.on('status', function (s) { if (!s.repeat) statusEl.textContent = s.text; if (s.kind !== 'progress') renderLog(); });
+    // The picker holds the sheets the grid holds, read off a record's sheet rows, the twins last:
+    // the engine's Life holds Screen, Palette, Clock, File and Input, the fake module its nine and State.
+    function fillSheets() {
+      var t = host.viewRecord('Clock', 'A1');
+      if (!t) return;
+      var forms = VP.readForms(t), own = [], twins = [];
+      for (var i = 0; i < forms.length; i++) {
+        var f = forms[i];
+        if (!Array.isArray(f) || !f[0] || f[0].sym !== 'sheet' || typeof f[1] !== 'string') continue;
+        (/\.last$/i.test(f[1]) ? twins : own).push(f[1]);
+      }
+      if (!own.length) return;
+      var keep = sheetEl.value, names = own.concat(twins);
+      sheetEl.textContent = '';
+      for (var j = 0; j < names.length; j++) {
+        var o = document.createElement('option');
+        o.value = names[j];
+        o.textContent = /\.last$/i.test(names[j]) ? names[j] + ', the previous frame' : names[j];
+        sheetEl.appendChild(o);
+      }
+      sheetEl.value = names.indexOf(keep) >= 0 ? keep : (names.indexOf('Write') >= 0 ? 'Write' : (names.indexOf('Clock') >= 0 ? 'Clock' : names[0]));
+    }
+    // Every refusal one colour, red until the page's palette is drawn (the owner's word, 2026-10-09):
+    // the status line while it shows one, each refused line of the log, the frame line after a refused load.
+    host.on('status', function (s) {
+      if (!s.repeat) { statusEl.textContent = s.text; statusEl.className = s.refusal ? 'status refused' : 'status'; }
+      if (s.kind !== 'progress') renderLog();
+    });
     host.on('frame', function (e) {
       var c = host.counters();
       var many = function (n, one, more) { return n + ' ' + (n === 1 ? one : more); };
       frameEl.textContent = 'Frame ' + e.frame + ', the window ' + e.window + ', ' + (e.scale ? e.scale + ' device pixels a cell' : 'no canvas') + '; ' + many(c.derivedApplied, 'derived write', 'derived writes') + ' landed and ' + c.derivedRefused + ' refused, ' + many(c.edits, 'edit', 'edits') + ' written, ' + many(c.yields, 'yield', 'yields') + '.';
-      // every sixth frame while the loop runs, about five a second at 30; every frame at rate zero,
-      // where a frame is an edit (found in the owner's hand test, 2026-10-09: the sheet lagged the edits)
-      if (rate === 0 || e.frame - shownAt >= 6 || e.frame < shownAt) { shownAt = e.frame; showSheet(); }
+      // about five times a second while the loop runs, so every frame of a cartridge slower than that
+      // (the engine's Life draws about two a second); every frame at rate zero, where a frame is an
+      // edit (found in the owner's hand test, 2026-10-09: the sheet lagged the edits)
+      var now = performance.now();
+      if (rate === 0 || now - shownTime >= 200 || e.frame < shownAt) { shownAt = e.frame; shownTime = now; showSheet(); }
     });
-    host.on('load', function (e) { shownAt = -1; rate = e.rate; });
-    function loadCartridge() { var r = host.load(cartEl.value, 'life.vla'); if (r.ok) { host.start(); showSheet(); } }
+    // A load is frame 0, drawn at once, nothing computed; the line says so until the first frame lands.
+    host.on('load', function (e) {
+      shownAt = -1; shownTime = -1e9; rate = e.rate;
+      frameEl.className = 'frame-line';
+      frameEl.textContent = 'Frame 0, the window ' + e.window + ', ' + (e.scale ? e.scale + ' device pixels a cell' : 'no canvas') + ': the cartridge as loaded, nothing computed until ' + (e.rate ? 'the first step.' : 'an edit steps it.');
+    });
+    function loadCartridge() {
+      var r = host.load(cartEl.value, 'life.vla');
+      if (r.ok) { fillSheets(); host.start(); showSheet(); return; }
+      // a refusal is red, as the viewport's own status line paints one (the owner's hand test, 2026-10-09)
+      frameEl.className = 'frame-line refused';
+      frameEl.textContent = 'No cartridge is loaded: the last load was refused, and the log says why.';
+    }
     function useFake(why) {
       var a = host.attach(FAKE.create({}).exports);
       moduleEl.textContent = why + ' The loop runs against the fake module, web/fake.js.';
@@ -468,12 +521,13 @@
   function lqQuote(s) { return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; }
   function lqSpell(v) { return typeof v === 'string' ? lqQuote(v) : (typeof v === 'boolean' ? (v ? 'true' : 'false') : String(v)); }
   function lqRange(row, col, h, w) { return VP.rangeText({ top: row, left: col, bottom: row + h - 1, right: col + w - 1 }); }
-  // The oracle's own memory pair, written apart from the host's.
+  // The oracle's own memory pair, written apart from the host's, over a module's exports, the
+  // fake's or the engine's; a text given as bytes goes in as they are.
   function Driver(fake) { this.x = fake.exports; }
   Driver.prototype.call = function (name, nums, texts) {
     var x = this.x, bufs = [], args = nums.slice(), te = new TextEncoder(), td = new TextDecoder();
     for (var i = 0; i < texts.length; i++) {
-      var b = te.encode(texts[i]), p = x.alonzo_alloc(b.length);
+      var b = texts[i] instanceof Uint8Array ? texts[i] : te.encode(texts[i]), p = x.alonzo_alloc(b.length);
       new Uint8Array(x.memory.buffer, p, b.length).set(b);
       bufs.push([p, b.length]); args.push(p, b.length);
     }
@@ -499,7 +553,16 @@
     this.edits = []; this.pending = []; this.windows = []; this.progress = []; this.saveValue = 0; this.stateEditFrame = 0;
     this.calls = 0; this.yields = 0; this.inputs = 0; this.applied = 0; this.refused = 0; this.editsOk = 0; this.editsRefused = 0; this.saves = 0;
     this.refusedBy = {};   // the derived writes refused, by the cell they named
+    if (m[2] === 'plane') this.windows.push(this.windowNow());   // the load draws frame 0 through the Camera's window
   }
+  // The window the Camera's two cells place: a whole number from 1 in each, else 1.
+  Model.prototype.windowNow = function () {
+    var fk = this.fake, h = this.h;
+    function v(sheet, addr) { var e = fk.peek(h, sheet, addr); return e ? e.v : undefined; }
+    function whole(x) { return (typeof x === 'number' && x >= 1 && Math.floor(x) === x) ? x : 1; }
+    var row = Math.min(whole(v('Camera', 'B1')), 1048576 - this.hh + 1), col = Math.min(whole(v('Camera', 'B2')), 16384 - this.w + 1);
+    return lqRange(row, col, this.hh, this.w);
+  };
   Model.prototype.write = function (rows) { return this.d.call('alonzo_write', [this.h], [rows]); };
   Model.prototype.keyDown = function (code, key) { this.held[code] = true; this.lastKey = { key: key, code: code }; };
   Model.prototype.keyUp = function (code) { delete this.held[code]; };
@@ -540,10 +603,8 @@
   Model.prototype.after = function (n) {
     var fk = this.fake, h = this.h;
     function v(sheet, addr) { var e = fk.peek(h, sheet, addr); return e ? e.v : undefined; }
-    function whole(x) { return (typeof x === 'number' && x >= 1 && Math.floor(x) === x) ? x : 1; }
     this.frame = n;
-    var row = Math.min(whole(v('Camera', 'B1')), 1048576 - this.hh + 1), col = Math.min(whole(v('Camera', 'B2')), 16384 - this.w + 1);
-    this.windows.push(lqRange(row, col, this.hh, this.w));
+    this.windows.push(this.windowNow());
     var save = v('File', 'B3') === 1 ? 1 : 0;
     if (save === 1 && this.saveValue !== 1) this.saves++;
     this.saveValue = save;
@@ -646,7 +707,14 @@
       if (said[j].split('was refused').length > 2) { P.push('a sentence says its refusal twice: ' + said[j]); break; }
       if (said[j].indexOf('(line ') >= 0) { P.push('a refusal of a one-row write names its line: ' + said[j]); break; }
     }
-    if (all.indexOf('cart-write-during-step') >= 0 || st.refusals['cart-write-during-step']) P.push('the host wrote while a step was yielded');
+    // A refusal is marked as one, for a page to paint every refusal one colour (the owner's word,
+    // 2026-10-09): every sentence holding a catalogue id in brackets is marked, and no other is here.
+    var marks = r.host.sentences();
+    for (var q = 0; q < marks.length; q++) {
+      var hasId = /\[[a-z]+(?:-[a-z0-9]+)+\]/.test(marks[q].text);
+      if (hasId !== !!marks[q].refusal) { P.push((hasId ? 'a refusal is not marked as one: ' : 'a sentence that refuses nothing is marked a refusal: ') + marks[q].text); break; }
+    }
+    if (all.indexOf('grid-write-during-step') >= 0 || st.refusals['grid-write-during-step']) P.push('the host wrote while a step was yielded');
     r.host.destroy();
     var st2 = r.fake.stats();
     if (st2.live !== 0) P.push(st2.live + ' allocation(s) live after the unload');
@@ -680,9 +748,11 @@
       if (lines.length !== 1 || lines[0].count !== want) r.P.push('the refusals of derived writes into ' + w + ' are ' + lines.length + ' line(s) of the log' + (lines.length ? ' counting ' + lines[0].count : '') + ', not one line counting ' + want);
     });
     if (!entries.some(function (x) { return x.key.indexOf('the edit (cell "Screen.last" "B1" 1) was refused') === 0; })) r.P.push('the refused edit of Screen.last was pushed out of the log');
-    var k = loopEnd(r, [['a derived write into Screen!A1 was refused', '[cart-write-derived]'], ['a derived write into Input!B5 was refused', '[cart-write-derived]'],
-      ['a derived write into Screen.last!B1 was refused', '[cart-write-derived]'], 'the Camera placed the window at C7:LJ206', 'the edit (cell "State" "B1" 999) was written',
-      ['the edit (cell "Screen.last" "B1" 1) was refused', '[cart-write-last]'], 'the Camera\'s column is "x", not a whole number from 1', 'the Camera placed the window at A7:LH206', 'asked to be saved']);
+    // The ids are the engine's module's (ENGINE.1's second slice): a formula cell is the language's
+    // grid-write-derived, a twin its grid-write-last, a cell the host writes the engine's cart-write-derived.
+    var k = loopEnd(r, [['a derived write into Screen!A1 was refused', '[grid-write-derived]'], ['a derived write into Input!B5 was refused', '[cart-write-derived]'],
+      ['a derived write into Screen.last!B1 was refused', '[grid-write-last]'], 'the Camera placed the window at C7:LJ206', 'the edit (cell "State" "B1" 999) was written',
+      ['the edit (cell "Screen.last" "B1" 1) was refused', '[grid-write-last]'], 'the Camera\'s column is "x", not a whole number from 1', 'the Camera placed the window at A7:LH206', 'asked to be saved']);
     k.lines = entries.length;
     return { counters: k, problems: r.P };
   }
@@ -720,10 +790,10 @@
     var k = loopEnd(r, []);
     return { counters: k, problems: r.P };
   }
-  // The ABI asked first: a module at ABI 2, one without the export, one without another, and the
-  // module built into this page, which is the empty crate until the language's four calls exist.
+  // The ABI asked first: a module at ABI 2, one without the export, one without another, each
+  // refused; and the engine's module built into this page, attached at ABI 1 with its version.
   function caseAbi() {
-    var P = [], refused = 0, module = 0;
+    var P = [], refused = 0, module = 0, attached = 0;
     function attempt(exports, want) {
       var h = new HOST({ drive: 'manual' }), a = h.attach(exports);
       h.destroy();
@@ -738,9 +808,13 @@
     if (wasm) {
       var bytes = bytesOfBase64(wasm);
       module = bytes.length;
-      attempt(HOST.instantiateSync(bytes), 'exports no alonzo_abi_version');
+      var h = new HOST({ drive: 'manual' }), a = h.attach(HOST.instantiateSync(bytes));
+      h.destroy();
+      if (!a.ok) P.push('the engine module built into this page was refused: ' + a.sentence);
+      else if (a.abi !== 1 || !/^alonzo \d+\.\d+\.\d+ \(vla-lang \d+\.\d+\.\d+\)$/.test(a.version)) P.push('the engine module attached at ABI ' + a.abi + ' as "' + a.version + '"');
+      else attached++;
     }
-    return { counters: { refused: refused, module: module }, problems: P };
+    return { counters: { refused: refused, module: module, attached: attached }, problems: P };
   }
   // Refusals by id, each a sentence: a manifest without its rate, a later spec, bytes that are not
   // UTF-8, an edit of a sheet the grid does not hold, and a derived row offered as an edit.
@@ -763,22 +837,27 @@
       host.start(); host.tick(1000);
       host.edit('(cell "Nowhere" "A1" 1)');
       host.tick(1040);
-      var met = host.sentences().some(function (s) { return s.text.indexOf('the edit (cell "Nowhere" "A1" 1) was refused') >= 0 && s.text.indexOf('[view-sheet-unknown]') >= 0; });
-      if (!met) P.push('no sentence refuses the edit of the sheet Nowhere by view-sheet-unknown');
+      var met = host.sentences().some(function (s) { return s.text.indexOf('the edit (cell "Nowhere" "A1" 1) was refused') >= 0 && s.text.indexOf('[grid-sheet-unknown]') >= 0; });
+      if (!met) P.push('no sentence refuses the edit of the sheet Nowhere by grid-sheet-unknown');
       else refused++;
       if (host.counters().frame !== 1) P.push('the frame with the refused edit did not run: frame ' + host.counters().frame);
       if (host.edit('(derived "State" "B1" 1)')) P.push('the host took a derived row as a person\'s edit');
       else refused++;
     }
+    // The host's own refusals are marked as the module's are: the loads refused, bytes that are not
+    // UTF-8 among them with no id to show, and an edit that is no row.
+    var unmarked = host.sentences().filter(function (s) { return !s.refusal && /refused|is not one/.test(s.text); });
+    if (unmarked.length) P.push('a refusal is not marked as one: ' + unmarked[0].text);
+    var marked = host.sentences().filter(function (s) { return s.refusal; }).length;
     host.destroy();
     var st = fake.stats();
     if (st.live !== 0) P.push(st.live + ' allocation(s) live after the unload');
-    return { counters: { refused: refused, live: st.live, misfrees: st.misfrees }, problems: P };
+    return { counters: { refused: refused, marked: marked, live: st.live, misfrees: st.misfrees }, problems: P };
   }
   // The blit: the backing store at a whole number of device pixels a cell, and pixels read back,
   // each at the middle of a cell: a colour through the Palette, black for 0, magenta past it.
   function caseScale() {
-    var P = [], probes = 0, s = 0, stage = document.getElementById('stage');
+    var P = [], probes = 0, reloaded = 0, cleared = 0, s = 0, stage = document.getElementById('stage');
     var box = document.createElement('div');
     box.style.cssText = 'width:700px;height:450px;overflow:hidden;position:relative;background:#000;';
     var cv = document.createElement('canvas');
@@ -800,8 +879,173 @@
         if (d[0] !== want[0] || d[1] !== want[1] || d[2] !== want[2]) P.push('the cell at row ' + r + ', column ' + c + ' (byte ' + byte + ') reads ' + d[0] + ',' + d[1] + ',' + d[2] + ', not ' + want.join(','));
         else probes++;
       }
+      // A reload draws the new grid's frame 0 at once, every cell index 0, black and opaque (the
+      // owner's hand test, 2026-10-09: a reload at rate 0 left the last run's picture on the canvas).
+      var re = host.load(lifeText.replace('(rate 30)', '(rate 0)'), 'life.vla'), black = hexOf(FAKE.RULES.palette[0][0]);
+      if (!re.ok) P.push('the reload at rate 0 was refused: ' + re.sentence);
+      else {
+        if (host.counters().frame !== 0) P.push('after the reload the host is at frame ' + host.counters().frame);
+        for (var j = 0; j < cells.length; j++) {
+          var e = ctx.getImageData((cells[j][1] - 1) * s + Math.floor(s / 2), (cells[j][0] - 1) * s + Math.floor(s / 2), 1, 1).data;
+          if (e[0] !== black[0] || e[1] !== black[1] || e[2] !== black[2] || e[3] !== 255) P.push('after the reload the cell at row ' + cells[j][0] + ', column ' + cells[j][1] + ' reads ' + e[0] + ',' + e[1] + ',' + e[2] + ' at alpha ' + e[3] + ', not frame 0\'s opaque black');
+          else reloaded++;
+        }
+      }
+      // A refused load leaves no picture: the grid it replaced is unloaded, and its canvas emptied.
+      var bad = host.load(lifeText.replace('(rate 30)', ''), 'life.vla');
+      if (bad.ok) P.push('a cartridge without its rate loaded');
+      else {
+        for (var k = 0; k < cells.length; k++) {
+          var g = ctx.getImageData((cells[k][1] - 1) * s + Math.floor(s / 2), (cells[k][0] - 1) * s + Math.floor(s / 2), 1, 1).data;
+          if (g[3] !== 0) P.push('after a refused load the cell at row ' + cells[k][0] + ', column ' + cells[k][1] + ' still holds a picture at alpha ' + g[3]);
+          else cleared++;
+        }
+      }
     } finally { host.destroy(); stage.removeChild(box); }
-    return { counters: { scale: s, width: 320 * s, height: 200 * s, probes: probes }, problems: P };
+    return { counters: { scale: s, width: 320 * s, height: 200 * s, probes: probes, reloaded: reloaded, cleared: cleared }, problems: P };
+  }
+  // Life by hand, the reference the engine's module is held to: the cartridge's soup, its formula's
+  // own arithmetic, exact in doubles for any seed below 2^31, then Conway's rule over the previous
+  // generation with the border dead; a plane of 320 by 200 bytes, row by row.
+  var LIFE_W = 320, LIFE_H = 200;
+  function lifeReference(seed, generations) {
+    var P = 67108859, T = 25165822, g = new Uint8Array(LIFE_W * LIFE_H), r, c;
+    for (r = 2; r <= LIFE_H - 1; r++) for (c = 2; c <= LIFE_W - 1; c++) {
+      var a = (seed * 1103515 + r * 1597334 + c * 1830421 + 12345) % P;
+      var b = (seed * 2012345 + r * 1209487 + c * 1949213 + 54321) % P;
+      var h = (a * b) % P;
+      g[(r - 1) * LIFE_W + (c - 1)] = (h * h) % P < T ? 1 : 0;
+    }
+    for (var n = 0; n < generations; n++) {
+      var next = new Uint8Array(LIFE_W * LIFE_H);
+      for (r = 2; r <= LIFE_H - 1; r++) for (c = 2; c <= LIFE_W - 1; c++) {
+        var i = (r - 1) * LIFE_W + (c - 1), me = g[i];
+        var others = g[i - LIFE_W - 1] + g[i - LIFE_W] + g[i - LIFE_W + 1] + g[i - 1] + g[i + 1] + g[i + LIFE_W - 1] + g[i + LIFE_W] + g[i + LIFE_W + 1];
+        next[i] = (others === 3 || (me === 1 && others === 2)) ? 1 : 0;
+      }
+      g = next;
+    }
+    return g;
+  }
+  function liveOf(bytes) { var n = 0; for (var i = 0; i < bytes.length; i++) if (bytes[i] === 1) n++; return n; }
+  function firstDiff(a, b) {
+    if (!a || a.length !== b.length) return 'the plane holds ' + (a ? a.length : 'no') + ' bytes, not ' + b.length;
+    for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) return 'row ' + (Math.floor(i / LIFE_W) + 1) + ', column ' + (i % LIFE_W + 1) + ' reads ' + a[i] + ' where the reference holds ' + b[i];
+    return '';
+  }
+  // The engine's own module, when this page holds one (ENGINE.1's second slice): the host loads Life
+  // and steps it eleven frames by manual ticks, a frame a tick at a budget of 0, and the plane at
+  // frames 1 and 11 is the reference Life's generations 0 and 10 byte for byte, the soup read off the
+  // Clock's frame the engine writes as the first act of each step and the rule after it; frame 2 again
+  // on a second host in budgets of 2,000 cells is the same plane; the module's memory grows at the
+  // load, detaching every earlier buffer, and every read after it is right.
+  function caseEngine() {
+    var wasm = builtModule();
+    if (!wasm) return { counters: { module: 0 }, problems: [] };
+    var bytes = bytesOfBase64(wasm), P = [];
+    var k = { module: bytes.length, reference0: 0, reference10: 0, grown: 0, devices: 0, frames: 0, equal: 0, live1: 0, live11: 0, chunked: 0, chunkedCalls: 0, reloaded: 0 };
+    var gen0 = lifeReference(1, 0), gen1 = lifeReference(1, 1), gen10 = lifeReference(1, 10);
+    k.reference0 = liveOf(gen0); k.reference10 = liveOf(gen10);
+    if (k.reference0 !== 23683 || k.reference10 !== 14482) P.push('the reference Life counts ' + k.reference0 + ' and ' + k.reference10 + ' live cells at generations 0 and 10, not the 23,683 and 14,482 the first slice measured outside the engine');
+    var exports = HOST.instantiateSync(bytes), before = exports.memory.buffer.byteLength;
+    var host = new HOST({ drive: 'manual', budget: 0, now: frozen });
+    try {
+      var a = host.attach(exports);
+      if (!a.ok) { P.push('the host refused the engine module: ' + a.sentence); return { counters: k, problems: P }; }
+      var ld = host.load(lifeText, 'life.vla');
+      if (!ld.ok) { P.push('Life did not load: ' + ld.sentence); return { counters: k, problems: P }; }
+      k.grown = exports.memory.buffer.byteLength > before ? 1 : 0;
+      if (!k.grown) P.push('the module\'s memory did not grow at the load, so no detached buffer was met');
+      if (ld.title !== 'Life' || ld.mode !== 'plane' || ld.w !== LIFE_W || ld.h !== LIFE_H || ld.rate !== 30) P.push('the cartridge row says ' + [ld.title, ld.mode, ld.w, ld.h, ld.rate].join(' '));
+      var said = host.sentences().map(function (s) { return s.text; }).join('\n');
+      if (said.indexOf('The budget: 62,964 formula cells a frame at 30 frames a second, 1,888,920 a second, under the console\'s line of 2,000,000.') < 0) P.push('no sentence gives Life\'s budget from the engine\'s describe');
+      var d = new Driver({ exports: exports }).call('alonzo_describe', [ld.handle], []).text;
+      ['(device "Screen" "A1:LH200" effect)', '(device "Palette" "A1:C16" effect)', '(device "Input" "A1:E18" input)', '(device "Clock" "A1:B3" input)', '(device "File" "A1:B3" effect)'].forEach(function (w) {
+        if (d.indexOf(w + '\n') < 0) P.push('the describe holds no ' + w);
+      });
+      k.devices = (d.match(/^\(device /mg) || []).length;
+      host.start();
+      var t = 1000, frame2 = null;
+      host.tick(t);
+      for (var f = 1; f <= 11; f++) {
+        t += 34;
+        host.tick(t);
+        var n = host.counters().frame;
+        if (n !== f) { P.push('after tick ' + f + ' the host is at frame ' + n); break; }
+        if (f === 1) { var d1 = firstDiff(host.plane, gen0); if (d1) P.push('frame 1 is not the reference soup: ' + d1); else k.equal++; k.live1 = liveOf(host.plane); }
+        if (f === 2) frame2 = host.plane;
+        if (f === 11) { var d11 = firstDiff(host.plane, gen10); if (d11) P.push('frame 11 differs from the reference Life at generation 10: ' + d11); else k.equal++; k.live11 = liveOf(host.plane); }
+      }
+      k.frames = host.counters().frame;
+      var refusals = host.sentences().filter(function (s) { return /refused/.test(s.text); });
+      if (refusals.length) P.push('the host was refused: ' + refusals[0].text);
+      // A reload at rate 0 is frame 0 at once: the plane the host holds is the new grid's, every cell 0,
+      // and not the last run's frame 11 (the owner's hand test, 2026-10-09).
+      var rl = host.load(lifeText.replace('(rate 30)', '(rate 0)'), 'life.vla');
+      if (!rl.ok) P.push('the reload at rate 0 was refused: ' + rl.sentence);
+      else if (host.counters().frame !== 0) P.push('after the reload the host is at frame ' + host.counters().frame);
+      else if (!host.plane || host.plane.length !== LIFE_W * LIFE_H || host.plane.some(function (x) { return x !== 0; })) P.push('after the reload the host holds a plane of ' + (host.plane ? liveOf(host.plane) : 'no') + ' live cells, not frame 0\'s empty one');
+      else k.reloaded = 1;
+      // A budget never changes a value: frame 2 again, on a second host over the same module.
+      var second = new HOST({ drive: 'manual', budget: 2000, now: frozen });
+      try {
+        second.attach(exports);
+        var l2 = second.load(lifeText, 'life.vla');
+        if (!l2.ok) P.push('Life did not load a second time: ' + l2.sentence);
+        else {
+          second.start(); second.tick(1000); second.tick(1034); second.tick(1068);
+          var c2 = second.counters();
+          k.chunkedCalls = c2.calls;
+          if (c2.frame !== 2) P.push('the second host is at frame ' + c2.frame + ', not 2');
+          else if (!frame2) P.push('no frame 2 was kept from the first host');
+          else {
+            var d2 = firstDiff(second.plane, frame2), d2r = firstDiff(second.plane, gen1);
+            if (d2) P.push('frame 2 in budgets of 2,000 differs from the unchunked frame 2: ' + d2);
+            else if (d2r) P.push('frame 2 is not the reference Life at generation 1: ' + d2r);
+            else k.chunked = 1;
+          }
+        }
+      } finally { second.destroy(); }
+    } finally { host.destroy(); }
+    return { counters: k, problems: P };
+  }
+  // The double answers what the module answers (ENGINE.1's second slice, decision 8): eleven
+  // refusals issued to the fake module and to the engine's, each answered with the same status and id.
+  function caseParity() {
+    var wasm = builtModule();
+    if (!wasm) return { counters: { module: 0 }, problems: [] };
+    var bytes = bytesOfBase64(wasm), P = [];
+    function scenarios(exports) {
+      var D = new Driver({ exports: exports }), out = [];
+      function load(text) { return D.call('alonzo_load', [], [text, 'life.vla']); }
+      out.push(['a manifest without its rate', load(lifeText.replace('(rate 30)', ''))]);
+      out.push(['a (spec 3)', load(lifeText.replace('(spec 2)', '(spec 3)'))]);
+      out.push(['bytes that are not UTF-8', D.call('alonzo_load', [], [new Uint8Array([0x28, 0xff, 0xfe, 0x29]), 'bad.vla'])]);
+      var L = load(lifeText), m = /^\(cartridge (\d+) /.exec(L.text);
+      if (!m) { P.push('Life did not load for the parity: ' + L.id + ' ' + L.text); return out; }
+      var h = +m[1];
+      function write(rows) { return D.call('alonzo_write', [h], [rows]); }
+      out.push(['an edit of a sheet the grid does not hold', write('(cell "Nowhere" "A1" 1)')]);
+      out.push(['an edit of Screen.last', write('(cell "Screen.last" "B1" 1)')]);
+      out.push(['a formula into Clock!B1', write('(formula "Clock" "B1" "=1")')]);
+      out.push(['a derived row into a formula cell', write('(derived "Screen" "B2" 1)')]);
+      out.push(['a derived row into Input!B5', write('(derived "Input" "B5" 1)')]);
+      D.call('alonzo_step', [h, 1000], []);
+      out.push(['a write during a yielded step', write('(cell "Palette" "C1" "x")')]);
+      out.push(['a projection the grid does not have', D.call('alonzo_view', [h], ['photo', 'Screen', ''])]);
+      out.push(['a step of a handle not loaded', D.call('alonzo_step', [999, 0], [])]);
+      D.call('alonzo_unload', [h], []);
+      return out;
+    }
+    var fake = scenarios(FAKE.create({}).exports), real = scenarios(HOST.instantiateSync(bytes)), same = 0;
+    if (fake.length !== 11 || real.length !== 11) P.push('the scenarios ran ' + fake.length + ' times on the fake and ' + real.length + ' on the engine, not 11');
+    for (var i = 0; i < Math.min(fake.length, real.length); i++) {
+      var f = fake[i][1], r = real[i][1], name = fake[i][0];
+      if ((f.status !== 1 && f.status !== 2) || (r.status !== 1 && r.status !== 2)) P.push(name + ': the fake answered status ' + f.status + ' and the engine ' + r.status + ', where both refuse');
+      else if (f.status !== r.status || f.id !== r.id) P.push(name + ': the fake says ' + (f.id || 'status ' + f.status) + ' and the engine ' + (r.id || 'status ' + r.status));
+      else same++;
+    }
+    return { counters: { module: bytes.length, same: same }, problems: P };
   }
   function loopLine(name, k, problems) {
     var parts = [];
@@ -811,7 +1055,8 @@
   function runLoopOracle() {
     var out = [], dpr = window.devicePixelRatio || 1, ok = 0, R = HOST.RULES;
     out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
-    var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals], ['scale', caseScale]];
+    var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals], ['scale', caseScale],
+                 ['engine', caseEngine], ['parity', caseParity]];
     for (var i = 0; i < cases.length; i++) {
       var res;
       try { res = cases[i][1](); } catch (e) { res = { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }

@@ -17,19 +17,36 @@ whose frame rate is one, and an engine that can draw sixty can draw one.
 
 ## What this crate holds today
 
-The contract, and no code: this is the first commit's crate, and the
-repository's `CHARTER.md` is its constitution. What it will hold, in the
-order `ROADMAP.md` lays it:
+The engine's module. Built for `wasm32-unknown-unknown` it exports eleven
+names and imports none: `alonzo_load` takes a cartridge's bytes and answers
+a handle; `alonzo_write` takes rows in the one notation; `alonzo_step` takes
+a budget in cells and may yield, so the page never freezes; `alonzo_view`
+answers one window of a sheet as the view record or as the plane, a byte a
+cell; with `alonzo_describe`, `alonzo_unload`, the memory pair, the ABI
+number and the version beside them. The grid, its rows, the previous
+frame's twin sheets, the step in dependency order and the views are the
+language crate's, `vla-lang`'s machine; what this crate adds is what an
+engine is:
 
-- the Screen device over the view record, a canvas renderer of one window
-  of a grid, crisp at the machine's pixel ratio (`KERNEL.5`, laid here);
-- the loop, with a fixed timestep and a budget, so the grid never freezes
-  (`ENGINE.1`), and the frame path, the Screen sheet blitted whole as a
-  typed array and held equal to the view record by a test (`ENGINE.2`);
-- the Input and Clock devices (`ENGINE.3`), Audio (`ENGINE.4`) and File
-  (`ENGINE.5`);
-- the accelerators, each behind the naive evaluation's frames as its
-  reference (`ENGINE.6`).
+- the cartridge's manifest, read by the language's own reader and refused
+  by name when a directive is missing, doubled, unknown or out of range;
+- the device sheets, Screen, Palette, Input, Keys, Clock, Audio, File,
+  Camera and Write, each held to its layout at load and at every write, a
+  formula refused where the host writes and a derived write refused where
+  the host writes, the volatile functions refused with the Clock named;
+- the engine's own sheets, made at load: the Clock's frame, rate and seed,
+  the File's name and size, and the Input sheet when a cartridge holds none;
+- the frame number written into the Clock as the first act of every step,
+  the only clock there is;
+- `describe`, the manifest, the devices and the budget, and the engine's
+  own refusals, a catalogue of eight in `data/messages.vla`.
+
+The host that drives it is the repository's `web/host.js`. What comes next,
+in the order `ROADMAP.md` lays it: the frame path, the plane held equal to
+the record by a test (`ENGINE.2`); the Input and Clock devices finished
+(`ENGINE.3`), Audio (`ENGINE.4`) and File (`ENGINE.5`); and the
+accelerators, each behind the naive evaluation's frames as its reference
+(`ENGINE.6`).
 
 ## The rules that bind every line
 
@@ -41,8 +58,9 @@ order `ROADMAP.md` lays it:
   is the language's; what can only be measured is the engine's.
 - The engine's imports are the host's functions, named by hand as
   `extern "C"` and held to an allowlist read off the artifact on every
-  push; the crate depends on the language crate and nothing else. It makes
-  no outbound network call, ever.
+  push, its exports to the specification's eleven names; the crate depends
+  on the language crate and nothing else, which a check reads off the
+  manifests and the lock. It makes no outbound network call, ever.
 - Nothing the browser rents is rebuilt until a measurement says the rent is
   the bottleneck: the rasterizer, the shaping engine and the fonts stay the
   browser's.

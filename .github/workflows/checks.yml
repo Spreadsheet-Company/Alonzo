@@ -1,6 +1,11 @@
 # The checks, on every push to main and every pull request (REPO.2; the
 # viewport's page and its oracle since KERNEL.5; the host's loop, the
-# cartridges and the blit floors since ENGINE.1).
+# cartridges and the blit floors since ENGINE.1; the engine's own module over
+# the language crate, its exports and its one dependency since ENGINE.1's
+# second slice). The crate job fetches vla-lang from Frazaro's repository at
+# the commit Cargo.toml pins (Cargo.lock holds the full hash), the build's one
+# fetch and never the engine's, which imports nothing; that commit must be on
+# the remote for the job to resolve it.
 #
 # Two jobs, in Frazaro's shape. The ratchets job builds the engine's page
 # (tools/build_web.ps1, which needs no cargo: without the wasm artifact the
@@ -13,8 +18,10 @@
 # check says SKIPPED, and the crate job is where it bites. The crate job builds, formats, lints and tests the workspace, builds
 # the engine for the browser, builds the page again, and runs the same runner
 # under pwsh, so that the engine's import section is read off the artifact
-# itself and held to the allowlist written in tools/check_host_imports.ps1 and
-# the oracle runs under the image's Chrome on Linux: AD-4 (zero imports in the
+# itself and held to the allowlist written in tools/check_host_imports.ps1, its
+# export section to the eleven names in tools/check_host_exports.ps1, and the
+# oracle runs under the image's Chrome on Linux, the host over the engine's
+# own module among its cases: AD-4 (zero imports in the
 # language, an allowlist here) and AD-5 (the imports named by hand, never
 # generated) are checked on the file, not taken on faith, and SD-13 crosses
 # the road with them. The wasm and the page are kept as artifacts of the run.

@@ -22,6 +22,10 @@ publish = false
 crate-type = ["rlib", "cdylib"]
 
 [dependencies]
-# Empty on purpose (AD-5): the language crate joins at ENGINE.1, and nothing
-# else ever does. The engine's imports are the host's functions, declared by
-# hand as extern "C" and held to tools/check_host_imports.ps1's list.
+# The language crate, as the workspace pins it, and nothing else, ever
+# (AD-5; tools/check_engine_deps.ps1). Its C surface stays unexported: the
+# crate's `c-abi` feature is never turned on here, so the module exports the
+# engine's eleven names alone (tools/check_host_exports.ps1). The engine's
+# imports are the host's functions, declared by hand as extern "C" and held
+# to tools/check_host_imports.ps1's list, empty today.
+vla-lang.workspace = true

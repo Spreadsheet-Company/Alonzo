@@ -3,8 +3,10 @@
 **The host shim, `host.js`, runs a cartridge on the loop of `SPEC.md`
 section 5 over the engine's module, every input a cell it writes and every
 effect a cell it reads, and blits the Screen as a plane of colour indices.
-Until the language crate's four calls exist it runs against `fake.js`, a
-double of the module's eleven exports. The viewport, `viewport.js`, draws
+It runs over the engine's own module, `alonzo.wasm`, built into the page,
+the language computing every cell; `fake.js`, a double of the module's
+eleven exports, is what its oracle drives and what the page falls back to
+when no engine is built in. The viewport, `viewport.js`, draws
 one window of a sheet on a canvas from the view record alone: the Screen
 device in grid mode, which the first game on Alonzo, Frazaro, the
 spreadsheet, draws its grid through.**
@@ -43,7 +45,7 @@ smoothing off; a byte past the palette is magenta.
 |---|---|
 | `new AlonzoHost(options)` | `canvas` the plane's canvas (it takes the keys while focused); `box` the element the blit fits, the canvas's parent by default; `scale` a fixed number of device pixels a cell; `budget` a fixed budget in cells a step call, 0 for none; `callsPerTick` a fixed count of step calls a tick in place of the time slice; `now` the clock the budget is measured by; `drive: 'manual'` when the caller calls `tick` itself (the oracles) |
 | `attach(exports)` | asks `alonzo_abi_version` and refuses another number, then every export the loop calls: `{ ok, abi, version }` or `{ ok: false, sentence }` |
-| `load(text, name)` / `loadBytes(bytes, name)` | loads a cartridge, then `describe`, and reads the Camera, the Palette and the Keys: `{ ok, handle, title, mode, w, h, rate }` or the refusal's sentence |
+| `load(text, name)` / `loadBytes(bytes, name)` | unloads the grid it held, loads a cartridge, then `describe`, reads the Camera, the Palette and the Keys, and draws the new grid's frame 0 at once, nothing computed, so the canvas never shows a grid the module no longer holds: `{ ok, handle, title, mode, w, h, rate }` or the refusal's sentence |
 | `start()` / `stop()` | the animation-frame loop |
 | `tick(ts)` | one animation frame's work at its timestamp, what the loop calls |
 | `edit(row)` | a person's edit, one `cell` or `formula` row, issued after the next frame's inputs; at rate 0 it steps once |
@@ -52,13 +54,25 @@ smoothing off; a byte past the palette is magenta.
 | `runFrameSync()` | one whole frame now, whatever the clock (the blit's instrument) |
 | `viewRecord(sheet, window)` | a sheet's record as the module prints it, for a page to show |
 | `counters()` / `sentences()` | what the host has done; every sentence said, in order |
-| `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last }` for a page that draws the log in place |
-| `unload()` / `destroy()` | frees the handle; removes the listeners |
-| `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line), `frame` (`{ frame, window, scale }`), `load` |
+| `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
+| `unload()` / `destroy()` | frees the handle and empties the canvas; removes the listeners |
+| `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat, refusal }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line, `refusal` true for a refusal or a failure; a notice of a value the host coerced, a Camera cell read as 1 or a colour painted magenta, is not one), `frame` (`{ frame, window, scale }`, after a frame completes), `load` (`{ handle, title, mode, w, h, rate, window, scale }`, after frame 0 is drawn) |
 
 `AlonzoHost.instantiate(bytes)` and `instantiateSync(bytes)` instantiate a
 module with the empty import object of section 8.1; `AlonzoHost.RULES` holds
-the loop's constants.
+the loop's constants. The first step call of a cartridge asks for 2,000
+cells, about 9 ms of the engine's module, before the host has measured how
+many cells a millisecond the machine does; after it the budget is half the
+display's interval turned into cells. A refusal is the module's words once,
+then its id; the host adds the row's line only for a write of more than one
+row, and only when the module's words do not already name it.
+
+The engine's module answers as the double does, with the language's refusals
+and its own: Life loads with the Clock, the File and an Input sheet the
+engine makes, and steps about 230,000 cells a second in Chrome, so about 1.8
+generations a second at the slice the host spends, the progress sentence
+showing between them (`SPEC.md` section 5's slowness in plain sight; the
+speed is `CART.1`'s and `ENGINE.6`'s to raise).
 
 `fake.js` is the permanent test double: `AlonzoFake.create(options)` answers
 `{ exports, stats, digest, peek, frame }`, the exports the eleven names of
@@ -73,6 +87,10 @@ order of every write. Its memory grows by zero pages at every load and every
 seventeenth allocation, detaching the buffer, and its allocator counts what
 is live and what is freed wrongly. `options.abi`, `options.omit` and
 `options.growEvery` make the doubles the loop's oracle refuses or strains.
+Since `ENGINE.1`'s second slice its refusals carry the engine's module's ids
+and its write checks rows in the engine's order, the engine's own checks
+over every row before the language's, which the loop oracle's `parity` case
+holds scenario by scenario.
 
 The viewport is `viewport.js`, one plain script: no framework, no module
 syntax, no import, nothing fetched. It reads a view record, the lines
@@ -100,14 +118,18 @@ From a clone:
 powershell -File tools\build_web.ps1
 ```
 
-writes `web/index.html`; open it from disk. The engine's panel runs Life
-against the fake module: click the plane to give it the keys, type a row in
-the edit box and press Write (`(cell "Camera" "B1" 7)` moves the window),
-watch the log for the derived writes the module refuses, each repeat
-counted in its first line, and press Copy the log to take it as text; pick a
-device sheet
-to see its record live, and edit the cartridge's `(rate 30)` to `(rate 0)`
-and press Load the cartridge to see a step on every edit. Below it, pick a
+writes `web/index.html`; open it from disk. Build the engine first,
+`cargo build --release -p alonzo --target wasm32-unknown-unknown`, and the
+builder puts it in the page: the engine's panel then runs Life as the
+language computes it, about two generations a second; without it the panel
+runs against the fake module and says so. Type a row in the edit box and
+press Write (`(cell "Palette" "B1" "#FF8800")` turns the dead cells orange,
+`(cell "Screen" "B2:K11" 1)` holds a block alive while Life flows around
+it), watch the log, each repeat counted in its first line, and press Copy
+the log to take it as text; pick a sheet of the grid, the Clock's frame
+counting or the previous frame's twin, to see its record live; edit the
+cartridge's `(rate 30)` to `(rate 0)` and press Load the cartridge to see a
+step on every edit. Below it, pick a
 record, scroll on both
 axes, click a cell or drag a range, click a column or row header or the
 corner, drag a column's right edge in the header, set rows and columns and
@@ -136,8 +158,12 @@ baseline to the roadmap's bars.
 - `index.html?loop=1` runs the host loop's oracle: the host driven over a
   fixed input log against the fake module, its frames, writes, windows,
   sentences and end state held to what the page computes from the log, and
-  from a second fake module it drives with no host between, one line a case
-  into `<pre id="loop">`, which `tools/check_host_loop.ps1` reads.
+  from a second fake module it drives with no host between; and, when the
+  page holds the engine's module, the same host over it, Life's plane at
+  frames 1 and 11 equal byte for byte to a reference Life the page computes
+  (`engine`) and eleven refusals answered with the same id by the double and
+  the module (`parity`); one line a case into `<pre id="loop">`, which
+  `tools/check_host_loop.ps1` reads.
 - `index.html?blit=1` is the blit's instrument, the engine's second number:
   a 320 by 200 plane drawn through the host's whole frame 120 times at the
   scale that fits the screen and 120 at a scale of 1, each frame's
@@ -268,9 +294,8 @@ viewport, not an Excel clone.
   the floors, the owner's measurement, under `tools/check_render_floors.ps1`.
   A draw that moves on purpose is first reworded in the page's oracle, whose
   expectations are its own and never the viewport's.
-- **Where it is going:** `ENGINE.1`'s second slice runs the same host over
-  the engine's own module once the language crate's four calls exist and
-  are published, the fake module staying the double the shim is tested
-  against; `ENGINE.2` holds the plane equal to the record of the same
-  window; the viewport stays the grid projection's, and a grid cartridge
-  is drawn through it.
+- **Where it is going:** `ENGINE.2` holds the plane equal to the record of
+  the same window, and makes the language's plane view cheaper than its
+  3 to 5 ms a frame today; the viewport stays the grid projection's, and a
+  grid cartridge is drawn through it; the fake module stays the double the
+  shim is tested against, its ids the module's.
