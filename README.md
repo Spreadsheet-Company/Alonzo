@@ -22,8 +22,9 @@ is a grid, in its own crate, `vla-lang`, cut out of Frazaro's core.
 **Frazaro** is the set of bridges into and out of it: from English and the
 other phrasebooks to VLA, with a proof per sentence, and from VLA to the
 spreadsheet hosts and back. **Alonzo** is the devices and the clock: a
-Screen, an Audio, an Input, a Clock and a File sheet mapped into VLA's
-grid, as uxn's Varvara maps its devices into memory, and a loop that writes
+Screen, an Audio, an Input, a Clock, a File, a Camera and a Write sheet
+mapped into VLA's grid, as uxn's Varvara maps its devices into memory, and
+a loop that writes
 the input and clock cells, asks the language to step, reads the Screen
 sheet and the effect cells, and draws. Every input is a cell the engine
 writes. Every effect is a cell it reads. The engine's whole contract is
@@ -45,10 +46,11 @@ laid here), with its page and the checks that hold it.
 
 | File | What it is |
 |---|---|
-| `CHARTER.md` | the thesis, the honest bottom, the six rules and the frame, the lineage, the social hypothesis stated so that it can fail, the first numbers, what is not built, the licence |
-| `ROADMAP.md` | the open items, in the order each makes the next cheap, with the standing decisions `AD-1` to `AD-6` |
+| `CHARTER.md` | the thesis, the honest bottom, the seven rules and the frame, the lineage, the social hypothesis stated so that it can fail, the first numbers, what is not built, the licence |
+| `ROADMAP.md` | the open items, in the order each makes the next cheap, with the standing decisions `AD-1` to `AD-7` |
 | `REARVIEW.md` | the closed ledger, the sittings, and each item's full scoping before it is built |
-| `SPEC.md` | the specification, version 1: the cell as the unit, the device sheets cell by cell, the four calls and their records, the frame's order, the determinism rules, the cartridge's one file, the host's duties, reflection |
+| `SPEC.md` | the specification, version 2: the cell as the unit with two renderers of one model, the device sheets cell by cell with the Camera and the Write sheet among them, the four calls and their records, the frame's order and rate zero, the determinism rules, the cartridge's one file, the host's duties, reflection and the rule that the step computes values and never formulas |
+| `docs/ALGEBRA.md` | the horizon: design theory marked per idea and never a source of items; four readers of the engine, the course corrections a later specification might take, the crowds, and linear algebra as a first-class paradigm of the formula language, with its ladder |
 | `engine/` | the `alonzo` crate |
 | `web/` | the viewport, `viewport.js`, one plain script the first game takes as a file, and its page, built from `index.template.html` over seven records the door printed, with the render oracle and the floors' instrument as its modes; `web/README.md` is the page and the API |
 | `tools/` | the checks: the import allowlist read off the wasm, the licence map verified against the tree, the page's offline doctrine, the fixtures' pins, the render oracle under a headless browser and the render floors; the builder of the page; and the runner that reports one total |
@@ -97,6 +99,11 @@ empty crate, the count is zero.
    writable through the two calls.** The key map, the palette, the clock
    and the previous frame are sheets a person can open and change;
    `SPEC.md` is the page that lays them out.
+7. **The step computes values and never formulas.** A formula enters the
+   grid by `load` or by a `write` made on a person's act; the engine's own
+   effects write values. The grid writes the grid in data, through the
+   Write sheet, and never in code, and a test holds it: the formula cells
+   are equal before and after a step.
 
 ## Contributing, security, the name
 

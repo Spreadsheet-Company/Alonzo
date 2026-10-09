@@ -45,7 +45,11 @@ of the file it touches, as declared in `REUSE.toml`:
 - **A cartridge** is a VLA program and its sheets, with a Palette sheet.
   One that ships in this repository is a fixture of a floor or a demo, and
   carries 0BSD. A game is a repository of its own, under its author's name
-  and terms.
+  and terms. Its formulas are fixed at load: the step computes values and
+  never formulas, and a cartridge that keeps a state writes it through the
+  Write sheet as a value (`AD-7`; `SPEC.md`, section 3.9). A change to the
+  engine or to the language that lets a step install a formula fails
+  `AD-7`'s test and is not merged.
 - **An accelerator** needs its oracle before it is merged: the naive
   every-cell evaluation is the reference, and the accelerator's frames must
   equal its frames on the fixtures, as a second implementation follows the

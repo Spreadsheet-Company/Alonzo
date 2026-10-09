@@ -48,4 +48,9 @@ A cartridge is a VLA program and its sheets. The engine reads no VLA and
 evaluates no cell itself; every value is the language crate's, which has no
 imports at all. What a cartridge can do is therefore what the devices let
 it do: draw, sound, read the keys and the mouse, and read a file the person
-picked. Nothing else exists to it.
+picked. Nothing else exists to it. And a cartridge's formulas are the ones
+it was loaded with: the step computes values and never formulas (`AD-7`),
+so a cartridge cannot write code at run time, and the grid writes the grid
+only in data, through the Write sheet's values; the test that holds it is
+the language crate's, the formula cells equal before and after a step
+(`SPEC.md`, section 13).

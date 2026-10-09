@@ -4,7 +4,7 @@
 
 ## The standing decisions
 
-The charter's six rules, numbered so an item can cite them. The text is the charter's (§4), and an amendment is made there first.
+The charter's seven rules, numbered so an item can cite them. The text is the charter's (§4), and an amendment is made there first.
 
 - **`AD-1`. VLA's seams are the interface, and Frazaro is a door.** `alonzo` consumes `vla-lang` and never `frazaro-core`. A game's dependency tree holds the language crate and the engine crate and not the Frazaro core, checked by `cargo tree` in every game's CI. Frazaro's web door may depend on Alonzo; its crates, its command-line door, its add-in and its treaty never do.
 - **`AD-2`. Every early brick is also a Frazaro item, laid where it is first needed.** The ID is Frazaro's and stays in its registers; the code lands on the side of the line `AD-4` draws.
@@ -12,21 +12,22 @@ The charter's six rules, numbered so an item can cite them. The text is the char
 - **`AD-4`. Frazaro has no clock; Alonzo is the clock.** What can be a golden is VLA's or Frazaro's; what can only be measured is Alonzo's. The check on each side is the import section: zero there, an allowlist here.
 - **`AD-5`. The engine's imports are the host's functions, named by hand and held to a list; the engine crate depends on the language crate and nothing else.** Each import, when one is needed, an `extern "C"` function the host shim provides, declared one by one; no generated glue, no second dependency; the first specification needs none, every device being a sheet read and written through the exports (`SPEC.md` §8.2). Adopted by the owner 2026-10-08 at the scoping of `REPO.1`; its second sentence amended the same day at the approval of `SPEC.1`.
 - **`AD-6`. Everything the engine holds is a cell of a named sheet, viewable through the one view call and, except the previous frame's twins and the plane, writable through the one write call; a device is a sheet's layout in `SPEC.md`, and no device holds state that is not a cell.** Reflection over the whole stack, sanctified: the Keys sheet, the Palette, the Clock and the `.last` twins are its first fruits, and every such act is a row in the one notation, logged by the replay. Adopted by the owner 2026-10-08 at the approval of `SPEC.1`.
+- **`AD-7`. The step computes values and never formulas; a formula enters the grid by `load` or by a `write` made on a person's act, and the engine's own effects write values.** Eval by a person, the REPL, kept; eval by the program refused, as the `GENSYM` veto's `eval` clause already has it; the grid writes the grid in data through the Write sheet (`SPEC.md` §3.9); held by a test, the formula cells equal before and after a step. Adopted by the owner 2026-10-08 at the approval of `SPEC.2`, the charter amended first.
 
-Frazaro's standing decisions that cross the road are cited by their own numbers and never re-minted: `SD-13` (no outbound call, ever), `SD-18` (VBA the reference for the language), `SD-23` (one model, many projections; the interface's own state), `SD-34` (every engine interruptible, its progress a sentence), the owner's veto of `GENSYM`, and the conformance treaty.
+Frazaro's standing decisions that cross the road are cited by their own numbers and never re-minted: `SD-13` (no outbound call, ever), `SD-18` (VBA the reference for the language), `SD-23` (one model, many projections; the interface's own state), `SD-34` (every engine interruptible, its progress a sentence), the owner's veto of `GENSYM`, which carries `eval` by its own words (`AD-7`), and the conformance treaty.
 
 ## The families
 
 | Family | What it holds | Next free |
 |---|---|---|
-| `SPEC` | the specification: the device sheets and the four calls, the page that is the product | `SPEC.2` |
+| `SPEC` | the specification: the device sheets and the four calls, the page that is the product | `SPEC.3` |
 | `ENGINE` | the loop, the devices, the renderer, the frame path, the floors, the accelerators | `ENGINE.7` |
 | `CART` | the cartridges: the benchmark, the games, each a fixture here or a repository of its own | `CART.6` |
 | `REPO` | the repository itself: licence, governance, checks, CI, the contributor's path, the counts | `REPO.4` |
 
 ## The order, and why
 
-Each item is what makes the next cheap, the instrument before the operation: `REPO.2` before the first import, `SPEC.1` before the first call into the language, `CART.1` before any accelerator. An item that waits on Frazaro names the Frazaro item and never re-mints it. Two tracks run in parallel until the loop: the repository and the specification need nothing from Frazaro, and the renderer needs only the view record, which exists as goldens; the loop and everything after it need the `vla-lang` cut, Frazaro's work before `KERNEL.7`, which `SPEC.1` tells what to expose. The frame-rate floor needs `KERNEL.7`'s first functions. The games after the first are repositories of their own and leave this file when they are founded. The reasoning and the fan-out table are in `REARVIEW.md` under the sittings of 2026-10-08.
+Each item is what makes the next cheap, the instrument before the operation: `REPO.2` before the first import, `SPEC.1` before the first call into the language, `SPEC.2` before the four calls are written against the page, `CART.1` before any accelerator. An item that waits on Frazaro names the Frazaro item and never re-mints it. Two tracks run in parallel until the loop: the repository and the specification need nothing from Frazaro, and the renderer needs only the view record, which exists as goldens; the loop and everything after it need the `vla-lang` cut, Frazaro's work before `KERNEL.7`, which `SPEC.1` tells what to expose. The frame-rate floor needs `KERNEL.7`'s first functions. The games after the first are repositories of their own and leave this file when they are founded. The reasoning and the fan-out table are in `REARVIEW.md` under the sittings of 2026-10-08.
 
 ## 🌍 THE REPOSITORY
 
@@ -34,7 +35,7 @@ Each item is what makes the next cheap, the instrument before the operation: `RE
 
 ## 📜 THE SPECIFICATION
 
-*No open item. `SPEC.1`, the page, closed 2026-10-08 and is the first line of the ledger's specification section in `REARVIEW.md`; `SPEC.md` is version 1, and a change to the page that is more than a correction is a new version, filed here as `SPEC.2` when one is wanted.*
+*No open item. `SPEC.1` and `SPEC.2`, the page's two versions, closed 2026-10-08 and are the two lines of the ledger's specification section in `REARVIEW.md`; `SPEC.md` is version 2, and a change to the page that is more than a correction is a new version, filed here as `SPEC.3` when one is wanted.*
 
 ## 🔧 THE ENGINE
 
