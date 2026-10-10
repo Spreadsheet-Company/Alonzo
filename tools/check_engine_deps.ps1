@@ -13,17 +13,20 @@ dependency wrote this check with it. A second dependency, a build script's,
 a test's, or one pulled in by the language crate itself (it has none, its
 own contract), shows in the lock and fails here by name.
 
-THE PIN, the owner's route of 2026-10-09: vla-lang by git, at a commit of
-Frazaro's, KERNEL.25's since CART.1's second slice (the evaluator's hot path;
-KERNEL.24's before it, from ENGINE.2's second slice, and KERNEL.22's before
-that), until vla-lang is on crates.io; a move
-of the pin is the two baseline lines below, which the control's mutants are
-read off, raised in the same commit as Cargo.toml's line and the lock; then
-at crates.io the baseline below
-becomes the exact registry pin "=0.9.0" with the registry's source and a
-checksum, in the same commit as Cargo.toml's line (REARVIEW.md, ENGINE.1's
-second slice, decision 1). A rev and never a branch or a tag, since a branch
-moves; an exact version and never a range, since a range moves too.
+THE PIN, the owner's route of 2026-10-09 (REARVIEW.md, ENGINE.1's second
+slice, decision 1): vla-lang by git at a commit of Frazaro's while the
+language's change is unreleased, and the exact registry pin once it is
+released. Since 2026-10-10 it is "=0.8.1" from crates.io, the release that
+decision expected as 0.9.0, whose source is KERNEL.25's (f5dc344) byte for
+byte; before it, git at f5dc344 (CART.1's second slice), at KERNEL.24's
+c0686a9 (ENGINE.2's second slice) and at KERNEL.22's 6cca2e1. A git pin may
+return for KERNEL.20 until the release after it. The pin is either kind, and
+the baseline below says which: a git pin is a rev, never a branch or a tag,
+since a branch moves, resolved in the lock to the full commit with no
+checksum; a registry pin is one exact version, never a range, since a range
+moves too, resolved in the lock to the registry with the crate's checksum.
+A move of the pin is the baseline's three lines, which the control's mutants
+are read off, raised in the same commit as Cargo.toml's line and the lock.
 
 WHAT IT READS, line by line, no TOML library (none ships with PowerShell):
   1. Cargo.toml: the [workspace.dependencies] table holds one entry, vla-lang,
@@ -32,18 +35,28 @@ WHAT IT READS, line by line, no TOML library (none ships with PowerShell):
      `vla-lang.workspace = true`, and the file has no other table of
      dependencies ([dev-dependencies], [build-dependencies], a target's).
   3. Cargo.lock: exactly two [[package]] entries, alonzo with no source (the
-     workspace's own) and vla-lang at the baseline's source; alonzo depends
-     on vla-lang alone.
+     workspace's own) and vla-lang at the baseline's source and checksum, at
+     the pin's version when the pin is a registry's; alonzo depends on
+     vla-lang alone.
+  0. Before the files, the baseline itself: a rev with its full commit and no
+     checksum, or one exact version with the registry and a checksum, so the
+     check cannot be satisfied by moving its own baseline to a branch or a
+     range.
   4. frazaro-core named by no table line of the two manifests and by no
      locked package (AD-1), told in its own line; the manifests' comments
      name it to say why, and are not read.
 
 -Control proves the reading on a scratch copy of the three files: the copy
-passes, then seven mutants each fail for their own reason, each asserting its
+passes, then its mutants each fail for their own reason, each asserting its
 anchor once and proving it applied before the check is asked: a second
 dependency in the engine's table, a [dev-dependencies] table, the pin moved
-to a branch, a range pin, the lock at another commit, frazaro-core in the
-lock, and a second entry in the workspace's table.
+to a branch, a range pin, frazaro-core in the lock, a second entry in the
+workspace's table, and by the pin's kind, the lock at another commit (git),
+or at another version and with another checksum (registry); seven for a git
+pin, eight for a registry pin. Then the baseline's own reading: a git
+baseline (f5dc344's, the pin before the registry's) and a registry baseline
+pass, and a baseline moved to a range, to a branch, or to a registry with no
+checksum each fail.
 
 House style (tools/check_*.ps1): PowerShell 5.1 and pwsh alike, host-free, a
 hardcoded and reviewable baseline; no cargo needed. Exit 0 clean; exit 1 with
@@ -61,9 +74,14 @@ $ErrorActionPreference = 'Stop'
 if ($Root -eq '') { $Root = Split-Path -Parent $PSScriptRoot }
 
 # --- The baseline: the language crate's pin, as Cargo.toml writes it and as
-#     Cargo.lock resolves it. The two lines are one fact, raised together. ---
-$langSpec = '{ git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "f5dc344" }'
-$langSource = 'git+https://github.com/Spreadsheet-Company/Frazaro?rev=f5dc344#f5dc344aeae5e3efdad03b6a7dbf7b1783e313fe'
+#     Cargo.lock resolves it, with the crate's checksum when the pin is a
+#     registry's and '' when it is git's. The three lines are one fact,
+#     raised together. The git pin before this one, for the day one returns:
+#     '{ git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "f5dc344" }',
+#     'git+https://github.com/Spreadsheet-Company/Frazaro?rev=f5dc344#f5dc344aeae5e3efdad03b6a7dbf7b1783e313fe', ''. ---
+$langSpec = '"=0.8.1"'
+$langSource = 'registry+https://github.com/rust-lang/crates.io-index'
+$langChecksum = '3c44ebaf0d769b193a2d31ca0e04abe2332dc743ac50d5c9ef5fb2e0318cd202'
 
 function Get-Lines([string]$path) {
     $text = [System.IO.File]::ReadAllText($path)
@@ -121,9 +139,31 @@ function Get-Packages([string]$path) {
     return ,$packages
 }
 
+# A baseline's own reading: a git pin is a rev, locked to its full commit with
+# no checksum; a registry pin is one exact version, locked to a registry with
+# the crate's checksum. Anything else is a pin that moves.
+function Get-PinProblems([string]$spec, [string]$source, [string]$checksum) {
+    $out = New-Object System.Collections.Generic.List[string]
+    $git = [regex]::Match($spec, '^\{\s*git\s*=\s*"[^"]+"\s*,\s*rev\s*=\s*"([0-9a-f]{7,40})"\s*\}$')
+    $exact = [regex]::Match($spec, '^"=([0-9]+\.[0-9]+\.[0-9]+)"$')
+    if ($git.Success) {
+        $rev = $git.Groups[1].Value
+        if ($source -notmatch ('^git\+[^?]+\?rev=' + $rev + '#' + $rev + '[0-9a-f]{' + (40 - $rev.Length) + '}$')) { $out.Add("the baseline's git pin, rev $rev, is not locked to that commit in full: $source") }
+        if ($checksum -ne '') { $out.Add("the baseline's git pin carries a checksum, which a git source never has: $checksum") }
+    } elseif ($exact.Success) {
+        if (-not $source.StartsWith('registry+')) { $out.Add("the baseline's registry pin, =$($exact.Groups[1].Value), is not locked to a registry: $source") }
+        if ($checksum -notmatch '^[0-9a-f]{64}$') { $out.Add("the baseline's registry pin has no checksum of the crate, 64 hex digits: '$checksum'") }
+    } else {
+        $out.Add("the baseline pins vla-lang as $spec, neither a git rev nor one exact version: a branch, a tag or a range moves")
+    }
+    return ,$out
+}
+
 # Every problem of the tree at $dir, one line each.
 function Get-Problems([string]$dir) {
     $out = New-Object System.Collections.Generic.List[string]
+    # 0. The baseline itself, before the files are held to it.
+    foreach ($p in (Get-PinProblems $langSpec $langSource $langChecksum)) { $out.Add($p) }
     $ws = Join-Path $dir 'Cargo.toml'
     $eng = Join-Path (Join-Path $dir 'engine') 'Cargo.toml'
     $lock = Join-Path $dir 'Cargo.lock'
@@ -174,6 +214,9 @@ function Get-Problems([string]$dir) {
     if ($vla.Count -ne 1) { $out.Add('Cargo.lock: no single vla-lang package') }
     else {
         if ($vla[0].Source -cne $langSource) { $out.Add("Cargo.lock: vla-lang resolves to $($vla[0].Source); the baseline is $langSource") }
+        if ($vla[0].Checksum -cne $langChecksum) { $out.Add("Cargo.lock: vla-lang's checksum is '$($vla[0].Checksum)'; the baseline is '$langChecksum'") }
+        $exact = [regex]::Match($langSpec, '^"=([0-9]+\.[0-9]+\.[0-9]+)"$')
+        if ($exact.Success -and $vla[0].Version -cne $exact.Groups[1].Value) { $out.Add("Cargo.lock: vla-lang is locked at version $($vla[0].Version), where the pin is exactly $($exact.Groups[1].Value)") }
         if ($vla[0].Deps.Count -gt 0) { $out.Add("Cargo.lock: vla-lang depends on $($vla[0].Deps -join ', '); the language crate has no dependency") }
         if ($vla[0].Source.StartsWith('registry+') -and $vla[0].Checksum -eq '') { $out.Add('Cargo.lock: vla-lang comes from a registry with no checksum') }
     }
@@ -208,17 +251,25 @@ if ($Control) {
         if ($clean.Count -eq 0) { $verdicts.Add('the copy as it stands: passes, as it should') }
         else { $ok = $false; $verdicts.Add("the copy as it stands: FAILED but should pass: $($clean -join ' | ')") }
 
-        $commit = ([regex]::Match($langSource, '#([0-9a-f]{40})$')).Groups[1].Value
-        $revText = ([regex]::Match($langSpec, 'rev = "[0-9a-f]+"')).Value
+        $branchSpec = '{ git = "https://github.com/Spreadsheet-Company/Frazaro", branch = "main" }'
         $mutants = @(
             @{ Name = 'a second dependency in the engine';  File = 'engine/Cargo.toml'; From = 'vla-lang.workspace = true'; To = "vla-lang.workspace = true`nserde = `"1`""; Want = 'engine/Cargo.toml: [dependencies] holds 2 line(s)' },
             @{ Name = 'a [dev-dependencies] table';         File = 'engine/Cargo.toml'; From = 'vla-lang.workspace = true'; To = "vla-lang.workspace = true`n`n[dev-dependencies]`nproptest = `"1`""; Want = 'a [dev-dependencies] table' },
-            @{ Name = 'the pin moved to a branch';          File = 'Cargo.toml';        From = $revText;                   To = 'branch = "main"'; Want = 'a branch, which moves' },
-            @{ Name = 'a range pin';                        File = 'Cargo.toml';        From = $langSpec;                  To = '"0.9"'; Want = 'a range of versions, which moves' },
-            @{ Name = 'the lock at another commit';         File = 'Cargo.lock';        From = $commit;                    To = ('0' * 40); Want = 'Cargo.lock: vla-lang resolves to' },
+            @{ Name = 'the pin moved to a branch';          File = 'Cargo.toml';        From = "vla-lang = $langSpec";     To = "vla-lang = $branchSpec"; Want = 'a branch, which moves' },
+            @{ Name = 'a range pin';                        File = 'Cargo.toml';        From = "vla-lang = $langSpec";     To = 'vla-lang = "0.8"'; Want = 'a range of versions, which moves' },
             @{ Name = 'frazaro-core in the lock';           File = 'Cargo.lock';        From = '[[package]]';              To = "[[package]]`nname = `"frazaro-core`"`nversion = `"0.8.0`"`n`n[[package]]"; Want = "Cargo.lock: locks frazaro-core; the engine consumes vla-lang and never Frazaro's core (AD-1)" },
             @{ Name = 'a second entry in the workspace''s table'; File = 'Cargo.toml';   From = "vla-lang = $langSpec";     To = "vla-lang = $langSpec`nfrazaro-core = `"=0.8.0`""; Want = 'Cargo.toml: [workspace.dependencies] holds 2 entries' }
         )
+        # The lock's mutants by the pin's kind, read off the baseline: a git
+        # pin's commit, or a registry pin's version and checksum.
+        $exactVersion = ([regex]::Match($langSpec, '^"=([0-9]+\.[0-9]+\.[0-9]+)"$')).Groups[1].Value
+        if ($exactVersion -ne '') {
+            $mutants += @{ Name = 'the lock at another version';    File = 'Cargo.lock'; From = "version = `"$exactVersion`""; To = 'version = "0.8.99"'; Want = 'Cargo.lock: vla-lang is locked at version 0.8.99' }
+            $mutants += @{ Name = 'the lock with another checksum'; File = 'Cargo.lock'; From = $langChecksum; To = ('0' * 64); Want = "Cargo.lock: vla-lang's checksum is" }
+        } else {
+            $commit = ([regex]::Match($langSource, '#([0-9a-f]{40})$')).Groups[1].Value
+            $mutants += @{ Name = 'the lock at another commit';     File = 'Cargo.lock'; From = $commit; To = ('0' * 40); Want = 'Cargo.lock: vla-lang resolves to' }
+        }
         foreach ($m in $mutants) {
             $t = @{}
             foreach ($k in $texts.Keys) { $t[$k] = $texts[$k] }
@@ -234,12 +285,33 @@ if ($Control) {
             elseif ($problems.Count -eq 0) { $ok = $false; $verdicts.Add("$($m.Name): PASSED but should fail") }
             else { $ok = $false; $verdicts.Add("$($m.Name): fails, but without '$($m.Want)': $($problems -join ' | ')") }
         }
+
+        # The baseline's own reading, asked of baselines written here: both
+        # kinds pass, and a baseline that moves fails.
+        $registry = 'registry+https://github.com/rust-lang/crates.io-index'
+        $baselines = @(
+            @{ Name = 'a git baseline, f5dc344''s'; Pin = @('{ git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "f5dc344" }', 'git+https://github.com/Spreadsheet-Company/Frazaro?rev=f5dc344#f5dc344aeae5e3efdad03b6a7dbf7b1783e313fe', ''); Want = '' },
+            @{ Name = 'a registry baseline';               Pin = @('"=0.8.1"', $registry, ('ab' * 32)); Want = '' },
+            @{ Name = 'a baseline moved to a range';       Pin = @('"0.8"', $registry, ('ab' * 32)); Want = 'neither a git rev nor one exact version' },
+            @{ Name = 'a baseline moved to a branch';      Pin = @($branchSpec, ('git+https://github.com/Spreadsheet-Company/Frazaro?branch=main#' + ('ab' * 20)), ''); Want = 'neither a git rev nor one exact version' },
+            @{ Name = 'a registry baseline with no checksum'; Pin = @('"=0.8.1"', $registry, ''); Want = 'no checksum of the crate' }
+        )
+        foreach ($b in $baselines) {
+            $problems = Get-PinProblems $b.Pin[0] $b.Pin[1] $b.Pin[2]
+            $hit = @($problems | Where-Object { $_.Contains($b.Want) }).Count -gt 0
+            if ($b.Want -eq '') {
+                if ($problems.Count -eq 0) { $verdicts.Add("$($b.Name): passes, as it should") }
+                else { $ok = $false; $verdicts.Add("$($b.Name): FAILED but should pass: $($problems -join ' | ')") }
+            } elseif ($problems.Count -gt 0 -and $hit) { $verdicts.Add("$($b.Name): fails, as it should ($($problems -join ' | '))") }
+            elseif ($problems.Count -eq 0) { $ok = $false; $verdicts.Add("$($b.Name): PASSED but should fail") }
+            else { $ok = $false; $verdicts.Add("$($b.Name): fails, but without '$($b.Want)': $($problems -join ' | ')") }
+        }
     } finally {
         Remove-Item -Recurse -Force -LiteralPath $tmp -ErrorAction SilentlyContinue
     }
     foreach ($v in $verdicts) { Write-Host ('control: ' + $v) }
     if ($ok) {
-        Write-Host "OK: control: the copy passes and $($mutants.Count) mutants fail, each for its own reason"
+        Write-Host "OK: control: the copy passes and $($mutants.Count) mutants fail, each for its own reason; of $($baselines.Count) baselines, the git one and the registry one pass and $($baselines.Count - 2) fail"
         exit 0
     }
     Write-Host 'FAIL: control: the reading did not behave as the header says'
@@ -252,5 +324,6 @@ if ($problems.Count -gt 0) {
     foreach ($p in $problems) { Write-Host "  ! $p" }
     exit 1
 }
-Write-Host "OK: the engine depends on vla-lang alone, pinned at $langSpec and locked at $langSource; frazaro-core named nowhere (AD-1, AD-5)"
+$checksumText = if ($langChecksum -ne '') { ", checksum $langChecksum" } else { '' }
+Write-Host "OK: the engine depends on vla-lang alone, pinned at $langSpec and locked at $langSource$checksumText; frazaro-core named nowhere (AD-1, AD-5)"
 exit 0

@@ -84,8 +84,9 @@ cargo build --workspace
 cargo build --release -p alonzo --target wasm32-unknown-unknown
 ```
 
-The first fetches the language crate, `vla-lang`, from Frazaro's repository
-at the commit `Cargo.toml` pins, until it is on crates.io. The second writes
+The first fetches the language crate, `vla-lang`, from crates.io at the one
+version `Cargo.toml` pins, or from Frazaro's repository at a commit while the
+engine waits on a change the language has not yet released. The second writes
 `target/wasm32-unknown-unknown/release/alonzo.wasm`, the module a page
 loads. Its import section is read on every push and held to a list of the
 host's functions and nothing else (`REPO.2`), the count zero today; its

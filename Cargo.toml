@@ -34,14 +34,17 @@ license = "Apache-2.0"
 repository = "https://github.com/Spreadsheet-Company/Alonzo"
 
 [workspace.dependencies]
-# The language crate and nothing else (AD-5), pinned to one commit: the
-# evaluator's hot path, KERNEL.25 in Frazaro (CART.1's second slice moved it
-# there), over the plane kept at the frame's end of KERNEL.24 and the handle
-# and the four calls of KERNEL.22, by git until vla-lang is on crates.io, when
-# this line becomes the exact registry pin `"=0.9.0"` (the owner's route,
-# 2026-10-09; REARVIEW.md, ENGINE.1's second slice, decision 1). A rev and
-# never a branch, since a branch moves.
-vla-lang = { git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "f5dc344" }
+# The language crate and nothing else (AD-5), pinned to one version on
+# crates.io: vla-lang 0.8.1, the release of KERNEL.25's source (Frazaro's
+# f5dc344, byte for byte: the evaluator's hot path, over the plane kept at the
+# frame's end of KERNEL.24 and the handle and the four calls of KERNEL.22).
+# The owner's route (2026-10-09; REARVIEW.md, ENGINE.1's second slice,
+# decision 1): a git rev while the language's change is unreleased, and the
+# exact registry pin once it is, which that decision expected as 0.9.0 and
+# Frazaro released as 0.8.1 (2026-10-10); a git rev may return for KERNEL.20
+# until the release after it. An exact version and never a range, a rev and
+# never a branch, since a range and a branch move.
+vla-lang = "=0.8.1"
 
 [profile.release]
 # Small, deterministic, and without an unwinder: a panic aborts, so the wasm
