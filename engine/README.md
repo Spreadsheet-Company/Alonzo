@@ -47,9 +47,11 @@ read with the language's own reader, every frame of the repository's test
 card, a cartridge holding every kind of value a Screen cell can under a
 Camera that pans a column a frame, and Life at its corners (`ENGINE.2`).
 
-The host that drives it is the repository's `web/host.js`. What comes next,
-in the order `ROADMAP.md` lays it: the frame path's floor over this module
-(`ENGINE.2`); the Input and Clock devices finished
+The host that drives it is the repository's `web/host.js`, whose frame path
+over this module, the plane viewed and blitted, is held to the same floors
+as over its double; the language keeps the Screen's plane at each frame's
+end, so a view is a copy. What comes next, in the order `ROADMAP.md` lays
+it: the Input and Clock devices finished
 (`ENGINE.3`), Audio (`ENGINE.4`) and File (`ENGINE.5`); and the
 accelerators, each behind the naive evaluation's frames as its reference
 (`ENGINE.6`).

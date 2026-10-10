@@ -51,7 +51,9 @@ every cell of every frame, and the fake module stays the double its oracle
 drives; then the frame path's oracle (`ENGINE.2`), the plane the host draws
 held to the view record of the same window, byte for value, through the
 Camera's window and into the canvas's pixels, over a test card that holds
-every kind of value a Screen cell can.
+every kind of value a Screen cell can; and the frame path itself over the
+engine's module, the language keeping the Screen's plane at each frame's
+end, so that a view is a copy, held to the blit's floors.
 
 | File | What it is |
 |---|---|

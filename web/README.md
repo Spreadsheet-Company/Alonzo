@@ -52,6 +52,7 @@ smoothing off; a byte past the palette is magenta.
 | `keyDown(code, key)` / `keyUp(code)` / `releaseKeys()` | the keys held, by `KeyboardEvent.code` |
 | `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer in Screen cells, 0 when off the Screen |
 | `runFrameSync()` | one whole frame now, whatever the clock (the blit's instrument) |
+| `redraw()` | the last complete frame drawn again, nothing stepped: the Camera and the Palette read as they stand, the plane viewed through the window and blitted, no other effect read (the blit's instrument over the engine's module, where a step is the evaluator's); `false` without a plane cartridge |
 | `viewRecord(sheet, window)` | a sheet's record as the module prints it, for a page to show |
 | `counters()` / `sentences()` | what the host has done; every sentence said, in order |
 | `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
@@ -181,10 +182,14 @@ baseline to the roadmap's bars.
   pans a column a frame; one line a case into `<pre id="loop">`, which
   `tools/check_host_loop.ps1` reads.
 - `index.html?blit=1` is the blit's instrument, the engine's second number:
-  a 320 by 200 plane drawn through the host's whole frame 120 times at the
-  scale that fits the screen and 120 at a scale of 1, each frame's
-  main-thread cost, printed as the table and the baseline lines for
-  `tools/check_blit_floors.ps1`. Run it in Chrome in fullscreen.
+  a 320 by 200 plane drawn through the host's whole frame over the double
+  120 times at the scale that fits the screen and 120 at a scale of 1, and,
+  when the page holds the engine's module, the same path over it (`engine`,
+  `ENGINE.2`): Life stepped once to its soup, then that frame redrawn 120
+  times at the scale that fits, the step left out as the evaluator's; each
+  frame's main-thread cost, printed as the table and the baseline lines for
+  `tools/check_blit_floors.ps1`, which holds the three cases from one run.
+  Run it in Chrome in fullscreen.
 - `index.html?oracle=1` runs the render oracle and prints one line a case
   into `<pre id="oracle">`, which the check reads under a headless browser.
 - `index.html?bench=1` is the floors' instrument, the renderer benchmark of

@@ -12,4 +12,4 @@ dependencies = [
 [[package]]
 name = "vla-lang"
 version = "0.8.0"
-source = "git+https://github.com/Spreadsheet-Company/Frazaro?rev=6cca2e1#6cca2e18260871d0930306e1a8f81c2976ff662a"
+source = "git+https://github.com/Spreadsheet-Company/Frazaro?rev=c0686a9#c0686a90a977323bd27220034734d4af46ee884d"

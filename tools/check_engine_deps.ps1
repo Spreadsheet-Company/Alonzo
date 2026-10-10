@@ -13,8 +13,12 @@ dependency wrote this check with it. A second dependency, a build script's,
 a test's, or one pulled in by the language crate itself (it has none, its
 own contract), shows in the lock and fails here by name.
 
-THE PIN, the owner's route of 2026-10-09: vla-lang by git, at the commit of
-KERNEL.22 in Frazaro, until vla-lang is on crates.io; then the baseline below
+THE PIN, the owner's route of 2026-10-09: vla-lang by git, at a commit of
+Frazaro's, KERNEL.24's since ENGINE.2's second slice (the plane kept at the
+frame's end; KERNEL.22's before it), until vla-lang is on crates.io; a move
+of the pin is the two baseline lines below, which the control's mutants are
+read off, raised in the same commit as Cargo.toml's line and the lock; then
+at crates.io the baseline below
 becomes the exact registry pin "=0.9.0" with the registry's source and a
 checksum, in the same commit as Cargo.toml's line (REARVIEW.md, ENGINE.1's
 second slice, decision 1). A rev and never a branch or a tag, since a branch
@@ -57,8 +61,8 @@ if ($Root -eq '') { $Root = Split-Path -Parent $PSScriptRoot }
 
 # --- The baseline: the language crate's pin, as Cargo.toml writes it and as
 #     Cargo.lock resolves it. The two lines are one fact, raised together. ---
-$langSpec = '{ git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "6cca2e1" }'
-$langSource = 'git+https://github.com/Spreadsheet-Company/Frazaro?rev=6cca2e1#6cca2e18260871d0930306e1a8f81c2976ff662a'
+$langSpec = '{ git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "c0686a9" }'
+$langSource = 'git+https://github.com/Spreadsheet-Company/Frazaro?rev=c0686a9#c0686a90a977323bd27220034734d4af46ee884d'
 
 function Get-Lines([string]$path) {
     $text = [System.IO.File]::ReadAllText($path)
@@ -203,11 +207,12 @@ if ($Control) {
         if ($clean.Count -eq 0) { $verdicts.Add('the copy as it stands: passes, as it should') }
         else { $ok = $false; $verdicts.Add("the copy as it stands: FAILED but should pass: $($clean -join ' | ')") }
 
-        $commit = '6cca2e18260871d0930306e1a8f81c2976ff662a'
+        $commit = ([regex]::Match($langSource, '#([0-9a-f]{40})$')).Groups[1].Value
+        $revText = ([regex]::Match($langSpec, 'rev = "[0-9a-f]+"')).Value
         $mutants = @(
             @{ Name = 'a second dependency in the engine';  File = 'engine/Cargo.toml'; From = 'vla-lang.workspace = true'; To = "vla-lang.workspace = true`nserde = `"1`""; Want = 'engine/Cargo.toml: [dependencies] holds 2 line(s)' },
             @{ Name = 'a [dev-dependencies] table';         File = 'engine/Cargo.toml'; From = 'vla-lang.workspace = true'; To = "vla-lang.workspace = true`n`n[dev-dependencies]`nproptest = `"1`""; Want = 'a [dev-dependencies] table' },
-            @{ Name = 'the pin moved to a branch';          File = 'Cargo.toml';        From = 'rev = "6cca2e1"';           To = 'branch = "main"'; Want = 'a branch, which moves' },
+            @{ Name = 'the pin moved to a branch';          File = 'Cargo.toml';        From = $revText;                   To = 'branch = "main"'; Want = 'a branch, which moves' },
             @{ Name = 'a range pin';                        File = 'Cargo.toml';        From = $langSpec;                  To = '"0.9"'; Want = 'a range of versions, which moves' },
             @{ Name = 'the lock at another commit';         File = 'Cargo.lock';        From = $commit;                    To = ('0' * 40); Want = 'Cargo.lock: vla-lang resolves to' },
             @{ Name = 'frazaro-core in the lock';           File = 'Cargo.lock';        From = '[[package]]';              To = "[[package]]`nname = `"frazaro-core`"`nversion = `"0.8.0`"`n`n[[package]]"; Want = "Cargo.lock: locks frazaro-core; the engine consumes vla-lang and never Frazaro's core (AD-1)" },

@@ -89,7 +89,9 @@
   function thousands(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
   // A refusal as the host prints it: the module's words once, then its id; the line only when a
   // write held more than one row, since a one-row write's line is always 1, and only when the
-  // module's words do not already name it, as the language's grid texts do ("Line 47 writes ...").
+  // module's words do not already name it. The language's grid texts named it until KERNEL.23
+  // ("Line 47 writes ..."); since then they name what they refuse and leave the line to the
+  // answer's own field, so a refused load's line is said here.
   function namesLine(text, line) { return new RegExp('\\b[Ll]ine ' + line + '\\b').test(text); }
   function words(r, oneRow) { return r.status === 2 ? r.text : r.text + (r.line && !oneRow && !namesLine(r.text, r.line) ? ' (line ' + r.line + ')' : '') + ' [' + r.id + ']'; }
   function first(text, head) { var f = VP().readForms(text)[0]; return Array.isArray(f) && sym(f[0]) === head ? f : null; }
@@ -633,6 +635,18 @@
     if (!this.handle || this.inFrame || !this.cart || this.cart.rate === 0) return false;
     this._begin();
     return this._continue({ used: 0, limit: 0x7fffffff, deadline: Infinity });
+  };
+  // The last complete frame drawn again, nothing stepped: the Camera and the Palette read as they
+  // stand, the plane viewed through the window and blitted, and no other effect read, so no derived
+  // write, save edge or key map moves. The blit's instrument times it over the engine's module,
+  // where a step is the evaluator's and not the frame path's (ENGINE.2).
+  Host.prototype.redraw = function () {
+    if (!this.handle || !this.cart || this.cart.mode !== 'plane') return false;
+    var d = this.cart.devices;
+    if (d.camera) this._readCamera();
+    if (d.palette) this._readPalette();
+    this._drawPlane();
+    return true;
   };
   // A sheet's record as the module prints it, for a page to show; null and a sentence when refused.
   Host.prototype.viewRecord = function (sheet, win) {

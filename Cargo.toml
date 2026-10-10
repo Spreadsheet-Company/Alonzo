@@ -32,12 +32,13 @@ license = "Apache-2.0"
 repository = "https://github.com/Spreadsheet-Company/Alonzo"
 
 [workspace.dependencies]
-# The language crate and nothing else (AD-5), pinned to one commit: the
-# handle and the four calls, KERNEL.22 in Frazaro, by git until vla-lang is on
-# crates.io, when this line becomes the exact registry pin `"=0.9.0"` (the
-# owner's route, 2026-10-09; REARVIEW.md, ENGINE.1's second slice, decision 1).
-# A rev and never a branch, since a branch moves.
-vla-lang = { git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "6cca2e1" }
+# The language crate and nothing else (AD-5), pinned to one commit: the plane
+# kept at the frame's end, KERNEL.24 in Frazaro, over the handle and the four
+# calls of KERNEL.22 (ENGINE.2's second slice moved it there), by git until
+# vla-lang is on crates.io, when this line becomes the exact registry pin
+# `"=0.9.0"` (the owner's route, 2026-10-09; REARVIEW.md, ENGINE.1's second
+# slice, decision 1). A rev and never a branch, since a branch moves.
+vla-lang = { git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "c0686a9" }
 
 [profile.release]
 # Small, deterministic, and without an unwinder: a panic aborts, so the wasm

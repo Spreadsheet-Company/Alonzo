@@ -32,8 +32,10 @@
   card on the module (ENGINE.2); it prints the result into <pre id="loop">, which
   tools/check_host_loop.ps1 reads under a headless browser. With ?blit=1 it is the
   blit's instrument, a 320 by 200 plane drawn 120 times at the scale that fits the
-  screen and at a scale of 1, each frame's main-thread cost, printed as the table
-  tools/check_blit_floors.ps1 holds as its baseline. With ?oracle=1 it runs the
+  screen and at a scale of 1 over the double, and at the scale that fits over the
+  engine's module, Life's first frame redrawn (ENGINE.2), each frame's main-thread
+  cost, printed as the table tools/check_blit_floors.ps1 holds as its baseline.
+  With ?oracle=1 it runs the
   render oracle, the viewport's draw list held equal to what each record says, cell
   for cell, at the machine's pixel ratio, into <pre id="oracle">, which
   tools/check_render_oracle.ps1 reads. With ?bench=1 it is the render floors'
@@ -1231,13 +1233,15 @@
   // queued after its rendering; a dropped frame is the next animation frame later than one and a
   // half intervals. The owner runs it in Chrome in fullscreen and pastes the baseline lines into
   // tools/check_blit_floors.ps1; a headless run's clock is virtual, and its numbers are not a
-  // measurement (&smoke=1 runs the shape alone, waiting on tasks and never on frames).
+  // measurement (&smoke=1 runs the shape alone, waiting on tasks and never on frames). Since
+  // ENGINE.2 a third case, engine, measures the same path over the engine's module when the page
+  // holds one: the language's plane view in place of the double's copy, the blit the same.
   function blitInstrument() {
     var SMOKE_B = /[?&]smoke=1(&|$)/.test(QS);
     var FRAMES = SMOKE_B ? 8 : 120, WARM = SMOKE_B ? 2 : 20;
     var statusEl = document.getElementById('bench-status'), outEl = document.getElementById('out'), pre = document.getElementById('blit');
     var runBtn = document.getElementById('run'), fsBtn = document.getElementById('fullscreen'), copyBtn = document.getElementById('copy');
-    document.getElementById('instrument-title').textContent = 'The blit\'s instrument \u00b7 a 320 by 200 plane at the scale that fits the screen, and at a scale of 1';
+    document.getElementById('instrument-title').textContent = 'The blit\'s instrument \u00b7 a 320 by 200 plane at the scale that fits the screen, at a scale of 1, and over the engine\'s module';
     document.getElementById('instrument-note').textContent = 'The page runs once on opening, not in fullscreen; press Fullscreen to enter it and run again. The fit case is honest only in fullscreen, where the plane fills the screen. Copy takes the table and the baseline lines for tools/check_blit_floors.ps1.';
     var running = false;
     function say(t) { statusEl.textContent = t; }
@@ -1262,16 +1266,24 @@
       box.appendChild(cv); stage.appendChild(box);
       var host = new HOST({ drive: 'manual', budget: 0, canvas: cv, box: box, scale: spec.scale || 0 });
       try {
-        host.attach(FAKE.create({}).exports);
+        // Over the double, the host's whole frame, whose step computes nothing. Over the engine's
+        // module (ENGINE.2), Life stepped once, untimed, to its soup, and then the same frame drawn
+        // again and again, redraw(): the Camera and the Palette read, the plane viewed through the
+        // window and blitted, since a step there is the evaluator's, Life's some 270 ms, and not the
+        // frame path. The language keeps the Screen's plane from the end of that first frame.
+        var a = host.attach(spec.engine ? HOST.instantiateSync(bytesOfBase64(builtModule())) : FAKE.create({}).exports);
+        if (!a.ok) throw new Error(a.sentence);
         var ld = host.load(lifeText, 'life.vla');
         if (!ld.ok) throw new Error(ld.sentence);
-        for (var w = 0; w < WARM; w++) host.runFrameSync();
+        var once = spec.engine ? function () { host.redraw(); } : function () { host.runFrameSync(); };
+        if (spec.engine && !host.runFrameSync()) throw new Error('Life\'s first frame did not complete on the engine\'s module');
+        for (var w = 0; w < WARM; w++) once();
         await frame();
         var mains = [], syncs = [], views = [], blits = [], dropped = 0, first = 0;
         for (var i = 0; i < FRAMES; i++) {
           if (i % 20 === 0) say('Running: ' + spec.name + ', frame ' + (i + 1) + ' of ' + FRAMES + '...');
           var t0 = performance.now();
-          host.runFrameSync();
+          once();
           var sync = performance.now() - t0, afterP = task(), ts = await frame(), after = await afterP, main = after - t0;
           if (i === 0) first = main;
           mains.push(main); syncs.push(sync);
@@ -1315,11 +1327,14 @@
         var rs = [];
         rs.push(await runCase({ name: 'fit', W: screen.width, H: screen.height, scale: 0 }, iv));
         rs.push(await runCase({ name: 'scale-1', W: 400, H: 300, scale: 1 }, iv));
-        var env = 'Environment: ' + browser + ' | DPR ' + (window.devicePixelRatio || 1) + ' | screen ' + screen.width + 'x' + screen.height + ' | fullscreen ' + (fullscreen ? 'yes' : 'no') + ' | frame interval ' + fmt1(iv) + ' ms (about ' + (iv > 0 ? Math.round(1000 / iv) : 0) + ' Hz) | the fake module, the Life cartridge, ' + FRAMES + ' frames a case';
+        var withEngine = !!builtModule();
+        if (withEngine) rs.push(await runCase({ name: 'engine', W: screen.width, H: screen.height, scale: 0, engine: true }, iv));
+        var env = 'Environment: ' + browser + ' | DPR ' + (window.devicePixelRatio || 1) + ' | screen ' + screen.width + 'x' + screen.height + ' | fullscreen ' + (fullscreen ? 'yes' : 'no') + ' | frame interval ' + fmt1(iv) + ' ms (about ' + (iv > 0 ? Math.round(1000 / iv) : 0) + ' Hz) | the fake module, the Life cartridge, ' + FRAMES + ' frames a case' +
+                  (withEngine ? '; the engine case over the module built into this page, ' + thousands(bytesOfBase64(builtModule()).length) + ' bytes, Life at its first frame redrawn' : '; no engine module built into this page, so no engine case');
         var md = env + '\n\n' + table(rs) + '\n\n' + baseline(rs, iv, env);
         outEl.value = md;
         pre.textContent = (SMOKE_B ? 'smoke ok (a virtual clock: numbers, not a measurement)\n' : 'blit ok\n') + md;
-        say('Done: two cases, ' + FRAMES + ' frames each' + (fullscreen ? ', in fullscreen.' : ', not in fullscreen.'));
+        say('Done: ' + rs.length + ' cases, ' + FRAMES + ' frames each' + (fullscreen ? ', in fullscreen.' : ', not in fullscreen.'));
       } catch (e) {
         say('Script error: ' + (e && e.message ? e.message : e));
         pre.textContent = 'blit failed: ' + (e && e.message ? e.message : e);

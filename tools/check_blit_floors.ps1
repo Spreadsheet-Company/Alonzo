@@ -34,16 +34,31 @@ which is 10 device pixels a cell on the owner's 2560 by 1440 screen at a
 ratio of 1.5 (3,200 by 2,000 device pixels), so a p50 under 1.5 ms and a
 p95 under 2.0.
 
-WHAT IT HOLDS: a date, an interval above zero and an environment line; both
-cases once, 'fit' and 'scale-1'; each with at least 120 frames (a smoke run
-has 8 and cannot be pasted); the fit case at a scale of at least 2, so a run
-in a small window is not the baseline, and the scale-1 case at 1; and for
-each the bars above.
+THE ENGINE'S CASE, since ENGINE.2's second slice (REARVIEW.md, decision 6):
+the same frame path over the engine's own module, which the page holds, Life
+stepped once to its soup and then that frame drawn again 120 times through
+the host's redraw(), the Camera and the Palette read, the plane viewed
+through the window and blitted, at the scale that fits; the step is left
+out, being the evaluator's, and with it the frame's writes and its other
+effects, which the double's cases time, so this case draws less than they do
+and agrees with them on the view and the blit. Its bars are the double's:
+the draw is one path whichever module answers it, and the language keeps the Screen's plane
+at each frame's end since KERNEL.24, so its view is a copy. Over the
+language before KERNEL.24 the same case read a view of 2.5 to 5.5 ms and
+could not hold them (the scoping's measurement in wasm). The prediction
+written before the first run of the case: a view p50 of 0.0 ms and a frame
+p95 under 1.0, as the double's fit case.
+
+WHAT IT HOLDS: a date, an interval above zero and an environment line; the
+three cases once, 'fit', 'scale-1' and 'engine', from one run; each with at
+least 120 frames (a smoke run has 8 and cannot be pasted); the fit and engine
+cases at a scale of at least 2, so a run in a small window is not the
+baseline, and the scale-1 case at 1; and for each the bars above.
 
 -Control proves the judgment on tables made in memory: a clean table passes;
 a p95 over the bar, a max over, a dropped frame, the scale-1 case missing, a
-smoke run's 8 frames, an empty table and a fit case at a scale of 1 must
-each fail.
+smoke run's 8 frames, an empty table, a fit case at a scale of 1 and the
+engine case missing must each fail.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no browser, no
 network; a hardcoded, reviewable baseline; exit 0 clean, exit 1 with every
@@ -66,21 +81,37 @@ $ErrorActionPreference = 'Stop'
 # prediction said; the frame p95 0.9 ms at that scale and 1.1 at a scale of 1
 # against a bar of 2.0, the max 1.6 and 2.1 against 4.0, no frame dropped; the
 # prediction (a p50 under 1.5 ms and a p95 under 2.0) met at 0.7 and 0.9
-# (ENGINE.1, REARVIEW.md's build record).
+# (ENGINE.1, REARVIEW.md's build record). Its two rows, kept here for the
+# record since the second run replaced them whole:
+#   fit:     FirstFrame 1.3, ViewP50 0.1, BlitP50 0.1, SyncP50 0.6, FrameP50 0.7, FrameP95 0.9, Max 1.6, Dropped 0, N 120
+#   scale-1: FirstFrame 0.8, ViewP50 0.2, BlitP50 0.1, SyncP50 0.6, FrameP50 0.7, FrameP95 1.1, Max 2.1, Dropped 0, N 120
+# 2026-10-09, the second baseline (ENGINE.2's second slice): the owner's run,
+# Google Chrome 154.0.8037.98, the same screen, ratio and display, with the
+# third case, 'engine', the same path over the engine's module, Life's first
+# frame redrawn: frame p50 0.3 ms, p95 0.5, max 0.8, view p50 0.1, against the
+# prediction of a view p50 of 0.0 and a p95 under 1.0, the p95 met and the view
+# one grain of the 0.1 ms timer above it. It draws less than the double's fit
+# case, which runs the whole frame (the writes, the step and every effect read)
+# where the engine's case redraws, so the two agree on the view and the blit
+# and not on the frame. The double's fit row moved from a p95 of 0.9 to 1.1
+# and a view of 0.1 to 0.2, a newer Chrome on another run, both far under the
+# bars; recorded as a finding in REARVIEW.md and not hidden by the paste.
 $baselineDate = '2026-10-09'
 $baselineInterval = 16.7
-$baselineEnvironment = 'Environment: Google Chrome 154.0.8037.93, Chromium 154.0.8037.93 on Windows | DPR 1.5 | screen 2560x1440 | fullscreen yes | frame interval 16.7 ms (about 60 Hz) | the fake module, the Life cartridge, 120 frames a case'
+$baselineEnvironment = 'Environment: Google Chrome 154.0.8037.98, Chromium 154.0.8037.98 on Windows | DPR 1.5 | screen 2560x1440 | fullscreen yes | frame interval 16.7 ms (about 60 Hz) | the fake module, the Life cartridge, 120 frames a case; the engine case over the module built into this page, 458,702 bytes, Life at its first frame redrawn'
 $baseline = @(
-    @{ Case = 'fit'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 1.3; ViewP50 = 0.1; BlitP50 = 0.1; SyncP50 = 0.6; FrameP50 = 0.7; FrameP95 = 0.9; Max = 1.6; Dropped = 0; N = 120; Holds = 'yes' },
-    @{ Case = 'scale-1'; Scale = 1; Width = 320; Height = 200; FirstFrame = 0.8; ViewP50 = 0.2; BlitP50 = 0.1; SyncP50 = 0.6; FrameP50 = 0.7; FrameP95 = 1.1; Max = 2.1; Dropped = 0; N = 120; Holds = 'yes' }
+    @{ Case = 'fit'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 1.3; ViewP50 = 0.2; BlitP50 = 0.1; SyncP50 = 0.5; FrameP50 = 0.7; FrameP95 = 1.1; Max = 1.6; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'scale-1'; Scale = 1; Width = 320; Height = 200; FirstFrame = 0.8; ViewP50 = 0.2; BlitP50 = 0.1; SyncP50 = 0.5; FrameP50 = 0.7; FrameP95 = 1.0; Max = 1.3; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'engine'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 0.5; ViewP50 = 0.1; BlitP50 = 0.1; SyncP50 = 0.2; FrameP50 = 0.3; FrameP95 = 0.5; Max = 0.8; Dropped = 0; N = 120; Holds = 'yes' }
 )
 
 # --- the bars ---
 $frameP95Bar = 2.0
 $maxBar = 4.0
-$requiredCases = @('fit', 'scale-1')
+$requiredCases = @('fit', 'scale-1', 'engine')
 $minFrames = 120
 $minFitScale = 2
+$fitCases = @('fit', 'engine')
 
 function Test-Baseline($table, [double]$interval, [string]$date, [string]$environment) {
     $problems = New-Object System.Collections.Generic.List[string]
@@ -103,7 +134,7 @@ function Test-Baseline($table, [double]$interval, [string]$date, [string]$enviro
         $r = $seen[$name]
         $lines.Add(("  {0} (scale {1}, {2} x {3} device px): first {4} ms, view p50 {5}, blit p50 {6}, frame p50 {7}, p95 {8}, max {9}, {10} of {11} dropped, holds {12}" -f $name, $r.Scale, $r.Width, $r.Height, $r.FirstFrame, $r.ViewP50, $r.BlitP50, $r.FrameP50, $r.FrameP95, $r.Max, $r.Dropped, $r.N, $r.Holds))
         if ([int]$r.N -lt $minFrames) { $problems.Add("the case $name has $($r.N) frames, under the instrument's $minFrames (a smoke run cannot be the baseline)") }
-        if ($name -eq 'fit' -and [int]$r.Scale -lt $minFitScale) { $problems.Add("the fit case drew at a scale of $($r.Scale), under ${minFitScale}; run it in fullscreen") }
+        if ($fitCases -contains $name -and [int]$r.Scale -lt $minFitScale) { $problems.Add("the $name case drew at a scale of $($r.Scale), under ${minFitScale}; run it in fullscreen") }
         if ($name -eq 'scale-1' -and [int]$r.Scale -ne 1) { $problems.Add("the scale-1 case drew at a scale of $($r.Scale), not 1") }
         if ([double]$r.FrameP95 -ge $frameP95Bar) { $problems.Add(("the case {0}: frame p95 {1} ms is not under {2} ms" -f $name, $r.FrameP95, $frameP95Bar)) }
         if ([double]$r.Max -ge $maxBar) { $problems.Add(("the case {0}: max {1} ms is not under {2} ms" -f $name, $r.Max, $maxBar)) }
@@ -116,7 +147,8 @@ function Test-Baseline($table, [double]$interval, [string]$date, [string]$enviro
 if ($Control) {
     $clean = @(
         @{ Case = 'fit'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 1.6; ViewP50 = 0.1; BlitP50 = 0.4; SyncP50 = 0.7; FrameP50 = 1.0; FrameP95 = 1.4; Max = 2.2; Dropped = 0; N = 120; Holds = 'yes' },
-        @{ Case = 'scale-1'; Scale = 1; Width = 320; Height = 200; FirstFrame = 1.1; ViewP50 = 0.1; BlitP50 = 0.2; SyncP50 = 0.4; FrameP50 = 0.6; FrameP95 = 0.9; Max = 1.5; Dropped = 0; N = 120; Holds = 'yes' }
+        @{ Case = 'scale-1'; Scale = 1; Width = 320; Height = 200; FirstFrame = 1.1; ViewP50 = 0.1; BlitP50 = 0.2; SyncP50 = 0.4; FrameP50 = 0.6; FrameP95 = 0.9; Max = 1.5; Dropped = 0; N = 120; Holds = 'yes' },
+        @{ Case = 'engine'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 1.5; ViewP50 = 0.0; BlitP50 = 0.4; SyncP50 = 0.5; FrameP50 = 0.9; FrameP95 = 1.3; Max = 2.0; Dropped = 0; N = 120; Holds = 'yes' }
     )
     function Mutate($rows, [int]$which, [string]$key, $value) {
         $out = @()
@@ -136,6 +168,7 @@ if ($Control) {
     $r5 = Test-Baseline (Mutate $clean 1 'N' 8) 16.6 '2026-10-08' 'a control environment'
     $r6 = Test-Baseline @() 16.6 '2026-10-08' 'a control environment'
     $r7 = Test-Baseline (Mutate $clean 0 'Scale' 1) 16.6 '2026-10-08' 'a control environment'
+    $r8 = Test-Baseline @($clean[0], $clean[1]) 16.6 '2026-10-08' 'a control environment'
     $p1 = @($r1.Problems | Where-Object { $_ -like '*frame p95*' }).Count
     $p2 = @($r2.Problems | Where-Object { $_ -like '*max*' }).Count
     $p3 = @($r3.Problems | Where-Object { $_ -like '*dropped*' }).Count
@@ -143,9 +176,10 @@ if ($Control) {
     $p5 = @($r5.Problems | Where-Object { $_ -like '*frames, under*' }).Count
     $p6 = @($r6.Problems | Where-Object { $_ -like '*empty*' }).Count
     $p7 = @($r7.Problems | Where-Object { $_ -like '*fit case drew at a scale of 1*' }).Count
-    Write-Output ("control: the clean table has {0} problem(s); the p95 over the bar {1}, the max over {2}, the dropped frame {3}, the missing case {4}, the smoke run {5}, the empty table {6}, the unfitted scale {7}" -f $r0.Problems.Count, $p1, $p2, $p3, $p4, $p5, $p6, $p7)
-    if ($r0.Problems.Count -eq 0 -and $p1 -ge 1 -and $p2 -ge 1 -and $p3 -ge 1 -and $p4 -ge 1 -and $p5 -ge 1 -and $p6 -ge 1 -and $p7 -ge 1) {
-        Write-Output 'OK: the judgment passes the clean table and fails each of the seven mutants for its own reason'
+    $p8 = @($r8.Problems | Where-Object { $_ -like '*engine is missing*' }).Count
+    Write-Output ("control: the clean table has {0} problem(s); the p95 over the bar {1}, the max over {2}, the dropped frame {3}, the missing case {4}, the smoke run {5}, the empty table {6}, the unfitted scale {7}, the engine's case missing {8}" -f $r0.Problems.Count, $p1, $p2, $p3, $p4, $p5, $p6, $p7, $p8)
+    if ($r0.Problems.Count -eq 0 -and $p1 -ge 1 -and $p2 -ge 1 -and $p3 -ge 1 -and $p4 -ge 1 -and $p5 -ge 1 -and $p6 -ge 1 -and $p7 -ge 1 -and $p8 -ge 1) {
+        Write-Output 'OK: the judgment passes the clean table and fails each of the eight mutants for its own reason'
         exit 0
     }
     Write-Output 'FAIL: the control did not behave as the header says'
@@ -153,13 +187,13 @@ if ($Control) {
     exit 1
 }
 
-Write-Output "=== THE BLIT FLOORS: THE OWNER'S BASELINE OF THE FRAME PATH MINUS THE EVALUATOR, HELD TO THE BARS (ENGINE.1) ==="
+Write-Output "=== THE BLIT FLOORS: THE OWNER'S BASELINE OF THE FRAME PATH MINUS THE EVALUATOR, OVER THE DOUBLE AND THE ENGINE'S MODULE, HELD TO THE BARS (ENGINE.1, ENGINE.2) ==="
 $t = Test-Baseline $baseline $baselineInterval $baselineDate $baselineEnvironment
 if ($baselineDate -ne '') { Write-Output ("  measured {0}: {1}" -f $baselineDate, $baselineEnvironment) }
 $t.Lines | ForEach-Object { Write-Output $_ }
 Write-Output ''
 if ($t.Problems.Count -eq 0) {
-    Write-Output ("=== CHECK: clean - both cases hold the frame: frame p95 under {0} ms, max under {1} ms, no frame dropped ===" -f $frameP95Bar, $maxBar)
+    Write-Output ("=== CHECK: clean - the {2} cases hold the frame: frame p95 under {0} ms, max under {1} ms, no frame dropped ===" -f $frameP95Bar, $maxBar, $requiredCases.Count)
     exit 0
 }
 Write-Output "=== CHECK: $($t.Problems.Count) problem(s) ==="
