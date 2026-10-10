@@ -400,7 +400,7 @@ mod tests {
 
     const LIFE: &str = include_str!("../../cartridges/life/life.vla");
     const LIFE_SOURCE: &str = include_str!("../../cartridges/life/life.source.vla");
-    const CONSOLE: &str = include_str!("../../cartridges/console.vla");
+    const COMMON: &str = include_str!("../../cartridges/common.vla");
     const LIFE_SOURCE_PATH: &str = "cartridges/life/life.source.vla";
 
     /// A record as the host reads it, the text still bytes.
@@ -520,7 +520,7 @@ mod tests {
         // The pass, an act of its own (SPEC.3's second slice): Life's source
         // and the library it includes expanded into Life's cartridge, the
         // command line's bytes, CRLF as it writes them.
-        let library = [("cartridges/console.vla", CONSOLE)];
+        let library = [("cartridges/common.vla", COMMON)];
         let built = expand(LIFE_SOURCE.as_bytes(), LIFE_SOURCE_PATH, &library);
         assert_eq!(
             (built.status, built.id.as_str()),
@@ -537,7 +537,7 @@ mod tests {
         );
         let include_line = LIFE_SOURCE
             .lines()
-            .position(|l| l.trim() == "(include \"../console.vla\")")
+            .position(|l| l.trim() == "(include \"../common.vla\")")
             .expect("Life's source includes the library")
             + 1;
         assert_eq!(alone.line as usize, include_line, "the include's own line");
@@ -548,7 +548,7 @@ mod tests {
         let (s, p, f) = (
             put(LIFE_SOURCE.as_bytes()),
             put(LIFE_SOURCE_PATH.as_bytes()),
-            put(b"cartridges/console.vla"),
+            put(b"cartridges/common.vla"),
         );
         let mut len = 0u32;
         let unpaired = take(

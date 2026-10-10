@@ -109,7 +109,7 @@ function Get-BesideNames([string]$dir, [string]$suffix) {
     }
     return ,$names
 }
-# A library is a file of cartridges/ itself: cartridges/console.vla (SPEC.3).
+# A library is a file of cartridges/ itself: cartridges/common.vla (SPEC.3).
 function Get-LibraryNames([string]$dir) {
     $names = @()
     if (Test-Path -LiteralPath $dir) {
@@ -197,11 +197,11 @@ if ($Control) {
         if (([regex]::Matches($text, [regex]::Escape($anchorH))).Count -ne 1) { Write-Output "FAIL: the anchor $anchorH is not in the template exactly once"; exit 1 }
         $h = Join-Path $tmp 'h.html'; [System.IO.File]::WriteAllText($h, $text.Replace($anchorH, '{{CARTRIDGE:nowhere}}'), $utf8)
         $ijs = Join-Path $tmp 'i.js'; [System.IO.File]::WriteAllText($ijs, ([System.IO.File]::ReadAllText($hostPath) + "`nfetch('x');`n"), $utf8)
-        foreach ($anchor in @('{{SOURCE:life}}', '{{LIBRARY:console}}', '{{REPLAY:inputcard}}', '{{GOLDEN:inputcard}}')) {
+        foreach ($anchor in @('{{SOURCE:life}}', '{{LIBRARY:common}}', '{{REPLAY:inputcard}}', '{{GOLDEN:inputcard}}')) {
             if (([regex]::Matches($text, [regex]::Escape($anchor))).Count -ne 1) { Write-Output "FAIL: the anchor $anchor is not in the template exactly once"; exit 1 }
         }
         $j = Join-Path $tmp 'j.html'; [System.IO.File]::WriteAllText($j, $text.Replace('{{SOURCE:life}}', '{{SOURCE:nowhere}}'), $utf8)
-        $k = Join-Path $tmp 'k.html'; [System.IO.File]::WriteAllText($k, $text.Replace('{{LIBRARY:console}}', ''), $utf8)
+        $k = Join-Path $tmp 'k.html'; [System.IO.File]::WriteAllText($k, $text.Replace('{{LIBRARY:common}}', ''), $utf8)
         $l = Join-Path $tmp 'l.html'; [System.IO.File]::WriteAllText($l, $text.Replace('{{REPLAY:inputcard}}', '{{REPLAY:inputcard}}{{REPLAY:nowhere}}'), $utf8)
         $m = Join-Path $tmp 'm.html'; [System.IO.File]::WriteAllText($m, $text.Replace('{{GOLDEN:inputcard}}', ''), $utf8)
         $ra = @(Test-Template $a $scriptPath $fixturesDir); $rb = @(Test-Template $b $scriptPath $fixturesDir); $rc = @(Test-Template $c $scriptPath $fixturesDir)
@@ -214,7 +214,7 @@ if ($Control) {
         $iHit = @($ri | Where-Object { $_ -like "the host's source reaches out*" }).Count
         # the stray source place names its place, and the source it left without one
         $jHit = @($rj | Where-Object { $_ -like '*SOURCE:nowhere*' -or $_ -like '*{{SOURCE:life}} place*' }).Count
-        $kHit = @($rk | Where-Object { $_ -like '*{{LIBRARY:console}} place*' }).Count
+        $kHit = @($rk | Where-Object { $_ -like '*{{LIBRARY:common}} place*' }).Count
         $lHit = @($rl | Where-Object { $_ -like '*REPLAY:nowhere*' }).Count
         $mHit = @($rm | Where-Object { $_ -like '*{{GOLDEN:inputcard}} place*' }).Count
         Write-Output ("control: the real set has {0} problem(s); the script src {1}, the fetch {2}, the missing placeholder {3}, the anchor {4}, the image {5}, the stray fixture place {6}, the fetch in the viewport {7}, the stray cartridge place {8}, the fetch in the host {9}, the stray source place {10}, the library without its place {11}, the stray replay place {12}, the golden without its place {13}" -f $real.Count, $ra.Count, $rb.Count, $rc.Count, $rd.Count, $re.Count, $rf.Count, $rg.Count, $hHit, $iHit, $jHit, $kHit, $lHit, $mHit)

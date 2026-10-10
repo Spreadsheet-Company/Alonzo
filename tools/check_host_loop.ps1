@@ -449,10 +449,10 @@ if ($Control) {
         if ($moduleReal -gt 0) {
             $cartsK = Join-Path $tmp 'cartridges_k'
             Copy-Item -Recurse -LiteralPath (Join-Path $repoRoot 'cartridges') -Destination $cartsK
-            $libK = Join-Path $cartsK 'console.vla'
+            $libK = Join-Path $cartsK 'common.vla'
             $lib = [System.IO.File]::ReadAllText($libK)
             $anchorK = '(cell "Palette" (symbol "\"C" (+expand index 1))'
-            if (([regex]::Matches($lib, [regex]::Escape($anchorK))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorK' is not in cartridges/console.vla exactly once"; exit 1 }
+            if (([regex]::Matches($lib, [regex]::Escape($anchorK))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorK' is not in cartridges/common.vla exactly once"; exit 1 }
             $mutK = $lib.Replace($anchorK, '(cell "Palette" (symbol "\"D" (+expand index 1))')
             $kApplied = $mutK -cne $lib
             [System.IO.File]::WriteAllText($libK, $mutK, $utf8)

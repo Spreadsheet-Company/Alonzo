@@ -62,7 +62,7 @@ and in the page it is the module's twelfth export, `alonzo_expand`, which
 the engine panel's Build calls and the page's loop oracle holds to the
 command line's bytes. A test holds every cartridge of the repository to its
 source's expansion, byte for byte. The pass knows no macro by name: the repository's
-library, `cartridges/console.vla`, is a file a cartridge includes, copies or
+library, `cartridges/common.vla`, is a file a cartridge includes, copies or
 outgrows like any other.
 
 Its tests hold the two projections of a window to one another: the plane of

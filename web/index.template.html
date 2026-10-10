@@ -169,7 +169,7 @@
         <p>The cartridge, <code id="eng-cart-path">cartridges/life/life.vla</code>, the file the host loads, picked above: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; or the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no colour. Edit it, or build it again from its source, and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
         <textarea id="eng-cart" rows="14" spellcheck="false" aria-label="the cartridge, the rows a load takes"></textarea>
         <details>
-          <summary>The library the sources include, <code id="eng-lib-path">cartridges/console.vla</code></summary>
+          <summary>The library the sources include, <code id="eng-lib-path">cartridges/common.vla</code></summary>
           <p>Template macros, the author's and never the engine's: change one, or write one of your own in a source, and build again.</p>
           <textarea id="eng-lib" rows="14" spellcheck="false" aria-label="the library the sources include"></textarea>
         </details>
@@ -260,7 +260,7 @@
 <script type="text/plain" id="source-inputcard">{{SOURCE:inputcard}}</script>
 <script type="text/plain" id="replay-inputcard">{{REPLAY:inputcard}}</script>
 <script type="text/plain" id="golden-inputcard">{{GOLDEN:inputcard}}</script>
-<script type="text/plain" id="library-console">{{LIBRARY:console}}</script>
+<script type="text/plain" id="library-common">{{LIBRARY:common}}</script>
 <script type="text/plain" id="alonzo-wasm">{{ALONZO_WASM}}</script>
 <script type="text/plain" id="fixture-fixture_frazaro">{{FIXTURE:fixture_frazaro}}</script>
 <script type="text/plain" id="fixture-fixture_output">{{FIXTURE:fixture_output}}</script>
@@ -302,7 +302,7 @@
   };
   // The libraries the sources include, each under the path an include resolves to.
   var LIBRARIES = {
-    console: { text: embedded('library-console'), path: 'cartridges/console.vla' }
+    common: { text: embedded('library-common'), path: 'cartridges/common.vla' }
   };
   // What the pass is handed beside a source: every library the page holds, [path, text], the
   // texts given in place of the embedded ones (a person's edits).
@@ -411,7 +411,7 @@
     var pathEl = document.getElementById('eng-cart-path'), srcEl = document.getElementById('eng-src'), srcPathEl = document.getElementById('eng-src-path');
     var libEl = document.getElementById('eng-lib'), textsEl = document.getElementById('eng-texts');
     var replayEl = document.getElementById('eng-replay'), replayBoxEl = document.getElementById('eng-replay-box'), replayPathEl = document.getElementById('eng-replay-path');
-    cartEl.value = lifeText; srcEl.value = CARTRIDGES.life.source; libEl.value = LIBRARIES.console.text;
+    cartEl.value = lifeText; srcEl.value = CARTRIDGES.life.source; libEl.value = LIBRARIES.common.text;
     var host = new HOST({ canvas: planeCv, box: planeBox });
     var dvp = new VP(document.getElementById('eng-grid'));
     var shownAt = -1, shownTime = -1e9, rate = -1, items = {};
@@ -501,7 +501,7 @@
     function buildCartridge() {
       var c = CARTRIDGES[pickEl.value] || CARTRIDGES.life;
       if (!c.sourcePath) { statusEl.textContent = c.file + ' has no source: it is written by hand, and Load the cartridge loads it as it stands.'; statusEl.className = 'status'; return; }
-      var r = host.expand(srcEl.value, c.sourcePath, libraryPairs({ console: libEl.value }));
+      var r = host.expand(srcEl.value, c.sourcePath, libraryPairs({ common: libEl.value }));
       if (!r.ok) return;
       cartEl.value = r.text;
       textsEl.open = true;
@@ -1395,9 +1395,9 @@
       }
       // An include the page does not hand in: refused at the include's own line, by the record.
       var src = CARTRIDGES.life.source, lines = src.split('\n'), incLine = 0;
-      for (var li = 0; li < lines.length; li++) if (/^\s*\(include "\.\.\/console\.vla"\)\s*$/.test(lines[li])) { incLine = li + 1; break; }
+      for (var li = 0; li < lines.length; li++) if (/^\s*\(include "\.\.\/common\.vla"\)\s*$/.test(lines[li])) { incLine = li + 1; break; }
       var lone = new Driver({ exports: exports }).call('alonzo_expand', [], [src, CARTRIDGES.life.sourcePath, '']);
-      if (!incLine) P.push('Life\'s source holds no line (include "../console.vla")');
+      if (!incLine) P.push('Life\'s source holds no line (include "../common.vla")');
       else if (lone.status !== 1 || lone.id !== 'vla-include-cannot-read' || lone.line !== incLine) P.push('a source whose include is not handed in answered status ' + lone.status + (lone.id ? ' ' + lone.id : '') + ' at line ' + lone.line + ', not vla-include-cannot-read at its include\'s line, ' + incLine);
       else k.refused = 1;
       // The pass took no handle: the test card the page's pass built loads under handle 1; and a

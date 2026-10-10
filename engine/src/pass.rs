@@ -21,7 +21,7 @@
 //!
 //! **What it does not do.** It knows no macro by name: every macro is an
 //! author's, in the source or in a library it includes, and the
-//! repository's library, `cartridges/console.vla`, is a file like any
+//! repository's library, `cartridges/common.vla`, is a file like any
 //! other. It judges no row: a form the load would refuse is written, and
 //! the load, an act of its own, refuses it with its line in the cartridge.
 //! And it splices only the texts it is handed, keyed by the paths [`resolve`]
@@ -345,8 +345,8 @@ mod tests {
             Some("a b.vla")
         );
         assert_eq!(
-            include_name("(INCLUDE \"../console.vla\")").as_deref(),
-            Some("../console.vla")
+            include_name("(INCLUDE \"../common.vla\")").as_deref(),
+            Some("../common.vla")
         );
         assert_eq!(include_name("(include \"a\") x"), None);
         assert_eq!(include_name("(include-all \"a\")"), None);
@@ -358,8 +358,8 @@ mod tests {
     #[test]
     fn a_path_resolves_against_the_source_s_folder() {
         assert_eq!(
-            resolve("cartridges/life", "../console.vla"),
-            "cartridges/console.vla"
+            resolve("cartridges/life", "../common.vla"),
+            "cartridges/common.vla"
         );
         assert_eq!(
             resolve("cartridges/life", "./lib.vla"),
@@ -369,10 +369,10 @@ mod tests {
             resolve("cartridges/life", "lib\\x.vla"),
             "cartridges/life/lib/x.vla"
         );
-        assert_eq!(resolve("", "console.vla"), "console.vla");
+        assert_eq!(resolve("", "common.vla"), "common.vla");
         assert_eq!(
-            resolve("C:/r/cartridges/gun", "../console.vla"),
-            "C:/r/cartridges/console.vla"
+            resolve("C:/r/cartridges/gun", "../common.vla"),
+            "C:/r/cartridges/common.vla"
         );
         assert_eq!(resolve("cartridges/life", "/abs/x.vla"), "/abs/x.vla");
         assert_eq!(
@@ -382,10 +382,10 @@ mod tests {
         assert_eq!(cartridge_path("cartridges/life/life.vla"), None);
         assert_eq!(
             includes(
-                "; a\n(include \"../console.vla\")\r\n(x)\n",
+                "; a\n(include \"../common.vla\")\r\n(x)\n",
                 "cartridges/gun"
             ),
-            vec!["cartridges/console.vla".to_string()]
+            vec!["cartridges/common.vla".to_string()]
         );
     }
 

@@ -182,7 +182,7 @@ pass writes from it. Press Build the cartridge to run the pass in the page,
 the function `cargo run --release --example expand` runs, to the same bytes:
 it puts the cartridge it built in the second box and loads nothing, so the
 cartridge running goes on running until Load the cartridge loads what was
-built. Change a macro of the library at the bottom, `cartridges/console.vla`,
+built. Change a macro of the library at the bottom, `cartridges/common.vla`,
 and build again to see every row it writes change; over the fake module the
 build is declined, in words. Pick the glider gun above the buttons to see Gosper's
 gun fire a glider every thirty frames, south-east until the stream meets the

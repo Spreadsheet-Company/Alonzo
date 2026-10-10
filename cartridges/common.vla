@@ -1,5 +1,5 @@
 ; SPDX-License-Identifier: 0BSD
-; console.vla - a library of template macros that a cartridge's source includes
+; common.vla - a library of template macros that a cartridge's source includes
 ; (SPEC.md section 7.8), 0BSD with the cartridges, so it is copied freely. The pass
 ; knows none of these by name: each is a text an author wrote, and a source may define
 ; its own beside them, or include a library of its own instead. They are examples, to
@@ -19,6 +19,37 @@
 ;     two numbers as the macro expands. A row is reached by arithmetic; a column and a
 ;     sheet only by the names a caller writes, until the language holds the arithmetic
 ;     of an address (SPEC.md section 12).
+
+; ---- one sheet, named once ----------------------------------------------------------
+; A run of rows on one sheet, the sheet named at the top of the run and not on every
+; row: cells and formulas take entries, each an address or a range and what it holds,
+; and on takes rows, or calls of a macro such as live, each written without its sheet.
+; The cartridge the pass writes still names the sheet on every row, which stands alone
+; there, as the record prints it (SPEC.md section 7.3).
+
+(defmacro (cells sheet & entries)
+  "value cells of one sheet, named once: each entry an address or a range, then its value"
+  (quote-if (null? entries)
+    (begin)
+    (begin
+      (cell sheet (car (car entries)) (car (cdr (car entries))))
+      (quasiquote (cells (unquote sheet) (unquote-splicing (cdr entries)))))))
+
+(defmacro (formulas sheet & entries)
+  "formula cells of one sheet, named once: each entry an address or a range, then its formula"
+  (quote-if (null? entries)
+    (begin)
+    (begin
+      (formula sheet (car (car entries)) (car (cdr (car entries))))
+      (quasiquote (formulas (unquote sheet) (unquote-splicing (cdr entries)))))))
+
+(defmacro (on sheet & forms)
+  "rows of one sheet, named once: each a row, or a call whose first argument is the sheet, written without it"
+  (quote-if (null? forms)
+    (begin)
+    (begin
+      (cons (car (car forms)) (cons sheet (cdr (car forms))))
+      (quasiquote (on (unquote sheet) (unquote-splicing (cdr forms)))))))
 
 ; ---- the Palette (SPEC.md section 3.2) ----------------------------------------------
 

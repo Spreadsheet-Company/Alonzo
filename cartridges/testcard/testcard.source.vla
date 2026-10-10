@@ -10,8 +10,9 @@
 ; magenta; anything else is 255, magenta too; an empty cell, and a formula before its
 ; first value, is 0.
 
-; The library whose macro this source calls: cga-palette, a palette with a name.
-(include "../console.vla")
+; The library whose macros this source calls: cga-palette, a palette with a name, and
+; on, cells and formulas, each naming a sheet once over a run of its rows.
+(include "../common.vla")
 
 (cartridge "testcard"
   (spec 2)                          ; the version of SPEC.md this cartridge is written to
@@ -38,82 +39,83 @@
 ; last column, BD, and the columns past it read blank. The value row after the formula is
 ; the column at frame 0, a save's spelling (section 7.3), so the first frame is drawn at
 ; column 1 with no word about an empty Camera.
-(cell "Camera" "A1" "row")
-(cell "Camera" "B1" 1)
-(cell "Camera" "A2" "column")
-(formula "Camera" "B2" "=1+MOD(Clock!$B$1,21)")
-(value "Camera" "B2" 1)
+(on "Camera"                                ; the sheet every row below writes
+  (cell "A1" "row")                         ; a label
+  (cell "B1" 1)                             ; the window's top row
+  (cell "A2" "column")                      ; a label
+  (formula "B2" "=1+MOD(Clock!$B$1,21)")    ; the window's left column, a column a frame
+  (value "B2" 1))                           ; that column at frame 0
 
 ; Rows 1 to 8: the sixteen colours as bars three columns wide, A to AV.
-(cell "Screen" "A1:C8" 0)
-(cell "Screen" "D1:F8" 1)
-(cell "Screen" "G1:I8" 2)
-(cell "Screen" "J1:L8" 3)
-(cell "Screen" "M1:O8" 4)
-(cell "Screen" "P1:R8" 5)
-(cell "Screen" "S1:U8" 6)
-(cell "Screen" "V1:X8" 7)
-(cell "Screen" "Y1:AA8" 8)
-(cell "Screen" "AB1:AD8" 9)
-(cell "Screen" "AE1:AG8" 10)
-(cell "Screen" "AH1:AJ8" 11)
-(cell "Screen" "AK1:AM8" 12)
-(cell "Screen" "AN1:AP8" 13)
-(cell "Screen" "AQ1:AS8" 14)
-(cell "Screen" "AT1:AV8" 15)
+(cells "Screen"                     ; the sheet every entry below writes
+  ("A1:C8" 0)                       ; black
+  ("D1:F8" 1)                       ; blue
+  ("G1:I8" 2)                       ; green
+  ("J1:L8" 3)                       ; cyan
+  ("M1:O8" 4)                       ; red
+  ("P1:R8" 5)                       ; magenta
+  ("S1:U8" 6)                       ; brown
+  ("V1:X8" 7)                       ; light grey
+  ("Y1:AA8" 8)                      ; dark grey
+  ("AB1:AD8" 9)                     ; light blue
+  ("AE1:AG8" 10)                    ; light green
+  ("AH1:AJ8" 11)                    ; light cyan
+  ("AK1:AM8" 12)                    ; light red
+  ("AN1:AP8" 13)                    ; light magenta
+  ("AQ1:AS8" 14)                    ; yellow
+  ("AT1:AV8" 15))                   ; white
 ; Then, AW to BD, numbers that are no colour: three bytes past the palette, which the
 ; plane carries as themselves and the host paints magenta, and five that are no byte at
 ; all, which the plane carries as 255.
-(cell "Screen" "AW1:AW8" 16)
-(cell "Screen" "AX1:AX8" 100)
-(cell "Screen" "AY1:AY8" 254)
-(cell "Screen" "AZ1:AZ8" 255)
-(cell "Screen" "BA1:BA8" 256)
-(cell "Screen" "BB1:BB8" -1)
-(cell "Screen" "BC1:BC8" 0.5)
-(cell "Screen" "BD1:BD8" 1e300)
+(cells "Screen"                     ; the sheet every entry below writes
+  ("AW1:AW8" 16)                    ; the first byte past the palette
+  ("AX1:AX8" 100)                   ; a byte past it
+  ("AY1:AY8" 254)                   ; the last byte past it
+  ("AZ1:AZ8" 255)                   ; no byte: the plane's own mark for one
+  ("BA1:BA8" 256)                   ; no byte: past the last
+  ("BB1:BB8" -1)                    ; no byte: below the first
+  ("BC1:BC8" 0.5)                   ; no byte: not a whole number
+  ("BD1:BD8" 1e300))                ; no byte: far past the last
 
 ; Rows 10 and 11: one value of each other kind a cell can hold, each two cells wide. A
 ; text, a text that spells a number, the empty text, the two truth values and the seven
 ; error values are 255; a number one unit in the last place from a colour is 255, and so
 ; is 1e-300; -0 and a whole number written as 7.0 are colours.
-(cell "Screen" "A10:B11" "x")
-(cell "Screen" "C10:D11" "7")
-(cell "Screen" "E10:F11" "")
-(cell "Screen" "G10:H11" true)
-(cell "Screen" "I10:J11" false)
-(cell "Screen" "K10:L11" (error "#NULL!"))
-(cell "Screen" "M10:N11" (error "#DIV/0!"))
-(cell "Screen" "O10:P11" (error "#VALUE!"))
-(cell "Screen" "Q10:R11" (error "#REF!"))
-(cell "Screen" "S10:T11" (error "#NAME?"))
-(cell "Screen" "U10:V11" (error "#NUM!"))
-(cell "Screen" "W10:X11" (error "#N/A"))
-(cell "Screen" "Y10:Z11" 3.0000000000000004)
-(cell "Screen" "AA10:AB11" 1e-300)
-(cell "Screen" "AC10:AD11" -0)
-(cell "Screen" "AE10:AF11" 7.0)
-(cell "Screen" "AG10:AH11" 14)
+(cells "Screen"                     ; the sheet every entry below writes
+  ("A10:B11" "x")                   ; a text
+  ("C10:D11" "7")                   ; a text that spells a number
+  ("E10:F11" "")                    ; the empty text
+  ("G10:H11" true)                  ; a truth value
+  ("I10:J11" false)                 ; the other
+  ("K10:L11" (error "#NULL!"))      ; the seven error values, in ERROR.TYPE's order
+  ("M10:N11" (error "#DIV/0!"))
+  ("O10:P11" (error "#VALUE!"))
+  ("Q10:R11" (error "#REF!"))
+  ("S10:T11" (error "#NAME?"))
+  ("U10:V11" (error "#NUM!"))
+  ("W10:X11" (error "#N/A"))
+  ("Y10:Z11" 3.0000000000000004)    ; one unit in the last place from 3
+  ("AA10:AB11" 1e-300)              ; nearly 0, and no colour
+  ("AC10:AD11" -0)                  ; negative zero, colour 0
+  ("AE10:AF11" 7.0)                 ; a whole number written with a point, colour 7
+  ("AG10:AH11" 14))                 ; a whole number, colour 14
 
-; Rows 13 to 16: formulas, each computing one kind, two cells wide: a colour that cycles
-; with the frame; a byte that passes 255 at frame 16; a fraction every other frame; a sum
-; one unit in the last place from 3; an error; a text; a truth value; a sine; a negative;
-; a whole number; a value whose kind cycles; a reference to an empty cell, which is 0; a
-; counter read through its own twin; and a cell that is 9 and 0.5 by turns.
-(formula "Screen" "A13:B16" "=MOD(Clock!$B$1,16)")
-(formula "Screen" "C13:D16" "=Clock!$B$1*16")
-(formula "Screen" "E13:F16" "=Clock!$B$1/2")
-(formula "Screen" "G13:H16" "=0.1*3*10")
-(formula "Screen" "I13:J16" "=1/0")
-(formula "Screen" "K13:L16" "=\"x\"")
-(formula "Screen" "M13:N16" "=1=1")
-(formula "Screen" "O13:P16" "=SIN(Clock!$B$1)")
-(formula "Screen" "Q13:R16" "=-Clock!$B$1")
-(formula "Screen" "S13:T16" "=INT(Clock!$B$1/2)")
-(formula "Screen" "U13:V16" "=CHOOSE(1+MOD(Clock!$B$1,3),2,\"x\",TRUE)")
-(formula "Screen" "W13:X16" "=$A$24")
-(formula "Screen" "Y13:Z16" "=Screen.last!Y13+1")
-(formula "Screen" "AA13:AB16" "=IF(MOD(Clock!$B$1,2)=0,9,0.5)")
+; Rows 13 to 16: formulas, each computing one kind, two cells wide.
+(formulas "Screen"                                        ; the sheet every entry below writes
+  ("A13:B16" "=MOD(Clock!$B$1,16)")                       ; a colour that cycles with the frame
+  ("C13:D16" "=Clock!$B$1*16")                            ; a byte that passes 255 at frame 16
+  ("E13:F16" "=Clock!$B$1/2")                             ; a fraction every other frame
+  ("G13:H16" "=0.1*3*10")                                 ; a sum one unit in the last place from 3
+  ("I13:J16" "=1/0")                                      ; an error
+  ("K13:L16" "=\"x\"")                                    ; a text
+  ("M13:N16" "=1=1")                                      ; a truth value
+  ("O13:P16" "=SIN(Clock!$B$1)")                          ; a sine
+  ("Q13:R16" "=-Clock!$B$1")                              ; a negative
+  ("S13:T16" "=INT(Clock!$B$1/2)")                        ; a whole number
+  ("U13:V16" "=CHOOSE(1+MOD(Clock!$B$1,3),2,\"x\",TRUE)") ; a value whose kind cycles
+  ("W13:X16" "=$A$24")                                    ; a reference to an empty cell, which is 0
+  ("Y13:Z16" "=Screen.last!Y13+1")                        ; a counter read through its own twin
+  ("AA13:AB16" "=IF(MOD(Clock!$B$1,2)=0,9,0.5)"))         ; a cell that is 9 and 0.5 by turns
 
 ; Rows 18 to 22: a stripe that moves, one formula filled over the Screen's whole width, so
 ; a person sees the frames go by under the pan.

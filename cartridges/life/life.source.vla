@@ -10,7 +10,7 @@
 
 ; The library whose macros this source calls, palette among them: a file like any other,
 ; which a cartridge of your own may copy, change, outgrow or leave out.
-(include "../console.vla")
+(include "../common.vla")
 
 (cartridge "life"
   (spec 2)                          ; the version of SPEC.md this cartridge is written to

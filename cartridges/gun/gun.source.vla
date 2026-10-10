@@ -8,8 +8,8 @@
 ; pattern off the Seed sheet where life.vla computes a soup. The border stays empty,
 ; which the plane reads as 0, dead. The format is SPEC.md section 7.
 
-; The library whose macros this source calls, palette and live among them.
-(include "../console.vla")
+; The library whose macros this source calls, palette, on and live among them.
+(include "../common.vla")
 
 (cartridge "gun"
   (spec 2)                          ; the version of SPEC.md this cartridge is written to
@@ -52,16 +52,18 @@
 ; 24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!).
 ; Its facts, which the runner holds its own Life to: period 30; 36 cells, then 5 more a
 ; period, one glider each, travelling south-east a cell every four frames.
-; One call of the library's live a row of the box, each naming that row's live cells.
-(live "Seed" "AH10")                                              ; the box's row 1
-(live "Seed" "AF11" "AH11")                                       ; row 2
-(live "Seed" "V12" "W12" "AD12" "AE12" "AR12" "AS12")             ; row 3
-(live "Seed" "U13" "Y13" "AD13" "AE13" "AR13" "AS13")             ; row 4
-(live "Seed" "J14" "K14" "T14" "Z14" "AD14" "AE14")               ; row 5
-(live "Seed" "J15" "K15" "T15" "X15" "Z15" "AA15" "AF15" "AH15")  ; row 6
-(live "Seed" "T16" "Z16" "AH16")                                  ; row 7
-(live "Seed" "U17" "Y17")                                         ; row 8
-(live "Seed" "V18" "W18")                                         ; row 9
+; One call of the library's live a row of the box, each naming that row's live cells,
+; and the library's on around them, which names their sheet once.
+(on "Seed"                                                        ; the sheet every call below writes
+  (live "AH10")                                                   ; the box's row 1
+  (live "AF11" "AH11")                                            ; row 2
+  (live "V12" "W12" "AD12" "AE12" "AR12" "AS12")                  ; row 3
+  (live "U13" "Y13" "AD13" "AE13" "AR13" "AS13")                  ; row 4
+  (live "J14" "K14" "T14" "Z14" "AD14" "AE14")                    ; row 5
+  (live "J15" "K15" "T15" "X15" "Z15" "AA15" "AF15" "AH15")       ; row 6
+  (live "T16" "Z16" "AH16")                                       ; row 7
+  (live "U17" "Y17")                                              ; row 8
+  (live "V18" "W18"))                                             ; row 9
 
 ; The rule, one row over the interior B2:LG199, every reference relative but the Clock's,
 ; so the row is one shape over 62,964 cells, as life.vla's.

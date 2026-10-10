@@ -1279,7 +1279,7 @@ mod tests {
         // one defining its own macro after the manifest: the pass's to
         // expand, never the load's, each refused at the line of the form.
         let good = small(30);
-        let opens = format!("(include \"../console.vla\")\n{good}");
+        let opens = format!("(include \"../common.vla\")\n{good}");
         let r = load(&opens).expect_err("a source is refused");
         assert_eq!(r.refusal.id, "cart-source-unexpanded");
         assert_eq!(r.line, 1);

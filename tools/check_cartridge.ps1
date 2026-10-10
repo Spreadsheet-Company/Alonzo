@@ -129,6 +129,9 @@ if ($Root -eq '') { $Root = $repoRoot }
 # the host recorded it: 26 frames, 19 of them written, 130 rows, the seed
 # 12345) and inputcard.golden.vla (the Tally sheet's record at its end, the
 # window A1:E20); the cartridges' rows unchanged.
+# 2026-10-10, at the owner's word: the library renamed cartridges/common.vla,
+# with on, cells and formulas, which name a sheet once over a run of its rows;
+# the sources rewritten over them, and the cartridges' rows unchanged.
 $expectedCartridges = 4
 $expectedSources = 4
 $expectedLibraries = 1
@@ -629,7 +632,7 @@ if ($Control) {
             @{ Name = 'Life written to (spec 3)'; Anchor = '(spec 2)'; With = '(spec 3)'; Want = '' },
             @{ Name = 'a (spec 4)'; Anchor = '(spec 2)'; With = '(spec 4)'; Want = 'cart-spec-unsupported: (spec 4)' },
             @{ Name = 'a macro left in a cartridge'; Append = '(defmacro (x) (y))'; Want = 'cart-source-unexpanded: the file holds a (defmacro ...)' },
-            @{ Name = 'an include before a cartridge''s manifest'; Anchor = $header; With = ($header + "`n(include `"../console.vla`")"); Want = 'cart-source-unexpanded: the file holds a (include ...)' },
+            @{ Name = 'an include before a cartridge''s manifest'; Anchor = $header; With = ($header + "`n(include `"../common.vla`")"); Want = 'cart-source-unexpanded: the file holds a (include ...)' },
             @{ Name = 'a source whose cartridge is gone'; Remove = 'gun/gun.vla'; Want = 'gun.source.vla: has no cartridge beside it' },
             @{ Name = 'a banner naming a source that is not there'; Anchor = 'from life.source.vla'; With = 'from lives.source.vla'; Want = 'names a source that is not there' },
             @{ Name = 'a stray .vla in a cartridge''s folder'; Add = 'life/notes.vla'; Want = 'life/notes.vla: neither a cartridge' },
