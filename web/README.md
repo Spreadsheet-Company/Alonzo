@@ -90,7 +90,10 @@ is live and what is freed wrongly. `options.abi`, `options.omit` and
 Since `ENGINE.1`'s second slice its refusals carry the engine's module's ids
 and its write checks rows in the engine's order, the engine's own checks
 over every row before the language's, which the loop oracle's `parity` case
-holds scenario by scenario.
+holds scenario by scenario. Since `ENGINE.2` its plane reads a formula
+without a value as 0 wherever it stands, as its record says by printing no
+value row, where it had read one outside its declared size as 255; the
+`plane` case holds its plane to its record.
 
 The viewport is `viewport.js`, one plain script: no framework, no module
 syntax, no import, nothing fetched. It reads a view record, the lines
@@ -105,7 +108,8 @@ the scroll, the selection, the widths a person dragged, the frozen panes and
 the marks a host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
-panel, Life running on the host's loop, and below it the viewport over seven
+panel, a cartridge running on the host's loop, Life or the test card, and
+below it the viewport over seven
 records the door printed: the six view goldens of Frazaro's `scripts/view/`
 and the record of the 10,000-line program the renderer benchmark measured.
 It runs from disk and reads nothing from the network.
@@ -129,7 +133,11 @@ it), watch the log, each repeat counted in its first line, and press Copy
 the log to take it as text; pick a sheet of the grid, the Clock's frame
 counting or the previous frame's twin, to see its record live; edit the
 cartridge's `(rate 30)` to `(rate 0)` and press Load the cartridge to see a
-step on every edit. Below it, pick a
+step on every edit. Pick the test card above the buttons to see the plane's
+whole rule: the sixteen colours as bars, magenta wherever a value is no
+colour (a byte past the palette, a fraction, a text, a truth value, an
+error), black for an empty cell, the window panning a column a frame across
+a Screen wider than it and wrapping after 21 frames. Below it, pick a
 record, scroll on both
 axes, click a cell or drag a range, click a column or row header or the
 corner, drag a column's right edge in the header, set rows and columns and
@@ -162,7 +170,15 @@ baseline to the roadmap's bars.
   page holds the engine's module, the same host over it, Life's plane at
   frames 1 and 11 equal byte for byte to a reference Life the page computes
   (`engine`) and eleven refusals answered with the same id by the double and
-  the module (`parity`); one line a case into `<pre id="loop">`, which
+  the module (`parity`); and the frame path's equality (`plane`, `ENGINE.2`):
+  at frame 0 and after every frame, the window the host drew through is the
+  Camera's, the bytes it holds are the record of that window read by the
+  page's own rule from `SPEC.md` section 3.1 (a whole number from 0 to 254
+  itself, any other value 255, an absent cell and a formula with no value
+  row 0), and the canvas's pixels at a cell of each kind are the Palette's
+  colour or magenta, over the double, its Camera moved by edits, and over the
+  engine's module, the test card's twenty-four frames under a Camera that
+  pans a column a frame; one line a case into `<pre id="loop">`, which
   `tools/check_host_loop.ps1` reads.
 - `index.html?blit=1` is the blit's instrument, the engine's second number:
   a 320 by 200 plane drawn through the host's whole frame 120 times at the

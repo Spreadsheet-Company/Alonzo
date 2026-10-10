@@ -68,8 +68,11 @@ if ($Root -eq '') { $Root = $repoRoot }
 # --- the baseline: how many cartridges, and each one's rows as a floor ---
 # 2026-10-08, ENGINE.1: one, Life, 51 rows (two sheet rows, the Palette's
 # forty-eight cells, the rule over the interior in one formula row).
-$expectedCartridges = 1
-$rowFloors = @{ 'cartridges/life/life.vla' = 51 }
+# 2026-10-09, ENGINE.2: two, the test card beside it, 112 rows (three sheet
+# rows, the Palette's forty-eight cells, the Camera's four and its value row,
+# the Screen's fifty-six: every kind of value and of formula, 960 cells).
+$expectedCartridges = 2
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/testcard/testcard.vla' = 112 }
 
 # --- section 7 and section 3, as data ---
 $requiredDirectives = @('spec', 'title', 'rate', 'screen', 'seed')
@@ -373,7 +376,7 @@ if ($Control) {
             @{ Name = 'the header dropped'; Anchor = $header; With = '; no licence'; Want = 'the licence header is not the first line' },
             @{ Name = 'an unknown row kind'; Append = '(paint "Screen" "A1" 1)'; Want = 'grid-row-unknown: (paint ...)' },
             @{ Name = 'a formula into Input!B1'; Append = '(formula "Input" "B1" "=1")'; Want = 'cart-device-cell-formula: Input!B1' },
-            @{ Name = 'the file renamed out of the glob'; Rename = 'life.txt'; Want = 'found 0 cartridge(s)' }
+            @{ Name = 'the file renamed out of the glob'; Rename = 'life.txt'; Want = ("found {0} cartridge(s)" -f ($expectedCartridges - 1)) }
         )
         foreach ($mu in $mutants) {
             $applied = $false

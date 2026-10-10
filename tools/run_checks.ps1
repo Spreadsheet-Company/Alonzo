@@ -99,7 +99,7 @@ $extras = @(
     @{ Script = 'check_render_oracle.ps1'; Args = @('-Control'); What = 'KERNEL.5 render oracle: the real page passes, three mutant pages fail under the browser (SKIPPED without one)' },
     @{ Script = 'check_render_floors.ps1'; Args = @('-Control'); What = 'KERNEL.5 render floors: a clean table passes, seven mutants fail' },
     @{ Script = 'check_cartridge.ps1';     Args = @('-Control'); What = 'ENGINE.1 cartridges: a clean scratch copy passes, thirteen mutants of Life fail' },
-    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1 host loop: the real page passes, seven mutant pages fail under the browser, the fourth only over the engine''s module (SKIPPED without a browser)' },
+    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 host loop: the real page passes, ten mutant pages fail under the browser, the fourth only over the engine''s module (SKIPPED without a browser)' },
     @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 blit floors: a clean table passes, seven mutants fail' },
     @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 export reader and judgment: eight modules built in memory, a non-module' },
     @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, seven mutants fail' }

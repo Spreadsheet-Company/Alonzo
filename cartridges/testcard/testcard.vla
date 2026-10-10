@@ -1,0 +1,160 @@
+; SPDX-License-Identifier: 0BSD
+; testcard.vla - the plane's test card: every kind of value a Screen cell can hold, drawn
+; through the Palette, on a Screen wider than its window, which the Camera pans one column
+; a frame. The fixture of ENGINE.2's equality: the plane of a window is the record of the
+; same window, byte for value (SPEC.md sections 3.1, 4.5 and 13), which the engine's tests
+; and the page's loop oracle hold every frame. A whole number from 0 to 15 is its colour;
+; from 16 to 254 it is a byte past the palette, which the host paints magenta; anything
+; else is 255, magenta too; an empty cell, and a formula before its first value, is 0.
+
+(cartridge "testcard"
+  (spec 2)                          ; the version of SPEC.md this cartridge is written to
+  (title "Test card")               ; what the host shows
+  (rate 30)                         ; frames a second
+  (screen plane 40 24)              ; the window: 40 cells wide and 24 high, placed by the Camera
+  (seed 1)                          ; the dice, which nothing here reads
+  (author "Spreadsheet Company")    ; who wrote it
+  (licence "0BSD")                  ; the header's twin
+  (notes "The plane's test card: the sixteen colours as bars, then every kind of value a Screen cell can hold, then formulas that compute each kind, on a Screen 56 columns wide that the Camera pans one column a frame. Anything that is not a whole number from 0 to 15 is magenta, so a wrong value is seen."))
+
+; The sheets, in tab order: the Screen, the Palette it draws with, the Camera that places it.
+(sheet "Screen" visible)
+(sheet "Palette" visible)
+(sheet "Camera" visible)
+
+; The Palette (SPEC.md section 3.2), the CGA's sixteen in their own order: column A the
+; index, B the colour as #RRGGBB, C a name.
+(cell "Palette" "A1" 0)
+(cell "Palette" "B1" "#000000")
+(cell "Palette" "C1" "black")
+(cell "Palette" "A2" 1)
+(cell "Palette" "B2" "#0000AA")
+(cell "Palette" "C2" "blue")
+(cell "Palette" "A3" 2)
+(cell "Palette" "B3" "#00AA00")
+(cell "Palette" "C3" "green")
+(cell "Palette" "A4" 3)
+(cell "Palette" "B4" "#00AAAA")
+(cell "Palette" "C4" "cyan")
+(cell "Palette" "A5" 4)
+(cell "Palette" "B5" "#AA0000")
+(cell "Palette" "C5" "red")
+(cell "Palette" "A6" 5)
+(cell "Palette" "B6" "#AA00AA")
+(cell "Palette" "C6" "magenta")
+(cell "Palette" "A7" 6)
+(cell "Palette" "B7" "#AA5500")
+(cell "Palette" "C7" "brown")
+(cell "Palette" "A8" 7)
+(cell "Palette" "B8" "#AAAAAA")
+(cell "Palette" "C8" "light grey")
+(cell "Palette" "A9" 8)
+(cell "Palette" "B9" "#555555")
+(cell "Palette" "C9" "dark grey")
+(cell "Palette" "A10" 9)
+(cell "Palette" "B10" "#5555FF")
+(cell "Palette" "C10" "light blue")
+(cell "Palette" "A11" 10)
+(cell "Palette" "B11" "#55FF55")
+(cell "Palette" "C11" "light green")
+(cell "Palette" "A12" 11)
+(cell "Palette" "B12" "#55FFFF")
+(cell "Palette" "C12" "light cyan")
+(cell "Palette" "A13" 12)
+(cell "Palette" "B13" "#FF5555")
+(cell "Palette" "C13" "light red")
+(cell "Palette" "A14" 13)
+(cell "Palette" "B14" "#FF55FF")
+(cell "Palette" "C14" "light magenta")
+(cell "Palette" "A15" 14)
+(cell "Palette" "B15" "#FFFF55")
+(cell "Palette" "C15" "yellow")
+(cell "Palette" "A16" 15)
+(cell "Palette" "B16" "#FFFFFF")
+(cell "Palette" "C16" "white")
+
+; The Camera (SPEC.md section 3.8): the window's top row stays 1, and its left column pans
+; from 1 to 21 and back, one column a frame, so the window's right edge passes the Screen's
+; last column, BD, and the columns past it read blank. The value row after the formula is
+; the column at frame 0, a save's spelling (section 7.3), so the first frame is drawn at
+; column 1 with no word about an empty Camera.
+(cell "Camera" "A1" "row")
+(cell "Camera" "B1" 1)
+(cell "Camera" "A2" "column")
+(formula "Camera" "B2" "=1+MOD(Clock!$B$1,21)")
+(value "Camera" "B2" 1)
+
+; Rows 1 to 8: the sixteen colours as bars three columns wide, A to AV.
+(cell "Screen" "A1:C8" 0)
+(cell "Screen" "D1:F8" 1)
+(cell "Screen" "G1:I8" 2)
+(cell "Screen" "J1:L8" 3)
+(cell "Screen" "M1:O8" 4)
+(cell "Screen" "P1:R8" 5)
+(cell "Screen" "S1:U8" 6)
+(cell "Screen" "V1:X8" 7)
+(cell "Screen" "Y1:AA8" 8)
+(cell "Screen" "AB1:AD8" 9)
+(cell "Screen" "AE1:AG8" 10)
+(cell "Screen" "AH1:AJ8" 11)
+(cell "Screen" "AK1:AM8" 12)
+(cell "Screen" "AN1:AP8" 13)
+(cell "Screen" "AQ1:AS8" 14)
+(cell "Screen" "AT1:AV8" 15)
+; Then, AW to BD, numbers that are no colour: three bytes past the palette, which the
+; plane carries as themselves and the host paints magenta, and five that are no byte at
+; all, which the plane carries as 255.
+(cell "Screen" "AW1:AW8" 16)
+(cell "Screen" "AX1:AX8" 100)
+(cell "Screen" "AY1:AY8" 254)
+(cell "Screen" "AZ1:AZ8" 255)
+(cell "Screen" "BA1:BA8" 256)
+(cell "Screen" "BB1:BB8" -1)
+(cell "Screen" "BC1:BC8" 0.5)
+(cell "Screen" "BD1:BD8" 1e300)
+
+; Rows 10 and 11: one value of each other kind a cell can hold, each two cells wide. A
+; text, a text that spells a number, the empty text, the two truth values and the seven
+; error values are 255; a number one unit in the last place from a colour is 255, and so
+; is 1e-300; -0 and a whole number written as 7.0 are colours.
+(cell "Screen" "A10:B11" "x")
+(cell "Screen" "C10:D11" "7")
+(cell "Screen" "E10:F11" "")
+(cell "Screen" "G10:H11" true)
+(cell "Screen" "I10:J11" false)
+(cell "Screen" "K10:L11" (error "#NULL!"))
+(cell "Screen" "M10:N11" (error "#DIV/0!"))
+(cell "Screen" "O10:P11" (error "#VALUE!"))
+(cell "Screen" "Q10:R11" (error "#REF!"))
+(cell "Screen" "S10:T11" (error "#NAME?"))
+(cell "Screen" "U10:V11" (error "#NUM!"))
+(cell "Screen" "W10:X11" (error "#N/A"))
+(cell "Screen" "Y10:Z11" 3.0000000000000004)
+(cell "Screen" "AA10:AB11" 1e-300)
+(cell "Screen" "AC10:AD11" -0)
+(cell "Screen" "AE10:AF11" 7.0)
+(cell "Screen" "AG10:AH11" 14)
+
+; Rows 13 to 16: formulas, each computing one kind, two cells wide: a colour that cycles
+; with the frame; a byte that passes 255 at frame 16; a fraction every other frame; a sum
+; one unit in the last place from 3; an error; a text; a truth value; a sine; a negative;
+; a whole number; a value whose kind cycles; a reference to an empty cell, which is 0; a
+; counter read through its own twin; and a cell that is 9 and 0.5 by turns.
+(formula "Screen" "A13:B16" "=MOD(Clock!$B$1,16)")
+(formula "Screen" "C13:D16" "=Clock!$B$1*16")
+(formula "Screen" "E13:F16" "=Clock!$B$1/2")
+(formula "Screen" "G13:H16" "=0.1*3*10")
+(formula "Screen" "I13:J16" "=1/0")
+(formula "Screen" "K13:L16" "=\"x\"")
+(formula "Screen" "M13:N16" "=1=1")
+(formula "Screen" "O13:P16" "=SIN(Clock!$B$1)")
+(formula "Screen" "Q13:R16" "=-Clock!$B$1")
+(formula "Screen" "S13:T16" "=INT(Clock!$B$1/2)")
+(formula "Screen" "U13:V16" "=CHOOSE(1+MOD(Clock!$B$1,3),2,\"x\",TRUE)")
+(formula "Screen" "W13:X16" "=$A$24")
+(formula "Screen" "Y13:Z16" "=Screen.last!Y13+1")
+(formula "Screen" "AA13:AB16" "=IF(MOD(Clock!$B$1,2)=0,9,0.5)")
+
+; Rows 18 to 22: a stripe that moves, one formula filled over the Screen's whole width, so
+; a person sees the frames go by under the pan.
+(formula "Screen" "A18:BD22" "=IF(MOD(COLUMN()+ROW()+Clock!$B$1,8)=0,15,IF(MOD(COLUMN()-ROW()+Clock!$B$1,8)=0,12,0))")

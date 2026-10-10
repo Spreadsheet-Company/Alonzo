@@ -41,9 +41,15 @@ engine is:
 - `describe`, the manifest, the devices and the budget, and the engine's
   own refusals, a catalogue of eight in `data/messages.vla`.
 
+Its tests hold the two projections of a window to one another: the plane of
+a window is the view record of the same window, byte for value, the record
+read with the language's own reader, every frame of the repository's test
+card, a cartridge holding every kind of value a Screen cell can under a
+Camera that pans a column a frame, and Life at its corners (`ENGINE.2`).
+
 The host that drives it is the repository's `web/host.js`. What comes next,
-in the order `ROADMAP.md` lays it: the frame path, the plane held equal to
-the record by a test (`ENGINE.2`); the Input and Clock devices finished
+in the order `ROADMAP.md` lays it: the frame path's floor over this module
+(`ENGINE.2`); the Input and Clock devices finished
 (`ENGINE.3`), Audio (`ENGINE.4`) and File (`ENGINE.5`); and the
 accelerators, each behind the naive evaluation's frames as its reference
 (`ENGINE.6`).

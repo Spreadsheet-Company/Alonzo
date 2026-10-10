@@ -169,8 +169,10 @@
     if (/^-?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/.test(t)) return { ok: true, v: Number(t) };
     return { ok: false };
   }
+  // A cell's byte in the plane (SPEC.md section 3.1): an absent cell, and a formula before its
+  // first value, is 0, wherever it stands, as the record says by printing no value row for it.
   function byteOf(e) {
-    if (!e) return 0;
+    if (!e || e.v === undefined) return 0;   // nothing here, or a formula with no value
     var v = e.v;
     return (typeof v === 'number' && v >= 0 && v <= 254 && Math.floor(v) === v) ? v : 255;
   }
@@ -528,7 +530,7 @@
           if (!p || p.r < R.top || p.r > R.bottom || p.c < R.left || p.c > R.right) return;
           var inside = p.r <= H && p.c <= W;
           if (e.f && inside) return;   // a formula cell of the Screen follows the pattern, whatever its text
-          out[(p.r - R.top) * w + (p.c - R.left)] = e.f ? 255 : byteOf(e);
+          out[(p.r - R.top) * w + (p.c - R.left)] = byteOf(e);
         });
       } else {
         map.forEach(function (e, addr) {

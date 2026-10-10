@@ -15,18 +15,21 @@
   file and the three scripts to that doctrine on every push, as Frazaro's page is
   held.
 
-  Five modes, one page. Opened plainly, it is the engine's panel, the Life
-  cartridge running on the host's loop over the engine's own module, the language
-  computing every cell (ENGINE.1's second slice), or over the fake module when no
-  engine is built in, with the cartridge editable, an edit row, Run and Pause, and
-  any sheet of the grid shown live; then the viewport over the fixtures: a record
-  picked, its sheets as tabs, scroll, select, resize a column, freeze panes, a
-  record of one's own pasted in. With ?loop=1 it runs the host loop's oracle, the
-  host driven over a fixed input log against the fake module, its writes, frames,
-  windows and sentences held to expectations the page computes from the log, and,
-  when the page holds the engine's module, the same host over it, Life held byte
-  for byte to a reference Life the page computes and the refusals of the double and
-  the module compared id for id; it prints the result into <pre id="loop">, which
+  Five modes, one page. Opened plainly, it is the engine's panel, a cartridge
+  picked, Life or the test card, running on the host's loop over the engine's own
+  module, the language computing every cell (ENGINE.1's second slice), or over the
+  fake module when no engine is built in, with the cartridge editable, an edit row,
+  Run and Pause, and any sheet of the grid shown live; then the viewport over the
+  fixtures: a record picked, its sheets as tabs, scroll, select, resize a column,
+  freeze panes, a record of one's own pasted in. With ?loop=1 it runs the host
+  loop's oracle, the host driven over a fixed input log against the fake module,
+  its writes, frames, windows and sentences held to expectations the page computes
+  from the log, and, when the page holds the engine's module, the same host over
+  it, Life held byte for byte to a reference Life the page computes and the
+  refusals of the double and the module compared id for id; and the plane the host
+  draws held to the record of the same window, byte for value, through the
+  Camera's window and into the canvas's pixels, over the double and over the test
+  card on the module (ENGINE.2); it prints the result into <pre id="loop">, which
   tools/check_host_loop.ps1 reads under a headless browser. With ?blit=1 it is the
   blit's instrument, a 320 by 200 plane drawn 120 times at the scale that fits the
   screen and at a scale of 1, each frame's main-thread cost, printed as the table
@@ -121,7 +124,7 @@
 </header>
 <main>
   <section class="panel page-only" aria-label="the engine">
-    <div class="bar"><span>The engine &middot; the host's loop over the module, the Life cartridge</span><span id="module-line"></span></div>
+    <div class="bar"><span>The engine &middot; the host's loop over the module, a cartridge from cartridges/</span><span id="module-line"></span></div>
     <div class="inner">
       <div class="engine">
         <div>
@@ -129,6 +132,7 @@
           <p id="frame-line" class="frame-line"></p>
         </div>
         <div class="engine-side">
+          <p class="controls"><label>Cartridge <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="testcard">Test card</option></select></label></p>
           <p class="controls"><button type="button" id="eng-run">Run</button> <button type="button" id="eng-pause">Pause</button> <button type="button" id="eng-load">Load the cartridge</button> <button type="button" id="eng-copy">Copy the log</button></p>
           <p class="controls"><label style="flex:1 1 100%">An edit, one row: <input type="text" id="eng-edit" spellcheck="false" value="(cell &quot;Palette&quot; &quot;B1&quot; &quot;#FF8800&quot;)"></label> <button type="button" id="eng-write">Write</button></p>
           <p id="eng-status" class="status"></p>
@@ -137,7 +141,7 @@
       </div>
       <details>
         <summary>The cartridge</summary>
-        <p>The file the host loads, <code>cartridges/life/life.vla</code>. Edit it and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
+        <p>The file the host loads, <code id="eng-cart-path">cartridges/life/life.vla</code>, picked above: Life, or the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no colour. Edit it and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
         <textarea id="eng-cart" rows="14" spellcheck="false"></textarea>
       </details>
       <p class="controls"><label>A sheet, live <select id="eng-sheet" aria-label="the sheet to show">
@@ -211,6 +215,7 @@
   <div id="stage"></div>
 </main>
 <script type="text/plain" id="cartridge-life">{{CARTRIDGE:life}}</script>
+<script type="text/plain" id="cartridge-testcard">{{CARTRIDGE:testcard}}</script>
 <script type="text/plain" id="alonzo-wasm">{{ALONZO_WASM}}</script>
 <script type="text/plain" id="fixture-fixture_frazaro">{{FIXTURE:fixture_frazaro}}</script>
 <script type="text/plain" id="fixture-fixture_output">{{FIXTURE:fixture_output}}</script>
@@ -236,6 +241,12 @@
   document.body.className = MODE;
   var VP = window.AlonzoViewport, HOST = window.AlonzoHost, FAKE = window.AlonzoFake;
   var lifeText = (document.getElementById('cartridge-life') || {}).textContent || '';
+  var testcardText = (document.getElementById('cartridge-testcard') || {}).textContent || '';
+  // The cartridges built into the page, each its text and the file name a load passes on.
+  var CARTRIDGES = {
+    life: { text: lifeText, file: 'life.vla', path: 'cartridges/life/life.vla' },
+    testcard: { text: testcardText, file: 'testcard.vla', path: 'cartridges/testcard/testcard.vla' }
+  };
   // The fixtures: each a record the door printed, by its program and the sheet it holds.
   var FIXTURES = {
     fixture_frazaro: { program: 'fixture', sheet: 'Frazaro' },
@@ -265,7 +276,10 @@
     if (!t.trim() || t.indexOf('{{FIXTURE') >= 0) built = false;
   }
   if (!VP || !HOST || !FAKE) { built = false; }
-  if (!lifeText.trim() || lifeText.indexOf('{{CARTRIDGE') >= 0) built = false;
+  for (var cn in CARTRIDGES) {
+    if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn)) continue;
+    if (!CARTRIDGES[cn].text.trim() || CARTRIDGES[cn].text.indexOf('{{CARTRIDGE') >= 0) built = false;
+  }
   var aboutEl = document.getElementById('about');
   if (!built) {
     aboutEl.textContent = 'This page was not built: run tools/build_web.ps1 to fill it.';
@@ -320,7 +334,8 @@
     var cartEl = document.getElementById('eng-cart'), editEl = document.getElementById('eng-edit');
     var statusEl = document.getElementById('eng-status'), logEl = document.getElementById('eng-log');
     var frameEl = document.getElementById('frame-line'), moduleEl = document.getElementById('module-line');
-    var sheetEl = document.getElementById('eng-sheet');
+    var sheetEl = document.getElementById('eng-sheet'), pickEl = document.getElementById('eng-pick');
+    var pathEl = document.getElementById('eng-cart-path');
     cartEl.value = lifeText;
     var host = new HOST({ canvas: planeCv, box: planeBox });
     var dvp = new VP(document.getElementById('eng-grid'));
@@ -397,7 +412,7 @@
       frameEl.textContent = 'Frame 0, the window ' + e.window + ', ' + (e.scale ? e.scale + ' device pixels a cell' : 'no canvas') + ': the cartridge as loaded, nothing computed until ' + (e.rate ? 'the first step.' : 'an edit steps it.');
     });
     function loadCartridge() {
-      var r = host.load(cartEl.value, 'life.vla');
+      var r = host.load(cartEl.value, (CARTRIDGES[pickEl.value] || CARTRIDGES.life).file);
       if (r.ok) { fillSheets(); host.start(); showSheet(); return; }
       // a refusal is red, as the viewport's own status line paints one (the owner's hand test, 2026-10-09)
       frameEl.className = 'frame-line refused';
@@ -411,6 +426,12 @@
     document.getElementById('eng-run').addEventListener('click', function () { host.start(); planeCv.focus(); });
     document.getElementById('eng-pause').addEventListener('click', function () { host.stop(); statusEl.textContent = 'Paused at frame ' + host.counters().frame + '.'; });
     document.getElementById('eng-load').addEventListener('click', loadCartridge);
+    // A cartridge picked is put in the text box and loaded, its file's name passed with it.
+    pickEl.addEventListener('change', function () {
+      var c = CARTRIDGES[pickEl.value] || CARTRIDGES.life;
+      cartEl.value = c.text; pathEl.textContent = c.path;
+      if (host.m) loadCartridge();
+    });
     // The log as text on the clipboard, every line as it reads, its counts included.
     document.getElementById('eng-copy').addEventListener('click', function () {
       var btn = this, text = host.log().join('\n');
@@ -1047,6 +1068,137 @@
     }
     return { counters: { module: bytes.length, same: same }, problems: P };
   }
+  // ---- ENGINE.2: the plane is the record of the same window, byte for value ----
+  // SPEC.md section 3.1 read off the record alone, this oracle's own rule: a cell row's value or a
+  // formula's value row; a whole number from 0 to 254 is itself, and any other value is 255, a
+  // fraction, a number past 254, a text, a truth value, an error; an absent cell, and a formula
+  // with no value row, is 0.
+  function recordByte(d) {
+    if (d && d.num !== undefined) return (Number.isInteger(d.num) && d.num >= 0 && d.num <= 254) ? d.num : 255;
+    return 255;
+  }
+  // The bytes the record of a window says the plane holds, row by row; a row for a cell outside the
+  // window is the record's defect, and named.
+  function recordBytes(text, R, P, at) {
+    var w = R.right - R.left + 1, out = new Uint8Array(w * (R.bottom - R.top + 1)), forms = VP.readForms(text);
+    for (var i = 0; i < forms.length; i++) {
+      var f = forms[i];
+      if (!Array.isArray(f) || f.length !== 4 || !f[0] || (f[0].sym !== 'cell' && f[0].sym !== 'value') || typeof f[2] !== 'string') continue;
+      var a = VP.parseRange(f[2]);
+      if (!a || a.top < R.top || a.top > R.bottom || a.left < R.left || a.left > R.right) { P.push(at + ': the record of ' + VP.rangeText(R) + ' holds a row for ' + f[2]); continue; }
+      out[(a.top - R.top) * w + (a.left - R.left)] = recordByte(f[3]);
+    }
+    return out;
+  }
+  // A sheet's values off its record, by address: a cell row's, a formula's value row's.
+  function recordValues(text) {
+    var forms = VP.readForms(text), out = {};
+    for (var i = 0; i < forms.length; i++) {
+      var f = forms[i];
+      if (Array.isArray(f) && f.length === 4 && f[0] && (f[0].sym === 'cell' || f[0].sym === 'value') && typeof f[2] === 'string') out[f[2].toUpperCase()] = f[3];
+    }
+    return out;
+  }
+  function cellIndex(R, addr) { var a = VP.parseRange(addr); return (a.top - R.top) * (R.right - R.left + 1) + (a.left - R.left); }
+  // The host over one module, the test card loaded and stepped by manual ticks, a frame a tick: at
+  // frame 0 and after every frame, the window the host drew through is the Camera's, by its record
+  // and, when one is given, by the page's own arithmetic; the bytes the host holds are the record of
+  // that window; and the canvas's pixels, at the first cell of each kind the window holds, are the
+  // Palette's colour below its count and magenta past it, black for 0. edits[f] are the person's
+  // edits made before the tick that runs frame f; check(f, at, rec, R, text) adds a frame's own pins.
+  var PLANE_SCALE = 3;   // device pixels a cell, fixed, so the probes' arithmetic is the page's own
+  function planeRun(exports, label, frames, edits, expectWindow, check, strict, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:200px;height:120px;overflow:hidden;position:relative;background:#000;';
+    var cv = document.createElement('canvas');
+    cv.style.display = 'block';
+    box.appendChild(cv); stage.appendChild(box);
+    var host = new HOST({ drive: 'manual', budget: 0, now: frozen, canvas: cv, box: box, scale: PLANE_SCALE });
+    var D = new Driver({ exports: exports }), windows = {}, kinds = {};
+    try {
+      var a = host.attach(exports);
+      if (!a.ok) { P.push(label + ': the host refused the module: ' + a.sentence); return; }
+      var ld = host.load(testcardText, 'testcard.vla');
+      if (!ld.ok) { P.push(label + ': the test card did not load: ' + ld.sentence); return; }
+      var h = ld.handle, W = ld.w, H = ld.h, ctx = cv.getContext('2d'), t = 1000;
+      host.start(); host.tick(t);
+      for (var f = 0; f <= frames; f++) {
+        if (f > 0) {
+          var evs = edits[f] || [];
+          for (var e = 0; e < evs.length; e++) host.edit(evs[e]);
+          t += 34; host.tick(t);
+          if (host.counters().frame !== f) { P.push(label + ': after tick ' + f + ' the host is at frame ' + host.counters().frame); break; }
+        }
+        var at = label + ' frame ' + f;
+        // The window: the Camera's two cells, off its record, and the page's own arithmetic.
+        var cam = recordValues(D.call('alonzo_view', [h], ['grid', 'Camera', '']).text);
+        var row = cam.B1 && cam.B1.num !== undefined ? cam.B1.num : 1, col = cam.B2 && cam.B2.num !== undefined ? cam.B2.num : 1;
+        var want = lqRange(row, col, H, W), win = host.counters().window;
+        if (expectWindow && expectWindow(f) !== want) P.push(at + ': the Camera\'s record places ' + want + ' where the card\'s formula places ' + expectWindow(f));
+        if (win !== want) { P.push(at + ': the host drew through ' + win + ' where the Camera\'s record places ' + want); continue; }
+        windows[win] = true;
+        // The bytes: the host's plane against the record of the same window.
+        var R = VP.parseRange(win), text = D.call('alonzo_view', [h], ['grid', 'Screen', win]).text;
+        var rec = recordBytes(text, R, P, at), got = host.plane;
+        if (!got || got.length !== rec.length) { P.push(at + ': the host holds ' + (got ? got.length : 'no') + ' bytes for ' + win + ', not ' + rec.length); continue; }
+        var diff = -1;
+        for (var i = 0; i < rec.length; i++) { kinds[got[i]] = true; if (diff < 0 && got[i] !== rec[i]) diff = i; }
+        if (diff >= 0) { P.push(at + ': ' + VP.colName(R.left + diff % W) + (R.top + Math.floor(diff / W)) + ' holds ' + got[diff] + ' in the host\'s plane and ' + rec[diff] + ' by the record of ' + win); continue; }
+        k.equal++;
+        if (check) check(f, at, rec, R, text);
+        // The pixels: the first cell of each kind, through the Palette's record.
+        var pal = recordValues(D.call('alonzo_view', [h], ['grid', 'Palette', '']).text), colours = [];
+        for (var p = 1; p <= 16; p++) { var hx = pal['B' + p]; if (typeof hx !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(hx)) break; colours.push(hexOf(hx)); }
+        var picked = {};
+        for (var j = 0; j < rec.length; j++) {
+          var b = rec[j], kind = b === 0 ? 'zero' : (b < colours.length ? 'colour' : (b === 255 ? 'none' : 'past'));
+          if (picked[kind]) continue;
+          picked[kind] = true;
+          var x = (j % W) * PLANE_SCALE + Math.floor(PLANE_SCALE / 2), y = Math.floor(j / W) * PLANE_SCALE + Math.floor(PLANE_SCALE / 2);
+          var px = ctx.getImageData(x, y, 1, 1).data, exp = b < colours.length ? colours[b] : [255, 0, 255];
+          if (px[0] !== exp[0] || px[1] !== exp[1] || px[2] !== exp[2] || px[3] !== 255) P.push(at + ': the cell ' + VP.colName(R.left + j % W) + (R.top + Math.floor(j / W)) + ' (byte ' + b + ') reads ' + px[0] + ',' + px[1] + ',' + px[2] + ' at alpha ' + px[3] + ', not ' + exp.join(','));
+          else k.probes++;
+        }
+      }
+      k.frames = host.counters().frame;
+      var refusals = host.sentences().filter(function (s) { return s.refusal; });
+      if (strict && refusals.length) P.push(label + ': the host was refused: ' + refusals[0].text);
+    } finally { host.destroy(); stage.removeChild(box); }
+    k.windows = Object.keys(windows).length; k.kinds = Object.keys(kinds).length;
+  }
+  // ENGINE.2's equality, the host's half (SPEC.md section 13): over the double, its tiles, the Camera
+  // moved by edits, and a formula written outside the declared size, which has no value and reads 0
+  // as its record says; over the engine's module, when the page holds one, the test card for
+  // twenty-four frames, its Camera panning a column a frame by the card's formula, 1 + MOD(frame, 21),
+  // and a value and a formula written into the window at frame 6 and seen in that frame.
+  function casePlane() {
+    var P = [], kf = { frames: 0, equal: 0, windows: 0, probes: 0, kinds: 0 }, km = { frames: 0, equal: 0, windows: 0, probes: 0, kinds: 0 }, module = 0;
+    var fake = FAKE.create({}), sawFake = 0;
+    planeRun(fake.exports, 'fake', 12, { 3: ['(cell "Camera" "B2" 12)'], 5: ['(formula "Screen" "AX5" "=1")', '(cell "Screen" "AY6" 3)'], 9: ['(cell "Camera" "B2" 1)'] }, null,
+      function (f, at, rec, R, text) {
+        if (f !== 5) return;
+        // the edits landed: a formula outside the declared size with no value, 0; a value, itself
+        if (text.indexOf('(formula "Screen" "AX5" "=1")') < 0 || text.indexOf('(value "Screen" "AX5"') >= 0) P.push(at + ': the record of ' + VP.rangeText(R) + ' holds no formula at AX5 without a value');
+        else if (rec[cellIndex(R, 'AX5')] !== 0 || rec[cellIndex(R, 'AY6')] !== 3) P.push(at + ': the record says ' + rec[cellIndex(R, 'AX5')] + ' at AX5 and ' + rec[cellIndex(R, 'AY6')] + ' at AY6, not 0 and 3');
+        else sawFake++;
+      }, false, kf, P);
+    if (!sawFake) P.push('the double\'s frame 5 was never held with its two edits');
+    var st = fake.stats();
+    var wasm = builtModule();
+    if (wasm) {
+      var bytes = bytesOfBase64(wasm), sawEngine = 0;
+      module = bytes.length;
+      planeRun(HOST.instantiateSync(bytes), 'engine', 24, { 6: ['(cell "Screen" "H3" 200)', '(formula "Screen" "H4" "=Clock!$B$1")'] },
+        function (f) { return lqRange(1, f === 0 ? 1 : 1 + f % 21, 24, 40); },
+        function (f, at, rec, R) {
+          if (f !== 6) return;
+          if (rec[cellIndex(R, 'H3')] !== 200 || rec[cellIndex(R, 'H4')] !== 6) P.push(at + ': the record says ' + rec[cellIndex(R, 'H3')] + ' at H3 and ' + rec[cellIndex(R, 'H4')] + ' at H4, not the edits\' 200 and the frame, 6');
+          else sawEngine++;
+        }, true, km, P);
+      if (!sawEngine) P.push('the engine\'s frame 6 was never held with its two edits');
+    }
+    return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeProbes: kf.probes, module: module, frames: km.frames, equal: km.equal, windows: km.windows, probes: km.probes, kinds: km.kinds, live: st.live, misfrees: st.misfrees }, problems: P };
+  }
   function loopLine(name, k, problems) {
     var parts = [];
     for (var key in k) if (Object.prototype.hasOwnProperty.call(k, key)) parts.push(key + ' ' + k[key]);
@@ -1056,7 +1208,7 @@
     var out = [], dpr = window.devicePixelRatio || 1, ok = 0, R = HOST.RULES;
     out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals], ['scale', caseScale],
-                 ['engine', caseEngine], ['parity', caseParity]];
+                 ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane]];
     for (var i = 0; i < cases.length; i++) {
       var res;
       try { res = cases[i][1](); } catch (e) { res = { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }

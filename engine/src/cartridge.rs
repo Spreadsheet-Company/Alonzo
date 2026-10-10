@@ -934,6 +934,9 @@ mod tests {
 
     const LIFE: &str = include_str!("../../cartridges/life/life.vla");
 
+    /// The plane's test card (ENGINE.2): every kind of value under a panning Camera.
+    const TESTCARD: &str = include_str!("../../cartridges/testcard/testcard.vla");
+
     const COLOURS: [&str; 16] = [
         "#000000", "#FFFFFF", "#0000AA", "#00AA00", "#00AAAA", "#AA0000", "#AA00AA", "#AA5500",
         "#AAAAAA", "#555555", "#5555FF", "#55FF55", "#55FFFF", "#FF5555", "#FF55FF", "#FFFF55",
@@ -1539,5 +1542,181 @@ mod tests {
             !d.contains("(device \"Write\""),
             "Life has no Write sheet: {d}"
         );
+    }
+
+    // ---- ENGINE.2: the plane is the record of the same window, byte for value ----
+
+    /// A value of the record as `SPEC.md` section 3.1 reads it into the plane, from the
+    /// record's spelling alone: a whole number from 0 to 254 is itself, and any other value,
+    /// a fraction, a number past 254, a text, a truth value, an error, is 255.
+    fn record_byte(v: &Form) -> u8 {
+        match v {
+            Form::Sym(s) if s == "true" || s == "false" => 255,
+            Form::Sym(s) => {
+                let n: f64 = s
+                    .parse()
+                    .unwrap_or_else(|_| panic!("the record holds {s}, which is no value"));
+                if (0.0..=254.0).contains(&n) && n.fract() == 0.0 {
+                    n as u8
+                } else {
+                    255
+                }
+            }
+            Form::Str(_) | Form::List(_) => 255,
+        }
+    }
+
+    /// The bytes the record of a window says the plane holds (section 3.1, section 13): a
+    /// `cell` row's value, a formula's `value` row; an absent cell, and a formula with no
+    /// value row, 0.
+    fn record_bytes(c: &Cartridge, sheet: &str, w: Rect) -> Vec<u8> {
+        let text = match c.view("grid", sheet, Some(&spell(w))) {
+            Ok(Viewed::Text(t)) => t,
+            other => panic!("the record of {sheet}!{}: {other:?}", spell(w)),
+        };
+        let width = (w.3 - w.1 + 1) as usize;
+        let mut out = vec![0u8; width * (w.2 - w.0 + 1) as usize];
+        for form in read_forms(&text).expect("the record reads") {
+            let Form::List(l) = &form else { continue };
+            let [Form::Sym(head), Form::Str(_), Form::Str(addr), value] = l.items.as_slice() else {
+                continue;
+            };
+            if head != "cell" && head != "value" {
+                continue;
+            }
+            let a = parse_a1_range(addr).expect("a cell's address");
+            out[(a.top - w.0) as usize * width + (a.left - w.1) as usize] = record_byte(value);
+        }
+        out
+    }
+
+    fn plane_of(c: &Cartridge, sheet: &str, w: Rect) -> Vec<u8> {
+        match c.view("plane", sheet, Some(&spell(w))) {
+            Ok(Viewed::Bytes(b)) => b,
+            other => panic!("the plane of {sheet}!{}: {other:?}", spell(w)),
+        }
+    }
+
+    /// The plane of a window held to the record of the same window, byte for value, the
+    /// first cell where they differ named.
+    fn plane_is_record(c: &Cartridge, sheet: &str, w: Rect, at: &str) {
+        let (plane, record) = (plane_of(c, sheet, w), record_bytes(c, sheet, w));
+        assert_eq!(
+            plane.len(),
+            record.len(),
+            "{at}: the window {sheet}!{}",
+            spell(w)
+        );
+        let width = (w.3 - w.1 + 1) as usize;
+        if let Some(i) = plane.iter().zip(&record).position(|(p, r)| p != r) {
+            panic!(
+                "{at}: in the window {sheet}!{}, {} holds {} in the plane and {} by the record",
+                spell(w),
+                address(w.0 + (i / width) as u32, w.1 + (i % width) as u32),
+                plane[i],
+                record[i]
+            );
+        }
+    }
+
+    /// `ENGINE.2`'s equality (`SPEC.md` section 13) over the test card, every frame from 0
+    /// to 24: the window the Camera places, read off the Camera's own record, which pans one
+    /// column a frame and wraps after 21; the Screen's whole extent; a window past it; and
+    /// the twin's window. At frame 5, a value, a formula and a derived row written inside
+    /// the window between two steps, each held at once, and a derived row refused. Every arm
+    /// of section 3.1 is reached: a colour, a byte past the palette, 255 for every other
+    /// kind of value, 0 for an empty cell and for a formula with no value.
+    #[test]
+    fn the_test_card_s_plane_is_its_record_every_frame() {
+        let mut c =
+            Cartridge::load(TESTCARD, "testcard.vla", TESTCARD.len()).expect("the test card loads");
+        let mut seen = std::collections::BTreeSet::new();
+        for frame in 0..=24u32 {
+            let camera = record_bytes(&c, "Camera", (1, 2, 2, 2));
+            let (row, col) = (u32::from(camera[0]), u32::from(camera[1]));
+            let pan = if frame == 0 { 1 } else { 1 + frame % 21 };
+            assert_eq!((row, col), (1, pan), "the Camera at frame {frame}");
+            let window = (row, col, row + 23, col + 39);
+            let at = format!("frame {frame}");
+            plane_is_record(&c, "Screen", window, &at);
+            seen.extend(plane_of(&c, "Screen", window));
+            plane_is_record(&c, "Screen", (1, 1, 22, 56), &format!("{at}, the extent"));
+            plane_is_record(
+                &c,
+                "Screen",
+                (20, 50, 26, 60),
+                &format!("{at}, past the extent"),
+            );
+            plane_is_record(&c, "Screen.last", window, &format!("{at}, the twin"));
+            if frame == 5 {
+                for (row, what) in [
+                    (
+                        format!("(cell \"Screen\" \"{}\" 200)", address(3, col + 2)),
+                        "a value",
+                    ),
+                    (
+                        format!(
+                            "(formula \"Screen\" \"{}\" \"=Clock!$B$1\")",
+                            address(4, col + 2)
+                        ),
+                        "a formula",
+                    ),
+                    (
+                        format!("(derived \"Screen\" \"{}\" 3)", address(5, col + 2)),
+                        "a derived row",
+                    ),
+                ] {
+                    c.write(&row).unwrap_or_else(|e| panic!("{row}: {e:?}"));
+                    let at = format!("frame 5, after {what} written");
+                    plane_is_record(&c, "Screen", window, &at);
+                    plane_is_record(&c, "Screen", (1, 1, 22, 56), &at);
+                }
+                let refused = format!("(derived \"Screen\" \"{}\" 3)", address(13, col));
+                assert!(c.write(&refused).is_err(), "{refused} lands on a formula");
+                plane_is_record(&c, "Screen", window, "frame 5, after a derived row refused");
+            }
+            assert!(c.step(0).done, "frame {} completes", frame + 1);
+        }
+        for b in [0u8, 1, 15, 16, 100, 254, 255] {
+            assert!(
+                seen.contains(&b),
+                "the windows never held the byte {b}: {seen:?}"
+            );
+        }
+    }
+
+    /// The same equality over Life, the engine's own cartridge, whose whole window's record
+    /// is tens of megabytes, 62,964 formula rows of some 430 characters each: its four
+    /// corners, each crossing the edge of the Screen's extent into the dead border, and a
+    /// band of two rows across its whole width, at frame 0, where no formula has a value,
+    /// and at frame 1, the soup.
+    #[test]
+    fn life_s_plane_is_its_record_at_its_corners_and_a_band() {
+        let mut c = Cartridge::load(LIFE, "life.vla", LIFE.len()).expect("Life loads");
+        let windows = [
+            (1, 1, 20, 20),
+            (1, 301, 20, 320),
+            (181, 1, 200, 20),
+            (181, 301, 200, 320),
+            (100, 1, 101, 320),
+        ];
+        for frame in 0..=1 {
+            for w in windows {
+                plane_is_record(&c, "Screen", w, &format!("Life, frame {frame}"));
+            }
+            if frame == 0 {
+                assert!(c.step(0).done, "Life's frame 1 completes");
+            }
+        }
+        let live: usize = windows
+            .iter()
+            .map(|&w| {
+                plane_of(&c, "Screen", w)
+                    .iter()
+                    .filter(|&&b| b == 1)
+                    .count()
+            })
+            .sum();
+        assert!(live > 0, "the soup reached none of the windows");
     }
 }
