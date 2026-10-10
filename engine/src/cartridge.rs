@@ -1874,6 +1874,72 @@ mod tests {
         );
     }
 
+    /// The input card's replay (ENGINE.3's second slice), played as SPEC.md
+    /// section 7.6 plays one, by this test and not by the host: the card
+    /// loaded and its seed written as the header names it, then for every
+    /// frame the derived write the last frame's Write row left, the frame's
+    /// rows as one write, and the step; its end the golden beside it, the
+    /// Tally sheet's record byte for byte.
+    #[test]
+    fn the_input_card_s_replay_plays_to_its_golden() {
+        const REPLAY: &str = include_str!("../../cartridges/inputcard/inputcard.replay.vla");
+        const GOLDEN: &str = include_str!("../../cartridges/inputcard/inputcard.golden.vla");
+        let lines: Vec<&str> = REPLAY
+            .lines()
+            .map(|l| l.trim_end_matches('\r'))
+            .filter(|l| !l.starts_with(';'))
+            .collect();
+        let seed = lines[0]
+            .rsplit("(seed ")
+            .next()
+            .and_then(|s| s.strip_suffix("))"))
+            .expect("the header's seed");
+        let mut frames: Vec<(u32, Vec<&str>)> = Vec::new();
+        for line in &lines[1..] {
+            match line
+                .strip_prefix("(frame ")
+                .and_then(|s| s.strip_suffix(')'))
+            {
+                Some(n) => frames.push((n.parse().expect("a frame's number"), Vec::new())),
+                None => frames.last_mut().expect("a row under a frame").1.push(line),
+            }
+        }
+        let last = frames.last().expect("a frame").0;
+        let mut c =
+            Cartridge::load(INPUTCARD, "inputcard.vla", INPUTCARD.len()).expect("the card loads");
+        assert_eq!(c.write(&format!("(cell \"Clock\" \"B3\" {seed})")), Ok(1));
+        let mut written = frames.iter().peekable();
+        let mut pending: Option<String> = None;
+        for frame in 1..=last {
+            if let Some(row) = pending.take() {
+                c.write(&row).expect("the derived write");
+            }
+            if let Some((_, rows)) = written.next_if(|(n, _)| *n == frame) {
+                c.write(&rows.join("\n"))
+                    .expect("the frame's rows, which landed when they were recorded");
+            }
+            assert!(c.step(0).done, "frame {frame}");
+            if value_of(&c, "Write", "B2") == "\"B20\"" {
+                pending = Some(format!(
+                    "(derived \"Tally\" \"B20\" {})",
+                    value_of(&c, "Write", "C2")
+                ));
+            }
+        }
+        assert!(written.next().is_none(), "every frame of the replay played");
+        let golden = GOLDEN.replace("\r\n", "\n");
+        let (_, body) = golden.split_once('\n').expect("the licence line");
+        let window = body
+            .lines()
+            .find_map(|l| l.strip_prefix("(window \"Tally\" \""))
+            .and_then(|s| s.strip_suffix("\")"))
+            .expect("the golden's window row");
+        match c.view("grid", "Tally", Some(window)) {
+            Ok(Viewed::Text(record)) => assert_eq!(record, body, "the replay ends in its golden"),
+            other => panic!("the Tally's record: {other:?}"),
+        }
+    }
+
     // ---- CART.1: the gun, the benchmark's second fixture ----
 
     /// Gosper's glider gun (CART.1): its pattern a Seed sheet the first frame reads.

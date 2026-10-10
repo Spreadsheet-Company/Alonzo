@@ -8,7 +8,9 @@ the language computing every cell; `fake.js`, a double of the eleven
 exports the loop calls, is what its oracle drives and what the page falls
 back to when no engine is built in. Beside the loop the host runs the pass,
 the module's twelfth export, which builds a cartridge from its source in the
-page as an act of its own before the load (`SPEC.3`). The viewport, `viewport.js`, draws
+page as an act of its own before the load (`SPEC.3`), and it keeps the
+replay, every write a run makes, and plays one back to the same frames
+(`ENGINE.3`). The viewport, `viewport.js`, draws
 one window of a sheet on a canvas from the view record alone: the Screen
 device in grid mode, which the first game on Alonzo, Frazaro, the
 spreadsheet, draws its grid through.**
@@ -50,6 +52,25 @@ each edit, and no Input. The blit puts the bytes through the palette into
 one `ImageData` and draws it at a whole number of device pixels a cell with
 smoothing off; a byte past the palette is magenta.
 
+The host keeps the replay of every load's run (`SPEC.md` section 7.6,
+`ENGINE.3`'s second slice). Its header names the cartridge by the SHA-256 of
+its text with LF line ends, a digest the host computes itself, at once, and
+the seed `Clock!B3` held after the load. Under `(frame n)` come the rows
+written before the `n`th step that landed: the Input sheet's cells that
+changed, all forty-eight at the first frame and after a person's edit of
+the Input sheet, and each person's edit in its order. The derived writes
+are never logged, since a replay re-derives them. A frame with no row is
+left out, except the last, so a replay names its length; the recorder stops
+at 8 MiB of text and says so.
+`play(text)` reads a replay whole and refuses in words a replay of another
+cartridge, of a later page, with a derived row, with a row before its first
+frame, with frames out of order, or with a seed that is not the manifest's.
+It then loads the cartridge again with the replay's seed and plays the
+frames through the loop at the cartridge's rate, each frame's rows one
+write after the derived writes. A person's edit is refused while it plays,
+and the loop pauses at the last frame. The recorder records what is played,
+so a replay played and copied is the replay played.
+
 | Method | What it does |
 |---|---|
 | `new AlonzoHost(options)` | `canvas` the plane's canvas (it takes the keys while focused); `box` the element the blit fits, the canvas's parent by default; `scale` a fixed number of device pixels a cell; `budget` a fixed budget in cells a step call, 0 for none; `callsPerTick` a fixed count of step calls a tick in place of the time slice; `now` the clock the budget is measured by; `drive: 'manual'` when the caller calls `tick` itself (the oracles); `seed` the number a `(seed host)` cartridge gets in place of the browser's random one, a whole number from 1 to 2147483646 (the oracle) |
@@ -64,14 +85,18 @@ smoothing off; a byte past the palette is magenta.
 | `runFrameSync()` | one whole frame now, whatever the clock (the blit's instrument) |
 | `redraw()` | the last complete frame drawn again, nothing stepped: the Camera and the Palette read as they stand, the plane viewed through the window and blitted, no other effect read (the blit's instrument over the engine's module, where a step is the evaluator's); `false` without a plane cartridge |
 | `viewRecord(sheet, window)` | a sheet's record as the module prints it, for a page to show |
+| `replayText()` | the replay of the run since the last load, as text, a replay played included; `null` with no cartridge loaded |
+| `play(text, all)` | a replay checked whole, then the cartridge loaded again with its seed and its frames played through the loop at the cartridge's rate, edits refused until it ends, the loop paused at its last frame: `{ ok, frames }`, or the refusal's sentence with nothing loaded; `all` plays every frame at once, synchronously (the oracle) |
 | `counters()` / `sentences()` | what the host has done; every sentence said, in order |
 | `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
 | `unload()` / `destroy()` | frees the handle and empties the canvas; removes the listeners |
-| `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat, refusal }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line, `refusal` true for a refusal or a failure; a notice of a value the host coerced, a Camera cell read as 1 or a colour painted magenta, is not one), `frame` (`{ frame, window, scale, rate }`, after a frame completes, `rate` the one the Clock now holds), `load` (`{ handle, title, mode, w, h, rate, window, scale }`, after frame 0 is drawn) |
+| `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat, refusal }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line, `refusal` true for a refusal or a failure; a notice of a value the host coerced, a Camera cell read as 1 or a colour painted magenta, is not one), `frame` (`{ frame, window, scale, rate, replay }`, after a frame completes, `rate` the one the Clock now holds, `replay` the last frame of a replay playing or 0), `load` (`{ handle, title, mode, w, h, rate, window, scale }`, after frame 0 is drawn) |
 
 `AlonzoHost.instantiate(bytes)` and `instantiateSync(bytes)` instantiate a
 module with the empty import object of section 8.1; `AlonzoHost.RULES` holds
-the loop's constants. The first step call of a cartridge asks for 2,000
+the loop's constants; `AlonzoHost.sha256(bytes or text)` is the host's
+digest in upper-case hex, and `AlonzoHost.SPEC` the page's version a
+replay's header names. The first step call of a cartridge asks for 2,000
 cells, about 9 ms of the engine's module, before the host has measured how
 many cells a millisecond the machine does; after it the budget is half the
 display's interval turned into cells. A refusal is the module's words once,
@@ -125,7 +150,7 @@ the marks a host asked for. The record is never written.
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
 test card or the input card, each with its source, which the panel's Build expands into the
-cartridge in the page, and
+cartridge in the page, the input card with its replay, which Play the replay plays, and
 below it the viewport over seven
 records the door printed: the six view goldens of Frazaro's `scripts/view/`
 and the record of the 10,000-line program the renderer benchmark measured.
@@ -173,7 +198,12 @@ player 1; I, K, J, L, U, O, Y, P, 9 and 0 for player 2), the mouse's three
 buttons and a cursor under the pointer in their colours, the wheel panning
 the card with the cursor still under the pointer, the frame's bits, and the
 seed's and the dice's from the seed the host chose; write `(cell "Clock"
-"B2" 1)` to watch it step once a second. Below it, pick a
+"B2" 1)` to watch it step once a second. Open The replay: the input card's
+own replay waits in its box, the loop oracle's run of the card; press Play
+the replay and watch it, the frame line saying which frame of the 26 it
+plays, until it pauses at its end. Play the card yourself, press Copy the
+replay, reload the page, paste it into the box, and press Play the replay
+to watch the same run again. Below it, pick a
 record, scroll on both
 axes, click a cell or drag a range, click a column or row header or the
 corner, drag a column's right edge in the header, set rows and columns and
@@ -222,12 +252,20 @@ baseline to the roadmap's bars.
   devices (`input`, `ENGINE.3`): over the engine's module, the input card
   loaded with its seed named and driven by events dispatched to the canvas,
   keys, a second player's press, the pointer with its clicks, the wheel
-  panning the Camera, an edit of the Clock's frame refused and the rate
-  written to 10 and back, the window the host draws equal at every frame to
-  the card computed by hand from the log, and the Tally's counts, the seed
-  and the dice to the log's; `rate30` pins the pointer written through the
-  double's Camera too. One line a case into `<pre id="loop">`, which
-  `tools/check_host_loop.ps1` reads.
+  panning the Camera, an edit of the Clock's frame refused, the rate
+  written to 1, the teacher's, and back, and a person's edit of the Input
+  sheet, the window the host draws equal at every frame to the card
+  computed by hand from the log, and the Tally's counts, the seed and the
+  dice to the log's; `rate30` pins the pointer written through the double's
+  Camera too; and the replay (`replay`, `ENGINE.3`'s second slice): the
+  host's SHA-256 held to FIPS 180-2's five vectors, a live run over the
+  double copied and played on a fresh host to the same digest, all at once
+  and through the loop, an edit refused while it played and six replays
+  refused in words; and, over the engine's module, the input card's
+  committed replay equal to the `input` case's run as the host recorded
+  it, played on a fresh host to every frame of that run and to its golden,
+  the Tally's record, byte for byte. One line a case into
+  `<pre id="loop">`, which `tools/check_host_loop.ps1` reads.
 - `index.html?blit=1` is the blit's instrument, the engine's second number:
   a 320 by 200 plane drawn through the host's whole frame over the double
   120 times at the scale that fits the screen and 120 at a scale of 1, and,

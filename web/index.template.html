@@ -39,7 +39,11 @@
   the input card on the module, driven over a fixed log of keys, the pointer, clicks,
   the wheel and the Clock's rate, every count held to the log, the cursor under the
   pointer through the Camera, the seed the host chose in the Clock and in the dice
-  (ENGINE.3); it prints the result into <pre id="loop">, which
+  (ENGINE.3); and the replay, the host's digest held to FIPS 180-2's vectors, a run
+  over the double copied and played to the same digest, all at once and through the
+  loop, and the input card's committed replay, the oracle's own run as the host
+  recorded it, played to every frame of that run and to its golden, the Tally's
+  record byte for byte (ENGINE.3's second slice); it prints the result into <pre id="loop">, which
   tools/check_host_loop.ps1 reads under a headless browser. With ?blit=1 it is the
   blit's instrument, a 320 by 200 plane drawn 120 times at the scale that fits the
   screen and at a scale of 1 over the double, and at the scale that fits over the
@@ -152,6 +156,7 @@
         <div class="engine-side">
           <p class="controls"><label>Cartridge <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="gun">Glider gun</option><option value="testcard">Test card</option><option value="inputcard">Input card</option></select></label></p>
           <p class="controls"><button type="button" id="eng-run">Run</button> <button type="button" id="eng-pause">Pause</button> <button type="button" id="eng-build">Build the cartridge</button> <button type="button" id="eng-load">Load the cartridge</button> <button type="button" id="eng-copy">Copy the log</button></p>
+          <p class="controls"><button type="button" id="eng-replay-play">Play the replay</button> <button type="button" id="eng-replay-copy">Copy the replay</button></p>
           <p class="controls"><label style="flex:1 1 100%">An edit, one row: <input type="text" id="eng-edit" spellcheck="false" value="(cell &quot;Palette&quot; &quot;B1&quot; &quot;#FF8800&quot;)"></label> <button type="button" id="eng-write">Write</button></p>
           <p id="eng-status" class="status"></p>
           <ol id="eng-log" class="engine-log" aria-label="the host's sentences"></ol>
@@ -168,6 +173,11 @@
           <p>Template macros, the author's and never the engine's: change one, or write one of your own in a source, and build again.</p>
           <textarea id="eng-lib" rows="14" spellcheck="false" aria-label="the library the sources include"></textarea>
         </details>
+      </details>
+      <details id="eng-replay-box">
+        <summary>The replay</summary>
+        <p>A replay, <code id="eng-replay-path">none: this cartridge has no replay of its own</code>, is every write a run made between its steps: a header naming the cartridge by the SHA-256 of its text and the seed, then each frame's rows, the Input sheet's cells that changed and each person's edit that landed; the host's derived writes are never logged, a replay re-deriving them (SPEC.md section 7.6). Paste one here and press Play the replay: the host loads the cartridge again with the replay's seed and plays its frames at the cartridge's rate, a person's edits waiting until it ends, and pauses at its last frame; Run then carries on with the live inputs. Copy the replay puts what the host has recorded since the last load on the clipboard and in this box, a replay played among it, so a replay played and copied is the replay played. The input card's own replay is the loop oracle's run of it.</p>
+        <textarea id="eng-replay" rows="10" spellcheck="false" aria-label="a replay to play"></textarea>
       </details>
       <p class="controls"><label>A sheet, live <select id="eng-sheet" aria-label="the sheet to show">
         <option value="Write" selected>Write</option><option value="Camera">Camera</option><option value="Clock">Clock</option><option value="Input">Input</option>
@@ -248,6 +258,8 @@
 <script type="text/plain" id="source-gun">{{SOURCE:gun}}</script>
 <script type="text/plain" id="source-testcard">{{SOURCE:testcard}}</script>
 <script type="text/plain" id="source-inputcard">{{SOURCE:inputcard}}</script>
+<script type="text/plain" id="replay-inputcard">{{REPLAY:inputcard}}</script>
+<script type="text/plain" id="golden-inputcard">{{GOLDEN:inputcard}}</script>
 <script type="text/plain" id="library-console">{{LIBRARY:console}}</script>
 <script type="text/plain" id="alonzo-wasm">{{ALONZO_WASM}}</script>
 <script type="text/plain" id="fixture-fixture_frazaro">{{FIXTURE:fixture_frazaro}}</script>
@@ -279,12 +291,14 @@
   var inputcardText = (document.getElementById('cartridge-inputcard') || {}).textContent || '';
   function embedded(id) { var el = document.getElementById(id); return el ? el.textContent : ''; }
   // The cartridges built into the page, each its text and the file name a load passes on, and its
-  // source with the path the pass resolves its includes against, the command line's own (SPEC.3).
+  // source with the path the pass resolves its includes against, the command line's own (SPEC.3);
+  // and a cartridge's replay with its golden, when it has them (ENGINE.3's second slice).
   var CARTRIDGES = {
     life: { text: lifeText, file: 'life.vla', path: 'cartridges/life/life.vla', source: embedded('source-life'), sourcePath: 'cartridges/life/life.source.vla' },
     gun: { text: gunText, file: 'gun.vla', path: 'cartridges/gun/gun.vla', source: embedded('source-gun'), sourcePath: 'cartridges/gun/gun.source.vla' },
     testcard: { text: testcardText, file: 'testcard.vla', path: 'cartridges/testcard/testcard.vla', source: embedded('source-testcard'), sourcePath: 'cartridges/testcard/testcard.source.vla' },
-    inputcard: { text: inputcardText, file: 'inputcard.vla', path: 'cartridges/inputcard/inputcard.vla', source: embedded('source-inputcard'), sourcePath: 'cartridges/inputcard/inputcard.source.vla' }
+    inputcard: { text: inputcardText, file: 'inputcard.vla', path: 'cartridges/inputcard/inputcard.vla', source: embedded('source-inputcard'), sourcePath: 'cartridges/inputcard/inputcard.source.vla',
+                 replay: embedded('replay-inputcard'), replayPath: 'cartridges/inputcard/inputcard.replay.vla', golden: embedded('golden-inputcard') }
   };
   // The libraries the sources include, each under the path an include resolves to.
   var LIBRARIES = {
@@ -333,6 +347,7 @@
     if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn)) continue;
     if (!CARTRIDGES[cn].text.trim() || CARTRIDGES[cn].text.indexOf('{{CARTRIDGE') >= 0) built = false;
     if (CARTRIDGES[cn].sourcePath && (!CARTRIDGES[cn].source.trim() || CARTRIDGES[cn].source.indexOf('{{SOURCE') >= 0)) built = false;
+    if (CARTRIDGES[cn].replayPath && (!CARTRIDGES[cn].replay.trim() || CARTRIDGES[cn].replay.indexOf('{{REPLAY') >= 0 || !CARTRIDGES[cn].golden.trim() || CARTRIDGES[cn].golden.indexOf('{{GOLDEN') >= 0)) built = false;
   }
   for (var lb in LIBRARIES) {
     if (!Object.prototype.hasOwnProperty.call(LIBRARIES, lb)) continue;
@@ -395,6 +410,7 @@
     var sheetEl = document.getElementById('eng-sheet'), pickEl = document.getElementById('eng-pick');
     var pathEl = document.getElementById('eng-cart-path'), srcEl = document.getElementById('eng-src'), srcPathEl = document.getElementById('eng-src-path');
     var libEl = document.getElementById('eng-lib'), textsEl = document.getElementById('eng-texts');
+    var replayEl = document.getElementById('eng-replay'), replayBoxEl = document.getElementById('eng-replay-box'), replayPathEl = document.getElementById('eng-replay-path');
     cartEl.value = lifeText; srcEl.value = CARTRIDGES.life.source; libEl.value = LIBRARIES.console.text;
     var host = new HOST({ canvas: planeCv, box: planeBox });
     var dvp = new VP(document.getElementById('eng-grid'));
@@ -458,7 +474,8 @@
       var c = host.counters();
       if (e.rate !== undefined) rate = e.rate;   // the Clock's rate, which a person may write (ENGINE.3)
       var many = function (n, one, more) { return n + ' ' + (n === 1 ? one : more); };
-      frameEl.textContent = 'Frame ' + e.frame + ', the window ' + e.window + ', ' + (e.scale ? e.scale + ' device pixels a cell' : 'no canvas') + '; ' + many(c.derivedApplied, 'derived write', 'derived writes') + ' landed and ' + c.derivedRefused + ' refused, ' + many(c.edits, 'edit', 'edits') + ' written, ' + many(c.yields, 'yield', 'yields') + '.';
+      // a replay playing says where it is in it (ENGINE.3's second slice)
+      frameEl.textContent = (e.replay ? 'Replaying frame ' + e.frame + ' of ' + e.replay : 'Frame ' + e.frame) + ', the window ' + e.window + ', ' + (e.scale ? e.scale + ' device pixels a cell' : 'no canvas') + '; ' + many(c.derivedApplied, 'derived write', 'derived writes') + ' landed and ' + c.derivedRefused + ' refused, ' + many(c.edits, 'edit', 'edits') + ' written, ' + many(c.yields, 'yield', 'yields') + '.';
       // about five times a second while the loop runs, so every frame of a cartridge slower than that
       // (the engine's Life draws about two a second); every frame at rate zero, where a frame is an
       // edit (found in the owner's hand test, 2026-10-09: the sheet lagged the edits)
@@ -500,16 +517,21 @@
     document.getElementById('eng-load').addEventListener('click', loadCartridge);
     // A cartridge picked is put in the text box and loaded, its file's name passed with it, and its
     // source put in the source's box.
+    // The picked cartridge's replay, when it has one, is the one the replay's box offers.
+    function offerReplay(c) {
+      replayEl.value = c.replay || '';
+      replayPathEl.textContent = c.replayPath || 'none: this cartridge has no replay of its own';
+    }
     pickEl.addEventListener('change', function () {
       var c = CARTRIDGES[pickEl.value] || CARTRIDGES.life;
       cartEl.value = c.text; pathEl.textContent = c.path;
       srcEl.value = c.source || ''; srcPathEl.textContent = c.sourcePath || 'none: this cartridge is written by hand';
+      offerReplay(c);
       if (host.m) loadCartridge();
     });
-    // The log as text on the clipboard, every line as it reads, its counts included.
-    document.getElementById('eng-copy').addEventListener('click', function () {
-      var btn = this, text = host.log().join('\n');
-      var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy the log'; }, 1200); };
+    // A text on the clipboard, the button saying so, or the way to copy it by hand when the browser keeps the clipboard closed.
+    function copyText(btn, label, text, what) {
+      var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = label; }, 1200); };
       var fallback = function () {
         var ta = document.createElement('textarea');
         ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0;';
@@ -517,9 +539,25 @@
         var ok = false;
         try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
         document.body.removeChild(ta);
-        if (ok) done(); else statusEl.textContent = 'The browser kept the clipboard closed: select the log and press Ctrl+C.';
+        if (ok) done(); else statusEl.textContent = 'The browser kept the clipboard closed: select ' + what + ' and press Ctrl+C.';
       };
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+    }
+    // The log as text on the clipboard, every line as it reads, its counts included.
+    offerReplay(CARTRIDGES.life);
+    document.getElementById('eng-copy').addEventListener('click', function () { copyText(this, 'Copy the log', host.log().join('\n'), 'the log'); });
+    // The replay of the run since the last load, put in the box as well, where it can be read and played.
+    document.getElementById('eng-replay-copy').addEventListener('click', function () {
+      var text = host.replayText();
+      if (text === null) { statusEl.textContent = 'There is no replay to copy: no cartridge is loaded.'; statusEl.className = 'status'; return; }
+      replayEl.value = text; replayPathEl.textContent = 'the run since the last load, as the host recorded it';
+      copyText(this, 'Copy the replay', text, 'the replay in its box');
+    });
+    // Play: the cartridge loaded again with the replay's seed and its frames played through the loop.
+    document.getElementById('eng-replay-play').addEventListener('click', function () {
+      if (!replayEl.value.trim()) { replayBoxEl.open = true; statusEl.textContent = 'Paste a replay into the box under The replay, then press Play the replay.'; statusEl.className = 'status'; return; }
+      var r = host.play(replayEl.value);
+      if (r.ok) { fillSheets(); showSheet(); planeCv.focus(); }
     });
     document.getElementById('eng-write').addEventListener('click', function () { host.edit(editEl.value); });
     editEl.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); host.edit(editEl.value); } });
@@ -1391,16 +1429,20 @@
   // pointer moved onto a cell with a click and a right click, three notches of the wheel, an edit
   // of the Clock's frame, refused, and the Clock's rate written to 1, the teacher's, and back to
   // 30, the ticks following it (the owner's hand test of 2026-10-10: at the rate of 1 the loop
-  // starved, its backlog held under the interval). Every expectation is the page's own: the card computed by hand from the log, its
+  // starved, its backlog held under the interval); and, since the second slice, a person's edit
+  // of the Input sheet, a button of player 2's held for one frame by the edit alone, which the
+  // replay must log whole after it. Every expectation is the page's own: the card computed by hand from the log, its
   // Panel, its cursor and its Tally, the dice by integer arithmetic from the seed, the Camera from
   // the wheel. The plane the host holds after every frame is that window, byte for byte, and the
-  // Tally's record at the end holds those counts; never by asking the host.
+  // Tally's record at the end holds those counts; never by asking the host. The run is kept for
+  // the replay case, which copies its replay and plays it (ENGINE.3's second slice).
   var CARD_SEED = 12345;
   var CARD_LOG = {
     3: [['down', 'ArrowRight', 'ArrowRight']],                                       // player 1's right, held three frames
     6: [['up', 'ArrowRight']],
     7: [['down', 'KeyZ', 'z'], ['down', 'KeyI', 'i']],                              // player 1's a and player 2's up
     8: [['up', 'KeyZ'], ['up', 'KeyI'], ['down', 'KeyQ', 'q'], ['up', 'KeyQ']],     // a key no button binds
+    9: [['edit', '(cell "Input" "C5" 1)']],                                          // a person's edit of the Input sheet: player 2's fifth button
     11: [['move', 5, 4, 1]],                                                         // the pointer on the window's (5, 4), left held
     12: [['move', 5, 4, 0]],
     13: [['move', 5, 4, 2]],                                                         // right held
@@ -1412,10 +1454,12 @@
     24: [['down', 'ArrowRight', 'ArrowRight']],                                      // right again, a second press
     26: [['up', 'ArrowRight']]
   };
+  var INPUT_RUN = null;   // the input case's live run, its replay and the plane after each frame, for the replay case
   function caseInput() {
+    INPUT_RUN = null;
     var wasm = builtModule();
     if (!wasm) return { counters: { module: 0 }, problems: [] };
-    var bytes = bytesOfBase64(wasm), P = [], N = 26;
+    var bytes = bytesOfBase64(wasm), P = [], N = 26, planes = [];
     var k = { module: bytes.length, frames: 0, equal: 0, seed: 0, presses: 0, players: 0, clicks: 0, wheel: 0, typed: 0, code: 0, dice: 0, clicked: 0, pointer: 0, cursor: 0, held: 0, rate: 0, refused: 0 };
     var stage = document.getElementById('stage'), box = document.createElement('div');
     box.style.cssText = 'width:200px;height:120px;overflow:hidden;position:relative;background:#000;';
@@ -1441,7 +1485,7 @@
       for (var kb = 0; kb < 10; kb++) for (var kp = 0; kp < 4; kp++) { var kc = keysRec['BCDE'.charAt(kp) + (kb + 1)]; if (typeof kc === 'string' && kc) keymap[kc] = [kb, kp]; }
       // ---- the card by hand, from the log ----
       var four = function () { var g = []; for (var i = 0; i < 10; i++) g.push([0, 0, 0, 0]); return g; };
-      var held = {}, lastKey = '', ptr = { col: 0, row: 0 }, btn = [0, 0, 0], notches = 0, rate = 30, nextRate = null;
+      var held = {}, lastKey = '', ptr = { col: 0, row: 0 }, btn = [0, 0, 0], notches = 0, rate = 30, nextRate = null, inputEdit = null;
       var prev = { buttons: four(), mouse: [0, 0, 0] }, cam = 1, pendingClick = 0;
       var T = { presses: four(), clicks: [0, 0, 0], wheel: 0, keys: 0, code: '', col: 0, row: 0, dice: 0, clickedAt: 0 };
       var bit = function (n, b) { return Math.floor(n / Math.pow(2, b)) % 2 === 1; };
@@ -1467,6 +1511,8 @@
         var on = ptr.col > 0 && ptr.row > 0;
         input = { buttons: four(), mouse: btn.slice(), col: on ? cam + ptr.col - 1 : 0, row: on ? ptr.row : 0, code: lastKey };
         for (var c in held) if (held[c] && keymap[c]) input.buttons[keymap[c][0]][keymap[c][1]] = 1;
+        // a person's edit of the Input sheet is written after the frame's Input rows, so it holds for its frame
+        if (inputEdit) { input.buttons[inputEdit[0]][inputEdit[1]] = inputEdit[2]; inputEdit = null; }
         if (pendingClick) { T.clickedAt = pendingClick; pendingClick = 0; }   // the last frame's derived write
         for (var b = 0; b < 10; b++) for (var p = 0; p < 4; p++) if (input.buttons[b][p] === 1 && prev.buttons[b][p] === 0) T.presses[b][p]++;
         for (var i = 0; i < 3; i++) if (input.mouse[i] === 1 && prev.mouse[i] === 0) T.clicks[i]++;
@@ -1490,7 +1536,11 @@
           cv.dispatchEvent(new MouseEvent('mousemove', { clientX: rc.left + (ev[1] - 0.5) * rc.width / W, clientY: rc.top + (ev[2] - 0.5) * rc.height / H, buttons: ev[3], bubbles: true }));
           ptr = { col: ev[1], row: ev[2] }; btn = [ev[3] & 1 ? 1 : 0, ev[3] & 2 ? 1 : 0, ev[3] & 4 ? 1 : 0];
         } else if (ev[0] === 'wheel') { for (var i = 0; i < ev[1]; i++) cv.dispatchEvent(new WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true })); notches += ev[1]; }
-        else if (ev[0] === 'edit') { host.edit(ev[1]); var m = /^\(cell "Clock" "B2" (\d+)\)$/.exec(ev[1]); if (m) nextRate = +m[1]; }
+        else if (ev[0] === 'edit') {
+          host.edit(ev[1]);
+          var m = /^\(cell "Clock" "B2" (\d+)\)$/.exec(ev[1]); if (m) nextRate = +m[1];
+          var mi = /^\(cell "Input" "([B-E])(\d+)" (\d+)\)$/.exec(ev[1]); if (mi) inputEdit = [+mi[2] - 1, 'BCDE'.indexOf(mi[1]), +mi[3]];
+        }
       };
       // ---- the drive: ticks at the rate the Clock holds, the frames they run by the page's own arithmetic ----
       // SPEC.md section 5 as corrected by ENGINE.3's hand test: a tick's time held to a quarter second,
@@ -1516,6 +1566,7 @@
         if (host.counters().frame !== f) { P.push('after ' + ticks + ' tick' + (ticks === 1 ? '' : 's') + ' of ' + dt + ' ms at the Clock\'s rate of ' + paced + ' the host is at frame ' + host.counters().frame + ', not ' + f); break; }
         if (ticks > 1) k.rate++;   // a frame of the slow rate, owed only after its waiting ticks ran none
         var got = host.plane, diff = -1;
+        planes[f] = got ? got.slice() : null;
         for (var q = 0; q < want.window.length; q++) if (!got || got[q] !== want.window[q]) { diff = q; break; }
         if (diff >= 0) { P.push('frame ' + f + ': the window\'s row ' + (Math.floor(diff / W) + 1) + ', column ' + (diff % W + 1) + ' holds ' + (got ? got[diff] : 'nothing') + ' in the host\'s plane and ' + want.window[diff] + ' in the card by hand'); continue; }
         k.equal++;
@@ -1553,7 +1604,180 @@
       var refusals = said.filter(function (s) { return s.refusal; });
       if (refusals.length === 1 && refusals[0].text.indexOf('the edit (cell "Clock" "B1" 99) was refused') >= 0 && refusals[0].text.indexOf('[cart-write-clock]') >= 0) k.refused = 1;
       else P.push('the refusals said are ' + refusals.length + ', not the one of the Clock\'s frame by cart-write-clock' + (refusals.length ? ': ' + refusals[0].text : ''));
+      INPUT_RUN = { text: host.replayText(), planes: planes, frames: k.frames };
     } finally { host.destroy(); stage.removeChild(box); }
+    return { counters: k, problems: P };
+  }
+  // ---- ENGINE.3's second slice: the replay (SPEC.md section 7.6) ----
+  // The host's SHA-256, which names a replay's cartridge, held to FIPS 180-2's vectors. Over the
+  // double: a live run of Life's manifest, its keys, its pointer, its derived writes, a person's
+  // edit of the State sheet and one of the Input sheet, copied and played on a fresh host all at
+  // once and through the loop at its rate, each ending at the live run's frame in its digest, the
+  // player's own recording the replay it played, a person's edit refused while it plays and the
+  // loop paused at its last frame; and six replays a player refuses in words, nothing loaded. Over
+  // the engine's module, when the page holds one: the card's committed replay,
+  // cartridges/inputcard/inputcard.replay.vla, is the input case's live run as the host recorded it,
+  // its header the card's digest and seed, each edit that landed logged in its frame and the refused
+  // one nowhere, the Input sheet logged whole at the first frame and after a person's edit of it;
+  // played on a fresh host, every frame the live run's window, and its end the golden,
+  // inputcard.golden.vla, the Tally's record byte for byte; and its recording the replay it played.
+  // Every cartridge whose folder holds a replay is played so to its golden, the shape each
+  // cartridge with input takes after the card (CART.4's first).
+  var SHA_VECTORS = [
+    ['', 'E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855'],
+    ['abc', 'BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD'],
+    ['abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq', '248D6A61D20638B8E5C026930C3E6039A33CE45964FF2167F6ECEDD419DB06C1'],
+    ['abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu', 'CF5B16A778AF8380036CE59E7B0492370B249B11E8F07A51AFAC45037AFEE9D1'],
+    [null, 'CDC76E5C9914FB9281A1C7E284D73E67F1809A48A497200E046D39CCC7112CD0']   // a million a's
+  ];
+  // A replay's or a golden's file as the page holds it, its comment lines, the licence first, dropped.
+  function afterComments(text) { return String(text).replace(/\r\n/g, '\n').replace(/^(?:;[^\n]*\n)+/, ''); }
+  // A replay's rows by frame, read the way the recorder writes them, one a line.
+  function replayFrames(text) {
+    var out = {}, n = 0, lines = String(text).split('\n');
+    for (var i = 1; i < lines.length; i++) {
+      var m = /^\(frame (\d+)\)$/.exec(lines[i]);
+      if (m) { n = +m[1]; out[n] = out[n] || []; } else if (n && lines[i]) out[n].push(lines[i]);
+    }
+    return out;
+  }
+  function firstDiffLine(a, b) {
+    var x = String(a).split('\n'), y = String(b).split('\n');
+    for (var i = 0; i < Math.max(x.length, y.length); i++) if (x[i] !== y[i]) return 'at line ' + (i + 1) + ', ' + JSON.stringify((x[i] === undefined ? 'no line' : x[i]).slice(0, 80)) + ' against ' + JSON.stringify((y[i] === undefined ? 'no line' : y[i]).slice(0, 80));
+    return 'nowhere by line';
+  }
+  function caseReplay() {
+    var P = [], k = { vectors: 0, liveFrames: 0, doubleSame: 0, doubleRound: 0, paced: 0, waited: 0, refused: 0 };
+    // ---- the digest ----
+    for (var v = 0; v < SHA_VECTORS.length; v++) {
+      var msg = SHA_VECTORS[v][0] === null ? new Array(1000001).join('a') : SHA_VECTORS[v][0], sha = HOST.sha256(msg);
+      if (sha === SHA_VECTORS[v][1]) k.vectors++;
+      else P.push('the host\'s SHA-256 of ' + (SHA_VECTORS[v][0] === null ? 'a million a\'s' : JSON.stringify(msg.slice(0, 20))) + ' is ' + sha + ', and FIPS 180-2 gives ' + SHA_VECTORS[v][1]);
+    }
+    // ---- over the double: a live run, copied and played ----
+    var r = loopRun({ text: lifeText, budget: 0, ticks: loopTicks(50, -1), events: {
+      3: [['down', 'ArrowRight', 'ArrowRight']], 7: [['edit', '(cell "State" "B1" 555)']], 9: [['up', 'ArrowRight']],
+      12: [['pointer', 6, 5], ['buttons', 1, 0, 0]], 15: [['edit', '(cell "Input" "B5" 1)']], 17: [['buttons', 0, 0, 0]],
+      20: [['wheel', 2]], 24: [['down', 'KeyZ', 'z']], 26: [['up', 'KeyZ']], 30: [['edit', '(cell "Camera" "B1" 3)']]
+    } });
+    var text = r.host.replayText(), liveFrame = r.host.counters().frame, liveDigest = r.fake.digest(r.host.counters().handle);
+    loopEnd(r, ['the edit (cell "State" "B1" 555) was written', 'the edit (cell "Input" "B5" 1) was written', 'the Camera placed the window at A3:LH202']);
+    P = P.concat(r.P);
+    k.liveFrames = liveFrame;
+    if (text === null) { P.push('the live run over the double has no replay'); return { counters: k, problems: P }; }
+    function doubleHost() {
+      var fk = FAKE.create({}), h = new HOST({ drive: 'manual', now: frozen, budget: 0 });
+      if (!h.attach(fk.exports).ok || !h.load(lifeText, 'life.vla').ok) throw new Error('a fresh host did not load Life over the double');
+      return { fake: fk, host: h };
+    }
+    // all at once
+    var A = doubleHost(), pa = A.host.play(text, true), da = A.fake.digest(A.host.counters().handle);
+    if (!pa.ok || A.host.counters().frame !== liveFrame) P.push('over the double, the live run\'s replay played all at once ends at frame ' + A.host.counters().frame + ', the live run at ' + liveFrame);
+    if (da === liveDigest) k.doubleSame++;
+    else P.push('over the double, the live run\'s replay played on a fresh host ends in the digest ' + da + ', where the live run ended in ' + liveDigest);
+    var againA = A.host.replayText();
+    if (againA === text) k.doubleRound = 1;
+    else P.push('over the double, the player\'s own recording is not the replay it played, ' + firstDiffLine(againA || '', text));
+    A.host.destroy();
+    // through the loop, at the rate, a person's edit refused while it plays
+    var B = doubleHost(), told = [], t = 1000;
+    B.host.on('frame', function (e) { told.push(e.replay); });
+    var pb = B.host.play(text);
+    if (!pb.ok || !B.host.running) P.push('the replay played through the loop did not start: ' + (pb.sentence || 'the loop is not running'));
+    B.host.tick(t);
+    for (var i = 0; i < 400 && B.host.running; i++) {
+      t += 17; B.host.tick(t);
+      if (i === 5) { if (B.host.edit('(cell "State" "B1" 1)')) P.push('a person\'s edit was taken while a replay played'); else k.waited = 1; }
+    }
+    var db = B.fake.digest(B.host.counters().handle);
+    if (B.host.running) P.push('the replay played through the loop had not ended after 400 ticks, at frame ' + B.host.counters().frame);
+    else if (B.host.counters().frame !== liveFrame || db !== liveDigest) P.push('over the double, the replay played through the loop ends at frame ' + B.host.counters().frame + ' in the digest ' + db + ', the live run at frame ' + liveFrame + ' in ' + liveDigest);
+    else if (told.length !== liveFrame || told.some(function (x) { return x !== liveFrame; })) P.push('the frames played through the loop said they replayed ' + told.length + ' frame(s), not ' + liveFrame + ' each of ' + liveFrame);
+    else k.paced = 1;
+    var saidB = B.host.sentences().map(function (s) { return s.text; });
+    if (!saidB.some(function (s) { return s.indexOf('frame ' + liveFrame + ': the replay ended at its last frame; the loop is paused') === 0; })) P.push('no sentence says the replay ended at its last frame, ' + liveFrame + ', and the loop paused');
+    if (!B.host.sentences().some(function (s) { return s.refusal && s.text.indexOf('The edit (cell "State" "B1" 1) was not written: a replay is playing') === 0; })) P.push('the edit made while the replay played was not refused in words');
+    B.host.destroy();
+    // the replays a player refuses, each in words, the cartridge loaded untouched
+    var C = doubleHost();
+    var wrong = [
+      ['another cartridge\'s replay', CARTRIDGES.inputcard.replay, 'a replay plays only on the file it was recorded from'],
+      ['a later version\'s replay', text.replace('(spec 3)', '(spec 4)'), 'this host implements versions 1 to 3'],
+      ['a derived row', text.replace('(frame 1)\n', '(frame 1)\n(derived "State" "B1" 1)\n'), 'holds a derived row'],
+      ['frames out of order', text + '(frame 1)\n', 'frames are out of order'],
+      ['a row before the first frame', text.replace('(frame 1)\n', '(cell "State" "B1" 1)\n(frame 1)\n'), 'a row before its first (frame n)'],
+      ['a seed not the manifest\'s', text.replace(/\(seed \d+\)\)\n/, '(seed 7))\n'), 'holds its manifest\'s seed']
+    ];
+    for (var w = 0; w < wrong.length; w++) {
+      if (wrong[w][1] === text) { P.push(wrong[w][0] + ': the mutation did not apply'); continue; }
+      var before = C.host.counters(), pr = C.host.play(wrong[w][1], true), after = C.host.counters();
+      var last = C.host.sentences().slice(-1)[0];
+      if (pr.ok) P.push('a player took ' + wrong[w][0]);
+      else if (!last || !last.refusal || last.text.indexOf(wrong[w][2]) < 0) P.push('a player refused ' + wrong[w][0] + ' without saying ' + JSON.stringify(wrong[w][2]) + ': ' + (last ? last.text : 'nothing said'));
+      else if (after.handle !== before.handle || after.frame !== before.frame) P.push('a player refused ' + wrong[w][0] + ' and still loaded the cartridge again');
+      else k.refused++;
+    }
+    C.host.destroy();
+    // ---- over the engine's module: the card's replay and its golden ----
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm), body = afterComments(CARTRIDGES.inputcard.replay);
+    k.module = bytes.length; k.digest = 0; k.seed = 0; k.recorded = 0; k.edits = 0; k.whole = 0; k.frames = 0; k.same = 0; k.golden = 0; k.round = 0;
+    var hm = /^\(replay "inputcard" \(spec 3\) \(cartridge "([0-9A-F]{64})"\) \(seed (\d+)\)\)\n/.exec(body), cardDigest = HOST.sha256(inputcardText.replace(/\r\n/g, '\n'));
+    if (!hm) P.push('the committed replay\'s header is not (replay "inputcard" (spec 3) (cartridge "<SHA-256>") (seed <n>)): ' + body.split('\n')[0].slice(0, 120));
+    else {
+      if (hm[1] === cardDigest) k.digest = 1; else P.push('the committed replay names the cartridge ' + hm[1] + ', and the input card\'s text, its line ends LF, is ' + cardDigest);
+      if (+hm[2] === CARD_SEED) k.seed = 1; else P.push('the committed replay\'s seed is ' + hm[2] + ', not the input case\'s ' + CARD_SEED);
+    }
+    if (!INPUT_RUN || !INPUT_RUN.text) P.push('the input case left no live run to copy');
+    else {
+      // what the recorder logged of the live run: each edit that landed in its frame, the refused one nowhere,
+      // and the Input sheet whole at the first frame and after a person's edit of it
+      var blocks = replayFrames(INPUT_RUN.text);
+      [[9, '(cell "Input" "C5" 1)'], [18, '(cell "Clock" "B2" 1)'], [21, '(cell "Clock" "B2" 30)']].forEach(function (e) {
+        if ((blocks[e[0]] || []).indexOf(e[1]) >= 0) k.edits++;
+        else P.push('the replay of the input case\'s live run does not log the edit ' + e[1] + ' in frame ' + e[0] + ', where it landed');
+      });
+      if (INPUT_RUN.text.indexOf('(cell "Clock" "B1" 99)') >= 0) P.push('the replay of the input case\'s live run logs the refused edit (cell "Clock" "B1" 99)');
+      [1, 10].forEach(function (n) {
+        var inputs = (blocks[n] || []).filter(function (x) { return x.indexOf('(cell "Input" ') === 0; }).length;
+        if (inputs === 48) k.whole++;
+        else P.push('frame ' + n + ' of the live run\'s replay logs ' + inputs + ' Input row(s), not the sheet\'s 48 ' + (n === 1 ? 'at the first frame' : 'after a person\'s edit of the Input sheet in frame 9'));
+      });
+      if (INPUT_RUN.text === body) k.recorded = 1;
+      else P.push('the input case\'s live run recorded a replay that is not the committed one, cartridges/inputcard/inputcard.replay.vla, ' + firstDiffLine(INPUT_RUN.text, body));
+    }
+    // every cartridge's committed replay, played on a fresh host over a fresh instance: its end its golden
+    // and its recording itself; the input card's, every frame the live run's window as well
+    k.replays = 0;
+    for (var cn in CARTRIDGES) {
+      if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn) || !CARTRIDGES[cn].replayPath) continue;
+      var cart = CARTRIDGES[cn], card = cn === 'inputcard', rBody = afterComments(cart.replay), gBody = afterComments(cart.golden);
+      var M = new HOST({ drive: 'manual', budget: 0, now: frozen }), firstOff = 0;
+      k.replays++;
+      try {
+        if (!M.attach(HOST.instantiateSync(bytes)).ok || !M.load(cart.text, cart.file).ok) { P.push('a fresh host did not load ' + cart.file + ' over the module'); continue; }
+        if (card) M.on('frame', function (e) {
+          k.frames++;
+          var live = INPUT_RUN ? INPUT_RUN.planes[e.frame] : null, got = M.plane, eq = !!(live && got && live.length === got.length);
+          for (var q = 0; eq && q < got.length; q++) if (got[q] !== live[q]) eq = false;
+          if (eq) k.same++; else if (!firstOff) firstOff = e.frame;
+        });
+        var pm = M.play(cart.replay, true);
+        if (!pm.ok) P.push('the committed replay of ' + cart.file + ' played on a fresh host stopped at frame ' + pm.frames + ': ' + (pm.sentence || M.sentences().slice(-1)[0].text));
+        if (firstOff) P.push('frame ' + firstOff + ' of the committed replay, played on a fresh host, draws a window that is not the live run\'s');
+        var wm = /^\(window "([^"]+)" "([^"]+)"\)$/m.exec(gBody);
+        if (!wm) P.push('the golden of ' + cart.file + ' has no (window ...) row naming its sheet');
+        else {
+          var rec = M.viewRecord(wm[1], wm[2]);
+          if (rec === gBody) k.golden++;
+          else P.push('the committed replay of ' + cart.file + ' played on a fresh host ends in a ' + wm[1] + ' that is not its golden, ' + cart.replayPath.replace(/replay\.vla$/, 'golden.vla') + ', ' + firstDiffLine(rec || '', gBody));
+        }
+        var again = M.replayText();
+        if (again === rBody) k.round++;
+        else P.push('the player\'s own recording of ' + cart.file + '\'s committed replay is not the replay it played, ' + firstDiffLine(again || '', rBody));
+      } finally { M.destroy(); }
+    }
     return { counters: k, problems: P };
   }
   function loopLine(name, k, problems) {
@@ -1565,7 +1789,7 @@
     var out = [], dpr = window.devicePixelRatio || 1, ok = 0, R = HOST.RULES;
     out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals], ['scale', caseScale],
-                 ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput]];
+                 ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay]];
     for (var i = 0; i < cases.length; i++) {
       var res;
       try { res = cases[i][1](); } catch (e) { res = { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }

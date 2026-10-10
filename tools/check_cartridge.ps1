@@ -56,9 +56,25 @@ a cartridge holding a (defmacro ...) or an (include ...) is refused as a
 source (cart-source-unexpanded), before its manifest, as the engine refuses
 it; and (spec 3) is read beside 1 and 2.
 
+SINCE ENGINE.3'S SECOND SLICE (2026-10-10; REARVIEW.md, decisions 8 and 11):
+a cartridge's folder may hold its replay, <name>.replay.vla, and the replay's
+golden, <name>.golden.vla, one of each a cartridge, each counted against its
+pin. A replay is read as SPEC.md section 7.6 has it: the licence header; its
+header (replay "<name>" (spec n) (cartridge "<SHA-256>") (seed n)), the name
+its folder's, the spec 1 to 3, the digest PowerShell's SHA-256 of the
+cartridge beside it over its LF bytes, the seed a whole number from 1 to
+2147483646 and the manifest's when the manifest names one; then (frame n)
+heads ascending from 1, and under them cell and formula rows alone, a
+(derived ...) row refused, being re-derived as a replay plays. A golden has
+its replay beside it, and is a record whose one (window ...) row names a
+sheet the record holds, every cell, formula and value row that sheet's. What
+the replay plays to is the loop oracle's, which holds the page's player to
+the golden byte for byte (tools/check_host_loop.ps1, the replay case), and
+cargo test's, a player of the engine's own.
+
 -Control copies cartridges/ to a scratch folder and proves the check on it,
 a fresh copy for every case: the clean copy passes, and so does Life written
-to (spec 3); twenty mutants must each fail for its own reason, each
+to (spec 3); twenty-nine mutants must each fail for its own reason, each
 asserting its anchor once and proving it applied before the check is asked.
 Thirteen are of life.vla: a directive dropped, a rate of 121, a screen 321
 wide, a cell written twice, a cell outside the Screen, a Palette index out
@@ -68,7 +84,11 @@ Input!B1, and the file renamed out of its folder's name, which the count
 must catch. Seven are SPEC.3's: a (spec 4), a macro left in a cartridge,
 an include before a cartridge's manifest, a source whose cartridge is gone,
 a banner naming a source that is not there, a stray .vla in a cartridge's
-folder, and a second library.
+folder, and a second library. Nine are ENGINE.3's, of the input card's
+replay and golden: a digest that is not the cartridge's, a replay named for
+another folder, a (spec 4), a seed of 0, frames out of order, a derived row,
+a row before the first frame, a golden without its window row, and a golden
+whose replay is gone.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network; a
 hardcoded, reviewable baseline that pins how many; exit 0 clean, exit 1 with
@@ -103,9 +123,16 @@ if ($Root -eq '') { $Root = $repoRoot }
 # the Panel's lamps and the Screen's one formula: 1,517 cells, 1,411 of them
 # formula cells), written as a source over the library, which gains the Keys
 # sheet's macros; the other three's rows unchanged.
+# 2026-10-10, ENGINE.3's second slice: the input card's replay and its golden,
+# cartridges/inputcard/inputcard.replay.vla (the loop oracle's input case as
+# the host recorded it: 26 frames, 19 of them written, 130 rows, the seed
+# 12345) and inputcard.golden.vla (the Tally sheet's record at its end, the
+# window A1:E20); the cartridges' rows unchanged.
 $expectedCartridges = 4
 $expectedSources = 4
 $expectedLibraries = 1
+$expectedReplays = 1
+$expectedGoldens = 1
 $rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136 }
 
 # --- section 7 and section 3, as data ---
@@ -382,6 +409,108 @@ function Get-SecondLine([string]$path) {
     return ''
 }
 
+# ---- a replay and its golden (ENGINE.3's second slice; SPEC.md section 7.6) ----
+# A file's SHA-256 over its text with LF line ends, upper-case hex: what a replay's header names
+# its cartridge by, as tools/check_frame_floors.ps1 digests a fixture and the host its cartridge.
+function Get-LfDigest([string]$path) {
+    $text = [System.IO.File]::ReadAllText($path) -replace "`r`n", "`n"
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { $hash = $sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($text)) } finally { $sha.Dispose() }
+    return (($hash | ForEach-Object { $_.ToString('X2') }) -join '')
+}
+# The seed a cartridge's manifest names, a number or host, from its one (seed ...) directive line; '' with none.
+function Get-ManifestSeed([string]$path) {
+    $m = [regex]::Match(([System.IO.File]::ReadAllText($path)), '(?m)^\s*\(seed\s+(host|\d+)\)')
+    if ($m.Success) { return $m.Groups[1].Value }
+    return ''
+}
+function Test-Replay([string]$path, [string]$name, [string]$cartridgePath) {
+    $problems = New-Object System.Collections.Generic.List[string]
+    $result = @{ Problems = $problems; Frames = 0; Rows = 0; Last = 0; Seed = '' }
+    $text = [System.IO.File]::ReadAllText($path) -replace "`r`n", "`n"
+    if (($text -split "`n", 2)[0] -cne $header) { $problems.Add("line 1: the licence header is not the first line, '$header'") }
+    try { $forms = Read-Forms $text } catch { $problems.Add($_.Exception.Message); return $result }
+    $shape = '(replay "<name>" (spec <n>) (cartridge "<SHA-256>") (seed <n>))'
+    $h = $null
+    if ($forms.Count -gt 0) { $h = $forms[0] }
+    if (-not (Test-Kind $h 'list') -or $h.Items.Count -lt 2 -or -not (Test-Sym $h.Items[0] 'replay') -or -not (Test-Kind $h.Items[1] 'string')) { $problems.Add("the first form is not a replay's header, $shape"); return $result }
+    if ($h.Items[1].Value -cne $name) { $problems.Add("line $($h.Line): the header names $($h.Items[1].Value), and the replay stands in the folder of $name") }
+    $given = @{}
+    for ($i = 2; $i -lt $h.Items.Count; $i++) {
+        $d = $h.Items[$i]
+        if (-not (Test-Kind $d 'list') -or $d.Items.Count -ne 2 -or -not (Test-Kind $d.Items[0] 'symbol') -or @('spec', 'cartridge', 'seed') -cnotcontains $d.Items[0].Text) { $problems.Add("line $($h.Line): the header holds $(Show-Datum $d), and a replay's header is $shape"); continue }
+        if ($given.ContainsKey($d.Items[0].Text)) { $problems.Add("line $($h.Line): the header gives ($($d.Items[0].Text) ...) twice") }
+        $given[$d.Items[0].Text] = $d.Items[1]
+    }
+    foreach ($k in @('spec', 'cartridge', 'seed')) { if (-not $given.ContainsKey($k)) { $problems.Add("line $($h.Line): the header has no ($k ...), and a replay's header is $shape") } }
+    if ($given.ContainsKey('spec')) {
+        $s = $given['spec']
+        if (-not (Test-Whole $s) -or $s.Value -lt 1 -or $s.Value -gt 3) { $problems.Add("line $($h.Line): (spec $(Show-Datum $s)): a replay is written to the page's version 1, 2 or 3") }
+    }
+    if ($given.ContainsKey('cartridge')) {
+        $c = $given['cartridge']
+        if (-not (Test-Kind $c 'string') -or $c.Value -cnotmatch '^[0-9A-F]{64}$') { $problems.Add("line $($h.Line): (cartridge $(Show-Datum $c)) is not a SHA-256 in sixty-four upper-case hex digits") }
+        else {
+            $want = Get-LfDigest $cartridgePath
+            if ($c.Value -cne $want) { $problems.Add("line $($h.Line): the header names the cartridge $($c.Value), and $name.vla's SHA-256 over its LF bytes is ${want}: a replay plays only on the file it was recorded from") }
+        }
+    }
+    if ($given.ContainsKey('seed')) {
+        $s = $given['seed']
+        if (-not (Test-Whole $s) -or $s.Value -lt 1 -or $s.Value -gt 2147483646) { $problems.Add("line $($h.Line): (seed $(Show-Datum $s)): a seed is a whole number from 1 to 2147483646") }
+        else {
+            $result.Seed = $s.Text
+            $named = Get-ManifestSeed $cartridgePath
+            if ($named -match '^\d+$' -and [double]$named -ne $s.Value) { $problems.Add("line $($h.Line): (seed $($s.Text)), and $name.vla's manifest says (seed $named): a replay of it holds its manifest's seed") }
+        }
+    }
+    # the frames ascending from 1, and under them cell and formula rows alone
+    $frame = 0
+    for ($i = 1; $i -lt $forms.Count; $i++) {
+        $f = $forms[$i]
+        $head = ''
+        if ((Test-Kind $f 'list') -and $f.Items.Count -ge 1 -and (Test-Kind $f.Items[0] 'symbol')) { $head = $f.Items[0].Text }
+        if ($head -ceq 'frame') {
+            $n = $null
+            if ($f.Items.Count -eq 2) { $n = $f.Items[1] }
+            if (-not (Test-Whole $n) -or $n.Value -le $frame) { $problems.Add("line $($f.Line): (frame $(Show-Datum $n)) follows $(if ($frame) { "(frame $frame)" } else { 'the header' }), and a replay's frames ascend from 1"); continue }
+            $frame = $n.Value; $result.Frames++; continue
+        }
+        if ($head -ceq 'derived') { $problems.Add("line $($f.Line): a (derived ...) row: the host's derived writes are re-derived as a replay plays and never logged (SPEC.md section 7.6)"); continue }
+        if ($head -cne 'cell' -and $head -cne 'formula') { $problems.Add("line $($f.Line): $(if ($head) { "($head ...)" } else { Show-Datum $f }) is neither a (frame n) nor a cell or formula row"); continue }
+        if ($frame -eq 0) { $problems.Add("line $($f.Line): a row before the replay's first (frame n)"); continue }
+        $ok = ($f.Items.Count -eq 4) -and (Test-Kind $f.Items[1] 'string') -and (Test-Kind $f.Items[2] 'string') -and ($null -ne (Get-Rect $f.Items[2].Value)) -and (Test-Value $f.Items[3])
+        if ($ok -and $head -ceq 'formula') { $ok = (Test-Kind $f.Items[3] 'string') -and $f.Items[3].Value.StartsWith('=') }
+        if (-not $ok) { $problems.Add("line $($f.Line): the row is not ($head `"sheet`" `"address`" value)"); continue }
+        $result.Rows++
+    }
+    $result.Last = $frame
+    return $result
+}
+function Test-Golden([string]$path) {
+    $problems = New-Object System.Collections.Generic.List[string]
+    $result = @{ Problems = $problems; Sheet = ''; Window = ''; Rows = 0 }
+    $text = [System.IO.File]::ReadAllText($path) -replace "`r`n", "`n"
+    if (($text -split "`n", 2)[0] -cne $header) { $problems.Add("line 1: the licence header is not the first line, '$header'") }
+    try { $forms = Read-Forms $text } catch { $problems.Add($_.Exception.Message); return $result }
+    $result.Rows = $forms.Count
+    $windows = @($forms | Where-Object { (Test-Kind $_ 'list') -and $_.Items.Count -ge 1 -and (Test-Sym $_.Items[0] 'window') })
+    if ($windows.Count -ne 1) { $problems.Add("the golden holds $($windows.Count) (window ...) row(s), and a golden is the record of one window of one sheet, its window row naming the sheet (SPEC.md section 7.6)"); return $result }
+    $w = $windows[0]
+    if ($w.Items.Count -ne 3 -or -not (Test-Kind $w.Items[1] 'string') -or -not (Test-Kind $w.Items[2] 'string') -or $null -eq (Get-Rect $w.Items[2].Value)) { $problems.Add("line $($w.Line): the window row is not (window `"sheet`" `"range`")"); return $result }
+    $sheet = $w.Items[1].Value
+    $result.Sheet = $sheet; $result.Window = $w.Items[2].Value
+    $sheets = @($forms | Where-Object { (Test-Kind $_ 'list') -and $_.Items.Count -ge 2 -and (Test-Sym $_.Items[0] 'sheet') -and (Test-Kind $_.Items[1] 'string') } | ForEach-Object { $_.Items[1].Value })
+    if ($sheets -cnotcontains $sheet) { $problems.Add("line $($w.Line): the window names the sheet $sheet, which no (sheet ...) row of the record holds") }
+    foreach ($f in $forms) {
+        if (-not (Test-Kind $f 'list') -or $f.Items.Count -lt 2) { continue }
+        foreach ($kind in @('cell', 'formula', 'value')) {
+            if ((Test-Sym $f.Items[0] $kind) -and (-not (Test-Kind $f.Items[1] 'string') -or $f.Items[1].Value -cne $sheet)) { $problems.Add("line $($f.Line): a ($kind ...) row of $(Show-Datum $f.Items[1]), and the golden is the record of $sheet") }
+        }
+    }
+    return $result
+}
+
 # ---- every cartridge, source and library of a tree, against the baseline ----
 function Test-Tree([string]$root) {
     $problems = New-Object System.Collections.Generic.List[string]
@@ -390,9 +519,12 @@ function Test-Tree([string]$root) {
     $all = @()
     if (Test-Path -LiteralPath $dir) { $all = @(Get-ChildItem -LiteralPath $dir -Recurse -Filter '*.vla' -File | Sort-Object FullName) }
     # The folder rule: a cartridge is the file of its folder's name, its source
-    # <name>.source.vla beside it, and a library a file of cartridges/ itself.
+    # <name>.source.vla beside it, its replay <name>.replay.vla and that replay's
+    # golden <name>.golden.vla, and a library a file of cartridges/ itself.
     $cartridges = New-Object System.Collections.Generic.List[object]
     $sources = New-Object System.Collections.Generic.List[object]
+    $replays = New-Object System.Collections.Generic.List[object]
+    $goldens = New-Object System.Collections.Generic.List[object]
     $libraries = New-Object System.Collections.Generic.List[object]
     foreach ($file in $all) {
         $rel = ($file.FullName.Substring($root.TrimEnd('\', '/').Length + 1)) -replace '\\', '/'
@@ -401,10 +533,14 @@ function Test-Tree([string]$root) {
         if ($parts.Count -eq 2) { $libraries.Add($entry) }
         elseif ($parts.Count -eq 3 -and $parts[2] -ceq ($parts[1] + '.vla')) { $entry.Name = $parts[1]; $cartridges.Add($entry) }
         elseif ($parts.Count -eq 3 -and $parts[2] -ceq ($parts[1] + '.source.vla')) { $entry.Name = $parts[1]; $sources.Add($entry) }
-        else { $problems.Add("${rel}: neither a cartridge (cartridges/<name>/<name>.vla), its source (<name>.source.vla beside it) nor a library (a file of cartridges/ itself)") }
+        elseif ($parts.Count -eq 3 -and $parts[2] -ceq ($parts[1] + '.replay.vla')) { $entry.Name = $parts[1]; $replays.Add($entry) }
+        elseif ($parts.Count -eq 3 -and $parts[2] -ceq ($parts[1] + '.golden.vla')) { $entry.Name = $parts[1]; $goldens.Add($entry) }
+        else { $problems.Add("${rel}: neither a cartridge (cartridges/<name>/<name>.vla), its source, replay or golden (<name>.source.vla, <name>.replay.vla, <name>.golden.vla beside it) nor a library (a file of cartridges/ itself)") }
     }
     if ($cartridges.Count -ne $expectedCartridges) { $problems.Add("found $($cartridges.Count) cartridge(s) under cartridges/, and the baseline pins ${expectedCartridges}; a cartridge added, removed or renamed out of its folder's name moves the pin in this file") }
     if ($sources.Count -ne $expectedSources) { $problems.Add("found $($sources.Count) source(s) under cartridges/, and the baseline pins ${expectedSources}; a source added or removed moves the pin in this file") }
+    if ($replays.Count -ne $expectedReplays) { $problems.Add("found $($replays.Count) replay(s) under cartridges/, and the baseline pins ${expectedReplays}; a replay added or removed moves the pin in this file") }
+    if ($goldens.Count -ne $expectedGoldens) { $problems.Add("found $($goldens.Count) golden(s) under cartridges/, and the baseline pins ${expectedGoldens}; a golden added or removed moves the pin in this file") }
     if ($libraries.Count -ne $expectedLibraries) { $problems.Add("found $($libraries.Count) library(ies) under cartridges/, and the baseline pins ${expectedLibraries}; a library added or removed moves the pin in this file") }
     # Each source has its cartridge beside it, whose second line names it.
     foreach ($s in $sources) {
@@ -433,6 +569,20 @@ function Test-Tree([string]$root) {
         $lines.Add($note + $(if ($t.Problems.Count) { "  FAIL ($($t.Problems.Count))" } else { ', every rule of section 7 holds' }))
     }
     $lines.Add(("  {0} source(s), each beside the cartridge whose banner names it, and {1} library(ies): {2}" -f $sources.Count, $libraries.Count, ((@($libraries | ForEach-Object { $_.Rel })) -join ', ')))
+    # A replay has its cartridge beside it, whose digest its header names; a golden its replay.
+    foreach ($rp in $replays) {
+        $cart = Join-Path (Split-Path -Parent $rp.Path) ($rp.Name + '.vla')
+        if (-not (Test-Path -LiteralPath $cart)) { $problems.Add("$($rp.Rel): has no cartridge beside it, $($rp.Name).vla, whose replay it would be"); continue }
+        $t = Test-Replay $rp.Path $rp.Name $cart
+        foreach ($p in $t.Problems) { $problems.Add("$($rp.Rel): $p") }
+        $lines.Add(("  {0}: {1} frame(s) written of {2}, {3} row(s), the seed {4}{5}" -f $rp.Rel, $t.Frames, $t.Last, $t.Rows, $t.Seed, $(if ($t.Problems.Count) { "  FAIL ($($t.Problems.Count))" } else { ", the header naming $($rp.Name).vla by its digest; every rule of section 7.6 holds" })))
+    }
+    foreach ($g in $goldens) {
+        if (-not (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $g.Path) ($g.Name + '.replay.vla')))) { $problems.Add("$($g.Rel): has no replay beside it, $($g.Name).replay.vla, whose end it would hold"); continue }
+        $t = Test-Golden $g.Path
+        foreach ($p in $t.Problems) { $problems.Add("$($g.Rel): $p") }
+        $lines.Add(("  {0}: the record of {1}'s window {2}, {3} row(s){4}" -f $g.Rel, $t.Sheet, $t.Window, $t.Rows, $(if ($t.Problems.Count) { "  FAIL ($($t.Problems.Count))" } else { ', its replay beside it' })))
+    }
     return @{ Problems = $problems; Lines = $lines }
 }
 
@@ -479,7 +629,17 @@ if ($Control) {
             @{ Name = 'a source whose cartridge is gone'; Remove = 'gun/gun.vla'; Want = 'gun.source.vla: has no cartridge beside it' },
             @{ Name = 'a banner naming a source that is not there'; Anchor = 'from life.source.vla'; With = 'from lives.source.vla'; Want = 'names a source that is not there' },
             @{ Name = 'a stray .vla in a cartridge''s folder'; Add = 'life/notes.vla'; Want = 'life/notes.vla: neither a cartridge' },
-            @{ Name = 'a second library'; Add = 'extra.vla'; Want = 'found 2 library(ies)' }
+            @{ Name = 'a second library'; Add = 'extra.vla'; Want = 'found 2 library(ies)' },
+            # ENGINE.3's second slice: the input card's replay and its golden
+            @{ Name = 'a replay naming another digest'; File = 'inputcard/inputcard.replay.vla'; Pattern = '\(cartridge "[0-9A-F]{64}"\)'; With = ('(cartridge "' + ('0' * 64) + '")'); Want = 'a replay plays only on the file it was recorded from' },
+            @{ Name = 'a replay named for another folder'; File = 'inputcard/inputcard.replay.vla'; Anchor = '(replay "inputcard"'; With = '(replay "life"'; Want = 'the header names life, and the replay stands in the folder of inputcard' },
+            @{ Name = 'a replay of a (spec 4)'; File = 'inputcard/inputcard.replay.vla'; Anchor = '(spec 3)'; With = '(spec 4)'; Want = '(spec 4): a replay is written to the page''s version 1, 2 or 3' },
+            @{ Name = 'a replay''s seed of 0'; File = 'inputcard/inputcard.replay.vla'; Pattern = '\(seed \d+\)\)'; With = '(seed 0))'; Want = '(seed 0): a seed is a whole number from 1 to 2147483646' },
+            @{ Name = 'a replay''s frames out of order'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 3)`n"; With = "(frame 30)`n"; Want = 'follows (frame 30), and a replay''s frames ascend from 1' },
+            @{ Name = 'a derived row in a replay'; File = 'inputcard/inputcard.replay.vla'; Append = '(derived "Tally" "B20" 1)'; Want = 'a (derived ...) row: the host''s derived writes are re-derived' },
+            @{ Name = 'a row before a replay''s first frame'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 1)`n"; With = "(cell `"Input`" `"B1`" 0)`n(frame 1)`n"; Want = 'a row before the replay''s first (frame n)' },
+            @{ Name = 'a golden without its window row'; File = 'inputcard/inputcard.golden.vla'; Pattern = '\(window "Tally" "[A-Z]+[0-9]+:[A-Z]+[0-9]+"\)\n'; With = ''; Want = 'the golden holds 0 (window ...) row(s)' },
+            @{ Name = 'a golden whose replay is gone'; Remove = 'inputcard/inputcard.replay.vla'; Want = 'inputcard.golden.vla: has no replay beside it' }
         )
         foreach ($mu in $mutants) {
             Reset-Tree
@@ -498,13 +658,22 @@ if ($Control) {
                 [System.IO.File]::WriteAllText($target, ($library -replace "`n", "`r`n"), $utf8)
                 $applied = $applied -and (Test-Path -LiteralPath $target)
             } else {
+                # life.vla unless the mutant names its file; an anchor or a pattern met exactly once, or a row appended
+                $rel = 'life/life.vla'
+                if ($mu.ContainsKey('File')) { $rel = $mu.File }
+                $target = Join-Path $tree ('cartridges/' + $rel)
+                $orig = $lf0
+                if ($rel -ne 'life/life.vla') { $orig = [System.IO.File]::ReadAllText((Join-Path $pristine $rel)) -replace "`r`n", "`n" }
                 if ($mu.ContainsKey('Anchor')) {
-                    if (([regex]::Matches($lf0, [regex]::Escape($mu.Anchor))).Count -ne 1) { $ok = $false; $verdicts.Add("$($mu.Name): the anchor $($mu.Anchor) is not in life.vla exactly once"); continue }
-                    $mut = $lf0.Replace($mu.Anchor, $mu.With)
-                } else { $mut = $lf0 + $mu.Append + "`n" }
-                [System.IO.File]::WriteAllText($life, ($mut -replace "`n", "`r`n"), $utf8)
-                $back = [System.IO.File]::ReadAllText($life) -replace "`r`n", "`n"
-                $applied = ($back -ne $lf0) -and ($back -ceq $mut)
+                    if (([regex]::Matches($orig, [regex]::Escape($mu.Anchor))).Count -ne 1) { $ok = $false; $verdicts.Add("$($mu.Name): the anchor $($mu.Anchor) is not in $rel exactly once"); continue }
+                    $mut = $orig.Replace($mu.Anchor, $mu.With)
+                } elseif ($mu.ContainsKey('Pattern')) {
+                    if (([regex]::Matches($orig, $mu.Pattern)).Count -ne 1) { $ok = $false; $verdicts.Add("$($mu.Name): the pattern $($mu.Pattern) is not in $rel exactly once"); continue }
+                    $mut = [regex]::Replace($orig, $mu.Pattern, $mu.With.Replace('$', '$$'))
+                } else { $mut = $orig + $mu.Append + "`n" }
+                [System.IO.File]::WriteAllText($target, ($mut -replace "`n", "`r`n"), $utf8)
+                $back = [System.IO.File]::ReadAllText($target) -replace "`r`n", "`n"
+                $applied = ($back -ne $orig) -and ($back -ceq $mut)
             }
             if (-not $applied) { $ok = $false; $verdicts.Add("$($mu.Name): the mutation did not apply"); continue }
             $r = Test-Tree $tree
@@ -519,7 +688,7 @@ if ($Control) {
             else { $ok = $false; $verdicts.Add("$($mu.Name): PASSED but should fail") }
         }
         foreach ($v in $verdicts) { Write-Output ('control: ' + $v) }
-        if ($ok) { Write-Output 'OK: the check passes the clean copy and Life written to (spec 3), and fails each of the twenty mutants for its own reason, each proving it applied'; exit 0 }
+        if ($ok) { Write-Output 'OK: the check passes the clean copy and Life written to (spec 3), and fails each of the twenty-nine mutants for its own reason, each proving it applied'; exit 0 }
         Write-Output 'FAIL: the control did not behave as the header says'
         exit 1
     } finally {
@@ -532,7 +701,7 @@ $tr = Test-Tree $Root
 $tr.Lines | ForEach-Object { Write-Output $_ }
 Write-Output ''
 if ($tr.Problems.Count -eq 0) {
-    Write-Output ("=== CHECK: clean - {0} cartridge(s), each holding to section 7, at or above its floor; {1} source(s) and {2} library(ies) beside them ===" -f $expectedCartridges, $expectedSources, $expectedLibraries)
+    Write-Output ("=== CHECK: clean - {0} cartridge(s), each holding to section 7, at or above its floor; {1} source(s), {2} replay(s) with {3} golden(s), and {4} library(ies) beside them ===" -f $expectedCartridges, $expectedSources, $expectedReplays, $expectedGoldens, $expectedLibraries)
     exit 0
 }
 Write-Output "=== CHECK: $($tr.Problems.Count) problem(s) ==="

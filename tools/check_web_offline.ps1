@@ -28,7 +28,10 @@ each; each {{FIXTURE:name}} once, a file web/fixtures/<name>.vla, each
 SPEC.3's second slice each {{SOURCE:name}} once, a cartridge's source,
 cartridges/<name>/<name>.source.vla, and each {{LIBRARY:name}} once, a
 library the sources include, cartridges/<name>.vla, the texts the pass in
-the page reads, with no file of any family left without its place, so a
+the page reads, and since ENGINE.3's second slice each {{REPLAY:name}} and
+{{GOLDEN:name}} once, a cartridge's replay and its golden beside it,
+cartridges/<name>/<name>.replay.vla and <name>.golden.vla, which the page
+plays and holds, with no file of any family left without its place, so a
 built page is whole and the page and its sources cannot drift apart. When
 web/index.html exists beside the template, its markup is held to the same
 list of tags (a record or a cartridge cannot spell a tag) and no
@@ -40,9 +43,10 @@ one with a fetch call, one with the viewport's placeholder removed, one with
 an anchor appended, one with an image, one with a FIXTURE place for a file
 the folder does not hold, one with a CARTRIDGE place for a cartridge the
 folder does not hold, one with a SOURCE place for a source no cartridge
-has, one with the library's LIBRARY place removed, a viewport source with a
-fetch call appended and a host source with a fetch call appended must each
-fail.
+has, one with the library's LIBRARY place removed, one with a REPLAY place
+for a replay no cartridge has, one with the input card's GOLDEN place
+removed, a viewport source with a fetch call appended and a host source
+with a fetch call appended must each fail.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named.
@@ -96,6 +100,15 @@ function Get-SourceNames([string]$dir) {
     }
     return ,$names
 }
+# A cartridge's replay and its golden stand beside it: cartridges/inputcard/inputcard.replay.vla
+# and inputcard.golden.vla (ENGINE.3's second slice).
+function Get-BesideNames([string]$dir, [string]$suffix) {
+    $names = @()
+    if (Test-Path -LiteralPath $dir) {
+        foreach ($d in (Get-ChildItem -LiteralPath $dir -Directory | Sort-Object Name)) { if (Test-Path -LiteralPath (Join-Path $d.FullName ($d.Name + $suffix))) { $names += $d.Name } }
+    }
+    return ,$names
+}
 # A library is a file of cartridges/ itself: cartridges/console.vla (SPEC.3).
 function Get-LibraryNames([string]$dir) {
     $names = @()
@@ -139,6 +152,8 @@ function Test-Template([string]$path, [string]$script, [string]$fixtures, [strin
     $problems += @(Test-Places $text 'CARTRIDGE' (Get-CartridgeNames $cartridges) $cartridges)
     $problems += @(Test-Places $text 'SOURCE' (Get-SourceNames $cartridges) $cartridges)
     $problems += @(Test-Places $text 'LIBRARY' (Get-LibraryNames $cartridges) $cartridges)
+    $problems += @(Test-Places $text 'REPLAY' (Get-BesideNames $cartridges '.replay.vla') $cartridges)
+    $problems += @(Test-Places $text 'GOLDEN' (Get-BesideNames $cartridges '.golden.vla') $cartridges)
     # The scripts' sources: the code tokens, since each is the page's code once inlined.
     foreach ($pair in @(@("the viewport's source", $script), @("the fake module's source", $fake), @("the host's source", $hostjs))) {
         if (-not (Test-Path -LiteralPath $pair[1])) { $problems += ("no file for {0} at {1}" -f $pair[0], $pair[1]); continue }
@@ -157,7 +172,7 @@ function Test-Built([string]$path) {
     foreach ($t in $tagTokens) {
         if ($lower.Contains($t.ToLowerInvariant())) { $problems += ("the built page reaches out: '{0}'" -f $t) }
     }
-    foreach ($ph in ($oncePlaceholders + @('{{FIXTURE:', '{{CARTRIDGE:', '{{SOURCE:', '{{LIBRARY:'))) {
+    foreach ($ph in ($oncePlaceholders + @('{{FIXTURE:', '{{CARTRIDGE:', '{{SOURCE:', '{{LIBRARY:', '{{REPLAY:', '{{GOLDEN:'))) {
         if ($lower.Contains($ph.ToLowerInvariant())) { $problems += ("the built page has {0} left in it" -f $ph) }
     }
     return $problems
@@ -182,24 +197,29 @@ if ($Control) {
         if (([regex]::Matches($text, [regex]::Escape($anchorH))).Count -ne 1) { Write-Output "FAIL: the anchor $anchorH is not in the template exactly once"; exit 1 }
         $h = Join-Path $tmp 'h.html'; [System.IO.File]::WriteAllText($h, $text.Replace($anchorH, '{{CARTRIDGE:nowhere}}'), $utf8)
         $ijs = Join-Path $tmp 'i.js'; [System.IO.File]::WriteAllText($ijs, ([System.IO.File]::ReadAllText($hostPath) + "`nfetch('x');`n"), $utf8)
-        foreach ($anchor in @('{{SOURCE:life}}', '{{LIBRARY:console}}')) {
+        foreach ($anchor in @('{{SOURCE:life}}', '{{LIBRARY:console}}', '{{REPLAY:inputcard}}', '{{GOLDEN:inputcard}}')) {
             if (([regex]::Matches($text, [regex]::Escape($anchor))).Count -ne 1) { Write-Output "FAIL: the anchor $anchor is not in the template exactly once"; exit 1 }
         }
         $j = Join-Path $tmp 'j.html'; [System.IO.File]::WriteAllText($j, $text.Replace('{{SOURCE:life}}', '{{SOURCE:nowhere}}'), $utf8)
         $k = Join-Path $tmp 'k.html'; [System.IO.File]::WriteAllText($k, $text.Replace('{{LIBRARY:console}}', ''), $utf8)
+        $l = Join-Path $tmp 'l.html'; [System.IO.File]::WriteAllText($l, $text.Replace('{{REPLAY:inputcard}}', '{{REPLAY:inputcard}}{{REPLAY:nowhere}}'), $utf8)
+        $m = Join-Path $tmp 'm.html'; [System.IO.File]::WriteAllText($m, $text.Replace('{{GOLDEN:inputcard}}', ''), $utf8)
         $ra = @(Test-Template $a $scriptPath $fixturesDir); $rb = @(Test-Template $b $scriptPath $fixturesDir); $rc = @(Test-Template $c $scriptPath $fixturesDir)
         $rd = @(Test-Template $d $scriptPath $fixturesDir); $re = @(Test-Template $e $scriptPath $fixturesDir); $rf = @(Test-Template $f $scriptPath $fixturesDir)
         $rg = @(Test-Template $templatePath $gjs $fixturesDir); $rh = @(Test-Template $h $scriptPath $fixturesDir)
         $ri = @(Test-Template $templatePath $scriptPath $fixturesDir $fakePath $ijs)
         $rj = @(Test-Template $j $scriptPath $fixturesDir); $rk = @(Test-Template $k $scriptPath $fixturesDir)
+        $rl = @(Test-Template $l $scriptPath $fixturesDir); $rm = @(Test-Template $m $scriptPath $fixturesDir)
         $hHit = @($rh | Where-Object { $_ -like '*CARTRIDGE:nowhere*' }).Count
         $iHit = @($ri | Where-Object { $_ -like "the host's source reaches out*" }).Count
         # the stray source place names its place, and the source it left without one
         $jHit = @($rj | Where-Object { $_ -like '*SOURCE:nowhere*' -or $_ -like '*{{SOURCE:life}} place*' }).Count
         $kHit = @($rk | Where-Object { $_ -like '*{{LIBRARY:console}} place*' }).Count
-        Write-Output ("control: the real set has {0} problem(s); the script src {1}, the fetch {2}, the missing placeholder {3}, the anchor {4}, the image {5}, the stray fixture place {6}, the fetch in the viewport {7}, the stray cartridge place {8}, the fetch in the host {9}, the stray source place {10}, the library without its place {11}" -f $real.Count, $ra.Count, $rb.Count, $rc.Count, $rd.Count, $re.Count, $rf.Count, $rg.Count, $hHit, $iHit, $jHit, $kHit)
-        if ($real.Count -eq 0 -and $ra.Count -ge 1 -and $rb.Count -ge 1 -and $rc.Count -ge 1 -and $rd.Count -ge 1 -and $re.Count -ge 1 -and $rf.Count -ge 1 -and $rg.Count -ge 1 -and $hHit -ge 1 -and $iHit -ge 1 -and $jHit -ge 2 -and $kHit -ge 1) {
-            Write-Output 'OK: the check passes the template and the three scripts and fails each of the eleven mutants'
+        $lHit = @($rl | Where-Object { $_ -like '*REPLAY:nowhere*' }).Count
+        $mHit = @($rm | Where-Object { $_ -like '*{{GOLDEN:inputcard}} place*' }).Count
+        Write-Output ("control: the real set has {0} problem(s); the script src {1}, the fetch {2}, the missing placeholder {3}, the anchor {4}, the image {5}, the stray fixture place {6}, the fetch in the viewport {7}, the stray cartridge place {8}, the fetch in the host {9}, the stray source place {10}, the library without its place {11}, the stray replay place {12}, the golden without its place {13}" -f $real.Count, $ra.Count, $rb.Count, $rc.Count, $rd.Count, $re.Count, $rf.Count, $rg.Count, $hHit, $iHit, $jHit, $kHit, $lHit, $mHit)
+        if ($real.Count -eq 0 -and $ra.Count -ge 1 -and $rb.Count -ge 1 -and $rc.Count -ge 1 -and $rd.Count -ge 1 -and $re.Count -ge 1 -and $rf.Count -ge 1 -and $rg.Count -ge 1 -and $hHit -ge 1 -and $iHit -ge 1 -and $jHit -ge 2 -and $kHit -ge 1 -and $lHit -ge 1 -and $mHit -ge 1) {
+            Write-Output 'OK: the check passes the template and the three scripts and fails each of the thirteen mutants'
             exit 0
         }
         Write-Output 'FAIL: the control did not behave'
@@ -222,7 +242,9 @@ if ($problems.Count -eq 0) {
     $carts = Get-CartridgeNames $cartridgesDir
     $sources = Get-SourceNames $cartridgesDir
     $libraries = Get-LibraryNames $cartridgesDir
-    Write-Output ("OK: web/index.template.html, web/viewport.js, web/fake.js and web/host.js load nothing and link nowhere, the scripts' and the module's placeholders each in its one place, the {0} fixture places the folder's files, the {1} cartridge places the cartridges', the {2} source places their sources' and the {3} library place(s) the libraries'; {4}" -f $names.Count, $carts.Count, $sources.Count, $libraries.Count, $builtNote)
+    $replays = Get-BesideNames $cartridgesDir '.replay.vla'
+    $goldens = Get-BesideNames $cartridgesDir '.golden.vla'
+    Write-Output ("OK: web/index.template.html, web/viewport.js, web/fake.js and web/host.js load nothing and link nowhere, the scripts' and the module's placeholders each in its one place, the {0} fixture places the folder's files, the {1} cartridge places the cartridges', the {2} source places their sources', the {3} replay and {4} golden place(s) theirs and the {5} library place(s) the libraries'; {6}" -f $names.Count, $carts.Count, $sources.Count, $replays.Count, $goldens.Count, $libraries.Count, $builtNote)
     exit 0
 }
 Write-Output ("FAIL: the web page has {0} problem(s):" -f $problems.Count)

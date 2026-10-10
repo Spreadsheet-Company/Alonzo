@@ -37,10 +37,25 @@
   at the attach, since the fake module holds no pass and still drives the
   loop; over a module without one, a build is declined in words.
 
+  And it keeps the replay (SPEC.md section 7.6; ENGINE.3's second slice):
+  every write a load's run makes, from frame 0, recorded as the replay's
+  rows, the Input rows as the cells that changed and each person's edit
+  that landed in its frame, the derived writes never, under a header that
+  names the cartridge by the SHA-256 of its text with LF line ends, a
+  synchronous digest of the host's own, and the seed; replayText() answers
+  it. play(text) loads the cartridge again with the replay's seed and plays
+  its frames through the loop at the cartridge's rate, each frame's rows
+  one write after the derived writes, in place of the live inputs, a
+  person's edits refused while it plays and the loop paused at its last
+  frame; play(text, true) plays every frame at once, for an oracle. The
+  recorder records what is played, so a replay played and copied is the
+  replay played.
+
   What the host holds is SD-23's interface state and nothing else (AD-6):
   the keys held, the pointer's place, the accumulator, the budget's
-  measurement, the palette's table, the key map, the Camera's two cells and
-  the derived rows waiting for the next frame. Every value is the module's.
+  measurement, the palette's table, the key map, the Camera's two cells,
+  the derived rows waiting for the next frame, and the replay's record and
+  the frames a replay has left to play. Every value is the module's.
   Every refusal and every event is a sentence, the latest new one in the
   status and the last twenty events in a log, a repeat of an event counted in
   the line it first made rather than pushing the others out (SD-30), and a
@@ -74,6 +89,9 @@
   var HISTORY_LINES = 2000;
   var MAX_SEED = 2147483646;         // the highest seed, so a Park and Miller cell never sticks at 0 (section 3.5)
   var MAX_RATE = 120;                // the highest rate, in frames a second (section 10)
+  var SPEC = 3;                      // the page's version this host implements, which a replay's header names
+  var REPLAY_CAP = 8 * 1048576;      // the replay's text, past which the recorder stops and says so: about an
+                                     // hour of a pointer that never rests (ENGINE.3, decision 10)
   var ABI = 1;
   var RULES = {
     abi: ABI, capMs: ACCUMULATOR_CAP_MS, firstBudget: FIRST_BUDGET, minBudget: MIN_BUDGET,
@@ -135,6 +153,64 @@
     }
     return cells;
   }
+  // A form spelled back as the reader read it, a list in parentheses, a string quoted, a number by
+  // its own text and a symbol by its name: a replay's rows one a line, whatever their spacing.
+  function spellForm(d) {
+    if (Array.isArray(d)) return '(' + d.map(spellForm).join(' ') + ')';
+    if (typeof d === 'string') return quote(d);
+    if (d && d.num !== undefined) return d.text;
+    return d && d.sym !== undefined ? d.sym : '';
+  }
+  function whole(d) { var n = num(d); return n !== null && n >= 0 && Math.floor(n) === n ? n : null; }
+  // The bytes with each CR before an LF dropped: a cartridge's text as the page's box and a CRLF
+  // checkout both hold it, named by one digest.
+  function lfOnly(bytes) {
+    var out = new Uint8Array(bytes.length), j = 0;
+    for (var i = 0; i < bytes.length; i++) { if (bytes[i] === 13 && bytes[i + 1] === 10) continue; out[j++] = bytes[i]; }
+    return out.subarray(0, j);
+  }
+  // The cartridge's name, its manifest's first field, after the comment lines before it.
+  function manifestName(text) {
+    var m = /^\s*(?:;[^\n]*\n\s*)*\(\s*cartridge\s+"((?:[^"\\]|\\.)*)"/.exec(text);
+    return m ? m[1] : '';
+  }
+
+  // ---- SHA-256 (FIPS 180-4), synchronous: a replay names its cartridge by the digest of its text
+  // with LF line ends, the bytes tools/check_frame_floors.ps1 digests (ENGINE.3, decision 9), in a
+  // call that answers at once, where crypto.subtle answers with a promise and only in a secure context ----
+  var K256 = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+              0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+              0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+              0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+              0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+              0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+              0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+              0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
+  function sha256(bytes) {
+    var n = bytes.length, total = (((n + 8) >> 6) + 1) << 6, m = new Uint8Array(total), dv = new DataView(m.buffer);
+    m.set(bytes); m[n] = 0x80;
+    dv.setUint32(total - 8, Math.floor(n / 0x20000000)); dv.setUint32(total - 4, (n * 8) >>> 0);   // the length in bits
+    var h = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+    var w = new Int32Array(64), i;
+    for (var off = 0; off < total; off += 64) {
+      for (i = 0; i < 16; i++) w[i] = dv.getInt32(off + 4 * i);
+      for (i = 16; i < 64; i++) {
+        var x = w[i - 15], y = w[i - 2];
+        w[i] = (w[i - 16] + ((x >>> 7 | x << 25) ^ (x >>> 18 | x << 14) ^ (x >>> 3)) + w[i - 7] + ((y >>> 17 | y << 15) ^ (y >>> 19 | y << 13) ^ (y >>> 10))) | 0;
+      }
+      var a = h[0], b = h[1], c = h[2], d = h[3], e = h[4], f = h[5], g = h[6], k = h[7];
+      for (i = 0; i < 64; i++) {
+        var t1 = (k + ((e >>> 6 | e << 26) ^ (e >>> 11 | e << 21) ^ (e >>> 25 | e << 7)) + ((e & f) ^ (~e & g)) + K256[i] + w[i]) | 0;
+        var t2 = (((a >>> 2 | a << 30) ^ (a >>> 13 | a << 19) ^ (a >>> 22 | a << 10)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+        k = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+      }
+      h[0] = (h[0] + a) | 0; h[1] = (h[1] + b) | 0; h[2] = (h[2] + c) | 0; h[3] = (h[3] + d) | 0;
+      h[4] = (h[4] + e) | 0; h[5] = (h[5] + f) | 0; h[6] = (h[6] + g) | 0; h[7] = (h[7] + k) | 0;
+    }
+    var hex = '';
+    for (i = 0; i < 8; i++) hex += ('0000000' + (h[i] >>> 0).toString(16)).slice(-8);
+    return hex.toUpperCase();
+  }
 
   // ---- (1) the module: the memory pair and the record (SPEC.md section 4.6) ----
   function Module(x) { this.x = x; }
@@ -193,6 +269,7 @@
     this.entries = new Map(); this.order = []; this.entryId = 0;   // the log: one entry an event, its repeats counted
     this.history = []; this.said = 0; this.status = '';
     this.m = null; this.version = ''; this.handle = 0; this.cart = null;
+    this.cartBytes = null; this.cartFile = '';   // the cartridge loaded, as its load was given it: a replay reloads it
     this.running = false; this.hidden = false; this.raf = 0;
     this._reset();
     if (this.canvas) this._listenCanvas();
@@ -209,6 +286,7 @@
     this.table = null; this.paletteText = ''; this.paletteCount = 0;
     this.audio = []; this.saveValue = 0; this.plane = null; this.timing = null; this.said1 = {};
     this.windowsSeen = {};
+    this.rec = null; this.player = null;   // the replay recorded since the load, and one playing
     this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, saves: 0 };
   };
 
@@ -235,13 +313,15 @@
     this.stop();
     if (this.handle) this.unload();
     this._reset();
+    this.cartBytes = null; this.cartFile = '';
     var b = this.m.put(bytes), n = this.m.text(name || ''), r;
     try { r = this.m.call('alonzo_load', [b.ptr, b.len, n.ptr, n.len]); } finally { this.m.release(b); this.m.release(n); }
     if (r.status !== 0) return this._fail('The cartridge was refused: ' + words(r) + '.');
     var f = first(r.text, 'cartridge');
     if (!f) return this._fail('The module answered the load with ' + r.text.trim() + ', not a cartridge row.');
     this.handle = num(f[1]);
-    var c = this.cart = { title: str(f[2]), mode: sym(f[3]), w: num(f[4]), h: num(f[5]), rate: num(f[6]), seed: '', devices: {}, budget: null };
+    this.cartBytes = bytes; this.cartFile = name || '';
+    var c = this.cart = { title: str(f[2]), mode: sym(f[3]), w: num(f[4]), h: num(f[5]), rate: num(f[6]), seed: '', devices: {}, budget: null, name: null, digest: null };
     this._describe();
     this.window = rangeOf(1, 1, c.h, c.w);
     this._say('Loaded ' + c.title + ': a ' + c.w + ' by ' + c.h + ' ' + c.mode + ' at ' + (c.rate ? c.rate + ' frames a second' : 'rate 0, a step on every edit') + ', seed ' + c.seed + ', on ' + this.version + '.');
@@ -252,6 +332,7 @@
     }
     if (c.mode !== 'plane') this._say('This slice blits the plane alone; a grid cartridge is drawn by the viewport, which the host takes up after it.');
     if (c.seed === 'host') this._seed();
+    this._startReplay();   // the replay of this load's run, from frame 0 (section 7.6)
     if (c.devices.camera) this._readCamera();
     if (c.devices.palette) this._readPalette();
     if (c.devices.keys) this._readKeys();
@@ -265,10 +346,10 @@
   // The host's seed (ENGINE.3, decision 1): a cartridge whose manifest says (seed host) loads with
   // Clock!B3 empty, and the host writes it once, before frame 0 is drawn, a whole number from 1 to
   // 2147483646 from the browser's random source, or options.seed when a caller names one (the
-  // oracle; a replay's player). The one write of the host's own that no person made and no step
-  // computes: no time, and at rate zero no step.
+  // oracle), or the seed of the replay being played. The one write of the host's own that no person
+  // made and no step computes: no time, and at rate zero no step.
   Host.prototype._seed = function () {
-    var named = this.options.seed, n;
+    var played = this.playSeed !== undefined, named = played ? this.playSeed : this.options.seed, n;
     if (typeof named === 'number' && named >= 1 && named <= MAX_SEED && Math.floor(named) === named) n = named;
     else {
       var cr = global.crypto, u = new Uint32Array(1);
@@ -278,7 +359,8 @@
     var r = this._write('(cell "Clock" "B3" ' + n + ')');
     if (r.status !== 0) { this._refuse('The cartridge asks the host for its seed, and the write of ' + n + ' into Clock!B3 was refused: ' + words(r, true) + '.'); return; }
     this.cart.seed = n; this.cart.seedChosen = true;
-    this._say('The cartridge asks the host for its seed: the host chose ' + n + ', in Clock!B3.');
+    this._say(played ? 'The cartridge asks the host for its seed: the replay names ' + n + ', written in Clock!B3.'
+                     : 'The cartridge asks the host for its seed: the host chose ' + n + ', in Clock!B3.');
   };
   Host.prototype._describe = function () {
     var r = this.m.call('alonzo_describe', [this.handle]);
@@ -353,6 +435,7 @@
       win = this._window();
       if (this.inFrame) { if (this._continue(win)) this._editFrames(win); }
       else if (this.edits.length) this._editFrames(win);   // edits made in the frame that set the rate to 0
+      else if (this.player) { this._begin(); if (this.inFrame) this._continue(win); }   // a replay's frame a tick, its edits being its frames
       return;
     }
     if (this.lastTs === null) { this.lastTs = ts; return; }
@@ -367,6 +450,7 @@
     for (;;) {
       if (this.inFrame) { if (!this._continue(win)) return; continue; }
       if (c.rate === 0) return;   // a frame of this tick set the Clock's rate to 0: edits step from here
+      if (!this.running) return;  // a frame of this tick ended a replay, or a replay's refused rows stopped it
       if (this._spent(win)) return;
       if (this.acc < 1000 / c.rate) return;   // the interval at the rate the last frame left in the Clock
       this.acc -= 1000 / c.rate;
@@ -458,10 +542,12 @@
     }
   };
   Host.prototype._issueInputs = function () {
+    if (this.player) { this._issuePlayed(); return; }   // a replay's rows in place of the live inputs and edits (section 7.6)
     if (this.cart.rate > 0) {
-      var r = this._write(this._inputRows());
+      var rows = this._inputRows(), r = this._write(rows);
       this.c.inputs++;
       if (r.status !== 0) this._refuse('frame ' + (this.frame + 1) + ': the Input rows were refused: ' + words(r) + '.');
+      else this._recordInputs(rows);
       this.notches = 0; this.lastKey = null;
     }
     while (this.edits.length) this._issueEdit(this.edits.shift(), false);
@@ -470,6 +556,7 @@
     var r = this._write(row);
     if (r.status === 0) {
       this.c.edits++;
+      this._recordEdit(row);   // the replay logs a person's edit that landed, in its frame (section 7.6)
       if (!atRateZero) this._say('frame ' + (this.frame + 1) + ': the edit ' + row + ' was written.');
       return true;
     }
@@ -502,6 +589,7 @@
   // ---- the effects (step 5) and the draw (step 6) ----
   Host.prototype._complete = function (n) {
     this.frame = n; this.c.frames++;
+    this._recordFrame(n);
     var d = this.cart.devices;
     if (d.camera) this._readCamera();
     if (d.palette) this._readPalette();
@@ -512,7 +600,9 @@
     if (d.write) this._readWrite();
     if (d.clock) this._readClock();
     if (this.stepEdit) { this._say('frame ' + n + ': stepped once for the edit ' + this.stepEdit + '.'); this.stepEdit = null; }
-    this._emit('frame', { frame: n, window: this.window, scale: this.scale || 0, rate: this.cart.rate });
+    var p = this.player;
+    this._emit('frame', { frame: n, window: this.window, scale: this.scale || 0, rate: this.cart.rate, replay: p ? p.last : 0 });
+    if (p && p === this.player && n >= p.last) this._endReplay(n);
   };
   Host.prototype._record = function (sheet) {
     var r = this.m.texts('alonzo_view', [this.handle], ['grid', sheet, '']);
@@ -660,6 +750,7 @@
     var head = forms.length === 1 && Array.isArray(forms[0]) ? sym(forms[0][0]) : null;
     if (head !== 'cell' && head !== 'formula') { this._refuse('An edit is one cell or formula row, as (cell "Palette" "B1" "#FF8800"); ' + (t || 'an empty line') + ' is not one.'); return false; }
     if (!this.handle) { this._refuse('No cartridge is loaded to edit.'); return false; }
+    if (this.player) { this._refuse('The edit ' + t + ' was not written: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s edit waits until it ends, so that what plays is the replay alone.'); return false; }
     this.edits.push(t);
     if (this.cart.rate === 0 && !this.inFrame) this._editFrames(this._window());
     return true;
@@ -711,6 +802,156 @@
       if (d.hidden) { self.hidden = true; return; }
       self.hidden = false; self.lastTs = null; self.acc = 0;
     });
+  };
+
+  // ---- the replay (SPEC.md section 7.6; ENGINE.3's second slice, decisions 8 to 10) ----
+  // The recorder: from a load, every write that landed before each step, a frame's rows logged at
+  // its end under (frame n). The Input rows as the cells that changed against the replay's own
+  // record of the sheet, whole at the first frame and after a person's edit of the sheet; each
+  // person's edit as its row, in order; the derived writes never, a replay re-deriving them.
+  var INPUT_ROW = /^\(cell "Input" "([A-Z]+[0-9]+)" (.*)\)$/;
+  Host.prototype._startReplay = function () {
+    var s = this.cart.seed;
+    this.rec = { seed: typeof s === 'number' ? s : null, blocks: [], size: 0, rows: [], input: null, last: 0, written: 0, full: false };
+  };
+  Host.prototype._recordInputs = function (text) {
+    var rec = this.rec;
+    if (!rec || rec.full) return;
+    var lines = text.split('\n'), was = rec.input, now = {};
+    for (var i = 0; i < lines.length; i++) {
+      var m = INPUT_ROW.exec(lines[i]);
+      if (!m) continue;
+      now[m[1]] = m[2];
+      if (!was || was[m[1]] !== m[2]) rec.rows.push(lines[i]);
+    }
+    rec.input = now;
+  };
+  Host.prototype._recordEdit = function (row) {
+    var rec = this.rec;
+    if (!rec || rec.full) return;
+    var f = VP().readForms(row)[0];
+    rec.rows.push(spellForm(f));
+    if (String(str(f[1])).toLowerCase() === 'input') rec.input = null;   // the Input sheet unknown to the replay: its next rows are logged whole
+  };
+  Host.prototype._recordPlayed = function (rows) {
+    var rec = this.rec;
+    if (!rec || rec.full) return;
+    for (var i = 0; i < rows.length; i++) rec.rows.push(rows[i]);
+    rec.input = null;   // a replay's rows are its own record: live rows after it are logged whole
+  };
+  Host.prototype._recordFrame = function (n) {
+    var rec = this.rec;
+    if (!rec || rec.full) return;
+    if (rec.rows.length) {
+      var block = '(frame ' + n + ')\n' + rec.rows.join('\n') + '\n';
+      rec.rows = [];
+      if (rec.size + block.length > REPLAY_CAP) {
+        rec.full = true;
+        this._say('frame ' + n + ': the replay reached its cap of 8 MiB of text and records no more; Copy the replay keeps frames 1 to ' + rec.last + '.');
+        return;
+      }
+      rec.blocks.push(block); rec.size += block.length; rec.written = n;
+    }
+    rec.last = n;
+  };
+  Host.prototype._cartName = function () {
+    var c = this.cart;
+    if (c.name === null) c.name = manifestName(dec.decode(this.cartBytes));
+    return c.name;
+  };
+  Host.prototype._cartDigest = function () {
+    var c = this.cart;
+    if (c.digest === null) c.digest = sha256(lfOnly(this.cartBytes));
+    return c.digest;
+  };
+  // The replay of the run since the last load: its header, then each frame that wrote a row, and
+  // the last frame however empty, so that a replay names its length; null with no cartridge.
+  Host.prototype.replayText = function () {
+    var rec = this.rec;
+    if (!rec || !this.handle || !this.cart) return null;
+    if (rec.seed === null) { this._sayOnce('replay-seed', 'There is no replay of this run: Clock!B3 holds no seed the load wrote, and a replay names its seed.', true); return null; }
+    var out = '(replay ' + quote(this._cartName()) + ' (spec ' + SPEC + ') (cartridge "' + this._cartDigest() + '") (seed ' + rec.seed + '))\n' + rec.blocks.join('');
+    if (rec.last > rec.written) out += '(frame ' + rec.last + ')\n';
+    return out;
+  };
+  // A replay's text read whole before anything plays: the header, then (frame n) heads ascending
+  // from 1, each followed by cell and formula rows; a refusal in words, and nothing loaded.
+  Host.prototype._readReplay = function (text) {
+    var forms = VP().readForms(text), h = forms[0];
+    var shape = 'A replay begins with its header, (replay "<name>" (spec <n>) (cartridge "<SHA-256>") (seed <n>))';
+    if (!Array.isArray(h) || sym(h[0]) !== 'replay' || str(h[1]) === null) return { error: shape + ', and this text begins with ' + (h === undefined ? 'nothing' : spellForm(h).slice(0, 60)) + '.' };
+    var rp = { name: str(h[1]), spec: null, digest: null, seed: null, frames: {}, last: 0 }, i;
+    for (i = 2; i < h.length; i++) {
+      var d = h[i], k = Array.isArray(d) && d.length === 2 ? sym(d[0]) : null;
+      if (k === 'spec') rp.spec = whole(d[1]);
+      else if (k === 'cartridge') rp.digest = str(d[1]);
+      else if (k === 'seed') rp.seed = whole(d[1]);
+      else return { error: shape + ', and ' + spellForm(d) + ' is none of its three.' };
+    }
+    if (rp.spec === null || rp.spec < 1) return { error: shape + ', and its (spec ...) is not a version of the page.' };
+    if (rp.spec > SPEC) return { error: 'The replay is written to the page\'s version ' + rp.spec + ', and this host implements versions 1 to ' + SPEC + ' (SPEC.md): a later version\'s replay may hold what this host cannot play.' };
+    if (rp.digest === null || !/^[0-9A-F]{64}$/.test(rp.digest)) return { error: shape + ', and its (cartridge ...) is not a SHA-256 in sixty-four upper-case hex digits.' };
+    if (rp.seed === null || rp.seed < 1 || rp.seed > MAX_SEED) return { error: shape + ', and its (seed ...) is not a whole number from 1 to ' + MAX_SEED + '.' };
+    var frame = 0;
+    for (i = 1; i < forms.length; i++) {
+      var f = forms[i], head = Array.isArray(f) ? sym(f[0]) : null;
+      if (head === 'frame') {
+        var n = whole(f[1]);
+        if (n === null || n <= frame) return { error: 'The replay\'s frames are out of order: ' + spellForm(f) + ' follows ' + (frame ? '(frame ' + frame + ')' : 'the header') + ', and a replay\'s frames ascend from 1.' };
+        frame = n; rp.last = n;
+        continue;
+      }
+      if (head === 'derived') return { error: 'The replay holds a derived row, ' + spellForm(f) + ', in frame ' + frame + ': the host\'s derived writes are re-derived as a replay plays and never logged (SPEC.md section 7.6).' };
+      if (head !== 'cell' && head !== 'formula') return { error: 'The replay holds ' + spellForm(f).slice(0, 60) + (frame ? ' in frame ' + frame : '') + ', and a replay\'s rows are cell and formula rows under their (frame n).' };
+      if (!frame) return { error: 'The replay holds a row before its first (frame n): ' + spellForm(f) + '.' };
+      (rp.frames[frame] = rp.frames[frame] || []).push(spellForm(f));
+    }
+    return rp;
+  };
+  // The player: a replay read and checked whole, then the cartridge the host holds loaded again with
+  // the replay's seed, and its frames played through the loop at the cartridge's rate, each frame's
+  // rows one write after the derived writes, in place of the live inputs; a person's edits are
+  // refused while it plays, and at its last frame the loop pauses. all: every frame at once, for an
+  // oracle. The recorder records what is played, so a replay played and copied is the replay played.
+  Host.prototype.play = function (text, all) {
+    if (!this.m) return this._fail('There is no engine module to play a replay on.');
+    if (!this.handle || !this.cart || !this.cartBytes) return this._fail('No cartridge is loaded to play a replay on: load the cartridge it was recorded from, then play it.');
+    var rp = this._readReplay(String(text || ''));
+    if (rp.error) return this._fail(rp.error);
+    var name = this._cartName(), digest = this._cartDigest(), c = this.cart;
+    if (rp.digest !== digest) return this._fail('The replay was recorded from ' + (rp.name || 'a cartridge') + ', its digest ' + rp.digest.slice(0, 16) + '..., and the cartridge loaded is ' + (name || 'another') + ', ' + digest.slice(0, 16) + '...: a replay plays only on the file it was recorded from (SPEC.md section 7.6).');
+    if (typeof c.seed === 'number' && !c.seedChosen && rp.seed !== c.seed) return this._fail('The replay\'s seed is ' + rp.seed + ', and the cartridge\'s manifest says (seed ' + c.seed + '): a replay of this cartridge holds its manifest\'s seed.');
+    var ld;
+    this.playSeed = rp.seed;
+    try { ld = this.loadBytes(this.cartBytes, this.cartFile); } finally { this.playSeed = undefined; }
+    if (!ld.ok) return ld;
+    if (this.cart.seed !== rp.seed) return this._fail('The cartridge loaded again holds the seed ' + this.cart.seed + ', and the replay names ' + rp.seed + ': the replay is not played.');
+    if (rp.last === 0) { this._say('The replay of ' + name + ' holds no frame: the cartridge stands at frame 0, loaded again from the seed ' + rp.seed + '.'); return { ok: true, frames: 0 }; }
+    this.player = { frames: rp.frames, last: rp.last };
+    this._say('Playing the replay of ' + name + ': ' + rp.last + ' frame' + (rp.last === 1 ? '' : 's') + ' from the seed ' + rp.seed + (all ? ', all at once' : ', at the cartridge\'s rate') + '; a person\'s edits wait until it ends.');
+    if (!all) { this.start(); return { ok: true, frames: rp.last }; }
+    var win = { used: 0, limit: 0x7fffffff, deadline: Infinity };
+    while (this.player && this.handle) {
+      this._begin();
+      if (!this.inFrame || !this._continue(win)) break;
+    }
+    return { ok: this.frame === rp.last, frames: this.frame };
+  };
+  // A replay's frame (section 7.6, decision 8): its rows as one write, after the derived writes and in
+  // place of the live Input rows and edits, landing as the live writes did, since a write applies its
+  // rows in order and every row logged had landed; a refused write stops the replay where it stands.
+  Host.prototype._issuePlayed = function () {
+    var n = this.frame + 1, rows = this.player.frames[n];
+    if (!rows) return;
+    var r = this._write(rows.join('\n'));
+    if (r.status === 0) { this._recordPlayed(rows); return; }
+    this.inFrame = false; this.progress = null; this.player = null; this.stop();
+    this._refuse('frame ' + n + ': the replay\'s rows were refused: ' + words(r) + '; the replay stops, and the cartridge stands at frame ' + this.frame + '.');
+  };
+  Host.prototype._endReplay = function (n) {
+    this.player = null; this.stop();
+    this.notches = 0; this.lastKey = null;   // what the wheel and the keys did while it played is no person's frame
+    this._say('frame ' + n + ': the replay ended at its last frame; the loop is paused, and Run carries on from here with the live inputs.');
   };
 
   // ---- what a page asks of the host ----
@@ -804,6 +1045,9 @@
   Host.RULES = RULES;
   Host.EXPORTS = EXPORTS;
   Host.ABI = ABI;
+  Host.SPEC = SPEC;
+  // The host's SHA-256 of bytes, or of a text's UTF-8, in upper-case hex: an oracle holds it to FIPS 180-2's vectors.
+  Host.sha256 = function (x) { return sha256(typeof x === 'string' ? enc.encode(x) : x); };
   Host.version = 1;
 
   global.AlonzoHost = Host;

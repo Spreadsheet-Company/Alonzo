@@ -10,7 +10,10 @@ web/host.js, each inlined whole, once; each {{CARTRIDGE:name}} with
 cartridges/<name>/<name>.vla, each {{SOURCE:name}} with its source beside it,
 cartridges/<name>/<name>.source.vla, each {{LIBRARY:name}} with a library,
 cartridges/<name>.vla, which the sources include (SPEC.3's second slice: the
-pass runs in the page over the texts the page holds), and each
+pass runs in the page over the texts the page holds), each {{REPLAY:name}}
+and {{GOLDEN:name}} with a cartridge's replay and its golden beside it,
+cartridges/<name>/<name>.replay.vla and <name>.golden.vla (ENGINE.3's second
+slice: the page plays the replay and holds its end to the golden), and each
 {{FIXTURE:name}} with web/fixtures/<name>.vla, inlined as text with line
 endings normalized to LF, so that the page holds the bytes the checks pin;
 and {{ALONZO_WASM}} once,
@@ -91,23 +94,31 @@ function Get-Places([string]$kind) {
     }
     return $places
 }
-try { $fixturePlaces = Get-Places 'FIXTURE'; $cartridgePlaces = Get-Places 'CARTRIDGE'; $sourcePlaces = Get-Places 'SOURCE'; $libraryPlaces = Get-Places 'LIBRARY' } catch { Write-Output ("FAIL: " + $_.Exception.Message); exit 1 }
+try { $fixturePlaces = Get-Places 'FIXTURE'; $cartridgePlaces = Get-Places 'CARTRIDGE'; $sourcePlaces = Get-Places 'SOURCE'; $libraryPlaces = Get-Places 'LIBRARY'; $replayPlaces = Get-Places 'REPLAY'; $goldenPlaces = Get-Places 'GOLDEN' } catch { Write-Output ("FAIL: " + $_.Exception.Message); exit 1 }
 $fixtureFiles = @{}
 foreach ($f in @(Get-ChildItem -LiteralPath $FixturesDir -Filter '*.vla' -File | Sort-Object Name)) { $fixtureFiles[[System.IO.Path]::GetFileNameWithoutExtension($f.Name)] = $f.FullName }
 # A cartridge is a folder holding its file of the same name, cartridges/life/life.vla, and its
-# source beside it when it has one, life.source.vla; a library is a file of cartridges/ itself.
+# source beside it when it has one, life.source.vla, and its replay and golden when it has them,
+# inputcard.replay.vla and inputcard.golden.vla; a library is a file of cartridges/ itself.
 $cartridgeFiles = @{}
 $sourceFiles = @{}
+$replayFiles = @{}
+$goldenFiles = @{}
 foreach ($d in @(Get-ChildItem -LiteralPath $CartridgesDir -Directory | Sort-Object Name)) {
     $file = Join-Path $d.FullName ($d.Name + '.vla')
     if (-not (Test-Path -LiteralPath $file)) { Write-Output ("FAIL: the cartridge folder {0} holds no {1}.vla" -f $d.FullName, $d.Name); exit 1 }
     $cartridgeFiles[$d.Name] = $file
     $source = Join-Path $d.FullName ($d.Name + '.source.vla')
     if (Test-Path -LiteralPath $source) { $sourceFiles[$d.Name] = $source }
+    $replay = Join-Path $d.FullName ($d.Name + '.replay.vla')
+    if (Test-Path -LiteralPath $replay) { $replayFiles[$d.Name] = $replay }
+    $golden = Join-Path $d.FullName ($d.Name + '.golden.vla')
+    if (Test-Path -LiteralPath $golden) { $goldenFiles[$d.Name] = $golden }
 }
 $libraryFiles = @{}
 foreach ($f in @(Get-ChildItem -LiteralPath $CartridgesDir -Filter '*.vla' -File | Sort-Object Name)) { $libraryFiles[[System.IO.Path]::GetFileNameWithoutExtension($f.Name)] = $f.FullName }
-foreach ($pair in @(@('FIXTURE', $fixturePlaces, $fixtureFiles, $FixturesDir), @('CARTRIDGE', $cartridgePlaces, $cartridgeFiles, $CartridgesDir), @('SOURCE', $sourcePlaces, $sourceFiles, $CartridgesDir), @('LIBRARY', $libraryPlaces, $libraryFiles, $CartridgesDir))) {
+foreach ($pair in @(@('FIXTURE', $fixturePlaces, $fixtureFiles, $FixturesDir), @('CARTRIDGE', $cartridgePlaces, $cartridgeFiles, $CartridgesDir), @('SOURCE', $sourcePlaces, $sourceFiles, $CartridgesDir), @('LIBRARY', $libraryPlaces, $libraryFiles, $CartridgesDir),
+                    @('REPLAY', $replayPlaces, $replayFiles, $CartridgesDir), @('GOLDEN', $goldenPlaces, $goldenFiles, $CartridgesDir))) {
     $kind = $pair[0]; $places = $pair[1]; $files = $pair[2]; $dir = $pair[3]
     foreach ($name in $files.Keys) { if (-not $places.ContainsKey($name)) { Write-Output ("FAIL: {0} has {1} and the template has no {{{{{2}:{1}}}}} place for it" -f $dir, $name, $kind); exit 1 } }
     foreach ($name in $places.Keys) { if (-not $files.ContainsKey($name)) { Write-Output ("FAIL: the template has {{{{{0}:{1}}}}}, and {2} holds no {1}" -f $kind, $name, $dir); exit 1 } }
@@ -128,6 +139,8 @@ try {
     foreach ($name in @($cartridgeFiles.Keys | Sort-Object)) { $texts['{{CARTRIDGE:' + $name + '}}'] = (Read-Inlined $cartridgeFiles[$name] $true) }
     foreach ($name in @($sourceFiles.Keys | Sort-Object)) { $texts['{{SOURCE:' + $name + '}}'] = (Read-Inlined $sourceFiles[$name] $true) }
     foreach ($name in @($libraryFiles.Keys | Sort-Object)) { $texts['{{LIBRARY:' + $name + '}}'] = (Read-Inlined $libraryFiles[$name] $true) }
+    foreach ($name in @($replayFiles.Keys | Sort-Object)) { $texts['{{REPLAY:' + $name + '}}'] = (Read-Inlined $replayFiles[$name] $true) }
+    foreach ($name in @($goldenFiles.Keys | Sort-Object)) { $texts['{{GOLDEN:' + $name + '}}'] = (Read-Inlined $goldenFiles[$name] $true) }
 } catch { Write-Output ("FAIL: " + $_.Exception.Message); exit 1 }
 
 # The engine's module, base64, or nothing.
@@ -143,11 +156,11 @@ $page = $html
 foreach ($ph in $scripts.Keys) { $page = $page.Replace($ph, $scripts[$ph]) }
 $page = $page.Replace('{{ALONZO_WASM}}', $wasmText)
 foreach ($ph in $texts.Keys) { $page = $page.Replace($ph, $texts[$ph]) }
-foreach ($ph in @('{{VIEWPORT_JS}}', '{{FAKE_JS}}', '{{HOST_JS}}', '{{ALONZO_WASM}}', '{{FIXTURE:', '{{CARTRIDGE:', '{{SOURCE:', '{{LIBRARY:')) {
+foreach ($ph in @('{{VIEWPORT_JS}}', '{{FAKE_JS}}', '{{HOST_JS}}', '{{ALONZO_WASM}}', '{{FIXTURE:', '{{CARTRIDGE:', '{{SOURCE:', '{{LIBRARY:', '{{REPLAY:', '{{GOLDEN:')) {
     if ($page.Contains($ph)) { Write-Output ("FAIL: {0} is left in the page" -f $ph); exit 1 }
 }
 $outDir = Split-Path -Parent $Out
 if ($outDir -ne '' -and -not (Test-Path -LiteralPath $outDir)) { New-Item -ItemType Directory -Path $outDir | Out-Null }
 [System.IO.File]::WriteAllText($Out, $page, (New-Object System.Text.UTF8Encoding($false)))
-Write-Output ("OK: wrote {0} ({1:N0} characters): the viewport, the fake module and the host, {2} cartridge(s), {3} source(s) and {4} librar{5}, {6}, {7} fixture(s) holding {8:N0} bytes" -f $Out, $page.Length, $cartridgeFiles.Count, $sourceFiles.Count, $libraryFiles.Count, $(if ($libraryFiles.Count -eq 1) { 'y' } else { 'ies' }), $wasmNote, $fixtureFiles.Count, $fixtureBytes)
+Write-Output ("OK: wrote {0} ({1:N0} characters): the viewport, the fake module and the host, {2} cartridge(s), {3} source(s), {4} replay(s) with {5} golden(s) and {6} librar{7}, {8}, {9} fixture(s) holding {10:N0} bytes" -f $Out, $page.Length, $cartridgeFiles.Count, $sourceFiles.Count, $replayFiles.Count, $goldenFiles.Count, $libraryFiles.Count, $(if ($libraryFiles.Count -eq 1) { 'y' } else { 'ies' }), $wasmNote, $fixtureFiles.Count, $fixtureBytes)
 exit 0
