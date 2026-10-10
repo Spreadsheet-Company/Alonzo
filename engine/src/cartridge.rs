@@ -1875,35 +1875,42 @@ mod tests {
     }
 
     /// The input card's replay (ENGINE.3's second slice), played as SPEC.md
-    /// section 7.6 plays one, by this test and not by the host: the card
-    /// loaded and its seed written as the header names it, then for every
-    /// frame the derived write the last frame's Write row left, the frame's
-    /// rows as one write, and the step; its end the golden beside it, the
-    /// Tally sheet's record byte for byte.
+    /// section 7.6 plays one, by this test and not by the host: read with the
+    /// language's reader, the card loaded and its seed written as the header
+    /// names it, then for every frame the derived write the last frame's
+    /// Write row left, the frame's rows, spelled back by the language's
+    /// printer, as one write, and the step; its end the golden beside it,
+    /// the Tally sheet's record byte for byte.
     #[test]
     fn the_input_card_s_replay_plays_to_its_golden() {
         const REPLAY: &str = include_str!("../../cartridges/inputcard/inputcard.replay.vla");
         const GOLDEN: &str = include_str!("../../cartridges/inputcard/inputcard.golden.vla");
-        let lines: Vec<&str> = REPLAY
-            .lines()
-            .map(|l| l.trim_end_matches('\r'))
-            .filter(|l| !l.starts_with(';'))
-            .collect();
-        let seed = lines[0]
-            .rsplit("(seed ")
-            .next()
-            .and_then(|s| s.strip_suffix("))"))
+        let forms = read_forms(REPLAY).expect("the replay reads");
+        let items = |f: &Form| match f {
+            Form::List(l) => l.items.clone(),
+            other => panic!("a list: {other:?}"),
+        };
+        let seed = items(&forms[0])
+            .iter()
+            .find_map(|d| match d {
+                Form::List(l) => match l.items.as_slice() {
+                    [Form::Sym(k), Form::Sym(n)] if k == "seed" => Some(n.clone()),
+                    _ => None,
+                },
+                _ => None,
+            })
             .expect("the header's seed");
-        let mut frames: Vec<(u32, Vec<&str>)> = Vec::new();
-        for line in &lines[1..] {
-            match line
-                .strip_prefix("(frame ")
-                .and_then(|s| s.strip_suffix(')'))
-            {
-                Some(n) => frames.push((n.parse().expect("a frame's number"), Vec::new())),
-                None => frames.last_mut().expect("a row under a frame").1.push(line),
-            }
-        }
+        // Each frame one form, (frame n row ...), its rows the frame's one write.
+        let frames: Vec<(u32, Vec<String>)> = forms[1..]
+            .iter()
+            .map(|f| match items(f).as_slice() {
+                [Form::Sym(head), Form::Sym(n), rows @ ..] if head == "frame" => (
+                    n.parse().expect("a frame's number"),
+                    rows.iter().map(write_datum).collect(),
+                ),
+                other => panic!("a frame: {other:?}"),
+            })
+            .collect();
         let last = frames.last().expect("a frame").0;
         let mut c =
             Cartridge::load(INPUTCARD, "inputcard.vla", INPUTCARD.len()).expect("the card loads");
@@ -1915,8 +1922,10 @@ mod tests {
                 c.write(&row).expect("the derived write");
             }
             if let Some((_, rows)) = written.next_if(|(n, _)| *n == frame) {
-                c.write(&rows.join("\n"))
-                    .expect("the frame's rows, which landed when they were recorded");
+                if !rows.is_empty() {
+                    c.write(&rows.join("\n"))
+                        .expect("the frame's rows, which landed when they were recorded");
+                }
             }
             assert!(c.step(0).done, "frame {frame}");
             if value_of(&c, "Write", "B2") == "\"B20\"" {

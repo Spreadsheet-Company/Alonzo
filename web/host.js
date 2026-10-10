@@ -805,10 +805,11 @@
   };
 
   // ---- the replay (SPEC.md section 7.6; ENGINE.3's second slice, decisions 8 to 10) ----
-  // The recorder: from a load, every write that landed before each step, a frame's rows logged at
-  // its end under (frame n). The Input rows as the cells that changed against the replay's own
-  // record of the sheet, whole at the first frame and after a person's edit of the sheet; each
-  // person's edit as its row, in order; the derived writes never, a replay re-deriving them.
+  // The recorder: from a load, every write that landed before each step, a frame logged at its end
+  // as one form holding its rows, (frame n row ...), one row a line, the form the player issues as
+  // one write (the owner's word after the close). The Input rows as the cells that changed against
+  // the replay's own record of the sheet, whole at the first frame and after a person's edit of the
+  // sheet; each person's edit as its row, in order; the derived writes never, a replay re-deriving them.
   var INPUT_ROW = /^\(cell "Input" "([A-Z]+[0-9]+)" (.*)\)$/;
   Host.prototype._startReplay = function () {
     var s = this.cart.seed;
@@ -843,7 +844,7 @@
     var rec = this.rec;
     if (!rec || rec.full) return;
     if (rec.rows.length) {
-      var block = '(frame ' + n + ')\n' + rec.rows.join('\n') + '\n';
+      var block = '(frame ' + n + '\n  ' + rec.rows.join('\n  ') + ')\n';
       rec.rows = [];
       if (rec.size + block.length > REPLAY_CAP) {
         rec.full = true;
@@ -874,8 +875,8 @@
     if (rec.last > rec.written) out += '(frame ' + rec.last + ')\n';
     return out;
   };
-  // A replay's text read whole before anything plays: the header, then (frame n) heads ascending
-  // from 1, each followed by cell and formula rows; a refusal in words, and nothing loaded.
+  // A replay's text read whole before anything plays: the header, then frames ascending from 1, each
+  // one form holding its cell and formula rows; a refusal in words, and nothing loaded.
   Host.prototype._readReplay = function (text) {
     var forms = VP().readForms(text), h = forms[0];
     var shape = 'A replay begins with its header, (replay "<name>" (spec <n>) (cartridge "<SHA-256>") (seed <n>))';
@@ -894,17 +895,17 @@
     if (rp.seed === null || rp.seed < 1 || rp.seed > MAX_SEED) return { error: shape + ', and its (seed ...) is not a whole number from 1 to ' + MAX_SEED + '.' };
     var frame = 0;
     for (i = 1; i < forms.length; i++) {
-      var f = forms[i], head = Array.isArray(f) ? sym(f[0]) : null;
-      if (head === 'frame') {
-        var n = whole(f[1]);
-        if (n === null || n <= frame) return { error: 'The replay\'s frames are out of order: ' + spellForm(f) + ' follows ' + (frame ? '(frame ' + frame + ')' : 'the header') + ', and a replay\'s frames ascend from 1.' };
-        frame = n; rp.last = n;
-        continue;
+      var f = forms[i];
+      if (!Array.isArray(f) || sym(f[0]) !== 'frame') return { error: 'The replay holds ' + spellForm(f).slice(0, 60) + ' outside a frame, and every form after a replay\'s header is a frame, (frame <n> <row> ...), holding the rows written before that step.' };
+      var n = whole(f[1]);
+      if (n === null || n <= frame) return { error: 'The replay\'s frames are out of order: (frame ' + (f.length > 1 ? spellForm(f[1]) : '') + ' ...) follows ' + (frame ? '(frame ' + frame + ' ...)' : 'the header') + ', and a replay\'s frames ascend from 1.' };
+      frame = n; rp.last = n;
+      for (var j = 2; j < f.length; j++) {
+        var row = f[j], head = Array.isArray(row) ? sym(row[0]) : null;
+        if (head === 'derived') return { error: 'The replay holds a derived row, ' + spellForm(row) + ', in frame ' + n + ': the host\'s derived writes are re-derived as a replay plays and never logged (SPEC.md section 7.6).' };
+        if (head !== 'cell' && head !== 'formula') return { error: 'The replay holds ' + spellForm(row).slice(0, 60) + ' in frame ' + n + ', and a frame holds cell and formula rows.' };
+        (rp.frames[n] = rp.frames[n] || []).push(spellForm(row));
       }
-      if (head === 'derived') return { error: 'The replay holds a derived row, ' + spellForm(f) + ', in frame ' + frame + ': the host\'s derived writes are re-derived as a replay plays and never logged (SPEC.md section 7.6).' };
-      if (head !== 'cell' && head !== 'formula') return { error: 'The replay holds ' + spellForm(f).slice(0, 60) + (frame ? ' in frame ' + frame : '') + ', and a replay\'s rows are cell and formula rows under their (frame n).' };
-      if (!frame) return { error: 'The replay holds a row before its first (frame n): ' + spellForm(f) + '.' };
-      (rp.frames[frame] = rp.frames[frame] || []).push(spellForm(f));
     }
     return rp;
   };

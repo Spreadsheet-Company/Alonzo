@@ -176,7 +176,7 @@
       </details>
       <details id="eng-replay-box">
         <summary>The replay</summary>
-        <p>A replay, <code id="eng-replay-path">none: this cartridge has no replay of its own</code>, is every write a run made between its steps: a header naming the cartridge by the SHA-256 of its text and the seed, then each frame's rows, the Input sheet's cells that changed and each person's edit that landed; the host's derived writes are never logged, a replay re-deriving them (SPEC.md section 7.6). Paste one here and press Play the replay: the host loads the cartridge again with the replay's seed and plays its frames at the cartridge's rate, a person's edits waiting until it ends, and pauses at its last frame; Run then carries on with the live inputs. Copy the replay puts what the host has recorded since the last load on the clipboard and in this box, a replay played among it, so a replay played and copied is the replay played. The input card's own replay is the loop oracle's run of it.</p>
+        <p>A replay, <code id="eng-replay-path">none: this cartridge has no replay of its own</code>, is every write a run made between its steps: a header naming the cartridge by the SHA-256 of its text and the seed, then each frame as one form holding its rows, <code>(frame 12 (cell "Input" "B5" 1))</code>, the Input sheet's cells that changed and each person's edit that landed; the host's derived writes are never logged, a replay re-deriving them (SPEC.md section 7.6). Paste one here and press Play the replay: the host loads the cartridge again with the replay's seed and plays its frames at the cartridge's rate, a person's edits waiting until it ends, and pauses at its last frame; Run then carries on with the live inputs. Copy the replay puts what the host has recorded since the last load on the clipboard and in this box, a replay played among it, so a replay played and copied is the replay played. The input card's own replay is the loop oracle's run of it.</p>
         <textarea id="eng-replay" rows="10" spellcheck="false" aria-label="a replay to play"></textarea>
       </details>
       <p class="controls"><label>A sheet, live <select id="eng-sheet" aria-label="the sheet to show">
@@ -1632,12 +1632,19 @@
   ];
   // A replay's or a golden's file as the page holds it, its comment lines, the licence first, dropped.
   function afterComments(text) { return String(text).replace(/\r\n/g, '\n').replace(/^(?:;[^\n]*\n)+/, ''); }
-  // A replay's rows by frame, read the way the recorder writes them, one a line.
+  // A replay's rows by frame, each frame one form holding them, read with the viewport's reader and
+  // spelled back as the recorder spells a row.
+  function spellOf(d) {
+    if (Array.isArray(d)) return '(' + d.map(spellOf).join(' ') + ')';
+    if (typeof d === 'string') return lqQuote(d);
+    if (d && d.num !== undefined) return d.text;
+    return d && d.sym !== undefined ? d.sym : '';
+  }
   function replayFrames(text) {
-    var out = {}, n = 0, lines = String(text).split('\n');
-    for (var i = 1; i < lines.length; i++) {
-      var m = /^\(frame (\d+)\)$/.exec(lines[i]);
-      if (m) { n = +m[1]; out[n] = out[n] || []; } else if (n && lines[i]) out[n].push(lines[i]);
+    var out = {}, forms = VP.readForms(text);
+    for (var i = 1; i < forms.length; i++) {
+      var f = forms[i];
+      if (Array.isArray(f) && f[0] && f[0].sym === 'frame' && f[1] && f[1].num !== undefined) out[f[1].num] = f.slice(2).map(spellOf);
     }
     return out;
   }
@@ -1703,9 +1710,9 @@
     var wrong = [
       ['another cartridge\'s replay', CARTRIDGES.inputcard.replay, 'a replay plays only on the file it was recorded from'],
       ['a later version\'s replay', text.replace('(spec 3)', '(spec 4)'), 'this host implements versions 1 to 3'],
-      ['a derived row', text.replace('(frame 1)\n', '(frame 1)\n(derived "State" "B1" 1)\n'), 'holds a derived row'],
+      ['a derived row', text.replace('(frame 1\n', '(frame 1\n  (derived "State" "B1" 1)\n'), 'holds a derived row'],
       ['frames out of order', text + '(frame 1)\n', 'frames are out of order'],
-      ['a row before the first frame', text.replace('(frame 1)\n', '(cell "State" "B1" 1)\n(frame 1)\n'), 'a row before its first (frame n)'],
+      ['a row outside a frame', text.replace('(frame 1\n', '(cell "State" "B1" 1)\n(frame 1\n'), 'outside a frame'],
       ['a seed not the manifest\'s', text.replace(/\(seed \d+\)\)\n/, '(seed 7))\n'), 'holds its manifest\'s seed']
     ];
     for (var w = 0; w < wrong.length; w++) {

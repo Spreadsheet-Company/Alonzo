@@ -63,9 +63,10 @@ pin. A replay is read as SPEC.md section 7.6 has it: the licence header; its
 header (replay "<name>" (spec n) (cartridge "<SHA-256>") (seed n)), the name
 its folder's, the spec 1 to 3, the digest PowerShell's SHA-256 of the
 cartridge beside it over its LF bytes, the seed a whole number from 1 to
-2147483646 and the manifest's when the manifest names one; then (frame n)
-heads ascending from 1, and under them cell and formula rows alone, a
-(derived ...) row refused, being re-derived as a replay plays. A golden has
+2147483646 and the manifest's when the manifest names one; then frames
+ascending from 1, each one form, (frame n row ...), holding cell and formula
+rows alone, a form outside a frame refused and a (derived ...) row refused,
+being re-derived as a replay plays. A golden has
 its replay beside it, and is a record whose one (window ...) row names a
 sheet the record holds, every cell, formula and value row that sheet's. What
 the replay plays to is the loop oracle's, which holds the page's player to
@@ -87,8 +88,8 @@ a banner naming a source that is not there, a stray .vla in a cartridge's
 folder, and a second library. Nine are ENGINE.3's, of the input card's
 replay and golden: a digest that is not the cartridge's, a replay named for
 another folder, a (spec 4), a seed of 0, frames out of order, a derived row,
-a row before the first frame, a golden without its window row, and a golden
-whose replay is gone.
+a row outside a frame, a golden without its window row, and a golden whose
+replay is gone.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network; a
 hardcoded, reviewable baseline that pins how many; exit 0 clean, exit 1 with
@@ -464,25 +465,28 @@ function Test-Replay([string]$path, [string]$name, [string]$cartridgePath) {
             if ($named -match '^\d+$' -and [double]$named -ne $s.Value) { $problems.Add("line $($h.Line): (seed $($s.Text)), and $name.vla's manifest says (seed $named): a replay of it holds its manifest's seed") }
         }
     }
-    # the frames ascending from 1, and under them cell and formula rows alone
+    # the frames ascending from 1, each one form holding cell and formula rows alone
     $frame = 0
     for ($i = 1; $i -lt $forms.Count; $i++) {
         $f = $forms[$i]
         $head = ''
         if ((Test-Kind $f 'list') -and $f.Items.Count -ge 1 -and (Test-Kind $f.Items[0] 'symbol')) { $head = $f.Items[0].Text }
-        if ($head -ceq 'frame') {
-            $n = $null
-            if ($f.Items.Count -eq 2) { $n = $f.Items[1] }
-            if (-not (Test-Whole $n) -or $n.Value -le $frame) { $problems.Add("line $($f.Line): (frame $(Show-Datum $n)) follows $(if ($frame) { "(frame $frame)" } else { 'the header' }), and a replay's frames ascend from 1"); continue }
-            $frame = $n.Value; $result.Frames++; continue
+        if ($head -cne 'frame') { $problems.Add("line $($f.Line): $(if ($head) { "($head ...)" } else { Show-Datum $f }) outside a frame: every form after a replay's header is a frame, (frame n row ...), holding the rows written before that step"); continue }
+        $n = $null
+        if ($f.Items.Count -ge 2) { $n = $f.Items[1] }
+        if (-not (Test-Whole $n) -or $n.Value -le $frame) { $problems.Add("line $($f.Line): (frame $(Show-Datum $n) ...) follows $(if ($frame) { "(frame $frame ...)" } else { 'the header' }), and a replay's frames ascend from 1"); continue }
+        $frame = $n.Value; $result.Frames++
+        for ($j = 2; $j -lt $f.Items.Count; $j++) {
+            $row = $f.Items[$j]
+            $rowHead = ''
+            if ((Test-Kind $row 'list') -and $row.Items.Count -ge 1 -and (Test-Kind $row.Items[0] 'symbol')) { $rowHead = $row.Items[0].Text }
+            if ($rowHead -ceq 'derived') { $problems.Add("line $($row.Line): a (derived ...) row: the host's derived writes are re-derived as a replay plays and never logged (SPEC.md section 7.6)"); continue }
+            if ($rowHead -cne 'cell' -and $rowHead -cne 'formula') { $problems.Add("line $($row.Line): $(if ($rowHead) { "($rowHead ...)" } else { Show-Datum $row }) in frame $frame, and a frame holds cell and formula rows alone"); continue }
+            $ok = ($row.Items.Count -eq 4) -and (Test-Kind $row.Items[1] 'string') -and (Test-Kind $row.Items[2] 'string') -and ($null -ne (Get-Rect $row.Items[2].Value)) -and (Test-Value $row.Items[3])
+            if ($ok -and $rowHead -ceq 'formula') { $ok = (Test-Kind $row.Items[3] 'string') -and $row.Items[3].Value.StartsWith('=') }
+            if (-not $ok) { $problems.Add("line $($row.Line): the row is not ($rowHead `"sheet`" `"address`" value)"); continue }
+            $result.Rows++
         }
-        if ($head -ceq 'derived') { $problems.Add("line $($f.Line): a (derived ...) row: the host's derived writes are re-derived as a replay plays and never logged (SPEC.md section 7.6)"); continue }
-        if ($head -cne 'cell' -and $head -cne 'formula') { $problems.Add("line $($f.Line): $(if ($head) { "($head ...)" } else { Show-Datum $f }) is neither a (frame n) nor a cell or formula row"); continue }
-        if ($frame -eq 0) { $problems.Add("line $($f.Line): a row before the replay's first (frame n)"); continue }
-        $ok = ($f.Items.Count -eq 4) -and (Test-Kind $f.Items[1] 'string') -and (Test-Kind $f.Items[2] 'string') -and ($null -ne (Get-Rect $f.Items[2].Value)) -and (Test-Value $f.Items[3])
-        if ($ok -and $head -ceq 'formula') { $ok = (Test-Kind $f.Items[3] 'string') -and $f.Items[3].Value.StartsWith('=') }
-        if (-not $ok) { $problems.Add("line $($f.Line): the row is not ($head `"sheet`" `"address`" value)"); continue }
-        $result.Rows++
     }
     $result.Last = $frame
     return $result
@@ -635,9 +639,9 @@ if ($Control) {
             @{ Name = 'a replay named for another folder'; File = 'inputcard/inputcard.replay.vla'; Anchor = '(replay "inputcard"'; With = '(replay "life"'; Want = 'the header names life, and the replay stands in the folder of inputcard' },
             @{ Name = 'a replay of a (spec 4)'; File = 'inputcard/inputcard.replay.vla'; Anchor = '(spec 3)'; With = '(spec 4)'; Want = '(spec 4): a replay is written to the page''s version 1, 2 or 3' },
             @{ Name = 'a replay''s seed of 0'; File = 'inputcard/inputcard.replay.vla'; Pattern = '\(seed \d+\)\)'; With = '(seed 0))'; Want = '(seed 0): a seed is a whole number from 1 to 2147483646' },
-            @{ Name = 'a replay''s frames out of order'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 3)`n"; With = "(frame 30)`n"; Want = 'follows (frame 30), and a replay''s frames ascend from 1' },
-            @{ Name = 'a derived row in a replay'; File = 'inputcard/inputcard.replay.vla'; Append = '(derived "Tally" "B20" 1)'; Want = 'a (derived ...) row: the host''s derived writes are re-derived' },
-            @{ Name = 'a row before a replay''s first frame'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 1)`n"; With = "(cell `"Input`" `"B1`" 0)`n(frame 1)`n"; Want = 'a row before the replay''s first (frame n)' },
+            @{ Name = 'a replay''s frames out of order'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 3`n"; With = "(frame 30`n"; Want = 'follows (frame 30 ...), and a replay''s frames ascend from 1' },
+            @{ Name = 'a derived row in a replay'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 1`n"; With = "(frame 1`n  (derived `"Tally`" `"B20`" 1)`n"; Want = 'a (derived ...) row: the host''s derived writes are re-derived' },
+            @{ Name = 'a row outside a replay''s frames'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 1`n"; With = "(cell `"Input`" `"B1`" 0)`n(frame 1`n"; Want = '(cell ...) outside a frame: every form after a replay''s header is a frame' },
             @{ Name = 'a golden without its window row'; File = 'inputcard/inputcard.golden.vla'; Pattern = '\(window "Tally" "[A-Z]+[0-9]+:[A-Z]+[0-9]+"\)\n'; With = ''; Want = 'the golden holds 0 (window ...) row(s)' },
             @{ Name = 'a golden whose replay is gone'; Remove = 'inputcard/inputcard.replay.vla'; Want = 'inputcard.golden.vla: has no replay beside it' }
         )

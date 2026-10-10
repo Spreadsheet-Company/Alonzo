@@ -55,16 +55,17 @@ smoothing off; a byte past the palette is magenta.
 The host keeps the replay of every load's run (`SPEC.md` section 7.6,
 `ENGINE.3`'s second slice). Its header names the cartridge by the SHA-256 of
 its text with LF line ends, a digest the host computes itself, at once, and
-the seed `Clock!B3` held after the load. Under `(frame n)` come the rows
-written before the `n`th step that landed: the Input sheet's cells that
-changed, all forty-eight at the first frame and after a person's edit of
-the Input sheet, and each person's edit in its order. The derived writes
-are never logged, since a replay re-derives them. A frame with no row is
-left out, except the last, so a replay names its length; the recorder stops
-at 8 MiB of text and says so.
+the seed `Clock!B3` held after the load. Each frame is one form, `(frame n
+row ...)`, holding the rows written before the `n`th step that landed, one
+a line: the Input sheet's cells that changed, all forty-eight at the first
+frame and after a person's edit of the Input sheet, and each person's edit
+in its order. The derived writes are never logged, since a replay
+re-derives them. A frame with no row is left out, except the last, written
+`(frame n)`, so a replay names its length; the recorder stops at 8 MiB of
+text and says so.
 `play(text)` reads a replay whole and refuses in words a replay of another
-cartridge, of a later page, with a derived row, with a row before its first
-frame, with frames out of order, or with a seed that is not the manifest's.
+cartridge, of a later page, with a derived row, with a form outside its
+frames, with frames out of order, or with a seed that is not the manifest's.
 It then loads the cartridge again with the replay's seed and plays the
 frames through the loop at the cartridge's rate, each frame's rows one
 write after the derived writes. A person's edit is refused while it plays,
