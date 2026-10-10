@@ -4,6 +4,8 @@
 
 *What this document is not. It is not a roadmap: nothing here is an item, it mints no ID here or in `Frazaro/docs/ID_REGISTRY.md`, and an idea here that is ever picked up goes onto `ROADMAP.md` under its family, or onto Frazaro's roadmap under the department that owns it, and takes its ID there. Its recommendations are the sitting's, unadjudicated until the owner takes or leaves each by a dated line, which §8 records, and a change to `SPEC.md` is a new version of that page, `SPEC.2` when one is wanted, never an edit made from here. Where this file and the code disagree, the code is right. Marks are the charter's: every idea is* **math exists**, **engineering** *or* **fiction**; *an argument about the present is* **exhibit** *(a dated, public, checkable fact, its source in §9),* **shelf** *(a claim a file in this repository or Frazaro's already makes, cited) or* **recommendation** *(the sitting's advice); every figure is a* **measurement**, *a* **prediction** *or* **derived**. *An idea with no mark is a vibe, and this file keeps none. Frazaro's standing decisions that bind here are named where they bind: `SD-7` (no mechanism without the sentence that needs it), `SD-13` (no outbound call, ever), `SD-18` (VBA the reference), `SD-22`, `SD-23`, `SD-24`, `SD-30`, `SD-32`, `SD-33`, `SD-34`, `SD-35`, the owner's veto of `GENSYM` and, by the veto's own words, of `eval` (§2.3), and this repository's `AD-1` to `AD-6`. Licence CC-BY-4.0, under the map's rule for `docs/**`.*
 
+*A later sitting is §10, of 2026-10-10: the annals of computer science read for the frame, at the owner's question, in the same register and under the same terms, its own hand-offs and sources inside it.*
+
 ---
 
 ## 1. The thesis: everything in the formula language
@@ -259,3 +261,147 @@ The first two are rows. The third is Newton over rung 4. The fourth is the gradi
 - Sanderson, G., "Essence of linear algebra", 3Blue1Brown, 2016, the audience rung 2 names. https://www.3blue1brown.com/topics/linear-algebra
 - Sketchpad (Sutherland, 1963), ThingLab (Borning, 1979), Hyvönen and De Pascale (1996): as `web/CALLOSUM.md` §11 cites them.
 - In this repository: `CHARTER.md` §1 to §8; `SPEC.md` §1 to §7, §10 to §12, Appendices A to C; `ROADMAP.md`, `AD-1` to `AD-6`, `CART.4`, `ENGINE.6`; `REARVIEW.md`, the sittings of 2026-10-08. In the Frazaro repository: `docs/BETA_ROADMAP.md` (`KERNEL.7`, `KERNEL.8`, `KERNEL.12`, `KERNEL.20`, the `GENSYM` entry, `OPTIMIZE`), `docs/SINGULARITY.md` (Stage 5), `docs/OPTIMIZATION.md`, `web/CALLOSUM.md` §5, §6, §12.6, `conformance/README.md`, `scripts/study/`.
+
+## 10. The sitting of 2026-10-10: the annals, read for the frame
+
+*Asked by the owner on 2026-10-10, the day `SPEC.3` closed, `ENGINE.3`'s replay landed and the library took `on`, `cells` and `formulas` (`d8bd24d`); answered in the session and written here the same day at the owner's word, in this file's register and under its terms. The question, in the owner's words: "As a sort of meta-analysis of Alonzo, are there any theoretical and/or practical concepts from the world of computer science which Alonzo should keep in mind when optimizing for speed, monotonicity, extensibility, and elegance in its architecture and performance? I'm talking about, without violating the deterministic foundations upon which Alonzo is currently built: continuations, category theory, reflection, multiple dispatch, and any other orthogonal wizardy from the annals of nerd publications which could be applied to make Alonzo not only a cool, fun, and easy engine to build upon and extend, but also a genuinely beautiful piece of software that marries mind and machine as elegantly as humanly-possible?" The sitting read the question against what this file already holds, Lustre and de Bruijn (§2.2), the Elm command (§2.3), reflection as `AD-6`, HashLife's table at a step of one (`ENGINE.6`) and the linear-region pass (§6.5), and gives only what was not on the shelf. A follow-up the same hour asked what the entity-component reading meant; its answer is §10.6. The exhibits of this section are §10.9's.*
+
+**The one rule.** An idea may change how fast or how structured the engine is, and never a value. Every accelerator equals the naive every-cell frames, the reference, or it is not merged (*shelf*: `ROADMAP.md`, `ENGINE.6`; `SPEC.md` §6). Everything below is read through that rule, and nothing below asks the language for `eval` (*shelf*: `AD-7`; §2.3).
+
+### 10.1 Continuations: the engine already holds the useful kind
+
+A step that takes a budget, stops before it is done and is called again until it is, is a one-shot continuation kept as data, the evaluator's place in its plan (*shelf*: `SPEC.md` §2, the step). Since the state is the cells and nothing else, a save is the whole program's continuation written to a file, which a language's first-class continuations rarely manage (*shelf*: `SPEC.md` §7.5). (*math exists*)
+
+- **Rollback.** Deterministic lockstep, the Age of Empires paper's (*exhibit*: Bettner and Terrano 2001), and GGPO's rollback (*exhibit*: Cannon 2006) give multiplayer in which the peers exchange inputs and nothing else: each predicts the other's input, steps ahead, and on a late input restores a snapshot and steps again. The replay is already the input log (*shelf*: `SPEC.md` §7.6). A correction costs a re-step of every frame since the snapshot, cheap for a Stacker-sized frame and not yet for Life's (*derived*). (*engineering*; it needs §10.7's bit-identity across machines)
+- **Not in the formula language.** A continuation a formula could hold would make the order of evaluation observable, which the acyclic rule exists to keep invisible (*shelf*: `SPEC.md` §2). (*recommendation*)
+
+### 10.2 Category theory, the parts that pay rent
+
+- **Coalgebra and bisimulation.** A cartridge is a Mealy machine, a state and an input to a state and a frame, which is a coalgebra in Rutten's sense (*exhibit*: Rutten 2000). "An accelerator equals the reference" says the two machines are bisimilar, the same frames for every input stream, and a replay is a finite witness of it. Generated input streams and generated shapes, QuickCheck's method (*exhibit*: Claessen and Hughes 2000), turn `ENGINE.6`'s oracle from one fixed trace into a search for a counterexample; the language already holds six laws over generated programs and grids (*shelf*: Frazaro, `vla-lang/tests/laws.rs`). (*math exists*; the generator *engineering*)
+- **Causal commutative arrows.** Any network of synchronous components with delays normalizes to one loop over one state (*exhibit*: Liu, Cheng and Hudak 2009). That is the frame's own shape, one pure step and the twins, and `CART.5`'s "a module is a macro, a patch is a sheet" is its consequence: composing modules costs nothing at run time, because the pass's expansion is the normalization (*shelf*: `ROADMAP.md`, `CART.5`; `SPEC.md` §7.8). (*math exists*)
+- **Lenses.** The view, and the load or the write, form a lens, and "a sheet viewed whole and loaded again is the same sheet" is its round-trip law (*exhibit*: Foster, Greenwald, Moore, Pierce and Schmitt 2007; *shelf*: `SPEC.md` §7.3). The Camera's window composes as a lens on its sheet (*shelf*: `SPEC.md` §3.8). The laws are property tests waiting to be written. (*math exists*; the tests *engineering*)
+
+### 10.3 Reflection: `AD-6` is the right kind, with one trap
+
+`AD-6` is reflection with total introspection and intercession through `write` alone, and `AD-7` keeps the program's own intercession to values (*shelf*: `ROADMAP.md`, `AD-6`, `AD-7`).
+
+- **The trap.** A number that is not a function of the replay, a frame's duration, the memory in use, any timing, put in a cell a formula can read, makes the replay diverge. Timings belong in the host's panel. The rule: reflection is deterministic, or it is invisible to formulas. (*recommendation*)
+- **The schedule as a sheet.** Halide separates the algorithm from the schedule, the tiling, the fusion and the vectorization (*exhibit*: Ragan-Kelley et al. 2013). The formulas are the algorithm; a Schedule sheet could be the schedule, viewable and editable while the game runs, and by construction unable to change a value, since the bisimulation oracle runs two schedules and compares their frames. Optimizing would then be editing cells, the charter's hypothesis acted out (*shelf*: `CHARTER.md` §6). (*engineering*; *recommendation*: weigh it only once `ENGINE.6` holds two accelerators to choose between, since it adds surface)
+
+### 10.4 Multiple dispatch: the function library's
+
+- **Speed.** A shape's run specialized to the kinds its cells actually hold, all numbers in the common case, with a guard back to the general path when a write puts a text in one of them: the polymorphic inline cache's idea (*exhibit*: Hölzle, Chambers and Ungar 1991) and Julia's method specialization (*exhibit*: Bezanson, Edelman, Karpinski and Shah 2017). Both paths compute the same values. (*engineering*)
+- **Extensibility.** The expression problem, a new kind of value and a new function each added without editing the old code (*exhibit*: Wadler 1998), is kept open on both axes by a table keyed by a function's name and its arguments' kinds; the language's `Library` seam is most of that table already (*shelf*: Frazaro, `vla-lang/src/calc/eval.rs`). (*math exists*, the problem; *engineering*, the table)
+
+### 10.5 By the owner's four goals
+
+**Speed.**
+
+- *Abstract interpretation picks the representation* (*exhibit*: Cousot and Cousot 1977). Prove Life's cells always 0 or 1 and its sums at most 8, then hold a cell as a bit and step with bitwise adders. The interior's 62,964 cells are about a thousand 64-bit words, and a bit-parallel generation is roughly forty word operations a word: tens of microseconds a frame (*derived*), against 10.9 ms, the best native soup frame in Frazaro's tree (*measurement*: Frazaro `e128d3c`, `CART.1`'s runner), so two to three orders of magnitude (*derived*). A write of a value that is not a bit falls back to the general path. (*math exists*, the analysis; *engineering*, the lowering)
+- *Changes, not dirty cells.* DBSP's delay operator is the twin, and its theorem incrementalizes any circuit, a linear operator, a sum over a window among them, being its own increment (*exhibit*: Budiu, Chajed, McSherry, Ryzhyk and Tannen 2023). Frazaro's incremental frame already computes only the cells a change reaches: the gun natively from 17.8 ms to 41 µs a frame, the soup from 17.7 to 10.9 ms (*measurement*: Frazaro `e128d3c`). Life's rule is not linear and gains little more from changes; a model's linear roll-forward gains the most, which is where this meets §6.5. Build systems à la carte classifies Excel's recalculation and supplies the oracle, an incremental frame equal to a frame computed from scratch (*exhibit*: Mokhov, Mitchell and Peyton Jones 2018). (*math exists*)
+- *Rewrites under IEEE.* A sum is a monoid only over exact values. A separable 3 by 3 box, row triples then column triples, four additions where there were eight, and a summed-area table (*exhibit*: Crow 1984) are legal only where the analysis proves the sums exact integers; elsewhere the reference's order of summation is the semantics, as §7's first crack says. An e-graph rewriter held to exact rules is the clean engine for it (*exhibit*: Willsey et al. 2021). (*math exists*; *engineering*)
+- *Staging.* The pass, the load and the step are three stages in the sense of multi-stage programming (*exhibit*: Taha and Sheard 1997). The encoder to WebAssembly (*shelf*: `SPEC.md` §13, the fan-out) is Futamura's first projection, the interpreter specialized to one program, with the interpreter kept as its oracle (*exhibit*: Futamura 1971). Sestoft, on the specification's shelf for spreadsheet implementation, co-wrote the book on partial evaluation (*exhibits*: Jones, Gomard and Sestoft 1993; Sestoft 2014). (*math exists*)
+
+**Monotonicity**, in four senses.
+
+- *Ratchets.* Floors and goldens only rise, and a lowering carries its reason (*shelf*: `tools/check_frame_floors.ps1`, the history). (*engineering*, held)
+- *Monotone time.* The engine alone writes the frame cell, a person's write refused (*shelf*: `SPEC.md` §3.5), so `Clock!$B$1=1` is false for good after the first frame. A specializer can drop that branch, and Life's steady shape is Conway's alone; Frazaro's incremental frame already compares it once a frame rather than once a cell (*shelf*: Frazaro `e128d3c`). (*engineering*)
+- *Monotone compatibility.* A cartridge of an earlier version loads under the later (*shelf*: `SPEC.md` §7). The promise, stated whole: a cartridge that loads once loads forever and computes the same frames. Its check: an append-only museum of every committed cartridge and replay, replayed on every push. (*engineering*; *recommendation*)
+- *Lattices.* Monotone programs need no coordination (*exhibit*: Hellerstein and Alvaro 2020). A cell that only grows, a counter, a maximum, a set, could merge two players' writes by join instead of refusing the second, as a replicated data type does (*exhibit*: Shapiro, Preguiça, Baquero and Zawirski 2011): multiplayer without a server, at the price of a new kind of cell against §7.3's loud collision. (*fiction*)
+
+**Extensibility.**
+
+- *Effects and handlers* (*exhibit*: Plotkin and Pretnar 2009). A device's sheet layout is an effect's signature, the host is its handler, the replay is a handler that records and the headless oracle is another. A new device is a signature, a handler and its replay rows, and the engine does not change. Zero imports is the object-capability discipline, no ambient authority and every device granted by the host (*exhibit*: Miller 2006; *shelf*: `AD-5`). (*math exists*, the reading; *engineering*, the discipline)
+- *Sheet-defined functions* (*exhibits*: Peyton Jones, Blackwell and Burnett 2003; Sestoft and Sørensen 2013; Excel's `LAMBDA`). A function whose body is a sheet, with input cells and an output cell, compiled at load: the formula-level twin of the pass's macros, written without Rust, viewable by `AD-6`, pure, and no program-time `eval` by `AD-7`. `LET` belongs beside them; Life's soup spells its hash twice (*shelf*: `cartridges/life/life.source.vla`). (*engineering*; the formula dialect of `SPEC.md` §12)
+- *Every seam ships with its oracle*, devices, projections, functions and libraries alike, so that substitutable means passing it, as Frazaro's treaty holds its ports (*shelf*: Frazaro, `conformance/README.md`). (*recommendation*)
+
+**Elegance.**
+
+- *Out of the tar pit* (*exhibit*: Moseley and Marks 2006). Essential state, essential logic, and accidental state that can be derived from the other two. Value cells are the first, formulas the second, the twins, the dense arrays and every cache the third, and a save already leaves the twins out as derivable (*shelf*: `SPEC.md` §7.5). The test for anything new: which of the three is it? (*recommendation*)
+- *One line of semantics*: `frames = scanl step (load cartridge) inputs`. A run is a running fold over the input log; a replay runs it again, a rewind indexes into it, a rollback folds again from a checkpoint, and HashLife's skipping is memoized composition of steps (*exhibit*: Gosper 1984, as `CHARTER.md` §10 cites it). A sentence for `SPEC.md` §2, beside the theorem. (*math exists*; *recommendation*)
+- *Notation as a tool of thought* (*exhibit*: Iverson 1980). Life in one formula is the spreadsheet's APL one-liner. Let the formula dialect grow toward array functions, which Excel's dynamic arrays already are, before it grows mechanisms. (*recommendation*)
+
+### 10.6 The gaming crowd's vocabulary: the engine as an entity-component system
+
+*The owner's follow-up: what exactly the reading meant.* Game programmers organize a world as an entity-component system. An entity is an identifier and holds nothing; a component is plain data attached to an entity; a system is a function run every tick over every entity that has the components it asks for (*exhibits*: Bilas 2002; Ford 2017; Bevy; Unity's Entities). In an archetype store, the entities that share one set of components sit in one table, a column a component, iterated as arrays. A sheet is that table already (*math exists*, the correspondence):
+
+| entity-component system | Alonzo | in the example below |
+|---|---|---|
+| an entity, an identifier | a row | ball 7 is row 8 |
+| a component, plain data | a column, or a block of them | x and y in B and C |
+| an archetype table | a sheet | `Balls` |
+| a system, run every tick over a query | a shape: one formula filled down a column | movement is `B2:B65`'s formula |
+| a query, with optional components | the shape's range, with a guard column | an `alive` column read by `IF` |
+| a resource, a global singleton | one cell, referenced absolutely | `Clock!$B$1`, `Physics!$B$1` |
+| an event | a rising edge against the twin, or a Write sheet row | `Input!B5=1` with `Input.last!B5=0` |
+| change detection | the twin, and the engine's own incremental frame | `Balls` against `Balls.last` |
+| the system schedule | derived from the references, never declared | dx after x, since `D2` reads `B2` |
+| a deferred structural change | the Write sheet, applied between frames | a spawn is a write of 1 |
+| chunked, vectorized iteration | a shape's run of 256 lanes over dense arrays | `KERNEL.20` |
+
+```text
+(formulas "Balls"                   ; the systems: one shape a column, rows 2 to 65 the entities
+  ; movement: x and y move by the last frame's velocity; the first frame places the balls
+  ("B2:B65" "=IF(Clock!$B$1=1,ROW()*4,Balls.last!B2+Balls.last!D2)")
+  ("C2:C65" "=IF(Clock!$B$1=1,20,Balls.last!C2+Balls.last!E2)")
+  ; bounce: dx turns at a side wall, reading this frame's x
+  ("D2:D65" "=IF(Clock!$B$1=1,1+MOD(ROW(),3),IF(OR(B2<=1,B2>=320),-Balls.last!D2,Balls.last!D2))")
+  ; gravity and the floor: dy gains the Physics sheet's g each frame, and turns up at the floor
+  ("E2:E65" "=IF(Clock!$B$1=1,0,IF(C2>=200,-ABS(Balls.last!E2),Balls.last!E2+Physics!$B$1))"))
+```
+
+What the store gains here. One formula a cell, so two systems cannot race for a component, and an effect pipeline, gravity then the floor then the player's push, is a chain of columns anyone can watch. The last frame named and never a matter of system order, so the one-frame lag an engine's schedule hides is spelled in the reference. The schedule derived and never declared. Every component inspectable as a table while the game runs (`AD-6`), and replay and rollback by construction (§10.1). Where it does not fit. The entities are a pool fixed at load, since the step writes no formula (`AD-7`), which is the Famicom's own shape: sixty-four sprite slots of four bytes in its object memory, a sheet of sixty-four rows (*exhibit*: the Nesdev wiki). An entity of another archetype is a row of another sheet, or a flag column. A pairwise system, collision, is an n-by-n block of cells, visible and quadratic until `KERNEL.8`'s lookups give it a broad phase. Drawing is §3's gather, which the composite projection answers. The recommendation: say this table to the gaming crowd in their words, beside §5.2's pitch. (*recommendation*)
+
+### 10.7 Determinism: the guardrails worth a check each
+
+- *Relaxed SIMD.* WebAssembly's relaxed SIMD instructions are implementation-defined by design, a fused multiply-add that may or may not fuse (*exhibit*: the relaxed SIMD proposal): never on a path that reaches a value.
+- *NaN.* A NaN's payload bits are WebAssembly's one floating-point nondeterminism, which the specification already names (*shelf*: `SPEC.md` §6): hold the rule that no NaN reaches a cell, Excel's own answer being `#NUM!`.
+- *Hash order.* A randomly seeded map's iteration order must never reach an output; the language's machine already hashes with a fixed function (*shelf*: Frazaro, `vla-lang/src/fx.rs`).
+- *Correctly rounded functions.* Beyond §2.2's fdlibm, correctly rounded functions define the answer by mathematics rather than by code, so that a port in any language agrees (*exhibit*: Sibidanov, Zimmermann and Glondu 2022); lockstep play makes it mandatory (§10.1).
+
+(*engineering*, each; *recommendation*: each a check in `tools/`, the house's way)
+
+### 10.8 The order the sitting would take, and what it hands to each file
+
+*The order, a* recommendation*:* first the bisimulation oracle with generated inputs and shapes, since every accelerator after it is safer; then kind specialization and the first frame's branch dropped, small and at once; then bits for Life through abstract interpretation, the large number, and the shape analysis the rest reuses; then DBSP's changes over Frazaro's incremental frame; then sheet-defined functions and `LET` as the formula dialect's seam.
+
+*Nothing here is an item; this is where each idea would go if the owner picks it up.*
+
+- **To a version of `SPEC.md`, `SPEC.4` when one is wanted:** the scan sentence beside §2's theorem; reflection deterministic or invisible to formulas; the compatibility promise; sheet-defined functions and `LET` in §12's formula dialect.
+- **To `ROADMAP.md`:** candidates only, minted at the owner's call: under `ENGINE`, the bisimulation oracle as `ENGINE.6`'s gate, and rollback play; under `REPO`, the museum and the determinism checks.
+- **To Frazaro's roadmap, by the department that owns each:** kind specialization, bits through abstract interpretation, changes over the incremental frame and the exact rewrites, beside `KERNEL.20` and `KERNEL.26`; the correctly rounded functions beside §2.2's fdlibm; the dispatch table to the `Library` seam.
+- **To the memory:** that this sitting's recommendations are unadjudicated.
+
+### 10.9 Sources for the outside facts
+
+- Bettner, P. and Terrano, M., "1500 Archers on a 28.8: Network Programming in Age of Empires and Beyond", Game Developers Conference, 2001 (deterministic lockstep).
+- Cannon, T., GGPO, rollback networking, 2006; open-sourced in 2019. https://github.com/pond3r/ggpo
+- Rutten, J. J. M. M., "Universal coalgebra: a theory of systems", *Theoretical Computer Science* 249(1), 2000.
+- Claessen, K. and Hughes, J., "QuickCheck: A Lightweight Tool for Random Testing of Haskell Programs", ICFP 2000.
+- Liu, H., Cheng, E. and Hudak, P., "Causal Commutative Arrows and Their Optimization", ICFP 2009.
+- Foster, J. N., Greenwald, M. B., Moore, J. T., Pierce, B. C. and Schmitt, A., "Combinators for Bidirectional Tree Transformations: A Linguistic Approach to the View-Update Problem", *ACM Transactions on Programming Languages and Systems* 29(3), 2007.
+- Ragan-Kelley, J., Barnes, C., Adams, A., Paris, S., Durand, F. and Amarasinghe, S., "Halide: A Language and Compiler for Optimizing Parallelism, Locality, and Recomputation in Image Processing Pipelines", PLDI 2013.
+- Hölzle, U., Chambers, C. and Ungar, D., "Optimizing Dynamically-Typed Object-Oriented Languages With Polymorphic Inline Caches", ECOOP 1991.
+- Bezanson, J., Edelman, A., Karpinski, S. and Shah, V. B., "Julia: A Fresh Approach to Numerical Computing", *SIAM Review* 59(1), 2017.
+- Wadler, P., "The Expression Problem", a note to the Java Genericity mailing list, 12 November 1998.
+- Cousot, P. and Cousot, R., "Abstract interpretation: a unified lattice model for static analysis of programs by construction or approximation of fixpoints", POPL 1977.
+- Budiu, M., Chajed, T., McSherry, F., Ryzhyk, L. and Tannen, V., "DBSP: Automatic Incremental View Maintenance for Rich Query Languages", *Proceedings of the VLDB Endowment* 16(7), 2023.
+- Mokhov, A., Mitchell, N. and Peyton Jones, S., "Build Systems à la Carte", ICFP 2018.
+- Crow, F. C., "Summed-area tables for texture mapping", SIGGRAPH 1984.
+- Willsey, M., Nandi, C., Wang, Y. R., Flatt, O., Tatlock, Z. and Panchekha, P., "egg: Fast and Extensible Equality Saturation", POPL 2021.
+- Taha, W. and Sheard, T., "Multi-stage programming with explicit annotations", PEPM 1997.
+- Futamura, Y., "Partial Evaluation of Computation Process: An Approach to a Compiler-Compiler", *Systems, Computers, Controls* 2(5), 1971.
+- Jones, N. D., Gomard, C. K. and Sestoft, P., *Partial Evaluation and Automatic Program Generation*, Prentice Hall, 1993. Sestoft, P., *Spreadsheet Implementation Technology: Basics and Extensions*, MIT Press, 2014.
+- Hellerstein, J. M. and Alvaro, P., "Keeping CALM: When Distributed Consistency Is Easy", *Communications of the ACM* 63(9), 2020.
+- Shapiro, M., Preguiça, N., Baquero, C. and Zawirski, M., "Conflict-Free Replicated Data Types", SSS 2011.
+- Plotkin, G. and Pretnar, M., "Handlers of Algebraic Effects", ESOP 2009.
+- Miller, M. S., *Robust Composition: Towards a Unified Approach to Access Control and Concurrency Control*, PhD thesis, Johns Hopkins University, 2006.
+- Peyton Jones, S., Blackwell, A. and Burnett, M., "A User-Centred Approach to Functions in Excel", ICFP 2003. Sestoft, P. and Sørensen, J. Z., "Sheet-Defined Functions: Implementation and Initial Evaluation", IS-EUD 2013. Microsoft, the `LAMBDA` worksheet function, announced for Excel in December 2020.
+- Moseley, B. and Marks, P., "Out of the Tar Pit", 2006.
+- Gosper, R. W., "Exploiting regularities in large cellular spaces", *Physica D* 10, 1984, as `CHARTER.md` §10 cites it.
+- Iverson, K. E., "Notation as a Tool of Thought", *Communications of the ACM* 23(8), 1980, the Turing Award lecture of 1979.
+- Bilas, S., "A Data-Driven Game Object System", Game Developers Conference, 2002. Ford, T., "Overwatch Gameplay Architecture and Netcode", Game Developers Conference, 2017. Bevy, its entity-component system. https://bevyengine.org/ Unity, the Entities package.
+- Nesdev wiki, "PPU OAM": sixty-four sprites of four bytes, the y, the tile, the attributes and the x. https://www.nesdev.org/wiki/PPU_OAM
+- WebAssembly, the relaxed SIMD proposal: instructions whose results are implementation-defined. https://github.com/WebAssembly/relaxed-simd
+- Sibidanov, A., Zimmermann, P. and Glondu, S., "The CORE-MATH Project", ARITH 2022. https://core-math.gitlabpages.inria.fr/
+- In this repository: `CHARTER.md` §4, §6, §10; `SPEC.md` §2, §3.5, §3.8, §6, §7, §12, §13; `ROADMAP.md`, `AD-5` to `AD-7`, `ENGINE.6`, `CART.5`; `cartridges/life/life.source.vla`; `tools/check_frame_floors.ps1`. In the Frazaro repository: `e128d3c` (`KERNEL.20`'s incremental frame) and its message's measurements; `vla-lang/tests/laws.rs`; `vla-lang/src/calc/eval.rs`; `vla-lang/src/fx.rs`; `conformance/README.md`.
