@@ -23,7 +23,7 @@ Frazaro's standing decisions that cross the road are cited by their own numbers 
 | `SPEC` | the specification: the device sheets and the four calls, the page that is the product | `SPEC.3` |
 | `ENGINE` | the loop, the devices, the renderer, the frame path, the floors, the accelerators | `ENGINE.7` |
 | `CART` | the cartridges: the benchmark, the games, each a fixture here or a repository of its own | `CART.6` |
-| `REPO` | the repository itself: licence, governance, checks, CI, the contributor's path, the counts | `REPO.4` |
+| `REPO` | the repository itself: licence, governance, checks, CI, the contributor's path, the counts, the releases | `REPO.5` |
 
 ## The order, and why
 
@@ -32,6 +32,7 @@ Each item is what makes the next cheap, the instrument before the operation: `RE
 ## 🌍 THE REPOSITORY
 
 - ⬜ **`REPO.3` — the count.** The GitHub API read of forks and pull requests on this repository and on `vla-lang`'s, written beside the prediction in `CHARTER.md` §6, with the engine's own release counted beside it and marked as not the test, one quarter after `CART.2`'s release. `~days`, then
+- ⬜ **`REPO.4` — the first release, `v0.1.0`.** Filed 2026-10-10 at the owner's word, when the first push of the engine's own work raised the question of versions. Alonzo has pushed to `main` with no tag since `REPO.1`, rightly while nothing it makes is used outside it: the crate is `publish = false`, no page is deployed, and no cartridge is written elsewhere; the workspace's `0.1.0` is, by Cargo's convention, the version in preparation. This item makes the first one a promise: the tag `v0.1.0` on a commit whose CI is green, with `vla-lang` pinned from crates.io, never a git rev under a tag; release notes begun as a file of their own, as Frazaro's `docs/RELEASES.md`; `publish = false` removed as `REPO.1` planned, and the decision on publishing `alonzo` to crates.io, the first publish by hand and Trusted Publishing after it, as Frazaro's `DEPLOY.md` has it, the name, free on 2026-10-10, being held only by publishing something real; the page deployed where a stranger can open it, as Frazaro's `pages.yml` deploys its own; and the README and the charter saying what the release shows, in measured numbers. *The decision the scoping opens on, the owner's:* the bar. `README.md` says the first release shows Life at thirty frames a second. The owner's second baseline is 7.3 in the browser and 9.9 natively (`CART.1`), and the next ask, `KERNEL.20`'s array of the twin, measured about 17 in the browser by prototype. Either the first release waits for thirty, behind `KERNEL.20` and `ENGINE.6`, or it ships Life at the floors' number and thirty becomes the bar of the game the test names (`CART.2`), the README amended first. *Counted by:* `REPO.3`, which writes the engine's own release beside the test and marks it as not the test. *Oracle:* the tag's CI run green on both jobs; the crate, if published, building from its own package in a fresh project; the deployed page running Life in a browser that has never seen the repository, its frames held by `?frames=1`; the release notes naming every item since `REPO.1`. `~days`, the bar aside
 
 ## 📜 THE SPECIFICATION
 
