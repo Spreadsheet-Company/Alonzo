@@ -20,7 +20,7 @@ Frazaro's standing decisions that cross the road are cited by their own numbers 
 
 | Family | What it holds | Next free |
 |---|---|---|
-| `SPEC` | the specification: the device sheets and the four calls, the page that is the product | `SPEC.3` |
+| `SPEC` | the specification: the device sheets and the four calls, the page that is the product | `SPEC.4` |
 | `ENGINE` | the loop, the devices, the renderer, the frame path, the floors, the accelerators | `ENGINE.7` |
 | `CART` | the cartridges: the benchmark, the games, each a fixture here or a repository of its own | `CART.6` |
 | `REPO` | the repository itself: licence, governance, checks, CI, the contributor's path, the counts, the releases | `REPO.5` |
@@ -36,7 +36,7 @@ Each item is what makes the next cheap, the instrument before the operation: `RE
 
 ## 📜 THE SPECIFICATION
 
-*No open item. `SPEC.1` and `SPEC.2`, the page's two versions, closed 2026-10-08 and are the two lines of the ledger's specification section in `REARVIEW.md`; `SPEC.md` is version 2, and a change to the page that is more than a correction is a new version, filed here as `SPEC.3` when one is wanted.*
+- ⬜ **`SPEC.3` — the page, version 3: the cartridge's source, and the expansion pass between it and the rows.** Filed 2026-10-10 at the owner's word, from the owner's reading of `cartridges/life/life.vla`. Counted that day: the Palette is 48 rows in each of the three cartridges, identical in Life and the gun and 94% of Life's grid rows, and the gun's 36 Seed cells and the test card's 41 Screen cells are pictures written one cell at a time. The rows stay what `view` prints and `load` takes, a save being a cartridge (§7.3, §7.5). This version decides the authoring above them, and §12's "folder-to-file tool" enters with it: when and where VLA's macro expansion runs, the page's own answer for `CART.5` being template macros expanded at build time into rows, with no gensym and every binding named (§12), so that the built file is fully expanded and the engine never expands; which tool runs the pass, Frazaro's door, the compiler of §7.4, or a tool here over `vla-lang`'s own expander; how a source and its built cartridge live in this repository and are held equal; and which conveniences are data forms the loader takes rather than macros. The candidates for those: a named palette as a manifest directive, §3.2's sixteen stated and not defaulted; a table row; and a picture row, a string a sheet row and a character a cell, the plane's inverse for input. The horizon the decision keeps open is the owner's end goal: VLA macros expanding into WebAssembly's text format, which is s-expressions too, so that VLA becomes a gateway for writing ever more abstract modules the browser compiles, one expansion pass with another target. The emitter itself is not this item's: it is the charter's third backend, `vla-lang`'s in time (`CHARTER.md` §4, rules 1 and 2), unminted in Frazaro's registers, and a cartridge that carries a module is a later version's. *Depends on:* `SPEC.2`; `vla-lang` 0.8.1's expander. *Oracle:* every version 2 cartridge loads under version 3 unchanged; each new data form loads to the same grid as the rows it stands for, held by the engine's tests and `check_cartridge.ps1`'s mutants; each built cartridge equal to the expansion of its source; the frame floors' fixtures handled on purpose, their digests being pinned. *Before:* `CART.4` is written, and `REPO.4`'s tag. `~days`, the pass's tool deciding more
 
 ## 🔧 THE ENGINE
 
