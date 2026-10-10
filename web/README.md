@@ -4,9 +4,11 @@
 section 5 over the engine's module, every input a cell it writes and every
 effect a cell it reads, and blits the Screen as a plane of colour indices.
 It runs over the engine's own module, `alonzo.wasm`, built into the page,
-the language computing every cell; `fake.js`, a double of the module's
-eleven exports, is what its oracle drives and what the page falls back to
-when no engine is built in. The viewport, `viewport.js`, draws
+the language computing every cell; `fake.js`, a double of the eleven
+exports the loop calls, is what its oracle drives and what the page falls
+back to when no engine is built in. Beside the loop the host runs the pass,
+the module's twelfth export, which builds a cartridge from its source in the
+page as an act of its own before the load (`SPEC.3`). The viewport, `viewport.js`, draws
 one window of a sheet on a canvas from the view record alone: the Screen
 device in grid mode, which the first game on Alonzo, Frazaro, the
 spreadsheet, draws its grid through.**
@@ -46,6 +48,7 @@ smoothing off; a byte past the palette is magenta.
 | `new AlonzoHost(options)` | `canvas` the plane's canvas (it takes the keys while focused); `box` the element the blit fits, the canvas's parent by default; `scale` a fixed number of device pixels a cell; `budget` a fixed budget in cells a step call, 0 for none; `callsPerTick` a fixed count of step calls a tick in place of the time slice; `now` the clock the budget is measured by; `drive: 'manual'` when the caller calls `tick` itself (the oracles) |
 | `attach(exports)` | asks `alonzo_abi_version` and refuses another number, then every export the loop calls: `{ ok, abi, version }` or `{ ok: false, sentence }` |
 | `load(text, name)` / `loadBytes(bytes, name)` | unloads the grid it held, loads a cartridge, then `describe`, reads the Camera, the Palette and the Keys, and draws the new grid's frame 0 at once, nothing computed, so the canvas never shows a grid the module no longer holds: `{ ok, handle, title, mode, w, h, rate }` or the refusal's sentence |
+| `expand(source, path, files)` | the pass (`SPEC.md` section 7.8): a cartridge's source, the path its includes resolve against (`cartridges/<name>/<name>.source.vla`, the command line's), and the texts it may include as `[path, text]` pairs, handed to the module's `alonzo_expand`, an act of its own that takes no handle, touches no grid and stops nothing: `{ ok, text, rows, ms }`, the cartridge's text CRLF as the command line writes it and its rows after the manifest, or the refusal's sentence with the source line it stands on; the export is asked for here and not at `attach`, so over a module without it, the double, the build is declined in words |
 | `start()` / `stop()` | the animation-frame loop |
 | `tick(ts)` | one animation frame's work at its timestamp, what the loop calls |
 | `edit(row)` | a person's edit, one `cell` or `formula` row, issued after the next frame's inputs; at rate 0 it steps once |
@@ -77,7 +80,9 @@ speed is `CART.1`'s and `ENGINE.6`'s to raise).
 
 `fake.js` is the permanent test double: `AlonzoFake.create(options)` answers
 `{ exports, stats, digest, peek, frame }`, the exports the eleven names of
-section 4.6 over a real `WebAssembly.Memory`. It reads a cartridge's
+section 4.6 the loop calls over a real `WebAssembly.Memory`, and not the
+twelfth, the pass, since it holds no expander: the host declines a build
+over it in words. It reads a cartridge's
 manifest, the engine's own duty, and never a row after it, and it evaluates
 nothing (`AD-1`); its grid is hard-coded and declared in `AlonzoFake.RULES`:
 the Screen's bytes as eight-by-eight tiles cycling through the sixteen
@@ -110,7 +115,8 @@ the marks a host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun or the
-test card, and
+test card, each with its source, which the panel's Build expands into the
+cartridge in the page, and
 below it the viewport over seven
 records the door printed: the six view goldens of Frazaro's `scripts/view/`
 and the record of the 10,000-line program the renderer benchmark measured.
@@ -135,7 +141,15 @@ it), watch the log, each repeat counted in its first line, and press Copy
 the log to take it as text; pick a sheet of the grid, the Clock's frame
 counting or the previous frame's twin, to see its record live; edit the
 cartridge's `(rate 30)` to `(rate 0)` and press Load the cartridge to see a
-step on every edit. Pick the glider gun above the buttons to see Gosper's
+step on every edit. Open The source and the cartridge to see both texts: the
+source a person writes, its palette one macro call, and the cartridge the
+pass writes from it. Press Build the cartridge to run the pass in the page,
+the function `cargo run --release --example expand` runs, to the same bytes:
+it puts the cartridge it built in the second box and loads nothing, so the
+cartridge running goes on running until Load the cartridge loads what was
+built. Change a macro of the library at the bottom, `cartridges/console.vla`,
+and build again to see every row it writes change; over the fake module the
+build is declined, in words. Pick the glider gun above the buttons to see Gosper's
 gun fire a glider every thirty frames, south-east until the stream meets the
 border; its pattern is the Seed sheet, which the first frame reads. Pick the
 test card to see the plane's
@@ -183,8 +197,12 @@ baseline to the roadmap's bars.
   row 0), and the canvas's pixels at a cell of each kind are the Palette's
   colour or magenta, over the double, its Camera moved by edits, and over the
   engine's module, the test card's twenty-four frames under a Camera that
-  pans a column a frame; one line a case into `<pre id="loop">`, which
-  `tools/check_host_loop.ps1` reads.
+  pans a column a frame; and the pass in the page (`pass`, `SPEC.3`): every
+  source the page holds, expanded over the module, is its cartridge as the
+  command line wrote it, byte for byte, an include the page does not hand in
+  is refused at its line, the pass takes no handle and stops no loop, and a
+  build over the double is declined in words; one line a case into
+  `<pre id="loop">`, which `tools/check_host_loop.ps1` reads.
 - `index.html?blit=1` is the blit's instrument, the engine's second number:
   a 320 by 200 plane drawn through the host's whole frame over the double
   120 times at the scale that fits the screen and 120 at a scale of 1, and,
@@ -315,9 +333,11 @@ viewport, not an Excel clone.
   (gitignored). `tools/build_web.ps1` fills `{{VIEWPORT_JS}}`,
   `{{FAKE_JS}}` and `{{HOST_JS}}` once each, `{{ALONZO_WASM}}` with the
   engine's module as base64 when it is built and with nothing when it is
-  not, each `{{CARTRIDGE:name}}` with `cartridges/<name>/<name>.vla` and
-  each `{{FIXTURE:name}}` with `fixtures/<name>.vla`, each family held to
-  its folder both ways; `-Template`, `-ViewportJs`, `-FakeJs`, `-HostJs`,
+  not, each `{{CARTRIDGE:name}}` with `cartridges/<name>/<name>.vla`, each
+  `{{SOURCE:name}}` with its source, `cartridges/<name>/<name>.source.vla`,
+  each `{{LIBRARY:name}}` with a library the sources include,
+  `cartridges/<name>.vla`, and each `{{FIXTURE:name}}` with
+  `fixtures/<name>.vla`, each family held to its folder both ways; `-Template`, `-ViewportJs`, `-FakeJs`, `-HostJs`,
   `-FixturesDir`, `-CartridgesDir`, `-Wasm`, `-NoWasm` and `-Out` exist for a
   check that builds a page from mutated sources, never for the real page.
 - **A change to the host** is held by the loop's oracle, whose expectations

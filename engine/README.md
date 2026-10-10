@@ -17,13 +17,14 @@ whose frame rate is one, and an engine that can draw sixty can draw one.
 
 ## What this crate holds today
 
-The engine's module. Built for `wasm32-unknown-unknown` it exports eleven
+The engine's module. Built for `wasm32-unknown-unknown` it exports twelve
 names and imports none: `alonzo_load` takes a cartridge's bytes and answers
 a handle; `alonzo_write` takes rows in the one notation; `alonzo_step` takes
 a budget in cells and may yield, so the page never freezes; `alonzo_view`
 answers one window of a sheet as the view record or as the plane, a byte a
 cell; with `alonzo_describe`, `alonzo_unload`, the memory pair, the ABI
-number and the version beside them. The grid, its rows, the previous
+number and the version beside them; and `alonzo_expand`, the pass below,
+which takes no handle. The grid, its rows, the previous
 frame's twin sheets, the step in dependency order and the views are the
 language crate's, `vla-lang`'s machine; what this crate adds is what an
 engine is:
@@ -55,8 +56,10 @@ cargo run --release --example expand                 # every cartridges/<name>/<
 cargo run --release --example expand -- --check      # the same, compared and written nowhere
 ```
 
-and a test holds every cartridge of the repository to its source's
-expansion, byte for byte. The pass knows no macro by name: the repository's
+and in the page it is the module's twelfth export, `alonzo_expand`, which
+the engine panel's Build calls and the page's loop oracle holds to the
+command line's bytes. A test holds every cartridge of the repository to its
+source's expansion, byte for byte. The pass knows no macro by name: the repository's
 library, `cartridges/console.vla`, is a file a cartridge includes, copies or
 outgrows like any other.
 
@@ -87,7 +90,7 @@ are gone, and the twin's values kept as an array is the next.
   is the language's; what can only be measured is the engine's.
 - The engine's imports are the host's functions, named by hand as
   `extern "C"` and held to an allowlist read off the artifact on every
-  push, its exports to the specification's eleven names; the crate depends
+  push, its exports to the specification's twelve names; the crate depends
   on the language crate and nothing else, which a check reads off the
   manifests and the lock. It makes no outbound network call, ever.
 - Nothing the browser rents is rebuilt until a measurement says the rent is

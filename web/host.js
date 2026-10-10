@@ -23,6 +23,14 @@
   cell, magenta past the palette. At rate zero there is no tick: one step
   for each edit, and no Input.
 
+  Beside the loop it runs the pass (SPEC.md section 7.8, SPEC.3's second
+  slice): a cartridge's source, its path and the texts it includes handed to
+  the module's twelfth export, alonzo_expand, an act of its own that takes no
+  handle and touches no grid, its answer the cartridge's text for a page to
+  show before anything loads it. The export is asked for at the act and not
+  at the attach, since the fake module holds no pass and still drives the
+  loop; over a module without one, a build is declined in words.
+
   What the host holds is SD-23's interface state and nothing else (AD-6):
   the keys held, the pointer's place, the accumulator, the budget's
   measurement, the palette's table, the key map, the Camera's two cells and
@@ -268,6 +276,26 @@
     if (!this.canvas) return;
     var ctx = this.ctx || this.canvas.getContext('2d');
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  };
+
+  // ---- the pass (SPEC.md section 7.8; SPEC.3's second slice): an act of its own, before any load ----
+  // A source, its path and the texts it may include, [path, text] pairs, handed to the module's
+  // alonzo_expand, the texts joined path, NUL, text, NUL, as the export reads them; the answer is the
+  // cartridge's text, the command line's bytes, for a page to show before anything loads it. The
+  // pass takes no handle and touches no grid, so nothing here stops, unloads or resets the loop. The
+  // export is asked for at the act and not at the attach, since the fake module holds no pass and
+  // still drives the loop: over a module without one, the build is declined in words.
+  Host.prototype.expand = function (source, path, files) {
+    if (!this.m) return this._fail('There is no engine module to run the pass.');
+    var name = String(path || '').replace(/^.*[\/\\]/, '');
+    if (typeof this.m.x.alonzo_expand !== 'function') return this._fail('The module exports no alonzo_expand, so it holds no pass to build a cartridge from ' + (name || 'its source') + ': the engine\'s module holds one (SPEC.md section 7.8).');
+    var parts = [];
+    for (var i = 0; i < (files || []).length; i++) parts.push(String(files[i][0]), String(files[i][1]));
+    var t0 = this.now(), r = this.m.texts('alonzo_expand', [], [source, path, parts.join('\u0000')]), ms = this.now() - t0;
+    if (r.status !== 0) return this._fail('The pass refused ' + name + ': ' + words(r) + '.');
+    var rows = Math.max(0, VP().readForms(r.text).length - 1);
+    this._say('Built ' + name.replace(/\.source\.vla$/i, '.vla') + ' from ' + name + ' by the pass: its manifest and ' + thousands(rows) + ' row' + (rows === 1 ? '' : 's') + ', and nothing loaded.');
+    return { ok: true, text: r.text, rows: rows, ms: ms };
   };
 
   // ---- the loop (section 5) ----

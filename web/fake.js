@@ -3,8 +3,12 @@
   SPDX-License-Identifier: Apache-2.0
 
   web/fake.js - the fake module: a double of the engine's eleven exports
-  (SPEC.md section 4.6), the permanent test double of the host shim
-  (ENGINE.1, decision 1 of its scoping in REARVIEW.md). The shim must behave
+  the loop calls (SPEC.md section 4.6), ten functions and the memory, the
+  permanent test double of the host shim (ENGINE.1, decision 1 of its
+  scoping in REARVIEW.md). The twelfth, alonzo_expand, the pass (SPEC.3), it
+  does not hold, since it holds no expander, the language's: the host asks
+  for that export at the act, and declines a build over the double in words.
+  The shim must behave
   the same against this file and, later, against the engine's own module, so
   the double answers the JavaScript side of the contract to the byte: the
   memory pair over a real WebAssembly.Memory, the record of four

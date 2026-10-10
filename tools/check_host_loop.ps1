@@ -14,7 +14,7 @@ re-done over the timestamps (a stall of a second runs seven frames at 30
 and no more), the Input rows from the key events, the derived writes from
 the fake module's declared rule, issued before the inputs so that a
 person's edit wins, and the end state from a second fake module the page
-drives with no host between, compared by digest. Ten cases: rate30 (the
+drives with no host between, compared by digest. Eleven cases: rate30 (the
 Camera moved by an edit and the window following, a derived write refused
 and printed, a refused edit, a Camera cell that is not a number, a save
 edge, the stall), rate0 (four edits, four steps, the Input sheet never
@@ -40,7 +40,14 @@ double, its Camera moved by edits and a formula without a value written
 outside its declared size; over the engine's module, when the page holds
 one, the test card, cartridges/testcard/testcard.vla, twenty-four frames
 under a Camera that pans a column a frame, with two edits seen in their
-frame). It prints one line a case into
+frame); and since SPEC.3's second slice pass (the pass in the page: over the
+double, a build declined in words and marked as a refusal, the double
+holding no pass; over the engine's module, when the page holds one, every
+source the page holds expanded by the host's expand into its cartridge
+byte for byte as the command line wrote it, CRLF, a source whose include is
+not handed in refused at the include's line, the first load after the pass
+handle 1, and a build between two frames leaving the loop running). It
+prints one line a case into
 <pre id="loop"> and a last line, 'loop ok cases=N'. This check runs the
 page under a headless Chromium at a device scale factor of 1 and of 1.5,
 reads that element off the dump, and holds every case to OK and its counts
@@ -57,7 +64,7 @@ frame, so the virtual-time budget only bounds the run. SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds ten mutant pages through tools/build_web.ps1 and runs
+-Control builds eleven mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -75,7 +82,12 @@ refusal red; and since ENGINE.2 three more, each failing the plane case by
 name: a host that reads the Camera after it draws the plane, whose plane is
 a frame late; a host whose blit masks a byte to the palette, so a byte past
 it draws as a colour; and a double that reads a formula without a value as
-255 again, which its own record says is 0. The real page must pass first.
+255 again, which its own record says is 0; and since SPEC.3's second slice,
+when the real page holds the engine's module, a page built from a scratch
+copy of cartridges/ whose library writes the Palette's names to column D
+and not C, so that the page's pass writes rows the command line did not,
+which the pass case must fail by name (not applicable to a page without a
+module). The real page must pass first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A headless run's clock is
@@ -123,6 +135,11 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # unchanged; plane over the double 12 frames, 13 of them equal to the record
 # (frame 0 with them), 2 windows, 40 pixels read back; over the engine's
 # module 24 frames, 25 equal, 21 windows, 96 pixels, 31 distinct bytes.
+# 2026-10-10, SPEC.3's second slice: eleven cases, the first ten's counts
+# unchanged; pass over the double 1 build declined, and over the engine's
+# module of 514,688 bytes 3 sources, 3 the same as the command line's (251
+# rows after their manifests), the include refused at its line, handle 1 at
+# the first load after the pass, the loop run on through a build.
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100 } },
@@ -134,10 +151,11 @@ $floors = @(
     @{ Case = 'scale';    Min = @{ scale = 2; probes = 6; reloaded = 6; cleared = 6 } },
     @{ Case = 'engine';   Min = @{}; WithModule = @{ frames = 11; equal = 2; live1 = 23683; live11 = 14482; chunked = 1; grown = 1; devices = 5; reloaded = 1 } },
     @{ Case = 'parity';   Min = @{}; WithModule = @{ same = 11 } },
-    @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } }
+    @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
+    @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 3; same = 3; refused = 1; handle = 1; ranOn = 1 } }
 )
 $zero = @('live', 'misfrees')
-$expectedCases = 10
+$expectedCases = 11
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
 
@@ -253,12 +271,13 @@ if ($Control) {
         $tpl = [System.IO.File]::ReadAllText($template)
         $fakeJs = Join-Path $repoRoot 'web/fake.js'
         $fk = [System.IO.File]::ReadAllText($fakeJs)
-        function New-MutantPage([string]$name, [string]$tplPath, [string]$jsPath, [string]$fakePath = '') {
+        function New-MutantPage([string]$name, [string]$tplPath, [string]$jsPath, [string]$fakePath = '', [string]$cartsPath = '') {
             $out = Join-Path $tmp ($name + '.html')
             if ($fakePath -eq '') { $fakePath = $fakeJs }
+            if ($cartsPath -eq '') { $cartsPath = Join-Path $repoRoot 'cartridges' }
             $prev = $ErrorActionPreference
             $ErrorActionPreference = 'Continue'
-            try { $null = & $shell -NoProfile -ExecutionPolicy Bypass -File $builder -Template $tplPath -HostJs $jsPath -FakeJs $fakePath -Out $out 2>&1; $code = $LASTEXITCODE } finally { $ErrorActionPreference = $prev }
+            try { $null = & $shell -NoProfile -ExecutionPolicy Bypass -File $builder -Template $tplPath -HostJs $jsPath -FakeJs $fakePath -CartridgesDir $cartsPath -Out $out 2>&1; $code = $LASTEXITCODE } finally { $ErrorActionPreference = $prev }
             if ($code -ne 0 -or -not (Test-Path -LiteralPath $out)) { throw "the builder could not build the mutant page $name" }
             return $out
         }
@@ -360,9 +379,29 @@ if ($Control) {
         $rJ = Invoke-Loop $browser (New-MutantPage 'j' $template $hostJs $fkJ) '1'
         $jJ = if ($rJ.Text -ne '') { Test-Loop $rJ.Text '1' } else { @{ Problems = @($rJ.Reason) } }
         $jFailed = @($jJ.Problems | Where-Object { $_ -like "*case plane*fake frame*holds 255 in the host's plane and 0 by the record*" }).Count
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18})" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1) {
-            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'ten' } else { 'nine applicable' }) + ' mutants for its own reason, each proving it applied')
+        # mutant K, when the real page holds the engine's module: a scratch copy of cartridges/ whose
+        # library writes the Palette's names to column D; the page's pass writes rows the command line
+        # did not, and the pass case must fail by name
+        $kApplied = $false; $kFailed = 0; $kNote = 'not applicable, the real page holding no engine module'
+        if ($moduleReal -gt 0) {
+            $cartsK = Join-Path $tmp 'cartridges_k'
+            Copy-Item -Recurse -LiteralPath (Join-Path $repoRoot 'cartridges') -Destination $cartsK
+            $libK = Join-Path $cartsK 'console.vla'
+            $lib = [System.IO.File]::ReadAllText($libK)
+            $anchorK = '(cell "Palette" (symbol "\"C" (+expand index 1))'
+            if (([regex]::Matches($lib, [regex]::Escape($anchorK))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorK' is not in cartridges/console.vla exactly once"; exit 1 }
+            $mutK = $lib.Replace($anchorK, '(cell "Palette" (symbol "\"D" (+expand index 1))')
+            $kApplied = $mutK -cne $lib
+            [System.IO.File]::WriteAllText($libK, $mutK, $utf8)
+            $rK = Invoke-Loop $browser (New-MutantPage 'k' $template $hostJs '' $cartsK) '1'
+            $jK = if ($rK.Text -ne '') { Test-Loop $rK.Text '1' } else { @{ Problems = @($rK.Reason) } }
+            $kFailed = @($jK.Problems | Where-Object { $_ -like "*case pass*the page's pass differs from*the command line's*" }).Count
+            $kNote = "applied ($kApplied) and failed the pass case ($kFailed)"
+        }
+        $kOk = ($moduleReal -eq 0) -or ($kApplied -and $kFailed -ge 1)
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk) {
+            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'eleven' } else { 'nine applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -377,6 +416,7 @@ if ($Control) {
         foreach ($p in @($jH.Problems) | Select-Object -First 3) { Write-Output ('  Camera read late: ' + $p) }
         foreach ($p in @($jI.Problems) | Select-Object -First 3) { Write-Output ('  masked blit: ' + $p) }
         foreach ($p in @($jJ.Problems) | Select-Object -First 3) { Write-Output ('  double''s old 255: ' + $p) }
+        if ($moduleReal -gt 0) { foreach ($p in @($jK.Problems) | Select-Object -First 3) { Write-Output ('  library changed: ' + $p) } }
         exit 1
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue

@@ -100,6 +100,11 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # holds each source to its cartridge's banner, and check_frame_floors.ps1
 # carries a fixture rebuilt with the measured rows; the golden, every
 # cartridge the pass's expansion of its source, is cargo test's.
+# 2026-10-10, SPEC.3's second slice: 12 still, no check added -
+# check_host_exports.ps1 holds twelve names, alonzo_expand the twelfth;
+# check_web_offline.ps1 holds the sources' and the library's places; and
+# check_host_loop.ps1's eleventh case, pass, holds the page's pass to the
+# command line's bytes.
 $expectedAtLeast = 12
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
@@ -109,14 +114,14 @@ if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 $extras = @(
     @{ Script = 'check_host_imports.ps1';  Args = @('-Control'); What = 'REPO.2 import reader and judgment: twelve modules built in memory, an unknown kind, a non-module' },
     @{ Script = 'check_spdx.ps1';          Args = @('-Control'); What = 'REPO.2 licence map: a clean scratch tree passes, four mutants fail' },
-    @{ Script = 'check_web_offline.ps1';   Args = @('-Control'); What = 'KERNEL.5 and ENGINE.1 offline doctrine: the template and the three scripts pass, nine mutants fail' },
+    @{ Script = 'check_web_offline.ps1';   Args = @('-Control'); What = 'KERNEL.5, ENGINE.1 and SPEC.3 offline doctrine: the template and the three scripts pass, eleven mutants fail' },
     @{ Script = 'check_view_fixtures.ps1'; Args = @('-Control'); What = 'KERNEL.5 fixtures: a clean scratch folder passes, four mutants fail each for its own reason' },
     @{ Script = 'check_render_oracle.ps1'; Args = @('-Control'); What = 'KERNEL.5 render oracle: the real page passes, three mutant pages fail under the browser (SKIPPED without one)' },
     @{ Script = 'check_render_floors.ps1'; Args = @('-Control'); What = 'KERNEL.5 render floors: a clean table passes, seven mutants fail' },
     @{ Script = 'check_cartridge.ps1';     Args = @('-Control'); What = 'ENGINE.1 and SPEC.3 cartridges: a clean scratch copy and Life written to (spec 3) pass, twenty mutants fail, the cartridge, its source and the library told apart' },
-    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 host loop: the real page passes, ten mutant pages fail under the browser, the fourth only over the engine''s module (SKIPPED without a browser)' },
+    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1, ENGINE.2 and SPEC.3 host loop: the real page passes, eleven mutant pages fail under the browser, the fourth and the eleventh only over the engine''s module (SKIPPED without a browser)' },
     @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 blit floors: a clean table of three cases passes, eight mutants fail' },
-    @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 export reader and judgment: eight modules built in memory, a non-module' },
+    @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 and SPEC.3 export reader and judgment: nine modules built in memory, a non-module' },
     @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, its mutants fail (seven for a git pin, eight for a registry pin); of five baselines, a git one and a registry one pass and three fail' },
     @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1 and SPEC.3 frame floors: a clean table, a reasoned lowering, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows pass, fourteen mutants fail; an entry added passes, an entry pasted over and one edited fail; five fake runners, the clean one passes and four fail' }
 )

@@ -55,7 +55,9 @@ of the file it touches, as declared in `REUSE.toml`:
   carries 0BSD. It is written as a source, `<name>.source.vla`, with
   template macros of its own or of a library it includes, and the pass
   expands it into the cartridge beside it, `<name>.vla`
-  (`cargo run --release --example expand`; `SPEC.md`, section 7.8). Commit
+  (`cargo run --release --example expand`; the page's Build runs the same
+  pass to the same bytes, to try a change in the browser before the file is
+  written; `SPEC.md`, section 7.8). Commit
   both: `cargo test` holds each cartridge byte for byte to its source's
   expansion, so edit the source and expand it again, never the cartridge. A game is a repository of its own, under its author's name
   and terms. Its formulas are fixed at load: the step computes values and

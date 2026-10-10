@@ -8,7 +8,9 @@
   record (KERNEL.5, laid here). tools/build_web.ps1 fills the placeholders:
   VIEWPORT_JS, FAKE_JS and HOST_JS with the three scripts once each, ALONZO_WASM
   with the engine's module as base64 when one is built and with nothing when it is
-  not, each CARTRIDGE place with a cartridge from cartridges/ and each FIXTURE place
+  not, each CARTRIDGE place with a cartridge from cartridges/, each SOURCE place with
+  a cartridge's source beside it and each LIBRARY place with a library the sources
+  include (SPEC.3), and each FIXTURE place
   with a record the door printed, and writes web/index.html, one file that runs
   from disk. The page loads nothing from the network, writes nothing anywhere and
   executes nothing but the scripts below: tools/check_web_offline.ps1 holds this
@@ -18,8 +20,10 @@
   Six modes, one page. Opened plainly, it is the engine's panel, a cartridge
   picked, Life, the glider gun or the test card, running on the host's loop over the engine's own
   module, the language computing every cell (ENGINE.1's second slice), or over the
-  fake module when no engine is built in, with the cartridge editable, an edit row,
-  Run and Pause, and any sheet of the grid shown live; then the viewport over the
+  fake module when no engine is built in, with the cartridge editable, its source
+  editable and built into the cartridge by the pass in the page, the module's
+  alonzo_expand, a press of its own before the load (SPEC.3's second slice), an edit
+  row, Run and Pause, and any sheet of the grid shown live; then the viewport over the
   fixtures: a record picked, its sheets as tabs, scroll, select, resize a column,
   freeze panes, a record of one's own pasted in. With ?loop=1 it runs the host
   loop's oracle, the host driven over a fixed input log against the fake module,
@@ -29,7 +33,9 @@
   refusals of the double and the module compared id for id; and the plane the host
   draws held to the record of the same window, byte for value, through the
   Camera's window and into the canvas's pixels, over the double and over the test
-  card on the module (ENGINE.2); it prints the result into <pre id="loop">, which
+  card on the module (ENGINE.2); and the pass in the page, every source the page
+  holds expanded over the module into its cartridge's bytes, the command line's, and
+  the double's Build declined in words (SPEC.3); it prints the result into <pre id="loop">, which
   tools/check_host_loop.ps1 reads under a headless browser. With ?blit=1 it is the
   blit's instrument, a 320 by 200 plane drawn 120 times at the scale that fits the
   screen and at a scale of 1 over the double, and at the scale that fits over the
@@ -141,16 +147,23 @@
         </div>
         <div class="engine-side">
           <p class="controls"><label>Cartridge <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="gun">Glider gun</option><option value="testcard">Test card</option></select></label></p>
-          <p class="controls"><button type="button" id="eng-run">Run</button> <button type="button" id="eng-pause">Pause</button> <button type="button" id="eng-load">Load the cartridge</button> <button type="button" id="eng-copy">Copy the log</button></p>
+          <p class="controls"><button type="button" id="eng-run">Run</button> <button type="button" id="eng-pause">Pause</button> <button type="button" id="eng-build">Build the cartridge</button> <button type="button" id="eng-load">Load the cartridge</button> <button type="button" id="eng-copy">Copy the log</button></p>
           <p class="controls"><label style="flex:1 1 100%">An edit, one row: <input type="text" id="eng-edit" spellcheck="false" value="(cell &quot;Palette&quot; &quot;B1&quot; &quot;#FF8800&quot;)"></label> <button type="button" id="eng-write">Write</button></p>
           <p id="eng-status" class="status"></p>
           <ol id="eng-log" class="engine-log" aria-label="the host's sentences"></ol>
         </div>
       </div>
-      <details>
-        <summary>The cartridge</summary>
-        <p>The file the host loads, <code id="eng-cart-path">cartridges/life/life.vla</code>, picked above: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; or the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no colour. Edit it and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
-        <textarea id="eng-cart" rows="14" spellcheck="false"></textarea>
+      <details id="eng-texts">
+        <summary>The source and the cartridge</summary>
+        <p>The source, <code id="eng-src-path">cartridges/life/life.source.vla</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one call a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load the cartridge loads it: the pass loads nothing, and a cartridge running goes on running (SPEC.md section 7.8). The fake module holds no pass, and says so.</p>
+        <textarea id="eng-src" rows="14" spellcheck="false" aria-label="the cartridge's source"></textarea>
+        <p>The cartridge, <code id="eng-cart-path">cartridges/life/life.vla</code>, the file the host loads, picked above: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; or the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no colour. Edit it, or build it again from its source, and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
+        <textarea id="eng-cart" rows="14" spellcheck="false" aria-label="the cartridge, the rows a load takes"></textarea>
+        <details>
+          <summary>The library the sources include, <code id="eng-lib-path">cartridges/console.vla</code></summary>
+          <p>Template macros, the author's and never the engine's: change one, or write one of your own in a source, and build again.</p>
+          <textarea id="eng-lib" rows="14" spellcheck="false" aria-label="the library the sources include"></textarea>
+        </details>
       </details>
       <p class="controls"><label>A sheet, live <select id="eng-sheet" aria-label="the sheet to show">
         <option value="Write" selected>Write</option><option value="Camera">Camera</option><option value="Clock">Clock</option><option value="Input">Input</option>
@@ -226,6 +239,10 @@
 <script type="text/plain" id="cartridge-life">{{CARTRIDGE:life}}</script>
 <script type="text/plain" id="cartridge-gun">{{CARTRIDGE:gun}}</script>
 <script type="text/plain" id="cartridge-testcard">{{CARTRIDGE:testcard}}</script>
+<script type="text/plain" id="source-life">{{SOURCE:life}}</script>
+<script type="text/plain" id="source-gun">{{SOURCE:gun}}</script>
+<script type="text/plain" id="source-testcard">{{SOURCE:testcard}}</script>
+<script type="text/plain" id="library-console">{{LIBRARY:console}}</script>
 <script type="text/plain" id="alonzo-wasm">{{ALONZO_WASM}}</script>
 <script type="text/plain" id="fixture-fixture_frazaro">{{FIXTURE:fixture_frazaro}}</script>
 <script type="text/plain" id="fixture-fixture_output">{{FIXTURE:fixture_output}}</script>
@@ -253,12 +270,28 @@
   var lifeText = (document.getElementById('cartridge-life') || {}).textContent || '';
   var gunText = (document.getElementById('cartridge-gun') || {}).textContent || '';
   var testcardText = (document.getElementById('cartridge-testcard') || {}).textContent || '';
-  // The cartridges built into the page, each its text and the file name a load passes on.
+  function embedded(id) { var el = document.getElementById(id); return el ? el.textContent : ''; }
+  // The cartridges built into the page, each its text and the file name a load passes on, and its
+  // source with the path the pass resolves its includes against, the command line's own (SPEC.3).
   var CARTRIDGES = {
-    life: { text: lifeText, file: 'life.vla', path: 'cartridges/life/life.vla' },
-    gun: { text: gunText, file: 'gun.vla', path: 'cartridges/gun/gun.vla' },
-    testcard: { text: testcardText, file: 'testcard.vla', path: 'cartridges/testcard/testcard.vla' }
+    life: { text: lifeText, file: 'life.vla', path: 'cartridges/life/life.vla', source: embedded('source-life'), sourcePath: 'cartridges/life/life.source.vla' },
+    gun: { text: gunText, file: 'gun.vla', path: 'cartridges/gun/gun.vla', source: embedded('source-gun'), sourcePath: 'cartridges/gun/gun.source.vla' },
+    testcard: { text: testcardText, file: 'testcard.vla', path: 'cartridges/testcard/testcard.vla', source: embedded('source-testcard'), sourcePath: 'cartridges/testcard/testcard.source.vla' }
   };
+  // The libraries the sources include, each under the path an include resolves to.
+  var LIBRARIES = {
+    console: { text: embedded('library-console'), path: 'cartridges/console.vla' }
+  };
+  // What the pass is handed beside a source: every library the page holds, [path, text], the
+  // texts given in place of the embedded ones (a person's edits).
+  function libraryPairs(texts) {
+    var out = [];
+    for (var ln in LIBRARIES) {
+      if (!Object.prototype.hasOwnProperty.call(LIBRARIES, ln)) continue;
+      out.push([LIBRARIES[ln].path, texts && texts[ln] !== undefined ? texts[ln] : LIBRARIES[ln].text]);
+    }
+    return out;
+  }
   // The fixtures: each a record the door printed, by its program and the sheet it holds.
   var FIXTURES = {
     fixture_frazaro: { program: 'fixture', sheet: 'Frazaro' },
@@ -291,6 +324,11 @@
   for (var cn in CARTRIDGES) {
     if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn)) continue;
     if (!CARTRIDGES[cn].text.trim() || CARTRIDGES[cn].text.indexOf('{{CARTRIDGE') >= 0) built = false;
+    if (CARTRIDGES[cn].sourcePath && (!CARTRIDGES[cn].source.trim() || CARTRIDGES[cn].source.indexOf('{{SOURCE') >= 0)) built = false;
+  }
+  for (var lb in LIBRARIES) {
+    if (!Object.prototype.hasOwnProperty.call(LIBRARIES, lb)) continue;
+    if (!LIBRARIES[lb].text.trim() || LIBRARIES[lb].text.indexOf('{{LIBRARY') >= 0) built = false;
   }
   var aboutEl = document.getElementById('about');
   if (!built) {
@@ -347,8 +385,9 @@
     var statusEl = document.getElementById('eng-status'), logEl = document.getElementById('eng-log');
     var frameEl = document.getElementById('frame-line'), moduleEl = document.getElementById('module-line');
     var sheetEl = document.getElementById('eng-sheet'), pickEl = document.getElementById('eng-pick');
-    var pathEl = document.getElementById('eng-cart-path');
-    cartEl.value = lifeText;
+    var pathEl = document.getElementById('eng-cart-path'), srcEl = document.getElementById('eng-src'), srcPathEl = document.getElementById('eng-src-path');
+    var libEl = document.getElementById('eng-lib'), textsEl = document.getElementById('eng-texts');
+    cartEl.value = lifeText; srcEl.value = CARTRIDGES.life.source; libEl.value = LIBRARIES.console.text;
     var host = new HOST({ canvas: planeCv, box: planeBox });
     var dvp = new VP(document.getElementById('eng-grid'));
     var shownAt = -1, shownTime = -1e9, rate = -1, items = {};
@@ -430,6 +469,17 @@
       frameEl.className = 'frame-line refused';
       frameEl.textContent = 'No cartridge is loaded: the last load was refused, and the log says why.';
     }
+    // Build: the pass in the page (SPEC.3), an act of its own. The cartridge it writes goes into the
+    // cartridge's box, opened, to be read before Load the cartridge loads it; nothing is loaded and
+    // nothing stopped, so a cartridge running goes on running.
+    function buildCartridge() {
+      var c = CARTRIDGES[pickEl.value] || CARTRIDGES.life;
+      if (!c.sourcePath) { statusEl.textContent = c.file + ' has no source: it is written by hand, and Load the cartridge loads it as it stands.'; statusEl.className = 'status'; return; }
+      var r = host.expand(srcEl.value, c.sourcePath, libraryPairs({ console: libEl.value }));
+      if (!r.ok) return;
+      cartEl.value = r.text;
+      textsEl.open = true;
+    }
     function useFake(why) {
       var a = host.attach(FAKE.create({}).exports);
       moduleEl.textContent = why + ' The loop runs against the fake module, web/fake.js.';
@@ -437,11 +487,14 @@
     }
     document.getElementById('eng-run').addEventListener('click', function () { host.start(); planeCv.focus(); });
     document.getElementById('eng-pause').addEventListener('click', function () { host.stop(); statusEl.textContent = 'Paused at frame ' + host.counters().frame + '.'; });
+    document.getElementById('eng-build').addEventListener('click', buildCartridge);
     document.getElementById('eng-load').addEventListener('click', loadCartridge);
-    // A cartridge picked is put in the text box and loaded, its file's name passed with it.
+    // A cartridge picked is put in the text box and loaded, its file's name passed with it, and its
+    // source put in the source's box.
     pickEl.addEventListener('change', function () {
       var c = CARTRIDGES[pickEl.value] || CARTRIDGES.life;
       cartEl.value = c.text; pathEl.textContent = c.path;
+      srcEl.value = c.source || ''; srcPathEl.textContent = c.sourcePath || 'none: this cartridge is written by hand';
       if (host.m) loadCartridge();
     });
     // The log as text on the clipboard, every line as it reads, its counts included.
@@ -570,14 +623,14 @@
     var len = new DataView(x.memory.buffer).getUint32(outp, true);
     var dv = new DataView(x.memory.buffer, ptr, len), u8 = new Uint8Array(x.memory.buffer, ptr, len);
     var idLen = dv.getUint32(8, true), textLen = dv.getUint32(12, true);
-    var res = { status: dv.getUint32(0, true), id: td.decode(u8.subarray(16, 16 + idLen)), bytes: u8.slice(16 + idLen, 16 + idLen + textLen) };
+    var res = { status: dv.getUint32(0, true), line: dv.getUint32(4, true), id: td.decode(u8.subarray(16, 16 + idLen)), bytes: u8.slice(16 + idLen, 16 + idLen + textLen) };
     x.alonzo_free(outp, 4); x.alonzo_free(ptr, len);
     for (var j = 0; j < bufs.length; j++) x.alonzo_free(bufs[j][0], bufs[j][1]);
     return res;
   };
   Driver.prototype.call = function (name, nums, texts) {
     var r = this.raw(name, nums, texts);
-    return { status: r.status, id: r.id, text: new TextDecoder().decode(r.bytes) };
+    return { status: r.status, line: r.line, id: r.id, text: new TextDecoder().decode(r.bytes) };
   };
   // The loop as section 5 states it, run beside the host over a second fake module.
   function Model(text, opts) {
@@ -1222,6 +1275,85 @@
     }
     return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeProbes: kf.probes, module: module, frames: km.frames, equal: km.equal, windows: km.windows, probes: km.probes, kinds: km.kinds, live: st.live, misfrees: st.misfrees }, problems: P };
   }
+  // ---- SPEC.3's second slice: the pass in the page is the command line's ----
+  // The first line two texts differ at, both shown without their line ends, for a failure's words;
+  // a line that differs in its end alone is named so.
+  function lineDiff(a, b) {
+    var x = a.split('\n'), y = b.split('\n');
+    function bare(l) { return l === undefined ? undefined : l.replace(/\r$/, ''); }
+    function shown(l) { return l === undefined ? 'no line' : JSON.stringify(bare(l).slice(0, 80)); }
+    for (var i = 0; i < Math.max(x.length, y.length); i++) {
+      if (x[i] === y[i]) continue;
+      if (x[i] !== undefined && bare(x[i]) === bare(y[i])) return 'at line ' + (i + 1) + ', in its line end';
+      return 'at line ' + (i + 1) + ', ' + shown(x[i]) + ' where the file holds ' + shown(y[i]);
+    }
+    return 'nowhere by line';
+  }
+  // Over the double, a build is declined in words, marked as a refusal, the double holding no pass.
+  // Over the engine's module, when the page holds one: every source the page holds, expanded by the
+  // host's expand with the libraries the page holds, is its cartridge byte for byte as the command
+  // line wrote it, CRLF (the page holds the file LF, as the builder normalizes it), so that the two
+  // doors run one pass; a source whose include is not handed in is refused at the include's own
+  // line, read off the record's fields; the pass takes no handle, so the first load after it, the
+  // test card the page's pass built, is handle 1; and a build between two frames leaves the loop
+  // running, the next frame stepped, nothing refused.
+  function casePass() {
+    var P = [], k = { declined: 0, module: 0, sources: 0, same: 0, rows: 0, refused: 0, handle: 0, ranOn: 0 };
+    var fh = new HOST({ drive: 'manual' });
+    try {
+      fh.attach(FAKE.create({}).exports);
+      var d = fh.expand(CARTRIDGES.life.source, CARTRIDGES.life.sourcePath, libraryPairs());
+      var said = fh.sentences().filter(function (s) { return s.refusal && s.text.indexOf('exports no alonzo_expand') >= 0; }).length;
+      if (d.ok) P.push('the double built a cartridge, holding no pass');
+      else if (!said) P.push('the double\'s build was not declined in its words, marked as a refusal: ' + d.sentence);
+      else k.declined = 1;
+    } finally { fh.destroy(); }
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm), exports = HOST.instantiateSync(bytes), built = {};
+    k.module = bytes.length;
+    var host = new HOST({ drive: 'manual', budget: 0, now: frozen });
+    try {
+      var a = host.attach(exports);
+      if (!a.ok) { P.push('the host refused the engine module: ' + a.sentence); return { counters: k, problems: P }; }
+      for (var name in CARTRIDGES) {
+        if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, name) || !CARTRIDGES[name].sourcePath) continue;
+        var c = CARTRIDGES[name], r = host.expand(c.source, c.sourcePath, libraryPairs());
+        k.sources++;
+        if (!r.ok) { P.push(name + ': the pass refused its source: ' + r.sentence); continue; }
+        var want = c.text.replace(/\n/g, '\r\n');
+        if (r.text !== want) { P.push(name + ': the page\'s pass differs from ' + c.path + ', the command line\'s, ' + lineDiff(r.text, want)); continue; }
+        k.same++; k.rows += r.rows; built[name] = r.text;
+      }
+      // An include the page does not hand in: refused at the include's own line, by the record.
+      var src = CARTRIDGES.life.source, lines = src.split('\n'), incLine = 0;
+      for (var li = 0; li < lines.length; li++) if (/^\s*\(include "\.\.\/console\.vla"\)\s*$/.test(lines[li])) { incLine = li + 1; break; }
+      var lone = new Driver({ exports: exports }).call('alonzo_expand', [], [src, CARTRIDGES.life.sourcePath, '']);
+      if (!incLine) P.push('Life\'s source holds no line (include "../console.vla")');
+      else if (lone.status !== 1 || lone.id !== 'vla-include-cannot-read' || lone.line !== incLine) P.push('a source whose include is not handed in answered status ' + lone.status + (lone.id ? ' ' + lone.id : '') + ' at line ' + lone.line + ', not vla-include-cannot-read at its include\'s line, ' + incLine);
+      else k.refused = 1;
+      // The pass took no handle: the test card the page's pass built loads under handle 1; and a
+      // build between two of its frames leaves the loop running.
+      if (built.testcard) {
+        var ld = host.load(built.testcard, 'testcard.vla');
+        if (!ld.ok) P.push('the test card the page\'s pass built did not load: ' + ld.sentence);
+        else if (ld.handle !== 1) P.push('the first load after the pass took handle ' + ld.handle + ', not 1');
+        else {
+          k.handle = 1;
+          host.start(); host.tick(1000); host.tick(1034);
+          var before = host.counters().frame, again = host.expand(CARTRIDGES.gun.source, CARTRIDGES.gun.sourcePath, libraryPairs());
+          host.tick(1068);
+          var after = host.counters();
+          if (!again.ok) P.push('a build between two frames was refused: ' + again.sentence);
+          else if (before !== 1 || after.frame !== 2 || after.handle !== 1 || !host.running) P.push('a build after frame ' + before + ' left the host at frame ' + after.frame + ' under handle ' + after.handle + (host.running ? '' : ', stopped'));
+          else k.ranOn = 1;
+        }
+      }
+      var refusals = host.sentences().filter(function (s) { return s.refusal; });
+      if (refusals.length) P.push('the host was refused: ' + refusals[0].text);
+    } finally { host.destroy(); }
+    return { counters: k, problems: P };
+  }
   function loopLine(name, k, problems) {
     var parts = [];
     for (var key in k) if (Object.prototype.hasOwnProperty.call(k, key)) parts.push(key + ' ' + k[key]);
@@ -1231,7 +1363,7 @@
     var out = [], dpr = window.devicePixelRatio || 1, ok = 0, R = HOST.RULES;
     out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals], ['scale', caseScale],
-                 ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane]];
+                 ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass]];
     for (var i = 0; i < cases.length; i++) {
       var res;
       try { res = cases[i][1](); } catch (e) { res = { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }

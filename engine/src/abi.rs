@@ -1,8 +1,11 @@
-//! The engine's C surface (ENGINE.1's second slice, 2026-10-09): the eleven
+//! The engine's C surface (ENGINE.1's second slice, 2026-10-09): the twelve
 //! exports of `SPEC.md` section 4.6, which the host shim calls (`web/host.js`)
-//! and `tools/check_host_exports.ps1` holds name for name: ten functions and
-//! the module's memory. Each is a thin door onto `crate::cartridge`, which is
-//! the language's machine with the engine's manifest and devices around it.
+//! and `tools/check_host_exports.ps1` holds name for name: eleven functions
+//! and the module's memory. Each is a thin door onto `crate::cartridge`, which
+//! is the language's machine with the engine's manifest and devices around
+//! it, except the twelfth, [`alonzo_expand`] (`SPEC.3`'s second slice,
+//! 2026-10-10), a door onto `crate::pass`, which takes no handle and touches
+//! no grid: the pass is an act of its own before any load.
 //!
 //! **Memory and the record**, byte for byte as the language's own surface
 //! has them (`vla-lang/src/abi.rs`): the host allocates every input with
@@ -27,6 +30,7 @@ use vla_lang::machine::{unloaded_row, written_row, Handles, Viewed};
 use vla_lang::messages::Refusal;
 
 use crate::cartridge::Cartridge;
+use crate::pass;
 
 const STATUS_OK: u32 = 0;
 const STATUS_REFUSED: u32 = 1;
@@ -325,6 +329,67 @@ pub unsafe extern "C" fn alonzo_unload(handle: u32, out_len: *mut u32) -> *mut u
     })
 }
 
+/// The texts a door hands the pass, in one buffer: a path, a NUL, its text,
+/// a NUL, and so on, as Frazaro's translate takes its phrasebooks NUL
+/// separated. An empty buffer is no text, and a last path with no text after
+/// it is none either, so an include of it is refused by name.
+fn included(all: &str) -> Vec<(String, String)> {
+    if all.is_empty() {
+        return Vec::new();
+    }
+    let parts: Vec<&str> = all.split('\0').collect();
+    parts
+        .chunks_exact(2)
+        .map(|pair| (pair[0].to_string(), pair[1].to_string()))
+        .collect()
+}
+
+/// `expand`: the pass (`SPEC.md` section 7.8), a cartridge's source, its
+/// path, and the texts it may include, expanded into the cartridge's text,
+/// the bytes the command line writes (`examples/expand.rs`); refused with the
+/// source line of the form that raised the refusal. It takes no handle and
+/// touches no grid: the pass is an act of its own, and the load that may
+/// follow it is another.
+///
+/// # Safety
+/// Each pointer came from [`alonzo_alloc`] with its length, or is null with
+/// 0; `out_len` is writable or null.
+#[no_mangle]
+pub unsafe extern "C" fn alonzo_expand(
+    source: *const u8,
+    source_len: u32,
+    path: *const u8,
+    path_len: u32,
+    files: *const u8,
+    files_len: u32,
+    out_len: *mut u32,
+) -> *mut u8 {
+    let source = match text(
+        unsafe { bytes(source, source_len) },
+        "the source is",
+        out_len,
+    ) {
+        Ok(t) => t,
+        Err(p) => return p,
+    };
+    let path = match text(unsafe { bytes(path, path_len) }, "the path is", out_len) {
+        Ok(t) => t,
+        Err(p) => return p,
+    };
+    let files = match text(
+        unsafe { bytes(files, files_len) },
+        "the texts to include are",
+        out_len,
+    ) {
+        Ok(t) => t,
+        Err(p) => return p,
+    };
+    match pass::expand(source, path, &included(files)) {
+        Ok(e) => answer(e.text.as_bytes(), out_len),
+        Err(e) => refused(e.line, &e.refusal, out_len),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     //! The surface as a host meets it: inputs allocated with the module's
@@ -334,6 +399,9 @@ mod tests {
     use super::*;
 
     const LIFE: &str = include_str!("../../cartridges/life/life.vla");
+    const LIFE_SOURCE: &str = include_str!("../../cartridges/life/life.source.vla");
+    const CONSOLE: &str = include_str!("../../cartridges/console.vla");
+    const LIFE_SOURCE_PATH: &str = "cartridges/life/life.source.vla";
 
     /// A record as the host reads it, the text still bytes.
     struct Rec {
@@ -402,6 +470,27 @@ mod tests {
         take(p, len)
     }
 
+    /// The pass through the surface, the texts to include NUL separated as a
+    /// host joins them.
+    fn expand(source: &[u8], path: &str, files: &[(&str, &str)]) -> Rec {
+        let joined: Vec<String> = files.iter().map(|(p, t)| format!("{p}\0{t}")).collect();
+        let (s, p, f) = (
+            put(source),
+            put(path.as_bytes()),
+            put(joined.join("\0").as_bytes()),
+        );
+        let mut len = 0u32;
+        let r = unsafe { alonzo_expand(s.0, s.1, p.0, p.1, f.0, f.1, &mut len) };
+        free(s);
+        free(p);
+        free(f);
+        take(r, len)
+    }
+
+    fn lf(s: &str) -> String {
+        s.replace("\r\n", "\n")
+    }
+
     fn view(handle: u32, projection: &str, sheet: &str, window: &str) -> Rec {
         let (a, s, w) = (
             put(projection.as_bytes()),
@@ -428,7 +517,50 @@ mod tests {
             v.text()
         );
 
-        // Life loads under handle 1 and says what it is.
+        // The pass, an act of its own (SPEC.3's second slice): Life's source
+        // and the library it includes expanded into Life's cartridge, the
+        // command line's bytes, CRLF as it writes them.
+        let library = [("cartridges/console.vla", CONSOLE)];
+        let built = expand(LIFE_SOURCE.as_bytes(), LIFE_SOURCE_PATH, &library);
+        assert_eq!(
+            (built.status, built.id.as_str()),
+            (0, ""),
+            "{}",
+            built.text()
+        );
+        assert_eq!(built.text(), lf(LIFE).replace('\n', "\r\n"));
+        // An include the door did not hand in: refused at the include's line.
+        let alone = expand(LIFE_SOURCE.as_bytes(), LIFE_SOURCE_PATH, &[]);
+        assert_eq!(
+            (alone.status, alone.id.as_str()),
+            (1, "vla-include-cannot-read")
+        );
+        let include_line = LIFE_SOURCE
+            .lines()
+            .position(|l| l.trim() == "(include \"../console.vla\")")
+            .expect("Life's source includes the library")
+            + 1;
+        assert_eq!(alone.line as usize, include_line, "the include's own line");
+        // A source that is not UTF-8, named; and a last path with no text
+        // after it is no text, so its include is refused by name.
+        let raw = expand(&[0x28, 0xff, 0xfe, 0x29], LIFE_SOURCE_PATH, &library);
+        assert_eq!((raw.status, raw.text()), (2, "the source is not UTF-8"));
+        let (s, p, f) = (
+            put(LIFE_SOURCE.as_bytes()),
+            put(LIFE_SOURCE_PATH.as_bytes()),
+            put(b"cartridges/console.vla"),
+        );
+        let mut len = 0u32;
+        let unpaired = take(
+            unsafe { alonzo_expand(s.0, s.1, p.0, p.1, f.0, f.1, &mut len) },
+            len,
+        );
+        free(s);
+        free(p);
+        free(f);
+        assert_eq!(unpaired.id, "vla-include-cannot-read");
+
+        // Life loads under handle 1 and says what it is: the pass took none.
         let l = load(LIFE.as_bytes(), "life.vla");
         assert_eq!((l.status, l.id.as_str()), (0, ""), "{}", l.text());
         assert_eq!(l.text(), "(cartridge 1 \"Life\" plane 320 200 30)");
