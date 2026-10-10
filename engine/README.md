@@ -55,7 +55,8 @@ it: the Input and Clock devices finished
 (`ENGINE.3`), Audio (`ENGINE.4`) and File (`ENGINE.5`); and the
 accelerators, each behind the naive evaluation's frames as its reference
 (`ENGINE.6`), after the naive evaluator's own costs, which the benchmark
-measured first and which are the language's to remove.
+measured first and which are the language's to remove; the first of them
+are gone, and the twin's values kept as an array is the next.
 
 ## The rules that bind every line
 
@@ -99,8 +100,12 @@ named and prints no baseline. The check mode counts the allocations of a
 frame, an exact number the repository's checks hold to a ceiling. On the
 day the benchmark was first measured, Life stepped at about 218,000 cells a
 second natively and 229,000 in the browser, about a ninth of the line, and
-the engine's own profile of that step names where the rest goes
-(`REARVIEW.md`, `CART.1`).
+the engine's own profile of that step named where the rest went
+(`REARVIEW.md`, `CART.1`). The first of it, the evaluator's hot path, was
+made cheaper bit for bit in the language (Frazaro's `KERNEL.25`): a step
+makes 4.0 allocations a cell where it made 71, and Life steps at about
+623,000 cells a second natively and 461,000 in the browser, about a third
+and nearly a quarter of the line.
 
 ## Where it comes from
 

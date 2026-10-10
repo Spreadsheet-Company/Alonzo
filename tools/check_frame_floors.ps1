@@ -23,6 +23,12 @@ WHAT IT HOLDS, from the baseline pasted below:
     each digest equal to the fixture's, so that a language moved or a
     fixture edited without a new measurement fails by name, and every change
     to the language is measured on the benchmark before it lands here;
+  - the environment line saying, as the instrument writes it, that both
+    halves ran opted out of Windows' power throttling and on the performance
+    cores, or on a machine of one kind of core: the instrument's guards
+    against measuring the power policy and the scheduler (CART.1's decisions
+    5 and 13), since a run on an efficiency core is 23% slower with a clock
+    that looks steady, and no other rule here would see it;
   - four rows, native and wasm, life and gun, each once: at least 30 steady
     frames; the clock's spread and its drift from the run's start within
     10% (the instrument's own guard against Windows' power throttling,
@@ -34,7 +40,15 @@ WHAT IT HOLDS, from the baseline pasted below:
     fix that costs speed, say, which the commit message repeats); each row's
     cells a second at least the latest floor. The floor is the baseline less
     a margin of 10%, the spread measured between sessions (4% natively, 7%
-    in wasm) rounded up; tools/bench_frames.ps1 prints the line to add.
+    in wasm) rounded up; tools/bench_frames.ps1 prints the history with its
+    run's entry added last, to paste whole.
+  - the history appended to and never pasted over: every entry the last
+    commit's copy of this file holds is still here, in its order, at the
+    head of the history, read with git (SKIPPED where git or the commit is
+    not there to ask). Without it, an entry pasted over the one before it
+    would erase the record, and a slower run's entry pasted over the latest
+    would lower a floor with no reason written, past the rule above (the
+    second baseline's paste lost the first entry, 2026-10-10);
   - the bars, 2,000,000 cells a second (CHARTER.md section 3) and Life's 30
     frames a second, printed with the distance; out of reach today, they are
     not gated, and a floor that reaches one makes it a gate from then on,
@@ -53,10 +67,14 @@ builds it before this check runs.
 lowered for a written reason passes; an empty baseline, a row missing, a
 smoke run's few frames, a row under its floor, a floor lowered with no
 reason, no floor at all, the pin moved, a fixture's digest changed, a clock
-that moved and frames a second that disagree with cells a second must each
-fail; then fake runners: a clean one passes, and one whose frame differs,
-one whose allocations pass the ceiling, one that never holds the gun's facts
-and one that leaves out a fixture must each fail.
+that moved, frames a second that disagree with cells a second, a run not
+opted out of the throttling and a run not on the performance cores must
+each fail; the history, read from text as the commit's copy is: an entry
+added after the committed ones passes, and so does a history unchanged,
+and an entry pasted over a committed one and a committed entry edited in
+place must each fail; then fake runners: a clean one passes, and one whose
+frame differs, one whose allocations pass the ceiling, one that never holds
+the gun's facts and one that leaves out a fixture must each fail.
 
 House style (tools/check_*.ps1): PowerShell 5.1 and pwsh alike, host-free,
 no browser, no network; a hardcoded, reviewable baseline; exit 0 clean,
@@ -78,7 +96,9 @@ $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::W
 
 # --- the baseline, hand-maintained: the owner's run of tools/bench_frames.ps1 ---
 # Paste the block the instrument prints over the six lines below, whole, and
-# add its floor line at the end of $floorHistory. A later run that is slower
+# the history it prints over $floorHistory, whole: it is this file's history
+# with the run's entry added last (the instrument writes both to
+# target/bench_frames.txt as well, to copy from). A later run that is slower
 # than the floor is a finding to record in REARVIEW.md, never a number to
 # paste over a faster one.
 # 2026-10-09, the first baseline: the owner's run, over vla-lang at c0686a9,
@@ -86,16 +106,24 @@ $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::W
 # 2.3% (CART.1's first slice). Copied from the terminal, whose line wrap
 # dropped two spaces, one in the environment line and one in the last row,
 # put back before the commit, and the floor entry set inside the history's
-# parentheses; no value was touched.
-$baselineDate = '2026-10-09'
-$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 154.0.8037.98 headless | the engine''s module 458,702 bytes | vla-lang at c0686a9 | power throttling opted out: the runner yes, 41 browser process(es)'
-$baselinePin = 'c0686a9'
+# parentheses; no value was touched. Its rows, the second having replaced
+# them: native life 217,984 cells a second (frame p50 288.8 ms), native gun
+# 207,634 (303.2), wasm life 228,710 (275.3), wasm gun 219,731 (286.6); its
+# floors are the history's first entry.
+# 2026-10-10, the second: the owner's run over f5dc344 (KERNEL.25, the
+# evaluator's hot path), both halves opted out and on the performance cores
+# (CART.1's second slice), copied from target/bench_frames.txt whole. Its
+# floor entry was pasted over the first instead of after it; the first was
+# put back before the commit, and no value was touched.
+$baselineDate = '2026-10-10'
+$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 154.0.8037.98 headless | the engine''s module 461,753 bytes | vla-lang at f5dc344 | power throttling opted out: the runner yes, 29 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 30 browser process(es)'
+$baselinePin = 'f5dc344'
 $baselineFixtures = @{ 'life' = '90B24FF2E98530FF530C9E573DAC0E2FB4F5968ABE378D0A673C3E9DCA8D70DB'; 'gun' = '0BD138CBE43825F93EA2235F755DE6A46F18CCF7B7DAEC33B6D38D8365E64234' }
 $baseline = @(
-    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Load = 165.4; FirstFrame = 228.1; FrameP50 = 288.8; FrameMin = 273.2; FrameMax = 295.8; CellsPerSecond = 217984; FramesPerSecond = 3.462; ClockMs = 0.181; ClockSpread = 2.3; ClockDrift = -0.0 },
-    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 30; Load = 149.0; FirstFrame = 57.7; FrameP50 = 303.2; FrameMin = 296.0; FrameMax = 310.8; CellsPerSecond = 207634; FramesPerSecond = 3.298; ClockMs = 0.181; ClockSpread = 1.8; ClockDrift = 0.0 },
-    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Load = 149.3; FirstFrame = 188.6; FrameP50 = 275.3; FrameMin = 265.5; FrameMax = 304.7; CellsPerSecond = 228710; FramesPerSecond = 3.632; ClockMs = 0.260; ClockSpread = 1.9; ClockDrift = -1.9 },
-    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 30; Load = 109.7; FirstFrame = 44.6; FrameP50 = 286.6; FrameMin = 276.3; FrameMax = 308.4; CellsPerSecond = 219731; FramesPerSecond = 3.490; ClockMs = 0.260; ClockSpread = 1.9; ClockDrift = -1.9 }
+    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Load = 52.4; FirstFrame = 109.2; FrameP50 = 101.1; FrameMin = 96.7; FrameMax = 109.7; CellsPerSecond = 622904; FramesPerSecond = 9.893; ClockMs = 0.185; ClockSpread = 5.8; ClockDrift = 0.5 },
+    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 30; Load = 46.0; FirstFrame = 17.9; FrameP50 = 96.6; FrameMin = 94.5; FrameMax = 102.2; CellsPerSecond = 651551; FramesPerSecond = 10.348; ClockMs = 0.177; ClockSpread = 5.8; ClockDrift = -3.9 },
+    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Load = 71.0; FirstFrame = 152.5; FrameP50 = 136.7; FrameMin = 132.8; FrameMax = 144.8; CellsPerSecond = 460600; FramesPerSecond = 7.315; ClockMs = 0.255; ClockSpread = 2.0; ClockDrift = -1.9 },
+    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 30; Load = 48.3; FirstFrame = 21.0; FrameP50 = 135.0; FrameMin = 130.5; FrameMax = 137.6; CellsPerSecond = 466400; FramesPerSecond = 7.407; ClockMs = 0.255; ClockSpread = 2.0; ClockDrift = -1.9 }
 )
 
 # --- the floors, in cells a second, a dated history that never goes down ---
@@ -105,7 +133,8 @@ $baseline = @(
 # n; 'wasm gun' = n } }. An entry lower than the one before it in any row
 # needs its Reason.
 $floorHistory = @(
-    @{ Date = '2026-10-09'; Pin = 'c0686a9'; Reason = ''; Floors = @{ 'native life' = 196000; 'native gun' = 186000; 'wasm life' = 205000; 'wasm gun' = 197000 } }
+    @{ Date = '2026-10-09'; Pin = 'c0686a9'; Reason = ''; Floors = @{ 'native life' = 196000; 'native gun' = 186000; 'wasm life' = 205000; 'wasm gun' = 197000 } },
+    @{ Date = '2026-10-10'; Pin = 'f5dc344'; Reason = ''; Floors = @{ 'native life' = 560000; 'native gun' = 586000; 'wasm life' = 414000; 'wasm gun' = 419000 } }
 )
 
 # --- the allocation ceilings, the second frame after a fresh load, exact ---
@@ -116,9 +145,14 @@ $floorHistory = @(
 # the scoping's profile). The same integers on every run and every machine:
 # no step calls the platform. Lowered when the language allocates less;
 # raised only by a reviewed act with its reason in the commit message.
+# 2026-10-10, CART.1's second slice, over vla-lang at f5dc344 (KERNEL.25, the
+# evaluator's hot path): the soup 251,957 and 5, the gun 251,958 and 5, 4.0
+# allocations a formula cell, what is left being the arguments of the four
+# strict calls (Frazaro's reading of its own item); the gun's extra sheet no
+# longer costs an allocation a reference.
 $allocationCeilings = @{
-    'life' = @{ Allocs = 4470549; Reallocs = 1129229 }
-    'gun'  = @{ Allocs = 4848335; Reallocs = 1129229 }
+    'life' = @{ Allocs = 251957; Reallocs = 5 }
+    'gun'  = @{ Allocs = 251958; Reallocs = 5 }
 }
 
 # --- the rules ---
@@ -129,6 +163,11 @@ $clockMax = 10.0
 $unitsTolerance = 0.005
 $barCells = 2000000
 $barFrames = 30
+# What the instrument's environment line says of a run's guards: both halves
+# opted out of the throttling, and both on the performance cores, or a
+# machine with one kind of core, left unpinned.
+$optedOutSays = 'power throttling opted out: the runner yes, [1-9]\d* browser process'
+$coresSay = 'on the performance cores, \d+ of \d+ logical processors \(efficiency class \d+\): the runner yes, [1-9]\d* browser process|one kind of core, \d+ logical processors, unpinned'
 
 function Get-LfDigest([string]$path) {
     $text = [System.IO.File]::ReadAllText($path) -replace "`r`n", "`n"
@@ -159,6 +198,10 @@ function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin,
     }
     if ($date -notmatch '^\d{4}-\d{2}-\d{2}$') { $problems.Add("the baseline has no date (yyyy-mm-dd): '$date'") }
     if ($environment -eq '') { $problems.Add('the baseline has no environment line') }
+    else {
+        if ($environment -notmatch $optedOutSays) { $problems.Add('the baseline''s environment does not say both halves ran opted out of Windows'' power throttling: a background run is about 40% slower three seconds in, so measure with tools/bench_frames.ps1') }
+        if ($environment -notmatch $coresSay) { $problems.Add('the baseline''s environment does not say both halves ran on the performance cores: an efficiency core steps about 23% slower with a clock that looks steady, so measure with tools/bench_frames.ps1 as CART.1''s second slice left it') }
+    }
     if ($pin -eq '') { $problems.Add('the baseline names no pin of vla-lang') }
     elseif ($pin -ne $currentPin) { $problems.Add("the baseline was measured at vla-lang $pin, and Cargo.toml pins $currentPin`: the language moved, so run tools/bench_frames.ps1 again and paste its block") }
     foreach ($name in @($currentDigests.Keys)) {
@@ -260,6 +303,34 @@ function Test-Runner([string]$runner, $paths, $ceilings) {
     return @{ Problems = $problems; Lines = $lines }
 }
 
+# The history's entries as a file's text holds them, one a line, each trimmed
+# of its comma: read, never run, so the commit's copy is read the same way.
+function Get-HistoryLines($text) {
+    $entries = New-Object System.Collections.Generic.List[string]
+    $inside = $false
+    foreach ($line in @($text)) {
+        if (-not $inside) { if ($line -match '^\$floorHistory = @\(\s*$') { $inside = $true }; continue }
+        if ($line -match '^\)\s*$') { break }
+        $t = $line.Trim().TrimEnd(',').Trim()
+        if ($t -ne '' -and -not $t.StartsWith('#')) { $entries.Add($t) }
+    }
+    return $entries.ToArray()
+}
+
+# Whether a history kept every entry it was committed with, in order, at its
+# head: a history is appended to and never pasted over.
+function Test-HistoryKept($committed, $working) {
+    $problems = New-Object System.Collections.Generic.List[string]
+    $c = @($committed); $w = @($working)
+    for ($i = 0; $i -lt $c.Count; $i++) {
+        if ($i -ge $w.Count -or $w[$i] -cne $c[$i]) {
+            $problems.Add(("the floor history lost or changed its entry {0} of {1} as committed, {2}: a history is appended to and never pasted over, so put that entry back and add the new one after it" -f ($i + 1), $c.Count, $c[$i]))
+            break
+        }
+    }
+    return @{ Problems = $problems }
+}
+
 if ($Control) {
     $ok = $true
     $verdicts = New-Object System.Collections.Generic.List[string]
@@ -271,7 +342,8 @@ if ($Control) {
     function Clean { return @((Row 'native' 'life' 225000), (Row 'native' 'gun' 214000), (Row 'wasm' 'life' 233000), (Row 'wasm' 'gun' 223000)) }
     function Floors([double]$a, [double]$b, [double]$c, [double]$d) { return @{ 'native life' = $a; 'native gun' = $b; 'wasm life' = $c; 'wasm gun' = $d } }
     $history = @(@{ Date = '2026-10-09'; Pin = 'abc1234'; Reason = ''; Floors = (Floors 202000 192000 209000 200000) })
-    function Judge($rows, $hist, [string]$currentPin, $current) { return Test-Baseline $rows '2026-10-09' 'a control environment' 'abc1234' $currentPin $digests $current $hist }
+    $controlEnvironment = 'a control machine | power throttling opted out: the runner yes, 25 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 25 browser process(es)'
+    function Judge($rows, $hist, [string]$currentPin, $current, [string]$environment = $controlEnvironment) { return Test-Baseline $rows '2026-10-09' $environment 'abc1234' $currentPin $digests $current $hist }
     function Expect([string]$name, $result, [string]$want) {
         $hit = @($result.Problems | Where-Object { $_ -like "*$want*" }).Count
         if ($want -eq '') {
@@ -300,17 +372,43 @@ if ($Control) {
     Expect 'a clock that moved' (Judge $moved $history 'abc1234' $digests) 'the clock moved'
     $units = Clean; $units[3].FramesPerSecond = [math]::Round($units[3].FramesPerSecond * 1.02, 3)
     Expect 'frames a second against cells a second' (Judge $units $history 'abc1234' $digests) 'is not'
+    $coresPart = 'on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 25 browser process(es)'
+    $oneKind = $controlEnvironment.Replace($coresPart, 'one kind of core, 20 logical processors, unpinned')
+    Expect 'a machine of one kind of core' (Judge (Clean) $history 'abc1234' $digests $oneKind) ''
+    $notOptedOut = $controlEnvironment.Replace('opted out: the runner yes', 'opted out: the runner no')
+    Expect 'a run not opted out of the throttling' (Judge (Clean) $history 'abc1234' $digests $notOptedOut) 'opted out of Windows'
+    $anyCore = $controlEnvironment.Replace(' | ' + $coresPart, '')
+    Expect 'a run not on the performance cores' (Judge (Clean) $history 'abc1234' $digests $anyCore) 'performance cores'
 
-    # The fake runners: scripts printing what a runner's check prints.
+    # The history, read from text as the commit's copy of this file is read.
+    $entryA = "@{ Date = '2026-10-09'; Pin = 'abc1234'; Reason = ''; Floors = @{ 'native life' = 202000; 'wasm life' = 209000 } }"
+    $entryB = "@{ Date = '2026-10-10'; Pin = 'def5678'; Reason = ''; Floors = @{ 'native life' = 560000; 'wasm life' = 414000 } }"
+    function HistoryText([string[]]$entries) {
+        $t = @('# the floors', '$floorHistory = @(')
+        for ($k = 0; $k -lt $entries.Count; $k++) { $t += ('    ' + $entries[$k] + $(if ($k -lt $entries.Count - 1) { ',' } else { '' })) }
+        return ($t + @(')', '', '$allocationCeilings = @{'))
+    }
+    $editedA = $entryA.Replace('202000', '201000')
+    if ($editedA -eq $entryA) { $ok = $false; $verdicts.Add('the edited entry: its mutant did not apply') }
+    Expect 'an entry added after the committed one' (Test-HistoryKept (Get-HistoryLines (HistoryText @($entryA))) (Get-HistoryLines (HistoryText @($entryA, $entryB)))) ''
+    Expect 'a history unchanged' (Test-HistoryKept (Get-HistoryLines (HistoryText @($entryA, $entryB))) (Get-HistoryLines (HistoryText @($entryA, $entryB)))) ''
+    Expect 'an entry pasted over a committed one' (Test-HistoryKept (Get-HistoryLines (HistoryText @($entryA))) (Get-HistoryLines (HistoryText @($entryB)))) 'never pasted over'
+    Expect 'a committed entry edited in place' (Test-HistoryKept (Get-HistoryLines (HistoryText @($entryA))) (Get-HistoryLines (HistoryText @($editedA, $entryB)))) 'never pasted over'
+
+    # The fake runners: scripts printing what a runner's check prints, at the
+    # ceilings as they stand, so a lowered ceiling moves the fakes with it.
     $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('alonzo_frame_floors_' + [System.IO.Path]::GetRandomFileName())
     New-Item -ItemType Directory -Path $tmp | Out-Null
     try {
-        $lifeRow = '(frames-check "life" (frames 4) (equal 4) (cells 62964) (allocs 4470549) (reallocs 1129229))'
-        $gunRow = '(frames-check "gun" (frames 4) (equal 4) (cells 62964) (allocs 4848335) (reallocs 1129229) (facts 24))'
+        function CheckRow([string]$name, [long]$allocs, [string]$facts) {
+            return ('(frames-check "{0}" (frames 4) (equal 4) (cells 62964) (allocs {1}) (reallocs {2}){3})' -f $name, $allocs, $allocationCeilings[$name].Reallocs, $facts)
+        }
+        $lifeRow = CheckRow 'life' $allocationCeilings['life'].Allocs ''
+        $gunRow = CheckRow 'gun' $allocationCeilings['gun'].Allocs ' (facts 24)'
         $fakes = @(
             @{ Name = 'a clean runner'; Lines = @($lifeRow, $gunRow, '(frames-check-done 2)'); Exit = 0; Want = '' },
             @{ Name = 'a runner whose frame differs'; Lines = @('(frames-differ "life" (frame 3) (cell "B5") (engine 1) (reference 0))'); Exit = 1; Want = 'check failed' },
-            @{ Name = 'a runner allocating more'; Lines = @($lifeRow.Replace('4470549', '4470550'), $gunRow, '(frames-check-done 2)'); Exit = 0; Want = 'rose to' },
+            @{ Name = 'a runner allocating more'; Lines = @((CheckRow 'life' ($allocationCeilings['life'].Allocs + 1) ''), $gunRow, '(frames-check-done 2)'); Exit = 0; Want = 'rose to' },
             @{ Name = 'a runner without the gun''s facts'; Lines = @($lifeRow, $gunRow.Replace(' (facts 24)', ''), '(frames-check-done 2)'); Exit = 0; Want = 'published facts' },
             @{ Name = 'a runner leaving out a fixture'; Lines = @($lifeRow, '(frames-check-done 1)'); Exit = 0; Want = 'no row for the fixture gun' }
         )
@@ -327,7 +425,7 @@ if ($Control) {
     }
     foreach ($v in $verdicts) { Write-Output ('control: ' + $v) }
     if ($ok) {
-        Write-Output ("OK: control: the judgment passes the clean table and a reasoned lowering, fails ten mutants of the table, and over five fake runners passes the clean one and fails four, each for its own reason")
+        Write-Output ("OK: control: the judgment passes the clean table, a reasoned lowering and a machine of one kind of core, and fails twelve mutants of the table; the history passes an entry added and a history unchanged, and fails an entry pasted over and one edited in place; over five fake runners it passes the clean one and fails four, each for its own reason")
         exit 0
     }
     Write-Output 'FAIL: control: the judgment did not behave as the header says'
@@ -345,6 +443,24 @@ $static = Test-Baseline $baseline $baselineDate $baselineEnvironment $baselinePi
 if ($baselineDate -ne '') { Write-Output ("  measured {0}: {1}" -f $baselineDate, $baselineEnvironment) }
 $static.Lines | ForEach-Object { Write-Output $_ }
 foreach ($p in $static.Problems) { $problems.Add($p) }
+
+# The history against the last commit's copy of this file, where git can say.
+$working = @(Get-HistoryLines ([System.IO.File]::ReadAllLines($PSCommandPath)))
+if ($null -eq (Get-Command git -ErrorAction SilentlyContinue)) {
+    Write-Output '  the history against the commit: SKIPPED, no git to ask'
+} else {
+    $old = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { $committedText = @(& git -C $Root show 'HEAD:tools/check_frame_floors.ps1' 2>$null); $gitCode = $LASTEXITCODE } finally { $ErrorActionPreference = $old }
+    if ($gitCode -ne 0 -or $committedText.Count -eq 0) {
+        Write-Output '  the history against the commit: SKIPPED, no committed copy of this file to read'
+    } else {
+        $committed = @(Get-HistoryLines $committedText)
+        $kept = Test-HistoryKept $committed $working
+        foreach ($p in $kept.Problems) { $problems.Add($p) }
+        if ($kept.Problems.Count -eq 0) { Write-Output ("  the history: {0} entries, the last commit's {1} kept at its head in order" -f $working.Count, $committed.Count) }
+    }
+}
 
 if ($Runner -eq '') {
     $candidate = Join-Path $Root ('target/release/examples/frames' + $(if ($onWindows) { '.exe' } else { '' }))

@@ -26,20 +26,37 @@ scoping measured that only the two together hold Chrome's frames flat.
 Both halves also watch the clock themselves, a fixed computation timed
 beside every frame, and print no rows when it moved more than 10%.
 
+THE SECOND TRAP (found by Frazaro's KERNEL.25 and measured here 2026-10-10,
+CART.1's second slice): the owner's processor has two kinds of core, eight
+performance cores and twelve efficiency cores, and Windows may run a process
+on either. On an efficiency core a steady frame of the soup took 120 to 121.5
+ms against 97 to 99 on a performance core, and the clock check passed those
+runs, since the clock's first readings were taken on the same kind of core:
+a floor could measure the scheduler. So both halves are started on the
+performance cores, the logical processors of the highest efficiency class
+the system reports (GetSystemCpuSetInformation): this script's own affinity
+is set to them before each start and put back after, so that the runner and
+Chrome inherit it from their creation, and Chrome's children from Chrome;
+every process found later is held there too. A machine of one kind of core
+is left unpinned, and the environment line says which it was.
+
 WHAT IT DOES:
   1. builds what it measures, unless -NoBuild: the runner (cargo build
      --release --example frames), the engine's module (cargo build --release
      -p alonzo --target wasm32-unknown-unknown) and the page
      (tools/build_web.ps1);
   2. runs the runner over both fixtures and reads its two native rows;
-  3. runs web/index.html?frames=1 and reads its two wasm rows;
+  3. runs web/index.html?frames=1 and reads its two wasm rows, both halves
+     on the performance cores and opted out of the throttling;
   4. prints the block: the date, the environment, the pin of vla-lang in
-     Cargo.toml, each fixture's SHA-256 over LF bytes, the four rows, and a
-     floor line, each row's cells a second less the check's margin of 10%,
-     rounded down to three figures, to add to the check's history; and
-     writes the same block to target/bench_frames.txt, to copy from, since a
-     terminal that wraps a long line can drop a space from a copy (the first
-     baseline's paste lost two, 2026-10-09).
+     Cargo.toml, each fixture's SHA-256 over LF bytes, the four rows, and the
+     floor history as the check holds it with this run's entry added last,
+     each row's cells a second less the check's margin of 10%, rounded down
+     to three figures, to paste over the check's history whole (a lone entry
+     to add by hand was pasted over the first at the second baseline,
+     2026-10-10); and writes the same block to target/bench_frames.txt, to
+     copy from, since a terminal that wraps a long line can drop a space from
+     a copy (the first baseline's paste lost two, 2026-10-09).
 It is an instrument and not a check: it measures, the owner pastes, and the
 check holds what was pasted. No job runs it; a shared runner's numbers are
 not this machine's.
@@ -101,11 +118,66 @@ public static class AlonzoPowerThrottling {
         return SetProcessInformation(process, 4, ref s, (uint)Marshal.SizeOf(typeof(State)));
     }
 }
+public static class AlonzoCores {
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern bool GetSystemCpuSetInformation(IntPtr information, uint length, out uint returned, IntPtr process, uint flags);
+    // Group 0's logical processors as pairs, its index then its efficiency
+    // class, a higher class a faster core. Each SYSTEM_CPU_SET_INFORMATION is
+    // Size, Type (0 for a CPU set), Id, Group (at 12), LogicalProcessorIndex
+    // (14), CoreIndex, LastLevelCacheIndex, NumaNodeIndex, EfficiencyClass (18).
+    public static int[] Classes() {
+        uint length;
+        GetSystemCpuSetInformation(IntPtr.Zero, 0, out length, IntPtr.Zero, 0);
+        var pairs = new System.Collections.Generic.List<int>();
+        if (length == 0) return pairs.ToArray();
+        IntPtr buffer = Marshal.AllocHGlobal((int)length);
+        try {
+            if (!GetSystemCpuSetInformation(buffer, length, out length, IntPtr.Zero, 0)) return pairs.ToArray();
+            int at = 0;
+            while (at + 20 <= length) {
+                int size = Marshal.ReadInt32(buffer, at);
+                if (size <= 0) break;
+                if (Marshal.ReadInt32(buffer, at + 4) == 0 && Marshal.ReadInt16(buffer, at + 12) == 0) {
+                    pairs.Add(Marshal.ReadByte(buffer, at + 14));
+                    pairs.Add(Marshal.ReadByte(buffer, at + 18));
+                }
+                at += size;
+            }
+        } finally { Marshal.FreeHGlobal(buffer); }
+        return pairs.ToArray();
+    }
+}
 "@
 }
 function Stop-Throttling($process) {
     if (-not $onWindows) { return $true }
     try { return [AlonzoPowerThrottling]::OptOut($process.Handle) } catch { return $false }
+}
+
+# The performance cores: the logical processors of the highest efficiency
+# class, as an affinity mask; a mask of 0 where the machine has one kind of
+# core, or where none could be read, and then nothing is pinned.
+function Get-PerformanceCores {
+    $set = @{ Mask = [long]0; Fast = 0; All = 0; Class = 0 }
+    if (-not $onWindows) { return $set }
+    try { $pairs = @([AlonzoCores]::Classes()) } catch { return $set }
+    if ($pairs.Count -lt 2) { return $set }
+    $classes = @(for ($i = 1; $i -lt $pairs.Count; $i += 2) { $pairs[$i] })
+    $set.All = $classes.Count
+    $set.Class = ($classes | Measure-Object -Maximum).Maximum
+    for ($i = 0; $i -lt $pairs.Count; $i += 2) {
+        if ($pairs[$i + 1] -eq $set.Class -and $pairs[$i] -lt 64) { $set.Mask = $set.Mask -bor ([long]1 -shl $pairs[$i]); $set.Fast++ }
+    }
+    if ($set.Fast -eq $set.All) { $set.Mask = [long]0 }
+    return $set
+}
+# Whether a process runs on the performance cores, put there when it does not.
+function Set-PerformanceCores($process) {
+    if ($cores.Mask -eq 0) { return $true }
+    try {
+        if ([long]$process.ProcessorAffinity -ne $cores.Mask) { $process.ProcessorAffinity = [IntPtr]$cores.Mask }
+        return ([long]$process.ProcessorAffinity -eq $cores.Mask)
+    } catch { return $false }
 }
 
 # The SHA-256 of a text file over LF bytes, upper-case hex, as the check computes it.
@@ -124,6 +196,21 @@ function Get-Pin {
     $m = [regex]::Match($toml, '(?m)^vla-lang\s*=\s*"=?([0-9][0-9.]*)"')
     if ($m.Success) { return $m.Groups[1].Value }
     return ''
+}
+
+# The floor history's entries as tools/check_frame_floors.ps1 holds them, one
+# a line, each trimmed of its comma: read, never run, as the check reads them.
+function Get-HistoryEntries([string]$path) {
+    $entries = New-Object System.Collections.Generic.List[string]
+    if (-not (Test-Path -LiteralPath $path)) { return $entries.ToArray() }
+    $inside = $false
+    foreach ($line in [System.IO.File]::ReadAllLines($path)) {
+        if (-not $inside) { if ($line -match '^\$floorHistory = @\(\s*$') { $inside = $true }; continue }
+        if ($line -match '^\)\s*$') { break }
+        $t = $line.Trim().TrimEnd(',').Trim()
+        if ($t -ne '' -and -not $t.StartsWith('#')) { $entries.Add($t) }
+    }
+    return $entries.ToArray()
 }
 
 # One build step, its output shown only when it fails.
@@ -159,16 +246,25 @@ foreach ($need in @($runnerExe, $wasm, $page)) {
     if (-not (Test-Path -LiteralPath $need)) { Write-Output "FAIL: $need is not built; run without -NoBuild"; exit 1 }
 }
 
+# The cores both halves run on, and this script's own affinity, put back after
+# each start (a child inherits its parent's from its creation).
+$cores = Get-PerformanceCores
+$self = [System.Diagnostics.Process]::GetCurrentProcess()
+$ownAffinity = $self.ProcessorAffinity
+$coresWord = if ($cores.Mask -ne 0) { ', on the performance cores' } else { '' }
+
 # --- the native half ---
-Write-Output ("  the native runner, {0} frames a fixture, its process opted out of power throttling..." -f $Frames)
+Write-Output ("  the native runner, {0} frames a fixture, its process opted out of power throttling{1}..." -f $Frames, $coresWord)
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName = $runnerExe
 $psi.Arguments = ('--frames {0} "{1}" "{2}"' -f $Frames, $life, $gun)
 $psi.UseShellExecute = $false
 $psi.RedirectStandardOutput = $true
 $psi.WorkingDirectory = $repoRoot
-$proc = [System.Diagnostics.Process]::Start($psi)
+if ($cores.Mask -ne 0) { $self.ProcessorAffinity = [IntPtr]$cores.Mask }
+try { $proc = [System.Diagnostics.Process]::Start($psi) } finally { $self.ProcessorAffinity = $ownAffinity }
 $nativeOptedOut = Stop-Throttling $proc
+$nativePinned = Set-PerformanceCores $proc
 $nativeText = $proc.StandardOutput.ReadToEnd()
 $proc.WaitForExit()
 $nativeRows = @(($nativeText -split "`r?`n") | Where-Object { $_ -match "^\s+@\{ Runner = 'native'" } | ForEach-Object { $_.Trim() })
@@ -183,11 +279,12 @@ $browser = Find-Browser $Browser
 if ($browser -eq '') { Write-Output 'FAIL: no Chrome or Edge found; name one with -Browser'; exit 1 }
 $browserVersion = ''
 try { $browserVersion = (Get-Item -LiteralPath $browser).VersionInfo.ProductVersion } catch { $browserVersion = '' }
-Write-Output ("  the page under headless {0} {1}, its processes opted out of power throttling..." -f [System.IO.Path]::GetFileNameWithoutExtension($browser), $browserVersion)
+Write-Output ("  the page under headless {0} {1}, its processes opted out of power throttling{2}..." -f [System.IO.Path]::GetFileNameWithoutExtension($browser), $browserVersion, $coresWord)
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('alonzo_frames_' + [System.IO.Path]::GetRandomFileName())
 New-Item -ItemType Directory -Path $tmp | Out-Null
 $wasmText = ''
 $optedOut = 0
+$pinned = 0
 try {
     $dump = Join-Path $tmp 'dump.html'
     $slashed = [System.IO.Path]::GetFullPath($page) -replace '\\', '/'
@@ -201,13 +298,15 @@ try {
     $before = @(Get-Process -Name $procName -ErrorAction SilentlyContinue | ForEach-Object { $_.Id })
     $start = @{ FilePath = $browser; ArgumentList = $argList; RedirectStandardOutput = $dump; RedirectStandardError = (Join-Path $tmp 'err.txt'); PassThru = $true }
     if ($onWindows) { $start['NoNewWindow'] = $true }
-    $chrome = Start-Process @start
+    if ($cores.Mask -ne 0) { $self.ProcessorAffinity = [IntPtr]$cores.Mask }
+    try { $chrome = Start-Process @start } finally { $self.ProcessorAffinity = $ownAffinity }
     $seen = @{}
     while (-not $chrome.HasExited) {
         foreach ($c in @(Get-Process -Name $procName -ErrorAction SilentlyContinue)) {
             if ($before -notcontains $c.Id -and -not $seen.ContainsKey($c.Id)) {
                 $seen[$c.Id] = $true
                 if (Stop-Throttling $c) { $optedOut++ }
+                if (Set-PerformanceCores $c) { $pinned++ }
             }
         }
         Start-Sleep -Milliseconds 50
@@ -245,7 +344,10 @@ try { $rustc = ((& rustc --version) -join ' ').Trim() } catch { $rustc = '' }
 if ($rustc -eq '') { $rc = Join-Path $(if ($env:USERPROFILE) { $env:USERPROFILE } else { $env:HOME }) '.cargo/bin/rustc.exe'; if (Test-Path -LiteralPath $rc) { $rustc = ((& $rc --version) -join ' ').Trim() } }
 $pin = Get-Pin
 $moduleBytes = (Get-Item -LiteralPath $wasm).Length
-$environment = ('{0} | {1} | {2} {3} headless | the engine''s module {4:N0} bytes | vla-lang at {5} | power throttling opted out: the runner {6}, {7} browser process(es)' -f $machine, $rustc, [System.IO.Path]::GetFileNameWithoutExtension($browser), $browserVersion, $moduleBytes, $pin, $(if ($nativeOptedOut) { 'yes' } else { 'no' }), $optedOut)
+$coresText = if ($cores.Mask -ne 0) { ('on the performance cores, {0} of {1} logical processors (efficiency class {2}): the runner {3}, {4} browser process(es)' -f $cores.Fast, $cores.All, $cores.Class, $(if ($nativePinned) { 'yes' } else { 'no' }), $pinned) }
+             elseif ($cores.All -gt 0) { ('one kind of core, {0} logical processors, unpinned' -f $cores.All) }
+             else { 'the cores not read, unpinned' }
+$environment = ('{0} | {1} | {2} {3} headless | the engine''s module {4:N0} bytes | vla-lang at {5} | power throttling opted out: the runner {6}, {7} browser process(es) | {8}' -f $machine, $rustc, [System.IO.Path]::GetFileNameWithoutExtension($browser), $browserVersion, $moduleBytes, $pin, $(if ($nativeOptedOut) { 'yes' } else { 'no' }), $optedOut, $coresText)
 $rows = @($nativeRows + $wasmRows)
 function Get-Field([string]$row, [string]$name) { $m = [regex]::Match($row, "\b$name = '?([^;']+)'?"); if ($m.Success) { return $m.Groups[1].Value.Trim() }; return '' }
 function Get-RoundedDown([double]$x) { if ($x -le 0) { return 0 }; $p = [math]::Pow(10, [math]::Floor([math]::Log10($x)) - 2); return [long]([math]::Floor($x / $p) * $p) }
@@ -264,8 +366,12 @@ $block.Add(("`$baselineFixtures = @{{ 'life' = '{0}'; 'gun' = '{1}' }}" -f (Get-
 $block.Add('$baseline = @(')
 for ($i = 0; $i -lt $rows.Count; $i++) { $block.Add(('    ' + $rows[$i] + $(if ($i -lt $rows.Count - 1) { ',' } else { '' }))) }
 $block.Add(')')
-$block.Add('# ---- and this entry as the last line inside $floorHistory = @( ... ), a comma after the entry before it: each row''s cells a second less 10%, three figures ----')
-$block.Add(("    @{{ Date = '{0}'; Pin = '{1}'; Reason = ''; Floors = @{{ {2} }} }}" -f $date, $pin, ($floors -join '; ')))
+$entries = @(Get-HistoryEntries (Join-Path $repoRoot 'tools/check_frame_floors.ps1'))
+$entries += ("@{{ Date = '{0}'; Pin = '{1}'; Reason = ''; Floors = @{{ {2} }} }}" -f $date, $pin, ($floors -join '; '))
+$block.Add(('# ---- and this over $floorHistory = @( ... ), whole: the check''s {0} entr{1} as they stand, then this run''s, each row''s cells a second less 10%, three figures ----' -f ($entries.Count - 1), $(if ($entries.Count -eq 2) { 'y' } else { 'ies' })))
+$block.Add('$floorHistory = @(')
+for ($i = 0; $i -lt $entries.Count; $i++) { $block.Add(('    ' + $entries[$i] + $(if ($i -lt $entries.Count - 1) { ',' } else { '' }))) }
+$block.Add(')')
 # The block in a file as well: a terminal that wraps a long line can drop a
 # space where it joins a copy (met at the first baseline, 2026-10-09).
 $blockFile = Join-Path $repoRoot 'target/bench_frames.txt'
@@ -279,4 +385,5 @@ Write-Output ''
 $block | ForEach-Object { Write-Output $_ }
 Write-Output ''
 Write-Output ("The block above is also in {0}: copy it from there, since a terminal's line wrap can drop a space from a copy." -f $blockFile)
+Write-Output 'In tools/check_frame_floors.ps1, its baseline lines go over the baseline lines, and its history over $floorHistory = @( ... ), whole.'
 exit 0

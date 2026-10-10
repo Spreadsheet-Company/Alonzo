@@ -113,7 +113,7 @@ $extras = @(
     @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 blit floors: a clean table of three cases passes, eight mutants fail' },
     @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 export reader and judgment: eight modules built in memory, a non-module' },
     @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, seven mutants fail' },
-    @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1 frame floors: a clean table and a reasoned lowering pass, ten mutants fail; five fake runners, the clean one passes and four fail' }
+    @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1 frame floors: a clean table, a reasoned lowering and a machine of one kind of core pass, twelve mutants fail; an entry added passes, an entry pasted over and one edited fail; five fake runners, the clean one passes and four fail' }
 )
 
 # --- The shell each check runs under. ---

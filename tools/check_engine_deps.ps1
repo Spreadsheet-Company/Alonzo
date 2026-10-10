@@ -14,8 +14,9 @@ a test's, or one pulled in by the language crate itself (it has none, its
 own contract), shows in the lock and fails here by name.
 
 THE PIN, the owner's route of 2026-10-09: vla-lang by git, at a commit of
-Frazaro's, KERNEL.24's since ENGINE.2's second slice (the plane kept at the
-frame's end; KERNEL.22's before it), until vla-lang is on crates.io; a move
+Frazaro's, KERNEL.25's since CART.1's second slice (the evaluator's hot path;
+KERNEL.24's before it, from ENGINE.2's second slice, and KERNEL.22's before
+that), until vla-lang is on crates.io; a move
 of the pin is the two baseline lines below, which the control's mutants are
 read off, raised in the same commit as Cargo.toml's line and the lock; then
 at crates.io the baseline below
@@ -61,8 +62,8 @@ if ($Root -eq '') { $Root = Split-Path -Parent $PSScriptRoot }
 
 # --- The baseline: the language crate's pin, as Cargo.toml writes it and as
 #     Cargo.lock resolves it. The two lines are one fact, raised together. ---
-$langSpec = '{ git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "c0686a9" }'
-$langSource = 'git+https://github.com/Spreadsheet-Company/Frazaro?rev=c0686a9#c0686a90a977323bd27220034734d4af46ee884d'
+$langSpec = '{ git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "f5dc344" }'
+$langSource = 'git+https://github.com/Spreadsheet-Company/Frazaro?rev=f5dc344#f5dc344aeae5e3efdad03b6a7dbf7b1783e313fe'
 
 function Get-Lines([string]$path) {
     $text = [System.IO.File]::ReadAllText($path)
