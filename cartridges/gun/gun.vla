@@ -1,0 +1,150 @@
+; SPDX-License-Identifier: 0BSD
+; gun.vla - Gosper's glider gun on Life's 320 by 200 plane: the second fixture the
+; engine's floors are measured on (CART.1), the sparse one beside the soup of life.vla.
+; Every cell of the interior, B2:LG199, is Life's rule over the previous frame, the twin
+; sheet Screen.last, word for word; only the first frame differs, reading the gun's
+; pattern off the Seed sheet where life.vla computes a soup. The border stays empty,
+; which the plane reads as 0, dead. The format is SPEC.md section 7.
+
+(cartridge "gun"
+  (spec 2)                          ; the version of SPEC.md this cartridge is written to
+  (title "Gosper's glider gun")     ; what the host shows
+  (rate 30)                         ; frames a second
+  (screen plane 320 200)            ; plane mode, 320 cells wide and 200 high: A1:LH200
+  (seed 1)                          ; the dice, Clock!B3: the gun reads none, and every directive is given
+  (author "Spreadsheet Company")    ; who wrote it
+  (licence "0BSD")                  ; the header's twin: copy this file to start a cartridge of your own
+  (notes "Gosper's glider gun, found by Bill Gosper's group at MIT in 1970, the first pattern known to grow without bound: a glider every thirty frames, south-east across the plane until the stream meets the border at frame 741. Every cell is Life's rule; the first frame reads the Seed sheet. Edit the Seed's rows and load again to fire another pattern."))
+
+; The sheets, in tab order: the Screen the rule draws on, the Palette it draws with, and
+; the Seed the first frame reads.
+(sheet "Screen" visible)
+(sheet "Palette" visible)
+(sheet "Seed" visible)
+
+; The Palette (SPEC.md section 3.2), as life.vla's: column A the index, B the colour as
+; #RRGGBB, C a name. Index 0 is a dead cell and index 1 a live one.
+; index 0, black: a dead cell
+(cell "Palette" "A1" 0)
+(cell "Palette" "B1" "#000000")
+(cell "Palette" "C1" "dead")
+; index 1, white: a live cell
+(cell "Palette" "A2" 1)
+(cell "Palette" "B2" "#FFFFFF")
+(cell "Palette" "C2" "alive")
+; index 2
+(cell "Palette" "A3" 2)
+(cell "Palette" "B3" "#0000AA")
+(cell "Palette" "C3" "blue")
+; index 3
+(cell "Palette" "A4" 3)
+(cell "Palette" "B4" "#00AA00")
+(cell "Palette" "C4" "green")
+; index 4
+(cell "Palette" "A5" 4)
+(cell "Palette" "B5" "#00AAAA")
+(cell "Palette" "C5" "cyan")
+; index 5
+(cell "Palette" "A6" 5)
+(cell "Palette" "B6" "#AA0000")
+(cell "Palette" "C6" "red")
+; index 6
+(cell "Palette" "A7" 6)
+(cell "Palette" "B7" "#AA00AA")
+(cell "Palette" "C7" "magenta")
+; index 7
+(cell "Palette" "A8" 7)
+(cell "Palette" "B8" "#AA5500")
+(cell "Palette" "C8" "brown")
+; index 8
+(cell "Palette" "A9" 8)
+(cell "Palette" "B9" "#AAAAAA")
+(cell "Palette" "C9" "light grey")
+; index 9
+(cell "Palette" "A10" 9)
+(cell "Palette" "B10" "#555555")
+(cell "Palette" "C10" "dark grey")
+; index 10
+(cell "Palette" "A11" 10)
+(cell "Palette" "B11" "#5555FF")
+(cell "Palette" "C11" "light blue")
+; index 11
+(cell "Palette" "A12" 11)
+(cell "Palette" "B12" "#55FF55")
+(cell "Palette" "C12" "light green")
+; index 12
+(cell "Palette" "A13" 12)
+(cell "Palette" "B13" "#55FFFF")
+(cell "Palette" "C13" "light cyan")
+; index 13
+(cell "Palette" "A14" 13)
+(cell "Palette" "B14" "#FF5555")
+(cell "Palette" "C14" "light red")
+; index 14
+(cell "Palette" "A15" 14)
+(cell "Palette" "B15" "#FF55FF")
+(cell "Palette" "C15" "light magenta")
+; index 15
+(cell "Palette" "A16" 15)
+(cell "Palette" "B16" "#FFFF55")
+(cell "Palette" "C16" "yellow")
+
+; The Seed: the gun's 36 live cells, its 9 by 36 box with the top-left at J10, decoded
+; from its published pattern (LifeWiki, "Gosper glider gun"; RLE x = 36, y = 9:
+; 24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!).
+; Its facts, which the runner holds its own Life to: period 30; 36 cells, then 5 more a
+; period, one glider each, travelling south-east a cell every four frames.
+; the box's row 1
+(cell "Seed" "AH10" 1)
+; row 2
+(cell "Seed" "AF11" 1)
+(cell "Seed" "AH11" 1)
+; row 3
+(cell "Seed" "V12" 1)
+(cell "Seed" "W12" 1)
+(cell "Seed" "AD12" 1)
+(cell "Seed" "AE12" 1)
+(cell "Seed" "AR12" 1)
+(cell "Seed" "AS12" 1)
+; row 4
+(cell "Seed" "U13" 1)
+(cell "Seed" "Y13" 1)
+(cell "Seed" "AD13" 1)
+(cell "Seed" "AE13" 1)
+(cell "Seed" "AR13" 1)
+(cell "Seed" "AS13" 1)
+; row 5
+(cell "Seed" "J14" 1)
+(cell "Seed" "K14" 1)
+(cell "Seed" "T14" 1)
+(cell "Seed" "Z14" 1)
+(cell "Seed" "AD14" 1)
+(cell "Seed" "AE14" 1)
+; row 6
+(cell "Seed" "J15" 1)
+(cell "Seed" "K15" 1)
+(cell "Seed" "T15" 1)
+(cell "Seed" "X15" 1)
+(cell "Seed" "Z15" 1)
+(cell "Seed" "AA15" 1)
+(cell "Seed" "AF15" 1)
+(cell "Seed" "AH15" 1)
+; row 7
+(cell "Seed" "T16" 1)
+(cell "Seed" "Z16" 1)
+(cell "Seed" "AH16" 1)
+; row 8
+(cell "Seed" "U17" 1)
+(cell "Seed" "Y17" 1)
+; row 9
+(cell "Seed" "V18" 1)
+(cell "Seed" "W18" 1)
+
+; The rule, one row over the interior B2:LG199, every reference relative but the Clock's,
+; so the row is one shape over 62,964 cells, as life.vla's.
+;   The first frame, Clock!B1 = 1, reads the Seed's cell at the same address: 1 where the
+;   gun stands, and an empty cell elsewhere, which the formula's value settles to 0.
+;   Every later frame is Conway's rule over the previous frame, life.vla's word for word:
+;   a cell is alive when its eight neighbours hold three live cells, or two and it was
+;   alive itself.
+(formula "Screen" "B2:LG199" "=IF(Clock!$B$1=1,Seed!B2,IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,AND(Screen.last!B2=1,SUM(Screen.last!A1:C3)-Screen.last!B2=2)),1,0))")

@@ -109,7 +109,8 @@ the scroll, the selection, the widths a person dragged, the frozen panes and
 the marks a host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
-panel, a cartridge running on the host's loop, Life or the test card, and
+panel, a cartridge running on the host's loop, Life, the glider gun or the
+test card, and
 below it the viewport over seven
 records the door printed: the six view goldens of Frazaro's `scripts/view/`
 and the record of the 10,000-line program the renderer benchmark measured.
@@ -134,7 +135,10 @@ it), watch the log, each repeat counted in its first line, and press Copy
 the log to take it as text; pick a sheet of the grid, the Clock's frame
 counting or the previous frame's twin, to see its record live; edit the
 cartridge's `(rate 30)` to `(rate 0)` and press Load the cartridge to see a
-step on every edit. Pick the test card above the buttons to see the plane's
+step on every edit. Pick the glider gun above the buttons to see Gosper's
+gun fire a glider every thirty frames, south-east until the stream meets the
+border; its pattern is the Seed sheet, which the first frame reads. Pick the
+test card to see the plane's
 whole rule: the sixteen colours as bars, magenta wherever a value is no
 colour (a byte past the palette, a fraction, a text, a truth value, an
 error), black for an empty cell, the window panning a column a frame across
@@ -160,7 +164,7 @@ each record says, cell for cell, every coordinate on a device pixel. And the
 frame holds: `tools/check_render_floors.ps1` holds the owner's measured
 baseline to the roadmap's bars.
 
-## The five modes
+## The six modes
 
 - Opened plainly, the page is the engine's panel and the viewport over the
   fixtures, above.
@@ -200,6 +204,20 @@ baseline to the roadmap's bars.
   baseline lines for `tools/check_render_floors.ps1`. Run it in a real
   browser in fullscreen; a headless run's clock is virtual and its numbers
   are not a measurement.
+- `index.html?frames=1` is the frame floors' instrument (`CART.1`), the
+  engine's first number: the engine's module stepped over the benchmark's two
+  fixtures, Life's soup and the glider gun, 31 frames each (`&n=` sets it),
+  each step timed alone with no budget and every frame's plane held to the
+  page's own Life, so a fast wrong answer is never a number; beside every
+  frame the page's Life runs a fixed workload, the clock, and a run whose
+  clock moved more than 10% prints no rows. It runs at the page's load and
+  synchronously, since `--dump-dom` writes a page at its load:
+  `tools/bench_frames.ps1` runs it under headless Chrome, with Chrome's flags
+  against backgrounding and its processes opted out of Windows' power
+  throttling, which slows a background process by about 40% three seconds
+  in, and reads `<pre id="frames">`. A step costs computation and no display,
+  so a headless run is a measurement here. Opened by hand, the page freezes
+  for about twenty seconds while it steps, then prints the same.
 
 ## For the first game: the API
 

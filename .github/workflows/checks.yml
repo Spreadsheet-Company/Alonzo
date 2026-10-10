@@ -27,7 +27,14 @@
 # the road with them. The wasm and the page are kept as artifacts of the run.
 # The render floors and the blit floors are the owner's measurements in a
 # real browser, pasted into tools/check_render_floors.ps1 and
-# tools/check_blit_floors.ps1; no job times anything.
+# tools/check_blit_floors.ps1, and the frame floors the owner's run of
+# tools/bench_frames.ps1, pasted into tools/check_frame_floors.ps1; no job
+# times anything. Since CART.1 the crate job builds the native runner,
+# engine/examples/frames.rs, before the runner script, so that
+# check_frame_floors.ps1 runs its check mode there: Life and the glider gun
+# held frame by frame to a hand-written Life, and each one's allocations held
+# to ceilings, exact numbers that are the code's and not the machine's; the
+# ratchets job builds no runner, and the check says SKIPPED for that half.
 name: checks
 on:
   push:
@@ -64,6 +71,8 @@ jobs:
           cargo test --workspace
       - name: build the wasm engine
         run: cargo build --release -p alonzo --target wasm32-unknown-unknown
+      - name: build the native runner of the frame floors (CART.1), whose check mode tools/check_frame_floors.ps1 runs
+        run: cargo build --release --example frames
       - name: build the engine's page, the wasm built in (KERNEL.5, ENGINE.1)
         shell: pwsh
         run: |

@@ -17,8 +17,8 @@ categories = ["game-engines", "wasm"]
 publish = false
 
 [lib]
-# rlib for the workspace's own native runner to come; cdylib for the wasm32
-# build the browser loads.
+# rlib for the native runner of the frame floors, examples/frames.rs (CART.1),
+# and the engine's tests; cdylib for the wasm32 build the browser loads.
 crate-type = ["rlib", "cdylib"]
 
 [dependencies]

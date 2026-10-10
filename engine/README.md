@@ -54,7 +54,8 @@ end, so a view is a copy. What comes next, in the order `ROADMAP.md` lays
 it: the Input and Clock devices finished
 (`ENGINE.3`), Audio (`ENGINE.4`) and File (`ENGINE.5`); and the
 accelerators, each behind the naive evaluation's frames as its reference
-(`ENGINE.6`).
+(`ENGINE.6`), after the naive evaluator's own costs, which the benchmark
+measured first and which are the language's to remove.
 
 ## The rules that bind every line
 
@@ -77,10 +78,29 @@ accelerators, each behind the naive evaluation's frames as its reference
 
 Conway's Life on a 320 by 200 sheet at thirty frames a second, every cell
 the same formula of its eight neighbours, drawn through the canvas; its
-cells evaluated per second are the engine's first number, against a floor
+cells evaluated per second are the engine's first number, against a line
 of two million a second, and the cartridge ships with the engine as its
 demo (`CART.1`). The first game after it is a falling-sand toy, in a
 repository of its own (`CART.2`).
+
+The benchmark runs from a clone:
+
+```text
+cargo run --release --example frames            # Life's soup and Gosper's glider gun, 31 frames each
+cargo run --release --example frames -- --check # 4 frames each, the frames and the allocations held
+```
+
+Each frame is one step, timed alone, and held to a Life written by hand
+before any number is printed; the steady frames' median gives the cells
+evaluated a second and the frames a second. Beside every frame the same
+hand-written Life runs a fixed workload, and a run whose clock moved more
+than 10%, as Windows' power throttling moves it in a background process, is
+named and prints no baseline. The check mode counts the allocations of a
+frame, an exact number the repository's checks hold to a ceiling. On the
+day the benchmark was first measured, Life stepped at about 218,000 cells a
+second natively and 229,000 in the browser, about a ninth of the line, and
+the engine's own profile of that step names where the rest goes
+(`REARVIEW.md`, `CART.1`).
 
 ## Where it comes from
 

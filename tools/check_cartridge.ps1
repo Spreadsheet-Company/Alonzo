@@ -71,8 +71,11 @@ if ($Root -eq '') { $Root = $repoRoot }
 # 2026-10-09, ENGINE.2: two, the test card beside it, 112 rows (three sheet
 # rows, the Palette's forty-eight cells, the Camera's four and its value row,
 # the Screen's fifty-six: every kind of value and of formula, 960 cells).
-$expectedCartridges = 2
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/testcard/testcard.vla' = 112 }
+# 2026-10-09, CART.1: three, Gosper's glider gun beside them, 88 rows (three
+# sheet rows, the Palette's forty-eight cells, the Seed's thirty-six, Life's
+# rule over the interior in one formula row, its first frame the Seed's).
+$expectedCartridges = 3
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112 }
 
 # --- section 7 and section 3, as data ---
 $requiredDirectives = @('spec', 'title', 'rate', 'screen', 'seed')

@@ -89,7 +89,13 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # a tenth case, the plane held to the record of the same window, and
 # check_blit_floors.ps1 a third case, the frame path over the engine's module,
 # failing until the owner's next fullscreen run is pasted in.
-$expectedAtLeast = 11
+# 2026-10-09, CART.1's first slice: 12 - check_frame_floors.ps1 (the owner's
+# measured baseline of Life's frames, the soup and the glider gun, natively
+# and in the browser, held to floors that never go down, the pin and the
+# fixtures the measured ones; empty, and so failing, until the owner's run of
+# tools/bench_frames.ps1 is pasted in; and with a built runner, every frame
+# held to a hand-written Life and the allocations to their ceilings).
+$expectedAtLeast = 12
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
 # --- The other verifiers, each with the arguments it needs. ---
@@ -106,7 +112,8 @@ $extras = @(
     @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 host loop: the real page passes, ten mutant pages fail under the browser, the fourth only over the engine''s module (SKIPPED without a browser)' },
     @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 blit floors: a clean table of three cases passes, eight mutants fail' },
     @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 export reader and judgment: eight modules built in memory, a non-module' },
-    @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, seven mutants fail' }
+    @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, seven mutants fail' },
+    @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1 frame floors: a clean table and a reasoned lowering pass, ten mutants fail; five fake runners, the clean one passes and four fail' }
 )
 
 # --- The shell each check runs under. ---

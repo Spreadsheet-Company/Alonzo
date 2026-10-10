@@ -15,8 +15,8 @@
   file and the three scripts to that doctrine on every push, as Frazaro's page is
   held.
 
-  Five modes, one page. Opened plainly, it is the engine's panel, a cartridge
-  picked, Life or the test card, running on the host's loop over the engine's own
+  Six modes, one page. Opened plainly, it is the engine's panel, a cartridge
+  picked, Life, the glider gun or the test card, running on the host's loop over the engine's own
   module, the language computing every cell (ENGINE.1's second slice), or over the
   fake module when no engine is built in, with the cartridge editable, an edit row,
   Run and Pause, and any sheet of the grid shown live; then the viewport over the
@@ -44,7 +44,13 @@
   window and at full screen, 120 steps of three rows and 20 page steps, each draw's
   main-thread cost, printed as the table tools/check_render_floors.ps1 holds as its
   baseline. The two instruments are the owner's, in a real browser in fullscreen,
-  never a shared runner.
+  never a shared runner. With ?frames=1 it is the frame floors' instrument (CART.1):
+  the engine's module stepped over the benchmark's two fixtures, Life's soup and the
+  glider gun, synchronously at the page's load, each frame timed alone and held to
+  the page's own Life, and the clock watched beside every frame, printed into
+  <pre id="frames"> as the rows tools/check_frame_floors.ps1 holds;
+  tools/bench_frames.ps1 runs it under headless Chrome on the owner's machine with
+  Windows' power throttling opted out, the step's cost needing no display.
 -->
 <html lang="en">
 <head>
@@ -100,8 +106,8 @@
   #stage:empty { display: none; }
   #stage .case { background: #fff; }
   pre.result { display: none; margin: 14px 0; padding: 10px; border: 1px solid #d9d9d2; background: #fff; font: 12.5px/1.4 ui-monospace, Consolas, "Cascadia Mono", monospace; white-space: pre-wrap; word-break: break-word; }
-  body.oracle pre#oracle, body.bench pre#bench, body.loop pre#loop, body.blit pre#blit { display: block; }
-  body.oracle .page-only, body.bench .page-only, body.loop .page-only, body.blit .page-only { display: none; }
+  body.oracle pre#oracle, body.bench pre#bench, body.loop pre#loop, body.blit pre#blit, body.frames pre#frames { display: block; }
+  body.oracle .page-only, body.bench .page-only, body.loop .page-only, body.blit .page-only, body.frames .page-only { display: none; }
   body:not(.bench):not(.blit) .bench-only { display: none; }
   /* The engine's panel: the plane in a box the blit fits, the controls and the log beside it. */
   .engine { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; align-items: start; }
@@ -134,7 +140,7 @@
           <p id="frame-line" class="frame-line"></p>
         </div>
         <div class="engine-side">
-          <p class="controls"><label>Cartridge <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="testcard">Test card</option></select></label></p>
+          <p class="controls"><label>Cartridge <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="gun">Glider gun</option><option value="testcard">Test card</option></select></label></p>
           <p class="controls"><button type="button" id="eng-run">Run</button> <button type="button" id="eng-pause">Pause</button> <button type="button" id="eng-load">Load the cartridge</button> <button type="button" id="eng-copy">Copy the log</button></p>
           <p class="controls"><label style="flex:1 1 100%">An edit, one row: <input type="text" id="eng-edit" spellcheck="false" value="(cell &quot;Palette&quot; &quot;B1&quot; &quot;#FF8800&quot;)"></label> <button type="button" id="eng-write">Write</button></p>
           <p id="eng-status" class="status"></p>
@@ -143,7 +149,7 @@
       </div>
       <details>
         <summary>The cartridge</summary>
-        <p>The file the host loads, <code id="eng-cart-path">cartridges/life/life.vla</code>, picked above: Life, or the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no colour. Edit it and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
+        <p>The file the host loads, <code id="eng-cart-path">cartridges/life/life.vla</code>, picked above: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; or the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no colour. Edit it and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
         <textarea id="eng-cart" rows="14" spellcheck="false"></textarea>
       </details>
       <p class="controls"><label>A sheet, live <select id="eng-sheet" aria-label="the sheet to show">
@@ -214,9 +220,11 @@
   <pre id="bench" class="result"></pre>
   <pre id="loop" class="result"></pre>
   <pre id="blit" class="result"></pre>
+  <pre id="frames" class="result"></pre>
   <div id="stage"></div>
 </main>
 <script type="text/plain" id="cartridge-life">{{CARTRIDGE:life}}</script>
+<script type="text/plain" id="cartridge-gun">{{CARTRIDGE:gun}}</script>
 <script type="text/plain" id="cartridge-testcard">{{CARTRIDGE:testcard}}</script>
 <script type="text/plain" id="alonzo-wasm">{{ALONZO_WASM}}</script>
 <script type="text/plain" id="fixture-fixture_frazaro">{{FIXTURE:fixture_frazaro}}</script>
@@ -239,14 +247,16 @@
 (function () {
   'use strict';
   var QS = location.search;
-  var MODE = /[?&]oracle=1(&|$)/.test(QS) ? 'oracle' : /[?&]bench=1(&|$)/.test(QS) ? 'bench' : /[?&]loop=1(&|$)/.test(QS) ? 'loop' : /[?&]blit=1(&|$)/.test(QS) ? 'blit' : 'page';
+  var MODE = /[?&]oracle=1(&|$)/.test(QS) ? 'oracle' : /[?&]bench=1(&|$)/.test(QS) ? 'bench' : /[?&]loop=1(&|$)/.test(QS) ? 'loop' : /[?&]blit=1(&|$)/.test(QS) ? 'blit' : /[?&]frames=1(&|$)/.test(QS) ? 'frames' : 'page';
   document.body.className = MODE;
   var VP = window.AlonzoViewport, HOST = window.AlonzoHost, FAKE = window.AlonzoFake;
   var lifeText = (document.getElementById('cartridge-life') || {}).textContent || '';
+  var gunText = (document.getElementById('cartridge-gun') || {}).textContent || '';
   var testcardText = (document.getElementById('cartridge-testcard') || {}).textContent || '';
   // The cartridges built into the page, each its text and the file name a load passes on.
   var CARTRIDGES = {
     life: { text: lifeText, file: 'life.vla', path: 'cartridges/life/life.vla' },
+    gun: { text: gunText, file: 'gun.vla', path: 'cartridges/gun/gun.vla' },
     testcard: { text: testcardText, file: 'testcard.vla', path: 'cartridges/testcard/testcard.vla' }
   };
   // The fixtures: each a record the door printed, by its program and the sheet it holds.
@@ -285,7 +295,7 @@
   var aboutEl = document.getElementById('about');
   if (!built) {
     aboutEl.textContent = 'This page was not built: run tools/build_web.ps1 to fill it.';
-    if (MODE === 'oracle' || MODE === 'loop' || MODE === 'blit') document.getElementById(MODE).textContent = MODE + ' failed: the page was not built';
+    if (MODE === 'oracle' || MODE === 'loop' || MODE === 'blit' || MODE === 'frames') document.getElementById(MODE).textContent = MODE + ' failed: the page was not built';
     return;
   }
   var engineB64 = builtModule().replace(/\s+/g, '');
@@ -547,7 +557,8 @@
   // The oracle's own memory pair, written apart from the host's, over a module's exports, the
   // fake's or the engine's; a text given as bytes goes in as they are.
   function Driver(fake) { this.x = fake.exports; }
-  Driver.prototype.call = function (name, nums, texts) {
+  // A call whose record's text comes back as bytes, a plane's (CART.1's instrument); call() decodes it.
+  Driver.prototype.raw = function (name, nums, texts) {
     var x = this.x, bufs = [], args = nums.slice(), te = new TextEncoder(), td = new TextDecoder();
     for (var i = 0; i < texts.length; i++) {
       var b = texts[i] instanceof Uint8Array ? texts[i] : te.encode(texts[i]), p = x.alonzo_alloc(b.length);
@@ -559,10 +570,14 @@
     var len = new DataView(x.memory.buffer).getUint32(outp, true);
     var dv = new DataView(x.memory.buffer, ptr, len), u8 = new Uint8Array(x.memory.buffer, ptr, len);
     var idLen = dv.getUint32(8, true), textLen = dv.getUint32(12, true);
-    var res = { status: dv.getUint32(0, true), id: td.decode(u8.subarray(16, 16 + idLen)), text: td.decode(u8.subarray(16 + idLen, 16 + idLen + textLen)) };
+    var res = { status: dv.getUint32(0, true), id: td.decode(u8.subarray(16, 16 + idLen)), bytes: u8.slice(16 + idLen, 16 + idLen + textLen) };
     x.alonzo_free(outp, 4); x.alonzo_free(ptr, len);
     for (var j = 0; j < bufs.length; j++) x.alonzo_free(bufs[j][0], bufs[j][1]);
     return res;
+  };
+  Driver.prototype.call = function (name, nums, texts) {
+    var r = this.raw(name, nums, texts);
+    return { status: r.status, id: r.id, text: new TextDecoder().decode(r.bytes) };
   };
   // The loop as section 5 states it, run beside the host over a second fake module.
   function Model(text, opts) {
@@ -939,16 +954,22 @@
       var h = (a * b) % P;
       g[(r - 1) * LIFE_W + (c - 1)] = (h * h) % P < T ? 1 : 0;
     }
-    for (var n = 0; n < generations; n++) {
-      var next = new Uint8Array(LIFE_W * LIFE_H);
-      for (r = 2; r <= LIFE_H - 1; r++) for (c = 2; c <= LIFE_W - 1; c++) {
-        var i = (r - 1) * LIFE_W + (c - 1), me = g[i];
-        var others = g[i - LIFE_W - 1] + g[i - LIFE_W] + g[i - LIFE_W + 1] + g[i - 1] + g[i + 1] + g[i + LIFE_W - 1] + g[i + LIFE_W] + g[i + LIFE_W + 1];
-        next[i] = (others === 3 || (me === 1 && others === 2)) ? 1 : 0;
-      }
-      g = next;
-    }
+    for (var n = 0; n < generations; n++) g = lifeGeneration(g);
     return g;
+  }
+  // One generation of Conway's rule over a 320 by 200 plane, the border dead.
+  function lifeGeneration(g) {
+    var next = new Uint8Array(LIFE_W * LIFE_H);
+    lifeGenerationInto(g, next);
+    return next;
+  }
+  // The same into a plane kept by the caller, whose border is left as it is.
+  function lifeGenerationInto(g, next) {
+    for (var r = 2; r <= LIFE_H - 1; r++) for (var c = 2; c <= LIFE_W - 1; c++) {
+      var i = (r - 1) * LIFE_W + (c - 1), me = g[i];
+      var others = g[i - LIFE_W - 1] + g[i - LIFE_W] + g[i - LIFE_W + 1] + g[i - 1] + g[i + 1] + g[i + LIFE_W - 1] + g[i + LIFE_W] + g[i + LIFE_W + 1];
+      next[i] = (others === 3 || (me === 1 && others === 2)) ? 1 : 0;
+    }
   }
   function liveOf(bytes) { var n = 0; for (var i = 0; i < bytes.length; i++) if (bytes[i] === 1) n++; return n; }
   function firstDiff(a, b) {
@@ -1356,6 +1377,105 @@
     window.addEventListener('load', function () { run(); });
   }
   if (MODE === 'blit') { blitInstrument(); return; }
+
+  // ---- the frame floors' instrument (?frames=1, CART.1): the engine's first number ----
+  // The engine's module stepped over the benchmark's two fixtures, Life's soup and the glider gun, at
+  // the page's load and synchronously, since a headless browser's --dump-dom writes the page at its
+  // load and an asynchronous page cannot be timed so. Each frame is one alonzo_step with no budget,
+  // timed alone; every frame's plane is held to this page's own Life, the soup's arithmetic or the
+  // gun's Seed rows read off the cartridge, so a fast wrong answer is never a number; beside every
+  // frame this page's Life runs a fixed workload, the clock, and a run whose clock moved more than
+  // 10% from its start or across its steady frames prints no rows. tools/bench_frames.ps1 runs it
+  // under headless Chrome on the owner's machine with Windows' power throttling opted out, the step's
+  // cost needing no display; opened by hand, the page freezes while it steps, about twenty seconds
+  // today, and then prints the same. &n=31 sets the frames a fixture.
+  function framesInstrument() {
+    var pre = document.getElementById('frames');
+    var nm = /[?&]n=(\d+)(&|$)/.exec(QS), N = nm ? Math.max(2, +nm[1]) : 31;
+    var PROBE_GENERATIONS = 20, PROBE_BATCHES = 3, START_READINGS = 5, CLOCK_MOVED_MAX = 10;
+    if (!builtModule()) { pre.textContent = 'frames failed: the page holds no engine module'; return; }
+    var bytes = bytesOfBase64(builtModule());
+    // The gun's Seed rows as a plane: (cell "Seed" "J14" 1).
+    function seedPlane(text) {
+      var g = new Uint8Array(LIFE_W * LIFE_H), re = /^\(cell "Seed" "([A-Z]+)([0-9]+)" 1\)\s*$/mg, m;
+      while ((m = re.exec(text))) {
+        var col = 0;
+        for (var k = 0; k < m[1].length; k++) col = col * 26 + (m[1].charCodeAt(k) - 64);
+        var row = +m[2];
+        if (row >= 1 && row <= LIFE_H && col >= 1 && col <= LIFE_W) g[(row - 1) * LIFE_W + (col - 1)] = 1;
+      }
+      return g;
+    }
+    // The clock: this page's Life over a fixed workload in two planes it keeps, a generation untimed
+    // to warm them, the best of a few batches, milliseconds a generation.
+    var fixed = lifeReference(1, 0), pa = new Uint8Array(fixed.length), pb = new Uint8Array(fixed.length);
+    function probe() {
+      var best = Infinity;
+      for (var b = 0; b < PROBE_BATCHES; b++) {
+        pa.set(fixed); lifeGenerationInto(pa, pb);
+        var t0 = performance.now();
+        for (var q = 0; q < PROBE_GENERATIONS / 2; q++) { lifeGenerationInto(pa, pb); lifeGenerationInto(pb, pa); }
+        best = Math.min(best, performance.now() - t0);
+      }
+      return best / PROBE_GENERATIONS;
+    }
+    function median(v) { var s = v.slice().sort(function (x, y) { return x - y; }), n = s.length; return n ? (n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2) : 0; }
+    function quantile(v, q) { var s = v.slice().sort(function (x, y) { return x - y; }); return s[Math.round((s.length - 1) * q)]; }
+    function f1(x) { return (Math.round(x * 10) / 10).toFixed(1); }
+    function f3(x) { return (Math.round(x * 1000) / 1000).toFixed(3); }
+    var starts = [];
+    for (var s0 = 0; s0 < START_READINGS; s0++) starts.push(probe());
+    var startClock = median(starts);
+    var fixtures = [{ name: 'life', text: lifeText }, { name: 'gun', text: gunText }];
+    var lines = [], rows = [], moved = false;
+    for (var fi = 0; fi < fixtures.length; fi++) {
+      var fx = fixtures[fi];
+      var x = HOST.instantiateSync(bytes), d = new Driver({ exports: x });
+      var t0 = performance.now(), ld = d.call('alonzo_load', [], [fx.text, fx.name + '.vla']), load = performance.now() - t0;
+      if (ld.status !== 0) throw new Error(fx.name + ' was refused at its load: ' + ld.text + ' [' + ld.id + ']');
+      var h = +/^\(cartridge (\d+) /.exec(ld.text)[1];
+      var bm = /\(budget \d+ (\d+) /.exec(d.call('alonzo_describe', [h], []).text);
+      if (!bm) throw new Error(fx.name + ': the describe holds no budget row');
+      var cells = +bm[1];
+      var sm = /\(seed (\d+)\)/.exec(fx.text);
+      var want = /^\(cell "Seed" /m.test(fx.text) ? seedPlane(fx.text) : lifeReference(sm ? +sm[1] : 1, 0);
+      var times = [], clocks = [], outp = x.alonzo_alloc(4);
+      for (var f = 1; f <= N; f++) {
+        if (f > 1) want = lifeGeneration(want);
+        clocks.push(probe());
+        var t = performance.now();
+        var ptr = x.alonzo_step(h, 0, outp);
+        var ms = performance.now() - t;
+        var len = new DataView(x.memory.buffer).getUint32(outp, true);
+        var row = new TextDecoder().decode(new Uint8Array(x.memory.buffer, ptr, len).slice(16));
+        x.alonzo_free(ptr, len);
+        if (row.indexOf('(step ' + f + ' ') !== 0 || !/ done\)$/.test(row)) throw new Error(fx.name + ': frame ' + f + ' answered ' + row);
+        var plane = d.raw('alonzo_view', [h], ['plane', 'Screen', 'A1:LH200']).bytes, diff = firstDiff(plane, want);
+        if (diff) throw new Error(fx.name + ': frame ' + f + ' is not the page\'s Life: ' + diff);
+        times.push(ms);
+      }
+      x.alonzo_free(outp, 4);
+      var steady = times.slice(1), med = median(steady), lo = Math.min.apply(null, steady), hi = Math.max.apply(null, steady);
+      var sc = clocks.slice(1), clock = median(sc), spread = (quantile(sc, 0.9) - quantile(sc, 0.1)) / clock * 100, drift = (clock / startClock - 1) * 100;
+      lines.push(fx.name + ': load ' + f1(load) + ' ms; ' + thousands(cells) + ' formula cells; frame 1 ' + f1(times[0]) + ' ms; frames 2 to ' + N + ': median ' + f1(med) + ' ms (min ' + f1(lo) + ', max ' + f1(hi) + '), ' +
+                 thousands(Math.round(cells / (med / 1000))) + ' cells a second, ' + f3(1000 / med) + ' frames a second');
+      lines.push('  the clock: this page\'s Life ' + f3(clock) + ' ms a generation beside every steady frame, spread ' + f1(spread) + '%, ' + (drift >= 0 ? '+' : '') + f1(drift) + '% from ' + f3(startClock) + ' at the start; the engine ' + Math.round(med / clock) + ' times slower than it');
+      if (spread > CLOCK_MOVED_MAX || Math.abs(drift) > CLOCK_MOVED_MAX) {
+        moved = true;
+        lines.push('  the clock moved during the run, more than ' + CLOCK_MOVED_MAX + '%: power throttling or a thermal limit; these frames are not a baseline');
+      }
+      rows.push("    @{ Runner = 'wasm'; Fixture = '" + fx.name + "'; Cells = " + cells + '; Frames = ' + steady.length + '; Load = ' + f1(load) + '; FirstFrame = ' + f1(times[0]) + '; FrameP50 = ' + f1(med) + '; FrameMin = ' + f1(lo) + '; FrameMax = ' + f1(hi) +
+                '; CellsPerSecond = ' + Math.round(cells / (med / 1000)) + '; FramesPerSecond = ' + f3(1000 / med) + '; ClockMs = ' + f3(clock) + '; ClockSpread = ' + f1(spread) + '; ClockDrift = ' + f1(drift) + ' }');
+    }
+    var head = 'frames: the engine\'s module, ' + thousands(bytes.length) + ' bytes, under ' + navigator.userAgent + '; 2 cartridges, ' + N + ' frames each, every frame equal to the page\'s Life';
+    pre.textContent = moved
+      ? 'frames refused: the clock moved\n' + head + '\n' + lines.join('\n') + '\nno baseline rows: run it through tools/bench_frames.ps1, which opts the browser out of Windows\' power throttling'
+      : 'frames ok\n' + head + '\n' + lines.join('\n') + '\nthe baseline rows, for tools/check_frame_floors.ps1:\n' + rows.join('\n');
+  }
+  if (MODE === 'frames') {
+    try { framesInstrument(); } catch (e) { document.getElementById('frames').textContent = 'frames failed: ' + (e && e.message ? e.message : e); }
+    return;
+  }
 
   // ---- the oracle: the viewport's draw list held to the record, cell for cell ----
   // The expectations below are computed from the record and the rules of the

@@ -65,7 +65,13 @@ of the file it touches, as declared in `REUSE.toml`:
   not merged (`ENGINE.6`).
 - **A floor** never goes down. The frame floors and the render floors are
   hand-maintained baselines in `tools/`; raising one is a commit, and
-  lowering one is a reviewed act with its reason in the message.
+  lowering one is a reviewed act with its reason in the message. A change
+  meant to make the engine faster is measured on its own benchmark, Life's
+  soup and the glider gun (`CART.1`): `cargo run --release --example frames`
+  steps both, holds every frame to a Life written by hand, and prints their
+  cells a second, and `tools/bench_frames.ps1` measures the browser's half
+  beside it; the frame floors rise with the change, and the allocation
+  ceilings `tools/check_frame_floors.ps1` holds on every push fall with it.
 - **The viewport** (`web/viewport.js`, the Screen device in grid mode) is
   held by the render oracle, every draw where the record puts it under
   `tools/check_render_oracle.ps1`, whose expectations live in the page and

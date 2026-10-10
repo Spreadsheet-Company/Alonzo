@@ -9,7 +9,11 @@
 //! sheets' layouts checked at load and at every write, the engine's own
 //! sheets (the Clock, the File, and the Input when a cartridge holds none),
 //! the Clock's frame written as the first act of every step, `describe`, and
-//! the engine's own refusals, the `cart` family of `data/messages.vla`. The
+//! the engine's own refusals, the `cart` family of `data/messages.vla`. Its
+//! example, `examples/frames.rs`, is the native runner of the frame floors
+//! (`CART.1`): Life's soup and the glider gun stepped through `Cartridge`,
+//! every frame held to a Life written by hand, timed, and in its check mode
+//! the allocations of a frame counted. The
 //! host shim that drives the module is `web/host.js`; what it holds in the
 //! order the roadmap lays it: the Screen device over the view record
 //! (`KERNEL.5`, laid here), the loop (`ENGINE.1`), the frame path

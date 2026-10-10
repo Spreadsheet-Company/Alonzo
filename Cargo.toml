@@ -1,5 +1,7 @@
-# The Cargo workspace: the engine, and later the native runner the frame
-# floors need (ROADMAP.md, CART.1). CHARTER.md section 4 is the constitution.
+# The Cargo workspace: the engine, one member. The native runner the frame
+# floors need (CART.1) is an example of the engine crate,
+# engine/examples/frames.rs, and no member of its own, so the lock holds no
+# third package. CHARTER.md section 4 is the constitution.
 # Its first rule puts the language in its own crate, vla-lang, cut out of
 # frazaro-core in the Frazaro repository, which this workspace pins under
 # [workspace.dependencies] since ENGINE.1's second slice. Its fifth rule,

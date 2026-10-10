@@ -1544,6 +1544,111 @@ mod tests {
         );
     }
 
+    // ---- CART.1: the gun, the benchmark's second fixture ----
+
+    /// Gosper's glider gun (CART.1): its pattern a Seed sheet the first frame reads.
+    const GUN: &str = include_str!("../../cartridges/gun/gun.vla");
+
+    /// A cartridge's Screen whole, 320 by 200, as the plane reads it.
+    fn screen(c: &Cartridge) -> Vec<u8> {
+        match c.view("plane", "Screen", Some("A1:LH200")) {
+            Ok(Viewed::Bytes(b)) => b,
+            other => panic!("the plane: {other:?}"),
+        }
+    }
+
+    /// The gun's Seed read off the cartridge's rows, `(cell "Seed" "J14" 1)`,
+    /// as a plane of 320 by 200, and not off the engine's grid.
+    fn gun_seed() -> Vec<u8> {
+        let mut g = vec![0u8; 320 * 200];
+        for line in GUN.lines() {
+            let Some(rest) = line.trim().strip_prefix("(cell \"Seed\" \"") else {
+                continue;
+            };
+            let (addr, value) = rest.split_once('"').expect("a Seed row's address");
+            assert_eq!(value.trim(), "1)", "a Seed row holds 1: {line}");
+            let a = vla_lang::sheet::parse_a1_range(addr).expect("a Seed row's address");
+            g[(a.top as usize - 1) * 320 + (a.left as usize - 1)] = 1;
+        }
+        g
+    }
+
+    /// One generation of Life by hand over a plane of 320 by 200, the border dead.
+    fn next_generation(g: &[u8]) -> Vec<u8> {
+        let w = 320usize;
+        let mut n = vec![0u8; g.len()];
+        for r in 1..199 {
+            for c in 1..w - 1 {
+                let i = r * w + c;
+                let mut others = 0;
+                for j in [
+                    i - w - 1,
+                    i - w,
+                    i - w + 1,
+                    i - 1,
+                    i + 1,
+                    i + w - 1,
+                    i + w,
+                    i + w + 1,
+                ] {
+                    others += g[j];
+                }
+                n[i] = u8::from(others == 3 || (g[i] == 1 && others == 2));
+            }
+        }
+        n
+    }
+
+    /// The text of the Screen's one formula row of a cartridge.
+    fn screen_formula(text: &str) -> &str {
+        let line = text
+            .lines()
+            .find(|l| l.starts_with("(formula \"Screen\" \"B2:LG199\" "))
+            .expect("the Screen's formula row");
+        line.trim_end()
+    }
+
+    #[test]
+    fn the_gun_s_first_frame_is_its_seed_and_its_second_the_rule() {
+        let mut c = Cartridge::load(GUN, "gun.vla", GUN.len()).expect("the gun loads");
+        assert_eq!(
+            c.row(1),
+            "(cartridge 1 \"Gosper's glider gun\" plane 320 200 30)"
+        );
+        assert_eq!(
+            c.machine().formulas(),
+            (62_964, 1),
+            "the rule is one shape over the interior"
+        );
+        let seed = gun_seed();
+        assert_eq!(
+            seed.iter().filter(|b| **b == 1).count(),
+            36,
+            "the gun's 36 cells"
+        );
+        assert_eq!(c.step(0).row(), "(step 1 62964 62964 done)");
+        assert_eq!(screen(&c), seed, "frame 1 is the Seed");
+        c.step(0);
+        assert_eq!(
+            screen(&c),
+            next_generation(&seed),
+            "frame 2 is the Seed's first generation"
+        );
+    }
+
+    #[test]
+    fn the_two_fixtures_differ_only_in_their_first_frame() {
+        // Life's rule word for word after the first frame's branch, so that the
+        // floors of the soup and of the gun time the same formula (CART.1).
+        let life = screen_formula(LIFE);
+        let gun = screen_formula(GUN);
+        let tail = ",IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,AND(Screen.last!B2=1,SUM(Screen.last!A1:C3)-Screen.last!B2=2)),1,0))\")";
+        assert!(life.ends_with(tail), "Life's rule: {life}");
+        assert!(gun.ends_with(tail), "the gun's rule: {gun}");
+        assert!(gun.contains("=IF(Clock!$B$1=1,Seed!B2,IF(OR("));
+        assert_eq!(gun, format!("(formula \"Screen\" \"B2:LG199\" \"{RULE}\")"));
+    }
+
     // ---- ENGINE.2: the plane is the record of the same window, byte for value ----
 
     /// A value of the record as `SPEC.md` section 3.1 reads it into the plane, from the
