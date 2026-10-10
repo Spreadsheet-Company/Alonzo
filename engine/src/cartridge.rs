@@ -5,7 +5,9 @@
 //! rows, its twins, its step, its views and their refusals are the
 //! language's, `vla_lang::machine`, called here in Rust.
 //!
-//! **The load**, in section 4.2's order: the manifest read with the
+//! **The load**, in section 4.2's order: a file holding a `defmacro` or an
+//! `include` refused as a cartridge's source, which the pass expands and
+//! the load never does (`SPEC.3`, `crate::pass`); the manifest read with the
 //! language's reader, a later `(spec ...)` refused before anything else in
 //! it; the rows after it read into a draft of the grid (`read_rows`); the
 //! device checks over the draft; the engine's own sheets made in it before
@@ -61,8 +63,9 @@ fn refused(line: u32, id: &str, slots: &[(&str, &str)]) -> LineRefusal {
 
 // ---- the manifest (section 7.2) -------------------------------------------
 
-/// The versions of `SPEC.md` this engine reads.
-pub const SPECS: [u32; 2] = [1, 2];
+/// The versions of `SPEC.md` this engine reads. Version 3 adds no row and no
+/// directive, so a cartridge written to it loads as a version 2 cartridge.
+pub const SPECS: [u32; 3] = [1, 2, 3];
 /// The highest rate, in frames a second; 0 is a step on every edit.
 pub const MAX_RATE: u32 = 120;
 /// The highest seed, so that a Park and Miller cell never sticks at 0.
@@ -736,6 +739,23 @@ impl Cartridge {
                 &[("what", "is missing: the file holds no form")],
             ));
         };
+        // A source is the pass's to expand and never the load's: refused
+        // before its manifest, which a source may open on an include before.
+        if let Some(source) = forms
+            .iter()
+            .find(|f| f.head_is("defmacro") || f.head_is("include"))
+        {
+            let head = if source.head_is("defmacro") {
+                "defmacro"
+            } else {
+                "include"
+            };
+            return Err(refused(
+                source.as_list().map(|l| l.line).unwrap_or(0),
+                "cart-source-unexpanded",
+                &[("form", &format!("({head} ...)"))],
+            ));
+        }
         let manifest = Manifest::read(first)?;
         let mut draft = read_rows(&forms[1..])?;
         let camera = draft.workbook.find_sheet("Camera").is_some();
@@ -1108,6 +1128,7 @@ mod tests {
                 vec![("cell", "x"), ("function", "x")],
             ),
             ("cart-write-derived", vec![("target", "x"), ("cells", "x")]),
+            ("cart-source-unexpanded", vec![("form", "x")]),
         ];
         assert_eq!(catalogue().count(), ids.len(), "every entry is raised");
         for (id, slots) in &ids {
@@ -1191,15 +1212,51 @@ mod tests {
 
     #[test]
     fn a_later_spec_is_refused_before_its_directives() {
-        let text = small(30).replacen("(spec 2)", "(spec 3)\n  (layers 2)", 1);
+        let text = small(30).replacen("(spec 2)", "(spec 4)\n  (layers 2)", 1);
         let r = load(&text).expect_err("a later page is refused");
         assert_eq!(r.refusal.id, "cart-spec-unsupported");
         assert_eq!(r.line, 2, "the spec's own line");
+        assert!(r.refusal.text.contains("(spec 4)"), "{}", r.refusal.text);
         assert!(r.refusal.text.contains("(spec 3)"), "{}", r.refusal.text);
-        assert_eq!(
-            id_of(load(&small(30).replacen("(spec 2)", "(spec 1)", 1))),
-            "loaded"
+        // Version 3 adds no row and no directive: the earlier pages' and its
+        // own load alike.
+        for spec in ["(spec 1)", "(spec 3)"] {
+            assert_eq!(
+                id_of(load(&small(30).replacen("(spec 2)", spec, 1))),
+                "loaded",
+                "{spec}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_source_is_refused_before_its_manifest() {
+        // A source opening on its include, as Appendix C's patch does, and
+        // one defining its own macro after the manifest: the pass's to
+        // expand, never the load's, each refused at the line of the form.
+        let good = small(30);
+        let opens = format!("(include \"../console.vla\")\n{good}");
+        let r = load(&opens).expect_err("a source is refused");
+        assert_eq!(r.refusal.id, "cart-source-unexpanded");
+        assert_eq!(r.line, 1);
+        assert!(
+            r.refusal.text.contains("(include ...)"),
+            "{}",
+            r.refusal.text
         );
+        let defines = format!("{good}(DEFMACRO (one a) (cell \"Screen\" a 1))\n");
+        let r = load(&defines).expect_err("a source is refused");
+        assert_eq!(r.refusal.id, "cart-source-unexpanded");
+        assert!(
+            r.refusal.text.contains("(defmacro ...)"),
+            "{}",
+            r.refusal.text
+        );
+        assert_eq!(r.line as usize, good.lines().count() + 1);
+        // What the pass writes from a source is a cartridge, and loads.
+        let source = format!("(defmacro (one a) (cell \"Screen\" a 1))\n{good}(one \"A1\")\n");
+        let e = crate::pass::expand(&source, "small.source.vla", &[]).expect("expands");
+        assert_eq!(id_of(load(&e.text)), "loaded");
     }
 
     #[test]

@@ -960,3 +960,319 @@ Every frame of both runs was equal to its Life, and the gun's facts held 24 peri
 *Committed and closed 2026-10-10 at the owner's word, "Commit CART.1": the second slice with the item's close, the roadmap's line moved to the ledger's new cartridges section above. Not pushed. Frazaro was pushed first the same day, with its release 0.8.1, so the crate job resolves `f5dc344` from Frazaro's remote.*
 
 *Noted 2026-10-10, after the close:* the pin moved on to the registry, `vla-lang = "=0.8.1"`, the source of `f5dc344` byte for byte, and `check_frame_floors.ps1` names that release as the measured commit's source, so the second baseline holds without being measured again (`ENGINE.1`'s second slice, the note on the registry pin).
+
+## `SPEC.3` — the page, version 3: the cartridge's source, and the pass between it and the rows
+
+*Scoped 2026-10-10 at the owner's word, the day the item was filed from the owner's reading of `cartridges/life/life.vla`, whose forty-eight Palette rows "read as a little redundant and cluttery, which is almost the purpose of writing new macros anyway". The model the owner confirmed at the filing: authors write VLA with macros, a pass writes the cartridge as fully expanded rows, and the engine loads the rows and never expands. The scoping measured what the language's expander can say about a cartridge before deciding anything. It worked in a scratch crate over `vla-lang` 0.8.1 and a scratch copy of the engine, never in either repository's tree. Its first finding settles most of the rest: the expander as published already writes every one of today's rows from a source a third their length, byte for byte. The owner refined the model while the scoping ran, and the decisions take the refinement as their first premise.*
+
+*The owner's refinement, 2026-10-10, given during the scoping:* "the expansion pass may run in the page as well as from a command line. The expander, and any later encoder, are pure functions that compile to wasm (an assembler from WebAssembly's text to its binary is one; a module can return the bytes it writes through its memory for the host to compile). So the scoping should hold that the pass is a separate act from load, its output the artifact a person can read, save and diff, and not where the pass physically runs; weigh the in-page pass beside the command-line tool when deciding which tool runs it."
+
+**Substrate, verified.** Read on the day, by file and never by assumption.
+
+- *The pre-flight.*
+  - This tree at `357cee8`, level with `origin/main`. `ROADMAP.md` holds the previous session's two filings uncommitted, `REPO.4` and `SPEC.3` with the families' next free numbers. They await the owner's word and are never staged with this item.
+  - `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`.
+  - Frazaro at `3235bf9`, the release of 0.8.1, level with its remote. Nine files under `vla-lang/` are uncommitted there by its own sessions, `VLA.1`'s depth limit among them (below).
+- *The page.* `SPEC.md` version 2 whole, 802 lines.
+  - §7.1: one file. A folder of files "is the source layout a tool flattens into the one file, and is not what the engine loads; the tool is a later item's".
+  - §7.2: every directive given, nothing defaulted.
+  - §7.3: the rows the printers print, the range fill the one addition, one write per cell, the prelude's loud collision carried into cells.
+  - §3.2: sixteen rows, and "the engine supplies none, since a default nobody wrote is a decision nobody can read"; the CGA's sixteen offered for a cartridge to copy.
+  - §12: the folder-to-file tool not in version 2. Fragments' modules are "template macros ... that Frazaro expands into formula rows at build time".
+  - Appendix A: Life's Palette "sixteen rows one each".
+  - Appendix C: a patch as a source of module calls, one argument a line, opening on `(include "modular.vla")` before its manifest; C.2, "Frazaro expands the macros at build time".
+- *The charter.*
+  - §4's preface: the owner's condition that Frazaro own nothing a game needs.
+  - Rule 1: the language crate holds the reader and the expander; "a game written in English is translated by Frazaro at build time and ships as VLA".
+  - Rule 4: `AD-4`, the line of the clock.
+  - Rule 7: macros "stay, at the viewport and at build time in Frazaro's expander".
+  - §8: "Alonzo reads no VLA and computes no cell".
+- *The language*, `vla-lang` 0.8.1, the registry's copy, `f5dc344`'s source.
+  - `expand.rs`, the reference's macro system ported: template substitution with a rest parameter; the quasiquote bundle; `symbol`, which fuses atoms, a fused text that opens on a quote mark being a string by the reader's own marker.
+  - Seventeen expand-time primitives: `car`, `cdr`, `cddr`, `cons`, `list`, `null?`, `eq?`, `equal?`, `quote-if`, `cond`, and `+expand` with six comparisons, over numeric literals only, through VBA's `Val` and `Str$`.
+  - No gensym. A trampoline unwraps a macro's own `begin` in tail position and refuses a chain past 5,000 applications. Every macro-made form carries line 0.
+  - `Expander::collect` defines every `defmacro` before anything expands.
+  - `reader.rs`: a string escapes `\"` and `\\` and nothing else; "nothing here splices" an include.
+  - `printer.rs`: `write_datum` writes a form flat; `write_pretty` breaks at 90 columns.
+  - `machine/load.rs`: `read_rows` takes twelve row kinds and skips four by name. Anything else is `grid-row-unknown`, so a `begin` never loads.
+  - The catalogue's language half holds the reference's include refusals: `vla-include-cannot-read`, `vla-include-too-deep` and `vla-include-must-stand-alone`.
+- *Frazaro.*
+  - Its door has no command that expands a VLA text into rows. `build` and `view` translate English, then walk the expanded VLA into a model that carries the `Frazaro` sheet of sentences (`core/src/api.rs`, `english_view`); `compile` writes VBA.
+  - Its core recognizes a whole-line include and refuses it by name: "the core cannot read the file, so it refuses by name where the VBA would splice; a door that reads files splices first" (`core/src/emit/mod.rs`).
+  - The reference's splice (`VLA.bas`, P.L7, `SpliceIncludes`): a line standing alone, raw text before the tokenizer, a relative name resolved against the workbook's folder, nesting capped at 16. A map carries each spliced line to its file's line, an included line's anchor being its include's line.
+  - In flight, uncommitted in its tree: `VLA.1`, a depth limit of 64 lists at the reader and in the expander's walk, scoped there the same day.
+- *This repository.*
+  - `engine/src/cartridge.rs`'s load: the forms read; the manifest the first of them; `read_rows` over the rest; the device checks; the engine's own sheets; the machine.
+  - `check_cartridge.ps1` holds every `.vla` under `cartridges/` as a cartridge, against a pinned count of three. `build_web.ps1` and `check_web_offline.ps1` take a cartridge as the file of its folder's name, and the page's build fails on a folder holding none.
+  - `check_frame_floors.ps1` pins `life.vla`'s and `gun.vla`'s SHA-256 over LF bytes, `90B24FF2...` and `0BD138CB...`: today's files, confirmed on the day. It carries the registry pin by `$sameSource`.
+  - The cartridges' text is read outside the engine in three places, each by the row: the engine's tests (the Screen's formula row by its opening, the gun's Seed rows a line each), the native runner (the Seed rows), and the page's frame oracle (the Seed rows and `(seed N)`).
+  - `check_host_exports.ps1` pins the module's eleven exports. `web/fake.js`, the page's double, refuses a `(spec ...)` other than 1 or 2, with the engine's id and words of its own.
+  - Every `.vla` is CRLF on checkout and LF in the blob.
+
+**The measurements.** *Measurement*, 2026-10-10, on the owner's machine, the scratch crates built under this workspace's release profile. The timings were neither pinned nor opted out of the throttling: they are magnitudes, never floors.
+
+- *A template macro writes the Palette from sixteen entries.* `palette` takes the entries as a rest parameter and hands them on whole through `quasiquote`. It recurses in tail position through `quote-if`, `null?`, `car` and `cdr`, and computes each row's address: `+expand` gives the row, and `symbol` fuses it after a quote mark, `(symbol "\"A" (+expand index 1))` making `"A1"`. Life's sixteen take 34 applications.
+- *A template macro writes a pattern's cells.* `live` puts a 1 in each cell named: the gun's 36 Seed cells are nine calls, one a row of the pattern, in 45 applications.
+- *A palette has a name.* `cga-palette`, a macro with no parameter, calls `palette` with §3.2's sixteen and writes the test card's Palette.
+- *The rows are the same rows.* Each of the three cartridges was written as a source: the manifest as it stands, the Palette and the Seed as calls, every other row as it stands.
+  - Expanded, each source's forms printed flat are byte for byte today's file's forms printed flat: 2,375, 3,117 and 4,339 bytes.
+  - Loaded through the engine, every sheet's record equals today's.
+  - Stepped, every plane is equal at frames 1 to 3: Life 23,683, 23,179 and 19,753 live cells; the gun 36, 39 and 43; the test card's window 40, 40 and 32 cells of colour 1.
+- *What it cannot say.*
+  - A picture written as a string, a character a cell, is refused: `car` of a string is `vla-car-expected-list`, and 0.8.1 has no primitive that splits a text.
+  - A picture as a list of marks, its columns spelled by the caller, works: the gun's seed as nine rows of 36 marks expands to its 36 cells in 657 applications.
+  - One `live` call of 6,000 cells is refused, `vla-macro-self-expansion-limit`, at 5,000 applications in a chain.
+- *What it costs.*
+  - Life's source with the library: 0.35 ms. The gun's 0.55, the test card's 0.45. Today's files merely read and printed: 0.09 to 0.19.
+  - The load the pass feeds: 60 ms for Life and 56 for the gun natively.
+  - A walk over a list copies the list at each step, so a macro's cost grows with the square of what it walks: the gun's picture of marks 4.0 ms, a full Screen's 64,000 marks 3.6 to 4.5 s.
+  - The deepest list any of the three expansions makes is 3 deep, the library recursing in tail position.
+- *The pass as one function of the engine crate.* A scratch copy of the engine took a `pass` module: the includes spliced as the reference splices them, every form expanded, each `begin` flattened, and the layout written. A native example over it built the three sources, each opening on `(include "../devices.vla")`. Each built cartridge's forms equal today's, and each loads.
+- *The same pass in the page.* The scratch module put the pass behind a twelfth export, `alonzo_expand`.
+  - Its size: 512,901 bytes against 461,817, +51,084 or 11.1%.
+  - Imports still none, by `check_host_imports.ps1 -Path`; `check_host_exports.ps1` fails on the twelfth name, as it should.
+  - Under headless Chrome 154 the export answers each source with the native pass's bytes exactly, in 0.3 to 0.5 ms. The module instantiates synchronously in 1.2 ms.
+
+**The census.** Each cartridge as it stands, as a source over the library (the scratch sources carry only the header comment; a real source keeps today's comments), and as the pass writes it (*measurement*):
+
+| cartridge | today: lines, lines of forms, rows after the manifest | as a source: lines, lines of forms, forms after the manifest | as built |
+|---|---|---|---|
+| Life | 103, 60, 51 (the Palette's 48) | 31, 30, 4 | 62, 60, 51 |
+| the gun | 150, 97, 88 (the Palette's 48, the Seed's 36) | 41, 40, 14 | 99, 97, 88 |
+| the test card | 160, 121, 112 (the Palette's 48) | 76, 75, 65 | 123, 121, 112 |
+| the library | | 49, 41 | |
+
+- The Palette is the clutter: 94% of Life's rows, 55% of the gun's, 43% of the test card's.
+- The gun's Seed is the second.
+- The test card's 41 Screen value rows are already ranges, each a kind of value of its own, and no form shortens them.
+- A palette directive the loader took would cost the same lines as a macro call, sixteen entries one a line, and would change the loader as well.
+
+**The work.** Two slices: the page, the pass and the command line first; the pass in the page second.
+
+| File | What it is | Slice; decisions |
+|---|---|---|
+| `SPEC.md` | rewritten in place as version 3: §7.8, the source and the pass, new; §7.1, §7.2 and §7.4 amended; the load's refusal of a source in §4.2; the twelfth export in §4.6 and §8.1; §11's decisions 25 to 35; §12 (the folder-to-file tool in, the picture, the module and the encoder named); §13's oracles; Appendices A and C in the source's shape | 1; all |
+| `CHARTER.md` | rule 1, rule 7, §8 and the frame paragraph, amended first | 1; 34 |
+| `engine/src/pass.rs` | the pass: a source, its path and the texts it may include, to the cartridge's text; its tests, among them the golden over every source the folder holds | 1; 25 to 28 |
+| `engine/examples/expand.rs` | the command line: each source's cartridge written beside it, then loaded as an act of its own; `--check` compares and writes nothing | 1; 26 |
+| `engine/src/cartridge.rs`, `engine/data/messages.vla`, `web/fake.js` | `cart-source-unexpanded`; `(spec 3)` read by the engine and the double | 1; 31, 32 |
+| `cartridges/console.vla` | the library: `palette`, `cga-palette`, `live` | 1; 27, 29 |
+| `cartridges/<name>/<name>.source.vla` | the three sources, today's comments kept | 1; 28, 30 |
+| `cartridges/<name>/<name>.vla` | the three cartridges, rebuilt, their rows unchanged | 1; 28, 30 |
+| `tools/check_cartridge.ps1` | the folder rule; sources and libraries told apart and counted; each source's cartridge and banner; `(spec 3)`; a source refused; the control's mutants | 1; 28, 31, 32 |
+| `tools/check_frame_floors.ps1` | `$sameRows`, and two control cases | 1; 30 |
+| `engine/src/abi.rs`, `tools/check_host_exports.ps1` | `alonzo_expand`, the twelfth export; the baseline at twelve | 2; 26 |
+| `web/host.js`, `web/index.template.html`, `tools/build_web.ps1`, `tools/check_web_offline.ps1` | the host's `expand`; the engine panel's Build, a press of its own before Load; the sources and the library embedded, their places held | 2; 26 |
+| `tools/check_host_loop.ps1` | the loop oracle's eleventh case: the page's pass over every embedded source equal to its embedded cartridge; a mutant page | 2; 26 |
+| `README.md`, `engine/README.md`, `web/README.md`, `CONTRIBUTING.md`, `ROADMAP.md`, this file, `Delta/CLAUDE.md`, the memory | the pages | 1 and 2; 35 |
+
+**The decisions, the owner's.** Numbered after §11's last, as the page's own decisions are. Each with the sitting's recommendation and the alternative it declines.
+
+25. **The pass is an act of its own between the source and the load; its output is the cartridge, the artifact a person reads, saves and diffs; where it runs is not what it is.** This is the owner's refinement made the page's rule.
+    - The load takes rows and never expands. The pass takes a source and the texts it includes, writes rows, and never loads.
+    - Every door runs the same pass. A door may run the load after it, as an act of its own, to say whether the cartridge loads.
+    - Each door hands the person the artifact to read before anything loads it.
+
+    *Alternatives:* expansion inside the load, which loses the artifact: a person loads text they never see as rows, a save writes rows the source never held, load is no longer the inverse of view, and every port of the engine carries an expander in its load. Or the pass defined as a build tool of the repository, the command line its one door, so that the page could not build what it loads.
+26. **One pass and two doors: a pure function of the engine crate over the language's expander, run at the command line by an example and in the page by a twelfth export.**
+    - `engine/src/pass.rs` holds the pass. `vla_lang::expand::Expander` does every act of expansion: template macros, the seventeen primitives, no gensym, no eval. The pass adds what a door adds: it splices the texts it is handed, flattens `begin`, and writes the cartridge's layout.
+    - `engine/examples/expand.rs` is the command line: it reads the files and writes the cartridges. As an example of the crate it adds no package and no dependency, so `AD-5` and the lock of two packages stand, as they did for the runner.
+    - `alonzo_expand`, the module's twelfth export, gives the page the same pass. Measured: +51,084 bytes, imports none, the native bytes exactly, 0.3 to 0.5 ms a source. The ABI stays 1, an export added and no signature changed, §4.6's own discipline.
+    - `AD-4`'s line is the clock, and the pass carries none. Its golden half, the expansion, is the language's code already. Its other half is a door's (the splice, which Frazaro's core leaves to "a door that reads files") and the cartridge's own layout, which is this page's. The engine's manifest reader and device checks are pure functions of this repository on the same reading.
+    - The command line comes first, since the repository's builds and the golden need it. The page's door is the second slice.
+
+    *Alternatives:*
+    - Frazaro's door, a new `frazaro expand`. That is a Frazaro item and a release before any cartridge builds, puts the core in every game's build, and runs against the owner's condition that Frazaro own nothing a game needs (`CHARTER.md` §4).
+    - The general half, a text's includes spliced and its forms expanded into rows, in `vla-lang` as a Frazaro item. Not needed while 0.8.1's expander suffices; it is where that half moves the day a second door wants it.
+    - The command line alone, so that the page cannot build.
+    - A second module for the pass: a third package in the lock that `check_engine_deps.ps1` pins at two, and a second compile in the page.
+27. **The source, the include and the library.**
+    - A source is a VLA text:
+      - its licence line first (§7.1);
+      - any `(include "path")` line, standing alone, spliced before the reader;
+      - template macros, every one defined before any form expands, as the language's first pass defines them;
+      - the manifest, the first form that is no macro, copied as written and never expanded, so the source states what the cartridge is;
+      - then rows and macro calls, in any mix.
+    - An include follows the reference's P.L7. A relative path resolves against the source's own folder, as the reference resolves against the workbook's, nested includes included. Includes nest 16 deep at most, and a refusal uses the language's own ids.
+    - Each door hands the pass the texts it may include: the command line reads them from disk, the page passes the libraries it embeds.
+    - The repository's library is `cartridges/console.vla`, a file beside the cartridges' folders, 0BSD with them. It holds `palette` (the Palette's sixteen rows from sixteen entries, one argument a line with its comment), `cga-palette` (§3.2's table as a palette with a name), and `live` (a 1 in each cell named, a pattern's live cells).
+
+    *Alternatives:* libraries named to the door, as Frazaro's door takes `--prelude`, which leaves the source silent about what it reads and gives two doors two conventions. Or the include in `vla-lang`, a Frazaro item; but the language reads no file, so a door splices first all the same, as Frazaro's core already says.
+28. **The layout in the repository, and the golden.**
+    - A cartridge stays the file of its folder's name, `cartridges/<name>/<name>.vla`. That is the rule `build_web.ps1` and `check_web_offline.ps1` keep already, and `check_cartridge.ps1` learns it in place of its glob of every `.vla`.
+    - Its source, when it has one, is `cartridges/<name>/<name>.source.vla`, beside it. A library is a file of `cartridges/` itself. Both are committed.
+    - The cartridge is the pass's output byte for byte:
+      - line 1, the source's licence line;
+      - line 2, a banner naming the source, with no digest in it, so that a comment edited in a source never moves its cartridge's bytes;
+      - the manifest, one directive a line;
+      - the rows, one a line;
+      - CRLF, as every `.vla` in the working tree.
+    - Held by `cargo test`: the pass over every source in the folder equals its cartridge, LF over LF, and each cartridge loads.
+    - Held by `check_cartridge.ps1`, statically: every source has its cartridge, every banner names a source that is there, and the counts are pinned.
+    - A cartridge with no source is hand-written, as every version 2 cartridge is, and stays a cartridge.
+
+    *Alternatives:* the source alone committed and the cartridge a build artifact. Then the ratchets job, the page's build and the runner would each need the pass first, and a clone would hold nothing to load. Or a stamp of the source's digest in the banner: a stale cartridge caught without cargo, at the price of the cartridge's bytes, and the frame floors' digests, moving with every comment of its source.
+29. **The data forms the loader takes: none in version 3. Every convenience is a macro of a library.**
+    - The loader takes version 2's rows. Load stays the inverse of view with its one addition, the range fill, and a port of the engine implements no sugar.
+    - The named palette is a macro, `cga-palette`, its sixteen stated in the library and never in the engine.
+    - The table row is a macro. `table` is the reader's row for an Excel Table already, skipped by the load.
+    - The picture row is not in this version (§12).
+      - A template macro cannot read a string in 0.8.1 (measured).
+      - A picture of marks works, but it is quadratic and spells its columns by hand.
+      - Each route to a picture written as a string is a later version's, decided by the first cartridge that wants one: a row the loader takes; a built-in of the pass; or an expand-time primitive in the language, a Frazaro item with the VBA reference first (`SD-18`).
+      - Until then a pattern is `live`, one call a row of it.
+
+    *Alternatives:* the palette as a manifest directive the engine expands at load. Then the manifest holds a device's contents, every port carries the table, and a save drops the directive for forty-eight rows. Or the picture now, by any of its three routes.
+30. **The fixtures are rebuilt from their sources with their rows unchanged, and a `$sameRows` map carries the frame floors' digests to the rebuilt bytes, as `$sameSource` carries the registry pin.**
+    - Measured: each rebuilt cartridge's forms are today's byte for byte, and it loads and steps to today's grid.
+    - `check_frame_floors.ps1` accepts a fixture whose SHA-256 the map names as the measured file's rows rebuilt, verified on the day the map is written.
+    - Two control cases: a mapped digest passes, an unmapped one fails.
+    - Thereafter a fixture's bytes move only with its rows, since the pass carries no comment and the banner no digest, and a moved row is measured again as before.
+
+    *Alternatives:* the owner's run of `tools/bench_frames.ps1` again, its baseline lines pasted, the history untouched, each row clearing its floor by its margin. Or the fixtures kept hand-written, which leaves the reading that filed this item unanswered. Or a digest over the forms printed flat, which needs a PowerShell twin of the language's printer in the check.
+31. **A source handed to the load is refused by name: `cart-source-unexpanded`.**
+    - A file holding a `defmacro` or an `include` among its top-level forms is refused before its manifest is read, at the first such form's line.
+    - The words say it is a source, which the pass expands into the rows a load takes.
+    - It is the ninth id of the engine's catalogue, and `check_cartridge.ps1` holds the same rule.
+    - The page's double reads the manifest alone and is not asked to know it.
+
+    *Alternative:* the language's `grid-row-unknown`, or, for a source that opens on an include, the manifest's "is not the file's first form". Each names a form and not the act that was missed.
+32. **`(spec 3)` is read by the engine, with nothing new to read.**
+    - Version 3 adds no row and no directive, so a cartridge written to it is a version 2 cartridge.
+    - The engine, the double and `check_cartridge.ps1` read 1 to 3, and `cart-spec-unsupported` says so.
+    - The three fixtures keep `(spec 2)`, the version of the rows they use, so that their manifests and their measured rows stand as they are.
+
+    *Alternatives:* the engine unchanged, refusing `(spec 3)` to an author who wrote the page's own number. Or the fixtures moved to `(spec 3)`, a row changed and the frame floors to measure again.
+33. **What the horizon needs from this version, and no more.**
+    - The pass is named as an act with an artifact.
+    - The source is neutral to its target.
+    - A cartridge carries data and never code.
+    - The module and its reaches are named in §12, and the emitter stays unminted.
+    - The owner's end goal, VLA macros expanding into WebAssembly's text, is one more target of the same act: the same source, includes and template macros.
+      - A later version's encoder writes a module's text. It is the charter's third backend, the language's, a pure function compiled to wasm like the pass.
+      - An assembler writes the module's bytes, and the host compiles them and nothing else does.
+      - The text stands beside the bytes as the artifact a person reads, as the cartridge stands beside its source.
+    - A cartridge that carries a module reaches six things by name, which that version decides:
+      - `AD-5`: a second module's imports, and how a step would reach a function its module does not hold with an empty import section;
+      - `AD-6`: a module's memory is state that is no cell;
+      - `AD-7`: code enters by the load, as a formula does, and never by a step;
+      - §6 and the replay: a module importing nothing is deterministic but for a NaN's payload bits, and the replay names its digest;
+      - `SD-13`: instantiated with an empty import object;
+      - and where the assembler runs.
+
+    *Alternatives:* the emitter minted now in Frazaro's registers, an ID ahead of any cartridge that needs code. Or a `(module ...)` directive reserved now, a directive that does nothing.
+34. **The charter amended first, in four places.**
+    - Rule 7's "at build time in Frazaro's expander" reads "at build time in the language's expander, through the pass (`SPEC.md` §7.8)". The expander has been the language's since `PORT.12`.
+    - Rule 1's sentence on a game written in English gains its twin: a cartridge written in VLA is expanded through the pass by the language's expander, so that a game's build needs the language and never the core.
+    - §8's "Alonzo reads no VLA" gains its clause: the pass reads a source through the language's reader and expander and adds no parser of its own.
+    - The frame paragraph names the page's third version.
+
+    *Alternative:* the page alone changed, and the charter's rule 7 left naming Frazaro's expander.
+35. **The slices, the checks and the bookkeeping.**
+    - Slice 1, the page and the command line: the page rewritten as version 3; the charter's four amendments; the pass with its tests; the command line; the library; the three sources and their rebuilt cartridges; the ninth refusal and `(spec 3)`; `check_cartridge.ps1` and its control; `check_frame_floors.ps1`'s map and its two cases.
+    - Slice 2, the page's door: the twelfth export and its baseline; the host's `expand`; the Build press; the sources and the library embedded and their places held; the loop oracle's eleventh case with its mutant page; the double's Build declined in words, since the double holds no expander. Slice 2's own scoping, at its build, measures `?frames=1` on the larger module beside the floors.
+    - `run_checks.ps1` stays at 12 checks and 12 verifiers, the golden being `cargo test`'s.
+    - The roadmap's line gains its scoping note and its built marker once the owner has committed the two filings it sits in.
+    - The commits are made at the owner's word, by `-F`, staged by hunk: `SPEC.3: the page, version 3, a cartridge's source and the pass that expands it into the rows the engine loads`, and `SPEC.3: the pass in the page, the same bytes as the command line's, an act of its own before the load`.
+
+    *Alternative:* one slice, or the page's door left to `ENGINE.5`, the File device, which picks and saves a person's files.
+
+**The catch.** Each met once in the scratch work, or foreseen by reading.
+
+- `check_cartridge.ps1` holds every `.vla` under `cartridges/` as a cartridge against a pinned count. A source or a library there fails it until it learns the folder rule the page's build already keeps.
+- The frame floors pin the fixtures' bytes, and a rebuilt fixture's bytes differ from today's where its rows do not (comments, the manifest's layout): decision 30. The replay of §7.6 names a cartridge by its bytes' digest as well. A cartridge rebuilt with the same rows is the same cartridge to the engine and another to a replay; no replay exists yet, and the first, `CART.4`'s, is written over a built cartridge.
+- A template walk over a list copies the list at each step, so a library macro walks dozens of items and never thousands. A chain stops at 5,000 applications. When the pin passes `VLA.1`, a list nested deeper than 64 is refused in the expander's walk as well: the library's macros recurse in tail position, where the trampoline keeps the output 3 deep (measured).
+- An address is a string only by the reader's marker. `(symbol "\"A" n)` fuses a text that opens on a quote mark, which `symbol` makes a string; the library says so where it does it.
+- Every `.vla` is CRLF on checkout and LF in the blob. The pass writes CRLF, as the language's own `expand_text` joins its lines, and every comparison is over LF.
+- The cartridges' rows are read off their text in three places outside the engine, each by its line. The pass writes one row a line, spelled as today (measured).
+- `2>&1` on a native command in Windows PowerShell 5.1 turns its standard error into error records and can stop a script. Met in the scratch harness; written around with `$ErrorActionPreference = 'Continue'`.
+- The tree is shared, and `ROADMAP.md` holds the previous session's filings of `REPO.4` and `SPEC.3`, uncommitted. This item's notes on its own roadmap line wait for the owner's commit of the filings, so that no hunk carries both.
+- The engine's tests already read the cartridges from outside the crate (`include_str!` of `../../cartridges/`), and the pass's golden reads the folder at run time. The crate's package will carry neither, which is `REPO.4`'s to settle, as `VLA.1` settles the language's.
+- Slice 2 grows the module by a ninth (measured: 11.1%). The step's code is the same, but the module's bytes are not the module the frame floors measured, so slice 2 measures `?frames=1` on it beside the floors.
+
+**Oracle.** On the owner's machine under Windows PowerShell 5.1, then on both jobs:
+
+- `cargo build`, `fmt --check`, `clippy --all-targets -D warnings` and `cargo test --workspace`. The pass's tests and its golden: every cartridge with a source equal to the pass over it, LF over LF, and loading. The engine's tests over the rebuilt cartridges as before.
+- `check_cartridge.ps1` clean, and its control's mutants failing.
+- `check_frame_floors.ps1` clean over the rebuilt fixtures: the runner's frames equal, its counts at their ceilings, and its control with the two new cases.
+- `check_host_loop.ps1` with Life at frames 1 and 11 at 23,683 and 14,482 live cells, as before.
+- `run_checks.ps1 -WithExtras` at 12 checks and 12 verifiers, `ALL GREEN`.
+- In slice 2: the module at twelve exports with none imported, and the loop oracle's new case at both ratios, the page's pass over every source equal to its cartridge byte for byte, its mutant page failing it.
+- The owner's reading of the page, version 3, against the decisions. The owner's hand test: each source read beside its cartridge; each cartridge picked and run in the page as before; in slice 2, a source built in the page, read, and loaded by a press of its own.
+
+**Size.** `~days` (*prediction*).
+- Slice 1, about a day: the pass about 250 lines and its tests 200, the command line 120, the library 60, the three sources, the check 120 lines more, and the page's prose.
+- Slice 2, about a day: the export 50, the host 40, the page 150, the oracle's case 80, the places 40.
+
+*Scoped 2026-10-10; the eleven decisions await the owner.*
+
+*Approved 2026-10-10, the same day, all eleven, in the owner's words: "Decisions 25 to 35 approved." The two filings were committed first and on their own, at the owner's word: `a41c86d` (`REPO.4`) and `f830a33` (`SPEC.3`). With the approval came a guiding principle, in the owner's words:* "the point isn't to solve the macro one built-in macro at a time, because that doesn't allow users/constributers/developers to define their own macros, nor does it generalize to the row/column/sheet level which is the fundamental object model of ALonzo. The 'palette', 'live', and 'cga-palette' are species of the larger problem, which is that hand-typing boilerplate is not conducive to rapid iteration, and rapid iteration is the psychological barrier between creative flow and task abandonment. ... it still stands as a guiding principle behind requiring the extensibility of VLA to collapse the cognitive burden of boilerplate down to a minium so that macro expansion can do the rote boring task of expanding human thought into WASM module code."
+
+*What the build takes from it.*
+- The pass knows no macro by name. Every macro is an author's `defmacro`, in a source or a library the source includes. The repository's library is a file like any other, written to be read, copied and outgrown. The page says so, and a test holds a source that defines its own macro.
+- The principle's second half is where the measurements put the limit of the template expander. A macro reaches a row by arithmetic (`+expand`), but reaches a column and a sheet only by the names its caller lists, and cannot split a text. Its walk over a list is quadratic, and a chain stops at 5,000.
+- So the generality the principle asks for, at the row, the column and the sheet, is an expand-time object model the language must give: an address from a row and a column number and back, a column's letters from its number, a text split into its characters, and arithmetic past addition. That is a change to `vla-lang`, so a Frazaro item, the VBA reference first (`SD-18`).
+- The page names it in §12 as the next step of the pass, with the formula dialect beside it (an expression such as `(- note 12)` written as `=note-12`, `frazaro-core`'s emitter today), and the emitter to WebAssembly after both. This item builds the pass and asks nothing of the language. The prompt for the Frazaro session goes in the chat, at the owner's call.
+
+*The first slice built 2026-10-10, over `vla-lang` 0.8.1, awaiting the owner's test.*
+
+What landed:
+- `CHARTER.md`, amended first (decision 34): rule 1's VLA road beside the English one; rule 7's macros "at build time in the language's expander, through the pass"; §8's clause that the pass reads a source through the language's reader and expander and adds no parser; the frame paragraph's third version.
+- `SPEC.md`, rewritten in place as version 3:
+  - the preamble;
+  - §4.2's refusal of a source, and every version 1 and 2 cartridge a version 3 one;
+  - §4.6's twelfth export and §8.1's count, both marked as the second slice's;
+  - §4.7's ninth refusal;
+  - §7.1's correction, the tool the pass;
+  - §7.2's `(spec 3)`;
+  - §7.3's rows the pass writes;
+  - §7.4's VLA road;
+  - §7.6's note that a replay names the cartridge and never its source;
+  - §7.8, new, the source and the pass;
+  - §9's `defmacro` row;
+  - §10's two limits, includes 16 deep and 5,000 applications;
+  - §11's decisions 25 to 35;
+  - §12, the folder-to-file tool gone from what is not built, and the pass's next steps named;
+  - §13's four oracles and the hand-offs;
+  - §14's sources;
+  - Appendix A's note;
+  - Appendix C as a source, its library in the pass's row shape, C.2 to C.4 corrected.
+- `engine/src/pass.rs`, the pass: the includes spliced as the reference splices them, the language's expander, the manifest copied, `begin` flattened, the layout written, CRLF, and its seven tests, the golden over the repository's folder among them.
+- `engine/examples/expand.rs`, the command line: each source's cartridge written beside it and then loaded, as an act of its own; `--check` compares and writes nothing.
+- `engine/src/cartridge.rs`: `(spec 3)` read, and `cart-source-unexpanded` before the manifest, with its test. `engine/data/messages.vla`: the ninth refusal, and `cart-spec-unsupported` naming three versions. `engine/src/lib.rs`: the module and its line.
+- `cartridges/console.vla`, the library: `palette`, `cga-palette` and `live`, with the rules every macro there keeps.
+- The three sources, `cartridges/<name>/<name>.source.vla`, today's comments kept, and the three cartridges rebuilt by the pass.
+- `tools/check_cartridge.ps1`: the folder rule, three pins, the banner held both ways, the source refused, `(spec 3)`, and its control. `tools/check_frame_floors.ps1`: `$sameRows`, its two control cases, its header and closing line. `tools/run_checks.ps1`: the floor's dated line and the two controls' lines.
+- `web/fake.js`, the double reading `(spec 3)`; `web/index.template.html`, the loop oracle's two later pages as `(spec 4)`.
+- `README.md`, `engine/README.md`, `CONTRIBUTING.md`; the roadmap's line; the map's line; the memory.
+
+The oracle, run on the day on the owner's machine under Windows PowerShell 5.1 (*measurement*):
+- `cargo fmt --check` and `clippy --workspace --all-targets -D warnings` clean; `cargo test --workspace` 24 passed, 16 before and 8 new, the golden among them, every cartridge with a source equal to its expansion and loading.
+- `cargo run --release --example expand`: 51, 88 and 112 rows, each cartridge loading; `--check` the same.
+- The three rebuilt cartridges against today's files, by the scratch probe: their forms printed flat byte for byte today's; every sheet's record equal; every plane equal at frames 1 to 3.
+- The module 462,379 bytes, 562 more for the ninth refusal's words and its check; 0 imports and the eleven exports; the pass in no export, so none of it in the module until the second slice.
+- `check_frame_floors.ps1` clean, both fixtures carried by the table, the runner's frames equal and its allocations at the ceilings, 251,957 and 251,958: the measured grid, by the code's own count. Its control: five clean cases and fourteen mutants.
+- `check_cartridge.ps1` clean: three cartridges, three sources, one library. Its control: two clean cases and twenty mutants, each failing for its own reason.
+- `check_host_loop.ps1` at both ratios: the engine case's Life at 23,683 and 14,482 live cells at frames 1 and 11, as before; parity 11 of 11.
+- `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`.
+
+Corrected in the build, against the scoping:
+- *A test held a layout, not a claim.* `abi.rs`'s test pinned "the rate's own line" as line 11, the hand-written file's; the rebuilt manifest puts `(rate 30)` on line 6. The test now finds the line in the text.
+- *The page's oracle used `(spec 3)` as its later page*, in the refusals case and the parity case; both now say `(spec 4)`, and parity still answers 11 of 11.
+- *Appendix C's library wrote the build walker's forms*, which the pass would hand to the load as rows it refuses. It is rewritten in the pass's row shape, and its block, cut out of the page, writes C.2's rows exactly.
+- *Two limits measured beyond the scoping*: a parameter named like a row it writes replaces that row's head (`name` turned `(name name ...)` into `("beat" "beat" ...)`), and a nested expression cannot become a formula by template (`vla-symbol-arg-is-list`). Both are in §7.8, and the second in §12.
+- *Windows PowerShell 5.1's `2>&1` on a native command* broke a comparison loop in the scratch harness, which then ran under bash.
+
+What remains is the owner's.
+1. Read `SPEC.md` §7.8 and a source beside its cartridge: `cartridges/life/life.source.vla` and `cartridges/life/life.vla`.
+2. `cargo run --release --example expand -- --check`, and then, if you like, edit a palette entry in a source, expand, and see the cartridge move and `cargo test` hold it.
+3. Open `web/index.html` (built) and run Life, the gun and the test card as before.
+4. `run_checks.ps1 -WithExtras`, `ALL GREEN`.
+5. The commit at the owner's word, by `-F`, staged by hunk: `SPEC.3: the page, version 3, a cartridge's source and the pass that expands it into the rows the engine loads`. Then the second slice, the pass in the page.
+
+*The owner's test, 2026-10-10.*
+- `cargo run --release --example expand -- --check` read `same` for the gun, Life and the test card, `(expand-done 3)`.
+- The three cartridges ran in `web/index.html` as before.
+- `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`.
+
+*Owner-tested 2026-10-10; committed 2026-10-10 at the owner's word, "Commit, then scope and implement slice 2". Not pushed.*

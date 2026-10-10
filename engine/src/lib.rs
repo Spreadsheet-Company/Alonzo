@@ -9,7 +9,11 @@
 //! sheets' layouts checked at load and at every write, the engine's own
 //! sheets (the Clock, the File, and the Input when a cartridge holds none),
 //! the Clock's frame written as the first act of every step, `describe`, and
-//! the engine's own refusals, the `cart` family of `data/messages.vla`. Its
+//! the engine's own refusals, the `cart` family of `data/messages.vla`. Since
+//! `SPEC.3` (2026-10-10) it holds the pass too (`pass`): a cartridge's source
+//! expanded by the language's expander into the rows a load takes, an act of
+//! its own that the load never calls, run at the command line by
+//! `examples/expand.rs` and in the page by the same function. Its
 //! example, `examples/frames.rs`, is the native runner of the frame floors
 //! (`CART.1`): Life's soup and the glider gun stepped through `Cartridge`,
 //! every frame held to a Life written by hand, timed, and in its check mode
@@ -31,3 +35,4 @@
 
 pub mod abi;
 pub mod cartridge;
+pub mod pass;

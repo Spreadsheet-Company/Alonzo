@@ -39,7 +39,26 @@ engine is:
 - the frame number written into the Clock as the first act of every step,
   the only clock there is;
 - `describe`, the manifest, the devices and the budget, and the engine's
-  own refusals, a catalogue of eight in `data/messages.vla`.
+  own refusals, a catalogue of nine in `data/messages.vla`, the ninth a
+  cartridge's source handed to the load, which never expands.
+
+Beside the engine, the pass (`src/pass.rs`, `SPEC.md` section 7.8): a
+cartridge's source, VLA with template macros and `include`s, expanded by the
+language's own expander into the rows a load takes, as an act of its own
+that no load calls. It reads no file, so the command line and the page run
+the same function to the same bytes: at the command line it is the example
+`examples/expand.rs`, which writes each `<name>.vla` beside its
+`<name>.source.vla` and loads it after,
+
+```text
+cargo run --release --example expand                 # every cartridges/<name>/<name>.source.vla
+cargo run --release --example expand -- --check      # the same, compared and written nowhere
+```
+
+and a test holds every cartridge of the repository to its source's
+expansion, byte for byte. The pass knows no macro by name: the repository's
+library, `cartridges/console.vla`, is a file a cartridge includes, copies or
+outgrows like any other.
 
 Its tests hold the two projections of a window to one another: the plane of
 a window is the view record of the same window, byte for value, the record

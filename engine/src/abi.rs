@@ -446,7 +446,12 @@ mod tests {
             "life.vla",
         );
         assert_eq!((bad.status, bad.id.as_str()), (1, "cart-manifest-invalid"));
-        assert_eq!(bad.line, 11, "the rate's own line");
+        let rate_line = LIFE
+            .lines()
+            .position(|l| l.contains("(rate 30)"))
+            .expect("Life's manifest gives its rate")
+            + 1;
+        assert_eq!(bad.line as usize, rate_line, "the rate's own line");
         // Bytes that are not UTF-8, named, status 2.
         let raw = load(&[0x28, 0xff, 0xfe, 0x29], "bad.vla");
         assert_eq!((raw.status, raw.text()), (2, "the cartridge is not UTF-8"));

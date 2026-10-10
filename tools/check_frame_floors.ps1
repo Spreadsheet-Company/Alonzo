@@ -21,10 +21,12 @@ WHAT IT HOLDS, from the baseline pasted below:
   - a date, an environment line, the vla-lang pin it was measured at, and
     each fixture's SHA-256 over LF bytes; the pin equal to Cargo.toml's, or
     Cargo.toml's a registry release this file names as the measured commit's
-    source byte for byte, and each digest equal to the fixture's, so that a
-    language moved or a fixture edited without a new measurement fails by
+    source byte for byte, and each digest equal to the fixture's, or the
+    fixture's a rebuild of the measured file's rows this file names, so that
+    a language moved or a fixture edited without a new measurement fails by
     name, and every change to the language is measured on the benchmark
-    before it lands here;
+    before it lands here (SPEC.3 rebuilt both fixtures by the pass from
+    their sources, their rows unchanged: decision 30, REARVIEW.md);
   - the environment line saying, as the instrument writes it, that both
     halves ran opted out of Windows' power throttling and on the performance
     cores, or on a machine of one kind of core: the instrument's guards
@@ -66,11 +68,13 @@ SKIPPED without a runner: the ratchets job builds none, and the crate job
 builds it before this check runs.
 
 -Control proves the judgment: a clean table passes, a table with a floor
-lowered for a written reason passes, and so does a pin moved to a registry
-release the table names as the measured source; an empty baseline, a row
+lowered for a written reason passes, and so do a pin moved to a registry
+release the table names as the measured source and a fixture rebuilt with
+the rows the table names as the measured ones; an empty baseline, a row
 missing, a smoke run's few frames, a row under its floor, a floor lowered
 with no reason, no floor at all, the pin moved, the pin moved to a release
-of another source, a fixture's digest changed, a clock
+of another source, a fixture's digest changed, a fixture rebuilt with rows
+the table does not name, a clock
 that moved, frames a second that disagree with cells a second, a run not
 opted out of the throttling and a run not on the performance cores must
 each fail; the history, read from text as the commit's copy is: an entry
@@ -155,6 +159,22 @@ $floorHistory = @(
 # f5dc344's. The engine's frames and allocations are the same over both.
 $sameSource = @{ '0.8.1' = 'f5dc344' }
 
+# --- fixtures whose bytes moved and whose rows did not ---
+# A fixture's SHA-256 over LF bytes named as the measured fixture's own rows,
+# rebuilt: a digest the baseline names stands for its file, and a digest here
+# for that file's rows written again, so the measured grid is the one loaded.
+# 2026-10-10, SPEC.3 (decision 30): life.vla and gun.vla rebuilt by the pass
+# from life.source.vla and gun.source.vla. Each rebuilt file's forms printed
+# flat are byte for byte the measured file's; loaded, every sheet's record is
+# equal; stepped, every plane is equal at frames 1 to 3 (Life 23,683, 23,179
+# and 19,753 live cells, the gun 36, 39 and 43). Only the comments and the
+# manifest's layout moved, and the pass carries no comment, so these bytes
+# move again only with a row.
+$sameRows = @{
+    '7220F8E1FBFF7A3B7F00DE9ECA5754E9A1877A8D1A766A251EB3811D0C937D89' = '90B24FF2E98530FF530C9E573DAC0E2FB4F5968ABE378D0A673C3E9DCA8D70DB'
+    '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7' = '0BD138CBE43825F93EA2235F755DE6A46F18CCF7B7DAEC33B6D38D8365E64234'
+}
+
 # --- the allocation ceilings, the second frame after a fresh load, exact ---
 # 2026-10-09, CART.1's first slice, the runner's check mode over vla-lang at
 # c0686a9: Life's soup 4,470,549 allocations and 1,129,229 reallocations, 71.0
@@ -207,7 +227,7 @@ function Get-Pin([string]$dir) {
 function Format-Count([double]$n) { return ([long][math]::Round($n)).ToString('N0', [System.Globalization.CultureInfo]::InvariantCulture) }
 
 # The static judgment of a pasted baseline: the problems, and the lines to print.
-function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin, [string]$currentPin, $fixtures, $currentDigests, $history, $same) {
+function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin, [string]$currentPin, $fixtures, $currentDigests, $history, $same, $sameRowsOf = @{}) {
     $problems = New-Object System.Collections.Generic.List[string]
     $lines = New-Object System.Collections.Generic.List[string]
     if ($null -eq $rows -or @($rows).Count -eq 0) {
@@ -227,7 +247,10 @@ function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin,
     }
     foreach ($name in @($currentDigests.Keys)) {
         if (-not $fixtures.ContainsKey($name)) { $problems.Add("the baseline names no SHA-256 for the fixture $name") }
-        elseif ($fixtures[$name] -ne $currentDigests[$name]) { $problems.Add("the fixture $name is not the one measured: its SHA-256 over LF bytes is $($currentDigests[$name]), the baseline's $($fixtures[$name]); measure again") }
+        elseif ($fixtures[$name] -ne $currentDigests[$name]) {
+            if ($null -ne $sameRowsOf -and $sameRowsOf.ContainsKey($currentDigests[$name]) -and [string]$sameRowsOf[$currentDigests[$name]] -eq $fixtures[$name]) { $lines.Add(("  the fixture {0}: the measured file's rows, rebuilt, by this file's table ({1}...)" -f $name, $currentDigests[$name].Substring(0, 8))) }
+            else { $problems.Add("the fixture $name is not the one measured: its SHA-256 over LF bytes is $($currentDigests[$name]), the baseline's $($fixtures[$name]); measure again") }
+        }
     }
 
     $byKey = @{}
@@ -364,7 +387,7 @@ if ($Control) {
     function Floors([double]$a, [double]$b, [double]$c, [double]$d) { return @{ 'native life' = $a; 'native gun' = $b; 'wasm life' = $c; 'wasm gun' = $d } }
     $history = @(@{ Date = '2026-10-09'; Pin = 'abc1234'; Reason = ''; Floors = (Floors 202000 192000 209000 200000) })
     $controlEnvironment = 'a control machine | power throttling opted out: the runner yes, 25 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 25 browser process(es)'
-    function Judge($rows, $hist, [string]$currentPin, $current, [string]$environment = $controlEnvironment, $same = @{}) { return Test-Baseline $rows '2026-10-09' $environment 'abc1234' $currentPin $digests $current $hist $same }
+    function Judge($rows, $hist, [string]$currentPin, $current, [string]$environment = $controlEnvironment, $same = @{}, $rowsOf = @{}) { return Test-Baseline $rows '2026-10-09' $environment 'abc1234' $currentPin $digests $current $hist $same $rowsOf }
     function Expect([string]$name, $result, [string]$want) {
         $hit = @($result.Problems | Where-Object { $_ -like "*$want*" }).Count
         if ($want -eq '') {
@@ -391,6 +414,8 @@ if ($Control) {
     Expect 'a release of another source' (Judge (Clean) $history '0.9.9' $digests $controlEnvironment @{ '0.9.9' = 'def5678' }) 'the language moved'
     $edited = @{ 'life' = ('A' * 64); 'gun' = ('C' * 64) }
     Expect 'a fixture edited' (Judge (Clean) $history 'abc1234' $edited) 'is not the one measured'
+    Expect 'a fixture rebuilt with the measured rows' (Judge (Clean) $history 'abc1234' $edited $controlEnvironment @{} @{ ('C' * 64) = ('B' * 64) }) ''
+    Expect 'a fixture rebuilt with other rows' (Judge (Clean) $history 'abc1234' $edited $controlEnvironment @{} @{ ('C' * 64) = ('A' * 64) }) 'is not the one measured'
     $moved = Clean; $moved[0].ClockSpread = 12.5
     Expect 'a clock that moved' (Judge $moved $history 'abc1234' $digests) 'the clock moved'
     $units = Clean; $units[3].FramesPerSecond = [math]::Round($units[3].FramesPerSecond * 1.02, 3)
@@ -448,7 +473,7 @@ if ($Control) {
     }
     foreach ($v in $verdicts) { Write-Output ('control: ' + $v) }
     if ($ok) {
-        Write-Output ("OK: control: the judgment passes the clean table, a reasoned lowering, a machine of one kind of core and a release of the measured source, and fails thirteen mutants of the table; the history passes an entry added and a history unchanged, and fails an entry pasted over and one edited in place; over five fake runners it passes the clean one and fails four, each for its own reason")
+        Write-Output ("OK: control: the judgment passes the clean table, a reasoned lowering, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows, and fails fourteen mutants of the table; the history passes an entry added and a history unchanged, and fails an entry pasted over and one edited in place; over five fake runners it passes the clean one and fails four, each for its own reason")
         exit 0
     }
     Write-Output 'FAIL: control: the judgment did not behave as the header says'
@@ -462,7 +487,7 @@ foreach ($name in $fixtureFiles.Keys) {
     $path = Join-Path $Root $fixtureFiles[$name]
     if (Test-Path -LiteralPath $path) { $currentDigests[$name] = Get-LfDigest $path } else { $problems.Add("the fixture $($fixtureFiles[$name]) is missing") }
 }
-$static = Test-Baseline $baseline $baselineDate $baselineEnvironment $baselinePin (Get-Pin $Root) $baselineFixtures $currentDigests $floorHistory $sameSource
+$static = Test-Baseline $baseline $baselineDate $baselineEnvironment $baselinePin (Get-Pin $Root) $baselineFixtures $currentDigests $floorHistory $sameSource $sameRows
 if ($baselineDate -ne '') { Write-Output ("  measured {0}: {1}" -f $baselineDate, $baselineEnvironment) }
 $static.Lines | ForEach-Object { Write-Output $_ }
 foreach ($p in $static.Problems) { $problems.Add($p) }

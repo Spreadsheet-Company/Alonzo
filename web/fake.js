@@ -208,7 +208,7 @@
     var m, out = {};
     m = /\(spec\s+([^\s()]+)\s*\)/.exec(bare);
     if (!m) return bad('has no (spec ...) directive');
-    if (m[1] !== '1' && m[1] !== '2') return { refusal: { id: 'cart-spec-unsupported', text: 'the cartridge is written to (spec ' + m[1] + '); this engine reads 1 and 2' } };
+    if (m[1] !== '1' && m[1] !== '2' && m[1] !== '3') return { refusal: { id: 'cart-spec-unsupported', text: 'the cartridge is written to (spec ' + m[1] + '); this engine reads 1, 2 and 3' } };
     out.spec = +m[1];
     m = /\(title\s+"((?:[^"\\]|\\.)*)"\s*\)/.exec(bare);
     if (!m) return bad('has no (title "...") directive');

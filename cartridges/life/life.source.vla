@@ -1,0 +1,64 @@
+; SPDX-License-Identifier: 0BSD
+; life.source.vla - Conway's Life on a 320 by 200 plane, as its author writes it: the
+; engine's own cartridge, the fixture its floors are measured on (CART.1) and the first
+; one its host loads (ENGINE.1). The pass expands this file into life.vla beside it, the
+; rows the engine loads (SPEC.md section 7.8): edit this one, then expand it again with
+;   cargo run --release --example expand
+; Every cell of the interior, B2:LG199, is one formula of its eight neighbours in the
+; previous frame, the twin sheet Screen.last; the border stays empty, which the plane
+; reads as 0, dead. The format is SPEC.md section 7; the shape is its Appendix A.
+
+; The library whose macros this source calls, palette among them: a file like any other,
+; which a cartridge of your own may copy, change, outgrow or leave out.
+(include "../console.vla")
+
+(cartridge "life"
+  (spec 2)                          ; the version of SPEC.md this cartridge is written to
+  (title "Life")                    ; what the host shows
+  (rate 30)                         ; frames a second
+  (screen plane 320 200)            ; plane mode, 320 cells wide and 200 high: A1:LH200
+  (seed 1)                          ; the dice, Clock!B3: the soup of the first frame
+  (author "Spreadsheet Company")    ; who wrote it
+  (licence "0BSD")                  ; the header's twin: copy this file to start a cartridge of your own
+  (notes "Conway's Life, every cell one formula of its eight neighbours in the previous frame. The first frame is a soup from the seed; change (seed 1) for another."))
+
+; The sheets, in tab order: the Screen the rule draws on, the Palette it draws with.
+(sheet "Screen" visible)
+(sheet "Palette" visible)
+
+; The Palette (SPEC.md section 3.2): sixteen entries from index 0, each a colour as
+; #RRGGBB and a name, which the library's palette writes into columns A, B and C. Index 0
+; is a dead cell and index 1 a live one, so the rule's arithmetic over 0 and 1 is the
+; colour; the CGA's other fourteen follow, blue to yellow, for a modder to use.
+(palette                            ; the sixteen colours, index 0 first
+  ("#000000" "dead")                ; 0, black: a dead cell
+  ("#FFFFFF" "alive")               ; 1, white: a live cell
+  ("#0000AA" "blue")                ; 2
+  ("#00AA00" "green")               ; 3
+  ("#00AAAA" "cyan")                ; 4
+  ("#AA0000" "red")                 ; 5
+  ("#AA00AA" "magenta")             ; 6
+  ("#AA5500" "brown")               ; 7
+  ("#AAAAAA" "light grey")          ; 8
+  ("#555555" "dark grey")           ; 9
+  ("#5555FF" "light blue")          ; 10
+  ("#55FF55" "light green")         ; 11
+  ("#55FFFF" "light cyan")          ; 12
+  ("#FF5555" "light red")           ; 13
+  ("#FF55FF" "light magenta")       ; 14
+  ("#FFFF55" "yellow"))             ; 15
+
+; The rule, one row over the interior B2:LG199. Every reference is relative but the
+; Clock's, so the row is one shape over 62,964 cells, the shape KERNEL.20 vectorizes.
+;   The first frame, Clock!B1 = 1, is a soup from the seed. Two linear forms of the seed,
+;   ROW() and COLUMN() are reduced modulo the prime P = 2^26 - 5 = 67108859 and
+;   multiplied, h = MOD(a*b, P), and a cell is alive when MOD(h*h, P) < 25165822, three
+;   eighths of P. Every sum and product stays under 2^53, so the hash is exact in doubles
+;   for any seed up to 2147483646. The square is what makes it a soup: h alone is a
+;   quadratic in the row and the column, which fixes the fourth cell of every 2x2 block
+;   from the other three, and its square does not (measured 2026-10-08 for the seed 1,
+;   outside the engine: 23,683 of 62,964 cells alive, a 2x2 chi-square of 17.1 on 15
+;   degrees of freedom against 300.7 without the square).
+;   Every later frame is Conway's rule over the previous frame: a cell is alive when its
+;   eight neighbours hold three live cells, or two and it was alive itself.
+(formula "Screen" "B2:LG199" "=IF(Clock!$B$1=1,IF(MOD(MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)*MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859),67108859)<25165822,1,0),IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,AND(Screen.last!B2=1,SUM(Screen.last!A1:C3)-Screen.last!B2=2)),1,0))")

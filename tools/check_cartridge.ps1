@@ -41,14 +41,34 @@ WHAT IT HOLDS, for each .vla under cartridges/, with the catalogue's ids:
 And a baseline that pins how many: the cartridges counted, and each one's
 rows as a floor that never goes down.
 
--Control copies cartridges/ to a scratch folder and proves the check on it:
-the clean copy passes; thirteen mutants of life.vla must each fail for its
-own reason, each asserting its anchor once and proving it applied before
-the check is asked: a directive dropped, a rate of 121, a screen 321 wide,
-a cell written twice, a cell outside the Screen, a Palette index out of
-order, a colour that is not #RRGGBB, NOW() in the rule, a sheet named
+SINCE SPEC.3 (2026-10-10; REARVIEW.md, decisions 28, 31 and 32): a
+cartridge is the file of its folder's name, cartridges/<name>/<name>.vla,
+the rule tools/build_web.ps1 and tools/check_web_offline.ps1 already keep;
+beside it stands its source when it has one, <name>.source.vla, which the
+pass expands into it (SPEC.md section 7.8); a library is a file of
+cartridges/ itself. Any other .vla under cartridges/ is refused, and each
+kind is counted against its pin. Each source has its cartridge beside it,
+whose second line is the banner naming it; a cartridge whose second line is
+a banner names a source that is there. A source's rows are the pass's to
+expand, and the golden, every cartridge the pass's expansion of its source,
+is cargo test's (engine/src/pass.rs), so this check reads cartridges alone:
+a cartridge holding a (defmacro ...) or an (include ...) is refused as a
+source (cart-source-unexpanded), before its manifest, as the engine refuses
+it; and (spec 3) is read beside 1 and 2.
+
+-Control copies cartridges/ to a scratch folder and proves the check on it,
+a fresh copy for every case: the clean copy passes, and so does Life written
+to (spec 3); twenty mutants must each fail for its own reason, each
+asserting its anchor once and proving it applied before the check is asked.
+Thirteen are of life.vla: a directive dropped, a rate of 121, a screen 321
+wide, a cell written twice, a cell outside the Screen, a Palette index out
+of order, a colour that is not #RRGGBB, NOW() in the rule, a sheet named
 Board.last, the header dropped, an unknown row kind, a formula into
-Input!B1, and the file renamed out of the glob, which the count must catch.
+Input!B1, and the file renamed out of its folder's name, which the count
+must catch. Seven are SPEC.3's: a (spec 4), a macro left in a cartridge,
+an include before a cartridge's manifest, a source whose cartridge is gone,
+a banner naming a source that is not there, a stray .vla in a cartridge's
+folder, and a second library.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network; a
 hardcoded, reviewable baseline that pins how many; exit 0 clean, exit 1 with
@@ -74,7 +94,12 @@ if ($Root -eq '') { $Root = $repoRoot }
 # 2026-10-09, CART.1: three, Gosper's glider gun beside them, 88 rows (three
 # sheet rows, the Palette's forty-eight cells, the Seed's thirty-six, Life's
 # rule over the interior in one formula row, its first frame the Seed's).
+# 2026-10-10, SPEC.3: three still, each now the pass's expansion of its source,
+# cartridges/<name>/<name>.source.vla, over one library, cartridges/console.vla;
+# their rows unchanged, so the floors stand.
 $expectedCartridges = 3
+$expectedSources = 3
+$expectedLibraries = 1
 $rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112 }
 
 # --- section 7 and section 3, as data ---
@@ -185,6 +210,14 @@ function Test-Cartridge([string]$path) {
     try { $forms = Read-Forms $text } catch { $problems.Add($_.Exception.Message); return @{ Problems = $problems; Rows = 0; Cells = 0; Formulas = 0 } }
     if ($forms.Count -eq 0) { $problems.Add('the file holds no form'); return @{ Problems = $problems; Rows = 0; Cells = 0; Formulas = 0 } }
 
+    # -- a source is the pass's, refused before its manifest as the engine refuses it --
+    foreach ($f in $forms) {
+        if ((Test-Kind $f 'list') -and $f.Items.Count -gt 0 -and (Test-Kind $f.Items[0] 'symbol') -and (@('defmacro', 'include') -contains $f.Items[0].Text)) {
+            $problems.Add("line $($f.Line): cart-source-unexpanded: the file holds a ($($f.Items[0].Text.ToLowerInvariant()) ...) form, so it is a cartridge's source, which the pass expands into the rows a load takes (SPEC.md section 7.8)")
+            return @{ Problems = $problems; Rows = 0; Cells = 0; Formulas = 0 }
+        }
+    }
+
     # -- the manifest --
     $man = $forms[0]
     $mode = ''; $width = 0; $height = 0
@@ -205,7 +238,7 @@ function Test-Cartridge([string]$path) {
             switch -CaseSensitive ($dn) {
                 'spec' {
                     if ($args1 -ne 1 -or -not (Test-Whole $d.Items[1])) { $problems.Add("line $($d.Line): cart-manifest-invalid: (spec ...) holds one whole number") }
-                    elseif ([int]$d.Items[1].Text -gt 2 -or [int]$d.Items[1].Text -lt 1) { $problems.Add("line $($d.Line): cart-spec-unsupported: (spec $($d.Items[1].Text)); this version reads 1 and 2") }
+                    elseif ([int]$d.Items[1].Text -gt 3 -or [int]$d.Items[1].Text -lt 1) { $problems.Add("line $($d.Line): cart-spec-unsupported: (spec $($d.Items[1].Text)); this version reads 1, 2 and 3") }
                 }
                 'title' { if ($args1 -ne 1 -or -not (Test-Kind $d.Items[1] 'string')) { $problems.Add("line $($d.Line): cart-manifest-invalid: (title `"...`") holds one text") } }
                 'rate' { if ($args1 -ne 1 -or -not (Test-Whole $d.Items[1]) -or [int]$d.Items[1].Text -gt 120) { $problems.Add("line $($d.Line): cart-manifest-invalid: (rate $(Show-Datum $d.Items[1])); a rate is a whole number from 0 to 120") } }
@@ -331,25 +364,69 @@ function Test-Cartridge([string]$path) {
     return @{ Problems = $problems; Rows = $forms.Count - 1; Cells = $cells; Formulas = $formulas }
 }
 
-# ---- every cartridge of a tree, against the baseline ----
+# The banner on the second line of a cartridge the pass wrote, naming its
+# source: engine/src/pass.rs's banner, word for word.
+function Get-Banner([string]$sourceFile) { return "; Expanded by the pass from ${sourceFile}: edit that file, then expand it again." }
+$bannerOpens = '; Expanded by the pass from '
+
+# A file's second line, its line ending dropped, or ''.
+function Get-SecondLine([string]$path) {
+    $parts = ([System.IO.File]::ReadAllText($path) -replace "`r`n", "`n") -split "`n", 3
+    if ($parts.Count -ge 2) { return $parts[1] }
+    return ''
+}
+
+# ---- every cartridge, source and library of a tree, against the baseline ----
 function Test-Tree([string]$root) {
     $problems = New-Object System.Collections.Generic.List[string]
     $lines = New-Object System.Collections.Generic.List[string]
     $dir = Join-Path $root 'cartridges'
-    $files = @()
-    if (Test-Path -LiteralPath $dir) { $files = @(Get-ChildItem -LiteralPath $dir -Recurse -Filter '*.vla' -File | Sort-Object FullName) }
-    if ($files.Count -ne $expectedCartridges) { $problems.Add("found $($files.Count) cartridge(s) under cartridges/, and the baseline pins ${expectedCartridges}; a cartridge added, removed or renamed out of the glob moves the pin in this file") }
-    foreach ($file in $files) {
+    $all = @()
+    if (Test-Path -LiteralPath $dir) { $all = @(Get-ChildItem -LiteralPath $dir -Recurse -Filter '*.vla' -File | Sort-Object FullName) }
+    # The folder rule: a cartridge is the file of its folder's name, its source
+    # <name>.source.vla beside it, and a library a file of cartridges/ itself.
+    $cartridges = New-Object System.Collections.Generic.List[object]
+    $sources = New-Object System.Collections.Generic.List[object]
+    $libraries = New-Object System.Collections.Generic.List[object]
+    foreach ($file in $all) {
         $rel = ($file.FullName.Substring($root.TrimEnd('\', '/').Length + 1)) -replace '\\', '/'
-        $t = Test-Cartridge $file.FullName
+        $parts = $rel.Split('/')
+        $entry = @{ Rel = $rel; Path = $file.FullName; Name = '' }
+        if ($parts.Count -eq 2) { $libraries.Add($entry) }
+        elseif ($parts.Count -eq 3 -and $parts[2] -ceq ($parts[1] + '.vla')) { $entry.Name = $parts[1]; $cartridges.Add($entry) }
+        elseif ($parts.Count -eq 3 -and $parts[2] -ceq ($parts[1] + '.source.vla')) { $entry.Name = $parts[1]; $sources.Add($entry) }
+        else { $problems.Add("${rel}: neither a cartridge (cartridges/<name>/<name>.vla), its source (<name>.source.vla beside it) nor a library (a file of cartridges/ itself)") }
+    }
+    if ($cartridges.Count -ne $expectedCartridges) { $problems.Add("found $($cartridges.Count) cartridge(s) under cartridges/, and the baseline pins ${expectedCartridges}; a cartridge added, removed or renamed out of its folder's name moves the pin in this file") }
+    if ($sources.Count -ne $expectedSources) { $problems.Add("found $($sources.Count) source(s) under cartridges/, and the baseline pins ${expectedSources}; a source added or removed moves the pin in this file") }
+    if ($libraries.Count -ne $expectedLibraries) { $problems.Add("found $($libraries.Count) library(ies) under cartridges/, and the baseline pins ${expectedLibraries}; a library added or removed moves the pin in this file") }
+    # Each source has its cartridge beside it, whose second line names it.
+    foreach ($s in $sources) {
+        $twin = Join-Path (Split-Path -Parent $s.Path) ($s.Name + '.vla')
+        if (-not (Test-Path -LiteralPath $twin)) { $problems.Add("$($s.Rel): has no cartridge beside it, $($s.Name).vla, which the pass writes (cargo run --release --example expand)"); continue }
+        $second = Get-SecondLine $twin
+        if ($second -cne (Get-Banner ($s.Name + '.source.vla'))) { $problems.Add("$($s.Rel): the second line of $($s.Name).vla is not the banner naming this source, but '$second': expand the source again") }
+    }
+    foreach ($c in $cartridges) {
+        $rel = $c.Rel
+        $t = Test-Cartridge $c.Path
         foreach ($p in $t.Problems) { $problems.Add("${rel}: $p") }
-        $note = ("  {0}: {1} rows, {2:N0} cells written, {3:N0} of them formula cells" -f $rel, $t.Rows, $t.Cells, $t.Formulas)
+        # A cartridge the pass wrote names a source that is there.
+        $second = Get-SecondLine $c.Path
+        $origin = ', written by hand'
+        if ($second.StartsWith($bannerOpens)) {
+            $want = $c.Name + '.source.vla'
+            $origin = ', the pass''s expansion of ' + $want
+            if ($second -cne (Get-Banner $want) -or -not (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $c.Path) $want))) { $problems.Add("${rel}: its banner, '$second', names a source that is not there; the pass names $want beside it") }
+        }
+        $note = ("  {0}: {1} rows, {2:N0} cells written, {3:N0} of them formula cells{4}" -f $rel, $t.Rows, $t.Cells, $t.Formulas, $origin)
         if (-not $rowFloors.ContainsKey($rel)) { $problems.Add("${rel}: not in the baseline; add its row floor to this file") }
         elseif ($t.Rows -lt $rowFloors[$rel]) { $problems.Add("${rel}: $($t.Rows) rows, below its floor of $($rowFloors[$rel])"); $note += ", BELOW THE FLOOR of $($rowFloors[$rel])" }
         elseif ($t.Rows -gt $rowFloors[$rel]) { $note += ", above the floor of $($rowFloors[$rel]) - raise it in this file" }
         else { $note += ', at its floor' }
         $lines.Add($note + $(if ($t.Problems.Count) { "  FAIL ($($t.Problems.Count))" } else { ', every rule of section 7 holds' }))
     }
+    $lines.Add(("  {0} source(s), each beside the cartridge whose banner names it, and {1} library(ies): {2}" -f $sources.Count, $libraries.Count, ((@($libraries | ForEach-Object { $_.Rel })) -join ', ')))
     return @{ Problems = $problems; Lines = $lines }
 }
 
@@ -357,15 +434,24 @@ if ($Control) {
     $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('alonzo_cart_' + [System.IO.Path]::GetRandomFileName())
     New-Item -ItemType Directory -Path $tmp | Out-Null
     try {
-        Copy-Item -LiteralPath (Join-Path $Root 'cartridges') -Destination (Join-Path $tmp 'cartridges') -Recurse
-        $life = Join-Path $tmp 'cartridges/life/life.vla'
-        $life0 = [System.IO.File]::ReadAllText($life)
-        $lf0 = $life0 -replace "`r`n", "`n"
+        # A pristine copy, and a fresh tree from it for every case, so that a
+        # case that removes or adds a file leaves nothing for the next.
+        $pristine = Join-Path $tmp 'pristine'
+        Copy-Item -LiteralPath (Join-Path $Root 'cartridges') -Destination $pristine -Recurse
+        $tree = Join-Path $tmp 'tree'
+        function Reset-Tree {
+            if (Test-Path -LiteralPath $tree) { Remove-Item -LiteralPath $tree -Recurse -Force }
+            New-Item -ItemType Directory -Path $tree | Out-Null
+            Copy-Item -LiteralPath $pristine -Destination (Join-Path $tree 'cartridges') -Recurse
+        }
+        $lf0 = [System.IO.File]::ReadAllText((Join-Path $pristine 'life/life.vla')) -replace "`r`n", "`n"
         $utf8 = New-Object System.Text.UTF8Encoding($false)
         $verdicts = New-Object System.Collections.Generic.List[string]
         $ok = $true
-        $clean = Test-Tree $tmp
+        Reset-Tree
+        $clean = Test-Tree $tree
         if ($clean.Problems.Count -eq 0) { $verdicts.Add('the clean copy passes') } else { $ok = $false; $verdicts.Add("the clean copy fails: $($clean.Problems -join ' | ')") }
+        $library = "; SPDX-License-Identifier: 0BSD`n(defmacro (x) (y))`n"
         $mutants = @(
             @{ Name = 'a directive dropped'; Anchor = '(rate 30)'; With = ''; Want = 'has no (rate ...) directive' },
             @{ Name = 'a rate of 121'; Anchor = '(rate 30)'; With = '(rate 121)'; Want = '(rate 121); a rate is' },
@@ -379,13 +465,32 @@ if ($Control) {
             @{ Name = 'the header dropped'; Anchor = $header; With = '; no licence'; Want = 'the licence header is not the first line' },
             @{ Name = 'an unknown row kind'; Append = '(paint "Screen" "A1" 1)'; Want = 'grid-row-unknown: (paint ...)' },
             @{ Name = 'a formula into Input!B1'; Append = '(formula "Input" "B1" "=1")'; Want = 'cart-device-cell-formula: Input!B1' },
-            @{ Name = 'the file renamed out of the glob'; Rename = 'life.txt'; Want = ("found {0} cartridge(s)" -f ($expectedCartridges - 1)) }
+            @{ Name = 'the file renamed out of its folder''s name'; Rename = 'life.txt'; Want = ("found {0} cartridge(s)" -f ($expectedCartridges - 1)) },
+            @{ Name = 'Life written to (spec 3)'; Anchor = '(spec 2)'; With = '(spec 3)'; Want = '' },
+            @{ Name = 'a (spec 4)'; Anchor = '(spec 2)'; With = '(spec 4)'; Want = 'cart-spec-unsupported: (spec 4)' },
+            @{ Name = 'a macro left in a cartridge'; Append = '(defmacro (x) (y))'; Want = 'cart-source-unexpanded: the file holds a (defmacro ...)' },
+            @{ Name = 'an include before a cartridge''s manifest'; Anchor = $header; With = ($header + "`n(include `"../console.vla`")"); Want = 'cart-source-unexpanded: the file holds a (include ...)' },
+            @{ Name = 'a source whose cartridge is gone'; Remove = 'gun/gun.vla'; Want = 'gun.source.vla: has no cartridge beside it' },
+            @{ Name = 'a banner naming a source that is not there'; Anchor = 'from life.source.vla'; With = 'from lives.source.vla'; Want = 'names a source that is not there' },
+            @{ Name = 'a stray .vla in a cartridge''s folder'; Add = 'life/notes.vla'; Want = 'life/notes.vla: neither a cartridge' },
+            @{ Name = 'a second library'; Add = 'extra.vla'; Want = 'found 2 library(ies)' }
         )
         foreach ($mu in $mutants) {
+            Reset-Tree
+            $life = Join-Path $tree 'cartridges/life/life.vla'
             $applied = $false
             if ($mu.ContainsKey('Rename')) {
                 Rename-Item -LiteralPath $life -NewName $mu.Rename
                 $applied = (-not (Test-Path -LiteralPath $life)) -and (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $life) $mu.Rename))
+            } elseif ($mu.ContainsKey('Remove')) {
+                $target = Join-Path $tree ('cartridges/' + $mu.Remove)
+                Remove-Item -LiteralPath $target -Force
+                $applied = -not (Test-Path -LiteralPath $target)
+            } elseif ($mu.ContainsKey('Add')) {
+                $target = Join-Path $tree ('cartridges/' + $mu.Add)
+                $applied = -not (Test-Path -LiteralPath $target)
+                [System.IO.File]::WriteAllText($target, ($library -replace "`n", "`r`n"), $utf8)
+                $applied = $applied -and (Test-Path -LiteralPath $target)
             } else {
                 if ($mu.ContainsKey('Anchor')) {
                     if (([regex]::Matches($lf0, [regex]::Escape($mu.Anchor))).Count -ne 1) { $ok = $false; $verdicts.Add("$($mu.Name): the anchor $($mu.Anchor) is not in life.vla exactly once"); continue }
@@ -395,21 +500,20 @@ if ($Control) {
                 $back = [System.IO.File]::ReadAllText($life) -replace "`r`n", "`n"
                 $applied = ($back -ne $lf0) -and ($back -ceq $mut)
             }
-            if (-not $applied) { $ok = $false; $verdicts.Add("$($mu.Name): the mutation did not apply") }
-            else {
-                $r = Test-Tree $tmp
-                $hit = @($r.Problems | Where-Object { $_.Contains($mu.Want) }).Count
-                if ($hit -ge 1) { $verdicts.Add("$($mu.Name): fails, as it should") }
-                elseif ($r.Problems.Count -gt 0) { $ok = $false; $verdicts.Add("$($mu.Name): fails, but without '$($mu.Want)': $($r.Problems -join ' | ')") }
-                else { $ok = $false; $verdicts.Add("$($mu.Name): PASSED but should fail") }
+            if (-not $applied) { $ok = $false; $verdicts.Add("$($mu.Name): the mutation did not apply"); continue }
+            $r = Test-Tree $tree
+            if ($mu.Want -eq '') {
+                if ($r.Problems.Count -eq 0) { $verdicts.Add("$($mu.Name): passes, as it should") }
+                else { $ok = $false; $verdicts.Add("$($mu.Name): FAILED but should pass: $($r.Problems -join ' | ')") }
+                continue
             }
-            # put the file back
-            $other = Join-Path (Split-Path -Parent $life) 'life.txt'
-            if (Test-Path -LiteralPath $other) { Remove-Item -LiteralPath $other -Force }
-            [System.IO.File]::WriteAllText($life, $life0, $utf8)
+            $hit = @($r.Problems | Where-Object { $_.Contains($mu.Want) }).Count
+            if ($hit -ge 1) { $verdicts.Add("$($mu.Name): fails, as it should") }
+            elseif ($r.Problems.Count -gt 0) { $ok = $false; $verdicts.Add("$($mu.Name): fails, but without '$($mu.Want)': $($r.Problems -join ' | ')") }
+            else { $ok = $false; $verdicts.Add("$($mu.Name): PASSED but should fail") }
         }
         foreach ($v in $verdicts) { Write-Output ('control: ' + $v) }
-        if ($ok) { Write-Output 'OK: the check passes the clean copy and fails each of the thirteen mutants for its own reason, each proving it applied'; exit 0 }
+        if ($ok) { Write-Output 'OK: the check passes the clean copy and Life written to (spec 3), and fails each of the twenty mutants for its own reason, each proving it applied'; exit 0 }
         Write-Output 'FAIL: the control did not behave as the header says'
         exit 1
     } finally {
@@ -422,7 +526,7 @@ $tr = Test-Tree $Root
 $tr.Lines | ForEach-Object { Write-Output $_ }
 Write-Output ''
 if ($tr.Problems.Count -eq 0) {
-    Write-Output ("=== CHECK: clean - {0} cartridge(s), each holding to section 7, at or above its floor ===" -f $expectedCartridges)
+    Write-Output ("=== CHECK: clean - {0} cartridge(s), each holding to section 7, at or above its floor; {1} source(s) and {2} library(ies) beside them ===" -f $expectedCartridges, $expectedSources, $expectedLibraries)
     exit 0
 }
 Write-Output "=== CHECK: $($tr.Problems.Count) problem(s) ==="

@@ -95,6 +95,11 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # fixtures the measured ones; empty, and so failing, until the owner's run of
 # tools/bench_frames.ps1 is pasted in; and with a built runner, every frame
 # held to a hand-written Life and the allocations to their ceilings).
+# 2026-10-10, SPEC.3's first slice: 12 still, no check added -
+# check_cartridge.ps1 tells a cartridge from its source and a library and
+# holds each source to its cartridge's banner, and check_frame_floors.ps1
+# carries a fixture rebuilt with the measured rows; the golden, every
+# cartridge the pass's expansion of its source, is cargo test's.
 $expectedAtLeast = 12
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
@@ -108,12 +113,12 @@ $extras = @(
     @{ Script = 'check_view_fixtures.ps1'; Args = @('-Control'); What = 'KERNEL.5 fixtures: a clean scratch folder passes, four mutants fail each for its own reason' },
     @{ Script = 'check_render_oracle.ps1'; Args = @('-Control'); What = 'KERNEL.5 render oracle: the real page passes, three mutant pages fail under the browser (SKIPPED without one)' },
     @{ Script = 'check_render_floors.ps1'; Args = @('-Control'); What = 'KERNEL.5 render floors: a clean table passes, seven mutants fail' },
-    @{ Script = 'check_cartridge.ps1';     Args = @('-Control'); What = 'ENGINE.1 cartridges: a clean scratch copy passes, thirteen mutants of Life fail' },
+    @{ Script = 'check_cartridge.ps1';     Args = @('-Control'); What = 'ENGINE.1 and SPEC.3 cartridges: a clean scratch copy and Life written to (spec 3) pass, twenty mutants fail, the cartridge, its source and the library told apart' },
     @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 host loop: the real page passes, ten mutant pages fail under the browser, the fourth only over the engine''s module (SKIPPED without a browser)' },
     @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 blit floors: a clean table of three cases passes, eight mutants fail' },
     @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 export reader and judgment: eight modules built in memory, a non-module' },
     @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, its mutants fail (seven for a git pin, eight for a registry pin); of five baselines, a git one and a registry one pass and three fail' },
-    @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1 frame floors: a clean table, a reasoned lowering, a machine of one kind of core and a release of the measured source pass, thirteen mutants fail; an entry added passes, an entry pasted over and one edited fail; five fake runners, the clean one passes and four fail' }
+    @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1 and SPEC.3 frame floors: a clean table, a reasoned lowering, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows pass, fourteen mutants fail; an entry added passes, an entry pasted over and one edited fail; five fake runners, the clean one passes and four fail' }
 )
 
 # --- The shell each check runs under. ---

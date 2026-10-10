@@ -52,7 +52,12 @@ of the file it touches, as declared in `REUSE.toml`:
   first, then in `tools/check_host_exports.ps1`'s list with its count.
 - **A cartridge** is a VLA program and its sheets, with a Palette sheet.
   One that ships in this repository is a fixture of a floor or a demo, and
-  carries 0BSD. A game is a repository of its own, under its author's name
+  carries 0BSD. It is written as a source, `<name>.source.vla`, with
+  template macros of its own or of a library it includes, and the pass
+  expands it into the cartridge beside it, `<name>.vla`
+  (`cargo run --release --example expand`; `SPEC.md`, section 7.8). Commit
+  both: `cargo test` holds each cartridge byte for byte to its source's
+  expansion, so edit the source and expand it again, never the cartridge. A game is a repository of its own, under its author's name
   and terms. Its formulas are fixed at load: the step computes values and
   never formulas, and a cartridge that keeps a state writes it through the
   Write sheet as a value (`AD-7`; `SPEC.md`, section 3.9). A change to the
