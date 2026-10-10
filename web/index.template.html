@@ -18,7 +18,7 @@
   held.
 
   Six modes, one page. Opened plainly, it is the engine's panel, a cartridge
-  picked, Life, the glider gun or the test card, running on the host's loop over the engine's own
+  picked, Life, the glider gun, the test card or the input card, running on the host's loop over the engine's own
   module, the language computing every cell (ENGINE.1's second slice), or over the
   fake module when no engine is built in, with the cartridge editable, its source
   editable and built into the cartridge by the pass in the page, the module's
@@ -35,7 +35,11 @@
   Camera's window and into the canvas's pixels, over the double and over the test
   card on the module (ENGINE.2); and the pass in the page, every source the page
   holds expanded over the module into its cartridge's bytes, the command line's, and
-  the double's Build declined in words (SPEC.3); it prints the result into <pre id="loop">, which
+  the double's Build declined in words (SPEC.3); and the Input and Clock devices over
+  the input card on the module, driven over a fixed log of keys, the pointer, clicks,
+  the wheel and the Clock's rate, every count held to the log, the cursor under the
+  pointer through the Camera, the seed the host chose in the Clock and in the dice
+  (ENGINE.3); it prints the result into <pre id="loop">, which
   tools/check_host_loop.ps1 reads under a headless browser. With ?blit=1 it is the
   blit's instrument, a 320 by 200 plane drawn 120 times at the scale that fits the
   screen and at a scale of 1 over the double, and at the scale that fits over the
@@ -146,7 +150,7 @@
           <p id="frame-line" class="frame-line"></p>
         </div>
         <div class="engine-side">
-          <p class="controls"><label>Cartridge <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="gun">Glider gun</option><option value="testcard">Test card</option></select></label></p>
+          <p class="controls"><label>Cartridge <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="gun">Glider gun</option><option value="testcard">Test card</option><option value="inputcard">Input card</option></select></label></p>
           <p class="controls"><button type="button" id="eng-run">Run</button> <button type="button" id="eng-pause">Pause</button> <button type="button" id="eng-build">Build the cartridge</button> <button type="button" id="eng-load">Load the cartridge</button> <button type="button" id="eng-copy">Copy the log</button></p>
           <p class="controls"><label style="flex:1 1 100%">An edit, one row: <input type="text" id="eng-edit" spellcheck="false" value="(cell &quot;Palette&quot; &quot;B1&quot; &quot;#FF8800&quot;)"></label> <button type="button" id="eng-write">Write</button></p>
           <p id="eng-status" class="status"></p>
@@ -239,9 +243,11 @@
 <script type="text/plain" id="cartridge-life">{{CARTRIDGE:life}}</script>
 <script type="text/plain" id="cartridge-gun">{{CARTRIDGE:gun}}</script>
 <script type="text/plain" id="cartridge-testcard">{{CARTRIDGE:testcard}}</script>
+<script type="text/plain" id="cartridge-inputcard">{{CARTRIDGE:inputcard}}</script>
 <script type="text/plain" id="source-life">{{SOURCE:life}}</script>
 <script type="text/plain" id="source-gun">{{SOURCE:gun}}</script>
 <script type="text/plain" id="source-testcard">{{SOURCE:testcard}}</script>
+<script type="text/plain" id="source-inputcard">{{SOURCE:inputcard}}</script>
 <script type="text/plain" id="library-console">{{LIBRARY:console}}</script>
 <script type="text/plain" id="alonzo-wasm">{{ALONZO_WASM}}</script>
 <script type="text/plain" id="fixture-fixture_frazaro">{{FIXTURE:fixture_frazaro}}</script>
@@ -270,13 +276,15 @@
   var lifeText = (document.getElementById('cartridge-life') || {}).textContent || '';
   var gunText = (document.getElementById('cartridge-gun') || {}).textContent || '';
   var testcardText = (document.getElementById('cartridge-testcard') || {}).textContent || '';
+  var inputcardText = (document.getElementById('cartridge-inputcard') || {}).textContent || '';
   function embedded(id) { var el = document.getElementById(id); return el ? el.textContent : ''; }
   // The cartridges built into the page, each its text and the file name a load passes on, and its
   // source with the path the pass resolves its includes against, the command line's own (SPEC.3).
   var CARTRIDGES = {
     life: { text: lifeText, file: 'life.vla', path: 'cartridges/life/life.vla', source: embedded('source-life'), sourcePath: 'cartridges/life/life.source.vla' },
     gun: { text: gunText, file: 'gun.vla', path: 'cartridges/gun/gun.vla', source: embedded('source-gun'), sourcePath: 'cartridges/gun/gun.source.vla' },
-    testcard: { text: testcardText, file: 'testcard.vla', path: 'cartridges/testcard/testcard.vla', source: embedded('source-testcard'), sourcePath: 'cartridges/testcard/testcard.source.vla' }
+    testcard: { text: testcardText, file: 'testcard.vla', path: 'cartridges/testcard/testcard.vla', source: embedded('source-testcard'), sourcePath: 'cartridges/testcard/testcard.source.vla' },
+    inputcard: { text: inputcardText, file: 'inputcard.vla', path: 'cartridges/inputcard/inputcard.vla', source: embedded('source-inputcard'), sourcePath: 'cartridges/inputcard/inputcard.source.vla' }
   };
   // The libraries the sources include, each under the path an include resolves to.
   var LIBRARIES = {
@@ -448,6 +456,7 @@
     });
     host.on('frame', function (e) {
       var c = host.counters();
+      if (e.rate !== undefined) rate = e.rate;   // the Clock's rate, which a person may write (ENGINE.3)
       var many = function (n, one, more) { return n + ' ' + (n === 1 ? one : more); };
       frameEl.textContent = 'Frame ' + e.frame + ', the window ' + e.window + ', ' + (e.scale ? e.scale + ' device pixels a cell' : 'no canvas') + '; ' + many(c.derivedApplied, 'derived write', 'derived writes') + ' landed and ' + c.derivedRefused + ' refused, ' + many(c.edits, 'edit', 'edits') + ' written, ' + many(c.yields, 'yield', 'yields') + '.';
       // about five times a second while the loop runs, so every frame of a cartridge slower than that
@@ -644,14 +653,17 @@
     this.edits = []; this.pending = []; this.windows = []; this.progress = []; this.saveValue = 0; this.stateEditFrame = 0;
     this.calls = 0; this.yields = 0; this.inputs = 0; this.applied = 0; this.refused = 0; this.editsOk = 0; this.editsRefused = 0; this.saves = 0;
     this.refusedBy = {};   // the derived writes refused, by the cell they named
+    this.cam = { row: 1, col: 1 };   // the Camera of the frame last drawn, which places the pointer (ENGINE.3)
     if (m[2] === 'plane') this.windows.push(this.windowNow());   // the load draws frame 0 through the Camera's window
   }
-  // The window the Camera's two cells place: a whole number from 1 in each, else 1.
+  // The window the Camera's two cells place: a whole number from 1 in each, else 1; the Camera kept
+  // as the one the frame is drawn through, which the next frame's pointer is written through.
   Model.prototype.windowNow = function () {
     var fk = this.fake, h = this.h;
     function v(sheet, addr) { var e = fk.peek(h, sheet, addr); return e ? e.v : undefined; }
     function whole(x) { return (typeof x === 'number' && x >= 1 && Math.floor(x) === x) ? x : 1; }
     var row = Math.min(whole(v('Camera', 'B1')), 1048576 - this.hh + 1), col = Math.min(whole(v('Camera', 'B2')), 16384 - this.w + 1);
+    this.cam = { row: row, col: col };
     return lqRange(row, col, this.hh, this.w);
   };
   Model.prototype.write = function (rows) { return this.d.call('alonzo_write', [this.h], [rows]); };
@@ -660,7 +672,10 @@
   Model.prototype.inputRows = function () {
     var out = [], cols = ['B', 'C', 'D', 'E'], keys = FAKE.RULES.keys, pt = this.pointer, k = this.lastKey;
     for (var b = 0; b < 10; b++) for (var p = 0; p < 4; p++) out.push('(cell "Input" "' + cols[p] + (b + 1) + '" ' + (p === 0 && this.held[keys[b]] ? 1 : 0) + ')');
-    out.push('(cell "Input" "B11" ' + pt.col + ')', '(cell "Input" "B12" ' + pt.row + ')', '(cell "Input" "B13" ' + pt.left + ')', '(cell "Input" "B14" ' + pt.right + ')', '(cell "Input" "B15" ' + pt.middle + ')');
+    // the pointer in the Screen's own cells: the window's cell under it, through the Camera last drawn
+    var on = pt.col > 0 && pt.row > 0, cam = this.cam;
+    out.push('(cell "Input" "B11" ' + (on ? cam.col + pt.col - 1 : 0) + ')', '(cell "Input" "B12" ' + (on ? cam.row + pt.row - 1 : 0) + ')');
+    out.push('(cell "Input" "B13" ' + pt.left + ')', '(cell "Input" "B14" ' + pt.right + ')', '(cell "Input" "B15" ' + pt.middle + ')');
     out.push('(cell "Input" "B16" ' + this.notches + ')', '(cell "Input" "B17" ' + lqQuote(k ? k.key : '') + ')', '(cell "Input" "B18" ' + lqQuote(k ? k.code : '') + ')');
     return out.join('\n');
   };
@@ -723,7 +738,9 @@
     if (this.last === null) { this.last = t; return; }
     var dt = t - this.last;
     this.last = t;
-    this.acc = Math.min(this.acc + Math.min(dt, LOOP_CAP_MS), LOOP_CAP_MS);
+    // a tick's time held to a quarter second, the backlog to the larger of that and one interval (section
+    // 5 as corrected by ENGINE.3's hand test: the backlog held to the quarter second alone starved a rate under 4)
+    this.acc = Math.min(this.acc + Math.min(dt, LOOP_CAP_MS), Math.max(LOOP_CAP_MS, 1000 / this.rate));
     var interval = 1000 / this.rate, used = 0;
     for (;;) {
       var spent = this.limit ? used >= this.limit : false;   // the host's clock is frozen, so its time slice is never spent
@@ -815,7 +832,7 @@
   // Rate 30: keys, the pointer, the wheel, the Camera moved by edits, an edit that wins over a
   // derived write, a refused edit, a Camera cell that is not a number, and a stall of a second.
   function caseRate30() {
-    var checked = false;
+    var checked = false, pointed = false;
     var r = loopRun({ text: lifeText, budget: 0, ticks: loopTicks(70, 60), events: {
       5: [['down', 'ArrowRight', 'ArrowRight']], 8: [['pointer', 40, 25], ['buttons', 1, 0, 0]], 12: [['buttons', 0, 0, 0]],
       15: [['up', 'ArrowRight']], 18: [['wheel', -1], ['wheel', -1]], 20: [['down', 'KeyZ', 'z']], 21: [['up', 'KeyZ']],
@@ -823,6 +840,13 @@
       30: [['down', 'Space', ' ']], 34: [['edit', '(cell "State" "B1" 999)']], 40: [['pointer', 0, 0]],
       44: [['edit', '(cell "Screen.last" "B1" 1)']], 50: [['edit', '(cell "Camera" "B2" "x")']]
     }, after: function (i, host, fake, M, P) {
+      // ENGINE.3: the pointer, held at the window's column 40 and row 25, is written as the Screen's
+      // own cell through the Camera the edits of tick 22 moved to row 7 and column 3: column 42, row 31.
+      if (i === 30) {
+        var px = fake.peek(host.counters().handle, 'Input', 'B11'), py = fake.peek(host.counters().handle, 'Input', 'B12');
+        if (!px || px.v !== 42 || !py || py.v !== 31) P.push('the pointer at the window\'s column 40 and row 25, under the Camera at row 7 and column 3, was written as column ' + (px ? px.v : 'none') + ' and row ' + (py ? py.v : 'none') + ', not the Screen\'s column 42 and row 31');
+        else pointed = true;
+      }
       // The edit of State!B1 wins over the derived write into the same cell in the same frame.
       if (checked || !M.stateEditFrame || M.frame !== M.stateEditFrame) return;
       checked = true;
@@ -830,6 +854,7 @@
       if (!e || e.v !== 999) P.push('State!B1 holds ' + (e ? e.v : 'nothing') + ' after frame ' + M.frame + ', in which the edit (cell "State" "B1" 999) was written and must win over the derived write');
     } });
     if (!checked) r.P.push('the frame of the State!B1 edit was never seen alone after a tick');
+    if (!pointed && !r.P.some(function (p) { return p.indexOf('the pointer at the window') === 0; })) r.P.push('the pointer was never seen after tick 30');
     // A repeated event is one line of the log, its count the times it happened, so a person's own
     // event is never pushed out by a cartridge's repeated refusals (the owner's hand test, 2026-10-09).
     var entries = r.host.logEntries();
@@ -844,7 +869,7 @@
     var k = loopEnd(r, [['a derived write into Screen!A1 was refused', '[grid-write-derived]'], ['a derived write into Input!B5 was refused', '[cart-write-derived]'],
       ['a derived write into Screen.last!B1 was refused', '[grid-write-last]'], 'the Camera placed the window at C7:LJ206', 'the edit (cell "State" "B1" 999) was written',
       ['the edit (cell "Screen.last" "B1" 1) was refused', '[grid-write-last]'], 'the Camera\'s column is "x", not a whole number from 1', 'the Camera placed the window at A7:LH206', 'asked to be saved']);
-    k.lines = entries.length;
+    k.lines = entries.length; k.pointer = pointed ? 1 : 0;
     return { counters: k, problems: r.P };
   }
   // Rate 0: no tick steps the grid; four edits step it four times; the Input sheet is never written.
@@ -1106,8 +1131,9 @@
     } finally { host.destroy(); }
     return { counters: k, problems: P };
   }
-  // The double answers what the module answers (ENGINE.1's second slice, decision 8): eleven
-  // refusals issued to the fake module and to the engine's, each answered with the same status and id.
+  // The double answers what the module answers (ENGINE.1's second slice, decision 8): fourteen
+  // refusals issued to the fake module and to the engine's, each answered with the same status and
+  // id, the three of the Clock's cells among them since ENGINE.3.
   function caseParity() {
     var wasm = builtModule();
     if (!wasm) return { counters: { module: 0 }, problems: [] };
@@ -1127,6 +1153,10 @@
       out.push(['a formula into Clock!B1', write('(formula "Clock" "B1" "=1")')]);
       out.push(['a derived row into a formula cell', write('(derived "Screen" "B2" 1)')]);
       out.push(['a derived row into Input!B5', write('(derived "Input" "B5" 1)')]);
+      // ENGINE.3: a person's write into the Clock, the frame refused, the rate and the seed held to their ranges
+      out.push(['an edit of Clock!B1, the frame', write('(cell "Clock" "B1" 5)')]);
+      out.push(['a rate of 121 into Clock!B2', write('(cell "Clock" "B2" 121)')]);
+      out.push(['a seed of 0 into Clock!B3', write('(cell "Clock" "B3" 0)')]);
       D.call('alonzo_step', [h, 1000], []);
       out.push(['a write during a yielded step', write('(cell "Palette" "C1" "x")')]);
       out.push(['a projection the grid does not have', D.call('alonzo_view', [h], ['photo', 'Screen', ''])]);
@@ -1135,7 +1165,7 @@
       return out;
     }
     var fake = scenarios(FAKE.create({}).exports), real = scenarios(HOST.instantiateSync(bytes)), same = 0;
-    if (fake.length !== 11 || real.length !== 11) P.push('the scenarios ran ' + fake.length + ' times on the fake and ' + real.length + ' on the engine, not 11');
+    if (fake.length !== 14 || real.length !== 14) P.push('the scenarios ran ' + fake.length + ' times on the fake and ' + real.length + ' on the engine, not 14');
     for (var i = 0; i < Math.min(fake.length, real.length); i++) {
       var f = fake[i][1], r = real[i][1], name = fake[i][0];
       if ((f.status !== 1 && f.status !== 2) || (r.status !== 1 && r.status !== 2)) P.push(name + ': the fake answered status ' + f.status + ' and the engine ' + r.status + ', where both refuse');
@@ -1354,6 +1384,178 @@
     } finally { host.destroy(); }
     return { counters: k, problems: P };
   }
+  // ---- ENGINE.3: the Input and Clock devices, over the input card ----
+  // The host over the engine's module, when the page holds one, loads the input card with its seed
+  // named, and is driven by manual ticks over a fixed log, every event dispatched to the canvas the
+  // host listens on: keys held across frames, a press of player 2's, a key no button binds, the
+  // pointer moved onto a cell with a click and a right click, three notches of the wheel, an edit
+  // of the Clock's frame, refused, and the Clock's rate written to 1, the teacher's, and back to
+  // 30, the ticks following it (the owner's hand test of 2026-10-10: at the rate of 1 the loop
+  // starved, its backlog held under the interval). Every expectation is the page's own: the card computed by hand from the log, its
+  // Panel, its cursor and its Tally, the dice by integer arithmetic from the seed, the Camera from
+  // the wheel. The plane the host holds after every frame is that window, byte for byte, and the
+  // Tally's record at the end holds those counts; never by asking the host.
+  var CARD_SEED = 12345;
+  var CARD_LOG = {
+    3: [['down', 'ArrowRight', 'ArrowRight']],                                       // player 1's right, held three frames
+    6: [['up', 'ArrowRight']],
+    7: [['down', 'KeyZ', 'z'], ['down', 'KeyI', 'i']],                              // player 1's a and player 2's up
+    8: [['up', 'KeyZ'], ['up', 'KeyI'], ['down', 'KeyQ', 'q'], ['up', 'KeyQ']],     // a key no button binds
+    11: [['move', 5, 4, 1]],                                                         // the pointer on the window's (5, 4), left held
+    12: [['move', 5, 4, 0]],
+    13: [['move', 5, 4, 2]],                                                         // right held
+    14: [['move', 5, 4, 0]],
+    15: [['wheel', 3]],                                                              // three notches: the Camera to column 4
+    17: [['edit', '(cell "Clock" "B1" 99)']],                                         // the frame: refused
+    18: [['edit', '(cell "Clock" "B2" 1)']],                                          // the teacher's rate, a frame a second
+    21: [['edit', '(cell "Clock" "B2" 30)']],                                         // and back
+    24: [['down', 'ArrowRight', 'ArrowRight']],                                      // right again, a second press
+    26: [['up', 'ArrowRight']]
+  };
+  function caseInput() {
+    var wasm = builtModule();
+    if (!wasm) return { counters: { module: 0 }, problems: [] };
+    var bytes = bytesOfBase64(wasm), P = [], N = 26;
+    var k = { module: bytes.length, frames: 0, equal: 0, seed: 0, presses: 0, players: 0, clicks: 0, wheel: 0, typed: 0, code: 0, dice: 0, clicked: 0, pointer: 0, cursor: 0, held: 0, rate: 0, refused: 0 };
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:200px;height:120px;overflow:hidden;position:relative;background:#000;';
+    var cv = document.createElement('canvas');
+    cv.style.display = 'block';
+    box.appendChild(cv); stage.appendChild(box);
+    var exports = HOST.instantiateSync(bytes), D = new Driver({ exports: exports });
+    var host = new HOST({ drive: 'manual', budget: 0, now: frozen, canvas: cv, box: box, scale: PLANE_SCALE, seed: CARD_SEED });
+    try {
+      var a = host.attach(exports);
+      if (!a.ok) { P.push('the host refused the engine module: ' + a.sentence); return { counters: k, problems: P }; }
+      var ld = host.load(inputcardText, 'inputcard.vla');
+      if (!ld.ok) { P.push('the input card did not load: ' + ld.sentence); return { counters: k, problems: P }; }
+      var h = ld.handle, W = ld.w, H = ld.h;
+      var values = function (sheet) { return recordValues(D.call('alonzo_view', [h], ['grid', sheet, '']).text); };
+      var num = function (v) { return v && v.num !== undefined ? v.num : (typeof v === 'string' ? v : null); };
+      // The seed the host was named, in the Clock before the first step.
+      var b3 = num(values('Clock').B3);
+      if (b3 !== CARD_SEED) P.push('Clock!B3 holds ' + b3 + ' after the load, not the seed the host was named, ' + CARD_SEED);
+      else k.seed = 1;
+      // The card's key map, off its Keys sheet's record: a code to [button, player].
+      var keysRec = values('Keys'), keymap = {};
+      for (var kb = 0; kb < 10; kb++) for (var kp = 0; kp < 4; kp++) { var kc = keysRec['BCDE'.charAt(kp) + (kb + 1)]; if (typeof kc === 'string' && kc) keymap[kc] = [kb, kp]; }
+      // ---- the card by hand, from the log ----
+      var four = function () { var g = []; for (var i = 0; i < 10; i++) g.push([0, 0, 0, 0]); return g; };
+      var held = {}, lastKey = '', ptr = { col: 0, row: 0 }, btn = [0, 0, 0], notches = 0, rate = 30, nextRate = null;
+      var prev = { buttons: four(), mouse: [0, 0, 0] }, cam = 1, pendingClick = 0;
+      var T = { presses: four(), clicks: [0, 0, 0], wheel: 0, keys: 0, code: '', col: 0, row: 0, dice: 0, clickedAt: 0 };
+      var bit = function (n, b) { return Math.floor(n / Math.pow(2, b)) % 2 === 1; };
+      var input = null;
+      var panelAt = function (r, c, f) {
+        if (r === 1) return c % 8 === 1 ? 7 : 8;
+        if (r >= 3 && r <= 12 && c >= 9 && c <= 12) return input.buttons[r - 3][c - 9] === 1 ? 15 : 1 + T.presses[r - 3][c - 9] % 7;
+        if (r >= 3 && r <= 5 && c === 14) return input.mouse[r - 3] === 1 ? 12 : 8;
+        if (r >= 3 && r <= 5 && c === 15) return 1 + T.clicks[r - 3] % 7;
+        if (r === 7 && c === 14) return input.code ? 14 : 0;
+        if (r === 7 && c === 15) return 1 + T.keys % 7;
+        if (r === 14 && c >= 9 && c <= 17) return c - 8 === cam ? 14 : 8;
+        if (r === 18 && c >= 9 && c <= 32) return c - 8 <= rate / 5 ? 9 : 0;
+        if (r === 20 && c >= 9 && c <= 24) return bit(f, c - 9) ? 11 : 1;
+        if (r === 22 && c >= 9 && c <= 39) return bit(CARD_SEED, c - 9) ? 13 : 5;
+        if (r === 23 && c >= 9 && c <= 39) return bit(T.dice, c - 9) ? 10 : 2;
+        return 0;
+      };
+      // Frame f by hand: the Input rows as the host should write them, the pointer through the Camera
+      // last drawn; the Tally after the frame; the Camera it leaves; the window it is drawn through.
+      var cardFrame = function (f) {
+        if (nextRate !== null) { rate = nextRate; nextRate = null; }   // an edit lands at the frame's begin
+        var on = ptr.col > 0 && ptr.row > 0;
+        input = { buttons: four(), mouse: btn.slice(), col: on ? cam + ptr.col - 1 : 0, row: on ? ptr.row : 0, code: lastKey };
+        for (var c in held) if (held[c] && keymap[c]) input.buttons[keymap[c][0]][keymap[c][1]] = 1;
+        if (pendingClick) { T.clickedAt = pendingClick; pendingClick = 0; }   // the last frame's derived write
+        for (var b = 0; b < 10; b++) for (var p = 0; p < 4; p++) if (input.buttons[b][p] === 1 && prev.buttons[b][p] === 0) T.presses[b][p]++;
+        for (var i = 0; i < 3; i++) if (input.mouse[i] === 1 && prev.mouse[i] === 0) T.clicks[i]++;
+        T.wheel += notches;
+        if (input.code) { T.keys++; T.code = input.code; }
+        if (input.col > 0) { T.col = input.col; T.row = input.row; }
+        T.dice = f === 1 ? CARD_SEED : (T.dice * 16807) % 2147483647;
+        if (input.mouse[0] === 1 && prev.mouse[0] === 0) pendingClick = f;
+        cam = 1 + (((T.wheel % 9) + 9) % 9);   // the card's =1+MOD(Tally!B16,9), Excel's MOD
+        prev = input; notches = 0; lastKey = '';
+        var out = new Uint8Array(W * H), cur = input.mouse[0] ? 12 : (input.mouse[1] ? 10 : (input.mouse[2] ? 9 : 15));
+        for (var r = 1; r <= H; r++) for (var cc = cam; cc < cam + W; cc++) out[(r - 1) * W + (cc - cam)] = (r === input.row && cc === input.col) ? cur : panelAt(r, cc, f);
+        return { window: out, cursor: on && input.col >= cam && input.col < cam + W, held: input.buttons.some(function (row) { return row.indexOf(1) >= 0; }) };
+      };
+      // The log's events, to the host's canvas and to the card by hand alike.
+      var dispatch = function (ev) {
+        var rc = cv.getBoundingClientRect();
+        if (ev[0] === 'down') { cv.dispatchEvent(new KeyboardEvent('keydown', { code: ev[1], key: ev[2], bubbles: true, cancelable: true })); held[ev[1]] = true; lastKey = ev[1]; }
+        else if (ev[0] === 'up') { cv.dispatchEvent(new KeyboardEvent('keyup', { code: ev[1], key: ev[1], bubbles: true })); delete held[ev[1]]; }
+        else if (ev[0] === 'move') {
+          cv.dispatchEvent(new MouseEvent('mousemove', { clientX: rc.left + (ev[1] - 0.5) * rc.width / W, clientY: rc.top + (ev[2] - 0.5) * rc.height / H, buttons: ev[3], bubbles: true }));
+          ptr = { col: ev[1], row: ev[2] }; btn = [ev[3] & 1 ? 1 : 0, ev[3] & 2 ? 1 : 0, ev[3] & 4 ? 1 : 0];
+        } else if (ev[0] === 'wheel') { for (var i = 0; i < ev[1]; i++) cv.dispatchEvent(new WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true })); notches += ev[1]; }
+        else if (ev[0] === 'edit') { host.edit(ev[1]); var m = /^\(cell "Clock" "B2" (\d+)\)$/.exec(ev[1]); if (m) nextRate = +m[1]; }
+      };
+      // ---- the drive: ticks at the rate the Clock holds, the frames they run by the page's own arithmetic ----
+      // SPEC.md section 5 as corrected by ENGINE.3's hand test: a tick's time held to a quarter second,
+      // the backlog to the larger of that and one interval, a frame for each interval the backlog holds,
+      // and a rate that moves starting the backlog again. A tick here is never longer than a quarter
+      // second, so at the rate of 1 a frame is owed at every fourth tick of 250 ms and none before it.
+      var t = 1000, acc = 0;
+      host.start(); host.tick(t);
+      for (var f = 1; f <= N; f++) {
+        var evs = CARD_LOG[f] || [];
+        for (var e = 0; e < evs.length; e++) dispatch(evs[e]);
+        var interval = 1000 / rate, dt = Math.min(Math.ceil(interval), LOOP_CAP_MS), ticks = 0, early = false;
+        for (;;) {
+          t += dt; host.tick(t); ticks++;
+          acc = Math.min(acc + Math.min(dt, LOOP_CAP_MS), Math.max(LOOP_CAP_MS, interval));
+          if (acc >= interval) { acc -= interval; break; }
+          if (host.counters().frame !== f - 1) { P.push('at the Clock\'s rate of ' + rate + ', the tick ' + ticks + ' of ' + dt + ' ms ran frame ' + host.counters().frame + ' before its interval was owed'); early = true; break; }
+        }
+        if (early) break;
+        var paced = rate;
+        var want = cardFrame(f);
+        if (rate !== paced) acc = 0;   // the frame's edit moved the rate: the backlog starts again
+        if (host.counters().frame !== f) { P.push('after ' + ticks + ' tick' + (ticks === 1 ? '' : 's') + ' of ' + dt + ' ms at the Clock\'s rate of ' + paced + ' the host is at frame ' + host.counters().frame + ', not ' + f); break; }
+        if (ticks > 1) k.rate++;   // a frame of the slow rate, owed only after its waiting ticks ran none
+        var got = host.plane, diff = -1;
+        for (var q = 0; q < want.window.length; q++) if (!got || got[q] !== want.window[q]) { diff = q; break; }
+        if (diff >= 0) { P.push('frame ' + f + ': the window\'s row ' + (Math.floor(diff / W) + 1) + ', column ' + (diff % W + 1) + ' holds ' + (got ? got[diff] : 'nothing') + ' in the host\'s plane and ' + want.window[diff] + ' in the card by hand'); continue; }
+        k.equal++;
+        if (want.cursor) k.cursor++;
+        if (want.held) k.held++;
+      }
+      k.frames = host.counters().frame;
+      // ---- the Tally's record at the end, against the counts by hand ----
+      var tally = values('Tally'), ok = true;
+      var eqv = function (addr, wantV, what) {
+        var gotV = num(tally[addr]);
+        if (gotV !== wantV) { P.push('Tally!' + addr + ', ' + what + ', holds ' + JSON.stringify(gotV) + ' where the log gives ' + JSON.stringify(wantV)); ok = false; return false; }
+        return true;
+      };
+      var sum = 0, others = 0;
+      for (var tb = 0; tb < 10; tb++) for (var tp = 0; tp < 4; tp++) {
+        if (eqv('BCDE'.charAt(tp) + (tb + 1), T.presses[tb][tp], 'the presses of button ' + (tb + 1) + ' of player ' + (tp + 1))) { sum += T.presses[tb][tp]; if (tp > 0) others += T.presses[tb][tp]; }
+      }
+      if (ok) { k.presses = sum; k.players = others; }
+      if (eqv('B11', T.col, 'the pointer\'s last column') && eqv('B12', T.row, 'its last row')) k.pointer = T.col;
+      if (eqv('B13', T.clicks[0], 'the left clicks') && eqv('B14', T.clicks[1], 'the right clicks') && eqv('B15', T.clicks[2], 'the middle clicks')) k.clicks = T.clicks[0] + T.clicks[1] + T.clicks[2];
+      if (eqv('B16', T.wheel, 'the wheel')) k.wheel = T.wheel;
+      if (eqv('B17', T.keys, 'the frames a key went down in')) k.typed = T.keys;
+      if (eqv('B18', T.code, 'the last key\'s code')) k.code = 1;
+      if (eqv('B19', T.dice, 'the dice')) k.dice = 1;
+      if (eqv('B20', T.clickedAt, 'the frame of the last left click')) k.clicked = T.clickedAt;
+      var clock = values('Clock');
+      if (num(clock.B1) !== N || num(clock.B2) !== 30 || num(clock.B3) !== CARD_SEED) P.push('the Clock ends at frame ' + num(clock.B1) + ', rate ' + num(clock.B2) + ' and seed ' + num(clock.B3) + ', not ' + N + ', 30 and ' + CARD_SEED);
+      // ---- what the host said ----
+      var said = host.sentences();
+      var says = function (parts) { return said.some(function (s) { return parts.every(function (x) { return s.text.indexOf(x) >= 0; }); }); };
+      if (!says(['the host chose ' + CARD_SEED, 'Clock!B3'])) P.push('no sentence names the seed the host chose, ' + CARD_SEED);
+      if (says(['the Clock\'s rate is now 1 frame a second'])) k.rate++; else P.push('no sentence says the rate is now 1 frame a second');
+      if (says(['the Clock\'s rate is now 30 frames a second'])) k.rate++; else P.push('no sentence says the rate is now 30');
+      var refusals = said.filter(function (s) { return s.refusal; });
+      if (refusals.length === 1 && refusals[0].text.indexOf('the edit (cell "Clock" "B1" 99) was refused') >= 0 && refusals[0].text.indexOf('[cart-write-clock]') >= 0) k.refused = 1;
+      else P.push('the refusals said are ' + refusals.length + ', not the one of the Clock\'s frame by cart-write-clock' + (refusals.length ? ': ' + refusals[0].text : ''));
+    } finally { host.destroy(); stage.removeChild(box); }
+    return { counters: k, problems: P };
+  }
   function loopLine(name, k, problems) {
     var parts = [];
     for (var key in k) if (Object.prototype.hasOwnProperty.call(k, key)) parts.push(key + ' ' + k[key]);
@@ -1363,7 +1565,7 @@
     var out = [], dpr = window.devicePixelRatio || 1, ok = 0, R = HOST.RULES;
     out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals], ['scale', caseScale],
-                 ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass]];
+                 ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput]];
     for (var i = 0; i < cases.length; i++) {
       var res;
       try { res = cases[i][1](); } catch (e) { res = { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }

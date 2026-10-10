@@ -105,6 +105,10 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # check_web_offline.ps1 holds the sources' and the library's places; and
 # check_host_loop.ps1's eleventh case, pass, holds the page's pass to the
 # command line's bytes.
+# 2026-10-10, ENGINE.3's first slice: 12 still, no check added -
+# check_host_loop.ps1's twelfth case, input, holds the Input and Clock
+# devices over the input card on the engine's module, its control fifteen
+# mutant pages; check_cartridge.ps1 pins four cartridges and four sources.
 $expectedAtLeast = 12
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
@@ -119,7 +123,7 @@ $extras = @(
     @{ Script = 'check_render_oracle.ps1'; Args = @('-Control'); What = 'KERNEL.5 render oracle: the real page passes, three mutant pages fail under the browser (SKIPPED without one)' },
     @{ Script = 'check_render_floors.ps1'; Args = @('-Control'); What = 'KERNEL.5 render floors: a clean table passes, seven mutants fail' },
     @{ Script = 'check_cartridge.ps1';     Args = @('-Control'); What = 'ENGINE.1 and SPEC.3 cartridges: a clean scratch copy and Life written to (spec 3) pass, twenty mutants fail, the cartridge, its source and the library told apart' },
-    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1, ENGINE.2 and SPEC.3 host loop: the real page passes, eleven mutant pages fail under the browser, the fourth and the eleventh only over the engine''s module (SKIPPED without a browser)' },
+    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1, ENGINE.2, SPEC.3 and ENGINE.3 host loop: the real page passes, fifteen mutant pages fail under the browser, the fourth, the eleventh and the last three only over the engine''s module (SKIPPED without a browser)' },
     @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 blit floors: a clean table of three cases passes, eight mutants fail' },
     @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 and SPEC.3 export reader and judgment: nine modules built in memory, a non-module' },
     @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, its mutants fail (seven for a git pin, eight for a registry pin); of five baselines, a git one and a registry one pass and three fail' },

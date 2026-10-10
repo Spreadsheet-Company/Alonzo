@@ -14,7 +14,7 @@ re-done over the timestamps (a stall of a second runs seven frames at 30
 and no more), the Input rows from the key events, the derived writes from
 the fake module's declared rule, issued before the inputs so that a
 person's edit wins, and the end state from a second fake module the page
-drives with no host between, compared by digest. Eleven cases: rate30 (the
+drives with no host between, compared by digest. Twelve cases: rate30 (the
 Camera moved by an edit and the window following, a derived write refused
 and printed, a refused edit, a Camera cell that is not a number, a save
 edge, the stall), rate0 (four edits, four steps, the Input sheet never
@@ -46,7 +46,17 @@ holding no pass; over the engine's module, when the page holds one, every
 source the page holds expanded by the host's expand into its cartridge
 byte for byte as the command line wrote it, CRLF, a source whose include is
 not handed in refused at the include's line, the first load after the pass
-handle 1, and a build between two frames leaving the loop running). It
+handle 1, and a build between two frames leaving the loop running); and
+since ENGINE.3's first slice input, over the engine's module when the page
+holds one (the input card, cartridges/inputcard/inputcard.vla, loaded with
+its seed named and driven by events dispatched to the canvas: keys held
+across frames, player 2's press, a key no button binds, the pointer with a
+click and a right click, three notches of the wheel that pan the Camera, an
+edit of the Clock's frame refused, the Clock's rate written to 1 and back;
+the window the host draws equal at every frame to the card computed by hand
+from the log, the Tally's counts, the seed in the Clock and in the dice, the
+ticks following the rate), with rate30 pinning the pointer written through
+the double's Camera and parity holding fourteen refusals. It
 prints one line a case into
 <pre id="loop"> and a last line, 'loop ok cases=N'. This check runs the
 page under a headless Chromium at a device scale factor of 1 and of 1.5,
@@ -64,7 +74,7 @@ frame, so the virtual-time budget only bounds the run. SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds eleven mutant pages through tools/build_web.ps1 and runs
+-Control builds fifteen mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -87,7 +97,17 @@ when the real page holds the engine's module, a page built from a scratch
 copy of cartridges/ whose library writes the Palette's names to column D
 and not C, so that the page's pass writes rows the command line did not,
 which the pass case must fail by name (not applicable to a page without a
-module). The real page must pass first.
+module); and since ENGINE.3's first slice three more: a host that writes
+the pointer as the window's cell, without the Camera, which rate30 must
+fail by name and, with the module, the input case at its window; and, when
+the real page holds the module, a host that never reads the Clock's rate
+after a step, whose ticks keep the manifest's rate where the input case
+slowed it to 1, and a host that never writes its seed, whose Clock!B3 the
+input case finds empty; and, found by the owner's hand test of ENGINE.3, a
+host whose backlog is held to the quarter second whatever the rate, as it
+was, so that at the teacher's rate of 1 no frame is ever owed, which the
+input case must fail at the frame it never ran. The real page must pass
+first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A headless run's clock is
@@ -140,9 +160,23 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # module of 514,688 bytes 3 sources, 3 the same as the command line's (251
 # rows after their manifests), the include refused at its line, handle 1 at
 # the first load after the pass, the loop run on through a build.
+# 2026-10-10, ENGINE.3's first slice: twelve cases, the first eleven's counts
+# unchanged but for three: rate30 pins the pointer written through the
+# double's Camera (pointer 1); parity 14 refusals, the Clock's three added;
+# pass 4 sources the same, the input card's among them. input over the
+# engine's module of 516,175 bytes: 26 frames, each window equal to the card
+# computed by hand from the log, the seed named, 4 presses (1 of player 2's),
+# 2 clicks, 3 notches, 4 key frames and the last code, the dice, the click's
+# frame 11 carried by a derived write, the pointer's last column 8 through the
+# Camera, the cursor seen in 16 frames, a button held in 6, the rate followed
+# 3 ways, cart-write-clock said once. The same day, from the owner's hand
+# test (the rate of 1 froze the loop, its backlog held under the interval):
+# the case writes the rate of 1, and paces its ticks by its own arithmetic of
+# section 5 as corrected, three frames at a second owed only after their
+# waiting ticks ran none, so the rate is followed 5 ways.
 $scales = @('1', '1.5')
 $floors = @(
-    @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100 } },
+    @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
     @{ Case = 'rate0';    Min = @{ frames = 4; applied = 3; edits = 4; windows = 3 } },
     @{ Case = 'yield';    Min = @{ frames = 9; calls = 600; yields = 590; edits = 1 } },
     @{ Case = 'memory';   Min = @{ frames = 14; edits = 1; detaches = 600 } },
@@ -150,12 +184,13 @@ $floors = @(
     @{ Case = 'refusals'; Min = @{ refused = 5; marked = 5 } },
     @{ Case = 'scale';    Min = @{ scale = 2; probes = 6; reloaded = 6; cleared = 6 } },
     @{ Case = 'engine';   Min = @{}; WithModule = @{ frames = 11; equal = 2; live1 = 23683; live11 = 14482; chunked = 1; grown = 1; devices = 5; reloaded = 1 } },
-    @{ Case = 'parity';   Min = @{}; WithModule = @{ same = 11 } },
+    @{ Case = 'parity';   Min = @{}; WithModule = @{ same = 14 } },
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
-    @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 3; same = 3; refused = 1; handle = 1; ranOn = 1 } }
+    @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 4; same = 4; refused = 1; handle = 1; ranOn = 1 } },
+    @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 4; players = 1; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 6; rate = 5; refused = 1 } }
 )
 $zero = @('live', 'misfrees')
-$expectedCases = 11
+$expectedCases = 12
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
 
@@ -399,9 +434,56 @@ if ($Control) {
             $kNote = "applied ($kApplied) and failed the pass case ($kFailed)"
         }
         $kOk = ($moduleReal -eq 0) -or ($kApplied -and $kFailed -ge 1)
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk) {
-            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'eleven' } else { 'nine applicable' }) + ' mutants for its own reason, each proving it applied')
+        # mutant L (ENGINE.3): the pointer written as the window's cell, without the Camera; rate30's
+        # pin over the double must fail by name, and, with the module, the input card's cursor too
+        $anchorL = "    out.push('(cell `"Input`" `"B11`" ' + (on ? cam.col + pt.col - 1 : 0) + ')', '(cell `"Input`" `"B12`" ' + (on ? cam.row + pt.row - 1 : 0) + ')');"
+        if (([regex]::Matches($js, [regex]::Escape($anchorL))).Count -ne 1) { Write-Output "FAIL: the pointer's two rows are not in web/host.js exactly once"; exit 1 }
+        $mutL = $js.Replace($anchorL, "    out.push('(cell `"Input`" `"B11`" ' + (on ? pt.col : 0) + ')', '(cell `"Input`" `"B12`" ' + (on ? pt.row : 0) + ')');")
+        $lApplied = $mutL -cne $js
+        $jsL = Join-Path $tmp 'l.js'; [System.IO.File]::WriteAllText($jsL, $mutL, $utf8)
+        $rL = Invoke-Loop $browser (New-MutantPage 'l' $template $jsL) '1'
+        $jL = if ($rL.Text -ne '') { Test-Loop $rL.Text '1' } else { @{ Problems = @($rL.Reason) } }
+        $lFailed = @($jL.Problems | Where-Object { $_ -like '*case rate30*the pointer at the window*' }).Count
+        $lInput = @($jL.Problems | Where-Object { $_ -like '*case input*in the card by hand*' }).Count
+        $lOk = $lApplied -and $lFailed -ge 1 -and (($moduleReal -eq 0) -or $lInput -ge 1)
+        # mutants M and N (ENGINE.3), when the real page holds the engine's module: the Clock's rate
+        # never read after a step, so the ticks keep the manifest's rate, and the host's seed never
+        # written; the input case must fail each by name
+        $mApplied = $false; $mFailed = 0; $nApplied = $false; $nFailed = 0; $oApplied = $false; $oFailed = 0
+        $mnNote = 'not applicable, the real page holding no engine module'
+        if ($moduleReal -gt 0) {
+            $anchorM = '    if (d.clock) this._readClock();'
+            if (([regex]::Matches($js, [regex]::Escape($anchorM))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorM' is not in web/host.js exactly once"; exit 1 }
+            $mutM = $js.Replace($anchorM, '    // the rate read cut by the control')
+            $mApplied = $mutM -cne $js
+            $jsM = Join-Path $tmp 'm.js'; [System.IO.File]::WriteAllText($jsM, $mutM, $utf8)
+            $rM = Invoke-Loop $browser (New-MutantPage 'm' $template $jsM) '1'
+            $jM = if ($rM.Text -ne '') { Test-Loop $rM.Text '1' } else { @{ Problems = @($rM.Reason) } }
+            $mFailed = @($jM.Problems | Where-Object { $_ -like '*case input*before its interval was owed*' }).Count
+            $anchorN = "    if (c.seed === 'host') this._seed();"
+            if (([regex]::Matches($js, [regex]::Escape($anchorN))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorN' is not in web/host.js exactly once"; exit 1 }
+            $mutN = $js.Replace($anchorN, '    // the seed cut by the control')
+            $nApplied = $mutN -cne $js
+            $jsN = Join-Path $tmp 'n.js'; [System.IO.File]::WriteAllText($jsN, $mutN, $utf8)
+            $rN = Invoke-Loop $browser (New-MutantPage 'n' $template $jsN) '1'
+            $jN = if ($rN.Text -ne '') { Test-Loop $rN.Text '1' } else { @{ Problems = @($rN.Reason) } }
+            $nFailed = @($jN.Problems | Where-Object { $_ -like '*case input*Clock!B3 holds*' }).Count
+            # mutant O (ENGINE.3's hand test): the backlog held to the quarter second whatever the rate,
+            # as it was, which starved the teacher's rate of 1; the input case must fail at the frame it never ran
+            $anchorO = '    this.acc = Math.min(this.acc + Math.min(dt, ACCUMULATOR_CAP_MS), Math.max(ACCUMULATOR_CAP_MS, 1000 / c.rate));'
+            if (([regex]::Matches($js, [regex]::Escape($anchorO))).Count -ne 1) { Write-Output "FAIL: the accumulator's line is not in web/host.js exactly once"; exit 1 }
+            $mutO = $js.Replace($anchorO, '    this.acc = Math.min(this.acc + Math.min(dt, ACCUMULATOR_CAP_MS), ACCUMULATOR_CAP_MS);')
+            $oApplied = $mutO -cne $js
+            $jsO = Join-Path $tmp 'o.js'; [System.IO.File]::WriteAllText($jsO, $mutO, $utf8)
+            $rO = Invoke-Loop $browser (New-MutantPage 'o' $template $jsO) '1'
+            $jO = if ($rO.Text -ne '') { Test-Loop $rO.Text '1' } else { @{ Problems = @($rO.Reason) } }
+            $oFailed = @($jO.Problems | Where-Object { $_ -like '*case input*ticks of 250 ms at the Clock*rate of 1 the host is at frame 18, not 19*' }).Count
+            $mnNote = "the rate read cut applied ($mApplied) and failed the input case ($mFailed); the seed cut applied ($nApplied) and failed it ($nFailed); the backlog held to the quarter second applied ($oApplied) and failed it ($oFailed)"
+        }
+        $mnOk = ($moduleReal -eq 0) -or ($mApplied -and $mFailed -ge 1 -and $nApplied -and $nFailed -ge 1 -and $oApplied -and $oFailed -ge 1)
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk) {
+            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'fifteen' } else { 'ten applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -417,6 +499,12 @@ if ($Control) {
         foreach ($p in @($jI.Problems) | Select-Object -First 3) { Write-Output ('  masked blit: ' + $p) }
         foreach ($p in @($jJ.Problems) | Select-Object -First 3) { Write-Output ('  double''s old 255: ' + $p) }
         if ($moduleReal -gt 0) { foreach ($p in @($jK.Problems) | Select-Object -First 3) { Write-Output ('  library changed: ' + $p) } }
+        foreach ($p in @($jL.Problems) | Select-Object -First 3) { Write-Output ('  pointer without the Camera: ' + $p) }
+        if ($moduleReal -gt 0) {
+            foreach ($p in @($jM.Problems) | Select-Object -First 3) { Write-Output ('  rate read cut: ' + $p) }
+            foreach ($p in @($jN.Problems) | Select-Object -First 3) { Write-Output ('  seed cut: ' + $p) }
+            foreach ($p in @($jO.Problems) | Select-Object -First 3) { Write-Output ('  backlog at the quarter second: ' + $p) }
+        }
         exit 1
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue

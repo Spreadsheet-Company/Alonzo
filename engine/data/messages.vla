@@ -17,3 +17,4 @@
 (message cart-formula-volatile 5 "Alonzo-Cart" "The formula in {cell} calls {function}, which reads the wall clock or the dice, so no replay could reproduce it. The engine's clock is the frame in Clock!B1 and its dice the seed in Clock!B3; a random number is a formula of the seed and the last frame (SPEC.md section 3.5).")
 (message cart-write-derived 5 "Alonzo-Cart" "A derived write cannot go into {target}: {cells} are the host's to write, so a derived write lands only in a value cell the host does not write (SPEC.md section 3.9).")
 (message cart-source-unexpanded 5 "Alonzo-Cart" "The file holds a {form} form, so it is a cartridge's source, which the pass expands into the rows a load takes (SPEC.md section 7.8): expand it, and load the cartridge the pass writes.")
+(message cart-write-clock 5 "Alonzo-Cart" "{target} {what} (SPEC.md section 3.5).")

@@ -31,21 +31,28 @@ host.on('status', function (s) { /* s.text, a sentence; s.kind 'event' or 'progr
 What it does each frame, in section 5's order: the derived writes of the
 Write sheet, each its own write of one `derived` row; the Input sheet's
 eighteen rows from the keys it holds through the Keys sheet, the pointer
-over the canvas, the wheel and the last key; a person's edits, each its own
-write; the step with a budget in cells, which may yield and continue on the
-next tick, the progress a sentence; then the effects, the Camera first and
-the Palette, so the frame is drawn through its own Camera and colours, the
-Screen as the plane through the Camera's window, the Keys, the Audio rows,
-the File's save cell and the Write sheet. The loop is a fixed timestep with
-an accumulator capped at 250 ms, no interpolation and no skipped frame,
-paused while the page is hidden. At rate 0 there is no tick: one step for
+over the canvas, written as the Screen's own cell through the Camera of the
+frame the person sees, the wheel and the last key; a person's edits, each
+its own write; the step with a budget in cells, which may yield and continue
+on the next tick, the progress a sentence; then the effects, the Camera
+first and the Palette, so the frame is drawn through its own Camera and
+colours, the Screen as the plane through the Camera's window, the Keys, the
+Audio rows, the File's save cell, the Write sheet and the Clock's rate,
+which a person may write into `Clock!B2` and the loop then steps at. At a
+load whose manifest says `(seed host)` the host writes the seed into
+`Clock!B3`, a number from the browser's random source, before frame 0 is
+drawn (`ENGINE.3`). The loop is a fixed timestep with
+an accumulator, a tick's time capped at 250 ms and the backlog at the larger
+of 250 ms and one frame's interval, so a rate under four frames a second
+still steps; a rate that moves starts the backlog again. No interpolation
+and no skipped frame, and the loop is paused while the page is hidden. At rate 0 there is no tick: one step for
 each edit, and no Input. The blit puts the bytes through the palette into
 one `ImageData` and draws it at a whole number of device pixels a cell with
 smoothing off; a byte past the palette is magenta.
 
 | Method | What it does |
 |---|---|
-| `new AlonzoHost(options)` | `canvas` the plane's canvas (it takes the keys while focused); `box` the element the blit fits, the canvas's parent by default; `scale` a fixed number of device pixels a cell; `budget` a fixed budget in cells a step call, 0 for none; `callsPerTick` a fixed count of step calls a tick in place of the time slice; `now` the clock the budget is measured by; `drive: 'manual'` when the caller calls `tick` itself (the oracles) |
+| `new AlonzoHost(options)` | `canvas` the plane's canvas (it takes the keys while focused); `box` the element the blit fits, the canvas's parent by default; `scale` a fixed number of device pixels a cell; `budget` a fixed budget in cells a step call, 0 for none; `callsPerTick` a fixed count of step calls a tick in place of the time slice; `now` the clock the budget is measured by; `drive: 'manual'` when the caller calls `tick` itself (the oracles); `seed` the number a `(seed host)` cartridge gets in place of the browser's random one, a whole number from 1 to 2147483646 (the oracle) |
 | `attach(exports)` | asks `alonzo_abi_version` and refuses another number, then every export the loop calls: `{ ok, abi, version }` or `{ ok: false, sentence }` |
 | `load(text, name)` / `loadBytes(bytes, name)` | unloads the grid it held, loads a cartridge, then `describe`, reads the Camera, the Palette and the Keys, and draws the new grid's frame 0 at once, nothing computed, so the canvas never shows a grid the module no longer holds: `{ ok, handle, title, mode, w, h, rate }` or the refusal's sentence |
 | `expand(source, path, files)` | the pass (`SPEC.md` section 7.8): a cartridge's source, the path its includes resolve against (`cartridges/<name>/<name>.source.vla`, the command line's), and the texts it may include as `[path, text]` pairs, handed to the module's `alonzo_expand`, an act of its own that takes no handle, touches no grid and stops nothing: `{ ok, text, rows, ms }`, the cartridge's text CRLF as the command line writes it and its rows after the manifest, or the refusal's sentence with the source line it stands on; the export is asked for here and not at `attach`, so over a module without it, the double, the build is declined in words |
@@ -53,14 +60,14 @@ smoothing off; a byte past the palette is magenta.
 | `tick(ts)` | one animation frame's work at its timestamp, what the loop calls |
 | `edit(row)` | a person's edit, one `cell` or `formula` row, issued after the next frame's inputs; at rate 0 it steps once |
 | `keyDown(code, key)` / `keyUp(code)` / `releaseKeys()` | the keys held, by `KeyboardEvent.code` |
-| `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer in Screen cells, 0 when off the Screen |
+| `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer's place as the window's cell under it, 0 when off the canvas, which the Input rows write as the Screen's own cell through the Camera |
 | `runFrameSync()` | one whole frame now, whatever the clock (the blit's instrument) |
 | `redraw()` | the last complete frame drawn again, nothing stepped: the Camera and the Palette read as they stand, the plane viewed through the window and blitted, no other effect read (the blit's instrument over the engine's module, where a step is the evaluator's); `false` without a plane cartridge |
 | `viewRecord(sheet, window)` | a sheet's record as the module prints it, for a page to show |
 | `counters()` / `sentences()` | what the host has done; every sentence said, in order |
 | `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
 | `unload()` / `destroy()` | frees the handle and empties the canvas; removes the listeners |
-| `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat, refusal }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line, `refusal` true for a refusal or a failure; a notice of a value the host coerced, a Camera cell read as 1 or a colour painted magenta, is not one), `frame` (`{ frame, window, scale }`, after a frame completes), `load` (`{ handle, title, mode, w, h, rate, window, scale }`, after frame 0 is drawn) |
+| `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat, refusal }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line, `refusal` true for a refusal or a failure; a notice of a value the host coerced, a Camera cell read as 1 or a colour painted magenta, is not one), `frame` (`{ frame, window, scale, rate }`, after a frame completes, `rate` the one the Clock now holds), `load` (`{ handle, title, mode, w, h, rate, window, scale }`, after frame 0 is drawn) |
 
 `AlonzoHost.instantiate(bytes)` and `instantiateSync(bytes)` instantiate a
 module with the empty import object of section 8.1; `AlonzoHost.RULES` holds
@@ -99,7 +106,9 @@ over every row before the language's, which the loop oracle's `parity` case
 holds scenario by scenario. Since `ENGINE.2` its plane reads a formula
 without a value as 0 wherever it stands, as its record says by printing no
 value row, where it had read one outside its declared size as 255; the
-`plane` case holds its plane to its record.
+`plane` case holds its plane to its record. Since `ENGINE.3` it refuses a
+person's value into the Clock as the engine does, `cart-write-clock`: the
+frame, and a rate or a seed outside its range.
 
 The viewport is `viewport.js`, one plain script: no framework, no module
 syntax, no import, nothing fetched. It reads a view record, the lines
@@ -114,8 +123,8 @@ the scroll, the selection, the widths a person dragged, the frozen panes and
 the marks a host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
-panel, a cartridge running on the host's loop, Life, the glider gun or the
-test card, each with its source, which the panel's Build expands into the
+panel, a cartridge running on the host's loop, Life, the glider gun, the
+test card or the input card, each with its source, which the panel's Build expands into the
 cartridge in the page, and
 below it the viewport over seven
 records the door printed: the six view goldens of Frazaro's `scripts/view/`
@@ -156,7 +165,15 @@ test card to see the plane's
 whole rule: the sixteen colours as bars, magenta wherever a value is no
 colour (a byte past the palette, a fraction, a text, a truth value, an
 error), black for an empty cell, the window panning a column a frame across
-a Screen wider than it and wrapping after 21 frames. Below it, pick a
+a Screen wider than it and wrapping after 21 frames. Pick the input card,
+click the plane to give it the keys, and see every cell the host writes
+before a step: a lamp for each button of four players, white while held and
+a new colour after each press (the arrows, Z, X, A, S, Enter and Space for
+player 1; I, K, J, L, U, O, Y, P, 9 and 0 for player 2), the mouse's three
+buttons and a cursor under the pointer in their colours, the wheel panning
+the card with the cursor still under the pointer, the frame's bits, and the
+seed's and the dice's from the seed the host chose; write `(cell "Clock"
+"B2" 1)` to watch it step once a second. Below it, pick a
 record, scroll on both
 axes, click a cell or drag a range, click a column or row header or the
 corner, drag a column's right edge in the header, set rows and columns and
@@ -188,7 +205,7 @@ baseline to the roadmap's bars.
   from a second fake module it drives with no host between; and, when the
   page holds the engine's module, the same host over it, Life's plane at
   frames 1 and 11 equal byte for byte to a reference Life the page computes
-  (`engine`) and eleven refusals answered with the same id by the double and
+  (`engine`) and fourteen refusals answered with the same id by the double and
   the module (`parity`); and the frame path's equality (`plane`, `ENGINE.2`):
   at frame 0 and after every frame, the window the host drew through is the
   Camera's, the bytes it holds are the record of that window read by the
@@ -201,8 +218,16 @@ baseline to the roadmap's bars.
   source the page holds, expanded over the module, is its cartridge as the
   command line wrote it, byte for byte, an include the page does not hand in
   is refused at its line, the pass takes no handle and stops no loop, and a
-  build over the double is declined in words; one line a case into
-  `<pre id="loop">`, which `tools/check_host_loop.ps1` reads.
+  build over the double is declined in words; and the Input and Clock
+  devices (`input`, `ENGINE.3`): over the engine's module, the input card
+  loaded with its seed named and driven by events dispatched to the canvas,
+  keys, a second player's press, the pointer with its clicks, the wheel
+  panning the Camera, an edit of the Clock's frame refused and the rate
+  written to 10 and back, the window the host draws equal at every frame to
+  the card computed by hand from the log, and the Tally's counts, the seed
+  and the dice to the log's; `rate30` pins the pointer written through the
+  double's Camera too. One line a case into `<pre id="loop">`, which
+  `tools/check_host_loop.ps1` reads.
 - `index.html?blit=1` is the blit's instrument, the engine's second number:
   a 320 by 200 plane drawn through the host's whole frame over the double
   120 times at the scale that fits the screen and 120 at a scale of 1, and,

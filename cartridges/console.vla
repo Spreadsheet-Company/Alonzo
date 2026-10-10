@@ -60,6 +60,33 @@
     ("#FFFF55" "yellow")            ; 14
     ("#FFFFFF" "white")))           ; 15
 
+; ---- the buttons and the keys (SPEC.md sections 3.3 and 3.4) --------------------------
+
+(defmacro (button-labels sheet)
+  "the Input sheet's ten button labels in a sheet's column A, up to select, rows 1 to 10"
+  (cell sheet "A1" "up")
+  (cell sheet "A2" "down")
+  (cell sheet "A3" "left")
+  (cell sheet "A4" "right")
+  (cell sheet "A5" "a")
+  (cell sheet "A6" "b")
+  (cell sheet "A7" "x")
+  (cell sheet "A8" "y")
+  (cell sheet "A9" "start")
+  (cell sheet "A10" "select"))
+
+(defmacro (keys letter & codes)
+  "a player's column of the Keys sheet: the KeyboardEvent.code that holds each button, up to select, from row 1"
+  (quasiquote (keys-from (unquote letter) 0 (unquote codes))))
+
+(defmacro (keys-from letter index codes)
+  "a player's codes from an index on, a code at a time; the column's letter fused before the row"
+  (quote-if (null? codes)
+    (begin)
+    (begin
+      (cell "Keys" (symbol "\"" letter (+expand index 1)) (car codes))
+      (keys-from letter (+expand index 1) (cdr codes)))))
+
 ; ---- patterns -----------------------------------------------------------------------
 
 (defmacro (live sheet & cells)

@@ -40,8 +40,10 @@ engine is:
 - the frame number written into the Clock as the first act of every step,
   the only clock there is;
 - `describe`, the manifest, the devices and the budget, and the engine's
-  own refusals, a catalogue of nine in `data/messages.vla`, the ninth a
-  cartridge's source handed to the load, which never expands.
+  own refusals, a catalogue of ten in `data/messages.vla`: the ninth a
+  cartridge's source handed to the load, which never expands, and the tenth
+  a person's write into the Clock, its frame, or a rate or a seed outside
+  its range (`ENGINE.3`).
 
 Beside the engine, the pass (`src/pass.rs`, `SPEC.md` section 7.8): a
 cartridge's source, VLA with template macros and `include`s, expanded by the

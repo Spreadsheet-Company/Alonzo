@@ -97,10 +97,16 @@ if ($Root -eq '') { $Root = $repoRoot }
 # 2026-10-10, SPEC.3: three still, each now the pass's expansion of its source,
 # cartridges/<name>/<name>.source.vla, over one library, cartridges/console.vla;
 # their rows unchanged, so the floors stand.
-$expectedCartridges = 3
-$expectedSources = 3
+# 2026-10-10, ENGINE.3: four, the input card beside them, 136 rows (seven sheet
+# rows, the Palette's forty-eight cells, the Keys sheet's thirty, the Camera's
+# four and its value row, the Tally's labels, counts and dice, the Write row,
+# the Panel's lamps and the Screen's one formula: 1,517 cells, 1,411 of them
+# formula cells), written as a source over the library, which gains the Keys
+# sheet's macros; the other three's rows unchanged.
+$expectedCartridges = 4
+$expectedSources = 4
 $expectedLibraries = 1
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112 }
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136 }
 
 # --- section 7 and section 3, as data ---
 $requiredDirectives = @('spec', 'title', 'rate', 'screen', 'seed')

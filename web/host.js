@@ -8,20 +8,26 @@
   the fake module's (web/fake.js), and it asks the ABI number before
   anything else and refuses another (section 8.1). Then it runs the frame's
   order of operations: the tick of the animation frame with a fixed
-  timestep and an accumulator, capped at a quarter of a second, with no
-  interpolation and no skipped frame, paused while the page is hidden; the
+  timestep and an accumulator, a tick's time capped at a quarter of a
+  second and the backlog at the larger of that and one frame's interval,
+  with no interpolation and no skipped frame, paused while the page is
+  hidden; the
   derived writes of the Write sheet before the inputs, each its own write
   of one derived row; the Input sheet's eighteen rows from the keys it
-  holds, mapped through the Keys sheet, and the pointer; a person's edits,
-  each its own write; the step with a budget in cells, which may yield and
-  continue on the next tick, its progress a sentence (SD-34); the effects
-  read after the step, the Camera first and the Palette, so that a frame is
-  drawn through its own Camera and colours, then the Screen as the plane
-  through the Camera's window, the Keys, the Audio rows, the File's save
-  cell and the Write sheet; and the blit, the plane's bytes through the
-  palette into an ImageData drawn at a whole number of device pixels a
-  cell, magenta past the palette. At rate zero there is no tick: one step
-  for each edit, and no Input.
+  holds, mapped through the Keys sheet, and the pointer, written as the
+  Screen's own cell through the Camera of the frame the person sees; a
+  person's edits, each its own write; the step with a budget in cells,
+  which may yield and continue on the next tick, its progress a sentence
+  (SD-34); the effects read after the step, the Camera first and the
+  Palette, so that a frame is drawn through its own Camera and colours,
+  then the Screen as the plane through the Camera's window, the Keys, the
+  Audio rows, the File's save cell, the Write sheet and the Clock's rate,
+  which a person may write and the loop then steps at; and the blit, the
+  plane's bytes through the palette into an ImageData drawn at a whole
+  number of device pixels a cell, magenta past the palette. At rate zero
+  there is no tick: one step for each edit, and no Input. At a load whose
+  manifest says (seed host) the host chooses the seed, its one write of its
+  own (ENGINE.3).
 
   Beside the loop it runs the pass (SPEC.md section 7.8, SPEC.3's second
   slice): a cartridge's source, its path and the texts it includes handed to
@@ -54,7 +60,8 @@
   'use strict';
 
   // ---- the rules of the loop, as ENGINE.1's scoping states them (decisions 4 to 8) ----
-  var ACCUMULATOR_CAP_MS = 250;      // Fiedler's cap, on a tick's time and on the backlog: a stall runs seven frames at 30, never thirty
+  var ACCUMULATOR_CAP_MS = 250;      // Fiedler's cap, on a tick's time; and on the backlog, unless one frame's interval is longer:
+                                     // a stall runs seven frames at 30, never thirty, and a rate under four a second still steps
   var FIRST_BUDGET = 2000;           // the cells of a step call before a rate is measured: about 9 ms of the
                                      // engine's own module (226,000 to 236,000 cells a second in Chrome,
                                      // measured 2026-10-09), where 16,000 held the page for about 70 ms
@@ -65,6 +72,8 @@
   var TIMER_FLOOR_MS = 0.1;          // a step faster than the timer's grain is measured at the grain
   var LOG_LINES = 20;
   var HISTORY_LINES = 2000;
+  var MAX_SEED = 2147483646;         // the highest seed, so a Park and Miller cell never sticks at 0 (section 3.5)
+  var MAX_RATE = 120;                // the highest rate, in frames a second (section 10)
   var ABI = 1;
   var RULES = {
     abi: ABI, capMs: ACCUMULATOR_CAP_MS, firstBudget: FIRST_BUDGET, minBudget: MIN_BUDGET,
@@ -166,7 +175,9 @@
   // options: canvas (the plane's), box (the element the blit fits, the canvas's parent by default),
   // scale (a fixed number of device pixels a cell), budget (a fixed budget in cells, 0 for none),
   // callsPerTick (the step calls a tick may make, in place of the time slice), now (the clock the
-  // budget is measured by), drive ('manual' when the caller calls tick itself).
+  // budget is measured by), drive ('manual' when the caller calls tick itself), seed (the number a
+  // (seed host) cartridge gets in place of the browser's random one, a whole number from 1 to
+  // 2147483646).
   function Host(options) {
     options = options || {};
     VP();
@@ -240,7 +251,7 @@
                        : 'The budget: ' + thousands(bd.cells) + ' formula cells a step, one step an edit.');
     }
     if (c.mode !== 'plane') this._say('This slice blits the plane alone; a grid cartridge is drawn by the viewport, which the host takes up after it.');
-    if (c.seed === 'host') this._say('The cartridge asks the host for its seed, which this host does not choose yet (the Clock is ENGINE.3\'s): Clock!B3 stays empty until it does.');
+    if (c.seed === 'host') this._seed();
     if (c.devices.camera) this._readCamera();
     if (c.devices.palette) this._readPalette();
     if (c.devices.keys) this._readKeys();
@@ -250,6 +261,24 @@
     if (c.mode === 'plane') this._drawPlane();   // frame 0, drawn at the load
     this._emit('load', { handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate, window: this.window, scale: this.scale || 0 });
     return { ok: true, handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate };
+  };
+  // The host's seed (ENGINE.3, decision 1): a cartridge whose manifest says (seed host) loads with
+  // Clock!B3 empty, and the host writes it once, before frame 0 is drawn, a whole number from 1 to
+  // 2147483646 from the browser's random source, or options.seed when a caller names one (the
+  // oracle; a replay's player). The one write of the host's own that no person made and no step
+  // computes: no time, and at rate zero no step.
+  Host.prototype._seed = function () {
+    var named = this.options.seed, n;
+    if (typeof named === 'number' && named >= 1 && named <= MAX_SEED && Math.floor(named) === named) n = named;
+    else {
+      var cr = global.crypto, u = new Uint32Array(1);
+      if (cr && cr.getRandomValues) cr.getRandomValues(u); else u[0] = Math.floor(Math.random() * 4294967296);
+      n = 1 + (u[0] % MAX_SEED);
+    }
+    var r = this._write('(cell "Clock" "B3" ' + n + ')');
+    if (r.status !== 0) { this._refuse('The cartridge asks the host for its seed, and the write of ' + n + ' into Clock!B3 was refused: ' + words(r, true) + '.'); return; }
+    this.cart.seed = n; this.cart.seedChosen = true;
+    this._say('The cartridge asks the host for its seed: the host chose ' + n + ', in Clock!B3.');
   };
   Host.prototype._describe = function () {
     var r = this.m.call('alonzo_describe', [this.handle]);
@@ -321,21 +350,26 @@
     if (!this.running || !this.handle || this.hidden || !this.cart) return;
     var c = this.cart, win;
     if (c.rate === 0) {   // no tick at rate zero: a frame an edit began continues here, and the edits waiting follow it
-      if (this.inFrame) { win = this._window(); if (this._continue(win)) this._editFrames(win); }
+      win = this._window();
+      if (this.inFrame) { if (this._continue(win)) this._editFrames(win); }
+      else if (this.edits.length) this._editFrames(win);   // edits made in the frame that set the rate to 0
       return;
     }
     if (this.lastTs === null) { this.lastTs = ts; return; }
     var dt = ts - this.lastTs;
     this.lastTs = ts;
     this._sample(dt);
-    this.acc = Math.min(this.acc + Math.min(dt, ACCUMULATOR_CAP_MS), ACCUMULATOR_CAP_MS);
-    var interval = 1000 / c.rate;
+    // A tick's time held to a quarter second, and the backlog to the larger of a quarter second and one
+    // frame's interval: held to the quarter second alone, a rate under four frames a second, whose
+    // interval is longer, never stepped, and the teacher's rate of 1 froze the loop (ENGINE.3's hand test).
+    this.acc = Math.min(this.acc + Math.min(dt, ACCUMULATOR_CAP_MS), Math.max(ACCUMULATOR_CAP_MS, 1000 / c.rate));
     win = this._window();
     for (;;) {
       if (this.inFrame) { if (!this._continue(win)) return; continue; }
+      if (c.rate === 0) return;   // a frame of this tick set the Clock's rate to 0: edits step from here
       if (this._spent(win)) return;
-      if (this.acc < interval) return;
-      this.acc -= interval;
+      if (this.acc < 1000 / c.rate) return;   // the interval at the rate the last frame left in the Clock
+      this.acc -= 1000 / c.rate;
       this._begin();
     }
   };
@@ -444,16 +478,21 @@
     return false;
   };
   // The Input sheet's eighteen rows (section 3.3): ten buttons for four players through the key map,
-  // the pointer in Screen cells, its three buttons, the wheel's notches, the last key twice.
+  // the pointer in Screen cells, its three buttons, the wheel's notches, the last key twice. The
+  // pointer is held as the window's cell under it, and written as the Screen's own cell (ENGINE.3,
+  // decision 4): the window's cell plus the offset of the Camera the person sees, the one the last
+  // frame was drawn through, so that ROW() and COLUMN() find the cell pointed at wherever the Camera
+  // stands; 0 off the canvas.
   Host.prototype._inputRows = function () {
-    var out = [], km = this.keymap, held = this.held, pt = this.pointer, k = this.lastKey;
+    var out = [], km = this.keymap, held = this.held, pt = this.pointer, k = this.lastKey, cam = this.camera;
     for (var b = 0; b < 10; b++) {
       for (var p = 0; p < 4; p++) {
         var code = km ? km[b][p] : '';
         out.push('(cell "Input" "' + PLAYERS[p] + (b + 1) + '" ' + (code && held[code] ? 1 : 0) + ')');
       }
     }
-    out.push('(cell "Input" "B11" ' + pt.col + ')', '(cell "Input" "B12" ' + pt.row + ')');
+    var on = pt.col > 0 && pt.row > 0;
+    out.push('(cell "Input" "B11" ' + (on ? cam.col + pt.col - 1 : 0) + ')', '(cell "Input" "B12" ' + (on ? cam.row + pt.row - 1 : 0) + ')');
     out.push('(cell "Input" "B13" ' + pt.left + ')', '(cell "Input" "B14" ' + pt.right + ')', '(cell "Input" "B15" ' + pt.middle + ')');
     out.push('(cell "Input" "B16" ' + this.notches + ')');
     out.push('(cell "Input" "B17" ' + quote(k ? k.key : '') + ')', '(cell "Input" "B18" ' + quote(k ? k.code : '') + ')');
@@ -471,8 +510,9 @@
     if (d.audio) this._readAudio();
     if (d.file) this._readFile();
     if (d.write) this._readWrite();
+    if (d.clock) this._readClock();
     if (this.stepEdit) { this._say('frame ' + n + ': stepped once for the edit ' + this.stepEdit + '.'); this.stepEdit = null; }
-    this._emit('frame', { frame: n, window: this.window, scale: this.scale || 0 });
+    this._emit('frame', { frame: n, window: this.window, scale: this.scale || 0, rate: this.cart.rate });
   };
   Host.prototype._record = function (sheet) {
     var r = this.m.texts('alonzo_view', [this.handle], ['grid', sheet, '']);
@@ -576,6 +616,22 @@
     var v = cells.B3 === 1 ? 1 : 0;
     if (v === 1 && this.saveValue !== 1) { this.c.saves++; this._say('frame ' + this.frame + ': the cartridge asked to be saved (File!B3 rose to 1); writing the save is the File device\'s, ENGINE.5.'); }
     this.saveValue = v;
+  };
+  // The Clock's rate (ENGINE.3, decision 3): a person may write Clock!B2, 0 or a whole number from 1
+  // to 120, which the engine holds to that range, and the loop steps at what the grid says, the
+  // teacher of section 9 who slows a rule to watch it think. A rate that moves starts the backlog
+  // again with nothing owed, so a rise from 1 to 30 runs no burst of the slow rate's backlog; from a
+  // rate to 0 the ticks stop and an edit steps; from 0 to a rate they start again.
+  Host.prototype._readClock = function () {
+    var cells = this._cells('Clock');
+    if (!cells) return;
+    var v = cells.B2, c = this.cart;
+    if (typeof v !== 'number' || Math.floor(v) !== v || v < 0 || v > MAX_RATE || v === c.rate) return;
+    var was = c.rate;
+    c.rate = v;
+    this.acc = 0;
+    if (was === 0) this.lastTs = null;
+    this._say('frame ' + this.frame + ': the Clock\'s rate is now ' + (v === 0 ? '0 (Clock!B2): the loop steps once for each edit, and the Input sheet keeps what it last held.' : v + ' frame' + (v === 1 ? '' : 's') + ' a second (Clock!B2); the loop steps at it.'));
   };
   // The Write sheet's rows become the next frame's derived writes (section 3.9).
   Host.prototype._readWrite = function () {

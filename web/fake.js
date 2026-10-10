@@ -39,7 +39,9 @@
   and checks every free against the pointer and the length it handed out;
   its step yields on a budget over a declared cost of width times height
   cells; its write refuses a twin, a host-written cell and, for a derived
-  row, a formula cell; and a write while a frame is in progress is refused.
+  row, a formula cell, and, as the engine does since ENGINE.3, a person's
+  value into the Clock's frame, or a rate or a seed out of its range; and a
+  write while a frame is in progress is refused.
 
   Plain script, no module syntax, no library, nothing fetched: one global,
   AlonzoFake, set by this closure. AlonzoFake.create(options) answers
@@ -181,6 +183,19 @@
     return (typeof v === 'number' && v >= 0 && v <= 254 && Math.floor(v) === v) ? v : 255;
   }
   function numberOf(v) { return typeof v === 'number' && isFinite(v) ? v : 0; }
+  // A person's value into the Clock's column B, as the engine judges it (ENGINE.3): the frame is
+  // refused, the rate is a whole number from 0 to 120 and the seed one from 1 to 2147483646, each
+  // spelled in digits alone, a range judged cell by cell from the frame. The words are the double's.
+  function clockRefusal(name, R, raw) {
+    if (R.left > 2 || R.right < 2) return '';
+    var n = /^\d{1,12}$/.test(raw) ? Number(raw) : -1;
+    for (var r = Math.max(1, R.top); r <= Math.min(3, R.bottom); r++) {
+      if (r === 1) return name + '!B1 is the frame, which the engine writes at every step';
+      if (r === 2 && !(n >= 0 && n <= 120)) return name + '!B2 takes a rate from 0 to 120, and ' + raw + ' is none';
+      if (r === 3 && !(n >= 1 && n <= 2147483646)) return name + '!B3 takes a seed from 1 to 2147483646, and ' + raw + ' is none';
+    }
+    return '';
+  }
   function thousands(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
   function fnv(s) {
     var h = 0x811c9dc5;
@@ -459,6 +474,7 @@
         if (LAYOUT[sk.key] && !within(R, LAYOUT[sk.key])) return refuse('cart-device-cell-outside', target + ' is outside the layout of the ' + sk.name + ' sheet (SPEC.md section 3)', ln, outLen);
         if (kind === 'formula' && meets(R, HOST_CELLS[sk.key])) return refuse('cart-device-cell-formula', target + ' is a cell the host writes, which holds values and never formulas', ln, outLen);
         if (kind === 'derived' && meets(R, DERIVED_BLOCKED[sk.key])) return refuse('cart-write-derived', 'a derived write into ' + target + ' was refused: it is a cell the host writes', ln, outLen);
+        if (kind === 'cell' && sk.key === 'clock') { var ck = clockRefusal(name, R, m[4].trim()); if (ck) return refuse('cart-write-clock', ck, ln, outLen); }
         if (area(R) > MAX_CELLS) { later('grid-too-many-cells', target + ' would bring the grid past the ' + thousands(MAX_CELLS) + ' cells one grid holds', ln); continue; }
         if (kind === 'derived' && anyCell(R, function (r, cc) { var e = c.content(sk.key, r, cc, false); return !!(e && e.f); })) {
           later('grid-write-derived', 'a derived write into ' + target + ' was refused: it is a formula cell: the step computes values and never formulas, and a derived write replaces none', ln);

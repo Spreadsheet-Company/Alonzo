@@ -21,7 +21,10 @@
 //! machine's write, all or none; checking first is the only order that keeps
 //! a write atomic, since the machine holds no undo an engine could call
 //! after it. A write while a frame is in progress goes straight to the
-//! machine, which refuses it whatever it holds.
+//! machine, which refuses it whatever it holds. Since `ENGINE.3` the checks
+//! hold the Clock's values too: a person's write of the frame is refused,
+//! the step's own write being the frame's only one, and the rate and the
+//! seed are held to their ranges.
 //!
 //! **The refusals** are the engine's own catalogue, `data/messages.vla`, the
 //! `cart` family, read by the language's mechanism; every other id is the
@@ -644,6 +647,43 @@ fn whole_in(cell: Option<&Cell>, low: f64, high: f64) -> Option<f64> {
     }
 }
 
+/// A person's value into the Clock's column B, judged cell by cell, the frame
+/// first (`ENGINE.3`, section 3.5). The frame is the engine's alone, written as
+/// the first act of every step, so a value written there would be undone
+/// unseen; the step writes it through the machine and never through this
+/// check. The rate is 0 or a whole number of frames a second from 1 to 120,
+/// which the host reads after each step and steps at, the teacher of section
+/// 9; the seed is a whole number from 1 to 2147483646, so that a Park and
+/// Miller cell seeded from it never sticks at 0. A formula or a derived row
+/// there is refused before this, as a cell the host writes.
+fn check_clock(line: u32, sheet: &str, range: &A1Range, value: &Form) -> Result<(), LineRefusal> {
+    if range.left > 2 || range.right < 2 {
+        return Ok(());
+    }
+    for row in range.top.max(1)..=range.bottom.min(3) {
+        let what = match (row, whole(value)) {
+            (1, _) => "is the Clock's frame, which the engine writes as the first act of every step, so a write there would be undone unseen: the frame is the only clock".to_string(),
+            (2, Some(n)) if n <= u64::from(MAX_RATE) => continue,
+            (2, _) => format!(
+                "holds the Clock's rate, 0 or a whole number of frames a second from 1 to {MAX_RATE}, and {} is not one",
+                write_datum(value)
+            ),
+            (_, Some(n)) if (1..=u64::from(MAX_SEED)).contains(&n) => continue,
+            _ => format!(
+                "holds the Clock's seed, a whole number from 1 to {MAX_SEED}, so that a Park and Miller cell never sticks at 0, and {} is not one",
+                write_datum(value)
+            ),
+        };
+        let target = format!("{sheet}!{}", address(row, 2));
+        return Err(refused(
+            line,
+            "cart-write-clock",
+            &[("target", &target), ("what", &what)],
+        ));
+    }
+    Ok(())
+}
+
 /// The engine's own sheets made in the draft (section 4.2): the Clock's
 /// three cells, the File's two, and the Input sheet when the cartridge holds
 /// none. Answers a save's frame, the whole number above 0 its rows wrote in
@@ -853,7 +893,7 @@ impl Cartridge {
     /// a row the machine would refuse whatever its target is left to it.
     fn check_row(&self, form: &Form) -> Result<(), LineRefusal> {
         let Form::List(l) = form else { return Ok(()) };
-        let [Form::Sym(head), Form::Str(sheet), Form::Str(addr), _] = l.items.as_slice() else {
+        let [Form::Sym(head), Form::Str(sheet), Form::Str(addr), value] = l.items.as_slice() else {
             return Ok(());
         };
         if !matches!(head.as_str(), "cell" | "formula" | "derived") {
@@ -916,6 +956,9 @@ impl Cartridge {
                     ("cells", &spell_all(name, device.derived_blocked())),
                 ],
             ));
+        }
+        if head == "cell" && device == Device::Clock {
+            check_clock(l.line, sheet, &range, value)?;
         }
         Ok(())
     }
@@ -1129,6 +1172,7 @@ mod tests {
             ),
             ("cart-write-derived", vec![("target", "x"), ("cells", "x")]),
             ("cart-source-unexpanded", vec![("form", "x")]),
+            ("cart-write-clock", vec![("target", "x"), ("what", "x")]),
         ];
         assert_eq!(catalogue().count(), ids.len(), "every entry is raised");
         for (id, slots) in &ids {
@@ -1479,6 +1523,88 @@ mod tests {
         assert_eq!(r.refusal.id, "grid-write-during-step");
     }
 
+    /// ENGINE.3, decision 2: a person's write into the Clock. The frame is
+    /// refused, the rate and the seed are held to their ranges, a range is
+    /// judged cell by cell from the frame, the labels stay a person's, a
+    /// refused write changes nothing, and the step's own write of the frame
+    /// goes on as before.
+    #[test]
+    fn the_clock_s_cells_are_held_at_a_write() {
+        let mut c = load(&small(30)).expect("loads");
+        let refused = [
+            ("(cell \"Clock\" \"B1\" 5)", "Clock!B1 is the Clock's frame"),
+            ("(cell \"Clock\" \"B2\" 121)", "and 121 is not one"),
+            ("(cell \"Clock\" \"B2\" -1)", "and -1 is not one"),
+            ("(cell \"Clock\" \"B2\" 2.5)", "and 2.5 is not one"),
+            (
+                "(cell \"Clock\" \"B2\" \"fast\")",
+                "and \"fast\" is not one",
+            ),
+            ("(cell \"Clock\" \"B2\" true)", "Clock's rate"),
+            (
+                "(cell \"Clock\" \"B3\" 0)",
+                "Clock!B3 holds the Clock's seed",
+            ),
+            (
+                "(cell \"Clock\" \"B3\" 2147483647)",
+                "and 2147483647 is not one",
+            ),
+            ("(cell \"Clock\" \"B3\" \"x\")", "and \"x\" is not one"),
+            (
+                "(cell \"Clock\" \"B1:B3\" 9)",
+                "Clock!B1 is the Clock's frame",
+            ),
+            (
+                "(cell \"clock\" \"A2:B2\" 300)",
+                "clock!B2 holds the Clock's rate",
+            ),
+            (
+                "(cell \"Clock\" \"B2\" 10)\n(cell \"Clock\" \"B1\" 2)",
+                "Clock!B1 is the Clock's frame",
+            ),
+        ];
+        for (rows, want) in refused {
+            let r = c.write(rows).expect_err(rows);
+            assert_eq!(
+                r.refusal.id, "cart-write-clock",
+                "{rows}: {}",
+                r.refusal.text
+            );
+            assert!(r.refusal.text.contains(want), "{rows}: {}", r.refusal.text);
+            assert!(
+                r.refusal.text.ends_with("(SPEC.md section 3.5)."),
+                "{}",
+                r.refusal.text
+            );
+        }
+        // Nothing a refused write held landed, the rate of the last case among it.
+        assert_eq!(cell_text(&c, "Clock", "B2"), "(cell \"Clock\" \"B2\" 30)");
+        // What lands: a rate of 0, 1 and 120, a seed at both its ends, both at
+        // once over a range the frame is not in, and a label.
+        for (rows, n) in [
+            ("(cell \"Clock\" \"B2\" 0)", 1),
+            ("(cell \"Clock\" \"B2\" 1)", 1),
+            ("(cell \"Clock\" \"B2\" 120)", 1),
+            ("(cell \"Clock\" \"B3\" 1)", 0), // the seed it holds: nothing changed
+            ("(cell \"Clock\" \"B3\" 2147483646)", 1),
+            ("(cell \"Clock\" \"B3\" 1)", 1),
+            ("(cell \"Clock\" \"B2:B3\" 5)", 2),
+            ("(cell \"Clock\" \"A1\" \"tick\")", 1),
+        ] {
+            assert_eq!(c.write(rows), Ok(n), "{rows}");
+        }
+        assert_eq!(cell_text(&c, "Clock", "B2"), "(cell \"Clock\" \"B2\" 5)");
+        assert_eq!(cell_text(&c, "Clock", "B3"), "(cell \"Clock\" \"B3\" 5)");
+        // The step writes the frame as before, past the person's check.
+        for frame in 1..=2u64 {
+            assert!(c.step(0).done);
+            assert_eq!(
+                cell_text(&c, "Clock", "B1"),
+                format!("(cell \"Clock\" \"B1\" {frame})")
+            );
+        }
+    }
+
     #[test]
     fn the_clock_is_written_once_a_frame() {
         let mut c = load(&small(30)).expect("loads");
@@ -1598,6 +1724,153 @@ mod tests {
         assert!(
             !d.contains("(device \"Write\""),
             "Life has no Write sheet: {d}"
+        );
+    }
+
+    // ---- ENGINE.3: the input card ----
+
+    /// The input card (ENGINE.3): the Input and Clock devices drawn.
+    const INPUTCARD: &str = include_str!("../../cartridges/inputcard/inputcard.vla");
+
+    /// The Input sheet's eighteen rows as the host writes them before a step:
+    /// the held buttons as (button, player) from 0, the pointer's Screen cell,
+    /// its three buttons, the wheel's notches, and the last key and its code.
+    fn input_rows(
+        held: &[(u32, u32)],
+        pointer: (u32, u32),
+        buttons: [u32; 3],
+        notches: i32,
+        key: (&str, &str),
+    ) -> String {
+        let mut out = String::new();
+        for b in 0..10u32 {
+            for p in 0..4u32 {
+                let v = u32::from(held.contains(&(b, p)));
+                out.push_str(&format!(
+                    "(cell \"Input\" \"{}\" {v})\n",
+                    address(b + 1, p + 2)
+                ));
+            }
+        }
+        out.push_str(&format!(
+            "(cell \"Input\" \"B11\" {})\n(cell \"Input\" \"B12\" {})\n",
+            pointer.0, pointer.1
+        ));
+        for (i, v) in buttons.iter().enumerate() {
+            out.push_str(&format!("(cell \"Input\" \"B{}\" {v})\n", 13 + i));
+        }
+        out.push_str(&format!(
+            "(cell \"Input\" \"B16\" {notches})\n(cell \"Input\" \"B17\" {})\n(cell \"Input\" \"B18\" {})\n",
+            quoted(key.0),
+            quoted(key.1)
+        ));
+        out
+    }
+
+    /// A cell's value as its record spells it, the row's last field.
+    fn value_of(c: &Cartridge, sheet: &str, addr: &str) -> String {
+        let row = cell_text(c, sheet, addr);
+        let open = row
+            .find(&format!("\"{addr}\" "))
+            .map(|i| i + addr.len() + 3);
+        open.map(|i| row[i..row.len() - 1].to_string())
+            .unwrap_or_default()
+    }
+
+    /// Twelve frames of the host's writes, the Write sheet's row carried as
+    /// the host carries it, and every count held to the log: a press on its
+    /// rising edge, a second player's column, a click and its frame, the
+    /// wheel and the Camera it pans, the keys, the dice from the seed, and the
+    /// cursor drawn at the pointer's Screen cell through the Camera's window.
+    #[test]
+    fn the_input_card_counts_what_it_is_given() {
+        let mut c =
+            Cartridge::load(INPUTCARD, "inputcard.vla", INPUTCARD.len()).expect("the card loads");
+        assert!(
+            cell_text(&c, "Clock", "B3").is_empty(),
+            "the seed is the host's"
+        );
+        assert_eq!(c.write("(cell \"Clock\" \"B3\" 12345)"), Ok(1));
+        let mut pending: Option<String> = None;
+        for frame in 1..=12u32 {
+            if let Some(row) = pending.take() {
+                assert_eq!(c.write(&row), Ok(1), "{row}");
+            }
+            let held: &[(u32, u32)] = match frame {
+                3..=5 => &[(3, 0)],     // right, player 1
+                7 => &[(4, 0), (0, 1)], // a, player 1; up, player 2
+                _ => &[],
+            };
+            let pointer = if frame >= 9 { (8, 4) } else { (0, 0) };
+            let buttons = if frame == 9 || frame == 10 {
+                [1, 0, 0]
+            } else {
+                [0, 0, 0]
+            };
+            let notches = if frame == 11 { 3 } else { 0 };
+            let key = match frame {
+                7 => ("i", "KeyI"),
+                8 => ("q", "KeyQ"),
+                _ => ("", ""),
+            };
+            c.write(&input_rows(held, pointer, buttons, notches, key))
+                .expect("the Input rows");
+            let before = formulas(&c);
+            assert!(c.step(0).done);
+            assert_eq!(
+                formulas(&c),
+                before,
+                "frame {frame} wrote no formula (AD-7)"
+            );
+            // The Write sheet's row, as the host reads it after the step.
+            if value_of(&c, "Write", "B2") == "\"B20\"" {
+                pending = Some(format!(
+                    "(derived \"Tally\" \"B20\" {})",
+                    value_of(&c, "Write", "C2")
+                ));
+            }
+        }
+        let mut dice: u64 = 12345;
+        for _ in 2..=12 {
+            dice = dice * 16807 % 2_147_483_647;
+        }
+        for (addr, want) in [
+            ("B1", "0".to_string()),
+            ("B4", "1".to_string()),
+            ("B5", "1".to_string()),
+            ("C1", "1".to_string()),
+            ("B11", "8".to_string()),
+            ("B12", "4".to_string()),
+            ("B13", "1".to_string()),
+            ("B14", "0".to_string()),
+            ("B16", "3".to_string()),
+            ("B17", "2".to_string()),
+            ("B18", "\"KeyQ\"".to_string()),
+            ("B19", dice.to_string()),
+            ("B20", "9".to_string()),
+        ] {
+            assert_eq!(value_of(&c, "Tally", addr), want, "Tally!{addr}");
+        }
+        assert_eq!(
+            value_of(&c, "Camera", "B2"),
+            "4",
+            "three notches pan to column 4"
+        );
+        let window = match c.view("plane", "Screen", Some("D1:AQ24")) {
+            Ok(Viewed::Bytes(b)) => b,
+            other => panic!("the plane: {other:?}"),
+        };
+        let at = |row: usize, col: usize| window[(row - 1) * 40 + (col - 1)];
+        assert_eq!(
+            at(4, 5),
+            15,
+            "the cursor at the Screen's H4, the window's fifth column"
+        );
+        assert_eq!(at(6, 6), 2, "right, pressed once and let go: colour 1 + 1");
+        assert_eq!(
+            [at(20, 6), at(20, 7), at(20, 8), at(20, 9)],
+            [1, 1, 11, 11],
+            "frame 12's four low bits, 0011 from bit 0"
         );
     }
 

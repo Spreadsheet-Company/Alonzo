@@ -469,6 +469,8 @@ Against the bars: the frame p95 under 2.0 ms by a factor of two at both scales, 
 
 *The third round, 2026-10-09: rate zero.* The owner changed the cartridge's `(rate 30)` to `(rate 0)` under "The cartridge" and loaded it: the plane stopped, the host said "Loaded Life: a 320 by 200 plane at rate 0, a step on every edit" and "The budget: 64,000 formula cells a step, one step an edit", and the edit `(cell "State" "B1" 5)` stepped the grid once, frame 1, the step yielding twice on the cold budget, the first after a load being measured before the host knows the machine's speed, and the frame still one. The log kept the rate-30 run above it collapsed, 126, 80 and 68 refusals and 35 save edges, each one line. With that, every item of the hand test is met: the loop running against the fake, a device sheet changing in the viewport, a row typed in the edit box and the status saying so, the Camera moved by an edit and the window following, a derived write refused and printed, rate zero stepping once for an edit, and the blit table pasted. *Owner-tested 2026-10-09.* Found in the last screenshot and fixed at the owner's word: the device sheet's viewport refreshed every sixth frame, which at rate zero is every sixth edit, so after frame 1 the Write sheet still showed its rows as loaded and not the State row frame 1 wrote. The panel now keeps the loaded rate from the host's `load` event and, at rate zero, shows the device sheet after every frame; while the loop runs it stays at every sixth. Proved on a scratch copy of the page driven headless, which is possible here because rate zero steps on the edit itself and needs no animation frame: the rate set to 0, the cartridge loaded, the edit written, and the device sheet's last record read back through a probe on the viewport's `load`. Before the fix it held the header row alone; after it, `(cell "Write" "A2" "State")` and its row. `run_checks.ps1 -WithExtras`: 9 checks and 9 verifiers, `ALL GREEN`. *Committed 2026-10-09 at the owner's word, the first slice whole in one commit; the item stays open for its second slice, the same host over the engine's own module, which waits on the language crate's handle and four calls.*
 
+*Noted 2026-10-10 by `ENGINE.3`'s hand test:* decision 4's cap held the backlog as well as a tick's time to 250 ms, so a rate under four frames a second was never owed a frame, a cartridge at `(rate 1)` to `(rate 3)` never stepped, and the oracle's model had copied the line. `ENGINE.3` holds the backlog to the larger of 250 ms and one frame's interval (that item's entry, below).
+
 ## `ENGINE.1` — the second slice: the same host over the engine's own module
 
 *Scoped 2026-10-09, at the owner's word, the day `KERNEL.22` closed in Frazaro: the `alonzo` crate over `vla-lang`'s machine, answering the eleven exports the host already drives, so that the page's loop runs Life as the language computes it and the fake module stays the double the oracle drives. The gate, read on the day, is half met: the handle and the four calls are committed in Frazaro as `6cca2e1`, and they are on no remote and in no registry, Frazaro being six commits ahead of its `origin/main` and `vla-lang` never published, at 0.8.0 by the workspace's version. Asked the same day, the owner chose the route this workspace reserved at `REPO.1`, the language crate from crates.io at exactly `=0.9.0`, and the scoping now: nothing lands here until Frazaro's 0.9.0 is on crates.io, and the build follows the publish. This slice closes the item.*
@@ -1341,3 +1343,288 @@ What remains is the owner's.
 - `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`.
 
 *Owner-tested 2026-10-10; committed and closed 2026-10-10 at the owner's word, "Commit, then suggest next steps": the second slice with the item's close, the roadmap's line moved to the ledger's specification section above. Not pushed.*
+
+## `ENGINE.3` — the Input and Clock devices: the host's seed, the Clock's three cells, the pointer in the Screen's own cells, an input card, and the replay
+
+*Scoped 2026-10-10 at the owner's word, the day `SPEC.3` closed. The roadmap's line: "keys and the mouse, position and buttons, written into the Input sheet's cells each frame before the step; the frame number in the Clock sheet; nothing else is a clock". `ENGINE.1` built most of that line, as its own decision 5 said it would, and handed this item the remainder by name: the Clock's frame seen to advance on the real module and the gamepad kept named (the first slice's decision 5), and the seed, "with the rest of the Clock" (the second slice's decision 9). So the scoping measured the gap first, in scratch copies, and its findings are where the decisions start. The host chooses no seed. The Clock's cells take any value a person writes, and two of them to no effect. The pointer is written as the window's cell where the page says the Screen's. The page's own example of the dice is refused by its own layout. And nothing records or plays a replay, though the page calls the replay the oracle of every cartridge with input. The owner's standing brief governs every decision: determinism first, a replay is a proof and a floor is a number.*
+
+**Substrate, verified.** Read on the day, by file and never by assumption; Frazaro's tree read and written nowhere.
+
+- *The pre-flight.*
+  - This tree clean at `10debee`, four commits ahead of `origin/main` (`357cee8`): `SPEC.3`'s two and the two filings before them, unpushed. CI's last run, `38041178863` on `357cee8`, green on both jobs.
+  - `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`; the loop check's control, eleven mutant pages, in 43.5 s.
+  - Frazaro clean at `494100a`, five ahead of its remote (`KERNEL.20`'s two slices, `VLA.1`, `VLA.2`'s filing, `VLA.3`), none released. This workspace pins `vla-lang` at `=0.8.1` and this item needs none of them.
+- *What `ENGINE.1` built of the line* (`web/host.js`).
+  - At every frame above rate 0, `_issueInputs` writes the eighteen Input rows of `_inputRows` in one write: forty button cells, players 1 to 4 through the key map `_readKeys` reads off the Keys sheet after each step; the pointer's column and row, its three buttons, the wheel's notches since the last frame; the last key as `key` and `code`, then cleared. A person's edits follow, each its own write. At rate 0 the sheet is never written.
+  - `_pointerFrom` maps a mouse event to the canvas's cell, 1 to the width and the height, 0 off the canvas; `pointerAt` keeps it; `_inputRows` writes it as it stands.
+  - `load` reads `(seed ...)` off `describe`, and under `(seed host)` says: "The cartridge asks the host for its seed, which this host does not choose yet (the Clock is ENGINE.3's): Clock!B3 stays empty until it does."
+  - The loop oracle holds the Input rows over the double: `rate30` (keys held over frames, the pointer, its buttons, the wheel, a key no button binds, all folded into the double's history cell and compared by digest with the oracle's own model), `rate0` (no Input row written), `yield` and `memory`.
+- *What the engine does* (`engine/src/cartridge.rs`).
+  - `make_own_sheets`: the Clock's labels; `B1` 0, or a save's frame; `B2` the manifest's rate; `B3` the manifest's seed, or empty under `(seed host)` unless a save kept one. The File's two cells. The Input sheet with its eighteen labels and zeros when the cartridge holds none.
+  - `step`: the next frame's number into `Clock!B1` through the machine's own write, before the machine steps, once a frame across yields.
+  - `check_row`, the engine's checks of a written row: a cell outside a device's layout, a formula into a cell the host writes, a derived row into one. Nothing about a value.
+  - The loop oracle's `engine` and `plane` cases already depend on `B1` advancing on the module: Life's soup is its first frame's (`Clock!$B$1=1`), and the test card's Camera is `1+MOD(Clock!B1,21)`.
+- *The double* (`web/fake.js`): the Clock's three cells as value cells, `B3` holding 1 under `(seed host)`; its write refuses what `check_row` refuses, and the `parity` case holds eleven refusals equal.
+- *The page*, `SPEC.md` version 3.
+  - §3.3: the Input's eighteen rows, "the pointer's Screen column, 1 to the width; 0 when the pointer is off the Screen"; the rising edge `=AND(Input!B5=1, Input.last!B5=0)`; no Input at rate 0.
+  - §3.4: the Keys sheet. §3.8: the Camera.
+  - §3.5: the Clock's three cells and who writes each, the engine at each step and at load and the host's one write of the seed; the dice as Park and Miller's step "in a fourth cell the cartridge adds", `=MOD(Clock.last!B4*16807, 2147483647)`.
+  - §3.10 and §12: the gamepad, a candidate device, not in this version; the key matrix not either.
+  - §5, the frame's order; §6, rules 2 to 5.
+  - §7.6, the replay: a header naming the spec, the cartridge's digest and the seed; `(frame n)` blocks of rows; the derived writes never logged; the golden a sheet at the end, as `view` prints it, compared whole.
+  - §9: "a teacher opens the Clock and slows the rate to one frame a second to watch a rule think", which the charter's rule 6 repeats.
+- *`CART.4`'s scoping.* "A replay: the Input sheet recorded frame by frame as a sheet of its own, played back by the loop in place of the live button", and `tools/check_cartridge_replays.ps1`, one line a cartridge. It was written the day before §7.6 gave the replay its form.
+
+**The measurements.** *Measurement*, 2026-10-10, on the owner's machine: native probes in a scratch copy of this workspace over `vla-lang` 0.8.1 (two examples, `probe_clock.rs` and `probe_card.rs`, scratch only), and a scratch page over today's module, 514,688 bytes, under headless Google Chrome 154 and Microsoft Edge 154, opened from `file://`. The timings are magnitudes, never floors.
+
+- *The seed.* A `(seed host)` cartridge loads with `Clock!B3` empty. `(cell "Clock" "B3" 12345)` written after the load answers `(written 1)`, and a formula `=Clock!B3` holds 12345 at frame 1. The host's write needs no new call.
+- *The frame.* `(cell "Clock" "B1" 5)` written between two steps lands, a view shows 5, and the next step's first act writes 2 over it. A person's write is undone, and nothing says so.
+- *The rate.* `Clock!B2` takes 1, 999, `"fast"`, 0, -3 and 2.5, each `(written 1)`. With 1 written, `=Clock!B1/Clock!B2` reads 3 at frame 3, while the host goes on stepping at the manifest's 30: the grid and the loop disagree.
+- *The seed at a write.* `Clock!B3` takes 0, -5, 2147483647 and `"x"`. A seed of 0 sticks a Park and Miller cell at 0 for ever, which §3.5's range exists to prevent.
+- *The page's dice.* §3.5's example, the dice in `Clock!B4`, is refused at load, `cart-device-cell-outside`: "Clock!B4 is outside the layout of the Clock sheet, Clock!A1:B3". A write there is refused the same way: the page's example breaks the page's layout rule. In a cartridge's own sheet, `=IF(Clock!B1=1,Clock!B3,MOD(State.last!B2*16807,2147483647))` from the seed 2147483646 was exact in doubles at all 40 frames, against integer arithmetic. `MOD(-1,9)` is 8, Excel's answer.
+- *The rising edge.* `=AND(Input!B5=1,Input.last!B5=0)` over eight frames of writes (1, 1, 0, 1, 1, 0, 0, 1) was true at frames 1, 4 and 8 and false at the rest. A counter, `=State.last!B2+IF(AND(...),1,0)`, a cell reading its own twin, counted 3. The edge works through the twins as the page says; no test held it until now.
+- *The pointer under a Camera.* The test card was loaded over the module in a scratch page and the pointer put on the canvas's top-left cell through the host's own `_pointerFrom`, for six frames. The window drawn before each frame moved from `A1:AN24` to `F1:AS24`, one column a frame, and the host wrote `Input!B11` 1 and `B12` 1 every frame. The host writes the window's cell; the Screen's cell under the pointer went from `A1` to `F1`. Without a Camera the two are the same; with one they part by the Camera's offset.
+- *What a `file://` page gets.* In both browsers `isSecureContext` is true, `crypto.subtle` an object and `crypto.getRandomValues` a function. `crypto.subtle.digest` of `"abc"` answered FIPS 180-2's vector, `BA7816BF...`, as a promise, which the headless dump waited for under its virtual-time budget.
+- *An input card, prototyped.* A plane of 40 by 24 on a Screen 48 wide:
+  - the buttons of four players, each press counted on its rising edge in a `Tally` sheet laid out as the Input sheet is, one range row over `B1:E10`;
+  - the mouse's clicks counted the same way; the wheel's notches summed, and the Camera panned by them, `=1+MOD(Tally!B16,9)`; the frames a key went down in, and the last key's code kept as text; the dice;
+  - a Write row that records a click's frame as a value;
+  - a `Panel` sheet of lamps, and the Screen one formula over `A1:AV24` that draws a cursor where `ROW()=Input!$B$12` and `COLUMN()=Input!$B$11`, and the Panel's cell elsewhere: the composite §3.1 names.
+
+  Loaded natively in 1.5 ms, 1,294 formula cells, `(budget 30 1294 38820 2000000)`; a step 0.3 to 0.5 ms. Twelve frames of writes as the host makes them: right held over three frames counted 1 press; player 2's up 1; a click 1, and its frame written by the derived write, `(derived "Tally" "B20" 9)` landed; three notches 3, and the Camera at column 4; the dice at frame 12 equal to the integer arithmetic's. With the pointer written as the Screen's column 8, the window `D1:AQ24`'s cell at its column 5 held the cursor.
+
+**The census.** What the line asks, against what stands:
+
+| the device | what stands | what is open |
+|---|---|---|
+| Input: ten buttons, four players | written every frame through the Keys sheet; held by `rate30` over the double | nothing on the module reads them; no test holds the rising edge |
+| Input: the pointer, its buttons, the wheel | written every frame | under a Camera the column and the row are the window's, not the Screen's |
+| Input: `key` and `code` | written every frame, cleared after | nothing |
+| Clock: the frame | the engine's, the step's first act | a person's write lands and is lost unseen |
+| Clock: the rate | the manifest's, written at load | any value lands, and the loop never reads it: §9's teacher has no effect |
+| Clock: the seed | the manifest's, written at load | `(seed host)` gets none; any value lands, a stuck dice among them |
+| the replay | its form, §7.6 | no recorder, no player, no digest, no golden |
+| the oracle on the module | Life and the test card read the Clock | no cartridge reads the Input |
+
+**The work.** Two slices: the Clock and the pointer, with the card and its oracle; then the replay.
+
+| File | What it is | Slice; decisions |
+|---|---|---|
+| `web/host.js` | the seed chosen and written at load; the rate read after each step; the pointer through the Camera; in slice 2 the recorder, the player and the digest | 1, 2; 1, 3, 4, 8 to 10 |
+| `engine/src/cartridge.rs`, `engine/data/messages.vla` | `cart-write-clock`, the tenth refusal: the frame refused at a write, the rate and the seed checked; the tests | 1; 2 |
+| `web/fake.js` | the same refusal, the double's twin | 1; 2 |
+| `cartridges/console.vla` | the Keys sheet's macros beside the palette's | 1; 5 |
+| `cartridges/inputcard/inputcard.source.vla`, `inputcard.vla` | the input card, a source over the library, and the cartridge the pass writes | 1; 5 |
+| `web/index.template.html` | the card in the picker; the loop oracle's twelfth case, `input`; three more refusals in `parity`; the pointer in the model; in slice 2 the panel's replay and the thirteenth case, `replay` | 1, 2; 4 to 6, 10, 11 |
+| `tools/check_host_loop.ps1` | twelve cases, then thirteen; the floors; the mutant pages | 1, 2; 6, 11 |
+| `tools/check_cartridge.ps1` | four cartridges and four sources; in slice 2 the replay and its golden as kinds of the folder | 1, 2; 5, 11 |
+| `tools/build_web.ps1`, `tools/check_web_offline.ps1` | in slice 2, the places of the replay and the golden | 2; 11 |
+| `cartridges/inputcard/inputcard.replay.vla`, `inputcard.golden.vla` | the card's replay, and its `Tally` sheet at the end | 2; 11 |
+| `SPEC.md` | dated corrections: §3.3, §3.5, §4.3, §4.7, §5, §6, §8.3; in slice 2, §7.6 | 1, 2; 12 |
+| `REARVIEW.md` (this entry; a dated note on `CART.4`'s), `ROADMAP.md` (this line; a note on `CART.4`'s), `README.md`, `web/README.md`, `engine/README.md`, `Delta/CLAUDE.md`, the memory | the pages | 1, 2; 13 |
+
+**The decisions, the owner's.** Each with the sitting's recommendation and the alternative it declines.
+
+1. **The host's seed: chosen once at load from the browser's random source, and written into `Clock!B3` as the host's one write. No new call, and no new ABI.**
+   - Under `(seed host)` the host takes a whole number from 1 to 2147483646 from `crypto.getRandomValues` (measured: present on a `file://` page in both browsers). It writes `(cell "Clock" "B3" <n>)` after the load, before frame 0 is drawn, and says so: "The cartridge asks the host for its seed: the host chose 1840027551, in Clock!B3; a replay records it."
+   - At rate 0 the write steps nothing, being no person's edit.
+   - A host option, `seed`, names the number in place of the random one, as `now` and `budget` are named for the oracle. The player of decision 10 passes the replay's.
+   - Under `(seed <n>)` the host writes nothing: the manifest's number is the seed.
+   - §3.5 and §6 rule 2 are corrected in place. The seed is the browser's random number and no time, so rule 2's exception goes: the host writes no time into any cell, ever.
+
+   *Alternatives:* the wall clock, `Date.now()`, as the page words it, which gives two loads in one millisecond the same seed and keeps the one time a cell would ever hold. Or the seed as an argument of `alonzo_load`: ABI 2, every caller and the double changed, for what one write already does.
+2. **The Clock's three cells at a write: the frame refused, the rate and the seed held to their ranges. One new refusal, `cart-write-clock`, the engine's tenth.**
+   - `B1`, the frame: refused. The step writes it first, every frame, so a person's value there is lost unseen (measured), which `SD-30` forbids. The frame is the only clock, and the engine's alone.
+   - `B2`, the rate: 0, or a whole number from 1 to 120, §10's range. Anything else is refused (measured: 999, `"fast"`, -3 and 2.5 land today).
+   - `B3`, the seed: a whole number from 1 to 2147483646, §3.5's range. Anything else is refused (measured: 0, -5, 2147483647 and `"x"` land today, and 0 sticks the dice).
+   - A range over the Clock is judged cell by cell. The labels in column A stay a person's to write. A formula and a derived row are refused there already.
+   - The words, one template with a slot: "{target} {what} (SPEC.md section 3.5)", the slot being "is the frame, which the engine writes as the first act of every step: the frame is the only clock"; or "holds the rate, 0 or a whole number of frames a second from 1 to 120, and {value} is not one"; or "holds the seed, a whole number from 1 to 2147483646, so that a Park and Miller cell never sticks at 0, and {value} is not one".
+   - The double refuses the same with the same id, and `parity` grows from eleven refusals to fourteen.
+
+   *Alternatives:* every Clock cell refused at a write, the seed excepted before the first step, which refuses the teacher of decision 3 and amends the charter's rule 6 first. Or nothing refused, the frame's write left to vanish silently.
+3. **The rate is the teacher's: the host reads `Clock!B2` after each step, and steps at it.**
+   - The charter's rule 6 and §9 name the act: "a teacher opens the Clock and slows the rate to one frame a second to watch a rule think". Today the write lands and nothing follows (measured).
+   - After each completed step the host reads the Clock with the other effects (§5, step 5): one small record, 0.006 to 0.018 ms (`ENGINE.2`'s measurement of the Clock's record). A rate that moved sets the loop's interval, and the host says so: "frame 61: the Clock's rate is now 1 frame a second (Clock!B2); the loop steps at it."
+   - From a rate to 0, the loop stops ticking and steps on edits, and the Input sheet keeps what it last held. From 0 to a rate, the ticks resume with nothing owed: the accumulator and its last timestamp reset.
+   - The write is a person's edit, so a replay logs it and plays it back, and a formula that reads the rate reads the loop's own.
+   - A save loads at its manifest's rate, as today; the save's shape is `ENGINE.5`'s.
+
+   *Alternative:* the rate fixed by the manifest and `B2` refused at a write, with the charter's rule 6 and §9 amended first to drop the teacher.
+4. **The pointer in the Screen's own cells: the window's cell under it plus the Camera's offset, through the window the person sees.**
+   - §3.3's "the pointer's Screen column" is read as the Screen sheet's column, so that `ROW()=Input!B12` and `COLUMN()=Input!B11` find the cell under the pointer wherever the Camera stands. It is then "the same in both modes", as §3.3 has it, a grid cartridge's pointer being a sheet's own cell.
+   - Which Camera: the one the person sees, the Camera of the frame last drawn, which the host holds. The row names the cell the person pointed at, even in a frame whose formulas move the Camera.
+   - "1 to the width" stays exact without a Camera; 0 when the pointer is off the canvas; a window cell past the Screen's extent is still a cell of the sheet, written as one.
+   - `pointerAt(col, row)` stays the window's cell, the host's own state (`SD-23`), and `_inputRows` adds the Camera. The double's model in the oracle does the same arithmetic.
+   - A dated correction of §3.3's rows 11 and 12.
+
+   *Alternative:* the window's cell, as the host writes it today (measured), and every cartridge with a Camera adding `Camera.last!B2-1` itself. It must be `Camera.last` and not `Camera`, since the person saw the last frame's window: a trap set for every author.
+5. **The input card: `cartridges/inputcard/`, the Input and Clock devices drawn, written as a source over the library.**
+   - The prototype's shape, above: `(screen plane 40 24)` on a Screen 48 wide, `(rate 30)`, `(seed host)`, `(spec 3)`.
+     - The lamps of ten buttons for four players, white while held, and otherwise a colour that moves on with each press; the three mouse buttons; the wheel, which pans the Camera; the frame's bits and the dice's; a cursor where the pointer is, coloured by the button held.
+     - A `Tally` sheet laid out as the Input sheet is, so a reader finds each count beside the row it counts.
+     - A Write row, so that slice 2's replay must re-derive a derived write.
+   - The Keys sheet binds two players: player 1 to §3.4's defaults, player 2 to `I`, `K`, `J`, `L` and six more, so the forty-cell matrix is seen working beyond its first column.
+   - The source calls the library's `cga-palette`, and two macros the library gains: one writes the Keys sheet's ten labels, one a player's column of ten codes, each called one argument a line with what it is.
+   - The fourth cartridge: `check_cartridge.ps1` pins four cartridges, four sources and one library, and the card's rows as a floor. The template gains `{{CARTRIDGE:inputcard}}` and `{{SOURCE:inputcard}}`, and the picker its line.
+
+   *Alternatives:* the oracle over Life and the test card alone, neither of which reads the Input. Or the card written by hand, against the owner's word that a cartridge is written as a source.
+6. **The oracle on the module: the loop oracle's twelfth case, `input`, and three mutant pages.**
+   - The host over the engine's module loads the card with the seed named, and is driven by manual ticks over a fixed log: keys held across frames; a press of player 2's; a key no button binds; the pointer placed through `_pointerFrom` on a canvas at a fixed scale; a click and a right click; three notches; an edit of `Clock!B1`, refused; the rate written to 10, then back to 30.
+   - Every expectation is the page's own: the presses, clicks, notches and keys from the log; the dice by integer arithmetic from the seed; the frames the ticks run at each rate, by the accumulator's arithmetic; the Camera from the card's formula, and so the Screen cell under the pointer. They are read back through the records of `Tally` and `Clock` and the plane of the window, never by asking the host.
+   - Its pins: the rising edge, a held button counted once; the four players' columns; the cursor under the pointer after the Camera moved; the seed in `Clock!B3` and in the dice; the frame's bits; the rate followed; `cart-write-clock` said and marked as a refusal.
+   - Over the double, `rate30`'s model writes the pointer through the double's Camera, which its edits move, so its digest holds decision 4 there too.
+   - `parity`: fourteen refusals, decision 2's three added.
+   - The control's mutant pages, each proving it applied: L, the pointer written without the Camera, which `input` must fail at the cursor; M, the rate not read after a step, which `input` must fail at the frames counted; N, the seed not written, which `input` must fail at `Clock!B3`.
+
+   *Alternative:* a native test alone, which holds the card's formulas and never the host's pointer, seed or rate.
+7. **The replay is this item's second slice: the recorder and the player belong to the host.**
+   - The host is the only writer of the inputs and the only one that knows which writes landed, so the log can be kept nowhere else. §6 rule 4 makes the replay the oracle of every cartridge with input, `CART.4` first, and this item's own card needs it.
+   - `CART.4` then writes its cartridge and commits its replay and its golden, as the input card does here.
+
+   *Alternative:* the recorder and the player `CART.4`'s, as its scoping had them, this item closing on its first slice and `CART.4` growing by a day.
+8. **The replay's form: §7.6 made exact by dated notes.**
+   - The header is `(replay "<name>" (spec <n>) (cartridge "<SHA-256>") (seed <n>))`.
+     - The spec is the page's version the host implements, 3 today; a player reads 1 to 3.
+     - The digest is SHA-256 over the cartridge's text with its line ends as LF, in upper-case hex: the bytes `check_frame_floors.ps1` already digests, so that a CRLF checkout and the page's text box name one file.
+     - The seed is `Clock!B3` as it stood after the load.
+   - A row is logged only when its write landed, a refusal being a function of the frame; a derived row never.
+   - The Input rows are logged as the cells that changed, against the replay's own record of the sheet. A person's edit of the Input sheet makes that record unknown, so the next frame logs all forty-eight. Each person's edit is its row, in order, in its frame.
+   - A frame with no row is not written, except the last, so that a replay names its length.
+   - The player issues each frame's rows as one write, after the derived writes, then steps to done. A write grouped so lands as the live ones did, since every logged row landed (§4.3's correction).
+   - `CART.4`'s "a sheet of its own" is superseded by §7.6's rows: a sheet of forty-eight cells a frame would carry no person's edit, and its loader would be a second reader of the same facts. A dated note on `CART.4`'s scoping and on its roadmap line says so.
+
+   *Alternative:* all forty-eight Input rows logged every frame, about 2.3 MB a minute where the deltas of a pointer that never rests are about 120 KB (*derived*: 1,262 bytes a frame against 66, at 30 frames a second).
+9. **The digest in the host: a synchronous SHA-256 in `web/host.js`.**
+   - About forty lines, held in the oracle to FIPS 180-2's vectors and, through the committed replay's header, to PowerShell's SHA-256 of the same bytes in `check_cartridge.ps1`.
+   - Synchronous, so the loop, the player and the oracle stay as they are; and present in every context a page opens in.
+
+   *Alternatives:* `crypto.subtle`, measured present on `file://` in both browsers but answering with a promise, so the player and the loop oracle would wait on it; and absent from a page served over plain `http` from another machine, which is no secure context. Or a thirteenth export, a SHA-256 in Rust in the engine: the export check at thirteen, and the double, which would hold none, declining every replay.
+10. **The recorder and the player, in the host and in the panel.**
+    - The recorder keeps every load's log from frame 0, capped at 8 MiB of text, past which it stops and says so (*derived*: about an hour of a pointer that never rests). `host.replayText()` answers it.
+    - `host.play(text)` refuses in words another cartridge's digest, a later spec, a derived row and frames out of order. It reloads the cartridge with the replay's seed, then plays at the cartridge's rate through the loop, the replay's rows in place of the live inputs, a person's edits refused while it plays; at its last frame it pauses and says so. `host.play(text, true)` plays every frame at once, for the oracle.
+    - The recorder keeps recording while a replay plays, so a replay played and copied is the replay played: the round trip.
+    - The panel: Copy the replay; a box to paste one into, with Play the replay, the card's own replay offered there; the frame line saying "replaying frame 41 of 180".
+
+    *Alternative:* the player alone, replays written by hand, which leaves out the person's act: play, and keep what was played.
+11. **The replay's files, and their checks: no new check.**
+    - A cartridge's folder may hold its replay, `<name>.replay.vla`, and its golden, `<name>.golden.vla`: the record `view` prints of the sheet at the replay's end, after its licence line, compared whole. One replay a cartridge in this version.
+    - `check_cartridge.ps1` holds them statically: the folder rule's two kinds; the header's name the folder's, its digest PowerShell's over the cartridge's LF bytes, its seed the manifest's when the manifest names one; the frames ascending from 1; every row a `cell` or `formula` row; the golden a record whose window row names its sheet.
+    - `check_host_loop.ps1`'s thirteenth case, `replay`, holds them on the module, where §6 rule 5 says a replay golden is held. The card's committed replay plays to its golden byte for byte. The `input` case's live run, copied and played on a fresh host, ends in the same `Tally`, and over the double in the same digest. The player's own recording equals what it played. The refusals are said in words.
+    - Three mutant pages, each failing `replay` by name: O, the recorder dropping a person's edits; P, the player skipping the derived writes; Q, the record of the Input sheet kept across a person's edit of it.
+    - `run_checks.ps1` stays at 12 checks and 12 verifiers.
+
+    *Alternative:* `CART.4`'s `tools/check_cartridge_replays.ps1`, a thirteenth check over the same folder and the same browser run.
+12. **The page: dated corrections, and no `SPEC.4`. The gamepad stays named, and the charter is not amended.**
+    - Every change makes the page exact where it is silent, or corrects it where the code is right: §3.3 (the pointer), §3.5 (the three cells at a write, the seed's source, the dice in a cartridge's own sheet), §4.3 and §4.7 (the tenth refusal), §5 step 5 (the rate read), §6 rule 2, §8.3 (the shim's duties), and in slice 2 §7.6 (decision 8). No device, row, directive or call is added.
+    - The gamepad stays where §3.10 and §12 name it, a candidate that fills the Input's columns B to E; taking it is `SPEC.4`, at the owner's word.
+    - The charter's rule 6 names the teacher, whom decision 3 makes real; nothing in the charter changes.
+
+    *Alternatives:* `SPEC.4` filed for the Clock's rules and the replay's form; or the gamepad filed now.
+13. **The slices, the checks and the bookkeeping.**
+    - Slice 1, the Clock and the pointer: decisions 1 to 6, their corrections, and the card. `check_host_loop.ps1` at twelve cases and fourteen mutant pages.
+    - Slice 2, the replay: decisions 7 to 11, §7.6's notes, and the card's replay and golden. `check_host_loop.ps1` at thirteen cases and seventeen mutant pages.
+    - The roadmap's line gains this scoping now and its built marker after each slice, and leaves for the ledger at the second slice's commit, closing the item.
+    - The commits, at the owner's word, by `-F`, staged by hunk: `ENGINE.3: the Clock's three cells held, the host's seed chosen at load, and the pointer in the Screen's own cells, with an input card`; then `ENGINE.3: the replay, every write a host makes from a load kept and played back to the same frames, with the input card's golden`.
+
+    *Alternative:* one slice.
+
+**The catch.** Each met once in the scratch work, or foreseen by reading.
+
+- The engine writes the Clock's frame through the machine's own write, past `check_row`, so refusing `B1` to a person refuses nothing to the step. A test holds both.
+- A rate moved to 0 leaves the Input sheet as it last stood, a button held then held still, since rate 0 writes no Input (§3.3); the sentence says so. A rate moved from 0 must reset the loop's last timestamp, or the first tick owes a quarter of a second.
+- The pointer's Camera is the one the person saw: the host's `camera`, set when the frame was drawn, never the Camera sheet as the next step leaves it.
+- A browser repeats `keydown` while a key is held, so `key` and `code` name a held key again on each repeat, as typing does, while the buttons stay put. Kept, and said in §3.3's correction.
+- The double puts 1 in `Clock!B3` under `(seed host)`, its own constant, which the host's write now replaces.
+- The card is small, 1,294 formula cells and a step of about 0.3 ms natively, so the `input` case adds little to the oracle's run.
+- The library gains macros. No existing cartridge calls them, so Life's, the gun's and the test card's rows and digests do not move, and the frame floors stand; mutant page K's anchor, the palette's row, stays in the library once.
+- A text box holds a cartridge with LF ends, and the working tree holds it with CRLF: the digest is over LF, or the page and a check would name two files.
+- The engine's text and the double's for the new refusal are twins in id and not in words, as `parity` holds them.
+- PowerShell 5.1 as every check met it: ASCII, `return ,$list`, `$onWindows`, `2>&1` on a native command, the Write tool and never a heredoc, a commit message by `-F`.
+- The tree is shared: this file, the roadmap and the page are staged by hunk, HEAD plus this item's own.
+
+**Oracle.** On the owner's machine under Windows PowerShell 5.1, then on both jobs.
+
+- `cargo fmt --check`, `clippy --workspace --all-targets -D warnings` and `cargo test --workspace`: the engine's tests of `cart-write-clock` (the frame refused, a rate and a seed at their edges, the step's own write untouched); the card loading and stepping to its counts; the pass's golden over the card's source.
+- `check_cartridge.ps1`: four cartridges, four sources, one library, its twenty mutants still failing; in slice 2 the replay's kinds, with mutants of their own.
+- `check_host_loop.ps1` at both ratios: twelve cases, then thirteen; `parity` at 14; the mutant pages, fourteen, then seventeen, each failing for its own reason.
+- `run_checks.ps1 -WithExtras` at 12 checks and 12 verifiers, `ALL GREEN`.
+- The owner's hand test.
+  - Slice 1: the input card picked; keys pressed and their lamps lit and moved on; player 2 on `I`, `K`, `J` and `L`; a click and the cursor's colour; the wheel panning the card, the cursor still under the pointer; the seed said in the log; `(cell "Clock" "B2" 1)` and the card stepping once a second, then `(cell "Clock" "B2" 30)`; `(cell "Clock" "B1" 5)` refused, in red.
+  - Slice 2: play the card, Copy the replay, reload, paste it, Play the replay, and watch the same run; then the card's own replay, to its end.
+
+**Size.** `~days` (*prediction*).
+- Slice 1, about a day: the host about 60 lines, the engine about 60 and its tests 120, the double 30, the card's source about 110 and the library's macros 30, the oracle's case about 250, the checks about 80, and the page's prose.
+- Slice 2, about a day: the recorder, the player and the digest about 250 lines, the panel 80, the oracle's case about 200, the checks about 150, the two files, and §7.6.
+
+*Scoped 2026-10-10; the thirteen decisions await the owner.*
+
+*Approved 2026-10-10, the same day, all thirteen, in the owner's words: "Recommendaitons approved; proceed." The first slice is built first, decisions 1 to 6; the second waits for its test.*
+
+*The first slice built 2026-10-10, over `10debee` and `vla-lang` 0.8.1, awaiting the owner's test.*
+
+What landed:
+- `engine/src/cartridge.rs`: `check_clock`, called from `check_row` for a `cell` row into the Clock, each cell of the range judged from the frame: the frame refused, the rate held to 0 or a whole number from 1 to 120, the seed to a whole number from 1 to 2147483646, each spelled in digits alone as the manifest's reader reads them. The step's own write of the frame goes through the machine and never through the check. Two tests: `the_clock_s_cells_are_held_at_a_write` (twelve refused writes, a range among them and a write of two rows whose second is refused, which leaves the first unwritten; the rate at 0, 1 and 120 and the seed at both its ends landing; a label; the step writing the frame after) and `the_input_card_counts_what_it_is_given` (twelve frames of Input rows as the host writes them, the Write row carried as the host carries it, every count, the dice, the Camera, the cursor, a lamp and the frame's bits held to the log, and no formula written, `AD-7`).
+- `engine/data/messages.vla`: the tenth refusal, `cart-write-clock`, "{target} {what} (SPEC.md section 3.5)."
+- `web/host.js`: `_seed`, the seed chosen at a `(seed host)` load from `crypto.getRandomValues` (or the `seed` option) and written into `Clock!B3` before frame 0 is drawn, with its sentence; `_readClock`, the rate read after each step with the other effects and followed, the tick loop taking its interval from the rate the last frame left and stopping when a frame sets it to 0, a tick at rate 0 stepping the edits a rate's last frame left waiting; the pointer written as the Screen's own cell through the Camera of the frame last drawn; the `frame` event carrying the rate; the header and the options' comment.
+- `web/fake.js`: `clockRefusal`, the same judgment under the same id in the engine's order, in the double's words.
+- `cartridges/console.vla`: `button-labels` (the ten labels in a sheet's column A) and `keys` with `keys-from` (a player's column of the Keys sheet, the column's letter fused before the row).
+- `cartridges/inputcard/inputcard.source.vla` and the cartridge the pass writes, `inputcard.vla`: 136 rows, 1,517 cells, 1,411 of them formula cells; the source calls `cga-palette`, `button-labels` twice and `keys` twice, one argument a line.
+- `web/index.template.html`: the card in the picker and its two places; the model writing the pointer through the double's Camera and `rate30` pinning it by name (the window's column 40 and row 25 under the Camera at row 7 and column 3 written as column 42 and row 31); `parity` at fourteen; the twelfth case, `input`; the panel following the rate.
+- `tools/check_host_loop.ps1`: twelve cases, the floors (`rate30`'s pointer, `parity` 14, `pass` 4 and 4, `input`'s sixteen counts), three mutant pages, L, M and N. `tools/check_cartridge.ps1`: four cartridges and four sources, the card's floor. `tools/run_checks.ps1`: the dated line and the control's words.
+- `SPEC.md`'s dated corrections: §3.3 (the pointer's rows and the paragraph after them), §3.5 (the table, the dice in a cartridge's own sheet, and a paragraph of the three cells), §4.3, §4.7 (the tenth id), §5 step 5, §6 rule 2, §8.3. `README.md`, `web/README.md`, `engine/README.md`.
+
+The oracle, run on the day on the owner's machine under Windows PowerShell 5.1 (*measurement*):
+- `cargo fmt --check` and `clippy --workspace --all-targets -D warnings` clean; `cargo test --workspace` 26 passed, 24 before and the two new; the pass's golden over four sources among them.
+- `cargo run --release --example expand`: the card's 136 rows, loading; Life's, the gun's and the test card's cartridges written again byte for byte as they stood.
+- The module 516,175 bytes, 1,487 more for the Clock's check and its words; 0 imports, the twelve exports.
+- `check_host_loop.ps1` at both ratios, twelve cases: `input` over the module 26 frames, each window equal to the card computed by hand, the seed named, 4 presses (1 of player 2's), 2 clicks, 3 notches, 4 key frames and the last code, the dice, the click's frame 11 carried by the derived write, the pointer's last column 8, the cursor seen in 16 frames, a button held in 6, the rate followed 3 ways, `cart-write-clock` said once and marked; `parity` 14 of 14; `pass` 4 sources the same, 387 rows; `rate30` with the pointer pinned. The first eleven cases' other counts are as before but for two things, each measured against HEAD's page built in a scratch folder. The detachments rose, `rate30` 124, `rate0` 13, `yield` 99 and `memory` 712, where HEAD's page counted 111, 12, 96 and 642: the Clock's record the host now views after each frame. And `rate30`'s digest moved, 7a8f8c44 where HEAD's was 2bdc8ef3, since the double's history folds the pointer the host now writes through the double's Camera; mutant L, the pointer without the Camera, gives HEAD's digest again.
+- Its control, fourteen mutant pages in 54.6 s, each failing for its own reason. L, the pointer without the Camera, failed `rate30` ("written as column 40 and row 25, not the Screen's column 42 and row 31") and `input` at frame 16, the cursor drawn at the window's second column where the card by hand has it at the fifth. M, the rate never read, failed `input` when a tick of 34 ms ran frame 19 at the rate of 10. N, the seed never written, failed `input` at `Clock!B3`, empty, and at the seed's bits from frame 1.
+- `check_cartridge.ps1`: four cartridges, four sources, one library; its control's twenty mutants failing. `check_frame_floors.ps1` with the runner rebuilt over this slice: every frame equal, the allocations 251,957 and 251,958, as before.
+- `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`.
+- The plain page's panel, probed headless: the card picked and loaded, its budget said (1,411 formula cells a frame, 42,330 a second), the host's seed chosen and named, 2058400448 on that run, and frame 0 drawn at 17 device pixels a cell with no notice of an empty Camera.
+
+Corrected in the build, against the scoping:
+- *The card's Camera holds a value row*, `(value "Camera" "B2" 1)`, a save's spelling as the test card's, or every load says the Camera's column is empty before the first step.
+- *A PowerShell trap:* a hashtable holding a key named `keys` answers `.Keys` with that key's value, so the floor table's loop walked the number 4. The counter is `typed`.
+- *The seed's sentence* said "a replay records it", which is the second slice's to make true; it names the seed and the cell alone.
+- *The case drives the host through its listeners*, `keydown`, `keyup`, `mousemove` and `wheel` dispatched to the canvas, where the scoping named `_pointerFrom` alone: every Input row it checks passed through the host's own event path.
+- *`rate30` pins the pointer by name*, where the scoping had its digest alone hold decision 4 over the double, so that mutant L fails there in words.
+- *The loop's interval* is taken from the rate the last frame left, inside the tick's loop, and a tick returns when one of its frames set the rate to 0: the scoping's "the ticks resume with nothing owed" needed both, or a tick could run a frame at rate 0 with no edit.
+- *A write of the value a cell already holds* answers `(written 0)`: the first draft of the Clock's test expected 1 for the seed the small cartridge already held.
+- *The card is larger than the prototype*, 1,411 formula cells where it had 1,294: a ruler, the rate's bar, the seed's bits and the keys' lamps.
+
+What remains is the owner's.
+1. Open `web/index.html` (built) in Chrome and pick the Input card. The log names the seed the host chose.
+2. Click the plane, so it takes the keys. Press the arrows, Z, X, A, S, Enter and Space: player 1's lamps in column I light white while held and move to another colour after each press. Press I, K, J, L, U, O, Y, P, 9 and 0 for player 2's, in column J.
+3. Move the mouse over the plane: a white cursor follows it; hold the left, right or middle button and it turns red, green or blue, the mouse's lamps lighting beside the buttons'. Type any key and the lamp beside them flashes.
+4. Turn the wheel: the card pans, the ruler and the wheel's lamp moving, and the cursor stays under the pointer.
+5. Write `(cell "Clock" "B2" 1)` in the edit row: the log says the rate is now 1 frame a second and the card steps once a second; then `(cell "Clock" "B2" 30)`. Write `(cell "Clock" "B1" 5)`: refused, in red, `[cart-write-clock]`.
+6. `run_checks.ps1 -WithExtras`, `ALL GREEN`.
+7. The commit at the owner's word, by `-F`, staged by hunk: `ENGINE.3: the Clock's three cells held, the host's seed chosen at load, and the pointer in the Screen's own cells, with an input card`. Then the second slice, the replay.
+
+*The owner's hand test, a first round, 2026-10-10, in Chrome at a ratio of 1.5, three screenshots and the runner's output.*
+- The input card ran, and each key pressed moved its lamp to another colour: players 1 and 2, the mouse's buttons, the wheel's lamp, the bits of the frame, the seed and the dice. The log counted the windows the wheel panned the Camera to, from `A1:AN24` to `I1:AV24`, and the Clock sheet held the seed the host chose, 83396106.
+- `(cell "Clock" "B1" 5)`, written over Life after a reload, was refused in red, `[cart-write-clock]`.
+- `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`.
+- **Found:** `(cell "Clock" "B2" 1)` froze the loop. The log said the rate was now 1 frame a second, and no frame followed; the plane stopped answering keys and clicks; and `(cell "Clock" "B2" 30)` did nothing. The engine had not crashed: the host had starved.
+  - The host held its accumulator to 250 ms, a tick's time and the backlog alike (`ENGINE.1`, decision 4). At a rate of 1 a frame is owed only when the backlog holds 1,000 ms, so none ever was.
+  - The edit of 30 is issued at the next frame's begin, as every edit is at a rate above 0, and so waited for a frame that never began.
+  - The defect was `ENGINE.1`'s, and latent: a cartridge whose manifest said `(rate 1)`, `(rate 2)` or `(rate 3)` would never have stepped. `SPEC.md` §5 caps a tick's elapsed time alone; the backlog's cap was the host's addition. The oracle's model had copied the host's line, and the `input` case slowed the rate to 10 only, whose interval of 100 ms fits under the cap.
+
+*Fixed the same day, at the report.*
+- The backlog is held to the larger of 250 ms and one frame's interval, and a tick's time still to 250 ms, so a stall at 30 frames a second still runs seven frames and never thirty, `rate30`'s stall unchanged. A rate that moves starts the backlog again with nothing owed, so a rise from 1 to 30 runs no burst of a second's frames.
+- The oracle's model takes the same rule. The `input` case writes the owner's rate of 1 at frame 18 and 30 again at frame 21, and paces its ticks by its own arithmetic of §5 as corrected: at the rate of 1, three ticks of 250 ms run no frame and the fourth runs one, for three frames, each checked after every tick. Its `rate` count is 5: three frames paced so, and the two sentences.
+- A fifteenth mutant page, O, holds the backlog to 250 ms as it was, and fails `input` by name: "after 4 ticks of 250 ms at the Clock's rate of 1 the host is at frame 18, not 19". Mutant M, the rate never read, now fails it when a tick of 250 ms runs frames at 30 "before its interval was owed".
+- `SPEC.md` §5, step 1, corrected in place and dated; `web/README.md` and the host's header with it; a dated note on `ENGINE.1`'s first slice above.
+
+The oracle, run on the day (*measurement*):
+- `check_host_loop.ps1` at both ratios, every case OK, `input` at `rate 5`; its control fifteen mutant pages, each failing for its own reason.
+- The plain page's real loop, probed headless with the input card picked and stepped by animation frames under a virtual clock: the rate of 1, written through the edit box, landed at frame 22, then 3 frames in 4 s; the rate of 30 landed at frame 26 and the card ran on, 15 frames in the next 3 s of that clock, which measures no speed. On the same page with the old cap restored, the frame stayed at 22 and the edit of 30 was never written: the owner's freeze, reproduced.
+
+What remains for the hand test: `(cell "Clock" "B2" 1)` on the input card, the card stepping once a second; then `(cell "Clock" "B2" 30)`, landing within a second and the card running at 30 again.
+
+*The owner's second round, 2026-10-10.*
+- `(cell "Clock" "B2" 1)` on the input card: the card dropped to one frame a second. `(cell "Clock" "B2" 30)`: back to thirty.
+- The double space found in the roadmap's `KERNEL.5` line during the build was the owner's, an accident, and the owner took it out; no hunk of this slice touched it.
+
+*Owner-tested 2026-10-10; the first slice committed 2026-10-10 at the owner's word, "Commit slice 1, then proceed with slice 2 of ENGINE.3". Not pushed.*

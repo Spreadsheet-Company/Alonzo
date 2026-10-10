@@ -1,0 +1,142 @@
+; SPDX-License-Identifier: 0BSD
+; inputcard.source.vla - the input card, as its author writes it: the Input and Clock
+; devices drawn on a plane, so that every cell the host writes before a step is seen
+; (ENGINE.3). The pass expands this file into inputcard.vla beside it, the rows the
+; engine loads (SPEC.md section 7.8): edit this one, then expand it again. The fixture
+; of ENGINE.3's oracle: the page's loop oracle drives it over a fixed log of keys, the
+; pointer, clicks and the wheel, and holds what it counts to the log.
+;
+; What it shows, on a Screen 48 columns wide that its Camera pans by the mouse wheel:
+;   - a lamp for each of the ten buttons of the four players, white while the button is
+;     held, and otherwise a colour that moves on with each press: a press counted on its
+;     rising edge, this frame against the last (SPEC.md section 3.3);
+;   - a lamp for each of the mouse's three buttons, and a cursor in the cell under the
+;     pointer, coloured by the button held: the pointer is the Screen's own cell, so the
+;     cursor stays under it wherever the Camera stands;
+;   - a lamp lit in the frame a key goes down; a bar of the rate, which a person may write
+;     into Clock!B2 (SPEC.md section 3.5); the bits of the frame, of the seed and of the
+;     dice, a Park and Miller cell seeded from the seed.
+; A Tally sheet counts what the Input sheet held, laid out as the Input sheet is, so that
+; each count sits beside the row it counts; a Write row records the frame of the last
+; left click as a value (SPEC.md section 3.9). The seed is the host's, chosen at the load.
+
+; The library whose macros this source calls: cga-palette, button-labels and keys.
+(include "../console.vla")
+
+(cartridge "inputcard"
+  (spec 3)                          ; the version of SPEC.md this cartridge is written to
+  (title "Input card")              ; what the host shows
+  (rate 30)                         ; frames a second; a person may write another into Clock!B2
+  (screen plane 40 24)              ; the window: 40 cells wide and 24 high, placed by the Camera
+  (seed host)                       ; the dice: the host chooses the seed at the load
+  (author "Spreadsheet Company")    ; who wrote it
+  (licence "0BSD")                  ; the header's twin
+  (notes "The input card: every cell the host writes before a step, drawn. Press the arrows, Z, X, A, S, Enter and Space for player 1, and I, K, J, L, U, O, Y, P, 9 and 0 for player 2; click, and turn the wheel to pan the card. A lamp is white while its button is held, and moves to another colour with each press."))
+
+; The sheets, in tab order: the Screen, the Panel of lamps it draws, the Tally of counts,
+; the keys, the Camera, the Write sheet and the Palette.
+(sheet "Screen" visible)
+(sheet "Panel" visible)
+(sheet "Tally" visible)
+(sheet "Keys" visible)
+(sheet "Camera" visible)
+(sheet "Write" visible)
+(sheet "Palette" visible)
+
+; ---- the Palette: the CGA's sixteen (SPEC.md section 3.2) ----------------------------
+(cga-palette)
+
+; ---- the Keys sheet: two players of four (SPEC.md section 3.4) -----------------------
+(button-labels "Keys")
+(keys "B"                           ; player 1: SPEC.md section 3.4's defaults, TIC-80's
+  "ArrowUp"                         ; up
+  "ArrowDown"                       ; down
+  "ArrowLeft"                       ; left
+  "ArrowRight"                      ; right
+  "KeyZ"                            ; a
+  "KeyX"                            ; b
+  "KeyA"                            ; x
+  "KeyS"                            ; y
+  "Enter"                           ; start
+  "Space")                          ; select
+(keys "C"                           ; player 2: a cluster under the right hand
+  "KeyI"                            ; up
+  "KeyK"                            ; down
+  "KeyJ"                            ; left
+  "KeyL"                            ; right
+  "KeyU"                            ; a
+  "KeyO"                            ; b
+  "KeyY"                            ; x
+  "KeyP"                            ; y
+  "Digit9"                          ; start
+  "Digit0")                         ; select
+
+; ---- the Camera: the wheel pans the window over the Screen's 48 columns --------------
+(cell "Camera" "A1" "row")
+(cell "Camera" "B1" 1)
+(cell "Camera" "A2" "column")
+(formula "Camera" "B2" "=1+MOD(Tally!B16,9)")
+(value "Camera" "B2" 1)             ; its value until the first step, a save's spelling, so frame 0 is drawn at column 1
+
+; ---- the Tally: what the Input sheet held, counted, row for row --------------------
+(button-labels "Tally")
+(cell "Tally" "A11" "pointer column")
+(cell "Tally" "A12" "pointer row")
+(cell "Tally" "A13" "left clicks")
+(cell "Tally" "A14" "right clicks")
+(cell "Tally" "A15" "middle clicks")
+(cell "Tally" "A16" "wheel")
+(cell "Tally" "A17" "keys")
+(cell "Tally" "A18" "last code")
+(cell "Tally" "A19" "dice")
+(cell "Tally" "A20" "clicked at")
+; the presses of every button of every player, each counted on its rising edge
+(formula "Tally" "B1:E10" "=Tally.last!B1+IF(AND(Input!B1=1,Input.last!B1=0),1,0)")
+; the pointer's last cell on the Screen, kept while it is off the canvas
+(formula "Tally" "B11:B12" "=IF(Input!B11>0,Input!B11,Tally.last!B11)")
+; the clicks of each mouse button, counted the same way
+(formula "Tally" "B13:B15" "=Tally.last!B13+IF(AND(Input!B13=1,Input.last!B13=0),1,0)")
+; the wheel's notches, summed
+(formula "Tally" "B16" "=Tally.last!B16+Input!B16")
+; the frames a key went down in, and the last key's code
+(formula "Tally" "B17" "=Tally.last!B17+IF(Input!B18<>\"\",1,0)")
+(formula "Tally" "B18" "=IF(Input!B18<>\"\",Input!B18,Tally.last!B18)")
+; the dice: Park and Miller's step from the seed, a number from 1 to 2147483646
+(formula "Tally" "B19" "=IF(Clock!B1=1,Clock!B3,MOD(Tally.last!B19*16807,2147483647))")
+; the frame of the last left click, written as a value by the Write row below
+(cell "Tally" "B20" 0)
+
+; ---- the Write sheet: a left click's frame into Tally!B20 (SPEC.md section 3.9) ----
+(cell "Write" "A1" "sheet")
+(cell "Write" "B1" "address")
+(cell "Write" "C1" "value")
+(cell "Write" "A2" "Tally")
+(formula "Write" "B2" "=IF(AND(Input!B13=1,Input.last!B13=0),\"B20\",\"\")")
+(formula "Write" "C2" "=Clock!B1")
+
+; ---- the Panel: the lamps, the layer under the cursor ------------------------------
+; The lamps sit in columns I to AM, which the window shows wherever the wheel pans it;
+; row 1 is a ruler over all 48 columns, ticked every eighth, so that the pan is seen.
+(formula "Panel" "A1:AV1" "=IF(MOD(COLUMN(),8)=1,7,8)")
+; the buttons: players 1 to 4 in columns I to L, up to select in rows 3 to 12
+(formula "Panel" "I3:L12" "=IF(Input!B1=1,15,1+MOD(Tally!B1,7))")
+; the mouse's three buttons while held, and their clicks, counted
+(formula "Panel" "N3:N5" "=IF(Input!B13=1,12,8)")
+(formula "Panel" "O3:O5" "=1+MOD(Tally!B13,7)")
+; a key went down this frame, and the keys, counted
+(formula "Panel" "N7" "=IF(Input!$B$18<>\"\",14,0)")
+(formula "Panel" "O7" "=1+MOD(Tally!$B$17,7)")
+; where the wheel has panned the window, one lamp of nine
+(formula "Panel" "I14:Q14" "=IF(COLUMN()-8=Camera!$B$2,14,8)")
+; the rate, a lamp for every five frames a second
+(formula "Panel" "I18:AF18" "=IF(COLUMN()-8<=Clock!$B$2/5,9,0)")
+; the frame, the seed and the dice, bit 0 in column I
+(formula "Panel" "I20:X20" "=IF(MOD(INT(Clock!$B$1/2^(COLUMN()-9)),2)=1,11,1)")
+(formula "Panel" "I22:AM22" "=IF(MOD(INT(Clock!$B$3/2^(COLUMN()-9)),2)=1,13,5)")
+(formula "Panel" "I23:AM23" "=IF(MOD(INT(Tally!$B$19/2^(COLUMN()-9)),2)=1,10,2)")
+
+; ---- the Screen: the cursor over the Panel ------------------------------------------
+; One formula over the Screen's 48 columns and 24 rows: the cell under the pointer is
+; white, or red, green or blue while the left, right or middle button is held; every
+; other cell is the Panel's.
+(formula "Screen" "A1:AV24" "=IF(AND(ROW()=Input!$B$12,COLUMN()=Input!$B$11),IF(Input!$B$13=1,12,IF(Input!$B$14=1,10,IF(Input!$B$15=1,9,15))),Panel!A1)")
