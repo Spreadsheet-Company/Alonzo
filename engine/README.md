@@ -137,7 +137,15 @@ the engine's own profile of that step named where the rest went
 made cheaper bit for bit in the language (Frazaro's `KERNEL.25`): a step
 makes 4.0 allocations a cell where it made 71, and Life steps at about
 623,000 cells a second natively and 461,000 in the browser, about a third
-and nearly a quarter of the line.
+and nearly a quarter of the line. The rest came with the language's 0.9.0
+(Frazaro's `KERNEL.20`, `KERNEL.26` and `KERNEL.27`): a frame computes only
+the cells a change reaches, a formula filled over many cells is computed at
+all of them at once, and a frame makes 80 allocations. Life now steps in
+2.8 ms natively and 4.3 ms in the browser, about 357 and 235 frames a
+second, eleven and nearly eight times its rate of thirty; counted as the
+floors count, the frame's 62,964 formula cells over its time, that is 22.5
+million and 14.8 million cells a second, past the line, though a frame no
+longer computes every cell (the owner's run of 2026-10-11).
 
 ## Where it comes from
 

@@ -127,16 +127,27 @@ $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::W
 # evaluator's hot path), both halves opted out and on the performance cores
 # (CART.1's second slice), copied from target/bench_frames.txt whole. Its
 # floor entry was pasted over the first instead of after it; the first was
-# put back before the commit, and no value was touched.
-$baselineDate = '2026-10-10'
-$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 154.0.8037.98 headless | the engine''s module 461,753 bytes | vla-lang at f5dc344 | power throttling opted out: the runner yes, 29 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 30 browser process(es)'
-$baselinePin = 'f5dc344'
-$baselineFixtures = @{ 'life' = '90B24FF2E98530FF530C9E573DAC0E2FB4F5968ABE378D0A673C3E9DCA8D70DB'; 'gun' = '0BD138CBE43825F93EA2235F755DE6A46F18CCF7B7DAEC33B6D38D8365E64234' }
+# put back before the commit, and no value was touched. Its rows, the third
+# having replaced them: native life 622,904 cells a second (frame p50 101.1
+# ms), native gun 651,551 (96.6), wasm life 460,600 (136.7), wasm gun
+# 466,400 (135.0); its floors are the history's second entry.
+# 2026-10-11, the third: the owner's run over vla-lang 0.9.0 (KERNEL.20's
+# first four slices, KERNEL.26 and KERNEL.27: a frame computes only the
+# cells a change reaches), both halves opted out and on the performance
+# cores, pasted from target/bench_frames.txt whole, no value touched. The
+# gun's browser row is timed in runs of 128 frames, its frames 158 to 3997
+# (CART.1's frame timer, 0dfe551), each row naming its frames a run. Its
+# floors pass the charter's line of two million cells a second and Life's
+# thirty frames a second, so both bars are gates from this entry on.
+$baselineDate = '2026-10-11'
+$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 154.0.8037.98 headless | the engine''s module 635,687 bytes | vla-lang at 0.9.0 | power throttling opted out: the runner yes, 28 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 31 browser process(es)'
+$baselinePin = '0.9.0'
+$baselineFixtures = @{ 'life' = '7220F8E1FBFF7A3B7F00DE9ECA5754E9A1877A8D1A766A251EB3811D0C937D89'; 'gun' = '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7' }
 $baseline = @(
-    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Load = 52.4; FirstFrame = 109.2; FrameP50 = 101.1; FrameMin = 96.7; FrameMax = 109.7; CellsPerSecond = 622904; FramesPerSecond = 9.893; ClockMs = 0.185; ClockSpread = 5.8; ClockDrift = 0.5 },
-    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 30; Load = 46.0; FirstFrame = 17.9; FrameP50 = 96.6; FrameMin = 94.5; FrameMax = 102.2; CellsPerSecond = 651551; FramesPerSecond = 10.348; ClockMs = 0.177; ClockSpread = 5.8; ClockDrift = -3.9 },
-    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Load = 71.0; FirstFrame = 152.5; FrameP50 = 136.7; FrameMin = 132.8; FrameMax = 144.8; CellsPerSecond = 460600; FramesPerSecond = 7.315; ClockMs = 0.255; ClockSpread = 2.0; ClockDrift = -1.9 },
-    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 30; Load = 48.3; FirstFrame = 21.0; FrameP50 = 135.0; FrameMin = 130.5; FrameMax = 137.6; CellsPerSecond = 466400; FramesPerSecond = 7.407; ClockMs = 0.255; ClockSpread = 2.0; ClockDrift = -1.9 }
+    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 64.9; FirstFrame = 21.8; FrameP50 = 2.8; FrameMin = 2.0; FrameMax = 5.6; CellsPerSecond = 22453863; FramesPerSecond = 356.614; ClockMs = 0.181; ClockSpread = 1.7; ClockDrift = 0.0 },
+    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 30; Run = 1; Load = 56.1; FirstFrame = 8.1; FrameP50 = 0.0152; FrameMin = 0.0115; FrameMax = 4.6; CellsPerSecond = 4128786885; FramesPerSecond = 65573.770; ClockMs = 0.179; ClockSpread = 6.4; ClockDrift = -1.3 },
+    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 86.5; FirstFrame = 28.4; FrameP50 = 4.3; FrameMin = 3.2; FrameMax = 8.6; CellsPerSecond = 14815059; FramesPerSecond = 235.294; ClockMs = 0.255; ClockSpread = 2.0; ClockDrift = -1.9 },
+    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 50.8; FirstFrame = 7.3; FrameP50 = 0.0613; FrameMin = 0.0320; FrameMax = 0.0797; CellsPerSecond = 1026674140; FramesPerSecond = 16305.732; ClockMs = 0.255; ClockSpread = 2.0; ClockDrift = -1.9 }
 )
 
 # --- the floors, in cells a second, a dated history that never goes down ---
@@ -147,7 +158,8 @@ $baseline = @(
 # needs its Reason.
 $floorHistory = @(
     @{ Date = '2026-10-09'; Pin = 'c0686a9'; Reason = ''; Floors = @{ 'native life' = 196000; 'native gun' = 186000; 'wasm life' = 205000; 'wasm gun' = 197000 } },
-    @{ Date = '2026-10-10'; Pin = 'f5dc344'; Reason = ''; Floors = @{ 'native life' = 560000; 'native gun' = 586000; 'wasm life' = 414000; 'wasm gun' = 419000 } }
+    @{ Date = '2026-10-10'; Pin = 'f5dc344'; Reason = ''; Floors = @{ 'native life' = 560000; 'native gun' = 586000; 'wasm life' = 414000; 'wasm gun' = 419000 } },
+    @{ Date = '2026-10-11'; Pin = '0.9.0'; Reason = ''; Floors = @{ 'native life' = 20200000; 'native gun' = 3710000000; 'wasm life' = 13300000; 'wasm gun' = 924000000 } }
 )
 
 # --- releases of a measured source: a registry release of the language whose
@@ -193,9 +205,13 @@ $sameRows = @{
 # allocations a formula cell, what is left being the arguments of the four
 # strict calls (Frazaro's reading of its own item); the gun's extra sheet no
 # longer costs an allocation a reference.
+# 2026-10-11, the pin moved to vla-lang 0.9.0 (KERNEL.20's first four slices,
+# KERNEL.26 and KERNEL.27): the soup 80 and 5, the gun 80 and 5, where a
+# function's arguments no longer cost an allocation and a frame keeps its
+# values by position; 0.0013 allocations a formula cell.
 $allocationCeilings = @{
-    'life' = @{ Allocs = 251957; Reallocs = 5 }
-    'gun'  = @{ Allocs = 251958; Reallocs = 5 }
+    'life' = @{ Allocs = 80; Reallocs = 5 }
+    'gun'  = @{ Allocs = 80; Reallocs = 5 }
 }
 
 # --- the rules ---
@@ -307,8 +323,11 @@ function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin,
             if ($cps -lt $floor) { $problems.Add(("the row {0}: {1} cells a second, under its floor of {2}" -f $key, (Format-Count $cps), (Format-Count $floor))) }
             if ($floor -ge $barCells) { $floorText += ', the line a gate' }
         }
-        $lines.Add(("  {0}: {1} cells a second, {2:N3} frames a second, frame p50 {3} ms; {4}; {5:N1}% of the line of {6}, {7:N1} times short; Life's rate {8} frames a second, {9:N1} times short; the clock's spread {10}%, drift {11}%" -f
-            $key, (Format-Count $cps), $fps, $r.FrameP50, $floorText, (100.0 * $cps / $barCells), (Format-Count $barCells), ($barCells / $cps), $barFrames, ($barFrames / $fps), $r.ClockSpread, $r.ClockDrift))
+        # the distance to each bar, short of it or, once a floor has passed it (2026-10-11), over it
+        $toLine = if ($cps -ge $barCells) { '{0:N1} times over' -f ($cps / $barCells) } else { '{0:N1} times short' -f ($barCells / $cps) }
+        $toRate = if ($fps -ge $barFrames) { '{0:N1} times over' -f ($fps / $barFrames) } else { '{0:N1} times short' -f ($barFrames / $fps) }
+        $lines.Add(("  {0}: {1} cells a second, {2:N3} frames a second, frame p50 {3} ms; {4}; {5:N1}% of the line of {6}, {7}; Life's rate {8} frames a second, {9}; the clock's spread {10}%, drift {11}%" -f
+            $key, (Format-Count $cps), $fps, $r.FrameP50, $floorText, (100.0 * $cps / $barCells), (Format-Count $barCells), $toLine, $barFrames, $toRate, $r.ClockSpread, $r.ClockDrift))
     }
     return @{ Problems = $problems; Lines = $lines }
 }

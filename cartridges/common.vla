@@ -14,11 +14,11 @@
 ;     of its begin, so the expander's trampoline keeps the rows flat. A chain stops at
 ;     5,000 applications, and each step copies the rest of the list, so a walk is for
 ;     dozens of items, never thousands.
-;   - An address is fused: (symbol "\"A" (+expand index 1)) is the text "A1", since
-;     symbol makes a string of a fused text that opens on a quote mark, and +expand adds
-;     two numbers as the macro expands. A row is reached by arithmetic; a column and a
-;     sheet only by the names a caller writes, until the language holds the arithmetic
-;     of an address (SPEC.md section 12).
+;   - An address is joined: (&expand "A" (+expand index 1)) is the text "A1", since
+;     &expand joins its atoms into one text and +expand adds two numbers as the macro
+;     expands. A column is reached by arithmetic too, (address-expand row column) or
+;     (column-letters-expand column), and a text is split by characters-expand: the
+;     expand-time primitives vla-lang 0.9.0 added (SPEC.md section 7.8).
 
 ; ---- one sheet, named once ----------------------------------------------------------
 ; A run of rows on one sheet, the sheet named at the top of the run and not on every
@@ -111,11 +111,11 @@
   (quasiquote (keys-from (unquote letter) 0 (unquote codes))))
 
 (defmacro (keys-from letter index codes)
-  "a player's codes from an index on, a code at a time; the column's letter fused before the row"
+  "a player's codes from an index on, a code at a time; the column's letter joined to the row"
   (quote-if (null? codes)
     (begin)
     (begin
-      (cell "Keys" (symbol "\"" letter (+expand index 1)) (car codes))
+      (cell "Keys" (&expand letter (+expand index 1)) (car codes))
       (keys-from letter (+expand index 1) (cdr codes)))))
 
 ; ---- the Audio sheet (SPEC.md section 3.6) ------------------------------------------

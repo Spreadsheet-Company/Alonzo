@@ -137,6 +137,10 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # 2026-10-10, ENGINE.1's panel, after ENGINE.4's close: 12 still, no check
 # added - the host says when a running loop stops, the replay case holds it,
 # and check_host_loop.ps1's control is twenty-five mutant pages.
+# 2026-10-11, the pin at vla-lang 0.9.0: 12 still, no check added -
+# check_engine_deps.ps1's baseline names 0.9.0 and its checksum;
+# check_frame_floors.ps1's allocation ceilings fall to 80 and 5 a frame, and
+# its floors are the owner's run over 0.9.0.
 $expectedAtLeast = 12
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 

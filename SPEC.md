@@ -364,7 +364,7 @@ The pass reads no file. Each door hands it the texts the source may include, und
 1. the includes spliced, each included form standing on its include's line for a refusal;
 2. every `defmacro` defined by the language's expander;
 3. the manifest found, the first other form, and copied;
-4. every form after it expanded to its fixpoint by the language's expander: template substitution, the rest parameter, the quasiquote bundle and the seventeen expand-time primitives, with no gensym and no eval;
+4. every form after it expanded to its fixpoint by the language's expander: template substitution, the rest parameter, the quasiquote bundle and the seventeen expand-time primitives (twenty-seven since `vla-lang` 0.9.0, *corrected 2026-10-11* below), with no gensym and no eval;
 5. each `begin` flattened, a `begin` being no row;
 6. the cartridge written: the source's licence line; a banner, `; Expanded by the pass from <name>.source.vla: edit that file, then expand it again.`; the manifest one directive a line; and the rows one a line; CRLF, as every `.vla` stands in the working tree.
 
@@ -386,6 +386,17 @@ A cartridge with no source is written by hand and stays a cartridge, as every ve
 - *The template doctrine's one trap.* A parameter replaces its name everywhere in the template, a row's head included, so a parameter is never named like a row it writes: a parameter `name` turns `(name name ...)` into a row the load refuses.
 
 The generality the owner's principle asks for, at the row, the column and the sheet, is the language's to give, and §12 names it as the pass's next step.
+
+(*Corrected 2026-10-11*, the pin at `vla-lang` 0.9.0, Frazaro's `VLA.3`: that step is given.)
+- Ten primitives join the seventeen, twenty-seven in all, each refusing by name what it cannot compute: a fraction to divide, a zero divisor, a row or a column past Excel's limits, a text that is no address. The ten:
+  - `-expand` and `*expand`;
+  - `quotient-expand` and `mod-expand`, Excel's `QUOTIENT` and `MOD` over whole numbers;
+  - `&expand`, its atoms joined into one text, so that an address or a formula's text needs no leading quote mark: `(&expand "A" (+expand row 1))` is the text `"A1"`;
+  - `characters-expand`, a text split into its characters, so that a picture written as a string can become cells;
+  - `address-expand`, `"B3"` for row 3 and column 2;
+  - `row-expand`, `column-expand` and `column-letters-expand`, an address or a column read back.
+- So a template macro reaches a column by arithmetic as it reaches a row, and the list above, measured at 0.8.1, stands corrected in its second, third and fifth points.
+- The library's `keys-from` joins its addresses by `&expand` since the same day, every cartridge expanding to the same bytes. Appendix C's patch, written before, fuses its addresses by `symbol` still, which still works.
 
 ## 8. The host
 

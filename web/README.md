@@ -129,10 +129,13 @@ row, and only when the module's words do not already name it.
 
 The engine's module answers as the double does, with the language's refusals
 and its own: Life loads with the Clock, the File and an Input sheet the
-engine makes, and steps about 230,000 cells a second in Chrome, so about 1.8
-generations a second at the slice the host spends, the progress sentence
-showing between them (`SPEC.md` section 5's slowness in plain sight; the
-speed is `CART.1`'s and `ENGINE.6`'s to raise).
+engine makes, and steps a frame in about 4.3 ms in Chrome over `vla-lang`
+0.9.0 (the owner's run of 2026-10-11), so it keeps its rate of thirty frames
+a second with most of each frame's interval to spare. The first engine,
+2026-10-09, stepped about 1.8 generations a second at the slice the host
+spends, the progress sentence showing between them (`SPEC.md` section 5's
+slowness in plain sight); `CART.1` measured the cost, and the language's
+releases removed it.
 
 `fake.js` is the permanent test double: `AlonzoFake.create(options)` answers
 `{ exports, stats, digest, peek, frame }`, the exports the eleven names of
@@ -192,7 +195,7 @@ powershell -File tools\build_web.ps1
 writes `web/index.html`; open it from disk. Build the engine first,
 `cargo build --release -p alonzo --target wasm32-unknown-unknown`, and the
 builder puts it in the page: the engine's panel then runs Life as the
-language computes it, about two generations a second; without it the panel
+language computes it, at its rate of thirty frames a second; without it the panel
 runs against the fake module and says so. Type a row in the edit box and
 press Write (`(cell "Palette" "B1" "#FF8800")` turns the dead cells orange,
 `(cell "Screen" "B2:K11" 1)` holds a block alive while Life flows around

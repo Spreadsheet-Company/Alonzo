@@ -35,16 +35,19 @@ repository = "https://github.com/Spreadsheet-Company/Alonzo"
 
 [workspace.dependencies]
 # The language crate and nothing else (AD-5), pinned to one version on
-# crates.io: vla-lang 0.8.1, the release of KERNEL.25's source (Frazaro's
-# f5dc344, byte for byte: the evaluator's hot path, over the plane kept at the
-# frame's end of KERNEL.24 and the handle and the four calls of KERNEL.22).
-# The owner's route (2026-10-09; REARVIEW.md, ENGINE.1's second slice,
-# decision 1): a git rev while the language's change is unreleased, and the
-# exact registry pin once it is, which that decision expected as 0.9.0 and
-# Frazaro released as 0.8.1 (2026-10-10); a git rev may return for KERNEL.20
-# until the release after it. An exact version and never a range, a rev and
-# never a branch, since a range and a branch move.
-vla-lang = "=0.8.1"
+# crates.io: vla-lang 0.9.0 (Frazaro's release commit 2eb54b7, tagged
+# v0.9.0, 2026-10-11): a frame computing only the cells a change reaches and
+# a filled formula at all its cells at once (KERNEL.20's first four slices,
+# KERNEL.26 and KERNEL.27), the limits a stranger's text is refused by
+# (VLA.1), and the ten expand-time primitives (VLA.3); over 0.8.1, the
+# evaluator's hot path (KERNEL.25), the plane kept at the frame's end
+# (KERNEL.24) and the handle and the four calls (KERNEL.22). The owner's
+# route (2026-10-09; REARVIEW.md, ENGINE.1's second slice, decision 1): a
+# git rev while the language's change is unreleased, and the exact registry
+# pin once it is, 0.8.1 on 2026-10-10 and 0.9.0 on 2026-10-11, no git rev
+# between them. An exact version and never a range, a rev and never a
+# branch, since a range and a branch move.
+vla-lang = "=0.9.0"
 
 [profile.release]
 # Small, deterministic, and without an unwinder: a panic aborts, so the wasm

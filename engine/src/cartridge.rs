@@ -845,9 +845,10 @@ impl Cartridge {
             out.push_str(d);
             out.push('\n');
         }
-        let book = self.machine.workbook();
+        // A sheet's place is the machine's to say: since vla-lang 0.9.0 the
+        // grid it lends is borrowed mutably, its twins' cells made first.
         for device in DEVICES {
-            match book.find_sheet(device.name()) {
+            match self.machine.find_sheet(device.name()) {
                 Some(si) if si < self.machine.sheets() => {}
                 _ => continue,
             }
@@ -902,18 +903,19 @@ impl Cartridge {
         let Some(range) = parse_a1_range(addr) else {
             return Ok(());
         };
-        let book = self.machine.workbook();
-        let Some(si) = book.find_sheet(sheet) else {
+        let Some(si) = self.machine.find_sheet(sheet) else {
             return Ok(());
         };
         if si >= self.machine.sheets() {
             return Ok(());
         }
-        let Some(device) = Device::of(&book.sheets[si].name) else {
+        let Some(name) = self.machine.sheet_name(si) else {
+            return Ok(());
+        };
+        let Some(device) = Device::of(name) else {
             return Ok(());
         };
         let target = format!("{sheet}!{addr}");
-        let name = &book.sheets[si].name;
         let at = (range.top, range.left, range.bottom, range.right);
         if device == Device::Screen {
             let m = &self.manifest;
@@ -1136,9 +1138,12 @@ mod tests {
         g
     }
 
-    fn formulas(c: &Cartridge) -> Vec<(usize, u32, u32, Content)> {
+    /// Every formula cell of the grid, its twins' among them. The grid is
+    /// lent mutably since vla-lang 0.9.0, which makes the twins' cells
+    /// first, so the test reads the machine's own field.
+    fn formulas(c: &mut Cartridge) -> Vec<(usize, u32, u32, Content)> {
         let mut out = Vec::new();
-        for (si, sheet) in c.machine().workbook().sheets.iter().enumerate() {
+        for (si, sheet) in c.machine.workbook().sheets.iter().enumerate() {
             for (&(row, col), cell) in &sheet.cells {
                 if is_formula(&cell.content) {
                     out.push((si, row, col, cell.content.clone()));
@@ -1424,13 +1429,8 @@ mod tests {
             cell_text(&c, "Input", "B17"),
             "(cell \"Input\" \"B17\" \"\")"
         );
-        let names: Vec<&str> = c
-            .machine()
-            .workbook()
-            .sheets
-            .iter()
-            .map(|s| s.name.as_str())
-            .collect();
+        // every sheet's name, its twins' among them, as the machine says it
+        let names: Vec<&str> = (0..).map_while(|i| c.machine().sheet_name(i)).collect();
         assert_eq!(
             names,
             [
@@ -1639,12 +1639,12 @@ mod tests {
             "nothing is computed before the first step"
         );
         for frame in 1..=12usize {
-            let before = formulas(&c);
+            let before = formulas(&mut c);
             let s = c.step(0);
             assert!(s.done && s.frame == frame as u64 && s.of == 80, "{s:?}");
             assert_eq!(plane(&c), reference(frame - 1), "frame {frame}");
             assert_eq!(
-                formulas(&c),
+                formulas(&mut c),
                 before,
                 "frame {frame} wrote no formula (AD-7)"
             );
@@ -1667,10 +1667,8 @@ mod tests {
         }
         // A save: the manifest, then every sheet that is no twin viewed whole.
         let mut save = manifest(30, "");
-        let names: Vec<String> = original.machine().workbook().sheets
-            [..original.machine().sheets()]
-            .iter()
-            .map(|s| s.name.clone())
+        let names: Vec<String> = (0..original.machine().sheets())
+            .filter_map(|i| original.machine().sheet_name(i).map(str::to_string))
             .collect();
         for name in &names {
             match original.view("grid", name, None) {
@@ -1815,10 +1813,10 @@ mod tests {
             };
             c.write(&input_rows(held, pointer, buttons, notches, key))
                 .expect("the Input rows");
-            let before = formulas(&c);
+            let before = formulas(&mut c);
             assert!(c.step(0).done);
             assert_eq!(
-                formulas(&c),
+                formulas(&mut c),
                 before,
                 "frame {frame} wrote no formula (AD-7)"
             );

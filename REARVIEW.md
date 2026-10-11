@@ -605,6 +605,59 @@ The oracle, on the day (*measurement*):
 
 *Found:* in the headless probe, Run after a Pause stepped no frame in 2 s of virtual time, on the page before the fix as well, while a replay played after it ran its frames. A headless Chrome makes animation frames while something is drawn: a replay's load draws frame 0, and a bare Run draws nothing before its first frame. The owner's hand test of `ENGINE.4` found Run resuming in a real Chrome, so this is the probe's, not the page's.
 
+*The pin at `vla-lang` 0.9.0, 2026-10-11, at the owner's word that Frazaro's 0.9.0 was cut and published to GitHub and crates.io.*
+
+The release is Frazaro's `2eb54b7`, tagged `v0.9.0`.
+- `KERNEL.20`'s first four slices, `KERNEL.26` and `KERNEL.27`: a frame computes only the cells a change reaches, a filled formula at all its cells at once, the twins' cells made only when read.
+- `VLA.1`'s limits, refused by name, and `VLA.3`'s ten expand-time primitives.
+- No git rev was pinned between 0.8.1 and it.
+
+What moved:
+- `Cargo.toml`'s pin and the lock: the checksum `248b3ecf...`, still two packages.
+- `KERNEL.27`'s one change, `Machine::workbook` taking `&mut self`. `describe` and `check_row` ask the machine for a sheet's place and name (`find_sheet`, `sheet_name`). Of the tests, `formulas` borrows the machine's own field mutably, and two read the sheets' names from the machine.
+- `check_engine_deps.ps1`'s baseline.
+- `check_frame_floors.ps1`'s allocation ceilings: 80 and 5 a frame for both fixtures, where they were 251,957 and 251,958.
+- The library's `keys-from`, which joins its addresses by `&expand` where it fused them by the leading-quote trick, and its header.
+- `SPEC.md` §7.8's dated correction.
+- And ENGINE.2's heading in this file, which the record of the live sheet's fix (`ea87ed0`) had dropped. Its note was inserted before that heading, and the heading was not written back.
+
+The oracle, on the day (*measurement*):
+- `cargo test`: 27, both replays played natively to their goldens.
+- `expand --check`: five sources the same, before the library's change and after it.
+- The module: 635,687 bytes (from 516,175), 0 imports, 12 exports.
+- The loop oracle's fifteen cases at both ratios, every count and digest as before:
+  - Life frame for frame equal to the page's own at generations 0 and 10;
+  - both replays to their goldens;
+  - the page's pass of five sources the command line's bytes.
+- `check_engine_deps.ps1` and its control's 8 mutants.
+- The runner's check mode: every frame equal to the hand-written Life, and the gun's facts held.
+
+A preview run of `tools/bench_frames.ps1` the same day, every guard met:
+- Life 3.2 ms a frame natively (309 frames a second) and 4.3 in headless Chrome (235).
+- The gun 0.031 ms natively, and 0.061 in Chrome, timed in 30 runs of 128 as the page now times a frame quicker than its clock.
+- The README's thirty frames a second is cleared in the browser nearly eight times. A floor never goes down, so floors from a baseline of this kind pass the charter's line of two million cells a second and make the check's two bars gates from then on.
+
+*The floors' third baseline, the owner's run of `tools/bench_frames.ps1` over 0.9.0 the same day, both halves opted out of the throttling and on the performance cores, pasted from `target/bench_frames.txt` whole (*measurement*):*
+
+| row | frame p50 | frames a second | cells a second | floor |
+|---|---|---|---|---|
+| native life | 2.8 ms | 356.6 | 22,453,863 | 20,200,000 |
+| native gun | 0.0152 ms | 65,573.8 | 4,128,786,885 | 3,710,000,000 |
+| wasm life | 4.3 ms | 235.3 | 14,815,059 | 13,300,000 |
+| wasm gun | 0.0613 ms, in 30 runs of 128 (frames 158 to 3997) | 16,305.7 | 1,026,674,140 | 924,000,000 |
+
+- The soup is 36 times the second baseline natively and 32 times in the browser.
+- Every floor passes the charter's line of two million cells a second and Life's thirty frames a second, so both bars are gates from this entry on: Life at 7.4 times the line and 7.8 times its rate in the browser.
+- "Cells a second" stays the floors' unit, the frame's formula cells over its time, though a frame no longer computes every cell.
+- With it:
+  - `check_frame_floors.ps1` prints the distance to a bar it has passed as "times over", where it printed "0.1 times short";
+  - the two READMEs' sentences on Life's speed take the run's numbers.
+- `run_checks.ps1 -WithExtras` then: 12 checks and 12 verifiers, `ALL GREEN`, in 149.8 s. The loop check's control took 70.5 s where it took 125: its pages step the faster engine.
+
+*Committed 2026-10-11 at the owner's word, "Commit, push to remote, then suggest next steps", under `ENGINE.1`'s ID as the 0.8.1 move was, and pushed the same day with the six commits before it, `ENGINE.4`'s two among them.*
+
+## `ENGINE.2` — the frame path: the plane held to the record of the same window
+
 *Scoped 2026-10-09, at the owner's word, the day `ENGINE.1` closed: the Screen read out of the module's memory as bytes and blitted whole, held equal to the view record of the same window by a test, the record being the oracle (`CHARTER.md` §3), and the window the Camera's (`SPEC.md` §13's two oracles for this item). The scoping finds the path itself already laid, since `ENGINE.1` had to draw something: the host views the plane, copies the bytes out and blits them through the Palette. What is missing is the oracle, a fixture that reaches every arm of the byte's rule, and the cost the second slice measured, which is the language's. So the scoping is mostly a measurement, made before any claim, and its first finding moves the cost to Frazaro.*
 
 **Substrate, verified.** Read on the day, by file and never by assumption; Frazaro's tree read and written nowhere, its crate built only from a scratch copy of the pinned commit.
