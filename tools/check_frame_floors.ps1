@@ -38,7 +38,11 @@ WHAT IT HOLDS, from the baseline pasted below:
     10% (the instrument's own guard against Windows' power throttling,
     measured to slow a background run by about 40% three seconds in); cells
     a second equal to frames a second times the formula cells within half a
-    percent, one measurement in two units;
+    percent, one measurement in two units, and each a finite number above 0
+    (since 2026-10-10, CART.1: a gun frame quicker than the page's clock of
+    0.1 ms read 0 ms timed alone, its rates infinite; the instrument now
+    times such frames in runs of consecutive steps, a row's Run the frames a
+    run, 1 where a frame is timed alone);
   - the floors, a dated history: each entry's floor at least the entry
     before it, row by row, unless the entry gives its reason (a correctness
     fix that costs speed, say, which the commit message repeats); each row's
@@ -75,7 +79,8 @@ missing, a smoke run's few frames, a row under its floor, a floor lowered
 with no reason, no floor at all, the pin moved, the pin moved to a release
 of another source, a fixture's digest changed, a fixture rebuilt with rows
 the table does not name, a clock
-that moved, frames a second that disagree with cells a second, a run not
+that moved, frames a second that disagree with cells a second, a frame read
+as 0 ms whose rates are infinite (CART.1, 2026-10-10), a run not
 opted out of the throttling and a run not on the performance cores must
 each fail; the history, read from text as the commit's copy is: an entry
 added after the committed ones passes, and so does a history unchanged,
@@ -286,6 +291,12 @@ function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin,
         $r = $byKey[$key]
         $cells = [double]$r.Cells; $cps = [double]$r.CellsPerSecond; $fps = [double]$r.FramesPerSecond
         if ($cells -le 0) { $problems.Add("the row $key names no formula cells"); continue }
+        # A rate that is no finite number above 0 is no floor: a frame quicker than the page's clock once
+        # read 0 ms timed alone (CART.1, 2026-10-10), and the instrument now times such frames in runs.
+        if ([double]::IsNaN($cps) -or [double]::IsInfinity($cps) -or $cps -le 0 -or [double]::IsNaN($fps) -or [double]::IsInfinity($fps) -or $fps -le 0) {
+            $problems.Add(("the row {0}: {1} cells a second and {2} frames a second, where each must be a finite number above 0: a frame read as 0 ms is no measurement, so measure again with tools/bench_frames.ps1, whose page times a frame quicker than its clock in runs" -f $key, $r.CellsPerSecond, $r.FramesPerSecond))
+            continue
+        }
         if ([int]$r.Frames -lt $minFrames) { $problems.Add("the row $key holds $($r.Frames) steady frames, under the instrument's $minFrames (a short run is not the baseline)") }
         if ([double]$r.ClockSpread -gt $clockMax -or [math]::Abs([double]$r.ClockDrift) -gt $clockMax) { $problems.Add(("the row {0}: the clock moved during its run, a spread of {1}% and a drift of {2}%, beyond {3}%: a throttled run is not the baseline" -f $key, $r.ClockSpread, $r.ClockDrift, $clockMax)) }
         if ($cps -le 0 -or [math]::Abs($cps - $fps * $cells) -gt $unitsTolerance * $cps) { $problems.Add(("the row {0}: {1} cells a second is not {2} frames a second times {3} formula cells" -f $key, (Format-Count $cps), $fps, (Format-Count $cells))) }
@@ -420,6 +431,8 @@ if ($Control) {
     Expect 'a clock that moved' (Judge $moved $history 'abc1234' $digests) 'the clock moved'
     $units = Clean; $units[3].FramesPerSecond = [math]::Round($units[3].FramesPerSecond * 1.02, 3)
     Expect 'frames a second against cells a second' (Judge $units $history 'abc1234' $digests) 'is not'
+    $timeless = Clean; $timeless[3].FrameP50 = 0.0; $timeless[3].CellsPerSecond = [double]::PositiveInfinity; $timeless[3].FramesPerSecond = [double]::PositiveInfinity
+    Expect 'a frame read as 0 ms, its rates infinite' (Judge $timeless $history 'abc1234' $digests) 'a finite number above 0'
     $coresPart = 'on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 25 browser process(es)'
     $oneKind = $controlEnvironment.Replace($coresPart, 'one kind of core, 20 logical processors, unpinned')
     Expect 'a machine of one kind of core' (Judge (Clean) $history 'abc1234' $digests $oneKind) ''
@@ -473,7 +486,7 @@ if ($Control) {
     }
     foreach ($v in $verdicts) { Write-Output ('control: ' + $v) }
     if ($ok) {
-        Write-Output ("OK: control: the judgment passes the clean table, a reasoned lowering, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows, and fails fourteen mutants of the table; the history passes an entry added and a history unchanged, and fails an entry pasted over and one edited in place; over five fake runners it passes the clean one and fails four, each for its own reason")
+        Write-Output ("OK: control: the judgment passes the clean table, a reasoned lowering, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows, and fails fifteen mutants of the table; the history passes an entry added and a history unchanged, and fails an entry pasted over and one edited in place; over five fake runners it passes the clean one and fails four, each for its own reason")
         exit 0
     }
     Write-Output 'FAIL: control: the judgment did not behave as the header says'

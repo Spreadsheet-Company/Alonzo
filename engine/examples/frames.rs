@@ -25,6 +25,10 @@
 //! steady frames are the second onwards, and their median is the floor's
 //! number, in cells evaluated a second (the step's formula cells over the
 //! median) and in frames a second (one over it), one measurement in two units.
+//! `Instant` reads nanoseconds, so a frame here is always timed alone, and its
+//! rows say `Run = 1`; the page's clock steps in tenths of a millisecond and
+//! times a quicker frame in runs (`CART.1`, 2026-10-10). A frame's time under
+//! 1 ms prints to a tenth of a microsecond, as the page prints it.
 //! Beside every frame the hand-written Life runs a fixed workload, the soup's
 //! first generations, and is timed too: the processor's clock seen from a
 //! computation that never changes. When that time moves more than 10% across
@@ -332,6 +336,17 @@ fn thousands(n: u64) -> String {
     out
 }
 
+/// A frame's time as the rows print it, the page's own rule: to a tenth of a
+/// millisecond from 1 ms, and to a tenth of a microsecond under it, so that a
+/// frame of 20 microseconds is not printed as nothing (CART.1, 2026-10-10).
+fn ms(x: f64) -> String {
+    if x >= 1.0 {
+        format!("{x:.1}")
+    } else {
+        format!("{x:.4}")
+    }
+}
+
 // ---- one fixture ----------------------------------------------------------
 
 /// What one fixture's run measured.
@@ -562,21 +577,26 @@ fn main() -> ExitCode {
         let spread = r.spread();
         let drift = drift(clock, start_clock);
         println!(
-            "{}: load {:.1} ms; {} formula cells; frame 1 {:.1} ms; frames 2 to {}: median {:.1} ms (min {:.1}, max {:.1}), {} cells a second, {:.3} frames a second",
+            "{}: load {:.1} ms; {} formula cells; frame 1 {} ms; frames 2 to {}: median {} ms (min {}, max {}), {} cells a second, {:.3} frames a second",
             r.name,
             r.load_ms,
             thousands(r.cells as u64),
-            r.times[0],
+            ms(r.times[0]),
             r.times.len(),
-            med,
-            lo,
-            hi,
+            ms(med),
+            ms(lo),
+            ms(hi),
             thousands((r.cells as f64 / (med / 1e3)).round() as u64),
             1e3 / med
         );
+        // a frame quicker than the clock's own generation is that many times faster (CART.1, 2026-10-10)
+        let against = if med >= clock {
+            format!("{:.0} times slower than it", med / clock)
+        } else {
+            format!("{:.0} times faster than it", clock / med)
+        };
         println!(
-            "  the clock: the hand-written Life {clock:.3} ms a generation beside every steady frame ({clock_lo:.3} to {clock_hi:.3}), spread {spread:.1}%, {drift:+.1}% from {start_clock:.3} at the start; the engine {:.0} times slower than it",
-            med / clock
+            "  the clock: the hand-written Life {clock:.3} ms a generation beside every steady frame ({clock_lo:.3} to {clock_hi:.3}), spread {spread:.1}%, {drift:+.1}% from {start_clock:.3} at the start; the engine {against}"
         );
         if let Some(n) = r.facts {
             println!(
@@ -600,15 +620,15 @@ fn main() -> ExitCode {
         let med = median(&steady);
         let (lo, hi) = range(&steady);
         println!(
-            "    @{{ Runner = 'native'; Fixture = '{}'; Cells = {}; Frames = {}; Load = {:.1}; FirstFrame = {:.1}; FrameP50 = {:.1}; FrameMin = {:.1}; FrameMax = {:.1}; CellsPerSecond = {}; FramesPerSecond = {:.3}; ClockMs = {:.3}; ClockSpread = {:.1}; ClockDrift = {:.1} }}",
+            "    @{{ Runner = 'native'; Fixture = '{}'; Cells = {}; Frames = {}; Run = 1; Load = {:.1}; FirstFrame = {}; FrameP50 = {}; FrameMin = {}; FrameMax = {}; CellsPerSecond = {}; FramesPerSecond = {:.3}; ClockMs = {:.3}; ClockSpread = {:.1}; ClockDrift = {:.1} }}",
             r.name,
             r.cells,
             steady.len(),
             r.load_ms,
-            r.times[0],
-            med,
-            lo,
-            hi,
+            ms(r.times[0]),
+            ms(med),
+            ms(lo),
+            ms(hi),
             (r.cells as f64 / (med / 1e3)).round() as u64,
             1e3 / med,
             median(&r.steady_clocks()),

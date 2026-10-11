@@ -974,6 +974,42 @@ Every frame of both runs was equal to its Life, and the gun's facts held 24 peri
 
 *Noted 2026-10-10, after the close:* the pin moved on to the registry, `vla-lang = "=0.8.1"`, the source of `f5dc344` byte for byte, and `check_frame_floors.ps1` names that release as the measured commit's source, so the second baseline holds without being measured again (`ENGINE.1`'s second slice, the note on the registry pin).
 
+*The frame timer, 2026-10-10, after `ENGINE.4`'s close, at the owner's word.*
+
+The defect. Frazaro's `KERNEL.26`, then built and uncommitted, stepped the gun in about 20 µs, and the owner relayed its report: `tools/bench_frames.ps1` died with "Cannot convert value NaN to Int64".
+- The page's `?frames=1` timed each frame alone with `performance.now()`, which Chrome gives a page that is not cross-origin isolated in steps of 0.1 ms. The gun's steady median read 0, and its row printed `CellsPerSecond = Infinity`.
+- `Get-RoundedDown` made NaN of that row.
+- Pasted, the row would have broken `check_frame_floors.ps1` too, an unquoted `Infinity` in a hashtable literal. Its units test would have passed it as NaN.
+
+The owner was given two ways: time several frames at once, or refuse the figure and hold the floor as under the clock. The owner chose the first: "proceed with your recommended fix for the timer fix (time several frames at once)".
+
+What landed:
+- `web/index.template.html`'s instrument reads its clock's step first, five readings of the smallest change it sees. It times frames 2 to N alone, as before.
+  - When their median reads under twenty steps (2 ms in Chrome), it times the steady frames again past them. They run in runs of consecutive steps, the run doubled from 2 until one reads twenty steps, `N - 1` runs in all. Each run is one span with no view or read inside it, and its frame is the span over the run.
+  - Each run's last frame is held to the page's Life on the instance timed. The whole fixture is then stepped again on a second instance, untimed, every frame held, so every frame is still held.
+  - The rows gain `Run`, the frames a run, and `Frames` counts the frames timed. Times under 1 ms print to 0.1 µs, and the page never prints a rate that is no time.
+- `engine/examples/frames.rs`: the same printing, `Run = 1` (its `Instant` reads nanoseconds, so it times every frame alone), and a clock line that says "times faster" for a frame quicker than the clock's own generation.
+- `tools/bench_frames.ps1` refuses a row whose rates are no finite number above 0, in words, and prints no block.
+- `tools/check_frame_floors.ps1` refuses such a row by name, its control at fifteen mutants. `tools/run_checks.ps1`'s words.
+
+The oracle, on the day on the owner's machine (*measurement*):
+- `tools/bench_frames.ps1` at the pin, 0.8.1, every frame read alone as before: the wasm soup 137.5 ms a frame, the gun 142.1, the native 101.1 and 101.4. Its block was printed, its rows saying `Run = 1`. It was not pasted, a baseline being the owner's run.
+- The same instrument in a scratch copy of the tree whose `vla-lang` was Frazaro's `b1f0b55` (`KERNEL.26`, committed by then) by a path, read and never written:
+  - natively, the soup 4.9 ms a frame and the gun 0.0354 ms;
+  - in the page, the soup 6.6 ms (152 frames a second) timed alone;
+  - the gun's frames 2 to 31 read a median of 0 ms alone, so frames 94 to 2013 were timed in 30 runs of 64: a frame's median 0.0953 ms (0.0328 to 0.1297), 10,492 frames a second;
+  - every frame from 1 to 2013 was held on the second instance.
+- The page as committed before the fix, built over the same module, printed the owner's row, `FrameP50 = 0.0; ... CellsPerSecond = Infinity`. The new `bench_frames.ps1` refused it: "the row wasm gun says CellsPerSecond = Infinity; ...: a rate that is no finite number above 0 is no floor, so no block is printed".
+- `check_frame_floors.ps1` clean, its control's fifteen mutants each failing, the new one "a frame read as 0 ms, its rates infinite". `check_host_loop.ps1` at both ratios and `check_web_offline.ps1` clean over the rebuilt page. `cargo fmt`, `clippy -D warnings` and `cargo test` (27) clean.
+- `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`, in 201.2 s.
+
+*Found:*
+- Frame 2 alone cannot decide how a fixture is timed. The first try did, and over `KERNEL.26` the gun's second frame read over 2 ms where every later one read 0, so its steady median was 0 and the page's own guard refused it. After a load the language may compute a frame whole before it computes only the cells a change reaches (`KERNEL.20`'s fourth slice), so the median of frames 2 to N decides.
+- A row timed in runs measures the frames it names: the wasm gun's 94 to 2013 where the native row's are 2 to 31. The gun's work a frame moves with its gliders and the border, and a faster engine's runs are longer and later, so each history entry is the procedure's own, and its rows say which frames.
+- The clock's own probe reads the same 0.1 ms steps, so the two wasm rows print the same spread and drift; at about 5 ms a reading it holds its 10% guard.
+
+*Committed 2026-10-10 at the owner's word, "Commit the timer fix", under `CART.1`'s ID. Not pushed. The baseline over `KERNEL.26` is the owner's own run of `tools/bench_frames.ps1` after the pin moves, which is the owner's call.*
+
 ## `SPEC.3` — the page, version 3: the cartridge's source, and the pass between it and the rows
 
 *Scoped 2026-10-10 at the owner's word, the day the item was filed from the owner's reading of `cartridges/life/life.vla`, whose forty-eight Palette rows "read as a little redundant and cluttery, which is almost the purpose of writing new macros anyway". The model the owner confirmed at the filing: authors write VLA with macros, a pass writes the cartridge as fully expanded rows, and the engine loads the rows and never expands. The scoping measured what the language's expander can say about a cartridge before deciding anything. It worked in a scratch crate over `vla-lang` 0.8.1 and a scratch copy of the engine, never in either repository's tree. Its first finding settles most of the rest: the expander as published already writes every one of today's rows from a source a third their length, byte for byte. The owner refined the model while the scoping ran, and the decisions take the refinement as their first premise.*

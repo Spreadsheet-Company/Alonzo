@@ -71,7 +71,10 @@
   never a shared runner. With ?frames=1 it is the frame floors' instrument (CART.1):
   the engine's module stepped over the benchmark's two fixtures, Life's soup and the
   glider gun, synchronously at the page's load, each frame timed alone and held to
-  the page's own Life, and the clock watched beside every frame, printed into
+  the page's own Life, or, where a frame reads under twenty steps of the page's
+  clock, the frames timed in runs, each run's last held and every frame held on a
+  second instance stepped untimed (CART.1, 2026-10-10), and the clock watched
+  beside every frame, printed into
   <pre id="frames"> as the rows tools/check_frame_floors.ps1 holds;
   tools/bench_frames.ps1 runs it under headless Chrome on the owner's machine with
   Windows' power throttling opted out, the step's cost needing no display.
@@ -2485,10 +2488,20 @@
   // under headless Chrome on the owner's machine with Windows' power throttling opted out, the step's
   // cost needing no display; opened by hand, the page freezes while it steps, about twenty seconds
   // today, and then prints the same. &n=31 sets the frames a fixture.
+  // A frame too quick for the page's clock is timed in runs (2026-10-10, at the owner's word, when
+  // Frazaro's KERNEL.26 stepped the gun in about 20 microseconds): Chrome gives a page that is not
+  // cross-origin isolated performance.now() in steps of 0.1 ms, so a gun frame timed alone read 0,
+  // its cells a second infinite. The page reads its clock's step first. Frames 2 to N are timed alone,
+  // as before; when their median reads under twenty steps, 2 ms in Chrome, the steady frames are timed
+  // again past them in runs of consecutive steps, the run doubled from 2 until it reads twenty steps,
+  // each run a span with no view or read inside it and its frame the span over the run. Each run's
+  // last frame is held to this page's Life on the instance timed, and the whole fixture is stepped
+  // again on a second instance, untimed, every frame held, so that every frame is still held. A fixture
+  // whose frames read twenty steps alone is printed as before, its rows saying Run = 1.
   function framesInstrument() {
     var pre = document.getElementById('frames');
     var nm = /[?&]n=(\d+)(&|$)/.exec(QS), N = nm ? Math.max(2, +nm[1]) : 31;
-    var PROBE_GENERATIONS = 20, PROBE_BATCHES = 3, START_READINGS = 5, CLOCK_MOVED_MAX = 10;
+    var PROBE_GENERATIONS = 20, PROBE_BATCHES = 3, START_READINGS = 5, CLOCK_MOVED_MAX = 10, RUN_GRAINS = 20, RUN_MAX = 65536;
     if (!builtModule()) { pre.textContent = 'frames failed: the page holds no engine module'; return; }
     var bytes = bytesOfBase64(builtModule());
     // The gun's Seed rows as a plane: (cell "Seed" "J14" 1).
@@ -2519,6 +2532,21 @@
     function quantile(v, q) { var s = v.slice().sort(function (x, y) { return x - y; }); return s[Math.round((s.length - 1) * q)]; }
     function f1(x) { return (Math.round(x * 10) / 10).toFixed(1); }
     function f3(x) { return (Math.round(x * 1000) / 1000).toFixed(3); }
+    // a frame's time as the rows print it: to a tenth of a millisecond from 1 ms, as before, and to a
+    // tenth of a microsecond under it
+    function fms(x) { return x >= 1 ? f1(x) : (Math.round(x * 10000) / 10000).toFixed(4); }
+    // The clock's step: the smallest change of performance.now() seen, five times over; a clock that
+    // never moves inside a task, as a headless virtual clock does not, is taken at Chrome's 0.1 ms.
+    function grainOf() {
+      var best = Infinity;
+      for (var s = 0; s < 5; s++) {
+        var a = performance.now(), b = a, spins = 0;
+        while (b === a && spins++ < 1000000) b = performance.now();
+        if (b > a) best = Math.min(best, b - a);
+      }
+      return best < Infinity ? best : 0.1;
+    }
+    var grain = grainOf(), runMs = RUN_GRAINS * grain, grainText = String(+grain.toFixed(4));
     var starts = [];
     for (var s0 = 0; s0 < START_READINGS; s0++) starts.push(probe());
     var startClock = median(starts);
@@ -2534,36 +2562,78 @@
       if (!bm) throw new Error(fx.name + ': the describe holds no budget row');
       var cells = +bm[1];
       var sm = /\(seed (\d+)\)/.exec(fx.text);
-      var want = /^\(cell "Seed" /m.test(fx.text) ? seedPlane(fx.text) : lifeReference(sm ? +sm[1] : 1, 0);
-      var times = [], clocks = [], outp = x.alonzo_alloc(4);
-      for (var f = 1; f <= N; f++) {
-        if (f > 1) want = lifeGeneration(want);
-        clocks.push(probe());
+      var start = /^\(cell "Seed" /m.test(fx.text) ? seedPlane(fx.text) : lifeReference(sm ? +sm[1] : 1, 0), want = start, gen = 0;
+      // n frames from frame f0 as one span, nothing viewed or read inside it; then each step's answer
+      // read, said to be its frame and done, and freed
+      var span = function (f0, n) {
+        var outs = x.alonzo_alloc(4 * n), ptrs = new Array(n);
         var t = performance.now();
-        var ptr = x.alonzo_step(h, 0, outp);
-        var ms = performance.now() - t;
-        var len = new DataView(x.memory.buffer).getUint32(outp, true);
-        var row = new TextDecoder().decode(new Uint8Array(x.memory.buffer, ptr, len).slice(16));
-        x.alonzo_free(ptr, len);
-        if (row.indexOf('(step ' + f + ' ') !== 0 || !/ done\)$/.test(row)) throw new Error(fx.name + ': frame ' + f + ' answered ' + row);
+        for (var i = 0; i < n; i++) ptrs[i] = x.alonzo_step(h, 0, outs + 4 * i);
+        var ms = performance.now() - t, dv = new DataView(x.memory.buffer);
+        for (var j = 0; j < n; j++) {
+          var len = dv.getUint32(outs + 4 * j, true), row = new TextDecoder().decode(new Uint8Array(x.memory.buffer, ptrs[j], len).slice(16));
+          x.alonzo_free(ptrs[j], len);
+          if (row.indexOf('(step ' + (f0 + j) + ' ') !== 0 || !/ done\)$/.test(row)) throw new Error(fx.name + ': frame ' + (f0 + j) + ' answered ' + row);
+        }
+        x.alonzo_free(outs, 4 * n);
+        return ms;
+      };
+      // the plane after frame n held to this page's Life at generation n - 1
+      var hold = function (n) {
+        while (gen < n - 1) { want = lifeGeneration(want); gen++; }
         var plane = d.raw('alonzo_view', [h], ['plane', 'Screen', 'A1:LH200']).bytes, diff = firstDiff(plane, want);
-        if (diff) throw new Error(fx.name + ': frame ' + f + ' is not the page\'s Life: ' + diff);
-        times.push(ms);
+        if (diff) throw new Error(fx.name + ': frame ' + n + ' is not the page\'s Life: ' + diff);
+      };
+      // frame 1 alone, then frames 2 to N alone, as before; when their median reads under twenty steps
+      // of the clock, the steady frames are timed again past them, in runs of k, k doubled from 2 until a
+      // run reads twenty steps. Frame 2 cannot decide alone: after a load the language may compute a
+      // frame whole before it computes only the cells a change reaches (Frazaro's KERNEL.20), and the
+      // gun's second frame over KERNEL.26 read over 2 ms where every later one read 0.
+      var times = [], clocks = [], k = 1, f;
+      clocks.push(probe());
+      var firstMs = span(1, 1);
+      hold(1);
+      for (f = 2; f <= N; f++) { var cf = probe(), mf = span(f, 1); hold(f); clocks.push(cf); times.push(mf); }
+      var alone = median(times);
+      if (!(alone >= runMs)) {
+        times = []; clocks = clocks.slice(0, 1);
+        for (k = 2; ; k *= 2) {
+          if (k > RUN_MAX) throw new Error(fx.name + ': ' + RUN_MAX + ' frames in a row still read under ' + RUN_GRAINS + ' steps of this page\'s clock');
+          var cp = probe(), sp = span(f, k);
+          hold(f + k - 1); f += k;
+          if (sp >= runMs) { clocks.push(cp); times.push(sp / k); break; }
+        }
+        for (var r = 2; r < N; r++) { var cr = probe(), sr = span(f, k); hold(f + k - 1); f += k; clocks.push(cr); times.push(sr / k); }
+        // every frame held all the same: the fixture stepped again on a second instance, untimed, each
+        // frame's plane held to this page's Life
+        var x2 = HOST.instantiateSync(bytes), d2 = new Driver({ exports: x2 }), ld2 = d2.call('alonzo_load', [], [fx.text, fx.name + '.vla']);
+        if (ld2.status !== 0) throw new Error(fx.name + ' was refused at its second load: ' + ld2.text + ' [' + ld2.id + ']');
+        var h2 = +/^\(cartridge (\d+) /.exec(ld2.text)[1], w2 = start, out2 = x2.alonzo_alloc(4);
+        for (var g = 1; g < f; g++) {
+          if (g > 1) w2 = lifeGeneration(w2);
+          var p2 = x2.alonzo_step(h2, 0, out2);
+          x2.alonzo_free(p2, new DataView(x2.memory.buffer).getUint32(out2, true));
+          var df2 = firstDiff(d2.raw('alonzo_view', [h2], ['plane', 'Screen', 'A1:LH200']).bytes, w2);
+          if (df2) throw new Error(fx.name + ': frame ' + g + ', stepped untimed on a second instance, is not the page\'s Life: ' + df2);
+        }
+        x2.alonzo_free(out2, 4);
       }
-      x.alonzo_free(outp, 4);
-      var steady = times.slice(1), med = median(steady), lo = Math.min.apply(null, steady), hi = Math.max.apply(null, steady);
+      var med = median(times), lo = Math.min.apply(null, times), hi = Math.max.apply(null, times);
+      if (!(med > 0 && isFinite(med))) throw new Error(fx.name + ': its steady frames read ' + med + ' ms, which is no time, and no row is printed');
       var sc = clocks.slice(1), clock = median(sc), spread = (quantile(sc, 0.9) - quantile(sc, 0.1)) / clock * 100, drift = (clock / startClock - 1) * 100;
-      lines.push(fx.name + ': load ' + f1(load) + ' ms; ' + thousands(cells) + ' formula cells; frame 1 ' + f1(times[0]) + ' ms; frames 2 to ' + N + ': median ' + f1(med) + ' ms (min ' + f1(lo) + ', max ' + f1(hi) + '), ' +
+      var which = k === 1 ? 'frames 2 to ' + N + ': median ' : 'frames ' + (f - (N - 1) * k) + ' to ' + (f - 1) + ' in ' + (N - 1) + ' runs of ' + k + ', each run one span: a frame\'s median ';
+      lines.push(fx.name + ': load ' + f1(load) + ' ms; ' + thousands(cells) + ' formula cells; frame 1 ' + fms(firstMs) + ' ms; ' + which + fms(med) + ' ms (min ' + fms(lo) + ', max ' + fms(hi) + '), ' +
                  thousands(Math.round(cells / (med / 1000))) + ' cells a second, ' + f3(1000 / med) + ' frames a second');
-      lines.push('  the clock: this page\'s Life ' + f3(clock) + ' ms a generation beside every steady frame, spread ' + f1(spread) + '%, ' + (drift >= 0 ? '+' : '') + f1(drift) + '% from ' + f3(startClock) + ' at the start; the engine ' + Math.round(med / clock) + ' times slower than it');
+      if (k > 1) lines.push('  frames 2 to ' + N + ' alone read a median of ' + fms(alone) + ' ms, under ' + RUN_GRAINS + ' steps of this page\'s clock of ' + grainText + ' ms, so the steady frames were timed in runs past them; each run\'s last frame held to the page\'s Life, and every frame from 1 to ' + (f - 1) + ' on a second instance stepped untimed');
+      lines.push('  the clock: this page\'s Life ' + f3(clock) + ' ms a generation beside every steady ' + (k === 1 ? 'frame' : 'run') + ', spread ' + f1(spread) + '%, ' + (drift >= 0 ? '+' : '') + f1(drift) + '% from ' + f3(startClock) + ' at the start; the engine ' + (med >= clock ? Math.round(med / clock) + ' times slower than it' : Math.round(clock / med) + ' times faster than it'));
       if (spread > CLOCK_MOVED_MAX || Math.abs(drift) > CLOCK_MOVED_MAX) {
         moved = true;
         lines.push('  the clock moved during the run, more than ' + CLOCK_MOVED_MAX + '%: power throttling or a thermal limit; these frames are not a baseline');
       }
-      rows.push("    @{ Runner = 'wasm'; Fixture = '" + fx.name + "'; Cells = " + cells + '; Frames = ' + steady.length + '; Load = ' + f1(load) + '; FirstFrame = ' + f1(times[0]) + '; FrameP50 = ' + f1(med) + '; FrameMin = ' + f1(lo) + '; FrameMax = ' + f1(hi) +
+      rows.push("    @{ Runner = 'wasm'; Fixture = '" + fx.name + "'; Cells = " + cells + '; Frames = ' + (times.length * k) + '; Run = ' + k + '; Load = ' + f1(load) + '; FirstFrame = ' + fms(firstMs) + '; FrameP50 = ' + fms(med) + '; FrameMin = ' + fms(lo) + '; FrameMax = ' + fms(hi) +
                 '; CellsPerSecond = ' + Math.round(cells / (med / 1000)) + '; FramesPerSecond = ' + f3(1000 / med) + '; ClockMs = ' + f3(clock) + '; ClockSpread = ' + f1(spread) + '; ClockDrift = ' + f1(drift) + ' }');
     }
-    var head = 'frames: the engine\'s module, ' + thousands(bytes.length) + ' bytes, under ' + navigator.userAgent + '; 2 cartridges, ' + N + ' frames each, every frame equal to the page\'s Life';
+    var head = 'frames: the engine\'s module, ' + thousands(bytes.length) + ' bytes, under ' + navigator.userAgent + '; 2 cartridges, ' + N + ' frames each or, where a frame reads under ' + RUN_GRAINS + ' steps of this page\'s clock of ' + grainText + ' ms, ' + (N - 1) + ' runs past frame 2, every frame equal to the page\'s Life';
     pre.textContent = moved
       ? 'frames refused: the clock moved\n' + head + '\n' + lines.join('\n') + '\nno baseline rows: run it through tools/bench_frames.ps1, which opts the browser out of Windows\' power throttling'
       : 'frames ok\n' + head + '\n' + lines.join('\n') + '\nthe baseline rows, for tools/check_frame_floors.ps1:\n' + rows.join('\n');

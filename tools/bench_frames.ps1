@@ -40,6 +40,23 @@ Chrome inherit it from their creation, and Chrome's children from Chrome;
 every process found later is held there too. A machine of one kind of core
 is left unpinned, and the environment line says which it was.
 
+THE THIRD TRAP (found 2026-10-10, when Frazaro's KERNEL.26 stepped the gun in
+about 20 microseconds): the page's clock steps in tenths of a millisecond,
+Chrome's performance.now() in a page that is not cross-origin isolated, so a
+gun frame timed alone read 0 ms, its cells a second infinite, and this
+script died making a floor of it ("Cannot convert value NaN to Int64"). So
+the page reads its clock's step, times frames 2 to N alone as before, and,
+when their median reads under twenty steps, times the steady frames again
+past them in runs of consecutive steps, a run doubled from 2 until it reads
+twenty, each run's last frame held to the page's Life and every frame held
+on a second instance stepped untimed; its rows say Run, the frames a run, 1
+where the frames are timed alone. (The gun's second frame over KERNEL.26
+still read over 2 ms, a frame computed whole after the load, so frame 2
+alone cannot decide.) The native
+runner reads nanoseconds and times every frame alone. And this script
+refuses a row whose rates are no finite number above 0, in words, and
+prints no block.
+
 WHAT IT DOES:
   1. builds what it measures, unless -NoBuild: the runner (cargo build
      --release --example frames), the engine's module (cargo build --release
@@ -351,6 +368,24 @@ $environment = ('{0} | {1} | {2} {3} headless | the engine''s module {4:N0} byte
 $rows = @($nativeRows + $wasmRows)
 function Get-Field([string]$row, [string]$name) { $m = [regex]::Match($row, "\b$name = '?([^;']+)'?"); if ($m.Success) { return $m.Groups[1].Value.Trim() }; return '' }
 function Get-RoundedDown([double]$x) { if ($x -le 0) { return 0 }; $p = [math]::Pow(10, [math]::Floor([math]::Log10($x)) - 2); return [long]([math]::Floor($x / $p) * $p) }
+# Every row's two rates a finite number above 0, as a floor is: a gun frame quicker than the page's
+# clock once read 0 ms timed alone, its rates infinite, and the floor's arithmetic made NaN of them
+# (CART.1, 2026-10-10). A page this tree builds times such frames in runs.
+$timeless = @()
+foreach ($r in $rows) {
+    foreach ($field in @('CellsPerSecond', 'FramesPerSecond')) {
+        $text = Get-Field $r $field
+        $value = 0.0
+        $parsed = [double]::TryParse($text, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$value)
+        if (-not $parsed -or [double]::IsNaN($value) -or [double]::IsInfinity($value) -or $value -le 0) { $timeless += ("the row {0} {1} says {2} = {3}" -f (Get-Field $r 'Runner'), (Get-Field $r 'Fixture'), $field, $text) }
+    }
+}
+if ($timeless.Count -gt 0) {
+    Write-Output $nativeText.TrimEnd()
+    Write-Output $wasmText.TrimEnd()
+    Write-Output ("FAIL: {0}: a rate that is no finite number above 0 is no floor, so no block is printed. A frame read as 0 ms timed alone; the page this tree builds times a frame quicker than its clock in runs, so build it again (run without -NoBuild)." -f ($timeless -join '; '))
+    exit 1
+}
 $floors = @()
 foreach ($r in $rows) {
     $key = (Get-Field $r 'Runner') + ' ' + (Get-Field $r 'Fixture')

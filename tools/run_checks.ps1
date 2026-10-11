@@ -130,6 +130,10 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # its replay case and check_cartridge.ps1 hold two replays and two goldens,
 # the sound card's beside the input card's; and cargo test plays every
 # committed replay to its golden.
+# 2026-10-10, CART.1's frame timer, after ENGINE.4's close: 12 still, no check
+# added - check_frame_floors.ps1 refuses a row whose rates are no finite
+# number above 0, its control fifteen mutants, since the page now times a
+# frame quicker than its clock in runs.
 $expectedAtLeast = 12
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
@@ -148,7 +152,7 @@ $extras = @(
     @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 blit floors: a clean table of three cases passes, eight mutants fail' },
     @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 and SPEC.3 export reader and judgment: nine modules built in memory, a non-module' },
     @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, its mutants fail (seven for a git pin, eight for a registry pin); of five baselines, a git one and a registry one pass and three fail' },
-    @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1 and SPEC.3 frame floors: a clean table, a reasoned lowering, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows pass, fourteen mutants fail; an entry added passes, an entry pasted over and one edited fail; five fake runners, the clean one passes and four fail' }
+    @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1 and SPEC.3 frame floors: a clean table, a reasoned lowering, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows pass, fifteen mutants fail, a frame read as 0 ms among them; an entry added passes, an entry pasted over and one edited fail; five fake runners, the clean one passes and four fail' }
 )
 
 # --- The shell each check runs under. ---
