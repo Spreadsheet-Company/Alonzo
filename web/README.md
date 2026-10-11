@@ -174,7 +174,7 @@ the marks a host asked for. The record is never written.
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
 test card, the input card or the sound card, each with its source, which the panel's Build expands into the
-cartridge in the page, the input card with its replay, which Play the replay plays, the
+cartridge in the page, the input card and the sound card each with its replay, which Play the replay plays, the
 Audio sheet heard after Sound on, and
 below it the viewport over seven
 records the door printed: the six view goldens of Frazaro's `scripts/view/`
@@ -234,7 +234,12 @@ slide under a swell, the notes falling down the Screen in each voice's
 colour; press Z or an arrow for a tick; write `(cell "Knobs" "B1" "saw")`
 and the log says voice 4's wave is no wave and the tick is silent, then
 `(cell "Knobs" "B1" "square")` for a square one; Pause and the sound stops,
-Run and it sounds again. Below it, pick a
+Run and it sounds again. Open The replay with the sound card picked: its
+own replay waits in the box, the loop oracle's run of it, 240 frames; press
+Play the replay with the sound on and hear that run again, six presses of
+Z, five of them ticks and the one while the knob says "saw" silent, and ten
+frames at a third of the speed.
+Below it, pick a
 record, scroll on both
 axes, click a cell or drag a range, click a column or row header or the
 corner, drag a column's right edge in the header, set rows and columns and
@@ -304,8 +309,19 @@ baseline to the roadmap's bars.
   (frames on time, a long task, a stall's burst, Pause and Run, the page
   hidden and shown, rate 0, the unload) and, over the engine's module, the
   sound card's 240 frames, every frame's Audio sheet equal to the card
-  computed by hand and its waterfall drawn by hand. One line a case into
-  `<pre id="loop">`, which `tools/check_host_loop.ps1` reads.
+  computed by hand and its waterfall drawn by hand, the run as the host
+  recorded it the card's committed replay, which `replay` plays to every
+  frame of the card and to its golden, the Log's record; and the sound
+  itself (`sound`, `ENGINE.4`'s second slice): the host's own voices over
+  the double handed an `OfflineAudioContext`, a sequence of voice states
+  rendered into samples and each frame measured between its own times
+  against the graph's own waves rendered beside it, a settled frame's pitch
+  within 0.1% of its note's and its rms within 4% of the volume over four
+  times its wave's own, a rest below 0.0001 and no onset step over 1.5 times
+  the wave's own; measured, never golden, and the one case that waits, its
+  render paced by a chain of 0 ms tasks under a headless browser's virtual
+  clock. One line a case into `<pre id="loop">` once the last has answered,
+  which `tools/check_host_loop.ps1` reads.
 - `index.html?blit=1` is the blit's instrument, the engine's second number:
   a 320 by 200 plane drawn through the host's whole frame over the double
   120 times at the scale that fits the screen and 120 at a scale of 1, and,

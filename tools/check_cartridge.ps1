@@ -71,7 +71,9 @@ its replay beside it, and is a record whose one (window ...) row names a
 sheet the record holds, every cell, formula and value row that sheet's. What
 the replay plays to is the loop oracle's, which holds the page's player to
 the golden byte for byte (tools/check_host_loop.ps1, the replay case), and
-cargo test's, a player of the engine's own.
+cargo test's, a player of the engine's own, made general by ENGINE.4's second
+slice over every folder holding a replay: the input card's and the sound
+card's.
 
 SINCE ENGINE.4 (2026-10-10; REARVIEW.md, decisions 4 and 9): the Audio
 sheet's value cells are judged as the host judges a voice at run time
@@ -148,11 +150,17 @@ if ($Root -eq '') { $Root = $repoRoot }
 # header, two waves and ten formulas, the Log's six formula rows and the
 # Screen's two, its waterfall: 1,592 formula cells), written as a source over
 # the library, which gains audio; the other four's rows unchanged.
+# 2026-10-10, ENGINE.4's second slice: the sound card's replay and its golden,
+# cartridges/soundcard/soundcard.replay.vla (the loop oracle's audio case over
+# the module as the host recorded it: 240 frames, 18 of them written, the last
+# empty, 88 rows, the manifest's seed 1) and soundcard.golden.vla (the Log sheet's
+# record at its end, the window A1:M32, the last 32 frames of the four
+# voices); the cartridges' rows unchanged.
 $expectedCartridges = 5
 $expectedSources = 5
 $expectedLibraries = 1
-$expectedReplays = 1
-$expectedGoldens = 1
+$expectedReplays = 2
+$expectedGoldens = 2
 $rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (SPEC.md section 3.6)
 

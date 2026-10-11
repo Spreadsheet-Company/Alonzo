@@ -48,8 +48,13 @@
   of the Web Audio graph handed to the host, every call it makes recorded with its
   time and held frame by frame to the page's own arithmetic of the schedule, over
   the double's Audio sheet written by edits and over the sound card on the module,
-  its voices and its waterfall computed by hand (ENGINE.4); it prints the result into <pre id="loop">, which
-  tools/check_host_loop.ps1 reads under a headless browser. With ?blit=1 it is the
+  its voices and its waterfall computed by hand (ENGINE.4); and the sound itself, the
+  host's voices rendered by an OfflineAudioContext and each frame's pitch, loudness,
+  rest and onset measured against the graph's own waves, the one case that waits, and
+  the sound card's committed replay played to every frame of the card and to its
+  golden, the Log's record (ENGINE.4's second slice); it prints the result into
+  <pre id="loop"> once the last case has answered, which tools/check_host_loop.ps1
+  reads under a headless browser. With ?blit=1 it is the
   blit's instrument, a 320 by 200 plane drawn 120 times at the scale that fits the
   screen and at a scale of 1 over the double, and at the scale that fits over the
   engine's module, Life's first frame redrawn (ENGINE.2), each frame's main-thread
@@ -181,7 +186,7 @@
       </details>
       <details id="eng-replay-box">
         <summary>The replay</summary>
-        <p>A replay, <code id="eng-replay-path">none: this cartridge has no replay of its own</code>, is every write a run made between its steps: a header naming the cartridge by the SHA-256 of its text and the seed, then each frame as one form holding its rows, <code>(frame 12 (cell "Input" "B5" 1))</code>, the Input sheet's cells that changed and each person's edit that landed; the host's derived writes are never logged, a replay re-deriving them (SPEC.md section 7.6). Paste one here and press Play the replay: the host loads the cartridge again with the replay's seed and plays its frames at the cartridge's rate, a person's edits waiting until it ends, and pauses at its last frame; Run then carries on with the live inputs. Copy the replay puts what the host has recorded since the last load on the clipboard and in this box, a replay played among it, so a replay played and copied is the replay played. The input card's own replay is the loop oracle's run of it.</p>
+        <p>A replay, <code id="eng-replay-path">none: this cartridge has no replay of its own</code>, is every write a run made between its steps: a header naming the cartridge by the SHA-256 of its text and the seed, then each frame as one form holding its rows, <code>(frame 12 (cell "Input" "B5" 1))</code>, the Input sheet's cells that changed and each person's edit that landed; the host's derived writes are never logged, a replay re-deriving them (SPEC.md section 7.6). Paste one here and press Play the replay: the host loads the cartridge again with the replay's seed and plays its frames at the cartridge's rate, a person's edits waiting until it ends, and pauses at its last frame; Run then carries on with the live inputs. Copy the replay puts what the host has recorded since the last load on the clipboard and in this box, a replay played among it, so a replay played and copied is the replay played. The input card's and the sound card's own replays are the loop oracle's runs of them: play the sound card's with the sound on and hear the run again, its ticks, the knob turned to a word that is no wave and back, and a stretch at a third of the speed.</p>
         <textarea id="eng-replay" rows="10" spellcheck="false" aria-label="a replay to play"></textarea>
       </details>
       <p class="controls"><label>A sheet, live <select id="eng-sheet" aria-label="the sheet to show">
@@ -267,6 +272,8 @@
 <script type="text/plain" id="source-soundcard">{{SOURCE:soundcard}}</script>
 <script type="text/plain" id="replay-inputcard">{{REPLAY:inputcard}}</script>
 <script type="text/plain" id="golden-inputcard">{{GOLDEN:inputcard}}</script>
+<script type="text/plain" id="replay-soundcard">{{REPLAY:soundcard}}</script>
+<script type="text/plain" id="golden-soundcard">{{GOLDEN:soundcard}}</script>
 <script type="text/plain" id="library-common">{{LIBRARY:common}}</script>
 <script type="text/plain" id="alonzo-wasm">{{ALONZO_WASM}}</script>
 <script type="text/plain" id="fixture-fixture_frazaro">{{FIXTURE:fixture_frazaro}}</script>
@@ -307,7 +314,8 @@
     testcard: { text: testcardText, file: 'testcard.vla', path: 'cartridges/testcard/testcard.vla', source: embedded('source-testcard'), sourcePath: 'cartridges/testcard/testcard.source.vla' },
     inputcard: { text: inputcardText, file: 'inputcard.vla', path: 'cartridges/inputcard/inputcard.vla', source: embedded('source-inputcard'), sourcePath: 'cartridges/inputcard/inputcard.source.vla',
                  replay: embedded('replay-inputcard'), replayPath: 'cartridges/inputcard/inputcard.replay.vla', golden: embedded('golden-inputcard') },
-    soundcard: { text: soundcardText, file: 'soundcard.vla', path: 'cartridges/soundcard/soundcard.vla', source: embedded('source-soundcard'), sourcePath: 'cartridges/soundcard/soundcard.source.vla' }
+    soundcard: { text: soundcardText, file: 'soundcard.vla', path: 'cartridges/soundcard/soundcard.vla', source: embedded('source-soundcard'), sourcePath: 'cartridges/soundcard/soundcard.source.vla',
+                 replay: embedded('replay-soundcard'), replayPath: 'cartridges/soundcard/soundcard.replay.vla', golden: embedded('golden-soundcard') }
   };
   // The libraries the sources include, each under the path an include resolves to.
   var LIBRARIES = {
@@ -1643,7 +1651,10 @@
   // played on a fresh host, every frame the live run's window, and its end the golden,
   // inputcard.golden.vla, the Tally's record byte for byte; and its recording the replay it played.
   // Every cartridge whose folder holds a replay is played so to its golden, the shape each
-  // cartridge with input takes after the card (CART.4's first).
+  // cartridge with input takes after the card (CART.4's first). Since ENGINE.4's second slice the
+  // sound card's is the second: the audio case's run over the module as the host recorded it, which
+  // that case holds, every frame of it played here equal to the card by hand, and its golden the
+  // Log's record at its end, the last 32 frames of the four voices.
   var SHA_VECTORS = [
     ['', 'E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855'],
     ['abc', 'BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD'],
@@ -1776,24 +1787,31 @@
       else P.push('the input case\'s live run recorded a replay that is not the committed one, cartridges/inputcard/inputcard.replay.vla, ' + firstDiffLine(INPUT_RUN.text, body));
     }
     // every cartridge's committed replay, played on a fresh host over a fresh instance: its end its golden
-    // and its recording itself; the input card's, every frame the live run's window as well
-    k.replays = 0;
+    // and its recording itself; the input card's, every frame the live run's window as well; the sound
+    // card's, every frame's Audio sheet the card by hand (ENGINE.4's second slice)
+    k.replays = 0; k.cardSame = 0;
     for (var cn in CARTRIDGES) {
       if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn) || !CARTRIDGES[cn].replayPath) continue;
-      var cart = CARTRIDGES[cn], card = cn === 'inputcard', rBody = afterComments(cart.replay), gBody = afterComments(cart.golden);
-      var M = new HOST({ drive: 'manual', budget: 0, now: frozen }), firstOff = 0;
+      var cart = CARTRIDGES[cn], card = cn === 'inputcard', sound = cn === 'soundcard', rBody = afterComments(cart.replay), gBody = afterComments(cart.golden);
+      var ex = HOST.instantiateSync(bytes), DS = new Driver({ exports: ex });
+      var M = new HOST({ drive: 'manual', budget: 0, now: frozen }), firstOff = 0, soundOff = '';
       k.replays++;
       try {
-        if (!M.attach(HOST.instantiateSync(bytes)).ok || !M.load(cart.text, cart.file).ok) { P.push('a fresh host did not load ' + cart.file + ' over the module'); continue; }
+        if (!M.attach(ex).ok || !M.load(cart.text, cart.file).ok) { P.push('a fresh host did not load ' + cart.file + ' over the module'); continue; }
         if (card) M.on('frame', function (e) {
           k.frames++;
           var live = INPUT_RUN ? INPUT_RUN.planes[e.frame] : null, got = M.plane, eq = !!(live && got && live.length === got.length);
           for (var q = 0; eq && q < got.length; q++) if (got[q] !== live[q]) eq = false;
           if (eq) k.same++; else if (!firstOff) firstOff = e.frame;
         });
+        if (sound) M.on('frame', function (e) {
+          var diff = cardDiff(e.frame, recordValues(DS.call('alonzo_view', [M.counters().handle], ['grid', 'Audio', 'A1:D5']).text));
+          if (!diff) k.cardSame++; else if (!soundOff) soundOff = 'frame ' + e.frame + ': ' + diff;
+        });
         var pm = M.play(cart.replay, true);
         if (!pm.ok) P.push('the committed replay of ' + cart.file + ' played on a fresh host stopped at frame ' + pm.frames + ': ' + (pm.sentence || M.sentences().slice(-1)[0].text));
         if (firstOff) P.push('frame ' + firstOff + ' of the committed replay, played on a fresh host, draws a window that is not the live run\'s');
+        if (soundOff) P.push('the sound card\'s committed replay, played on a fresh host, is not the card by hand at ' + soundOff);
         var wm = /^\(window "([^"]+)" "([^"]+)"\)$/m.exec(gBody);
         if (!wm) P.push('the golden of ' + cart.file + ' has no (window ...) row naming its sheet');
         else {
@@ -1847,7 +1865,7 @@
     return n;
   };
   // The page's own arithmetic of the schedule: the lines the double should hold, decision by decision.
-  function SoundModel() { this.lines = []; this.made = 0; this.voices = null; this.end = null; this.silent = true; this.c = { sounded: 0, restarts: 0, skipped: 0, silences: 0 }; }
+  function SoundModel() { this.lines = []; this.made = 0; this.voices = null; this.end = null; this.at = null; this.silent = true; this.c = { sounded: 0, restarts: 0, skipped: 0, silences: 0 }; }
   SoundModel.prototype.graph = function () {
     if (this.voices) return;
     var L = this.lines, m = 'gain ' + (++this.made);
@@ -1878,14 +1896,17 @@
     if (w.freq !== v.freq) { this.lines.push(v.osc + ' frequency set ' + w.freq + ' at ' + at); v.freq = w.freq; }
     if (w.gain !== v.target) this.target(v, w.gain, at);
   };
-  // A frame (decision 1): wants, its four voices judged; rate, the Clock's after the frame; now, the audio clock.
+  // A frame (decision 1): wants, its four voices judged; rate, the Clock's after the frame; now, the audio
+  // clock. Its time on that clock is kept in at, null for a frame not sounded, for the sound case's measure.
   SoundModel.prototype.frame = function (wants, rate, now) {
     var at;
+    this.at = null;
     if (rate > 0 && this.end !== null) {
       at = this.end;
       if (at < now) { at = now + SND_LOOKAHEAD; this.c.restarts++; }
       else if (at > now + 2 * SND_LOOKAHEAD) { this.c.skipped++; return; }
     } else { at = now + SND_LOOKAHEAD; if (rate > 0) this.c.restarts++; }
+    this.at = at;
     this.end = rate > 0 ? at + 1 / rate : null;
     this.silent = false;
     this.graph();
@@ -1953,6 +1974,33 @@
     ['sounded', 'restarts', 'skipped', 'silences'].forEach(function (key) { if (hc[key] !== model.c[key]) P.push(label + ': the host counts ' + hc[key] + ' ' + key + ', and the page\'s arithmetic ' + model.c[key]); });
     return hc;
   }
+  // The sound card's log, the audio case's run over the engine's module and so its committed replay's: Z
+  // pressed before each of these frames and let go after it, a tick each but frame 105's; the tick's knob
+  // turned to "saw", a word that is no wave, after frame 99 and back to "square" after frame 109; the
+  // Clock's rate moved to 10 after frame 149 and back to 30 after frame 159.
+  var CARD_FRAMES = 240, CARD_PRESS = { 5: 1, 20: 1, 70: 1, 105: 1, 130: 1, 200: 1 };
+  function cardRateAfter(f) { return f >= 150 && f < 160 ? 10 : 30; }
+  // The card by hand, frame f: its four voices as its formulas compute them (cartridges/soundcard/soundcard.source.vla).
+  function cardRows(f) {
+    var sec = Math.floor((f - 1) / 60) % 4, st = (f - 1) % 60;
+    var w1 = sec === 0 ? SND_WAVES[Math.floor(st / 15)] : 'square';
+    var n1 = sec === 0 ? 69 : (sec === 1 ? [60, 62, 64, 65, 67, 69, 71, 72, 72][Math.floor(st / 7)] : (st < 30 ? 60 : 57));
+    var v1 = (sec === 0 || (sec === 1 && st % 7 < 6 && st < 56) ? 0.6 : (sec === 2 ? 0.4 : 0)) * 1;
+    var n2 = sec === 2 ? (st < 30 ? 64 : 60) : 48 + 0.4 * st;
+    var v2 = (sec === 2 ? 0.4 : (sec === 3 ? 0.8 * (1 - Math.abs(st - 29.5) / 29.5) : 0)) * 1;
+    var n3 = st < 30 ? 67 : 64, v3 = (sec === 2 ? 0.4 : 0) * 1;
+    var w4 = f < 100 ? 'sawtooth' : (f < 110 ? 'saw' : 'square'), v4 = (CARD_PRESS[f] ? 1 : 0) * 1;
+    return [{ wave: w1, note: n1, volume: v1 }, { wave: 'triangle', note: n2, volume: v2 }, { wave: 'sine', note: n3, volume: v3 }, { wave: w4, note: 84, volume: v4 }];
+  }
+  // A frame's Audio sheet, read off its record, against the card by hand: the first cell that differs, or ''.
+  function cardDiff(f, rec) {
+    var rows = cardRows(f);
+    for (var v = 0; v < 4; v++) {
+      var r = v + 2, got = [sndPlain(rec['B' + r]), sndPlain(rec['C' + r]), sndPlain(rec['D' + r])], want = [rows[v].wave, rows[v].note, rows[v].volume];
+      for (var q = 0; q < 3; q++) if (got[q] !== want[q]) return 'Audio!' + 'BCD'.charAt(q) + r + ' holds ' + JSON.stringify(got[q]) + ', and the card by hand ' + JSON.stringify(want[q]);
+    }
+    return '';
+  }
   // Over the double: Life's manifest, its Audio sheet written by a person's edits (a voice's volume, note and
   // wave, a wave that is no wave and a volume that is no number, a rest), driven by manual ticks 17 ms apart
   // with the audio clock beside them: frames on time; a long task, the audio clock moved ahead, so that the
@@ -1961,8 +2009,8 @@
   // step; and the unload. Over the engine's module, when the page holds one: the sound card,
   // cartridges/soundcard/soundcard.vla, 240 frames, its Audio sheet at every frame equal to the card computed
   // by hand from the log, presses of Z each a tick, a knob turned to a wave that is no wave and back, the
-  // Clock's rate moved to 10 and back; every call on the graph the page's arithmetic's, and the waterfall
-  // drawn by hand.
+  // Clock's rate moved to 10 and back; every call on the graph the page's arithmetic's, the waterfall
+  // drawn by hand, and the run as the host recorded it the card's committed replay (ENGINE.4's second slice).
   function caseAudio() {
     var P = [], k = { frames: 0, sounded: 0, calls: 0, oscillators: 0, restarts: 0, skipped: 0, silences: 0, notices: 0, rate0: 0 };
     var fake = FAKE.create({}), graph = new GraphDouble(), clock = { t: 0 }, M = new SoundModel(), h = 0;
@@ -2039,24 +2087,11 @@
     var wasm = builtModule();
     if (!wasm) return { counters: k, problems: P };
     var bytes = bytesOfBase64(wasm);
-    k.module = bytes.length; k.cardFrames = 0; k.cardEqual = 0; k.cardSounded = 0; k.cardCalls = 0; k.ticks = 0; k.silenced = 0; k.cardNotices = 0; k.slow = 0; k.waterfall = 0;
+    k.module = bytes.length; k.cardFrames = 0; k.cardEqual = 0; k.cardSounded = 0; k.cardCalls = 0; k.ticks = 0; k.silenced = 0; k.cardNotices = 0; k.slow = 0; k.waterfall = 0; k.recorded = 0;
     var exports = HOST.instantiateSync(bytes), D = new Driver({ exports: exports });
     var g2 = new GraphDouble(), clock2 = { t: 0 }, M2 = new SoundModel(), check2 = new SoundCheck(g2, M2, 'over the module, the sound card', P);
     var card = new HOST({ drive: 'manual', now: frozen, budget: 0, audio: g2, audioNow: function () { return clock2.t; } });
-    var N = 240, PRESS = { 5: 1, 20: 1, 70: 1, 105: 1, 130: 1, 200: 1 }, hc2 = 0, W = 48, H = 24, prevPlane = new Uint8Array(W * H);
-    function rateAfter(f) { return f >= 150 && f < 160 ? 10 : 30; }
-    // The card by hand, frame f: its four voices as its formulas compute them (cartridges/soundcard/soundcard.source.vla).
-    function cardRows(f) {
-      var sec = Math.floor((f - 1) / 60) % 4, st = (f - 1) % 60;
-      var w1 = sec === 0 ? SND_WAVES[Math.floor(st / 15)] : 'square';
-      var n1 = sec === 0 ? 69 : (sec === 1 ? [60, 62, 64, 65, 67, 69, 71, 72, 72][Math.floor(st / 7)] : (st < 30 ? 60 : 57));
-      var v1 = (sec === 0 || (sec === 1 && st % 7 < 6 && st < 56) ? 0.6 : (sec === 2 ? 0.4 : 0)) * 1;
-      var n2 = sec === 2 ? (st < 30 ? 64 : 60) : 48 + 0.4 * st;
-      var v2 = (sec === 2 ? 0.4 : (sec === 3 ? 0.8 * (1 - Math.abs(st - 29.5) / 29.5) : 0)) * 1;
-      var n3 = st < 30 ? 67 : 64, v3 = (sec === 2 ? 0.4 : 0) * 1;
-      var w4 = f < 100 ? 'sawtooth' : (f < 110 ? 'saw' : 'square'), v4 = (PRESS[f] ? 1 : 0) * 1;
-      return [{ wave: w1, note: n1, volume: v1 }, { wave: 'triangle', note: n2, volume: v2 }, { wave: 'sine', note: n3, volume: v3 }, { wave: w4, note: 84, volume: v4 }];
-    }
+    var N = CARD_FRAMES, PRESS = CARD_PRESS, rateAfter = cardRateAfter, hc2 = 0, W = 48, H = 24, prevPlane = new Uint8Array(W * H);
     // The waterfall's top row by hand: each sounding voice's note to the nearest, notes 48 to 95, in its colour.
     function topRow(rows) {
       var out = new Uint8Array(W), colours = [10, 11, 14, 12];
@@ -2066,13 +2101,10 @@
       return out;
     }
     card.on('frame', function (e) {
-      var f = e.frame, rows = cardRows(f), rec = recordValues(D.call('alonzo_view', [hc2], ['grid', 'Audio', 'A1:D5']).text), same = true;
+      var f = e.frame, rows = cardRows(f), diff = cardDiff(f, recordValues(D.call('alonzo_view', [hc2], ['grid', 'Audio', 'A1:D5']).text));
       k.cardFrames = f;
-      for (var v = 0; v < 4 && same; v++) {
-        var r = v + 2, got = [sndPlain(rec['B' + r]), sndPlain(rec['C' + r]), sndPlain(rec['D' + r])], want = [rows[v].wave, rows[v].note, rows[v].volume];
-        for (var q = 0; q < 3; q++) if (got[q] !== want[q]) { same = false; P.push('the sound card, frame ' + f + ': Audio!' + 'BCD'.charAt(q) + r + ' holds ' + JSON.stringify(got[q]) + ', and the card by hand ' + JSON.stringify(want[q])); break; }
-      }
-      if (same) k.cardEqual++;
+      if (!diff) k.cardEqual++;
+      else P.push('the sound card, frame ' + f + ': ' + diff);
       var ws = rows.map(sndWant);
       if (ws[3].gain > 0) k.ticks++;
       if (ws.some(function (w) { return w.bad; })) k.silenced++;
@@ -2108,12 +2140,171 @@
       else P.push('the sound card: ' + notices.length + ' sentence(s) say voice 4\'s wave "saw" is no wave, where it is said once, a notice');
       var refusals = card.sentences().filter(function (s) { return s.refusal; });
       if (refusals.length) P.push('the sound card: the host was refused: ' + refusals[0].text);
+      // the run as the host recorded it is the card's committed replay (decision 10), which the replay
+      // case plays to its golden, the Log's record at this run's end
+      var recorded = card.replayText(), committed = CARTRIDGES.soundcard.replay ? afterComments(CARTRIDGES.soundcard.replay) : '';
+      if (recorded === committed) k.recorded = 1;
+      else P.push('the sound card\'s run recorded a replay that is not the committed one, cartridges/soundcard/soundcard.replay.vla, ' + firstDiffLine(recorded || '', committed));
     } finally {
       card.destroy(); M2.silence(clock2.t); M2.release(clock2.t); check2.at('the unload');
     }
     var hc3 = sndCounts(card, M2, 'the sound card', P);
     k.cardSounded = hc3.sounded; k.cardCalls = g2.log.length;
     return { counters: k, problems: P };
+  }
+  // ---- ENGINE.4's second slice: the sound itself, measured (decision 8) ----
+  // The fifteenth case, sound: the host's own voices over the double, Life's manifest at its rate of 30,
+  // handed an OfflineAudioContext as their audio context with the oracle's clock as the audio clock, so
+  // that what the host schedules is rendered into samples and measured, and never golden (SPEC.md
+  // section 6). A sequence of voice states written by edits, each held three frames: the four waves,
+  // notes from 36 to 96, rests, a voice sounding again on the oscillator it kept through its rest, and a
+  // wave changed while its voice sounds, twice. Each frame is read between its own times on the page's
+  // arithmetic of the timeline, a millisecond inside each end, against the graph's own waves rendered
+  // beside it, each alone at gain 1 in a channel of its own: a frame whose one voice holds its gain and
+  // wave, its pitch by the interpolated upward zero crossings within 0.1% of its note's and its rms over
+  // those whole periods within 4% of the volume over four times its wave's own; a rest after a frame of
+  // silence, no sample of 0.0001 or more; a frame where a voice's gain or wave moves, no step between two
+  // samples over 1.5 times the larger of its wave's own steps before and after. The measure takes no time
+  // from the sound's constants, so that a misreading of the graph's time that the host and the page's
+  // arithmetic share is heard (the control's page X). Under a headless browser's virtual clock a render
+  // needs a chain of 0 ms tasks beside it (measured): this is the case that waits, and the loop element is
+  // printed when its render lands.
+  var SND_PITCH = 0.001, SND_RMS = 0.04, SND_REST = 0.0001, SND_STEP = 1.5;
+  function caseSound() {
+    var P = [], k = { frames: 0, settled: 0, rests: 0, steps: 0, dips: 0, releases: 0, waves: 0, notes: 0, span: 0 };
+    var AC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!AC) { P.push('this browser has no OfflineAudioContext, by which the sound is measured'); return { counters: k, problems: P }; }
+    var SR = 48000, T = 1 / 30, LAST = 48;
+    // the frame each state starts at, and the edits that make it, issued after the frame before
+    var SEQ = {
+      3: ['(cell "Audio" "B2" "square")', '(cell "Audio" "C2" 36)', '(cell "Audio" "D2" 1)'],       // voice 1, a square at note 36
+      6: ['(cell "Audio" "C2" 96)'],                                                                  // its note 96, under the sound
+      9: ['(cell "Audio" "D2" 0)'],                                                                   // a rest
+      12: ['(cell "Audio" "B3" "triangle")', '(cell "Audio" "C3" 60)', '(cell "Audio" "D3" 0.5)'],   // voice 2, a triangle at note 60
+      15: ['(cell "Audio" "D3" 0)'],                                                                  // a rest, its oscillator kept
+      18: ['(cell "Audio" "D3" 0.5)'],                                                                // voice 2 again, on that oscillator
+      21: ['(cell "Audio" "B3" "sine")'],                                                             // its wave a sine while it sounds: the dip
+      24: ['(cell "Audio" "C3" 72)', '(cell "Audio" "D3" 1)'],                                        // its note 72 and its volume 1 at once
+      27: ['(cell "Audio" "D3" 0)'],                                                                  // a rest
+      30: ['(cell "Audio" "B4" "sawtooth")', '(cell "Audio" "C4" 48)', '(cell "Audio" "D4" 0.8)'],   // voice 3, a sawtooth at note 48
+      33: ['(cell "Audio" "D4" 0)'],                                                                  // a rest
+      36: ['(cell "Audio" "B5" "sine")', '(cell "Audio" "C5" 84)', '(cell "Audio" "D5" 1)'],          // voice 4, a sine at note 84
+      39: ['(cell "Audio" "B5" "triangle")'],                                                         // its wave a triangle while it sounds: the dip
+      42: ['(cell "Audio" "D5" 0)']                                                                   // a rest to the end
+    };
+    var ctx = new AC(1, Math.ceil((SND_LOOKAHEAD + (LAST + 2) * T + 0.1) * SR), SR);
+    var fake = FAKE.create({}), clock = { t: 0 }, M = new SoundModel(), h = 0, frames = [];
+    var host = new HOST({ drive: 'manual', now: frozen, budget: 0, audio: ctx, audioNow: function () { return clock.t; } });
+    function peekV(sheet, addr) { var e = fake.peek(h, sheet, addr); return e ? e.v : undefined; }
+    function wants() { var out = []; for (var r = 2; r <= 5; r++) out.push(sndWant({ wave: peekV('Audio', 'B' + r), note: peekV('Audio', 'C' + r), volume: peekV('Audio', 'D' + r) })); return out; }
+    function rateNow() { var v = peekV('Clock', 'B2'); return typeof v === 'number' ? v : 0; }
+    host.on('frame', function (e) {
+      var ws = wants();
+      M.frame(ws, rateNow(), clock.t);
+      frames[e.frame] = { at: M.at, wants: ws };
+      (SEQ[e.frame + 1] || []).forEach(function (row) { host.edit(row); });
+    });
+    try {
+      if (!host.attach(fake.exports).ok || !host.load(lifeText, 'life.vla').ok) { P.push('the host did not load Life\'s manifest over the double'); return { counters: k, problems: P }; }
+      h = host.counters().handle;
+      host.start();
+      var w0 = wants();
+      M.start(w0, rateNow(), clock.t); frames[0] = { at: M.at, wants: w0 };
+      var t = 1000, guard = 0;
+      host.tick(t);
+      while (host.counters().frame < LAST && guard++ < 400) { t += 17; clock.t = (t - 1000) / 1000; host.tick(t); }
+      if (host.counters().frame !== LAST) P.push('the double stopped at frame ' + host.counters().frame + ' of ' + LAST);
+      k.frames = sndCounts(host, M, 'the sound', P).sounded;
+      var said = host.sentences().filter(function (s) { return s.text.indexOf('the voice is silent') >= 0; });
+      if (said.length) P.push('the sound: the host says ' + said[0].text);
+    } finally { host.destroy(); }
+    // the graph's own waves, each note and wave the sequence sounds alone at gain 1 in a channel of its own
+    var pairs = [], seen = {};
+    frames.forEach(function (fr) { if (fr) fr.wants.forEach(function (w) { if (w.gain > 0 && !seen[w.wave + ' ' + w.freq]) { seen[w.wave + ' ' + w.freq] = 1; pairs.push({ wave: w.wave, freq: w.freq }); } }); });
+    if (!pairs.length || pairs.length > 32) { P.push('the sequence sounds ' + pairs.length + ' notes and waves, and one render holds 1 to 32'); return { counters: k, problems: P }; }
+    var cal = new AC(pairs.length, Math.round(0.5 * SR), SR), merger = cal.createChannelMerger(pairs.length);
+    merger.connect(cal.destination);
+    pairs.forEach(function (p, i) { var o = cal.createOscillator(); o.type = p.wave; o.frequency.value = p.freq; o.connect(merger, 0, i); o.start(0); });
+    // A span of samples: its upward zero crossings, interpolated, and over the whole periods between the
+    // first and the last the pitch and the rms; its largest sample; its largest step between two samples.
+    function periods(x, a, b) {
+      a = Math.max(1, Math.ceil(a)); b = Math.min(x.length, Math.floor(b));
+      var first = -1, last = -1, n = 0;
+      for (var i = a; i < b; i++) if (x[i - 1] < 0 && x[i] >= 0) { var c = (i - 1) + -x[i - 1] / (x[i] - x[i - 1]); if (first < 0) first = c; else n++; last = c; }
+      if (n < 1) return null;
+      var from = Math.ceil(first), to = Math.ceil(last), sum = 0;
+      for (var j = from; j < to; j++) sum += x[j] * x[j];
+      return { hz: SR * n / (last - first), rms: Math.sqrt(sum / Math.max(1, to - from)) };
+    }
+    function peakOf(x, a, b) { var p = 0; for (var i = Math.max(0, Math.ceil(a)); i < Math.min(x.length, Math.floor(b)); i++) p = Math.max(p, Math.abs(x[i])); return p; }
+    function stepOf(x, a, b) { var s = 0; for (var i = Math.max(1, Math.ceil(a)); i < Math.min(x.length, Math.floor(b)); i++) s = Math.max(s, Math.abs(x[i] - x[i - 1])); return s; }
+    function noteOf(freq) { return Math.round(69 + 12 * Math.log(freq / 440) / Math.LN2); }
+    function judge(x, own) {
+      var ref = {}, worst = { pitch: 0, rms: 0, step: 0, rest: 0 }, wavesHeard = {}, notesHeard = {}, lo = 128, hi = -1;
+      pairs.forEach(function (p, i) {
+        var y = own.getChannelData(i), m = periods(y, 0.1 * SR, 0.45 * SR);
+        ref[p.wave + ' ' + p.freq] = { rms: m ? m.rms : 0, step: stepOf(y, 0.1 * SR, 0.45 * SR) };
+        if (!m) P.push('the ' + p.wave + ' at note ' + noteOf(p.freq) + ' rendered alone holds no whole period');
+      });
+      var silent = [{ gain: 0 }, { gain: 0 }, { gain: 0 }, { gain: 0 }];
+      for (var f = 0; f <= LAST; f++) {
+        var fr = frames[f], prev = f > 0 && frames[f - 1] ? frames[f - 1].wants : silent, what = 'the sound, frame ' + f;
+        if (!fr || fr.at === null) { P.push(what + ' was not sounded'); continue; }
+        var on = [], moved = 0;
+        for (var v = 0; v < 4; v++) {
+          var w = fr.wants[v], p = prev[v];
+          if (w.gain > 0) on.push(v);
+          if (w.gain !== p.gain || (w.gain > 0 && p.gain > 0 && w.wave !== p.wave)) moved++;
+        }
+        var a = (fr.at + 0.001) * SR, b = (fr.at + T - 0.001) * SR;
+        if (on.length > 1) { P.push(what + ': the sequence sounds ' + on.length + ' voices at once, and the measure reads one'); continue; }
+        if (!on.length) {
+          if (moved) { k.releases++; continue; }
+          var pk = peakOf(x, a, b);
+          worst.rest = Math.max(worst.rest, pk);
+          if (pk >= SND_REST) P.push(what + ', a rest: a sample of ' + pk.toFixed(5) + ', where none reaches ' + SND_REST); else k.rests++;
+          continue;
+        }
+        var vi = on[0], w1 = fr.wants[vi], p1 = prev[vi], own1 = ref[w1.wave + ' ' + w1.freq], note = noteOf(w1.freq);
+        what += ' (voice ' + (vi + 1) + ', a ' + w1.wave + ' at note ' + note + ')';
+        if (moved) {
+          var r = w1.gain * own1.step;
+          if (p1.gain > 0) r = Math.max(r, p1.gain * ref[p1.wave + ' ' + p1.freq].step);
+          if (p1.gain > 0 && p1.wave !== w1.wave) k.dips++;
+          var st = stepOf(x, (fr.at - 0.001) * SR, b) / r;
+          worst.step = Math.max(worst.step, st);
+          if (st > SND_STEP) P.push(what + ': a step between two samples ' + st.toFixed(2) + ' times the wave\'s own, over ' + SND_STEP); else k.steps++;
+          continue;
+        }
+        var m = periods(x, a, b);
+        if (!m) { P.push(what + ': no whole period between its times'); continue; }
+        var pe = Math.abs(m.hz / w1.freq - 1), re = Math.abs(m.rms / (w1.gain * own1.rms) - 1);
+        worst.pitch = Math.max(worst.pitch, pe); worst.rms = Math.max(worst.rms, re);
+        if (pe > SND_PITCH) P.push(what + ': its pitch ' + m.hz.toFixed(2) + ' Hz, and its note\'s ' + w1.freq.toFixed(2) + ' Hz, ' + (pe * 100).toFixed(3) + '% apart, over 0.1%');
+        else if (re > SND_RMS) P.push(what + ': its rms ' + m.rms.toFixed(4) + ', and the volume over four times the ' + w1.wave + '\'s own ' + (w1.gain * own1.rms).toFixed(4) + ', ' + (re * 100).toFixed(1) + '% apart, over 4%');
+        else { k.settled++; wavesHeard[w1.wave] = 1; notesHeard[note] = 1; lo = Math.min(lo, note); hi = Math.max(hi, note); }
+      }
+      k.waves = Object.keys(wavesHeard).length; k.notes = Object.keys(notesHeard).length; k.span = hi >= lo ? hi - lo : 0;
+      // the worst of each, measured and printed, never a floor
+      k.pitchWorst = (worst.pitch * 100).toFixed(4); k.rmsWorst = (worst.rms * 100).toFixed(2); k.stepWorst = worst.step.toFixed(2); k.restWorst = worst.rest.toExponential(1);
+    }
+    return new Promise(function (resolve) {
+      var pacing = true, landed = false;
+      function pace() { if (pacing) setTimeout(pace, 0); }
+      function end(why) { if (landed) return; landed = true; pacing = false; if (why) P.push(why); resolve({ counters: k, problems: P }); }
+      // the two renders take about 1.6 s of a headless budget's clock (measured), which runs with the wall's here
+      var dog = setTimeout(function () { end('the render had not landed after 45 s of the page\'s clock'); }, 45000), t0 = performance.now();
+      pace();
+      ctx.startRendering().then(function (heard) {
+        return cal.startRendering().then(function (own) {
+          clearTimeout(dog);
+          if (landed) return;
+          k.renderMs = Math.round(performance.now() - t0);   // the page's clock across the two renders, virtual under a headless budget
+          try { judge(heard.getChannelData(0), own); } catch (e) { P.push('error: ' + (e && e.message ? e.message : e)); }
+          end('');
+        });
+      }).catch(function (e) { clearTimeout(dog); end('the render failed: ' + (e && e.message ? e.message : e)); });
+    });
   }
   function loopLine(name, k, problems) {
     var parts = [];
@@ -2124,15 +2315,27 @@
     var out = [], dpr = window.devicePixelRatio || 1, ok = 0, R = HOST.RULES;
     out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals], ['scale', caseScale],
-                 ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay], ['audio', caseAudio]];
-    for (var i = 0; i < cases.length; i++) {
-      var res;
-      try { res = cases[i][1](); } catch (e) { res = { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
-      out.push(loopLine(cases[i][0], res.counters, res.problems));
-      if (!res.problems.length) ok++;
+                 ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay], ['audio', caseAudio],
+                 ['sound', caseSound]];
+    function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
+    function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); if (!res.problems.length) ok++; }
+    // A case answers its result, or a promise of it (sound, which waits on its render): the cases run in
+    // order, and the loop element is printed once the last has answered.
+    var i = 0;
+    function next() {
+      while (i < cases.length) {
+        var c = cases[i++], res;
+        try { res = c[1](); } catch (e) { res = failed(e); }
+        if (res && typeof res.then === 'function') {
+          res.then(function (r) { record(c[0], r); next(); }, function (e) { record(c[0], failed(e)); next(); });
+          return;
+        }
+        record(c[0], res);
+      }
+      out.push(ok === cases.length ? 'loop ok cases=' + cases.length + ' dpr=' + dpr : 'loop failed: ' + (cases.length - ok) + ' of ' + cases.length + ' cases dpr=' + dpr);
+      document.getElementById('loop').textContent = out.join('\n');
     }
-    out.push(ok === cases.length ? 'loop ok cases=' + cases.length + ' dpr=' + dpr : 'loop failed: ' + (cases.length - ok) + ' of ' + cases.length + ' cases dpr=' + dpr);
-    document.getElementById('loop').textContent = out.join('\n');
+    next();
   }
   if (MODE === 'loop') {
     try { runLoopOracle(); } catch (e) { document.getElementById('loop').textContent = 'loop failed: ' + (e && e.message ? e.message : e); }

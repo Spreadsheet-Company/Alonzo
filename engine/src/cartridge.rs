@@ -1874,21 +1874,60 @@ mod tests {
         );
     }
 
-    /// The input card's replay (ENGINE.3's second slice), played as SPEC.md
-    /// section 7.6 plays one, by this test and not by the host: read with the
-    /// language's reader, the card loaded and its seed written as the header
-    /// names it, then for every frame the derived write the last frame's
-    /// Write row left, the frame's rows, spelled back by the language's
-    /// printer, as one write, and the step; its end the golden beside it,
-    /// the Tally sheet's record byte for byte.
-    #[test]
-    fn the_input_card_s_replay_plays_to_its_golden() {
-        const REPLAY: &str = include_str!("../../cartridges/inputcard/inputcard.replay.vla");
-        const GOLDEN: &str = include_str!("../../cartridges/inputcard/inputcard.golden.vla");
-        let forms = read_forms(REPLAY).expect("the replay reads");
+    /// The Write sheet's rows as the host reads them after a step (SPEC.md
+    /// section 3.9, `web/host.js`'s `_readWrite`): from row 2, a sheet in
+    /// column A, an address in B and a value in C, each row the next frame's
+    /// derived write, spelled as the record spells its values. A row without
+    /// a sheet, an address or a value, or whose value is an error, writes
+    /// nothing; a cartridge without a Write sheet has none.
+    fn derived_rows(c: &Cartridge) -> Vec<String> {
+        let Ok(Viewed::Text(record)) = c.view("grid", "Write", None) else {
+            return Vec::new();
+        };
+        let mut cells = std::collections::BTreeMap::new();
+        for line in record.lines() {
+            let Some(rest) = line
+                .strip_prefix("(cell \"Write\" \"")
+                .or_else(|| line.strip_prefix("(value \"Write\" \""))
+            else {
+                continue;
+            };
+            let Some((addr, value)) = rest.split_once("\" ") else {
+                continue;
+            };
+            let (col, row) = addr.split_at(1);
+            if let Ok(row) = row.parse::<u32>() {
+                if row >= 2 {
+                    let value = value.strip_suffix(')').unwrap_or(value).to_string();
+                    cells.insert((row, col.to_string()), value);
+                }
+            }
+        }
+        let rows: std::collections::BTreeSet<u32> = cells.keys().map(|(r, _)| *r).collect();
+        let text = |s: &&String| s.starts_with('"') && s.as_str() != "\"\"";
+        rows.into_iter()
+            .filter_map(|r| {
+                let at = |col: &str| cells.get(&(r, col.to_string()));
+                let (sheet, addr, value) = (at("A")?, at("B")?, at("C")?);
+                (text(&sheet) && text(&addr) && !value.starts_with('('))
+                    .then(|| format!("(derived {sheet} {addr} {value})"))
+            })
+            .collect()
+    }
+
+    /// One committed replay played as SPEC.md section 7.6 plays one, by this
+    /// test and not by the host: read with the language's reader, the
+    /// cartridge loaded, the header's seed written when the manifest asks the
+    /// host for one and else its manifest's, then for every frame the derived
+    /// writes the last frame's Write sheet left, each its own write, the
+    /// frame's rows, spelled back by the language's printer, as one write,
+    /// and the step; its end the golden beside it, its window's record byte
+    /// for byte.
+    fn play_to_golden(name: &str, cart: &str, replay: &str, golden: &str) {
+        let forms = read_forms(replay).unwrap_or_else(|e| panic!("{name}'s replay reads: {e:?}"));
         let items = |f: &Form| match f {
             Form::List(l) => l.items.clone(),
-            other => panic!("a list: {other:?}"),
+            other => panic!("{name}: a list: {other:?}"),
         };
         let seed = items(&forms[0])
             .iter()
@@ -1899,7 +1938,7 @@ mod tests {
                 },
                 _ => None,
             })
-            .expect("the header's seed");
+            .unwrap_or_else(|| panic!("{name}: the header's seed"));
         // Each frame one form, (frame n row ...), its rows the frame's one write.
         let frames: Vec<(u32, Vec<String>)> = forms[1..]
             .iter()
@@ -1908,45 +1947,94 @@ mod tests {
                     n.parse().expect("a frame's number"),
                     rows.iter().map(write_datum).collect(),
                 ),
-                other => panic!("a frame: {other:?}"),
+                other => panic!("{name}: a frame: {other:?}"),
             })
             .collect();
         let last = frames.last().expect("a frame").0;
-        let mut c =
-            Cartridge::load(INPUTCARD, "inputcard.vla", INPUTCARD.len()).expect("the card loads");
-        assert_eq!(c.write(&format!("(cell \"Clock\" \"B3\" {seed})")), Ok(1));
+        let mut c = Cartridge::load(cart, &format!("{name}.vla"), cart.len())
+            .unwrap_or_else(|e| panic!("{name} loads: {}", e.refusal.text));
+        if c.describe().contains("(seed host)\n") {
+            assert_eq!(c.write(&format!("(cell \"Clock\" \"B3\" {seed})")), Ok(1));
+        } else {
+            assert!(
+                c.describe().contains(&format!("(seed {seed})\n")),
+                "{name}: the replay's seed {seed} is its manifest's"
+            );
+        }
         let mut written = frames.iter().peekable();
-        let mut pending: Option<String> = None;
+        let mut pending: Vec<String> = Vec::new();
         for frame in 1..=last {
-            if let Some(row) = pending.take() {
-                c.write(&row).expect("the derived write");
+            for row in pending.drain(..) {
+                c.write(&row)
+                    .unwrap_or_else(|e| panic!("{name}, frame {frame}: {row}: {e:?}"));
             }
             if let Some((_, rows)) = written.next_if(|(n, _)| *n == frame) {
                 if !rows.is_empty() {
-                    c.write(&rows.join("\n"))
-                        .expect("the frame's rows, which landed when they were recorded");
+                    c.write(&rows.join("\n")).unwrap_or_else(|e| {
+                        panic!("{name}, frame {frame}: the rows, which landed when they were recorded: {e:?}")
+                    });
                 }
             }
-            assert!(c.step(0).done, "frame {frame}");
-            if value_of(&c, "Write", "B2") == "\"B20\"" {
-                pending = Some(format!(
-                    "(derived \"Tally\" \"B20\" {})",
-                    value_of(&c, "Write", "C2")
-                ));
-            }
+            assert!(c.step(0).done, "{name}, frame {frame}");
+            pending = derived_rows(&c);
         }
-        assert!(written.next().is_none(), "every frame of the replay played");
-        let golden = GOLDEN.replace("\r\n", "\n");
+        assert!(
+            written.next().is_none(),
+            "{name}: every frame of the replay played"
+        );
+        let golden = golden.replace("\r\n", "\n");
         let (_, body) = golden.split_once('\n').expect("the licence line");
-        let window = body
+        let (sheet, window) = body
             .lines()
-            .find_map(|l| l.strip_prefix("(window \"Tally\" \""))
+            .find_map(|l| l.strip_prefix("(window \""))
             .and_then(|s| s.strip_suffix("\")"))
-            .expect("the golden's window row");
-        match c.view("grid", "Tally", Some(window)) {
-            Ok(Viewed::Text(record)) => assert_eq!(record, body, "the replay ends in its golden"),
-            other => panic!("the Tally's record: {other:?}"),
+            .and_then(|s| s.split_once("\" \""))
+            .unwrap_or_else(|| panic!("{name}: the golden's window row"));
+        match c.view("grid", sheet, Some(window)) {
+            Ok(Viewed::Text(record)) => {
+                assert_eq!(record, body, "{name}: the replay ends in its golden")
+            }
+            other => panic!("{name}: the {sheet}'s record: {other:?}"),
         }
+    }
+
+    /// Every committed replay (ENGINE.3's second slice, made general by
+    /// ENGINE.4's): each folder of `cartridges/` holding `<name>.replay.vla`
+    /// played to `<name>.golden.vla` beside it, the files read as they stand
+    /// in the tree, the input card's and the sound card's today.
+    #[test]
+    fn every_committed_replay_plays_to_its_golden() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../cartridges");
+        let mut folders: Vec<std::path::PathBuf> = std::fs::read_dir(&root)
+            .expect("cartridges/")
+            .filter_map(|e| e.ok().map(|e| e.path()))
+            .filter(|p| p.is_dir())
+            .collect();
+        folders.sort();
+        let read = |p: std::path::PathBuf| {
+            std::fs::read_to_string(&p).unwrap_or_else(|e| panic!("{}: {e}", p.display()))
+        };
+        let mut played = Vec::new();
+        for dir in folders {
+            let name = dir
+                .file_name()
+                .and_then(|n| n.to_str())
+                .expect("a folder's name")
+                .to_string();
+            let replay = dir.join(format!("{name}.replay.vla"));
+            if !replay.exists() {
+                continue;
+            }
+            let cart = read(dir.join(format!("{name}.vla")));
+            let golden = read(dir.join(format!("{name}.golden.vla")));
+            play_to_golden(&name, &cart, &read(replay), &golden);
+            played.push(name);
+        }
+        assert_eq!(
+            played,
+            ["inputcard", "soundcard"],
+            "the replays committed under cartridges/"
+        );
     }
 
     // ---- CART.1: the gun, the benchmark's second fixture ----
