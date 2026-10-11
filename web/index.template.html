@@ -504,6 +504,10 @@
       var now = performance.now();
       if (rate === 0 || now - shownTime >= 200 || e.frame < shownAt) { shownAt = e.frame; shownTime = now; showSheet(); }
     });
+    // When the loop stops (Pause, a replay's end, a refused step), the sheet is drawn at the frame it
+    // stopped at, so that it and the frame line say one frame: the refresh above had left it up to
+    // 200 ms behind (found in the owner's hand test of ENGINE.4, 2026-10-10, frame 234 under frame 240).
+    host.on('stop', function (e) { if (e.frame !== shownAt) { shownAt = e.frame; shownTime = performance.now(); showSheet(); } });
     // A load is frame 0, drawn at once, nothing computed; the line says so until the first frame lands.
     host.on('load', function (e) {
       shownAt = -1; shownTime = -1e9; rate = e.rate;
@@ -1646,7 +1650,8 @@
   // edit of the State sheet and one of the Input sheet, copied and played on a fresh host all at
   // once and through the loop at its rate, each ending at the live run's frame in its digest, the
   // player's own recording the replay it played, a person's edit refused while it plays and the
-  // loop paused at its last frame; and six replays a player refuses in words, nothing loaded. Over
+  // loop paused at its last frame, its stop said once at that frame (2026-10-10); and six replays a
+  // player refuses in words, nothing loaded. Over
   // the engine's module, when the page holds one: the card's committed replay,
   // cartridges/inputcard/inputcard.replay.vla, is the input case's live run as the host recorded it,
   // its header the card's digest and seed, each edit that landed logged in its frame and the refused
@@ -1689,7 +1694,7 @@
     return 'nowhere by line';
   }
   function caseReplay() {
-    var P = [], k = { vectors: 0, liveFrames: 0, doubleSame: 0, doubleRound: 0, paced: 0, waited: 0, refused: 0 };
+    var P = [], k = { vectors: 0, liveFrames: 0, doubleSame: 0, doubleRound: 0, paced: 0, stopped: 0, waited: 0, refused: 0 };
     // ---- the digest ----
     for (var v = 0; v < SHA_VECTORS.length; v++) {
       var msg = SHA_VECTORS[v][0] === null ? new Array(1000001).join('a') : SHA_VECTORS[v][0], sha = HOST.sha256(msg);
@@ -1722,8 +1727,9 @@
     else P.push('over the double, the player\'s own recording is not the replay it played, ' + firstDiffLine(againA || '', text));
     A.host.destroy();
     // through the loop, at the rate, a person's edit refused while it plays
-    var B = doubleHost(), told = [], t = 1000;
+    var B = doubleHost(), told = [], stops = [], t = 1000;
     B.host.on('frame', function (e) { told.push(e.replay); });
+    B.host.on('stop', function (e) { stops.push(e.frame); });
     var pb = B.host.play(text);
     if (!pb.ok || !B.host.running) P.push('the replay played through the loop did not start: ' + (pb.sentence || 'the loop is not running'));
     B.host.tick(t);
@@ -1739,6 +1745,10 @@
     var saidB = B.host.sentences().map(function (s) { return s.text; });
     if (!saidB.some(function (s) { return s.indexOf('frame ' + liveFrame + ': the replay ended at its last frame; the loop is paused') === 0; })) P.push('no sentence says the replay ended at its last frame, ' + liveFrame + ', and the loop paused');
     if (!B.host.sentences().some(function (s) { return s.refusal && s.text.indexOf('The edit (cell "State" "B1" 1) was not written: a replay is playing') === 0; })) P.push('the edit made while the replay played was not refused in words');
+    // the loop's stop at the replay's end said once, at its last frame, so that a page draws what it
+    // shows of the grid at the frame the frame line says (the panel's live sheet, 2026-10-10)
+    if (stops.length === 1 && stops[0] === liveFrame) k.stopped = 1;
+    else P.push('the replay played through the loop said the loop stopped ' + stops.length + ' time(s)' + (stops.length ? ', at frame(s) ' + stops.join(', ') : '') + ', where it says so once, at its last frame, ' + liveFrame);
     B.host.destroy();
     // the replays a player refuses, each in words, the cartridge loaded untouched
     var C = doubleHost();

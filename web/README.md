@@ -114,7 +114,7 @@ sound the frame the grid holds again when it starts.
 | `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`); every sentence said, in order |
 | `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
 | `unload()` / `destroy()` | frees the handle and empties the canvas; removes the listeners |
-| `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat, refusal }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line, `refusal` true for a refusal or a failure; a notice of a value the host coerced, a Camera cell read as 1 or a colour painted magenta, is not one), `frame` (`{ frame, window, scale, rate, replay }`, after a frame completes, `rate` the one the Clock now holds, `replay` the last frame of a replay playing or 0), `load` (`{ handle, title, mode, w, h, rate, window, scale }`, after frame 0 is drawn) |
+| `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat, refusal }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line, `refusal` true for a refusal or a failure; a notice of a value the host coerced, a Camera cell read as 1 or a colour painted magenta, is not one), `frame` (`{ frame, window, scale, rate, replay }`, after a frame completes, `rate` the one the Clock now holds, `replay` the last frame of a replay playing or 0), `load` (`{ handle, title, mode, w, h, rate, window, scale }`, after frame 0 is drawn), `stop` (`{ frame }`, when a running loop stops, at Pause, a replay's end, a refused step, a load or an unload, so that a page draws what it shows of the grid at that frame) |
 
 `AlonzoHost.instantiate(bytes)` and `instantiateSync(bytes)` instantiate a
 module with the empty import object of section 8.1; `AlonzoHost.RULES` holds
@@ -198,7 +198,9 @@ press Write (`(cell "Palette" "B1" "#FF8800")` turns the dead cells orange,
 `(cell "Screen" "B2:K11" 1)` holds a block alive while Life flows around
 it), watch the log, each repeat counted in its first line, and press Copy
 the log to take it as text; pick a sheet of the grid, the Clock's frame
-counting or the previous frame's twin, to see its record live; edit the
+counting or the previous frame's twin, to see its record live, drawn about
+five times a second while the loop runs and again whenever it stops, so
+that at a pause the sheet and the frame line say the same frame; edit the
 cartridge's `(rate 30)` to `(rate 0)` and press Load the cartridge to see a
 step on every edit. Open The source and the cartridge to see both texts: the
 source a person writes, its palette one macro call, and the cartridge the
@@ -296,8 +298,8 @@ baseline to the roadmap's bars.
   Camera too; and the replay (`replay`, `ENGINE.3`'s second slice): the
   host's SHA-256 held to FIPS 180-2's five vectors, a live run over the
   double copied and played on a fresh host to the same digest, all at once
-  and through the loop, an edit refused while it played and six replays
-  refused in words; and, over the engine's module, the input card's
+  and through the loop, an edit refused while it played, the loop's stop
+  said once at the replay's last frame, and six replays refused in words; and, over the engine's module, the input card's
   committed replay equal to the `input` case's run as the host recorded
   it, played on a fresh host to every frame of that run and to its golden,
   the Tally's record, byte for byte; and the Audio device (`audio`,

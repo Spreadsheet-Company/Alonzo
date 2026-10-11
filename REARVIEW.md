@@ -583,7 +583,27 @@ What remains is the owner's. Open `web/index.html` in Chrome: the module line na
 - *The rest.* The engine's version text reads `alonzo 0.1.0 (vla-lang 0.8.1)`. The README says where the language comes from, and the ledger's line for this item names the release that came. Where this entry says 0.9.0, the release came as 0.8.1. A git pin may return for `KERNEL.20` until the release after it, and both checks take it as they took this one.
 - *The oracle:* `run_checks.ps1 -WithExtras`, 12 checks and 12 verifiers, `ALL GREEN`, over the page rebuilt with the new module.
 
-## `ENGINE.2` — the frame path: the plane held to the record of the same window
+*The live sheet at a stop, 2026-10-10, after `ENGINE.4`'s close, at the owner's word: "implement the refresh upon stopping so that the live sheet and clock frame maintain parity to the human eye".*
+
+The defect. The owner's screenshot of `ENGINE.4`'s replay showed the live sheet's `Clock!B1` at 234 under a frame line at 240.
+- The panel draws the live sheet about five times a second while the loop runs (this slice's owner's hand test, 2026-10-09, when the sheet lagged the edits), and the frame line every frame. Nothing drew the sheet when the loop stopped, so every stop left it up to 200 ms behind.
+- The host stops in seven places and the panel's Pause makes an eighth, and the page heard of none of them: the host said `status`, `load` and `frame` and nothing at a stop.
+
+What landed:
+- `web/host.js`: `stop()` says `stop`, `{ frame }`, when a running loop stops: Pause, a replay's end, a refused step, a load or an unload. The header names the four events.
+- `web/index.template.html`: the panel draws the live sheet at a `stop` whose frame it does not already show.
+- The loop oracle's `replay` case holds the event: the replay played through the loop says its stop once, at its last frame (`stopped 1`).
+- `tools/check_host_loop.ps1`: the floor, and a twenty-fifth control page, Y, a host that never says it stopped.
+- `web/README.md`: the event and the panel's sheet. `tools/run_checks.ps1`'s words.
+
+The oracle, on the day (*measurement*):
+- A headless probe of the plain page, built in scratch, wrapped the viewport's `load` to keep the last record of the Clock the panel drew. It played the sound card, paused it twice and then played its replay to its end, comparing the frame line with the drawn `Clock!B1` at each stop. Before the fix: frame 14 against 8 at both pauses, and 105 against 99 where the replay stood when the probe looked. After it: 10 and 10 at both pauses, and 240 and 240 at the replay's end.
+- `check_host_loop.ps1` at both ratios: fifteen cases, `replay` at `stopped 1`. Its control, twenty-five mutant pages in 125.3 s; Y failed the replay case by name, "said the loop stopped 0 time(s), where it says so once, at its last frame".
+- `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`, in 246.8 s.
+
+*Owner-tested 2026-10-10 and committed the same day at the owner's word, "Tests pass, commit.", under `ENGINE.1`'s ID. Not pushed.*
+
+*Found:* in the headless probe, Run after a Pause stepped no frame in 2 s of virtual time, on the page before the fix as well, while a replay played after it ran its frames. A headless Chrome makes animation frames while something is drawn: a replay's load draws frame 0, and a bare Run draws nothing before its first frame. The owner's hand test of `ENGINE.4` found Run resuming in a real Chrome, so this is the probe's, not the page's.
 
 *Scoped 2026-10-09, at the owner's word, the day `ENGINE.1` closed: the Screen read out of the module's memory as bytes and blitted whole, held equal to the view record of the same window by a test, the record being the oracle (`CHARTER.md` §3), and the window the Camera's (`SPEC.md` §13's two oracles for this item). The scoping finds the path itself already laid, since `ENGINE.1` had to draw something: the host views the plane, copies the bytes out and blits them through the Palette. What is missing is the oracle, a fixture that reaches every arm of the byte's rule, and the cost the second slice measured, which is the language's. So the scoping is mostly a measurement, made before any claim, and its first finding moves the cost to Frazaro.*
 
@@ -2126,6 +2146,6 @@ What remains is the owner's, in Chrome with the speakers on.
   - frame 105's notice of the wave `"saw"`;
   - the rate at 10 from frame 150 and at 30 from frame 160;
   - "frame 240: the replay ended at its last frame; the loop is paused, and Run carries on from here with the live inputs."
-- Seen in the screenshot, and not this item's: the live sheet below the plane showed `Clock!B1` at 234 while the frame line said 240. The panel refreshes the live sheet about five times a second while the loop runs, and nothing refreshes it when the loop stops, so a pause leaves it up to 200 ms behind. It was named to the owner and not fixed here.
+- Seen in the screenshot, and not this item's: the live sheet below the plane showed `Clock!B1` at 234 while the frame line said 240. The panel refreshes the live sheet about five times a second while the loop runs, and nothing refreshes it when the loop stops, so a pause leaves it up to 200 ms behind. It was named to the owner and not fixed here. (*Fixed after the close at the owner's word, the same day:* the host says when a running loop stops, and the panel draws the sheet then; the note is at the end of `ENGINE.1`'s second slice above.)
 
 *Owner-tested 2026-10-10; committed and closed 2026-10-10 at the owner's word, "Replay results attached as screenshot, and pass the hearing test. Commit, then proceed with your recommended fix for the timer fix (time several frames at once)": the second slice with the item's close, the roadmap's line moved to the ledger's engine section above. Not pushed.*

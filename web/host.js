@@ -77,7 +77,10 @@
   refusal or a failure is marked as one, so that a page paints every refusal
   one colour. Every view over the module's memory is made fresh for each
   read, since any growth of the memory detaches the buffer the earlier views
-  were made over.
+  were made over. A page hears four events: status, a sentence; load, frame 0
+  drawn; frame, a frame completed; and stop, a running loop stopped at its
+  frame, so that what a page shows of the grid can be drawn at the frame the
+  frame line says.
 
   It reads every record with the viewport's reader (web/viewport.js,
   AlonzoViewport.readForms), which must load first: the shim holds no
@@ -464,10 +467,16 @@
     this.raf = global.requestAnimationFrame(loop);
   };
   Host.prototype.stop = function () {
+    var was = this.running;
     this.running = false;
     if (this.raf && global.cancelAnimationFrame) global.cancelAnimationFrame(this.raf);
     this.raf = 0;
     this._silence();   // the voices stop with the loop (ENGINE.4, decision 6)
+    // A running loop that stops says so, with the frame it stopped at (Pause, a replay's end, a refused
+    // step, a load or an unload), so that a page draws what it shows of the grid at that frame: the
+    // panel's live sheet, drawn about five times a second while the loop runs, was left a few frames
+    // behind the frame line at every stop (the owner's hand test of ENGINE.4, 2026-10-10).
+    if (was) this._emit('stop', { frame: this.frame });
   };
   // One animation frame's work, at its timestamp: the step 1 of section 5.
   Host.prototype.tick = function (ts) {

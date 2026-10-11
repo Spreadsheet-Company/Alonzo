@@ -62,8 +62,9 @@ over the double, a live run of keys, the pointer, derived writes and a
 person's edits of the State and Input sheets, copied and played on a fresh
 host all at once and through the loop, each ending at the live run's frame
 in its digest, the player's recording the replay it played, a person's edit
-refused while it plays, the loop paused at its last frame, and six replays
-refused in words with nothing loaded; over the engine's module, when the page
+refused while it plays, the loop paused at its last frame and its stop said
+once there (since 2026-10-10), and six replays refused in words with nothing
+loaded; over the engine's module, when the page
 holds one, the input card's committed replay, cartridges/inputcard/
 inputcard.replay.vla, equal to the input case's live run as the host
 recorded it, its header the card's digest and seed, each edit that landed
@@ -117,7 +118,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds twenty-four mutant pages through tools/build_web.ps1 and runs
+-Control builds twenty-five mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -162,7 +163,10 @@ sounding at a stop, and one that changes a wave at once while the voice
 sounds; and since ENGINE.4's second slice one more, over the double: a host
 and a page whose time constant is written in milliseconds where the graph
 takes seconds, both alike, so that the audio case passes it and the sound
-case, whose render hears the voice that never arrives, must fail it by name.
+case, whose render hears the voice that never arrives, must fail it by name;
+and after ENGINE.4's close one more, over the double: a host that never says
+a running loop stopped, so that the panel's live sheet would stay behind the
+frame line at a stop, which the replay case must fail by name.
 The real page must pass first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
@@ -263,6 +267,10 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # a span of 60. replay over the module: 2 replays, each played to its golden and
 # recording itself, the sound card's 240 frames each the card by hand; audio
 # over the module: the card's run as recorded its committed replay.
+# 2026-10-10, after ENGINE.4's close (ENGINE.1's panel, at the owner's word): the
+# host says when a running loop stops, at its frame, so that the panel's live
+# sheet is drawn at the frame its frame line says; replay holds the stop said
+# once at the replay's last frame (stopped 1), the other counts unchanged.
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
@@ -277,7 +285,7 @@ $floors = @(
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
     @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 5; same = 5; refused = 1; handle = 1; ranOn = 1 } },
     @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 5; players = 2; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 7; rate = 5; refused = 1 } },
-    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; waited = 1; refused = 6 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 2; frames = 26; same = 26; golden = 2; round = 2; cardSame = 240 } },
+    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 2; frames = 26; same = 26; golden = 2; round = 2; cardSame = 240 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } }
 )
@@ -659,9 +667,22 @@ if ($Control) {
         $xAudio = @($jX.Problems | Where-Object { $_ -like '*case audio*' }).Count
         $xNote = "the time constant in milliseconds, in the host and the page alike, applied ($xApplied), passed the audio case ($($xAudio -eq 0)) and failed the sound case ($xFailed)"
         $xOk = $xApplied -and $xFailed -ge 1 -and $xAudio -eq 0
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk) {
-            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'twenty-four' } else { 'sixteen applicable' }) + ' mutants for its own reason, each proving it applied')
+        # mutant Y (2026-10-10, ENGINE.1's panel), over the double: a host that never says a running loop
+        # stopped, so that a page cannot draw its sheet at the frame it stopped at; the replay case, whose
+        # replay played through the loop must say its stop once at its last frame, must fail it by name.
+        $anchorY = "    if (was) this._emit('stop', { frame: this.frame });"
+        if (([regex]::Matches($js, [regex]::Escape($anchorY))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorY' is not in web/host.js exactly once"; exit 1 }
+        $mutY = $js.Replace($anchorY, '    // the stop said to no one, by the control')
+        $yApplied = $mutY -cne $js
+        $jsY = Join-Path $tmp 'y.js'; [System.IO.File]::WriteAllText($jsY, $mutY, $utf8)
+        $rY = Invoke-Loop $browser (New-MutantPage 'y' $template $jsY) '1'
+        $jY = if ($rY.Text -ne '') { Test-Loop $rY.Text '1' } else { @{ Problems = @($rY.Reason) } }
+        $yFailed = @($jY.Problems | Where-Object { $_ -cmatch 'case replay.*said the loop stopped 0 time\(s\), where it says so once, at its last frame' }).Count
+        $yNote = "the stop said to no one applied ($yApplied) and failed the replay case ($yFailed)"
+        $yOk = $yApplied -and $yFailed -ge 1
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk) {
+            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'twenty-five' } else { 'seventeen applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -688,6 +709,7 @@ if ($Control) {
         }
         foreach ($sj in $sndJudged) { foreach ($p in @($sj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $sj.Name + ': ' + $p) } }
         foreach ($p in @($jX.Problems) | Select-Object -First 3) { Write-Output ('  the time constant in milliseconds: ' + $p) }
+        foreach ($p in @($jY.Problems) | Select-Object -First 3) { Write-Output ('  the stop said to no one: ' + $p) }
         exit 1
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
