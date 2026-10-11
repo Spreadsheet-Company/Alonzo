@@ -1,0 +1,133 @@
+; SPDX-License-Identifier: 0BSD
+; soundcard.source.vla - the sound card, as its author writes it: the Audio device played, so that
+; every cell the host reads after a step is heard (ENGINE.4). The pass expands this file into
+; soundcard.vla beside it, the rows the engine loads (SPEC.md section 7.8): edit this one, then
+; expand it again. The fixture of ENGINE.4's oracle: the page's loop oracle drives it over a log of
+; presses, a knob turned and the Clock's rate, and holds every frame's voices, and every call the
+; host makes on the Web Audio graph, to the card computed by hand.
+;
+; What it plays, an eight-second loop of four sections of sixty frames, two seconds each at thirty
+; frames a second. A voice is a row of the Audio sheet: its wave, its note as a MIDI number, and its
+; volume from 0 to 1 (SPEC.md section 3.6).
+;   - The four waves: voice 1 holds A4, note 69, and changes its wave every half second, square,
+;     triangle, sawtooth and sine, each change made under the sound.
+;   - A scale: voice 1 plays C major up, seven frames a note, the last frame of each a rest.
+;   - Two chords: voices 1 to 3 hold C major for a second, then A minor.
+;   - A slide and a swell: voice 2 slides up from note 48 by 0.4 a frame while its volume rises to
+;     0.8 and falls again, so that a fraction of a note and every volume between are heard.
+; Voice 4 is a tick: a frame at volume 1 on each press of player 1's buttons or of the left mouse
+; button, its wave and its note the Knobs sheet's. A knob is a cell, and a word there that is no
+; wave silences the tick, which the host says. The Log keeps the four voices of the last 32 frames,
+; and the Screen draws the notes as a waterfall, the newest row on top.
+
+; The library whose macros this source calls: cga-palette, button-labels and keys, audio, and
+; cells and formulas, each naming a sheet once over a run of its rows.
+(include "../common.vla")
+
+(cartridge "soundcard"
+  (spec 3)                          ; the version of SPEC.md this cartridge is written to
+  (title "Sound card")              ; what the host shows
+  (rate 30)                         ; frames a second; every length below is in frames
+  (screen plane 48 24)              ; the waterfall: 48 notes wide, 24 frames deep
+  (seed 1)                          ; the dice, which nothing here throws
+  (author "Spreadsheet Company")    ; who wrote it
+  (licence "0BSD")                  ; the header's twin
+  (notes "The sound card: press Sound on, then hear the four waves, a scale, two chords and a slide under a swell, an eight-second loop. Press the arrows, Z, X, A, S, Enter or Space, or click the plane, for a tick; write another wave into Knobs!B1 to change it."))
+
+; The sheets, in tab order: the Screen, the Audio sheet it draws, the Score that times the
+; voices, the Knobs a person turns, the Log of the voices, the keys and the Palette.
+(sheet "Screen" visible)
+(sheet "Audio" visible)
+(sheet "Score" visible)
+(sheet "Knobs" visible)
+(sheet "Log" visible)
+(sheet "Keys" visible)
+(sheet "Palette" visible)
+
+; ---- the Palette: the CGA's sixteen (SPEC.md section 3.2) ----------------------------
+(cga-palette)
+
+; ---- the Keys sheet: player 1's ten buttons, each a tick (SPEC.md section 3.4) -------
+(button-labels "Keys")
+(keys "B"                           ; player 1: SPEC.md section 3.4's defaults, TIC-80's
+  "ArrowUp"                         ; up
+  "ArrowDown"                       ; down
+  "ArrowLeft"                       ; left
+  "ArrowRight"                      ; right
+  "KeyZ"                            ; a
+  "KeyX"                            ; b
+  "KeyA"                            ; x
+  "KeyS"                            ; y
+  "Enter"                           ; start
+  "Space")                          ; select
+
+; ---- the Knobs: the tick's wave and note, and every voice's volume -----------------
+(cells "Knobs"                      ; a label in column A, a knob in column B
+  ("A1" "tick wave")
+  ("B1" "sawtooth")                 ; the tick's wave: write "square", or a word that is no wave
+  ("A2" "tick note")
+  ("B2" 84)                         ; the tick's note: C6
+  ("A3" "volume")
+  ("B3" 1))                         ; every voice's volume is multiplied by it
+
+; ---- the Score: the section, the step within it, and the presses -------------------
+(cells "Score"                      ; the labels
+  ("A1" "section")
+  ("A2" "step")
+  ("A3" "presses"))
+(formulas "Score"                   ; the timing, from the Clock's frame
+  ; the section, 0 to 3, sixty frames each
+  ("B1" "=MOD(INT((Clock!B1-1)/60),4)")
+  ; the step within it, 0 to 59
+  ("B2" "=MOD(Clock!B1-1,60)")
+  ; a press of each of player 1's ten buttons, on its rising edge, this frame against the last
+  ("C1:C10" "=IF(AND(Input!B1=1,Input.last!B1=0),1,0)")
+  ; a press of the left mouse button, the same way
+  ("C11" "=IF(AND(Input!B13=1,Input.last!B13=0),1,0)")
+  ; the presses this frame
+  ("B3" "=SUM(C1:C11)"))
+
+; ---- the Audio sheet: the four voices (SPEC.md section 3.6) -------------------------
+(audio)
+(cells "Audio"                      ; the two waves that never change
+  ("B3" "triangle")                 ; voice 2's wave
+  ("B4" "sine"))                    ; voice 3's wave
+(formulas "Audio"                   ; the rest, each a formula of the Score and the Knobs
+  ; voice 1's wave: the four in turn, half a second each, in the first section; a square after it
+  ("B2" "=IF(Score!$B$1=0,CHOOSE(1+INT(Score!$B$2/15),\"square\",\"triangle\",\"sawtooth\",\"sine\"),\"square\")")
+  ; voice 1's note: A4; then C major up, seven frames a note; then the chords' roots, C4 and A3
+  ("C2" "=IF(Score!$B$1=0,69,IF(Score!$B$1=1,CHOOSE(1+INT(Score!$B$2/7),60,62,64,65,67,69,71,72,72),IF(Score!$B$2<30,60,57)))")
+  ; voice 1's volume: 0.6, the last frame of each note of the scale a rest; 0.4 in the chords
+  ("D2" "=IF(OR(Score!$B$1=0,AND(Score!$B$1=1,MOD(Score!$B$2,7)<6,Score!$B$2<56)),0.6,IF(Score!$B$1=2,0.4,0))*Knobs!$B$3")
+  ; voice 2's note: the chords' thirds, E4 and C4; else a slide up from note 48, 0.4 a frame
+  ("C3" "=IF(Score!$B$1=2,IF(Score!$B$2<30,64,60),48+0.4*Score!$B$2)")
+  ; voice 2's volume: 0.4 in the chords; in the last section a swell to 0.8 and back
+  ("D3" "=IF(Score!$B$1=2,0.4,IF(Score!$B$1=3,0.8*(1-ABS(Score!$B$2-29.5)/29.5),0))*Knobs!$B$3")
+  ; voice 3's note: the chords' fifths, G4 and E4
+  ("C4" "=IF(Score!$B$2<30,67,64)")
+  ; voice 3's volume: 0.4 in the chords, silent elsewhere
+  ("D4" "=IF(Score!$B$1=2,0.4,0)*Knobs!$B$3")
+  ; voice 4, the tick: the Knobs' wave and note, and a frame at volume 1 on a press
+  ("B5" "=Knobs!B1")
+  ("C5" "=Knobs!B2")
+  ("D5" "=IF(Score!$B$3>0,1,0)*Knobs!$B$3"))
+
+; ---- the Log: the last 32 frames' voices, the newest in row 1 ------------------------
+(formulas "Log"                     ; a shift register over its twin: the control log
+  ; the frame
+  ("A1" "=Clock!B1")
+  ; each voice's wave, note and volume, a voice in three columns
+  ("B1:D1" "=Audio!B2")
+  ("E1:G1" "=Audio!B3")
+  ("H1:J1" "=Audio!B4")
+  ("K1:M1" "=Audio!B5")
+  ; every row below it the last frame's row above it
+  ("A2:M32" "=Log.last!A1"))
+
+; ---- the Screen: the waterfall ------------------------------------------------------
+; The top row lights the column of each sounding voice's note, to the nearest, notes 48 to 95, in
+; the voice's colour: voice 1 light green, voice 2 light cyan, voice 3 yellow, voice 4 light red.
+; Every row below holds the last frame's row above it, so the notes fall down the Screen as they
+; are played.
+(formula "Screen" "A1:AV1" "=IF(AND(Audio!$D$2>0,INT(Audio!$C$2+0.5)=COLUMN()+47),10,IF(AND(Audio!$D$3>0,INT(Audio!$C$3+0.5)=COLUMN()+47),11,IF(AND(Audio!$D$4>0,INT(Audio!$C$4+0.5)=COLUMN()+47),14,IF(AND(Audio!$D$5>0,INT(Audio!$C$5+0.5)=COLUMN()+47),12,0))))")
+(formula "Screen" "A2:AV24" "=Screen.last!A1")

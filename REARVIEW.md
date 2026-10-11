@@ -1747,3 +1747,267 @@ The oracle, run on the day (*measurement*):
 - The plain page, probed headless, played the card's nested replay to frame 26, and Copy the replay gave back its 3,560 characters, the same text.
 
 *Committed 2026-10-10 at the owner's word, "Commit.", under the closed item's ID. Not pushed.*
+
+## `ENGINE.4` — the Audio device: the four voices on the audio clock, the graph's own nodes, a sound card, and the schedule held
+
+*Scoped 2026-10-10 at the owner's word, the day `ENGINE.3` closed and was pushed. The roadmap's line: "The Web Audio graph's own nodes, an oscillator and a gain per voice, driven from the Audio sheet's cells read after the step; no synthesizer of its own (`CHARTER.md` §8). Needed by: `CART.3`." `CART.4` needs it too, a tick per move, a tone per freeze and a fanfare at the top, and `CART.5`'s four voices play under a playhead. Every item before this one left the Audio sheet the same way: read after each step, and sounded nowhere. So the scoping measured what a page gets from Web Audio before deciding anything, in scratch pages under headless Chrome 154 and in a scratch copy of the workspace: the two clocks, the clicks, the waves, the cost, and a sound card. The owner's standing brief governs every decision: determinism first, a replay is a proof and a floor is a number. The sound is never golden (`SPEC.md` §6); what the host schedules from the cells is a function of them, and can be held.*
+
+**Substrate, verified.** Read on the day, by file and never by assumption; Frazaro's tree read and written nowhere.
+
+- *The pre-flight.*
+  - This tree clean at `d8bd24d`, level with `origin/main`. CI's run on it, `38072688050`, green on both jobs.
+  - `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`; the loop check's control, eighteen mutant pages, in 69.4 s.
+  - `vla-lang` pinned at `=0.8.1`. Frazaro's 0.8.2 is unreleased, and this item needs none of it.
+  - During the scoping a peer session began a new §10 of `docs/ALGEBRA.md`, uncommitted; this item touches that file nowhere.
+- *The engine* (`engine/src/cartridge.rs`). `Device::Audio`'s layout is `A1:D5`, with no cell the host writes and none a derived write is kept from. `describe` names it when a cartridge holds it; a cell outside it is refused at load and at a write. The engine makes no Audio sheet of its own, and no cartridge in the repository holds one.
+- *The host* (`web/host.js`).
+  - `_readAudio` reads the four rows after each step into `this.audio`, `{voice, wave, note, volume}` as the record holds them, after the plane is drawn and before the File, the Write sheet and the Clock. Nothing reads `this.audio`, and nothing in `web/` makes an audio context.
+  - `stop()` is called by `attach`, a load, an unload, a refused step, the end of a replay and Pause. A hidden page sets `hidden`, and the tick returns while it holds.
+- *The double* (`web/fake.js`). An Audio sheet of value cells: the header, then voices 1 to 4 each `square`, 69 and volume 0. Its `describe` lists every device, and its digest folds every sheet, the Audio sheet among them.
+- *The page.* The device sheet's picker offers Audio; nothing turns a sound on.
+- *The language's library* (`vla-lang` 0.8.1, `library::language`): `IF`, `AND`, `OR`, `NOT`, `SUM`, `MIN`, `MAX`, `ABS`, `INT`, `MOD`, `ROW`, `COLUMN`, `CHOOSE` and `SIN`. A sound card needs nothing more: `CHOOSE` over texts for a wave, `INT` and `MOD` for a sequence.
+- *The specification*, version 3.
+  - §3.6: the table, the frequency the host's, the cells holding for one frame, rendered for `1/rate` seconds against the audio clock with a lookahead and never against the animation clock; noise, envelopes and samples not in this version.
+  - §5: step 5, the effects read after the step; step 6, the sound; rate zero, a voice holding until the next step.
+  - §6's last line: the host's draw and sound measured, never golden. §8.3: the shim "drives the four voices (`ENGINE.4`)". §10: four voices. §11, decision 16: wave, note and volume. §12 and §14 (Wilson's "A Tale of Two Clocks"). Appendix C's voice forms, and C.5: control signals are cells, audio rate is the graph's.
+- *The charter.* §4: rule 3, rent from the browser; rule 4 (`AD-4`), what can only be measured is Alonzo's. §8: "A sound synthesizer beyond the Web Audio graph's own nodes" is not built.
+- *The checks.* `check_web_offline.ps1` forbids the tag `<audio` over the template and the built page, into which `web/host.js` is inlined. No code token names Web Audio.
+
+**The measurements.** *Measurement*, 2026-10-10, on the owner's machine: scratch pages opened from `file://` under headless Google Chrome 154 and read by `--dump-dom`, and a scratch copy of this workspace over `vla-lang` 0.8.1 with an example of its own. Timings are magnitudes, never floors.
+
+- *What a page gets.* `AudioContext` and `OfflineAudioContext` exist, and `isSecureContext` is true. Without a person's gesture a context is made suspended and its `resume()` stays pending; with `--autoplay-policy=no-user-gesture-required` it runs at once. The sample rate is 48,000, the base latency 0.01 s, the output latency 0.
+- *The two clocks, parted.* Under a virtual-time budget the page's clock, its timers, `performance.now` and `Date`, is virtual, and the audio clock is the wall's. `currentTime` went from 0 to 0.76 s during one busy task of about 0.76 s of wall time, then stood at 0.76 across 2 s of idle virtual time. No headless check can read a real context's clock against the page's, so an oracle of the schedule must drive its own. (And within a task neither `Date` nor `performance.now` moves: a scratch probe's busy wait on `Date` never ended.)
+- *The offline render.* An `OfflineAudioContext` renders under headless Chrome. Awaited idle under a virtual-time budget it burns the budget at a growing rate: four renders of 1 s took 5 ms, 0.6 ms, 935 ms and 8,975 ms of virtual time, and the fifth never finished. A chain of 0 ms tasks beside it holds virtual time to the clamped 4 ms a task: 28 channels of 1 s rendered in 9.9 s of virtual time, 2,491 tasks, about a second of wall time. A context holds at most 32 channels, the Web Audio specification's limit: a page that asked for 34 printed nothing, and batches of 24 rendered.
+- *The graph's own waves*, Chrome's, at 440 Hz and gain 1: a square's peak 0.9910 and rms 0.8440; a triangle's 0.9907 and 0.5775; a sawtooth's 0.9715 and 0.4863; a sine's 1.0000 and 0.7071; each 440.0 zero crossings a second.
+- *Four voices summed.* Four squares at gain 1 (A, C sharp, E, A) peak at 3.81, which a real output clips at 1. At gain 1/4 they peak at 0.953.
+- *The note's range.* Note 127, 12,543.9 Hz, renders at 12,542.9 Hz by its zero crossings. 30,000 Hz, past the Nyquist frequency of 24,000, renders silence. Every note from 0 to 127 lies below the Nyquist frequency of every sample rate from 25,088 a second (*derived*).
+- *A wave is no AudioParam.* An oscillator's `type` set while an offline render stood suspended at 0.5013 s changed the wave there: rms 0.7069 before, 0.8440 after. A wave changed in JavaScript is heard when the JavaScript runs, never at a time on the audio clock.
+- *The click*, read as the largest step between two samples over the wave's own largest step:
+  - a gain set at once from 0 to 1 at mid-cycle: 17 times for a sine and 24 for a triangle at 440 Hz; from 1 to 0, 17 times for a sine;
+  - a linear ramp of 1, 2 or 5 ms: 1.00 to 1.26 at 440 Hz; from 55 to 220 Hz, up to 1.33 at 2 ms and 1.36 at 5 ms;
+  - `setTargetAtTime`'s approach, the worst of four phases from 55 to 440 Hz: a time constant of 1.5 ms up to 2.65 (a triangle at 55 Hz), 2 ms up to 1.99, 3 ms up to 1.33; a release from 1 to 0 at 1.5 ms up to 3.63;
+  - a square's own edges, a step of 1.22, dwarf all of these.
+- *A wave change at full gain*, the old oscillator stopped and a new one started at one time: a sine to a triangle 31 times the wave's own, a triangle to a sine 25 times; a square to a sine, or a sine to a sawtooth, no larger than the square's or the sawtooth's own edge. Through a dip, the gain approaching 0 and the new oscillator started five time constants later: 1.00 to 1.12.
+- *One frame's pitch and loudness.* A note held one frame at 30 frames a second, measured over its middle by interpolated zero crossings, was within 0.010% of 440·2^((note−69)/12) for notes 36 to 96 on all four waves. A frame's rms was within 1.8% of the gain times the wave's own.
+- *The automation, as the Web Audio specification has it.* `cancelScheduledValues(t)` removed the later event and kept the earlier (peaks 0.5, 0.25, 0.25); of two values set at one time, the later won; a frequency set to 880 at 0.5 s read 440.4 Hz before and 880.0 after.
+- *The schedule's cost on the main thread*, by totals, since headless Chrome coarsens `performance.now` to 0.1 ms. Four voices each changing note and volume, a cancel and three events a voice: 0.0034 to 0.0041 ms a frame over 1,500 frames, three runs. Four new oscillators a frame, the worst case of a wave change: 0.042 to 0.046 ms. A timeline grown 1,500 frames ahead: no growth. The read of the Audio sheet is already paid (`ENGINE.1`).
+- *A sound card, prototyped natively.* 117 rows and 1,592 formula cells, `(budget 30 1592 47760 2000000)`, loaded in 1.64 ms, a step 0.171 ms at the median and 0.209 at the 95th over 240 frames. Its sections, its tick on a press, a knob edited to `"saw"` and back, its Log and its waterfall each held the values designed (decision 9).
+- *Derived.* Scheduled when a frame completes, by the animation clock, a rhythm carries the display's quantization. At 25 frames a second on a 60 Hz display, a frame owed every 40 ms runs at the first display interval after it, 10, 3.3, 13.3, 6.7 and 0 ms late in turn, so a beat every four frames comes 150 to 166.7 ms apart where the cells say 160. Scheduled on the audio clock from the last frame's end, it comes every 160 ms exactly.
+
+**The census.** What the line asks, against what stands:
+
+| the device | what stands | what is open |
+|---|---|---|
+| the layout | `A1:D5`, checked by the engine at load and at a write; `describe` names it | nothing |
+| the read | the host reads rows 2 to 5 after each step | no cell judged: a wave, a note or a volume that is no voice passes unseen |
+| the sound | nothing: no audio context in `web/` | the whole of §3.6 |
+| the two clocks | §3.6's sentence and §14's source | no rule for a late frame, a burst, rate 0, a pause, a hidden page or a replay |
+| starting | nothing | the autoplay policy: a context made before a gesture is suspended (measured) |
+| a cartridge that sounds | none in the repository | a fixture |
+| the oracle | nothing | the schedule held nowhere, the sound measured nowhere |
+| the double | four value cells a voice, silent at volume 0 | a person's edits can drive them |
+
+**The work.** Two slices: the voices, with the sound card and the schedule's oracle; then the measured render and the card's replay.
+
+| File | What it is | Slice; decisions |
+|---|---|---|
+| `web/host.js` | the voices: the timeline, the nodes, the approach and the dip, a cell that is no voice, Sound on and off, silence at a stop; the options `audio` and `audioNow`; the counters | 1; 1 to 6 |
+| `web/index.template.html` | the Sound button and the frame line's counts; the sound card in the picker and its places; the double of the graph and the fourteenth case, `audio`; in slice 2 the fifteenth, `sound`, and the card's replay and golden | 1, 2; 5, 7 to 10 |
+| `cartridges/common.vla` | the `audio` macro, Appendix C's | 1; 9 |
+| `cartridges/soundcard/soundcard.source.vla`, `soundcard.vla` | the sound card, a source over the library, and the cartridge the pass writes | 1; 9 |
+| `cartridges/soundcard/soundcard.replay.vla`, `soundcard.golden.vla` | the card's replay, the `audio` case's run as recorded, and its Log at the end | 2; 10 |
+| `engine/src/cartridge.rs` | the replay's player in `cargo test`, made general over every folder holding a replay (tests only; the module unchanged) | 2; 10 |
+| `tools/check_host_loop.ps1` | fourteen cases, then fifteen; the floors; mutant pages S to W, then X | 1, 2; 7, 8 |
+| `tools/check_cartridge.ps1` | five cartridges and five sources; the Audio sheet's value cells judged, with mutants; in slice 2 two replays and two goldens | 1, 2; 9, 10 |
+| `tools/check_web_offline.ps1` | the shim's Web Audio names held, with mutants; the card's places | 1, 2; 11 |
+| `tools/run_checks.ps1` | the dated line and the controls' words; the floor stays at 12 and 12 | 1, 2; 13 |
+| `SPEC.md` | dated corrections: §3.6, §5, §8.3, §13, §14 | 1, 2; 12 |
+| `REARVIEW.md` (this entry), `ROADMAP.md` (this line; notes on `CART.4` and `CART.5` at the close), `README.md`, `web/README.md`, `engine/README.md`, `Delta/CLAUDE.md`, the memory | the pages | 1, 2; 13 |
+
+**The decisions, the owner's.** Each with the sitting's recommendation and the alternative it declines.
+
+1. **The two clocks: each frame's voices sound at a time on the audio clock, the end of the last frame's sound, kept inside a window ahead of the clock. A late frame starts the timeline again, and a frame past the window is not sounded.**
+   - A frame's time is the last frame's time plus `1/rate`, the rate the host read after the last frame and steps at. While the loop keeps up, the frames lie end to end on the audio clock, so a rhythm in the cells is a rhythm in the sound whatever the display's interval: Wilson's lesson (§14).
+   - The window runs from the audio clock's now to twice the lookahead ahead of it. The lookahead is 50 ms.
+   - A frame whose time has already passed starts the timeline again, at now + 50 ms. A cartridge too heavy for its rate then sounds its frames as they come, each frame's voices holding until the next, as its screen does.
+   - A frame whose time lies past the window is not sounded, and the timeline stays where it was. A burst after a stall, seven frames at 30, sounds its first frames and skips the rest, as its screen presents only its last; the next frame in time is sounded where the timeline left off.
+   - At rate 0 every step sounds at now + 50 ms, and a voice holds until the next step (§5).
+   - The host sounds only while its audio context runs (decision 5). A frame computed while it does not is not scheduled, and the next one starts the timeline.
+   - A restart and a skip are the renderer's, as the blit's scale is, so no sentence says them; the frame line counts them while the sound is on.
+   - A press reaches its tick after its frame, the lookahead and the device's own output latency.
+
+   *Alternatives:* each frame at now + 50 ms when it completes, the animation clock in the rhythm: at 25 frames a second on a 60 Hz display a beat every four frames comes 150 to 166.7 ms apart where the cells say 160 (*derived* above). The timeline unbounded, a stall's burst adding up to seven frames of lag for good. A burst cancelled and pulled back, with oscillators already scheduled to start and stop to undo. A lookahead of 100 ms, Wilson's example: safer against a long task, and twice the lag behind the picture; or 25 ms, a tick heard sooner, and every long task a restart.
+2. **The voices: the graph's own nodes and nothing else, an oscillator and a gain a voice into one gain into the destination. The frequency is the host's 440·2^((note−69)/12), set at the frame's time, so a slide is a staircase at the frame rate. The gain is the volume over four. Only what changed is scheduled.**
+   - The gains are made when the sound is first turned on and kept for the host's life; a voice's oscillator is made when the voice first sounds, replaced at a wave change, and stopped at an unload.
+   - A voice's gain is its volume divided by four, so four voices at full volume never clip: four squares at gain 1 peak at 3.81, at a quarter at 0.953 (measured). A voice alone at full volume is a quarter of full scale. The gain the voices share is 1.
+   - The frequency is set at the frame's time by `setValueAtTime`, the oscillator keeping its phase. A fraction of a note is a fraction of a semitone (§3.6), and a slide the cells write moves once a frame, as a chip's registers are written once a frame; to interpolate across the frame would need the next frame before this one sounds.
+   - A voice whose wave, note and volume are the ones last scheduled schedules nothing, so a held drone costs no event. A silent voice changes neither its oscillator's wave nor its pitch, only its gain.
+
+   *Alternatives:* the gain the volume itself, louder alone and clipping under two loud voices. A compressor on the shared gain, a node of the graph's own that changes the sound by its level, so a synthesizer of its own in all but name. Every voice every frame, twelve events a frame whatever happens.
+3. **The click: every change of a voice's gain approaches its new value through the graph's `setTargetAtTime`, with a time constant of 3 ms. A wave change is a new oscillator, through a dip when the voice is sounding.**
+   - `setTargetAtTime` starts from wherever the gain stands, so a frame needs no record of the last one's level, and a stop needs no `cancelAndHoldAtTime`, which Firefox lacks. At 3 ms the approach is within 1% after 14 ms, under half a frame at 30, and no onset step exceeds 1.33 times the wave's own down to 55 Hz (measured; 2.65 at 1.5 ms). It is the graph's automation, never a sample the host computes (`CHARTER.md` §8).
+   - A wave cannot be scheduled: the type is set when the JavaScript runs (measured). So a wave change stops the voice's oscillator and starts a new one of the new wave at one time on the audio clock. When the voice was sounding, the gain approaches 0 from the frame's time, the switch comes five time constants later, 15 ms, and the gain approaches its new value from there: 1.00 to 1.12 times the wave's own, against 25 to 31 at once (measured). When the voice was silent, the switch is at the frame's time.
+
+   *Alternatives:* gains set at once, an onset 17 to 24 times the wave's own. A linear ramp, as clean at 5 ms, but needing the last level, at a stop too. The type set when the frame is scheduled, 50 ms early, under the previous frame's sound. Four oscillators a voice, one a wave, against the line's one oscillator a voice. A column for the approach, an envelope, which §12 leaves to a later version.
+4. **A cell that is no voice: the voice is silent for the frame, and the host says so once, as it says a Camera cell. A rest needs nothing else.**
+   - The volume is read first: empty is 0, and a number from 0 to 1 is itself. At 0 the voice is silent and its wave and note are not judged, so a rest is volume 0 whatever the other cells hold, and an unused voice is an empty row.
+   - Above 0, the wave is one of the four words, compared without case as the model compares names, and the note a number from 0 to 127, MIDI's range, a fraction allowed; every one is below every Nyquist frequency from 25 kHz (measured).
+   - Anything else in any of the three, a text, a truth value, an error value or a number out of range, silences the voice for the frame. The host says it once for each cell and each value shown: "frame 12: voice 2's wave, Audio!B3, is "saw", not square, triangle, sawtooth or sine; the voice is silent." It is a notice and not a refusal, with no id: the Audio sheet is read after a step and never refused, as the Camera is (§3.8).
+   - It judges only while the sound is on, the sentence being about what is heard.
+
+   *Alternatives:* an error tone, magenta's twin, declined, since a sound cannot be glanced past as a pixel can and the sentence carries the defect. The volume clamped and the note clamped, a wrong note heard as a right one. A refusal at a write, which an effect never takes.
+5. **Starting the sound: a Sound button in the engine's panel. The audio context is made at its first press, the person's act Chrome's autoplay policy asks for. Sound off silences the voices and suspends the context. The panel says when a cartridge's voices are silent for want of it.**
+   - Made at the press, the context runs at once, a press being a gesture. Made at the page's load it would stay suspended until one (measured), and the console would warn.
+   - At the load of a cartridge holding an Audio sheet while the sound is off: "The cartridge has an Audio sheet: press Sound on to hear its four voices (the browser lets a page sound only after a person's act)." A browser without Web Audio says so, and the sheet is still read.
+   - The sound is the person's to turn on, as the plane takes the keys at a click: a click on the plane or a key does not turn it on.
+   - The audio context is the host's own state (§8.3, `SD-23`). Nothing about the sound a cartridge makes is the host's.
+
+   *Alternatives:* the first click or key on the page turns the sound on, so a page sounds when a person meant to give it the keys. A context made at load, resumed at the first gesture.
+6. **When the loop stops, the voices stop. At Pause, a hidden page, the end of a replay, a refused step and an unload, every voice's later events are cancelled and its gain approaches 0 from the audio clock's now. When the loop starts, the frame the grid holds sounds at once.**
+   - Every one of these but the hidden page goes through the host's `stop()`, and the hidden page through its own flag; the silence is made there and nowhere else.
+   - A start (Run, a load's start, a replay's, a page shown again) sounds the current frame's voices at now + 50 ms, so a paused card resumes where it stood, and frame 0 sounds at a load as it is drawn.
+   - After a cancel the host forgets what it last scheduled, so the next frame sets every voice whole.
+   - An unload also stops the oscillators after the release, and the next load makes new ones at its first sounding frame.
+
+   *Alternatives:* the voices hold their last frame through a pause and in a background tab, a drone no game's pause makes. The context suspended at every stop, an asynchronous act at every Pause.
+7. **The oracle of the schedule: a double of the graph in the page, every node and every call recorded with its time on a clock the oracle drives, held frame by frame to the page's own arithmetic of decisions 1 to 6. It is the loop oracle's fourteenth case, `audio`, over the double and over the module, with five mutant pages. Both kinds of oracle the brief named are recommended: this one, and decision 8's.**
+   - The host takes two options for it, `audio` (a context in place of the one it makes) and `audioNow` (the audio clock), as it takes `now` and `budget` today. The panel never passes them.
+   - Over the double, its Audio sheet written by a person's edits (a voice's note, volume and wave, a defect and its end): frames on time; a late frame, the audio clock jumped ahead; a stall's burst, its first frames sounded and the rest skipped; Pause and Run; the page hidden and shown; rate 0; an unload. Its floors are `Min`.
+   - Over the module, the sound card of decision 9 for 240 frames: presses, each a tick; a knob turned into a defect and back; the Clock's rate moved to 10 and back. Every frame's Audio sheet equals the card computed by hand from the log, and every event equals the page's arithmetic. Its floors are `WithModule`.
+   - The expectations use the oracle's own constants, 50 ms, 3 ms and a quarter, never the host's, as the accumulator's 250 ms is the oracle's own.
+   - The control's pages, each failing the case by name: S, a gain set at once; T, every frame at now + 50 ms, the animation clock; U, a voice's gain its volume; V, no silence at a stop; W, a wave changed at once while the voice sounds.
+   - The thirteen cases before it make no audio context, so the host schedules nothing in them and their counts stay.
+
+   *Alternatives:* the measured render alone (decision 8), which can say a sound is wrong and not which call made it. A native test, which holds the card and never the host.
+8. **The measured half: an offline render of frames through the host's own voices, the pitch and the loudness of each measured against the graph's own waves. It is the fifteenth case, `sound`, measured and never golden (§6).**
+   - Over the double at its rate: a sequence of voice states written by edits, the four waves, notes from 36 to 96, a rest and a wave changed while the voice sounds. It is rendered into an `OfflineAudioContext` by the host's own voices on the oracle's clock, paced by a chain of 0 ms tasks (measured).
+   - Each frame's middle is held: its pitch within 0.1% of its note's, its rms within 4% of the volume over four times the wave's own measured in the same page, a rest under 0.0001, and no onset step over 1.5 times the wave's own.
+   - One control page, X: the time constant written in milliseconds where the graph takes seconds, in the host and in the oracle's own arithmetic alike. `audio` passes it, and only the render hears the voice that never arrives.
+   - The case awaits its render, the first case that does. The loop element is printed when the render lands, and the check's virtual-time budget rises if a run needs it.
+
+   *Alternatives:* the double alone, blind to a misreading of the graph that the host and the oracle share. A check of its own under `?sound=1`, a thirteenth check for one case.
+9. **The fixture: a sound card, `cartridges/soundcard/`, written as a source over the library. It plays the voices' features in four sections of two seconds and a tick on every press, with a Knobs sheet a person turns, a Log of the last 32 frames' voices, and a waterfall on the Screen.**
+   - `(spec 3)`, `(rate 30)`, `(screen plane 48 24)`, `(seed 1)`. A Score sheet holds the section, the step within it, and the rising edges of the presses.
+   - The sections, each 60 frames: A4 through the four waves, half a second each, the wave changing under the sound; a scale, C major up, seven frames a note with a rest between; a chord, C major then A minor on voices 1 to 3; a slide on voice 2 from note 48 by 0.4 a frame, under a swell of its volume.
+   - Voice 4 is a tick: one frame at volume 1 on the rising edge of any of player 1's ten buttons or the left mouse button, its wave and note the Knobs sheet's.
+   - The Knobs sheet holds the tick's wave and note, and a volume every voice is multiplied by. A knob is a cell (Appendix C), and a person's edit of the tick's wave to `"saw"` is the defect decision 4 says.
+   - The Log holds the frame and the four voices' cells, a shift register over its twin 32 frames deep: the control log `CART.5`'s oracle names. The waterfall lights the Screen's top row at each sounding voice's note, 48 to 95, in its colour, and moves the rows below down one each frame.
+   - The library gains `audio`, the Audio sheet's header row and voice numbers, the macro Appendix C's patch already calls; no cartridge's bytes move.
+   - `check_cartridge.ps1` judges the Audio sheet's value cells statically as decision 4 judges them in the host, with mutants.
+
+   *Alternatives:* the input card given an Audio sheet, its digest, replay and golden moved, and two devices shown on one card. No Log, the golden the Audio sheet's four rows at the end.
+10. **The replay: the sound card's replay and golden are committed, and played by the `replay` case and, natively, by the engine's player made general.**
+    - The replay is the `audio` case's run over the module as the host recorded it, and the golden is the Log's record at its end, 32 frames of the four voices, note for note.
+    - The `replay` case already plays every committed replay to its golden over the module. It gains the card's live run held equal to its committed replay, as the input card's is.
+    - `cargo test`'s player was written for the input card alone, its derived write hard-coded. It plays every folder's replay to its golden, the Write sheet's rows read as the host reads them.
+
+    *Alternatives:* a second native test, copied for the card. None.
+11. **The charter's §8 held on the shim: `check_web_offline.ps1` forbids in `web/host.js` every Web Audio name that would make a synthesizer of the host's own or reach past the graph's nodes.**
+    - The names: `createScriptProcessor`, `AudioWorklet` and `audioWorklet`, `createBuffer` (and so `createBufferSource`), `createPeriodicWave`, `createMediaElementSource`, `createMediaStreamSource`, `getUserMedia` and `addModule`.
+    - They are held over the shim alone, since the page's oracle reads a render's samples to measure it.
+    - Mutants plant each kind in a copy of the shim, each failing by name.
+
+    *Alternatives:* the rule in prose alone; or `SPEC.4`.
+12. **The page: dated corrections of version 3, and no `SPEC.4`; the charter unchanged.**
+    - §3.6: the timeline, the gain over four, the approach and the dip, the note's range and a voice that is no voice, and the sound while the loop runs. §5's step 6 and rate zero. §8.3. §13's oracle. §14's sources: MDN's `AudioParam` and `OscillatorNode`, and Chrome's autoplay policy.
+    - No row, column, directive or call is added, and §3.6's table keeps its four columns.
+
+    *Alternatives:* `SPEC.4` for the timeline. The approach as a column, an envelope, which is §12's.
+13. **The slices, the checks and the bookkeeping.**
+    - Slice 1, the voices: decisions 1 to 7, 9 without its replay, 11 and 12. `check_host_loop.ps1` at fourteen cases and twenty-three mutant pages; `check_cartridge.ps1` at five cartridges and five sources; `run_checks.ps1` at 12 and 12.
+    - Slice 2, the measure and the replay: decisions 8 and 10. Fifteen cases and twenty-four pages; two replays and two goldens.
+    - No floor for the schedule's cost, under a hundredth of the blit's frame of 0.7 ms (measured above; `ENGINE.1`'s baseline).
+    - The roadmap's line gains this scoping now and 🟡 after the first slice is built, and leaves for the ledger at the second's commit, closing the item.
+    - The commits, at the owner's word, by `-F`, staged by hunk: `ENGINE.4: the Audio sheet's four voices sounded by the graph's own nodes on the audio clock, with a sound card`; then `ENGINE.4: the sound measured by an offline render, and the sound card's replay played to its golden`.
+
+    *Alternative:* one slice.
+
+**The catch.** Each met once in the scratch work, or foreseen by reading.
+
+- The double's digest folds every sheet, the Audio sheet among them, so the double half drives its voices by edits: no rule changes in the double, and no case's printed digest moves.
+- `<audio` is a forbidden tag on the built page, which inlines the shim: no comment there may write it.
+- The frame's sound is scheduled after the Clock's rate is read, so a rate written in a frame sets that frame's length. The mutant anchors H (the three reads) and M (`if (d.clock) this._readClock();`) stay whole: the sound is a line after them.
+- A late frame starts the timeline again with no cancel, since the last frame's events have all passed; only a stop cancels.
+- Under virtual time an offline render needs a chain of 0 ms tasks, and a busy wait on `Date` or `performance.now` never ends.
+- A real context's clock is the wall's under virtual time, so nothing headless reads one: the oracle's clock is its own.
+- An offline context holds at most 32 channels.
+- PowerShell 5.1 as every check met it: ASCII, `return ,$list`, `$onWindows`, `2>&1` on a native command, the Write tool and never a heredoc, a commit message by `-F`.
+- The tree is shared, a peer's `docs/ALGEBRA.md` among it: this file, the roadmap and the page are staged by hunk, HEAD plus this item's own.
+
+**Oracle.** On the owner's machine under Windows PowerShell 5.1, then on both jobs.
+
+- `cargo fmt --check`, `clippy --workspace --all-targets -D warnings` and `cargo test --workspace`: the pass's golden over five sources; in slice 2 the general player over two replays.
+- `check_cartridge.ps1`: five cartridges, five sources, one library, the Audio judgment's mutants among its control's; in slice 2 two replays and two goldens.
+- `check_host_loop.ps1` at both ratios: fourteen cases, then fifteen; the control's pages, twenty-three then twenty-four, each failing for its own reason.
+- `check_web_offline.ps1`'s control with its new mutants.
+- `run_checks.ps1 -WithExtras` at 12 checks and 12 verifiers, `ALL GREEN`.
+- The owner's hand test, in Chrome with the speakers on.
+  - Slice 1: pick the Sound card and press Sound on. Hear the four waves under one note, the scale, the two chords and the slide with its swell, an eight-second loop, with no click at a wave change or a note's start. Press Z or an arrow: a tick. Write `(cell "Knobs" "B1" "saw")`: the log says voice 4's wave is no wave, and the tick is silent; `(cell "Knobs" "B1" "square")`: a square tick. Pause: silence; Run: the sound again. Another tab and back: silence, then the sound. `(cell "Clock" "B2" 10)`: the music at a third of its speed; then 30. Sound off.
+  - Slice 2: play the card's replay and hear the run again.
+
+**Size.** `~days` (*prediction*).
+- Slice 1, about a day: the host about 220 lines, the page's double and case about 450, the card's source about 170, the checks about 150, and the page's prose.
+- Slice 2, about half a day: the render's case about 200 lines, the engine's player about 80, the two files.
+
+*Scoped 2026-10-10; the thirteen decisions await the owner.*
+
+*Approved 2026-10-10, the same day, all thirteen, in the owner's words: "All thirteen decisions approved. Proceed." With the approval the owner restated the roadmap's markers: 🟡 marks an item under construction, and ✅ is earned by a successful build whose tests pass; the line went to 🟡 the same hour, and the roadmap's legend says so. The first slice is built first, decisions 1 to 7, 9 without its replay, 11 and 12; the second waits for its test.*
+
+*The first slice built 2026-10-10, over `5ecfa38` (a peer's commit of `docs/ALGEBRA.md` §10 and its sitting, which moved HEAD during the build and took none of this slice's hunks) and `vla-lang` 0.8.1, awaiting the owner's test.*
+
+What landed:
+- `web/host.js`, the sound:
+  - `_sound`, a frame's four voices on the audio clock by decision 1's window, after the Clock's rate is read; `_graph`, the shared gain and a gain a voice, made once for a context; `_voiceOf` and `_voiceBad`, decision 4's judgment and its notice; `_voiceAt`, `_oscillator` and `_target`, decisions 2 and 3, only what changed, the approach by `setTargetAtTime` at 3 ms and the dip of five time constants.
+  - `_silence` in `stop()`, and `_visibility`, through which the page's `visibilitychange` now runs; `_release` at an unload; `_resound` in `start()` and at a page shown again, which reads the Audio sheet only while the sound is on.
+  - `soundOn`, `soundOff` and `soundIs`; the options `audio` and `audioNow`; the counters `sounded`, `restarts`, `skipped` and `silences`; `_wantSound`, the notice that a voice would sound while the sound is off, once a load.
+  - The header, the rules' comment and `AlonzoHost.RULES` with the sound's constants.
+- `web/index.template.html`: the Sound on button and the frame line's sound counts; the sound card in the picker, its two places and its entry; and the loop oracle's fourteenth case, `audio`: `GraphDouble`, a double of the Web Audio graph; `SoundModel`, the page's own arithmetic of decisions 1 to 6 with its own constants; `sndWant`, decision 4; and the case, over the double by edits, with the sound off, and over the module with the sound card computed by hand.
+- `cartridges/common.vla`: `audio`, the Audio sheet's header and the voices' numbers. `cartridges/soundcard/soundcard.source.vla` (133 lines) and the cartridge the pass writes, `soundcard.vla`, 117 rows, 1,679 cells, 1,592 of them formula cells; every other cartridge unchanged byte for byte.
+- `tools/check_host_loop.ps1`: fourteen cases, the floors of `audio` and `pass` at 5 sources, and mutant pages S to W. `tools/check_cartridge.ps1`: five cartridges and five sources, the Audio sheet's value cells judged, thirty-two mutants. `tools/check_web_offline.ps1`: the shim's eight Web Audio names, twenty-one mutants. `tools/run_checks.ps1`: the dated line and the controls' words.
+- `SPEC.md`'s dated corrections: §3.6 (the timeline, the voices, a voice that is no voice, when it sounds), §5 step 6 and rate zero, §8.3, §13, §14's sources. `README.md`, `web/README.md`, `engine/README.md`.
+
+The oracle, run on the day on the owner's machine under Windows PowerShell 5.1 (*measurement*):
+- `cargo fmt --check` and `clippy --workspace --all-targets -D warnings` clean; `cargo test --workspace` 27 passed, the pass's golden holding five sources. The module unchanged, 516,175 bytes: this slice is the host's.
+- `cargo run --release --example expand -- --check`: five sources, each `same`.
+- `check_host_loop.ps1` at both ratios, fourteen cases. The first thirteen's counts and digests are what they were (`rate30` 7a8f8c44 with 124 detachments), but for `pass`, 5 sources the same and 504 rows. `audio`:
+  - over the double: 43 frames, 41 sounded (the frames and three starts, less five skipped), 80 calls on the double of the graph each equal to the page's arithmetic, 3 oscillators, 5 restarts (the start, the long task, the stall, the run after the pause, the page shown), 5 skipped (the stall's burst), 3 silences (the pause, the page hidden, the unload), 2 notices said once each and marked no refusal, 3 frames at rate 0; and with the sound off, the one notice that the voices would sound, nothing sounded;
+  - over the engine's module, the sound card: 240 frames, every frame's Audio sheet equal to the card computed by hand and every call to the arithmetic, 241 sounded, 248 calls, 5 ticks, 1 frame silenced by the wave `"saw"` and its one notice, 10 frames at the rate of 10, the waterfall drawn by hand 240 times.
+- Its control, twenty-three mutant pages in 107.1 s, each failing for its own reason. The five new ones failed at the first call their reason makes the first to differ, in both halves:
+  - S, a gain set at once: "over the double, frame 2: the host's call 21 on the graph is "gain 2 gain set 0.125 at 0.11666666666666667", and the page's arithmetic says "gain 2 gain target 0.125 at 0.11666666666666667 tau 0.003"";
+  - T, every frame a lookahead from now: "the host's call 18 on the graph is "oscillator 6 frequency set 440 at 0.11800000000000001", and the page's arithmetic says "oscillator 6 frequency set 440 at 0.11666666666666667"";
+  - U, a voice's gain its volume: "gain 2 gain target 0.5" where the arithmetic says 0.125;
+  - V, no silence at a stop: "over the double, the pause: the host's call 39 on the graph is missing, and the page's arithmetic says "gain 2 gain cancel 1.57"";
+  - W, a wave changed at once: "the host's call 23 on the graph is "oscillator 6 stop 0.31666666666666665", and the page's arithmetic says "gain 2 gain target 0 at 0.31666666666666665 tau 0.003"".
+- `check_cartridge.ps1`: five cartridges, five sources, the replay and its golden as before; its control's thirty-two mutants, the three new ones (`"triangel"`, a note of 130, a volume of `"loud"`) failing by name. `check_web_offline.ps1`: the shim names none of the eight; its control's twenty-one mutants, each Web Audio name planted failing by its name.
+- `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`, in 176 s, the loop check's control 108.3 s of it.
+- The plain page's panel, probed headless with the autoplay flag over the module: the sound card picked, Sound on pressed (the button then reads Sound off), "Sound on: the Audio sheet's four voices sound on the audio clock, 50 ms ahead of it.", the frame line counting 4 frames sounded, 2 restarts and 12 skipped by frame 14, since under a virtual clock the frames come far faster than the audio clock, which is the wall's (the scoping's measurement); Pause, then Sound off ("Sound off."); no script error. The real context is made and driven; what it sounds like is the owner's to hear.
+
+Corrected in the build, against the scoping:
+- *The notice while the sound is off is said at the first frame a voice would sound*, "frame n: the Audio sheet's voices would sound now: press Sound on to hear them (...)", where decision 5 said it at the load. The double declares an Audio sheet, so a load-time sentence would have been said at every load of every case over it, about voices at volume 0; at the first frame a volume is above 0 it is true and said once a load. The `audio` case holds it with the sound off.
+- *The start sounds the frame the grid holds only while the sound is on*, reading the Audio sheet then: an extra view at every load would have moved the thirteen cases' allocation and detachment counts, which this slice leaves exactly as they were.
+- *A hidden page goes through `_visibility`*, which the listener calls and the oracle calls directly, since a page cannot set `document.hidden`.
+- *A stop silences once*: a voice already silent since its last silence is left alone, so the second `stop()` an unload makes logs nothing.
+- *An unload stops the oscillators ten time constants after the silence, and Sound off suspends the context after that release*, not at once, so the release is heard to its end.
+- *A PowerShell trap, met in the control:* `$jS`, a mutant's judgment, was `$js`, the host's text the next mutant read, since names fold case; renamed.
+
+The size, against the prediction (*measurement*, the diff's added lines): the host 242 against about 220; the page 336, the double, the arithmetic, the case and the panel, against about 450; the card's source 133 against about 170; the checks 160 against about 150. The writing took about half a day, against a day.
+
+What remains is the owner's, in Chrome with the speakers on.
+1. Open `web/index.html` (built) and pick the Sound card. The log says the voices would sound now, and to press Sound on.
+2. Press Sound on. Hear the eight-second loop: A4 through the square, the triangle, the sawtooth and the sine, half a second each, with no click at a change of wave; C major up, each note starting cleanly after its rest; C major held for a second, then A minor; voice 2 sliding up two octaves while it swells and fades. The notes fall down the plane in each voice's colour.
+3. Click the plane and press Z, or an arrow: a tick, a short sawtooth at C6, each press.
+4. Write `(cell "Knobs" "B1" "saw")`: at the next press the log says voice 4's wave, Audio!B5, is "saw", not a wave, and the tick is silent; write `(cell "Knobs" "B1" "square")` and the tick is a square.
+5. Press Pause: the sound stops. Press Run: it sounds again. Switch to another tab and back: silence, then the sound.
+6. Write `(cell "Clock" "B2" 10)`: the loop plays at a third of its speed, each note longer; then `(cell "Clock" "B2" 30)`.
+7. Press Sound off: silence, and the button reads Sound on.
+8. `run_checks.ps1 -WithExtras`, `ALL GREEN`.
+9. The commit at the owner's word, by `-F`, staged by hunk: `ENGINE.4: the Audio sheet's four voices sounded by the graph's own nodes on the audio clock, with a sound card`. Then the second slice: the offline render's measure and the card's replay.
+
+*The owner's hand test, 2026-10-10, in Chrome with the speakers on, with a screenshot.*
+- The sound card sounded after Sound on, its waterfall falling down the plane; the screenshot's frame line at frame 1893 reads "The sound: 1772 frames sounded, 4 restarts, 0 skipped.", and its log holds the notice of frame 1 that the voices would sound now, then "Sound on: ...".
+- `(cell "Knobs" "B1" "saw")`, written at frame 1488: the tick silent, and at the next press, frame 1529, the log said "voice 4's wave, Audio!B5, is "saw", not square, triangle, sawtooth or sine; the voice is silent." `(cell "Knobs" "B1" "square")`: the tick again.
+- Pause: silence; Run: the music again. Another cartridge picked: silence; the sound card picked again: the music, without Sound on pressed again, the sound being the page's switch and not a cartridge's (decision 5). And, beyond the steps, the browser's window left for another paused the page and silenced it: Chrome told the page it was hidden, and the hidden page is silent (decision 6).
+- `(cell "Clock" "B2" 10)`: the music at a third of its speed; `(cell "Clock" "B2" 30)`: its own pace again.
+- The tests pass.
+
+*Owner-tested 2026-10-10; the first slice committed 2026-10-10 at the owner's word, "Tests pass; commit, then proceed with scoping and implementing slice 2 of ENGINE.4". Not pushed.*

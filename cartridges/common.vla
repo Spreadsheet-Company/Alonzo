@@ -118,6 +118,21 @@
       (cell "Keys" (symbol "\"" letter (+expand index 1)) (car codes))
       (keys-from letter (+expand index 1) (cdr codes)))))
 
+; ---- the Audio sheet (SPEC.md section 3.6) ------------------------------------------
+; A table, a voice a row: the header in row 1 and the voices' numbers in column A, rows 2
+; to 5; a cartridge writes each voice's wave, note and volume in columns B to D itself.
+
+(defmacro (audio)
+  "the Audio sheet's header row, voice, wave, note and volume, and its four voices' numbers"
+  (cell "Audio" "A1" "voice")
+  (cell "Audio" "B1" "wave")
+  (cell "Audio" "C1" "note")
+  (cell "Audio" "D1" "volume")
+  (cell "Audio" "A2" 1)
+  (cell "Audio" "A3" 2)
+  (cell "Audio" "A4" 3)
+  (cell "Audio" "A5" 4))
+
 ; ---- patterns -----------------------------------------------------------------------
 
 (defmacro (live sheet & cells)

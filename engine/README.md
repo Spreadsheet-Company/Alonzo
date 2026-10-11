@@ -78,8 +78,12 @@ sheet (`ENGINE.3`).
 The host that drives it is the repository's `web/host.js`, whose frame path
 over this module, the plane viewed and blitted, is held to the same floors
 as over its double; the language keeps the Screen's plane at each frame's
-end, so a view is a copy. What comes next, in the order `ROADMAP.md` lays
-it: Audio (`ENGINE.4`) and File (`ENGINE.5`); and the
+end, so a view is a copy. The host sounds the Audio sheet too (`ENGINE.4`,
+under construction): this module holds the sheet's layout and checks it at
+load and at a write, and the host reads the four voices after each step and
+schedules the Web Audio graph's own oscillators and gains from them; the
+module computes no sound. What comes next, in the order `ROADMAP.md` lays
+it: File (`ENGINE.5`); and the
 accelerators, each behind the naive evaluation's frames as its reference
 (`ENGINE.6`), after the naive evaluator's own costs, which the benchmark
 measured first and which are the language's to remove; the first of them

@@ -73,9 +73,17 @@ the replay plays to is the loop oracle's, which holds the page's player to
 the golden byte for byte (tools/check_host_loop.ps1, the replay case), and
 cargo test's, a player of the engine's own.
 
+SINCE ENGINE.4 (2026-10-10; REARVIEW.md, decisions 4 and 9): the Audio
+sheet's value cells are judged as the host judges a voice at run time
+(SPEC.md section 3.6): a wave in column B one of square, triangle, sawtooth
+or sine, compared without case; a note in column C a number from 0 to 127;
+a volume in column D a number from 0 to 1. A formula there is the host's to
+judge after each step, which says a voice that is no voice once and silences
+it; a value written wrong is a typo this check can name before any run.
+
 -Control copies cartridges/ to a scratch folder and proves the check on it,
 a fresh copy for every case: the clean copy passes, and so does Life written
-to (spec 3); twenty-nine mutants must each fail for its own reason, each
+to (spec 3); thirty-two mutants must each fail for its own reason, each
 asserting its anchor once and proving it applied before the check is asked.
 Thirteen are of life.vla: a directive dropped, a rate of 121, a screen 321
 wide, a cell written twice, a cell outside the Screen, a Palette index out
@@ -89,7 +97,9 @@ folder, and a second library. Nine are ENGINE.3's, of the input card's
 replay and golden: a digest that is not the cartridge's, a replay named for
 another folder, a (spec 4), a seed of 0, frames out of order, a derived row,
 a row outside a frame, a golden without its window row, and a golden whose
-replay is gone.
+replay is gone. Three are ENGINE.4's: the sound card's voice 2 written the
+wave "triangel", and Life given an Audio sheet whose voice 1 has the note
+130, and one whose voice 1 has the volume "loud".
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network; a
 hardcoded, reviewable baseline that pins how many; exit 0 clean, exit 1 with
@@ -132,12 +142,19 @@ if ($Root -eq '') { $Root = $repoRoot }
 # 2026-10-10, at the owner's word: the library renamed cartridges/common.vla,
 # with on, cells and formulas, which name a sheet once over a run of its rows;
 # the sources rewritten over them, and the cartridges' rows unchanged.
-$expectedCartridges = 4
-$expectedSources = 4
+# 2026-10-10, ENGINE.4's first slice: five, the sound card beside them, 117
+# rows (seven sheet rows, the Palette's forty-eight cells, the Keys sheet's
+# twenty, the Knobs' six, the Score's labels and timing, the Audio sheet's
+# header, two waves and ten formulas, the Log's six formula rows and the
+# Screen's two, its waterfall: 1,592 formula cells), written as a source over
+# the library, which gains audio; the other four's rows unchanged.
+$expectedCartridges = 5
+$expectedSources = 5
 $expectedLibraries = 1
 $expectedReplays = 1
 $expectedGoldens = 1
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136 }
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117 }
+$waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---
 $requiredDirectives = @('spec', 'title', 'rate', 'screen', 'seed')
@@ -398,6 +415,25 @@ function Test-Cartridge([string]$path) {
             if ($null -eq $colour -or -not (Test-Kind $colour 'string') -or $colour.Value -cnotmatch '^#[0-9A-Fa-f]{6}$') { $problems.Add("cart-palette-invalid: Palette!B$row holds $(Show-Datum $colour), not a colour as #RRGGBB") }
         }
     }
+
+    # -- the Audio sheet's value cells, judged as the host judges a voice (ENGINE.4, decision 4) --
+    foreach ($w in $writes) {
+        if ($w.Key -ne 'audio' -or $w.Kind -ne 'cell') { continue }
+        $d = $w.Value
+        for ($row = [Math]::Max(2, $w.Rect.T); $row -le [Math]::Min(5, $w.Rect.B); $row++) {
+            for ($col = [Math]::Max(2, $w.Rect.L); $col -le [Math]::Min(4, $w.Rect.R); $col++) {
+                $at = 'Audio!' + [char](64 + $col) + $row
+                $num = if (Test-Kind $d 'number') { [double]$d.Text } else { $null }
+                if ($col -eq 2 -and -not ((Test-Kind $d 'string') -and ($waves -ccontains $d.Value.ToLowerInvariant()))) {
+                    $problems.Add("line $($w.Line): $at holds $(Show-Datum $d), which is no voice's wave: square, triangle, sawtooth or sine, compared without case (SPEC.md section 3.6); the host would silence the voice")
+                } elseif ($col -eq 3 -and -not ($null -ne $num -and $num -ge 0 -and $num -le 127)) {
+                    $problems.Add("line $($w.Line): $at holds $(Show-Datum $d), which is no voice's note: a number from 0 to 127, MIDI's range (SPEC.md section 3.6); the host would silence the voice")
+                } elseif ($col -eq 4 -and -not ($null -ne $num -and $num -ge 0 -and $num -le 1)) {
+                    $problems.Add("line $($w.Line): $at holds $(Show-Datum $d), which is no voice's volume: a number from 0 to 1 (SPEC.md section 3.6); the host would silence the voice")
+                }
+            }
+        }
+    }
     return @{ Problems = $problems; Rows = $forms.Count - 1; Cells = $cells; Formulas = $formulas }
 }
 
@@ -646,7 +682,11 @@ if ($Control) {
             @{ Name = 'a derived row in a replay'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 1`n"; With = "(frame 1`n  (derived `"Tally`" `"B20`" 1)`n"; Want = 'a (derived ...) row: the host''s derived writes are re-derived' },
             @{ Name = 'a row outside a replay''s frames'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 1`n"; With = "(cell `"Input`" `"B1`" 0)`n(frame 1`n"; Want = '(cell ...) outside a frame: every form after a replay''s header is a frame' },
             @{ Name = 'a golden without its window row'; File = 'inputcard/inputcard.golden.vla'; Pattern = '\(window "Tally" "[A-Z]+[0-9]+:[A-Z]+[0-9]+"\)\n'; With = ''; Want = 'the golden holds 0 (window ...) row(s)' },
-            @{ Name = 'a golden whose replay is gone'; Remove = 'inputcard/inputcard.replay.vla'; Want = 'inputcard.golden.vla: has no replay beside it' }
+            @{ Name = 'a golden whose replay is gone'; Remove = 'inputcard/inputcard.replay.vla'; Want = 'inputcard.golden.vla: has no replay beside it' },
+            # ENGINE.4: the Audio sheet's value cells
+            @{ Name = 'a wave that is no wave'; File = 'soundcard/soundcard.vla'; Anchor = '(cell "Audio" "B3" "triangle")'; With = '(cell "Audio" "B3" "triangel")'; Want = 'Audio!B3 holds "triangel", which is no voice''s wave' },
+            @{ Name = 'a note past 127'; Append = '(cell "Audio" "C2" 130)'; Want = 'Audio!C2 holds 130, which is no voice''s note' },
+            @{ Name = 'a volume that is no number'; Append = '(cell "Audio" "D2" "loud")'; Want = 'Audio!D2 holds "loud", which is no voice''s volume' }
         )
         foreach ($mu in $mutants) {
             Reset-Tree
@@ -695,7 +735,7 @@ if ($Control) {
             else { $ok = $false; $verdicts.Add("$($mu.Name): PASSED but should fail") }
         }
         foreach ($v in $verdicts) { Write-Output ('control: ' + $v) }
-        if ($ok) { Write-Output 'OK: the check passes the clean copy and Life written to (spec 3), and fails each of the twenty-nine mutants for its own reason, each proving it applied'; exit 0 }
+        if ($ok) { Write-Output 'OK: the check passes the clean copy and Life written to (spec 3), and fails each of the thirty-two mutants for its own reason, each proving it applied'; exit 0 }
         Write-Output 'FAIL: the control did not behave as the header says'
         exit 1
     } finally {

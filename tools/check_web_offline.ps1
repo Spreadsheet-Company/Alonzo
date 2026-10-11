@@ -37,6 +37,16 @@ web/index.html exists beside the template, its markup is held to the same
 list of tags (a record or a cartridge cannot spell a tag) and no
 placeholder is left in it.
 
+SINCE ENGINE.4 (2026-10-10; REARVIEW.md, decision 11): CHARTER.md section 8
+builds no sound synthesizer beyond the Web Audio graph's own nodes, and the
+Audio device is an oscillator and a gain a voice, scheduled from the cells.
+So the host's source, web/host.js, names none of the Web Audio calls that
+would make samples of the host's own or reach past those nodes:
+createScriptProcessor, AudioWorklet (and audioWorklet), createBuffer (and so
+createBufferSource), createPeriodicWave, createMediaElementSource,
+createMediaStreamSource, getUserMedia and addModule. The list is held on the
+shim alone: the page's oracle reads a render's samples to measure it.
+
 -Control proves the check on scratch copies of the template and the
 scripts: the real set passes; a template with a script tag's src appended,
 one with a fetch call, one with the viewport's placeholder removed, one with
@@ -46,7 +56,9 @@ folder does not hold, one with a SOURCE place for a source no cartridge
 has, one with the library's LIBRARY place removed, one with a REPLAY place
 for a replay no cartridge has, one with the input card's GOLDEN place
 removed, a viewport source with a fetch call appended and a host source
-with a fetch call appended must each fail.
+with a fetch call appended must each fail; and since ENGINE.4 a host source
+with each of the eight Web Audio names planted, one a copy, each failing by
+its name: twenty-one mutants.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named.
@@ -73,6 +85,10 @@ $tagTokens = @('<script src', '<script type="module" src', '<link ', '<img ', '<
 # Code and style that reach out: held on the template and on the viewport's
 # source, which the builder inlines into the page.
 $codeTokens = @('fetch(', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'sendBeacon', 'import(', 'importScripts', '@import', 'url(', 'http://', 'https://')
+# The Web Audio names the host's source never holds (ENGINE.4; CHARTER.md section 8): a sample of its own
+# (a script processor, a worklet, a buffer, a periodic wave) or a reach past the graph's nodes (a media
+# element or stream, the microphone, a module fetched by address). Compared without case, as the code tokens are.
+$shimAudioTokens = @('createScriptProcessor', 'AudioWorklet', 'createBuffer', 'createPeriodicWave', 'createMediaElementSource', 'createMediaStreamSource', 'getUserMedia', 'addModule')
 # The placeholders the builder fills once each: the three scripts and the engine's module.
 $viewportPlaceholder = '{{VIEWPORT_JS}}'
 $oncePlaceholders = @($viewportPlaceholder, '{{FAKE_JS}}', '{{HOST_JS}}', '{{ALONZO_WASM}}')
@@ -161,6 +177,10 @@ function Test-Template([string]$path, [string]$script, [string]$fixtures, [strin
         foreach ($t in $codeTokens) {
             if ($js.Contains($t.ToLowerInvariant())) { $problems += ("{0} reaches out: '{1}'" -f $pair[0], $t) }
         }
+        if ($pair[1] -ne $hostjs) { continue }
+        foreach ($t in $shimAudioTokens) {
+            if ($js.Contains($t.ToLowerInvariant())) { $problems += ("{0} names '{1}', a sound of the host's own or a reach past the Web Audio graph's oscillators and gains, which CHARTER.md section 8 builds no part of (ENGINE.4)" -f $pair[0], $t) }
+        }
     }
     # Returned without the comma, as Frazaro's twin returns it: the callers wrap the result in @().
     return $problems
@@ -217,9 +237,23 @@ if ($Control) {
         $kHit = @($rk | Where-Object { $_ -like '*{{LIBRARY:common}} place*' }).Count
         $lHit = @($rl | Where-Object { $_ -like '*REPLAY:nowhere*' }).Count
         $mHit = @($rm | Where-Object { $_ -like '*{{GOLDEN:inputcard}} place*' }).Count
-        Write-Output ("control: the real set has {0} problem(s); the script src {1}, the fetch {2}, the missing placeholder {3}, the anchor {4}, the image {5}, the stray fixture place {6}, the fetch in the viewport {7}, the stray cartridge place {8}, the fetch in the host {9}, the stray source place {10}, the library without its place {11}, the stray replay place {12}, the golden without its place {13}" -f $real.Count, $ra.Count, $rb.Count, $rc.Count, $rd.Count, $re.Count, $rf.Count, $rg.Count, $hHit, $iHit, $jHit, $kHit, $lHit, $mHit)
-        if ($real.Count -eq 0 -and $ra.Count -ge 1 -and $rb.Count -ge 1 -and $rc.Count -ge 1 -and $rd.Count -ge 1 -and $re.Count -ge 1 -and $rf.Count -ge 1 -and $rg.Count -ge 1 -and $hHit -ge 1 -and $iHit -ge 1 -and $jHit -ge 2 -and $kHit -ge 1 -and $lHit -ge 1 -and $mHit -ge 1) {
-            Write-Output 'OK: the check passes the template and the three scripts and fails each of the thirteen mutants'
+        # ENGINE.4: each Web Audio name planted in a copy of the host's source, each failing by its own name
+        $hostText = [System.IO.File]::ReadAllText($hostPath)
+        $audioHits = New-Object System.Collections.Generic.List[string]
+        $audioOk = $true
+        for ($n = 0; $n -lt $shimAudioTokens.Count; $n++) {
+            $tok = $shimAudioTokens[$n]
+            $planted = $hostText + "`nvar planted = window.planted && window.planted." + $tok + ";`n"
+            $pjs = Join-Path $tmp ('audio' + $n + '.js'); [System.IO.File]::WriteAllText($pjs, $planted, $utf8)
+            $applied = ([System.IO.File]::ReadAllText($pjs)).Contains('.' + $tok + ';')
+            $rp = @(Test-Template $templatePath $scriptPath $fixturesDir $fakePath $pjs)
+            $hit = @($rp | Where-Object { $_ -like ("the host's source names '" + $tok + "'*") }).Count
+            $audioHits.Add(("{0} {1}" -f $tok, $(if ($applied -and $hit -ge 1) { 'failed' } else { 'NOT failed' })))
+            if (-not ($applied -and $hit -ge 1)) { $audioOk = $false }
+        }
+        Write-Output ("control: the real set has {0} problem(s); the script src {1}, the fetch {2}, the missing placeholder {3}, the anchor {4}, the image {5}, the stray fixture place {6}, the fetch in the viewport {7}, the stray cartridge place {8}, the fetch in the host {9}, the stray source place {10}, the library without its place {11}, the stray replay place {12}, the golden without its place {13}; the Web Audio names planted in the host: {14}" -f $real.Count, $ra.Count, $rb.Count, $rc.Count, $rd.Count, $re.Count, $rf.Count, $rg.Count, $hHit, $iHit, $jHit, $kHit, $lHit, $mHit, ($audioHits -join ', '))
+        if ($real.Count -eq 0 -and $ra.Count -ge 1 -and $rb.Count -ge 1 -and $rc.Count -ge 1 -and $rd.Count -ge 1 -and $re.Count -ge 1 -and $rf.Count -ge 1 -and $rg.Count -ge 1 -and $hHit -ge 1 -and $iHit -ge 1 -and $jHit -ge 2 -and $kHit -ge 1 -and $lHit -ge 1 -and $mHit -ge 1 -and $audioOk) {
+            Write-Output 'OK: the check passes the template and the three scripts and fails each of the twenty-one mutants'
             exit 0
         }
         Write-Output 'FAIL: the control did not behave'
@@ -244,7 +278,7 @@ if ($problems.Count -eq 0) {
     $libraries = Get-LibraryNames $cartridgesDir
     $replays = Get-BesideNames $cartridgesDir '.replay.vla'
     $goldens = Get-BesideNames $cartridgesDir '.golden.vla'
-    Write-Output ("OK: web/index.template.html, web/viewport.js, web/fake.js and web/host.js load nothing and link nowhere, the scripts' and the module's placeholders each in its one place, the {0} fixture places the folder's files, the {1} cartridge places the cartridges', the {2} source places their sources', the {3} replay and {4} golden place(s) theirs and the {5} library place(s) the libraries'; {6}" -f $names.Count, $carts.Count, $sources.Count, $replays.Count, $goldens.Count, $libraries.Count, $builtNote)
+    Write-Output ("OK: web/index.template.html, web/viewport.js, web/fake.js and web/host.js load nothing and link nowhere, the host names no Web Audio call past the graph's oscillators and gains, the scripts' and the module's placeholders each in its one place, the {0} fixture places the folder's files, the {1} cartridge places the cartridges', the {2} source places their sources', the {3} replay and {4} golden place(s) theirs and the {5} library place(s) the libraries'; {6}" -f $names.Count, $carts.Count, $sources.Count, $replays.Count, $goldens.Count, $libraries.Count, $builtNote)
     exit 0
 }
 Write-Output ("FAIL: the web page has {0} problem(s):" -f $problems.Count)

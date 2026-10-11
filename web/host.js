@@ -29,6 +29,20 @@
   manifest says (seed host) the host chooses the seed, its one write of its
   own (ENGINE.3).
 
+  And it sounds the Audio sheet (SPEC.md section 3.6; ENGINE.4): after each
+  frame, once the Clock's rate is read, its four voices, each the Web Audio
+  graph's own oscillator and gain and nothing else, scheduled on the audio
+  clock and never on the animation clock. A frame sounds where the last
+  frame's sound ends, while that lies within twice a lookahead of 50 ms
+  ahead of the audio clock; a frame whose time has passed starts the
+  timeline again a lookahead ahead, and a frame past the window is not
+  sounded, the timeline staying where it was. A voice's gain is its volume
+  over four, approached by the graph's setTargetAtTime with a time constant
+  of 3 ms; a wave changed is a new oscillator, through a dip while the voice
+  sounds; a cell that is no voice silences its voice for the frame, said
+  once. The sound is on only after a person's act, the panel's Sound on, as
+  Chrome's autoplay policy asks, and it stops with the loop.
+
   Beside the loop it runs the pass (SPEC.md section 7.8, SPEC.3's second
   slice): a cartridge's source, its path and the texts it includes handed to
   the module's twelfth export, alonzo_expand, an act of its own that takes no
@@ -54,8 +68,9 @@
   What the host holds is SD-23's interface state and nothing else (AD-6):
   the keys held, the pointer's place, the accumulator, the budget's
   measurement, the palette's table, the key map, the Camera's two cells,
-  the derived rows waiting for the next frame, and the replay's record and
-  the frames a replay has left to play. Every value is the module's.
+  the derived rows waiting for the next frame, the replay's record and the
+  frames a replay has left to play, and the audio context with the voices'
+  nodes and the timeline's end. Every value is the module's.
   Every refusal and every event is a sentence, the latest new one in the
   status and the last twenty events in a log, a repeat of an event counted in
   the line it first made rather than pushing the others out (SD-30), and a
@@ -92,10 +107,22 @@
   var SPEC = 3;                      // the page's version this host implements, which a replay's header names
   var REPLAY_CAP = 8 * 1048576;      // the replay's text, past which the recorder stops and says so: about an
                                      // hour of a pointer that never rests (ENGINE.3, decision 10)
+  // ---- the sound's rules, as ENGINE.4's scoping states them (decisions 1 to 4) ----
+  var LOOKAHEAD = 0.05;              // s: a frame that starts the timeline sounds this far ahead of the audio clock,
+                                     // and no frame sounds further ahead than twice it
+  var GAIN_TAU = 0.003;              // s: every change of a voice's gain approaches its value by the graph's setTargetAtTime
+                                     // with this time constant (measured: no onset step over 1.33 times a wave's own down to
+                                     // 55 Hz, where a gain set at once steps 17 to 24 times it)
+  var DIP_TAUS = 5;                  // a wave changed while the voice sounds: the new oscillator this many time constants on
+  var VOICE_SHARE = 0.25;            // a voice's gain is its volume times this, so four voices at full volume never clip
+  var RELEASE_TAUS = 10;             // an unload stops the oscillators this many time constants after their silence
+  var MAX_NOTE = 127;                // MIDI's highest note, below every Nyquist frequency from 25 kHz
+  var WAVES = ['square', 'triangle', 'sawtooth', 'sine'];   // the OscillatorNode's own words
   var ABI = 1;
   var RULES = {
     abi: ABI, capMs: ACCUMULATOR_CAP_MS, firstBudget: FIRST_BUDGET, minBudget: MIN_BUDGET,
-    sliceFraction: SLICE_FRACTION, intervalSamples: INTERVAL_SAMPLES, logLines: LOG_LINES
+    sliceFraction: SLICE_FRACTION, intervalSamples: INTERVAL_SAMPLES, logLines: LOG_LINES,
+    lookahead: LOOKAHEAD, gainTau: GAIN_TAU, voiceShare: VOICE_SHARE
   };
   var EXPORTS = ['alonzo_abi_version', 'alonzo_version_text', 'alonzo_alloc', 'alonzo_free', 'alonzo_load',
                  'alonzo_describe', 'alonzo_write', 'alonzo_step', 'alonzo_view', 'alonzo_unload'];
@@ -253,7 +280,9 @@
   // callsPerTick (the step calls a tick may make, in place of the time slice), now (the clock the
   // budget is measured by), drive ('manual' when the caller calls tick itself), seed (the number a
   // (seed host) cartridge gets in place of the browser's random one, a whole number from 1 to
-  // 2147483646).
+  // 2147483646), audio (an audio context the host sounds through from the start, in place of the
+  // one Sound on makes: an oracle's double of the graph, or an offline context to render), and
+  // audioNow (the audio clock, in place of that context's currentTime).
   function Host(options) {
     options = options || {};
     VP();
@@ -271,6 +300,14 @@
     this.m = null; this.version = ''; this.handle = 0; this.cart = null;
     this.cartBytes = null; this.cartFile = '';   // the cartridge loaded, as its load was given it: a replay reloads it
     this.running = false; this.hidden = false; this.raf = 0;
+    // The sound (ENGINE.4): the audio context and the voices' nodes, the host's own state (SD-23), kept
+    // across loads; made at Sound on, or handed in (options.audio) with its clock (options.audioNow).
+    this.snd = { ctx: null, injected: false, on: false, now: null, master: null, voices: null, end: null, silent: true, bad: {}, wanted: false };
+    if (options.audio) {
+      var actx = options.audio;
+      this.snd.ctx = actx; this.snd.injected = true; this.snd.on = true;
+      this.snd.now = options.audioNow || function () { return actx.currentTime; };
+    }
     this._reset();
     if (this.canvas) this._listenCanvas();
     this._listenPage();
@@ -287,7 +324,9 @@
     this.audio = []; this.saveValue = 0; this.plane = null; this.timing = null; this.said1 = {};
     this.windowsSeen = {};
     this.rec = null; this.player = null;   // the replay recorded since the load, and one playing
-    this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, saves: 0 };
+    this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
+    this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, saves: 0,
+               sounded: 0, restarts: 0, skipped: 0, silences: 0 };
   };
 
   // The module: its ABI number asked first, then every export the loop calls.
@@ -376,6 +415,7 @@
   Host.prototype.unload = function () {
     if (!this.m || !this.handle) return;
     this.stop();
+    this._release();   // the oscillators stopped after the silence, the next load making its own (ENGINE.4, decision 6)
     var r = this.m.call('alonzo_unload', [this.handle]);
     if (r.status !== 0) this._refuse('The unload was refused: ' + words(r) + '.');
     this.handle = 0; this.cart = null; this.inFrame = false; this.progress = null; this.plane = null;
@@ -413,6 +453,7 @@
   Host.prototype.start = function () {
     if (this.running || !this.handle) return;
     this.running = true; this.lastTs = null;
+    this._resound();   // the frame the grid holds sounds again with the loop (ENGINE.4, decision 6)
     if (this.options.drive === 'manual' || !global.requestAnimationFrame) return;
     var self = this;
     var loop = function (ts) {
@@ -426,6 +467,7 @@
     this.running = false;
     if (this.raf && global.cancelAnimationFrame) global.cancelAnimationFrame(this.raf);
     this.raf = 0;
+    this._silence();   // the voices stop with the loop (ENGINE.4, decision 6)
   };
   // One animation frame's work, at its timestamp: the step 1 of section 5.
   Host.prototype.tick = function (ts) {
@@ -599,6 +641,7 @@
     if (d.file) this._readFile();
     if (d.write) this._readWrite();
     if (d.clock) this._readClock();
+    if (d.audio) this._sound();   // step 6, the sound, after the Clock's rate that times it (ENGINE.4)
     if (this.stepEdit) { this._say('frame ' + n + ': stepped once for the edit ' + this.stepEdit + '.'); this.stepEdit = null; }
     var p = this.player;
     this._emit('frame', { frame: n, window: this.window, scale: this.scale || 0, rate: this.cart.rate, replay: p ? p.last : 0 });
@@ -742,6 +785,192 @@
     this.pending = list;
   };
 
+  // ---- the sound (step 6; SPEC.md section 3.6; ENGINE.4) ----
+  // A frame's four voices on the audio clock (decision 1). A frame sounds where the last frame's sound
+  // ends, the last frame's time and 1/rate, the rate the host read after it; while the loop keeps up the
+  // frames lie end to end, so a rhythm in the cells is a rhythm in the sound whatever the display's
+  // interval. A frame whose time has passed starts the timeline again a lookahead ahead of the clock; a
+  // frame further ahead than twice the lookahead is not sounded and the timeline stays where it was, so a
+  // burst after a stall sounds its first frames and skips the rest, as its screen shows only its last. At
+  // rate zero every step sounds a lookahead ahead and holds until the next. Nothing sounds while the loop
+  // is stopped or the page hidden, or before a person turns the sound on.
+  Host.prototype._sound = function () {
+    var s = this.snd, c = this.cart;
+    if (!c || !c.devices.audio || !this.running || this.hidden) return;
+    if (!this._soundOn()) { this._wantSound(); return; }
+    var now = s.now(), at;
+    if (c.rate > 0 && s.end !== null) {
+      at = s.end;   // the end of the last frame's sound (decision 1)
+      if (at < now) { at = now + LOOKAHEAD; this.c.restarts++; }
+      else if (at > now + 2 * LOOKAHEAD) { this.c.skipped++; return; }
+    } else {
+      at = now + LOOKAHEAD;
+      if (c.rate > 0) this.c.restarts++;
+    }
+    s.end = c.rate > 0 ? at + 1 / c.rate : null;
+    s.silent = false;
+    this._graph();
+    for (var i = 0; i < 4; i++) this._voiceAt(s.voices[i], this._voiceOf(i), at);
+    this.c.sounded++;
+  };
+  // The sound on: a context the host was handed, or one made at Sound on that the browser runs.
+  Host.prototype._soundOn = function () { var s = this.snd; return s.on && !!s.ctx && (s.injected || s.ctx.state === 'running'); };
+  // The graph, made once for its context (decision 2): one gain into the destination and a gain a voice into
+  // it, each voice silent until a frame sounds it; an oscillator is made when its voice first sounds.
+  Host.prototype._graph = function () {
+    var s = this.snd;
+    if (s.voices) return;
+    s.master = s.ctx.createGain();
+    s.master.gain.value = 1;
+    s.master.connect(s.ctx.destination);
+    s.voices = [];
+    for (var i = 0; i < 4; i++) {
+      var g = s.ctx.createGain();
+      g.gain.value = 0;
+      g.connect(s.master);
+      s.voices.push({ gain: g, osc: null, wave: null, freq: null, target: 0 });
+    }
+  };
+  // A voice's row judged (decision 4): the volume first, empty 0 and a number from 0 to 1 itself, 0 a rest
+  // whatever the rest of the row holds; above it, the wave one of the four words, compared without case as
+  // the model compares names, and the note a number from 0 to 127, a fraction allowed, its frequency the
+  // host's 440 * 2^((note - 69) / 12). Anything else silences the voice for the frame.
+  Host.prototype._voiceOf = function (i) {
+    var row = this.audio[i] || {}, r = i + 2, bad = this.snd.bad, vol = row.volume;
+    if (vol === null || vol === undefined) vol = 0;
+    if (typeof vol !== 'number' || !(vol >= 0 && vol <= 1)) return this._voiceBad(i, 'volume', 'D' + r, row.volume, 'a number from 0 to 1');
+    bad[i + ' volume'] = undefined;
+    if (vol === 0) return { gain: 0 };
+    var wave = typeof row.wave === 'string' ? row.wave.toLowerCase() : null;
+    if (WAVES.indexOf(wave) < 0) return this._voiceBad(i, 'wave', 'B' + r, row.wave, WAVES.slice(0, 3).join(', ') + ' or ' + WAVES[3]);
+    bad[i + ' wave'] = undefined;
+    var note = row.note;
+    if (typeof note !== 'number' || !(note >= 0 && note <= MAX_NOTE)) return this._voiceBad(i, 'note', 'C' + r, note, 'a number from 0 to ' + MAX_NOTE);
+    bad[i + ' note'] = undefined;
+    return { gain: vol * VOICE_SHARE, wave: wave, freq: 440 * Math.pow(2, (note - 69) / 12) };
+  };
+  // Said once for each cell and each value shown, as a Camera cell is (section 3.8): a notice and not a
+  // refusal, since the Audio sheet is read after a step and never refused.
+  Host.prototype._voiceBad = function (i, what, addr, v, want) {
+    var shown = v === null || v === undefined ? 'empty' : (typeof v === 'string' ? '"' + v + '"' : (typeof v === 'object' ? 'an error, ' + v.error : String(v)));
+    if (this.snd.bad[i + ' ' + what] !== shown) {
+      this.snd.bad[i + ' ' + what] = shown;
+      this._say('frame ' + this.frame + ': voice ' + (i + 1) + '\'s ' + what + ', Audio!' + addr + ', is ' + shown + ', not ' + want + '; the voice is silent.');
+    }
+    return { gain: 0 };
+  };
+  // One voice at a frame's time (decisions 2 and 3): only what changed. A silent voice changes its gain
+  // alone; a wave cannot be scheduled, its type taking effect when the JavaScript runs (measured), so a
+  // wave changed is a new oscillator started at a time on the audio clock as the old one stops, through a
+  // dip while the voice sounds; a pitch is set at the frame's time, the oscillator keeping its phase.
+  Host.prototype._voiceAt = function (v, want, at) {
+    if (want.gain === 0) { if (v.target !== 0) this._target(v, 0, at); return; }
+    if (!v.osc) { this._oscillator(v, want, at); this._target(v, want.gain, at); return; }
+    if (want.wave !== v.wave) {
+      var sw = v.target > 0 ? at + DIP_TAUS * GAIN_TAU : at;   // through a dip while the voice sounds
+      if (sw !== at) this._target(v, 0, at);
+      v.osc.stop(sw);
+      this._oscillator(v, want, sw);
+      this._target(v, want.gain, sw);
+      return;
+    }
+    if (want.freq !== v.freq) { v.osc.frequency.setValueAtTime(want.freq, at); v.freq = want.freq; }
+    if (want.gain !== v.target) this._target(v, want.gain, at);
+  };
+  Host.prototype._oscillator = function (v, want, at) {
+    var o = this.snd.ctx.createOscillator();
+    o.type = want.wave;
+    o.frequency.setValueAtTime(want.freq, at);
+    o.connect(v.gain);
+    o.start(at);
+    v.osc = o; v.wave = want.wave; v.freq = want.freq;
+  };
+  Host.prototype._target = function (v, value, at) {
+    v.gain.gain.setTargetAtTime(value, at, GAIN_TAU);   // the graph's own approach, never a sample of the host's (decision 3)
+    v.target = value;
+  };
+  // The voices stopped with the loop (decision 6): every voice's later events cancelled and its gain
+  // approaching 0 from the audio clock's now; the timeline and each voice's pitch forgotten, so that the
+  // next frame sets every voice whole. A voice already silent since its last silence is left alone.
+  Host.prototype._silence = function () {
+    var s = this.snd;
+    s.end = null;
+    if (s.silent || !s.voices) return;
+    var now = s.now();
+    for (var i = 0; i < 4; i++) {
+      var v = s.voices[i];
+      v.gain.gain.cancelScheduledValues(now);
+      this._target(v, 0, now);
+      if (v.osc) { v.osc.frequency.cancelScheduledValues(now); v.freq = null; }
+    }
+    s.silent = true;
+    this.c.silences++;
+  };
+  // At an unload and at Sound off, after the silence: the oscillators stopped once the release is over.
+  Host.prototype._release = function () {
+    var s = this.snd;
+    if (!s.voices) return;
+    var now = s.now();
+    for (var i = 0; i < 4; i++) {
+      var v = s.voices[i];
+      if (!v.osc) continue;
+      v.osc.stop(now + RELEASE_TAUS * GAIN_TAU);
+      v.osc = null; v.wave = null; v.freq = null;
+    }
+  };
+  // The loop started, or the page shown again (decision 6): the frame the grid holds sounds at once, a
+  // lookahead ahead, its Audio sheet read as it stands.
+  Host.prototype._resound = function () {
+    var c = this.cart;
+    if (!this.handle || !c || !c.devices.audio || !this.running || this.hidden || this.inFrame || !this._soundOn()) return;
+    this._readAudio();
+    this.snd.end = null;
+    this._sound();
+  };
+  // The sound off while a voice would sound (decision 5; SD-30): said once a load.
+  Host.prototype._wantSound = function () {
+    var s = this.snd;
+    if (s.wanted || s.on) return;
+    for (var i = 0; i < 4; i++) {
+      var r = this.audio[i], vol = r ? r.volume : null;
+      if (typeof vol === 'number' && vol > 0) {
+        s.wanted = true;
+        this._say('frame ' + this.frame + ': the Audio sheet\'s voices would sound now: press Sound on to hear them (the browser lets a page sound only after a person\'s act).');
+        return;
+      }
+    }
+  };
+  // Sound on (decision 5): the audio context made at a person's act, the press of the panel's button, which
+  // is what Chrome's autoplay policy asks for (a context made before one stays suspended, measured); the
+  // frame the grid holds sounds at once. Sound off: the voices silenced and stopped, the context suspended
+  // once the release is over.
+  Host.prototype.soundOn = function () {
+    var s = this.snd, self = this;
+    if (!s.ctx) {
+      var AC = global.AudioContext || global.webkitAudioContext;
+      if (!AC) return this._fail('This browser has no Web Audio: the Audio sheet is read and never heard.');
+      try { s.ctx = new AC(); } catch (e) { return this._fail('The browser made no audio context: ' + (e && e.message ? e.message : e) + '.'); }
+      s.now = function () { return s.ctx.currentTime; };
+      s.ctx.onstatechange = function () { if (s.on && s.ctx.state === 'running') self._resound(); };
+    }
+    s.on = true;
+    if (s.ctx.state !== 'running' && s.ctx.resume) s.ctx.resume();
+    this._say('Sound on: ' + (this.cart && this.cart.devices.audio ? 'the Audio sheet\'s four voices sound on the audio clock, ' + (LOOKAHEAD * 1000) + ' ms ahead of it.' : 'this cartridge has no Audio sheet, so nothing sounds.'));
+    this._resound();
+    return { ok: true };
+  };
+  Host.prototype.soundOff = function () {
+    var s = this.snd;
+    if (!s.on) return { ok: true };
+    this._silence();
+    this._release();
+    s.on = false;
+    if (s.ctx && !s.injected && s.ctx.suspend) global.setTimeout(function () { if (!s.on) s.ctx.suspend(); }, 1000 * RELEASE_TAUS * GAIN_TAU + 20);
+    this._say('Sound off.');
+    return { ok: true };
+  };
+  Host.prototype.soundIs = function () { return this.snd.on; };
+
   // ---- a person's acts: edits, keys, the pointer ----
   // An edit is one cell or formula row, issued as its own write after the frame's inputs; at
   // rate zero it steps the grid once, and the frame number counts the edits that landed.
@@ -794,14 +1023,17 @@
     this._on(cv, 'contextmenu', function (ev) { ev.preventDefault(); });
     this._on(cv, 'wheel', function (ev) { self.wheel(ev.deltaY > 0 ? 1 : (ev.deltaY < 0 ? -1 : 0)); ev.preventDefault(); }, { passive: false });
   };
-  // A hidden page stops the ticks, and its return starts the clock again with nothing owed.
+  // A hidden page stops the ticks and the voices, and its return starts the clock again with nothing owed
+  // and sounds the frame the grid holds (ENGINE.4, decision 6).
   Host.prototype._listenPage = function () {
     var self = this, d = global.document;
     if (!d) return;
-    this._on(d, 'visibilitychange', function () {
-      if (d.hidden) { self.hidden = true; return; }
-      self.hidden = false; self.lastTs = null; self.acc = 0;
-    });
+    this._on(d, 'visibilitychange', function () { self._visibility(d.hidden); });
+  };
+  Host.prototype._visibility = function (hidden) {
+    if (hidden) { this.hidden = true; this._silence(); return; }
+    this.hidden = false; this.lastTs = null; this.acc = 0;
+    this._resound();
   };
 
   // ---- the replay (SPEC.md section 7.6; ENGINE.3's second slice, decisions 8 to 10) ----

@@ -69,7 +69,19 @@ inputcard.replay.vla, equal to the input case's live run as the host
 recorded it, its header the card's digest and seed, each edit that landed
 logged in its frame and the Input sheet logged whole after a person's edit
 of it; played on a fresh host, every frame the live run's window and its end
-the golden, inputcard.golden.vla, byte for byte). It
+the golden, inputcard.golden.vla, byte for byte); and since ENGINE.4's first
+slice audio (a double of the Web Audio graph handed to the host as its audio
+context, every node and call recorded with its time on a clock the oracle
+drives, and held frame by frame to the page's own arithmetic of the scoping's
+decisions 1 to 6: over the double, its Audio sheet written by a person's
+edits, frames on time, a long task that moves the audio clock on, a stall's
+burst, Pause and Run, the page hidden and shown, rate 0 and the unload, and a
+wave and a volume that are no voice each said once; over the engine's module,
+when the page holds one, the sound card, cartridges/soundcard/soundcard.vla,
+240 frames, every frame's Audio sheet equal to the card computed by hand and
+every call the arithmetic's, presses each a tick, a knob turned to a wave that
+is no wave and back, the rate moved to 10 and back, the waterfall drawn by
+hand). It
 prints one line a case into
 <pre id="loop"> and a last line, 'loop ok cases=N'. This check runs the
 page under a headless Chromium at a device scale factor of 1 and of 1.5,
@@ -123,7 +135,13 @@ input case must fail at the frame it never ran; and since ENGINE.3's second
 slice three more, when the real page holds the module, each failing the
 replay case by name: a recorder that drops a person's edits, a player that
 skips the derived writes, and a recorder that keeps its record of the Input
-sheet across a person's edit of it. The real page must pass first.
+sheet across a person's edit of it; and since ENGINE.4's first slice five
+more, over the double and so with or without the module, each failing the
+audio case by name: a host that sets a voice's gain at once, one that sounds
+every frame a lookahead from the audio clock's now, the animation clock in the
+rhythm, one whose voice's gain is its volume, one that leaves the voices
+sounding at a stop, and one that changes a wave at once while the voice
+sounds. The real page must pass first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A headless run's clock is
@@ -201,6 +219,19 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # logged in their frames, the Input sheet whole twice; and every committed
 # replay played to its golden, 1 today, its 26 frames each equal to the live
 # run's, and its recording itself.
+# 2026-10-10, ENGINE.4's first slice: fourteen cases, the first thirteen's
+# counts and digests unchanged but for pass, 5 sources the same, the sound
+# card's among them (504 rows after their manifests). audio over the double:
+# 43 frames, 41 sounded (the frames and three starts, less five skipped), 80
+# calls on the double of the graph, 3 oscillators, 5 restarts (the start, the
+# long task, the stall, the run after the pause, the page shown), 5 skipped
+# (the stall's burst), 3 silences (the pause, the page hidden, the unload), 2
+# notices, 3 frames at rate 0, and with the sound off the one notice that the
+# voices would sound, nothing sounded; over the engine's module of 516,175 bytes, the
+# sound card: 240 frames, each one's Audio sheet the card by hand and each
+# one's calls the page's arithmetic, 241 sounded, 248 calls, 5 ticks, 1 frame
+# silenced by a wave that is no wave and its one notice, 10 frames at the rate
+# of 10, the waterfall drawn by hand 240 times.
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
@@ -213,12 +244,13 @@ $floors = @(
     @{ Case = 'engine';   Min = @{}; WithModule = @{ frames = 11; equal = 2; live1 = 23683; live11 = 14482; chunked = 1; grown = 1; devices = 5; reloaded = 1 } },
     @{ Case = 'parity';   Min = @{}; WithModule = @{ same = 14 } },
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
-    @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 4; same = 4; refused = 1; handle = 1; ranOn = 1 } },
+    @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 5; same = 5; refused = 1; handle = 1; ranOn = 1 } },
     @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 5; players = 2; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 7; rate = 5; refused = 1 } },
-    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; waited = 1; refused = 6 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 1; frames = 26; same = 26; golden = 1; round = 1 } }
+    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; waited = 1; refused = 6 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 1; frames = 26; same = 26; golden = 1; round = 1 } },
+    @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240 } }
 )
 $zero = @('live', 'misfrees')
-$expectedCases = 13
+$expectedCases = 14
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
 
@@ -543,9 +575,42 @@ if ($Control) {
             $pqrNote = "the edit's record cut applied ($pApplied) and failed the replay case ($pFailed); the derived writes cut from a replay applied ($qApplied) and failed it ($qFailed); the Input sheet's record kept applied ($rApplied) and failed it ($rFailed)"
         }
         $pqrOk = ($moduleReal -eq 0) -or ($pApplied -and $pFailed -ge 1 -and $qApplied -and $qFailed -ge 1 -and $rApplied -and $rFailed -ge 1)
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk) {
-            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'eighteen' } else { 'ten applicable' }) + ' mutants for its own reason, each proving it applied')
+        # mutants S, T, U, V and W (ENGINE.4), over the double and so with or without the engine's module: a
+        # voice's gain set at once; every frame a lookahead from the audio clock's now, the animation clock in
+        # the rhythm; a voice's gain its volume; no silence at a stop; a wave changed at once while the voice
+        # sounds. The audio case must fail each by name, at the call its own reason makes the first to differ.
+        $sndMutants = @(
+            @{ L = 's'; Name = 'the gain set at once'; Anchor = "    v.gain.gain.setTargetAtTime(value, at, GAIN_TAU);   // the graph's own approach, never a sample of the host's (decision 3)"; With = '    v.gain.gain.setValueAtTime(value, at);'
+               Want = 'case audio.*on the graph is "gain \d+ gain set [\d.]+ at [^"]+", and the page''s arithmetic says "gain \d+ gain target ' },
+            @{ L = 't'; Name = 'every frame a lookahead from now'; Anchor = "      at = s.end;   // the end of the last frame's sound (decision 1)"; With = '      at = now + LOOKAHEAD;'
+               Want = 'case audio.*on the graph is "(oscillator \d+ frequency set [\d.]+) at [^"]+", and the page''s arithmetic says "\1 at ' },
+            @{ L = 'u'; Name = 'a voice''s gain its volume'; Anchor = "  var VOICE_SHARE = 0.25;            // a voice's gain is its volume times this, so four voices at full volume never clip"; With = '  var VOICE_SHARE = 1;'
+               Want = 'case audio.*on the graph is "gain 2 gain target 0\.5 at [^"]+", and the page''s arithmetic says "gain 2 gain target 0\.125 at ' },
+            @{ L = 'v'; Name = 'no silence at a stop'; Anchor = '    this._silence();   // the voices stop with the loop (ENGINE.4, decision 6)'; With = '    // the silence cut by the control'
+               Want = 'case audio.*over the double, the pause: the host''s call \d+ on the graph is missing, and the page''s arithmetic says "gain \d+ gain cancel ' },
+            @{ L = 'w'; Name = 'a wave changed at once'; Anchor = '      var sw = v.target > 0 ? at + DIP_TAUS * GAIN_TAU : at;   // through a dip while the voice sounds'; With = '      var sw = at;'
+               Want = 'case audio.*on the graph is "oscillator \d+ stop [^"]+", and the page''s arithmetic says "gain \d+ gain target 0 at ' }
+        )
+        $sndNotes = New-Object System.Collections.Generic.List[string]
+        $sndJudged = New-Object System.Collections.Generic.List[object]
+        $sndOk = $true
+        foreach ($mu in $sndMutants) {
+            if (([regex]::Matches($js, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in web/host.js exactly once"; exit 1 }
+            $mutS = $js.Replace($mu.Anchor, $mu.With)
+            $sApplied = $mutS -cne $js
+            $jsS = Join-Path $tmp ($mu.L + '.js'); [System.IO.File]::WriteAllText($jsS, $mutS, $utf8)
+            $rS = Invoke-Loop $browser (New-MutantPage $mu.L $template $jsS) '1'
+            # not $jS: names fold case here, and $jS would be $js, the host's text the next mutant reads
+            $sJudge = if ($rS.Text -ne '') { Test-Loop $rS.Text '1' } else { @{ Problems = @($rS.Reason) } }
+            $sFailed = @($sJudge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
+            $sndJudged.Add(@{ Name = $mu.Name; Problems = @($sJudge.Problems) })
+            $sndNotes.Add(("{0} applied ({1}) and failed the audio case ({2})" -f $mu.Name, $sApplied, $sFailed))
+            if (-not ($sApplied -and $sFailed -ge 1)) { $sndOk = $false }
+        }
+        $sndNote = $sndNotes -join '; '
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk) {
+            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'twenty-three' } else { 'fifteen applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -570,6 +635,7 @@ if ($Control) {
             foreach ($p in @($jQ.Problems) | Select-Object -First 3) { Write-Output ('  derived writes cut from a replay: ' + $p) }
             foreach ($p in @($jR.Problems) | Select-Object -First 3) { Write-Output ('  Input sheet''s record kept: ' + $p) }
         }
+        foreach ($sj in $sndJudged) { foreach ($p in @($sj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $sj.Name + ': ' + $p) } }
         exit 1
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue

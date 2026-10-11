@@ -72,13 +72,36 @@ write after the derived writes. A person's edit is refused while it plays,
 and the loop pauses at the last frame. The recorder records what is played,
 so a replay played and copied is the replay played.
 
+The host sounds the Audio sheet (`SPEC.md` section 3.6, `ENGINE.4`), each of
+its four voices one `OscillatorNode` and one `GainNode` of the Web Audio
+graph into one shared gain, and nothing of the host's own: no sample is
+computed here, which `tools/check_web_offline.ps1` holds on this file. After
+each frame, once the Clock's rate is read, a frame sounds where the last
+frame's sound ends on the audio clock, while that lies within 100 ms ahead of
+it; a frame whose time has passed starts the timeline again 50 ms ahead, and
+a frame further ahead than 100 ms is not sounded. A voice's gain is its
+volume over four, approached by the graph's `setTargetAtTime` with a time
+constant of 3 ms, so a change is not a click; its frequency is
+`440 * 2^((note - 69) / 12)`, set at the frame's time; a wave changed is a
+new oscillator, through a dip of 15 ms while the voice sounds, since a wave
+takes effect when the JavaScript runs and cannot be scheduled. Only what
+changed is scheduled. A volume of 0, or an empty one, is a rest; a wave that
+is not one of the four words (without case), a note that is not a number
+from 0 to 127 or a volume that is not one from 0 to 1 silences the voice for
+the frame, said once, a notice and not a refusal. Nothing sounds until a
+person presses Sound on, which makes the audio context, since one made
+before a person's act stays suspended; and the voices stop with the loop, at
+a pause, a hidden page, a replay's end, a refused step and an unload, and
+sound the frame the grid holds again when it starts.
+
 | Method | What it does |
 |---|---|
-| `new AlonzoHost(options)` | `canvas` the plane's canvas (it takes the keys while focused); `box` the element the blit fits, the canvas's parent by default; `scale` a fixed number of device pixels a cell; `budget` a fixed budget in cells a step call, 0 for none; `callsPerTick` a fixed count of step calls a tick in place of the time slice; `now` the clock the budget is measured by; `drive: 'manual'` when the caller calls `tick` itself (the oracles); `seed` the number a `(seed host)` cartridge gets in place of the browser's random one, a whole number from 1 to 2147483646 (the oracle) |
+| `new AlonzoHost(options)` | `canvas` the plane's canvas (it takes the keys while focused); `box` the element the blit fits, the canvas's parent by default; `scale` a fixed number of device pixels a cell; `budget` a fixed budget in cells a step call, 0 for none; `callsPerTick` a fixed count of step calls a tick in place of the time slice; `now` the clock the budget is measured by; `drive: 'manual'` when the caller calls `tick` itself (the oracles); `seed` the number a `(seed host)` cartridge gets in place of the browser's random one, a whole number from 1 to 2147483646 (the oracle); `audio` an audio context the host sounds through from the start, in place of the one `soundOn` makes, and `audioNow` its clock in place of the context's `currentTime` (the oracle's double of the graph) |
 | `attach(exports)` | asks `alonzo_abi_version` and refuses another number, then every export the loop calls: `{ ok, abi, version }` or `{ ok: false, sentence }` |
 | `load(text, name)` / `loadBytes(bytes, name)` | unloads the grid it held, loads a cartridge, then `describe`, reads the Camera, the Palette and the Keys, and draws the new grid's frame 0 at once, nothing computed, so the canvas never shows a grid the module no longer holds: `{ ok, handle, title, mode, w, h, rate }` or the refusal's sentence |
 | `expand(source, path, files)` | the pass (`SPEC.md` section 7.8): a cartridge's source, the path its includes resolve against (`cartridges/<name>/<name>.source.vla`, the command line's), and the texts it may include as `[path, text]` pairs, handed to the module's `alonzo_expand`, an act of its own that takes no handle, touches no grid and stops nothing: `{ ok, text, rows, ms }`, the cartridge's text CRLF as the command line writes it and its rows after the manifest, or the refusal's sentence with the source line it stands on; the export is asked for here and not at `attach`, so over a module without it, the double, the build is declined in words |
-| `start()` / `stop()` | the animation-frame loop |
+| `start()` / `stop()` | the animation-frame loop; the voices sound the frame the grid holds when it starts, and stop with it |
+| `soundOn()` / `soundOff()` / `soundIs()` | the sound, on only after a person's act: `soundOn` makes the audio context at its first call, which a page makes in a press's handler, and sounds the frame the grid holds; `soundOff` silences the voices, stops the oscillators and suspends the context; `soundIs` whether it is on |
 | `tick(ts)` | one animation frame's work at its timestamp, what the loop calls |
 | `edit(row)` | a person's edit, one `cell` or `formula` row, issued after the next frame's inputs; at rate 0 it steps once |
 | `keyDown(code, key)` / `keyUp(code)` / `releaseKeys()` | the keys held, by `KeyboardEvent.code` |
@@ -88,7 +111,7 @@ so a replay played and copied is the replay played.
 | `viewRecord(sheet, window)` | a sheet's record as the module prints it, for a page to show |
 | `replayText()` | the replay of the run since the last load, as text, a replay played included; `null` with no cartridge loaded |
 | `play(text, all)` | a replay checked whole, then the cartridge loaded again with its seed and its frames played through the loop at the cartridge's rate, edits refused until it ends, the loop paused at its last frame: `{ ok, frames }`, or the refusal's sentence with nothing loaded; `all` plays every frame at once, synchronously (the oracle) |
-| `counters()` / `sentences()` | what the host has done; every sentence said, in order |
+| `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`); every sentence said, in order |
 | `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
 | `unload()` / `destroy()` | frees the handle and empties the canvas; removes the listeners |
 | `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat, refusal }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line, `refusal` true for a refusal or a failure; a notice of a value the host coerced, a Camera cell read as 1 or a colour painted magenta, is not one), `frame` (`{ frame, window, scale, rate, replay }`, after a frame completes, `rate` the one the Clock now holds, `replay` the last frame of a replay playing or 0), `load` (`{ handle, title, mode, w, h, rate, window, scale }`, after frame 0 is drawn) |
@@ -150,8 +173,9 @@ the marks a host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
-test card or the input card, each with its source, which the panel's Build expands into the
-cartridge in the page, the input card with its replay, which Play the replay plays, and
+test card, the input card or the sound card, each with its source, which the panel's Build expands into the
+cartridge in the page, the input card with its replay, which Play the replay plays, the
+Audio sheet heard after Sound on, and
 below it the viewport over seven
 records the door printed: the six view goldens of Frazaro's `scripts/view/`
 and the record of the 10,000-line program the renderer benchmark measured.
@@ -204,7 +228,13 @@ own replay waits in its box, the loop oracle's run of the card; press Play
 the replay and watch it, the frame line saying which frame of the 26 it
 plays, until it pauses at its end. Play the card yourself, press Copy the
 replay, reload the page, paste it into the box, and press Play the replay
-to watch the same run again. Below it, pick a
+to watch the same run again. Pick the sound card, press Sound on, and hear
+its eight-second loop: A4 through the four waves, a scale, two chords and a
+slide under a swell, the notes falling down the Screen in each voice's
+colour; press Z or an arrow for a tick; write `(cell "Knobs" "B1" "saw")`
+and the log says voice 4's wave is no wave and the tick is silent, then
+`(cell "Knobs" "B1" "square")` for a square one; Pause and the sound stops,
+Run and it sounds again. Below it, pick a
 record, scroll on both
 axes, click a cell or drag a range, click a column or row header or the
 corner, drag a column's right edge in the header, set rows and columns and
@@ -265,7 +295,16 @@ baseline to the roadmap's bars.
   refused in words; and, over the engine's module, the input card's
   committed replay equal to the `input` case's run as the host recorded
   it, played on a fresh host to every frame of that run and to its golden,
-  the Tally's record, byte for byte. One line a case into
+  the Tally's record, byte for byte; and the Audio device (`audio`,
+  `ENGINE.4`): a double of the Web Audio graph handed to the host as its
+  audio context, every node and call recorded with its time on a clock the
+  oracle drives, held frame by frame to the page's own arithmetic of the
+  timeline, the voices, the approach, the dip, a voice that is no voice and
+  the silence at a stop, over the double's Audio sheet written by edits
+  (frames on time, a long task, a stall's burst, Pause and Run, the page
+  hidden and shown, rate 0, the unload) and, over the engine's module, the
+  sound card's 240 frames, every frame's Audio sheet equal to the card
+  computed by hand and its waterfall drawn by hand. One line a case into
   `<pre id="loop">`, which `tools/check_host_loop.ps1` reads.
 - `index.html?blit=1` is the blit's instrument, the engine's second number:
   a 320 by 200 plane drawn through the host's whole frame over the double
