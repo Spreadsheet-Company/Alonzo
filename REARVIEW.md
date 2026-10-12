@@ -3413,3 +3413,54 @@ The commits, at the owner's word: `ENGINE.1`'s snap first, which leaves the floo
 Recommended, the owner's call since it changes the toy's look and the floors' fixture: the opening a rain of the top third, about a third of the grains landing in about two seconds. The chain stays two hundred rows deep, but the floors' Sand would measure a lighter stretch than the worst a person can make, so a seventh baseline follows it. Otherwise the whole board stays, slow for about two seconds over 0.9.1 and about one over the three asks.
 
 *Approved 2026-10-12: "If the top-third rain change would fix the laggy load, then I approve. Commit, then proceed." The row gate, the rate and the sixth baseline were committed the same day, after `ENGINE.1`'s snap. Not pushed. The top-third rain follows in a build of its own. It fixes the first seconds' half speed and not the load's freeze before the first frame, which is the plan's edges and Frazaro's first ask.*
+
+**The top-third rain: what landed.** Built 2026-10-12 over `f8dda50`; it awaits the owner's hand test and the floors' seventh baseline.
+- `cartridges/sand/sand.source.vla` and `sand.vla`: the first frame's soup inside `IF(ROW()>67,0,...)`, the header and the manifest's notes. Still 87 rows, 189,215 formula cells in 15 shapes. The rows are the ones measured in scratch, but for the notes.
+- `engine/src/sand.rs`: `RAIN`, 67, the opening's last row. The page's `sandOpening` takes the same bound, `SAND_RAIN`.
+- `engine/src/cartridge.rs`: the opening test's grains, over 3,000 of each material in the top third.
+- `tools/check_frame_floors.ps1`: Sand's allocation ceiling lowered with its fixture, to 509 and 5.
+- `engine/README.md`, `web/README.md`'s hand test, `README.md`'s row of the cartridges, and `CHARTER.md` §6's measurement of Sand.
+
+The oracle, on the day (*measurement*):
+- `cargo fmt --check` and `clippy --all-targets -D warnings`: clean.
+- `cargo test`: 30.
+- `expand --check`: six sources the same.
+- The runner's check mode: Sand 509 and 5.
+- The session, twice: every one of 1,100 frames equal to the sand by hand.
+  - The rain's median is 5.6 ms, its p95 5.9 to 6.1 and its longest 6.3 to 7.8, where the whole board's were 3.8 to 3.9, 15.7 to 16.1 and 17.4 to 17.7.
+  - The rain's median rose: its band falls for its whole phase, where most of the whole board had landed by frame 65.
+  - The session steps in 1,602 to 1,625 ms, against 1,859 to 1,867.
+- In headless Chrome, the real host with the tick on the frame's grid, the canvas left out:
+
+  | rate | frames presented each second | gaps, median and p95 |
+  |---|---|---|
+  | 60 | 55, frames 1 and 2 computing every cell, then 60 | 16.7 and 17.0 ms |
+  | 30 | 28, then 30 | 33.3 and 33.9 to 34.0 |
+
+  The whole board at 60 presented 33 to 35, then 47 to 52, then 60.
+- `tools/bench_frames.ps1`, a preview. *My run, and its block was not pasted:* Sand's opening natively 5.7 ms, 33,283,494 cells a second, and in the browser 8.4 ms, 22,525,595. Both rows are re-based higher on the new fixture.
+- Not fixed by it: the load's freeze before the first frame, 510 ms natively and 609 in the browser. That is the plan's edges, and Frazaro's first ask: 156 to 167 and 153 to 163 in its prototype.
+
+*The owner's hand test:* pick Sand. It opens raining from its top third at sixty frames a second from its first second, after the load's half second. Then the floors' seventh baseline, and the commit at the owner's word.
+
+*The owner's run of `tools/bench_frames.ps1` the same day, with a remark: "I suppose it's technically cheating to reduce the loaded grains in order to meet a benchmark instead of addressing the underlying issue, but there's more to Alonzo than Sand and we can always come back around and tinker with it another time." The run is the floors' seventh baseline, pasted from `target/bench_frames.txt` whole, no value touched; the chat's copy had dropped a space at a line wrap (*measurement*):*
+
+| row | frame p50 | frames a second | cells a second | floor |
+|---|---|---|---|---|
+| native life | 2.8 ms | 357.4 | 22,500,402 | 20,500,000 |
+| native gun | 0.0423 ms, in runs of 128 | 23,622.6 | 1,487,370,607 | 1,340,000,000 |
+| native sand | 5.6 ms | 179.7 | 33,998,149 | 30,500,000, re-based on the top third's cartridge |
+| wasm life | 4.2 ms | 235.3 | 14,815,059 | 14,100,000 |
+| wasm gun | 0.0605 ms, in runs of 128 | 16,516.1 | 1,039,921,548 | 935,000,000 |
+| wasm sand | 8.3 ms | 120.5 | 22,796,988 | 20,500,000, re-based on the top third's cartridge |
+
+- `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`.
+- *The remark, answered in the session:* fair as to the floors.
+  - The top third was for the player's first two seconds, which it fixes.
+  - Sand's floors now measure a third of the grains falling, so their rise, about two and four fifths times, is the workload and not the engine. The engine and the language are the sixth baseline's.
+  - The instrument writes a reason only for a floor that goes down, so this entry's is blank. The baseline's note in `check_frame_floors.ps1` says it instead, so that nobody reads the rise as a speedup.
+  - The underlying cost is untouched: a heavy frame of the whole board falling, about 16 ms natively. It is what Frazaro's three asks address (63 frames over a 60 Hz tick's budget, then 31 to 33), with deeper work of the language beyond them.
+  - To keep the floors honest when Sand is next worked on: a fixture of the whole board falling, kept for the floors alone beside the toy's gentler opening. Slice 4's scoping already weighs Sand as the floors' fixture.
+- *Found, and fixed with this baseline:* the sixth baseline's note in `check_frame_floors.ps1`, committed in `f8dda50`, was cut short at a quotation mark. The scratch splice passed the note as an argument through `powershell -File`, and a double quote ended it. The note is restored, and the splice reads its note from a file since.
+
+*Committed 2026-10-12 at the owner's word, the top-third rain, the seventh baseline and the restored note in one commit under `CART.2`; not pushed. The same day the owner relayed the pass's ask to a Frazaro session, where it is under way. Next is slice 2, the owner's painting session as a replay, whose commit closes the item (decision 26); slice 4, the repository, stays the owner's.*

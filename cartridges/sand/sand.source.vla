@@ -8,8 +8,8 @@
 ; How to play: paint with the left button, erase with the right, and turn the wheel to
 ; size the brush, a disc of radius 1 to 8 (3 at the start). Press 1 for sand, 3 for water,
 ; 2 for wall and 0 for empty; the floor shows the material the left button paints. The toy
-; opens raining sand and water: its first frame is Life's soup, three eighths of the board,
-; as grains, half of them water.
+; opens raining sand and water: its first frame is Life's soup over the board's top third,
+; three eighths of it as grains, half of them water, landing in about two seconds.
 ;
 ; The board is the Screen itself. The interior, C2:LF199, is 316 by 198 cells; the walls
 ; two cells wide down each side, A:B and LG:LH, since a grain's second choice reads two
@@ -76,7 +76,7 @@
   (seed 1)                          ; the dice, Clock!B3: the soup of the first frame
   (author "Spreadsheet Company")    ; who wrote it
   (licence "0BSD")                  ; the header's twin: copy this file to start a cartridge of your own
-  (notes "A falling-sand toy. Paint with the left button, erase with the right, and turn the wheel to size the brush; press 1 for sand, 3 for water, 2 for wall and 0 for empty. The floor shows what the left button paints. It opens raining sand and water, Life's first frame as grains."))
+  (notes "A falling-sand toy. Paint with the left button, erase with the right, and turn the wheel to size the brush; press 1 for sand, 3 for water, 2 for wall and 0 for empty. The floor shows what the left button paints. It opens raining sand and water from its top third, Life's first frame as grains."))
 
 ; The sheets, in tab order: the Screen the rule draws on, and Stay and Side beside it;
 ; Parity, the direction of each row; the brush, its Gate and the material in State; the
@@ -223,10 +223,14 @@
 ; P = 67108859 and multiplied, h = MOD(a*b, P), and a grain where MOD(h*h, P) < 25165822,
 ; three eighths of P (life.source.vla says why it is exact): sand where it is under
 ; 12582911, three sixteenths of P, and water above that, so half the grains are water.
-; The soup is computed twice, once for each threshold, in the first frame alone.
+; The soup is computed twice, once for each threshold, in the first frame alone. It rains
+; from the top third, rows 2 to 67: the whole board falling at once made every frame of
+; its first two seconds take two of a 60 Hz display's ticks, and a third of it takes one
+; (the playtest pass, 2026-10-12).
 (formula "Screen" "C2:LF199"
   (&expand
     "=IF(Clock!$B$1=1,"                                                      ; the first frame:
+    "IF(ROW()>67,0,"                                                         ;   nothing below the top third,
     "IF(MOD(MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
     "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)"
     "*MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
@@ -236,7 +240,7 @@
     "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)"
     "*MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
     "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859),"
-    "67108859)<25165822,3,0)),"                                             ;   water where it is under three eighths
+    "67108859)<25165822,3,0))),"                                            ;   water where it is under three eighths
     "IF(IF(Gate!$B2<0,FALSE,"                                                ; the brush, as Stay tests it:
     "(COLUMN()-Gate!$A2)^2<=Gate!$B2),"
     "Gate!$C2,"                                                              ;   the paint

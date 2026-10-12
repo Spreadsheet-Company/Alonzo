@@ -200,18 +200,44 @@ $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::W
 # sand 10,618,933 (17.8); its floors are the history's fifth entry.
 # 2026-10-12, the sixth: the owner's run with CART.2's playtest pass built,
 # Sand's brush read from the Gate's rows, its rate of 60 and the host's tick
-# on the frame's grid, after the owner's hand test (No
+# on the frame's grid, after the owner's hand test, no stall on any click.
+# Pasted from target/bench_frames.txt whole, no value touched; the chat's
+# copy had dropped a space at a line wrap. Its entry re-bases Sand's two rows
+# lower on the row gate's cartridge, their reasons written: over vla-lang
+# 0.9.1 each marked cell reads its row's gate and splits its lanes, and the
+# opening's frames take 15.8 ms natively and 22.5 in the browser against the
+# fifth's 12.3 and 17.8, until a run reads a held column once, asked of
+# Frazaro the same day (REARVIEW.md, CART.2). Life's and the gun's rows are
+# held, native life's floor raised to 20,500,000. (This note was cut short at
+# a quotation mark when it was spliced in, and was restored with the
+# seventh.) Its rows, the seventh having replaced them: native life
+# 22,781,677 cells a second (frame p50 2.8 ms), native gun 1,489,542,292
+# (0.0423, runs of 128), native sand 12,009,228 (15.8), wasm life 15,546,667
+# (4.0), wasm gun 1,020,176,202 (0.0617), wasm sand 8,390,909 (22.5); its
+# floors are the history's sixth entry.
+# 2026-10-12, the seventh: the owner's run with Sand's opening raining from
+# the board's top third, rows 2 to 67, so that its first seconds keep sixty
+# frames a second. Pasted from target/bench_frames.txt whole, no value
+# touched; the chat's copy had dropped a space at a line wrap. Its entry
+# re-bases Sand's two rows on the new cartridge, both higher, its reason
+# blank since no floor goes down: 5.6 ms natively and 8.3 in the browser
+# against the sixth's 15.8 and 22.5. The rise is the workload, a third of the
+# grains falling, and not the engine, which with the language is the sixth's.
+# From this entry Sand's rows measure a gentler opening than the worst a
+# person can make; a fixture of the whole board falling, for the floors
+# alone, is slice 4's to weigh (REARVIEW.md, CART.2). Life's and the gun's
+# rows are held, the wasm gun's floor raised to 935,000,000.
 $baselineDate = '2026-10-12'
-$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 154.0.8037.98 headless | the engine''s module 643,503 bytes | vla-lang at 0.9.1 | power throttling opted out: the runner yes, 31 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 31 browser process(es)'
+$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 154.0.8037.98 headless | the engine''s module 643,503 bytes | vla-lang at 0.9.1 | power throttling opted out: the runner yes, 29 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 31 browser process(es)'
 $baselinePin = '0.9.1'
-$baselineFixtures = @{ 'life' = '7220F8E1FBFF7A3B7F00DE9ECA5754E9A1877A8D1A766A251EB3811D0C937D89'; 'gun' = '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7'; 'sand' = '177E8863A7B769C4ED0F80622ADA6DF3C9C4CB1358DF1566EC08B654F9630692' }
+$baselineFixtures = @{ 'life' = '7220F8E1FBFF7A3B7F00DE9ECA5754E9A1877A8D1A766A251EB3811D0C937D89'; 'gun' = '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7'; 'sand' = '814983F85A9DA90155F0F58C6FE201C8750E588BF202BD54B18763C41DC594C7' }
 $baseline = @(
-    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 70.3; FirstFrame = 10.4; FrameP50 = 2.8; FrameMin = 2.1; FrameMax = 5.0; CellsPerSecond = 22781677; FramesPerSecond = 361.821; ClockMs = 0.178; ClockSpread = 0.9; ClockDrift = 0.6 },
-    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 56.5; FirstFrame = 8.8; FrameP50 = 0.0423; FrameMin = 0.0206; FrameMax = 0.0449; CellsPerSecond = 1489542292; FramesPerSecond = 23657.047; ClockMs = 0.178; ClockSpread = 0.9; ClockDrift = 0.4 },
-    @{ Runner = 'native'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 514.2; FirstFrame = 45.8; FrameP50 = 15.8; FrameMin = 13.3; FrameMax = 30.5; CellsPerSecond = 12009228; FramesPerSecond = 63.469; ClockMs = 0.178; ClockSpread = 1.1; ClockDrift = 0.4 },
-    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 89.6; FirstFrame = 13.2; FrameP50 = 4.0; FrameMin = 2.9; FrameMax = 8.4; CellsPerSecond = 15546667; FramesPerSecond = 246.914; ClockMs = 0.260; ClockSpread = 1.9; ClockDrift = -1.9 },
-    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 51.3; FirstFrame = 7.2; FrameP50 = 0.0617; FrameMin = 0.0320; FrameMax = 0.0680; CellsPerSecond = 1020176202; FramesPerSecond = 16202.532; ClockMs = 0.260; ClockSpread = 3.8; ClockDrift = -1.9 },
-    @{ Runner = 'wasm'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 607.1; FirstFrame = 45.7; FrameP50 = 22.5; FrameMin = 19.5; FrameMax = 39.3; CellsPerSecond = 8390909; FramesPerSecond = 44.346; ClockMs = 0.263; ClockSpread = 5.7; ClockDrift = -0.9 }
+    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 71.8; FirstFrame = 12.1; FrameP50 = 2.8; FrameMin = 2.0; FrameMax = 6.2; CellsPerSecond = 22500402; FramesPerSecond = 357.353; ClockMs = 0.179; ClockSpread = 1.5; ClockDrift = 0.7 },
+    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 65.1; FirstFrame = 9.8; FrameP50 = 0.0423; FrameMin = 0.0206; FrameMax = 0.0470; CellsPerSecond = 1487370607; FramesPerSecond = 23622.556; ClockMs = 0.179; ClockSpread = 1.5; ClockDrift = 0.9 },
+    @{ Runner = 'native'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 501.9; FirstFrame = 43.8; FrameP50 = 5.6; FrameMin = 5.5; FrameMax = 30.3; CellsPerSecond = 33998149; FramesPerSecond = 179.680; ClockMs = 0.178; ClockSpread = 6.3; ClockDrift = 0.3 },
+    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 87.7; FirstFrame = 13.4; FrameP50 = 4.2; FrameMin = 3.0; FrameMax = 8.8; CellsPerSecond = 14815059; FramesPerSecond = 235.294; ClockMs = 0.257; ClockSpread = 1.9; ClockDrift = -1.0 },
+    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 53.6; FirstFrame = 7.2; FrameP50 = 0.0605; FrameMin = 0.0344; FrameMax = 0.0672; CellsPerSecond = 1039921548; FramesPerSecond = 16516.129; ClockMs = 0.255; ClockSpread = 2.0; ClockDrift = -1.9 },
+    @{ Runner = 'wasm'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 586.3; FirstFrame = 41.6; FrameP50 = 8.3; FrameMin = 8.0; FrameMax = 41.9; CellsPerSecond = 22796988; FramesPerSecond = 120.482; ClockMs = 0.257; ClockSpread = 3.9; ClockDrift = -1.0 }
 )
 
 # --- the floors, in cells a second, a dated history that never goes down ---
@@ -229,7 +255,8 @@ $floorHistory = @(
     @{ Date = '2026-10-11'; Pin = '0.9.0'; Reason = ''; Floors = @{ 'native life' = 20200000; 'native gun' = 3710000000; 'wasm life' = 13300000; 'wasm gun' = 924000000 } },
     @{ Date = '2026-10-11'; Pin = '0.9.0'; Reason = 'the native gun only, at the owner''s word (CART.2): on the code measured at 02:00 it read 17.6 to 26.9 microseconds a frame in nine runs that evening, two runners alternated, against 15.2; the clock beside every frame and the gun in the browser unchanged; a frame of 20 microseconds varies between sessions by more than the margin of 10%'; Floors = @{ 'native life' = 20200000; 'native gun' = 2770000000; 'native sand' = 9490000; 'wasm life' = 13600000; 'wasm gun' = 929000000; 'wasm sand' = 6810000 } },
     @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = 'native gun re-based: timed in runs of 128 from this entry, where the baseline before it timed its frames alone, and a frame under 2 ms timed alone, right after the clock, varied between sessions past the margin (CART.1''s frame timer); its floor is this run''s less 10%'; Floors = @{ 'native life' = 20300000; 'native gun' = 1340000000; 'native sand' = 13700000; 'wasm life' = 14100000; 'wasm gun' = 929000000; 'wasm sand' = 9550000 } },
-    @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = 'native sand re-based: its fixture is another file, 177E8863..., where the baseline before it measured 3DFFD0BE..., and cells a second count a fixture''s cells (CART.2''s decision 24); its floor is this run''s less 10%; wasm sand re-based: its fixture is another file, 177E8863..., where the baseline before it measured 3DFFD0BE..., and cells a second count a fixture''s cells (CART.2''s decision 24); its floor is this run''s less 10%'; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 10800000; 'wasm life' = 14100000; 'wasm gun' = 929000000; 'wasm sand' = 7550000 } }
+    @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = 'native sand re-based: its fixture is another file, 177E8863..., where the baseline before it measured 3DFFD0BE..., and cells a second count a fixture''s cells (CART.2''s decision 24); its floor is this run''s less 10%; wasm sand re-based: its fixture is another file, 177E8863..., where the baseline before it measured 3DFFD0BE..., and cells a second count a fixture''s cells (CART.2''s decision 24); its floor is this run''s less 10%'; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 10800000; 'wasm life' = 14100000; 'wasm gun' = 929000000; 'wasm sand' = 7550000 } },
+    @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 30500000; 'wasm life' = 14100000; 'wasm gun' = 935000000; 'wasm sand' = 20500000 } }
 )
 
 # --- releases of a measured source: a registry release of the language whose
@@ -290,11 +317,13 @@ $sameRows = @{
 # re-based (CART.2's decision 24), and not for a language that allocates more.
 # 2026-10-12, CART.2's playtest pass: the brush read from the Gate's rows, a
 # third Gate column (189,215 formula cells) and the rate of 60, every count
-# the same, 516 and 5.
+# the same, 516 and 5. Then the opening raining from the board's top third,
+# rows 2 to 67: 509 allocations and 5 reallocations, the same on every run,
+# the ceiling lowered with the fixture it measures.
 $allocationCeilings = [ordered]@{
     'life' = @{ Allocs = 80; Reallocs = 5 }
     'gun'  = @{ Allocs = 80; Reallocs = 5 }
-    'sand' = @{ Allocs = 516; Reallocs = 5 }
+    'sand' = @{ Allocs = 509; Reallocs = 5 }
 }
 
 # --- the rules ---

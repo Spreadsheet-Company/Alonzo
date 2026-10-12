@@ -2413,8 +2413,8 @@ mod tests {
         }
         let n = sand::counts(&want);
         assert!(
-            n[sand::SAND as usize] > 10_000 && n[sand::WATER as usize] > 10_000,
-            "the soup is three eighths of the board, half of it water: {n:?}"
+            n[sand::SAND as usize] > 3_000 && n[sand::WATER as usize] > 3_000,
+            "the soup is three eighths of the board's top third, half of it water: {n:?}"
         );
         // The Tally, computed at frame 4 from the twins, holds frame 3's sums.
         let tally = sand_values(&c, "Tally", "A2:B199");

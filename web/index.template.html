@@ -1219,11 +1219,13 @@
     for (c = SAND_LEFT; c <= SAND_RIGHT; c++) b[(LIFE_H - 1) * LIFE_W + (c - 1)] = swatch;
     return b;
   }
-  // The opening: Life's soup as grains, Life's own arithmetic over the interior, sand where the soup's
-  // square is under three sixteenths of the prime and water where it is under three eighths.
+  // The opening: Life's soup as grains, Life's own arithmetic over the interior's top third, rows 2 to
+  // 67 (CART.2's playtest pass), sand where the soup's square is under three sixteenths of the prime and
+  // water where it is under three eighths.
+  var SAND_RAIN = 67;
   function sandOpening(seed) {
     var P = 67108859, T = 25165822, TS = 12582911, b = sandEmpty(2);
-    for (var r = SAND_TOP; r <= SAND_BOTTOM; r++) for (var c = SAND_LEFT; c <= SAND_RIGHT; c++) {
+    for (var r = SAND_TOP; r <= SAND_RAIN; r++) for (var c = SAND_LEFT; c <= SAND_RIGHT; c++) {
       var a = (seed * 1103515 + r * 1597334 + c * 1830421 + 12345) % P;
       var d = (seed * 2012345 + r * 1209487 + c * 1949213 + 54321) % P;
       var h = (a * d) % P, sq = (h * h) % P;

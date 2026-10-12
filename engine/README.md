@@ -162,7 +162,11 @@ formula cells (the build's run of 2026-10-12 over `vla-lang` 0.9.1; the
 floors' fifth baseline is the owner's). Since the playtest pass, the same
 day, the toy steps at a rate of sixty, its grains moving a cell a frame, and
 reads its brush from the Gate's rows alone, so a press, a release or a key
-changes only the rows under the brush where it computed every cell.
+changes only the rows under the brush where it computed every cell. Its
+opening then rains from the board's top third, rows 2 to 67, so that its
+first seconds keep sixty frames a second: about 5.7 ms a frame natively and
+8.4 ms in the browser, where the whole board falling at once took 15.8 and
+22.5 (the build's run; the floors' seventh baseline is the owner's).
 
 The floors time a game's worst stretch; a person plays the rest of it. A
 third example, `examples/play.rs`, plays Sand as the host plays it, the

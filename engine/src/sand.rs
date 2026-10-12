@@ -49,6 +49,12 @@ pub const BOTTOM: usize = H - 1;
 pub const LEFT: usize = 3;
 pub const RIGHT: usize = W - 2;
 
+/// The opening's last row: the soup rains from the interior's top third,
+/// rows 2 to 67, since the whole board falling at once took two of a 60 Hz
+/// display's ticks a frame for its first two seconds (`CART.2`'s playtest
+/// pass, 2026-10-12).
+pub const RAIN: usize = 67;
+
 /// The soup's prime and its threshold, three eighths of it, Life's own; and
 /// the opening's sand, under three sixteenths, so that half its grains are
 /// water.
@@ -98,13 +104,13 @@ pub fn empty(swatch: u8) -> Vec<u8> {
 }
 
 /// The opening: Life's soup from the seed, its own arithmetic, a grain at
-/// every cell of the interior where Life's first frame is alive: sand where
-/// the soup's square is under three sixteenths of the prime, and water where
-/// it is under three eighths. Every sum and product stays under 2^53, so the
-/// cartridge's doubles agree.
+/// every cell of the interior's top third, rows 2 to 67, where Life's first
+/// frame is alive: sand where the soup's square is under three sixteenths of
+/// the prime, and water where it is under three eighths. Every sum and
+/// product stays under 2^53, so the cartridge's doubles agree.
 pub fn opening(seed: u64) -> Vec<u8> {
     let mut b = empty(SAND);
-    for row in TOP..=BOTTOM {
+    for row in TOP..=RAIN {
         for col in LEFT..=RIGHT {
             let (r, c) = (row as u64, col as u64);
             let a = (seed * 1_103_515 + r * 1_597_334 + c * 1_830_421 + 12_345) % P;
