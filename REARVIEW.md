@@ -3340,3 +3340,76 @@ Unadjudicated.
 2. *The row gate before slice 2*, `SPEC.md` §2 rule 4 corrected with it. Over 0.9.1 it costs a fifth of the opening's rain, whose heaviest frames still fit a frame at the rate of 30 in the browser, and it removes the stall at every click; the held-column read makes it free when Frazaro ships it.
 3. *A rate of 60, the opening as it stands.* The motion was what read as slow, and a settled frame costs under a millisecond. With the row gate and the host's tick snapped to the frame's grid, the browser presents Sand at an even 60 a second and a click shows no stall. The host's snap is `ENGINE.1`'s, the loop's, and goes in with the row gate, so that one hand test sees both. The opening stays the whole board raining at once: it is the floors' worst case by design, and at 60 it lands in about three and a half seconds.
 4. *This record and the session committed now*, the session as `engine/examples/play.rs`, the engine's third example; the playtest pass named in `ROADMAP.md`'s order. The row gate, the rate and the snap wait for the owner's hand test and the floors' sixth baseline, since the cartridge's digest moves.
+
+*Committed 2026-10-12 as `47a8f12`, with the session; not pushed. The ask for Frazaro was written the same day for the owner to relay, the three changes with their patches and numbers, in the session's scratchpad (`pt/ASK_FRAZARO.md`, the patches beside it in `pt/patches/`).*
+
+**The row gate and the rate of 60: what landed.** Built 2026-10-12 over `47a8f12` and `vla-lang` 0.9.1, with the host's tick on the frame's grid (`ENGINE.1`'s record). It awaits the owner's hand test and the floors' sixth baseline.
+- `cartridges/sand/sand.source.vla` and `sand.vla`:
+  - the `Gate`'s third fill, `C2:C199`, the material in the disc's rows and −1 elsewhere;
+  - each cell of `Stay`, `Side` and the `Screen` testing its row's `Gate!$B2<0` before the disc, and painting `Gate!$C2`;
+  - the rate of 60, and the header's rule 4.
+
+  The rows are the ones the pass measured, byte for byte but for the rate: 87 rows, 189,215 formula cells in 15 shapes.
+- `engine/src/cartridge.rs`: the opening test's manifest row, its budget row at 60, and 15 shapes.
+- `tools/check_cartridge.ps1`: Sand's row floor, 87.
+- `tools/check_frame_floors.ps1`: the ceiling's dated note, 516 and 5 unchanged.
+- `SPEC.md` §2's correction of rule 4, `engine/README.md`, and `web/README.md`'s hand test.
+
+The oracle, on the day (*measurement*):
+- `cargo fmt --check` and `clippy --all-targets -D warnings`: clean.
+- `cargo test`: 30. The painting and water tests hold `Stay` and `Side` cell by cell through the brush.
+- `expand --check`: six sources the same, Sand's among them.
+- The runner's check mode: Sand 189,215 cells, 516 and 5.
+- The session over it, twice: every one of 1,100 frames equal to the sand by hand. No stroke, settle or key frame over 2.9 ms, where they reached 17 to 26. The rain's median is 3.8 to 3.9 ms and its p95 15.7 to 16.1, against 3.1 to 3.2 and 13.2 to 13.5.
+- `tools/bench_frames.ps1 -NoBuild`, a preview. *My run, and its block was not pasted:*
+  - the floors' Sand natively 15.6 ms, 12,162,770 cells a second, against the fifth baseline's 12.3;
+  - in the browser 22.1 ms, 8,581,179 cells a second, against 17.8;
+  - both rows re-based on the new fixture, the reasons written.
+
+  The opening's heaviest frames pay the row gate's price over 0.9.1, a fifth to a quarter. Frazaro's held-column read, asked, makes it free.
+- `run_checks.ps1 -WithExtras`: 12 checks, 11 passed, and `check_frame_floors.ps1` failing on Sand's digest alone, the sixth baseline's to clear; 12 verifiers passed.
+- In headless Chrome, the real host over the build, the canvas left out, from second 8 a click a second (*measurement*):
+
+  | rate | frames presented each second | gaps from second 4, median and p95 | after a press or a release |
+  |---|---|---|---|
+  | 60 | 33 to 35, 47 to 52, then 60 from the third | 16.7 and 17.0 ms | 18 to 19 ms |
+  | 30 | 28, 28, then 30 | 33.3 and 33.8 ms | 34 to 35 ms |
+
+  Before, as committed: at 30 a press left a gap of 83 to 85 ms and a release one of 75 to 77; at 60 the loop presented 38 to 40 frames a second.
+
+*The owner's hand test, before the baseline:*
+- Pick Sand: it rains at sixty frames a second, its first two seconds slower while the board falls at once.
+- Paint, release, press 3 and paint water, erase with the right button: no stall at any press, release or key.
+- Then the sixth baseline: the owner's run of `tools/bench_frames.ps1`, pasted. It re-bases Sand's two rows lower with their reasons, the row gate's price over 0.9.1.
+
+The commits, at the owner's word: `ENGINE.1`'s snap first, which leaves the floors as they stand; then this, with the sixth baseline.
+
+*Owner-tested 2026-10-12, the same day: "Sand runs at 60fps on load, but the first two seconds are really slow. Why is that?" and "No stalls on clicks." The owner's run of `tools/bench_frames.ps1` is the floors' sixth baseline, pasted from `target/bench_frames.txt` whole, no value touched; the chat's copy had dropped a space at a line wrap (*measurement*):*
+
+| row | frame p50 | frames a second | cells a second | floor |
+|---|---|---|---|---|
+| native life | 2.8 ms | 361.8 | 22,781,677 | 20,500,000 |
+| native gun | 0.0423 ms, in runs of 128 | 23,657.0 | 1,489,542,292 | 1,340,000,000 |
+| native sand | 15.8 ms | 63.5 | 12,009,228 | 10,800,000, re-based on the row gate's cartridge |
+| wasm life | 4.0 ms | 246.9 | 15,546,667 | 14,100,000 |
+| wasm gun | 0.0617 ms, in runs of 128 | 16,202.5 | 1,020,176,202 | 929,000,000 |
+| wasm sand | 22.5 ms | 44.3 | 8,390,909 | 7,550,000, re-based on the row gate's cartridge |
+
+- `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`.
+
+*Why the first two seconds are slow* (answered in the session, *measurement*). The opening is the whole board falling at once. A frame at a rate of 60 has three quarters of 16.7 ms, 12.5, for its steps; a heavier frame spans two ticks, and the host runs late and never skips, so the rain falls at half speed until enough of it lands. Natively, frames 3 to 200 of three openings over 0.9.1, a frame over 8.6 ms being one over 12.5 in the browser by the floors' ratio:
+
+| opening | frames 3 to 31, median | frames over 8.6 ms, and the last |
+|---|---|---|
+| as built, the whole board | 15.4 to 16.3 ms | 63, frame 65 |
+| the same over the three asks of Frazaro | 10.2 to 10.5 | 31 to 33, frame 36 to 37 |
+| half the density | 13.8 to 14.2 | 67 to 68, frame 70 |
+| the full density in the top third only, rows 2 to 67 | 5.6 to 5.8 | none |
+
+- Sixty-three frames at two ticks each are about the two seconds the owner saw. The row gate made each about a fifth dearer, and the full-board opening kept was decision 3 of the pass's adjudication.
+- A thinner soup does not help: its grains fall longer before they pile up.
+- A rain from the top third is at 60 from its third frame. Frames 1 and 2 stay whole frames, 41 to 45 ms and 22, as they are in every opening.
+
+Recommended, the owner's call since it changes the toy's look and the floors' fixture: the opening a rain of the top third, about a third of the grains landing in about two seconds. The chain stays two hundred rows deep, but the floors' Sand would measure a lighter stretch than the worst a person can make, so a seventh baseline follows it. Otherwise the whole board stays, slow for about two seconds over 0.9.1 and about one over the three asks.
+
+*Approved 2026-10-12: "If the top-third rain change would fix the laggy load, then I approve. Commit, then proceed." The row gate, the rate and the sixth baseline were committed the same day, after `ENGINE.1`'s snap. Not pushed. The top-third rain follows in a build of its own. It fixes the first seconds' half speed and not the load's freeze before the first frame, which is the plan's edges and Frazaro's first ask.*

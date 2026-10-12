@@ -42,6 +42,15 @@ The graph's depth is the frame's critical path and its width is the parallelism 
 
 A value read through its twin is still about 1% cheaper, so Sand keeps its `Parity` column.
 
+(*Corrected 2026-10-12*, `CART.2`'s playtest pass, Sand played as a person plays it, every frame held to its sand by hand; *measurement*, over `vla-lang` 0.9.1: rule 4's guard has a price it did not name.)
+- A part every `$` holds changes value when the rare thing begins and when it ends, and each change computes every cell of the shape.
+  - Sand's button test flipped at every press and every release.
+  - The material, `Brush!$B$4`, read at every cell, changed at every key and at the right button.
+  - Each of those frames computed all 189,017 cells: 17 to 26 ms natively, where a stroke's frames take 1 to 2, and in Chrome the frame after a press came 83 to 85 ms after the last.
+- A test that is rarely true and touches few rows reads a cell of its own row instead. Sand's `Gate` holds, for each row, the brush's column, the disc's half-width squared, and the material, with −999, −1 and −1 outside the disc's rows. Each cell tests its row's `Gate!$B2<0` before the disc, so a press, a release or a key changes only the rows under the brush.
+- Over 0.9.1, each marked cell then reads its row and splits its lanes, a fifth of Sand's opening rain. A run whose cells share a row could read such a cell once; that read, asked of Frazaro with the pass's numbers, makes the guard cost nothing.
+- Keep the part for a test whose change is as rare as the grid's life, such as the first frame's `Clock!$B$1=1`.
+
 ## 3. The device sheets, cell by cell
 
 Alonzo is Varvara to VLA's uxn: where Varvara maps its devices into uxn's memory at fixed ports, sixteen bytes each, with a vector per device that the machine evaluates on an event (*exhibit*: the Varvara page, §14), Alonzo maps its devices into the grid as sheets with fixed layouts, and has no vectors, since the frame is the only event and every input is a cell written before the step. The nearer precedent is TIC-80, whose devices are memory-mapped registers a program peeks and pokes, the screen at address zero, the palette at `0x3FC0`, the gamepads, mouse and keyboard at `0xFF80` (*exhibit*, §14): a device sheet is a register file with names instead of addresses and a formula bar instead of `peek`. The layout follows the spreadsheet's own convention for a block of settings, a label in column A and its value in column B, so that a person reading the sheet in the viewport sees `up | 1` and not a bare `1`, and follows ICAEW's tenth principle, inputs, workings and outputs separate and clearly identified (*exhibit*, §14): the Input sheet is inputs, a cartridge's own sheets are workings, and Screen, Audio and File are outputs.

@@ -2376,19 +2376,21 @@ mod tests {
     /// kept, the Tally the last frame's sums, and the rule one fill a formula,
     /// which decision 2 asks of every board (a fill a row made 398 shapes, and
     /// a frame's start 369 ms). The opening rains sand and water, half the
-    /// soup's grains each (decision 19).
+    /// soup's grains each (decision 19). The toy steps at a rate of 60 and
+    /// reads its brush from the Gate's three columns since the playtest pass
+    /// (2026-10-12).
     #[test]
     fn sand_s_opening_is_the_hand_written_sand_and_keeps_every_grain() {
         let mut c = Cartridge::load(SAND, "sand.vla", SAND.len()).expect("Sand loads");
-        assert_eq!(c.row(1), "(cartridge 1 \"Sand\" plane 320 200 30)");
+        assert_eq!(c.row(1), "(cartridge 1 \"Sand\" plane 320 200 60)");
         let (cells, shapes) = c.machine().formulas();
         assert_eq!(
-            shapes, 14,
-            "one fill a formula: Parity, the Brush's four, the Gate's two, State, Stay, Side, the Screen's two and the Tally's two"
+            shapes, 15,
+            "one fill a formula: Parity, the Brush's four, the Gate's three, State, Stay, Side, the Screen's two and the Tally's two"
         );
         assert!(
             c.describe()
-                .contains(&format!("(budget 30 {cells} {} 2000000)\n", cells * 30)),
+                .contains(&format!("(budget 60 {cells} {} 2000000)\n", cells * 60)),
             "{}",
             c.describe()
         );

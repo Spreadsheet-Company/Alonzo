@@ -193,18 +193,25 @@ $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::W
 # two spaces at its line wraps. Its entry re-bases the native gun's floor,
 # with its reason, timed in runs where the fourth timed it alone, and Sand's
 # two rows on water's cartridge, both higher; Life's two rows are held,
-# native life clearing its floor again at 2.8 ms.
+# native life clearing its floor again at 2.8 ms. Its rows, the sixth having
+# replaced them: native life 22,561,677 cells a second (frame p50 2.8 ms),
+# native gun 1,489,473,470 (0.0423, runs of 128), native sand 15,329,970
+# (12.3), wasm life 15,741,000 (4.0), wasm gun 1,033,255,383 (0.0609), wasm
+# sand 10,618,933 (17.8); its floors are the history's fifth entry.
+# 2026-10-12, the sixth: the owner's run with CART.2's playtest pass built,
+# Sand's brush read from the Gate's rows, its rate of 60 and the host's tick
+# on the frame's grid, after the owner's hand test (No
 $baselineDate = '2026-10-12'
-$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 154.0.8037.98 headless | the engine''s module 643,503 bytes | vla-lang at 0.9.1 | power throttling opted out: the runner yes, 27 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 28 browser process(es)'
+$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 154.0.8037.98 headless | the engine''s module 643,503 bytes | vla-lang at 0.9.1 | power throttling opted out: the runner yes, 31 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 31 browser process(es)'
 $baselinePin = '0.9.1'
-$baselineFixtures = @{ 'life' = '7220F8E1FBFF7A3B7F00DE9ECA5754E9A1877A8D1A766A251EB3811D0C937D89'; 'gun' = '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7'; 'sand' = '3DFFD0BE234487C6AEBAE8583DB4276B9A5A71B1B4A76851605F1FF70C06FF33' }
+$baselineFixtures = @{ 'life' = '7220F8E1FBFF7A3B7F00DE9ECA5754E9A1877A8D1A766A251EB3811D0C937D89'; 'gun' = '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7'; 'sand' = '177E8863A7B769C4ED0F80622ADA6DF3C9C4CB1358DF1566EC08B654F9630692' }
 $baseline = @(
-    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 71.2; FirstFrame = 10.9; FrameP50 = 2.8; FrameMin = 2.0; FrameMax = 5.9; CellsPerSecond = 22561677; FramesPerSecond = 358.327; ClockMs = 0.178; ClockSpread = 0.9; ClockDrift = -0.3 },
-    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 59.6; FirstFrame = 9.0; FrameP50 = 0.0423; FrameMin = 0.0223; FrameMax = 0.0515; CellsPerSecond = 1489473470; FramesPerSecond = 23655.954; ClockMs = 0.179; ClockSpread = 2.3; ClockDrift = 0.2 },
-    @{ Runner = 'native'; Fixture = 'sand'; Cells = 189017; Frames = 30; Run = 1; Load = 495.9; FirstFrame = 41.5; FrameP50 = 12.3; FrameMin = 10.7; FrameMax = 24.5; CellsPerSecond = 15329970; FramesPerSecond = 81.104; ClockMs = 0.178; ClockSpread = 0.6; ClockDrift = -0.3 },
-    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 87.4; FirstFrame = 13.0; FrameP50 = 4.0; FrameMin = 3.0; FrameMax = 8.3; CellsPerSecond = 15741000; FramesPerSecond = 250.000; ClockMs = 0.255; ClockSpread = 2.0; ClockDrift = -3.8 },
-    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 51.3; FirstFrame = 7.2; FrameP50 = 0.0609; FrameMin = 0.0320; FrameMax = 0.0727; CellsPerSecond = 1033255383; FramesPerSecond = 16410.256; ClockMs = 0.255; ClockSpread = 2.0; ClockDrift = -3.8 },
-    @{ Runner = 'wasm'; Fixture = 'sand'; Cells = 189017; Frames = 30; Run = 1; Load = 584.5; FirstFrame = 40.2; FrameP50 = 17.8; FrameMin = 15.5; FrameMax = 32.6; CellsPerSecond = 10618933; FramesPerSecond = 56.180; ClockMs = 0.257; ClockSpread = 5.8; ClockDrift = -2.8 }
+    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 70.3; FirstFrame = 10.4; FrameP50 = 2.8; FrameMin = 2.1; FrameMax = 5.0; CellsPerSecond = 22781677; FramesPerSecond = 361.821; ClockMs = 0.178; ClockSpread = 0.9; ClockDrift = 0.6 },
+    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 56.5; FirstFrame = 8.8; FrameP50 = 0.0423; FrameMin = 0.0206; FrameMax = 0.0449; CellsPerSecond = 1489542292; FramesPerSecond = 23657.047; ClockMs = 0.178; ClockSpread = 0.9; ClockDrift = 0.4 },
+    @{ Runner = 'native'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 514.2; FirstFrame = 45.8; FrameP50 = 15.8; FrameMin = 13.3; FrameMax = 30.5; CellsPerSecond = 12009228; FramesPerSecond = 63.469; ClockMs = 0.178; ClockSpread = 1.1; ClockDrift = 0.4 },
+    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 89.6; FirstFrame = 13.2; FrameP50 = 4.0; FrameMin = 2.9; FrameMax = 8.4; CellsPerSecond = 15546667; FramesPerSecond = 246.914; ClockMs = 0.260; ClockSpread = 1.9; ClockDrift = -1.9 },
+    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 51.3; FirstFrame = 7.2; FrameP50 = 0.0617; FrameMin = 0.0320; FrameMax = 0.0680; CellsPerSecond = 1020176202; FramesPerSecond = 16202.532; ClockMs = 0.260; ClockSpread = 3.8; ClockDrift = -1.9 },
+    @{ Runner = 'wasm'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 607.1; FirstFrame = 45.7; FrameP50 = 22.5; FrameMin = 19.5; FrameMax = 39.3; CellsPerSecond = 8390909; FramesPerSecond = 44.346; ClockMs = 0.263; ClockSpread = 5.7; ClockDrift = -0.9 }
 )
 
 # --- the floors, in cells a second, a dated history that never goes down ---
@@ -221,7 +228,8 @@ $floorHistory = @(
     @{ Date = '2026-10-10'; Pin = 'f5dc344'; Reason = ''; Floors = @{ 'native life' = 560000; 'native gun' = 586000; 'wasm life' = 414000; 'wasm gun' = 419000 } },
     @{ Date = '2026-10-11'; Pin = '0.9.0'; Reason = ''; Floors = @{ 'native life' = 20200000; 'native gun' = 3710000000; 'wasm life' = 13300000; 'wasm gun' = 924000000 } },
     @{ Date = '2026-10-11'; Pin = '0.9.0'; Reason = 'the native gun only, at the owner''s word (CART.2): on the code measured at 02:00 it read 17.6 to 26.9 microseconds a frame in nine runs that evening, two runners alternated, against 15.2; the clock beside every frame and the gun in the browser unchanged; a frame of 20 microseconds varies between sessions by more than the margin of 10%'; Floors = @{ 'native life' = 20200000; 'native gun' = 2770000000; 'native sand' = 9490000; 'wasm life' = 13600000; 'wasm gun' = 929000000; 'wasm sand' = 6810000 } },
-    @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = 'native gun re-based: timed in runs of 128 from this entry, where the baseline before it timed its frames alone, and a frame under 2 ms timed alone, right after the clock, varied between sessions past the margin (CART.1''s frame timer); its floor is this run''s less 10%'; Floors = @{ 'native life' = 20300000; 'native gun' = 1340000000; 'native sand' = 13700000; 'wasm life' = 14100000; 'wasm gun' = 929000000; 'wasm sand' = 9550000 } }
+    @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = 'native gun re-based: timed in runs of 128 from this entry, where the baseline before it timed its frames alone, and a frame under 2 ms timed alone, right after the clock, varied between sessions past the margin (CART.1''s frame timer); its floor is this run''s less 10%'; Floors = @{ 'native life' = 20300000; 'native gun' = 1340000000; 'native sand' = 13700000; 'wasm life' = 14100000; 'wasm gun' = 929000000; 'wasm sand' = 9550000 } },
+    @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = 'native sand re-based: its fixture is another file, 177E8863..., where the baseline before it measured 3DFFD0BE..., and cells a second count a fixture''s cells (CART.2''s decision 24); its floor is this run''s less 10%; wasm sand re-based: its fixture is another file, 177E8863..., where the baseline before it measured 3DFFD0BE..., and cells a second count a fixture''s cells (CART.2''s decision 24); its floor is this run''s less 10%'; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 10800000; 'wasm life' = 14100000; 'wasm gun' = 929000000; 'wasm sand' = 7550000 } }
 )
 
 # --- releases of a measured source: a registry release of the language whose
@@ -280,6 +288,9 @@ $sameRows = @{
 # allocations and 5 reallocations, the same on every run; 0.0027 a formula
 # cell over 189,017. Raised with the fixture it measures, as its rows are
 # re-based (CART.2's decision 24), and not for a language that allocates more.
+# 2026-10-12, CART.2's playtest pass: the brush read from the Gate's rows, a
+# third Gate column (189,215 formula cells) and the rate of 60, every count
+# the same, 516 and 5.
 $allocationCeilings = [ordered]@{
     'life' = @{ Allocs = 80; Reallocs = 5 }
     'gun'  = @{ Allocs = 80; Reallocs = 5 }

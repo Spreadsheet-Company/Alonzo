@@ -159,7 +159,10 @@ baseline). Since the third slice the opening rains water with the sand,
 half the soup's grains, through a rule of three sheets where it was two:
 about 12.5 ms natively and 18.7 ms in the browser, over half again the
 formula cells (the build's run of 2026-10-12 over `vla-lang` 0.9.1; the
-floors' fifth baseline is the owner's).
+floors' fifth baseline is the owner's). Since the playtest pass, the same
+day, the toy steps at a rate of sixty, its grains moving a cell a frame, and
+reads its brush from the Gate's rows alone, so a press, a release or a key
+changes only the rows under the brush where it computed every cell.
 
 The floors time a game's worst stretch; a person plays the rest of it. A
 third example, `examples/play.rs`, plays Sand as the host plays it, the

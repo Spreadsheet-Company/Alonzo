@@ -253,8 +253,9 @@ own replay waits in the box, the loop oracle's run of it, 240 frames; press
 Play the replay with the sound on and hear that run again, six presses of
 Z, five of them ticks and the one while the knob says "saw" silent, and ten
 frames at a third of the speed. Pick Sand and watch it open raining sand
-and water, Life's soup as grains, half of each, the sand settling into
-piles and the water spreading over them in a few seconds; click the plane
+and water at sixty frames a second, Life's soup as grains, half of each,
+the sand settling into piles and the water spreading over them in a few
+seconds, the motion even and no click, release or key a stall; click the plane
 to give it the keys, paint sand with the left button, press 3 and paint
 water, which spreads along whatever it lands on and never settles, a lake's
 edge shimmering; press 2 and paint walls, press 0 and the left button paints

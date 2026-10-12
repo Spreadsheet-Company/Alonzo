@@ -50,8 +50,11 @@
 ;      frame's start took 369 ms of a 387 ms frame.
 ;   3. No term that changes every frame, and no raw pointer, in a cell's formula. Each
 ;      goes through a cell that holds still when idle, or every frame is whole.
-;   4. A test that is rarely true sits behind a part every $ holds, reading value cells
-;      or twins only: the brush's guard, 24% of the worst frame.
+;   4. A test that is rarely true reads a cell of its own row, the brush's Gate, so that a
+;      press changes only the rows under the brush. Behind a part every $ holds, the guard
+;      saved 24% of the worst frame, but its flip at every press and release, and the
+;      material held at every cell at every key, computed all 189,017 cells, 17 to 26 ms
+;      (the playtest pass, 2026-10-12).
 ;   5. A value fixed for the grid's life is computed once and read through its twin,
 ;      not called at each cell: the Parity column, 15%. No CHOOSE in a board's formula:
 ;      +38%. (Since vla-lang 0.9.1 a run computes MOD, ROW and CHOOSE across its cells,
@@ -68,7 +71,7 @@
 (cartridge "sand"
   (spec 3)                          ; the version of SPEC.md this cartridge is written to
   (title "Sand")                    ; what the host shows
-  (rate 30)                         ; frames a second
+  (rate 60)                         ; frames a second: a grain moves a cell a frame
   (screen plane 320 200)            ; plane mode, 320 cells wide and 200 high: A1:LH200
   (seed 1)                          ; the dice, Clock!B3: the soup of the first frame
   (author "Spreadsheet Company")    ; who wrote it
@@ -146,12 +149,15 @@
   ("B4" "=IF(Input!B14=1,0,State!B1)"))
 
 ; ---- the Gate: the disc, row by row ----------------------------------------------------
-; For each row of the interior, the brush's column, and the square of the disc's
-; half-width there; -999 and -1 outside its rows, which no cell is inside. A cell of row
-; r is inside the disc when (COLUMN()-Gate!Ar)^2 <= Gate!Br.
+; For each row of the interior, the brush's column, the square of the disc's half-width
+; there, and the material it paints; -999, -1 and -1 outside its rows, which no cell is
+; inside. A cell of row r is inside the disc when Gate!Br is not negative and
+; (COLUMN()-Gate!Ar)^2 <= Gate!Br. The rule reads the brush from this sheet alone, so a
+; press, a release or a key changes only the rows under the disc (rule 4).
 (formulas "Gate"
   ("A2:A199" "=IF((ROW()-Brush!$B$2)^2<=Brush!$B$3^2,Brush!$B$1,-999)")
-  ("B2:B199" "=IF((ROW()-Brush!$B$2)^2<=Brush!$B$3^2,Brush!$B$3^2-(ROW()-Brush!$B$2)^2,-1)"))
+  ("B2:B199" "=IF((ROW()-Brush!$B$2)^2<=Brush!$B$3^2,Brush!$B$3^2-(ROW()-Brush!$B$2)^2,-1)")
+  ("C2:C199" "=IF((ROW()-Brush!$B$2)^2<=Brush!$B$3^2,Brush!$B$4,-1)"))
 
 ; ---- State: the material the left button paints ------------------------------------------
 (cells "State"
@@ -172,9 +178,9 @@
 ; moves the water, reads this sheet alone (rule 7).
 (formula "Stay" "C2:LF199"
   (&expand
-    "=IF(IF(Input!$B$13+Input!$B$14=0,FALSE,"                      ; the brush, tested only while a button is held (rule 4):
+    "=IF(IF(Gate!$B2<0,FALSE,"                                     ; the brush, tested only in its rows (rule 4):
     "(COLUMN()-Gate!$A2)^2<=Gate!$B2),"                            ;   the cell inside the disc, by its row's gate,
-    "IF(Brush!$B$4<>0,IF(Screen.last!C2=3,2,1),0),"                ;   is occupied when the paint is not empty, 2 over water, whose grain still moves;
+    "IF(Gate!$C2<>0,IF(Screen.last!C2=3,2,1),0),"                  ;   is occupied when the paint is not empty, 2 over water, whose grain still moves;
     "IF(Screen.last!C2=1,1,"                                       ; else a wall stays,
     "IF(AND(Screen.last!C2>=2,Side!C3=1),"                         ; and a grain whose cell beneath is taken
     "IF(Parity.last!$A2=0,"                                        ; on an even row, right first:
@@ -197,9 +203,9 @@
 ; paints this sheet as it paints Stay.
 (formula "Side" "C2:LF199"
   (&expand
-    "=IF(IF(Input!$B$13+Input!$B$14=0,FALSE,"                      ; the brush, as Stay tests it:
+    "=IF(IF(Gate!$B2<0,FALSE,"                                     ; the brush, as Stay tests it:
     "(COLUMN()-Gate!$A2)^2<=Gate!$B2),"
-    "IF(Brush!$B$4<>0,1,0),"                                       ;   occupied when the paint is not empty;
+    "IF(Gate!$C2<>0,1,0),"                                         ;   occupied when the paint is not empty;
     "IF(Stay!C2=2,"                                                ; else water that stays
     "IF(IF(Parity.last!$A2=0,"                                     ;   on an even row, right first:
     "OR(Stay!D2=0,AND(Stay!B2=0,Stay!A2<>2)),"                     ;   leaves for a free cell right, or left when the water two to the left does not take it;
@@ -231,9 +237,9 @@
     "*MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
     "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859),"
     "67108859)<25165822,3,0)),"                                             ;   water where it is under three eighths
-    "IF(IF(Input!$B$13+Input!$B$14=0,FALSE,"                                 ; the brush, as Stay tests it:
+    "IF(IF(Gate!$B2<0,FALSE,"                                                ; the brush, as Stay tests it:
     "(COLUMN()-Gate!$A2)^2<=Gate!$B2),"
-    "Brush!$B$4,"                                                            ;   the paint
+    "Gate!$C2,"                                                              ;   the paint
     "IF(Side!C2=1,IF(Stay!C2>0,Screen.last!C2,3),"                           ; else an occupant that stayed keeps its cell, and water moved in is water;
     "IF(Screen.last!C1>=2,Screen.last!C1,"                                   ; a free cell takes the grain falling straight,
     "IF(Parity.last!$A1=0,"                                                  ; and when the row above goes right first,
