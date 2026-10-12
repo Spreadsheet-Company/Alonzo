@@ -126,7 +126,13 @@ many cells a millisecond the machine does; after it the budget is three
 quarters of the display's interval turned into cells, where it was half
 until Sand's water (`CART.2`, 2026-10-12), whose heaviest seconds step in
 about 23 to 25 ms and are presented at thirty frames a second only so; the
-loop oracle's `slice` case holds the share. A refusal is the module's words once,
+loop oracle's `slice` case holds the share. A tick's time is put on the grid
+of the frame's interval when within a quarter of a millisecond of it (the
+rules' `snapMs`, `CART.2`'s playtest pass, 2026-10-12): the display's
+timestamps jitter by a tenth of a millisecond, and at a rate of 60 the
+accumulator's remainder at its threshold presented 38 to 40 of 60 frames a
+second, some ticks two and some none; the loop oracle's `pace` case holds
+one frame a tick at 60 and one each second tick at 30. A refusal is the module's words once,
 then its id; the host adds the row's line only for a write of more than one
 row, and only when the module's words do not already name it.
 

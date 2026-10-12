@@ -104,6 +104,10 @@
                                      // 22.6 to 24.9 ms, presented at 20 to 22 frames a second at a half and at 30 here
   var INTERVAL_SAMPLES = 30;         // the display's interval is the median of the first thirty deltas
   var DEFAULT_INTERVAL_MS = 1000 / 60;
+  var SNAP_MS = 0.25;                // a tick's time this near the grid of the frame's interval is put on it: the
+                                     // display's timestamps jitter by a tenth of a millisecond, and a remainder at
+                                     // the accumulator's threshold made some ticks present two frames and some none
+                                     // (CART.2's playtest pass, 2026-10-12: Sand at 60 presented 38 to 40 a second)
   var TIMER_FLOOR_MS = 0.1;          // a step faster than the timer's grain is measured at the grain
   var LOG_LINES = 20;
   var HISTORY_LINES = 2000;
@@ -126,7 +130,7 @@
   var ABI = 1;
   var RULES = {
     abi: ABI, capMs: ACCUMULATOR_CAP_MS, firstBudget: FIRST_BUDGET, minBudget: MIN_BUDGET,
-    sliceFraction: SLICE_FRACTION, intervalSamples: INTERVAL_SAMPLES, logLines: LOG_LINES,
+    sliceFraction: SLICE_FRACTION, snapMs: SNAP_MS, intervalSamples: INTERVAL_SAMPLES, logLines: LOG_LINES,
     lookahead: LOOKAHEAD, gainTau: GAIN_TAU, voiceShare: VOICE_SHARE
   };
   var EXPORTS = ['alonzo_abi_version', 'alonzo_version_text', 'alonzo_alloc', 'alonzo_free', 'alonzo_load',
@@ -495,9 +499,10 @@
       return;
     }
     if (this.lastTs === null) { this.lastTs = ts; return; }
-    var dt = ts - this.lastTs;
+    var raw = ts - this.lastTs;
     this.lastTs = ts;
-    this._sample(dt);
+    this._sample(raw);
+    var dt = this._snapped(raw, c.rate);
     // A tick's time held to a quarter second, and the backlog to the larger of a quarter second and one
     // frame's interval: held to the quarter second alone, a rate under four frames a second, whose
     // interval is longer, never stepped, and the teacher's rate of 1 froze the loop (ENGINE.3's hand test).
@@ -512,6 +517,15 @@
       this.acc -= 1000 / c.rate;
       this._begin();
     }
+  };
+  // A tick's time put on the grid of the frame's interval when within SNAP_MS of it (SPEC.md section 5, step 1,
+  // corrected 2026-10-12): the grid's step is the frame's interval over the whole number of the display's
+  // intervals it spans, or the frame's own interval where it is shorter than the display's. So at a rate of
+  // 60 on a display of 60 every tick owes one frame, and at 30 every second tick, whatever the timestamps'
+  // jitter; a display whose interval is off the grid by more than SNAP_MS is timed as it comes.
+  Host.prototype._snapped = function (dt, rate) {
+    var f = 1000 / rate, d = this.interval, unit = f >= d ? f / Math.max(1, Math.round(f / d)) : f, m = Math.round(dt / unit);
+    return m >= 1 && Math.abs(dt - m * unit) < SNAP_MS ? m * unit : dt;
   };
   Host.prototype._sample = function (dt) {
     if (dt <= 0 || this.deltas.length >= INTERVAL_SAMPLES) return;

@@ -1015,6 +1015,45 @@
     var st = fake.stats();
     return { counters: { ticks: ticks, perTick: want, calls: total, frames: frames, live: st.live, misfrees: st.misfrees }, problems: P };
   }
+  // The host's pace (CART.2's playtest pass, 2026-10-12; SPEC.md section 5, step 1, corrected): a tick's time
+  // put on the grid of the frame's interval when within a quarter millisecond of it, so that the display's
+  // timestamps, which jitter, never alias the accumulator. Over the double, under a clock this case keeps,
+  // which stands still within a tick, the ticks come at 60 a second with their times to a tenth of a
+  // millisecond, as Chrome's are: 16.7, 16.6 and 16.7 ms apart in turn. At a rate of 60 every tick after
+  // the first presents one frame, and at the rate of 30 every second tick does, never two at once and
+  // never two ticks running without one. Without the grid, the second tick at 60 owes none and a later
+  // one two (Sand at 60 presented 38 to 40 of its 60 frames a second in Chrome).
+  var PACE_TICKS = 61;
+  function casePace() {
+    var P = [], counted = { ticks: 0 };
+    [[60, 1], [30, 2]].forEach(function (rc) {
+      var rate = rc[0], every = rc[1], clock = { t: 0 }, fake = FAKE.create({});
+      var host = new HOST({ drive: 'manual', now: function () { return clock.t; } });
+      var a = host.attach(fake.exports);
+      if (!a.ok) { P.push('the host refused the double: ' + a.sentence); return; }
+      var text = rate === 30 ? lifeText : lifeText.replace('(rate 30)', '(rate ' + rate + ')');
+      var ld = host.load(text, 'life.vla');
+      if (!ld.ok) { P.push('the host did not load Life at a rate of ' + rate + ': ' + ld.sentence); return; }
+      host.start();
+      var per = [], before = 0, wrong = [];
+      for (var k = 0; k < PACE_TICKS; k++) {
+        clock.t = 1000 + Math.round(k * 1000 / 60 * 10) / 10;   // the first tick primes the loop's clock and steps nothing
+        host.tick(clock.t);
+        var f = host.counters().frame;
+        if (k > 0) per.push(f - before);
+        before = f;
+      }
+      for (var i = 0; i < per.length; i++) {
+        var want = (i + 1) % every === 0 ? 1 : 0;
+        if (per[i] !== want) wrong.push('tick ' + (i + 1) + ' presented ' + per[i]);
+      }
+      if (wrong.length) P.push('at a rate of ' + rate + ', on ticks 16.6 or 16.7 ms apart, a tick presents ' + (every === 1 ? 'one frame' : 'one frame every second tick') + ', and ' + wrong.slice(0, 3).join(', ') + (wrong.length > 3 ? ' and ' + (wrong.length - 3) + ' more ticks were wrong' : ''));
+      counted['rate' + rate] = before;
+      counted.ticks += per.length;
+      host.destroy();
+    });
+    return { counters: counted, problems: P };
+  }
   // Every allocation grows the memory by zero pages and detaches the buffer: the host keeps no view.
   function caseMemory() {
     var r = loopRun({ text: lifeText, budget: 0, fake: { growEvery: 1 }, ticks: loopTicks(30, -1), events: { 3: [['down', 'ArrowUp', 'ArrowUp']], 9: [['edit', '(cell "State" "B1" 42)']], 15: [['up', 'ArrowUp']] } });
@@ -2438,8 +2477,8 @@
   }
   function runLoopOracle() {
     var out = [], dpr = window.devicePixelRatio || 1, ok = 0, R = HOST.RULES;
-    out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
-    var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
+    out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' snap=' + R.snapMs + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
+    var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound]];
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }

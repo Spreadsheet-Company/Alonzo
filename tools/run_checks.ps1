@@ -148,6 +148,10 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # frames held to a sand by hand and its grains kept, its control seventeen
 # mutants of the table and six fake runners; and check_host_loop.ps1's pass
 # case holds six sources.
+# 2026-10-12, CART.2's third slice and its playtest pass: 12 still, no check
+# added - check_host_loop.ps1 holds seventeen cases, slice and pace among
+# them, and its control is twenty-seven mutant pages, Z the slice at a half
+# and AA the tick on no grid.
 $expectedAtLeast = 12
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
@@ -162,7 +166,7 @@ $extras = @(
     @{ Script = 'check_render_oracle.ps1'; Args = @('-Control'); What = 'KERNEL.5 render oracle: the real page passes, three mutant pages fail under the browser (SKIPPED without one)' },
     @{ Script = 'check_render_floors.ps1'; Args = @('-Control'); What = 'KERNEL.5 render floors: a clean table passes, seven mutants fail' },
     @{ Script = 'check_cartridge.ps1';     Args = @('-Control'); What = 'ENGINE.1, SPEC.3, ENGINE.3, ENGINE.4 and CART.2 cartridges: a clean scratch copy of six cartridges and Life written to (spec 3) pass, thirty-two mutants fail, the cartridge, its source, its replay and golden, and the library told apart, the Audio sheet''s values judged, two replays and two goldens' },
-    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1, ENGINE.2, SPEC.3, ENGINE.3 and ENGINE.4 host loop: the real page passes, twenty-five mutant pages fail under the browser, the fourth, the eleventh and six more only over the engine''s module, and the twenty-fourth only by the sound case''s render (SKIPPED without a browser)' },
+    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1, ENGINE.2, SPEC.3, ENGINE.3, ENGINE.4 and CART.2 host loop: the real page passes, twenty-seven mutant pages fail under the browser, the fourth, the eleventh and six more only over the engine''s module, and the twenty-fourth only by the sound case''s render (SKIPPED without a browser)' },
     @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 blit floors: a clean table of three cases passes, eight mutants fail' },
     @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 and SPEC.3 export reader and judgment: nine modules built in memory, a non-module' },
     @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, its mutants fail (seven for a git pin, eight for a registry pin); of five baselines, a git one and a registry one pass and three fail' },

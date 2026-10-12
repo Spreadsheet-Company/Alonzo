@@ -683,6 +683,35 @@ The floors hold the pin they were measured at, so `check_frame_floors.ps1` fails
 
 *Committed 2026-10-12 at the owner's word, "Commit, then walk CART.1's optimization route again over CART.2", in one commit with `CART.2`'s third slice. The floors' check fails on the pin without the fifth baseline, and the fifth baseline measured water's cartridge, so no commit can hold the one without the other. Not pushed.*
 
+*The host's tick on the frame's grid, 2026-10-12, found by `CART.2`'s playtest pass (that item's entry) and built with its row gate at the owner's word: "Your adjudications for implementing the four decisions are more informed than mine, so I trust your judgment. Proceed." Uncommitted, awaiting the owner's hand test.*
+
+The defect (*measurement*, headless Chrome 154, the real host on a 60 Hz schedule of real time):
+- A tick's time went into the accumulator as it came. The display's timestamps come to a tenth of a millisecond, 16.6 or 16.7 ms apart where a frame at 60 is 16.667.
+- With the remainder at its threshold, a tick a few hundredths of a millisecond short owed no frame, and the next owed two. Sand at a rate of 60 computed its 60 frames a second and presented 38 to 40.
+- At the rate of 30 the same jitter put a gap of 50 ms among the 33s, a p95 of 51 to 60 ms.
+- The state comes and goes: the same page presented 56 to 60 a second in some runs and settled at 40 in others, after one long tick.
+
+What landed:
+- `web/host.js`:
+  - `SNAP_MS`, a quarter of a millisecond, among the rules as `snapMs`;
+  - `_snapped`, by which `tick` puts a delta within `SNAP_MS` of the grid onto it. The grid's step is the frame's interval over the whole number of display intervals it spans, or the frame's own interval where it is shorter.
+  - The display's interval is still measured from the deltas as they come. A display off the grid by more is timed as before.
+- The page: the loop oracle's header prints `snap=`, and a seventeenth case, `pace`. Over the double, under a clock the case keeps, the ticks come at 60 a second with their times to a tenth of a millisecond, 16.7, 16.6 and 16.7 ms apart in turn. At a rate of 60 every tick after the first presents one frame, and at 30 every second tick, never two at once and never two ticks running without one.
+- `tools/check_host_loop.ps1`: the case's floors (60 ticks at each rate, 60 frames at 60 and 30 at 30), seventeen cases, and mutant AA. A host whose tolerance is 0 must say `snap=0`, and its second tick at 60 presents none, which the `pace` case fails by name. Twenty-seven mutants.
+- `SPEC.md` §5 step 1's dated correction, `web/README.md`, and `run_checks.ps1`'s line for the control.
+
+Why a quarter of a millisecond: the loop oracle's ticks come 17 ms apart, a third of a millisecond off the grid of 16.667. A tolerance of 1 ms, the first prototype's, would have put them on it and moved their counts. A quarter holds the jitter measured and leaves every other case's counts as they were.
+
+The oracle, on the day (*measurement*):
+- `check_host_loop.ps1` at both ratios: seventeen cases OK, the sixteen's counts unchanged, `pace` 120 ticks with 60 frames at 60 and 30 at 30. Its control: the real page clean, and twenty-seven mutants each failing for its own reason.
+- In Chrome, the snap in a scratch copy of the host and then in the build, the canvas left out:
+  - at 60 every second presents 59 to 60 frames, its gaps a median of 16.7 ms and a p95 of 17.0;
+  - at 30 the p95 is 33.7 to 33.8 ms, where it was 51 to 60.
+
+  `CART.2`'s record has the table.
+
+*Owner-tested 2026-10-12 with `CART.2`'s row gate: Sand at sixty frames a second and "No stalls on clicks". Committed the same day at the owner's word, "Commit, then proceed", on its own and before the row gate. It leaves the floors as they stood. Not pushed.*
+
 ## `ENGINE.2` — the frame path: the plane held to the record of the same window
 
 *Scoped 2026-10-09, at the owner's word, the day `ENGINE.1` closed: the Screen read out of the module's memory as bytes and blitted whole, held equal to the view record of the same window by a test, the record being the oracle (`CHARTER.md` §3), and the window the Camera's (`SPEC.md` §13's two oracles for this item). The scoping finds the path itself already laid, since `ENGINE.1` had to draw something: the host views the plane, copies the bytes out and blits them through the Palette. What is missing is the oracle, a fixture that reaches every arm of the byte's rule, and the cost the second slice measured, which is the language's. So the scoping is mostly a measurement, made before any claim, and its first finding moves the cost to Frazaro.*

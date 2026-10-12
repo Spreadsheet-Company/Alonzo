@@ -23,7 +23,11 @@ sentence, an edit held until the frame is done), since CART.2's third slice
 slice (the host's time slice, three quarters of the display's interval:
 over the double in steps of 1,000 cells, a clock the case keeps moving 1 ms
 at each step call and ticks 20 ms apart, every tick's calls fifteen, the
-share the oracle's own constant), memory (every allocation
+share the oracle's own constant), since CART.2's playtest pass pace (the
+host's tick put on the grid of the frame's interval when within a quarter
+millisecond of it: over the double, on ticks 16.7, 16.6 and 16.7 ms apart in
+turn as Chrome's timestamps come, every tick at a rate of 60 presents one
+frame and every second tick at 30), memory (every allocation
 detaches the buffer and the host keeps no view), abi (a module at ABI 2 and
 two without an export refused, and the engine's module built into the page
 attached at ABI 1 with its version), the refusals by id, scale (the backing
@@ -122,7 +126,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds twenty-six mutant pages through tools/build_web.ps1 and runs
+-Control builds twenty-seven mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -173,7 +177,10 @@ a running loop stopped, so that the panel's live sheet would stay behind the
 frame line at a stop, which the replay case must fail by name; and since
 CART.2's third slice one more, over the double: a host whose slice is half
 the display's interval again, whose header must say slice=0.5 and whose
-ticks the slice case must fail by name, ten calls where it owes fifteen.
+ticks the slice case must fail by name, ten calls where it owes fifteen;
+and since CART.2's playtest pass one more, over the double: a host whose
+tick snaps to no grid, its tolerance 0, whose header must say snap=0 and
+whose pace case must fail by name, its second tick at 60 presenting none.
 The real page must pass first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
@@ -285,12 +292,16 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # after their manifests). slice over the double: 39 ticks after the first, each
 # 15 step calls (perTick, the oracle's own share of the 20 ms interval at
 # 1 ms a call), 585 calls in all and 9 frames of 64 calls.
+# 2026-10-12, CART.2's playtest pass: seventeen cases, the sixteen's counts
+# unchanged. pace over the double: 60 ticks at each rate after its first, 60
+# frames at a rate of 60 and 30 at the rate of 30, every tick as the grid owes it.
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
     @{ Case = 'rate0';    Min = @{ frames = 4; applied = 3; edits = 4; windows = 3 } },
     @{ Case = 'yield';    Min = @{ frames = 9; calls = 600; yields = 590; edits = 1 } },
     @{ Case = 'slice';    Min = @{ ticks = 39; perTick = 15; calls = 585; frames = 9 } },
+    @{ Case = 'pace';     Min = @{ ticks = 120; rate60 = 60; rate30 = 30 } },
     @{ Case = 'memory';   Min = @{ frames = 14; edits = 1; detaches = 600 } },
     @{ Case = 'abi';      Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
     @{ Case = 'refusals'; Min = @{ refused = 5; marked = 5 } },
@@ -305,7 +316,7 @@ $floors = @(
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } }
 )
 $zero = @('live', 'misfrees')
-$expectedCases = 16
+$expectedCases = 17
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
 
@@ -708,9 +719,22 @@ if ($Control) {
         $zFailed = @($jZ.Problems | Where-Object { $_ -cmatch 'case slice.*a tick spends 0\.75 of a display interval of 20 ms, 15 step calls of 1 ms, and tick 2 made 10' }).Count
         $zNote = "the slice at a half applied ($zApplied) and failed the slice case ($zFailed)"
         $zOk = $zApplied -and $zFailed -ge 1
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk) {
-            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'twenty-six' } else { 'eighteen applicable' }) + ' mutants for its own reason, each proving it applied')
+        # mutant AA (CART.2's playtest pass), over the double: a host whose tick snaps to no grid, its
+        # tolerance 0, as it was; its header must say snap=0, and the pace case must fail it by name, the
+        # second tick at a rate of 60 presenting no frame where the grid owes one.
+        $anchorAA = '  var SNAP_MS = 0.25;'
+        if (([regex]::Matches($js, [regex]::Escape($anchorAA))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorAA' is not in web/host.js exactly once"; exit 1 }
+        $mutAA = $js.Replace($anchorAA, '  var SNAP_MS = 0;')
+        $jsAA = Join-Path $tmp 'aa.js'; [System.IO.File]::WriteAllText($jsAA, $mutAA, $utf8)
+        $rAA = Invoke-Loop $browser (New-MutantPage 'aa' $template $jsAA) '1'
+        $aaApplied = ($mutAA -cne $js) -and ($rAA.Text -ne '') -and ($rAA.Text.Split("`n")[0] -like '* snap=0 slice=*')
+        $jAA = if ($rAA.Text -ne '') { Test-Loop $rAA.Text '1' } else { @{ Problems = @($rAA.Reason) } }
+        $aaFailed = @($jAA.Problems | Where-Object { $_ -cmatch 'case pace.*at a rate of 60, on ticks 16\.6 or 16\.7 ms apart, a tick presents one frame, and tick 2 presented 0' }).Count
+        $aaNote = "the tick on no grid applied ($aaApplied) and failed the pace case ($aaFailed)"
+        $aaOk = $aaApplied -and $aaFailed -ge 1
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk) {
+            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'twenty-seven' } else { 'nineteen applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -739,6 +763,7 @@ if ($Control) {
         foreach ($p in @($jX.Problems) | Select-Object -First 3) { Write-Output ('  the time constant in milliseconds: ' + $p) }
         foreach ($p in @($jY.Problems) | Select-Object -First 3) { Write-Output ('  the stop said to no one: ' + $p) }
         foreach ($p in @($jZ.Problems) | Select-Object -First 3) { Write-Output ('  the slice at a half: ' + $p) }
+        foreach ($p in @($jAA.Problems) | Select-Object -First 3) { Write-Output ('  the tick on no grid: ' + $p) }
         exit 1
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
