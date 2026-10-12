@@ -28,15 +28,31 @@
 //! steady frames are the second onwards, and their median is the floor's
 //! number, in cells evaluated a second (the step's formula cells over the
 //! median) and in frames a second (one over it), one measurement in two units.
-//! `Instant` reads nanoseconds, so a frame here is always timed alone, and its
-//! rows say `Run = 1`; the page's clock steps in tenths of a millisecond and
-//! times a quicker frame in runs (`CART.1`, 2026-10-10). A frame's time under
-//! 1 ms prints to a tenth of a microsecond, as the page prints it.
-//! Beside every frame the hand-written Life runs a fixed workload, the soup's
-//! first generations, and is timed too: the processor's clock seen from a
-//! computation that never changes. When that time moves more than 10% across
-//! the steady frames, its 10th to its 90th percentile over its median, the run
-//! is not a baseline, and the runner says so and prints no rows.
+//! A steady frame under 2 ms, the page's own line, is timed again past them in
+//! runs of consecutive frames, as the page times one (`CART.1`, 2026-10-10):
+//! the run doubled from 2 until it lasts 2 ms, `N - 1` runs, each one span
+//! with nothing viewed inside it, each run's last frame held to the reference,
+//! and every frame stepped held again on a second instance stepped untimed.
+//! The rows say `Run`, the frames a run, 1 where a frame is timed alone.
+//! `Instant` reads nanoseconds, so the reason was not the clock's step, as it
+//! is the page's, but the clock this runner read beside every frame until
+//! 2026-10-12: a frame timed alone came right after it, and the gun's frames 2
+//! to 31 read 22 to 48 microseconds with it in one sitting and 12.3 to 13.2
+//! without it, where the floors' margin is 10%. Its runs read 42.4 to 44.5
+//! microseconds a frame across launches and an added load, over frames 158 to
+//! 3997, the frames the page times (`CART.2`, 2026-10-12). A frame's time
+//! under 1 ms prints to a tenth of a microsecond, as the page prints it.
+//! Three times before a fixture's first frame, and three times after its
+//! steady frames or runs, the hand-written Life runs a fixed workload, the
+//! soup's first generations, and is timed too: the processor's clock seen from
+//! a computation that never changes. When its readings move more than 10%,
+//! their range over their median or their median from the runner's start, the
+//! run is not a baseline, and the runner says so and prints no rows. It is
+//! never read between two frames (`CART.1`'s decision 5, reopened 2026-10-12):
+//! read beside every frame, it slowed the frame after it, Life's steady frames
+//! from 2.7 to 2.9 ms to 3.1 to 3.2 and Sand's by 3%, in four alternated pairs
+//! over `vla-lang` 0.9.1. A run throttled while it runs now shows as its two
+//! sides apart.
 //! On the owner's machine Windows throttles a background process about three
 //! seconds into a run, by about 40% (measured 2026-10-09); `tools/bench_frames.ps1`
 //! starts this runner with its process opted out of that.
@@ -61,7 +77,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Instant;
 
 use alonzo::cartridge::{Cartridge, Seed};
-use vla_lang::machine::Viewed;
+use vla_lang::machine::{Step, Viewed};
 use vla_lang::sheet::parse_a1_range;
 
 // The hand-written sand, the engine's tests' own file; the runner steps the
@@ -117,14 +133,22 @@ static GLOBAL: Counted = Counted;
 const W: usize = 320;
 const H: usize = 200;
 
-/// The clock beside each frame: the hand-written Life's generations in a
-/// batch, and the batches, the best of which is the clock's reading.
+/// The clock: the hand-written Life's generations in a batch, and the
+/// batches, the best of which is the clock's reading; the readings at the
+/// runner's start, and on each side of a fixture's frames.
 const PROBE_GENERATIONS: usize = 20;
 const PROBE_BATCHES: usize = 3;
 const START_READINGS: usize = 5;
+const SIDE_READINGS: usize = 3;
 
 /// The most the hand-written Life's time may move across a run, in percent.
 const CLOCK_SPREAD_MAX: f64 = 10.0;
+
+/// A steady frame quicker than this, timed alone, is timed again in runs of
+/// consecutive frames, a run doubled from 2 until it lasts this long, the
+/// page's twenty steps of Chrome's clock; and the longest run tried.
+const RUN_MS: f64 = 2.0;
+const RUN_MAX: usize = 65_536;
 
 /// The gun's published facts: a period, the cells of one glider, and the last
 /// generation they are held to, before a glider meets the dead border at 740.
@@ -370,6 +394,12 @@ struct Run {
     facts: Option<usize>,
     /// Sand's frames after the first, each keeping every grain.
     conserved: Option<usize>,
+    /// The frames a run, 1 where each steady frame is timed alone.
+    run: usize,
+    /// Where the steady frames were timed in runs: the median of frames 2 to
+    /// N timed alone, and the frames stepped in all, each held on a second
+    /// instance.
+    alone: Option<(f64, usize)>,
 }
 
 impl Run {
@@ -377,23 +407,17 @@ impl Run {
         self.times.iter().skip(1).copied().collect()
     }
 
-    /// The clock's readings beside the steady frames, the ones measured.
-    fn steady_clocks(&self) -> Vec<f64> {
-        self.clocks.iter().skip(1).copied().collect()
-    }
-
-    /// How far the clock moved: its readings' 10th to 90th percentile over
-    /// their median, in percent, so that one reading interrupted is not a
-    /// moved clock and a throttled tenth of the run is.
+    /// How far the clock moved between its readings before the fixture's
+    /// frames and after them: their range over their median, in percent. Each
+    /// reading is the best of its batches, so one batch interrupted is not a
+    /// moved clock, and a run throttled after its start reads slower after.
     fn spread(&self) -> f64 {
-        let mut c = self.steady_clocks();
-        let m = median(&c);
-        if m <= 0.0 || c.is_empty() {
+        let m = median(&self.clocks);
+        if m <= 0.0 || self.clocks.is_empty() {
             return 0.0;
         }
-        c.sort_by(f64::total_cmp);
-        let at = |q: f64| c[((c.len() - 1) as f64 * q).round() as usize];
-        (at(0.9) - at(0.1)) / m * 100.0
+        let (lo, hi) = range(&self.clocks);
+        (hi - lo) / m * 100.0
     }
 }
 
@@ -405,20 +429,83 @@ fn plane(c: &Cartridge) -> Result<Vec<u8>, String> {
     }
 }
 
-/// A cartridge stepped `frames` frames, every frame held to the reference;
-/// `check` counts the second frame's allocations and times nothing it claims.
-fn run(path: &Path, frames: usize, check: bool, probe: &mut Probe) -> Result<Run, String> {
-    let text = std::fs::read_to_string(path)
-        .map_err(|e| format!("{}: cannot be read: {e}", path.display()))?;
-    let start = Instant::now();
-    let mut cart = Cartridge::load(&text, "frames.vla", text.len()).map_err(|e| {
+fn load(text: &str, path: &Path) -> Result<Cartridge, String> {
+    Cartridge::load(text, "frames.vla", text.len()).map_err(|e| {
         format!(
             "{}: refused at line {}: {}",
             path.display(),
             e.line,
             e.refusal.text
         )
-    })?;
+    })
+}
+
+/// The reference one frame on: Conway's generation, or Sand's step, which
+/// keeps every grain.
+fn next(name: &str, f: usize, want: &[u8], is_sand: bool) -> Result<Vec<u8>, String> {
+    if !is_sand {
+        return Ok(generation(want));
+    }
+    let before = sand::counts(want);
+    let after = sand::step(want, None, sand::SAND).0;
+    if sand::counts(&after) != before {
+        return Err(format!(
+            "(frames-grains \"{name}\" (frame {f}) (before {before:?}) (after {:?}))",
+            sand::counts(&after)
+        ));
+    }
+    Ok(after)
+}
+
+/// The plane after frame `f` held to the reference.
+fn hold(cart: &Cartridge, name: &str, f: usize, want: &[u8]) -> Result<(), String> {
+    let got = plane(cart).map_err(|e| format!("{name}: {e}"))?;
+    if let Some(i) = got.iter().zip(want).position(|(a, b)| a != b) {
+        return Err(format!(
+            "(frames-differ \"{name}\" (frame {f}) (cell \"{}\") (engine {}) (reference {}))",
+            cell_name(i),
+            got[i],
+            want[i]
+        ));
+    }
+    Ok(())
+}
+
+/// Frames `f0` to `f0 + n - 1` stepped as one span with nothing viewed inside
+/// it, timed; then each step's answer said to be its frame and done.
+fn span(
+    cart: &mut Cartridge,
+    name: &str,
+    f0: usize,
+    n: usize,
+    answers: &mut Vec<Step>,
+) -> Result<f64, String> {
+    answers.clear();
+    answers.reserve(n);
+    let t = Instant::now();
+    for _ in 0..n {
+        answers.push(cart.step(0));
+    }
+    let ms = t.elapsed().as_secs_f64() * 1e3;
+    for (j, s) in answers.iter().enumerate() {
+        if s.frame != (f0 + j) as u64 || !s.done {
+            return Err(format!("{name}: the step answered {}", s.row()));
+        }
+    }
+    Ok(ms)
+}
+
+/// A cartridge stepped `frames` frames, every frame held to the reference;
+/// `check` counts the second frame's allocations and times nothing it claims.
+/// Where the steady frames timed alone read under `RUN_MS`, they are timed
+/// again past them in runs of consecutive frames, `frames - 1` runs, each
+/// run's last frame held to the reference, and every frame stepped is held on
+/// a second instance stepped untimed (2026-10-12).
+fn run(path: &Path, frames: usize, check: bool, probe: &mut Probe) -> Result<Run, String> {
+    let text = std::fs::read_to_string(path)
+        .map_err(|e| format!("{}: cannot be read: {e}", path.display()))?;
+    let start = Instant::now();
+    let mut cart = load(&text, path)?;
     let load_ms = start.elapsed().as_secs_f64() * 1e3;
     let name = cart.manifest().name.clone();
     if cart.manifest().width as usize != W || cart.manifest().height as usize != H {
@@ -429,7 +516,7 @@ fn run(path: &Path, frames: usize, check: bool, probe: &mut Probe) -> Result<Run
         ));
     }
     let is_sand = name == "sand";
-    let mut want = if text.contains("(cell \"Seed\"") {
+    let first = if text.contains("(cell \"Seed\"") {
         seeded(&text)
     } else {
         match (cart.manifest().seed, is_sand) {
@@ -439,7 +526,7 @@ fn run(path: &Path, frames: usize, check: bool, probe: &mut Probe) -> Result<Run
         }
     };
     let facts = if name == "gun" {
-        Some(gun_facts(&want).map_err(|e| format!("{name}: {e}"))?)
+        Some(gun_facts(&first).map_err(|e| format!("{name}: {e}"))?)
     } else {
         None
     };
@@ -448,29 +535,26 @@ fn run(path: &Path, frames: usize, check: bool, probe: &mut Probe) -> Result<Run
         cells: cart.machine().formulas().0,
         load_ms,
         times: Vec::with_capacity(frames),
-        clocks: Vec::with_capacity(frames),
+        clocks: Vec::with_capacity(2 * SIDE_READINGS),
         allocs: 0,
         reallocs: 0,
         facts,
         conserved: is_sand.then_some(0),
+        run: 1,
+        alone: None,
     };
+    // The clock before the fixture's first frame, and after its steady frames
+    // below; never between two frames, where it slowed the frame after it.
+    if !check {
+        r.clocks.extend((0..SIDE_READINGS).map(|_| probe.read()));
+    }
+    let mut want = first.clone();
     for f in 1..=frames {
-        if f > 1 && is_sand {
-            let before = sand::counts(&want);
-            want = sand::step(&want, None, sand::SAND).0;
-            if sand::counts(&want) != before {
-                return Err(format!(
-                    "(frames-grains \"{}\" (frame {f}) (before {before:?}) (after {:?}))",
-                    r.name,
-                    sand::counts(&want)
-                ));
+        if f > 1 {
+            want = next(&r.name, f, &want, is_sand)?;
+            if is_sand {
+                r.conserved = r.conserved.map(|n| n + 1);
             }
-            r.conserved = r.conserved.map(|n| n + 1);
-        } else if f > 1 {
-            want = generation(&want);
-        }
-        if !check {
-            r.clocks.push(probe.read());
         }
         let counted = check && f == 2;
         if counted {
@@ -489,18 +573,65 @@ fn run(path: &Path, frames: usize, check: bool, probe: &mut Probe) -> Result<Run
         if s.frame != f as u64 || !s.done {
             return Err(format!("{}: the step answered {}", r.name, s.row()));
         }
-        let got = plane(&cart).map_err(|e| format!("{}: {e}", r.name))?;
-        if let Some(i) = got.iter().zip(&want).position(|(a, b)| a != b) {
-            return Err(format!(
-                "(frames-differ \"{}\" (frame {f}) (cell \"{}\") (engine {}) (reference {}))",
-                r.name,
-                cell_name(i),
-                got[i],
-                want[i]
-            ));
-        }
+        hold(&cart, &r.name, f, &want)?;
         r.times.push(ms);
     }
+    let alone = median(&r.steady());
+    if check {
+        return Ok(r);
+    }
+    if alone >= RUN_MS {
+        r.clocks.extend((0..SIDE_READINGS).map(|_| probe.read()));
+        return Ok(r);
+    }
+
+    // The steady frames again, past them, in runs of k consecutive frames, k
+    // doubled from 2 until a run lasts RUN_MS: a run that reads under it is
+    // stepped and held, and not counted.
+    let (mut times, mut answers) = (Vec::new(), Vec::new());
+    let (mut f, mut k) = (frames + 1, 2);
+    while times.len() < frames - 1 {
+        if k > RUN_MAX {
+            return Err(format!(
+                "{}: {RUN_MAX} frames in a row still read under {RUN_MS} ms",
+                r.name
+            ));
+        }
+        let ms = span(&mut cart, &r.name, f, k, &mut answers)?;
+        for g in f..f + k {
+            want = next(&r.name, g, &want, is_sand)?;
+        }
+        hold(&cart, &r.name, f + k - 1, &want)?;
+        f += k;
+        if times.is_empty() && ms < RUN_MS {
+            k *= 2;
+            continue;
+        }
+        times.push(ms / k as f64);
+    }
+    r.clocks.extend((0..SIDE_READINGS).map(|_| probe.read()));
+    // Every frame held all the same: the fixture stepped again on a second
+    // instance, untimed, each frame's plane held to the reference.
+    let mut second = load(&text, path)?;
+    let mut w = first;
+    for g in 1..f {
+        if g > 1 {
+            w = next(&r.name, g, &w, is_sand)?;
+        }
+        let s = second.step(0);
+        if s.frame != g as u64 || !s.done {
+            return Err(format!(
+                "{}: the second instance answered {}",
+                r.name,
+                s.row()
+            ));
+        }
+        hold(&second, &r.name, g, &w)?;
+    }
+    r.times.truncate(1);
+    r.times.extend(times);
+    r.run = k;
+    r.alone = Some((alone, f - 1));
     Ok(r)
 }
 
@@ -599,32 +730,47 @@ fn main() -> ExitCode {
         let steady = r.steady();
         let med = median(&steady);
         let (lo, hi) = range(&steady);
-        let clocks = r.steady_clocks();
-        let clock = median(&clocks);
-        let (clock_lo, clock_hi) = range(&clocks);
+        let clock = median(&r.clocks);
+        let (clock_lo, clock_hi) = range(&r.clocks);
         let spread = r.spread();
         let drift = drift(clock, start_clock);
+        let by = if r.name == "sand" { "Sand" } else { "Life" };
+        let which = match r.alone {
+            None => format!("frames 2 to {}: median", r.times.len()),
+            Some((_, stepped)) => format!(
+                "frames {} to {stepped} in {} runs of {}, each run one span: a frame's median",
+                stepped + 1 - steady.len() * r.run,
+                steady.len(),
+                r.run
+            ),
+        };
         println!(
-            "{}: load {:.1} ms; {} formula cells; frame 1 {} ms; frames 2 to {}: median {} ms (min {}, max {}), {} cells a second, {:.3} frames a second",
+            "{}: load {:.1} ms; {} formula cells; frame 1 {} ms; {which} {} ms (min {}, max {}), {} cells a second, {:.3} frames a second",
             r.name,
             r.load_ms,
             thousands(r.cells as u64),
             ms(r.times[0]),
-            r.times.len(),
             ms(med),
             ms(lo),
             ms(hi),
             thousands((r.cells as f64 / (med / 1e3)).round() as u64),
             1e3 / med
         );
+        if let Some((alone, stepped)) = r.alone {
+            println!(
+                "  frames 2 to {frames} alone read a median of {} ms, under {RUN_MS} ms, so the steady frames were timed in runs past them; each run's last frame held to the hand-written {by}, and every frame from 1 to {stepped} on a second instance stepped untimed",
+                ms(alone)
+            );
+        }
         // a frame quicker than the clock's own generation is that many times faster (CART.1, 2026-10-10)
         let against = if med >= clock {
             format!("{:.0} times slower than it", med / clock)
         } else {
             format!("{:.0} times faster than it", clock / med)
         };
+        let steadies = if r.run > 1 { "runs" } else { "frames" };
         println!(
-            "  the clock: the hand-written Life {clock:.3} ms a generation beside every steady frame ({clock_lo:.3} to {clock_hi:.3}), spread {spread:.1}%, {drift:+.1}% from {start_clock:.3} at the start; the engine {against}"
+            "  the clock: the hand-written Life {clock:.3} ms a generation, read {SIDE_READINGS} times before frame 1 and {SIDE_READINGS} after the steady {steadies} ({clock_lo:.3} to {clock_hi:.3}), spread {spread:.1}%, {drift:+.1}% from {start_clock:.3} at the start; the engine {against}"
         );
         if let Some(n) = r.facts {
             println!(
@@ -653,10 +799,11 @@ fn main() -> ExitCode {
         let med = median(&steady);
         let (lo, hi) = range(&steady);
         println!(
-            "    @{{ Runner = 'native'; Fixture = '{}'; Cells = {}; Frames = {}; Run = 1; Load = {:.1}; FirstFrame = {}; FrameP50 = {}; FrameMin = {}; FrameMax = {}; CellsPerSecond = {}; FramesPerSecond = {:.3}; ClockMs = {:.3}; ClockSpread = {:.1}; ClockDrift = {:.1} }}",
+            "    @{{ Runner = 'native'; Fixture = '{}'; Cells = {}; Frames = {}; Run = {}; Load = {:.1}; FirstFrame = {}; FrameP50 = {}; FrameMin = {}; FrameMax = {}; CellsPerSecond = {}; FramesPerSecond = {:.3}; ClockMs = {:.3}; ClockSpread = {:.1}; ClockDrift = {:.1} }}",
             r.name,
             r.cells,
-            steady.len(),
+            steady.len() * r.run,
+            r.run,
             r.load_ms,
             ms(r.times[0]),
             ms(med),
@@ -664,9 +811,9 @@ fn main() -> ExitCode {
             ms(hi),
             (r.cells as f64 / (med / 1e3)).round() as u64,
             1e3 / med,
-            median(&r.steady_clocks()),
+            median(&r.clocks),
             r.spread(),
-            drift(median(&r.steady_clocks()), start_clock)
+            drift(median(&r.clocks), start_clock)
         );
     }
     ExitCode::SUCCESS

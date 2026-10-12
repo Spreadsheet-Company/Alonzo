@@ -126,10 +126,14 @@ cargo run --release --example frames -- --check # 4 frames each, the frames and 
 Each frame is one step, timed alone, and held to a Life written by hand, or
 for Sand to a sand written by hand (`src/sand.rs`, which the engine's tests
 hold Sand to as well), before any number is printed; the steady frames' median gives the cells
-evaluated a second and the frames a second. Beside every frame the same
-hand-written Life runs a fixed workload, and a run whose clock moved more
-than 10%, as Windows' power throttling moves it in a background process, is
-named and prints no baseline. The check mode counts the allocations of a
+evaluated a second and the frames a second. A frame under 2 ms, the glider
+gun's, is timed again in runs of consecutive frames, as the browser's page
+times one, since a frame of microseconds timed alone measured the clock
+beside it as much as the step. Before a fixture's first frame and after its
+steady frames, and never between two frames, where it slowed the frame after
+it, the same hand-written Life runs a fixed workload, and a run whose clock
+moved more than 10%, as Windows' power throttling moves it in a background
+process, is named and prints no baseline. The check mode counts the allocations of a
 frame, an exact number the repository's checks hold to a ceiling. On the
 day the benchmark was first measured, Life stepped at about 218,000 cells a
 second natively and 229,000 in the browser, about a ninth of the line, and

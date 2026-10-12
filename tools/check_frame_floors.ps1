@@ -39,13 +39,17 @@ WHAT IT HOLDS, from the baseline pasted below:
     charter's test of a chain two hundred rows deep): at least 30 steady
     frames; the clock's spread and its drift from the run's start within
     10% (the instrument's own guard against Windows' power throttling,
-    measured to slow a background run by about 40% three seconds in); cells
+    measured to slow a background run by about 40% three seconds in; the
+    clock read before a fixture's frames and after them since 2026-10-12,
+    CART.1's decision 5 reopened, its spread the two sides apart, since read
+    beside every frame it slowed the frame after it); cells
     a second equal to frames a second times the formula cells within half a
     percent, one measurement in two units, and each a finite number above 0
     (since 2026-10-10, CART.1: a gun frame quicker than the page's clock of
     0.1 ms read 0 ms timed alone, its rates infinite; the instrument now
     times such frames in runs of consecutive steps, a row's Run the frames a
-    run, 1 where a frame is timed alone);
+    run, 1 where a frame is timed alone; the native runner too since
+    2026-10-12, a frame under 2 ms, for the margin's sake below);
   - the floors, a dated history: each entry's floor at least the entry
     before it, row by row, unless the entry gives its reason (a correctness
     fix that costs speed, say, which the commit message repeats); each row's
@@ -54,7 +58,15 @@ WHAT IT HOLDS, from the baseline pasted below:
     the latest entry holds every row (since CART.2, whose two rows entered
     a history that was Life's alone). The floor is the baseline less
     a margin of 10%, the spread measured between sessions (4% natively, 7%
-    in wasm) rounded up; tools/bench_frames.ps1 prints the history with its
+    in wasm) rounded up, on frames of about 100 ms (CART.1). A frame of
+    microseconds timed alone spreads past it: the native gun's frames 2 to
+    31 read 17.6 to 26.9 microseconds in one evening and 22 to 48 in one
+    sitting the next day, where its runs of 128 read 42.4 to 44.5 across
+    launches and an added load (CART.2, 2026-10-12). So both halves time a
+    frame under 2 ms in runs, and a row timed one way where the baseline
+    before it was timed the other measures other frames: the instrument
+    re-bases its floor on the run, and where that is lower the entry's
+    reason says so. tools/bench_frames.ps1 prints the history with its
     run's entry added last, to paste whole.
   - the history appended to and never pasted over: every entry the last
     commit's copy of this file holds is still here, in its order, at the

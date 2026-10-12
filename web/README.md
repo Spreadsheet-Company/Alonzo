@@ -358,9 +358,11 @@ baseline to the roadmap's bars.
   fixtures, Life's soup and the glider gun, and since `CART.2` Sand's
   opening, 31 frames each (`&n=` sets it),
   each step timed alone with no budget and every frame's plane held to the
-  page's own Life, or its own Sand (`sandStep`), so a fast wrong answer is never a number; beside every
-  frame the page's Life runs a fixed workload, the clock, and a run whose
-  clock moved more than 10% prints no rows. It runs at the page's load and
+  page's own Life, or its own Sand (`sandStep`), so a fast wrong answer is never a number; before
+  each fixture's frames and after them the page's Life runs a fixed workload
+  three times, the clock, and a run whose clock moved more than 10% prints
+  no rows; never between two frames, where it slowed the frame after it
+  (`CART.1`, 2026-10-12). It runs at the page's load and
   synchronously, since `--dump-dom` writes a page at its load:
   `tools/bench_frames.ps1` runs it under headless Chrome, with Chrome's flags
   against backgrounding and its processes opted out of Windows' power

@@ -1089,6 +1089,98 @@ The oracle, on the day on the owner's machine (*measurement*):
 
 *Committed 2026-10-10 at the owner's word, "Commit the timer fix", under `CART.1`'s ID. Not pushed. The baseline over `KERNEL.26` is the owner's own run of `tools/bench_frames.ps1` after the pin moves, which is the owner's call.*
 
+*The native frame timer, 2026-10-12, at the owner's word: "Fix the floors' margin for microsecond frames". Found by `CART.2`'s fourth baseline (that item's entry, the owner's run).*
+
+The defect. The native runner timed every frame alone, since `Instant` reads nanoseconds and the page's trap above was its clock's step.
+- The gun's frames 2 to 31 read 15.2 µs at the third baseline and 20.4 at the fourth. That evening, nine runs of unchanged code read 17.6 to 26.9.
+- The floors' margin is 10%, measured between sessions on frames of about 100 ms (`CART.1`'s scoping).
+- So the fourth baseline lowered the native gun's floor at the owner's word, and the next was likely to meet the same refusal.
+
+What was measured on the owner's machine, the runner opted out of the throttling and on the performance cores, the clock beside the frames reading 0.180 to 0.184 ms throughout (*measurement*):
+
+| how the gun's frames were timed | launches | a frame's median, µs |
+|---|---|---|
+| frames 2 to 31 alone, the clock read before each, as committed | 44 | 22.3 to 47.5 |
+| the same, four memory-heavy processes held on the efficiency cores | 6 | 36.8 to 43.6 |
+| the same, pinned to one performance core | 6 | 15.1 to 19.0 |
+| the same, the clock shortened to 4 generations, or to 2 (scratch builds) | 6 | 13.2 to 22.7 |
+| the same, the clock read after the frame (a scratch build) | 3 | 16.2 to 37.1 |
+| the same, the clock taken away (a scratch build) | 4 | 12.3 to 13.2 |
+| runs of 128, frames 158 to 3997, the clock read before each run | 22 | 42.4 to 44.1 |
+| the same, four memory-heavy processes held on the efficiency cores | 3 | 43.3 to 44.5 |
+| the same, the clock shortened, read after or taken away (scratch builds) | 13 | 41.9 to 43.2 |
+| the same, pinned to one performance core | 6 | 41.7 to 41.8 |
+| runs of 256, frames 286 to 7965 | 3 | 42.6 to 42.9 |
+
+- The clock is 60 generations of Life by hand, about 11 ms, read right before each frame. The frame after it is what scatters: the longer the clock, the slower and wider the frame. A thread free to move among the eight performance cores pays more than one held to a single core.
+- A run amortizes the clock over its 128 frames. Its median stood between 41.7 and 44.5 µs whatever the clock's length or place, the load beside it, the cores or the run's length.
+- Later frames cost more: the gliders meet the border at generation 740 and leave debris. Runs of 128 and of 256 read the same, so a run doubled on a quicker day measures the same number.
+
+What landed:
+- `engine/examples/frames.rs`:
+  - A steady frame under 2 ms (the page's own line, twenty steps of Chrome's clock) is timed again past frames 2 to N, in runs of consecutive frames, the run doubled from 2 until it lasts 2 ms, `N - 1` runs.
+  - Each run is one span with nothing viewed inside it, and each run's last frame is held to the reference. The fixture is then stepped again on a second instance, untimed, every frame held.
+  - The rows say `Run` and the frames timed, as the page's do. The clock is read before each run.
+  - On the owner's machine the native gun is timed in runs of 128 over frames 158 to 3997, the page's own frames. Life and Sand, about 3 and 12 ms a frame, are timed alone as before.
+- `tools/bench_frames.ps1`:
+  - The header's fourth trap.
+  - A row timed in runs where the check's baseline timed it alone, or the other way about, measures other frames. So its floor is re-based on the run, the run less 10%, whatever the latest floor, and where that is lower the entry's reason says so. Every other row keeps the rule of 2026-10-11: the higher of the latest floor and the run less 10%.
+  - A line naming each row re-based.
+- `tools/check_frame_floors.ps1`'s header says the same. Its judgment is unchanged: a lowering with a reason written already passes.
+
+The oracle, on the owner's machine (*measurement*):
+- `cargo fmt --check` and `clippy --workspace --all-targets -D warnings` are clean.
+- The runner's check mode is unchanged: 80 and 5, 80 and 5, 509 and 5.
+- The runner over the three fixtures: every frame equal to the reference, the gun's 3,997 frames on the second instance among them.
+- `tools/bench_frames.ps1 -NoBuild` end to end. *My run, and its block was not pasted:*
+  - the native gun in runs of 128, 43.0 µs a frame, 1,465,770,406 cells a second;
+  - its entry re-basing the native gun's floor to 1,310,000,000, the reason written;
+  - the wasm rows as the fourth baseline's: Life 4.2 ms, the gun 61.7 µs, Sand 17.0 ms.
+- That block spliced into a scratch copy of the check: the history kept, the re-based floor and its reason accepted. The one problem was native life, below.
+- `check_frame_floors.ps1` and its control are clean, the tree's baseline untouched.
+
+*Found, and left for the owner:* the clock before each frame slows Life's frames too, by an amount that changes between sessions.
+- Without the clock, Life's frames read 2.7 to 2.8 ms (4 launches). With it they read 3.0 to 3.5 the same night, where the third baseline read 2.8 and the fourth 3.1.
+- Shortened, the clock left Life at 2.7 to 3.1 ms; read after the frame instead, 3.0 to 3.5.
+- Native life's floor is 20,200,000 cells a second, 3.12 ms a frame. My run of the instrument that night read 3.4 ms, and the instrument named the row NOT A BASELINE.
+- A millisecond frame is not in this fix's reach. Where the clock is read is `CART.1`'s decision 5, which is the owner's to reopen; until then, a baseline refused on that row is run again at a quieter time, as the instrument says.
+
+*Decision 5 reopened, 2026-10-12, at the owner's word, "proceed with implementing slice 3 of CART.2 as scoped". That scoping's decision 24 recommended it before the floors' fifth baseline, as a fix of its own under this item's ID.*
+
+What changed, in both halves:
+- `engine/examples/frames.rs`: the hand-written Life is read three times before a fixture's first frame and three times after its steady frames or runs, and never between two frames or two runs.
+  - A row's `ClockMs` is the six readings' median, `ClockSpread` their range over that median, and `ClockDrift` the median against the runner's start.
+  - So a run throttled while it runs reads slower after than before, and one throttled throughout reads slower than the start; either past 10% prints no rows, as before.
+- The page's `?frames=1` the same, its rows the same fields.
+- `bench_frames.ps1`, `check_frame_floors.ps1`, the two READMEs and the runner's header say so. The check's judgment is unchanged.
+
+Natively, four launches of each runner alternated, over `vla-lang` 0.9.1 and slice 1's fixtures, opted out and on the performance cores (*measurement*, the medians of frames 2 to 31, ms):
+
+| | the clock beside every frame | before and after |
+|---|---|---|
+| native life | 3.1 to 3.2 | 2.7 to 2.9 |
+| native sand | 12.0 to 12.2 | 11.7 to 11.8 |
+| native gun, runs of 128 | 0.0426 to 0.0434 | 0.0423 to 0.0428 |
+| native gun, frames 2 to 31 alone | 0.0255 to 0.0408 | 0.0120 to 0.0132 |
+| the clock's spread | 0.4 to 1.5% | 0.7 to 2.0% |
+
+- Native life clears its floor of 3.12 ms again, where the clock beside its frames put it at 3.1 to 3.5.
+- The gun's frames alone read as with no clock at all, 12 to 13 µs. Its row stays in runs, the page's frames, and the fifth baseline re-bases it (`CART.2`'s decision 24).
+
+In the browser, thirteen launches of each page alternated, and three of a third page whose frames 2 to 31 each wait 15 ms with no work before they step (*measurement*, ms):
+
+| | the clock beside every frame | before and after | a pause of 15 ms |
+|---|---|---|---|
+| wasm life | 4.3 to 4.6 | 4.0 to 4.3 | 4.2 to 4.4 |
+| wasm sand | 16.5 to 17.1 | 17.2 to 18.3 | 16.8 to 17.2 |
+| wasm gun, runs of 128 | 0.0609 to 0.0617 | 0.0602 to 0.0641 | 0.0609 to 0.0617 |
+
+- Life gains, as it does natively.
+- Sand loses about 3%. A pause with no work in it gives back the old numbers, so in the browser it is the time between frames, not the clock's work, that moves Sand's frame. A game's loop has that time, a frame every 33 ms at the rate of 30.
+- Not pursued: a floor compares a row with itself, and Sand's rows are re-based at the fifth baseline on water's cartridge.
+
+*Committed 2026-10-12 at the owner's word, "Commit, then walk CART.1's optimization route again over CART.2", with the frame timer above, under this item's ID. Not pushed. The commit after it holds `CART.2`'s third slice and the floors' fifth baseline, the owner's run over this code, which re-bases the native gun's floor and Sand's two rows and holds the rest.*
+
 ## `SPEC.3` — the page, version 3: the cartridge's source, and the pass between it and the rows
 
 *Scoped 2026-10-10 at the owner's word, the day the item was filed from the owner's reading of `cartridges/life/life.vla`, whose forty-eight Palette rows "read as a little redundant and cluttery, which is almost the purpose of writing new macros anyway". The model the owner confirmed at the filing: authors write VLA with macros, a pass writes the cartridge as fully expanded rows, and the engine loads the rows and never expands. The scoping measured what the language's expander can say about a cartridge before deciding anything. It worked in a scratch crate over `vla-lang` 0.8.1 and a scratch copy of the engine, never in either repository's tree. Its first finding settles most of the rest: the expander as published already writes every one of today's rows from a source a third their length, byte for byte. The owner refined the model while the scoping ran, and the decisions take the refinement as their first premise.*
