@@ -161,6 +161,24 @@ about 12.5 ms natively and 18.7 ms in the browser, over half again the
 formula cells (the build's run of 2026-10-12 over `vla-lang` 0.9.1; the
 floors' fifth baseline is the owner's).
 
+The floors time a game's worst stretch; a person plays the rest of it. A
+third example, `examples/play.rs`, plays Sand as the host plays it, the
+Input sheet's rows written before every step, through a session of eight
+phases: the opening's rain, the board settled, a stroke of sand, the key 3
+and a stroke of water, a lake left to shimmer, a stroke erased, and the
+frames after each. Every frame's plane is held to `src/sand.rs` before a
+phase's median, 95th percentile and longest step are printed, numbers for a
+playtest and no floor:
+
+```text
+cargo run --release --example play                 # cartridges/sand/sand.vla, 1,100 frames
+```
+
+Its first session (`CART.2`'s playtest pass, 2026-10-12) found what the
+opening never reaches: every press, release and material key computed all
+of Sand's 189,017 formula cells, 17 to 26 ms natively, where a stroke's
+frames take 1 to 2 ms.
+
 ## Where it comes from
 
 The repository is `Spreadsheet-Company/Alonzo`, beside Frazaro, whose

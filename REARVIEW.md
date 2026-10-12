@@ -3159,3 +3159,155 @@ Unadjudicated.
 *Recommended in the session, unadjudicated:* `CART.1`'s route again. Each candidate is prototyped in a scratch copy of the language and measured on Sand, then asked of Frazaro with the measurement. The plan's edges found once a shape, from its references' patterns as `calc/reach.rs` already keeps them, rather than a cell at a time, for the load; and reach by branch, for the frame. The rate is the cartridge's, and so the owner's.
 
 *Committed 2026-10-12 at the owner's word, "Commit, then walk CART.1's optimization route again over CART.2 to look for hacks to improve CART.2". The pin at 0.9.1 is in the same commit (`ENGINE.1`'s record says why), and `CART.1`'s frame timer and decision 5 are in a commit of their own before it. Not pushed.*
+
+*The playtest pass, 2026-10-12, at the owner's word, right after those commits: "walk CART.1's optimization route again over CART.2 to look for hacks to improve CART.2 (should we call it a "playtest pass" from now on for shorthand, as a stand-in for "once the game works, we play it to test for performance bugs to file as optimization passes and game mechanic improvements"?)". Everything below was measured in scratch: copies of `vla-lang` 0.9.1 and of this engine, in the session's `scratchpad/pt/`, each prototype kept there as a patch. Nothing in either repository changed.*
+
+**The route.** `CART.1`'s, with a session played in front of it.
+- *The session.* A scratch example, committed with this record as `engine/examples/play.rs`, plays Sand as the host plays it: 1,098 frames in eight phases (below), the Input sheet's rows written before every step.
+  - Every frame's plane is held to `src/sand.rs`, through each stroke too.
+  - Each step is timed alone, the write and the hold outside it, opted out of the throttling and on the performance cores.
+- *Beside it:*
+  - the live loop in Chrome from the speed question;
+  - the floors' runner and the page's `?frames=1`;
+  - a copy of the language with timers in its load and its step;
+  - a copy that counts, by shape, the cells evaluated and changed and the marks each change tries.
+- *Each candidate:*
+  - built in a copy of its own and held to the references in every frame;
+  - put through the language's 182 tests and the engine's 30;
+  - then timed in alternated launches against the copy before it.
+
+**What a person meets.** Today's Sand over 0.9.1, natively, six sessions (*measurement*, ms):
+
+| phase | median | p95 | the worst frame |
+|---|---|---|---|
+| the opening's rain, frames 3 to 200 | 3.1 to 3.2 | 13.2 to 13.5 | 14.3 to 15.3 |
+| settled, 201 to 400 | 0.14 | 0.17 to 0.19 | under 0.6 |
+| a stroke of sand, 120 frames | 1.4 | 1.6 to 1.8 | 24 to 25 |
+| the sand settling, 80 | 0.2 | 0.4 to 0.5 | 17.5 to 18.4 |
+| a stroke of water, 120 | 1.3 | 1.6 to 2.0 | 24 to 25 |
+| a lake shimmering, 180 | 0.33 | 0.5 to 0.6 | 17.7 to 25 |
+| a stroke erased, 120 | 2.1 to 2.3 | 2.6 to 2.9 | 24 to 26 |
+| after it, 80 | 0.27 | 1.1 | 17.9 to 18.6 |
+
+- Settled, Sand is cheap: a lake's shimmer, which never ends, costs a third of a millisecond a frame.
+- The heavy frames are the opening's first seconds, and one frame at every click.
+
+**Found: a stall at every click.**
+- *The cause.* Two parts of the rule make every cell of `Stay`, `Side` and the `Screen` compute, 189,017 cells, 17 to 26 ms natively (*measurement*):
+  - rule 4's part `Input!$B$13+Input!$B$14=0`, which flips at a button's press and again at its release;
+  - `Brush!$B$4`, the material, held at every cell of those shapes, which changes at a material's key and at the right button.
+- In the browser that is about 25 to 38 ms by the floors' ratio of 1.45, against 25 for a frame at the rate of 30 (*inference*).
+- *The fix, the cartridge's: the row gate.* The brush is read from `Gate`'s rows alone:
+  - each cell tests its row's `Gate!$B2<0` before the disc;
+  - a third column, `Gate!C2:C199`, holds the material in the disc's rows and −1 elsewhere;
+  - `Gate!A` and `B` already read −999 and −1 when no button is held.
+
+  A press, a release or a key then changes only the rows under the brush. The patch is 18 lines.
+- *Held:* every frame of the session is equal to the sand by hand.
+  - The engine's painting and water tests pass over the row gate, `Stay` and `Side` cell by cell.
+  - Its opening test fails only on the count of shapes, 15 where it pins 14.
+- *Its cost alone:* each marked cell reads its row and splits its lanes, 20% of the rain (the median 3.2 to 3.8 ms, the p95 13.4 to 16.5).
+  - Dropping the part without the third column was worse: 30% of the rain, with the key's and the right button's stalls kept.
+  - With the held-column read below, the row gate costs nothing.
+
+**The language: four candidates**, each prototyped and measured (*measurement*).
+
+1. *The plan's edges, built once a shape.*
+   - Before, each cell resolved every reference of its parse, repeats included, walked each area in the sheet's B-tree and found each cell in a SipHash map.
+   - Now each shape's references are found once:
+     - one on a sheet holding no formula is dropped;
+     - one every `$` holds is resolved once;
+     - each cell's vertex comes from the array reach already keeps (`Positions`);
+     - the adjacency is one flat array, and Tarjan and the order run over it, their components flat.
+   - The plan is unchanged, every cell having the same edges as before.
+
+   | load | 0.9.1 | the plan's edges |
+   |---|---|---|
+   | Sand, native | 490 to 506 ms | 156 to 167 |
+   | Sand, Chrome, the real host | 548 to 555 | 153 to 163 |
+   | Life, native | 67 to 74 | 37 to 40 |
+   | Life, Chrome | 91 to 94 | 59 to 60 |
+   | the gun, native | 60 to 63 | 36 to 41 |
+
+   - The frames are unchanged.
+   - What remains of Sand's 151 ms natively: the edges 52, the rows 29, placing the shapes 18, the refusal check 11, the first walk 10, the order 9, Tarjan 4.
+2. *Reach by branch* (decision 25's candidate, asked of no one).
+   - How it works:
+     - each `IF` of a shape whose branches hold references gets two bits;
+     - a run records the branch each cell takes;
+     - a reference inside a branch marks a reader only when the reader's last evaluation took that branch;
+     - a cell evaluated alone, or through `Ctx`, records every bit, and an `IF` inside a repeated part guards nothing.
+   - The counts, Sand's rain, frames 3 to 31, a frame's mean:
+
+     | | cells evaluated | of them `Stay` | of them the `Screen` | cells changed |
+     |---|---|---|---|---|
+     | 0.9.1 | 110,347 | 54,410 | 55,026 | 30,531 |
+     | reach by branch | 80,494 | 30,387 | 49,195 | 30,531 |
+
+   - The time: the floors' Sand 12.8 to 13.4 ms → 12.4 to 12.8, and the session −5%. The gun is +4%, from the recording.
+   - Why so little: `Stay` changes 275 cells a frame in the rain, yet is evaluated tens of thousands of times, nearly all through `Screen.last!C2`, a read every cell needs. A grain arriving must ask whether it falls on, and while everything falls the answer stays 0. The cells reach by branch skips were the cheap ones.
+   - Not recommended as an ask: the machine records each cell's branches and reach keeps a guard per pattern, for 5% on the cartridge it was named for.
+3. *A held column read once.*
+   - A reference that holds its column (`Gate!$B2`, `Parity.last!$A2`), read by a run whose cells share a row, reads one cell, as a fully held one already does. Its `IF` then takes one branch for the run, with no split. Sand's runs are each one row of one shape.
+   - The floors' fixtures are unchanged.
+   - Today's Sand: strokes −21 to −25%, the session −9 to −10%, and a click's whole frame 16 to 21 ms where it was 17 to 26.
+   - With the row gate, the gate is free: the rain as today (median 3.0, p95 13.0), and the session 16% under today's.
+4. *Merged patterns.*
+   - A shape's single cells side by side in a row (`Stay`'s `Screen.last!A2` to `E2`) become one rectangle of that row, which reaches the cells they reached. The frame's start tries one pattern where it tried five.
+   - The floors' Sand natively 12.5 to 12.9 ms → 10.7 to 10.9 (−15%). With the row gate, the rain's p95 13.2 to 13.8 → 11.2. Life and the gun unchanged.
+
+**The three that pay, together** (1, 3 and 4), with the row gate (*measurement*):
+- The load: Sand 490 to 506 ms → 155 to 167 natively, and 548 to 555 → 153 to 163 in Chrome.
+- The floors' Sand: 12.5 to 13.0 ms → 10.7 to 10.9 natively, and 18.1 to 19.0 → 15.8 to 16.5 in Chrome (`?frames=1`, three alternated pairs). Life and the gun unchanged.
+- The session: 1,781 to 1,824 ms stepping → 1,354 to 1,423 (−20 to −26%). No frame of a stroke, a settle or a key is over 3 ms, where those frames reached 18 to 26.
+
+**Mechanics.** No rule bug: every one of 1,098 frames is equal to the sand by hand, through sand, water and erasing.
+- The motion is a cell a frame, so the rain takes about six and a half seconds to land at the rate of 30.
+- The opening, the whole board falling at once, is the heaviest moment the toy has. At a rate of 60, the rain's p95 of 11.2 ms natively is about 16 in the browser, against the slice's 12.5, so its first seconds still overrun (*inference*).
+
+**Recommended, unadjudicated:**
+- *Frazaro*, asked at the owner's word, as `KERNEL.28` was, each with its prototype's patch and these numbers:
+  - (1), the plan's edges: the load 3.5 times faster in Chrome;
+  - (3), the held-column read;
+  - (4), merged patterns.
+
+  Reach by branch is not asked.
+- *Sand:* the row gate, before slice 2, since a replay names its cartridge by digest and plays only on that file (`SPEC.md` §7.6). `SPEC.md` §2 rule 4 is corrected with it: a test rarely true reads its own row, which a run reads once, and not a part every `$` holds, whose flip computes every cell.
+- *The owner's:* the rate; and the opening, whether the whole board rains at once.
+- *The pass itself:* the session could be committed as the engine's third example, its phases data, so that every game's playtest pass starts from the same runner.
+
+*The owner's question in the middle of the pass's adjudication, 2026-10-12:* "How difficult would it be to implement sand displacing water due to being heavier? I can already imagine that would cause an explosion of localized checks (if a water particle is directly beneath a sand particle, do they swap or does the sand particle take a non-sand/non-wall diagonal space?). Perhaps this is best left for a much later feature pass than a core CART.2 functionality." Answered in the session, unadjudicated:
+- Fewer checks than it looks. A grain over water that stayed, and did not move sideways, swaps with it:
+  - `Stay` gains a code for a grain that sinks;
+  - `Side` counts the swapped cell as occupied;
+  - the `Screen` takes the grain from the row above's `Stay` and gives the water the grain's cell.
+- The `Screen` reading the row above this frame makes no cycle, since nothing reads the `Screen` before the frame's end.
+- The cost is one reference more for each `Screen` cell, more marking, perhaps 5 to 10% of a frame (*inference*, not measured).
+- The work is the two hand-written sands, Rust's and the page's, kept equal, and a test of a grain sinking through a lake: about a day (*prediction*).
+- Agreed, a later pass and not core: a mechanic changes the cartridge's bytes, and the owner's session, slice 2's replay, plays only on the file it was recorded from, so after slice 2 such a pass records again.
+
+**In the browser** (*measurement*, headless Chrome 154). The real host over the engine's module, ticked on a 60 Hz schedule of real time, from second 8 a click a second, the left button held half a second at (160, 60) through the host's own `pointerAt` and `pointerButtons`. Each figure is the longest gap between two frames drawn in the 300 ms after a press or a release; a frame at the rate of 30 is due every 33.3 ms.
+- The stall is visible:
+
+  | at the rate of 30 | after a press | after a release |
+  |---|---|---|
+  | Sand as committed | 83 to 85 ms | 75 to 77 |
+  | the row gate | 51 to 52 | 51 to 52, the loop's ordinary gap |
+
+- *A trap of the harness, found and set aside:* a tick of 66 to 105 ms every 132 frames, at either rate and in Life too, as in the speed question's live runs. It does not come from the module's memory, which held 77.9 MiB without a growth, or from the plane's copy, which a reused buffer left unchanged. It went when the host was given no canvas: a page that never returns to the event loop never presents its canvas, and Chrome flushes the drawing it holds in one go. A page that returns to the loop every frame presents every frame.
+- *Found: the host's loop aliases.*
+  - At a rate of 60 Sand computed 60 frames a second but presented 38 to 40: some ticks finished two frames and some none. The timestamps jitter by a tenth of a millisecond around 16.667 ms, and the accumulator's remainder sat near its threshold.
+  - At the rate of 30 the same jitter puts a gap of 50 ms among the 33s, a p95 of 51 to 60 ms.
+  - Snapping a tick's time to the frame's grid when within 1 ms of it (a scratch patch of `tick`, the grid the frame's interval over the whole number of display intervals in it) gave even gaps:
+
+    | | presented a second | gaps, median and p95 | after a click |
+    |---|---|---|---|
+    | rate 30, the row gate | 30, from 30 | 33.3 and 33.7 ms, from 51.0 | 35 ms |
+    | rate 60, as committed | 59 to 60, from 38 to 40 | 16.7 and 17.0, from 34 | 50 at a press, 42 at a release |
+    | rate 60, the row gate | 60 | 16.7 and 16.9 | 18 |
+
+*Adjudicated 2026-10-12, the owner's word: "Your adjudications for implementing the four decisions are more informed than mine, so I trust your judgment. Proceed."*
+1. *Frazaro:* the pass's three asks, the plan's edges, the held-column read and merged patterns, each with its patch and its numbers, drafted for the owner to relay as `KERNEL.28`'s ask was, since this session leaves Frazaro's tree alone. Reach by branch is not asked.
+2. *The row gate before slice 2*, `SPEC.md` §2 rule 4 corrected with it. Over 0.9.1 it costs a fifth of the opening's rain, whose heaviest frames still fit a frame at the rate of 30 in the browser, and it removes the stall at every click; the held-column read makes it free when Frazaro ships it.
+3. *A rate of 60, the opening as it stands.* The motion was what read as slow, and a settled frame costs under a millisecond. With the row gate and the host's tick snapped to the frame's grid, the browser presents Sand at an even 60 a second and a click shows no stall. The host's snap is `ENGINE.1`'s, the loop's, and goes in with the row gate, so that one hand test sees both. The opening stays the whole board raining at once: it is the floors' worst case by design, and at 60 it lands in about three and a half seconds.
+4. *This record and the session committed now*, the session as `engine/examples/play.rs`, the engine's third example; the playtest pass named in `ROADMAP.md`'s order. The row gate, the rate and the snap wait for the owner's hand test and the floors' sixth baseline, since the cartridge's digest moves.
