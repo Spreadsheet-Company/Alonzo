@@ -368,8 +368,11 @@
     this.window = rangeOf(1, 1, c.h, c.w);
     this._say('Loaded ' + c.title + ': a ' + c.w + ' by ' + c.h + ' ' + c.mode + ' at ' + (c.rate ? c.rate + ' frames a second' : 'rate 0, a step on every edit') + ', seed ' + c.seed + ', on ' + this.version + '.');
     if (c.budget) {
+      // "may", since CART.2 (2026-10-11, decision 16): the budget counts every formula cell every frame,
+      // and the engine computes only the cells a change reaches, so a cartridge over the line may run
+      // at its rate, as Sand's 126,449 cells at 30 frames a second do.
       var bd = c.budget, over = bd.perSecond > bd.line;
-      this._say(c.rate ? 'The budget: ' + thousands(bd.cells) + ' formula cells a frame at ' + c.rate + ' frames a second, ' + thousands(bd.perSecond) + ' a second, ' + (over ? 'over' : 'under') + ' the console\'s line of ' + thousands(bd.line) + (over ? ': it will run slowly, in plain sight.' : '.')
+      this._say(c.rate ? 'The budget: ' + thousands(bd.cells) + ' formula cells a frame at ' + c.rate + ' frames a second, ' + thousands(bd.perSecond) + ' a second, ' + (over ? 'over' : 'under') + ' the console\'s line of ' + thousands(bd.line) + (over ? ': it may run slowly, in plain sight.' : '.')
                        : 'The budget: ' + thousands(bd.cells) + ' formula cells a step, one step an edit.');
     }
     if (c.mode !== 'plane') this._say('This slice blits the plane alone; a grid cartridge is drawn by the viewport, which the host takes up after it.');

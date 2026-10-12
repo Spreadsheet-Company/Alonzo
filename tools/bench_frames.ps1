@@ -1,12 +1,14 @@
 <#
-bench_frames.ps1 - the frame floors' instrument: Life's frames measured on
-the owner's machine, natively and in the browser, and printed as one block
-to paste into tools/check_frame_floors.ps1.
+bench_frames.ps1 - the frame floors' instrument: Life's frames and Sand's
+measured on the owner's machine, natively and in the browser, and printed as
+one block to paste into tools/check_frame_floors.ps1.
 
 WHY: CART.1's scoping, decisions 4 and 5 (REARVIEW.md). The engine's first
 number is cells evaluated a second (CHARTER.md section 7), on the benchmark
 cartridge's two fixtures, Life's soup (cartridges/life/life.vla) and Gosper's
-glider gun (cartridges/gun/gun.vla), and it is measured twice: by the native
+glider gun (cartridges/gun/gun.vla), and since CART.2 (decision 11) on Sand's
+opening (cartridges/sand/sand.vla), the charter's test of a chain two hundred
+rows deep. It is measured twice: by the native
 runner, engine/examples/frames.rs, which a contributor runs; and by the
 engine's module in the browser, the product, through the page's ?frames=1
 mode. One build moved the two apart by a factor of 1.4 in the scoping, so
@@ -62,14 +64,18 @@ WHAT IT DOES:
      --release --example frames), the engine's module (cargo build --release
      -p alonzo --target wasm32-unknown-unknown) and the page
      (tools/build_web.ps1);
-  2. runs the runner over both fixtures and reads its two native rows;
-  3. runs web/index.html?frames=1 and reads its two wasm rows, both halves
+  2. runs the runner over the three fixtures and reads its three native rows;
+  3. runs web/index.html?frames=1 and reads its three wasm rows, both halves
      on the performance cores and opted out of the throttling;
   4. prints the block: the date, the environment, the pin of vla-lang in
-     Cargo.toml, each fixture's SHA-256 over LF bytes, the four rows, and the
+     Cargo.toml, each fixture's SHA-256 over LF bytes, the six rows, and the
      floor history as the check holds it with this run's entry added last,
      each row's cells a second less the check's margin of 10%, rounded down
-     to three figures, to paste over the check's history whole (a lone entry
+     to three figures, or the latest entry's floor for the row where that is
+     higher, since this instrument never lowers a floor (CART.2, 2026-10-11:
+     a run slower on unchanged code lowered two floors, and the check refused
+     the entry); a row measured under its latest floor is named, a finding
+     and not a baseline. The block is pasted over the check's history whole (a lone entry
      to add by hand was pasted over the first at the second baseline,
      2026-10-10); and writes the same block to target/bench_frames.txt, to
      copy from, since a terminal that wraps a long line can drop a space from
@@ -241,11 +247,12 @@ function Invoke-Step([string]$what, [string]$exe, [string[]]$arguments) {
 
 $life = Join-Path $repoRoot 'cartridges/life/life.vla'
 $gun = Join-Path $repoRoot 'cartridges/gun/gun.vla'
+$sand = Join-Path $repoRoot 'cartridges/sand/sand.vla'
 $runnerExe = Join-Path $repoRoot ('target/release/examples/frames' + $(if ($onWindows) { '.exe' } else { '' }))
 $wasm = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
 $page = Join-Path $repoRoot 'web/index.html'
 
-Write-Output '=== THE FRAME FLOORS: LIFE MEASURED NATIVELY AND IN THE BROWSER (CART.1) ==='
+Write-Output '=== THE FRAME FLOORS: LIFE AND SAND MEASURED NATIVELY AND IN THE BROWSER (CART.1, CART.2) ==='
 if (-not $NoBuild) {
     $cargo = Find-Cargo
     if ($cargo -eq '') { Write-Output 'FAIL: no cargo on PATH or in ~/.cargo/bin; build the runner and the module, then run with -NoBuild'; exit 1 }
@@ -274,7 +281,7 @@ $coresWord = if ($cores.Mask -ne 0) { ', on the performance cores' } else { '' }
 Write-Output ("  the native runner, {0} frames a fixture, its process opted out of power throttling{1}..." -f $Frames, $coresWord)
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName = $runnerExe
-$psi.Arguments = ('--frames {0} "{1}" "{2}"' -f $Frames, $life, $gun)
+$psi.Arguments = ('--frames {0} "{1}" "{2}" "{3}"' -f $Frames, $life, $gun, $sand)
 $psi.UseShellExecute = $false
 $psi.RedirectStandardOutput = $true
 $psi.WorkingDirectory = $repoRoot
@@ -285,9 +292,9 @@ $nativePinned = Set-PerformanceCores $proc
 $nativeText = $proc.StandardOutput.ReadToEnd()
 $proc.WaitForExit()
 $nativeRows = @(($nativeText -split "`r?`n") | Where-Object { $_ -match "^\s+@\{ Runner = 'native'" } | ForEach-Object { $_.Trim() })
-if ($nativeRows.Count -ne 2) {
+if ($nativeRows.Count -ne 3) {
     Write-Output $nativeText
-    Write-Output ("FAIL: the runner printed {0} row(s), not 2 (exit {1}); its words are above" -f $nativeRows.Count, $proc.ExitCode)
+    Write-Output ("FAIL: the runner printed {0} row(s), not 3 (exit {1}); its words are above" -f $nativeRows.Count, $proc.ExitCode)
     exit 1
 }
 
@@ -338,9 +345,9 @@ try {
     Remove-Item -Recurse -Force -LiteralPath $tmp -ErrorAction SilentlyContinue
 }
 $wasmRows = @(($wasmText -split "`r?`n") | Where-Object { $_ -match "^\s+@\{ Runner = 'wasm'" } | ForEach-Object { $_.Trim() })
-if ($wasmRows.Count -ne 2) {
+if ($wasmRows.Count -ne 3) {
     Write-Output $wasmText
-    Write-Output ("FAIL: the page printed {0} row(s), not 2; its words are above" -f $wasmRows.Count)
+    Write-Output ("FAIL: the page printed {0} row(s), not 3; its words are above" -f $wasmRows.Count)
     exit 1
 }
 
@@ -386,24 +393,43 @@ if ($timeless.Count -gt 0) {
     Write-Output ("FAIL: {0}: a rate that is no finite number above 0 is no floor, so no block is printed. A frame read as 0 ms timed alone; the page this tree builds times a frame quicker than its clock in runs, so build it again (run without -NoBuild)." -f ($timeless -join '; '))
     exit 1
 }
+# Each row's floor: this run's cells a second less the margin, rounded down to three figures, or the
+# latest entry's floor for the row where that is higher, so that this instrument never lowers a floor
+# (CART.2, 2026-10-11: the fourth baseline's paste lowered Life's two native floors, measured slower
+# that night on unchanged code, and the check refused the entry, a floor going down only with its
+# reason written). A row this run measured under its latest floor is named, a finding and not a
+# baseline: run again, or lower that floor by hand with its reason in the entry.
+$entries = @(Get-HistoryEntries (Join-Path $repoRoot 'tools/check_frame_floors.ps1'))
+$latest = @{}
+if ($entries.Count -gt 0) {
+    foreach ($m in [regex]::Matches([string]$entries[$entries.Count - 1], "'([a-z]+ [a-z]+)' = (\d+)")) { $latest[$m.Groups[1].Value] = [double]$m.Groups[2].Value }
+}
 $floors = @()
+$kept = @()
+$under = @()
 foreach ($r in $rows) {
     $key = (Get-Field $r 'Runner') + ' ' + (Get-Field $r 'Fixture')
-    $floors += ("'{0}' = {1}" -f $key, (Get-RoundedDown ([double](Get-Field $r 'CellsPerSecond') * (1 - $margin))))
+    $cps = [double](Get-Field $r 'CellsPerSecond')
+    $floor = Get-RoundedDown ($cps * (1 - $margin))
+    if ($latest.ContainsKey($key) -and $latest[$key] -gt $floor) {
+        $floor = [long]$latest[$key]
+        if ($cps -lt $latest[$key]) { $under += $key } else { $kept += $key }
+    }
+    $floors += ("'{0}' = {1}" -f $key, $floor)
 }
 
 $block = New-Object System.Collections.Generic.List[string]
+if ($under.Count -gt 0) { $block.Add(('# ---- NOT A BASELINE for {0}: measured under the latest floor, which the check refuses; run again, or lower that floor by hand with its reason in the entry ----' -f ($under -join ', '))) }
 $block.Add('# ---- paste from here into tools/check_frame_floors.ps1, over the baseline ----')
 $block.Add(("`$baselineDate = '{0}'" -f $date))
 $block.Add(("`$baselineEnvironment = '{0}'" -f ($environment -replace "'", "''")))
 $block.Add(("`$baselinePin = '{0}'" -f $pin))
-$block.Add(("`$baselineFixtures = @{{ 'life' = '{0}'; 'gun' = '{1}' }}" -f (Get-LfDigest $life), (Get-LfDigest $gun)))
+$block.Add(("`$baselineFixtures = @{{ 'life' = '{0}'; 'gun' = '{1}'; 'sand' = '{2}' }}" -f (Get-LfDigest $life), (Get-LfDigest $gun), (Get-LfDigest $sand)))
 $block.Add('$baseline = @(')
 for ($i = 0; $i -lt $rows.Count; $i++) { $block.Add(('    ' + $rows[$i] + $(if ($i -lt $rows.Count - 1) { ',' } else { '' }))) }
 $block.Add(')')
-$entries = @(Get-HistoryEntries (Join-Path $repoRoot 'tools/check_frame_floors.ps1'))
 $entries += ("@{{ Date = '{0}'; Pin = '{1}'; Reason = ''; Floors = @{{ {2} }} }}" -f $date, $pin, ($floors -join '; '))
-$block.Add(('# ---- and this over $floorHistory = @( ... ), whole: the check''s {0} entr{1} as they stand, then this run''s, each row''s cells a second less 10%, three figures ----' -f ($entries.Count - 1), $(if ($entries.Count -eq 2) { 'y' } else { 'ies' })))
+$block.Add(('# ---- and this over $floorHistory = @( ... ), whole: the check''s {0} entr{1} as they stand, then this run''s, each row''s cells a second less 10%, three figures, or its latest floor where that is higher ----' -f ($entries.Count - 1), $(if ($entries.Count -eq 2) { 'y' } else { 'ies' })))
 $block.Add('$floorHistory = @(')
 for ($i = 0; $i -lt $entries.Count; $i++) { $block.Add(('    ' + $entries[$i] + $(if ($i -lt $entries.Count - 1) { ',' } else { '' }))) }
 $block.Add(')')
@@ -419,6 +445,8 @@ Write-Output $wasmText.TrimEnd()
 Write-Output ''
 $block | ForEach-Object { Write-Output $_ }
 Write-Output ''
+if ($kept.Count -gt 0) { Write-Output ("Kept: {0}, measured slower than the run that set the latest floor and still above it, so the entry keeps that floor." -f ($kept -join ', ')) }
+if ($under.Count -gt 0) { Write-Output ("NOT A BASELINE for {0}: measured under the latest floor, so the check refuses this block. Run again at a quieter time; or, where the cause is known and accepted, lower that floor by hand with its reason written in the entry, and record the finding in REARVIEW.md." -f ($under -join ', ')) }
 Write-Output ("The block above is also in {0}: copy it from there, since a terminal's line wrap can drop a space from a copy." -f $blockFile)
 Write-Output 'In tools/check_frame_floors.ps1, its baseline lines go over the baseline lines, and its history over $floorHistory = @( ... ), whole.'
 exit 0

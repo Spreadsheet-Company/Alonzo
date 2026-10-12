@@ -36,3 +36,9 @@
 pub mod abi;
 pub mod cartridge;
 pub mod pass;
+
+/// Sand by hand (`CART.2`), the reference the engine's tests hold Sand's
+/// frames to, compiled for the tests alone; the native runner includes the
+/// same file by its path.
+#[cfg(test)]
+mod sand;

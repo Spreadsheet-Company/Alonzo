@@ -141,6 +141,13 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # check_engine_deps.ps1's baseline names 0.9.0 and its checksum;
 # check_frame_floors.ps1's allocation ceilings fall to 80 and 5 a frame, and
 # its floors are the owner's run over 0.9.0.
+# 2026-10-11, CART.2's first slice: 12 still, no check added -
+# check_cartridge.ps1 pins six cartridges and six sources, Sand beside them;
+# check_frame_floors.ps1 holds six rows, Sand's opening natively and in the
+# browser, a row entering the history at the first entry holding it, Sand's
+# frames held to a sand by hand and its grains kept, its control seventeen
+# mutants of the table and six fake runners; and check_host_loop.ps1's pass
+# case holds six sources.
 $expectedAtLeast = 12
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
@@ -154,12 +161,12 @@ $extras = @(
     @{ Script = 'check_view_fixtures.ps1'; Args = @('-Control'); What = 'KERNEL.5 fixtures: a clean scratch folder passes, four mutants fail each for its own reason' },
     @{ Script = 'check_render_oracle.ps1'; Args = @('-Control'); What = 'KERNEL.5 render oracle: the real page passes, three mutant pages fail under the browser (SKIPPED without one)' },
     @{ Script = 'check_render_floors.ps1'; Args = @('-Control'); What = 'KERNEL.5 render floors: a clean table passes, seven mutants fail' },
-    @{ Script = 'check_cartridge.ps1';     Args = @('-Control'); What = 'ENGINE.1, SPEC.3, ENGINE.3 and ENGINE.4 cartridges: a clean scratch copy and Life written to (spec 3) pass, thirty-two mutants fail, the cartridge, its source, its replay and golden, and the library told apart, the Audio sheet''s values judged, two replays and two goldens' },
+    @{ Script = 'check_cartridge.ps1';     Args = @('-Control'); What = 'ENGINE.1, SPEC.3, ENGINE.3, ENGINE.4 and CART.2 cartridges: a clean scratch copy of six cartridges and Life written to (spec 3) pass, thirty-two mutants fail, the cartridge, its source, its replay and golden, and the library told apart, the Audio sheet''s values judged, two replays and two goldens' },
     @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1, ENGINE.2, SPEC.3, ENGINE.3 and ENGINE.4 host loop: the real page passes, twenty-five mutant pages fail under the browser, the fourth, the eleventh and six more only over the engine''s module, and the twenty-fourth only by the sound case''s render (SKIPPED without a browser)' },
     @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 blit floors: a clean table of three cases passes, eight mutants fail' },
     @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 and SPEC.3 export reader and judgment: nine modules built in memory, a non-module' },
     @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, its mutants fail (seven for a git pin, eight for a registry pin); of five baselines, a git one and a registry one pass and three fail' },
-    @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1 and SPEC.3 frame floors: a clean table, a reasoned lowering, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows pass, fifteen mutants fail, a frame read as 0 ms among them; an entry added passes, an entry pasted over and one edited fail; five fake runners, the clean one passes and four fail' }
+    @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1, SPEC.3 and CART.2 frame floors: a clean table, a reasoned lowering, a row entering the history, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows pass, seventeen mutants fail, a frame read as 0 ms and a row dropped from the history among them; an entry added passes, an entry pasted over and one edited fail; six fake runners, the clean one passes and five fail' }
 )
 
 # --- The shell each check runs under. ---

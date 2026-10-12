@@ -271,6 +271,8 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # host says when a running loop stops, at its frame, so that the panel's live
 # sheet is drawn at the frame its frame line says; replay holds the stop said
 # once at the replay's last frame (stopped 1), the other counts unchanged.
+# 2026-10-11, CART.2's first slice: fifteen cases, the counts and digests
+# unchanged but for pass, 6 sources the same, Sand's among them.
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
@@ -283,7 +285,7 @@ $floors = @(
     @{ Case = 'engine';   Min = @{}; WithModule = @{ frames = 11; equal = 2; live1 = 23683; live11 = 14482; chunked = 1; grown = 1; devices = 5; reloaded = 1 } },
     @{ Case = 'parity';   Min = @{}; WithModule = @{ same = 14 } },
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
-    @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 5; same = 5; refused = 1; handle = 1; ranOn = 1 } },
+    @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 6; same = 6; refused = 1; handle = 1; ranOn = 1 } },
     @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 5; players = 2; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 7; rate = 5; refused = 1 } },
     @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 2; frames = 26; same = 26; golden = 2; round = 2; cardSame = 240 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },

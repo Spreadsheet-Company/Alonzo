@@ -176,7 +176,7 @@ the marks a host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
-test card, the input card or the sound card, each with its source, which the panel's Build expands into the
+test card, the input card, the sound card or Sand, each with its source, which the panel's Build expands into the
 cartridge in the page, the input card and the sound card each with its replay, which Play the replay plays, the
 Audio sheet heard after Sound on, and
 below it the viewport over seven
@@ -243,7 +243,14 @@ Run and it sounds again. Open The replay with the sound card picked: its
 own replay waits in the box, the loop oracle's run of it, 240 frames; press
 Play the replay with the sound on and hear that run again, six presses of
 Z, five of them ticks and the one while the knob says "saw" silent, and ten
-frames at a third of the speed.
+frames at a third of the speed. Pick Sand and watch it open raining sand,
+Life's soup as grains, settling into piles in a few seconds; click the plane
+to give it the keys, paint sand with the left button, press 2 and paint
+walls, press 0 and the left button paints empty, as the right button always
+does; turn the wheel to size the brush from 1 to 8, and see the material
+the left button paints in the floor's colour. Its Stay sheet, the cells that
+keep their occupant this frame, its Parity column and its Tally, each row's
+codes and occupied cells, are in the sheet picker.
 Below it, pick a
 record, scroll on both
 axes, click a cell or drag a range, click a column or row header or the
@@ -348,9 +355,10 @@ baseline to the roadmap's bars.
   are not a measurement.
 - `index.html?frames=1` is the frame floors' instrument (`CART.1`), the
   engine's first number: the engine's module stepped over the benchmark's two
-  fixtures, Life's soup and the glider gun, 31 frames each (`&n=` sets it),
+  fixtures, Life's soup and the glider gun, and since `CART.2` Sand's
+  opening, 31 frames each (`&n=` sets it),
   each step timed alone with no budget and every frame's plane held to the
-  page's own Life, so a fast wrong answer is never a number; beside every
+  page's own Life, or its own Sand (`sandStep`), so a fast wrong answer is never a number; beside every
   frame the page's Life runs a fixed workload, the clock, and a run whose
   clock moved more than 10% prints no rows. It runs at the page's load and
   synchronously, since `--dump-dom` writes a page at its load:

@@ -156,12 +156,19 @@ if ($Root -eq '') { $Root = $repoRoot }
 # empty, 88 rows, the manifest's seed 1) and soundcard.golden.vla (the Log sheet's
 # record at its end, the window A1:M32, the last 32 frames of the four
 # voices); the cartridges' rows unchanged.
-$expectedCartridges = 5
-$expectedSources = 5
+# 2026-10-11, CART.2's first slice: six, Sand beside them, 81 rows (eight
+# sheet rows, the Palette's forty-eight cells, the walls' two and Stay's
+# border's three, the Brush's four labels and four formulas, the Gate's two,
+# Parity's one, State's label and formula, Stay's one fill and the Screen's
+# two, the Tally's two labels and two fills: 126,449 formula cells), written
+# as a source over the library, which gains nothing; the other five's rows
+# unchanged.
+$expectedCartridges = 6
+$expectedSources = 6
 $expectedLibraries = 1
 $expectedReplays = 2
 $expectedGoldens = 2
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117 }
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 81 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

@@ -1,0 +1,203 @@
+; SPDX-License-Identifier: 0BSD
+; sand.source.vla - Sand, a falling-sand toy on a 320 by 200 plane, as its author writes
+; it (CART.2): the first game, and a fixture of the engine's floors beside Life. The pass
+; expands this file into sand.vla beside it, the rows the engine loads (SPEC.md section
+; 7.8): edit this one, then expand it again with
+;   cargo run --release --example expand
+;
+; How to play: paint with the left button, erase with the right, and turn the wheel to
+; size the brush, a disc of radius 1 to 8 (3 at the start). Press 1 for sand, 2 for wall
+; and 0 for empty; the floor shows the material the left button paints. The toy opens
+; raining sand: its first frame is Life's soup, three eighths of the board, as grains.
+;
+; The board is the Screen itself. The interior, C2:LF199, is 316 by 198 cells; the walls
+; two cells wide down each side, A:B and LG:LH, since a grain's second choice reads two
+; columns aside; row 1 empty above the interior, so that nothing falls out of it; row
+; 200 the floor. The codes: 0 empty, 1 wall, 2 sand, and 3 for water when it comes.
+;
+; The rule is a scan down the board in two sheets, each one fill over the interior:
+;   - Stay says whether a cell's occupant stays after its row's grains have moved. Its
+;     row reads its own row beneath in this frame, and the Screen's last frame.
+;   - Screen holds each cell's material at the frame's end. Its row reads Stay's same
+;     row in this frame, another sheet, and the Screen's last frame, its own row and the
+;     row above.
+; A grain falls straight down when the cell beneath is free; else to its first diagonal,
+; when that is free and no grain falls straight into it; else to the other diagonal, when
+; that is free and taken neither straight nor by the grain whose first choice it is. The
+; first diagonal alternates by row, right first on an even row, so of the two grains that
+; could take a cell on a diagonal exactly one has it as its first choice: a fixed
+; priority settles every claim. The receiving cell chooses, computing the grain's own
+; move again, so a grain moves at most once a frame and is never doubled or lost.
+;
+; What a rule costs, as Sand's scoping measured it (REARVIEW.md, CART.2, decision 2; the
+; rules are SPEC.md section 2's note of 2026-10-11), and which this source keeps:
+;   1. A sheet reads itself this frame only in the row beneath. Another sheet's same row
+;      is free. A row that reads the row beside collapses its run to one lane.
+;   2. One fill a formula. The same rule written a fill a row made 398 shapes, and a
+;      frame's start took 369 ms of a 387 ms frame.
+;   3. No term that changes every frame, and no raw pointer, in a cell's formula. Each
+;      goes through a cell that holds still when idle, or every frame is whole.
+;   4. A test that is rarely true sits behind a part every $ holds, reading value cells
+;      or twins only: the brush's guard, 24% of the worst frame.
+;   5. A value fixed for the grid's life is computed once and read through its twin,
+;      not called at each cell: the Parity column, 15%. No CHOOSE in a board's formula:
+;      +38%.
+;   6. A class of materials is one comparison: what moves is >=2.
+
+; The library whose macros this source calls: palette, cells and formulas.
+(include "../common.vla")
+
+(cartridge "sand"
+  (spec 3)                          ; the version of SPEC.md this cartridge is written to
+  (title "Sand")                    ; what the host shows
+  (rate 30)                         ; frames a second
+  (screen plane 320 200)            ; plane mode, 320 cells wide and 200 high: A1:LH200
+  (seed 1)                          ; the dice, Clock!B3: the soup of the first frame
+  (author "Spreadsheet Company")    ; who wrote it
+  (licence "0BSD")                  ; the header's twin: copy this file to start a cartridge of your own
+  (notes "A falling-sand toy. Paint with the left button, erase with the right, and turn the wheel to size the brush; press 1 for sand, 2 for wall and 0 for empty. The floor shows what the left button paints. It opens raining sand, Life's first frame as grains."))
+
+; The sheets, in tab order: the Screen the rule draws on and Stay beside it; Parity, the
+; direction of each row; the brush, its Gate and the material in State; the Tally of each
+; row; the Palette.
+(sheet "Screen" visible)
+(sheet "Stay" visible)
+(sheet "Parity" visible)
+(sheet "Brush" visible)
+(sheet "Gate" visible)
+(sheet "State" visible)
+(sheet "Tally" visible)
+(sheet "Palette" visible)
+
+; ---- the Palette (SPEC.md section 3.2): the codes first ------------------------------
+; Index 0 is empty, 1 a wall, 2 sand and 3 water, so that what moves is the codes from 2
+; up, one comparison. The CGA's colours follow for a modder to use.
+(palette                            ; the sixteen colours, index 0 first
+  ("#000000" "empty")               ; 0, black
+  ("#808080" "wall")                ; 1, grey
+  ("#E8C872" "sand")                ; 2
+  ("#3060E0" "water, to come")      ; 3, CART.2's third slice
+  ("#0000AA" "blue")                ; 4
+  ("#00AA00" "green")               ; 5
+  ("#00AAAA" "cyan")                ; 6
+  ("#AA0000" "red")                 ; 7
+  ("#AA00AA" "magenta")             ; 8
+  ("#AA5500" "brown")               ; 9
+  ("#AAAAAA" "light grey")          ; 10
+  ("#5555FF" "light blue")          ; 11
+  ("#55FF55" "light green")         ; 12
+  ("#FF5555" "light red")           ; 13
+  ("#FFFF55" "yellow")              ; 14
+  ("#FFFFFF" "white"))              ; 15
+
+; ---- the frame of the board: walls, and Stay's border ---------------------------------
+(cells "Screen"                     ; the walls, two cells wide, the full height
+  ("A1:B200" 1)
+  ("LG1:LH200" 1))
+(cells "Stay"                       ; the border is occupied, so nothing moves into it
+  ("A1:B200" 1)
+  ("LG1:LH200" 1)
+  ("C200:LF200" 1))                 ; the floor
+
+; ---- Parity: the direction of each row, computed once ---------------------------------
+; Part of the rule, as the walls are: a grain goes right first on an even row and left
+; first on an odd one, and an edit that breaks the alternation lets two grains claim one
+; cell. The rule reads it through its twin, Parity.last, an index into an array, where
+; MOD(ROW(),2) at every cell would be a call at every cell (rule 5).
+(formula "Parity" "A1:A200" "=MOD(ROW(),2)")
+
+; ---- the brush, entered only while a button is held -----------------------------------
+(cells "Brush"                      ; the labels
+  ("A1" "column")
+  ("A2" "row")
+  ("A3" "radius")
+  ("A4" "material"))
+(formulas "Brush"                   ; the only cells that read the pointer (rule 3)
+  ; the pointer's column and row while the left or the right button is held over the
+  ; Screen, and -999 otherwise, which no disc reaches
+  ("B1" "=IF(AND(Input!B13+Input!B14>0,Input!B11>0,Input!B12>0),Input!B11,-999)")
+  ("B2" "=IF(AND(Input!B13+Input!B14>0,Input!B11>0,Input!B12>0),Input!B12,-999)")
+  ; the radius: 3 at the start, then the wheel's notches, larger away from the user
+  ("B3" "=IF(Clock!B1<=1,3,MAX(1,MIN(8,Brush.last!B3-Input!B16)))")
+  ; the right button paints empty, and the left the material picked
+  ("B4" "=IF(Input!B14=1,0,State!B1)"))
+
+; ---- the Gate: the disc, row by row ----------------------------------------------------
+; For each row of the interior, the brush's column, and the square of the disc's
+; half-width there; -999 and -1 outside its rows, which no cell is inside. A cell of row
+; r is inside the disc when (COLUMN()-Gate!Ar)^2 <= Gate!Br.
+(formulas "Gate"
+  ("A2:A199" "=IF((ROW()-Brush!$B$2)^2<=Brush!$B$3^2,Brush!$B$1,-999)")
+  ("B2:B199" "=IF((ROW()-Brush!$B$2)^2<=Brush!$B$3^2,Brush!$B$3^2-(ROW()-Brush!$B$2)^2,-1)"))
+
+; ---- State: the material the left button paints ------------------------------------------
+(cells "State"
+  ("A1" "material"))
+(formula "State" "B1"
+  (&expand
+    "=IF(Clock!$B$1<=1,2,"                  ; sand at the start
+    "IF(Input!$B$17=\"1\",2,"               ; 1: sand
+    "IF(Input!$B$17=\"2\",1,"               ; 2: wall
+    "IF(Input!$B$17=\"0\",0,"               ; 0: empty
+    "State.last!$B$1))))"))                 ; any other key, or none: kept
+
+; ---- Stay: whether the cell's occupant stays after its row's grains have moved --------
+; Written at C2, the fill's first cell: Stay!C3 is the cell beneath this frame, and
+; Screen.last!A2:E2 the row's grains as the last frame left them.
+(formula "Stay" "C2:LF199"
+  (&expand
+    "=IF(IF(Input!$B$13+Input!$B$14=0,FALSE,"           ; the brush, tested only while a button is held (rule 4):
+    "(COLUMN()-Gate!$A2)^2<=Gate!$B2),"                 ;   the cell inside the disc, by its row's gate,
+    "IF(Brush!$B$4<>0,1,0),"                            ;   is occupied when the paint is not empty;
+    "IF(Screen.last!C2=1,1,"                            ; else a wall stays,
+    "IF(AND(Screen.last!C2>=2,Stay!C3=1),"              ; and a grain whose cell beneath is taken
+    "IF(Parity.last!$A2=0,"                             ; on an even row, right first:
+    "IF(OR(AND(Stay!D3=0,Screen.last!D2<2),"            ;   leaves for its first diagonal, free and none falling into it,
+    "AND(Stay!B3=0,Screen.last!B2<2,"                   ;   or else for its second, free and none falling into it,
+    "OR(Screen.last!A2<2,Stay!A3=0))),0,1),"            ;   when the grain two to the left does not take it first; else stays.
+    "IF(OR(AND(Stay!B3=0,Screen.last!B2<2),"            ; on an odd row, left first, the same mirrored:
+    "AND(Stay!D3=0,Screen.last!D2<2,"
+    "OR(Screen.last!E2<2,Stay!E3=0))),0,1)),"
+    "0)))"))                                            ; an empty cell, or a grain that falls straight, does not stay
+
+; ---- Screen: the material at the frame's end -------------------------------------------
+; Written at C2: Stay!A2:E2 is the row after its departures, Screen.last!A1:E1 the grains
+; above as the last frame left them. The first frame is Life's soup as sand, by Life's own
+; arithmetic and threshold: two linear forms of the seed, ROW() and COLUMN() reduced
+; modulo the prime P = 67108859 and multiplied, h = MOD(a*b, P), and a grain where
+; MOD(h*h, P) < 25165822, three eighths of P (life.source.vla says why it is exact).
+(formula "Screen" "C2:LF199"
+  (&expand
+    "=IF(Clock!$B$1=1,"                                                      ; the first frame:
+    "IF(MOD(MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
+    "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)"
+    "*MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
+    "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859),"
+    "67108859)<25165822,2,0),"                                              ;   a grain of sand where the soup is alive
+    "IF(IF(Input!$B$13+Input!$B$14=0,FALSE,"                                 ; the brush, as Stay tests it:
+    "(COLUMN()-Gate!$A2)^2<=Gate!$B2),"
+    "Brush!$B$4,"                                                            ;   the paint
+    "IF(Stay!C2=1,Screen.last!C2,"                                           ; else an occupant that stayed keeps its cell;
+    "IF(Screen.last!C1>=2,Screen.last!C1,"                                   ; a free cell takes the grain falling straight,
+    "IF(Parity.last!$A1=0,"                                                  ; and when the row above goes right first,
+    "IF(AND(Screen.last!B1>=2,Stay!B2=1),Screen.last!B1,"                    ;   the grain up left, its first choice,
+    "IF(AND(Screen.last!D1>=2,Stay!D2=1,"                                    ;   or the grain up right, its second choice,
+    "OR(Stay!E2=1,Screen.last!E1>=2)),Screen.last!D1,0)),"                   ;   when its first is not open; else empty;
+    "IF(AND(Screen.last!D1>=2,Stay!D2=1),Screen.last!D1,"                    ; and when it goes left first, mirrored
+    "IF(AND(Screen.last!B1>=2,Stay!B2=1,"
+    "OR(Stay!A2=1,Screen.last!A1>=2)),Screen.last!B1,0)))))))"))
+
+; The floor shows the material the left button paints. No formula reads row 200 of the
+; Screen, since Stay's row 200 is what the row above it stands on.
+(formula "Screen" "C200:LF200" "=State!$B$1")
+
+; ---- the Tally: each board row counted, from the twins --------------------------------
+; Column A the sum of the row's codes, column B its occupied cells, read from the last
+; frame's Screen and Stay; on a settled board, B is the row's grains and walls, and A
+; less B its grains of sand. A frame's end is the replay's golden (decision 12).
+(cells "Tally"
+  ("A1" "codes")
+  ("B1" "occupied"))
+(formulas "Tally"
+  ("A2:A199" "=SUM(Screen.last!C2:LF2)")
+  ("B2:B199" "=SUM(Stay.last!C2:LF2)"))

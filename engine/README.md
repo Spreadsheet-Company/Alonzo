@@ -113,18 +113,19 @@ Conway's Life on a 320 by 200 sheet at thirty frames a second, every cell
 the same formula of its eight neighbours, drawn through the canvas; its
 cells evaluated per second are the engine's first number, against a line
 of two million a second, and the cartridge ships with the engine as its
-demo (`CART.1`). The first game after it is a falling-sand toy, in a
-repository of its own (`CART.2`).
+demo (`CART.1`). The first game after it is a falling-sand toy, Sand
+(`CART.2`), built here first and then in a repository of its own.
 
 The benchmark runs from a clone:
 
 ```text
-cargo run --release --example frames            # Life's soup and Gosper's glider gun, 31 frames each
+cargo run --release --example frames            # Life's soup, Gosper's glider gun and Sand's opening, 31 frames each
 cargo run --release --example frames -- --check # 4 frames each, the frames and the allocations held
 ```
 
-Each frame is one step, timed alone, and held to a Life written by hand
-before any number is printed; the steady frames' median gives the cells
+Each frame is one step, timed alone, and held to a Life written by hand, or
+for Sand to a sand written by hand (`src/sand.rs`, which the engine's tests
+hold Sand to as well), before any number is printed; the steady frames' median gives the cells
 evaluated a second and the frames a second. Beside every frame the same
 hand-written Life runs a fixed workload, and a run whose clock moved more
 than 10%, as Windows' power throttling moves it in a background process, is
@@ -145,7 +146,12 @@ all of them at once, and a frame makes 80 allocations. Life now steps in
 second, eleven and nearly eight times its rate of thirty; counted as the
 floors count, the frame's 62,964 formula cells over its time, that is 22.5
 million and 14.8 million cells a second, past the line, though a frame no
-longer computes every cell (the owner's run of 2026-10-11).
+longer computes every cell (the owner's run of 2026-10-11). Sand's opening,
+the worst stretch of the toy, three eighths of the board falling at once
+through a chain two hundred rows deep, steps in about 12 ms natively and
+17 ms in the browser, about 60 frames a second against its rate of thirty
+(`CART.2`'s first slice, the owner's run of 2026-10-11, the floors' fourth
+baseline).
 
 ## Where it comes from
 

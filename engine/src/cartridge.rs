@@ -2315,4 +2315,186 @@ mod tests {
             .sum();
         assert!(live > 0, "the soup reached none of the windows");
     }
+
+    // ---- CART.2: Sand, the first game ----
+
+    /// Sand (CART.2): a falling-sand toy, the floors' third fixture.
+    const SAND: &str = include_str!("../../cartridges/sand/sand.vla");
+
+    use crate::sand;
+
+    /// One of Sand's sheets whole, 320 by 200, as the plane reads it.
+    fn sand_plane(c: &Cartridge, sheet: &str) -> Vec<u8> {
+        match c.view("plane", sheet, Some("A1:LH200")) {
+            Ok(Viewed::Bytes(b)) => b,
+            other => panic!("the {sheet}'s plane: {other:?}"),
+        }
+    }
+
+    /// Where a plane first differs from the hand-written sand, by its cell.
+    fn sand_differs(got: &[u8], want: &[u8]) -> Option<String> {
+        got.iter().zip(want).position(|(a, b)| a != b).map(|i| {
+            format!(
+                "{} reads {} where the hand-written sand holds {}",
+                address((i / sand::W + 1) as u32, (i % sand::W + 1) as u32),
+                got[i],
+                want[i]
+            )
+        })
+    }
+
+    /// Each value row of a sheet's window, by its address.
+    fn sand_values(
+        c: &Cartridge,
+        sheet: &str,
+        window: &str,
+    ) -> std::collections::HashMap<String, String> {
+        let Ok(Viewed::Text(record)) = c.view("grid", sheet, Some(window)) else {
+            panic!("the {sheet}'s record");
+        };
+        let head = format!("(value \"{sheet}\" \"");
+        record
+            .lines()
+            .filter_map(|l| l.strip_prefix(head.as_str()))
+            .filter_map(|rest| rest.split_once("\" "))
+            .map(|(addr, v)| (addr.to_string(), v.trim_end_matches(')').to_string()))
+            .collect()
+    }
+
+    /// Sand's opening held to the hand-written sand: the Screen and the Stay
+    /// sheet at every frame, every grain kept, the Tally the last frame's
+    /// sums, and the rule one fill a formula, which decision 2 asks of every
+    /// board (a fill a row made 398 shapes, and a frame's start 369 ms).
+    #[test]
+    fn sand_s_opening_is_the_hand_written_sand_and_keeps_every_grain() {
+        let mut c = Cartridge::load(SAND, "sand.vla", SAND.len()).expect("Sand loads");
+        assert_eq!(c.row(1), "(cartridge 1 \"Sand\" plane 320 200 30)");
+        let (cells, shapes) = c.machine().formulas();
+        assert_eq!(
+            shapes, 13,
+            "one fill a formula: Parity, the Brush's four, the Gate's two, State, Stay, the Screen's two and the Tally's two"
+        );
+        assert!(
+            c.describe()
+                .contains(&format!("(budget 30 {cells} {} 2000000)\n", cells * 30)),
+            "{}",
+            c.describe()
+        );
+        let mut want = sand::opening(1);
+        let (_, mut stay) = sand::step(&sand::empty(sand::SAND), None, sand::SAND);
+        let (mut last, mut last_stay) = (sand::empty(sand::EMPTY), stay.clone());
+        for frame in 1..=4 {
+            if frame > 1 {
+                let before = sand::counts(&want);
+                (last, last_stay) = (want.clone(), stay.clone());
+                (want, stay) = sand::step(&want, None, sand::SAND);
+                assert_eq!(
+                    sand::counts(&want),
+                    before,
+                    "frame {frame} keeps every grain"
+                );
+            }
+            assert!(c.step(0).done, "Sand's frame {frame} completes");
+            if let Some(d) = sand_differs(&sand_plane(&c, "Screen"), &want) {
+                panic!("Sand's frame {frame}: {d}");
+            }
+            if let Some(d) = sand_differs(&sand_plane(&c, "Stay"), &stay) {
+                panic!("the Stay sheet at frame {frame}: {d}");
+            }
+        }
+        assert!(
+            sand::counts(&want)[2] > 20_000,
+            "the soup is three eighths of the board"
+        );
+        // The Tally, computed at frame 4 from the twins, holds frame 3's sums.
+        let tally = sand_values(&c, "Tally", "A2:B199");
+        for row in sand::TOP..=sand::BOTTOM {
+            let (codes, occupied) = sand::tally(&last, &last_stay, row);
+            assert_eq!(tally[&format!("A{row}")], codes.to_string(), "Tally!A{row}");
+            assert_eq!(
+                tally[&format!("B{row}")],
+                occupied.to_string(),
+                "Tally!B{row}"
+            );
+        }
+    }
+
+    /// One frame of a person's hand on Sand: the pointer's column and row, the
+    /// left and right buttons, the wheel's notches and the key pressed.
+    type Gesture = ((u32, u32), u32, u32, i32, &'static str);
+
+    /// A session of the brush, frame by frame, each frame held to the
+    /// hand-written sand: the left button paints the material picked, the
+    /// right paints empty, the wheel sizes the disc from 1 to 8, the keys 1,
+    /// 2 and 0 pick sand, wall and empty, the floor shows the pick, and a
+    /// button held with the pointer off the Screen paints nothing. A frame with
+    /// no paint keeps every grain.
+    #[test]
+    fn sand_paints_with_the_left_button_erases_with_the_right_and_the_wheel_sizes_the_brush() {
+        let mut c = Cartridge::load(SAND, "sand.vla", SAND.len()).expect("Sand loads");
+        assert!(c.step(0).done, "frame 1, the soup");
+        let mut want = sand::opening(1);
+        let session: [Gesture; 9] = [
+            ((100, 60), 1, 0, 0, ""),
+            ((104, 62), 1, 0, -2, ""),
+            ((150, 120), 0, 1, 0, ""),
+            ((150, 120), 0, 0, 0, "2"),
+            ((60, 40), 1, 0, 1, ""),
+            ((318, 199), 1, 0, 9, ""),
+            ((60, 40), 0, 0, 0, "0"),
+            ((200, 100), 1, 0, 0, ""),
+            ((0, 0), 1, 0, -20, "1"),
+        ];
+        let (mut material, mut radius) = (sand::SAND, 3i64);
+        let mut painted = 0;
+        for (i, &((col, row), left, right, notches, key)) in session.iter().enumerate() {
+            let frame = i + 2;
+            material = match key {
+                "1" => sand::SAND,
+                "2" => sand::WALL,
+                "0" => sand::EMPTY,
+                _ => material,
+            };
+            radius = (radius - i64::from(notches)).clamp(1, 8);
+            let brush = (left + right > 0 && col > 0 && row > 0).then_some(sand::Brush {
+                row: i64::from(row),
+                col: i64::from(col),
+                radius,
+                material: if right == 1 { sand::EMPTY } else { material },
+            });
+            let code = match key {
+                "" => String::new(),
+                k => format!("Digit{k}"),
+            };
+            c.write(&input_rows(
+                &[],
+                (col, row),
+                [left, right, 0],
+                notches,
+                (key, code.as_str()),
+            ))
+            .expect("the Input sheet takes the host's rows");
+            assert!(c.step(0).done, "frame {frame} completes");
+            let before = sand::counts(&want);
+            want = sand::step(&want, brush.as_ref(), material).0;
+            if let Some(d) = sand_differs(&sand_plane(&c, "Screen"), &want) {
+                panic!("frame {frame}, the brush {brush:?}: {d}");
+            }
+            if brush.is_some() {
+                painted += 1;
+            } else {
+                assert_eq!(
+                    sand::counts(&want),
+                    before,
+                    "frame {frame} keeps every grain"
+                );
+            }
+            assert_eq!(
+                value_of(&c, "Brush", "B3"),
+                radius.to_string(),
+                "the radius at frame {frame}"
+            );
+        }
+        assert_eq!(painted, 6, "six frames painted");
+    }
 }

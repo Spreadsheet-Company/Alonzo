@@ -538,6 +538,6 @@ mod tests {
             });
             held += 1;
         }
-        assert!(held >= 3, "{held} cartridges held to their sources");
+        assert!(held >= 6, "{held} cartridges held to their sources");
     }
 }

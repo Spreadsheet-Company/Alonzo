@@ -1,11 +1,11 @@
 //! The native runner of the frame floors (`CART.1`; `REARVIEW.md`, the
 //! item's scoping, decisions 2, 3, 5 and 7): a cartridge loaded through the
 //! engine's own `Cartridge`, stepped frame by frame and timed, every frame's
-//! plane held to a Life written here by hand before any number is printed,
-//! since a fast wrong answer is no floor.
+//! plane held to a Life, or a Sand, written by hand before any number is
+//! printed, since a fast wrong answer is no floor.
 //!
 //! ```text
-//! cargo run --release --example frames                  # both fixtures, 31 frames each, the baseline rows
+//! cargo run --release --example frames                  # the three fixtures, 31 frames each, the baseline rows
 //! cargo run --release --example frames -- --check       # 4 frames each, the frames and the allocations held
 //! cargo run --release --example frames -- --frames 61 cartridges/gun/gun.vla
 //! ```
@@ -19,7 +19,10 @@
 //! "Gosper glider gun"): period 30, 36 cells, one glider of 5 a period, each
 //! held every 30 generations through 720, before the first glider meets the
 //! border at 740, the generation where the bounded plane and Golly's stop
-//! agreeing.
+//! agreeing. Since `CART.2` (2026-10-11), the cartridge named `sand` is held
+//! to the hand-written sand the engine's tests hold it to, `engine/src/sand.rs`,
+//! included here by its path: the opening, Life's soup as grains, then the
+//! rule, every frame after the first keeping every grain.
 //!
 //! **The timings.** Each frame is one `step` with no budget, timed alone; the
 //! steady frames are the second onwards, and their median is the floor's
@@ -40,7 +43,7 @@
 //!
 //! **The check.** With `--check` the runner times nothing it claims: it steps
 //! each fixture four frames, holds them to the reference, holds the gun to its
-//! facts, and counts the heap's allocations and reallocations in the second
+//! facts and Sand to its grains, and counts the heap's allocations and reallocations in the second
 //! frame after a fresh load, exact on every run, so that
 //! `tools/check_frame_floors.ps1` holds them to ceilings on every push where no
 //! time can be held. It counts only there: counting while timing costs a frame
@@ -60,6 +63,12 @@ use std::time::Instant;
 use alonzo::cartridge::{Cartridge, Seed};
 use vla_lang::machine::Viewed;
 use vla_lang::sheet::parse_a1_range;
+
+// The hand-written sand, the engine's tests' own file; the runner steps the
+// opening and paints nothing, so the brush is the tests' alone.
+#[path = "../src/sand.rs"]
+#[allow(dead_code)]
+mod sand;
 
 // ---- the allocator: the system's, counted when asked ----------------------
 
@@ -359,6 +368,8 @@ struct Run {
     allocs: u64,
     reallocs: u64,
     facts: Option<usize>,
+    /// Sand's frames after the first, each keeping every grain.
+    conserved: Option<usize>,
 }
 
 impl Run {
@@ -417,12 +428,14 @@ fn run(path: &Path, frames: usize, check: bool, probe: &mut Probe) -> Result<Run
             cart.manifest().height
         ));
     }
+    let is_sand = name == "sand";
     let mut want = if text.contains("(cell \"Seed\"") {
         seeded(&text)
     } else {
-        match cart.manifest().seed {
-            Seed::Number(n) => soup(u64::from(n)),
-            Seed::Host => return Err(format!("{name}: a soup needs the manifest's seed")),
+        match (cart.manifest().seed, is_sand) {
+            (Seed::Number(n), false) => soup(u64::from(n)),
+            (Seed::Number(n), true) => sand::opening(u64::from(n)),
+            (Seed::Host, _) => return Err(format!("{name}: a soup needs the manifest's seed")),
         }
     };
     let facts = if name == "gun" {
@@ -439,9 +452,21 @@ fn run(path: &Path, frames: usize, check: bool, probe: &mut Probe) -> Result<Run
         allocs: 0,
         reallocs: 0,
         facts,
+        conserved: is_sand.then_some(0),
     };
     for f in 1..=frames {
-        if f > 1 {
+        if f > 1 && is_sand {
+            let before = sand::counts(&want);
+            want = sand::step(&want, None, sand::SAND).0;
+            if sand::counts(&want) != before {
+                return Err(format!(
+                    "(frames-grains \"{}\" (frame {f}) (before {before:?}) (after {:?}))",
+                    r.name,
+                    sand::counts(&want)
+                ));
+            }
+            r.conserved = r.conserved.map(|n| n + 1);
+        } else if f > 1 {
             want = generation(&want);
         }
         if !check {
@@ -483,7 +508,7 @@ fn run(path: &Path, frames: usize, check: bool, probe: &mut Probe) -> Result<Run
 
 fn default_cartridges() -> Vec<PathBuf> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
-    ["life", "gun"]
+    ["life", "gun", "sand"]
         .iter()
         .map(|n| root.join("cartridges").join(n).join(format!("{n}.vla")))
         .collect()
@@ -545,7 +570,10 @@ fn main() -> ExitCode {
     if check {
         // The check's rows, one a fixture, read by tools/check_frame_floors.ps1.
         for r in &runs {
-            let facts = r.facts.map(|n| format!(" (facts {n})")).unwrap_or_default();
+            let facts = r.facts.map(|n| format!(" (facts {n})")).unwrap_or_default()
+                + &r.conserved
+                    .map(|n| format!(" (conserved {n})"))
+                    .unwrap_or_default();
             println!(
                 "(frames-check \"{}\" (frames {}) (equal {}) (cells {}) (allocs {}) (reallocs {}){facts})",
                 r.name,
@@ -561,7 +589,7 @@ fn main() -> ExitCode {
     }
 
     println!(
-        "frames: the native runner, {} on {}, {} cartridge(s), {frames} frames each, every frame equal to the hand-written Life",
+        "frames: the native runner, {} on {}, {} cartridge(s), {frames} frames each, every frame equal to the hand-written Life or Sand",
         std::env::consts::ARCH,
         std::env::consts::OS,
         runs.len()
@@ -601,6 +629,11 @@ fn main() -> ExitCode {
         if let Some(n) = r.facts {
             println!(
                 "  the gun's facts: period {GUN_PERIOD}, {GUN_CELLS} cells and {GLIDER_CELLS} more a period, held {n} periods, through generation {GUN_THROUGH}"
+            );
+        }
+        if let Some(n) = r.conserved {
+            println!(
+                "  the grains: every material's count kept in each of the {n} frames after the first"
             );
         }
         if spread > CLOCK_SPREAD_MAX || drift.abs() > CLOCK_SPREAD_MAX {
