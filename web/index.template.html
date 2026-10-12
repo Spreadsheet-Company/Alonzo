@@ -18,7 +18,7 @@
   held.
 
   Six modes, one page. Opened plainly, it is the engine's panel, a cartridge
-  picked, Life, the glider gun, the test card, the input card or the sound card, its Audio sheet heard after
+  picked, Life, the glider gun, the test card, the input card, the sound card or Sand, its Audio sheet heard after
   Sound on (ENGINE.4), running on the host's loop over the engine's own
   module, the language computing every cell (ENGINE.1's second slice), or over the
   fake module when no engine is built in, with the cartridge editable, its source
@@ -52,7 +52,10 @@
   host's voices rendered by an OfflineAudioContext and each frame's pitch, loudness,
   rest and onset measured against the graph's own waves, the one case that waits, and
   the sound card's committed replay played to every frame of the card and to its
-  golden, the Log's record (ENGINE.4's second slice); it prints the result into
+  golden, the Log's record (ENGINE.4's second slice); and Sand's committed replay,
+  a person's painting session, every frame's Screen held to the page's sand under
+  the replay's brush and its end the golden, the Tally's record (CART.2's second
+  slice); it prints the result into
   <pre id="loop"> once the last case has answered, which tools/check_host_loop.ps1
   reads under a headless browser. With ?blit=1 it is the
   blit's instrument, a 320 by 200 plane drawn 120 times at the scale that fits the
@@ -280,6 +283,8 @@
 <script type="text/plain" id="golden-inputcard">{{GOLDEN:inputcard}}</script>
 <script type="text/plain" id="replay-soundcard">{{REPLAY:soundcard}}</script>
 <script type="text/plain" id="golden-soundcard">{{GOLDEN:soundcard}}</script>
+<script type="text/plain" id="replay-sand">{{REPLAY:sand}}</script>
+<script type="text/plain" id="golden-sand">{{GOLDEN:sand}}</script>
 <script type="text/plain" id="library-common">{{LIBRARY:common}}</script>
 <script type="text/plain" id="alonzo-wasm">{{ALONZO_WASM}}</script>
 <script type="text/plain" id="fixture-fixture_frazaro">{{FIXTURE:fixture_frazaro}}</script>
@@ -323,7 +328,8 @@
                  replay: embedded('replay-inputcard'), replayPath: 'cartridges/inputcard/inputcard.replay.vla', golden: embedded('golden-inputcard') },
     soundcard: { text: soundcardText, file: 'soundcard.vla', path: 'cartridges/soundcard/soundcard.vla', source: embedded('source-soundcard'), sourcePath: 'cartridges/soundcard/soundcard.source.vla',
                  replay: embedded('replay-soundcard'), replayPath: 'cartridges/soundcard/soundcard.replay.vla', golden: embedded('golden-soundcard') },
-    sand: { text: sandText, file: 'sand.vla', path: 'cartridges/sand/sand.vla', source: embedded('source-sand'), sourcePath: 'cartridges/sand/sand.source.vla' }
+    sand: { text: sandText, file: 'sand.vla', path: 'cartridges/sand/sand.vla', source: embedded('source-sand'), sourcePath: 'cartridges/sand/sand.source.vla',
+            replay: embedded('replay-sand'), replayPath: 'cartridges/sand/sand.replay.vla', golden: embedded('golden-sand') }
   };
   // The libraries the sources include, each under the path an include resolves to.
   var LIBRARIES = {
@@ -1234,13 +1240,22 @@
     }
     return b;
   }
-  // One frame of the rule over the last frame's board with no brush, the floor showing the swatch: the
-  // row beneath known after its departures and its water's sideways moves, occupied or not and what it
-  // holds, the floor first.
-  function sandStep(old, swatch) {
+  // One frame of the rule over the last frame's board, the floor showing the swatch: the row beneath
+  // known after its departures and its water's sideways moves, occupied or not and what it holds, the
+  // floor first. A brush, { row, col, radius, material }, paints the cells of the interior its disc
+  // covers (CART.2's second slice, as engine/src/sand.rs paints them): a painted cell holds its paint at
+  // the frame's end and is occupied when the paint is not empty, while the grain it held still moves as
+  // the rule says, falling or moving sideways.
+  function sandStep(old, swatch, brush) {
     var W = LIFE_W, next = old.slice(), occ = new Uint8Array(W + 1), holds = new Uint8Array(W + 1);
-    var claimed = new Uint8Array(W + 1), moved = new Uint8Array(W + 1), arrives = new Uint8Array(W + 1), r, c, pass;
+    var claimed = new Uint8Array(W + 1), moved = new Uint8Array(W + 1), arrives = new Uint8Array(W + 1), r, c, pass, p;
     var taken = new Uint8Array(W + 1), went = new Uint8Array(W + 1);
+    // the paint at a cell, or -1 where the disc does not reach or there is no brush
+    function paint(pr, pc) {
+      if (!brush || pr < SAND_TOP || pr > SAND_BOTTOM || pc < SAND_LEFT || pc > SAND_RIGHT) return -1;
+      var dr = pr - brush.row, dc = pc - brush.col;
+      return dr * dr + dc * dc <= brush.radius * brush.radius ? brush.material : -1;
+    }
     for (c = SAND_LEFT; c <= SAND_RIGHT; c++) next[(LIFE_H - 1) * W + (c - 1)] = swatch;
     for (c = 1; c <= W; c++) { occ[c] = 1; holds[c] = 1; }
     for (r = SAND_BOTTOM; r >= SAND_TOP; r--) {
@@ -1252,10 +1267,12 @@
         var t = pass === 0 ? c : ((pass === 1) === rightFirst ? c + 1 : c - 1);
         if (!occ[t] && !claimed[t]) { claimed[t] = 1; moved[c] = 1; arrives[t] = g; }
       }
-      if (r < SAND_BOTTOM) for (c = SAND_LEFT; c <= SAND_RIGHT; c++) next[row + W + c - 1] = occ[c] ? holds[c] : arrives[c];
+      if (r < SAND_BOTTOM) for (c = SAND_LEFT; c <= SAND_RIGHT; c++) { p = paint(r + 1, c); next[row + W + c - 1] = p >= 0 ? p : occ[c] ? holds[c] : arrives[c]; }
       // this row after its departures
       for (c = 1; c <= W; c++) {
         var m = old[row + c - 1];
+        p = paint(r, c);
+        if (p >= 0) { occ[c] = p !== 0 ? 1 : 0; holds[c] = p; continue; }
         if (c < SAND_LEFT || c > SAND_RIGHT) { occ[c] = 1; holds[c] = m; continue; }
         var stays = m === 1 || (m >= 2 && !moved[c]);
         occ[c] = stays ? 1 : 0; holds[c] = stays ? m : 0;
@@ -1268,12 +1285,15 @@
         var s = (pass === 0) === rightFirst ? c + 1 : c - 1;
         if (!occ[s] && !taken[s]) { taken[s] = 1; went[c] = 1; }
       }
+      // this row after its sideways moves, a painted cell holding its paint whatever moved
       for (c = SAND_LEFT; c <= SAND_RIGHT; c++) {
         if (went[c]) { occ[c] = 0; holds[c] = 0; }
         if (taken[c]) { occ[c] = 1; holds[c] = 3; }
+        p = paint(r, c);
+        if (p >= 0) { occ[c] = p !== 0 ? 1 : 0; holds[c] = p; }
       }
     }
-    for (c = SAND_LEFT; c <= SAND_RIGHT; c++) next[(SAND_TOP - 1) * W + c - 1] = occ[c] ? holds[c] : 0;
+    for (c = SAND_LEFT; c <= SAND_RIGHT; c++) { p = paint(SAND_TOP, c); next[(SAND_TOP - 1) * W + c - 1] = p >= 0 ? p : occ[c] ? holds[c] : 0; }
     return next;
   }
   function liveOf(bytes) { var n = 0; for (var i = 0; i < bytes.length; i++) if (bytes[i] === 1) n++; return n; }
@@ -1815,7 +1835,10 @@
   // cartridge with input takes after the card (CART.4's first). Since ENGINE.4's second slice the
   // sound card's is the second: the audio case's run over the module as the host recorded it, which
   // that case holds, every frame of it played here equal to the card by hand, and its golden the
-  // Log's record at its end, the last 32 frames of the four voices.
+  // Log's record at its end, the last 32 frames of the four voices. Since CART.2's second slice Sand's
+  // is the third, the first a person played: the owner's painting session, every frame's Screen equal
+  // to the page's sand under the brush the replay's Input rows make, and its golden the Tally's record
+  // at its last frame.
   var SHA_VECTORS = [
     ['', 'E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855'],
     ['abc', 'BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD'],
@@ -1834,13 +1857,43 @@
     return d && d.sym !== undefined ? d.sym : '';
   }
   function replayFrames(text) {
+    var out = {}, forms = replayForms(text);
+    for (var n in forms) if (Object.prototype.hasOwnProperty.call(forms, n)) out[n] = forms[n].map(spellOf);
+    return out;
+  }
+  // The same rows as the reader reads them, by frame.
+  function replayForms(text) {
     var out = {}, forms = VP.readForms(text);
     for (var i = 1; i < forms.length; i++) {
       var f = forms[i];
-      if (Array.isArray(f) && f[0] && f[0].sym === 'frame' && f[1] && f[1].num !== undefined) out[f[1].num] = f.slice(2).map(spellOf);
+      if (Array.isArray(f) && f[0] && f[0].sym === 'frame' && f[1] && f[1].num !== undefined) out[f[1].num] = f.slice(2);
     }
     return out;
   }
+  // A replay of Sand on the page's sand (CART.2's second slice), the brush as the cartridge reads it: the
+  // Input sheet's cells as the replay's rows leave them, since a replay logs a cell only in the frame it
+  // changes; the material and the radius as the State and the Brush keep them, sand and 3 at the first
+  // frame, then a key's pick and the wheel's notches; the disc the left or the right button paints while
+  // the pointer is over the Screen, empty under the right; and the board, the opening from the seed at
+  // the first frame. engine/src/cartridge.rs holds the same replay natively to engine/src/sand.rs.
+  var SAND_PICKS = { '1': 2, '2': 1, '3': 3, '0': 0 };
+  function SandHand(seed) { this.seed = seed; this.input = {}; this.material = 2; this.radius = 3; this.board = null; this.painted = 0; }
+  SandHand.prototype.frame = function (n, rows) {
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      if (Array.isArray(row) && row[0] && row[0].sym === 'cell' && row[1] === 'Input' && typeof row[2] === 'string') this.input[row[2]] = row[3];
+    }
+    var input = this.input, num = function (a) { var v = input[a]; return v && v.num !== undefined ? +v.num : 0; };
+    if (n === 1) { this.material = 2; this.radius = 3; this.board = sandOpening(this.seed); return this.board; }
+    var key = typeof input.B17 === 'string' ? input.B17 : '';
+    if (Object.prototype.hasOwnProperty.call(SAND_PICKS, key)) this.material = SAND_PICKS[key];
+    this.radius = Math.max(1, Math.min(8, this.radius - num('B16')));
+    var col = num('B11'), row1 = num('B12'), left = num('B13'), right = num('B14');
+    var brush = left + right > 0 && col > 0 && row1 > 0 ? { row: row1, col: col, radius: this.radius, material: right === 1 ? 0 : this.material } : null;
+    if (brush) this.painted++;
+    this.board = sandStep(this.board, this.material, brush);
+    return this.board;
+  };
   function firstDiffLine(a, b) {
     var x = String(a).split('\n'), y = String(b).split('\n');
     for (var i = 0; i < Math.max(x.length, y.length); i++) if (x[i] !== y[i]) return 'at line ' + (i + 1) + ', ' + JSON.stringify((x[i] === undefined ? 'no line' : x[i]).slice(0, 80)) + ' against ' + JSON.stringify((y[i] === undefined ? 'no line' : y[i]).slice(0, 80));
@@ -1954,13 +2007,16 @@
     }
     // every cartridge's committed replay, played on a fresh host over a fresh instance: its end its golden
     // and its recording itself; the input card's, every frame the live run's window as well; the sound
-    // card's, every frame's Audio sheet the card by hand (ENGINE.4's second slice)
-    k.replays = 0; k.cardSame = 0;
+    // card's, every frame's Audio sheet the card by hand (ENGINE.4's second slice); Sand's, every frame's
+    // Screen the page's sand under the replay's brush (CART.2's second slice)
+    k.replays = 0; k.cardSame = 0; k.sandFrames = 0; k.sandPainted = 0;
     for (var cn in CARTRIDGES) {
       if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn) || !CARTRIDGES[cn].replayPath) continue;
       var cart = CARTRIDGES[cn], card = cn === 'inputcard', sound = cn === 'soundcard', rBody = afterComments(cart.replay), gBody = afterComments(cart.golden);
       var ex = HOST.instantiateSync(bytes), DS = new Driver({ exports: ex });
-      var M = new HOST({ drive: 'manual', budget: 0, now: frozen }), firstOff = 0, soundOff = '';
+      var M = new HOST({ drive: 'manual', budget: 0, now: frozen }), firstOff = 0, soundOff = '', sandOff = '';
+      var seedM = /^\(replay "[^"]*" \(spec \d+\) \(cartridge "[0-9A-F]{64}"\) \(seed (\d+)\)\)\n/.exec(rBody);
+      var hand = cn === 'sand' ? new SandHand(seedM ? +seedM[1] : 0) : null, handRows = hand ? replayForms(rBody) : null;
       k.replays++;
       try {
         if (!M.attach(ex).ok || !M.load(cart.text, cart.file).ok) { P.push('a fresh host did not load ' + cart.file + ' over the module'); continue; }
@@ -1974,10 +2030,16 @@
           var diff = cardDiff(e.frame, recordValues(DS.call('alonzo_view', [M.counters().handle], ['grid', 'Audio', 'A1:D5']).text));
           if (!diff) k.cardSame++; else if (!soundOff) soundOff = 'frame ' + e.frame + ': ' + diff;
         });
+        if (hand) M.on('frame', function (e) {
+          var diff = firstDiff(M.plane, hand.frame(e.frame, handRows[e.frame] || []));
+          if (!diff) k.sandFrames++; else if (!sandOff) sandOff = 'frame ' + e.frame + ': ' + diff;
+        });
         var pm = M.play(cart.replay, true);
         if (!pm.ok) P.push('the committed replay of ' + cart.file + ' played on a fresh host stopped at frame ' + pm.frames + ': ' + (pm.sentence || M.sentences().slice(-1)[0].text));
         if (firstOff) P.push('frame ' + firstOff + ' of the committed replay, played on a fresh host, draws a window that is not the live run\'s');
         if (soundOff) P.push('the sound card\'s committed replay, played on a fresh host, is not the card by hand at ' + soundOff);
+        if (sandOff) P.push('Sand\'s committed replay, played on a fresh host, is not the page\'s sand at ' + sandOff);
+        if (hand) k.sandPainted = hand.painted;
         var wm = /^\(window "([^"]+)" "([^"]+)"\)$/m.exec(gBody);
         if (!wm) P.push('the golden of ' + cart.file + ' has no (window ...) row naming its sheet');
         else {

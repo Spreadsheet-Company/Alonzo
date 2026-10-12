@@ -101,7 +101,10 @@ frame where a gain or a wave moves stepping no more than 1.5 times its wave's
 own; the four waves, notes from 36 to 96, rests, a voice sounding again on
 the oscillator it kept and a wave changed twice while its voice sounds), with
 replay playing the sound card's committed replay too, every frame of it the
-card by hand and its end its golden, the Log's record. It
+card by hand and its end its golden, the Log's record; and since CART.2's
+second slice Sand's, a person's painting session, every frame's Screen the
+page's sand under the replay's brush and its end its golden, the Tally's
+record. It
 prints one line a case into
 <pre id="loop"> and a last line, 'loop ok cases=N', once the last case has
 answered. This check runs the
@@ -126,7 +129,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds twenty-seven mutant pages through tools/build_web.ps1 and runs
+-Control builds twenty-eight mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -180,8 +183,11 @@ the display's interval again, whose header must say slice=0.5 and whose
 ticks the slice case must fail by name, ten calls where it owes fifteen;
 and since CART.2's playtest pass one more, over the double: a host whose
 tick snaps to no grid, its tolerance 0, whose header must say snap=0 and
-whose pace case must fail by name, its second tick at 60 presenting none.
-The real page must pass first.
+whose pace case must fail by name, its second tick at 60 presenting none;
+and since CART.2's second slice one more, when the real page holds the
+module: a template whose sand paints a brush without its rim, < where the
+cartridge's Gate says <=, which the replay case must fail by name on Sand's
+committed replay. The real page must pass first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A headless run's clock is
@@ -295,6 +301,10 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # 2026-10-12, CART.2's playtest pass: seventeen cases, the sixteen's counts
 # unchanged. pace over the double: 60 ticks at each rate after its first, 60
 # frames at a rate of 60 and 30 at the rate of 30, every tick as the grid owes it.
+# 2026-10-12, CART.2's second slice: the seventeen cases' counts unchanged but
+# for replay over the module, 3 replays each played to its golden and recording
+# itself, Sand's the third, the owner's session on the finished toy: its 2,085
+# frames each the page's sand under the replay's brush, 453 of them painted.
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
@@ -311,7 +321,7 @@ $floors = @(
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
     @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 6; same = 6; refused = 1; handle = 1; ranOn = 1 } },
     @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 5; players = 2; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 7; rate = 5; refused = 1 } },
-    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 2; frames = 26; same = 26; golden = 2; round = 2; cardSame = 240 } },
+    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 3; frames = 26; same = 26; golden = 3; round = 3; cardSame = 240; sandFrames = 2085; sandPainted = 453 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } }
 )
@@ -732,9 +742,25 @@ if ($Control) {
         $aaFailed = @($jAA.Problems | Where-Object { $_ -cmatch 'case pace.*at a rate of 60, on ticks 16\.6 or 16\.7 ms apart, a tick presents one frame, and tick 2 presented 0' }).Count
         $aaNote = "the tick on no grid applied ($aaApplied) and failed the pace case ($aaFailed)"
         $aaOk = $aaApplied -and $aaFailed -ge 1
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk) {
-            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'twenty-seven' } else { 'nineteen applicable' }) + ' mutants for its own reason, each proving it applied')
+        # mutant AB (CART.2's second slice), when the real page holds the engine's module: the page's sand
+        # paints a brush without its rim, < where the cartridge's Gate says <=; Sand's committed replay
+        # paints with the rim, and the replay case must fail it by name at the first frame the rim lands.
+        $abApplied = $false; $abFailed = 0; $abNote = 'the brush without its rim: not applicable, the real page holding no engine module'
+        if ($moduleReal -gt 0) {
+            $anchorAB = '      return dr * dr + dc * dc <= brush.radius * brush.radius ? brush.material : -1;'
+            if (([regex]::Matches($tpl, [regex]::Escape($anchorAB))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorAB' is not in the template exactly once"; exit 1 }
+            $mutAB = $tpl.Replace($anchorAB, '      return dr * dr + dc * dc < brush.radius * brush.radius ? brush.material : -1;')
+            $abApplied = $mutAB -cne $tpl
+            $tplAB = Join-Path $tmp 'ab.template.html'; [System.IO.File]::WriteAllText($tplAB, $mutAB, $utf8)
+            $rAB = Invoke-Loop $browser (New-MutantPage 'ab' $tplAB $hostJs) '1'
+            $jAB = if ($rAB.Text -ne '') { Test-Loop $rAB.Text '1' } else { @{ Problems = @($rAB.Reason) } }
+            $abFailed = @($jAB.Problems | Where-Object { $_ -like "*case replay*Sand's committed replay, played on a fresh host, is not the page's sand at frame*" }).Count
+            $abNote = "the brush without its rim applied ($abApplied) and failed the replay case ($abFailed)"
+        }
+        $abOk = ($moduleReal -eq 0) -or ($abApplied -and $abFailed -ge 1)
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk) {
+            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'twenty-eight' } else { 'nineteen applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -764,6 +790,7 @@ if ($Control) {
         foreach ($p in @($jY.Problems) | Select-Object -First 3) { Write-Output ('  the stop said to no one: ' + $p) }
         foreach ($p in @($jZ.Problems) | Select-Object -First 3) { Write-Output ('  the slice at a half: ' + $p) }
         foreach ($p in @($jAA.Problems) | Select-Object -First 3) { Write-Output ('  the tick on no grid: ' + $p) }
+        if ($moduleReal -gt 0) { foreach ($p in @($jAB.Problems) | Select-Object -First 3) { Write-Output ('  the brush without its rim: ' + $p) } }
         exit 1
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue

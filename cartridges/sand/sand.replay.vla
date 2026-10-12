@@ -1,0 +1,1454 @@
+; SPDX-License-Identifier: 0BSD
+; The owner's painting session of 2026-10-12, recorded in the page on this cartridge, the
+; finished toy: sand painted into the rain; water after the key 3; sand again after the
+; key 1; a wall after the key 2; water again after the key 3, then the wheel turned away
+; four notches, so the brush is 7, and more water; then the right button erasing near the
+; bottom of the board; the pointer off the plane at frame 1223, and the toy left alone to
+; frame 2085. Its golden is the Tally at its last frame.
+(replay "sand" (spec 3) (cartridge "814983F85A9DA90155F0F58C6FE201C8750E588BF202BD54B18763C41DC594C7") (seed 1))
+(frame 1
+  (cell "Input" "B1" 0)
+  (cell "Input" "C1" 0)
+  (cell "Input" "D1" 0)
+  (cell "Input" "E1" 0)
+  (cell "Input" "B2" 0)
+  (cell "Input" "C2" 0)
+  (cell "Input" "D2" 0)
+  (cell "Input" "E2" 0)
+  (cell "Input" "B3" 0)
+  (cell "Input" "C3" 0)
+  (cell "Input" "D3" 0)
+  (cell "Input" "E3" 0)
+  (cell "Input" "B4" 0)
+  (cell "Input" "C4" 0)
+  (cell "Input" "D4" 0)
+  (cell "Input" "E4" 0)
+  (cell "Input" "B5" 0)
+  (cell "Input" "C5" 0)
+  (cell "Input" "D5" 0)
+  (cell "Input" "E5" 0)
+  (cell "Input" "B6" 0)
+  (cell "Input" "C6" 0)
+  (cell "Input" "D6" 0)
+  (cell "Input" "E6" 0)
+  (cell "Input" "B7" 0)
+  (cell "Input" "C7" 0)
+  (cell "Input" "D7" 0)
+  (cell "Input" "E7" 0)
+  (cell "Input" "B8" 0)
+  (cell "Input" "C8" 0)
+  (cell "Input" "D8" 0)
+  (cell "Input" "E8" 0)
+  (cell "Input" "B9" 0)
+  (cell "Input" "C9" 0)
+  (cell "Input" "D9" 0)
+  (cell "Input" "E9" 0)
+  (cell "Input" "B10" 0)
+  (cell "Input" "C10" 0)
+  (cell "Input" "D10" 0)
+  (cell "Input" "E10" 0)
+  (cell "Input" "B11" 0)
+  (cell "Input" "B12" 0)
+  (cell "Input" "B13" 0)
+  (cell "Input" "B14" 0)
+  (cell "Input" "B15" 0)
+  (cell "Input" "B16" 0)
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 129
+  (cell "Input" "B11" 317)
+  (cell "Input" "B12" 96))
+(frame 130
+  (cell "Input" "B11" 314))
+(frame 131
+  (cell "Input" "B11" 310))
+(frame 132
+  (cell "Input" "B11" 306))
+(frame 133
+  (cell "Input" "B11" 301))
+(frame 134
+  (cell "Input" "B11" 296))
+(frame 135
+  (cell "Input" "B11" 291))
+(frame 136
+  (cell "Input" "B11" 285))
+(frame 137
+  (cell "Input" "B11" 280))
+(frame 138
+  (cell "Input" "B11" 276))
+(frame 139
+  (cell "Input" "B11" 272))
+(frame 140
+  (cell "Input" "B11" 269))
+(frame 141
+  (cell "Input" "B11" 268))
+(frame 142
+  (cell "Input" "B11" 267))
+(frame 143
+  (cell "Input" "B11" 266))
+(frame 145
+  (cell "Input" "B11" 265))
+(frame 188
+  (cell "Input" "B11" 264))
+(frame 197
+  (cell "Input" "B11" 263))
+(frame 199
+  (cell "Input" "B11" 261)
+  (cell "Input" "B12" 97))
+(frame 201
+  (cell "Input" "B11" 260))
+(frame 205
+  (cell "Input" "B11" 259))
+(frame 207
+  (cell "Input" "B11" 258))
+(frame 209
+  (cell "Input" "B11" 257))
+(frame 212
+  (cell "Input" "B11" 256))
+(frame 214
+  (cell "Input" "B11" 255))
+(frame 216
+  (cell "Input" "B11" 253))
+(frame 217
+  (cell "Input" "B11" 252))
+(frame 218
+  (cell "Input" "B11" 250))
+(frame 220
+  (cell "Input" "B11" 248))
+(frame 222
+  (cell "Input" "B11" 247))
+(frame 223
+  (cell "Input" "B11" 246))
+(frame 224
+  (cell "Input" "B11" 245))
+(frame 225
+  (cell "Input" "B11" 244))
+(frame 227
+  (cell "Input" "B11" 243))
+(frame 229
+  (cell "Input" "B11" 242))
+(frame 241
+  (cell "Input" "B13" 1))
+(frame 247
+  (cell "Input" "B11" 241))
+(frame 248
+  (cell "Input" "B11" 240)
+  (cell "Input" "B12" 98))
+(frame 249
+  (cell "Input" "B11" 239))
+(frame 250
+  (cell "Input" "B12" 99))
+(frame 251
+  (cell "Input" "B11" 238)
+  (cell "Input" "B12" 100))
+(frame 252
+  (cell "Input" "B11" 236)
+  (cell "Input" "B12" 102))
+(frame 254
+  (cell "Input" "B11" 235)
+  (cell "Input" "B12" 104))
+(frame 255
+  (cell "Input" "B11" 234)
+  (cell "Input" "B12" 106))
+(frame 256
+  (cell "Input" "B11" 233)
+  (cell "Input" "B12" 108))
+(frame 257
+  (cell "Input" "B11" 232)
+  (cell "Input" "B12" 109))
+(frame 258
+  (cell "Input" "B11" 230)
+  (cell "Input" "B12" 110))
+(frame 259
+  (cell "Input" "B11" 229)
+  (cell "Input" "B12" 111))
+(frame 260
+  (cell "Input" "B11" 227)
+  (cell "Input" "B12" 113))
+(frame 261
+  (cell "Input" "B11" 226)
+  (cell "Input" "B12" 114))
+(frame 262
+  (cell "Input" "B11" 224)
+  (cell "Input" "B12" 116))
+(frame 263
+  (cell "Input" "B11" 222)
+  (cell "Input" "B12" 117))
+(frame 264
+  (cell "Input" "B11" 219)
+  (cell "Input" "B12" 118))
+(frame 265
+  (cell "Input" "B11" 217)
+  (cell "Input" "B12" 119))
+(frame 266
+  (cell "Input" "B11" 215)
+  (cell "Input" "B12" 120))
+(frame 267
+  (cell "Input" "B11" 214)
+  (cell "Input" "B12" 121))
+(frame 268
+  (cell "Input" "B11" 213))
+(frame 270
+  (cell "Input" "B11" 210))
+(frame 271
+  (cell "Input" "B11" 209))
+(frame 272
+  (cell "Input" "B11" 207))
+(frame 273
+  (cell "Input" "B11" 206))
+(frame 274
+  (cell "Input" "B11" 205)
+  (cell "Input" "B12" 120))
+(frame 275
+  (cell "Input" "B11" 203)
+  (cell "Input" "B12" 119))
+(frame 276
+  (cell "Input" "B11" 201))
+(frame 277
+  (cell "Input" "B11" 199)
+  (cell "Input" "B12" 118))
+(frame 278
+  (cell "Input" "B11" 198)
+  (cell "Input" "B12" 117))
+(frame 279
+  (cell "Input" "B11" 197)
+  (cell "Input" "B12" 116))
+(frame 280
+  (cell "Input" "B11" 195)
+  (cell "Input" "B12" 114))
+(frame 281
+  (cell "Input" "B11" 194)
+  (cell "Input" "B12" 113))
+(frame 282
+  (cell "Input" "B11" 193)
+  (cell "Input" "B12" 111))
+(frame 283
+  (cell "Input" "B11" 192))
+(frame 284
+  (cell "Input" "B11" 191)
+  (cell "Input" "B12" 110))
+(frame 285
+  (cell "Input" "B12" 109))
+(frame 286
+  (cell "Input" "B11" 190)
+  (cell "Input" "B12" 108))
+(frame 287
+  (cell "Input" "B12" 107))
+(frame 288
+  (cell "Input" "B12" 106))
+(frame 294
+  (cell "Input" "B12" 105))
+(frame 296
+  (cell "Input" "B11" 189)
+  (cell "Input" "B12" 104))
+(frame 297
+  (cell "Input" "B11" 188)
+  (cell "Input" "B12" 103))
+(frame 298
+  (cell "Input" "B12" 102))
+(frame 299
+  (cell "Input" "B11" 186)
+  (cell "Input" "B12" 101))
+(frame 301
+  (cell "Input" "B11" 185)
+  (cell "Input" "B12" 99))
+(frame 302
+  (cell "Input" "B11" 184))
+(frame 303
+  (cell "Input" "B11" 182)
+  (cell "Input" "B12" 98))
+(frame 304
+  (cell "Input" "B11" 179)
+  (cell "Input" "B12" 96))
+(frame 305
+  (cell "Input" "B11" 177)
+  (cell "Input" "B12" 94))
+(frame 306
+  (cell "Input" "B11" 174)
+  (cell "Input" "B13" 0))
+(frame 307
+  (cell "Input" "B11" 172)
+  (cell "Input" "B12" 93))
+(frame 308
+  (cell "Input" "B11" 170)
+  (cell "Input" "B12" 92))
+(frame 309
+  (cell "Input" "B11" 169)
+  (cell "Input" "B12" 91))
+(frame 325
+  (cell "Input" "B11" 168))
+(frame 326
+  (cell "Input" "B12" 90))
+(frame 327
+  (cell "Input" "B11" 167))
+(frame 328
+  (cell "Input" "B11" 166))
+(frame 329
+  (cell "Input" "B11" 165)
+  (cell "Input" "B12" 89))
+(frame 331
+  (cell "Input" "B11" 164))
+(frame 332
+  (cell "Input" "B11" 163)
+  (cell "Input" "B12" 88))
+(frame 333
+  (cell "Input" "B11" 162)
+  (cell "Input" "B12" 87))
+(frame 334
+  (cell "Input" "B11" 161))
+(frame 335
+  (cell "Input" "B11" 159)
+  (cell "Input" "B12" 86))
+(frame 336
+  (cell "Input" "B11" 157))
+(frame 337
+  (cell "Input" "B11" 154))
+(frame 338
+  (cell "Input" "B11" 152))
+(frame 339
+  (cell "Input" "B11" 149))
+(frame 340
+  (cell "Input" "B11" 147))
+(frame 341
+  (cell "Input" "B11" 144))
+(frame 342
+  (cell "Input" "B11" 141))
+(frame 343
+  (cell "Input" "B11" 139)
+  (cell "Input" "B17" "3")
+  (cell "Input" "B18" "Digit3"))
+(frame 344
+  (cell "Input" "B11" 137)
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 345
+  (cell "Input" "B11" 136))
+(frame 346
+  (cell "Input" "B11" 134)
+  (cell "Input" "B12" 85))
+(frame 347
+  (cell "Input" "B11" 131))
+(frame 348
+  (cell "Input" "B11" 127)
+  (cell "Input" "B12" 83))
+(frame 349
+  (cell "Input" "B11" 123))
+(frame 350
+  (cell "Input" "B11" 119)
+  (cell "Input" "B12" 82))
+(frame 351
+  (cell "Input" "B11" 116))
+(frame 352
+  (cell "Input" "B11" 114))
+(frame 353
+  (cell "Input" "B11" 113))
+(frame 354
+  (cell "Input" "B11" 112)
+  (cell "Input" "B13" 1))
+(frame 358
+  (cell "Input" "B11" 111))
+(frame 359
+  (cell "Input" "B11" 110))
+(frame 360
+  (cell "Input" "B11" 108))
+(frame 361
+  (cell "Input" "B11" 106))
+(frame 362
+  (cell "Input" "B11" 104))
+(frame 363
+  (cell "Input" "B11" 102)
+  (cell "Input" "B12" 83))
+(frame 364
+  (cell "Input" "B11" 100))
+(frame 365
+  (cell "Input" "B11" 98)
+  (cell "Input" "B12" 84))
+(frame 366
+  (cell "Input" "B11" 96)
+  (cell "Input" "B12" 85))
+(frame 367
+  (cell "Input" "B11" 95)
+  (cell "Input" "B12" 86))
+(frame 368
+  (cell "Input" "B11" 94)
+  (cell "Input" "B12" 87))
+(frame 369
+  (cell "Input" "B11" 92)
+  (cell "Input" "B12" 88))
+(frame 370
+  (cell "Input" "B11" 91)
+  (cell "Input" "B12" 89))
+(frame 371
+  (cell "Input" "B11" 90)
+  (cell "Input" "B12" 91))
+(frame 372
+  (cell "Input" "B11" 89)
+  (cell "Input" "B12" 92))
+(frame 373
+  (cell "Input" "B12" 93))
+(frame 374
+  (cell "Input" "B11" 87)
+  (cell "Input" "B12" 95))
+(frame 375
+  (cell "Input" "B11" 86)
+  (cell "Input" "B12" 97))
+(frame 376
+  (cell "Input" "B11" 85)
+  (cell "Input" "B12" 98))
+(frame 377
+  (cell "Input" "B11" 83)
+  (cell "Input" "B12" 100))
+(frame 378
+  (cell "Input" "B11" 82)
+  (cell "Input" "B12" 102))
+(frame 379
+  (cell "Input" "B11" 81)
+  (cell "Input" "B12" 103))
+(frame 380
+  (cell "Input" "B11" 79)
+  (cell "Input" "B12" 104))
+(frame 381
+  (cell "Input" "B11" 78)
+  (cell "Input" "B12" 105))
+(frame 382
+  (cell "Input" "B11" 77)
+  (cell "Input" "B12" 106))
+(frame 384
+  (cell "Input" "B11" 75))
+(frame 385
+  (cell "Input" "B11" 74))
+(frame 386
+  (cell "Input" "B11" 73)
+  (cell "Input" "B12" 104))
+(frame 387
+  (cell "Input" "B11" 72)
+  (cell "Input" "B12" 101))
+(frame 388
+  (cell "Input" "B11" 71)
+  (cell "Input" "B12" 98))
+(frame 389
+  (cell "Input" "B12" 97))
+(frame 390
+  (cell "Input" "B12" 94))
+(frame 391
+  (cell "Input" "B11" 72)
+  (cell "Input" "B12" 91))
+(frame 392
+  (cell "Input" "B11" 73)
+  (cell "Input" "B12" 87))
+(frame 393
+  (cell "Input" "B11" 75)
+  (cell "Input" "B12" 85))
+(frame 394
+  (cell "Input" "B12" 84))
+(frame 395
+  (cell "Input" "B11" 76)
+  (cell "Input" "B12" 82))
+(frame 396
+  (cell "Input" "B11" 77))
+(frame 400
+  (cell "Input" "B11" 78)
+  (cell "Input" "B12" 83))
+(frame 401
+  (cell "Input" "B11" 79)
+  (cell "Input" "B12" 84))
+(frame 402
+  (cell "Input" "B11" 80)
+  (cell "Input" "B12" 86))
+(frame 403
+  (cell "Input" "B11" 81)
+  (cell "Input" "B12" 89))
+(frame 404
+  (cell "Input" "B11" 83)
+  (cell "Input" "B12" 91))
+(frame 405
+  (cell "Input" "B11" 84)
+  (cell "Input" "B12" 94))
+(frame 406
+  (cell "Input" "B11" 86)
+  (cell "Input" "B12" 97))
+(frame 407
+  (cell "Input" "B12" 98))
+(frame 408
+  (cell "Input" "B11" 88)
+  (cell "Input" "B12" 101))
+(frame 409
+  (cell "Input" "B11" 89)
+  (cell "Input" "B12" 103))
+(frame 410
+  (cell "Input" "B11" 90)
+  (cell "Input" "B12" 105))
+(frame 411
+  (cell "Input" "B11" 92)
+  (cell "Input" "B12" 108))
+(frame 412
+  (cell "Input" "B11" 94)
+  (cell "Input" "B12" 110))
+(frame 413
+  (cell "Input" "B11" 95)
+  (cell "Input" "B12" 113))
+(frame 414
+  (cell "Input" "B11" 96)
+  (cell "Input" "B12" 116))
+(frame 415
+  (cell "Input" "B11" 97)
+  (cell "Input" "B12" 118))
+(frame 416
+  (cell "Input" "B12" 120))
+(frame 417
+  (cell "Input" "B11" 98)
+  (cell "Input" "B12" 122))
+(frame 418
+  (cell "Input" "B11" 99)
+  (cell "Input" "B12" 124))
+(frame 419
+  (cell "Input" "B11" 100)
+  (cell "Input" "B12" 126))
+(frame 420
+  (cell "Input" "B11" 101))
+(frame 421
+  (cell "Input" "B12" 127))
+(frame 422
+  (cell "Input" "B11" 102)
+  (cell "Input" "B12" 128))
+(frame 423
+  (cell "Input" "B11" 103)
+  (cell "Input" "B12" 129))
+(frame 424
+  (cell "Input" "B11" 104))
+(frame 425
+  (cell "Input" "B11" 105)
+  (cell "Input" "B12" 128))
+(frame 426
+  (cell "Input" "B11" 108)
+  (cell "Input" "B12" 127))
+(frame 427
+  (cell "Input" "B11" 110)
+  (cell "Input" "B12" 126))
+(frame 428
+  (cell "Input" "B11" 113)
+  (cell "Input" "B12" 124))
+(frame 429
+  (cell "Input" "B11" 116)
+  (cell "Input" "B12" 123))
+(frame 430
+  (cell "Input" "B11" 118)
+  (cell "Input" "B12" 122))
+(frame 431
+  (cell "Input" "B11" 120))
+(frame 432
+  (cell "Input" "B11" 122)
+  (cell "Input" "B12" 120))
+(frame 434
+  (cell "Input" "B11" 123))
+(frame 436
+  (cell "Input" "B11" 124))
+(frame 437
+  (cell "Input" "B11" 125)
+  (cell "Input" "B12" 121))
+(frame 438
+  (cell "Input" "B11" 127)
+  (cell "Input" "B12" 122))
+(frame 439
+  (cell "Input" "B11" 129)
+  (cell "Input" "B12" 123))
+(frame 440
+  (cell "Input" "B11" 131)
+  (cell "Input" "B12" 124))
+(frame 441
+  (cell "Input" "B11" 132)
+  (cell "Input" "B12" 125))
+(frame 442
+  (cell "Input" "B11" 133))
+(frame 443
+  (cell "Input" "B11" 134)
+  (cell "Input" "B12" 126))
+(frame 444
+  (cell "Input" "B11" 135)
+  (cell "Input" "B12" 127))
+(frame 445
+  (cell "Input" "B11" 137)
+  (cell "Input" "B12" 128))
+(frame 446
+  (cell "Input" "B12" 129))
+(frame 447
+  (cell "Input" "B11" 138)
+  (cell "Input" "B12" 130))
+(frame 449
+  (cell "Input" "B11" 139))
+(frame 455
+  (cell "Input" "B13" 0))
+(frame 456
+  (cell "Input" "B11" 140))
+(frame 470
+  (cell "Input" "B11" 141))
+(frame 472
+  (cell "Input" "B11" 142))
+(frame 473
+  (cell "Input" "B11" 143))
+(frame 475
+  (cell "Input" "B11" 144))
+(frame 477
+  (cell "Input" "B11" 145))
+(frame 505
+  (cell "Input" "B12" 131))
+(frame 507
+  (cell "Input" "B12" 133))
+(frame 509
+  (cell "Input" "B12" 134))
+(frame 510
+  (cell "Input" "B11" 146)
+  (cell "Input" "B12" 135))
+(frame 511
+  (cell "Input" "B11" 147)
+  (cell "Input" "B12" 136))
+(frame 512
+  (cell "Input" "B11" 148)
+  (cell "Input" "B12" 138))
+(frame 513
+  (cell "Input" "B11" 151)
+  (cell "Input" "B12" 139))
+(frame 514
+  (cell "Input" "B11" 154)
+  (cell "Input" "B12" 140))
+(frame 515
+  (cell "Input" "B11" 156)
+  (cell "Input" "B12" 141))
+(frame 516
+  (cell "Input" "B11" 158))
+(frame 517
+  (cell "Input" "B11" 159))
+(frame 518
+  (cell "Input" "B11" 160))
+(frame 527
+  (cell "Input" "B11" 158)
+  (cell "Input" "B12" 140))
+(frame 528
+  (cell "Input" "B11" 157)
+  (cell "Input" "B12" 139))
+(frame 529
+  (cell "Input" "B11" 155)
+  (cell "Input" "B12" 137))
+(frame 530
+  (cell "Input" "B11" 153)
+  (cell "Input" "B12" 136))
+(frame 531
+  (cell "Input" "B11" 152)
+  (cell "Input" "B12" 135))
+(frame 532
+  (cell "Input" "B11" 151)
+  (cell "Input" "B12" 134))
+(frame 533
+  (cell "Input" "B11" 150)
+  (cell "Input" "B12" 133))
+(frame 534
+  (cell "Input" "B17" "1")
+  (cell "Input" "B18" "Digit1"))
+(frame 535
+  (cell "Input" "B11" 149)
+  (cell "Input" "B12" 132)
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 536
+  (cell "Input" "B11" 148)
+  (cell "Input" "B12" 131))
+(frame 537
+  (cell "Input" "B12" 130))
+(frame 542
+  (cell "Input" "B13" 1))
+(frame 550
+  (cell "Input" "B12" 131))
+(frame 551
+  (cell "Input" "B11" 149)
+  (cell "Input" "B12" 132))
+(frame 552
+  (cell "Input" "B11" 150)
+  (cell "Input" "B12" 133))
+(frame 553
+  (cell "Input" "B11" 151)
+  (cell "Input" "B12" 134))
+(frame 554
+  (cell "Input" "B12" 135))
+(frame 555
+  (cell "Input" "B12" 136))
+(frame 559
+  (cell "Input" "B12" 137))
+(frame 560
+  (cell "Input" "B11" 152))
+(frame 561
+  (cell "Input" "B12" 138))
+(frame 563
+  (cell "Input" "B11" 154)
+  (cell "Input" "B12" 139))
+(frame 565
+  (cell "Input" "B11" 155)
+  (cell "Input" "B12" 140))
+(frame 567
+  (cell "Input" "B12" 141))
+(frame 571
+  (cell "Input" "B13" 0))
+(frame 573
+  (cell "Input" "B11" 156))
+(frame 575
+  (cell "Input" "B11" 157))
+(frame 576
+  (cell "Input" "B11" 158)
+  (cell "Input" "B12" 140))
+(frame 577
+  (cell "Input" "B11" 159))
+(frame 578
+  (cell "Input" "B12" 139))
+(frame 579
+  (cell "Input" "B12" 138))
+(frame 580
+  (cell "Input" "B12" 137))
+(frame 581
+  (cell "Input" "B12" 136))
+(frame 582
+  (cell "Input" "B12" 135))
+(frame 583
+  (cell "Input" "B12" 134)
+  (cell "Input" "B17" "2")
+  (cell "Input" "B18" "Digit2"))
+(frame 584
+  (cell "Input" "B12" 132)
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 585
+  (cell "Input" "B11" 158)
+  (cell "Input" "B12" 129))
+(frame 586
+  (cell "Input" "B12" 126))
+(frame 587
+  (cell "Input" "B12" 123))
+(frame 588
+  (cell "Input" "B12" 120))
+(frame 589
+  (cell "Input" "B12" 118))
+(frame 591
+  (cell "Input" "B13" 1))
+(frame 595
+  (cell "Input" "B11" 159)
+  (cell "Input" "B12" 119))
+(frame 596
+  (cell "Input" "B11" 160)
+  (cell "Input" "B12" 120))
+(frame 597
+  (cell "Input" "B12" 121))
+(frame 598
+  (cell "Input" "B11" 162)
+  (cell "Input" "B12" 122))
+(frame 599
+  (cell "Input" "B11" 164)
+  (cell "Input" "B12" 124))
+(frame 600
+  (cell "Input" "B11" 166)
+  (cell "Input" "B12" 126))
+(frame 601
+  (cell "Input" "B12" 128))
+(frame 602
+  (cell "Input" "B11" 167)
+  (cell "Input" "B12" 130))
+(frame 603
+  (cell "Input" "B11" 168))
+(frame 604
+  (cell "Input" "B12" 131))
+(frame 605
+  (cell "Input" "B11" 169))
+(frame 606
+  (cell "Input" "B12" 132))
+(frame 607
+  (cell "Input" "B11" 170)
+  (cell "Input" "B12" 133))
+(frame 608
+  (cell "Input" "B12" 134))
+(frame 609
+  (cell "Input" "B11" 171)
+  (cell "Input" "B12" 135))
+(frame 610
+  (cell "Input" "B12" 137))
+(frame 611
+  (cell "Input" "B11" 172)
+  (cell "Input" "B12" 138))
+(frame 613
+  (cell "Input" "B12" 139))
+(frame 614
+  (cell "Input" "B12" 140))
+(frame 615
+  (cell "Input" "B11" 173)
+  (cell "Input" "B12" 141))
+(frame 616
+  (cell "Input" "B12" 142))
+(frame 617
+  (cell "Input" "B11" 174))
+(frame 618
+  (cell "Input" "B12" 143))
+(frame 621
+  (cell "Input" "B11" 175))
+(frame 629
+  (cell "Input" "B13" 0))
+(frame 633
+  (cell "Input" "B11" 176))
+(frame 643
+  (cell "Input" "B12" 142))
+(frame 654
+  (cell "Input" "B12" 141))
+(frame 656
+  (cell "Input" "B11" 177))
+(frame 658
+  (cell "Input" "B12" 140))
+(frame 660
+  (cell "Input" "B12" 139))
+(frame 678
+  (cell "Input" "B12" 138))
+(frame 680
+  (cell "Input" "B12" 137))
+(frame 682
+  (cell "Input" "B12" 136))
+(frame 684
+  (cell "Input" "B12" 135))
+(frame 685
+  (cell "Input" "B12" 134))
+(frame 686
+  (cell "Input" "B11" 178)
+  (cell "Input" "B12" 132))
+(frame 687
+  (cell "Input" "B12" 131))
+(frame 688
+  (cell "Input" "B12" 128))
+(frame 689
+  (cell "Input" "B12" 127))
+(frame 690
+  (cell "Input" "B12" 125))
+(frame 691
+  (cell "Input" "B12" 124))
+(frame 692
+  (cell "Input" "B12" 123))
+(frame 693
+  (cell "Input" "B12" 122))
+(frame 695
+  (cell "Input" "B12" 120))
+(frame 697
+  (cell "Input" "B12" 119))
+(frame 699
+  (cell "Input" "B11" 177)
+  (cell "Input" "B12" 118))
+(frame 702
+  (cell "Input" "B12" 117))
+(frame 703
+  (cell "Input" "B11" 176)
+  (cell "Input" "B12" 116))
+(frame 706
+  (cell "Input" "B11" 175))
+(frame 710
+  (cell "Input" "B11" 174))
+(frame 711
+  (cell "Input" "B12" 115))
+(frame 712
+  (cell "Input" "B11" 173))
+(frame 716
+  (cell "Input" "B11" 172))
+(frame 721
+  (cell "Input" "B12" 114))
+(frame 752
+  (cell "Input" "B17" "3")
+  (cell "Input" "B18" "Digit3"))
+(frame 753
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 762
+  (cell "Input" "B11" 170))
+(frame 764
+  (cell "Input" "B11" 169)
+  (cell "Input" "B12" 113))
+(frame 765
+  (cell "Input" "B11" 166)
+  (cell "Input" "B12" 111))
+(frame 766
+  (cell "Input" "B11" 164)
+  (cell "Input" "B12" 109))
+(frame 767
+  (cell "Input" "B11" 162)
+  (cell "Input" "B12" 107))
+(frame 768
+  (cell "Input" "B11" 160)
+  (cell "Input" "B12" 106))
+(frame 769
+  (cell "Input" "B11" 158)
+  (cell "Input" "B12" 105))
+(frame 770
+  (cell "Input" "B11" 157)
+  (cell "Input" "B12" 104))
+(frame 771
+  (cell "Input" "B12" 103))
+(frame 773
+  (cell "Input" "B13" 1))
+(frame 777
+  (cell "Input" "B11" 158)
+  (cell "Input" "B12" 102))
+(frame 779
+  (cell "Input" "B11" 159)
+  (cell "Input" "B12" 101))
+(frame 780
+  (cell "Input" "B11" 162)
+  (cell "Input" "B12" 98))
+(frame 781
+  (cell "Input" "B11" 164)
+  (cell "Input" "B12" 96))
+(frame 782
+  (cell "Input" "B11" 166)
+  (cell "Input" "B12" 94))
+(frame 783
+  (cell "Input" "B11" 168)
+  (cell "Input" "B12" 91))
+(frame 784
+  (cell "Input" "B12" 90))
+(frame 785
+  (cell "Input" "B11" 169)
+  (cell "Input" "B12" 89))
+(frame 800
+  (cell "Input" "B12" 90))
+(frame 801
+  (cell "Input" "B12" 91))
+(frame 802
+  (cell "Input" "B12" 92))
+(frame 804
+  (cell "Input" "B12" 93))
+(frame 805
+  (cell "Input" "B12" 96))
+(frame 806
+  (cell "Input" "B11" 170)
+  (cell "Input" "B12" 98))
+(frame 807
+  (cell "Input" "B11" 171)
+  (cell "Input" "B12" 101))
+(frame 808
+  (cell "Input" "B11" 172)
+  (cell "Input" "B12" 102))
+(frame 809
+  (cell "Input" "B12" 103))
+(frame 823
+  (cell "Input" "B12" 102))
+(frame 824
+  (cell "Input" "B11" 170)
+  (cell "Input" "B12" 101))
+(frame 825
+  (cell "Input" "B12" 99))
+(frame 826
+  (cell "Input" "B11" 169)
+  (cell "Input" "B12" 97))
+(frame 827
+  (cell "Input" "B11" 168)
+  (cell "Input" "B12" 95))
+(frame 828
+  (cell "Input" "B12" 93))
+(frame 829
+  (cell "Input" "B11" 167)
+  (cell "Input" "B12" 91))
+(frame 830
+  (cell "Input" "B12" 90))
+(frame 831
+  (cell "Input" "B12" 89))
+(frame 832
+  (cell "Input" "B12" 87))
+(frame 834
+  (cell "Input" "B12" 86))
+(frame 835
+  (cell "Input" "B12" 85))
+(frame 836
+  (cell "Input" "B12" 84))
+(frame 837
+  (cell "Input" "B12" 83))
+(frame 838
+  (cell "Input" "B12" 82))
+(frame 847
+  (cell "Input" "B13" 0))
+(frame 848
+  (cell "Input" "B11" 170))
+(frame 849
+  (cell "Input" "B11" 174))
+(frame 850
+  (cell "Input" "B11" 176))
+(frame 851
+  (cell "Input" "B11" 177))
+(frame 852
+  (cell "Input" "B11" 178))
+(frame 853
+  (cell "Input" "B11" 179))
+(frame 854
+  (cell "Input" "B11" 181)
+  (cell "Input" "B12" 81))
+(frame 855
+  (cell "Input" "B11" 182)
+  (cell "Input" "B12" 80))
+(frame 857
+  (cell "Input" "B11" 183))
+(frame 858
+  (cell "Input" "B12" 79))
+(frame 860
+  (cell "Input" "B16" -1))
+(frame 861
+  (cell "Input" "B16" 0))
+(frame 862
+  (cell "Input" "B11" 182)
+  (cell "Input" "B12" 80)
+  (cell "Input" "B16" -1))
+(frame 863
+  (cell "Input" "B11" 181)
+  (cell "Input" "B16" 0))
+(frame 864
+  (cell "Input" "B11" 179))
+(frame 865
+  (cell "Input" "B11" 178)
+  (cell "Input" "B12" 81))
+(frame 866
+  (cell "Input" "B11" 177)
+  (cell "Input" "B16" -1))
+(frame 867
+  (cell "Input" "B11" 176)
+  (cell "Input" "B16" 0))
+(frame 870
+  (cell "Input" "B11" 175))
+(frame 873
+  (cell "Input" "B16" -1))
+(frame 874
+  (cell "Input" "B16" 0))
+(frame 878
+  (cell "Input" "B13" 1))
+(frame 889
+  (cell "Input" "B11" 174))
+(frame 891
+  (cell "Input" "B11" 173))
+(frame 910
+  (cell "Input" "B13" 0))
+(frame 915
+  (cell "Input" "B11" 174))
+(frame 916
+  (cell "Input" "B11" 176)
+  (cell "Input" "B12" 82))
+(frame 917
+  (cell "Input" "B11" 178)
+  (cell "Input" "B12" 84))
+(frame 918
+  (cell "Input" "B11" 181)
+  (cell "Input" "B12" 87))
+(frame 919
+  (cell "Input" "B11" 184)
+  (cell "Input" "B12" 89))
+(frame 920
+  (cell "Input" "B11" 187)
+  (cell "Input" "B12" 92))
+(frame 921
+  (cell "Input" "B11" 189)
+  (cell "Input" "B12" 94))
+(frame 922
+  (cell "Input" "B11" 191)
+  (cell "Input" "B12" 96))
+(frame 923
+  (cell "Input" "B11" 192)
+  (cell "Input" "B12" 98))
+(frame 924
+  (cell "Input" "B11" 193)
+  (cell "Input" "B12" 100))
+(frame 925
+  (cell "Input" "B11" 195)
+  (cell "Input" "B12" 101))
+(frame 927
+  (cell "Input" "B12" 102))
+(frame 932
+  (cell "Input" "B12" 103))
+(frame 933
+  (cell "Input" "B12" 104))
+(frame 934
+  (cell "Input" "B11" 194)
+  (cell "Input" "B12" 105))
+(frame 935
+  (cell "Input" "B11" 193)
+  (cell "Input" "B12" 107))
+(frame 936
+  (cell "Input" "B12" 110))
+(frame 937
+  (cell "Input" "B12" 113))
+(frame 938
+  (cell "Input" "B12" 116))
+(frame 939
+  (cell "Input" "B12" 119))
+(frame 940
+  (cell "Input" "B12" 122))
+(frame 941
+  (cell "Input" "B12" 125))
+(frame 942
+  (cell "Input" "B12" 128))
+(frame 943
+  (cell "Input" "B12" 131))
+(frame 944
+  (cell "Input" "B12" 134))
+(frame 945
+  (cell "Input" "B12" 137))
+(frame 946
+  (cell "Input" "B12" 139))
+(frame 947
+  (cell "Input" "B12" 142))
+(frame 948
+  (cell "Input" "B12" 145))
+(frame 949
+  (cell "Input" "B12" 147))
+(frame 950
+  (cell "Input" "B12" 148))
+(frame 951
+  (cell "Input" "B12" 150))
+(frame 952
+  (cell "Input" "B12" 151))
+(frame 953
+  (cell "Input" "B12" 153))
+(frame 954
+  (cell "Input" "B12" 154))
+(frame 955
+  (cell "Input" "B11" 192)
+  (cell "Input" "B12" 156))
+(frame 956
+  (cell "Input" "B11" 191)
+  (cell "Input" "B12" 158))
+(frame 957
+  (cell "Input" "B12" 160))
+(frame 958
+  (cell "Input" "B12" 162))
+(frame 959
+  (cell "Input" "B12" 163))
+(frame 960
+  (cell "Input" "B12" 164))
+(frame 961
+  (cell "Input" "B11" 190)
+  (cell "Input" "B12" 166))
+(frame 962
+  (cell "Input" "B12" 167))
+(frame 963
+  (cell "Input" "B11" 189)
+  (cell "Input" "B12" 168))
+(frame 964
+  (cell "Input" "B11" 188)
+  (cell "Input" "B12" 170))
+(frame 965
+  (cell "Input" "B11" 187)
+  (cell "Input" "B12" 171))
+(frame 966
+  (cell "Input" "B11" 186)
+  (cell "Input" "B12" 172))
+(frame 967
+  (cell "Input" "B11" 185))
+(frame 968
+  (cell "Input" "B11" 184)
+  (cell "Input" "B12" 174))
+(frame 969
+  (cell "Input" "B11" 183)
+  (cell "Input" "B12" 175))
+(frame 970
+  (cell "Input" "B11" 182)
+  (cell "Input" "B12" 176))
+(frame 971
+  (cell "Input" "B11" 181))
+(frame 972
+  (cell "Input" "B11" 180)
+  (cell "Input" "B12" 178))
+(frame 974
+  (cell "Input" "B12" 179))
+(frame 975
+  (cell "Input" "B11" 179)
+  (cell "Input" "B12" 180))
+(frame 977
+  (cell "Input" "B11" 178)
+  (cell "Input" "B14" 1))
+(frame 979
+  (cell "Input" "B12" 181))
+(frame 980
+  (cell "Input" "B11" 177))
+(frame 981
+  (cell "Input" "B12" 182))
+(frame 983
+  (cell "Input" "B11" 176)
+  (cell "Input" "B12" 183))
+(frame 984
+  (cell "Input" "B11" 175))
+(frame 985
+  (cell "Input" "B11" 174))
+(frame 987
+  (cell "Input" "B11" 173)
+  (cell "Input" "B12" 184))
+(frame 988
+  (cell "Input" "B11" 172))
+(frame 989
+  (cell "Input" "B11" 171))
+(frame 991
+  (cell "Input" "B12" 185))
+(frame 993
+  (cell "Input" "B12" 186))
+(frame 994
+  (cell "Input" "B11" 172))
+(frame 995
+  (cell "Input" "B11" 174))
+(frame 996
+  (cell "Input" "B11" 175)
+  (cell "Input" "B12" 187))
+(frame 997
+  (cell "Input" "B11" 177))
+(frame 998
+  (cell "Input" "B11" 179))
+(frame 999
+  (cell "Input" "B11" 181))
+(frame 1000
+  (cell "Input" "B11" 182))
+(frame 1001
+  (cell "Input" "B11" 184))
+(frame 1002
+  (cell "Input" "B11" 185))
+(frame 1003
+  (cell "Input" "B11" 187))
+(frame 1004
+  (cell "Input" "B11" 188))
+(frame 1005
+  (cell "Input" "B11" 189))
+(frame 1006
+  (cell "Input" "B11" 191))
+(frame 1008
+  (cell "Input" "B11" 192))
+(frame 1009
+  (cell "Input" "B11" 194))
+(frame 1010
+  (cell "Input" "B11" 196))
+(frame 1011
+  (cell "Input" "B11" 197))
+(frame 1012
+  (cell "Input" "B11" 198))
+(frame 1013
+  (cell "Input" "B11" 199))
+(frame 1014
+  (cell "Input" "B11" 200))
+(frame 1015
+  (cell "Input" "B11" 202))
+(frame 1016
+  (cell "Input" "B11" 203))
+(frame 1017
+  (cell "Input" "B11" 204))
+(frame 1019
+  (cell "Input" "B11" 206))
+(frame 1020
+  (cell "Input" "B11" 208))
+(frame 1021
+  (cell "Input" "B11" 209))
+(frame 1022
+  (cell "Input" "B11" 210))
+(frame 1024
+  (cell "Input" "B11" 212)
+  (cell "Input" "B12" 188))
+(frame 1025
+  (cell "Input" "B11" 213))
+(frame 1026
+  (cell "Input" "B11" 214)
+  (cell "Input" "B12" 189))
+(frame 1027
+  (cell "Input" "B11" 216)
+  (cell "Input" "B12" 190))
+(frame 1028
+  (cell "Input" "B11" 218))
+(frame 1029
+  (cell "Input" "B11" 220))
+(frame 1030
+  (cell "Input" "B11" 221))
+(frame 1049
+  (cell "Input" "B11" 220))
+(frame 1050
+  (cell "Input" "B11" 219))
+(frame 1051
+  (cell "Input" "B11" 218)
+  (cell "Input" "B12" 191))
+(frame 1052
+  (cell "Input" "B11" 217))
+(frame 1053
+  (cell "Input" "B11" 215))
+(frame 1054
+  (cell "Input" "B11" 214)
+  (cell "Input" "B12" 192))
+(frame 1055
+  (cell "Input" "B11" 212))
+(frame 1056
+  (cell "Input" "B11" 210))
+(frame 1057
+  (cell "Input" "B11" 209))
+(frame 1058
+  (cell "Input" "B11" 207)
+  (cell "Input" "B12" 193))
+(frame 1059
+  (cell "Input" "B11" 206))
+(frame 1060
+  (cell "Input" "B11" 205)
+  (cell "Input" "B12" 194))
+(frame 1061
+  (cell "Input" "B11" 203)
+  (cell "Input" "B12" 195))
+(frame 1062
+  (cell "Input" "B11" 202))
+(frame 1063
+  (cell "Input" "B11" 201))
+(frame 1065
+  (cell "Input" "B11" 199))
+(frame 1067
+  (cell "Input" "B11" 198))
+(frame 1068
+  (cell "Input" "B11" 197))
+(frame 1078
+  (cell "Input" "B11" 195))
+(frame 1080
+  (cell "Input" "B11" 194))
+(frame 1082
+  (cell "Input" "B11" 193))
+(frame 1084
+  (cell "Input" "B11" 192))
+(frame 1091
+  (cell "Input" "B14" 0))
+(frame 1094
+  (cell "Input" "B11" 193))
+(frame 1095
+  (cell "Input" "B11" 195))
+(frame 1096
+  (cell "Input" "B11" 197))
+(frame 1097
+  (cell "Input" "B11" 199))
+(frame 1098
+  (cell "Input" "B11" 200))
+(frame 1099
+  (cell "Input" "B11" 201))
+(frame 1100
+  (cell "Input" "B11" 202))
+(frame 1101
+  (cell "Input" "B11" 204)
+  (cell "Input" "B12" 194))
+(frame 1102
+  (cell "Input" "B11" 205))
+(frame 1103
+  (cell "Input" "B11" 208))
+(frame 1104
+  (cell "Input" "B11" 210))
+(frame 1105
+  (cell "Input" "B11" 212))
+(frame 1106
+  (cell "Input" "B11" 213)
+  (cell "Input" "B12" 193))
+(frame 1107
+  (cell "Input" "B11" 214))
+(frame 1108
+  (cell "Input" "B11" 216))
+(frame 1109
+  (cell "Input" "B11" 217))
+(frame 1110
+  (cell "Input" "B11" 218))
+(frame 1111
+  (cell "Input" "B11" 219))
+(frame 1112
+  (cell "Input" "B11" 220))
+(frame 1113
+  (cell "Input" "B11" 221))
+(frame 1124
+  (cell "Input" "B12" 192))
+(frame 1125
+  (cell "Input" "B11" 222))
+(frame 1126
+  (cell "Input" "B11" 223))
+(frame 1127
+  (cell "Input" "B11" 224)
+  (cell "Input" "B12" 190))
+(frame 1128
+  (cell "Input" "B11" 225))
+(frame 1129
+  (cell "Input" "B11" 226)
+  (cell "Input" "B12" 189))
+(frame 1130
+  (cell "Input" "B11" 227))
+(frame 1131
+  (cell "Input" "B11" 229)
+  (cell "Input" "B12" 188))
+(frame 1132
+  (cell "Input" "B11" 231)
+  (cell "Input" "B12" 187))
+(frame 1133
+  (cell "Input" "B11" 234)
+  (cell "Input" "B12" 186))
+(frame 1134
+  (cell "Input" "B11" 238)
+  (cell "Input" "B12" 184))
+(frame 1135
+  (cell "Input" "B11" 243)
+  (cell "Input" "B12" 183))
+(frame 1136
+  (cell "Input" "B11" 247)
+  (cell "Input" "B12" 182))
+(frame 1137
+  (cell "Input" "B11" 250)
+  (cell "Input" "B12" 181))
+(frame 1138
+  (cell "Input" "B11" 253)
+  (cell "Input" "B12" 180))
+(frame 1139
+  (cell "Input" "B11" 255))
+(frame 1140
+  (cell "Input" "B11" 257))
+(frame 1141
+  (cell "Input" "B11" 258)
+  (cell "Input" "B12" 179))
+(frame 1142
+  (cell "Input" "B11" 260))
+(frame 1143
+  (cell "Input" "B11" 262))
+(frame 1144
+  (cell "Input" "B11" 263))
+(frame 1191
+  (cell "Input" "B11" 265)
+  (cell "Input" "B12" 178))
+(frame 1192
+  (cell "Input" "B11" 266))
+(frame 1193
+  (cell "Input" "B11" 267))
+(frame 1194
+  (cell "Input" "B11" 271)
+  (cell "Input" "B12" 179))
+(frame 1195
+  (cell "Input" "B11" 274)
+  (cell "Input" "B12" 180))
+(frame 1196
+  (cell "Input" "B11" 278)
+  (cell "Input" "B12" 181))
+(frame 1197
+  (cell "Input" "B11" 280))
+(frame 1198
+  (cell "Input" "B11" 283))
+(frame 1199
+  (cell "Input" "B11" 286))
+(frame 1200
+  (cell "Input" "B11" 293)
+  (cell "Input" "B12" 177))
+(frame 1201
+  (cell "Input" "B11" 294)
+  (cell "Input" "B12" 175))
+(frame 1216
+  (cell "Input" "B11" 296)
+  (cell "Input" "B12" 173))
+(frame 1217
+  (cell "Input" "B11" 299)
+  (cell "Input" "B12" 168))
+(frame 1218
+  (cell "Input" "B11" 303)
+  (cell "Input" "B12" 162))
+(frame 1219
+  (cell "Input" "B11" 306)
+  (cell "Input" "B12" 157))
+(frame 1220
+  (cell "Input" "B11" 311)
+  (cell "Input" "B12" 156))
+(frame 1221
+  (cell "Input" "B11" 315)
+  (cell "Input" "B12" 154))
+(frame 1222
+  (cell "Input" "B11" 320))
+(frame 1223
+  (cell "Input" "B11" 0)
+  (cell "Input" "B12" 0))
+(frame 2085)

@@ -186,7 +186,7 @@ the marks a host asked for. The record is never written.
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
 test card, the input card, the sound card or Sand, each with its source, which the panel's Build expands into the
-cartridge in the page, the input card and the sound card each with its replay, which Play the replay plays, the
+cartridge in the page, the input card, the sound card and Sand each with its replay, which Play the replay plays, the
 Audio sheet heard after Sound on, and
 below it the viewport over seven
 records the door printed: the six view goldens of Frazaro's `scripts/view/`
@@ -265,7 +265,12 @@ from 1 to 8, and see the material the left button paints in the floor's
 colour. Its Stay sheet, the cells that keep their occupant this frame, 2
 where it is water, its Side sheet, the cells occupied once the water has
 moved sideways, its Parity column and its Tally, each row's codes and
-occupied cells, are in the sheet picker.
+occupied cells, are in the sheet picker. Open The replay with Sand picked:
+its own replay waits in the box, a person's painting session, 2,085 frames;
+press Play the replay and watch sand painted into the rain, water after the
+key 3, sand after the key 1, a wall after the key 2, water again with the
+brush widened to 7, the right button erasing near the bottom, and the toy
+left alone to frame 2,085, where the replay pauses, its Tally the golden's.
 Below it, pick a
 record, scroll on both
 axes, click a cell or drag a range, click a column or row header or the
@@ -338,7 +343,11 @@ baseline to the roadmap's bars.
   sound card's 240 frames, every frame's Audio sheet equal to the card
   computed by hand and its waterfall drawn by hand, the run as the host
   recorded it the card's committed replay, which `replay` plays to every
-  frame of the card and to its golden, the Log's record; and the sound
+  frame of the card and to its golden, the Log's record; `replay` plays
+  Sand's committed replay too, a person's painting session (`CART.2`'s
+  second slice), every frame's Screen equal to the page's own sand under the
+  brush the replay's Input rows make, and its end its golden, the Tally's
+  record; and the sound
   itself (`sound`, `ENGINE.4`'s second slice): the host's own voices over
   the double handed an `OfflineAudioContext`, a sequence of voice states
   rendered into samples and each frame measured between its own times

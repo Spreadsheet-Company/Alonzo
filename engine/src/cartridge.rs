@@ -1920,8 +1920,16 @@ mod tests {
     /// writes the last frame's Write sheet left, each its own write, the
     /// frame's rows, spelled back by the language's printer, as one write,
     /// and the step; its end the golden beside it, its window's record byte
-    /// for byte.
-    fn play_to_golden(name: &str, cart: &str, replay: &str, golden: &str) {
+    /// for byte. After each step `held` is given the cartridge, the frame
+    /// and the frame's rows, so that a cartridge with a rule written by hand
+    /// holds every frame to it (Sand's, CART.2's second slice).
+    fn play_to_golden(
+        name: &str,
+        cart: &str,
+        replay: &str,
+        golden: &str,
+        held: &mut dyn FnMut(&Cartridge, u32, &[Form]),
+    ) {
         let forms = read_forms(replay).unwrap_or_else(|e| panic!("{name}'s replay reads: {e:?}"));
         let items = |f: &Form| match f {
             Form::List(l) => l.items.clone(),
@@ -1938,13 +1946,12 @@ mod tests {
             })
             .unwrap_or_else(|| panic!("{name}: the header's seed"));
         // Each frame one form, (frame n row ...), its rows the frame's one write.
-        let frames: Vec<(u32, Vec<String>)> = forms[1..]
+        let frames: Vec<(u32, Vec<Form>)> = forms[1..]
             .iter()
             .map(|f| match items(f).as_slice() {
-                [Form::Sym(head), Form::Sym(n), rows @ ..] if head == "frame" => (
-                    n.parse().expect("a frame's number"),
-                    rows.iter().map(write_datum).collect(),
-                ),
+                [Form::Sym(head), Form::Sym(n), rows @ ..] if head == "frame" => {
+                    (n.parse().expect("a frame's number"), rows.to_vec())
+                }
                 other => panic!("{name}: a frame: {other:?}"),
             })
             .collect();
@@ -1966,14 +1973,18 @@ mod tests {
                 c.write(&row)
                     .unwrap_or_else(|e| panic!("{name}, frame {frame}: {row}: {e:?}"));
             }
-            if let Some((_, rows)) = written.next_if(|(n, _)| *n == frame) {
-                if !rows.is_empty() {
-                    c.write(&rows.join("\n")).unwrap_or_else(|e| {
-                        panic!("{name}, frame {frame}: the rows, which landed when they were recorded: {e:?}")
-                    });
-                }
+            let rows: &[Form] = match written.next_if(|(n, _)| *n == frame) {
+                Some((_, rows)) => rows,
+                None => &[],
+            };
+            if !rows.is_empty() {
+                let text: Vec<String> = rows.iter().map(write_datum).collect();
+                c.write(&text.join("\n")).unwrap_or_else(|e| {
+                    panic!("{name}, frame {frame}: the rows, which landed when they were recorded: {e:?}")
+                });
             }
             assert!(c.step(0).done, "{name}, frame {frame}");
+            held(&c, frame, rows);
             pending = derived_rows(&c);
         }
         assert!(
@@ -1999,7 +2010,9 @@ mod tests {
     /// Every committed replay (ENGINE.3's second slice, made general by
     /// ENGINE.4's): each folder of `cartridges/` holding `<name>.replay.vla`
     /// played to `<name>.golden.vla` beside it, the files read as they stand
-    /// in the tree, the input card's and the sound card's today.
+    /// in the tree: the input card's, Sand's and the sound card's. Sand's
+    /// holds its Screen to the hand-written sand at every frame (CART.2's
+    /// second slice), as the page's replay case holds it to the page's.
     #[test]
     fn every_committed_replay_plays_to_its_golden() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../cartridges");
@@ -2025,12 +2038,24 @@ mod tests {
             }
             let cart = read(dir.join(format!("{name}.vla")));
             let golden = read(dir.join(format!("{name}.golden.vla")));
-            play_to_golden(&name, &cart, &read(replay), &golden);
+            let mut hand = SandHand::default();
+            let mut held = |c: &Cartridge, frame: u32, rows: &[Form]| {
+                if name == "sand" {
+                    hand.holds(c, frame, rows);
+                }
+            };
+            play_to_golden(&name, &cart, &read(replay), &golden, &mut held);
+            if name == "sand" {
+                assert!(
+                    hand.painted > 0,
+                    "Sand's replay paints, and its frames are held to the hand-written sand's brush"
+                );
+            }
             played.push(name);
         }
         assert_eq!(
             played,
-            ["inputcard", "soundcard"],
+            ["inputcard", "sand", "soundcard"],
             "the replays committed under cartridges/"
         );
     }
@@ -2475,6 +2500,84 @@ mod tests {
             radius: *radius,
             material: if right == 1 { sand::EMPTY } else { *material },
         })
+    }
+
+    /// A replay of Sand on the hand-written sand (CART.2's second slice), the
+    /// brush as `sand_gesture` reads it: the Input sheet's cells as the
+    /// replay's rows leave them, since a replay logs a cell only in the frame
+    /// it changes; the material and the radius as the State and the Brush keep
+    /// them, sand and 3 at the first frame, then a key's pick and the wheel's
+    /// notches; the disc the left or the right button paints while the
+    /// pointer is over the Screen, empty under the right; and the board, the
+    /// opening from the Clock's seed at the first frame. Each frame's Screen
+    /// is held to it.
+    #[derive(Default)]
+    struct SandHand {
+        input: std::collections::HashMap<String, Form>,
+        material: u8,
+        radius: i64,
+        board: Vec<u8>,
+        painted: usize,
+    }
+
+    impl SandHand {
+        fn holds(&mut self, c: &Cartridge, frame: u32, rows: &[Form]) {
+            for row in rows {
+                if let Form::List(l) = row {
+                    if let [Form::Sym(head), Form::Str(sheet), Form::Str(addr), value] =
+                        l.items.as_slice()
+                    {
+                        if head == "cell" && sheet == "Input" {
+                            self.input.insert(addr.clone(), value.clone());
+                        }
+                    }
+                }
+            }
+            let number = |addr: &str| match self.input.get(addr) {
+                Some(Form::Sym(n)) => n.parse::<f64>().expect("a number in the Input sheet"),
+                _ => 0.0,
+            };
+            let (col, row, left, right, wheel) = (
+                number("B11"),
+                number("B12"),
+                number("B13"),
+                number("B14"),
+                number("B16"),
+            );
+            let key = match self.input.get("B17") {
+                Some(Form::Str(k)) => k.clone(),
+                _ => String::new(),
+            };
+            if frame == 1 {
+                let seed = value_of(c, "Clock", "B3").parse().expect("the seed");
+                (self.material, self.radius) = (sand::SAND, 3);
+                self.board = sand::opening(seed);
+            } else {
+                self.material = match key.as_str() {
+                    "1" => sand::SAND,
+                    "2" => sand::WALL,
+                    "3" => sand::WATER,
+                    "0" => sand::EMPTY,
+                    _ => self.material,
+                };
+                self.radius = (self.radius - wheel as i64).clamp(1, 8);
+                let brush = (left + right > 0.0 && col > 0.0 && row > 0.0).then_some(sand::Brush {
+                    row: row as i64,
+                    col: col as i64,
+                    radius: self.radius,
+                    material: if right == 1.0 {
+                        sand::EMPTY
+                    } else {
+                        self.material
+                    },
+                });
+                self.painted += usize::from(brush.is_some());
+                self.board = sand::step(&self.board, brush.as_ref(), self.material).0;
+            }
+            if let Some(d) = sand_differs(&sand_plane(c, "Screen"), &self.board) {
+                panic!("Sand's replay, frame {frame}: {d}");
+            }
+        }
     }
 
     /// A session of the brush, frame by frame, each frame held to the

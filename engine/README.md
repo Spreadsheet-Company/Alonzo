@@ -70,11 +70,14 @@ a window is the view record of the same window, byte for value, the record
 read with the language's own reader, every frame of the repository's test
 card, a cartridge holding every kind of value a Screen cell can under a
 Camera that pans a column a frame, and Life at its corners (`ENGINE.2`).
-And one plays every committed replay, the input card's and the sound
-card's, as `SPEC.md` section 7.6 plays one, the derived writes the Write
-sheet leaves before each frame's rows, to the golden beside it, byte for
-byte, so the host's player and the engine alone end in the same sheet
+And one plays every committed replay, the input card's, Sand's and the
+sound card's, as `SPEC.md` section 7.6 plays one, the derived writes the
+Write sheet leaves before each frame's rows, to the golden beside it, byte
+for byte, so the host's player and the engine alone end in the same sheet
 (`ENGINE.3`, made general over every folder holding a replay by `ENGINE.4`).
+Sand's, the owner's painting session of 2,085 frames, also holds its Screen to
+the sand written by hand at every frame, under the brush the replay's Input
+rows make (`CART.2`'s second slice).
 
 The host that drives it is the repository's `web/host.js`, whose frame path
 over this module, the plane viewed and blitted, is held to the same floors

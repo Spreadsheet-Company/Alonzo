@@ -72,8 +72,8 @@ sheet the record holds, every cell, formula and value row that sheet's. What
 the replay plays to is the loop oracle's, which holds the page's player to
 the golden byte for byte (tools/check_host_loop.ps1, the replay case), and
 cargo test's, a player of the engine's own, made general by ENGINE.4's second
-slice over every folder holding a replay: the input card's and the sound
-card's.
+slice over every folder holding a replay: the input card's, Sand's (since
+CART.2's second slice) and the sound card's.
 
 SINCE ENGINE.4 (2026-10-10; REARVIEW.md, decisions 4 and 9): the Audio
 sheet's value cells are judged as the host judges a voice at run time
@@ -169,11 +169,16 @@ if ($Root -eq '') { $Root = $repoRoot }
 # 2026-10-12, CART.2's playtest pass: the brush read from the Gate's rows,
 # 87 rows (the Gate's third fill, the material in the disc's rows: 189,215
 # formula cells), and the rate of 60; the other five's rows unchanged.
+# 2026-10-12, CART.2's second slice: Sand's replay and its golden,
+# cartridges/sand/sand.replay.vla (the owner's painting session on the
+# finished toy: 2,085 frames, 576 of them written, the last empty, 870 rows,
+# the manifest's seed 1) and sand.golden.vla (the Tally sheet's record at its
+# end, the window A1:B199); the cartridges' rows unchanged.
 $expectedCartridges = 6
 $expectedSources = 6
 $expectedLibraries = 1
-$expectedReplays = 2
-$expectedGoldens = 2
+$expectedReplays = 3
+$expectedGoldens = 3
 $rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (SPEC.md section 3.6)
 
