@@ -442,6 +442,13 @@ The generality the owner's principle asks for, at the row, the column and the sh
 - A verb builds its row inside a quasiquote, its pieces spliced in by `unquote`, so an `&expand` piece is joined when the row is expanded. Named inside the verb's own `&expand`, a parameter bound to an `&expand` form would be handed over as the list it is, and refused.
 - The pass over a source costs a few tenths of a millisecond more, the library's longer text read and its macros defined before any form expands.
 
+(*Noted 2026-10-12*, `KIT.2`, the picture; *measurement* over `vla-lang` 0.9.2. `REARVIEW.md` holds the scoping, its twelve decisions and the build.)
+- §12's picture is taken by the route it recommends, a macro over the object model: `(picture sheet top-left legend row ...)`, each string one row of cells down from the top-left, each character one cell, its value the legend's. A pattern, which this section's opening writes as one call a row of it, is now one call, its picture: the glider gun's Seed is one, and expands to the rows the nine calls of `live` wrote, which leaves the library.
+- The legend is `hex`, PICO-8's sixteen digits, `0` to `9` and `a` to `f` the Palette's indices 0 to 15, as a PICO-8 cartridge keeps its sprites; or a list of entries, each a character and its value, a number, a text or a truth value: `(("O" 1))` writes a Life pattern's live cells. A dot writes no cell, in every legend, which the plane reads as 0 (§3.1) and the composite, when it comes, as transparent (§12).
+- A character the legend does not hold writes a row the load refuses, `(not-in-the-legend sheet cell character)`, where its cell would be. The pass judges no row, so the load refuses it at its line of the cartridge, and that line names the sheet, the cell and the character.
+- What a picture costs, the pass natively and in the page: a sprite a millisecond or two, PICO-8's 128 by 128 sheet about a tenth of a second, and the Screen whole, 320 by 200, about half a second, its 64,000 cells loading in a tenth more. A chain counts its links, each application and each `begin` a macro made, and the other forms of such a `begin` are chains of their own, so a picture stops at 2,499 rows, or at a row of 2,499 cells.
+- The four seconds measured at 0.8.1 for a walk over the Screen's 64,000, in the list above, are 0.14 s at 0.9.2, where a walk that hands its list on whole costs its length (Frazaro's `VLA.2`); one that splices its rest still copies it at every step.
+
 ## 8. The host
 
 ### 8.1 The exports
@@ -560,6 +567,7 @@ A noise voice, envelopes and samples (Varvara has them; the Web Audio graph has 
   - a built-in of the pass, which would make the pass a dialect;
   - or a macro over the object model above, which version 3 recommends.
   Until then a pattern is `live`, one call a row of it.
+  (*Taken 2026-10-12*, `KIT.2`, by the third route: the library's `picture`, its legend `hex` or a list of entries and a dot no cell, the gun's Seed its first client, and `live` gone from the library; §7.8's note.)
 - *The formula dialect.* An expression such as `(- note 12)` written as the formula `=note-12`. It is `frazaro-core`'s emitter today and the language's in time; a template macro writes a flat one and not a nested one (§7.8).
 - *Modules, the owner's end goal.* VLA macros expanding into WebAssembly's text, which is s-expressions too, so that VLA becomes a gateway to ever more abstract modules the browser compiles. It is one more target of the same act:
   - the same source, includes and template macros;

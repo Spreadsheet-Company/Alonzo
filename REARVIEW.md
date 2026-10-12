@@ -25,6 +25,7 @@
 ## 🧰 THE KIT
 
 - ✅ **`KIT.1` — the first verbs: the patterns the cartridges already write by hand, each a macro named for what a person means.** *Filed 2026-10-11; scoped, built, owner-tested and closed 2026-10-12, committed at the close.* The kit's first item. `cartridges/common.vla` grows from 144 lines to 267, each macro a template the pass knows by no name. `sheets`, `labels` and `headers` write a cartridge's sheets and their words. `default-keys` writes the Keys sheet as `SPEC.md` §3.4 tabulates it. The verbs `first-frame`, `pressed`, `count`, `hold` and `dice` each write one formula row: the sheet first, so that `on` names it once; the range; then pieces of a formula in the order it reads them, a string or an `&expand` of strings, written as the range's first cell reads it. A verb finds its range's first cell, and `pressed` its button's twin, by a walk that hands the text on to the macro named after it, since a macro's call is no argument of `&expand`. It builds its row inside a quasiquote, so an `&expand` piece is joined when the row is. So verbs compose by reference, one writing a cell that another reads. A pattern entered at its second appearance, in a second cartridge or in the page's own words, as the ratchet has it; `every`, the Write table's row and the Camera were left to `CART.4`, their first or deciding client. All six sources were rewritten over the kit, the floors' three among them, and every cartridge expands to its bytes, so every replay, golden, describe golden and floor stands. *Oracle, met:* `expand --check`, six `same`, and seven in the shared tree with `ENGINE.8`'s grid card; `cargo test`, 32, among them `the_kit_s_verbs_write_the_rows_they_name`, sixteen calls held to their rows exactly at their edges and a nested verb refused at its line; the frame floors' digests and the loop oracle's `pass` case; `run_checks.ps1` at 12 checks and 12 verifiers, `ALL GREEN`, in a worktree holding this item's files alone; eleven one-byte mutants, one a verb, each refused by the command line at exactly the cartridges that call it and by both the pass's golden and the kit's test, and three of them again with their cartridges written over, refused by the floors' digests, `check_cartridge.ps1`'s replay digests and the describe goldens; the owner's hand test, every cartridge built and loaded in the page, the three replays played, and `count` respelled in the page's library box. *Found:* a parameter bound to an `&expand` form and named inside a macro's own `&expand` is handed over as the list it is, and refused; no expand-time primitive tells an atom from a list without a refusal; the native replay player names no digest, so a respelled `pressed` passed `cargo test`'s replay, and `check_cartridge.ps1` caught it; the pass costs a few tenths of a millisecond more a source. *Scoped:* 2026-10-12, eleven decisions, all approved. Predicted `~days`; cost one day, the scoping and the build. (more: the full entry under THE ITEMS, SCOPED)
+- ✅ **`KIT.2` — the picture: a string a row of cells, a character a cell, through a legend.** *Filed 2026-10-11; scoped, built, owner-tested and closed 2026-10-12, committed at the close.* `cartridges/common.vla` grows from 267 lines to 333: `(picture sheet top-left legend row ...)`, each string a row of cells down from the top-left, each character a cell, its value the legend's. The legend is `hex`, PICO-8's sixteen digits, the Palette's indices 0 to 15, asked for by name and tried in one application as one `cond`; or a list of `(character value)` entries a cartridge passes, the first entry for a character giving its value. A dot writes no cell in every legend, which the plane reads as 0 and the composite will read as transparent. A character no legend holds writes a `(not-in-the-legend sheet cell character)` row where its cell would be, which the load refuses at its line, so that the cartridge says where; the pass judges no row. The gun's Seed, nine calls of `live`, is one hex picture of its 9 by 36 box and expands to its bytes, so the frame floors' digest stands, and `live` left the library. Measured at 0.9.2, with Frazaro's `VLA.2` in it: a sprite costs the pass a millisecond or two, PICO-8's whole sheet a tenth of a second, and the Screen whole about half a second natively and in the page, where 0.8.1 took four seconds to walk it; the language's chain stops a picture at 2,499 rows, or at a row of 2,499 cells. Life's RLE, prototyped in 19 lines, waits for a client. *Oracle, met:* `expand --check`, seven `same`; `cargo test`, 33, the kit's test extended to every digit, a legend's every path, the load's refusal at its line, the pass's refusal of a legend that is no list, and the Screen's extent; `run_checks.ps1` at 12 checks and 12 verifiers, `ALL GREEN`, in a worktree holding this item's files alone; thirteen one-byte mutants, each refused, six by the command line, the pass's golden and the kit's test, and seven, the paths the gun does not take, by the kit's test alone; the owner's hand test, the gun built and loaded in the page, and an `x` drawn into its Seed refused by the load at its line. *Found:* the gun's pattern is held by the frame floors alone, since the describe golden counts its cells and the gun's own test reads its Seed off its cartridge; `equal?` never refuses, so it tells the name `hex` from any list; a `begin`'s waiting forms are chains of their own, which is what lets a picture reach the Screen's size. *Scoped:* 2026-10-12, twelve decisions, all approved. Predicted `~days`; cost one day, the scoping and the build. (more: the full entry under THE ITEMS, SCOPED)
 
 ## 🕹 THE CARTRIDGES
 
@@ -4155,3 +4156,281 @@ Then three of them again with the cartridges written over again by the command l
 *Committed 2026-10-12 at the owner's word ("Commit, then address the native replay test not checking a replay's cartridge digest"), in one commit with the close, staged by hunk beside the `ENGINE.8` session's uncommitted work. Not pushed.*
 
 *The controls' finding, the native replay player naming no digest, was addressed the same day at the owner's word, under `ENGINE.3`'s ID: that entry's last note.*
+
+## `KIT.2` — the picture: a string a row of cells, a character a cell, through a legend
+
+*Scoped 2026-10-12 at the owner's word, the day `KIT.1` closed. The roadmap's line, filed with the kit on 2026-10-11, gives the call, `(picture sheet top-left legend row ...)`: each string one row of cells from the top-left down, each character one cell, its value the legend's, and a character the legend leaves blank writing no cell. The default legend is PICO-8's, a hex digit a pixel. The oracle is the glider gun's Seed, nine calls of `live` today, written as one picture of its 9 by 36 box and expanding to the gun's bytes. The line names three decisions: the legend's spelling and its default, a blank as no cell or as 0, and the largest picture the kit promises before `VLA.2`. `VLA.2` shipped in `vla-lang` 0.9.2, the pin since `57cfdaf`, so the last is measured again, as the owner asked. `KIT.1`'s findings about the expander bind the picture too. The scoping drafted the picture in a scratch copy of the library, rewrote a scratch copy of the gun over it, and measured the pass natively and in the page; nothing in this tree was touched but this entry. The `ENGINE.8` session works in the tree at the same time, its grid card, host and page uncommitted.*
+
+**Substrate, verified.** Read on the day, by file; Frazaro's tree read nowhere, the language read from the registry's copy of 0.9.2.
+
+- *The pre-flight.* This tree at `e66614d`, two commits ahead of `origin/main` (`KIT.1`'s close and `ENGINE.3`'s digest note); `vla-lang` pinned `=0.9.2`; the `ENGINE.8` session's first slice uncommitted in thirteen files and the grid card. During the scoping that session edited its own entry in this file; nothing else moved.
+- *The library*, `cartridges/common.vla`, 267 lines. Its last section, patterns, holds `live`, "the value 1 in each cell named: a pattern's live cells, one row of it a call". The gun is its one caller.
+- *The client*, `cartridges/gun/gun.source.vla`. The Seed's 36 live cells, in its 9 by 36 box from `J10`, are nine `live` calls inside an `on` that names the sheet once, a call a row of the box. Each of the 36 quoted addresses is a live cell's column and row, worked out by hand from the published pattern, whose RLE the source quotes. `gun.vla` holds the 36 `(cell "Seed" ...)` rows in that order, row by row and left to right, each value the number `1`. Its bytes are read by `check_frame_floors.ps1`'s digest (`5E54AAE0...`), by `engine/testdata/describe/gun.vla`, by the pass's golden and `expand --check`, and by the loop oracle's `pass` case.
+- *The other blocks of constants* are range rows: the test card's colour bars (`("A1:C8" 0)` and on), Sand's walls and border, the grid card's tables. One range row fills a block of one value. A picture writes a row a cell, so it hoists none of them byte for byte, and should not.
+- *The language*, 0.9.2's `expand.rs`:
+  - `characters-expand` splits a text into one-character strings.
+  - `eq?` compares two atoms: strings exactly, symbols folded, never a string with a symbol. It refuses a list.
+  - `equal?` never refuses, so `(equal? legend hex)` tells the one name `hex` from any list. `KIT.1` found that no primitive tells an atom from a list in general; this tells one name from everything else, which is all a default needs.
+  - `cond` tries its clauses in one application when each test folds to true or false, and its `else` gives a form.
+  - The trampoline counts a chain's links, each macro application and each `begin` a macro made that it unwraps, and refuses the 5,001st, `vla-macro-self-expansion-limit`. The forms of such a `begin` before its last wait, and each is expanded afterwards as a chain of its own.
+  - Since `VLA.2` a walk that hands its list on whole hands on a view; one that splices its rest copies it at every step.
+  - `&expand` of a number gives its text, so a legend's key written as a number can be compared with a character.
+  - No primitive refuses in an author's words, and a refusal of the pass stands on the source line of its top-level form.
+- *The pass and the load.* §7.8: "The pass judges no row. A form the load would refuse is written, and the load refuses it at its line in the cartridge." The load refuses a row it does not take with `grid-row-unknown`, "A ({head} ...) row is not one taken here; the rows taken here are ...". The command line prints that refusal after its pass, `(loads no (line n) ...)`, and the page's Load prints it with `(line n)` and the id.
+- *The page*, `SPEC.md`:
+  - §3.1: the plane reads an empty cell as 0.
+  - §12: the composite, when it comes, reads a blank as transparent. And §12's picture: three routes, the macro over the object model recommended, and "Until then a pattern is `live`, one call a row of it".
+  - §7.8's measurement at 0.8.1: a walk over a Screen's 64,000 about four seconds.
+  - §10: the plane's window at most 320 by 200.
+- *The ratchet* (`ROADMAP.md`, "The order, and why") and `KIT.1`'s decision 2: a pattern enters the kit at its second appearance, in a second cartridge or in the page's own words. The page spells the picture (§12), and the gun is its first cartridge. The hex legend is the filing's and not the page's, so a gun written in it is the hex legend's first client.
+- *The outside formats.* PICO-8 keeps its sprite sheet in a cartridge's `__gfx__` section as a hex digit a pixel, `0` to `f` in lower case, the palette's sixteen indices. Life's plaintext format, `.cells`, writes a dead cell as `.` and a live one as `O`, and omits a row's trailing dead cells (LifeWiki, "Plaintext"). XPM, the X picture format, maps characters to colours through a table at its head, where `None` is transparent.
+
+**The measurements.** *Measurement*, 2026-10-12, on the owner's machine. A scratch copy of this workspace at `HEAD`, over 0.9.2 with a target of its own, held the draft library. A scratch example ran the pass over generated sources, and a scratch page ran the engine's own module, `alonzo_expand`, over the same pictures in headless Chrome 154. Both were opted out of Windows' power throttling and pinned to the performance cores. Each time is the median of five runs: magnitudes, never floors. Every probe source holds an include, a manifest, four sheets and a palette, which alone cost 0.66 ms natively and 1.0 ms in the page.
+
+- *The oracle holds.* The gun's source, its Seed written as one picture in the hex legend over the draft library with `live` removed, expands to `gun.vla`'s bytes: `expand --check` over the scratch tree answered six `same`.
+- *The gun's Seed, four ways*, each writing the same 36 rows in the same order:
+
+  | spelling | the pass over the probe's source |
+  |---|---|
+  | nine `live` calls in an `on`, today's | 0.87 ms |
+  | one picture, the hex legend, its rows padded to the box's 36 | 1.49 ms |
+  | one picture, Life's plaintext legend `(("O" 1))`, the `.cells` rows with their trailing dots omitted | 1.26 ms |
+  | an RLE prototype (decision 9), over the RLE the source quotes | 1.19 ms |
+
+  Over the gun's own source the pass goes from 0.68 ms to 1.57.
+- *What a picture costs*, in ms, the hex legend as one `cond` (decision 3):
+
+  | picture | cells written | native | page |
+  |---|---|---|---|
+  | a sprite, 8 by 8, every cell a digit | 64 | 1.10 | |
+  | a sprite, 16 by 16 | 256 | 2.45 | 2.7 |
+  | the same, half of it dots | about 128 | 1.86 | |
+  | sixteen tiles of 8 by 8 side by side, 128 by 8 | 1,024 | 7.7 | |
+  | PICO-8's whole sprite sheet, 128 by 128 | 16,384 | 118 | 104 |
+  | the Screen, 320 by 200, every character a dot | 0 | 140 | 127 |
+  | the Screen, half dots and half digits | about 32,000 | 307 | 239 |
+  | the Screen, every character a digit at random | 64,000 | 473 | 402 |
+  | the Screen, every character `0`, the `cond`'s first clause | 64,000 | 365 | |
+  | the Screen, every character `f`, its last | 64,000 | 585 | |
+  | the Screen, half dots and half `O`, a legend of one entry | about 32,000 | 291 | 230 |
+
+  The load of a Screen's 64,000 cells adds 88 to 109 ms natively. A dot costs about 2.2 µs, one application; a cell about 7.
+- *The hex legend walked as a list*, the first draft, costs an application an entry before the one that holds the character. Natively: the Screen of random digits 1,572 ms, of `f` 2,720, of `0` 395; PICO-8's sheet 298; a 16 by 16 sprite 4.9. As one `cond` the Screen of random digits is 3.3 times cheaper.
+- *The chain's limits*, each refused at the picture's line with `vla-macro-self-expansion-limit`:
+  - a picture's rows walk at two links a row: 2,499 rows expand (27 ms), and 2,500 are refused;
+  - a row's cells walk at two links a cell and its dots at one: 2,499 cells expand (24 ms) and 2,500 are refused; a row of 4,997 dots and a cell expands (19 ms), and one of 4,998 dots is refused;
+  - each cell's value is a chain of its own, one link under the hex legend and a link an entry under a legend's walk.
+
+  All of it is far past the Screen's 200 rows and 320 columns. `SPEC.md` §7.8's "about four seconds" for a walk over the Screen's 64,000, measured at 0.8.1, is 0.14 s at 0.9.2.
+- *The edges*, each the row meant:
+  - the grid's last cells, `XFB1048575` to `XFD1048576`;
+  - a legend with a number key, `(1 1)`, a text value, `("#" "wall")`, and a truth value, `("x" true)`;
+  - a picture inside `on`, the sheet named once;
+  - a character the legend does not hold, `x`, and an upper-case `F` under `hex`: each a `(not-in-the-legend "S" "D2" "x")` row where its cell would be, which the load refused at its line with `grid-row-unknown`.
+- *The library's growth*, 56 more lines with `live` removed, costs every other source's pass 0.08 to 0.11 ms: Life 0.51 to 0.60, the test card 0.76 to 0.84, the input card 0.98 to 1.09, the sound card 0.87 to 0.96, Sand 0.69 to 0.77.
+- *What a person spells by hand* in the gun, by a scan that keeps strings whole and drops comments and blank lines: before, 45 lines of forms, 1,408 bytes, and 36 quoted cell addresses, each a live cell's column and row worked out by hand; after, 48 lines, 1,478 bytes, and one address, the box's top-left. The rows are the published pattern drawn, where the addresses were the pattern decoded.
+
+**The work.** One library section, one source, a test and the pages. Every cartridge, replay, golden and describe golden keeps its bytes; no check, page tool or template moves.
+
+| File | What it is | Decisions |
+|---|---|---|
+| `cartridges/common.vla` | a section, pictures, in place of patterns: `picture`, its walks `picture-from` and `picture-row`, and the two legends' macros, `picture-hex` and `picture-legend`; `live` removed; the header's rule about walks brought to 0.9.2; 267 lines to about 325 | 1 to 6, 8 |
+| `cartridges/gun/gun.source.vla` | the Seed as one picture; its comment naming the library's macros | 7 |
+| `engine/src/pass.rs` | the kit's test, `the_kit_s_verbs_write_the_rows_they_name`, extended to the picture | 10 |
+| `SPEC.md` | §7.8's dated note; §12's picture step marked taken | 11 |
+| `README.md`, `engine/README.md`, `web/README.md` | the library's lines, and the gun's | 11 |
+| `ROADMAP.md` | `KIT.2`'s line; a dated note on `KIT.3`, whose tiles are pictures | 11 |
+| this file, `Delta/CLAUDE.md`, the memory | the record | 11 |
+
+**The decisions, the owner's.** Each with the sitting's recommendation and the alternatives it declines.
+
+1. **The signature, the filing's: `(picture sheet top-left legend row ...)`.**
+   - The sheet first, so that `on` names it once, as every verb of the kit takes it.
+   - The top-left an address, `"J10"`, read by `row-expand` and `column-expand`: a `$` in it is taken, and a range is refused in the language's words.
+   - Then the legend, then the rows, each a string, as many as the picture has.
+   - A row shorter than another writes nothing past its end, as dots would, so the `.cells` text pastes with its trailing dots omitted. An empty string is a row of nothing.
+
+   *Alternatives:*
+   - the top-left as a row and a column number, which reads as arithmetic where the rest of a source reads addresses;
+   - the box, `"J10:AS18"`, whose size the rows already give: a second place to disagree with them.
+2. **The legend: a list of entries, each a one-character string and its value, `(("O" 1) ("#" "wall"))`, as the palette's entries are each a colour and a name.**
+   - A value is any atom a `cell` row takes: a number, a text or a truth value.
+   - The first entry that holds a character gives its value.
+   - A key written as a number is its text, so `(1 1)` holds the character `1`. The walk compares the key's `&expand`, where `eq?` alone would never match a number to a string, and the miss would read as a character the legend does not hold.
+   - The walk costs an application an entry, so a legend of a few entries costs what the hex legend's one application does (half the Screen in `O`, 291 ms).
+
+   *Alternatives:*
+   - a flat list, `("O" 1 "#" "wall")`, where one entry short misaligns every entry after it without a word;
+   - a string whose characters' places are their values, `".O"`: indices alone, no text and no truth value, and a place for every value up to the largest;
+   - a legend as a macro the author defines, which hands its value on as the kit's walks do: a macro to write for every legend, and none to read.
+3. **The default, `hex`, asked for by name. The legend written `hex` is PICO-8's sixteen digits, `0` to `9` and `a` to `f`, the Palette's indices 0 to 15, in lower case as PICO-8 writes them. Its sixteen are one `cond`, `picture-hex`, a cell's value in one application.**
+   - `(equal? legend hex)` tells the name from any list without a refusal, so the legend stays one argument and the default is one word.
+   - As one `cond`, the Screen of random digits takes 473 ms natively and 402 in the page, where the sixteen walked as a list take 1,572. A digit's cost is then nearly the same whichever it is: `f` against `0`, 585 ms against 365 for the Screen.
+   - An upper-case `A` to `F` is a character the legend does not hold (decision 5).
+
+   *Alternatives:*
+   - a second macro for the default, such as `hex-picture`: two names for one act, so a source that changes its legend changes its macro too;
+   - the empty list, `()`, as the default, which reads as no legend at all;
+   - the sixteen as a list walked like any legend: one path for both and 18 fewer lines, at 3.3 times the cost for a picture of digits;
+   - upper case as well, six more clauses, which PICO-8 does not write.
+4. **A blank writes no cell, and the blank is the dot, in every legend; a legend's entry for a dot is never read. A space is a character like any other. A picture writes a row a cell, and never a range.**
+   - No cell is the filing's. The plane reads it as 0 (§3.1), so it draws as `0` would; the composite, when it comes, reads it as transparent (§12), where `0` is opaque black. The author chooses, cell by cell.
+   - The dot is Life's plaintext format's dead cell, and the mark a sprite editor shows for nothing. One blank, which a reader sees, where a space at a row's end is invisible.
+   - The gun's 288 dead cells in its box write no rows, so the gun hoists byte for byte. As the hex legend's `0` they would add 288 rows, and its bytes, its digest and its describe golden would move.
+   - A run of one value is never one range row. The gun's neighbours `V12` and `W12` would become `(cell "Seed" "V12:W12" 1)`, and its bytes would move. A block of one value is a `cells` entry, the author's to write, as the test card's bars are.
+
+   *Alternatives:*
+   - a blank as `0`, every character a cell;
+   - a space blank as well, as ASCII art leaves a gap, where a space typed by mistake writes nothing without a word;
+   - blanks the legend declares, XPM's `None`: a spelling for no value that no client needs yet;
+   - runs written as ranges, fewer rows for an area of one value, at the price of the gun's bytes.
+5. **A character the legend does not hold writes a row the load refuses, `(not-in-the-legend sheet cell character)`, where its cell would be. The load refuses it with `grid-row-unknown` at its line in the cartridge, and that line names the sheet, the cell and the character.**
+   - The pass judges no row (§7.8), and this is that rule's shape: the cartridge is the text a person reads, and the miss stands in it where the cell would.
+   - The load refuses the first. The cartridge holds every miss, so a person reads them all at once.
+   - Measured: `(not-in-the-legend "S" "D2" "x")`, refused at its line, "A (not-in-the-legend ...) row is not one taken here; the rows taken here are sheet, cell, formula, ...". The command line prints it after its pass as `(loads no (line n) grid-row-unknown ...)`, and the page's Load prints it with its line.
+   - A legend that is no list of entries is refused by the pass itself, in the language's words, at the line of the picture's call or of the `on` around it: a text `"hex"` in place of the name, `car: expected a list, got '"hex'`; an entry with no value, `car: expected a non-empty list`.
+
+   *Alternatives:*
+   - refused by the pass at the picture's line, through a macro called with the wrong count of arguments, the only refusal a template can raise, in words that name neither the cell nor the character;
+   - the character written as its own text, which loads without a word and which the plane paints magenta (§3.1);
+   - a refusal in the author's own words, an expand-time primitive asked of the language: a Frazaro item with the VBA reference first (`SD-18`), for a need no second macro has yet.
+6. **The kit promises a picture the Screen's size, 320 by 200: about half a second at 0.9.2, natively and in the page, its load a tenth of a second more. A sprite costs a millisecond or two, and PICO-8's whole sheet a tenth of a second. Past the Screen, the limits are the language's chain: 2,499 rows, and a row of 2,499 cells or about 4,997 dots, each refused in its words at the picture's line.**
+   - The Screen is the plane's window (§10) and the largest picture a cartridge draws whole.
+   - Half a second is a press of Build. A person draws a Screen rarely and a sprite often, and the owner's principle (§7.8) is the time between a thought and its rows.
+   - `SPEC.md` §7.8's "about four seconds" at 0.8.1 is corrected in its dated note.
+
+   *Alternatives:*
+   - PICO-8's sheet, 128 by 128, as the promise, which leaves a title screen unpromised though it costs half a second;
+   - no promise, the chain's limits alone, which tells an author what is refused but not what is slow.
+7. **The gun's Seed is one picture in the hex legend, its rows padded to the box's 36 columns, so that the hex legend's first client is a cartridge and the frame floors' digest guards it.**
+   - A live cell's value is `1`, the Palette's alive, index 1. So the hex picture writes the first frame as it is drawn, which is PICO-8's idea of a sprite sheet.
+   - Padded, the rows show the box the source names, 9 by 36.
+   - The source keeps its quotation of the published RLE, the pattern's provenance, and its comment names the library's macros it calls.
+   - The layout is the owner's (2026-10-08): a module call one argument a line, each with a comment; the rows, a list of like things, one a line, which is the picture itself.
+
+   *Alternatives:*
+   - Life's plaintext legend, `(("O" 1))`, and the `.cells` text, which reads more like the pattern and pastes from LifeWiki, but leaves the hex legend without a cartridge until `CART.4` or `KIT.3`;
+   - the picture inside `on`, which names one sheet over one call.
+8. **`live` leaves the library.** Its one caller moves to the picture, which writes what it wrote. The library keeps one way to write a pattern, and a reader is not left to wonder which to copy.
+
+   *Alternative:* `live` kept, for a pattern of cells far apart, where a picture is mostly dots; no cartridge writes one.
+9. **Life's run-length encoding, RLE, waits for a client.**
+   - Measured: a prototype of 19 lines decodes the gun's RLE, as the source quotes it, to the same 36 rows in the same order, in 1.19 ms over the probe's source. It is a `cond` over the tag, `b` a dead cell, `o` a live one, `$` a row's end and `!` the pattern's; a count's digits, each turned into a number by `symbol`, gathered with `*expand` and `+expand`; and a run of live cells, a walk of its own.
+   - It waits because the house has one Life pattern written by hand, the gun, and the picture is the filing's, the gun its client. RLE is Life's alone, and its whole grammar, a header line, `#` comments, line breaks and states past two, is a client's to decide.
+
+   *Alternative:* `rle` now, the gun written in it from the quoted text, the picture's oracle then waiting for another client.
+10. **The oracle is the cartridges' bytes; the kit's test is extended to the picture; the controls are mutants run by hand and written in the build record; no check moves.**
+    - The gun's bytes are held as `KIT.1`'s cartridges were: `expand --check`; `cargo test`'s golden; the gun's describe golden, with no re-bless; the frame floors' digest; and the loop oracle's `pass` case, which expands the page's sources over the page's library.
+    - `the_kit_s_verbs_write_the_rows_they_name` gains the picture's cases, each held to its rows exactly:
+      - every hex digit, `0123456789abcdef`, along one row;
+      - dots, a short row and an empty one;
+      - a legend's every path: a later entry, a number key, a text and a truth value, the first of two entries for a character, and a dot's entry never read;
+      - characters the legend does not hold, `F`, a space and `x`, each a `not-in-the-legend` row, and the load refusing the first at its line;
+      - a legend that is a text, refused by the pass at the call's line;
+      - a picture inside `on`, a `$` top-left, and the grid's last cell;
+      - the Screen's extent, a row 320 cells wide and a column 200 tall, its corners held.
+    - The controls: each macro respelled by one byte in a scratch copy, and which oracle refuses it, in the build record. The gun calls `picture`, `picture-from`, `picture-row` and `picture-hex`'s `1` alone, so the other fifteen digits, `picture-legend` and the refusal row are held by the kit's test alone; which is why the test holds them all.
+    - `check_cartridge.ps1`, `check_web_offline.ps1`, `build_web.ps1`, `check_host_loop.ps1` and `run_checks.ps1` keep their counts and places, and the loop oracle's mutant K keeps its anchor in `palette-entry`.
+
+    *Alternatives:*
+    - a picture card, a cartridge drawing every digit and a legend's every path, with a describe golden: it would hold the picture through the engine too, at the price of the pins `ENGINE.8` is moving now, for rows a unit test holds exactly;
+    - the chain's limits held by the test, which are the language's and pinned there.
+11. **The pages.**
+    - `SPEC.md` §7.8, a dated note: the picture, its legend and default, the blank, the refusal row, the measurements, and the correction of 0.8.1's four seconds. §12's picture step marked taken, by a dated note under it.
+    - `common.vla`'s header: the rule about walks brought to 0.9.2, a walk that hands its list on whole costing its length, and a `begin`'s waiting forms each a chain of its own.
+    - `README.md`'s library line, `engine/README.md`'s paragraph on the library, and `web/README.md`'s gun.
+    - `ROADMAP.md`: `KIT.2`'s line, and a dated note on `KIT.3`, whose tiles are pictures in the hex legend, with a tile's measured cost.
+    - This entry, `Delta/CLAUDE.md`'s map line and the memory.
+12. **No ask of the language now.**
+    - What would help: an expand-time refusal in an author's own words (decision 5); and a key looked up in a list of entries in one application, so that a legend of any length costs what `hex` does.
+    - Why not now: the load's refusal names the cell and the character, which an arity refusal would not; and a legend of a few entries already costs what `hex` does, so a lookup pays only for a long legend nobody writes yet.
+
+    *Alternative:* ask now, a Frazaro item with the VBA reference first (`SD-18`).
+
+**The catch.** Each met in the scratch work, or foreseen by reading.
+- A legend's entry for a dot is never read; the docstring says the dot is blank in every legend.
+- `hex` is a name and `"hex"` a text: the text is read as a legend and refused by the pass, `car: expected a list, got '"hex'`, at the call's line.
+- A picture writes a row a cell. A block of one value is a `cells` range, one row and cheaper to load; a Screen's 64,000 cells load in about a tenth of a second.
+- A not-in-the-legend row loads nowhere. The command line's `expand` writes the cartridge and then its load refuses it, and `expand --check` reports `differs` for a cartridge committed before the miss.
+- The library's 56 more lines cost every source's pass about a tenth of a millisecond.
+- `picture-hex`'s fifteen digits the gun does not draw, and `picture-legend`, are held by the kit's test alone.
+- The loop oracle's mutant K finds `palette-entry`'s third row by its text; this item does not touch it.
+- The shared tree. The `ENGINE.8` session's slice is uncommitted here. This item touches the library, the gun's source, `pass.rs`'s test and the pages, and no cartridge, template, page tool or check. `pass.rs` is not that session's; `README.md`'s `cartridges/` row, `SPEC.md` §7.8 and §12, and `ROADMAP.md`'s kit section hold none of its hunks. The commit stages by hunk, HEAD plus this item's, in `ROADMAP.md`, `REARVIEW.md`, `README.md`, `SPEC.md`, `web/README.md` and the map.
+- The working copies: every `.vla` is CRLF on checkout, so an edit keeps CRLF, and none is written by `sed -i`.
+
+**The oracle.** The gun its source's expansion byte for byte, held by `expand --check`, `cargo test`'s golden, the describe golden, the frame floors' digest and the loop oracle's `pass` case; every other cartridge's bytes likewise; the picture's rows held by the kit's test at every path; `run_checks.ps1 -WithExtras` `ALL GREEN`, 12 and 12, in a worktree holding this item's files alone. *The owner's hand test:* read the library's pictures section and the gun's source; run `cargo run --release --example expand -- --check` at the root, seven `same`; in the page, Build then Load the gun from its source and watch it fire; then, optionally, change a digit of the Seed's picture in the page's source box, or write an `x` in it, and Build and Load: the gun changes, or the load refuses the `x` at its line in the cartridge.
+
+**The size.** `~days`, as filed. The scratch already holds the library's section and the gun's rewrite, every cartridge the same, so the build is the library made final, the test, the controls and the pages: about a day.
+
+*The scratch*, in the session's scratchpad: `kit/` (the workspace copy, with `engine/examples/picprobe.rs` and the draft library), `draft_picture.vla` (the hex legend walked), `cand_picture.vla` (the candidate), `draft_rle.vla` (the RLE prototype), `pagebench.js` and `measure.ps1` (the page and the runner, both opted out and pinned), `formcount.ps1`, and `splice_gun.ps1`.
+
+*Approved 2026-10-12, the same day, all twelve, in the owner's words: "Recommendations approved; proceed with implementing KIT.2 as scoped." The roadmap's line went to 🟡 the same hour.*
+
+*Built 2026-10-12, over `a4ad3b6` and `vla-lang` 0.9.2, awaiting the owner's test. Between the scoping and the approval the `ENGINE.8` session committed its first slice as `a4ad3b6`, the grid card among it, so the build began from a tree holding no other session's uncommitted work.*
+
+What landed:
+- `cartridges/common.vla`, 267 lines to 333.
+  - A section, pictures, in place of patterns: `picture`; its walks `picture-from`, down the rows, and `picture-row`, along a row, a dot passed over; and the two legends' macros, `picture-hex`, the sixteen digits as one `cond`, and `picture-legend`, a list of entries walked, each key compared through `&expand`. A character no legend holds is a `(not-in-the-legend sheet cell character)` row. The section's comment says what a picture is, its blank, its legends, its refusal and its cost.
+  - `live` removed.
+  - The header: its first paragraph names the picture; the rule about walks is brought to 0.9.2, a chain's links, a `begin`'s waiting forms each a chain of its own, and a walk that hands its list on whole costing its length; and the comment over `on` names a verb or a picture where it named `live`.
+  - `palette-entry`, the loop oracle's mutant K's anchor, stands as it was.
+- `cartridges/gun/gun.source.vla`: the Seed as one picture in the hex legend, its nine rows padded to the box's 36 columns, at the owner's layout; the comment naming the library's macros it calls, `sheets`, `palette`, `picture` and `first-frame`. `gun.vla` is unchanged, byte for byte.
+- `engine/src/pass.rs`: `the_kit_s_verbs_write_the_rows_they_name` extended. Seven calls join its table, each held to its rows exactly: every hex digit along a row; dots, a short row and an empty one; a legend's every path; an upper-case `F`, a space and an `x` under `hex`, and an `o` under a legend of `O`, each a `not-in-the-legend` row; a picture inside `on` with a `$` top-left; and the grid's last cells. After the table: the load refusing a `not-in-the-legend` row at its line of the cartridge, 9, with `grid-row-unknown`; the pass refusing a text `"hex"` for a legend at the call's line, 8, with `vla-car-expected-list`; and the Screen's extent, a row of 320 cells and a column of 200, its 519 rows held whole. The module is unchanged.
+- The pages: `SPEC.md` §7.8's dated note and §12's picture step marked taken; `README.md`'s library line, `engine/README.md`'s paragraph on the library and `web/README.md`'s gun; `ROADMAP.md`, the line 🟡, scoped and built, and a dated note on `KIT.3`, whose tiles are pictures.
+
+*The oracle, on the day.* In a worktree at `a4ad3b6` holding this item's nine files and nothing else:
+- `cargo build`, `cargo fmt --check` and `cargo clippy --workspace --all-targets -- -D warnings`, clean;
+- `cargo test`, 33 passed, the kit's test extended and none added;
+- the wasm module, 682,679 bytes as before, and the frames runner, built;
+- `cargo run --release --example expand -- --check`, seven `same`;
+- the page built: seven cartridges, seven sources, three replays with their goldens, one library;
+- `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`, in about seven minutes; the loop oracle's controls passed, its mutant K among them, 271 s.
+
+In the shared tree, the command line's `--check` answered seven `same` over the final library.
+
+*The controls*, in a second scratch worktree of the same files: each picture macro respelled by one byte, the cartridges as committed, then the command line's `--check` and the pass's tests. The clean control first, every oracle clean; afterwards the tree restored and clean again.
+
+| respelled | the command line says | the pass's tests that fail |
+|---|---|---|
+| `picture`, its `top-left` read as `top-lefs` | the gun refused, `vla-address-expand-not-address` | the golden and the kit's test |
+| `picture-from`, each row two below the last | the gun differs | the golden and the kit's test |
+| `picture-row`, the blank a comma | the gun differs | the golden and the kit's test |
+| `picture-row`, a cell two columns on | the gun differs | the golden and the kit's test |
+| `picture-row`, the default named `hez` | the gun refused, `vla-car-expected-list` | the golden and the kit's test |
+| `picture-hex`, `1` written 7 | the gun differs | the golden and the kit's test |
+| `picture-hex`, `a` written 11 | nothing | the kit's test alone |
+| `picture-hex`, `f` read as `F` | nothing | the kit's test alone |
+| `picture-hex`, its refusal row misnamed | nothing | the kit's test alone |
+| `picture-legend`, no key ever matched | nothing | the kit's test alone |
+| `picture-legend`, every other entry read | nothing | the kit's test alone |
+| `picture-legend`, the value read as its key | nothing | the kit's test alone |
+| `picture-legend`, its refusal row misnamed | nothing | the kit's test alone |
+
+The gun reaches `picture`, its two walks and `picture-hex`'s `1`, and the command line and the pass's golden refuse a respelling there. The seven it does not reach are refused by the kit's test alone, as decision 10 foresaw, which is why the test holds every digit and every path.
+
+Then three of them again with the gun written over by the command line, as an author would after a change:
+- *Each row two below the last.* The frame floors' check refuses the gun's digest, and its runner's check mode says "at generation 30 the gun's box is not its first generation's"; the kit's test fails. The describe golden, the gun's own engine test and `check_cartridge.ps1` pass, since the Seed still holds 36 cells and the cartridge holds to section 7.
+- *The blank a comma.* The gun's cartridge holds 288 `not-in-the-legend` rows and does not load. The command line says `loads no` with `grid-row-unknown`; the floors' check refuses the digest, and its runner the load at line 63; `check_cartridge.ps1` names the 288 rows, and the gun's 376 rows past their floor of 88; and four engine tests fail: the gun's first frame, the describe goldens, the kit's test and the pass's golden.
+- *`1` written 7.* The floors' check refuses the digest, its runner saying "the Seed holds 0 live cells, not the gun's 36"; the gun's own engine test and the kit's test fail; the describe golden and `check_cartridge.ps1` pass.
+
+*Found by the controls, and left as it stands:* the gun's pattern is held by the frame floors, their digest and their runner's facts of the gun (period 30, 36 cells, five more a period), and by no engine test. The describe golden prints the census, which counts cells and shapes and not their places, and the gun's own test reads its Seed off its cartridge, so both hold a moved or a recoloured Seed of 36 cells. The floors are the gun's oracle by design (`CART.1`), and they ran in every gate above.
+
+*Measured on the final files*, the pass natively, opted out and pinned, medians of fifteen runs: the gun 1.54 ms, where it was 0.68 at `HEAD`; Life 0.61, the test card 0.88, the input card 1.10, the sound card 0.96 and Sand 0.76, each about a tenth of a millisecond above `HEAD`; a 16 by 16 sprite 2.40 ms, PICO-8's sheet 117 and the Screen of random digits 454, each over the probe's source.
+
+*The owner's hand test:*
+1. Read the library's last section, pictures, and the gun's Seed in `cartridges/gun/gun.source.vla`.
+2. Run `cargo run --release --example expand -- --check` at the root: seven `same`, `(expand-done 7)`.
+3. Build the page, pick the glider gun, press Build the cartridge and then Load the cartridge, and watch it fire a glider every thirty frames.
+4. Optionally, in the page's source box, write an `x` in a row of the Seed's picture, then Build: the cartridge box holds a `(not-in-the-legend "Seed" ... "x")` row where the `x` stands. Load it, and the load refuses that line with `grid-row-unknown`. Or change a `1` to a dot, Build and Load, and see a broken gun.
+
+*The scratch*, in the session's scratchpad: `gate.sh` and `gate.log` (the gate), `mutants.ps1` and `mutants.log` (the controls), and `kit/` with `measure.ps1`. Both worktrees were removed once they had run.
+
+*Owner-tested 2026-10-12, the same day, every step passing.*
+- "Picture section and gun seed look good."
+- The command line answered seven `same`, `(expand-done 7)`.
+- "Glider gun cartridge builds and loads."
+- In the optional step, an `x` drawn into the Seed's fourth row, at `AM13`, made the build write 89 rows where it wrote 88, and the load refused the cartridge at line 76, `A (not-in-the-legend ...) row is not one taken here ... [grid-row-unknown]`: the 36 live cells take lines 63 to 98 of the cartridge in the Seed's order, and `AM13` falls after `AE13`, the thirteenth of them at line 75, so its row stands at line 76.
+
+*Corrected after the hand test.* The owner's screenshot showed the page's own description of a source, in `web/index.template.html`, still saying "a pattern one call a row of it", which this item made stale. It now says "a pattern one picture, a string a row of it". The page was built again and the 12 checks passed over it, and the page's two controls passed over the corrected template: `check_web_offline.ps1 -Control` and the loop oracle's `check_host_loop.ps1 -Control`.
+
+`KIT.2` is closed ✅, its line in the ledger's kit section after `KIT.1`'s.

@@ -547,7 +547,12 @@ mod tests {
     /// names, exactly. A cartridge holds only the paths it uses; this holds
     /// the rest, and names the call that moved. Read off the folder at run
     /// time, as the golden above is: a package without the repository's
-    /// `cartridges/` holds nothing to compare.
+    /// `cartridges/` holds nothing to compare. Since `KIT.2` (decision 10)
+    /// it holds the picture too: every hex digit, a legend's every path, a
+    /// character no legend holds written as a row the load refuses, a legend
+    /// that is no list refused by the pass, and the Screen's extent. The gun
+    /// draws only `1`s and dots, so the rest of the picture is held here
+    /// alone.
     #[test]
     fn the_kit_s_verbs_write_the_rows_they_name() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
@@ -686,6 +691,79 @@ mod tests {
                     r#"(formula "Score" "D1:D2" "=Score.last!D1+1")"#,
                 ],
             ),
+            // The picture (KIT.2): every hex digit along a row, each the
+            // Palette's index it names.
+            (
+                r#"(picture "S" "B2" hex "0123456789abcdef")"#,
+                &[
+                    r#"(cell "S" "B2" 0)"#,
+                    r#"(cell "S" "C2" 1)"#,
+                    r#"(cell "S" "D2" 2)"#,
+                    r#"(cell "S" "E2" 3)"#,
+                    r#"(cell "S" "F2" 4)"#,
+                    r#"(cell "S" "G2" 5)"#,
+                    r#"(cell "S" "H2" 6)"#,
+                    r#"(cell "S" "I2" 7)"#,
+                    r#"(cell "S" "J2" 8)"#,
+                    r#"(cell "S" "K2" 9)"#,
+                    r#"(cell "S" "L2" 10)"#,
+                    r#"(cell "S" "M2" 11)"#,
+                    r#"(cell "S" "N2" 12)"#,
+                    r#"(cell "S" "O2" 13)"#,
+                    r#"(cell "S" "P2" 14)"#,
+                    r#"(cell "S" "Q2" 15)"#,
+                ],
+            ),
+            // A dot writes no cell; a short row, and an empty one.
+            (
+                r#"(picture "S" "B2" hex "1.2" "" ".3")"#,
+                &[
+                    r#"(cell "S" "B2" 1)"#,
+                    r#"(cell "S" "D2" 2)"#,
+                    r#"(cell "S" "C4" 3)"#,
+                ],
+            ),
+            // A legend's every path: a dot's entry never read, a later entry,
+            // a number key, a text and a truth value, the first of two
+            // entries for one character.
+            (
+                r#"(picture "S" "A1" (("." 5) ("W" "wall") (7 true) ("x" 1) ("x" 2)) ".W7x")"#,
+                &[
+                    r#"(cell "S" "B1" "wall")"#,
+                    r#"(cell "S" "C1" true)"#,
+                    r#"(cell "S" "D1" 1)"#,
+                ],
+            ),
+            // A character no legend holds, an upper-case digit, a space or a
+            // letter, is a row the load refuses, where its cell would be.
+            (
+                r#"(picture "S" "A1" hex "1F x")"#,
+                &[
+                    r#"(cell "S" "A1" 1)"#,
+                    r#"(not-in-the-legend "S" "B1" "F")"#,
+                    r#"(not-in-the-legend "S" "C1" " ")"#,
+                    r#"(not-in-the-legend "S" "D1" "x")"#,
+                ],
+            ),
+            (
+                r#"(picture "S" "A1" (("O" 1)) "Oo")"#,
+                &[
+                    r#"(cell "S" "A1" 1)"#,
+                    r#"(not-in-the-legend "S" "B1" "o")"#,
+                ],
+            ),
+            // A picture inside on, a $ top-left, and the grid's last cells.
+            (
+                r#"(on "S" (picture "$B$2" hex "1"))"#,
+                &[r#"(cell "S" "B2" 1)"#],
+            ),
+            (
+                r#"(picture "S" "XFC1048575" hex "1." ".f")"#,
+                &[
+                    r#"(cell "S" "XFC1048575" 1)"#,
+                    r#"(cell "S" "XFD1048576" 15)"#,
+                ],
+            ),
         ];
         for (call, want) in cases {
             let got = rows_of(call)
@@ -698,5 +776,60 @@ mod tests {
             .expect_err("a verb nested in another");
         assert_eq!(r.refusal.id, "vla-expand-arg-is-list");
         assert_eq!(r.line, 8);
+
+        // A character no legend holds: the pass judges no row, and the load
+        // refuses the first such row at its own line of the cartridge, the
+        // banner on 1, the manifest on 2 to 7 and the picture's 1 on 8.
+        let source =
+            format!("(include \"../common.vla\")\n{MANIFEST}(picture \"S\" \"A1\" hex \"1x\")\n");
+        let e = expand(&source, "cartridges/kit/kit.source.vla", &fs).expect("no row judged");
+        let r = Cartridge::load(&e.text, "kit.vla", e.text.len()).expect_err("the load refuses");
+        assert_eq!(r.refusal.id, "grid-row-unknown");
+        assert_eq!(r.line, 9);
+        assert!(
+            r.refusal.text.contains("(not-in-the-legend ...)"),
+            "{}",
+            r.refusal.text
+        );
+        assert_eq!(
+            lf(&e.text).lines().nth(8),
+            Some(r#"(not-in-the-legend "S" "B1" "x")"#)
+        );
+
+        // A legend that is no list of entries is the pass's to refuse, at the
+        // call's line: the text "hex" is not the name hex.
+        let r = rows_of(r#"(picture "S" "A1" "hex" "1")"#).expect_err("a text for a legend");
+        assert_eq!(r.refusal.id, "vla-car-expected-list");
+        assert_eq!(r.line, 8);
+
+        // The Screen's extent: a row as wide as the plane's 320 columns and a
+        // column as tall as its 200 rows, each cell a row of its own.
+        fn letters(mut column: u32) -> String {
+            let mut out = Vec::new();
+            while column > 0 {
+                column -= 1;
+                out.push(b'A' + (column % 26) as u8);
+                column /= 26;
+            }
+            out.reverse();
+            String::from_utf8(out).expect("letters")
+        }
+        let mut call = format!(
+            "(picture \"Screen\" \"A1\" hex\n  \"{}\"\n",
+            "1".repeat(320)
+        );
+        for _ in 2..=200 {
+            call.push_str("  \"1\"\n");
+        }
+        call.push(')');
+        let want: Vec<String> = (1..=320)
+            .map(|c| format!("(cell \"Screen\" \"{}1\" 1)", letters(c)))
+            .chain((2..=200).map(|r| format!("(cell \"Screen\" \"A{r}\" 1)")))
+            .collect();
+        let got = rows_of(&call)
+            .unwrap_or_else(|r| panic!("the Screen's extent: {} {}", r.refusal.id, r.refusal.text));
+        assert_eq!(got[319], r#"(cell "Screen" "LH1" 1)"#);
+        assert_eq!(got[got.len() - 1], r#"(cell "Screen" "A200" 1)"#);
+        assert_eq!(got, want);
     }
 }

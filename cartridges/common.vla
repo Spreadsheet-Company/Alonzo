@@ -4,7 +4,8 @@
 ; knows none of these by name: each is a text an author wrote, and a source may define
 ; its own beside them, or include a library of its own instead. They are examples, to
 ; be read, copied, changed and outgrown. Since KIT.1 they hold the kit's first verbs,
-; the patterns two cartridges wrote alike by hand, or one wrote as the page spells it.
+; the patterns two cartridges wrote alike by hand, or one wrote as the page spells it;
+; and since KIT.2 the picture, a string a row of cells and a character a cell.
 ;
 ; The rules each macro here keeps, which are the language's:
 ;   - Template macros only. A parameter is replaced by the form the caller passes; no
@@ -13,7 +14,11 @@
 ;     would replace the head of a (name ...) row too, and the load would refuse the row.
 ;   - A macro that walks a list recurses in tail position, its own call the last form
 ;     of its begin, so the expander's trampoline keeps the rows flat. A chain stops at
-;     5,000 applications, and each step copies the rest of the list, so a walk is for
+;     5,000 links: each application is one, and so is each begin it unwraps. The forms
+;     of a begin before its last wait, and each is expanded as a chain of its own, which
+;     is how a picture's rows and cells each start one. Since vla-lang 0.9.2 a walk that
+;     hands its list on whole, (cdr characters), costs its length; one that splices its
+;     rest, (unquote-splicing (cdr ...)), copies the rest at every step, which is for
 ;     dozens of items, never thousands.
 ;   - An address is joined: (&expand "A" (+expand index 1)) is the text "A1", since
 ;     &expand joins its atoms into one text and +expand adds two numbers as the macro
@@ -33,7 +38,7 @@
 ; ---- one sheet, named once ----------------------------------------------------------
 ; A run of rows on one sheet, the sheet named at the top of the run and not on every
 ; row: cells and formulas take entries, each an address or a range and what it holds,
-; and on takes rows, or calls of a macro such as live, each written without its sheet.
+; and on takes rows, or calls of a verb or a picture, each written without its sheet.
 ; The cartridge the pass writes still names the sheet on every row, which stands alone
 ; there, as the record prints it (SPEC.md section 7.3).
 
@@ -256,12 +261,73 @@
     (quasiquote ((unquote then) (unquote made) (unquote-splicing args)))
     (quasiquote (twin-from (unquote (cdr characters)) (unquote (quote-if (eq? (car characters) "!") (&expand made ".last!") (&expand made (car characters)))) (unquote then) (unquote-splicing args)))))
 
-; ---- patterns -----------------------------------------------------------------------
+; ---- pictures -----------------------------------------------------------------------
+; A picture is rows of text: each string one row of cells, down from a top-left cell,
+; and each character one cell, its value the legend's, so that a sprite, a tile or a
+; pattern is written as it looks. A dot writes no cell, in every legend, so a picture's
+; empty cells are no rows at all, which the plane reads as 0 (SPEC.md section 3.1); a
+; legend's entry for a dot is never read, and a space is a character like any other. A
+; row shorter than another writes nothing past its end. The legend is hex, PICO-8's
+; sixteen digits, 0 to 9 and a to f the Palette's indices 0 to 15, as a PICO-8
+; cartridge keeps its sprites; or a list of entries, each a character and its value, a
+; number, a text or a truth value, the first entry for a character giving its value:
+; (("O" 1)) for a Life pattern, O a live cell. A character the legend does not hold
+; writes a row the load refuses, (not-in-the-legend sheet cell character), where its
+; cell would be, so that the cartridge says where. A picture writes a row a cell and
+; never a range, so a block of one value is a cells entry. Each row and each cell begins
+; a chain of its own, so a picture the Screen's size, 320 by 200, expands in about half
+; a second, and the chain stops one at 2,499 rows, or at a row of 2,499 cells (SPEC.md
+; section 7.8).
 
-(defmacro (live sheet & cells)
-  "the value 1 in each cell named: a pattern's live cells, one row of it a call"
-  (quote-if (null? cells)
+(defmacro (picture sheet top-left legend & rows)
+  "rows of cells drawn as text: each string a row down from the top-left, each character a cell, its value the legend's; a dot writes no cell; the legend hex, PICO-8's sixteen digits, or a list of (character value) entries"
+  (quasiquote (picture-from (unquote sheet) (unquote (row-expand top-left)) (unquote (column-expand top-left)) (unquote legend) (unquote rows))))
+
+(defmacro (picture-from sheet row column legend rows)
+  "picture's walk down its rows, a string at a time, each row a walk of its own"
+  (quote-if (null? rows)
     (begin)
     (begin
-      (cell sheet (car cells) 1)
-      (quasiquote (live (unquote sheet) (unquote-splicing (cdr cells)))))))
+      (picture-row sheet row column legend (characters-expand (car rows)))
+      (picture-from sheet (+expand row 1) column legend (cdr rows)))))
+
+(defmacro (picture-row sheet row column legend characters)
+  "picture's walk along a row, a character at a time: a dot passed over, any other its cell"
+  (quote-if (null? characters)
+    (begin)
+    (quote-if (eq? (car characters) ".")
+      (picture-row sheet row (+expand column 1) legend (cdr characters))
+      (begin
+        (quote-if (equal? legend hex)
+          (picture-hex sheet (address-expand row column) (car characters))
+          (picture-legend sheet (address-expand row column) (car characters) legend))
+        (picture-row sheet row (+expand column 1) legend (cdr characters))))))
+
+(defmacro (picture-hex sheet at character)
+  "a character's cell in PICO-8's sixteen digits, 0 to 9 and a to f the Palette's indices 0 to 15, its clauses tried in one application; any other character a row the load refuses"
+  (cond
+    ((eq? character "0") (cell sheet at 0))
+    ((eq? character "1") (cell sheet at 1))
+    ((eq? character "2") (cell sheet at 2))
+    ((eq? character "3") (cell sheet at 3))
+    ((eq? character "4") (cell sheet at 4))
+    ((eq? character "5") (cell sheet at 5))
+    ((eq? character "6") (cell sheet at 6))
+    ((eq? character "7") (cell sheet at 7))
+    ((eq? character "8") (cell sheet at 8))
+    ((eq? character "9") (cell sheet at 9))
+    ((eq? character "a") (cell sheet at 10))
+    ((eq? character "b") (cell sheet at 11))
+    ((eq? character "c") (cell sheet at 12))
+    ((eq? character "d") (cell sheet at 13))
+    ((eq? character "e") (cell sheet at 14))
+    ((eq? character "f") (cell sheet at 15))
+    (else (not-in-the-legend sheet at character))))
+
+(defmacro (picture-legend sheet at character legend)
+  "a character's cell in a legend of (character value) entries, an entry at a time, the first that holds it giving its value; a character none holds a row the load refuses"
+  (quote-if (null? legend)
+    (not-in-the-legend sheet at character)
+    (quote-if (eq? (&expand (car (car legend))) character)
+      (cell sheet at (car (cdr (car legend))))
+      (picture-legend sheet at character (cdr legend)))))

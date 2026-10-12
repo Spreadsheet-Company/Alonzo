@@ -229,8 +229,9 @@ built. Change a macro of the library at the bottom, `cartridges/common.vla`,
 and build again to see every row it writes change; over the fake module the
 build is declined, in words. Pick the glider gun above the buttons to see Gosper's
 gun fire a glider every thirty frames, south-east until the stream meets the
-border; its pattern is the Seed sheet, which the first frame reads. Pick the
-test card to see the plane's
+border; its pattern is the Seed sheet, which the first frame reads, drawn in
+its source as one picture, a string a row and a hex digit a cell, `1` alive
+and a dot nothing (`KIT.2`). Pick the test card to see the plane's
 whole rule: the sixteen colours as bars, magenta wherever a value is no
 colour (a byte past the palette, a fraction, a text, a truth value, an
 error), black for an empty cell, the window panning a column a frame across

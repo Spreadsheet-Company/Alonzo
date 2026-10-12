@@ -8,8 +8,7 @@
 ; pattern off the Seed sheet where life.vla computes a soup. The border stays empty,
 ; which the plane reads as 0, dead. The format is SPEC.md section 7.
 
-; The library whose macros this source calls, sheets, palette, on, live and first-frame
-; among them.
+; The library whose macros this source calls: sheets, palette, picture and first-frame.
 (include "../common.vla")
 
 (cartridge "gun"
@@ -46,23 +45,27 @@
   ("#FF55FF" "light magenta")       ; 14
   ("#FFFF55" "yellow"))             ; 15
 
-; The Seed: the gun's 36 live cells, its 9 by 36 box with the top-left at J10, decoded
+; The Seed: the gun's 36 live cells, its 9 by 36 box with the top-left at J10, drawn
 ; from its published pattern (LifeWiki, "Gosper glider gun"; RLE x = 36, y = 9:
 ; 24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!).
 ; Its facts, which the runner holds its own Life to: period 30; 36 cells, then 5 more a
 ; period, one glider each, travelling south-east a cell every four frames.
-; One call of the library's live a row of the box, each naming that row's live cells,
-; and the library's on around them, which names their sheet once.
-(on "Seed"                                                        ; the sheet every call below writes
-  (live "AH10")                                                   ; the box's row 1
-  (live "AF11" "AH11")                                            ; row 2
-  (live "V12" "W12" "AD12" "AE12" "AR12" "AS12")                  ; row 3
-  (live "U13" "Y13" "AD13" "AE13" "AR13" "AS13")                  ; row 4
-  (live "J14" "K14" "T14" "Z14" "AD14" "AE14")                    ; row 5
-  (live "J15" "K15" "T15" "X15" "Z15" "AA15" "AF15" "AH15")       ; row 6
-  (live "T16" "Z16" "AH16")                                       ; row 7
-  (live "U17" "Y17")                                              ; row 8
-  (live "V18" "W18"))                                             ; row 9
+; One picture of the box, the library's: each string a row of the box and each character
+; a cell, in PICO-8's legend, hex, so 1 is a live cell and the Palette's alive, and a dot
+; writes no cell, dead, which the first frame reads as 0.
+(picture                                    ; the gun's box, drawn:
+  "Seed"                                    ;   the sheet the first frame reads
+  "J10"                                     ;   the box's top-left
+  hex                                       ;   the legend, PICO-8's sixteen digits: 1 alive
+  "........................1..........."    ;   the box's nine rows, top to bottom
+  "......................1.1..........."
+  "............11......11............11"
+  "...........1...1....11............11"
+  "11........1.....1...11.............."
+  "11........1...1.11....1.1..........."
+  "..........1.....1.......1..........."
+  "...........1...1...................."
+  "............11......................")
 
 ; The rule, one row over the interior B2:LG199, which the library's first-frame writes,
 ; every reference relative but the Clock's, so the row is one shape over 62,964 cells, as
