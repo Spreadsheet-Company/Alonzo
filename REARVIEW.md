@@ -2054,6 +2054,31 @@ The oracle, run on the day (*measurement*):
 
 *Committed 2026-10-10 at the owner's word, "Commit.", under the closed item's ID. Not pushed.*
 
+*Noted 2026-10-12, at the owner's word after `KIT.1`'s close ("Commit, then address the native replay test not checking a replay's cartridge digest"), under this item's ID, the native player being this item's.* `KIT.1`'s controls found the gap.
+- `play_to_golden`, the native player in `engine/src/cartridge.rs`'s tests, played a replay on whatever cartridge its folder held, and read no digest from the header.
+- The page's player refuses a replay of another cartridge's digest (`SPEC.md` §7.6), and `tools/check_cartridge.ps1` holds each committed replay's header to its cartridge.
+- So a respelled `pressed`, with the sound card written over, passed `cargo test`'s replay: the card's golden, the Log's last 32 frames, holds no frame with a button down.
+
+The fix, in the tests alone; the module is unchanged.
+- `sha256_hex`, SHA-256 written from FIPS 180-4, since the engine crate depends on the language and nothing else (`AD-5`). `the_replay_s_digest_is_sha_256` holds it to FIPS 180-2's five vectors, the ones the page's own SHA-256 is held to.
+- `play_to_golden` reads the header's `(cartridge "<SHA-256>")` and holds it to the SHA-256 of the cartridge's text with LF line ends, the digest the host and the check compute. It refuses in the page's words: "the replay was recorded from the cartridge whose SHA-256 is ..., and soundcard.vla's is ...: a replay plays only on the file it was recorded from".
+- The three committed replays' digests were computed by the host's JavaScript and are checked by PowerShell's .NET; they are the Rust digest's too.
+
+*The oracle, on the day.* In a scratch copy of the workspace at `f3943a0` with this change alone:
+- `cargo fmt --check` and `cargo clippy --workspace --all-targets -- -D warnings`, clean;
+- `cargo test`, 33 passed.
+
+*The controls*, in the same copy, each undone after:
+- `pressed` respelled in the library, the cartridges written over again: the replay test now fails, on the sound card's digest.
+- One character of the sound card's `notes`, which no frame reads: refused the same way.
+- One bit of SHA-256's first round constant: refused by the vectors and by every replay.
+
+*The owner's hand test:* `cargo test` passes, `the_replay_s_digest_is_sha_256` among its tests.
+
+*Owner-tested 2026-10-12, the same day: `cargo test`, 33 passed, `the_replay_s_digest_is_sha_256` and `every_committed_replay_plays_to_its_golden` among them.*
+
+*Committed 2026-10-12 at the owner's word ("Commit, then provide a starting prompt for a new session to scope and implement KIT.2"), under the closed item's ID, staged by hunk beside the `ENGINE.8` session's uncommitted work. Not pushed.*
+
 ## `ENGINE.4` — the Audio device: the four voices on the audio clock, the graph's own nodes, a sound card, and the schedule held
 
 *Scoped 2026-10-10 at the owner's word, the day `ENGINE.3` closed and was pushed. The roadmap's line: "The Web Audio graph's own nodes, an oscillator and a gain per voice, driven from the Audio sheet's cells read after the step; no synthesizer of its own (`CHARTER.md` §8). Needed by: `CART.3`." `CART.4` needs it too, a tick per move, a tone per freeze and a fanfare at the top, and `CART.5`'s four voices play under a playhead. Every item before this one left the Audio sheet the same way: read after each step, and sounded nowhere. So the scoping measured what a page gets from Web Audio before deciding anything, in scratch pages under headless Chrome 154 and in a scratch copy of the workspace: the two clocks, the clicks, the waves, the cost, and a sound card. The owner's standing brief governs every decision: determinism first, a replay is a proof and a floor is a number. The sound is never golden (`SPEC.md` §6); what the host schedules from the cells is a function of them, and can be held.*
@@ -3897,3 +3922,5 @@ Then three of them again with the cartridges written over again by the command l
 `KIT.1` is closed ✅, its line in the ledger under a new section, the kit's, between the engine and the cartridges, as the roadmap orders its families.
 
 *Committed 2026-10-12 at the owner's word ("Commit, then address the native replay test not checking a replay's cartridge digest"), in one commit with the close, staged by hunk beside the `ENGINE.8` session's uncommitted work. Not pushed.*
+
+*The controls' finding, the native replay player naming no digest, was addressed the same day at the owner's word, under `ENGINE.3`'s ID: that entry's last note.*

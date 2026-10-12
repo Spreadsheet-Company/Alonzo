@@ -84,6 +84,10 @@ sound card's, as `SPEC.md` section 7.6 plays one, the derived writes the
 Write sheet leaves before each frame's rows, to the golden beside it, byte
 for byte, so the host's player and the engine alone end in the same sheet
 (`ENGINE.3`, made general over every folder holding a replay by `ENGINE.4`).
+Like the host's player, it plays a replay only on the cartridge its header
+names: the header's SHA-256 is held to the cartridge's text with LF line
+ends, by a SHA-256 the tests hold to FIPS 180-2's vectors (since
+2026-10-12).
 Sand's, the owner's painting session of 2,085 frames, also holds its Screen to
 the sand written by hand at every frame, under the brush the replay's Input
 rows make (`CART.2`'s second slice).
