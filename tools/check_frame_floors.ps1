@@ -225,19 +225,36 @@ $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::W
 # grains falling, and not the engine, which with the language is the sixth's.
 # From this entry Sand's rows measure a gentler opening than the worst a
 # person can make; a fixture of the whole board falling, for the floors
-# alone, is slice 4's to weigh (REARVIEW.md, CART.2). Life's and the gun's
-# rows are held, the wasm gun's floor raised to 935,000,000.
+# alone, is slice 4's to weigh (REARVIEW.md, CART.2; REPO.5's since CART.2's
+# close). Life's and the gun's rows are held, the wasm gun's floor raised to
+# 935,000,000. Its rows, the eighth having replaced them: native life
+# 22,500,402 cells a second (frame p50 2.8 ms), native gun 1,487,370,607
+# (0.0423, runs of 128), native sand 33,998,149 (5.6), wasm life 14,815,059
+# (4.2), wasm gun 1,039,921,548 (0.0605), wasm sand 22,796,988 (8.3); its
+# floors are the history's seventh entry.
+# 2026-10-12, the eighth: the owner's run over vla-lang 0.9.2, Frazaro's
+# KERNEL.33, the playtest pass's three asks (a plan's edges found once a
+# shape, a held column read once across a row, a row of single cells reached
+# as one span), and KERNEL.30, the census describe prints, which the module
+# carries (682,679 bytes). Pasted from target/bench_frames.txt whole, no value
+# touched; the chat's copy had dropped a space at a line wrap. Sand's rows
+# rise on the same fixture, so the rise is the language's and not the
+# workload's: natively 3.7 ms a frame where the seventh had 5.6, and in the
+# browser 6.1 where it had 8.3; its load 133 ms natively and 159 in the
+# browser, where it was 502 and 586. Life's and the gun's frames hold, their
+# loads nearly halved. Its entry raises Sand's two floors, to 45,500,000 and
+# 27,900,000, and the wasm life and gun floors, native life's kept.
 $baselineDate = '2026-10-12'
-$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 154.0.8037.98 headless | the engine''s module 643,503 bytes | vla-lang at 0.9.1 | power throttling opted out: the runner yes, 29 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 31 browser process(es)'
-$baselinePin = '0.9.1'
+$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 154.0.8037.98 headless | the engine''s module 682,679 bytes | vla-lang at 0.9.2 | power throttling opted out: the runner yes, 22 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 23 browser process(es)'
+$baselinePin = '0.9.2'
 $baselineFixtures = @{ 'life' = '7220F8E1FBFF7A3B7F00DE9ECA5754E9A1877A8D1A766A251EB3811D0C937D89'; 'gun' = '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7'; 'sand' = '814983F85A9DA90155F0F58C6FE201C8750E588BF202BD54B18763C41DC594C7' }
 $baseline = @(
-    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 71.8; FirstFrame = 12.1; FrameP50 = 2.8; FrameMin = 2.0; FrameMax = 6.2; CellsPerSecond = 22500402; FramesPerSecond = 357.353; ClockMs = 0.179; ClockSpread = 1.5; ClockDrift = 0.7 },
-    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 65.1; FirstFrame = 9.8; FrameP50 = 0.0423; FrameMin = 0.0206; FrameMax = 0.0470; CellsPerSecond = 1487370607; FramesPerSecond = 23622.556; ClockMs = 0.179; ClockSpread = 1.5; ClockDrift = 0.9 },
-    @{ Runner = 'native'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 501.9; FirstFrame = 43.8; FrameP50 = 5.6; FrameMin = 5.5; FrameMax = 30.3; CellsPerSecond = 33998149; FramesPerSecond = 179.680; ClockMs = 0.178; ClockSpread = 6.3; ClockDrift = 0.3 },
-    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 87.7; FirstFrame = 13.4; FrameP50 = 4.2; FrameMin = 3.0; FrameMax = 8.8; CellsPerSecond = 14815059; FramesPerSecond = 235.294; ClockMs = 0.257; ClockSpread = 1.9; ClockDrift = -1.0 },
-    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 53.6; FirstFrame = 7.2; FrameP50 = 0.0605; FrameMin = 0.0344; FrameMax = 0.0672; CellsPerSecond = 1039921548; FramesPerSecond = 16516.129; ClockMs = 0.255; ClockSpread = 2.0; ClockDrift = -1.9 },
-    @{ Runner = 'wasm'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 586.3; FirstFrame = 41.6; FrameP50 = 8.3; FrameMin = 8.0; FrameMax = 41.9; CellsPerSecond = 22796988; FramesPerSecond = 120.482; ClockMs = 0.257; ClockSpread = 3.9; ClockDrift = -1.0 }
+    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 38.6; FirstFrame = 10.3; FrameP50 = 2.8; FrameMin = 2.0; FrameMax = 5.7; CellsPerSecond = 22355009; FramesPerSecond = 355.044; ClockMs = 0.183; ClockSpread = 0.6; ClockDrift = 0.2 },
+    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 37.4; FirstFrame = 8.7; FrameP50 = 0.0422; FrameMin = 0.0218; FrameMax = 0.0516; CellsPerSecond = 1492037915; FramesPerSecond = 23696.682; ClockMs = 0.183; ClockSpread = 0.8; ClockDrift = 0.1 },
+    @{ Runner = 'native'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 132.7; FirstFrame = 39.5; FrameP50 = 3.7; FrameMin = 3.7; FrameMax = 23.6; CellsPerSecond = 50627442; FramesPerSecond = 267.566; ClockMs = 0.183; ClockSpread = 8.6; ClockDrift = 0.1 },
+    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 53.0; FirstFrame = 13.1; FrameP50 = 4.0; FrameMin = 2.9; FrameMax = 8.2; CellsPerSecond = 15940253; FramesPerSecond = 253.165; ClockMs = 0.255; ClockSpread = 2.0; ClockDrift = -3.8 },
+    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 36.9; FirstFrame = 7.5; FrameP50 = 0.0602; FrameMin = 0.0313; FrameMax = 0.0664; CellsPerSecond = 1046674283; FramesPerSecond = 16623.377; ClockMs = 0.255; ClockSpread = 0.0; ClockDrift = -3.8 },
+    @{ Runner = 'wasm'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 159.2; FirstFrame = 33.0; FrameP50 = 6.1; FrameMin = 5.9; FrameMax = 30.4; CellsPerSecond = 31018852; FramesPerSecond = 163.934; ClockMs = 0.258; ClockSpread = 3.9; ClockDrift = -2.8 }
 )
 
 # --- the floors, in cells a second, a dated history that never goes down ---
@@ -256,7 +273,8 @@ $floorHistory = @(
     @{ Date = '2026-10-11'; Pin = '0.9.0'; Reason = 'the native gun only, at the owner''s word (CART.2): on the code measured at 02:00 it read 17.6 to 26.9 microseconds a frame in nine runs that evening, two runners alternated, against 15.2; the clock beside every frame and the gun in the browser unchanged; a frame of 20 microseconds varies between sessions by more than the margin of 10%'; Floors = @{ 'native life' = 20200000; 'native gun' = 2770000000; 'native sand' = 9490000; 'wasm life' = 13600000; 'wasm gun' = 929000000; 'wasm sand' = 6810000 } },
     @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = 'native gun re-based: timed in runs of 128 from this entry, where the baseline before it timed its frames alone, and a frame under 2 ms timed alone, right after the clock, varied between sessions past the margin (CART.1''s frame timer); its floor is this run''s less 10%'; Floors = @{ 'native life' = 20300000; 'native gun' = 1340000000; 'native sand' = 13700000; 'wasm life' = 14100000; 'wasm gun' = 929000000; 'wasm sand' = 9550000 } },
     @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = 'native sand re-based: its fixture is another file, 177E8863..., where the baseline before it measured 3DFFD0BE..., and cells a second count a fixture''s cells (CART.2''s decision 24); its floor is this run''s less 10%; wasm sand re-based: its fixture is another file, 177E8863..., where the baseline before it measured 3DFFD0BE..., and cells a second count a fixture''s cells (CART.2''s decision 24); its floor is this run''s less 10%'; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 10800000; 'wasm life' = 14100000; 'wasm gun' = 929000000; 'wasm sand' = 7550000 } },
-    @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 30500000; 'wasm life' = 14100000; 'wasm gun' = 935000000; 'wasm sand' = 20500000 } }
+    @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 30500000; 'wasm life' = 14100000; 'wasm gun' = 935000000; 'wasm sand' = 20500000 } },
+    @{ Date = '2026-10-12'; Pin = '0.9.2'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 45500000; 'wasm life' = 14300000; 'wasm gun' = 942000000; 'wasm sand' = 27900000 } }
 )
 
 # --- releases of a measured source: a registry release of the language whose

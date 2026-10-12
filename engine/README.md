@@ -39,11 +39,17 @@ engine is:
   the File's name and size, and the Input sheet when a cartridge holds none;
 - the frame number written into the Clock as the first act of every step,
   the only clock there is;
-- `describe`, the manifest, the devices and the budget, and the engine's
-  own refusals, a catalogue of ten in `data/messages.vla`: the ninth a
-  cartridge's source handed to the load, which never expands, and the tenth
-  a person's write into the Clock, its frame, or a rate or a seed outside
-  its range (`ENGINE.3`).
+- `describe`, the manifest, the devices and the budget, and since
+  `vla-lang` 0.9.2 the machine's census, the plan as rows, a row for each
+  shape with its cells, its levels, its runs and the path each of its reads
+  takes, so that what a cartridge costs a frame is read before a frame runs
+  (Frazaro's `KERNEL.30`, laid here; each cartridge's held to a golden in
+  `testdata/describe/`, which `ALONZO_BLESS=1 cargo test describe` writes
+  again);
+- the engine's own refusals, a catalogue of ten in `data/messages.vla`: the
+  ninth a cartridge's source handed to the load, which never expands, and
+  the tenth a person's write into the Clock, its frame, or a rate or a seed
+  outside its range (`ENGINE.3`).
 
 Beside the engine, the pass (`src/pass.rs`, `SPEC.md` section 7.8): a
 cartridge's source, VLA with template macros and `include`s, expanded by the
@@ -169,7 +175,11 @@ changes only the rows under the brush where it computed every cell. Its
 opening then rains from the board's top third, rows 2 to 67, so that its
 first seconds keep sixty frames a second: about 5.7 ms a frame natively and
 8.4 ms in the browser, where the whole board falling at once took 15.8 and
-22.5 (the build's run; the floors' seventh baseline is the owner's).
+22.5 (the build's run; the floors' seventh baseline is the owner's). Over
+`vla-lang` 0.9.2, which reads a held column once across a row and finds a
+plan's edges once a shape (Frazaro's `KERNEL.33`, the pass's asks), the
+opening steps in about 3.7 ms natively and Sand loads in about 160 ms where
+it took 500 (the build's run of 2026-10-12, alternated against 0.9.1).
 
 The floors time a game's worst stretch; a person plays the rest of it. A
 third example, `examples/play.rs`, plays Sand as the host plays it, the
@@ -187,7 +197,8 @@ cargo run --release --example play                 # cartridges/sand/sand.vla, 1
 Its first session (`CART.2`'s playtest pass, 2026-10-12) found what the
 opening never reaches: every press, release and material key computed all
 of Sand's 189,017 formula cells, 17 to 26 ms natively, where a stroke's
-frames take 1 to 2 ms.
+frames take 1 to 2 ms. Over `vla-lang` 0.9.2 the session's 1,100 frames step
+in about 1.1 s, where they took 1.6 over 0.9.1.
 
 ## Where it comes from
 

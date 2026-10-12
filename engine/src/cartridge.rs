@@ -838,7 +838,12 @@ impl Cartridge {
     /// `describe`: the manifest's directives, one a row; a `device` row for
     /// each device sheet the grid holds, the Screen at its window and the
     /// rest at their layouts' extents; then the budget, the formula cells a
-    /// frame, their product with the rate, and the charter's line.
+    /// frame, their product with the rate, and the charter's line; then the
+    /// machine's census (Frazaro's `KERNEL.30`, laid here; `vla-lang` 0.9.2),
+    /// the plan's row, a `readers` row for each sheet whose changes are
+    /// followed, and a `shape` row for each shape with the path each of its
+    /// reads takes, so that what a cartridge costs a frame is read before a
+    /// frame runs (`SPEC.md` section 2's rules, each read off a row).
     pub fn describe(&self) -> String {
         let mut out = String::new();
         for d in &self.manifest.directives {
@@ -875,6 +880,7 @@ impl Cartridge {
             "(budget {rate} {formulas} {} {LINE})\n",
             rate * formulas
         ));
+        out.push_str(&self.machine.census());
         out
     }
 
@@ -1686,6 +1692,9 @@ mod tests {
         assert_eq!(plane(&resumed), reference(3));
     }
 
+    /// Since `vla-lang` 0.9.2 the census follows the budget (`KERNEL.30`,
+    /// laid here): the small Life is one shape in one run of its 80 cells,
+    /// the Seed, the Clock and the Screen's twin each followed to it.
     #[test]
     fn describe_prints_the_manifest_the_devices_and_the_budget() {
         let c = load(&small(30)).expect("loads");
@@ -1695,7 +1704,13 @@ mod tests {
             "(spec 2)\n(title \"Small\")\n(rate 30)\n(screen plane 12 10)\n(seed 1)\n\
              (device \"Screen\" \"A1:L10\" effect)\n(device \"Palette\" \"A1:C16\" effect)\n\
              (device \"Input\" \"A1:E18\" input)\n(device \"Clock\" \"A1:B3\" input)\n\
-             (device \"File\" \"A1:B3\" effect)\n(budget 30 80 2400 2000000)\n"
+             (device \"File\" \"A1:B3\" effect)\n(budget 30 80 2400 2000000)\n\
+             (plan (shapes 1) (texts 1) (formulas 80) (levels 1) (runs 1) (lanes 80) (alone 0) \
+             (every-frame 0) (cycles 0))\n\
+             (readers \"Seed\" 1)\n(readers \"Clock\" 1)\n(readers \"Screen.last\" 1)\n\
+             (shape 0 \"Screen\" \"B2\" \"=IF(Clock!R1C2=1,Seed!RC,IF(OR(SUM(Screen.last!R[-1]C[-1]:R[1]C[1])\
+             -Screen.last!RC=3,AND(Screen.last!RC=1,SUM(Screen.last!R[-1]C[-1]:R[1]C[1])-Screen.last!RC=2)),1,0))\" \
+             (cells 80) (levels 0 0 1 80) (runs 1 80 80 80) (alone 0) (reads slot array lookup once start))\n"
         );
         assert_eq!(c.row(4), "(cartridge 4 \"Small\" plane 12 10 30)");
     }
@@ -1716,12 +1731,84 @@ mod tests {
             "(device \"Clock\" \"A1:B3\" input)\n",
             "(device \"File\" \"A1:B3\" effect)\n",
             "(budget 30 62964 1888920 2000000)\n",
+            // The census (KERNEL.30, laid here): one shape, one level, one
+            // run of every cell, its twin read as an array and its Clock
+            // once a run or at the frame's start.
+            "(plan (shapes 1) (texts 1) (formulas 62964) (levels 1) (runs 1) (lanes 62964) \
+             (alone 0) (every-frame 0) (cycles 0))\n",
+            "(readers \"Clock\" 2)\n(readers \"Screen.last\" 1)\n",
+            " (cells 62964) (levels 0 0 1 62964) (runs 1 62964 62964 62964) (alone 0) \
+             (reads slot array once start))\n",
         ] {
             assert!(d.contains(want), "describe holds {want}: {d}");
         }
         assert!(
             !d.contains("(device \"Write\""),
             "Life has no Write sheet: {d}"
+        );
+    }
+
+    /// Every committed cartridge's `describe`, its manifest, its devices,
+    /// its budget and its census (`KERNEL.30`, laid here), held to a golden,
+    /// `engine/testdata/describe/<name>.vla`, its comment lines aside, so that
+    /// a change of a cartridge's plan, made by the cartridge or by the
+    /// language, shows as a diff. `ALONZO_BLESS=1 cargo test describe` writes
+    /// the goldens again, for a change made on purpose and read before it is
+    /// committed.
+    #[test]
+    fn every_cartridge_describes_itself_as_its_golden() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let goldens = root.join("testdata/describe");
+        let bless = std::env::var_os("ALONZO_BLESS").is_some();
+        let mut folders: Vec<std::path::PathBuf> = std::fs::read_dir(root.join("../cartridges"))
+            .expect("cartridges/")
+            .filter_map(|e| e.ok().map(|e| e.path()))
+            .filter(|p| p.is_dir())
+            .collect();
+        folders.sort();
+        let read = |p: &std::path::Path| {
+            std::fs::read_to_string(p).unwrap_or_else(|e| panic!("{}: {e}", p.display()))
+        };
+        let mut described = Vec::new();
+        for dir in folders {
+            let name = dir
+                .file_name()
+                .and_then(|n| n.to_str())
+                .expect("a folder's name")
+                .to_string();
+            let text = read(&dir.join(format!("{name}.vla")));
+            let c = Cartridge::load(&text, &format!("{name}.vla"), text.len())
+                .unwrap_or_else(|e| panic!("{name} loads: {}", e.refusal.text));
+            let d = c.describe();
+            let path = goldens.join(format!("{name}.vla"));
+            if bless {
+                std::fs::create_dir_all(&goldens).expect("the goldens' folder");
+                let head = format!(
+                    "; The engine's describe of cartridges/{name}/{name}.vla: the manifest, the devices, the\n\
+                     ; budget and the machine's census (KERNEL.30). ALONZO_BLESS=1 cargo test describe\n\
+                     ; writes it again.\n"
+                );
+                std::fs::write(&path, head + &d).expect("a golden written");
+            } else {
+                let golden = read(&path).replace("\r\n", "\n");
+                let body: String = golden
+                    .lines()
+                    .filter(|l| !l.starts_with(';'))
+                    .map(|l| format!("{l}\n"))
+                    .collect();
+                assert!(
+                    d == body,
+                    "{name}'s describe is not its golden, {}; if the change is meant, \
+                     ALONZO_BLESS=1 cargo test describe writes it again:\n{d}",
+                    path.display()
+                );
+            }
+            described.push(name);
+        }
+        assert_eq!(
+            described,
+            ["gun", "inputcard", "life", "sand", "soundcard", "testcard"],
+            "the cartridges committed under cartridges/"
         );
     }
 

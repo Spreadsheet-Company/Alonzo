@@ -1,0 +1,21 @@
+; The engine's describe of cartridges/life/life.vla: the manifest, the devices, the
+; budget and the machine's census (KERNEL.30). ALONZO_BLESS=1 cargo test describe
+; writes it again.
+(spec 2)
+(title "Life")
+(rate 30)
+(screen plane 320 200)
+(seed 1)
+(author "Spreadsheet Company")
+(licence "0BSD")
+(notes "Conway's Life, every cell one formula of its eight neighbours in the previous frame. The first frame is a soup from the seed; change (seed 1) for another.")
+(device "Screen" "A1:LH200" effect)
+(device "Palette" "A1:C16" effect)
+(device "Input" "A1:E18" input)
+(device "Clock" "A1:B3" input)
+(device "File" "A1:B3" effect)
+(budget 30 62964 1888920 2000000)
+(plan (shapes 1) (texts 1) (formulas 62964) (levels 1) (runs 1) (lanes 62964) (alone 0) (every-frame 0) (cycles 0))
+(readers "Clock" 2)
+(readers "Screen.last" 1)
+(shape 0 "Screen" "B2" "=IF(Clock!R1C2=1,IF(MOD(MOD(MOD(Clock!R3C2*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)*MOD(Clock!R3C2*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)*MOD(MOD(Clock!R3C2*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)*MOD(Clock!R3C2*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859),67108859)<25165822,1,0),IF(OR(SUM(Screen.last!R[-1]C[-1]:R[1]C[1])-Screen.last!RC=3,AND(Screen.last!RC=1,SUM(Screen.last!R[-1]C[-1]:R[1]C[1])-Screen.last!RC=2)),1,0))" (cells 62964) (levels 0 0 1 62964) (runs 1 62964 62964 62964) (alone 0) (reads slot array once start))

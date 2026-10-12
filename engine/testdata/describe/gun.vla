@@ -1,0 +1,22 @@
+; The engine's describe of cartridges/gun/gun.vla: the manifest, the devices, the
+; budget and the machine's census (KERNEL.30). ALONZO_BLESS=1 cargo test describe
+; writes it again.
+(spec 2)
+(title "Gosper's glider gun")
+(rate 30)
+(screen plane 320 200)
+(seed 1)
+(author "Spreadsheet Company")
+(licence "0BSD")
+(notes "Gosper's glider gun, found by Bill Gosper's group at MIT in 1970, the first pattern known to grow without bound: a glider every thirty frames, south-east across the plane until the stream meets the border at frame 741. Every cell is Life's rule; the first frame reads the Seed sheet. Edit the Seed's rows and load again to fire another pattern.")
+(device "Screen" "A1:LH200" effect)
+(device "Palette" "A1:C16" effect)
+(device "Input" "A1:E18" input)
+(device "Clock" "A1:B3" input)
+(device "File" "A1:B3" effect)
+(budget 30 62964 1888920 2000000)
+(plan (shapes 1) (texts 1) (formulas 62964) (levels 1) (runs 1) (lanes 62964) (alone 0) (every-frame 0) (cycles 0))
+(readers "Seed" 1)
+(readers "Clock" 1)
+(readers "Screen.last" 1)
+(shape 0 "Screen" "B2" "=IF(Clock!R1C2=1,Seed!RC,IF(OR(SUM(Screen.last!R[-1]C[-1]:R[1]C[1])-Screen.last!RC=3,AND(Screen.last!RC=1,SUM(Screen.last!R[-1]C[-1]:R[1]C[1])-Screen.last!RC=2)),1,0))" (cells 62964) (levels 0 0 1 62964) (runs 1 62964 62964 62964) (alone 0) (reads slot array lookup once start))

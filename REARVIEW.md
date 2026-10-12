@@ -713,6 +713,49 @@ The oracle, on the day (*measurement*):
 
 *Owner-tested 2026-10-12 with `CART.2`'s row gate: Sand at sixty frames a second and "No stalls on clicks". Committed the same day at the owner's word, "Commit, then proceed", on its own and before the row gate. It leaves the floors as they stood. Not pushed.*
 
+*The pin at `vla-lang` 0.9.2, 2026-10-12, at the owner's word, "0.9.2 is deployed to GitHub and crates.io", relaying two notes from Frazaro's session: `KERNEL.30`'s half to lay here, `describe` printing the census, and `KERNEL.33`, the playtest pass's asks answered.*
+
+The release is Frazaro's `e738cbb`, tagged `v0.9.2`.
+- `KERNEL.30`: the machine's plan printed as rows, its census, which `describe` now appends (`KERNEL.30`'s record, laid here, at the end of this file).
+- `KERNEL.33`: the three asks of `CART.2`'s playtest pass (that item's entry).
+- `VLA.2`: the expander's walk of a list costs its length and not its square, which `KIT.2`'s picture waits on.
+- Calls added and no signature changed. No git rev was pinned between 0.9.1 and it.
+
+What moved:
+- `Cargo.toml`'s pin and its comment, and the lock: the checksum `587237a2...`, still two packages.
+- `check_engine_deps.ps1`'s baseline and its header.
+- `SPEC.md` §2's note: a dated correction, the row gate's price paid back, and the rules read off the census.
+
+The oracle, on the day (*measurement*):
+- `cargo test`: 31, the six describe goldens among them.
+- The runner's check mode: every frame equal, Life and the gun 80 and 5 allocations, Sand 509 and 5, the ceilings unchanged.
+- `expand --check`: six sources the same.
+- `check_engine_deps.ps1` and its control's 8 mutants and 5 baselines; `check_host_exports.ps1` at twelve, `check_host_imports.ps1` at none.
+- The module: 682,679 bytes, from 643,503 (+6.1%). The language's release alone is 664,534 (+3.3%), and the census `describe` prints is 18,145 more (+2.7%; Frazaro's scoping measured +11,958 on its own build).
+- Natively over today's cartridges, three rounds alternated against 0.9.1, opted out of the throttling and on the performance cores:
+  - Sand's opening, 5.6 ms a frame to 3.7, 33.5 to 33.9 million cells a second to 50.5 to 50.9;
+  - Sand's load, 494 to 501 ms to 154 to 164;
+  - the playtest pass's session, 1,586 to 1,613 ms of steps to 1,082 to 1,103, every frame held;
+  - Life's and the gun's frames unchanged, 2.7 to 2.9 ms and 0.042 ms; their loads 59 to 70 ms to 37 to 40.
+
+The floors hold the pin they were measured at, so `check_frame_floors.ps1` fails until the owner's eighth baseline, whose Sand rows will stand well above their floors.
+
+*Owner-tested 2026-10-12, "Tests pass; commit.", with the owner's run of `tools/bench_frames.ps1` over 0.9.2, the floors' eighth baseline, pasted from `target/bench_frames.txt` whole, no value touched; the chat's copy had dropped a space at a line wrap (*measurement*):*
+
+| row | frame p50 | frames a second | cells a second | load | floor |
+|---|---|---|---|---|---|
+| native life | 2.8 ms | 355.0 | 22,355,009 | 38.6 ms | 20,500,000, kept |
+| native gun | 0.0422 ms, in runs of 128 | 23,696.7 | 1,492,037,915 | 37.4 ms | 1,340,000,000 |
+| native sand | 3.7 ms | 267.6 | 50,627,442 | 132.7 ms | 45,500,000 |
+| wasm life | 4.0 ms | 253.2 | 15,940,253 | 53.0 ms | 14,300,000 |
+| wasm gun | 0.0602 ms, in runs of 128 | 16,623.4 | 1,046,674,283 | 36.9 ms | 942,000,000 |
+| wasm sand | 6.1 ms | 163.9 | 31,018,852 | 159.2 ms | 27,900,000 |
+
+- Sand's rows rise on the same fixture, so the rise is the language's: 3.7 ms natively and 6.1 in the browser where the seventh baseline had 5.6 and 8.3, and its load 133 and 159 ms where it was 502 and 586. The baseline's note in `check_frame_floors.ps1` says so, and the seventh's note gains its rows and its pointer to `REPO.5`.
+- `check_frame_floors.ps1`: clean.
+
+*Committed 2026-10-12 at the owner's word, in one commit with `KERNEL.30`'s half, since the baseline measures the module that prints the census. Not pushed.*
+
 ## `ENGINE.2` — the frame path: the plane held to the record of the same window
 
 *Scoped 2026-10-09, at the owner's word, the day `ENGINE.1` closed: the Screen read out of the module's memory as bytes and blitted whole, held equal to the view record of the same window by a test, the record being the oracle (`CHARTER.md` §3), and the window the Camera's (`SPEC.md` §13's two oracles for this item). The scoping finds the path itself already laid, since `ENGINE.1` had to draw something: the host views the plane, copies the bytes out and blits them through the Palette. What is missing is the oracle, a fixture that reaches every arm of the byte's rule, and the cost the second slice measured, which is the language's. So the scoping is mostly a measurement, made before any claim, and its first finding moves the cost to Frazaro.*
@@ -3344,6 +3387,18 @@ Unadjudicated.
 
 *Committed 2026-10-12 as `47a8f12`, with the session; not pushed. The ask for Frazaro was written the same day for the owner to relay, the three changes with their patches and numbers, in the session's scratchpad (`pt/ASK_FRAZARO.md`, the patches beside it in `pt/patches/`).*
 
+*Answered the same day by Frazaro's `KERNEL.33` (`0f16b0e`), released in `vla-lang` 0.9.2 (`e738cbb`), the owner having relayed the ask.* It builds all three: a plan's edges found once a shape, a held column read once across a row, and a row of single cells reached as one span. Reach by branch was not built, as this pass concluded.
+- *Frazaro's session's numbers, over `f8dda50` by a path (relayed):*
+  - Sand's load, 507 to about 163 ms natively and 597 to about 163 in Chrome;
+  - its steady frame, 15.6 to 10.5 ms natively and 22.1 to 15.9 in Chrome;
+  - the session, 1,857 to 1,256 ms, every frame held;
+  - Life's and the gun's loads nearly halved, their frames unchanged.
+- *Over Sand as it now stands*, the pin at 0.9.2 (`ENGINE.1`'s record), alternated against 0.9.1 (*measurement*):
+  - the opening's frames, 5.6 to 3.7 ms natively;
+  - the load, 494 to 501 ms to 154 to 164;
+  - the session, 1,586 to 1,613 ms to 1,082 to 1,103.
+- The census still names a held column's read `slot` or `lookup` where a run reads it once. That is Frazaro's decision 3: a run's layout and each `IF`'s split are not known before it runs.
+
 **The row gate and the rate of 60: what landed.** Built 2026-10-12 over `47a8f12` and `vla-lang` 0.9.1, with the host's tick on the frame's grid (`ENGINE.1`'s record). It awaits the owner's hand test and the floors' sixth baseline.
 - `cartridges/sand/sand.source.vla` and `sand.vla`:
   - the `Gate`'s third fill, `C2:C199`, the material in the disc's rows and −1 elsewhere;
@@ -3513,3 +3568,36 @@ The oracle, on the day, over the owner's session (*measurement*):
 - Left for a later pass over Sand, unfiled: sand that sinks through water, about a day by the session's estimate (the owner's question of 2026-10-12); and the pass's three asks landing in `vla-lang`, the pin's move then measured on Sand.
 
 *Committed 2026-10-12 at the owner's word ("Commit"), in two commits: `REPO.5`'s filing, `1ab631b`, then `CART.2`'s close with slice 2. Not pushed.*
+
+## `KERNEL.30` — the plan printed, laid here: `describe` prints the machine's census
+
+*Frazaro's item, its engine half laid here (`AD-2`). Frazaro built and closed `KERNEL.30` at `b14d053`: the plan an engine's machine makes, printed as rows by the language's `Machine::census` and by its door's `frazaro calc --shapes`. Frazaro's session handed this half over with 0.9.2's release, and the owner relayed it on 2026-10-12. The item is closed in Frazaro's ledger; this is the record of its half here.*
+
+What landed, with the pin at 0.9.2 (`ENGINE.1`'s record):
+- `engine/src/cartridge.rs`: `describe()` appends the machine's census after the budget row.
+  - Its two tests take the new rows: the small Life's whole text, one shape in one run of its 80 cells; and Life's census rows, one shape, one level and one run of 62,964 cells, reading `slot array once start`.
+  - `every_cartridge_describes_itself_as_its_golden` holds every committed cartridge's `describe` to a golden, `engine/testdata/describe/<name>.vla`, its comment lines aside, so that a change of a plan, made by a cartridge or by the language, shows as a diff. `ALONZO_BLESS=1 cargo test describe` writes them again, for a change made on purpose and read before it is committed.
+- `SPEC.md` §4.6's dated correction and its table; `engine/README.md` and `README.md`.
+- No export is added, so `check_host_exports.ps1` holds twelve. The page reads `describe` for its devices and its budget, and passes the new rows by.
+
+What the census says of the six cartridges over 0.9.2 (*measurement*):
+
+| cartridge | shapes | texts | formula cells | levels | runs | lanes | alone | describe |
+|---|---|---|---|---|---|---|---|---|
+| Life | 1 | 1 | 62,964 | 1 | 1 | 62,964 | 0 | 1,267 bytes |
+| the gun | 1 | 1 | 62,964 | 1 | 1 | 62,964 | 0 | 1,167 |
+| the test card | 16 | 16 | 393 | 1 | 15 | 392 | 1 | 2,656 |
+| the input card | 22 | 21 | 1,411 | 4 | 12 | 1,391 | 20 | 4,106 |
+| the sound card | 23 | 23 | 1,592 | 4 | 4 | 1,565 | 27 | 4,219 |
+| Sand | 15 | 15 | 189,215 | 400 | 601 | 189,210 | 5 | 5,357 |
+
+- Sand's three board shapes, `Stay`, `Side` and the Screen's interior, each stand at 198 levels, one for each row of the chain, in runs of 316 lanes, a row's interior. The Brush's four cells are evaluated alone, a cell each. The Gate's three fills read `once`, cells every `$` holds, and the Tally reads `array`, the twins walked by index.
+- The input card's 22 shapes hold 21 texts: its press count is written as two fills of one text, the second `(same 12)`, as Frazaro's run found.
+- Sand's `describe` is 5,357 bytes where it was 619, the census 4,738 of them; Frazaro's scoping, over an earlier Sand, estimated 576 growing to about 4.2 KB. The census costs the module 18,145 bytes on this build.
+- The census still names a held column's read `slot` or `lookup` where a run reads it once, which is Frazaro's decision 3: a run's layout and each `IF`'s split are not known before it runs.
+
+The oracle, on the day: `cargo fmt --check` and `clippy -D warnings` clean; `cargo test` 31; the rest is the pin's.
+
+*The owner's hand test:* read Sand's census in `engine/testdata/describe/sand.vla`; open the page, pick each cartridge and play it as before, Sand loading in a fraction of the time it took; and run `tools/bench_frames.ps1`, its block pasted as the floors' eighth baseline.
+
+*Owner-tested 2026-10-12, "Tests pass; commit.", and committed the same day at the owner's word in one commit with the pin's move (`ENGINE.1`'s record, with the floors' eighth baseline). Not pushed.*

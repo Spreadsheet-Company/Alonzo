@@ -16,15 +16,17 @@ own contract), shows in the lock and fails here by name.
 THE PIN, the owner's route of 2026-10-09 (REARVIEW.md, ENGINE.1's second
 slice, decision 1): vla-lang by git at a commit of Frazaro's while the
 language's change is unreleased, and the exact registry pin once it is
-released. Since 2026-10-12 it is "=0.9.1" from crates.io, Frazaro's release
-of KERNEL.28 (its release commit cb3cd12); before it "=0.9.0" (2026-10-11),
+released. Since 2026-10-12 it is "=0.9.2" from crates.io, Frazaro's release
+of KERNEL.30, KERNEL.33 and VLA.2 (its release commit e738cbb); before it
+"=0.9.1" (the same day), the release of KERNEL.28 (its release commit
+cb3cd12); before that "=0.9.0" (2026-10-11),
 the release of KERNEL.20's first four slices, KERNEL.26 and KERNEL.27, VLA.1
 and VLA.3 (its release commit 2eb54b7); before that "=0.8.1" (2026-10-10),
 the release that decision expected as 0.9.0, whose source is KERNEL.25's
 (f5dc344) byte for byte, and before that, git at f5dc344 (CART.1's second
 slice), at KERNEL.24's c0686a9 (ENGINE.2's second slice) and at KERNEL.22's
-6cca2e1. The moves from 0.8.1 to 0.9.0 and to 0.9.1 took no git rev between
-them. The pin is either kind, and
+6cca2e1. The moves from 0.8.1 to 0.9.0, 0.9.1 and 0.9.2 took no git rev
+between them. The pin is either kind, and
 the baseline below says which: a git pin is a rev, never a branch or a tag,
 since a branch moves, resolved in the lock to the full commit with no
 checksum; a registry pin is one exact version, never a range, since a range
@@ -83,13 +85,15 @@ if ($Root -eq '') { $Root = Split-Path -Parent $PSScriptRoot }
 #     raised together. The git pin before this one, for the day one returns:
 #     '{ git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "f5dc344" }',
 #     'git+https://github.com/Spreadsheet-Company/Frazaro?rev=f5dc344#f5dc344aeae5e3efdad03b6a7dbf7b1783e313fe', ''. ---
-# The registry pins before this one, "=0.9.0", checksum
+# The registry pins before this one, "=0.9.1", checksum
+# 712a4ef4d13ff8bd067e984b714739f726db75c146a488281468ee29337426c3 (2026-10-12),
+# "=0.9.0", checksum
 # 248b3ecf10365f9acbf2da3a481e53642d90d028ef7155b02e582da480d2d68d (2026-10-11),
 # and "=0.8.1", checksum
 # 3c44ebaf0d769b193a2d31ca0e04abe2332dc743ac50d5c9ef5fb2e0318cd202 (2026-10-10).
-$langSpec = '"=0.9.1"'
+$langSpec = '"=0.9.2"'
 $langSource = 'registry+https://github.com/rust-lang/crates.io-index'
-$langChecksum = '712a4ef4d13ff8bd067e984b714739f726db75c146a488281468ee29337426c3'
+$langChecksum = '587237a27c42276eb08d095ec8bbb68024c919dcd218e2f9222fd6c58d66cf15'
 
 function Get-Lines([string]$path) {
     $text = [System.IO.File]::ReadAllText($path)
