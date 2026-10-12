@@ -3631,6 +3631,237 @@ The oracle, on the day: `cargo fmt --check` and `clippy -D warnings` clean; `car
 
 *Owner-tested 2026-10-12, "Tests pass; commit.", and committed the same day at the owner's word in one commit with the pin's move (`ENGINE.1`'s record, with the floors' eighth baseline). Not pushed.*
 
+## `ENGINE.8` — the host draws a grid-mode cartridge: the record of the Screen's window, drawn by the viewport
+
+*Minted and scoped 2026-10-12 at the owner's word: the first step toward Alonzo's first game, Frazaro the spreadsheet, which `SPEC.md`'s decision 20 makes a grid-mode cartridge at rate zero. The engine has loaded a grid cartridge since `ENGINE.1`'s second slice, and the language has printed a running grid's record since `KERNEL.22`; the host draws neither. The scoping reads what the host, the viewport and the double do with a grid cartridge today. It measures what a frame drawn from the record costs before choosing a draw path, as `CHARTER.md` §3 asks, and prototypes the cheaper view it finds in a scratch copy of the language, so that the ask to Frazaro carries its numbers. The tree is shared with a session scoping and building `KIT.1`: until the owner approves, this item writes nothing in it but its roadmap line and this entry, and Frazaro's tree is read and never written.*
+
+**Substrate, verified.** Read on the day, by file and never by assumption; measured in scratch copies of this tree at `57cfdaf` and of `vla-lang` 0.9.2, never in the shared tree.
+
+- *The pre-flight.* This tree clean at `57cfdaf`, level with `origin/main`, CI's run `38274626009` green on both jobs there; `run_checks.ps1 -WithExtras` at 12 checks and 12 verifiers, `ALL GREEN`, by the owner's word; `vla-lang` pinned `=0.9.2`. Frazaro at `e738cbb`, the 0.9.2 release, with another session's roadmap and registry edits uncommitted in its tree; its registry's next free `KERNEL` number `KERNEL.37` (`docs/ID_REGISTRY.md`).
+- *The host.* `web/host.js` loads a grid cartridge and runs it: its steps, its derived writes, its effects and its replay. It draws nothing: frame 0 and each frame are drawn `if (c.mode === 'plane')` alone, and at the load it says "This slice blits the plane alone; a grid cartridge is drawn by the viewport, which the host takes up after it." Its listeners for the keys, the pointer, the buttons and the wheel are on the plane's canvas. It reads the Camera and views the window it places in either mode.
+- *The engine.* `engine/src/cartridge.rs` reads `(screen grid w h)` at most 80 by 50 and needs no Palette in grid mode, which its own test holds. Without a Camera it refuses a Screen cell outside the declared size, `cart-screen-outside`, in either mode, and its `view` adds nothing to the machine's. The engine needs no change.
+- *The record.* `vla-lang` 0.9.2's `view.rs`, which a running grid prints through `Machine::view("grid", ...)`, prints in order:
+  - every sheet's row; the window, the extent and the gridlines;
+  - the window's `column` rows and, since `KERNEL.22`, its `row` rows, a height in points or `none`, `shown` or `hidden`;
+  - the `format` rows: format 0, every format the window's cells use and every format a look names;
+  - the sheet's `look` rows, `(look "<sheet>" <value> <format>)`, in the order declared;
+  - then each cell in row-major order: a `cell` row, or a `formula` row followed by its `value` row once computed, then the cell's `style` and `sentence` rows.
+
+  A shared child's formula text is its master's text moved to the cell by `refers::shift_a1_references`, at every view, after `shared_masters` has walked every cell of the sheet to find the masters. A number is spelled by Rust's `{}`, which never writes an exponent: `1e300` is 301 digits and `1e-300` 302 characters. A `value` row spells either zero `0`, a `cell` row spells negative zero `-0`, and a look's value is spelled as a `cell` row's.
+- *The viewport.* `web/viewport.js`'s reader takes `sheet`, `window`, `extent`, `gridlines`, `column`, `format`, `cell`, `formula`, `style` and `sentence`, and counts every other row as unknown. That includes the `value` row, so a formula shows its text in the formula colour whatever its value: `KERNEL.5`'s decision 7 promised the change, one arm, the day the row arrived. It includes the `look` and `row` rows too, which `SPEC.2`'s decision 19 added after `KERNEL.5` was built. Its geometry lays every row at the default 20 px. `load(text)` of the sheet it shows puts the scroll and the selection back at A1, so a record drawn every frame would take a person's selection away every frame. The panel's live sheet does exactly that today, about five times a second while the loop runs. `cellAt(clientX, clientY)` answers the sheet's own cell under a point, which is what the Input sheet's pointer has been since `ENGINE.3`.
+- *The double.* `web/fake.js` reads `(screen grid w h)` at most 80 by 50. It answers a grid view of its Screen with a `formula` row and a `value` row a cell inside the declared size, the byte its tiles hold, `(format 0 ...)` alone, and no `look` or `row` row.
+- *The checks.*
+  - `tools/check_cartridge.ps1` already judges a grid manifest and the `look`, `row`, `format`, `column`, `style`, `gridlines` and `sentence` rows in their shapes; it pins six cartridges and six sources.
+  - `tools/build_web.ps1` and `tools/check_web_offline.ps1` hold the page's `{{CARTRIDGE:name}}` and `{{SOURCE:name}}` places to the folders both ways and pin no count.
+  - `tools/check_host_loop.ps1` holds seventeen cases and twenty-eight mutant pages.
+  - `tools/check_render_oracle.ps1` holds the viewport's draw list to the six goldens and the sparse record, none of which holds a `value`, `look` or `row` row. Its control anchors `var TEXT_PAD_PX = 4;` and `if (!cell || cell.text === '') continue;` in `web/viewport.js`, each once.
+- *The cost, measured.* `CHARTER.md` §3's caution is that the record is text, so a frame drawn from it may cost more than a frame computed. Five scratch fixtures, each one fill:
+  - `gridnum`, an 80 by 50 Screen of `=MOD(ROW()*7+COLUMN()*3+Clock!$B$1,10)` with ten looks, every cell changing every frame;
+  - `gridtext`, the same with a text, `"#"` or `"."`;
+  - `gridsheet`, at rate zero, 3,920 values and a row of 80 sums, an edit a frame;
+  - `gridcam`, a Screen of 320 by 200 formulas seen through an 80 by 50 window a Camera pans;
+  - Life's own Screen through the window `A1:CB50`, a formula of about 470 characters.
+
+  Natively: a scratch example over the engine's `Cartridge`, 31 frames a fixture, three runs, opted out of the throttling and on the performance cores (*measurement*, p50s).
+
+  | fixture | grid view | step | plane of the same window |
+  |---|---|---|---|
+  | `gridnum` | 10.2 to 10.4 ms | 0.14 to 0.17 ms | 0.002 ms |
+  | `gridtext` | 11.1 to 11.2 | 0.27 to 0.29 | 0.002 |
+  | `gridsheet` | 2.0 | 0.06 to 0.07 | 0.002 |
+  | `gridcam` | 11.0 to 12.0 | 3.2 to 3.5 | 0.002 |
+  | Life's window | 63.2 to 64.0 | 3.3 | 0.003 |
+
+  Frame 0's record of `gridnum`, its formula rows with no value row yet, takes 9.2 to 9.4 ms of the 10.3: the formulas' texts are the cost, about 2.3 µs a cell for a formula of 40 characters and 16 µs for Life's.
+
+  In the page: a scratch page over the engine's module at HEAD, 682,679 bytes, under headless Chrome 154 with no virtual clock, synchronous at its load, the same guards, two runs (*measurement*, p50s). For `gridnum`: the step 0.3 ms, the view 9.0 to 9.1, the text's decoding 0.1, the viewport's reading of the record 1.7, and its whole load 4.6 (the reading, the tabs and a draw of 1,200 visible texts at a ratio of 1), its draw alone 2.3. About 14 ms a frame, two thirds of it the view. `gridtext` the same; `gridsheet` a view of 1.6 and a load of 3.2; `gridcam` 9.9 to 10.3 and 3.3 to 3.4 beside a step of 3.7; Life's window 62.1 to 62.2 and 8.7; the plane 0.01.
+
+  So at a rate of 30 a full window of short formulas keeps its frame and at 60 it does not, and a window of Life's formulas keeps neither. At rate zero an edit is a step and a draw of about 5 ms.
+- *A prototype, measured.* In a scratch copy of `vla-lang` 0.9.2, a third projection, `values`: the grid record with its `formula` rows left out, `shared_masters` not called, each formula cell's `value` row printed as the grid prints it. About thirty lines in `view.rs` and five in `machine/mod.rs`; the module 1,893 bytes larger.
+
+  Natively, three runs (*measurement*, p50s):
+
+  | fixture | grid view | values view | grid record | values record |
+  |---|---|---|---|---|
+  | `gridnum` | 10.2 to 10.4 ms | 1.68 to 1.71 ms | 368,831 bytes | 102,851 bytes |
+  | `gridtext` | 11.0 to 11.1 | 1.87 to 1.89 | 428,393 | 110,413 |
+  | `gridsheet` | 2.0 to 2.1 | 1.83 to 1.90 | 121,815 | 118,453 |
+  | `gridcam` | 11.0 to 11.1 | 2.20 to 2.27 | 369,444 | 102,964 |
+  | Life's window | 62.5 to 62.9 | 2.55 to 2.58 | 2,070,132 | 99,165 |
+
+  At every frame of every fixture, 450 in all, the values record was byte for byte the grid record with its `formula` lines removed: the free oracle the ask proposes.
+
+  In the page, with the viewport given the `value` row's arm in scratch (*measurement*, p50s, two runs): `gridnum`'s view from 9.2 to 1.4 or 1.5 ms and its load from 4.6 to 3.4; Life's window's view from 60.0 or 61.3 to 1.9 and its load from 6.5 to 3.0 or 3.1. A frame drawn from it costs about 5 ms. The language's 205 tests and this engine's 31 pass over the prototype.
+
+**The work.** The host's grid mode, three arms of the viewport, a line of the double, a card, a case of the loop oracle with its mutant pages, and the record; in a second slice, the cheaper view and its floor.
+
+| File | What it is | Copied, adapted, or decided |
+|---|---|---|
+| `web/host.js` | grid mode: a viewport of its own over the page's element, the window the Camera's, frame 0 at the load and every frame's record drawn with the view kept; the Input device over the viewport's cells; in the second slice, the `values` view and `redraw()` in grid mode | decisions 1, 3, 5, 6 and 7 |
+| `web/viewport.js` | the `value`, `look` and `row` rows read and drawn; `load(text, { keep: true })` | decisions 4 and 5 |
+| `web/fake.js` | its grid record's tiles drawn through a look map of the CGA's sixteen | decision 8 |
+| `cartridges/gridcard/` | the grid card: its source over the library and its cartridge, CRLF | decision 2 |
+| `engine/testdata/describe/gridcard.vla` | the card's `describe` golden, which `cargo test` holds every committed cartridge to | decision 2 |
+| `web/index.template.html` | the panel's grid box beside the plane's; the card's two places; the live sheet kept; `?loop=1`'s eighteenth case, `grid`; in the second slice, `?blit=1`'s fourth case | decisions 1, 5, 9 and 11 |
+| `tools/check_host_loop.ps1` | eighteen cases, the new case's floors, five mutant pages more | decision 9 |
+| `tools/check_cartridge.ps1` | seven cartridges and seven sources, the card's floor | decision 2 |
+| `tools/check_blit_floors.ps1` | in the second slice: the fourth case and its bars | decision 11 |
+| `SPEC.md` | dated corrections of §3.1, §3.3, §3.8, §5's steps 5 and 6, §7.3, §8.3 and §10; in the second slice, §4.5 | decision 12 |
+| `ROADMAP.md`, `REARVIEW.md`, `README.md`, `web/README.md`, `engine/README.md`, `Delta/CLAUDE.md`, the memory | the line, this record, the pages | decision 12 |
+
+**The decisions, the owner's.** Each with the sitting's recommendation and the alternatives it declines.
+
+1. **The host draws grid mode through a viewport of its own, over an element the page hands it.** A new option, `grid`, an element. At a grid cartridge's load the host makes an `AlonzoViewport` over it, once, and reuses it across loads. At a plane load the viewport is left as it is and the canvas is drawn, and at a grid load the reverse. Frame 0 is drawn at the load, nothing computed, as a plane's is (the owner's hand test of 2026-10-09). The panel holds two boxes, the plane's and the grid's, and shows the one the `load` event's `mode` names. `SPEC.md` §8.3 already gives the shim the drawing of the record through the viewport. *Alternatives:* the page owns the viewport and draws it on the host's `frame` event, which leaves the host's mode half-built and every page to wire it again; one element for both modes, the viewport's canvas reused for the plane, whose box, scroller and tabs a plane does not want.
+2. **The fixture: a grid card, `cartridges/gridcard/`, the test card's twin, written as a source over `cartridges/common.vla`.** A window of 80 by 50, §10's limit, so that the card is also the second slice's floor. A Screen 96 columns wide under a Camera that pans a column every ten frames, from 1 to 21 and back to 1, so the window's right edge passes the Screen's last column and the columns past it are empty. Its rows:
+   - the sixteen colours as cells holding 0 to 15, each drawn through a look of the CGA's sixteen, the plane's Palette as the grid's look map, one model with two renderers;
+   - every kind of value a cell can hold, the test card's list: a text, a text that spells a number, the empty text, both truth values, the seven errors, `3.0000000000000004`, `1e-300`, `-0`, `7.0`, `1e300` and a negative fraction;
+   - formulas that compute each kind every frame: a number cycling through the looks, so its fill changes every frame; a text; a truth value; an error; `SIN`; a counter through its own twin; a value whose kind cycles;
+   - a look on a text, on a truth value and on an error; a cell's own style and a look over it; a number under a `text` format;
+   - a text that spills into empty neighbours and one cut by a neighbour; a wrapped text in a tall row;
+   - a hidden row and a hidden column, each holding a value that must not be drawn; a narrow and a wide column; a column whose style fills its empty cells; a `sentence` row; the gridlines on;
+   - and below them a stripe that moves, one fill over the Screen's width through two looks.
+
+   The Camera's formula carries a `value` row, a save's spelling, so frame 0 is drawn at column 1. The Screen's formulas carry none, so frame 0 shows their texts, each a formula before its first value. The card's own macros, a look map from a palette among them, live in its source. *Alternatives:* the cases written inline in the oracle, leaving nothing a person can load; the library extended now, which a peer session owns this week (`KIT.1`) and whose ratchet admits a pattern at its second appearance; a small window, which leaves §10's limit unexercised by any cartridge.
+3. **The draw path: the record each frame in the first slice; a record without the formulas' texts, asked of Frazaro, in the second.** The first slice draws what the oracle reads, `alonzo_view` with `grid`, so that the oracle and the host can disagree about nothing but the draw. At an 80 by 50 window of formulas that costs about 14 ms a frame in Chrome, enough for 30 frames a second and not 60, and about 68 ms for Life's formulas (*measurement*, above).
+
+   The second slice draws from the prototype's `values` projection once the language ships it: the same rows less the `formula` rows, about 5 ms a frame, held to the full record by the free oracle. It is asked as a new Frazaro item, `KERNEL.37` by the registry's next free number. It is a pure function of the model and a window whose output can be a golden, so it is the language's by `AD-4`, and one more implementation of the projection seam `KERNEL.12` names. The prompt for the Frazaro session is given in the chat and kept nowhere on disk. The decisions it opens on are the Frazaro scoping's:
+   - the projection's name;
+   - what a formula with no value prints: its `style` and `sentence` rows kept, so that the oracle stays the grid record less its formula lines and the viewport reads a style for a cell no row wrote as an empty cell styled;
+   - whether the door prints it, `frazaro view --values`.
+
+   *Alternatives:*
+   - the record each frame and nothing more, which holds a game's window at 30 frames a second and never at 60, and fails Life's formulas at 30;
+   - the language caching each cell's moved text, or spelling it from the shape's parse once a shape, which leaves a record three to twenty times larger for the page to read;
+   - a record of the cells changed since the last view, which needs a viewer's state in the machine, and a whole record whenever the Camera moves;
+   - the values view printed by this engine through the machine's public calls, which `AD-4` gives the language, and which would be a second record that no door prints.
+4. **The viewport reads the three rows it ignores.**
+   - *The `value` row.* A formula with a value shows its value, aligned by its kind as any value is, in the text's colour, and keeps its formula's text for the bar (`cell()` answers both). A formula without a value shows its text in the formula colour, as now. That is `KERNEL.5`'s decision 7, one arm, kept as promised.
+   - *The `look` rows.* A cell whose value equals a look's draws with that look's format in place of its own: the fill, the number format and the wrap. A number equals a number by value, so `7` and `7.0` are one value, and `0` and `-0` are one, since the language spells a zero differently in a `cell` row and a `value` row. A text equals a text by its characters exactly, a truth value equals its own, and an error equals an error by its name. An empty cell, and a formula without a value, match no look. The plane reads an empty cell as 0 and the grid draws it empty: the two renderers' one difference, stated.
+   - *The `row` rows.* A row's height is in points, at 96 dots an inch, so 15 points is the default 20 px, and a hidden row is 0. The layout keeps the rows with settings as a short sorted list, so a row's top is the default arithmetic corrected by the settings above it, and a window a million rows down costs nothing.
+
+   *Alternatives:* the host translating the record, a look into a `style` row, before the viewport reads it, two readers of one record; a look matched by its spelling, which would split a formula's `-0` from a cell's; a look over an empty cell, which would paint the record's absence of a row.
+5. **A frame's record replaces the last without resetting the view: `load(text, { keep: true })`.** The sheet's record is replaced. The scroll, the selection, the widths a person dragged, the frozen panes and the marks are kept, and no `select` event is raised. The tabs are remade only when the sheet rows changed. The host uses it for every frame after the load. The panel's live sheet uses it too, which fixes what it does today, its scroll and selection put back at A1 five times a second while the loop runs. *Alternatives:* a method of its own, `update(text)`, a second name for one act; the host diffing records, which would make the host a second reader.
+6. **The window, the Camera and the scroll in grid mode.** With a Camera sheet, the host views the window the Camera places, as in plane mode. At the load the viewport scrolls to the window's top-left. When the Camera moves, the viewport scrolls by the Camera's move, so the person's place inside the window is kept and the window moves under it, as a game's camera moves. Between moves a person may scroll anywhere, which is `SD-23`'s state. Without a Camera, the window is `A1` to the declared size, the whole Screen (§3.1), and the scroll is the person's alone. *Alternatives:*
+   - the viewport scrolled to the Camera's corner at every frame, which fights a person's scroll at every frame;
+   - the viewport held inside the window, a mode of its own;
+   - the spreadsheet's scroll as the window over a sheet larger than the declared size, a view asked at every scroll (`KERNEL.5`'s decision 10). That needs a Screen past the declared size with no Camera, which `cart-screen-outside` refuses today: the first game's, named and not built.
+7. **The Input device over the viewport.** At a rate above zero, the pointer, its buttons and the wheel over the viewport's cells are the game's:
+   - `Input!B11` and `B12` are the column and row of the cell under the pointer, the sheet's own (the viewport's `cellAt`), and 0 off the cells;
+   - the wheel's notches are written and its scroll prevented;
+   - a key the Keys sheet binds is the game's, taken before the viewport sees it, and every other key is the viewport's.
+
+   At rate zero all of it is the viewport's, select, scroll and the keys, since the Input sheet is not written at rate zero. *Alternatives:* the Input device in grid mode left to a later item, so that a grid game at a rate loads deaf; every key the game's at a rate, leaving the viewport no keys; the wheel both scrolling and counted.
+8. **The double draws its grid tiles through a look map.** In grid mode its record gains the CGA's sixteen as formats 1 to 16 and a look for each colour index, 0 to 15, declared in `AlonzoFake.RULES`. A fill then changes every frame over the double as over the module, and the oracle computes it without asking. *Alternatives:* the double as it is, a grid record with no fill to hold; a row height too, which the card holds over the module.
+9. **The oracle: the loop oracle's eighteenth case, `grid`, and five mutant pages.** At frame 0 and after every frame:
+   - the window the host viewed is the Camera's, by the Camera's record and, over the module, by the card's own arithmetic;
+   - the viewport's scroll stands at the window's corner, moved by the Camera's move;
+   - the record of that window, viewed by the oracle itself, is read by the oracle's own rules, decision 4's three and `KERNEL.5`'s, which give each visible cell its text, its fill, its alignment and its rectangle;
+   - those are held to the viewport's draw list both ways: every expected text and fill drawn once, and nothing drawn that the record does not hold;
+   - pixel probes at a corner of a cell filled by a look, by a style and by a column read the fill's colour;
+   - a selection made before frame 3 is the selection at every frame after.
+
+   Over the double: a grid cartridge of 40 by 30 for twelve frames, its Camera moved by edits, the pointer moved onto a cell and a bound key held, each read back from the Input sheet. Over the module, when the page holds one: the grid card for twenty-four frames, with a value and a formula written into the window at frame 6 and seen in that frame.
+
+   The mutant pages each fail the case by name, and each proves it applied:
+   - a viewport whose `value` arm is cut, a formula's text drawn where its value is due;
+   - one whose `look` arm is cut, a fill missing;
+   - a host that loads each frame without `keep`, the selection back at A1;
+   - a host that views the grid before it reads the Camera, a frame late;
+   - a viewport that lays every row at the default height, a rectangle off below the tall row, over the module.
+
+   *Alternatives:* the render oracle, `?oracle=1`, alone, which holds a record and not the host's frames; the Rust tests, which never see a draw.
+10. **Editing a cell through the viewport is not this item's second slice; it is an item of its own, filed at the owner's word.** The act is a selected cell, a value or a formula typed and written on Enter as a person's write, stepped once at rate zero, and recorded by the replay. It is the first game's bar (`SD-24`, the first game's chrome), with `KERNEL.9`'s sentence recorder behind it. Its cost waits on Frazaro's `KERNEL.34`: a formula written into a fill is quadratic in its cells today, 0.85 s for one cell inside Life's fill, so its oracle would stay on small grids until then. This item draws; the panel's edit row already writes any cell and steps at rate zero, which is what the hand test uses. *Alternatives:* this item's second slice, its oracle on small grids until `KERNEL.34`; a third slice after the cheaper view.
+11. **No bar in the first slice; in the second, `?blit=1`'s fourth case, `grid`, its baseline the owner's run.** The case: the grid card loaded and stepped once, then the host's `redraw()` 120 times, each the Camera read, the window's `values` record viewed, and the viewport's load and draw, at the screen's size in fullscreen. The bars: a frame's p95 under 8.3 ms and its max under 16.7, half and one interval of a 60 Hz display, so that a step keeps the other half. *Prediction*, written before the owner's run: the `values` path's p95 about 5 to 6 ms. Over the first slice's `grid` record the same case would read about 12 to 15 ms and fail (*derived* from the measurement above), which is why the case waits for the second slice. The baseline is the owner's run in Chrome in fullscreen, pasted into `tools/check_blit_floors.ps1` as its rows are, never the session's. *Alternatives:* a floor in the first slice over the full record, which would fail at the window's limit by design; a page of its own; no floor, so that the grid's frame path is never measured on a real display.
+12. **The page and the record.** `SPEC.md`'s dated corrections, as the build finds what the code does:
+    - §3.1: the grid's frame, what a cell shows, how a look matches;
+    - §3.3: the pointer, the wheel and the keys in grid mode;
+    - §3.8: the Camera scrolling the viewport by its move;
+    - §5's steps 5 and 6;
+    - §7.3: a look's match, and a row's height in points;
+    - §8.3: the shim's duty;
+    - §10: the grid's limit with its measured cost;
+    - and, in the second slice, §4.5's third projection.
+
+    Then `README.md`'s rows for `cartridges/` and `web/`; `web/README.md` on the three rows, `keep`, the host's `grid` option and the new case; `engine/README.md` on the card; the map's line; the memory. The viewport's three arms are `KERNEL.5`'s code, laid here, and travel with the file when Frazaro's page takes it. *Alternative:* the page left untouched until the item closes.
+13. **Two slices, the instrument before the operation, and the commits.** The first now, over 0.9.2: decisions 1, 2 and 4 to 10, the record drawn each frame, the oracle and the card, a commit of its own. The second after Frazaro's item ships in a release: the pin moved under `ENGINE.1`'s ID, as every move has been, with the owner's run of the frame floors; then the draw from `values`, the oracle's free equality, the blit's fourth case and the owner's baseline, and the item closed. Both commits at the owner's word, by `-F`, staged by hunk beside the peer's: `ENGINE.8: the host draws a grid-mode cartridge, the record of the Camera's window through the viewport, held to the record cell for cell with a grid card`, and `ENGINE.8: the grid drawn from the language's values view, a fifth of the record's cost, and held to the blit's bars`. *Alternatives:* one slice after Frazaro's item, holding the draw back for the language's schedule; no second slice, the record's cost accepted and recorded.
+
+**The catch.** Each met once, or foreseen by reading.
+- An insertion between an `if` line and its `else` rebinds the `else`: the grid's draw is its own `if` line after the plane's, so that mutant H's three anchored lines still swap as they did.
+- `KERNEL.5`'s two control anchors in `web/viewport.js` stay exactly once each, and the render oracle's twelve cases, none holding a new row, stay as they are.
+- The record spells a number by Rust's `{}`: the card's `1e300` is 301 digits, drawn right-aligned and clipped, and Excel's General format is the first game's to want.
+- A grid cartridge at rate zero shows its formulas' texts until the first edit, since a load computes nothing (§4.2), unless its rows carry `value` rows, a save's spelling.
+- A synchronous page flushes a canvas every ~132 draws (`CART.2`'s playtest pass): the oracle draws under a hundred frames a viewport and times nothing.
+- Under headless virtual time no animation frame follows a scroll (`KERNEL.5`): the oracle reads the scroll's position and never waits for a frame.
+- A probe at a cell's centre reads glyph ink: the probes read a corner.
+- The scoping's numbers are headless, for a scoping; a floor is the owner's run.
+- PowerShell 5.1 as every check met it: ASCII, `return ,$list`, `$onWindows`, the Write tool and never a heredoc, a commit message by `-F`.
+- The tree is shared with `KIT.1`'s session. `ROADMAP.md`, `REARVIEW.md`, `README.md`, `tools/check_cartridge.ps1`, `tools/check_web_offline.ps1`, `tools/build_web.ps1`, `web/index.template.html` and `tools/run_checks.ps1` are re-read before each edit and staged by hunk, HEAD plus this item's own. This item moves the cartridge check's cartridge and source pins; a library pin is the peer's.
+
+**Oracle.** On the owner's machine under Windows PowerShell 5.1, then on both jobs at the owner's push:
+- `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings` and `cargo test --workspace` green, the card among every cartridge with a source, expanded to its bytes and holding to its `describe` golden;
+- the module built, `check_host_imports.ps1` at 0 and `check_host_exports.ps1` at its twelve names, the engine untouched;
+- `check_host_loop.ps1` under headless Chrome at both ratios with the module built in, eighteen cases clean, its control failing thirty-three mutant pages, each for its own reason;
+- `check_render_oracle.ps1` clean at both ratios over the new viewport, its control as before;
+- `check_cartridge.ps1` at seven cartridges and seven sources, its control's mutants failing;
+- `run_checks.ps1 -WithExtras` at 12 checks and 12 verifiers, `ALL GREEN`;
+- the owner's hand test of `web/index.html`: the grid card picked and running, its kinds, fills and looks; the stripe moving through its looks; the window panning a column every third of a second, with a scroll inside it kept; a cell selected and kept across frames; an edit seen in its frame; the card at `(rate 0)` stepping once an edit; Life and the test card as before;
+- in the second slice: Frazaro's item green by its own tests; the pin moved and the floors' baseline the owner's; the free equality green; the owner's `?blit=1` in Chrome in fullscreen pasted, four rows.
+
+**Size.** `~days`: the host about 200 lines, the viewport about 150, the double 20, the card's source about 200 and its cartridge, the oracle's case about 350 with the panel's 50, the checks about 150. The second slice is small on this side, beside Frazaro's item of about fifty lines and its tests (*prediction*).
+
+*Approved 2026-10-12, the same day, all thirteen, in the owner's words: "all recommendations are approved; proceed with implementing ENGINE.8 as scoped." With it the owner's reading of decision 10's act: a cell selected by the mouse or the keys and typed into preloads the row, `(cell "<sheet>" "<cell or range>" ...)`, behind the bar, and Enter issues the whole row as one write the replay logs, so that a cartridge has one point of entry. It is the engine's act as it stands: `host.edit(row)` issues one row as its own write, the replay logs it in its frame when it lands and says a refused one in words, and at rate zero the write is the frame's one step. Text that opens with `=` makes the row a `formula` row, and the typed text is read as a value by one rule. In Frazaro the spreadsheet the same Enter also writes a sentence (`KERNEL.9`), the first game's layer above the row. `KERNEL.34`, which the act's cost waits on, is under construction in a Frazaro session. The `KERNEL.37` prompt went to the owner in the chat, to relay.*
+
+*The first slice built 2026-10-12, awaiting the owner's hand test.* A session building `KIT.1` worked in the same tree on the day, rewriting every source over the kit's verbs, so this slice was built and checked in a scratch copy, `HEAD` with this item's files over it and its edits of files the peer also touched applied to `HEAD`'s copies, and its files were copied into the shared tree from there. What landed:
+- `web/viewport.js`, decision 4 and 5:
+  - the `value` row read: a formula with a value shows it, aligned by its kind, in the text's colour, its own text kept for the bar (`cell()` answers `formula` and `valued` beside `text`);
+  - the `look` rows read, matched by value as decision 4 says, a look's format in place of the cell's own;
+  - the `row` rows read, a height in points at 96 dots an inch, a hidden row 0. The geometry keeps the rows with settings as a sorted list with the running difference from the default, so a row's top is one search of the rows that have any. Every row's fill, gridline, text, header and selection is drawn at its own height;
+  - `load(text, { keep: true })`, a later frame of the sheet shown, with the scroll, the selection, the widths, the frozen panes and the marks kept, no event, the tabs remade only when the sheet rows change; `clear()`; `scrolled()`.
+- `web/host.js`, decisions 1, 6 and 7:
+  - the option `grid`, an element, over which the host makes its viewport at the first grid load and keeps it across loads; frame 0 drawn at the load and each frame after (`_drawGrid`), the record of the Screen through the frame's own Camera;
+  - the viewport scrolled to the window's corner at the load and by the Camera's move after it (`_follow`);
+  - the Input device over the viewport at a rate above zero (`_listenGrid`, `_pointerFromGrid`): the pointer the viewport's cell under it, held as the window's cell so that the Input rows add the Camera back as they do a plane's, the wheel prevented, a key the Keys sheet binds taken in the capture phase before the viewport sees it;
+  - the viewport emptied at an unload and destroyed with the host;
+  - the sentence at a grid load without an element. The plane's three anchored lines and its frame-0 line stand as they were, each grid line its own `if`.
+- `web/fake.js`, decision 8: in grid mode its Screen's record holds the CGA's sixteen as formats 1 to 16 and a look a colour index, `AlonzoFake.RULES.gridLooks`.
+- `cartridges/gridcard/gridcard.source.vla` and `gridcard.vla`, decision 2: 151 rows, 3,279 formula cells in 16 shapes, a macro of its own, `looks-from`, over `on`, `cells` and `formulas` from `HEAD`'s library; expanded by the command line in the scratch copy, over `HEAD`'s `common.vla`. Its wrapped text was shortened in the build to fit its tall row, since the oracle compares the lines drawn with the whole text. `engine/testdata/describe/gridcard.vla`, its `describe` golden, and the cartridge's name in the list `every_cartridge_describes_itself_as_its_golden` pins (`engine/src/cartridge.rs`, the engine's one line).
+- `web/index.template.html`, decisions 1, 5 and 9:
+  - the panel's second box, the Screen's grid, shown in the plane's place by the load's mode, the viewport measured again as it shows; the focus given to what shows the Screen; the frame line;
+  - the card's two places, its picker entry and its line in `CARTRIDGES`;
+  - the live sheet loaded with `keep`;
+  - the fixtures' selection line naming a formula's value;
+  - the loop oracle's eighteenth case, `grid`, with its own reading of the record (`gqRead`), its own layout (`gqLayout`), its expectation (`gqExpect`), the comparison both ways (`gqCompare`) and the probes (`gqProbes`), run over the double and over the card (`gridRun`).
+- `tools/check_host_loop.ps1`: eighteen cases, the grid case's floors, `pass` at seven sources, `New-MutantPage` taking a viewport of its own, and five mutant pages, AC to AG, thirty-three in all. `tools/check_cartridge.ps1`: seven cartridges, seven sources, the card's floor of 151 rows. `tools/run_checks.ps1`: the two controls' lines.
+- `SPEC.md`'s dated corrections of §3.1, §3.3, §3.8, §5's step 6, §7.3, §8.3 and §10; `web/README.md`; the root `README.md`'s `web/` row. `engine/README.md` names no cartridge and needed no line. The root README's `cartridges/` row is the line the peer rewrote this session, so the card's mention waits for the peer's commit, or rides with this item's on `HEAD` after it.
+
+The oracle, run on the day in the scratch copy under Windows PowerShell 5.1 (*measurement*):
+- `cargo fmt --all -- --check` and `cargo clippy --workspace --all-targets -- -D warnings` clean, and `cargo test --workspace` 31 passed, the card among every cartridge with a source, expanded to its bytes, loading, and holding to its `describe` golden.
+- The module 682,679 bytes, `HEAD`'s, the engine's code untouched; the page 2,251,994 characters, seven cartridges and seven sources.
+- `check_host_loop.ps1` clean under headless Chrome 154 at both ratios, eighteen cases, the seventeen's counts and digests unchanged but for `pass`, seven sources the same. `grid` over the double counted 13 frames equal to the record with frame 0, 2 windows, 2,336 texts, 1,913 fills through a look, 244 formulas drawn as their text before a value, 12 pixels read back, the selection kept 10 frames, the pointer and a bound key read back, the edits of frame 5 seen and the viewport emptied at the unload. Over the module it counted 25 frames equal, 3 windows, 11,395 texts, 20 wrapped, 10,677 fills (10,311 through a look, 40 by a style, 326 by a column), 350 formulas as their text at frame 0, 20 cells of a hidden row or column never drawn, 70 pixels, the selection kept 22 frames, the person's two rows kept through the Camera's move, and the edits of frame 6 seen.
+- Its control failed all thirty-three mutant pages, each for its own reason and each proving it applied, the five new ones among them: the value row unread, no look matched, the view not kept, the grid drawn before the Camera is read, and every row at the default height.
+- `check_render_oracle.ps1` clean at both ratios over the new viewport, its twelve cases' counts unchanged, and its control passed. `check_cartridge.ps1` passed at seven and seven, its control's thirty-two mutants failing. `check_web_offline.ps1`'s control failed its twenty-one mutants.
+- `run_checks.ps1 -WithExtras`: 11 checks and 12 verifiers passed in the copy. The twelfth check, `check_spdx.ps1`, reads `git ls-files`, so it was run in the repository against a scratch index holding `HEAD` and this item's three new files, and passed: 83 files, 21 cartridge headers. All twelve and twelve.
+
+Found in the build:
+- rustfmt breaks the lengthened list of cartridges into a line each.
+- A grid draws only what its box shows, where a plane draws its whole window, so the double's edits had to stand inside the visible part of the window. Its grid became 20 by 12, so that a formula written outside its declared size is in view, drawn as its text with no value.
+- `load` put the scroll and the selection back at A1 at every load of the sheet shown, which the panel's live sheet did five times a second while the loop ran; `keep` answers both.
+
+*What remains is the owner's:* the hand test, then the commit at the owner's word, staged by hunk beside the peer's.
+
+*The owner's first hand test, 2026-10-12.* The grid card picked in the page and paused at once, with a screenshot; clicking and scrolling, by the scrollbar and the keys, as expected; `(cell "Screen" "C2" 7)` doing nothing at rate 30 and landing once the rate was 0; and the card hard to use, "the grid is constantly shifting one column to the right, so I have to keep resetting the rate to 0 to interact with the grid as an actual spreadsheet." Three findings, each mended the same day, and one that was not a defect:
+
+1. **The plane's box shown above the grid.** The page's `.plane-box { display: flex }` outranks the `hidden` attribute's own rule, so the black box stood over the viewport while a grid cartridge ran (read back in headless Chrome: the box's computed display `flex` beside the grid's `block`). Mended by `.plane-box[hidden] { display: none; }`.
+2. **An edit silent while the loop was paused.** At a rate above zero an edit is written at the next frame (§5), which a paused loop does not bring until Run, and the host said nothing. Measured in headless Chrome in real time over the owner's own page: running at 30, `(cell "Screen" "C2" 7)` drawn in the next frame; paused, the next edit held with nothing in the log until a frame was stepped. Mended in words, the edit's semantics unchanged: `edit` now says `frame n: the edit … waits for the next frame, which Run brings: the loop is paused at 30 frames a second.` The `grid` case's run over the double ends paused, writes an edit, finds the sentence, then runs a frame and finds the edit written (`waits`, a floor of 1); mutant page AH, the sentence cut, fails it by name, thirty-four pages in all; `web/README.md`'s `edit(row)` says so.
+3. **A card that would not hold still.** Decision 2's Camera, a column every ten frames, moved the window three times a second and the viewport with it, so the card could not be clicked, scrolled and edited as a sheet at its own rate. Amended at the owner's report: the Camera's `B2` a value that only an edit moves; `(cell "Camera" "B2" 5)` moves the window four columns right and the viewport by the move, the person's place in it kept (decision 6). The card 150 rows, 3,278 formula cells in 15 shapes, the Clock read by 9 (its `describe` golden blessed again; the six other goldens byte-equal); the loop oracle's run over the module moves the Camera by edits at frames 10 and 20, so its windows and frames are the same as before. Declined: the wheel, which at a rate above zero is the game's (decision 7) and would have made a person's scroll pan the window sideways; a slower pan, which still moves under a click.
+4. **Not a defect: the follow.** The screenshot, paused at frame 15, showed column A at the viewport's left, empty, where the Camera had placed the window at B1:CC50 since frame 10. Under the virtual clock the plain page never steps, so the panel was run in headless Chrome in real time, driven over the DevTools protocol: its viewport scrolled to B at frame 10, C at 20, D at 30 and E at 40 and stayed there between the moves, each move made by `_follow` and nothing else (a wrapped `scrollLeft` setter logged every one with its stack); the panel driven by hand under the virtual clock did the same. The owner's "constantly shifting one column to the right" is that follow. A scroll back to A by the person is kept, and column A, outside the window, is drawn empty, the record holding no cell of it.
+
+*Verified,* in a copy of `HEAD` (`e66614d`, the peer's `ENGINE.3` commit) with this item's files: `cargo fmt --all -- --check` and `cargo clippy --workspace --all-targets -- -D warnings` clean and `cargo test --workspace` 33 passed; the pass wrote the card's 150 rows and the six other cartridges unchanged; the module 682,679 bytes, unchanged, and the page 2,263,843 characters; `check_host_loop.ps1` clean at both ratios, `grid`'s counts as before and `waits` 1, the module's run the same 24 frames, 25 equal, 3 windows and 11,395 texts under a Camera moved by edits; `run_checks.ps1 -WithExtras` 11 checks and 12 verifiers, the controls of `check_cartridge.ps1` and `check_host_loop.ps1` among them, the latter failing all thirty-four mutant pages, AH by name; `check_spdx.ps1` in the repository against a scratch index of `HEAD` and the three new files, 83 files and 21 cartridge headers. All twelve and twelve.
+
+*What remains is the owner's:* the second hand test, then the commit at the owner's word, staged by hunk beside the peer's.
+
+*The owner's second hand test, 2026-10-12, passed:* "Hand tests pass; commit." The first slice committed the same day at the owner's word, staged by hunk over the peer's `e66614d`. The item stays 🟡 for its second slice: the Screen drawn from `values` once Frazaro ships `KERNEL.37`, at the pin's move, with `?blit=1`'s fourth case, `grid`, and the owner's baseline.
+
 ## `KIT.1` — the first verbs: the patterns the cartridges already write by hand, each a macro named for what a person means
 
 *Scoped 2026-10-12 at the owner's word, the day the pin moved to `vla-lang` 0.9.2 and was pushed. The roadmap's line, filed with the kit on 2026-10-11, names the patterns the device cards write again and again: a press counted on its rising edge, a value kept from the twin until an event replaces it, the first frame's `IF(Clock!$B$1=1, ...)`, Park and Miller's dice, player 1's ten key codes, the Write sheet's header and a row. It names the verbs that would hoist them (`pressed`, `count`, `hold`, `every`, `dice`, `first-frame`, `default-keys` and the Write table), says they compose by reference because `&expand` refuses a macro's call, and gives the oracle: the cards rewritten over the verbs expand to their bytes unchanged, so their replays and goldens stand. The scoping first took an inventory of every pattern the six sources write more than once. It then wrote each candidate into a scratch copy of the library and rewrote a scratch copy of every source over it, so that what hoists byte for byte is measured and not predicted; nothing in this tree was touched. A session minting and building `ENGINE.8` works in this tree at the same time; the work below names this item's files.*

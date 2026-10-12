@@ -55,7 +55,11 @@
   golden, the Log's record (ENGINE.4's second slice); and Sand's committed replay,
   a person's painting session, every frame's Screen held to the page's sand under
   the replay's brush and its end the golden, the Tally's record (CART.2's second
-  slice); it prints the result into
+  slice); and the grid the host draws, a grid cartridge's Screen through the
+  viewport, held at every frame to the record of the same window cell for
+  cell, its text, its fill and its place, by the page's own reading of the
+  record, over the double and over the grid card on the module (ENGINE.8);
+  it prints the result into
   <pre id="loop"> once the last case has answered, which tools/check_host_loop.ps1
   reads under a headless browser. With ?blit=1 it is the
   blit's instrument, a 320 by 200 plane drawn 120 times at the scale that fits the
@@ -144,6 +148,8 @@
   .engine { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; align-items: start; }
   @media (max-width: 860px) { .engine { grid-template-columns: minmax(0, 1fr); } }
   .plane-box { height: 440px; background: #1d1d1b; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  /* hidden while a grid cartridge's viewport shows the Screen: its flex would keep it shown (ENGINE.8's hand test) */
+  .plane-box[hidden] { display: none; }
   .plane-box canvas { display: block; outline: none; image-rendering: pixelated; }
   .plane-box canvas:focus { box-shadow: 0 0 0 2px var(--lavender-deep); }
   .engine-side .controls { margin: 0 0 8px; }
@@ -153,6 +159,8 @@
   .frame-line { font-size: 13px; color: #6b6b66; margin: 6px 0 0; min-height: 1.4em; }
   .frame-line.refused, .engine-log li.refused { color: #a2262b; }
   .grid.small { height: 220px; }
+  /* A grid cartridge's Screen, drawn by the host's viewport in the plane's place (ENGINE.8). */
+  .grid.screen { height: 440px; }
 </style>
 </head>
 <body>
@@ -168,10 +176,11 @@
       <div class="engine">
         <div>
           <div id="plane-box" class="plane-box"><canvas id="plane" tabindex="0" aria-label="the Screen, drawn as a plane of colour indices"></canvas></div>
+          <div id="eng-screen-grid" class="grid screen" hidden aria-label="the Screen, drawn as a grid by the viewport"></div>
           <p id="frame-line" class="frame-line"></p>
         </div>
         <div class="engine-side">
-          <p class="controls"><label>Cartridge <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="gun">Glider gun</option><option value="testcard">Test card</option><option value="inputcard">Input card</option><option value="soundcard">Sound card</option><option value="sand">Sand</option></select></label></p>
+          <p class="controls"><label>Cartridge <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="gun">Glider gun</option><option value="testcard">Test card</option><option value="inputcard">Input card</option><option value="soundcard">Sound card</option><option value="sand">Sand</option><option value="gridcard">Grid card</option></select></label></p>
           <p class="controls"><button type="button" id="eng-run">Run</button> <button type="button" id="eng-pause">Pause</button> <button type="button" id="eng-sound" aria-pressed="false">Sound on</button> <button type="button" id="eng-build">Build the cartridge</button> <button type="button" id="eng-load">Load the cartridge</button> <button type="button" id="eng-copy">Copy the log</button></p>
           <p class="controls"><button type="button" id="eng-replay-play">Play the replay</button> <button type="button" id="eng-replay-copy">Copy the replay</button></p>
           <p class="controls"><label style="flex:1 1 100%">An edit, one row: <input type="text" id="eng-edit" spellcheck="false" value="(cell &quot;Palette&quot; &quot;B1&quot; &quot;#FF8800&quot;)"></label> <button type="button" id="eng-write">Write</button></p>
@@ -183,7 +192,7 @@
         <summary>The source and the cartridge</summary>
         <p>The source, <code id="eng-src-path">cartridges/life/life.source.vla</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one call a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load the cartridge loads it: the pass loads nothing, and a cartridge running goes on running (SPEC.md section 7.8). The fake module holds no pass, and says so.</p>
         <textarea id="eng-src" rows="14" spellcheck="false" aria-label="the cartridge's source"></textarea>
-        <p>The cartridge, <code id="eng-cart-path">cartridges/life/life.vla</code>, the file the host loads, picked above: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no colour; the input card, every cell the host writes before a step, drawn; the sound card, the Audio sheet's four voices played, heard after Sound on; or Sand, a falling-sand toy that opens raining sand: paint with the left button, erase with the right, size the brush with the wheel, and press 1, 2 or 0 for sand, wall or empty. Edit it, or build it again from its source, and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
+        <p>The cartridge, <code id="eng-cart-path">cartridges/life/life.vla</code>, the file the host loads, picked above: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no colour; the input card, every cell the host writes before a step, drawn; the sound card, the Audio sheet's four voices played, heard after Sound on; or Sand, a falling-sand toy that opens raining sand: paint with the left button, erase with the right, size the brush with the wheel, and press 1, 2 or 0 for sand, wall or empty; or the grid card, a grid cartridge drawn by the viewport, every kind of value, format and look a grid cell can hold, through a Camera that only an edit moves: write <code>(cell "Camera" "B2" 5)</code> and the window moves four columns right, the viewport scrolling with it. Edit it, or build it again from its source, and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
         <textarea id="eng-cart" rows="14" spellcheck="false" aria-label="the cartridge, the rows a load takes"></textarea>
         <details>
           <summary>The library the sources include, <code id="eng-lib-path">cartridges/common.vla</code></summary>
@@ -199,7 +208,7 @@
       <p class="controls"><label>A sheet, live <select id="eng-sheet" aria-label="the sheet to show">
         <option value="Write" selected>Write</option><option value="Camera">Camera</option><option value="Clock">Clock</option><option value="Input">Input</option>
         <option value="Keys">Keys</option><option value="Palette">Palette</option><option value="Audio">Audio</option><option value="File">File</option><option value="State">State</option>
-      </select></label> <span class="status">Click the plane to give it the keys: the arrows, Z, X, A, S, Enter and Space are player 1's.</span></p>
+      </select></label> <span class="status">Click the Screen to give it the keys: the arrows, Z, X, A, S, Enter and Space are player 1's; in a grid, a key the Keys sheet does not bind moves the selection.</span></p>
       <div id="eng-grid" class="grid small" aria-label="the device sheet's record"></div>
     </div>
   </section>
@@ -273,12 +282,14 @@
 <script type="text/plain" id="cartridge-inputcard">{{CARTRIDGE:inputcard}}</script>
 <script type="text/plain" id="cartridge-soundcard">{{CARTRIDGE:soundcard}}</script>
 <script type="text/plain" id="cartridge-sand">{{CARTRIDGE:sand}}</script>
+<script type="text/plain" id="cartridge-gridcard">{{CARTRIDGE:gridcard}}</script>
 <script type="text/plain" id="source-life">{{SOURCE:life}}</script>
 <script type="text/plain" id="source-gun">{{SOURCE:gun}}</script>
 <script type="text/plain" id="source-testcard">{{SOURCE:testcard}}</script>
 <script type="text/plain" id="source-inputcard">{{SOURCE:inputcard}}</script>
 <script type="text/plain" id="source-soundcard">{{SOURCE:soundcard}}</script>
 <script type="text/plain" id="source-sand">{{SOURCE:sand}}</script>
+<script type="text/plain" id="source-gridcard">{{SOURCE:gridcard}}</script>
 <script type="text/plain" id="replay-inputcard">{{REPLAY:inputcard}}</script>
 <script type="text/plain" id="golden-inputcard">{{GOLDEN:inputcard}}</script>
 <script type="text/plain" id="replay-soundcard">{{REPLAY:soundcard}}</script>
@@ -329,7 +340,8 @@
     soundcard: { text: soundcardText, file: 'soundcard.vla', path: 'cartridges/soundcard/soundcard.vla', source: embedded('source-soundcard'), sourcePath: 'cartridges/soundcard/soundcard.source.vla',
                  replay: embedded('replay-soundcard'), replayPath: 'cartridges/soundcard/soundcard.replay.vla', golden: embedded('golden-soundcard') },
     sand: { text: sandText, file: 'sand.vla', path: 'cartridges/sand/sand.vla', source: embedded('source-sand'), sourcePath: 'cartridges/sand/sand.source.vla',
-            replay: embedded('replay-sand'), replayPath: 'cartridges/sand/sand.replay.vla', golden: embedded('golden-sand') }
+            replay: embedded('replay-sand'), replayPath: 'cartridges/sand/sand.replay.vla', golden: embedded('golden-sand') },
+    gridcard: { text: embedded('cartridge-gridcard'), file: 'gridcard.vla', path: 'cartridges/gridcard/gridcard.vla', source: embedded('source-gridcard'), sourcePath: 'cartridges/gridcard/gridcard.source.vla' }
   };
   // The libraries the sources include, each under the path an include resolves to.
   var LIBRARIES = {
@@ -443,9 +455,13 @@
     var libEl = document.getElementById('eng-lib'), textsEl = document.getElementById('eng-texts');
     var replayEl = document.getElementById('eng-replay'), replayBoxEl = document.getElementById('eng-replay-box'), replayPathEl = document.getElementById('eng-replay-path');
     cartEl.value = lifeText; srcEl.value = CARTRIDGES.life.source; libEl.value = LIBRARIES.common.text;
-    var host = new HOST({ canvas: planeCv, box: planeBox });
+    // A grid cartridge's Screen is drawn by the host's own viewport, in the plane's place (ENGINE.8).
+    var screenGrid = document.getElementById('eng-screen-grid');
+    var host = new HOST({ canvas: planeCv, box: planeBox, grid: screenGrid });
     var dvp = new VP(document.getElementById('eng-grid'));
-    var shownAt = -1, shownTime = -1e9, rate = -1, items = {};
+    var shownAt = -1, shownTime = -1e9, rate = -1, mode = 'plane', items = {};
+    // The keys go to what shows the Screen: the plane's canvas, or the viewport's scroller.
+    function focusScreen() { if (mode === 'grid' && host.vp) host.vp.scroller.focus(); else planeCv.focus(); }
     // The log drawn in place: a new event appends a line, a repeat changes only its own line's
     // count, so the other lines stay put to be read, selected and copied; the list follows a new
     // line only when it was already at its bottom.
@@ -469,9 +485,11 @@
       var cam = host.camera || { row: 1, col: 1 };
       return VP.rangeText({ top: cam.row, left: cam.col, bottom: cam.row + 19, right: cam.col + 19 });
     }
+    // Each refresh replaces the record with the scroll and the selection kept (ENGINE.8, decision 5): drawn
+    // whole, the sheet went back to A1 five times a second while the loop ran.
     function showSheet() {
       var t = host.viewRecord(sheetEl.value, windowOf(sheetEl.value));
-      if (t) { dvp.load(t); dvp.show(sheetEl.value); }
+      if (t) { dvp.load(t, { keep: true }); dvp.show(sheetEl.value); }
     }
     // The picker holds the sheets the grid holds, read off a record's sheet rows, the twins last:
     // the engine's Life holds Screen, Palette, Clock, File and Input, the fake module its nine and State.
@@ -506,7 +524,7 @@
       if (e.rate !== undefined) rate = e.rate;   // the Clock's rate, which a person may write (ENGINE.3)
       var many = function (n, one, more) { return n + ' ' + (n === 1 ? one : more); };
       // a replay playing says where it is in it (ENGINE.3's second slice)
-      frameEl.textContent = (e.replay ? 'Replaying frame ' + e.frame + ' of ' + e.replay : 'Frame ' + e.frame) + ', the window ' + e.window + ', ' + (e.scale ? e.scale + ' device pixels a cell' : 'no canvas') + '; ' + many(c.derivedApplied, 'derived write', 'derived writes') + ' landed and ' + c.derivedRefused + ' refused, ' + many(c.edits, 'edit', 'edits') + ' written, ' + many(c.yields, 'yield', 'yields') + '.' +
+      frameEl.textContent = (e.replay ? 'Replaying frame ' + e.frame + ' of ' + e.replay : 'Frame ' + e.frame) + ', the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + '; ' + many(c.derivedApplied, 'derived write', 'derived writes') + ' landed and ' + c.derivedRefused + ' refused, ' + many(c.edits, 'edit', 'edits') + ' written, ' + many(c.yields, 'yield', 'yields') + '.' +
         // while the sound is on, the frames sounded and the timeline's restarts and skips (ENGINE.4, decision 1)
         (host.soundIs() ? ' The sound: ' + many(c.sounded, 'frame', 'frames') + ' sounded, ' + many(c.restarts, 'restart', 'restarts') + ', ' + c.skipped + ' skipped.' : '');
       // about five times a second while the loop runs, so every frame of a cartridge slower than that
@@ -521,9 +539,13 @@
     host.on('stop', function (e) { if (e.frame !== shownAt) { shownAt = e.frame; shownTime = performance.now(); showSheet(); } });
     // A load is frame 0, drawn at once, nothing computed; the line says so until the first frame lands.
     host.on('load', function (e) {
-      shownAt = -1; shownTime = -1e9; rate = e.rate;
+      shownAt = -1; shownTime = -1e9; rate = e.rate; mode = e.mode;
+      // the box the mode draws in shown, the other hidden; the viewport, made while its box was hidden,
+      // measured again now that it shows
+      planeBox.hidden = mode === 'grid'; screenGrid.hidden = mode !== 'grid';
+      if (mode === 'grid' && host.vp) host.vp.redraw();
       frameEl.className = 'frame-line';
-      frameEl.textContent = 'Frame 0, the window ' + e.window + ', ' + (e.scale ? e.scale + ' device pixels a cell' : 'no canvas') + ': the cartridge as loaded, nothing computed until ' + (e.rate ? 'the first step.' : 'an edit steps it.');
+      frameEl.textContent = 'Frame 0, the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + ': the cartridge as loaded, nothing computed until ' + (e.rate ? 'the first step.' : 'an edit steps it.');
     });
     function loadCartridge() {
       var r = host.load(cartEl.value, (CARTRIDGES[pickEl.value] || CARTRIDGES.life).file);
@@ -548,7 +570,7 @@
       moduleEl.textContent = why + ' The loop runs against the fake module, web/fake.js.';
       if (a.ok) loadCartridge();
     }
-    document.getElementById('eng-run').addEventListener('click', function () { host.start(); planeCv.focus(); });
+    document.getElementById('eng-run').addEventListener('click', function () { host.start(); focusScreen(); });
     document.getElementById('eng-pause').addEventListener('click', function () { host.stop(); statusEl.textContent = 'Paused at frame ' + host.counters().frame + '.'; });
     // Sound on and off (ENGINE.4, decision 5): the audio context is made at this press, a person's act, as
     // the browser's autoplay policy asks; a click on the plane gives it the keys and never the sound.
@@ -558,7 +580,7 @@
       var on = host.soundIs();
       soundEl.textContent = on ? 'Sound off' : 'Sound on';
       soundEl.setAttribute('aria-pressed', on ? 'true' : 'false');
-      if (r.ok) planeCv.focus();
+      if (r.ok) focusScreen();
     });
     document.getElementById('eng-build').addEventListener('click', buildCartridge);
     document.getElementById('eng-load').addEventListener('click', loadCartridge);
@@ -604,7 +626,7 @@
     document.getElementById('eng-replay-play').addEventListener('click', function () {
       if (!replayEl.value.trim()) { replayBoxEl.open = true; statusEl.textContent = 'Paste a replay into the box under The replay, then press Play the replay.'; statusEl.className = 'status'; return; }
       var r = host.play(replayEl.value);
-      if (r.ok) { fillSheets(); showSheet(); planeCv.focus(); }
+      if (r.ok) { fillSheets(); showSheet(); focusScreen(); }
     });
     document.getElementById('eng-write').addEventListener('click', function () { host.edit(editEl.value); });
     editEl.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); host.edit(editEl.value); } });
@@ -629,7 +651,9 @@
     function status(text, refused) { statusEl.textContent = text; statusEl.className = refused ? 'status refused' : 'status'; }
     function cellWords(c) {
       if (c.kind === 'empty') return 'an empty cell';
-      return (c.kind === 'formula' ? 'the formula ' : 'the value ') + c.text + (c.sentence ? ', written by row ' + c.sentence : '');
+      // a formula with a value shows the value, and keeps its own text for the bar (ENGINE.8)
+      var what = c.kind !== 'formula' ? 'the value ' + c.text : (c.valued ? 'the formula ' + c.formula + ', its value ' + c.text : 'the formula ' + c.text);
+      return what + (c.sentence ? ', written by row ' + c.sentence : '');
     }
     function newViewport() {
       if (vp) vp.destroy();
@@ -1551,6 +1575,354 @@
       if (!sawEngine) P.push('the engine\'s frame 6 was never held with its two edits');
     }
     return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeProbes: kf.probes, module: module, frames: km.frames, equal: km.equal, windows: km.windows, probes: km.probes, kinds: km.kinds, live: st.live, misfrees: st.misfrees }, problems: P };
+  }
+  // ---- ENGINE.8: the grid the host draws is the record of the same window, cell for cell ----
+  // The oracle's own reading of a grid record and its own layout, never the viewport's: SPEC.md section 3.1
+  // and decision 19 as ENGINE.8 reads them, with KERNEL.5's rules of the record. A cell row shows its value
+  // as the record spells it; a formula row its text, until its value row lands and then its value. A cell
+  // whose value equals a look's draws with the look's format in place of its own: a number by its value, so
+  // 0 and -0 are one; a text by its characters; a truth value; an error by its name. An empty cell, and a
+  // formula with no value, match no look; the first look the record holds for a value is its look. A row's
+  // height is in points at 96 dots an inch, a hidden row or column 0, and neither draws anything.
+  var GQ = { column: 64, row: 20, point: 96 / 72, font: 13, pad: 4, digit: 7, headerMin: 32, headerPad: 12, headerDigit: 7, lineHeight: 1.2, lookback: 8 };
+  var GRID_BOX = { w: 1600, h: 700 };   // the stage's box: the card's tall, hidden and styled rows and columns in view
+  function gqText(d) {
+    if (typeof d === 'string') return d;
+    if (d && d.num !== undefined) return d.text;
+    if (d && d.sym === 'true') return 'TRUE';
+    if (d && d.sym === 'false') return 'FALSE';
+    if (Array.isArray(d) && d.length === 2 && typeof d[1] === 'string') return d[1];
+    return d && d.sym !== undefined ? d.sym : '';
+  }
+  function gqKind(d) {
+    if (typeof d === 'string') return 'text';
+    if (d && d.num !== undefined) return 'number';
+    if (d && (d.sym === 'true' || d.sym === 'false')) return 'bool';
+    if (Array.isArray(d) && d[0] && d[0].sym === 'error') return 'error';
+    if (Array.isArray(d) && d[0] && d[0].sym === 'date') return 'date';
+    return 'text';
+  }
+  function gqKey(d) {
+    if (typeof d === 'string') return 'text ' + d;
+    if (d && d.num !== undefined) return 'number ' + (d.num === 0 ? 0 : d.num);
+    if (d && d.sym === 'true') return 'truth TRUE';
+    if (d && d.sym === 'false') return 'truth FALSE';
+    if (Array.isArray(d) && d.length === 2 && d[0] && d[0].sym === 'error' && typeof d[1] === 'string') return 'error ' + d[1];
+    return null;
+  }
+  function gqColumnPixels(width) { return Math.floor(((256 * width + Math.floor(128 / GQ.digit)) / 256) * GQ.digit); }
+  function gqName(key) { var p = key.split(','); return VP.colName(+p[1]) + p[0]; }
+  function gqRead(text) {
+    var forms = VP.readForms(text), m = { window: null, gridlines: true, columns: {}, rows: {}, formats: { 0: { fill: null, num: 'general', wrap: false } }, looks: [], cells: {} };
+    for (var i = 0; i < forms.length; i++) {
+      var f = forms[i];
+      if (!Array.isArray(f) || !f[0] || f[0].sym === undefined) continue;
+      var head = f[0].sym, a, e;
+      if (head === 'window') m.window = VP.parseRange(f[2]);
+      else if (head === 'gridlines') m.gridlines = !!f[2] && f[2].sym === 'on';
+      else if (head === 'column') m.columns[VP.colIndex(f[2])] = { width: f[3] && f[3].num !== undefined ? f[3].num : null, hidden: !!f[4] && f[4].sym === 'hidden', style: f[5] && f[5].num !== undefined ? f[5].num : null };
+      else if (head === 'row') m.rows[f[2].num] = { height: f[3] && f[3].num !== undefined ? f[3].num : null, hidden: !!f[4] && f[4].sym === 'hidden' };
+      else if (head === 'format') m.formats[f[1].num] = { fill: typeof f[2] === 'string' ? '#' + f[2] : null, num: f[3].sym, wrap: f[4].sym === 'wrap' };
+      else if (head === 'look') m.looks.push({ key: gqKey(f[2]), index: f[3].num });
+      else if (head === 'cell' || head === 'formula' || head === 'value' || head === 'style') {
+        a = VP.parseRange(f[2]);
+        if (!a) continue;
+        var key = a.top + ',' + a.left;
+        if (head === 'cell') m.cells[key] = { kind: 'cell', text: gqText(f[3]), vkind: gqKind(f[3]), key: gqKey(f[3]), valued: true, style: 0 };
+        else if (head === 'formula') m.cells[key] = { kind: 'formula', text: f[3], vkind: 'formula', key: null, valued: false, style: 0 };
+        else if ((e = m.cells[key])) {
+          if (head === 'value') { e.text = gqText(f[3]); e.vkind = gqKind(f[3]); e.key = gqKey(f[3]); e.valued = true; }
+          else e.style = f[3].num;
+        }
+      }
+    }
+    return m;
+  }
+  // A cell's format and where it came from: its value's first look, else its own style, else, for an
+  // empty cell, its column's style, else format 0.
+  function gqFormat(m, cell, c) {
+    if (cell && cell.key !== null) {
+      for (var i = 0; i < m.looks.length; i++) {
+        if (m.looks[i].key !== cell.key) continue;
+        if (m.formats[m.looks[i].index]) return { f: m.formats[m.looks[i].index], src: 'look' };
+        break;
+      }
+    }
+    if (cell && cell.style !== 0 && m.formats[cell.style]) return { f: m.formats[cell.style], src: 'style' };
+    if (!cell) { var col = m.columns[c]; if (col && col.style !== null && m.formats[col.style]) return { f: m.formats[col.style], src: 'column' }; }
+    return { f: m.formats[0], src: 'none' };
+  }
+  function gqAlign(cell, f) {
+    if (f.num === 'text') return 'left';
+    if (cell.vkind === 'number' || cell.vkind === 'date') return 'right';
+    if (cell.vkind === 'bool' || cell.vkind === 'error') return 'center';
+    return 'left';
+  }
+  // The layout in device pixels from the record and the viewport's size, ratio and scroll, which are the
+  // host's state (SD-23): the columns by ECMA-376's rule, the rows by their points, the headers' sizes.
+  function gqLayout(m, g) {
+    var dpr = g.dpr, L = { dpr: dpr, W: g.canvasW, H: g.canvasH }, x = 0, c, r;
+    L.rowH = Math.round(GQ.row * dpr); L.headH = L.rowH; L.pad = Math.round(GQ.pad * dpr); L.lineH = Math.round(GQ.font * GQ.lineHeight * dpr);
+    L.font = Math.round(GQ.font * dpr) + 'px system-ui, "Segoe UI", sans-serif';
+    L.rows = m.window.bottom + Math.ceil(g.clientH / GQ.row) + 1;
+    L.cols = m.window.right + Math.ceil(g.clientW / GQ.column) + 1;
+    L.rhW = Math.round(Math.max(GQ.headerMin, GQ.headerPad + GQ.headerDigit * String(L.rows).length) * dpr);
+    L.colW = [0]; L.colX = [0, 0];
+    for (c = 1; c <= L.cols; c++) {
+      var col = m.columns[c], css = GQ.column;
+      if (col) { if (col.hidden) css = 0; else if (col.width !== null) css = gqColumnPixels(col.width); }
+      var w = Math.round(css * dpr);
+      L.colW.push(w); x += w; L.colX.push(x);
+    }
+    L.rowHt = [0]; L.top = [0, 0];
+    for (r = 1; r <= L.rows; r++) {
+      var s = m.rows[r], h = !s ? L.rowH : (s.hidden ? 0 : (s.height === null ? L.rowH : Math.round(Math.round(s.height * GQ.point) * dpr)));
+      L.rowHt.push(h); L.top.push(L.top[r] + h);
+    }
+    L.sx = g.scrollX; L.sy = g.scrollY; L.ox = L.rhW; L.oy = L.headH;
+    return L;
+  }
+  // What the viewport must draw in its body, by the record: each visible cell's fill, and each text, where
+  // it sits, how it aligns and where it is clipped, a nowrap text spilling into empty neighbours and one
+  // left of the view reaching into it; and the cells the record holds in a hidden row or column, counted.
+  function gqExpect(m, L, measure) {
+    var E = { texts: {}, wraps: {}, fills: {}, hiddenHeld: 0 }, ox = L.ox, oy = L.oy, sx = L.sx, sy = L.sy;
+    var clip = { x: ox, y: oy, w: L.W - ox, h: L.H - oy }, r, c, cell;
+    function rowAt(y) { var rr = 1; while (rr < L.rows && L.top[rr + 1] <= y) rr++; return rr; }
+    function colAt(xx) { var cc = 1; while (cc <= L.cols && L.colX[cc + 1] <= xx) cc++; return cc; }
+    var r0 = rowAt(sy), r1 = Math.min(L.rows, rowAt(L.H - 1 - oy + sy)), c0 = colAt(sx), c1 = Math.min(L.cols, colAt(L.W - 1 - ox + sx));
+    measure.font = L.font;
+    for (r = r0; r <= r1; r++) {
+      var h = L.rowHt[r], top = oy + L.top[r] - sy;
+      for (c = Math.max(1, c0 - GQ.lookback); c <= c1; c++) {
+        cell = m.cells[r + ',' + c] || null;
+        var w = L.colW[c];
+        if (h === 0 || w === 0) { if (cell && c >= c0) E.hiddenHeld++; continue; }
+        var fm = gqFormat(m, cell, c), left = ox + L.colX[c] - sx;
+        if (c >= c0 && fm.f.fill) E.fills[r + ',' + c] = { x: left, y: top, w: w, h: h, color: fm.f.fill, src: fm.src };
+        if (!cell || cell.text === '') continue;
+        var align = gqAlign(cell, fm.f);
+        if (c < c0 && (fm.f.wrap || align !== 'left')) continue;
+        var ax = align === 'left' ? left + L.pad : (align === 'right' ? left + w - L.pad : left + Math.round(w / 2));
+        if (fm.f.wrap) {
+          if (left + w <= clip.x || left >= clip.x + clip.w) continue;
+          E.wraps[r + ',' + c] = { text: cell.text, x: ax, y: top + Math.round(L.lineH / 2), clip: { x: left, y: top, w: w, h: h } };
+          continue;
+        }
+        var textW = measure.measureText(cell.text).width, clipW = w;
+        if (align === 'left' && textW + 2 * L.pad > w) {
+          for (var cc = c + 1; cc <= L.cols && clipW < textW + 2 * L.pad; cc++) { var e2 = m.cells[r + ',' + cc]; if (e2 && e2.text !== '') break; clipW += L.colW[cc]; }
+        }
+        if (left + clipW <= clip.x || left >= clip.x + clip.w) continue;
+        E.texts[r + ',' + c] = { text: cell.text, x: ax, y: top + Math.round(h / 2), align: align, clip: { x: left, y: top, w: clipW, h: h }, valued: cell.valued, formula: cell.kind === 'formula' };
+      }
+    }
+    return E;
+  }
+  // The viewport's draw list against the expectation, both ways: every expected text, wrapped text and fill
+  // drawn once and as expected, and nothing else drawn in the body.
+  function gqCompare(E, ops, at, P, k) {
+    var texts = {}, wraps = {}, fills = {}, i, op, key, bad = 0;
+    function say(s) { if (bad++ < 4) P.push(at + ': ' + s); }
+    for (i = 0; i < ops.length; i++) {
+      op = ops[i];
+      if (op.quadrant !== 'body' || !op.row) continue;
+      key = op.row + ',' + op.col;
+      if (op.op === 'text') { if (op.wrap) (wraps[key] = wraps[key] || []).push(op); else { if (texts[key]) say(gqName(key) + ' is drawn twice'); texts[key] = op; } }
+      else if (op.op === 'fill') fills[key] = op;
+    }
+    for (key in E.texts) {
+      var ex = E.texts[key], got = texts[key], name = gqName(key);
+      if (!got) { say(name + ' (' + JSON.stringify(ex.text) + ') is not drawn'); continue; }
+      if (got.text !== ex.text) say(name + ' shows ' + JSON.stringify(got.text) + ', and the record says ' + JSON.stringify(ex.text));
+      else if (got.x !== ex.x || got.y !== ex.y) say(name + ' is drawn at ' + got.x + ',' + got.y + ', and the record places it at ' + ex.x + ',' + ex.y);
+      else if (got.align !== ex.align) say(name + ' is aligned ' + got.align + ', and the record says ' + ex.align);
+      else if (got.clip.x !== ex.clip.x || got.clip.y !== ex.clip.y || got.clip.w !== ex.clip.w || got.clip.h !== ex.clip.h) say(name + ' is clipped to ' + [got.clip.x, got.clip.y, got.clip.w, got.clip.h].join(',') + ', and the record says ' + [ex.clip.x, ex.clip.y, ex.clip.w, ex.clip.h].join(','));
+      else if (!!got.valued !== !!ex.valued || (got.kind === 'formula') !== ex.formula) say(name + ' is drawn as ' + (got.kind === 'formula' ? (got.valued ? 'a formula\'s value' : 'a formula before its value') : 'a value') + ', and the record holds ' + (ex.formula ? (ex.valued ? 'a formula with its value' : 'a formula with no value') : 'a value'));
+      else { k.texts++; if (ex.formula && !ex.valued) k.unvalued++; }
+      delete texts[key];
+    }
+    for (key in texts) if (Object.prototype.hasOwnProperty.call(texts, key)) say('a text is drawn at ' + gqName(key) + ', ' + JSON.stringify(texts[key].text) + ', where the record holds none');
+    for (key in E.wraps) {
+      var wx = E.wraps[key], lines = wraps[key];
+      if (!lines) { say('the wrapped ' + gqName(key) + ' is not drawn'); continue; }
+      lines.sort(function (p, q) { return p.line - q.line; });
+      var joined = lines.map(function (l) { return l.text; }).join(' ');
+      if (joined.replace(/ /g, '') !== wx.text.replace(/ /g, '')) say('the wrapped ' + gqName(key) + ' shows ' + JSON.stringify(joined) + ', and the record says ' + JSON.stringify(wx.text));
+      else if (lines[0].x !== wx.x || lines[0].y !== wx.y || lines[0].clip.w !== wx.clip.w || lines[0].clip.h !== wx.clip.h) say('the wrapped ' + gqName(key) + ' is drawn at ' + lines[0].x + ',' + lines[0].y + ' in ' + lines[0].clip.w + ' by ' + lines[0].clip.h + ', and the record places it at ' + wx.x + ',' + wx.y + ' in ' + wx.clip.w + ' by ' + wx.clip.h);
+      else k.wraps++;
+      delete wraps[key];
+    }
+    for (key in wraps) if (Object.prototype.hasOwnProperty.call(wraps, key)) say('a wrapped text is drawn at ' + gqName(key) + ' where the record holds none');
+    for (key in E.fills) {
+      var ef = E.fills[key], gf = fills[key];
+      if (!gf) { say(gqName(key) + '\'s fill, ' + ef.color + ' by its ' + ef.src + ', is not drawn'); continue; }
+      if (gf.x !== ef.x || gf.y !== ef.y || gf.w !== ef.w || gf.h !== ef.h) say(gqName(key) + '\'s fill is at ' + [gf.x, gf.y, gf.w, gf.h].join(',') + ', and the record places it at ' + [ef.x, ef.y, ef.w, ef.h].join(','));
+      else if (String(gf.color).toLowerCase() !== ef.color.toLowerCase()) say(gqName(key) + '\'s fill is ' + gf.color + ', and the record says ' + ef.color + ' by its ' + ef.src);
+      else { k.fills++; if (ef.src === 'look') k.looks++; else if (ef.src === 'style') k.styles++; else if (ef.src === 'column') k.columns++; }
+      delete fills[key];
+    }
+    for (key in fills) if (Object.prototype.hasOwnProperty.call(fills, key)) say('a fill is drawn at ' + gqName(key) + ' where the record declares none');
+    return bad === 0;
+  }
+  // A pixel at a corner of the first visible cell of each kind of fill, a look's, a style's and a column's,
+  // off the selection: the canvas holds the fill's colour exactly.
+  function gqProbes(E, vp, at, P, k) {
+    var ctx = vp.canvas.getContext('2d'), seen = {}, sr = vp.selection().range;
+    for (var key in E.fills) {
+      var ef = E.fills[key], p = key.split(','), r = +p[0], c = +p[1];
+      if (seen[ef.src] || (r >= sr.top && r <= sr.bottom && c >= sr.left && c <= sr.right)) continue;
+      if (ef.w < 3 || ef.h < 3 || ef.x + 1 < 0 || ef.y + 1 < 0 || ef.x + 1 >= vp.canvas.width || ef.y + 1 >= vp.canvas.height) continue;
+      seen[ef.src] = true;
+      var d = ctx.getImageData(ef.x + 1, ef.y + 1, 1, 1).data, want = hexOf(ef.color);
+      if (d[0] !== want[0] || d[1] !== want[1] || d[2] !== want[2]) P.push(at + ': the pixel inside ' + gqName(key) + ' reads ' + [d[0], d[1], d[2]].join(',') + ', and its fill by its ' + ef.src + ' is ' + want.join(','));
+      else k.probes++;
+    }
+  }
+  // The host over one module and a grid cartridge, its viewport in a box of the stage, stepped by manual
+  // ticks, a frame a tick. At frame 0 and after every frame: the window the host viewed is the Camera's, by
+  // its record and, when given, by the cartridge's own arithmetic; the viewport's top-left cell is the
+  // window's corner and the person's scroll since; the record of that window, viewed here, is drawn cell for
+  // cell; a pixel of each kind of fill; and the selection a person made is kept. plan: edits[f], the person's
+  // edits before frame f; before(f, host) and after(f, host), a person's acts around frame f; window(f), the
+  // cartridge's own window; offset(f), the rows the person scrolled; selected, { from, cell }; check(f, at,
+  // m, host), a frame's own pins; end(host, t), a person's acts after the last frame; strict, no refusal said.
+  function gridRun(exports, label, text, file, frames, plan, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:' + GRID_BOX.w + 'px;height:' + GRID_BOX.h + 'px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box });
+    var D = new Driver({ exports: exports }), windows = {}, measure = document.createElement('canvas').getContext('2d');
+    try {
+      var a = host.attach(exports);
+      if (!a.ok) { P.push(label + ': the host refused the module: ' + a.sentence); return; }
+      var ld = host.load(text, file);
+      if (!ld.ok) { P.push(label + ': the cartridge did not load: ' + ld.sentence); return; }
+      if (ld.mode !== 'grid' || !host.vp) { P.push(label + ': the cartridge loaded as ' + ld.mode + (host.vp ? '' : ', and the host made no viewport')); return; }
+      var h = ld.handle, t = 1000;
+      host.start(); host.tick(t);
+      for (var f = 0; f <= frames; f++) {
+        if (f > 0) {
+          if (plan.before) plan.before(f, host);
+          var evs = (plan.edits && plan.edits[f]) || [];
+          for (var e = 0; e < evs.length; e++) host.edit(evs[e]);
+          t += 34; host.tick(t);
+          if (host.counters().frame !== f) { P.push(label + ': after tick ' + f + ' the host is at frame ' + host.counters().frame); break; }
+        }
+        var at = label + ' frame ' + f;
+        var cam = recordValues(D.call('alonzo_view', [h], ['grid', 'Camera', '']).text);
+        var row = cam.B1 && cam.B1.num !== undefined ? cam.B1.num : 1, col = cam.B2 && cam.B2.num !== undefined ? cam.B2.num : 1;
+        var want = lqRange(row, col, ld.h, ld.w), win = host.counters().window;
+        if (plan.window && plan.window(f) !== want) P.push(at + ': the Camera\'s record places ' + want + ' where the card and its edits place ' + plan.window(f));
+        if (win !== want) { P.push(at + ': the host drew through ' + win + ' where the Camera\'s record places ' + want); continue; }
+        windows[win] = true;
+        var s = host.vp.scrolled(), wantTop = row + (plan.offset ? plan.offset(f) : 0);
+        if (s.top !== wantTop || s.left !== col) { P.push(at + ': the viewport shows ' + VP.colName(s.left) + s.top + ' at its top left, and the Camera at ' + VP.colName(col) + row + (wantTop !== row ? ' with the person\'s scroll of ' + (wantTop - row) + ' rows' : '') + ' puts ' + VP.colName(col) + wantTop + ' there'); continue; }
+        var m = gqRead(D.call('alonzo_view', [h], ['grid', 'Screen', win]).text), L = gqLayout(m, host.vp.geometry()), E = gqExpect(m, L, measure);
+        if (!gqCompare(E, host.vp.draws(), at, P, k)) continue;
+        k.hidden = Math.max(k.hidden, E.hiddenHeld);
+        gqProbes(E, host.vp, at, P, k);
+        if (plan.selected && f >= plan.selected.from) {
+          var sel = host.vp.selection().text;
+          if (sel !== plan.selected.cell) { P.push(at + ': the selection is ' + sel + ', where the person selected ' + plan.selected.cell + ' before frame ' + plan.selected.from + ' and each frame since must keep it'); continue; }
+          k.kept++;
+        }
+        if (plan.check) plan.check(f, at, m, E, host);
+        k.equal++;
+        if (plan.after) plan.after(f, host);
+      }
+      k.frames = host.counters().frame;
+      if (plan.end) plan.end(host, t);
+      var refusals = host.sentences().filter(function (sn) { return sn.refusal; });
+      if (plan.strict && refusals.length) P.push(label + ': the host was refused: ' + refusals[0].text);
+      // the unload empties the viewport: it shows no picture of a grid the module no longer holds
+      host.unload();
+      var left = host.vp.draws().filter(function (o) { return (o.op === 'text' || o.op === 'fill') && o.row; }).length;
+      if (left) P.push(label + ': after the unload the viewport still draws ' + left + ' cell(s) of a grid the module no longer holds'); else k.cleared = 1;
+    } finally { host.destroy(); stage.removeChild(box); }
+    k.windows = Object.keys(windows).length;
+  }
+  // ENGINE.8's oracle (decision 9). Over the double, a grid cartridge of 20 by 12 whose tiles draw through
+  // the double's looks: its Camera moved by edits, a formula written outside the declared size, with no
+  // value and so its text, a value beside it through its look, a cell selected and kept, the pointer moved
+  // onto a cell and read back from the Input sheet as the Screen's own cell, a bound key taken from the
+  // viewport and read back, and, the loop paused at its rate, an edit said to wait for the frame Run brings
+  // and written in it. Over the engine's module, when the page holds one, the grid card for twenty-four
+  // frames, its Camera moved a column right by an edit at frames 10 and 20: frame 0's formulas as their
+  // texts, a value and a formula written into the window at frame 6 and seen in that frame, a cell selected
+  // and kept, and a person's scroll of two rows kept through the Camera's move at frame 20.
+  function caseGrid() {
+    var P = [], kf = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0 };
+    var km = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0 };
+    var x = { pointer: 0, key: 0, edited: 0, waits: 0, edits: 0, followed: 0 }, module = 0;
+    var fake = FAKE.create({}), taken = false;
+    function cellCenter(host, r, c) {
+      var g = host.vp.geometry(), rect = host.vp.box.getBoundingClientRect();
+      return { x: rect.left + (g.rhW + g.colX[c] - g.scrollX + g.colW[c] / 2) / g.dpr, y: rect.top + (g.headH + (r - 1) * g.rowH - g.scrollY + g.rowH / 2) / g.dpr };
+    }
+    gridRun(fake.exports, 'fake', lifeText.replace('(screen plane 320 200)', '(screen grid 20 12)'), 'grid.vla', 12, {
+      edits: { 3: ['(cell "Camera" "B2" 12)'], 5: ['(formula "Screen" "U5" "=1")', '(cell "Screen" "V6" 3)'], 9: ['(cell "Camera" "B2" 1)'] },
+      selected: { from: 3, cell: 'C5' },
+      before: function (f, host) {
+        var sc = host.vp.scroller;
+        if (f === 3) host.vp.select('C5');
+        if (f === 6) { var p = cellCenter(host, 4, 14); sc.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: p.x, clientY: p.y })); }
+        if (f === 7) taken = !sc.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, code: 'ArrowRight', key: 'ArrowRight' }));
+        if (f === 8) sc.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, cancelable: true, code: 'ArrowRight', key: 'ArrowRight' }));
+      },
+      check: function (f, at, m, E, host) {
+        var hh = host.counters().handle;
+        function v(addr) { var en = fake.peek(hh, 'Input', addr); return en ? en.v : undefined; }
+        // a formula outside the declared size has no value and shows its text; a value beside it, its look
+        if (f === 5) {
+          var u5 = E.texts['5,21'], v6 = E.fills['6,22'];
+          if (!u5 || u5.text !== '=1' || u5.valued) P.push(at + ': U5, a formula written outside the declared size, is not drawn as its text before a value');
+          else if (!v6 || v6.src !== 'look' || v6.color.toLowerCase() !== '#00aaaa') P.push(at + ': V6, the value 3, is not drawn through the look of 3');
+          else x.edited = 1;
+        }
+        if (f === 6) { if (v('B11') !== 14 || v('B12') !== 4) P.push(at + ': the pointer over N4 was written as column ' + v('B11') + ' and row ' + v('B12') + ', not the Screen\'s own column 14 and row 4'); else x.pointer = 1; }
+        if (f === 7) { if (!taken || v('B4') !== 1) P.push(at + ': ArrowRight, bound to player 1\'s right, was ' + (taken ? '' : 'not ') + 'taken from the viewport and Input!B4 holds ' + v('B4') + ', not 1'); else x.key = 1; }
+      },
+      // Paused at its rate, an edit waits for the next frame, which Run brings, and says so (the owner's hand
+      // test, 2026-10-12: the grid card, paused, took an edit and showed nothing); Run writes it.
+      end: function (host, t) {
+        var row = '(cell "Screen" "W7" 1)', from = host.sentences().length;
+        host.stop();
+        host.edit(row);
+        var said = host.sentences().slice(from).map(function (sn) { return sn.text; }).join(' / ');
+        if (said.indexOf('the edit ' + row + ' waits for the next frame, which Run brings') < 0) { P.push('fake: the edit ' + row + ', made while the loop was paused at its rate, was not said to wait for the frame Run brings: ' + (said || 'nothing was said')); return; }
+        host.start(); host.tick(t + 34); host.tick(t + 68);
+        said = host.sentences().slice(from).map(function (sn) { return sn.text; }).join(' / ');
+        if (said.indexOf('the edit ' + row + ' was written') < 0) P.push('fake: Run did not write the edit ' + row + ' that waited: ' + said);
+        else x.waits = 1;
+      }
+    }, kf, P);
+    var st = fake.stats();
+    var wasm = builtModule();
+    if (wasm) {
+      var bytes = bytesOfBase64(wasm);
+      module = bytes.length;
+      gridRun(HOST.instantiateSync(bytes), 'engine', CARTRIDGES.gridcard.text, 'gridcard.vla', 24, {
+        window: function (f) { return lqRange(1, f >= 20 ? 3 : (f >= 10 ? 2 : 1), 50, 80); },
+        edits: { 6: ['(cell "Screen" "C2" 7)', '(formula "Screen" "D2" "=Clock!$B$1")'], 10: ['(cell "Camera" "B2" 2)'], 20: ['(cell "Camera" "B2" 3)'] },
+        selected: { from: 3, cell: 'C5' },
+        before: function (f, host) { if (f === 3) host.vp.select('C5'); },
+        after: function (f, host) { if (f === 12) { var sc = host.vp.scrolled(); host.vp.scrollTo(sc.top + 2, sc.left); } },
+        offset: function (f) { return f > 12 ? 2 : 0; },
+        check: function (f, at, m, E) {
+          if (f === 6) {
+            var c2 = E.texts['2,3'], d2 = E.texts['2,4'];
+            if (!c2 || c2.text !== '7' || !E.fills['2,3'] || E.fills['2,3'].src !== 'look' || !d2 || d2.text !== '6' || !d2.valued) P.push(at + ': the edits of frame 6, C2 the value 7 through its look and D2 the formula =Clock!$B$1, are not drawn as 7 and 6 in their frame');
+            else x.edits = 1;
+          }
+          if (f === 20) x.followed = 1;   // its scroll check held the person's two rows through the Camera's move
+        },
+        strict: true
+      }, km, P);
+    }
+    return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeTexts: kf.texts, fakeLooks: kf.looks, fakeUnvalued: kf.unvalued, fakeProbes: kf.probes, fakeKept: kf.kept, fakeCleared: kf.cleared,
+                         pointer: x.pointer, key: x.key, edited: x.edited, waits: x.waits, module: module, frames: km.frames, equal: km.equal, windows: km.windows, texts: km.texts, wraps: km.wraps, fills: km.fills, looks: km.looks, styles: km.styles,
+                         columns: km.columns, unvalued: km.unvalued, hidden: km.hidden, probes: km.probes, kept: km.kept, followed: x.followed, edits: x.edits, cleared: km.cleared, live: st.live, misfrees: st.misfrees }, problems: P };
   }
   // ---- SPEC.3's second slice: the pass in the page is the command line's ----
   // The first line two texts differ at, both shown without their line ends, for a failure's words;
@@ -2544,7 +2916,7 @@
     out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' snap=' + R.snapMs + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
-                 ['audio', caseAudio], ['sound', caseSound]];
+                 ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid]];
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); if (!res.problems.length) ok++; }
     // A case answers its result, or a promise of it (sound, which waits on its render): the cases run in

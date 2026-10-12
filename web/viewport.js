@@ -9,8 +9,12 @@
   record declares, the fills and number formats of its formats, each cell's
   text where the record puts it, and the gridlines when the record says so.
   The viewport computes nothing: a cell row shows its value as the reader
-  spells it, a formula row shows its text until the value row lands
-  (KERNEL.7), and an unknown row is counted, never refused.
+  spells it, a formula row shows its text until its value row lands
+  (KERNEL.7) and its value after it, keeping the text for the bar; a look
+  row maps a value to the format every cell holding it draws with, and a
+  row row gives a row its height or hides it (SPEC.md decision 19; both read
+  since ENGINE.8, when the host began drawing a grid cartridge's Screen
+  every frame); and an unknown row is counted, never refused.
 
   What the viewport owns is the state no program sees (SD-23): the scroll, the
   selection, the widths a person dragged, the frozen panes, the marks a host
@@ -45,6 +49,7 @@
   // Pixels are CSS pixels here; the geometry scales them to device pixels.
   var DEFAULT_COLUMN_PX = 64;    // Excel's default column, 8.43 characters of Calibri 11 at 96 DPI
   var DEFAULT_ROW_PX = 20;       // Excel's default row, 15 points
+  var POINT_PX = 96 / 72;        // a row row's height is in points: at 96 dots an inch, 15 points are the default row
   var FONT_PX = 13;              // the benchmark's text size
   var FONT_FAMILY = 'system-ui, "Segoe UI", sans-serif';
   var TEXT_PAD_PX = 4;           // the padding inside a cell, left and right
@@ -70,7 +75,7 @@
     tabActive: '#ffffff'
   };
   var RULES = {
-    column: DEFAULT_COLUMN_PX, row: DEFAULT_ROW_PX, font: FONT_PX, pad: TEXT_PAD_PX, digit: MAX_DIGIT_WIDTH,
+    column: DEFAULT_COLUMN_PX, row: DEFAULT_ROW_PX, point: POINT_PX, font: FONT_PX, pad: TEXT_PAD_PX, digit: MAX_DIGIT_WIDTH,
     headerMin: ROW_HEADER_MIN_PX, headerPad: ROW_HEADER_PAD_PX, headerDigit: ROW_HEADER_DIGIT_PX, lineHeight: LINE_HEIGHT
   };
 
@@ -152,7 +157,7 @@
       }
       return { kind: 'text', text: d.map(function (x) { return valueOf(x).text; }).join(' ') };
     }
-    if (d.text !== undefined) return { kind: 'number', text: d.text };
+    if (d.text !== undefined) return { kind: 'number', text: d.text, num: d.num };
     if (d.sym !== undefined) {
       if (d.sym === 'true') return { kind: 'bool', text: 'TRUE' };
       if (d.sym === 'false') return { kind: 'bool', text: 'FALSE' };
@@ -163,6 +168,18 @@
   function strOf(d) { return typeof d === 'string' ? d : null; }
   function symOf(d) { return (d && d.sym !== undefined) ? d.sym : null; }
   function numOf(d) { return (d && d.num !== undefined) ? d.num : null; }
+  // A value as a look matches it (SPEC.md decision 19, as ENGINE.8 reads it): a number by its value, so 7
+  // and 7.0 are one value and so are 0 and -0, which the language spells apart in a cell row and a value
+  // row; a text by its characters exactly; a truth value; an error by its name. Anything else, a date or a
+  // value not computed, is matched by no look, and nor is an empty cell or a formula with no value.
+  function lookKeyOf(d) {
+    if (typeof d === 'string') return 't:' + d;
+    if (d && d.num !== undefined) return 'n:' + String(d.num);
+    if (d && d.sym === 'true') return 'b:true';
+    if (d && d.sym === 'false') return 'b:false';
+    if (Array.isArray(d) && d.length === 2 && d[0] && d[0].sym === 'error' && typeof d[1] === 'string') return 'e:' + d[1];
+    return null;
+  }
   function colIndex(letters) {
     var col = 0, s = letters.toUpperCase();
     for (var k = 0; k < s.length; k++) col = col * 26 + (s.charCodeAt(k) - 64);
@@ -216,7 +233,8 @@
     var m = {
       sheets: [], sheet: '', windowText: '', window: null, extentText: '', extent: null, gridlines: true,
       columns: {}, columnList: [], formats: {}, cells: new Map(), rows: 1, cols: 1,
-      counts: { forms: 0, cells: 0, formulas: 0, styles: 0, sentences: 0, unknown: 0, malformed: 0 },
+      looks: {}, rowSettings: {},
+      counts: { forms: 0, cells: 0, formulas: 0, values: 0, styles: 0, sentences: 0, looks: 0, rows: 0, unknown: 0, malformed: 0 },
       lines: 0, readMs: 0
     };
     m.formats[0] = { fill: null, num: 'general', wrap: false };
@@ -264,10 +282,34 @@
         a = parseA1(strOf(f[2]) || '');
         if (!a) { m.counts.malformed++; continue; }
         var v = head === 'cell' ? valueOf(f[3]) : { kind: 'formula', text: strOf(f[3]) === null ? valueOf(f[3]).text : strOf(f[3]) };
-        m.cells.set(cellKey(a.row, a.col), { row: a.row, col: a.col, address: colName(a.col) + a.row, kind: head, vkind: v.kind, text: v.text, style: 0, sentence: 0 });
+        // text is what the cell shows; a formula keeps its own text for the bar, and has a value once its value row lands
+        m.cells.set(cellKey(a.row, a.col), { row: a.row, col: a.col, address: colName(a.col) + a.row, kind: head, vkind: v.kind, text: v.text, style: 0, sentence: 0,
+                                             formula: head === 'formula' ? v.text : '', valued: head === 'cell', lookKey: head === 'cell' ? lookKeyOf(f[3]) : null });
         if (a.row > maxRow) maxRow = a.row;
         if (a.col > maxCol) maxCol = a.col;
         if (head === 'cell') m.counts.cells++; else m.counts.formulas++;
+      } else if (head === 'value') {
+        // a formula's computed value (KERNEL.7's row, drawn since ENGINE.8): the cell shows it, aligned by its
+        // kind, and matches a look by it; a value row for a cell no formula row wrote is malformed
+        a = parseA1(strOf(f[2]) || '');
+        e = a ? m.cells.get(cellKey(a.row, a.col)) : null;
+        if (!e || e.kind !== 'formula' || f.length < 4) { m.counts.malformed++; continue; }
+        var vv = valueOf(f[3]);
+        e.text = vv.text; e.vkind = vv.kind; e.valued = true; e.lookKey = lookKeyOf(f[3]);
+        m.counts.values++;
+      } else if (head === 'look') {
+        // the look map (SPEC.md decision 19): every cell whose value is the look's draws with its format in
+        // place of its own; of two looks a value matches, the first the record holds
+        var lk = lookKeyOf(f[2]), li = numOf(f[3]);
+        if (strOf(f[1]) === null || lk === null || li === null || li < 0 || Math.floor(li) !== li) { m.counts.malformed++; continue; }
+        if (!Object.prototype.hasOwnProperty.call(m.looks, lk)) m.looks[lk] = li;
+        m.counts.looks++;
+      } else if (head === 'row') {
+        // a row's settings (SPEC.md decision 19), the column row's twin: its height in points or none, shown or hidden
+        var rn = numOf(f[2]), rh = numOf(f[3]), rs = symOf(f[4]);
+        if (strOf(f[1]) === null || rn === null || rn < 1 || Math.floor(rn) !== rn || (rh === null && symOf(f[3]) !== 'none') || (rh !== null && rh < 0) || (rs !== 'shown' && rs !== 'hidden')) { m.counts.malformed++; continue; }
+        m.rowSettings[rn] = { height: rh, hidden: rs === 'hidden' };
+        m.counts.rows++;
       } else if (head === 'style' || head === 'sentence') {
         a = parseA1(strOf(f[2]) || '');
         var n = numOf(f[3]);
@@ -311,6 +353,22 @@
     this.font = this.fontPx + 'px ' + FONT_FAMILY;
     this.pad = Math.round(TEXT_PAD_PX * dpr);
     this.lineH = Math.round(FONT_PX * LINE_HEIGHT * dpr);
+    // The rows with settings of their own (ENGINE.8): a height in points turned into whole CSS pixels and then
+    // device pixels, as a column's width is, or 0 for a hidden row; kept sorted with the running difference
+    // from the default above each, so that a row's top is the default arithmetic corrected by the rows with
+    // settings above it, and a window a million rows down costs a search of the few rows that have any.
+    var rs = [], heights = {};
+    if (model && model.rowSettings) {
+      for (var key in model.rowSettings) {
+        if (!Object.prototype.hasOwnProperty.call(model.rowSettings, key)) continue;
+        var st = model.rowSettings[key], h = st.hidden ? 0 : (st.height === null ? this.rowH : Math.round(Math.round(st.height * POINT_PX) * dpr));
+        rs.push({ n: +key, h: h });
+        heights[+key] = h;
+      }
+      rs.sort(function (p, q) { return p.n - q.n; });
+    }
+    this.rs = rs; this.heights = heights; this.rsDelta = [0];
+    for (var i = 0; i < rs.length; i++) this.rsDelta.push(this.rsDelta[i] + rs[i].h - this.rowH);
     var rows = model ? model.rows : 1, cols = model ? model.cols : 1;
     // The sheet space is never less than a screen: a screen of slack rows and
     // columns follows the window, so the scroll reaches past the last cell.
@@ -326,10 +384,10 @@
       this.colW.push(w); x += w; this.colX.push(x);
     }
     this.contentW = x;
-    this.contentH = this.rows * this.rowH;
+    this.contentH = this.rowTop(this.rows + 1);
     this.fr = Math.max(0, Math.min(state.frozenRows, this.rows - 1));
     this.fc = Math.max(0, Math.min(state.frozenCols, this.cols - 1));
-    this.frozenH = this.fr * this.rowH;
+    this.frozenH = this.rowTop(this.fr + 1);
     this.frozenW = this.colX[this.fc + 1];
     this.ox = this.rhW; this.oy = this.headH;
   }
@@ -345,19 +403,38 @@
     }
     return DEFAULT_COLUMN_PX;
   }
-  Geometry.prototype.rowTop = function (r) { return (r - 1) * this.rowH; };
+  // A row's top in content coordinates, and its height, 0 when hidden.
+  Geometry.prototype.rowTop = function (r) {
+    var rs = this.rs;
+    if (!rs.length) return (r - 1) * this.rowH;
+    var lo = 0, hi = rs.length;   // the count of rows with settings above r
+    while (lo < hi) { var mid = (lo + hi) >> 1; if (rs[mid].n < r) lo = mid + 1; else hi = mid; }
+    return (r - 1) * this.rowH + this.rsDelta[lo];
+  };
+  Geometry.prototype.rowHeight = function (r) { var h = this.heights[r]; return h === undefined ? this.rowH : h; };
   // The first column whose right edge is past x (content coordinates), from c0.
   Geometry.prototype.columnAt = function (x, c0) {
     var c = Math.max(1, c0 || 1);
     while (c <= this.cols && this.colX[c + 1] <= x) c++;
     return c;
   };
+  // The row a content y falls in, from r0: the last row whose top is at or above y, so that a hidden row,
+  // whose top is the next row's, is never the answer.
   Geometry.prototype.rowAt = function (y, r0) {
-    var r = Math.floor(y / this.rowH) + 1;
-    return Math.max(r0 || 1, r);
+    var lo = Math.max(1, r0 || 1);
+    if (!this.rs.length) return Math.max(lo, Math.floor(y / this.rowH) + 1);
+    var hi = Math.max(lo, this.rows);
+    if (this.rowTop(lo) > y) return lo;
+    while (lo < hi) { var mid = Math.floor((lo + hi + 1) / 2); if (this.rowTop(mid) <= y) lo = mid; else hi = mid - 1; }
+    return lo;
   };
-  // The formats of a cell: the cell's own, else its column's, else format 0.
+  // The formats of a cell: its look's, when its value is a look's (SPEC.md decision 19), in place of its
+  // own; else the cell's own; else, for an empty cell, its column's; else format 0.
   function formatOf(model, cell, c) {
+    if (cell && cell.lookKey !== null && Object.prototype.hasOwnProperty.call(model.looks, cell.lookKey)) {
+      var lf = model.formats[model.looks[cell.lookKey]];
+      if (lf) return lf;
+    }
     if (cell && cell.style !== 0 && model.formats[cell.style]) return model.formats[cell.style];
     if (!cell) {
       var col = model.columns[c];
@@ -602,7 +679,7 @@
   // content position less the quadrant's scroll, clipped to its rectangle.
   Viewport.prototype._paintQuadrant = function (p, model, g, clip, r1, r2, c1, c2, sx, sy, name) {
     var self = this, colors = this.colors;
-    var ox = g.ox, oy = g.oy, rowH = g.rowH;
+    var ox = g.ox, oy = g.oy, rh;
     if (clip.w <= 0 || clip.h <= 0) return;
     // the visible rows and columns of the quadrant
     var rowStart = Math.max(r1, g.rowAt(clip.y - oy + sy, r1));
@@ -612,20 +689,22 @@
     if (rowStart > rowEnd || colStart > colEnd) return;
     var r, c, cell, x, y, w;
     p.clipped(clip, function () {
-      // the fills: a styled cell's, or a styled column's for its empty cells
+      // the fills: a look's, a styled cell's, or a styled column's for its empty cells
       if (model) {
         for (r = rowStart; r <= rowEnd; r++) {
+          rh = g.rowHeight(r);
+          if (rh === 0) continue;
           y = oy + g.rowTop(r) - sy;
           for (c = colStart; c <= colEnd; c++) {
             w = g.colW[c];
             if (w === 0) continue;
             cell = model.cells.get(cellKey(r, c)) || null;
             var fmt = formatOf(model, cell, c);
-            if (fmt.fill) p.fillRect(ox + g.colX[c] - sx, y, w, rowH, fmt.fill, { op: 'fill', row: r, col: c, quadrant: name });
+            if (fmt.fill) p.fillRect(ox + g.colX[c] - sx, y, w, rh, fmt.fill, { op: 'fill', row: r, col: c, quadrant: name });
           }
         }
       }
-      // the gridlines, at an integer plus a half so that each is one device pixel
+      // the gridlines, at an integer plus a half so that each is one device pixel; a hidden row draws none
       if (!model || model.gridlines) {
         var segs = [];
         for (c = colStart; c <= colEnd; c++) {
@@ -634,7 +713,9 @@
           segs.push([x, clip.y, x, clip.y + clip.h]);
         }
         for (r = rowStart; r <= rowEnd; r++) {
-          y = oy + g.rowTop(r) + rowH - sy - 0.5;
+          rh = g.rowHeight(r);
+          if (rh === 0) continue;
+          y = oy + g.rowTop(r) + rh - sy - 0.5;
           segs.push([clip.x, y, clip.x + clip.w, y]);
         }
         p.lines(segs, colors.gridline, 'grid-' + name);
@@ -642,6 +723,7 @@
       // the texts
       if (model) {
         for (r = rowStart; r <= rowEnd; r++) {
+          if (g.rowHeight(r) === 0) continue;
           y = oy + g.rowTop(r) - sy;
           // a text left of the quadrant's first visible column may overflow into view
           var from = Math.max(c1, colStart - OVERFLOW_LOOKBACK);
@@ -667,11 +749,12 @@
   // neighbours to the right, a wrapped text broken at the column's width.
   Viewport.prototype._paintCell = function (p, model, g, cell, r, c, left, top, cLast, quadrant, qclip) {
     var ctx = p.ctx, colors = this.colors;
-    var w = g.colW[c], h = g.rowH, pad = g.pad;
+    var w = g.colW[c], h = g.rowHeight(r), pad = g.pad;
     var fmt = formatOf(model, cell, c);
     var align = alignOf(cell, fmt);
-    var color = cell.kind === 'formula' ? colors.formula : colors.text;
-    var op = { op: 'text', row: r, col: c, kind: cell.kind, quadrant: quadrant };
+    // a formula before its value shows its text in the formula's colour; its value, the text's (KERNEL.5, decision 7)
+    var color = cell.kind === 'formula' && !cell.valued ? colors.formula : colors.text;
+    var op = { op: 'text', row: r, col: c, kind: cell.kind, valued: cell.valued, quadrant: quadrant };
     if (fmt.wrap) {
       if (left + w <= qclip.x || left >= qclip.x + qclip.w) return;
       var lines = wrapText(ctx, cell.text, Math.max(1, w - 2 * pad));
@@ -717,7 +800,7 @@
       var t = Math.max(top, r1), b = Math.min(bottom, r2), l = Math.max(left, c1), rr = Math.min(right, c2);
       if (t > b || l > rr) return null;
       var x = g.ox + g.colX[l] - sx, y = g.oy + g.rowTop(t) - sy;
-      var w = g.colX[rr + 1] - g.colX[l], h = (b - t + 1) * g.rowH;
+      var w = g.colX[rr + 1] - g.colX[l], h = g.rowTop(b + 1) - g.rowTop(t);
       return { x: x, y: y, w: w, h: h, top: t, bottom: b, left: l, right: rr };
     }
     var sel = this._selectionRange();
@@ -780,11 +863,13 @@
         var rEnd = Math.min(r2, g.rowAt(clip.y + clip.h - 1 - oy + scroll, r1));
         var segs = [];
         for (var r = rStart; r <= rEnd; r++) {
+          var rh = g.rowHeight(r);
+          if (rh === 0) continue;   // a hidden row has no header, as a hidden column has none
           var y = oy + g.rowTop(r) - scroll;
           var selected = r >= selRows.top && r <= selRows.bottom;
-          p.fillRect(0, y, g.rhW, rowH, selected ? colors.headerSelected : colors.header, { op: 'header', kind: 'row', index: r, text: String(r), selected: selected });
-          p.text(String(r), g.rhW - g.pad, y + Math.round(rowH / 2), 'right', colors.headerText, { x: 0, y: y, w: g.rhW, h: rowH }, { op: 'header-text', kind: 'row', index: r });
-          segs.push([0, y + rowH - 0.5, g.rhW, y + rowH - 0.5]);
+          p.fillRect(0, y, g.rhW, rh, selected ? colors.headerSelected : colors.header, { op: 'header', kind: 'row', index: r, text: String(r), selected: selected });
+          p.text(String(r), g.rhW - g.pad, y + Math.round(rh / 2), 'right', colors.headerText, { x: 0, y: y, w: g.rhW, h: rh }, { op: 'header-text', kind: 'row', index: r });
+          segs.push([0, y + rh - 0.5, g.rhW, y + rh - 0.5]);
         }
         segs.push([g.rhW - 0.5, clip.y, g.rhW - 0.5, clip.y + clip.h]);
         p.lines(segs, colors.gridline, 'header-row');
@@ -817,8 +902,9 @@
   Viewport.prototype._cellInfo = function (row, col) {
     var model = this._model();
     var cell = model ? model.cells.get(cellKey(row, col)) : null;
-    if (!cell) return { row: row, col: col, address: colName(col) + row, kind: 'empty', text: '', style: 0, sentence: 0 };
-    return { row: cell.row, col: cell.col, address: cell.address, kind: cell.kind, vkind: cell.vkind, text: cell.text, style: cell.style, sentence: cell.sentence };
+    if (!cell) return { row: row, col: col, address: colName(col) + row, kind: 'empty', text: '', formula: '', valued: false, style: 0, sentence: 0 };
+    // text is what the cell shows; formula is a formula cell's own text, the bar's, beside its value
+    return { row: cell.row, col: cell.col, address: cell.address, kind: cell.kind, vkind: cell.vkind, text: cell.text, formula: cell.formula, valued: cell.valued, style: cell.style, sentence: cell.sentence };
   };
   Viewport.prototype._selectPayload = function () {
     var r = this._selectionRange(), s = this.state.selection;
@@ -829,7 +915,7 @@
     var g = this.g;
     if (!g) return { sheet: this.active, top: 1, left: 1, window: 'A1' };
     var sx = this.scroll.x, sy = this.scroll.y;
-    var top = g.fr + 1 + Math.floor(sy / g.rowH), left = g.columnAt(g.colX[g.fc + 1] + sx, g.fc + 1);
+    var top = g.rowAt(g.frozenH + sy, g.fr + 1), left = g.columnAt(g.colX[g.fc + 1] + sx, g.fc + 1);
     var bottom = Math.min(g.rows, g.rowAt(g.canvasH - 1 - g.oy + sy, top)), right = Math.min(g.cols, g.columnAt(g.canvasW - 1 - g.ox + sx, left));
     return { sheet: this.active, top: top, left: left, bottom: bottom, right: right, window: rangeText({ top: top, left: left, bottom: bottom, right: right }) };
   };
@@ -845,7 +931,7 @@
     var sc = this.scroller, dpr = g.dpr;
     var changed = false;
     if (row > g.fr) {
-      var top = g.rowTop(row) - g.frozenH, bottom = top + g.rowH;
+      var top = g.rowTop(row) - g.frozenH, bottom = top + g.rowHeight(row);
       var viewH = sc.clientHeight * dpr - g.oy - g.frozenH;
       var sy = Math.round(sc.scrollTop * dpr);
       if (top < sy) { sc.scrollTop = top / dpr; changed = true; }
@@ -1054,24 +1140,47 @@
   // ---- (5) the API ----
   // A record's text: its sheet becomes a tab, replacing an earlier record of
   // the same sheet; the record's sheet rows are the tab strip. Returns the
-  // model's counts.
-  Viewport.prototype.load = function (text) {
+  // model's counts. With options.keep (ENGINE.8), a later frame of the sheet
+  // shown: its record replaces the last with the scroll, the selection, the
+  // widths, the frozen panes and the marks kept and no event raised, and the
+  // tabs are remade only when the sheet rows changed. The host draws every
+  // frame of a grid cartridge so, and a page its live sheet.
+  Viewport.prototype.load = function (text, options) {
+    var keep = !!(options && options.keep);
     var model = readRecord(String(text || ''));
     var name = model.sheet || (model.sheets.length ? model.sheets[0].name : 'Sheet');
+    var tabs = !keep || !this.records[name];
     this.records[name] = model;
-    if (model.sheets.length) this.sheetList = model.sheets.slice();
-    else if (!this._sheetListed(name)) this.sheetList.push({ name: name, state: 'visible' });
-    if (!this.active || this.active === name) { this.active = name; this._resetView(); }
-    this._renderTabs();
+    if (model.sheets.length) { if (!sameSheets(this.sheetList, model.sheets)) tabs = true; this.sheetList = model.sheets.slice(); }
+    else if (!this._sheetListed(name)) { this.sheetList.push({ name: name, state: 'visible' }); tabs = true; }
+    var kept = keep && this.active === name;
+    if (!kept && (!this.active || this.active === name)) { this.active = name; this._resetView(); }
+    if (tabs) this._renderTabs();
     this._draw();
-    if (this.active === name) {
+    if (this.active === name && !kept) {
       this._emit('sheet', { name: name, loaded: true, state: this._sheetState(name) });
       // the selection went back to A1 of the record shown: say so
       this._emit('select', this._selectPayload());
     }
-    return { sheet: name, lines: model.lines, cells: model.counts.cells, formulas: model.counts.formulas, styles: model.counts.styles, sentences: model.counts.sentences,
-             unknown: model.counts.unknown, malformed: model.counts.malformed, window: model.windowText, extent: model.extentText, readMs: model.readMs };
+    return { sheet: name, lines: model.lines, cells: model.counts.cells, formulas: model.counts.formulas, values: model.counts.values, styles: model.counts.styles, sentences: model.counts.sentences,
+             looks: model.counts.looks, rows: model.counts.rows, unknown: model.counts.unknown, malformed: model.counts.malformed, window: model.windowText, extent: model.extentText, readMs: model.readMs };
   };
+  function sameSheets(a, b) {
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) if (a[i].name !== b[i].name || a[i].state !== b[i].state) return false;
+    return true;
+  }
+  // Every record forgotten and the grid drawn empty: a host's grid unloaded (ENGINE.8), so that the viewport
+  // shows no picture of a grid the module no longer holds.
+  Viewport.prototype.clear = function () {
+    this.records = {}; this.sheetList = []; this.active = '';
+    this._resetView();
+    this._renderTabs();
+    this._draw();
+  };
+  // The window the scrolled quadrant shows, { top, left, bottom, right, window }: a host follows a Camera's
+  // move by it (ENGINE.8).
+  Viewport.prototype.scrolled = function () { return this._scrollPayload(); };
   Viewport.prototype._sheetListed = function (name) {
     for (var i = 0; i < this.sheetList.length; i++) if (this.sheetList[i].name === name) return true;
     return false;

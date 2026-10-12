@@ -174,12 +174,19 @@ if ($Root -eq '') { $Root = $repoRoot }
 # finished toy: 2,085 frames, 576 of them written, the last empty, 870 rows,
 # the manifest's seed 1) and sand.golden.vla (the Tally sheet's record at its
 # end, the window A1:B199); the cartridges' rows unchanged.
-$expectedCartridges = 6
-$expectedSources = 6
+# 2026-10-12, ENGINE.8's first slice: seven, the grid card beside them, 150
+# rows (two sheet rows, the Camera's four cells, twenty-six formats and
+# twenty-three looks, the gridlines, four column rows and two row rows, the
+# Screen's sixty-eight value cells and fifteen formulas, the stripe's one
+# fill among them, four styles and a sentence: 3,278 formula cells), the
+# first grid cartridge, written as a source over the library with a macro of
+# its own; the other six's rows unchanged.
+$expectedCartridges = 7
+$expectedSources = 7
 $expectedLibraries = 1
 $expectedReplays = 3
 $expectedGoldens = 3
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87 }
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 150 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

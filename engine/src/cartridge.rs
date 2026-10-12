@@ -1807,7 +1807,15 @@ mod tests {
         }
         assert_eq!(
             described,
-            ["gun", "inputcard", "life", "sand", "soundcard", "testcard"],
+            [
+                "gridcard",
+                "gun",
+                "inputcard",
+                "life",
+                "sand",
+                "soundcard",
+                "testcard"
+            ],
             "the cartridges committed under cartridges/"
         );
     }

@@ -1,0 +1,199 @@
+; SPDX-License-Identifier: 0BSD
+; gridcard.source.vla - the grid card, as its author writes it: the test card's twin in
+; grid mode, every kind of value, format and look a grid cell can hold, drawn by the
+; viewport (ENGINE.8). The pass expands this file into gridcard.vla beside it, the rows
+; the engine loads (SPEC.md section 7.8): edit this one, then expand it again. The
+; fixture of ENGINE.8's oracle: the page's loop oracle holds the window the host draws
+; to the record of the same window at every frame, cell for cell, text, fill and place.
+;
+; What it shows, through a window of 80 by 50 cells, section 10's limit, on a Screen 96
+; columns wide under a Camera that a person's edit moves, the viewport following it:
+;   - the sixteen colours, each a number drawn through its look: the plane's Palette as
+;     the grid's look map, one model with two renderers (SPEC.md decision 19);
+;   - a value of each kind a cell can hold, and the numbers as the record spells them;
+;   - a formula computing each kind every frame, a number among them whose look, and so
+;     whose fill, changes every frame;
+;   - a text that spills into its empty neighbours and one its neighbour cuts; a number
+;     under a text format; a wrapped text in a tall row; a cell's own style, and a look
+;     over a style; a sentence row; a hidden row and a hidden column, each holding a
+;     value that is never drawn; a narrow column and a column whose style fills its
+;     empty cells; looks on a text, a truth value and an error;
+;   - and below them a stripe that moves a cell a frame, through two looks.
+; A formula before its first value shows its text, so frame 0 shows the Screen's
+; formulas as written.
+
+; The library whose macros this source calls: on, cells and formulas, each naming a
+; sheet once over a run of its rows.
+(include "../common.vla")
+
+; The card's own macro, a look map from a palette: each colour of a list a format, its
+; index plus one, and a look from its index to that format. The CGA's sixteen through it
+; are the plane's Palette as the grid's looks.
+
+(defmacro (looks-from sheet index entries)
+  "a format and a look for each colour of a list, from an index on: the format is the index plus one, its fill the colour"
+  (quote-if (null? entries)
+    (begin)
+    (begin
+      (format (+expand index 1) (car entries) general nowrap)
+      (look sheet index (+expand index 1))
+      (looks-from sheet (+expand index 1) (cdr entries)))))
+
+(defmacro (cga-looks sheet)
+  "the CGA's sixteen as formats 1 to 16, and a look from each colour index, 0 to 15, to its format"
+  (looks-from sheet 0
+    ("000000"                       ; 0, black
+     "0000AA"                       ; 1, blue
+     "00AA00"                       ; 2, green
+     "00AAAA"                       ; 3, cyan
+     "AA0000"                       ; 4, red
+     "AA00AA"                       ; 5, magenta
+     "AA5500"                       ; 6, brown
+     "AAAAAA"                       ; 7, light grey
+     "555555"                       ; 8, dark grey
+     "5555FF"                       ; 9, light blue
+     "55FF55"                       ; 10, light green
+     "55FFFF"                       ; 11, light cyan
+     "FF5555"                       ; 12, light red
+     "FF55FF"                       ; 13, light magenta
+     "FFFF55"                       ; 14, yellow
+     "FFFFFF")))                    ; 15, white
+
+(cartridge "gridcard"
+  (spec 3)                          ; the version of SPEC.md this cartridge is written to
+  (title "Grid card")               ; what the host shows
+  (rate 30)                         ; frames a second
+  (screen grid 80 50)               ; the window: 80 cells wide and 50 high, section 10's limit, placed by the Camera
+  (seed 1)                          ; the dice, which nothing here reads
+  (author "Spreadsheet Company")    ; who wrote it
+  (licence "0BSD")                  ; the header's twin
+  (notes "The grid card: every kind of value, format and look a grid cell can hold, drawn by the viewport, on a Screen 96 columns wide under a Camera that an edit moves. The sixteen colours are numbers drawn through their looks, a formula's value changes its fill every frame, and a stripe moves below."))
+
+; The sheets, in tab order: the Screen, and the Camera that places its window.
+(sheet "Screen" visible)
+(sheet "Camera" visible)
+
+; The Camera (SPEC.md section 3.8): the window's top row and left column, two values that
+; nothing but a person's edit moves, so that the card holds still to be clicked, scrolled
+; and edited as a sheet. (cell "Camera" "B2" 5) moves the window four columns right and the
+; viewport scrolls by the move, the person's place inside the window kept; from column 18
+; the window's right edge passes the Screen's last column, CR, and the columns past it are
+; empty.
+(on "Camera"                                        ; the sheet every row below writes
+  (cell "A1" "row")                                 ; a label
+  (cell "B1" 1)                                     ; the window's top row
+  (cell "A2" "column")                              ; a label
+  (cell "B2" 1))                                    ; the window's left column, which an edit moves
+
+; The looks (SPEC.md section 7.3): the CGA's sixteen for the numbers 0 to 15, then the
+; formats the other looks and the styles name, then the looks on a text, a truth value
+; and an error. A cell whose value is a look's draws with the look's format in place of
+; its own; an empty cell and a formula with no value match none.
+(cga-looks "Screen")
+(format 17 none text nowrap)        ; a number format of text, no fill: a number drawn on the left
+(format 18 "F7F4FC" general wrap)   ; a wrapped text's
+(format 19 "555555" general nowrap) ; the look of "#"
+(format 20 "F3F3EE" general nowrap) ; the look of "."
+(format 21 "E2D8F6" general nowrap) ; the look of "x"
+(format 22 "D5F5D5" general nowrap) ; the look of TRUE
+(format 23 "EEEEEE" general nowrap) ; the look of FALSE
+(format 24 "FFD5D5" general nowrap) ; the look of two errors
+(format 25 "FFF2CC" general nowrap) ; a cell's own style
+(format 26 "E8F0FE" general nowrap) ; a column's style, which fills its empty cells
+(on "Screen"                        ; the sheet every row below writes
+  (look "#" 19)                     ; the stripe's mark
+  (look "." 20)                     ; the stripe's ground
+  (look "x" 21)                     ; a text
+  (look true 22)                    ; a truth value
+  (look false 23)                   ; the other
+  (look (error "#N/A") 24)          ; an error
+  (look (error "#DIV/0!") 24)       ; another, to the same format
+  (gridlines on)                    ; the gridlines drawn
+  (column "A" 40 shown none)        ; the labels' column, wide
+  (column "R" 3 shown none)         ; a narrow column: a number in it is clipped
+  (column "S" none hidden none)     ; a hidden column: its cell is never drawn
+  (column "T" 24 shown 26)          ; a styled column: its empty cells take its fill
+  (row 9 45 shown)                  ; a tall row, 45 points: the wrapped text's
+  (row 12 none hidden))             ; a hidden row: its cells are never drawn
+
+; Row 1: a text that spills into its empty neighbours to the right.
+(cell "Screen" "A1" "The grid card: every kind of value, format and look a grid cell can hold, drawn by the viewport through a Camera that an edit moves")
+
+; Rows 3 to 6, a label in column A and the cells after it.
+(cells "Screen"                     ; the sheet every entry below writes
+  ("A3" "the sixteen colours, each through its look")
+  ("B3" 0) ("C3" 1) ("D3" 2) ("E3" 3) ("F3" 4) ("G3" 5) ("H3" 6) ("I3" 7)
+  ("J3" 8) ("K3" 9) ("L3" 10) ("M3" 11) ("N3" 12) ("O3" 13) ("P3" 14) ("Q3" 15)
+  ("A4" "a value of each kind")
+  ("B4" "x")                        ; a text, through its look
+  ("C4" "7")                        ; a text that spells a number: no number's look
+  ("D4" "")                         ; the empty text
+  ("E4" true)                       ; a truth value, through its look
+  ("F4" false)                      ; the other
+  ("G4" (error "#NULL!"))           ; the seven error values, in ERROR.TYPE's order
+  ("H4" (error "#DIV/0!"))          ; through its look
+  ("I4" (error "#VALUE!"))
+  ("J4" (error "#REF!"))
+  ("K4" (error "#NAME?"))
+  ("L4" (error "#NUM!"))
+  ("M4" (error "#N/A"))             ; through its look
+  ("A5" "numbers as the record spells them")
+  ("B5" 3.0000000000000004)         ; one unit in the last place from 3: no look
+  ("C5" 1e-300)                     ; nearly 0: spelled with three hundred zeros, clipped
+  ("D5" -0)                         ; negative zero, spelled -0, through the look of 0
+  ("E5" 7.0)                        ; a whole number written with a point, through the look of 7
+  ("F5" 1e300)                      ; spelled with three hundred digits, clipped
+  ("G5" -12.5)                      ; a negative fraction
+  ("H5" 1234567.89)                 ; wider than its cell, clipped and never spilled
+  ("I5" 0.5)                        ; a fraction
+  ("A6" "a formula of each kind, every frame"))
+(formulas "Screen"                                           ; the sheet every entry below writes
+  ("B6" "=MOD(Clock!$B$1,16)")                               ; a colour that cycles: its look, so its fill, changes every frame
+  ("C6" "=Clock!$B$1*16")                                    ; a number past the looks
+  ("D6" "=Clock!$B$1/2")                                     ; a fraction every other frame
+  ("E6" "=0.1*3*10")                                         ; a sum one unit in the last place from 3
+  ("F6" "=1/0")                                              ; an error, through its look
+  ("G6" "=\"x\"")                                            ; a text, through its look
+  ("H6" "=1=1")                                              ; a truth value, through its look
+  ("I6" "=SIN(Clock!$B$1)")                                  ; a sine
+  ("J6" "=-Clock!$B$1")                                      ; a negative
+  ("K6" "=INT(Clock!$B$1/2)")                                ; a whole number, through the looks while under 16
+  ("L6" "=CHOOSE(1+MOD(Clock!$B$1,3),2,\"x\",TRUE)")         ; a value whose kind cycles, each through its look
+  ("M6" "=$A$2")                                             ; a reference to an empty cell, which is 0
+  ("N6" "=Screen.last!N6+1")                                 ; a counter read through its own twin
+  ("O6" "=IF(MOD(Clock!$B$1,2)=0,9,0.5)"))                   ; 9, through its look, and 0.5 by turns
+
+; Rows 7 to 15: texts, formats, styles, a sentence, the hidden row and column, the looks.
+(cells "Screen"                     ; the sheet every entry below writes
+  ("A7" "a text cut by its neighbour")
+  ("B7" "this text stops where the next cell holds a value")
+  ("C7" "stop")
+  ("A8" "a number under a text format, then under general")
+  ("B8" 42)                         ; drawn on the left, its style the text format
+  ("C8" 42)                         ; drawn on the right
+  ("A9" "a wrapped text in a tall row")
+  ("B9" "wrapped in a tall row")
+  ("A10" "a cell's own style, and a look over a style")
+  ("B10" "styled")                  ; its own style's fill
+  ("C10" 5)                         ; its own style, and the look of 5 in its place
+  ("A11" "a sentence row, read by no rule")
+  ("B11" "the program's row 11 wrote this cell")
+  ("A12" "a hidden row")
+  ("B12" 99)                        ; never drawn
+  ("A13" "a narrow, a hidden and a styled column")
+  ("R13" 12345)                     ; clipped by its narrow column
+  ("S13" "hidden")                  ; never drawn
+  ("T13" "a cell of a styled column")
+  ("A14" "looks on a text, a truth value and an error")
+  ("B14" "#") ("C14" ".") ("D14" true) ("E14" false) ("F14" (error "#N/A")) ("G14" "x")
+  ("A15" "the stripe below moves a cell a frame through two looks"))
+(on "Screen"                        ; the sheet every row below writes
+  (style "B8" 17)                   ; the text format
+  (style "B9" 18)                   ; the wrapped text's
+  (style "B10" 25)                  ; a cell's own style
+  (style "C10" 25)                  ; the same, under the look of 5
+  (sentence "B11" 11))              ; the program row that wrote the cell
+
+; Rows 17 to 50: a stripe that moves, one fill over the Screen's whole width, a "#" every
+; eighth cell along a diagonal and a "." elsewhere, each through its look.
+(formula "Screen" "A17:CR50" "=IF(MOD(COLUMN()+ROW()+Clock!$B$1,8)=0,\"#\",\".\")")

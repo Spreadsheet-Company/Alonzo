@@ -24,7 +24,8 @@
   asking it: the Screen's cells inside the declared size are formula cells
   whose bytes follow the frame number (eight-by-eight tiles cycling through
   the sixteen colours, one row swept by a byte past the palette, one error
-  byte); the device sheets sit at their section 3 layouts as value cells,
+  byte, and in grid mode a look of the palette's sixteen for each colour,
+  ENGINE.8); the device sheets sit at their section 3 layouts as value cells,
   the Palette the CGA's sixteen and the Keys TIC-80's defaults for player 1;
   the Write sheet carries rows on a rule of the frame, one that lands and
   three that are refused; and a State sheet holds a value cell the derived
@@ -93,6 +94,8 @@
     sweepByte: 200,      // the byte swept down the rows, one a frame: past the palette, so painted magenta
     errorByte: 255,      // the byte of a cell that holds no colour: A1 holds one always
     saveEvery: 25,       // File!B3 is 1 on every twenty-fifth frame, 0 otherwise
+    gridLooks: 16,       // in grid mode the Screen's record holds the palette's sixteen as formats 1 to 16, and a look
+                         // for each colour index, 0 to 15, to its format, so its tiles draw through a look (ENGINE.8)
     sheets: SHEETS,
     palette: PALETTE,
     buttons: BUTTONS,
@@ -570,6 +573,12 @@
       lines.push('(extent ' + name + ' ' + (E ? quote(rangeText(E)) : 'none') + ')');
       lines.push('(gridlines ' + name + ' on)');
       lines.push('(format 0 none general nowrap)');
+      // a grid cartridge's Screen draws its tiles through a look of the palette's sixteen (ENGINE.8)
+      var looks = sk.key === 'screen' && !sk.twin && c.mode === 'grid';
+      if (looks) {
+        for (var g = 0; g < RULES.gridLooks; g++) lines.push('(format ' + (g + 1) + ' ' + quote(PALETTE[g][0].slice(1)) + ' general nowrap)');
+        for (var l = 0; l < RULES.gridLooks; l++) lines.push('(look ' + name + ' ' + l + ' ' + (l + 1) + ')');
+      }
       var map = sk.twin ? c.twins[sk.key] : c.cells[sk.key], addrs = [];
       map.forEach(function (e, addr) { var p = rcOf(addr); if (p && p.r >= R.top && p.r <= R.bottom && p.c >= R.left && p.c <= R.right) addrs.push(p); });
       if (sk.key === 'screen') {   // the formula cells inside the declared size, each with its value

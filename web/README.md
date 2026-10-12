@@ -96,16 +96,16 @@ sound the frame the grid holds again when it starts.
 
 | Method | What it does |
 |---|---|
-| `new AlonzoHost(options)` | `canvas` the plane's canvas (it takes the keys while focused); `box` the element the blit fits, the canvas's parent by default; `scale` a fixed number of device pixels a cell; `budget` a fixed budget in cells a step call, 0 for none; `callsPerTick` a fixed count of step calls a tick in place of the time slice; `now` the clock the budget is measured by; `drive: 'manual'` when the caller calls `tick` itself (the oracles); `seed` the number a `(seed host)` cartridge gets in place of the browser's random one, a whole number from 1 to 2147483646 (the oracle); `audio` an audio context the host sounds through from the start, in place of the one `soundOn` makes, and `audioNow` its clock in place of the context's `currentTime` (the oracle's double of the graph) |
+| `new AlonzoHost(options)` | `canvas` the plane's canvas (it takes the keys while focused); `box` the element the blit fits, the canvas's parent by default; `scale` a fixed number of device pixels a cell; `budget` a fixed budget in cells a step call, 0 for none; `callsPerTick` a fixed count of step calls a tick in place of the time slice; `now` the clock the budget is measured by; `drive: 'manual'` when the caller calls `tick` itself (the oracles); `seed` the number a `(seed host)` cartridge gets in place of the browser's random one, a whole number from 1 to 2147483646 (the oracle); `audio` an audio context the host sounds through from the start, in place of the one `soundOn` makes, and `audioNow` its clock in place of the context's `currentTime` (the oracle's double of the graph); `grid` the element a grid cartridge's viewport fills (`ENGINE.8`), without which a grid cartridge runs and nothing draws it |
 | `attach(exports)` | asks `alonzo_abi_version` and refuses another number, then every export the loop calls: `{ ok, abi, version }` or `{ ok: false, sentence }` |
-| `load(text, name)` / `loadBytes(bytes, name)` | unloads the grid it held, loads a cartridge, then `describe`, reads the Camera, the Palette and the Keys, and draws the new grid's frame 0 at once, nothing computed, so the canvas never shows a grid the module no longer holds: `{ ok, handle, title, mode, w, h, rate }` or the refusal's sentence |
+| `load(text, name)` / `loadBytes(bytes, name)` | unloads the grid it held, loads a cartridge, then `describe`, reads the Camera, the Palette and the Keys, and draws the new grid's frame 0 at once, nothing computed, on the plane's canvas or, for a grid cartridge, through the viewport, so that neither shows a grid the module no longer holds: `{ ok, handle, title, mode, w, h, rate }` or the refusal's sentence |
 | `expand(source, path, files)` | the pass (`SPEC.md` section 7.8): a cartridge's source, the path its includes resolve against (`cartridges/<name>/<name>.source.vla`, the command line's), and the texts it may include as `[path, text]` pairs, handed to the module's `alonzo_expand`, an act of its own that takes no handle, touches no grid and stops nothing: `{ ok, text, rows, ms }`, the cartridge's text CRLF as the command line writes it and its rows after the manifest, or the refusal's sentence with the source line it stands on; the export is asked for here and not at `attach`, so over a module without it, the double, the build is declined in words |
 | `start()` / `stop()` | the animation-frame loop; the voices sound the frame the grid holds when it starts, and stop with it |
 | `soundOn()` / `soundOff()` / `soundIs()` | the sound, on only after a person's act: `soundOn` makes the audio context at its first call, which a page makes in a press's handler, and sounds the frame the grid holds; `soundOff` silences the voices, stops the oscillators and suspends the context; `soundIs` whether it is on |
 | `tick(ts)` | one animation frame's work at its timestamp, what the loop calls |
-| `edit(row)` | a person's edit, one `cell` or `formula` row, issued after the next frame's inputs; at rate 0 it steps once |
+| `edit(row)` | a person's edit, one `cell` or `formula` row, issued after the next frame's inputs; at rate 0 it steps once; while the loop is paused at a rate above 0 it waits for the frame Run brings, and the host says so |
 | `keyDown(code, key)` / `keyUp(code)` / `releaseKeys()` | the keys held, by `KeyboardEvent.code` |
-| `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer's place as the window's cell under it, 0 when off the canvas, which the Input rows write as the Screen's own cell through the Camera |
+| `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer's place as the window's cell under it, 0 when off the canvas, which the Input rows write as the Screen's own cell through the Camera; in grid mode, at a rate above zero, the viewport's cell under the pointer, 0 off the window's cells, and the wheel's notches with its scroll prevented, while a key the Keys sheet binds is taken before the viewport sees it (`ENGINE.8`) |
 | `runFrameSync()` | one whole frame now, whatever the clock (the blit's instrument) |
 | `redraw()` | the last complete frame drawn again, nothing stepped: the Camera and the Palette read as they stand, the plane viewed through the window and blitted, no other effect read (the blit's instrument over the engine's module, where a step is the evaluator's); `false` without a plane cartridge |
 | `viewRecord(sheet, window)` | a sheet's record as the module prints it, for a page to show |
@@ -113,7 +113,8 @@ sound the frame the grid holds again when it starts.
 | `play(text, all)` | a replay checked whole, then the cartridge loaded again with its seed and its frames played through the loop at the cartridge's rate, edits refused until it ends, the loop paused at its last frame: `{ ok, frames }`, or the refusal's sentence with nothing loaded; `all` plays every frame at once, synchronously (the oracle) |
 | `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`); every sentence said, in order |
 | `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
-| `unload()` / `destroy()` | frees the handle and empties the canvas; removes the listeners |
+| `unload()` / `destroy()` | frees the handle and empties the canvas and the viewport; removes the listeners, and the viewport with them |
+| `vp` | grid mode's viewport (`ENGINE.8`), made at the first grid load over `options.grid` and kept across loads: a grid cartridge's Screen, its record through the Camera's window drawn at frame 0 and after every frame, each frame's record replacing the last with the person's scroll and selection kept, scrolled to the window's corner at a load and by the Camera's move after it; a page focuses its `scroller` to give it the keys |
 | `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat, refusal }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line, `refusal` true for a refusal or a failure; a notice of a value the host coerced, a Camera cell read as 1 or a colour painted magenta, is not one), `frame` (`{ frame, window, scale, rate, replay }`, after a frame completes, `rate` the one the Clock now holds, `replay` the last frame of a replay playing or 0), `load` (`{ handle, title, mode, w, h, rate, window, scale }`, after frame 0 is drawn), `stop` (`{ frame }`, when a running loop stops, at Pause, a replay's end, a refused step, a load or an unload, so that a page draws what it shows of the grid at that frame) |
 
 `AlonzoHost.instantiate(bytes)` and `instantiateSync(bytes)` instantiate a
@@ -157,7 +158,8 @@ the Screen's bytes as eight-by-eight tiles cycling through the sixteen
 colours with one row swept by a byte past the palette, the CGA palette,
 TIC-80's keys, a Write sheet whose rows land or are refused on a rule of the
 frame, and a history cell that makes the end state's digest witness the
-order of every write. Its memory grows by zero pages at every load and every
+order of every write; in grid mode its Screen's record draws the tiles through
+a look of the CGA's sixteen (`ENGINE.8`). Its memory grows by zero pages at every load and every
 seventeenth allocation, detaching the buffer, and its allocator counts what
 is live and what is freed wrongly. `options.abi`, `options.omit` and
 `options.growEvery` make the doubles the loop's oracle refuses or strains.
@@ -178,14 +180,17 @@ paints the window it is given: the sheets as tabs, the columns at the widths
 the record declares, the fills and number formats of its formats, each
 cell's text where the record puts it, the gridlines when the record says so.
 It computes nothing: a value is shown as the reader spells it, a formula
-shows its text until the value row lands (`KERNEL.7`), and an unknown row is
+shows its text until the value row lands (`KERNEL.7`) and its value after it,
+its text kept for the bar, a `look` row maps a value to the format every cell
+holding it draws with, and a `row` row gives a row its height in points or
+hides it (`SPEC.md` decision 19, read since `ENGINE.8`); an unknown row is
 counted, never refused. What the viewport owns is the state no program sees:
 the scroll, the selection, the widths a person dragged, the frozen panes and
 the marks a host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
-test card, the input card, the sound card or Sand, each with its source, which the panel's Build expands into the
+test card, the input card, the sound card, Sand or the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), each with its source, which the panel's Build expands into the
 cartridge in the page, the input card, the sound card and Sand each with its replay, which Play the replay plays, the
 Audio sheet heard after Sound on, and
 below it the viewport over seven
@@ -356,7 +361,20 @@ baseline to the roadmap's bars.
   times its wave's own, a rest below 0.0001 and no onset step over 1.5 times
   the wave's own; measured, never golden, and the one case that waits, its
   render paced by a chain of 0 ms tasks under a headless browser's virtual
-  clock. One line a case into `<pre id="loop">` once the last has answered,
+  clock; and grid mode (`grid`, `ENGINE.8`): a grid cartridge's Screen drawn
+  by the host's own viewport, held at frame 0 and after every frame to the
+  record of the same window by the page's own reading of it and its own
+  layout, never the viewport's: the window the Camera's, the viewport's
+  top-left cell the window's corner and a person's scroll since, every
+  visible cell's text, fill, alignment and place both ways, a formula's value
+  once it has one and its text before, a look's fill, a style's and a
+  column's each read back as a pixel, the selection kept, and the viewport
+  emptied at the unload; over the double, a grid of 20 by 12 drawn through
+  its looks, the pointer and a bound key read back from the Input sheet, and
+  an edit made while the loop is paused said to wait for the frame Run
+  brings; over the engine's module the grid card, twenty-four frames under a
+  Camera an edit moves a column right at frames 10 and 20.
+  One line a case into `<pre id="loop">` once the last has answered,
   which `tools/check_host_loop.ps1` reads.
 - `index.html?blit=1` is the blit's instrument, the engine's second number:
   a 320 by 200 plane drawn through the host's whole frame over the double
@@ -414,7 +432,9 @@ reads any text of forms into data, the host shim's one reader.
 
 | Method | What it does |
 |---|---|
-| `load(text)` | reads a record; its sheet becomes a tab, replacing an earlier record of that sheet; the record's `sheet` rows become the tab strip; returns the counts (`sheet`, `lines`, `cells`, `formulas`, `styles`, `sentences`, `unknown`, `malformed`, `window`, `extent`, `readMs`) |
+| `load(text, options)` | reads a record; its sheet becomes a tab, replacing an earlier record of that sheet; the record's `sheet` rows become the tab strip; returns the counts (`sheet`, `lines`, `cells`, `formulas`, `values`, `styles`, `sentences`, `looks`, `rows`, `unknown`, `malformed`, `window`, `extent`, `readMs`). With `{ keep: true }` (`ENGINE.8`), a later frame of the sheet shown: the record replaces the last with the scroll, the selection, the widths, the frozen panes and the marks kept and no event raised, the tabs remade only when the sheet rows changed; the host draws every frame of a grid cartridge so, and the panel its live sheet |
+| `clear()` | forgets every record and draws the grid empty: the host's grid unloaded (`ENGINE.8`) |
+| `scrolled()` | the window the scrolled quadrant shows, `{ top, left, bottom, right, window }`: the host follows a Camera's move by it (`ENGINE.8`) |
 | `show(name)` | shows a sheet whose record is loaded (the name compared without case); false when none is |
 | `sheets()` | every sheet row as `{ name, state, loaded, active }` |
 | `sheet()` | the sheet shown |
@@ -426,7 +446,7 @@ reads any text of forms into data, the host shim's one reader.
 | `columnWidth(letters, px)` / `columnWidths()` | a column's width in CSS pixels, the host's over the record's; `null` puts the record's back; the overrides |
 | `mark(name, ranges, style)` / `unmark(name)` | a named highlight over ranges the host computed, `style` `{ fill, border }`; `unmark()` with no name clears all |
 | `cellAt(clientX, clientY)` | the cell under a point of the page, or null |
-| `cell(row, col)` | a cell: `{ row, col, address, kind, vkind, text, style, sentence }`, `kind` one of `cell`, `formula`, `empty` |
+| `cell(row, col)` | a cell: `{ row, col, address, kind, vkind, text, formula, valued, style, sentence }`, `kind` one of `cell`, `formula`, `empty`; `text` what the cell shows, a formula's value once its value row lands and its text before, `formula` a formula's own text, the bar's, and `valued` whether a formula has its value |
 | `geometry()` | the last draw's geometry in device pixels: the ratio, the sizes, the row height, the column edges, the frozen bands, the scroll |
 | `draws()` | the last draw's list: every text, fill, line, header, selection and mark with its position (the oracle's) |
 | `model()` | the record shown, as read |

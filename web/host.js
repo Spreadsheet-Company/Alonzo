@@ -29,6 +29,15 @@
   manifest says (seed host) the host chooses the seed, its one write of its
   own (ENGINE.3).
 
+  A grid cartridge (SPEC.md section 3.1; ENGINE.8) is drawn by a viewport
+  of the host's own (web/viewport.js) over an element the page hands it:
+  frame 0 at the load and each frame after, the record of the Screen
+  through the Camera's window, every frame's record replacing the last with
+  the person's scroll and selection kept, and the viewport scrolled by the
+  Camera's move. At a rate above zero the pointer over the viewport's cells,
+  its buttons, the wheel and the keys the Keys sheet binds are the Input
+  sheet's; at rate zero all of them are the viewport's.
+
   And it sounds the Audio sheet (SPEC.md section 3.6; ENGINE.4): after each
   frame, once the Clock's rate is read, its four voices, each the Web Audio
   graph's own oscillator and gain and nothing else, scheduled on the audio
@@ -290,14 +299,17 @@
   // budget is measured by), drive ('manual' when the caller calls tick itself), seed (the number a
   // (seed host) cartridge gets in place of the browser's random one, a whole number from 1 to
   // 2147483646), audio (an audio context the host sounds through from the start, in place of the
-  // one Sound on makes: an oracle's double of the graph, or an offline context to render), and
-  // audioNow (the audio clock, in place of that context's currentTime).
+  // one Sound on makes: an oracle's double of the graph, or an offline context to render),
+  // audioNow (the audio clock, in place of that context's currentTime), and grid (the element a
+  // grid cartridge's viewport fills, ENGINE.8; without one a grid cartridge runs and nothing draws it).
   function Host(options) {
     options = options || {};
     VP();
     this.options = options;
     this.now = options.now || function () { return global.performance.now(); };
     this.canvas = options.canvas || null;
+    this.gridEl = options.grid || null;
+    this.vp = null;   // grid mode's viewport, made at the first grid load and kept across loads
     this.box = options.box || (this.canvas ? this.canvas.parentNode : null);
     this.fixedScale = options.scale || 0;
     this.fixedBudget = options.budget;
@@ -330,7 +342,7 @@
     this.pointer = { col: 0, row: 0, left: 0, right: 0, middle: 0 };
     this.keymap = null; this.window = ''; this.camera = { row: 1, col: 1 }; this.badCamera = {};
     this.table = null; this.paletteText = ''; this.paletteCount = 0;
-    this.audio = []; this.saveValue = 0; this.plane = null; this.timing = null; this.said1 = {};
+    this.audio = []; this.saveValue = 0; this.plane = null; this.record = null; this.followed = null; this.timing = null; this.said1 = {};
     this.windowsSeen = {};
     this.rec = null; this.player = null;   // the replay recorded since the load, and one playing
     this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
@@ -381,7 +393,7 @@
       this._say(c.rate ? 'The budget: ' + thousands(bd.cells) + ' formula cells a frame at ' + c.rate + ' frames a second, ' + thousands(bd.perSecond) + ' a second, ' + (over ? 'over' : 'under') + ' the console\'s line of ' + thousands(bd.line) + (over ? ': it may run slowly, in plain sight.' : '.')
                        : 'The budget: ' + thousands(bd.cells) + ' formula cells a step, one step an edit.');
     }
-    if (c.mode !== 'plane') this._say('This slice blits the plane alone; a grid cartridge is drawn by the viewport, which the host takes up after it.');
+    if (c.mode === 'grid' && !this.gridEl) this._say('This page gave the host no element for grid mode: the cartridge runs, and nothing draws it.');
     if (c.seed === 'host') this._seed();
     this._startReplay();   // the replay of this load's run, from frame 0 (section 7.6)
     if (c.devices.camera) this._readCamera();
@@ -391,6 +403,7 @@
     // 0, a value cell its value): a load completes no frame, and without this draw the canvas kept
     // the last run's picture, a grid that no longer exists (the owner's hand test, 2026-10-09).
     if (c.mode === 'plane') this._drawPlane();   // frame 0, drawn at the load
+    if (c.mode === 'grid') this._drawGrid(true);   // and a grid's, its record as loaded (ENGINE.8)
     this._emit('load', { handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate, window: this.window, scale: this.scale || 0 });
     return { ok: true, handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate };
   };
@@ -434,8 +447,9 @@
     this._clear();
   };
   // The canvas emptied when its grid is unloaded: what it showed is gone, and a load refused after
-  // it leaves no picture of a grid the module no longer holds.
+  // it leaves no picture of a grid the module no longer holds; the viewport too (ENGINE.8).
   Host.prototype._clear = function () {
+    if (this.vp) this.vp.clear();
     if (!this.canvas) return;
     var ctx = this.ctx || this.canvas.getContext('2d');
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -664,6 +678,7 @@
     if (d.camera) this._readCamera();
     if (d.palette) this._readPalette();
     if (this.cart.mode === 'plane') this._drawPlane();
+    if (this.cart.mode === 'grid') this._drawGrid(false);   // the record through the frame's own Camera (ENGINE.8)
     if (d.keys) this._readKeys();
     if (d.audio) this._readAudio();
     if (d.file) this._readFile();
@@ -743,6 +758,45 @@
     this.ctx.imageSmoothingEnabled = false;
     this.ctx.drawImage(this.planeCanvas, 0, 0, w * this.scale, h * this.scale);
     this.c.draws++;
+  };
+  // Grid mode (ENGINE.8; SPEC.md section 5, steps 5 and 6): the Screen's record through the window the
+  // Camera places, drawn by the viewport. Frame 0's record is loaded whole, the view reset; every later
+  // frame's replaces it with the person's scroll and selection kept (decision 5). The record is viewed
+  // whether or not a viewport draws it, so a host with no element still counts its windows.
+  Host.prototype._drawGrid = function (atLoad) {
+    var t0 = this.now();
+    var r = this.m.texts('alonzo_view', [this.handle], ['grid', 'Screen', this.window]);
+    var t1 = this.now();
+    if (r.status !== 0) { this._sayOnce('grid', 'frame ' + this.frame + ': the record of the Screen was refused: ' + words(r) + '.', true); return; }
+    if (!this.windowsSeen[this.window]) { this.windowsSeen[this.window] = true; this.c.windows++; }
+    this.record = r.text;
+    var vp = this._viewport();
+    if (vp) {
+      vp.load(r.text, { keep: !atLoad });
+      this._follow(atLoad);
+      this.c.draws++;
+    }
+    this.timing = { view: t1 - t0, draw: this.now() - t1 };
+  };
+  // The viewport, made over the page's element at the first grid load and kept across loads.
+  Host.prototype._viewport = function () {
+    if (this.vp || !this.gridEl) return this.vp;
+    var V = VP();
+    this.vp = new V(this.gridEl);
+    this._listenGrid();
+    return this.vp;
+  };
+  // The viewport follows the Camera (decision 6): at a load to the window's top-left; at a move, by the
+  // move, so that where the person looks inside the window is kept and the window moves under it. A
+  // cartridge with no Camera keeps the person's scroll.
+  Host.prototype._follow = function (atLoad) {
+    var cam = this.camera, was = this.followed;
+    this.followed = { row: cam.row, col: cam.col };
+    if (!this.cart.devices.camera) return;
+    if (atLoad || !was) { this.vp.scrollTo(cam.row, cam.col); return; }
+    if (cam.row === was.row && cam.col === was.col) return;
+    var at = this.vp.scrolled();
+    this.vp.scrollTo(Math.max(1, at.top + cam.row - was.row), Math.max(1, at.left + cam.col - was.col));
   };
   Host.prototype._fit = function () {
     var c = this.cart, dpr = global.devicePixelRatio || 1;
@@ -1010,6 +1064,10 @@
     if (this.player) { this._refuse('The edit ' + t + ' was not written: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s edit waits until it ends, so that what plays is the replay alone.'); return false; }
     this.edits.push(t);
     if (this.cart.rate === 0 && !this.inFrame) this._editFrames(this._window());
+    // At a rate above zero the edit is written at the next frame, which a paused loop does not bring until Run:
+    // said, so that an edit is never silent (the owner's hand test of ENGINE.8, 2026-10-12: the grid card,
+    // paused, took an edit and showed nothing).
+    else if (this.cart.rate > 0 && !this.running) this._say('frame ' + this.frame + ': the edit ' + t + ' waits for the next frame, which Run brings: the loop is paused at ' + this.cart.rate + ' frame' + (this.cart.rate === 1 ? '' : 's') + ' a second.');
     return true;
   };
   Host.prototype.keyDown = function (code, key) {
@@ -1050,6 +1108,33 @@
     this._on(cv, 'mouseleave', function () { self.pointerAt(0, 0); self.pointerButtons(0, 0, 0); });
     this._on(cv, 'contextmenu', function (ev) { ev.preventDefault(); });
     this._on(cv, 'wheel', function (ev) { self.wheel(ev.deltaY > 0 ? 1 : (ev.deltaY < 0 ? -1 : 0)); ev.preventDefault(); }, { passive: false });
+  };
+  // The Input device over the viewport (ENGINE.8, decision 7). At a rate above zero the pointer over the
+  // window's cells, its buttons and the wheel are the game's, and a key the Keys sheet binds is taken before
+  // the viewport sees it; every other key moves the viewport. At rate zero, where the Input sheet is not
+  // written, all of them are the viewport's, to select, scroll and move by.
+  Host.prototype._listenGrid = function () {
+    var self = this, root = this.vp.root;
+    function playing() { return !!self.cart && self.cart.mode === 'grid' && self.cart.rate > 0; }
+    this._on(root, 'keydown', function (ev) { if (playing() && self.keyDown(ev.code, ev.key)) { ev.preventDefault(); ev.stopPropagation(); } }, true);
+    this._on(root, 'keyup', function (ev) { if (playing()) self.keyUp(ev.code); }, true);
+    this._on(root, 'focusout', function () { self.releaseKeys(); });
+    this._on(root, 'mousemove', function (ev) { if (playing()) self._pointerFromGrid(ev); });
+    this._on(root, 'mousedown', function (ev) { if (playing()) self._pointerFromGrid(ev); });
+    this._on(root, 'mouseup', function (ev) { if (playing()) self._pointerFromGrid(ev); });
+    this._on(root, 'mouseleave', function () { if (playing()) { self.pointerAt(0, 0); self.pointerButtons(0, 0, 0); } });
+    this._on(root, 'contextmenu', function (ev) { if (playing()) ev.preventDefault(); });
+    this._on(root, 'wheel', function (ev) { if (!playing()) return; self.wheel(ev.deltaY > 0 ? 1 : (ev.deltaY < 0 ? -1 : 0)); ev.preventDefault(); }, { passive: false, capture: true });
+  };
+  // The cell under the pointer, the sheet's own, held as the window's cell so that the Input rows add the
+  // Camera back as they do a plane's: the viewport draws the sheet's own rows and columns, so a cell is the
+  // pointer's when the window holds it, and the pointer is 0 off the window, as a plane's is off its canvas.
+  Host.prototype._pointerFromGrid = function (ev) {
+    var c = this.cart, cam = this.camera, at = this.vp.cellAt(ev.clientX, ev.clientY);
+    var col = at ? at.col - cam.col + 1 : 0, row = at ? at.row - cam.row + 1 : 0;
+    if (col < 1 || col > c.w || row < 1 || row > c.h) { col = 0; row = 0; }
+    this.pointerAt(col, row);
+    this.pointerButtons(ev.buttons & 1, ev.buttons & 2, ev.buttons & 4);
   };
   // A hidden page stops the ticks and the voices, and its return starts the clock again with nothing owed
   // and sounds the frame the grid holds (ENGINE.4, decision 6).
@@ -1259,6 +1344,7 @@
     if (this.handle) this.unload();
     for (var i = 0; i < this.handlers.length; i++) { var h = this.handlers[i]; h[0].removeEventListener(h[1], h[2], h[3]); }
     this.handlers = []; this.listeners = {};
+    if (this.vp) { this.vp.destroy(); this.vp = null; }   // its element left as the page gave it
   };
 
   // ---- sentences and events ----
