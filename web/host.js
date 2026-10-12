@@ -99,7 +99,9 @@
                                      // engine's own module (226,000 to 236,000 cells a second in Chrome,
                                      // measured 2026-10-09), where 16,000 held the page for about 70 ms
   var MIN_BUDGET = 1000;             // the least a measured budget asks for
-  var SLICE_FRACTION = 0.5;          // the share of the display's interval the steps of one tick may spend
+  var SLICE_FRACTION = 0.75;         // the share of the display's interval the steps of one tick may spend: three
+                                     // quarters since CART.2's water (decision 20), whose heaviest seconds step in
+                                     // 22.6 to 24.9 ms, presented at 20 to 22 frames a second at a half and at 30 here
   var INTERVAL_SAMPLES = 30;         // the display's interval is the median of the first thirty deltas
   var DEFAULT_INTERVAL_MS = 1000 / 60;
   var TIMER_FLOOR_MS = 0.1;          // a step faster than the timer's grain is measured at the grain

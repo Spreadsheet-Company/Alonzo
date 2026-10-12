@@ -979,6 +979,42 @@
     var k = loopEnd(r, ['frame 1, 16,000 of 64,000 cells', 'frame 1, 48,000 of 64,000 cells', 'the edit (cell "State" "B1" 777) was written']);
     return { counters: k, problems: r.P };
   }
+  // The host's time slice (CART.2, decision 20; SPEC.md section 5, step 4, corrected 2026-10-12): the
+  // steps of one tick may spend three quarters of the display's interval, so that a frame needing more
+  // than half of it is still presented at the cartridge's rate. Over the double, in steps of 1,000 cells,
+  // sixty-four a frame of Life's 64,000, under a clock this case keeps, which stands still but at a step
+  // call, where it moves on 1 ms. The display's ticks come 20 ms apart, so the interval the host measures
+  // is 20 ms, and a tick's calls stop once its share has passed: fifteen at three quarters, ten at a half.
+  // The share is the oracle's own constant, never read off the host.
+  var LOOP_SLICE = 0.75, SLICE_TICK_MS = 20, SLICE_STEP_MS = 1;
+  function caseSlice() {
+    var P = [], clock = { t: 0 }, fake = FAKE.create({}), x = fake.exports, exports = {};
+    for (var key in x) exports[key] = x[key];
+    exports.alonzo_step = function () { clock.t += SLICE_STEP_MS; return x.alonzo_step.apply(null, arguments); };
+    var host = new HOST({ drive: 'manual', now: function () { return clock.t; }, budget: 1000 });
+    var a = host.attach(exports);
+    if (!a.ok) return { counters: { ticks: 0 }, problems: ['the host refused the double: ' + a.sentence] };
+    var ld = host.load(lifeText, 'life.vla');
+    if (!ld.ok) return { counters: { ticks: 0 }, problems: ['the host did not load Life: ' + ld.sentence] };
+    host.start();
+    var want = Math.round(SLICE_TICK_MS * LOOP_SLICE / SLICE_STEP_MS), t = 1000, ticks = 0, wrong = [], before;
+    host.tick(t);   // the first tick primes the loop's clock and steps nothing
+    for (var i = 1; i <= 40; i++) {
+      before = host.counters().calls;
+      t += SLICE_TICK_MS;
+      host.tick(t);
+      if (i === 1) continue;   // its 20 ms owe no frame of 33.3 yet; every tick after it has a frame to step
+      ticks++;
+      var calls = host.counters().calls - before;
+      if (calls !== want) wrong.push('tick ' + i + ' made ' + calls);
+    }
+    var total = host.counters().calls, frames = host.counters().frame;
+    if (wrong.length) P.push('a tick spends ' + LOOP_SLICE + ' of a display interval of ' + SLICE_TICK_MS + ' ms, ' + want + ' step calls of ' + SLICE_STEP_MS + ' ms, and ' + wrong.slice(0, 3).join(', ') + (wrong.length > 3 ? ' and ' + (wrong.length - 3) + ' more ticks were wrong' : ''));
+    if (frames !== Math.floor(total / 64)) P.push('the host is at frame ' + frames + ' after ' + total + ' step calls of 1,000 cells, where a frame of 64,000 takes 64');
+    host.destroy();
+    var st = fake.stats();
+    return { counters: { ticks: ticks, perTick: want, calls: total, frames: frames, live: st.live, misfrees: st.misfrees }, problems: P };
+  }
   // Every allocation grows the memory by zero pages and detaches the buffer: the host keeps no view.
   function caseMemory() {
     var r = loopRun({ text: lifeText, budget: 0, fake: { growEvery: 1 }, ticks: loopTicks(30, -1), events: { 3: [['down', 'ArrowUp', 'ArrowUp']], 9: [['edit', '(cell "State" "B1" 42)']], 15: [['up', 'ArrowUp']] } });
@@ -1128,13 +1164,15 @@
       next[i] = (others === 3 || (me === 1 && others === 2)) ? 1 : 0;
     }
   }
-  // Sand by hand (CART.2, decision 13), the page's own, a third beside the engine's and the Rust one,
-  // engine/src/sand.rs: the rule of cartridges/sand/sand.vla as a person writes a falling-sand toy, each
-  // row's grains proposing a move and the cells beneath them claiming it, from the bottom row up, in
-  // three passes: straight down, then each grain's first diagonal, then its second, the first to the
-  // right on an even row; a cell is claimed once, by the first grain to ask. The codes are the
-  // cartridge's, 0 empty, 1 wall and 2 sand; the interior is C2:LF199, the walls two cells wide down
-  // each side, row 1 empty and row 200 the floor, which shows the swatch. A plane as Life's.
+  // Sand by hand (CART.2, decisions 13 and 21), the page's own, a third beside the engine's and the Rust
+  // one, engine/src/sand.rs: the rule of cartridges/sand/sand.vla as a person writes a falling-sand toy,
+  // each row's grains, sand and water alike, proposing a move and the cells beneath them claiming it,
+  // from the bottom row up, in three passes: straight down, then each grain's first diagonal, then its
+  // second, the first to the right on an even row; a cell is claimed once, by the first grain to ask.
+  // Then the row's water that stayed claims a cell of its row left free, in two passes, the side its
+  // row's direction names first. The codes are the cartridge's, 0 empty, 1 wall, 2 sand and 3 water; the
+  // interior is C2:LF199, the walls two cells wide down each side, row 1 empty and row 200 the floor,
+  // which shows the swatch. A plane as Life's.
   var SAND_TOP = 2, SAND_BOTTOM = LIFE_H - 1, SAND_LEFT = 3, SAND_RIGHT = LIFE_W - 2;
   function sandEmpty(swatch) {
     var b = new Uint8Array(LIFE_W * LIFE_H), r, c;
@@ -1142,38 +1180,56 @@
     for (c = SAND_LEFT; c <= SAND_RIGHT; c++) b[(LIFE_H - 1) * LIFE_W + (c - 1)] = swatch;
     return b;
   }
-  // The opening: Life's soup as grains of sand, Life's own arithmetic over the interior.
+  // The opening: Life's soup as grains, Life's own arithmetic over the interior, sand where the soup's
+  // square is under three sixteenths of the prime and water where it is under three eighths.
   function sandOpening(seed) {
-    var P = 67108859, T = 25165822, b = sandEmpty(2);
+    var P = 67108859, T = 25165822, TS = 12582911, b = sandEmpty(2);
     for (var r = SAND_TOP; r <= SAND_BOTTOM; r++) for (var c = SAND_LEFT; c <= SAND_RIGHT; c++) {
       var a = (seed * 1103515 + r * 1597334 + c * 1830421 + 12345) % P;
       var d = (seed * 2012345 + r * 1209487 + c * 1949213 + 54321) % P;
-      var h = (a * d) % P;
-      if ((h * h) % P < T) b[(r - 1) * LIFE_W + (c - 1)] = 2;
+      var h = (a * d) % P, sq = (h * h) % P;
+      if (sq < TS) b[(r - 1) * LIFE_W + (c - 1)] = 2;
+      else if (sq < T) b[(r - 1) * LIFE_W + (c - 1)] = 3;
     }
     return b;
   }
   // One frame of the rule over the last frame's board with no brush, the floor showing the swatch: the
-  // row beneath known after its own departures, occupied or not and what it holds, the floor first.
+  // row beneath known after its departures and its water's sideways moves, occupied or not and what it
+  // holds, the floor first.
   function sandStep(old, swatch) {
     var W = LIFE_W, next = old.slice(), occ = new Uint8Array(W + 1), holds = new Uint8Array(W + 1);
     var claimed = new Uint8Array(W + 1), moved = new Uint8Array(W + 1), arrives = new Uint8Array(W + 1), r, c, pass;
+    var taken = new Uint8Array(W + 1), went = new Uint8Array(W + 1);
     for (c = SAND_LEFT; c <= SAND_RIGHT; c++) next[(LIFE_H - 1) * W + (c - 1)] = swatch;
     for (c = 1; c <= W; c++) { occ[c] = 1; holds[c] = 1; }
     for (r = SAND_BOTTOM; r >= SAND_TOP; r--) {
       var row = (r - 1) * W, rightFirst = r % 2 === 0;
       claimed.fill(0); moved.fill(0); arrives.fill(0);
       for (pass = 0; pass < 3; pass++) for (c = SAND_LEFT; c <= SAND_RIGHT; c++) {
-        if (old[row + c - 1] !== 2 || moved[c]) continue;
+        var g = old[row + c - 1];
+        if (g < 2 || moved[c]) continue;
         var t = pass === 0 ? c : ((pass === 1) === rightFirst ? c + 1 : c - 1);
-        if (!occ[t] && !claimed[t]) { claimed[t] = 1; moved[c] = 1; arrives[t] = 2; }
+        if (!occ[t] && !claimed[t]) { claimed[t] = 1; moved[c] = 1; arrives[t] = g; }
       }
       if (r < SAND_BOTTOM) for (c = SAND_LEFT; c <= SAND_RIGHT; c++) next[row + W + c - 1] = occ[c] ? holds[c] : arrives[c];
+      // this row after its departures
       for (c = 1; c <= W; c++) {
         var m = old[row + c - 1];
         if (c < SAND_LEFT || c > SAND_RIGHT) { occ[c] = 1; holds[c] = m; continue; }
-        var stays = m === 1 || (m === 2 && !moved[c]);
+        var stays = m === 1 || (m >= 2 && !moved[c]);
         occ[c] = stays ? 1 : 0; holds[c] = stays ? m : 0;
+      }
+      // its water that stayed, into a cell of the row left free, its direction's side first; a grain
+      // moving out frees no cell for another this frame
+      taken.fill(0); went.fill(0);
+      for (pass = 0; pass < 2; pass++) for (c = SAND_LEFT; c <= SAND_RIGHT; c++) {
+        if (!occ[c] || old[row + c - 1] !== 3 || went[c]) continue;
+        var s = (pass === 0) === rightFirst ? c + 1 : c - 1;
+        if (!occ[s] && !taken[s]) { taken[s] = 1; went[c] = 1; }
+      }
+      for (c = SAND_LEFT; c <= SAND_RIGHT; c++) {
+        if (went[c]) { occ[c] = 0; holds[c] = 0; }
+        if (taken[c]) { occ[c] = 1; holds[c] = 3; }
       }
     }
     for (c = SAND_LEFT; c <= SAND_RIGHT; c++) next[(SAND_TOP - 1) * W + c - 1] = occ[c] ? holds[c] : 0;
@@ -2383,9 +2439,9 @@
   function runLoopOracle() {
     var out = [], dpr = window.devicePixelRatio || 1, ok = 0, R = HOST.RULES;
     out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
-    var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals], ['scale', caseScale],
-                 ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay], ['audio', caseAudio],
-                 ['sound', caseSound]];
+    var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
+                 ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
+                 ['audio', caseAudio], ['sound', caseSound]];
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); if (!res.problems.length) ok++; }
     // A case answers its result, or a promise of it (sound, which waits on its render): the cases run in

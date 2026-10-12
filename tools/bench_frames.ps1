@@ -72,7 +72,10 @@ where the floors' margin is 10%. So the native runner times a frame under
 42.4 to 44.5 microseconds a frame across launches and an added load, over
 frames 158 to 3997, the page's frames. A row timed one way where the
 check's baseline timed it the other measures other frames, so its floor is
-re-based on this run (step 4).
+re-based on this run (step 4); and so is a row whose fixture is not the
+file the check's baseline measured (CART.2's decision 24), since cells a
+second count the fixture's cells: Sand with water steps its opening in
+slice 1's time over half again the cells.
 
 WHAT IT DOES:
   1. builds what it measures, unless -NoBuild: the runner (cargo build
@@ -90,11 +93,13 @@ WHAT IT DOES:
      higher, since this instrument never lowers a floor (CART.2, 2026-10-11:
      a run slower on unchanged code lowered two floors, and the check refused
      the entry); a row measured under its latest floor is named, a finding
-     and not a baseline. One exception: a row this run timed in runs where
+     and not a baseline. Two exceptions: a row this run timed in runs where
      the check's baseline timed it alone, or the other way about, measures
-     other frames (2026-10-12, the fourth trap), so its floor is this run's
-     less 10% whatever the latest, and where that is lower the entry's
-     reason says why. The block is pasted over the check's history whole (a lone entry
+     other frames (2026-10-12, the fourth trap); and a row whose fixture is
+     not the file the check's baseline measured, nor that file's rows
+     rebuilt, measures another cartridge (CART.2's decision 24). Either row's
+     floor is this run's less 10% whatever the latest, and where that is
+     lower the entry's reason says why. The block is pasted over the check's history whole (a lone entry
      to add by hand was pasted over the first at the second baseline,
      2026-10-10); and writes the same block to target/bench_frames.txt, to
      copy from, since a terminal that wraps a long line can drop a space from
@@ -270,6 +275,33 @@ function Get-BaselineRuns([string]$path) {
     return $runs
 }
 
+# The fixtures the check's baseline measured, by name, each its SHA-256 over
+# LF bytes; and the check's rebuilt fixtures, a file's digest to the measured
+# one whose rows it holds. Read as text, as the history is.
+function Get-BaselineFixtures([string]$path) {
+    $fixtures = @{}
+    if (-not (Test-Path -LiteralPath $path)) { return $fixtures }
+    foreach ($line in [System.IO.File]::ReadAllLines($path)) {
+        if ($line -match '^\$baselineFixtures = @\{') {
+            foreach ($m in [regex]::Matches($line, "'([a-z]+)' = '([0-9A-F]{64})'")) { $fixtures[$m.Groups[1].Value] = $m.Groups[2].Value }
+            break
+        }
+    }
+    return $fixtures
+}
+function Get-SameRows([string]$path) {
+    $same = @{}
+    if (-not (Test-Path -LiteralPath $path)) { return $same }
+    $inside = $false
+    foreach ($line in [System.IO.File]::ReadAllLines($path)) {
+        if (-not $inside) { if ($line -match '^\$sameRows = @\{\s*$') { $inside = $true }; continue }
+        if ($line -match '^\}\s*$') { break }
+        $m = [regex]::Match($line, "'([0-9A-F]{64})' = '([0-9A-F]{64})'")
+        if ($m.Success) { $same[$m.Groups[1].Value] = $m.Groups[2].Value }
+    }
+    return $same
+}
+
 # One build step, its output shown only when it fails.
 function Invoke-Step([string]$what, [string]$exe, [string[]]$arguments) {
     Write-Output ("  building {0}..." -f $what)
@@ -434,10 +466,15 @@ if ($timeless.Count -gt 0) {
 # reason written). A row this run measured under its latest floor is named, a finding and not a
 # baseline: run again, or lower that floor by hand with its reason in the entry. A row timed in runs
 # where the check's baseline timed it alone, or the other way about, measures other frames (2026-10-12,
-# the fourth trap): its floor is re-based on this run, the entry saying why where it goes down.
+# the fourth trap), and a row whose fixture is not the file the check's baseline measured, nor its
+# rows rebuilt, measures another cartridge (CART.2's decision 24): either row's floor is re-based on
+# this run, the entry saying why where it goes down.
 $checkFile = Join-Path $repoRoot 'tools/check_frame_floors.ps1'
 $entries = @(Get-HistoryEntries $checkFile)
 $was = Get-BaselineRuns $checkFile
+$measured = Get-BaselineFixtures $checkFile
+$rebuilt = Get-SameRows $checkFile
+$digestNow = @{ 'life' = (Get-LfDigest $life); 'gun' = (Get-LfDigest $gun); 'sand' = (Get-LfDigest $sand) }
 $latest = @{}
 if ($entries.Count -gt 0) {
     foreach ($m in [regex]::Matches([string]$entries[$entries.Count - 1], "'([a-z]+ [a-z]+)' = (\d+)")) { $latest[$m.Groups[1].Value] = [double]$m.Groups[2].Value }
@@ -448,16 +485,21 @@ $under = @()
 $rebased = @()
 $reasons = @()
 foreach ($r in $rows) {
-    $key = (Get-Field $r 'Runner') + ' ' + (Get-Field $r 'Fixture')
+    $fixture = Get-Field $r 'Fixture'
+    $key = (Get-Field $r 'Runner') + ' ' + $fixture
     $cps = [double](Get-Field $r 'CellsPerSecond')
     $run = [int](Get-Field $r 'Run')
     $floor = Get-RoundedDown ($cps * (1 - $margin))
+    $now = [string]$digestNow[$fixture]
+    $changed = $measured.ContainsKey($fixture) -and $now -ne $measured[$fixture] -and -not ($rebuilt.ContainsKey($now) -and $rebuilt[$now] -eq $measured[$fixture])
     $retimed = $was.ContainsKey($key) -and (($was[$key] -gt 1) -ne ($run -gt 1))
-    if ($retimed) {
+    if ($changed -or $retimed) {
         $rebased += $key
         if ($latest.ContainsKey($key) -and $floor -lt $latest[$key]) {
-            $why = $(if ($run -gt 1) { "timed in runs of $run from this entry, where the baseline before it timed its frames alone, and a frame under 2 ms timed alone, right after the clock, varied between sessions past the margin (CART.1's frame timer)" } else { 'timed alone from this entry, its frames 2 ms or more, where the baseline before it timed them in runs (CART.1''s frame timer)' })
-            $reasons += ("{0} re-based: {1}; its floor is this run's less 10%" -f $key, $why)
+            $whys = @()
+            if ($changed) { $whys += ("its fixture is another file, {0}..., where the baseline before it measured {1}..., and cells a second count a fixture's cells (CART.2's decision 24)" -f $now.Substring(0, 8), ([string]$measured[$fixture]).Substring(0, 8)) }
+            if ($retimed) { $whys += $(if ($run -gt 1) { "timed in runs of $run from this entry, where the baseline before it timed its frames alone, and a frame under 2 ms timed alone, right after the clock, varied between sessions past the margin (CART.1's frame timer)" } else { 'timed alone from this entry, its frames 2 ms or more, where the baseline before it timed them in runs (CART.1''s frame timer)' }) }
+            $reasons += ("{0} re-based: {1}; its floor is this run's less 10%" -f $key, ($whys -join '; and '))
         }
     } elseif ($latest.ContainsKey($key) -and $latest[$key] -gt $floor) {
         $floor = [long]$latest[$key]
@@ -477,7 +519,7 @@ $block.Add('$baseline = @(')
 for ($i = 0; $i -lt $rows.Count; $i++) { $block.Add(('    ' + $rows[$i] + $(if ($i -lt $rows.Count - 1) { ',' } else { '' }))) }
 $block.Add(')')
 $entries += ("@{{ Date = '{0}'; Pin = '{1}'; Reason = '{2}'; Floors = @{{ {3} }} }}" -f $date, $pin, (($reasons -join '; ') -replace "'", "''"), ($floors -join '; '))
-$block.Add(('# ---- and this over $floorHistory = @( ... ), whole: the check''s {0} entr{1} as they stand, then this run''s, each row''s cells a second less 10%, three figures, or its latest floor where that is higher, unless the row is timed another way than the baseline before ----' -f ($entries.Count - 1), $(if ($entries.Count -eq 2) { 'y' } else { 'ies' })))
+$block.Add(('# ---- and this over $floorHistory = @( ... ), whole: the check''s {0} entr{1} as they stand, then this run''s, each row''s cells a second less 10%, three figures, or its latest floor where that is higher, unless the row is timed another way than the baseline before or over another fixture ----' -f ($entries.Count - 1), $(if ($entries.Count -eq 2) { 'y' } else { 'ies' })))
 $block.Add('$floorHistory = @(')
 for ($i = 0; $i -lt $entries.Count; $i++) { $block.Add(('    ' + $entries[$i] + $(if ($i -lt $entries.Count - 1) { ',' } else { '' }))) }
 $block.Add(')')
@@ -494,7 +536,7 @@ Write-Output ''
 $block | ForEach-Object { Write-Output $_ }
 Write-Output ''
 if ($kept.Count -gt 0) { Write-Output ("Kept: {0}, measured slower than the run that set the latest floor and still above it, so the entry keeps that floor." -f ($kept -join ', ')) }
-if ($rebased.Count -gt 0) { Write-Output ("Re-based: {0}, each timed another way than the check's baseline timed it: its floor is this run's less 10%{1}." -f ($rebased -join ', '), $(if ($reasons.Count -gt 0) { ', and where that is lower than the latest, the entry says why' } else { '' })) }
+if ($rebased.Count -gt 0) { Write-Output ("Re-based: {0}, each timed another way than the check's baseline timed it, or over another fixture than it measured: its floor is this run's less 10%{1}." -f ($rebased -join ', '), $(if ($reasons.Count -gt 0) { ', and where that is lower than the latest, the entry says why' } else { '' })) }
 if ($under.Count -gt 0) { Write-Output ("NOT A BASELINE for {0}: measured under the latest floor, so the check refuses this block. Run again at a quieter time; or, where the cause is known and accepted, lower that floor by hand with its reason written in the entry, and record the finding in REARVIEW.md." -f ($under -join ', ')) }
 Write-Output ("The block above is also in {0}: copy it from there, since a terminal's line wrap can drop a space from a copy." -f $blockFile)
 Write-Output 'In tools/check_frame_floors.ps1, its baseline lines go over the baseline lines, and its history over $floorHistory = @( ... ), whole.'

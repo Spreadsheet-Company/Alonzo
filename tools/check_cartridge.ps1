@@ -163,12 +163,15 @@ if ($Root -eq '') { $Root = $repoRoot }
 # two, the Tally's two labels and two fills: 126,449 formula cells), written
 # as a source over the library, which gains nothing; the other five's rows
 # unchanged.
+# 2026-10-12, CART.2's third slice: Sand with water, 86 rows (nine sheet rows,
+# Side's among them, Side's border's three, and Side's one fill: 189,017
+# formula cells); the other five's rows unchanged.
 $expectedCartridges = 6
 $expectedSources = 6
 $expectedLibraries = 1
 $expectedReplays = 2
 $expectedGoldens = 2
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 81 }
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 86 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

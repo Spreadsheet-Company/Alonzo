@@ -155,7 +155,11 @@ the worst stretch of the toy, three eighths of the board falling at once
 through a chain two hundred rows deep, steps in about 12 ms natively and
 17 ms in the browser, about 60 frames a second against its rate of thirty
 (`CART.2`'s first slice, the owner's run of 2026-10-11, the floors' fourth
-baseline).
+baseline). Since the third slice the opening rains water with the sand,
+half the soup's grains, through a rule of three sheets where it was two:
+about 12.5 ms natively and 18.7 ms in the browser, over half again the
+formula cells (the build's run of 2026-10-12 over `vla-lang` 0.9.1; the
+floors' fifth baseline is the owner's).
 
 ## Where it comes from
 

@@ -662,6 +662,27 @@ A preview run of `tools/bench_frames.ps1` the same day, every guard met:
 
 *Committed 2026-10-11 at the owner's word, "Commit, push to remote, then suggest next steps", under `ENGINE.1`'s ID as the 0.8.1 move was, and pushed the same day with the six commits before it, `ENGINE.4`'s two among them.*
 
+*The pin at `vla-lang` 0.9.1, 2026-10-12, at the owner's word: "0.9.1 is cut and deployed to GitHub and crates.io; proceed with implementing slice 3 of CART.2 as scoped". That scoping's decision 24 has the floors' fifth baseline measure the pin, water's cartridge and the gun's runs in one run of the owner's, so the pin moved first.*
+
+The release is Frazaro's `cb3cd12`, tagged `v0.9.1`.
+- `KERNEL.28`, `CART.2`'s decision 14's ask: a run computes the language's `ROW`, `COLUMN`, `MOD`, `INT`, `ABS`, `SIN` and `CHOOSE` across its cells, by the library's own meanings.
+- No public interface changed, and no git rev was pinned between 0.9.0 and it.
+
+What moved:
+- `Cargo.toml`'s pin and its comment, and the lock: the checksum `712a4ef4...`, still two packages.
+- `check_engine_deps.ps1`'s baseline and its header.
+- `SPEC.md` §2's note: rule 5's dated correction. A cell's place may be computed at each cell, and `CHOOSE` costs what `IF` does, as Frazaro's session measured on Sand (relayed); Sand keeps its `Parity` column, about 1% cheaper.
+
+The oracle, on the day, before `CART.2`'s third slice changed anything (*measurement*):
+- `cargo test --release`: 29.
+- The runner's check mode: every count the same, Life and the gun 80 and 5, Sand 509 and 5.
+- `check_engine_deps.ps1` and its control's 8 mutants and 5 baselines.
+- The module: 643,503 bytes, from 635,687 (+1.2%).
+
+The floors hold the pin they were measured at, so `check_frame_floors.ps1` fails until the fifth baseline, which is `CART.2`'s third slice's (that item's entry).
+
+*Committed 2026-10-12 at the owner's word, "Commit, then walk CART.1's optimization route again over CART.2", in one commit with `CART.2`'s third slice. The floors' check fails on the pin without the fifth baseline, and the fifth baseline measured water's cartridge, so no commit can hold the one without the other. Not pushed.*
+
 ## `ENGINE.2` — the frame path: the plane held to the record of the same window
 
 *Scoped 2026-10-09, at the owner's word, the day `ENGINE.1` closed: the Screen read out of the module's memory as bytes and blitted whole, held equal to the view record of the same window by a test, the record being the oracle (`CHARTER.md` §3), and the window the Camera's (`SPEC.md` §13's two oracles for this item). The scoping finds the path itself already laid, since `ENGINE.1` had to draw something: the host views the plane, copies the bytes out and blits them through the Palette. What is missing is the oracle, a fixture that reaches every arm of the byte's rule, and the cost the second slice measured, which is the language's. So the scoping is mostly a measurement, made before any claim, and its first finding moves the cost to Frazaro.*
@@ -2803,3 +2824,338 @@ What remains is the owner's, in Chrome.
   Sand clears the charter's thirty frames a second at its first floor, 75 and 54 frames a second, so that bar is a gate for it from this entry on (decision 11). `check_frame_floors.ps1` is clean, and `run_checks.ps1 -WithExtras` reports 12 checks and 12 verifiers, `ALL GREEN`.
 
 *The first slice committed 2026-10-11 at the owner's word, after the run above: "Commit, then suggest next steps (also numbering the remaining slices in CART.2)". The roadmap's line numbers the four slices. Not pushed.*
+
+*Pushed 2026-10-12 at the owner's word, `96fe7a5..11a61c1`, with `ccf8b7c` and `de31eea`. CI run `38215740585` is green on both jobs: crate in 5m31s, ratchets in 8m21s. On Linux, `cargo test` passed 29, and the floors' check passed with its runner, so Sand's frames equal the sand by hand there and its allocations fit the ceiling Windows measured. The run's one annotation is Node 20's deprecation for `actions/checkout@v4`.*
+
+*2026-10-12, at the owner's word: the floors' margin for microsecond frames, met at the fourth baseline above, is fixed in the native runner and the instrument; the record is `CART.1`'s, "The native frame timer". Native Life's own scatter, from the clock read before each frame, is left there for the owner.*
+
+**Slice 3, water: its scoping.**
+
+*Scoped 2026-10-12 at the owner's word: "Fix the floors' margin for microsecond frames, then proceed with scoping slice 3 of CART.2". Decisions 9 and 10 set the slice's ground: water through a third sheet, `Side`, its row in the floors beside sand's, and the host's slice raised to three quarters of the display's interval. The scoping measured before it proposed:*
+- *It wrote the rule into a scratch copy of the tree at `11a61c1`, with the day's margin fix, and a scratch sand by hand with water.*
+- *Every frame of every case was held to that sand natively, on the Screen, `Stay` and `Side`, before any time was kept.*
+- *The browser half is the item's scratch page again: the engine's own module, 635,687 bytes, holding every frame to the native frame's hash.*
+
+*Nothing in this tree changed for it.*
+
+**Substrate, verified.** Read on the day, by file.
+- *The cartridge* is as slice 1 landed it:
+  - `Stay` and `Screen`, one fill each over `C2:LF199`;
+  - the Palette's index 3 already "water, to come", `#3060E0`;
+  - `State!B1` reading the keys 1, 2 and 0;
+  - 81 rows and 126,449 formula cells, in 13 shapes.
+- *The host.* `web/host.js` holds `SLICE_FRACTION = 0.5`, the share of the display's interval a tick's steps may spend. `SPEC.md` §5 step 4 says "a fraction of the display's interval that leaves room for the draw" and names no number.
+- *The loop oracle* prints the host's rule, `slice=0.5`, and holds no slice of its own: every case drives the host by a budget of cells or a count of calls. So decision 9's "the loop oracle's own constant beside it" has nothing to stand beside yet (decision 20).
+- *The replay* names the SHA-256 of the cartridge it was recorded from.
+  - The page's player refuses another cartridge: "a replay plays only on the file it was recorded from".
+  - `check_cartridge.ps1` holds the digest to the cartridge beside it.
+  - `cargo test`'s player reads the seed and not the digest.
+
+  So a slice that rewrites `sand.vla` meets any replay recorded on slice 1's (decision 22).
+- *The floors* hold six rows, Sand's fixture digest and Sand's allocation ceiling, 509 and 5. Since today the native runner times a frame under 2 ms in runs, and the instrument re-bases a row whose timing changed (`CART.1`'s record, "The native frame timer").
+- *The language.* The pin is `vla-lang` 0.9.0. Frazaro's `KERNEL.28`, decision 14's ask, was committed as `ec369a5` the same day and ships in 0.9.1 at the owner's release, as Frazaro's session reported it, relayed by the owner. A run now computes `ROW`, `COLUMN`, `MOD`, `INT`, `ABS`, `SIN` and `CHOOSE` itself. No public interface changed, so the pin moves by its version alone. The slice's measurements are 0.9.0's.
+- *The machine* is the item's. Every timing ran on the performance cores, opted out of the throttling.
+  - The scratch runner timed each frame alone, with only the hold between frames and no clock beside them, since the clock slows the frame after it (`CART.1`'s record of today).
+  - The scratch page kept its clock beside every frame, as the item's did.
+
+**The candidate as the item's scoping wrote it.** Water falls as sand does. A grain of water that stayed then moves one cell sideways, into a cell of its row left free, its direction's side first.
+- `Side` holds each cell's occupancy after the row's sideways moves.
+- `Stay` reads `Side` beneath it where it read `Stay`.
+- The Screen keeps or receives by `Side`.
+
+Written into slice 1's cartridge, every frame of six cases equals the sand by hand with water.
+
+*One property the item's scoping did not name: water never settles.* A grain beside free room moves into it. The next frame its first side is free again, so it moves back. A lake's edge shimmers, and a board holding water is never still. Once the pouring stops, the shimmer costs 0.17 to 0.29 ms a frame natively and 0.2 to 0.5 in the browser (*measurement*).
+
+*What it costs.* Frames 2 to 31, medians in ms, natively pinned and in headless Chrome (*measurement*):
+
+| case | slice 1 | the item's spelling | refined, below |
+|---|---|---|---|
+| the opening, sand alone, natively | 11.65 to 11.74 | 19.35 to 19.64 | 11.43 to 12.25 |
+| the same in the browser | 16.7 to 16.9 | 27.95 to 28.4 | 16.9 to 17.5 |
+| a soup of sand and water, a quarter each, natively | | 20.40 to 20.67 | 12.37 to 12.79 |
+| the same in the browser | | 29.0 to 29.65 | 17.7 to 18.75 |
+
+The item's spelling makes every board two thirds dearer, a board with no water in it too.
+
+*Where it went.* Five spellings of `Side` over the sand-only opening, natively, pinned (*measurement*):
+
+| `Side`'s formula | ms |
+|---|---|
+| a copy of `Stay`, `=Stay!C2` | 11.8 to 12.2 |
+| the copy behind a row's guard: a column folding the row's last frame, `MAX(Screen.last!C2:LF2)`, 3 when it held water | 12.1 to 12.3 |
+| the same, with a branch no cell takes holding the rule's references | 15.1 to 15.6 |
+| the rule behind the row's guard | 14.8 to 16.0 |
+| the rule, the item's spelling | 19.0 to 20.1 |
+
+- A third sheet in the chain costs nothing as such. The copy runs at slice 1's time, with a chain four hundred levels deep.
+- The references cost, whether or not their branch is taken. When a cell changes, the language marks its readers through every reference of every formula, whichever branch its cells take. A branch no cell takes, holding the rule's references, cost about 3 ms of 15.3.
+- In the soup about 26,000 cells change a frame, and the item's `Side`, reading five cells of the last frame, gives each of them five readers more to mark.
+
+*The refinement: `Side` reads `Stay` alone.*
+- `Stay` says what stayed: 1 for a wall or a grain of sand, and 2 for water.
+- `Side` then reads its own row of `Stay`, and nothing of the last frame.
+- A cell painted over water with anything but empty is 2, so the item's paint holds: the grain a painted cell held still moves as the rule says.
+
+Every frame of every case equals the sand by hand, its `Stay` now 0, 1 or 2 (*measurement*):
+- the opening, 60 frames; the soup of a quarter each, 120; water poured, 300; water painted round a circle, 120; water poured for 150 frames then left for 450; the pointer moving with no button, 60;
+- the second frame's allocations: 515 and 5, where slice 1's are 509 and 5;
+- under the floors' own runner, its clock beside every frame: the opening at 12.0 ms and 83 frames a second, where slice 1 reads 11.7 to 12.0 ms.
+
+With `Side` reading `Stay` alone, the row's guard is no longer worth its sheet. Without it the rule ran the opening at 12.05 ms and the soup of a quarter each at 12.66, against 12.6 and 13.1 with it (one run each, unpinned).
+
+*The heaviest seconds of the refined rule in the browser,* frames 2 to 31 (*measurement*):
+
+| case | median ms | max ms |
+|---|---|---|
+| the opening, sand alone | 16.9 to 17.5 | 30.3 |
+| Life's soup, half its grains water (one run) | 20.0 | 33.2 |
+| a soup of a quarter each | 17.7 to 18.75 | 30.6 |
+| water poured into the falling soup | 22.6 | 39.7 |
+| water painted round a circle into the falling soup | 24.85 | 43.2 |
+| a lake left to shimmer | 0.2 to 0.5 | |
+
+The maxima are two kinds of whole frame:
+- the second frame, computed whole after the load: 189,017 formula cells, about 30 ms in the browser;
+- the press of a button, which computes one whole frame (decision 6), 43 ms with the brush entered at every cell.
+
+*The host's slice, derived* as the item's scoping derived it: a step of *s* ms is presented at 1,000 × *f* ⁄ *s* frames a second, capped at the rate of 30, where *f* is the share of the interval the steps may spend.
+
+| a step of | at half the interval | at three quarters |
+|---|---|---|
+| 16.9 ms, the opening of sand | 29.6 | 30 |
+| 20.0 ms, Life's soup half water | 25.0 | 30 |
+| 22.6 ms, water poured into the soup | 22.1 | 30 |
+| 24.85 ms, water painted into the soup | 20.1 | 30 |
+
+*The owner's session, played on both rules.* The painting session of 781 frames was recorded on slice 1's cartridge. Played natively on it, and on the refined rule with the same opening:
+- the plane last changes at frame 619 on both;
+- the `Tally` ends with every value equal, codes 55,659 and occupied 27,928;
+- its record differs by two rows only, the sheet list's `Side` and `Side.last`.
+
+So water's rule leaves a session without water as it was, measured over a person's painting.
+
+*The unit.* Cells a second are the formula cells over a frame's time. The refined opening steps in slice 1's time with 189,017 formula cells where slice 1 has 126,449. It reads 15,716,644 cells a second against 10,566,784, at the same 83 frames a second. So a fixture that gains cells is not compared across the change by cells a second (decision 24).
+
+**The decisions, the owner's.** Numbered on from the item's sixteen. Each with the recommendation and the alternatives it declines.
+
+17. **Water's rule as decision 10 has it, spelled so that `Side` reads `Stay` alone, `Stay` saying 2 for water that stayed.** Measured above:
+    - a board with no water costs what slice 1 costs, natively and in the browser;
+    - a soup of a quarter each costs 12.4 to 12.8 ms natively and 17.7 to 18.8 in the browser;
+    - water never settles: a lake's edge shimmers, at 0.2 to 0.5 ms a frame in the browser, and the header says so.
+
+    *Alternatives:*
+    - The item's spelling, `Side` re-reading the last frame: the plainest to read, and two thirds dearer on every board.
+    - The item's spelling behind a row's guard, a `Wet` column: a quarter cheaper than that, still 29% over slice 1, and a sheet more.
+    - A water that settles, with no second side, so that a grain stops when its first side is taken. There is no shimmer, but a lake's rows pack against alternate walls and its surface never levels (named, not measured).
+18. **The material: water 3, the key `3`, the Palette's blue already.** The floor turns blue with water picked, and the right button erases water as it erases anything. Sand and water fall alike, and neither sinks through the other.
+
+    *Alternative:* density, sand sinking through water by swapping with the grain beneath it. A swap moves a grain up, which the scan's one-way chain cannot say without another sheet (named, not measured).
+19. **The opening and the floors' fixture: Life's soup, half its grains water. Sand's two rows measure it, and no row is added.**
+    - The grains are Life's first frame's, as before: sand where the soup's square is under three sixteenths of the prime, water where it is under three eighths.
+    - So the toy opens raining both, and the fixture's frames run both materials' paths.
+    - In the browser its first second steps at 20.0 ms: 25 frames a second at half the interval, 30 at three quarters.
+    - The rows keep their names and are re-based at the fifth baseline, since the cartridge they measure changed (decision 24).
+
+    *Alternatives:*
+    - Decision 10 as approved: a second cartridge, `cartridges/water/`, the gun's way beside Life. Its rule would be Sand's word for word, held by a test or, by the kit's ratchet, moved into a library both include; its opening a soup of sand and water; and its two rows added. Its premise was that water costs twice what sand does. Refined, it costs about a tenth more, so its rows would measure much what Sand's do, at the price of a second copy of the rule.
+    - The opening as it is, sand alone, and water in no row: the toy opens as now, and nothing measures water.
+20. **The host's slice at three quarters of the display's interval, as decision 9 has it, held by a loop case of its own.** The measurements above keep it needed: water poured or painted into the falling soup steps at 22.6 to 24.85 ms, presented at 20 to 22 frames a second at half the interval and at 30 at three quarters.
+    - `SPEC.md` §5 step 4's dated correction names the share, and `web/host.js`'s constant follows it.
+    - The loop oracle gains a case, `slice`, over the double. The oracle's clock advances a fixed time at each step call, a frame takes many calls, and the case counts a tick's calls against its own share, three quarters. A mutant page at half fails it.
+
+    *Alternatives:* the constant changed with its rule printed, as now, and no case to hold it; or half the interval kept, water's heaviest seconds presented at 20 to 25.
+21. **The references and the oracle: the sand by hand gains water, in Rust and in JavaScript.**
+    - `engine/src/sand.rs`: after a row's falls, its water that stayed claims a free cell of its row in two passes, its direction's side first. `step` returns the Screen, `Stay` (0, 1 or 2) and `Side`; `counts` counts four materials; the opening takes the soup's two thresholds. The scratch reference is written.
+    - The page's `sandStep` does the same, for `?frames=1`.
+    - `cargo test`:
+      - the opening's frames 1 to 4, the Screen, `Stay` and `Side` each equal to the sand by hand;
+      - every material kept in a frame with no painting;
+      - a session with water: the key `3`, a disc of water, the right button erasing water, a grain against the wall, a lone grain's shimmer;
+      - the budget row.
+    - The runner's Sand fixture holds the four materials' counts in every frame after the first, as `(conserved n)` does now.
+22. **The replay and the new cartridge: slice 3 first, then slice 2 records its session on the toy with water.** That is one session, recorded on the finished toy, and the page's sand gains the brush and water together. The owner's session of slice 1 has served already, as the evidence above that water leaves a dry session's every value as it was. It is kept in the session's scratchpad and transcript, and its measurement here.
+
+    *Alternatives:*
+    - Slice 2 first, as numbered, and slice 3 carries its replay to the new cartridge: the session re-recorded by playing it there, its frames the same, its golden regenerated. `SPEC.md` §7.6 would gain a dated note on carrying a replay, since today a replay plays only on the file it was recorded from. With decision 19's opening, the carried session's golden changes in its values too.
+    - Slice 2 first, and slice 3 replaces its replay with a session with water: two recordings.
+23. **What a rule costs: a seventh rule.** "A fact a later sheet needs is carried in the value of a sheet it already reads, and not read again from the twin. Each reference is a reader marked at every change, in a branch no cell takes as well." It goes into `SPEC.md` §2's note beside the six, and into Sand's header. Measured: `Side` re-reading the last frame made every board two thirds dearer, and a branch no cell takes cost about 3 ms of a 15 ms frame.
+
+    *Alternative:* the finding in Sand's source alone.
+24. **The fifth baseline: the owner's run after slice 3, with a row re-based when its fixture changes.**
+    - The instrument re-bases a row whose fixture is not the one the check's baseline measured, as it re-bases a row timed another way since today, and the entry's reason says so. Cells a second count the cells: the refined opening runs at slice 1's 83 frames a second and reads 49% more cells a second.
+    - At that run, Sand's two rows are re-based, and so is the native gun's, timed in runs of 128 since today's fix. Life's rows are held.
+    - *When.* The pin's move to `vla-lang` 0.9.1 needs a baseline of its own, since the check holds the measured pin. Recommended: the fifth baseline waits for that move, so that one run of the owner's measures the pin, water's cartridge and the gun's runs together. If 0.9.1 is not released by slice 3's commit, the run is taken at 0.9.0 and the pin's move takes the sixth.
+    - *The clock, before that run.* The clock read before each frame slows the frame after it, by an amount that changes between sessions (`CART.1`'s record of today). Native Life read 3.0 to 3.5 ms with it that night and 2.7 to 2.8 without, where its floor wants 3.12, and my run of the instrument named that row NOT A BASELINE.
+      - *Recommended:* `CART.1`'s decision 5 reopened before the fifth baseline, as a fix of its own under `CART.1`'s ID. The clock is read before a fixture's steady frames and after them, so that a throttled run still shows as drift, and the change is measured in both halves.
+      - *Its alternative:* the clock as it is, and a refused row run again at a quieter time, as the instrument says.
+25. **What to ask of Frazaro: nothing new. `KERNEL.28` has landed there, and what it changes here comes with the pin's move to 0.9.1.**
+    - *Measured by Frazaro's session* on Sand natively, frames 2 to 31, three alternated pairs, 0.9.0 against 0.9.1:
+      - the direction read through `Parity`'s twin, 11.7 ms before and after;
+      - `MOD(ROW(),2)` at each cell, 13.5 to 11.8;
+      - `CHOOSE(MOD(ROW(),2)+1,...)`, 29.6 to 12.0;
+      - the soup's first frame, 34.8 to 23.6.
+
+      The allocations are unchanged, Sand's 509 and 5 among them, and the engine's tests pass over it by path, 29 of 29.
+    - *For this slice:* the `Parity` column stays. It costs nothing, and dropping it would cost about 1%. Decision 19's opening computes the soup twice in its first frame, which 0.9.1 makes cheap; that frame is not floored.
+    - *With the pin's move,* not with this slice unless the move lands first: rule 5 of `SPEC.md` §2's note gains a dated correction. A cell's place may be computed at each cell, and `CHOOSE` costs what `IF` does.
+    - *Named, not asked:* reach by branch, where a reference marks its readers only when a cell takes its branch. It would make a guard's untaken branch free, about 3 ms of a 15 ms frame as measured here. It moves none of Frazaro's fixtures, whose formulas hold no untaken branch of references.
+26. **The bookkeeping.**
+    - The roadmap's line leaves for the ledger with the commit of the later of slices 2 and 3. Slice 4, the repository, stays the owner's.
+    - `CHARTER.md` §6 gains water's measurement, the READMEs the material, and Sand's header the rule and its shimmer.
+    - The commits are made at the owner's word, by `-F`, staged by hunk.
+
+**The work.**
+
+| File | What changes | Decisions |
+|---|---|---|
+| `cartridges/sand/sand.source.vla`, `sand.vla` | `Side`, its border and formula; `Stay` reading `Side` beneath and saying 2 for water; the Screen keeping by `Side`; the key `3`; the opening half water; the header | 17 to 19, 23 |
+| `engine/src/sand.rs` | water: the sideways pass, `Stay` 0 to 2, `Side`, four materials, the opening's two thresholds | 21 |
+| `engine/src/cartridge.rs` | the opening's frames and sheets, a session with water, the rule's shapes and budget | 21 |
+| `engine/examples/frames.rs` | Sand's opening by its two thresholds, four materials kept | 21 |
+| `web/index.template.html` | `sandStep` with water and `sandOpening`; the loop's `slice` case | 20, 21 |
+| `web/host.js` | the slice at three quarters | 20 |
+| `tools/check_host_loop.ps1` | the `slice` case and its mutant page | 20 |
+| `tools/bench_frames.ps1`, `tools/check_frame_floors.ps1` | a row re-based when its fixture changed; Sand's allocation ceiling | 24 |
+| `tools/check_cartridge.ps1` | Sand's row floor, 86 | 17 |
+| `SPEC.md` | §2's seventh rule; §5's slice; rule 5's correction if the pin's move to 0.9.1 lands first | 20, 23, 25 |
+| `CHARTER.md`, the READMEs, `ROADMAP.md`, `REARVIEW.md`, `Delta/CLAUDE.md`, the memory | the measurement, the pages, the line, the record | 26 |
+
+**The catch.**
+- A reference costs at every change whether or not its branch is taken, so a guard that skips work does not skip the references inside it.
+- Water never settles, so a replay that ends with water has no settled frame: its golden is its last frame's.
+- `Stay`'s 2 changes the `Tally`'s occupied column on a wet board, a sum of 0, 1 and 2. It stays a checksum, as decision 12 has it with water; or the column reads `Side.last`, 0 or 1 a cell, which the build weighs.
+- The page's player refuses a replay recorded on another cartridge, and `check_cartridge.ps1` holds a replay's digest. Whichever of slices 2 and 3 comes second records or carries the replay.
+- The first frame computes the soup's arithmetic twice, once for each threshold: 62 ms natively and 66 in the browser at 0.9.0, once, and less at 0.9.1, whose runs compute `MOD` themselves.
+- A whole frame of 189,017 cells is about 30 ms in the browser, and a button's press computes one.
+
+**Oracle.**
+- `cargo fmt --check`, `clippy -D warnings` and `cargo test`: decision 21's tests and every test before them.
+- The runner's check mode: Sand's frames equal, its four materials kept, its allocations within a ceiling the build measures.
+- `?frames=1` under headless Chrome: Sand's frames equal to the page's sand with water.
+- `check_host_loop.ps1` at both ratios: the `slice` case passing, and its mutant page failing.
+- `check_frame_floors.ps1` and its control: a row re-based when its fixture changed, its reason in the entry.
+- `check_cartridge.ps1` and `check_web_offline.ps1`; `run_checks.ps1 -WithExtras`, `ALL GREEN`.
+- The owner's hand test:
+  - open Sand and watch it rain sand and water, and the frame line through the opening;
+  - press `3` and pour water into a basin of sand and walls;
+  - erase water with the right button;
+  - watch a lake's edge shimmer.
+
+  Then the fifth baseline: the owner's run of `tools/bench_frames.ps1`, pasted.
+
+**Size.** About a day (*prediction*, the item's): about 60 lines of the source changed, about 60 of the Rust sand, about 70 of the page's sand and 60 for its slice case, about 150 of tests, and about 40 of the instruments.
+
+*Scoped 2026-10-12; decisions 17 to 26 await the owner.*
+
+*Approved 2026-10-12, the same day, decisions 17 to 26 as recommended: "0.9.1 is cut and deployed to GitHub and crates.io; proceed with implementing slice 3 of CART.2 as scoped." So the pin moved first (`ENGINE.1`'s record, "The pin at `vla-lang` 0.9.1"), and `CART.1`'s decision 5 was reopened before the fifth baseline (`CART.1`'s record, "Decision 5 reopened").*
+
+**Slice 3, water: what landed.** Built 2026-10-12 over `5aee496` and `vla-lang` 0.9.1; it awaits the owner's hand test and the floors' fifth baseline.
+- `cartridges/sand/sand.source.vla` and `sand.vla`:
+  - decision 17's rule, its rows the ones the scoping measured in its scratch copy, the half-water candidate: `Side`, its border and its one fill; `Stay` saying 2 for water that stays; the Screen keeping by `Side`;
+  - the key `3`, the Palette's index 3 named "water", and the opening Life's soup half water, sand under three sixteenths of the prime and water under three eighths (decisions 18 and 19);
+  - the header's rule, its shimmer and the seventh rule (decision 23);
+  - one row the scoping left to the build: the Tally's occupied column reads `Side.last`, 0 or 1 a cell, so that on a wet board it still counts occupied cells (the catch);
+  - 86 rows, 189,017 formula cells in 14 shapes.
+- `engine/src/sand.rs`: the scoping's scratch reference with the committed file's docs. After a row's falls, its water that stays claims a free cell of its row in two passes. `step` answers the Screen, `Stay` (0 to 2) and `Side`; `counts` counts four materials; the opening takes the two thresholds; `tally` sums `Side`.
+- `engine/src/cartridge.rs` (decision 21):
+  - the opening's four frames held on the Screen, `Stay` and `Side`, every material kept, 14 shapes, the budget row, the Tally over `Side.last`;
+  - the painting session, its gestures now one helper both sessions share, the key `3` mapped;
+  - a new test, `sand_s_water_falls_spreads_is_erased_and_never_settles`. Sand's rows with the opening's two thresholds at 0, so the board opens empty. Then the key 3, the floor turning to water; a disc of water that falls and spreads; the right button erasing water; the wheel to a radius of 1; a lone grain painted against the left wall, by pointing at the wall's own column; and fifteen frames after it. Every frame's three sheets equal the sand by hand, and from frame 10 the grain on the floor moves out from the wall and back each frame.
+- `engine/examples/frames.rs`: Sand's opening by the two thresholds, and four materials kept every frame, through the shared file.
+- The page: `sandOpening` and `sandStep` with water; the loop oracle's sixteenth case, `slice` (decision 20).
+- `web/host.js`: `SLICE_FRACTION` 0.75.
+- `tools/check_host_loop.ps1`: the `slice` case's floors, sixteen cases, and mutant Z, a host at half the interval, whose header says `slice=0.5` and whose ticks the case fails by name, ten calls where it owes fifteen.
+- `tools/bench_frames.ps1` (decision 24): a row whose fixture is not the file the check's baseline measured, nor its rows rebuilt, is re-based on the run, the entry's reason written where that lowers its floor.
+- `tools/check_frame_floors.ps1`: Sand's allocation ceiling, 516 and 5, raised with the fixture it measures; the header.
+- `tools/check_cartridge.ps1`: Sand's row floor, 86.
+- `SPEC.md`: §2's seventh rule and rule 5's correction; §5 step 4's correction, three quarters.
+- `CHARTER.md` §6, the three READMEs, and `ROADMAP.md`'s line, which stays until slice 2's commit (decision 26).
+
+The `slice` case, by its own arithmetic. The double is stepped in calls of 1,000 cells, 64 a frame of Life. The case keeps the host's clock, which stands still but at a step call, where it moves 1 ms. Ticks come 20 ms apart, so the host's interval is 20 ms, and a tick may spend 15 of it. Every tick after the first makes 15 calls: 585 in 39 ticks, the host at frame 9 (*measurement*, both ratios).
+
+The oracle, on the day (*measurement*):
+- `cargo fmt --check` and `clippy --all-targets -D warnings`: clean.
+- `cargo test`: 30, the three Sand tests among them.
+- The runner's check mode: Life 80 and 5, the gun 80 and 5, Sand 516 and 5; every frame equal and every material kept.
+- `expand`: six sources, Sand's 86 rows. `check_cartridge.ps1`: clean.
+- `check_host_loop.ps1` at both ratios: sixteen cases OK, every count at its floor. Its control: the real page clean, and twenty-six mutants each failing for its own reason, Z among them.
+- `tools/bench_frames.ps1` end to end. *My run, and its block was not pasted:*
+  - `frames ok`, Sand's frames equal to the page's sand with water;
+  - natively, Life 2.7 ms, the gun 42.8 µs in runs of 128, Sand 12.5 ms (80 frames a second, 15,174,044 cells a second);
+  - in the browser, Life 4.0 ms, the gun 60.9 µs, Sand 18.7 ms (53 frames a second, 10,107,861 cells a second);
+  - its entry re-bases the native gun's floor to 1,320,000,000 with its reason, and Sand's two rows on their new fixture, both higher than before: 13,600,000 natively and 9,090,000 in the browser.
+- `check_frame_floors.ps1`: two problems, both the fifth baseline's to clear: the pin measured is 0.9.0, and Sand's fixture is not the one measured. Its control: clean.
+- `run_checks.ps1 -WithExtras`: 12 checks, 11 passed and `check_frame_floors.ps1` failing on those two problems alone; 12 verifiers, all passed.
+
+*Found:* the opening's first frame, the soup computed twice, steps in about 41 ms natively and 42 in the browser at 0.9.1, where the scoping read 62 and 66 at 0.9.0, as `KERNEL.28` predicted. It is not floored.
+
+*For slice 4, the owner's question of 2026-10-12, asked with the approval:* "An 'arcade' repo with each cartridge listed as a subdirectory feels cleaner, at least from a build and maintenance perspective, than provisioning distinct repos for each cartridge. It's worth adjudicating before slice 4. My gut says an arcade repo, but I'm open to being wrong."
+
+Recommended in the session: one arcade repository for the house's games, beside the engine's, each game a folder.
+- *The kit.* Every source includes `common.vla`, and the kit's ratchet proves a move into the kit by every client's bytes unchanged (`ROADMAP.md`, "The order, and why"). In one repository that proof is one commit and one CI run. Across repositories it is a version of the kit and a bump in every game.
+- *One of everything.* One pin of the engine and of the language, one CI, one licence map (every cartridge 0BSD), one deployed page whose cartridge picker is already built. Each repository is the owner's word, its settings, its CI and its Pages; six games are filed.
+- *The charter's test is kept.* `CHARTER.md` §6 counts forks and pull requests on this repository and on `vla-lang`'s, from the release of the first game. The arcade's first release, Sand aboard, starts the quarter as a game repository's would, with a dated line in §6. And a game's pull requests stay out of the count the hypothesis is about, as they would not if the games lived in this repository.
+- *Where it could be wrong.* A repository of its own is the more legible thing for a falling-sand community to find, star and fork. If the owner wants Sand itself to be what people star, that argues for its own repository. A game that grows a community of its own can still leave the arcade later, its folder split out with its history.
+- *What slice 4's scoping would weigh either way:*
+  - Sand as the engine's floors fixture: a frozen copy kept here beside Life, or the floors losing their chain two hundred rows deep;
+  - the engine consumed as a stranger consumes it, `alonzo` from crates.io after `REPO.4`, or a pinned git rev before it;
+  - where the kit lives: here, shipped with the engine, the arcade holding a copy checked byte for byte, or with the games.
+
+Unadjudicated.
+
+*Owner-tested 2026-10-12, the same day: "All the hand tests pass". The owner's run of `tools/bench_frames.ps1` is the floors' fifth baseline, pasted from `target/bench_frames.txt` whole, no value touched; the terminal's copy, given in chat, had dropped two spaces at its line wraps (*measurement*):*
+
+| row | frame p50 | frames a second | cells a second | floor |
+|---|---|---|---|---|
+| native life | 2.8 ms | 358.3 | 22,561,677 | 20,300,000 |
+| native gun | 0.0423 ms, in 30 runs of 128 (frames 158 to 3997) | 23,656.0 | 1,489,473,470 | 1,340,000,000, re-based with its reason |
+| native sand | 12.3 ms | 81.1 | 15,329,970 | 13,700,000, re-based on water's cartridge |
+| wasm life | 4.0 ms | 250.0 | 15,741,000 | 14,100,000 |
+| wasm gun | 0.0609 ms, in 30 runs of 128 | 16,410.3 | 1,033,255,383 | 929,000,000 |
+| wasm sand | 17.8 ms | 56.2 | 10,618,933 | 9,550,000, re-based on water's cartridge |
+
+- Native life clears its floor again, at 2.8 ms, its clock read before the fixture's frames and after them.
+- `run_checks.ps1`: 12 checks, `ALL GREEN`.
+
+*The owner's question the same day, after the hand test:* "loading the Sand game now hangs the page for a half second and the game feels much slower, visually, than Life. Which items on the roadmap will address Sand's performance in the same way Life moved from single digit fps to over 200 fps?" Answered in the session from three measurements made for it, in scratch and nothing in this tree (*measurement*, the owner's machine, opted out and on the performance cores).
+
+*The loop as a person sees it.* The real host over the engine's module in headless Chrome, ticked on a 60 Hz schedule of real time for ten seconds, every frame drawn; four runs each of Life and Sand, and two of Sand at a rate of 60:
+
+| | load | frames drawn, each second | ticks past the display's interval |
+|---|---|---|---|
+| Life | 93 to 98 ms | 29, then 30 every second | 2, at seconds 4 and 8 |
+| Sand | 568 to 590 ms | 29, then 30 every second | 19 to 23 in four runs; in the two that named their seconds, all but four in the first |
+| Sand at a rate of 60 | 563 to 574 ms | 44 to 48, then 71 to 75 (the backlog run), then 60 | 29 to 33, most in the first second |
+
+- Sand draws as many frames as Life does, at its rate of thirty.
+- Its motion is a cell a frame, so the opening's rain takes about six and a half seconds to reach the floor. At a rate of 60 it draws 60 a second from its third second.
+
+*Where the load goes,* natively, through a copy of `vla-lang` 0.9.1 with timers in its load and its step:
+- Sand's load is 491 ms. Of it, the plan's dependency edges take 341 ms: 2,370,747 edges resolved a cell at a time, each reference's area walked in the sheet's tree and each cell found in a hash of positions. Then the rows 29 ms, placing the shapes 19, Tarjan 25, the order 23 and the first walk 11.
+- Life's load is 73 ms, its edges 30.
+- Frames 1 and 2 are computed whole after a load: Sand's in 40.6 ms (the first walk 23.8 of it) and 19.2.
+
+*Where a steady frame goes,* frames 3 to 31:
+- Sand: 12.6 ms. Marking the readers of 30,531 changed cells takes 3.4 (27%); evaluating 110,346 cells in 600 runs, 8.6 (78 ns a cell); the frame's end, 0.5.
+- Life: 2.7 ms, 41,663 cells at 57 ns, its marking 0.34.
+- A cell costs about what Life's does. Sand evaluates almost three cells for each one that changes, and marks ten times Life's readers.
+
+*Read against both roadmaps:* no item, filed here or in Frazaro, is aimed at these costs. `KERNEL.25`, `KERNEL.20`'s slices, `KERNEL.26`, `KERNEL.27` and `KERNEL.28` were found by profiling Life and Sand's opening, and have all landed; they are why Sand steps at 81 frames a second natively and 56 in the browser.
+
+| Sand's cost | filed |
+|---|---|
+| the load's edges, 341 ms of 491 | none |
+| the frame's marking and its cells evaluated without changing, most of 12.6 ms | none; reach by branch, named by this slice's decision 25, not asked |
+| a cell's evaluation, 78 ns | `ENGINE.6`'s `opt-level = 3`, about 5.5% in wasm (`CART.1`'s measurement) |
+| frame 1's soup computed twice | `KERNEL.29`'s `LET`, frame 1 alone |
+| the page frozen through the load | none; a host that loads in a worker, as `SPEC.md` §5 names a worker for pipelining |
+
+- `KERNEL.31` is a range of this frame's sheet, and Sand reads single cells of it.
+- `KERNEL.30` is an instrument, which would print Sand's shapes and reads before a frame runs.
+- `KERNEL.32` is Frazaro's doors, `KERNEL.8` its lookups, and `ENGINE.6`'s block memoization pays Life alone.
+- The first second's overruns most likely come from a frame's start and end lying outside the step's budget, which counts the cells a call passes. Sand's start is 3.4 ms natively, where Life's is 0.3 (*inference*, not measured).
+
+*Recommended in the session, unadjudicated:* `CART.1`'s route again. Each candidate is prototyped in a scratch copy of the language and measured on Sand, then asked of Frazaro with the measurement. The plan's edges found once a shape, from its references' patterns as `calc/reach.rs` already keeps them, rather than a cell at a time, for the load; and reach by branch, for the frame. The rate is the cartridge's, and so the owner's.
+
+*Committed 2026-10-12 at the owner's word, "Commit, then walk CART.1's optimization route again over CART.2 to look for hacks to improve CART.2". The pin at 0.9.1 is in the same commit (`ENGINE.1`'s record says why), and `CART.1`'s frame timer and decision 5 are in a commit of their own before it. Not pushed.*

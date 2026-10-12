@@ -11,6 +11,6 @@ dependencies = [
 
 [[package]]
 name = "vla-lang"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "248b3ecf10365f9acbf2da3a481e53642d90d028ef7155b02e582da480d2d68d"
+checksum = "712a4ef4d13ff8bd067e984b714739f726db75c146a488281468ee29337426c3"

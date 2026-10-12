@@ -122,8 +122,11 @@ the loop's constants; `AlonzoHost.sha256(bytes or text)` is the host's
 digest in upper-case hex, and `AlonzoHost.SPEC` the page's version a
 replay's header names. The first step call of a cartridge asks for 2,000
 cells, about 9 ms of the engine's module, before the host has measured how
-many cells a millisecond the machine does; after it the budget is half the
-display's interval turned into cells. A refusal is the module's words once,
+many cells a millisecond the machine does; after it the budget is three
+quarters of the display's interval turned into cells, where it was half
+until Sand's water (`CART.2`, 2026-10-12), whose heaviest seconds step in
+about 23 to 25 ms and are presented at thirty frames a second only so; the
+loop oracle's `slice` case holds the share. A refusal is the module's words once,
 then its id; the host adds the row's line only for a write of more than one
 row, and only when the module's words do not already name it.
 
@@ -243,14 +246,18 @@ Run and it sounds again. Open The replay with the sound card picked: its
 own replay waits in the box, the loop oracle's run of it, 240 frames; press
 Play the replay with the sound on and hear that run again, six presses of
 Z, five of them ticks and the one while the knob says "saw" silent, and ten
-frames at a third of the speed. Pick Sand and watch it open raining sand,
-Life's soup as grains, settling into piles in a few seconds; click the plane
-to give it the keys, paint sand with the left button, press 2 and paint
-walls, press 0 and the left button paints empty, as the right button always
-does; turn the wheel to size the brush from 1 to 8, and see the material
-the left button paints in the floor's colour. Its Stay sheet, the cells that
-keep their occupant this frame, its Parity column and its Tally, each row's
-codes and occupied cells, are in the sheet picker.
+frames at a third of the speed. Pick Sand and watch it open raining sand
+and water, Life's soup as grains, half of each, the sand settling into
+piles and the water spreading over them in a few seconds; click the plane
+to give it the keys, paint sand with the left button, press 3 and paint
+water, which spreads along whatever it lands on and never settles, a lake's
+edge shimmering; press 2 and paint walls, press 0 and the left button paints
+empty, as the right button always does; turn the wheel to size the brush
+from 1 to 8, and see the material the left button paints in the floor's
+colour. Its Stay sheet, the cells that keep their occupant this frame, 2
+where it is water, its Side sheet, the cells occupied once the water has
+moved sideways, its Parity column and its Tally, each row's codes and
+occupied cells, are in the sheet picker.
 Below it, pick a
 record, scroll on both
 axes, click a cell or drag a range, click a column or row header or the
