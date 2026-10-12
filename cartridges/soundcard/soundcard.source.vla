@@ -20,8 +20,9 @@
 ; wave silences the tick, which the host says. The Log keeps the four voices of the last 32 frames,
 ; and the Screen draws the notes as a waterfall, the newest row on top.
 
-; The library whose macros this source calls: cga-palette, button-labels and keys, audio, and
-; cells and formulas, each naming a sheet once over a run of its rows.
+; The library whose macros this source calls: sheets; cga-palette and default-keys; audio
+; and labels; on, cells and formulas, each naming a sheet once over a run of its rows; and
+; the verb pressed.
 (include "../common.vla")
 
 (cartridge "soundcard"
@@ -36,30 +37,13 @@
 
 ; The sheets, in tab order: the Screen, the Audio sheet it draws, the Score that times the
 ; voices, the Knobs a person turns, the Log of the voices, the keys and the Palette.
-(sheet "Screen" visible)
-(sheet "Audio" visible)
-(sheet "Score" visible)
-(sheet "Knobs" visible)
-(sheet "Log" visible)
-(sheet "Keys" visible)
-(sheet "Palette" visible)
+(sheets "Screen" "Audio" "Score" "Knobs" "Log" "Keys" "Palette")
 
 ; ---- the Palette: the CGA's sixteen (SPEC.md section 3.2) ----------------------------
 (cga-palette)
 
 ; ---- the Keys sheet: player 1's ten buttons, each a tick (SPEC.md section 3.4) -------
-(button-labels "Keys")
-(keys "B"                           ; player 1: SPEC.md section 3.4's defaults, TIC-80's
-  "ArrowUp"                         ; up
-  "ArrowDown"                       ; down
-  "ArrowLeft"                       ; left
-  "ArrowRight"                      ; right
-  "KeyZ"                            ; a
-  "KeyX"                            ; b
-  "KeyA"                            ; x
-  "KeyS"                            ; y
-  "Enter"                           ; start
-  "Space")                          ; select
+(default-keys)                      ; the labels, and player 1: SPEC.md section 3.4's defaults, TIC-80's
 
 ; ---- the Knobs: the tick's wave and note, and every voice's volume -----------------
 (cells "Knobs"                      ; a label in column A, a knob in column B
@@ -71,21 +55,20 @@
   ("B3" 1))                         ; every voice's volume is multiplied by it
 
 ; ---- the Score: the section, the step within it, and the presses -------------------
-(cells "Score"                      ; the labels
-  ("A1" "section")
-  ("A2" "step")
-  ("A3" "presses"))
-(formulas "Score"                   ; the timing, from the Clock's frame
+(labels "Score" "A1" "section" "step" "presses")   ; the labels, down column A from A1
+(on "Score"                         ; the timing, from the Clock's frame, and the presses
   ; the section, 0 to 3, sixty frames each
-  ("B1" "=MOD(INT((Clock!B1-1)/60),4)")
+  (formula "B1" "=MOD(INT((Clock!B1-1)/60),4)")
   ; the step within it, 0 to 59
-  ("B2" "=MOD(Clock!B1-1,60)")
-  ; a press of each of player 1's ten buttons, on its rising edge, this frame against the last
-  ("C1:C10" "=IF(AND(Input!B1=1,Input.last!B1=0),1,0)")
-  ; a press of the left mouse button, the same way
-  ("C11" "=IF(AND(Input!B13=1,Input.last!B13=0),1,0)")
+  (formula "B2" "=MOD(Clock!B1-1,60)")
+  (pressed                          ; a press of each of player 1's ten buttons, on its rising edge:
+    "C1:C10"                        ;   the cells, a button a row, up to select
+    "Input!B1")                     ;   the button the first cell reads, player 1's up
+  (pressed                          ; a press of the left mouse button, the same way:
+    "C11"                           ;   the cell
+    "Input!B13")                    ;   the button it reads
   ; the presses this frame
-  ("B3" "=SUM(C1:C11)"))
+  (formula "B3" "=SUM(C1:C11)"))
 
 ; ---- the Audio sheet: the four voices (SPEC.md section 3.6) -------------------------
 (audio)

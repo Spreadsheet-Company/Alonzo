@@ -540,4 +540,163 @@ mod tests {
         }
         assert!(held >= 6, "{held} cartridges held to their sources");
     }
+
+    /// The kit's verbs (`KIT.1`, decision 9 of its scoping in `REARVIEW.md`):
+    /// a source over the repository's own library calls each macro the kit
+    /// added, at its edges, and each call is held to the rows its docstring
+    /// names, exactly. A cartridge holds only the paths it uses; this holds
+    /// the rest, and names the call that moved. Read off the folder at run
+    /// time, as the golden above is: a package without the repository's
+    /// `cartridges/` holds nothing to compare.
+    #[test]
+    fn the_kit_s_verbs_write_the_rows_they_name() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
+        let Ok(library) = std::fs::read_to_string(root.join("cartridges").join("common.vla"))
+        else {
+            eprintln!("no cartridges/common.vla beside the crate: the kit is the repository's");
+            return;
+        };
+        let fs = files(&[("cartridges/common.vla", library.as_str())]);
+        // A call's rows: the source's lines after the include and the
+        // manifest, as the pass writes them.
+        let rows_of = |call: &str| -> Result<Vec<String>, LineRefusal> {
+            let source = format!("(include \"../common.vla\")\n{MANIFEST}{call}\n");
+            let e = expand(&source, "cartridges/kit/kit.source.vla", &fs)?;
+            let text = lf(&e.text);
+            let lines: Vec<&str> = text.lines().collect();
+            Ok(lines[lines.len() - e.rows..]
+                .iter()
+                .map(|l| l.to_string())
+                .collect())
+        };
+        let cases: &[(&str, &[&str])] = &[
+            // The sheets, and their words.
+            (
+                r#"(sheets "Screen" "Palette")"#,
+                &[
+                    r#"(sheet "Screen" visible)"#,
+                    r#"(sheet "Palette" visible)"#,
+                ],
+            ),
+            (
+                r#"(labels "Tally" "A11" "pointer column" "pointer row")"#,
+                &[
+                    r#"(cell "Tally" "A11" "pointer column")"#,
+                    r#"(cell "Tally" "A12" "pointer row")"#,
+                ],
+            ),
+            (
+                r#"(headers "Write" "A1" "sheet" "address" "value")"#,
+                &[
+                    r#"(cell "Write" "A1" "sheet")"#,
+                    r#"(cell "Write" "B1" "address")"#,
+                    r#"(cell "Write" "C1" "value")"#,
+                ],
+            ),
+            // Along row 9 from ZZ into AAA.
+            (
+                r#"(headers "S" "ZZ9" "a" "b")"#,
+                &[r#"(cell "S" "ZZ9" "a")"#, r#"(cell "S" "AAA9" "b")"#],
+            ),
+            // The library's own audio over headers and labels, numbers as labels.
+            (
+                r#"(audio)"#,
+                &[
+                    r#"(cell "Audio" "A1" "voice")"#,
+                    r#"(cell "Audio" "B1" "wave")"#,
+                    r#"(cell "Audio" "C1" "note")"#,
+                    r#"(cell "Audio" "D1" "volume")"#,
+                    r#"(cell "Audio" "A2" 1)"#,
+                    r#"(cell "Audio" "A3" 2)"#,
+                    r#"(cell "Audio" "A4" 3)"#,
+                    r#"(cell "Audio" "A5" 4)"#,
+                ],
+            ),
+            (
+                r#"(default-keys)"#,
+                &[
+                    r#"(cell "Keys" "A1" "up")"#,
+                    r#"(cell "Keys" "A2" "down")"#,
+                    r#"(cell "Keys" "A3" "left")"#,
+                    r#"(cell "Keys" "A4" "right")"#,
+                    r#"(cell "Keys" "A5" "a")"#,
+                    r#"(cell "Keys" "A6" "b")"#,
+                    r#"(cell "Keys" "A7" "x")"#,
+                    r#"(cell "Keys" "A8" "y")"#,
+                    r#"(cell "Keys" "A9" "start")"#,
+                    r#"(cell "Keys" "A10" "select")"#,
+                    r#"(cell "Keys" "B1" "ArrowUp")"#,
+                    r#"(cell "Keys" "B2" "ArrowDown")"#,
+                    r#"(cell "Keys" "B3" "ArrowLeft")"#,
+                    r#"(cell "Keys" "B4" "ArrowRight")"#,
+                    r#"(cell "Keys" "B5" "KeyZ")"#,
+                    r#"(cell "Keys" "B6" "KeyX")"#,
+                    r#"(cell "Keys" "B7" "KeyA")"#,
+                    r#"(cell "Keys" "B8" "KeyS")"#,
+                    r#"(cell "Keys" "B9" "Enter")"#,
+                    r#"(cell "Keys" "B10" "Space")"#,
+                ],
+            ),
+            // The verbs: a piece as a string, or an &expand of strings.
+            (
+                r#"(first-frame "Screen" "B2:LG199" "Seed!B2" "0")"#,
+                &[r#"(formula "Screen" "B2:LG199" "=IF(Clock!$B$1=1,Seed!B2,0)")"#],
+            ),
+            (
+                r#"(first-frame "Screen" "C2" (&expand "1+" "2") (&expand "Screen.last!" "C2"))"#,
+                &[r#"(formula "Screen" "C2" "=IF(Clock!$B$1=1,1+2,Screen.last!C2)")"#],
+            ),
+            (
+                r#"(pressed "Score" "C1:C10" "Input!B1")"#,
+                &[r#"(formula "Score" "C1:C10" "=IF(AND(Input!B1=1,Input.last!B1=0),1,0)")"#],
+            ),
+            // A $ reference's twin.
+            (
+                r#"(pressed "Score" "C11" "Input!$B$13")"#,
+                &[r#"(formula "Score" "C11" "=IF(AND(Input!$B$13=1,Input.last!$B$13=0),1,0)")"#],
+            ),
+            (
+                r#"(count "Tally" "B1:E10" "Input!B1")"#,
+                &[r#"(formula "Tally" "B1:E10" "=Tally.last!B1+Input!B1")"#],
+            ),
+            // A range in two-letter columns, and the grid's last cell alone.
+            (
+                r#"(count "Screen" "LG1:LH200" 1)"#,
+                &[r#"(formula "Screen" "LG1:LH200" "=Screen.last!LG1+1")"#],
+            ),
+            (
+                r#"(count "Screen" "XFD1048576" 1)"#,
+                &[r#"(formula "Screen" "XFD1048576" "=Screen.last!XFD1048576+1")"#],
+            ),
+            (
+                r#"(hold "Tally" "B11:B12" "Input!B11>0" "Input!B11")"#,
+                &[r#"(formula "Tally" "B11:B12" "=IF(Input!B11>0,Input!B11,Tally.last!B11)")"#],
+            ),
+            (
+                r#"(dice "Tally" "B19")"#,
+                &[
+                    r#"(formula "Tally" "B19" "=IF(Clock!B1=1,Clock!B3,MOD(Tally.last!B19*16807,2147483647))")"#,
+                ],
+            ),
+            // Verbs inside on, the sheet named once.
+            (
+                r#"(on "Score" (pressed "C11" "Input!B13") (count "D1:D2" 1))"#,
+                &[
+                    r#"(formula "Score" "C11" "=IF(AND(Input!B13=1,Input.last!B13=0),1,0)")"#,
+                    r#"(formula "Score" "D1:D2" "=Score.last!D1+1")"#,
+                ],
+            ),
+        ];
+        for (call, want) in cases {
+            let got = rows_of(call)
+                .unwrap_or_else(|r| panic!("{call}: {} {}", r.refusal.id, r.refusal.text));
+            assert_eq!(got, *want, "{call}");
+        }
+        // A verb's call is no piece of another's: the language refuses it at
+        // the caller's line, the include on 1 and the manifest on 2 to 7.
+        let r = rows_of("(count \"Tally\" \"B1\"\n  (pressed \"Tally\" \"B2\" \"Input!B1\"))")
+            .expect_err("a verb nested in another");
+        assert_eq!(r.refusal.id, "vla-expand-arg-is-list");
+        assert_eq!(r.line, 8);
+    }
 }

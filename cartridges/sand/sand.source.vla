@@ -65,7 +65,8 @@
 ;      Each reference is a reader marked at every change, in a branch no cell takes as
 ;      well: Side reading the last frame beside Stay made every board two thirds dearer.
 
-; The library whose macros this source calls: palette, cells and formulas.
+; The library whose macros this source calls: sheets, palette, labels and headers; cells
+; and formulas, each naming a sheet once over a run of its rows; and the verb first-frame.
 (include "../common.vla")
 
 (cartridge "sand"
@@ -81,15 +82,7 @@
 ; The sheets, in tab order: the Screen the rule draws on, and Stay and Side beside it;
 ; Parity, the direction of each row; the brush, its Gate and the material in State; the
 ; Tally of each row; the Palette.
-(sheet "Screen" visible)
-(sheet "Stay" visible)
-(sheet "Side" visible)
-(sheet "Parity" visible)
-(sheet "Brush" visible)
-(sheet "Gate" visible)
-(sheet "State" visible)
-(sheet "Tally" visible)
-(sheet "Palette" visible)
+(sheets "Screen" "Stay" "Side" "Parity" "Brush" "Gate" "State" "Tally" "Palette")
 
 ; ---- the Palette (SPEC.md section 3.2): the codes first ------------------------------
 ; Index 0 is empty, 1 a wall, 2 sand and 3 water, so that what moves is the codes from 2
@@ -133,11 +126,7 @@
 (formula "Parity" "A1:A200" "=MOD(ROW(),2)")
 
 ; ---- the brush, entered only while a button is held -----------------------------------
-(cells "Brush"                      ; the labels
-  ("A1" "column")
-  ("A2" "row")
-  ("A3" "radius")
-  ("A4" "material"))
+(labels "Brush" "A1" "column" "row" "radius" "material")   ; the labels, down column A
 (formulas "Brush"                   ; the only cells that read the pointer (rule 3)
   ; the pointer's column and row while the left or the right button is held over the
   ; Screen, and -999 otherwise, which no disc reaches
@@ -160,8 +149,7 @@
   ("C2:C199" "=IF((ROW()-Brush!$B$2)^2<=Brush!$B$3^2,Brush!$B$4,-1)"))
 
 ; ---- State: the material the left button paints ------------------------------------------
-(cells "State"
-  ("A1" "material"))
+(labels "State" "A1" "material")
 (formula "State" "B1"
   (&expand
     "=IF(Clock!$B$1<=1,2,"                  ; sand at the start
@@ -227,9 +215,10 @@
 ; from the top third, rows 2 to 67: the whole board falling at once made every frame of
 ; its first two seconds take two of a 60 Hz display's ticks, and a third of it takes one
 ; (the playtest pass, 2026-10-12).
-(formula "Screen" "C2:LF199"
-  (&expand
-    "=IF(Clock!$B$1=1,"                                                      ; the first frame:
+(first-frame                        ; the material at the frame's end, one fill over the interior:
+  "Screen"                          ;   the sheet it writes
+  "C2:LF199"                        ;   the interior
+  (&expand                          ;   the first frame:
     "IF(ROW()>67,0,"                                                         ;   nothing below the top third,
     "IF(MOD(MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
     "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)"
@@ -240,7 +229,8 @@
     "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)"
     "*MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
     "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859),"
-    "67108859)<25165822,3,0))),"                                            ;   water where it is under three eighths
+    "67108859)<25165822,3,0)))")                                            ;   water where it is under three eighths
+  (&expand                          ;   every later frame:
     "IF(IF(Gate!$B2<0,FALSE,"                                                ; the brush, as Stay tests it:
     "(COLUMN()-Gate!$A2)^2<=Gate!$B2),"
     "Gate!$C2,"                                                              ;   the paint
@@ -252,7 +242,7 @@
     "OR(Side!E2=1,Screen.last!E1>=2)),Screen.last!D1,0)),"                   ;   when its first is not open; else empty;
     "IF(AND(Screen.last!D1>=2,Side!D2=1),Screen.last!D1,"                    ; and when it goes left first, mirrored
     "IF(AND(Screen.last!B1>=2,Side!B2=1,"
-    "OR(Side!A2=1,Screen.last!A1>=2)),Screen.last!B1,0)))))))"))
+    "OR(Side!A2=1,Screen.last!A1>=2)),Screen.last!B1,0))))))"))
 
 ; The floor shows the material the left button paints. No formula reads row 200 of the
 ; Screen, since Stay's and Side's row 200 is what the row above it stands on.
@@ -263,9 +253,7 @@
 ; frame's Screen and Side; on a board where nothing falls, B is the row's grains and
 ; walls, and A less B its sand and twice its water. A frame's end is the replay's golden
 ; (decision 12).
-(cells "Tally"
-  ("A1" "codes")
-  ("B1" "occupied"))
+(headers "Tally" "A1" "codes" "occupied")
 (formulas "Tally"
   ("A2:A199" "=SUM(Screen.last!C2:LF2)")
   ("B2:B199" "=SUM(Side.last!C2:LF2)"))

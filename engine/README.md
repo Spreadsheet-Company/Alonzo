@@ -69,7 +69,10 @@ the engine panel's Build calls and the page's loop oracle holds to the
 command line's bytes. A test holds every cartridge of the repository to its
 source's expansion, byte for byte. The pass knows no macro by name: the repository's
 library, `cartridges/common.vla`, is a file a cartridge includes, copies or
-outgrows like any other.
+outgrows like any other. Since `KIT.1` it holds the kit's first verbs, each a
+template macro writing one formula row, `first-frame`, `pressed`, `count`,
+`hold` and `dice`, and a test holds every macro the kit added to the rows it
+names, at its edges.
 
 Its tests hold the two projections of a window to one another: the plane of
 a window is the view record of the same window, byte for value, the record

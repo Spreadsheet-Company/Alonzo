@@ -8,8 +8,9 @@
 ; previous frame, the twin sheet Screen.last; the border stays empty, which the plane
 ; reads as 0, dead. The format is SPEC.md section 7; the shape is its Appendix A.
 
-; The library whose macros this source calls, palette among them: a file like any other,
-; which a cartridge of your own may copy, change, outgrow or leave out.
+; The library whose macros this source calls, sheets, palette and first-frame among them:
+; a file like any other, which a cartridge of your own may copy, change, outgrow or leave
+; out.
 (include "../common.vla")
 
 (cartridge "life"
@@ -23,8 +24,7 @@
   (notes "Conway's Life, every cell one formula of its eight neighbours in the previous frame. The first frame is a soup from the seed; change (seed 1) for another."))
 
 ; The sheets, in tab order: the Screen the rule draws on, the Palette it draws with.
-(sheet "Screen" visible)
-(sheet "Palette" visible)
+(sheets "Screen" "Palette")
 
 ; The Palette (SPEC.md section 3.2): sixteen entries from index 0, each a colour as
 ; #RRGGBB and a name, which the library's palette writes into columns A, B and C. Index 0
@@ -48,8 +48,10 @@
   ("#FF55FF" "light magenta")       ; 14
   ("#FFFF55" "yellow"))             ; 15
 
-; The rule, one row over the interior B2:LG199. Every reference is relative but the
-; Clock's, so the row is one shape over 62,964 cells, the shape KERNEL.20 vectorizes.
+; The rule, one row over the interior B2:LG199, which the library's first-frame writes:
+; the first frame's value, then the rule every later frame. Every reference is relative
+; but the Clock's, so the row is one shape over 62,964 cells, the shape KERNEL.20
+; vectorizes.
 ;   The first frame, Clock!B1 = 1, is a soup from the seed. Two linear forms of the seed,
 ;   ROW() and COLUMN() are reduced modulo the prime P = 2^26 - 5 = 67108859 and
 ;   multiplied, h = MOD(a*b, P), and a cell is alive when MOD(h*h, P) < 25165822, three
@@ -61,4 +63,15 @@
 ;   degrees of freedom against 300.7 without the square).
 ;   Every later frame is Conway's rule over the previous frame: a cell is alive when its
 ;   eight neighbours hold three live cells, or two and it was alive itself.
-(formula "Screen" "B2:LG199" "=IF(Clock!$B$1=1,IF(MOD(MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)*MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859),67108859)<25165822,1,0),IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,AND(Screen.last!B2=1,SUM(Screen.last!A1:C3)-Screen.last!B2=2)),1,0))")
+(first-frame                        ; the rule, one fill over the interior:
+  "Screen"                          ;   the sheet it writes
+  "B2:LG199"                        ;   the interior; the border stays empty, dead
+  (&expand                          ;   the first frame: the soup, alive where h*h is under three eighths of P
+    "IF(MOD(MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
+    "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)"
+    "*MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
+    "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859),"
+    "67108859)<25165822,1,0)")
+  (&expand                          ;   every later frame: Conway's rule over the previous frame,
+    "IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,"                    ;   alive with three live neighbours,
+    "AND(Screen.last!B2=1,SUM(Screen.last!A1:C3)-Screen.last!B2=2)),1,0)"))  ;   or with two and alive itself

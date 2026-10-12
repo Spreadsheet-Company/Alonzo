@@ -8,7 +8,8 @@
 ; pattern off the Seed sheet where life.vla computes a soup. The border stays empty,
 ; which the plane reads as 0, dead. The format is SPEC.md section 7.
 
-; The library whose macros this source calls, palette, on and live among them.
+; The library whose macros this source calls, sheets, palette, on, live and first-frame
+; among them.
 (include "../common.vla")
 
 (cartridge "gun"
@@ -23,9 +24,7 @@
 
 ; The sheets, in tab order: the Screen the rule draws on, the Palette it draws with, and
 ; the Seed the first frame reads.
-(sheet "Screen" visible)
-(sheet "Palette" visible)
-(sheet "Seed" visible)
+(sheets "Screen" "Palette" "Seed")
 
 ; The Palette (SPEC.md section 3.2), as life.source.vla's: sixteen entries from index 0,
 ; each a colour as #RRGGBB and a name. Index 0 is a dead cell and index 1 a live one.
@@ -65,11 +64,18 @@
   (live "U17" "Y17")                                              ; row 8
   (live "V18" "W18"))                                             ; row 9
 
-; The rule, one row over the interior B2:LG199, every reference relative but the Clock's,
-; so the row is one shape over 62,964 cells, as life.vla's.
+; The rule, one row over the interior B2:LG199, which the library's first-frame writes,
+; every reference relative but the Clock's, so the row is one shape over 62,964 cells, as
+; life.vla's.
 ;   The first frame, Clock!B1 = 1, reads the Seed's cell at the same address: 1 where the
 ;   gun stands, and an empty cell elsewhere, which the formula's value settles to 0.
 ;   Every later frame is Conway's rule over the previous frame, life.vla's word for word:
 ;   a cell is alive when its eight neighbours hold three live cells, or two and it was
 ;   alive itself.
-(formula "Screen" "B2:LG199" "=IF(Clock!$B$1=1,Seed!B2,IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,AND(Screen.last!B2=1,SUM(Screen.last!A1:C3)-Screen.last!B2=2)),1,0))")
+(first-frame                        ; the rule, one fill over the interior:
+  "Screen"                          ;   the sheet it writes
+  "B2:LG199"                        ;   the interior; the border stays empty, dead
+  "Seed!B2"                         ;   the first frame: the Seed's cell at the same address
+  (&expand                          ;   every later frame: Conway's rule over the previous frame,
+    "IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,"                    ;   alive with three live neighbours,
+    "AND(Screen.last!B2=1,SUM(Screen.last!A1:C3)-Screen.last!B2=2)),1,0)"))  ;   or with two and alive itself

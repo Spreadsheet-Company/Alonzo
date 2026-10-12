@@ -428,6 +428,13 @@ The generality the owner's principle asks for, at the row, the column and the sh
 - So a template macro reaches a column by arithmetic as it reaches a row, and the list above, measured at 0.8.1, stands corrected in its second, third and fifth points.
 - The library's `keys-from` joins its addresses by `&expand` since the same day, every cartridge expanding to the same bytes. Appendix C's patch, written before, fuses its addresses by `symbol` still, which still works.
 
+(*Noted 2026-10-12*, `KIT.1`, the kit's first verbs; *measurement* over `vla-lang` 0.9.2. `REARVIEW.md` holds the scoping, its eleven decisions and the build.)
+- The library holds the patterns two cartridges wrote alike by hand, or one wrote as this page spells it. `sheets`, `labels` and `headers` write a cartridge's sheets and their words; `default-keys` writes §3.4's table; and the verbs `first-frame`, `pressed`, `count`, `hold` and `dice` write §3.3's rising edge, §3.5's dice, §3.9's keep-last and the first frame's test. All six sources are written over them, and every cartridge expands to its bytes, so every replay, golden and floor stands.
+- A verb writes one formula row: the sheet first, so that `on` names it once; then the range it fills; then pieces of a formula without the `=`, each a string or an `&expand` of strings, written as the range's first cell reads it. `(count "Tally" "B16" "Input!B16")` writes `=Tally.last!B16+Input!B16`.
+- A macro's call is no argument of `&expand`, since the expand-time primitives take their arguments as data, and the language refuses one, `vla-expand-arg-is-list`, at the caller's line. So verbs compose by reference, one writing a cell that another reads. A macro that finds a text, a range's first cell or a reference's twin, hands it on to the macro named after it: `(first-cell range then args...)` becomes `(then first args...)`, a walk of an application a character.
+- A verb builds its row inside a quasiquote, its pieces spliced in by `unquote`, so an `&expand` piece is joined when the row is expanded. Named inside the verb's own `&expand`, a parameter bound to an `&expand` form would be handed over as the list it is, and refused.
+- The pass over a source costs a few tenths of a millisecond more, the library's longer text read and its macros defined before any form expands.
+
 ## 8. The host
 
 ### 8.1 The exports

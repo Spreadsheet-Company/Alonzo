@@ -20,8 +20,9 @@
 ; each count sits beside the row it counts; a Write row records the frame of the last
 ; left click as a value (SPEC.md section 3.9). The seed is the host's, chosen at the load.
 
-; The library whose macros this source calls: cga-palette, button-labels and keys, and
-; on, cells and formulas, each naming a sheet once over a run of its rows.
+; The library whose macros this source calls: sheets; cga-palette, default-keys and keys;
+; button-labels, labels and headers; on and formulas, each naming a sheet once over a run
+; of its rows; and the verbs count, hold and dice.
 (include "../common.vla")
 
 (cartridge "inputcard"
@@ -36,30 +37,13 @@
 
 ; The sheets, in tab order: the Screen, the Panel of lamps it draws, the Tally of counts,
 ; the keys, the Camera, the Write sheet and the Palette.
-(sheet "Screen" visible)
-(sheet "Panel" visible)
-(sheet "Tally" visible)
-(sheet "Keys" visible)
-(sheet "Camera" visible)
-(sheet "Write" visible)
-(sheet "Palette" visible)
+(sheets "Screen" "Panel" "Tally" "Keys" "Camera" "Write" "Palette")
 
 ; ---- the Palette: the CGA's sixteen (SPEC.md section 3.2) ----------------------------
 (cga-palette)
 
 ; ---- the Keys sheet: two players of four (SPEC.md section 3.4) -----------------------
-(button-labels "Keys")
-(keys "B"                           ; player 1: SPEC.md section 3.4's defaults, TIC-80's
-  "ArrowUp"                         ; up
-  "ArrowDown"                       ; down
-  "ArrowLeft"                       ; left
-  "ArrowRight"                      ; right
-  "KeyZ"                            ; a
-  "KeyX"                            ; b
-  "KeyA"                            ; x
-  "KeyS"                            ; y
-  "Enter"                           ; start
-  "Space")                          ; select
+(default-keys)                      ; the labels, and player 1: SPEC.md section 3.4's defaults, TIC-80's
 (keys "C"                           ; player 2: a cluster under the right hand
   "KeyI"                            ; up
   "KeyK"                            ; down
@@ -82,39 +66,52 @@
 
 ; ---- the Tally: what the Input sheet held, counted, row for row --------------------
 (button-labels "Tally")
-(cells "Tally"                      ; the labels below the buttons', one a row of the Input sheet
-  ("A11" "pointer column")
-  ("A12" "pointer row")
-  ("A13" "left clicks")
-  ("A14" "right clicks")
-  ("A15" "middle clicks")
-  ("A16" "wheel")
-  ("A17" "keys")
-  ("A18" "last code")
-  ("A19" "dice")
-  ("A20" "clicked at"))
-(formulas "Tally"                   ; the counts beside them
-  ; the presses of every button of every player, each counted on its rising edge
-  ("B1:E10" "=Tally.last!B1+IF(AND(Input!B1=1,Input.last!B1=0),1,0)")
-  ; the pointer's last cell on the Screen, kept while it is off the canvas
-  ("B11:B12" "=IF(Input!B11>0,Input!B11,Tally.last!B11)")
-  ; the clicks of each mouse button, counted the same way
-  ("B13:B15" "=Tally.last!B13+IF(AND(Input!B13=1,Input.last!B13=0),1,0)")
-  ; the wheel's notches, summed
-  ("B16" "=Tally.last!B16+Input!B16")
-  ; the frames a key went down in, and the last key's code
-  ("B17" "=Tally.last!B17+IF(Input!B18<>\"\",1,0)")
-  ("B18" "=IF(Input!B18<>\"\",Input!B18,Tally.last!B18)")
-  ; the dice: Park and Miller's step from the seed, a number from 1 to 2147483646
-  ("B19" "=IF(Clock!B1=1,Clock!B3,MOD(Tally.last!B19*16807,2147483647))"))
+(labels "Tally" "A11"               ; the labels below the buttons', one a row of the Input sheet
+  "pointer column"
+  "pointer row"
+  "left clicks"
+  "right clicks"
+  "middle clicks"
+  "wheel"
+  "keys"
+  "last code"
+  "dice"
+  "clicked at")
+(on "Tally"                         ; the counts beside them
+  ; A press is written out inside its count, as pressed would write it: a verb's call is
+  ; no piece of another's, and a cell of its own would move this card's bytes, which its
+  ; replay names (common.vla's header).
+  (count                            ; the presses of every button of every player:
+    "B1:E10"                        ;   a cell a button, as the Input sheet lays them out
+    "IF(AND(Input!B1=1,Input.last!B1=0),1,0)")  ; one in the frame it goes down, its rising edge
+  (hold                             ; the pointer's last cell on the Screen:
+    "B11:B12"                       ;   its column and its row
+    "Input!B11>0"                   ;   while it is on the canvas,
+    "Input!B11")                    ;   where it is; kept while it is off
+  (count                            ; the clicks of each mouse button:
+    "B13:B15"                       ;   left, right and middle
+    "IF(AND(Input!B13=1,Input.last!B13=0),1,0)")  ; counted the same way
+  (count                            ; the wheel's notches, summed:
+    "B16"                           ;   the cell
+    "Input!B16")                    ;   the notches turned this frame
+  (count                            ; the frames a key went down in:
+    "B17"                           ;   the cell
+    "IF(Input!B18<>\"\",1,0)")      ;   one when a key's code was written this frame
+  (hold                             ; the last key's code:
+    "B18"                           ;   the cell
+    "Input!B18<>\"\""               ;   when a key went down,
+    "Input!B18")                    ;   its code; kept otherwise
+  (dice                             ; the dice: Park and Miller's step from the seed, 1 to 2147483646
+    "B19"))                         ;   the cell
 ; the frame of the last left click, written as a value by the Write row below
 (cell "Tally" "B20" 0)
 
 ; ---- the Write sheet: a left click's frame into Tally!B20 (SPEC.md section 3.9) ----
+(headers "Write" "A1"               ; the header:
+  "sheet"                           ;   the sheet a value goes to,
+  "address"                         ;   its cell,
+  "value")                          ;   and the value
 (on "Write"                                 ; the sheet every row below writes
-  (cell "A1" "sheet")                       ; the header: the sheet a value goes to,
-  (cell "B1" "address")                     ; its cell,
-  (cell "C1" "value")                       ; and the value
   (cell "A2" "Tally")                       ; the one write: into the Tally,
   ; at B20 on a left click's rising edge, and nowhere in any other frame,
   (formula "B2" "=IF(AND(Input!B13=1,Input.last!B13=0),\"B20\",\"\")")

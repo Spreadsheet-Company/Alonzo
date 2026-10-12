@@ -22,6 +22,10 @@
 - ✅ **`ENGINE.3` — the Input and Clock devices.** *Scoped, built in two slices, owner-tested and closed 2026-10-10; the first slice committed `e1e4935`, the second at the close.* `ENGINE.1` had built most of the line, and the scoping measured what it left. The Clock's three cells are held at a person's write by the engine's tenth refusal, `cart-write-clock`, and by the double alike: the frame refused, being the step's own first act and the only clock; the rate 0 or a whole number from 1 to 120; the seed a whole number from 1 to 2147483646. The host chooses the seed at a `(seed host)` load from the browser's random source, no clock among it, and writes it into `Clock!B3`. It reads the Clock's rate after each step and steps at it, `SPEC.md` §9's teacher made real. It writes the pointer as the Screen's own cell through the Camera the person sees. The input card, `cartridges/inputcard/`, is written as a source over the library, which gained the Keys sheet's macros, and draws every cell the host writes before a step. And the replay, §7.6 made exact. The host records every load's run as frames, each one form holding its rows (the form amended after the close at the owner's word): the Input sheet's cells that changed, whole at the first frame and after a person's edit of the sheet, and each person's edit that landed, in its frame, the derived writes never. The header names the cartridge by a SHA-256 of its LF text that the host computes itself, synchronously, and names the seed. The player loads the cartridge again with that seed and plays each frame's rows as one write after the derived writes, through the loop or all at once, a person's edits refused while it plays; Play the replay and Copy the replay sit in the panel. The card's replay, the loop oracle's own run of it, and its golden, the `Tally` sheet at its end, are committed beside it and read by `check_cartridge.ps1`, and every committed replay is played to its golden. *Oracle, met:* `cargo test`, 27, the Clock's refusals, the card's counts over twelve frames, and the replay played with the engine alone to its golden; the loop oracle at thirteen cases under headless Chrome at two ratios, `input` holding every window of 26 frames to the card computed by hand from a log of keys, clicks, the wheel, the teacher's rate of 1 and a person's edit of the Input sheet, and `replay` holding the host's digest to FIPS 180-2's five vectors, a run over the double played to its digest all at once and through the loop, six bad replays refused in words, and the card's replay played to every frame of its run and to its golden, with `parity` at fourteen refusals; the controls, `check_host_loop.ps1`'s at eighteen mutant pages, `check_cartridge.ps1`'s at twenty-nine mutants and `check_web_offline.ps1`'s at thirteen; `run_checks.ps1` at 12 checks and 12 verifiers, `ALL GREEN`; the owner's hand tests, two rounds for the first slice and one for the second, all four cartridges replayed. *Found:* the owner's hand test found a latent `ENGINE.1` defect, the backlog held to 250 ms, so that a rate under four frames a second never stepped and the teacher's rate of 1 froze the loop, now held to the larger of 250 ms and one frame's interval; a PowerShell hashtable with a key named `keys` answers `.Keys` with that key's value; a write of the value a cell already holds answers `(written 0)`; a recorder that keeps its record of the Input sheet across a person's edit of it loses the next frame's release, so the record forgets on such an edit; under headless virtual time the animation frames come in bursts. *Scoped:* 2026-10-10, thirteen decisions, all approved. Predicted `~days`; cost one day, both slices and the fix. (more: the full entry under THE ITEMS, SCOPED)
 - ✅ **`ENGINE.4` — the Audio device.** *Scoped, built in two slices, owner-tested and closed 2026-10-10; the first slice committed `4244819`, the second at the close.* Every item before it read the Audio sheet after each step and sounded nothing, so the scoping measured Web Audio under headless Chrome first: a context made before a person's gesture stays suspended; under a virtual clock the audio clock is the wall's; a wave cannot be scheduled; a gain set at once clicks 17 to 24 times a wave's own step, and `setTargetAtTime` at 3 ms no more than 1.33. The host sounds the four voices with the graph's own nodes, an oscillator and a gain a voice into one shared gain, and computes no sample (`CHARTER.md` §8). Each frame's voices sound at the end of the last frame's sound on the audio clock, within 100 ms ahead of it, so a rhythm in the cells is a rhythm in the sound; a late frame starts the timeline again 50 ms ahead, and a frame past the window is skipped. A voice's gain is its volume over four, every change approaches its value at 3 ms, and a wave change is a new oscillator through a dip. A cell that is no voice is silent and said once. A Sound button makes the context at a person's press, and every stop of the loop silences the voices. The sound card, `cartridges/soundcard/`, is written as a source over the library, which gained `audio`: the four waves, a scale, two chords and a slide under a swell, a tick on every press, a Knobs sheet, a Log of the last 32 frames and a waterfall. Its replay and golden, the Log at the replay's end, are committed beside it, and `cargo test`'s player now plays every committed replay. `check_web_offline.ps1` holds the host to the graph's oscillators and gains. *Oracle, met:* the loop oracle at fifteen cases under headless Chrome at two ratios. `audio` holds every call the host makes on a double of the graph to the page's own arithmetic, over the double by edits and over 240 frames of the card computed by hand. `sound` renders the host's voices offline and holds each frame's pitch within 0.1%, its rms within 4%, a rest below 0.0001 and an onset under 1.5 times the wave's own: the worst 0.0052%, 0.06% and 1.00, every rest 0 exactly. `replay` plays both committed replays to every frame and to their goldens. The controls: `check_host_loop.ps1`'s twenty-four mutant pages, X, the time constant in milliseconds in host and page alike, heard only by the render; `check_cartridge.ps1`'s thirty-two mutants; `check_web_offline.ps1`'s twenty-one. `cargo test`, 27, both replays played natively to their goldens; `run_checks.ps1` at 12 checks and 12 verifiers, `ALL GREEN`; the owner's hand tests with the speakers on, the loop, the ticks, the knob, Pause, a hidden page, the rate and the card's replay heard again. *Found:* an `OfflineAudioContext` awaited idle burns a headless virtual-time budget, and a chain of 0 ms tasks paces it; a context holds at most 32 channels; PowerShell's names fold case, so a mutant's `$jS` was the host's `$js`; Chrome tells a page whose window another covers that it is hidden, and the hidden page is silent; the rests render 0 exactly. *Scoped:* 2026-10-10, thirteen decisions, all approved. Predicted `~days`; cost one day, both slices. (more: the full entry under THE ITEMS, SCOPED)
 
+## 🧰 THE KIT
+
+- ✅ **`KIT.1` — the first verbs: the patterns the cartridges already write by hand, each a macro named for what a person means.** *Filed 2026-10-11; scoped, built, owner-tested and closed 2026-10-12, committed at the close.* The kit's first item. `cartridges/common.vla` grows from 144 lines to 267, each macro a template the pass knows by no name. `sheets`, `labels` and `headers` write a cartridge's sheets and their words. `default-keys` writes the Keys sheet as `SPEC.md` §3.4 tabulates it. The verbs `first-frame`, `pressed`, `count`, `hold` and `dice` each write one formula row: the sheet first, so that `on` names it once; the range; then pieces of a formula in the order it reads them, a string or an `&expand` of strings, written as the range's first cell reads it. A verb finds its range's first cell, and `pressed` its button's twin, by a walk that hands the text on to the macro named after it, since a macro's call is no argument of `&expand`. It builds its row inside a quasiquote, so an `&expand` piece is joined when the row is. So verbs compose by reference, one writing a cell that another reads. A pattern entered at its second appearance, in a second cartridge or in the page's own words, as the ratchet has it; `every`, the Write table's row and the Camera were left to `CART.4`, their first or deciding client. All six sources were rewritten over the kit, the floors' three among them, and every cartridge expands to its bytes, so every replay, golden, describe golden and floor stands. *Oracle, met:* `expand --check`, six `same`, and seven in the shared tree with `ENGINE.8`'s grid card; `cargo test`, 32, among them `the_kit_s_verbs_write_the_rows_they_name`, sixteen calls held to their rows exactly at their edges and a nested verb refused at its line; the frame floors' digests and the loop oracle's `pass` case; `run_checks.ps1` at 12 checks and 12 verifiers, `ALL GREEN`, in a worktree holding this item's files alone; eleven one-byte mutants, one a verb, each refused by the command line at exactly the cartridges that call it and by both the pass's golden and the kit's test, and three of them again with their cartridges written over, refused by the floors' digests, `check_cartridge.ps1`'s replay digests and the describe goldens; the owner's hand test, every cartridge built and loaded in the page, the three replays played, and `count` respelled in the page's library box. *Found:* a parameter bound to an `&expand` form and named inside a macro's own `&expand` is handed over as the list it is, and refused; no expand-time primitive tells an atom from a list without a refusal; the native replay player names no digest, so a respelled `pressed` passed `cargo test`'s replay, and `check_cartridge.ps1` caught it; the pass costs a few tenths of a millisecond more a source. *Scoped:* 2026-10-12, eleven decisions, all approved. Predicted `~days`; cost one day, the scoping and the build. (more: the full entry under THE ITEMS, SCOPED)
+
 ## 🕹 THE CARTRIDGES
 
 - ✅ **`CART.1` — Life, the benchmark cartridge.** *Scoped 2026-10-09, built in two slices, owner-tested and closed 2026-10-10; the first slice committed `da26122`, the second at the close.* Life on the 320 by 200 Screen as the engine's benchmark, every cell one shape of its eight neighbours in the previous frame, over two fixtures: the soup of `cartridges/life/life.vla`, and Gosper's glider gun, `cartridges/gun/gun.vla`, its pattern a Seed sheet the first frame reads and its rule Life's word for word. `engine/examples/frames.rs`, the native runner, an example and no member, holds every frame to a Life written by hand and the gun to its published facts through generation 720, watches the clock beside every frame, and counts a frame's allocations exactly in its check mode; the page's `?frames=1` steps the module over both at its load, held to the page's Life; `tools/bench_frames.ps1`, the instrument, runs both halves opted out of Windows' power throttling and on the performance cores, and prints the block to paste; `tools/check_frame_floors.ps1`, the twelfth check, holds four rows to floors in a dated history that never goes down and is never pasted over, the pin and the fixtures to the measured ones and the environment to the instrument's guards, and, with a built runner, the frames and the allocation ceilings on every push. The scoping's profile named the bottleneck, the naive evaluator's own hot path, allocation first, and Frazaro removed the first of it bit for bit (`KERNEL.25`, `f5dc344`); the pin moved there and the floors rose: the soup from 217,984 cells a second natively and 228,710 in wasm to 622,904 and 460,600, a frame's allocations from 4,470,549 to 251,957, about a third and a quarter of `CHARTER.md` §3's line, with `KERNEL.20`'s array of the twin the next ask. *Oracle, met:* `cargo test`, 16, over both pins; the runner's frames and the gun's facts; `?frames=1` under headless Chrome; the check's control at three clean tables, twelve table mutants, two clean histories, two history mutants and five fake runners; `run_checks.ps1` at 12 checks and 12 verifiers, `ALL GREEN`; the owner's two runs of the instrument, pasted as the floors' two baselines, and the gun seen firing in the page. *Found:* Windows throttles a background process about three seconds into a run, about 40% slower, and only Chrome's four flags with every process opted out hold headless Chrome flat; an efficiency core steps 23% slower with a clock that looks steady, and the performance cores run at two clocks 6% apart; counting allocations while timing costs a frame a tenth; a terminal's line wrap drops spaces from a copied block, and a floor entry pasted over the history erased the first, so the instrument writes its block to a file and prints the history whole, and the check holds the history against the commit. *Scoped:* 2026-10-09, twelve decisions, all approved, and two more in the second slice, 2026-10-10. Predicted `~days`; cost two days, Frazaro's `KERNEL.25` beside it. (more: the full entry under THE ITEMS, SCOPED)
@@ -3601,3 +3605,295 @@ The oracle, on the day: `cargo fmt --check` and `clippy -D warnings` clean; `car
 *The owner's hand test:* read Sand's census in `engine/testdata/describe/sand.vla`; open the page, pick each cartridge and play it as before, Sand loading in a fraction of the time it took; and run `tools/bench_frames.ps1`, its block pasted as the floors' eighth baseline.
 
 *Owner-tested 2026-10-12, "Tests pass; commit.", and committed the same day at the owner's word in one commit with the pin's move (`ENGINE.1`'s record, with the floors' eighth baseline). Not pushed.*
+
+## `KIT.1` — the first verbs: the patterns the cartridges already write by hand, each a macro named for what a person means
+
+*Scoped 2026-10-12 at the owner's word, the day the pin moved to `vla-lang` 0.9.2 and was pushed. The roadmap's line, filed with the kit on 2026-10-11, names the patterns the device cards write again and again: a press counted on its rising edge, a value kept from the twin until an event replaces it, the first frame's `IF(Clock!$B$1=1, ...)`, Park and Miller's dice, player 1's ten key codes, the Write sheet's header and a row. It names the verbs that would hoist them (`pressed`, `count`, `hold`, `every`, `dice`, `first-frame`, `default-keys` and the Write table), says they compose by reference because `&expand` refuses a macro's call, and gives the oracle: the cards rewritten over the verbs expand to their bytes unchanged, so their replays and goldens stand. The scoping first took an inventory of every pattern the six sources write more than once. It then wrote each candidate into a scratch copy of the library and rewrote a scratch copy of every source over it, so that what hoists byte for byte is measured and not predicted; nothing in this tree was touched. A session minting and building `ENGINE.8` works in this tree at the same time; the work below names this item's files.*
+
+**Substrate, verified.** Read on the day, by file and never by assumption; Frazaro's tree read nowhere, the language read from the registry's copy of 0.9.2.
+
+- *The pre-flight.* This tree at `57cfdaf`, level with `origin/main`, CI green; `vla-lang` pinned `=0.9.2`; `run_checks.ps1 -WithExtras` 12 checks and 12 verifiers `ALL GREEN` (the owner's brief). During the scoping the `ENGINE.8` session filed its line in `ROADMAP.md`, uncommitted; nothing else in the tree moved.
+- *The library*, `cartridges/common.vla`, 144 lines: `cells`, `formulas` and `on`; `palette`, `palette-from`, `palette-entry` and `cga-palette`; `button-labels`, `keys` and `keys-from`; `audio`; `live`. Every source includes it, `(include "../common.vla")`.
+- *The pass*, `engine/src/pass.rs`: the language's expander, each `begin` flattened, the cartridge's layout; it knows no macro by name. Its golden test reads the folder at run time and holds at least six cartridges.
+- *The language*, 0.9.2's `expand.rs`:
+  - `resolve_listops_arg` substitutes an argument, which evaluates a nested primitive and never a macro's call, so `&expand` handed a macro's call refuses it, `vla-expand-arg-is-list`.
+  - `substitute` returns a parameter's binding exactly as it was passed. So a macro whose own `&expand` names a parameter bound to an `&expand` form refuses that form too.
+  - `null?` of an atom is false, `equal?` never refuses, `eq?` compares two texts exactly and refuses a list, and `quote-if` substitutes only the branch it takes. No primitive tells an atom from a list without a refusal.
+  - `row-expand` and `column-expand` take an address and refuse a range. Nothing splits a reference at its `!`.
+  - A parameter replaces its symbol wherever it stands in the template, a row's head included (the library's second rule). A macro's `begin` in tail position is unwrapped, its other forms expanded after it.
+  - Since `VLA.2` a walk over a list costs its length.
+- *What reads a cartridge's bytes.* `check_frame_floors.ps1` pins Life's, the gun's and Sand's SHA-256 over LF. Each replay names its cartridge by SHA-256: the input card's, the sound card's and Sand's. `engine/testdata/describe/` holds each cartridge's describe, its census included. The page embeds every source, every cartridge and the library, and the loop oracle's `pass` case holds the page's pass to the command line's bytes; its mutant K edits `palette-entry`'s third row, found by its text.
+- *The page*, `SPEC.md` version 3. §2's seven rules of what a formula costs. §3.3's rising edge, `=AND(Input!B5=1, Input.last!B5=0)`, and Appendix B's. §3.4's Keys table, player 1's defaults. §3.5's dice, `=IF(Clock!B1=1, Clock!B3, MOD(State.last!B1*16807, 2147483647))`. §3.9's keep-last, `=IF(event, new, Me.last!B5)`, and the Write table. §12's clock divider and sample-and-hold. Appendix B's tower write, its address a formula, `"A" & State!B2`. §7.8, the pass.
+- *The ratchet* (`ROADMAP.md`, "The order, and why", 2026-10-11): "a cartridge is easier to build when what two cartridges write alike is written once", a pattern entering the kit "at its second appearance", the cartridges then expanding "to their bytes unchanged".
+- *The owner's layout rule* (2026-10-08, with Appendix C): a module call is written one argument a line, each with a comment saying what it is; a list of like things stays on one line.
+
+**The inventory.** Every pattern the six sources write more than once, or once where the page spells it as the formula a cartridge copies, by file, line and spelling, and what would hoist it byte for byte. The lines are today's sources'.
+
+| pattern | spelling | where | hoisted byte for byte by |
+|---|---|---|---|
+| a run of sheets | `(sheet "Screen" visible)`, one a sheet | every source: Life 26-27, the gun 26-28, the test card 28-30, the input card 39-45, the sound card 39-45, Sand 84-92; 31 rows | `sheets`, all six |
+| a column of labels | `("A1" "column")`, one a row down column A | the input card 85-95 (Tally A11:A20), the sound card 74-77 (Score A1:A3), Sand 136-140 (Brush A1:A4) and 163-164 (State A1); the library's `button-labels` (A1:A10) and `audio`'s voice numbers (A2:A5) | `labels`, all six |
+| a row of headers | `("A1" "codes") ("B1" "occupied")`, one a column along row 1 | Sand 266-268 (Tally A1:B1), the input card 115-117 (Write A1:C1), the library's `audio` (A1:D1); §3.6 and §3.9 | `headers`, all three |
+| the Keys table | `(button-labels "Keys")` and `(keys "B" "ArrowUp" ... "Space")` | the input card 51-62 and the sound card 51-62, word for word; §3.4 | `default-keys`, both |
+| the first frame | `=IF(Clock!$B$1=1,<start>,<rule>)` | Life 64, the gun 75, Sand 230-255 | `first-frame`, all three |
+| | `=IF(Clock!B1=1,...`, the dice's own | the input card 109 | `dice` |
+| | `=IF(Clock!B1<=1,...` and `=IF(Clock!$B$1<=1,...` | Sand 147 (Brush!B3) and 165-172 (State!B1) | none: another test, left as written |
+| the rising edge | `=IF(AND(Input!B1=1,Input.last!B1=0),1,0)` | the sound card 84 (Score!C1:C10) and 86 (C11); §3.3 and Appendix B as the bare `AND` | `pressed`, both |
+| | the same inside another formula | the input card 98 and 102 (inside its counts), 120 (the bare `AND` inside the Write row) | none: a verb's text inside another's (decision 3) |
+| a count over the twin | `=Tally.last!B16+Input!B16`, the cell's last value plus an event | the input card 98, 102, 104 and 106; the test card 117 (`=Screen.last!Y13+1`) | `count`, all five, its event a text |
+| a hold over the twin | `=IF(Input!B11>0,Input!B11,Tally.last!B11)` | the input card 100 and 107; §3.9's keep-last, §12's sample-and-hold | `hold`, both |
+| the dice | `=IF(Clock!B1=1,Clock!B3,MOD(Tally.last!B19*16807,2147483647))` | the input card 109; §3.5, word for word | `dice` |
+| the Write row | A2 the sheet, B2 `=IF(<event>,"B20","")`, C2 `=Clock!B1` | the input card 118-121; §3.9; Appendix B with an address computed by formula | none in this item (decision 7) |
+| the Camera | A1 `row`, B1 `1`, A2 `column`, B2 a formula and its frame-0 value | the input card 76-81 and the test card 42-47, alike but for B2's formula | none in this item (decision 7) |
+| a frame in `n` | `MOD(Clock!B1,n)=0` | no source; §12's clock divider, Appendix B's counter that wraps | none: no client (decision 7) |
+| Life's soup | `MOD(MOD(MOD(...),P)*MOD(...),P)<T` | Life 64; Sand 234-238 and 239-243, two thresholds | none: text inside a formula |
+| Life's rule | `IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,...),1,0)` | Life 64 and the gun 75, word for word | none: a cartridge's content (decision 7) |
+| Life's palette | sixteen entries, dead and alive first | Life 33-49 and the gun 32-48, word for word | none: a cartridge's content (decision 7) |
+| one source's own | the input card's bits (142-144) and lamp colours (130, 133, 136); the sound card's shift register (125, 133), its volumes times `Knobs!$B$3` (101, 105, 109, 113) and its waterfall's four voice tests (132); Sand's walls (116-126), its Gate test (181-182, 206-207, 244-245) and `IF(Screen.last!C2=3,2,1)` (183, 190, 194) | one source each, the page silent | none: each its source's (decision 2) |
+
+**The measurements.** *Measurement*, 2026-10-12, on the owner's machine: a scratch copy of this workspace over 0.9.2 with a target of its own, the draft library and the six rewritten sources in it, and a scratch example that runs the pass over one source. The pass's times are medians of fifteen runs, neither pinned nor opted out of the throttling: magnitudes, never floors.
+
+- *Every source keeps its bytes.* With the library at 253 lines and all six sources rewritten over it, `expand --check` answered six `same`, and `cargo test` passed its 31 tests over the scratch tree: the pass's golden, the six describe goldens with no re-bless, and the three replays to their goldens.
+- *The library's own macros.* `button-labels` and `audio`, rewritten over `labels` and `headers` before any source was touched, left every cartridge the same.
+- *The edges*, each the row meant:
+  - a fill in two-letter columns, `LG1:LH200`, whose twin is `Screen.last!LG1`;
+  - the grid's last cell, `XFD1048576`;
+  - a `$` reference, `Input!$B$13`, whose twin is `Input.last!$B$13`;
+  - a range with no colon, a single cell;
+  - labels and headers from `ZZ9`, the headers running on into `AAA9`;
+  - a verb inside `on`, and `first-frame` handed `&expand` pieces.
+- *The quasiquote is what takes an `&expand` piece.* The same `first-frame` with its `&expand` written outside a quasiquote refuses an `&expand` piece, `vla-expand-arg-is-list`, "argument 2 is a list"; written inside one, Sand's Screen passes it two and keeps its bytes.
+- *A verb nested in another* is refused at the caller's line, `vla-expand-arg-is-list`, "&expand: argument 6 is a list, expected an atom or string literal". The argument counted is `&expand`'s inside the verb, and not the caller's.
+- *What a person still spells by hand*, the forms alone, comments and blank lines out:
+
+  | source | lines | bytes of forms | twins typed | quoted addresses |
+  |---|---|---|---|---|
+  | Life | 64 → 74 | 1,243 → 1,243 | 5 → 5 | 0 → 0 |
+  | the gun | 75 → 79 | 1,447 → 1,409 | 5 → 5 | 36 → 36 |
+  | the test card | 122 → 122 | 2,022 → 2,068 | 1 → 0 | 5 → 5 |
+  | the input card | 150 → 144 | 2,574 → 2,145 | 10 → 3 | 28 → 17 |
+  | the sound card | 133 → 118 | 2,338 → 2,079 | 4 → 2 | 26 → 24 |
+  | Sand | 271 → 265 | 4,447 → 4,274 | 32 → 32 | 12 → 8 |
+  | all six | 815 → 802 | 14,071 → 13,218 | 57 → 47 | 107 → 90 |
+
+  The cards shrink most, 17% and 11%. Life grows by its lines alone, its row of 502 characters now written in commented lines as Sand's is. The test card grows by its block of rows 13 to 16 becoming an `on` of `formula` rows around its counter. Every first-frame test is the kit's.
+- *What it costs.* The pass over a source, before and after: Life 0.41 and 0.65 ms, the gun 0.61 and 0.80, the test card 0.73 and 0.94, the input card 0.72 and 1.16, the sound card 0.63 and 1.01, Sand 0.65 and 0.85. About 0.2 ms of it, the whole of Life's difference, is the library's 109 more lines, read and defined before every source expands; the rest is the verbs and their walks.
+
+**The work.** One library, six sources, a test and the pages. The cartridges, their replays and goldens, the describe goldens, the page's template and tools, and every check keep their bytes.
+
+| File | What it is | Decisions |
+|---|---|---|
+| `cartridges/common.vla` | `sheets`, `labels` and `headers`; `default-keys`; the verbs `first-frame`, `pressed`, `count`, `hold` and `dice`; the walks `first-cell` and `twin`; `button-labels` and `audio` over `labels` and `headers`; two rules added to the header; 144 lines to about 255 | 1 to 6 |
+| `cartridges/<name>/<name>.source.vla`, all six | rewritten over the kit; their cartridges unchanged | 8 |
+| `engine/src/pass.rs` | a test, `the_kit_s_verbs_write_the_rows_they_name`; the module unchanged | 9 |
+| `SPEC.md` | §7.8's dated note | 10 |
+| `README.md`, `engine/README.md` | the library's lines | 10 |
+| `ROADMAP.md` | `KIT.1`'s line; dated notes on `CART.4` | 7, 10 |
+| this file, `Delta/CLAUDE.md`, the memory | the record | 10 |
+
+**The decisions, the owner's.** Each with the sitting's recommendation and the alternatives it declines.
+
+1. **One library, `cartridges/common.vla`, its macros in sections by domain. A library of its own comes the day a source would include one domain without the rest.**
+   - Every source includes `common.vla` already, so each verb is one line away from every cartridge, and a new source starts from one include.
+   - One library leaves standing what a second would move: `check_cartridge.ps1`'s pin of one library; the page's one `{{LIBRARY:common}}` place and its one library box; the places `build_web.ps1` and `check_web_offline.ps1` hold; and the loop oracle's mutant K, whose anchor in `palette-entry` this item does not touch. So the item shares no counted line with `ENGINE.8`.
+   - At about 255 lines it reads in one sitting, in seven sections: one sheet, named once; the sheets and their words; the Palette; the buttons and the keys; the Audio sheet; the verbs; patterns.
+   - The split is named here so that it is a decision when it comes: `KIT.4`'s board and Mind, which its line already makes files of `cartridges/` beside this one, and the pictures, if `KIT.2`'s legends grow past a section.
+
+   *Alternatives:*
+   - several libraries now, by domain (sheets, devices, verbs): each a pin and a page place held both ways, the page's library box made a picker, and three to five includes in every source, for no source that wants one domain without the others;
+   - one library for the cards and one for the games, when the same verbs serve both.
+2. **A pattern enters the kit at its second appearance, in a second cartridge or in the page's own words. A pattern one source repeats and the page never spells stays that source's.**
+   - The ratchet's note speaks of "what two cartridges write alike". The page spells some patterns as the formula every cartridge copies: the rising edge (§3.3, Appendix B), the dice (§3.5), the keep-last that `hold` writes (§3.9), the Keys table (§3.4). A cartridge that writes one of them is its second appearance.
+   - A pattern one source repeats and the page never spells is that source's, written in it or as a macro the source defines beside its rows, until a second cartridge writes it: the input card's bits, three times; Sand's Gate test, three times; the sound card's shift register, twice.
+
+   *Alternatives:*
+   - two cartridges and nothing else, which leaves `hold` and `dice` to `CART.4` and `CART.6` though the filing lists them and the page has spelled them since version 1;
+   - any repeat, which fills the kit with one card's instruments.
+3. **A verb writes one formula row. Its arguments: the sheet first, so that `on` names it once; then the range it fills; then what it means, as pieces of a formula in the order the formula reads them. A piece is text without the `=`, a string or an `&expand` of strings, written as the range's first cell reads it. Verbs compose by reference.**
+   - One row is one fill of one shape, the first of §2's rules of what a formula costs.
+   - A piece written as the first cell reads it is how a `formula` row is written today, so a verb reads like the row it writes, and the fill moves the piece as it moves every relative reference.
+   - An `&expand` piece is taken because the verb builds its row inside a quasiquote: the piece is spliced in by `unquote` and joined when the row is expanded (measured, both ways).
+   - A macro's call is never a piece, since the language joins atoms and refuses the call at the caller's line. So verbs compose by reference, as the filing has it: `pressed` writes a cell, and `count` or `hold` reads it. Each pattern's value is then a cell a person sees in the live sheet, as everything the engine holds is (`AD-6`).
+
+   *Alternatives:*
+   - events as data, `(count "Tally" "B1:E10" (pressed "Input!B1"))`, the outer verb reading the inner list by its head and spelling it inline. It would hoist the input card's press counts whole. But every event would have to be a list, since no primitive tells a list from an atom without a refusal; every verb would carry a dispatch over every event it takes; and the press would sit inside the count, where the filing wants a cell.
+   - the sheet last, which `on` cannot name once.
+4. **A verb over a range finds its first cell, and a verb that reads a reference's twin finds the twin: two walks in the kit, `first-cell` and `twin`, each handing its result on to the macro named after it.**
+   - `count` and `hold` read their own cell's twin, `Tally.last!B1` for a fill over `Tally!B1:E10`; `pressed` reads its button's, `Input.last!B1` for `Input!B1`. Neither text is a primitive's: `row-expand` refuses a range, and nothing splits a reference at its `!`.
+   - A macro that computes a text cannot return it, since its call is no argument of `&expand`. It calls on instead. `(first-cell range then args...)` walks the range's characters to its colon and becomes `(then first args...)`, the macro named `then` called with the first cell before its own arguments. `twin` walks a reference the same way, writing its `!` as `.last!`. Continuation-passing: an application a character, up to a range's colon or to a reference's end.
+   - Measured over 0.9.2 at every edge listed above.
+   - The verb then reads as the row it writes, `(count "Tally" "B1:E10" ...)`, the range named once.
+
+   *Alternatives:*
+   - takes, `(count "Tally" "B1:E10" "B1" ...)`: the first cell typed a second time, where a typo is a formula that reads another cell's twin and loads without a word;
+   - the language finds it, `row-expand` and `column-expand` answering a range's first cell: a change to `vla-lang`, the VBA reference first (`SD-18`), not needed while the walk costs nothing a person sees.
+5. **Six of the filing's eight, each hoisting the spellings it names byte for byte.**
+
+   | verb | its row | hoists |
+   |---|---|---|
+   | `(first-frame sheet range start rule)` | `=IF(Clock!$B$1=1,<start>,<rule>)` | Life's, the gun's and Sand's Screen |
+   | `(pressed sheet range button)` | `=IF(AND(<button>=1,<its twin>=0),1,0)` | the sound card's two |
+   | `(count sheet range event)` | `=<sheet>.last!<first cell>+<event>` | the input card's four and the test card's one |
+   | `(hold sheet range when new)` | `=IF(<when>,<new>,<sheet>.last!<first cell>)` | the input card's two |
+   | `(dice sheet at)` | `=IF(Clock!B1=1,Clock!B3,MOD(<sheet>.last!<at>*16807,2147483647))` | the input card's one |
+   | `(default-keys)` | the Keys sheet's ten labels, then player 1's ten TIC-80 codes in column B | both cards' twelve lines |
+
+   - `pressed` writes 1 and 0, the sound card's spelling, and not the page's bare `AND`. The sound card sums its presses, a sum over a range skips truth values by the spreadsheet's rules, and a press that is a number can be summed, coloured and compared.
+   - `count` adds any event: 1s counted, or numbers summed, as the wheel's notches are. Its name is the filing's. Its event is a text, so the input card's two press counts keep the press spelled by hand inside the count (decision 3), and the card keeps its bytes.
+   - `hold`'s pieces are in `IF`'s order, the test and then the value: hold, when this, that.
+   - `dice` is one cell. Its Clock references are relative, as the input card and §3.5 spell them, so a fill would move them onto the rate and past the Clock; its docstring says so. Its parameter is `at` and not `cell`, a row the library writes.
+   - `default-keys` writes the labels as well as player 1's codes. Both cards write the labels just before player 1, so it hoists both whole; §3.4's table holds both columns; and TIC-80's defaults are player 1's, so a column letter would only invite one key bound to two players. Player 2 and on stay `keys` calls.
+   - `every` and the Write table are decision 7's.
+
+   *Alternatives:*
+   - `pressed` as the page's bare `AND`, which hoists no card;
+   - `default-keys` as the filing's "a player's column", codes alone with a letter, which leaves the labels to every caller;
+   - `count` named `tally` or `sum`, each true of one use and not the other.
+6. **Three macros the inventory found and the filing did not name: `sheets`, `labels` and `headers`.**
+   - `(sheets "Screen" "Palette" ...)`: the sheets in tab order, each visible, a `(sheet "X" visible)` row a name. Every source writes such a run, 31 rows in all; a hidden sheet stays a row of its own. Its parameter is `tabs`, since one named `sheet` would replace the rows' heads.
+   - `(labels sheet first text ...)`: texts down a column from a cell, a block's labels in §3's label column. Five runs in three sources, and the library's `button-labels` and `audio`'s voice numbers, which are rewritten over it, their bytes unchanged.
+   - `(headers sheet first text ...)`: texts along a row from a cell, a table's headers. Sand's Tally, the input card's Write sheet, and `audio`'s header.
+   - Each hoists every run it names byte for byte. None hoists a block that interleaves a label with its value row by row, the sound card's Knobs and the two Cameras: a verb writes its rows in its own order, and the bytes would move.
+
+   *Alternatives:*
+   - leave them, the kit holding the filing's verbs alone and the six sources keeping their 31 `sheet` rows and their label runs by hand;
+   - one `labels` with a word for its direction, where the page has two words already, labels and headers.
+7. **Left: `every`, the Write table's row and the Camera, each to `CART.4`. The soup, Life's rule and Life's palette stay their cartridges'.**
+   - `every`: no source writes a frame in `n` as a cell, so it has nothing to hoist, and a verb spelled anew needs a client that uses it. `CART.4`'s phase counter, its period falling with the row, is its first; `CART.5`'s clock divider its second.
+   - The Write row: one appearance, the input card's, whose address is a literal, `"B20"`. `CART.4`'s tower writes an address computed by a formula, `"A" & State!B2` (Appendix B). That second client decides the verb's shape, so the row waits for it; the Write sheet's header is `headers`' today.
+   - The Camera: two appearances, both a row value and a column formula. `CART.4`'s tower pans rows (§13; Appendix B), a third shape, which decides the verb.
+   - Life's soup, three copies in two sources, sits inside formulas' text, which no row verb hoists (decision 3).
+   - Life's rule and its sixteen colours are written word for word by the gun, which is Life's rule by design and the floors' second fixture. They are a cartridge's content, not boilerplate between a thought and its rows, and the demo a stranger copies first shows them.
+
+   *Alternatives:*
+   - `every` spelled now and held by a card of its own, a seventh cartridge: it moves the pins `ENGINE.8` is moving now, for a verb no game uses yet;
+   - the Write row now, for literal addresses, its shape chosen on one client.
+8. **All six sources rewritten over the kit, the floors' three among them, each expanding to its bytes, at the owner's layout.**
+   - A verb is a module call, so it is laid out one argument a line, each with a comment saying what it is, inside `on` where a sheet runs on. A list of like things, a run of sheets or a short run of labels, stays on one line.
+   - Life's soup and rule, given to `first-frame`, are written in commented lines of `&expand`, as Sand's are, where they were one row of 502 characters.
+   - The input card's two press counts keep the press as text inside `count`, with a comment saying why. Its Write row and its Camera stay rows (decision 7); its bits and lamps stay its own.
+   - The test card's rows 13 to 16 become an `on` of rows with its counter one `count` among them, so the block still reads in the card's order.
+   - Each source's comment naming the library's macros it calls is brought up to date.
+
+   *Alternatives:*
+   - the cards alone, as the filing's oracle names them, leaving `first-frame` with no caller among the cartridges that write its spelling;
+   - Life and the gun left as they are because they are the floors' fixtures, which their digests already guard.
+9. **The oracle is the cartridges' bytes; a test holds each verb's rows; the controls are mutants run by hand and written in the build record; no check moves.**
+   - The bytes, held six ways:
+     - `cargo run --release --example expand -- --check` answers six `same`;
+     - `cargo test`'s golden holds every cartridge to its source's expansion;
+     - the describe goldens stand with no re-bless;
+     - the three replays play to their goldens, each naming its cartridge by digest;
+     - `check_frame_floors.ps1` holds Life's, the gun's and Sand's digests;
+     - the loop oracle's `pass` case holds the page's pass over the rewritten sources and library to the command line's bytes.
+   - A test in `engine/src/pass.rs`, `the_kit_s_verbs_write_the_rows_they_name`. A source over the repository's own `cartridges/common.vla` calls every verb at its edges, and is held to the rows each docstring names, exactly. A cartridge holds only the paths it uses; this test holds the rest and names the verb that moved. It reads the library off the folder at run time, as the golden reads the cartridges, so it stands down in a package without `cartridges/`.
+   - The controls: each verb respelled by one byte in a scratch copy, and for each, which of the oracles above fails and in what words, written in the build record.
+   - `check_cartridge.ps1`, `check_web_offline.ps1`, `build_web.ps1`, `check_host_loop.ps1` and `run_checks.ps1` keep their counts and places, and mutant K keeps its anchor.
+
+   *Alternatives:*
+   - a kit card, a seventh cartridge calling every verb, with a replay golden: it would hold the verbs through the engine too, at the price of the pins `ENGINE.8` is moving now and a replay to record, for verbs whose rows a unit test holds exactly;
+   - a static check over the library's text, which can say a macro is defined but not what it writes.
+10. **The pages.**
+    - `SPEC.md` §7.8, a dated note: the kit's verbs, the shape of a verb, composition by reference, the quasiquote that takes an `&expand` piece, and the walks, with the measurements.
+    - `common.vla`'s header: two rules beside its four. A macro's call is no argument of `&expand`, so a macro that finds a text hands it on. A verb builds its row inside a quasiquote, so a piece may be an `&expand`.
+    - The library's lines in `README.md` and `engine/README.md`.
+    - `ROADMAP.md`: `KIT.1`'s line, and dated notes on `CART.4`, whose `every`, Write row and Camera are its to put in the kit.
+    - This entry, `Delta/CLAUDE.md`'s map line and the memory.
+11. **No ask of the language now.**
+    - What nesting would take: an `&expand` argument that is a macro's call expanded before it is joined, the macro's result an atom. The kit's walks would then be macros returning their text, and the input card's press counts would hoist whole.
+    - Why not now: the walks cost a few tenths of a millisecond a source with the library's growth (measured); the only text left by hand is the input card's press inside its counts, a fixture's; and composition by reference is the kit's design whether or not the language nests.
+    - `CART.4` is where a nesting a game needs would show itself, and the ask, with its numbers, would then be the owner's to relay.
+
+    *Alternative:* ask now, a Frazaro item with the VBA reference first (`SD-18`). It changes what a primitive's argument is: today a macro's call there is data a primitive can take apart by its head, as the library's own walks take apart their entries.
+
+**The catch.** Each met in the scratch work, or foreseen by reading.
+- A verb nested in another is refused in the language's words, "&expand: argument 6 is a list". The number counts `&expand`'s arguments inside the verb, not the caller's; the header and §7.8 say what it means.
+- A sheet whose name the formula language quotes, for a space, a leading digit or a character outside letters, digits, `_` and `.`: the twin a verb writes, `My Sheet.last!A1`, is not the `'My Sheet.last'!A1` it means. Every sheet the cartridges name is bare, and the verbs' docstrings say they want one.
+- `dice` filled over a range moves its Clock references. It is one cell.
+- A verb writes its rows in its own order, so it hoists only a run the hand wrote in that order.
+- A parameter named like a row the template writes replaces the row's head: `sheets` takes `tabs`, `dice` takes `at`, `hold` takes `new`.
+- The library's growth costs every source's pass a few tenths of a millisecond, since the expander defines every macro before anything expands.
+- The loop oracle's mutant K finds `palette-entry`'s third row by its text, so `palette-entry` stands as it is.
+- The shared tree. `ENGINE.8` is minted and built here at the same time. This item touches the library, the six sources, `pass.rs`'s tests and the pages, and no cartridge, template, page tool or check. `pass.rs` is shared if `ENGINE.8` raises its golden's floor of six; this item adds a test after the golden and leaves the floor. The commit stages by hunk, HEAD plus this item's, in `pass.rs`, `ROADMAP.md`, `REARVIEW.md`, `README.md`, `engine/README.md` and the map.
+- The working copies: every `.vla` is CRLF on checkout, so an edit keeps CRLF, and none is written by `sed -i`, which writes LF.
+
+**The oracle.** Every cartridge its source's expansion byte for byte, held by `expand --check`, `cargo test`'s golden, the describe goldens, the three replays, the frame floors' digests and the loop oracle's `pass` case; each verb's rows held by the kit's test; `run_checks.ps1 -WithExtras` `ALL GREEN`, 12 and 12. *The owner's hand test:* read the library; in the page, Build then Load each of the six from its rewritten source, and play the input card's and the sound card's replays to their goldens.
+
+**The size.** `~days`, as filed. The scratch build has written the library and rewritten all six sources once, every cartridge the same, so the build is the library made final, the test, the controls and the pages: about a day.
+
+*Approved 2026-10-12, the same day, all eleven, in the owner's words: "Recommendations approved; proceed with implementing KIT.1 as scoped." The roadmap's line went to 🟡 the same hour.*
+
+*Built 2026-10-12, over `57cfdaf` and `vla-lang` 0.9.2, awaiting the owner's test. The `ENGINE.8` session built its own item in the tree at the same time, uncommitted: a grid card, the host and the page. This build takes none of its hunks, and its new card, which includes the library, expands to its own bytes over the new library.*
+
+What landed:
+- `cartridges/common.vla`, 144 lines to 267.
+  - A section of its own, the sheets and their words: `sheets`, `labels` with its walk `labels-from`, and `headers` with `headers-from`.
+  - `default-keys` beside `keys`.
+  - The verbs: `first-frame`, `pressed`, `count`, `hold` and `dice`. `pressed`, `count` and `hold` each hand on to a `-from` macro.
+  - The walks `first-cell` and `twin`, under the verbs.
+  - `button-labels` written over `labels`, and `audio` over `headers` and `labels`.
+  - Two rules added to the header's four: a macro's call is no argument of `&expand`, so a macro that finds a text hands it on; and a verb builds its row inside a quasiquote, so a piece may be an `&expand`.
+  - `palette-entry`, which the loop oracle's mutant K finds by its text, stands as it was.
+- The six sources, rewritten over the kit at the owner's layout, each comment naming the library's macros brought up to date:
+  - Life: `sheets`; and `first-frame`, given the soup and the rule in commented lines of `&expand`, where they were one row of 502 characters.
+  - The gun: `sheets`; and `first-frame`, given the Seed's cell and Life's rule.
+  - The test card: `sheets`; and its rows 13 to 16 an `on` of rows, the counter a `count` among them.
+  - The input card: `sheets`, `default-keys`, `labels` and `headers`; the Tally's counts, holds and dice an `on` of `count`, `hold` and `dice`, its two press counts keeping the press as text inside `count`, with a comment saying why. Its Write row, its Camera, its bits and its lamps stand as they were.
+  - The sound card: `sheets`, `default-keys` and `labels`; its two presses `pressed`, inside an `on` of the Score's rows.
+  - Sand: `sheets`, `labels` and `headers`; its Screen's interior `first-frame`, given the opening's and the rule's lines of `&expand` as they stood.
+  - Every cartridge, replay, golden and describe golden is unchanged, byte for byte.
+- `engine/src/pass.rs`: `the_kit_s_verbs_write_the_rows_they_name`, sixteen calls held to their rows exactly at the edges the scoping measured, and a verb nested in another refused, `vla-expand-arg-is-list`, at the caller's line. The module itself is unchanged.
+- `SPEC.md` §7.8's dated note; the library's lines in `README.md` and `engine/README.md`; `ROADMAP.md`, the line 🟡 and a dated note on `CART.4`, whose `every`, Write row and Camera are its to put in the kit.
+
+*The oracle, on the day.* In a worktree at `57cfdaf` holding this item's eight files and nothing of the `ENGINE.8` session's:
+- `cargo build`, `cargo fmt --check` and `cargo clippy --workspace --all-targets -- -D warnings`, clean;
+- `cargo test`, 32 passed, the 31 before and the kit's;
+- the wasm module, 682,679 bytes as before, and the frames runner, built;
+- `cargo run --release --example expand -- --check`, six `same`;
+- the page built: six cartridges, six sources, three replays with their goldens, one library;
+- `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`, in 394 s; the loop oracle's controls passed, its mutant K among them, 206 s.
+
+In the shared tree, the scratch-built command line's `--check` over all seven sources answered seven `same`. Among them is the `ENGINE.8` session's new card, `cartridges/gridcard/`, uncommitted, which includes the library and calls `on`, `cells` and `formulas`.
+
+*The controls*, in the scratch copy: each verb respelled by one byte, the cartridges as committed. In every case the command line named exactly the cartridges that call the verb, and both the pass's golden and the kit's test failed.
+
+| respelled | the command line says differs |
+|---|---|
+| `sheets`, `visible` as `visibles` | all six |
+| `labels`, a row skipped | the input card, the sound card, Sand |
+| `headers`, a column skipped | the input card, the sound card, Sand |
+| `default-keys`, `KeyZ` as `KeyQ` | the input card, the sound card |
+| `first-frame`, `=1` as `=2` | Life, the gun, Sand |
+| `pressed`, the twin's `=0` as `=1` | the sound card |
+| `count`, `+` as `-` | the input card, the test card |
+| `hold`, a sign before the test | the input card |
+| `dice`, `16807` as `16808` | the input card |
+| `first-cell`, its colon as a semicolon | the input card, the test card |
+| `twin`, `.last!` as `.lost!` | the sound card |
+
+Then three of them again with the cartridges written over again by the command line, as an author would after a change:
+- `first-frame`: the frame floors' check refuses all three fixtures' digests; `check_cartridge.ps1` refuses Sand's replay's digest; and eight engine tests fail, the replays, the describe goldens, Life's plane and Sand's opening among them.
+- `count`: `check_cartridge.ps1` refuses the input card's replay's digest; the replay to its golden, the input card's own test and the describe golden fail.
+- `pressed`: `check_cartridge.ps1` refuses the sound card's replay's digest; the describe golden fails.
+
+*Found by the controls, noted for the owner and not changed here:* the native replay player in `engine/src/cartridge.rs` plays a replay on whatever cartridge its folder holds and names no digest. A replay's digest is held by `check_cartridge.ps1` and by the page's player alone. So a respelled `pressed` passes `cargo test`'s replay, because the sound card's golden, the Log's last 32 frames, holds no frame with a button down, and only the digest check catches it.
+
+*Measured on the final files* (medians of fifteen runs, unpinned, magnitudes), the pass over each source before and after: Life 0.41 and 0.63 ms, the gun 0.61 and 0.82, the test card 0.76 and 0.94, the input card 0.75 and 1.22, the sound card 0.67 and 0.99, Sand 0.66 and 0.88.
+
+*The scratch*, in the session's scratchpad: `kit/` (the workspace copy with `examples/kitprobe.rs` and the probes), `final/` (the library and the sources as written), `mut/` (the controls, `run_mutants.ps1` and `run_level2.ps1`), `gate.sh` and its log. The worktree was removed once the gate had run.
+
+*The owner's hand test:*
+1. Read the library's two new sections and the input card's Tally.
+2. Run `cargo run --release --example expand -- --check` at the root: seven `same`, `(expand-done 7)`.
+3. Build the page, then for each of the six cartridges press Build the cartridge and Load the cartridge.
+4. Play the input card's, the sound card's and Sand's replays.
+5. Optionally, write `count`'s `+` as `-` in the page's library box and build the input card.
+
+*Owner-tested 2026-10-12, the same day, every step passing.*
+- The command line answered seven `same`, the `ENGINE.8` session's grid card among them.
+- "Cartridges build and load, and all three replays perform as expected."
+- In the optional step, the input card's build wrote its four counts with `-`, `=Tally.last!B1-IF(AND(Input!B1=1,Input.last!B1=0),1,0)` among them, and left its holds and its dice as they were: the page's pass reads the kit from the library it holds.
+
+`KIT.1` is closed ✅, its line in the ledger under a new section, the kit's, between the engine and the cartridges, as the roadmap orders its families.
+
+*Committed 2026-10-12 at the owner's word ("Commit, then address the native replay test not checking a replay's cartridge digest"), in one commit with the close, staged by hunk beside the `ENGINE.8` session's uncommitted work. Not pushed.*
