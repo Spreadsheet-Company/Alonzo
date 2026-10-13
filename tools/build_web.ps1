@@ -106,6 +106,10 @@ $replayFiles = @{}
 $goldenFiles = @{}
 foreach ($d in @(Get-ChildItem -LiteralPath $CartridgesDir -Directory | Sort-Object Name)) {
     $file = Join-Path $d.FullName ($d.Name + '.vla')
+    # A folder holding no .vla at all is a design folder, a cartridge's notes ahead of its file
+    # (cartridges/buffet/BUFFET.md, CART.11): it is no cartridge and takes no place. A folder that
+    # holds another .vla without its own is still refused, below.
+    if (-not (Test-Path -LiteralPath $file) -and @(Get-ChildItem -LiteralPath $d.FullName -Filter '*.vla' -File).Count -eq 0) { continue }
     if (-not (Test-Path -LiteralPath $file)) { Write-Output ("FAIL: the cartridge folder {0} holds no {1}.vla" -f $d.FullName, $d.Name); exit 1 }
     $cartridgeFiles[$d.Name] = $file
     $source = Join-Path $d.FullName ($d.Name + '.source.vla')

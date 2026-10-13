@@ -1776,6 +1776,17 @@ mod tests {
                 .and_then(|n| n.to_str())
                 .expect("a folder's name")
                 .to_string();
+            // A folder holding no .vla at all is a design folder, a cartridge's notes ahead of
+            // its file (cartridges/buffet/BUFFET.md, CART.11): no cartridge, so no golden.
+            let holds_vla = std::fs::read_dir(&dir)
+                .map(|it| {
+                    it.flatten()
+                        .any(|e| e.path().extension().is_some_and(|x| x == "vla"))
+                })
+                .unwrap_or(false);
+            if !holds_vla {
+                continue;
+            }
             let text = read(&dir.join(format!("{name}.vla")));
             let c = Cartridge::load(&text, &format!("{name}.vla"), text.len())
                 .unwrap_or_else(|e| panic!("{name} loads: {}", e.refusal.text));
