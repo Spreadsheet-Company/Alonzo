@@ -72,8 +72,9 @@ sheet the record holds, every cell, formula and value row that sheet's. What
 the replay plays to is the loop oracle's, which holds the page's player to
 the golden byte for byte (tools/check_host_loop.ps1, the replay case), and
 cargo test's, a player of the engine's own, made general by ENGINE.4's second
-slice over every folder holding a replay: the input card's, Sand's (since
-CART.2's second slice) and the sound card's.
+slice over every folder holding a replay: the input card's, Kairos's (since
+CART.4's second slice), Sand's (since CART.2's second slice) and the sound
+card's.
 
 SINCE ENGINE.4 (2026-10-10; REARVIEW.md, decisions 4 and 9): the Audio
 sheet's value cells are judged as the host judges a voice at run time
@@ -191,11 +192,16 @@ if ($Root -eq '') { $Root = $repoRoot }
 # Lavender, written as a source over the library, which gains
 # every, since, looks, camera and put; the input card and the grid card
 # rewritten over put, looks and camera; the other seven's rows unchanged.
+# 2026-10-12, CART.4's second slice: Kairos's replay and its golden,
+# cartridges/kairos/kairos.replay.vla (the owner's two games: 3,469 frames,
+# 127 of them written, the last empty, 273 rows, the manifest's seed 1) and
+# kairos.golden.vla (the Tally sheet's record at its end, the window
+# A1:D23); the cartridges' rows unchanged.
 $expectedCartridges = 8
 $expectedSources = 8
 $expectedLibraries = 1
-$expectedReplays = 3
-$expectedGoldens = 3
+$expectedReplays = 4
+$expectedGoldens = 4
 $rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 150; 'cartridges/kairos/kairos.vla' = 378 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (SPEC.md section 3.6)
 

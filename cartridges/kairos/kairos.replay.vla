@@ -1,0 +1,408 @@
+; SPDX-License-Identifier: 0BSD
+; The owner's session of 2026-10-12, recorded in the page on this cartridge: two games.
+; The first stops every row over the row beneath, a click, then Space; at level 11 Z
+; refuses the minor prize and goes on, and level 15 wins the major. A click plays again.
+; The second loses a light at levels 2 and 4, refuses the minor prize again, and misses
+; at level 15, so the stack falls; the replay ends after the fall's hold, the tower
+; cleared. Its golden is the Tally at its last frame.
+(replay "kairos" (spec 3) (cartridge "F84EFCE27AB4E880B43B4869FA07ED012180AEE8642AA92ACEBD9B9B02E3C6E8") (seed 1))
+(frame 1
+  (cell "Input" "B1" 0)
+  (cell "Input" "C1" 0)
+  (cell "Input" "D1" 0)
+  (cell "Input" "E1" 0)
+  (cell "Input" "B2" 0)
+  (cell "Input" "C2" 0)
+  (cell "Input" "D2" 0)
+  (cell "Input" "E2" 0)
+  (cell "Input" "B3" 0)
+  (cell "Input" "C3" 0)
+  (cell "Input" "D3" 0)
+  (cell "Input" "E3" 0)
+  (cell "Input" "B4" 0)
+  (cell "Input" "C4" 0)
+  (cell "Input" "D4" 0)
+  (cell "Input" "E4" 0)
+  (cell "Input" "B5" 0)
+  (cell "Input" "C5" 0)
+  (cell "Input" "D5" 0)
+  (cell "Input" "E5" 0)
+  (cell "Input" "B6" 0)
+  (cell "Input" "C6" 0)
+  (cell "Input" "D6" 0)
+  (cell "Input" "E6" 0)
+  (cell "Input" "B7" 0)
+  (cell "Input" "C7" 0)
+  (cell "Input" "D7" 0)
+  (cell "Input" "E7" 0)
+  (cell "Input" "B8" 0)
+  (cell "Input" "C8" 0)
+  (cell "Input" "D8" 0)
+  (cell "Input" "E8" 0)
+  (cell "Input" "B9" 0)
+  (cell "Input" "C9" 0)
+  (cell "Input" "D9" 0)
+  (cell "Input" "E9" 0)
+  (cell "Input" "B10" 0)
+  (cell "Input" "C10" 0)
+  (cell "Input" "D10" 0)
+  (cell "Input" "E10" 0)
+  (cell "Input" "B11" 0)
+  (cell "Input" "B12" 0)
+  (cell "Input" "B13" 0)
+  (cell "Input" "B14" 0)
+  (cell "Input" "B15" 0)
+  (cell "Input" "B16" 0)
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 101
+  (cell "Input" "B11" 15)
+  (cell "Input" "B12" 3))
+(frame 102
+  (cell "Input" "B11" 14))
+(frame 105
+  (cell "Input" "B12" 4))
+(frame 106
+  (cell "Input" "B11" 13))
+(frame 109
+  (cell "Input" "B11" 12))
+(frame 111
+  (cell "Input" "B11" 11))
+(frame 114
+  (cell "Input" "B11" 10))
+(frame 115
+  (cell "Input" "B11" 9)
+  (cell "Input" "B12" 5))
+(frame 117
+  (cell "Input" "B11" 8))
+(frame 119
+  (cell "Input" "B11" 7))
+(frame 121
+  (cell "Input" "B11" 6))
+(frame 144
+  (cell "Input" "B13" 1))
+(frame 150
+  (cell "Input" "B13" 0))
+(frame 166
+  (cell "Input" "B11" 7))
+(frame 169
+  (cell "Input" "B11" 8)
+  (cell "Input" "B12" 4))
+(frame 170
+  (cell "Input" "B11" 9))
+(frame 171
+  (cell "Input" "B11" 10))
+(frame 172
+  (cell "Input" "B11" 12))
+(frame 173
+  (cell "Input" "B11" 14))
+(frame 175
+  (cell "Input" "B11" 15))
+(frame 179
+  (cell "Input" "B11" 0)
+  (cell "Input" "B12" 0))
+(frame 270
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 271
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 277
+  (cell "Input" "B10" 0))
+(frame 352
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 353
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 358
+  (cell "Input" "B10" 0))
+(frame 447
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 448
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 452
+  (cell "Input" "B10" 0))
+(frame 537
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 538
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 543
+  (cell "Input" "B10" 0))
+(frame 627
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 628
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 632
+  (cell "Input" "B10" 0))
+(frame 704
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 705
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 711
+  (cell "Input" "B10" 0))
+(frame 786
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 787
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 791
+  (cell "Input" "B10" 0))
+(frame 856
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 857
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 862
+  (cell "Input" "B10" 0))
+(frame 937
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 938
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 943
+  (cell "Input" "B10" 0))
+(frame 1011
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 1012
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 1016
+  (cell "Input" "B10" 0))
+(frame 1127
+  (cell "Input" "B5" 1)
+  (cell "Input" "B17" "z")
+  (cell "Input" "B18" "KeyZ"))
+(frame 1128
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 1134
+  (cell "Input" "B5" 0))
+(frame 1180
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 1181
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 1185
+  (cell "Input" "B10" 0))
+(frame 1291
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 1292
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 1294
+  (cell "Input" "B10" 0))
+(frame 1402
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 1403
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 1406
+  (cell "Input" "B10" 0))
+(frame 1526
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 1527
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 1530
+  (cell "Input" "B10" 0))
+(frame 1776
+  (cell "Input" "B11" 15)
+  (cell "Input" "B12" 5))
+(frame 1777
+  (cell "Input" "B11" 14))
+(frame 1779
+  (cell "Input" "B11" 13))
+(frame 1783
+  (cell "Input" "B11" 12))
+(frame 1796
+  (cell "Input" "B11" 11))
+(frame 1864
+  (cell "Input" "B13" 1))
+(frame 1870
+  (cell "Input" "B13" 0))
+(frame 1885
+  (cell "Input" "B11" 12))
+(frame 1887
+  (cell "Input" "B11" 13)
+  (cell "Input" "B12" 6))
+(frame 1888
+  (cell "Input" "B11" 15))
+(frame 1889
+  (cell "Input" "B11" 0)
+  (cell "Input" "B12" 0))
+(frame 1947
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 1948
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 1953
+  (cell "Input" "B10" 0))
+(frame 2043
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 2044
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 2051
+  (cell "Input" "B10" 0))
+(frame 2150
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 2151
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 2156
+  (cell "Input" "B10" 0))
+(frame 2251
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 2252
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 2260
+  (cell "Input" "B10" 0))
+(frame 2353
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 2354
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 2362
+  (cell "Input" "B10" 0))
+(frame 2458
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 2459
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 2465
+  (cell "Input" "B10" 0))
+(frame 2550
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 2551
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 2559
+  (cell "Input" "B10" 0))
+(frame 2645
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 2646
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 2652
+  (cell "Input" "B10" 0))
+(frame 2728
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 2729
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 2733
+  (cell "Input" "B10" 0))
+(frame 2810
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 2811
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 2816
+  (cell "Input" "B10" 0))
+(frame 2884
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 2885
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 2889
+  (cell "Input" "B10" 0))
+(frame 2983
+  (cell "Input" "B5" 1)
+  (cell "Input" "B17" "z")
+  (cell "Input" "B18" "KeyZ"))
+(frame 2984
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 2989
+  (cell "Input" "B5" 0))
+(frame 3037
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 3038
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 3043
+  (cell "Input" "B10" 0))
+(frame 3101
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 3102
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 3107
+  (cell "Input" "B10" 0))
+(frame 3163
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 3164
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 3169
+  (cell "Input" "B10" 0))
+(frame 3217
+  (cell "Input" "B10" 1)
+  (cell "Input" "B17" " ")
+  (cell "Input" "B18" "Space"))
+(frame 3218
+  (cell "Input" "B17" "")
+  (cell "Input" "B18" ""))
+(frame 3221
+  (cell "Input" "B10" 0))
+(frame 3469)

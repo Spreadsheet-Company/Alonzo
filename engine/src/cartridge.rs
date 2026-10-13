@@ -2124,7 +2124,8 @@ mod tests {
     /// and the step; its end the golden beside it, its window's record byte
     /// for byte. After each step `held` is given the cartridge, the frame
     /// and the frame's rows, so that a cartridge with a rule written by hand
-    /// holds every frame to it (Sand's, CART.2's second slice).
+    /// holds every frame to it (Sand's, CART.2's second slice; Kairos's,
+    /// CART.4's).
     fn play_to_golden(
         name: &str,
         cart: &str,
@@ -2228,9 +2229,12 @@ mod tests {
     /// Every committed replay (ENGINE.3's second slice, made general by
     /// ENGINE.4's): each folder of `cartridges/` holding `<name>.replay.vla`
     /// played to `<name>.golden.vla` beside it, the files read as they stand
-    /// in the tree: the input card's, Sand's and the sound card's. Sand's
-    /// holds its Screen to the hand-written sand at every frame (CART.2's
-    /// second slice), as the page's replay case holds it to the page's.
+    /// in the tree: the input card's, Kairos's, Sand's and the sound card's.
+    /// Sand's holds its Screen to the hand-written sand at every frame
+    /// (CART.2's second slice), as the page's replay case holds it to the
+    /// page's; Kairos's holds its board, State, voices and Tally to the game
+    /// by hand at every frame (CART.4's second slice), and the page's its
+    /// board to the page's game.
     #[test]
     fn every_committed_replay_plays_to_its_golden() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../cartridges");
@@ -2257,9 +2261,12 @@ mod tests {
             let cart = read(dir.join(format!("{name}.vla")));
             let golden = read(dir.join(format!("{name}.golden.vla")));
             let mut hand = SandHand::default();
+            let mut kairos_hand = KairosHand::new();
             let mut held = |c: &Cartridge, frame: u32, rows: &[Form]| {
                 if name == "sand" {
                     hand.holds(c, frame, rows);
+                } else if name == "kairos" {
+                    kairos_hand.holds(c, frame, rows);
                 }
             };
             play_to_golden(&name, &cart, &read(replay), &golden, &mut held);
@@ -2269,11 +2276,18 @@ mod tests {
                     "Sand's replay paints, and its frames are held to the hand-written sand's brush"
                 );
             }
+            if name == "kairos" {
+                assert_eq!(
+                    kairos_hand.ends,
+                    [(End::Major, 15), (End::Fell, 15)],
+                    "the owner's session: the major prize won, then a fall at the last level"
+                );
+            }
             played.push(name);
         }
         assert_eq!(
             played,
-            ["inputcard", "sand", "soundcard"],
+            ["inputcard", "kairos", "sand", "soundcard"],
             "the replays committed under cartridges/"
         );
     }
@@ -3165,7 +3179,8 @@ mod tests {
         }
     }
 
-    /// The Tally at a session's end, the game by hand's counts.
+    /// The Tally, the game by hand's counts: at a session's end, or at every
+    /// frame of a replay.
     fn kairos_tally_holds(c: &Cartridge, g: &Game) {
         let t = kairos_cells(c, "Tally", "A1:D23");
         let num = |a: &str| {
@@ -3181,14 +3196,63 @@ mod tests {
                 num(&format!("D{r}")),
             ];
             let want = [g.reached[lv - 1], g.stacked[lv - 1], g.fell[lv - 1]].map(f64::from);
-            assert_eq!(got, want, "the Tally's level {lv}: reached, stacked, fell");
+            assert_eq!(
+                got, want,
+                "frame {}: the Tally's level {lv}: reached, stacked, fell",
+                g.frame
+            );
         }
         let got = ["B18", "B19", "B20", "B21", "B22", "B23"].map(num);
         let want = [g.games, g.presses, g.moves, g.minors, g.majors, g.falls].map(f64::from);
         assert_eq!(
             got, want,
-            "the Tally's games, presses, moves, minor prizes, major prizes and falls"
+            "frame {}: the Tally's games, presses, moves, minor prizes, major prizes and falls",
+            g.frame
         );
+    }
+
+    /// A replay of Kairos on the game by hand (CART.4's second slice): the
+    /// Input sheet's cells as the replay's rows leave them, since a replay
+    /// logs a cell only in the frame it changes; the stop's button held while
+    /// a, select or the left button is down (the State's B8, their `MAX`) and
+    /// the minor prize's while b is. Each frame's board, State, voices and
+    /// Tally are held to the game by hand, and each game's end is kept.
+    struct KairosHand {
+        input: std::collections::HashMap<String, Form>,
+        game: Game,
+        ends: Vec<(End, usize)>,
+    }
+
+    impl KairosHand {
+        fn new() -> KairosHand {
+            KairosHand {
+                input: std::collections::HashMap::new(),
+                game: Game::new(Settings::default()),
+                ends: Vec::new(),
+            }
+        }
+
+        fn holds(&mut self, c: &Cartridge, frame: u32, rows: &[Form]) {
+            for row in rows {
+                if let Form::List(l) = row {
+                    if let [Form::Sym(head), Form::Str(sheet), Form::Str(addr), value] =
+                        l.items.as_slice()
+                    {
+                        if head == "cell" && sheet == "Input" {
+                            self.input.insert(addr.clone(), value.clone());
+                        }
+                    }
+                }
+            }
+            let down = |addr: &str| matches!(self.input.get(addr), Some(Form::Sym(n)) if n == "1");
+            let (held, take) = (down("B5") || down("B10") || down("B13"), down("B6"));
+            self.game.step(held, take);
+            if self.game.phase == Phase::Over && self.game.since == 0 {
+                self.ends.push((self.game.end, self.game.level));
+            }
+            kairos_holds(c, &self.game, frame, false);
+            kairos_tally_holds(c, &self.game);
+        }
     }
 
     /// What a session of Kairos did: each game's end with its level, and how

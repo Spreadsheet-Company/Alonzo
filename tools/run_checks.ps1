@@ -165,6 +165,11 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # 2026-10-12, CART.4's first slice: 12 still, no check added -
 # check_cartridge.ps1 pins eight cartridges and eight sources, Kairos's, and
 # check_host_loop.ps1's pass case holds eight sources to the command line.
+# 2026-10-12, CART.4's second slice: 12 still, no check added -
+# check_cartridge.ps1 pins four replays and four goldens, Kairos's beside
+# Sand's and the cards'; check_host_loop.ps1's replay case plays Kairos's to
+# its golden, every frame held to the page's Kairos, and its control is
+# thirty-five mutant pages, AI the turn a column early.
 $expectedAtLeast = 12
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
@@ -178,8 +183,8 @@ $extras = @(
     @{ Script = 'check_view_fixtures.ps1'; Args = @('-Control'); What = 'KERNEL.5 fixtures: a clean scratch folder passes, four mutants fail each for its own reason' },
     @{ Script = 'check_render_oracle.ps1'; Args = @('-Control'); What = 'KERNEL.5 render oracle: the real page passes, three mutant pages fail under the browser (SKIPPED without one)' },
     @{ Script = 'check_render_floors.ps1'; Args = @('-Control'); What = 'KERNEL.5 render floors: a clean table passes, seven mutants fail' },
-    @{ Script = 'check_cartridge.ps1';     Args = @('-Control'); What = 'ENGINE.1, SPEC.3, ENGINE.3, ENGINE.4, CART.2, ENGINE.8 and CART.4 cartridges: a clean scratch copy of eight cartridges and Life written to (spec 3) pass, thirty-two mutants fail, the cartridge, its source, its replay and golden, and the library told apart, the Audio sheet''s values judged, three replays and three goldens' },
-    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1, ENGINE.2, SPEC.3, ENGINE.3, ENGINE.4, CART.2 and ENGINE.8 host loop: the real page passes, thirty-four mutant pages fail under the browser, the fourth, the eleventh, the twenty-eighth, the thirty-third and six more only over the engine''s module, and the twenty-fourth only by the sound case''s render (SKIPPED without a browser)' },
+    @{ Script = 'check_cartridge.ps1';     Args = @('-Control'); What = 'ENGINE.1, SPEC.3, ENGINE.3, ENGINE.4, CART.2, ENGINE.8 and CART.4 cartridges: a clean scratch copy of eight cartridges and Life written to (spec 3) pass, thirty-two mutants fail, the cartridge, its source, its replay and golden, and the library told apart, the Audio sheet''s values judged, four replays and four goldens' },
+    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1, ENGINE.2, SPEC.3, ENGINE.3, ENGINE.4, CART.2, ENGINE.8 and CART.4 host loop: the real page passes, thirty-five mutant pages fail under the browser, the fourth, the eleventh, the twenty-eighth, the thirty-third, the thirty-fifth and six more only over the engine''s module, and the twenty-fourth only by the sound case''s render (SKIPPED without a browser)' },
     @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 blit floors: a clean table of three cases passes, eight mutants fail' },
     @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 and SPEC.3 export reader and judgment: nine modules built in memory, a non-module' },
     @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, its mutants fail (seven for a git pin, eight for a registry pin); of five baselines, a git one and a registry one pass and three fail' },

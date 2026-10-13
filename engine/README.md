@@ -83,15 +83,18 @@ written by hand, `src/kairos.rs`, compiled for the tests alone as `src/sand.rs`
 is: a bot that watches the game by hand plays four games, every frame's board,
 State and voices equal, then the rigged window, the stop where the row was
 seen, and the cabinet stood up by one word of its source, every frame the
-sideways board's transpose.
+sideways board's transpose. Its replay, the owner's two games of 3,469
+frames, holds its board, State, voices and Tally to the game by hand at
+every frame, under the buttons the replay's Input rows press (`CART.4`'s
+second slice).
 
 Its tests hold the two projections of a window to one another: the plane of
 a window is the view record of the same window, byte for value, the record
 read with the language's own reader, every frame of the repository's test
 card, a cartridge holding every kind of value a Screen cell can under a
 Camera that pans a column a frame, and Life at its corners (`ENGINE.2`).
-And one plays every committed replay, the input card's, Sand's and the
-sound card's, as `SPEC.md` section 7.6 plays one, the derived writes the
+And one plays every committed replay, the input card's, Kairos's, Sand's and
+the sound card's, as `SPEC.md` section 7.6 plays one, the derived writes the
 Write sheet leaves before each frame's rows, to the golden beside it, byte
 for byte, so the host's player and the engine alone end in the same sheet
 (`ENGINE.3`, made general over every folder holding a replay by `ENGINE.4`).

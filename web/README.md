@@ -191,7 +191,7 @@ the marks a host asked for. The record is never written.
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
 test card, the input card, the sound card, Sand, the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), or Kairos, the stacking game (`CART.4`), each with its source, which the panel's Build expands into the
-cartridge in the page, the input card, the sound card and Sand each with its replay, which Play the replay plays, the
+cartridge in the page, the input card, the sound card, Sand and Kairos each with its replay, which Play the replay plays, the
 Audio sheet heard after Sound on, and
 below it the viewport over seven
 records the door printed: the six view goldens of Frazaro's `scripts/view/`
@@ -277,6 +277,21 @@ press Play the replay and watch sand painted into the rain, water after the
 key 3, sand after the key 1, a wall after the key 2, water again with the
 brush widened to 7, the right button erasing near the bottom, and the toy
 left alone to frame 2,085, where the replay pauses, its Tally the golden's.
+Pick Kairos and a row of three lights slides up and down the board's first
+column, the tower lying on its side with level 1 at the left: press Z or
+Space, or click the plane, to stop it over the row beneath. The lights that
+miss blink and fall, and the next row is no wider than what stayed. At level
+11 the minor prize's column blinks: X takes it and ends the game, Z goes on;
+level 15 wins the major, and WIN flashes. Its Levels sheet, each level's
+speed and window, and its State sheet, the game's thirty-one cells, are in
+the sheet picker; write `(cell "Levels" "D3" 1)` and level 2's row stops
+where it stands only in the first frame of each place, a column on after it,
+the cabinet rigged in the open. Open The replay with Kairos picked: its own
+replay waits in the box, the owner's two games, 3,469 frames; press Play the
+replay and watch the major prize won, every row stopped over the one beneath
+and the minor refused at level 11, then a second game that loses a light at
+levels 2 and 4, refuses the minor again and misses at level 15, the replay
+pausing after the fall's hold, its Tally the golden's.
 Below it, pick a
 record, scroll on both
 axes, click a cell or drag a range, click a column or row header or the
@@ -353,7 +368,10 @@ baseline to the roadmap's bars.
   Sand's committed replay too, a person's painting session (`CART.2`'s
   second slice), every frame's Screen equal to the page's own sand under the
   brush the replay's Input rows make, and its end its golden, the Tally's
-  record; and the sound
+  record; and Kairos's, the owner's two games (`CART.4`'s second slice),
+  every frame's board equal to the page's own Kairos under the buttons the
+  replay's Input rows press, and its end its golden, the Tally's record;
+  and the sound
   itself (`sound`, `ENGINE.4`'s second slice): the host's own voices over
   the double handed an `OfflineAudioContext`, a sequence of voice states
   rendered into samples and each frame measured between its own times
