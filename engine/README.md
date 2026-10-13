@@ -73,8 +73,17 @@ outgrows like any other. Since `KIT.1` it holds the kit's first verbs, each a
 template macro writing one formula row, `first-frame`, `pressed`, `count`,
 `hold` and `dice`, and since `KIT.2` the picture, `picture`, a string a row of
 cells and a character a cell through a legend, PICO-8's hex digits or a list
-of a cartridge's own, a dot writing no cell; a test holds every macro the kit
-added to the rows it names, at its edges.
+of a cartridge's own, a dot writing no cell; and since `CART.4` the verbs
+`every` and `since`, `looks`, the grid's twin of the Palette, `camera`, a
+still Camera, and `put`, the Write sheet's row; a test holds every macro the
+kit added to the rows it names, at its edges.
+
+Kairos, `cartridges/kairos/`, the stacking game (`CART.4`), is held to a game
+written by hand, `src/kairos.rs`, compiled for the tests alone as `src/sand.rs`
+is: a bot that watches the game by hand plays four games, every frame's board,
+State and voices equal, then the rigged window, the stop where the row was
+seen, and the cabinet stood up by one word of its source, every frame the
+sideways board's transpose.
 
 Its tests hold the two projections of a window to one another: the plane of
 a window is the view record of the same window, byte for value, the record

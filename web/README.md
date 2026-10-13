@@ -190,7 +190,7 @@ the marks a host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
-test card, the input card, the sound card, Sand or the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), each with its source, which the panel's Build expands into the
+test card, the input card, the sound card, Sand, the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), or Kairos, the stacking game (`CART.4`), each with its source, which the panel's Build expands into the
 cartridge in the page, the input card, the sound card and Sand each with its replay, which Play the replay plays, the
 Audio sheet heard after Sound on, and
 below it the viewport over seven

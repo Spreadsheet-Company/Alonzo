@@ -42,3 +42,8 @@ pub mod pass;
 /// same file by its path.
 #[cfg(test)]
 mod sand;
+
+/// Kairos by hand (`CART.4`), the reference the engine's tests hold the
+/// stacking game's frames to, compiled for the tests alone.
+#[cfg(test)]
+mod kairos;

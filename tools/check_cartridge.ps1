@@ -181,12 +181,22 @@ if ($Root -eq '') { $Root = $repoRoot }
 # fill among them, four styles and a sentence: 3,278 formula cells), the
 # first grid cartridge, written as a source over the library with a macro of
 # its own; the other six's rows unchanged.
-$expectedCartridges = 7
-$expectedSources = 7
+# 2026-10-12, CART.4's first slice: eight, Kairos beside them, 378 rows (twelve
+# sheet rows, the Palette's forty-eight cells with sixteen formats and sixteen
+# looks, the Keys' twenty, the Camera's four, the Levels' table and settings,
+# the State's labels and thirty-one cells, the Gate's six fills and a row of
+# values, the Tower's one row, WIN's picture, the Screen's three fills, the
+# Audio sheet's voices, the Tally's counts, and the Write sheet's header and
+# its two rows: 350 formula cells), the first game, a plane drawn in Lovelace
+# Lavender, written as a source over the library, which gains
+# every, since, looks, camera and put; the input card and the grid card
+# rewritten over put, looks and camera; the other seven's rows unchanged.
+$expectedCartridges = 8
+$expectedSources = 8
 $expectedLibraries = 1
 $expectedReplays = 3
 $expectedGoldens = 3
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 150 }
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 150; 'cartridges/kairos/kairos.vla' = 378 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

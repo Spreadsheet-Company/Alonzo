@@ -22,7 +22,7 @@
 
 ; The library whose macros this source calls: sheets; cga-palette, default-keys and keys;
 ; button-labels, labels and headers; on and formulas, each naming a sheet once over a run
-; of its rows; and the verbs count, hold and dice.
+; of its rows; the verbs count, hold and dice; and put, the Write sheet's row.
 (include "../common.vla")
 
 (cartridge "inputcard"
@@ -111,11 +111,13 @@
   "sheet"                           ;   the sheet a value goes to,
   "address"                         ;   its cell,
   "value")                          ;   and the value
-(on "Write"                                 ; the sheet every row below writes
-  (cell "A2" "Tally")                       ; the one write: into the Tally,
-  ; at B20 on a left click's rising edge, and nowhere in any other frame,
-  (formula "B2" "=IF(AND(Input!B13=1,Input.last!B13=0),\"B20\",\"\")")
-  (formula "C2" "=Clock!B1"))               ; the frame it came in
+(on "Write"                         ; the sheet the row below writes
+  (put                              ; the one write, a left click's frame into the Tally:
+    "A2"                            ;   the row of the Write sheet, from its cell in column A
+    "Tally"                         ;   the sheet it writes
+    "AND(Input!B13=1,Input.last!B13=0)"   ; when: a left click's rising edge, and in no other frame
+    "\"B20\""                       ;   where: B20, an address in quotes
+    "Clock!B1"))                    ;   what: the frame it came in
 
 ; ---- the Panel: the lamps, the layer under the cursor ------------------------------
 ; The lamps sit in columns I to AM, which the window shows wherever the wheel pans it;

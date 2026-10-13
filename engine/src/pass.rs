@@ -552,7 +552,10 @@ mod tests {
     /// character no legend holds written as a row the load refuses, a legend
     /// that is no list refused by the pass, and the Screen's extent. The gun
     /// draws only `1`s and dots, so the rest of the picture is held here
-    /// alone.
+    /// alone. Since `CART.4` (decision 10 of its second scoping) it holds the
+    /// five verbs the stacking game brought: `every` over a count and over
+    /// the Clock, `since` over a cell and a range, `put` alone and inside
+    /// `on`, `looks` and a still `camera`.
     #[test]
     fn the_kit_s_verbs_write_the_rows_they_name() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
@@ -681,6 +684,61 @@ mod tests {
                 r#"(dice "Tally" "B19")"#,
                 &[
                     r#"(formula "Tally" "B19" "=IF(Clock!B1=1,Clock!B3,MOD(Tally.last!B19*16807,2147483647))")"#,
+                ],
+            ),
+            // CART.4's verbs: every over a count, the page's clock divider
+            // over the frame with a number for n, and since over a range.
+            (
+                r#"(every "State" "B7" "State!B2" "State!B18")"#,
+                &[r#"(formula "State" "B7" "=IF(MOD(State!B2,State!B18)=0,1,0)")"#],
+            ),
+            (
+                r#"(every "Patch" "B2" "Clock!B1" 15)"#,
+                &[r#"(formula "Patch" "B2" "=IF(MOD(Clock!B1,15)=0,1,0)")"#],
+            ),
+            (
+                r#"(since "State" "B2" "State!B1<>State.last!B1")"#,
+                &[r#"(formula "State" "B2" "=IF(State!B1<>State.last!B1,0,State.last!B2+1)")"#],
+            ),
+            (
+                r#"(since "Patch" "B8:C8" "beat=1")"#,
+                &[r#"(formula "Patch" "B8:C8" "=IF(beat=1,0,Patch.last!B8+1)")"#],
+            ),
+            // The Write sheet's row: its target, its address while a test
+            // holds, its value; an address in quotes, or a range's.
+            (
+                r#"(put "Write" "A2" "Tally" "AND(Input!B13=1,Input.last!B13=0)" "\"B20\"" "Clock!B1")"#,
+                &[
+                    r#"(cell "Write" "A2" "Tally")"#,
+                    r#"(formula "Write" "B2" "=IF(AND(Input!B13=1,Input.last!B13=0),\"B20\",\"\")")"#,
+                    r#"(formula "Write" "C2" "=Clock!B1")"#,
+                ],
+            ),
+            (
+                r#"(on "Write" (put "A3" "Tower" "State!B1=4" "\"A1:O7\"" 0))"#,
+                &[
+                    r#"(cell "Write" "A3" "Tower")"#,
+                    r#"(formula "Write" "B3" "=IF(State!B1=4,\"A1:O7\",\"\")")"#,
+                    r#"(formula "Write" "C3" "=0")"#,
+                ],
+            ),
+            // The look map, a format and a look a fill from 0; a still Camera.
+            (
+                r#"(looks "S" "112233" "AABBCC")"#,
+                &[
+                    r#"(format 1 "112233" general nowrap)"#,
+                    r#"(look "S" 0 1)"#,
+                    r#"(format 2 "AABBCC" general nowrap)"#,
+                    r#"(look "S" 1 2)"#,
+                ],
+            ),
+            (
+                r#"(camera 3 5)"#,
+                &[
+                    r#"(cell "Camera" "A1" "row")"#,
+                    r#"(cell "Camera" "B1" 3)"#,
+                    r#"(cell "Camera" "A2" "column")"#,
+                    r#"(cell "Camera" "B2" 5)"#,
                 ],
             ),
             // Verbs inside on, the sheet named once.

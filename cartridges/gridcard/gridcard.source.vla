@@ -23,41 +23,33 @@
 ; formulas as written.
 
 ; The library whose macros this source calls: on, cells and formulas, each naming a
-; sheet once over a run of its rows.
+; sheet once over a run of its rows; looks, a look map from a list of fills; and camera,
+; a still Camera.
 (include "../common.vla")
 
-; The card's own macro, a look map from a palette: each colour of a list a format, its
-; index plus one, and a look from its index to that format. The CGA's sixteen through it
-; are the plane's Palette as the grid's looks.
-
-(defmacro (looks-from sheet index entries)
-  "a format and a look for each colour of a list, from an index on: the format is the index plus one, its fill the colour"
-  (quote-if (null? entries)
-    (begin)
-    (begin
-      (format (+expand index 1) (car entries) general nowrap)
-      (look sheet index (+expand index 1))
-      (looks-from sheet (+expand index 1) (cdr entries)))))
+; The card's own macro: the CGA's sixteen through the library's look map, the plane's
+; Palette as the grid's looks. A look map from a palette was this card's own macro until
+; CART.4 wrote one too, and it went into the library as looks.
 
 (defmacro (cga-looks sheet)
   "the CGA's sixteen as formats 1 to 16, and a look from each colour index, 0 to 15, to its format"
-  (looks-from sheet 0
-    ("000000"                       ; 0, black
-     "0000AA"                       ; 1, blue
-     "00AA00"                       ; 2, green
-     "00AAAA"                       ; 3, cyan
-     "AA0000"                       ; 4, red
-     "AA00AA"                       ; 5, magenta
-     "AA5500"                       ; 6, brown
-     "AAAAAA"                       ; 7, light grey
-     "555555"                       ; 8, dark grey
-     "5555FF"                       ; 9, light blue
-     "55FF55"                       ; 10, light green
-     "55FFFF"                       ; 11, light cyan
-     "FF5555"                       ; 12, light red
-     "FF55FF"                       ; 13, light magenta
-     "FFFF55"                       ; 14, yellow
-     "FFFFFF")))                    ; 15, white
+  (looks sheet                      ; the sixteen fills, index 0 first
+    "000000"                        ; 0, black
+    "0000AA"                        ; 1, blue
+    "00AA00"                        ; 2, green
+    "00AAAA"                        ; 3, cyan
+    "AA0000"                        ; 4, red
+    "AA00AA"                        ; 5, magenta
+    "AA5500"                        ; 6, brown
+    "AAAAAA"                        ; 7, light grey
+    "555555"                        ; 8, dark grey
+    "5555FF"                        ; 9, light blue
+    "55FF55"                        ; 10, light green
+    "55FFFF"                        ; 11, light cyan
+    "FF5555"                        ; 12, light red
+    "FF55FF"                        ; 13, light magenta
+    "FFFF55"                        ; 14, yellow
+    "FFFFFF"))                      ; 15, white
 
 (cartridge "gridcard"
   (spec 3)                          ; the version of SPEC.md this cartridge is written to
@@ -79,11 +71,9 @@
 ; viewport scrolls by the move, the person's place inside the window kept; from column 18
 ; the window's right edge passes the Screen's last column, CR, and the columns past it are
 ; empty.
-(on "Camera"                                        ; the sheet every row below writes
-  (cell "A1" "row")                                 ; a label
-  (cell "B1" 1)                                     ; the window's top row
-  (cell "A2" "column")                              ; a label
-  (cell "B2" 1))                                    ; the window's left column, which an edit moves
+(camera                            ; a still Camera, its labels beside its values:
+  1                                 ;   the window's top row
+  1)                                ;   the window's left column, which an edit moves
 
 ; The looks (SPEC.md section 7.3): the CGA's sixteen for the numbers 0 to 15, then the
 ; formats the other looks and the styles name, then the looks on a text, a truth value

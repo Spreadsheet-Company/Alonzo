@@ -95,8 +95,10 @@
 <style>
   :root {
     color-scheme: light;
-    /* Frazaro Lavender's three shades, as the benchmark page carries them:
-       the selection's fill and border in the viewport, the one button's hue. */
+    /* Lovelace Lavender's three shades, as the benchmark page carries them:
+       the selection's fill and border in the viewport, the one button's hue.
+       Lovelace Lavender is the owner's name (2026-10-12) for the logo's
+       lavender, #a080e0, which these are derived from. */
     --lavender: #e2d8f6;
     --lavender-whisper: #f7f4fc;
     --lavender-deep: #6b4fc8;
@@ -180,7 +182,7 @@
           <p id="frame-line" class="frame-line"></p>
         </div>
         <div class="engine-side">
-          <p class="controls"><label>Cartridge <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="gun">Glider gun</option><option value="testcard">Test card</option><option value="inputcard">Input card</option><option value="soundcard">Sound card</option><option value="sand">Sand</option><option value="gridcard">Grid card</option></select></label></p>
+          <p class="controls"><label>Cartridge <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="gun">Glider gun</option><option value="testcard">Test card</option><option value="inputcard">Input card</option><option value="soundcard">Sound card</option><option value="sand">Sand</option><option value="gridcard">Grid card</option><option value="kairos">Kairos</option></select></label></p>
           <p class="controls"><button type="button" id="eng-run">Run</button> <button type="button" id="eng-pause">Pause</button> <button type="button" id="eng-sound" aria-pressed="false">Sound on</button> <button type="button" id="eng-build">Build the cartridge</button> <button type="button" id="eng-load">Load the cartridge</button> <button type="button" id="eng-copy">Copy the log</button></p>
           <p class="controls"><button type="button" id="eng-replay-play">Play the replay</button> <button type="button" id="eng-replay-copy">Copy the replay</button></p>
           <p class="controls"><label style="flex:1 1 100%">An edit, one row: <input type="text" id="eng-edit" spellcheck="false" value="(cell &quot;Palette&quot; &quot;B1&quot; &quot;#FF8800&quot;)"></label> <button type="button" id="eng-write">Write</button></p>
@@ -192,7 +194,7 @@
         <summary>The source and the cartridge</summary>
         <p>The source, <code id="eng-src-path">cartridges/life/life.source.vla</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one picture, a string a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load the cartridge loads it: the pass loads nothing, and a cartridge running goes on running (SPEC.md section 7.8). The fake module holds no pass, and says so.</p>
         <textarea id="eng-src" rows="14" spellcheck="false" aria-label="the cartridge's source"></textarea>
-        <p>The cartridge, <code id="eng-cart-path">cartridges/life/life.vla</code>, the file the host loads, picked above: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no colour; the input card, every cell the host writes before a step, drawn; the sound card, the Audio sheet's four voices played, heard after Sound on; or Sand, a falling-sand toy that opens raining sand: paint with the left button, erase with the right, size the brush with the wheel, and press 1, 2 or 0 for sand, wall or empty; or the grid card, a grid cartridge drawn by the viewport, every kind of value, format and look a grid cell can hold, through a Camera that only an edit moves: write <code>(cell "Camera" "B2" 5)</code> and the window moves four columns right, the viewport scrolling with it. Edit it, or build it again from its source, and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
+        <p>The cartridge, <code id="eng-cart-path">cartridges/life/life.vla</code>, the file the host loads, picked above: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no colour; the input card, every cell the host writes before a step, drawn; the sound card, the Audio sheet's four voices played, heard after Sound on; or Sand, a falling-sand toy that opens raining sand: paint with the left button, erase with the right, size the brush with the wheel, and press 1, 2 or 0 for sand, wall or empty; or the grid card, a grid cartridge drawn by the viewport, every kind of value, format and look a grid cell can hold, through a Camera that only an edit moves: write <code>(cell "Camera" "B2" 5)</code> and the window moves four columns right, the viewport scrolling with it; or Kairos, the stacking game, in Lovelace Lavender: stop each row of lights over the row beneath with Z, Space or a click, take the minor prize at level 11 with X or go on with Z, and read every level's speed and window in its Levels sheet, which an edit such as <code>(cell "Levels" "D3" 1)</code> rigs in the open. Edit it, or build it again from its source, and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
         <textarea id="eng-cart" rows="14" spellcheck="false" aria-label="the cartridge, the rows a load takes"></textarea>
         <details>
           <summary>The library the sources include, <code id="eng-lib-path">cartridges/common.vla</code></summary>
@@ -283,6 +285,7 @@
 <script type="text/plain" id="cartridge-soundcard">{{CARTRIDGE:soundcard}}</script>
 <script type="text/plain" id="cartridge-sand">{{CARTRIDGE:sand}}</script>
 <script type="text/plain" id="cartridge-gridcard">{{CARTRIDGE:gridcard}}</script>
+<script type="text/plain" id="cartridge-kairos">{{CARTRIDGE:kairos}}</script>
 <script type="text/plain" id="source-life">{{SOURCE:life}}</script>
 <script type="text/plain" id="source-gun">{{SOURCE:gun}}</script>
 <script type="text/plain" id="source-testcard">{{SOURCE:testcard}}</script>
@@ -290,6 +293,7 @@
 <script type="text/plain" id="source-soundcard">{{SOURCE:soundcard}}</script>
 <script type="text/plain" id="source-sand">{{SOURCE:sand}}</script>
 <script type="text/plain" id="source-gridcard">{{SOURCE:gridcard}}</script>
+<script type="text/plain" id="source-kairos">{{SOURCE:kairos}}</script>
 <script type="text/plain" id="replay-inputcard">{{REPLAY:inputcard}}</script>
 <script type="text/plain" id="golden-inputcard">{{GOLDEN:inputcard}}</script>
 <script type="text/plain" id="replay-soundcard">{{REPLAY:soundcard}}</script>
@@ -341,7 +345,8 @@
                  replay: embedded('replay-soundcard'), replayPath: 'cartridges/soundcard/soundcard.replay.vla', golden: embedded('golden-soundcard') },
     sand: { text: sandText, file: 'sand.vla', path: 'cartridges/sand/sand.vla', source: embedded('source-sand'), sourcePath: 'cartridges/sand/sand.source.vla',
             replay: embedded('replay-sand'), replayPath: 'cartridges/sand/sand.replay.vla', golden: embedded('golden-sand') },
-    gridcard: { text: embedded('cartridge-gridcard'), file: 'gridcard.vla', path: 'cartridges/gridcard/gridcard.vla', source: embedded('source-gridcard'), sourcePath: 'cartridges/gridcard/gridcard.source.vla' }
+    gridcard: { text: embedded('cartridge-gridcard'), file: 'gridcard.vla', path: 'cartridges/gridcard/gridcard.vla', source: embedded('source-gridcard'), sourcePath: 'cartridges/gridcard/gridcard.source.vla' },
+    kairos: { text: embedded('cartridge-kairos'), file: 'kairos.vla', path: 'cartridges/kairos/kairos.vla', source: embedded('source-kairos'), sourcePath: 'cartridges/kairos/kairos.source.vla' }
   };
   // The libraries the sources include, each under the path an include resolves to.
   var LIBRARIES = {

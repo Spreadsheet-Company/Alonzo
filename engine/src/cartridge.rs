@@ -1811,6 +1811,7 @@ mod tests {
                 "gridcard",
                 "gun",
                 "inputcard",
+                "kairos",
                 "life",
                 "sand",
                 "soundcard",
@@ -2942,5 +2943,479 @@ mod tests {
                     }),
             "the grain against the wall shimmers on the floor: {after:?}"
         );
+    }
+
+    // ---- CART.4: Kairos, the stacking game ----
+
+    /// Kairos (CART.4): the stacking game, the first game with a goal, a win
+    /// and a loss.
+    const KAIROS: &str = include_str!("../../cartridges/kairos/kairos.vla");
+
+    use crate::kairos::{self, End, Game, Phase, Settings};
+
+    /// One frame's Input rows as the host writes them: the stop's button, a,
+    /// and the minor prize's, b, both player 1's (the Input sheet's B5 and B6).
+    fn kairos_inputs(stop: bool, take: bool) -> String {
+        let mut held = Vec::new();
+        if stop {
+            held.push((4, 0));
+        }
+        if take {
+            held.push((5, 0));
+        }
+        input_rows(&held, (0, 0), [0, 0, 0], 0, ("", ""))
+    }
+
+    /// Each cell of a sheet's window by its address: a value cell's value or
+    /// a formula's last value, as the record spells it, a text unquoted.
+    fn kairos_cells(
+        c: &Cartridge,
+        sheet: &str,
+        window: &str,
+    ) -> std::collections::HashMap<String, String> {
+        let Ok(Viewed::Text(record)) = c.view("grid", sheet, Some(window)) else {
+            panic!("the {sheet}'s record");
+        };
+        let mut out = std::collections::HashMap::new();
+        for line in record.lines() {
+            for head in [
+                format!("(value \"{sheet}\" \""),
+                format!("(cell \"{sheet}\" \""),
+            ] {
+                if let Some((addr, v)) = line
+                    .strip_prefix(head.as_str())
+                    .and_then(|rest| rest.split_once("\" "))
+                {
+                    let v = v.trim_end_matches(')').trim_matches('"');
+                    out.insert(addr.to_string(), v.to_string());
+                }
+            }
+        }
+        out
+    }
+
+    /// What the bot does in one game: the level it misses at, the levels it
+    /// stops half over the row beneath, whether it takes the minor prize, how
+    /// many frames into a place it waits before it presses, and how many
+    /// moves a row makes before the bot may stop it, at least one.
+    #[derive(Clone, Copy, Default)]
+    struct KairosPlan {
+        miss_at: Option<usize>,
+        partial_at: &'static [usize],
+        take_minor: bool,
+        late: u32,
+        travel: u32,
+    }
+
+    /// A player that watches the game by hand after each frame and presses as
+    /// a person would, a key down for one frame and up the next: on the place
+    /// its plan means, after the row has moved once; at the offer, and after a
+    /// game's end, once it has waited.
+    struct KairosBot {
+        plans: Vec<KairosPlan>,
+        game: usize,
+        stop: bool,
+        take: bool,
+        waited: u32,
+    }
+
+    impl KairosBot {
+        fn new(plans: Vec<KairosPlan>) -> KairosBot {
+            KairosBot {
+                plans,
+                game: 1,
+                stop: false,
+                take: false,
+                waited: 0,
+            }
+        }
+
+        fn decide(&mut self, g: &Game) -> (bool, bool) {
+            let plan = self.plans.get(self.game - 1).copied();
+            let (mut stop, mut take) = (false, false);
+            match (g.phase, plan) {
+                (Phase::Sliding, Some(p)) if g.frame > 0 => {
+                    let row = g.row();
+                    let over = row & g.beneath;
+                    let period = g.settings.period[g.level - 1];
+                    let want = if p.miss_at == Some(g.level) {
+                        over == 0
+                    } else if p.partial_at.contains(&g.level) {
+                        over != 0 && over != row
+                    } else {
+                        over == row
+                    };
+                    let place = g.since % period;
+                    stop = g.since >= period * p.travel.max(1)
+                        && want
+                        && place >= p.late.min(period - 1)
+                        && !self.stop;
+                }
+                (Phase::Offer, Some(p)) => {
+                    self.waited += 1;
+                    if self.waited > 30 && !self.stop && !self.take {
+                        if p.take_minor {
+                            take = true;
+                        } else {
+                            stop = true;
+                        }
+                    }
+                }
+                (Phase::Over, Some(_)) if g.ready() => {
+                    self.waited += 1;
+                    if self.waited > 20 && !self.stop {
+                        stop = true;
+                        self.game += 1;
+                    }
+                }
+                _ => {}
+            }
+            if g.phase == Phase::Sliding || g.phase == Phase::Stopped {
+                self.waited = 0;
+            }
+            (self.stop, self.take) = (stop, take);
+            (stop, take)
+        }
+    }
+
+    /// One frame of Kairos held to the game by hand: the board through the
+    /// plane projection, the cells of the State the game keeps, and the four
+    /// voices.
+    fn kairos_holds(c: &Cartridge, g: &Game, frame: u32, upright: bool) {
+        let window = if upright { "A1:G15" } else { "A1:O7" };
+        let board = match c.view("plane", "Screen", Some(window)) {
+            Ok(Viewed::Bytes(b)) => b,
+            other => panic!("the board: {other:?}"),
+        };
+        let want = if upright {
+            g.board_upright()
+        } else {
+            g.board()
+        };
+        let width = if upright {
+            kairos::COLUMNS
+        } else {
+            kairos::LEVELS
+        };
+        if let Some(i) = board.iter().zip(&want).position(|(a, b)| a != b) {
+            panic!(
+                "frame {frame}: the board's {} reads {} where the game by hand holds {} ({:?}, level {}, {} frames into the phase)",
+                address((i / width + 1) as u32, (i % width + 1) as u32),
+                board[i],
+                want[i],
+                g.phase,
+                g.level,
+                g.since
+            );
+        }
+        let st = kairos_cells(c, "State", "B1:B26");
+        let num = |a: &str| {
+            st.get(a)
+                .and_then(|v| v.parse::<f64>().ok())
+                .unwrap_or(f64::NAN)
+        };
+        let mut held = vec![
+            ("B1, the phase", num("B1"), f64::from(g.phase.code())),
+            (
+                "B2, the frames since it began",
+                num("B2"),
+                f64::from(g.since),
+            ),
+            ("B3, the level", num("B3"), g.level as f64),
+            ("B4, the width", num("B4"), f64::from(g.width)),
+            ("B5, the left end", num("B5"), f64::from(g.left)),
+            ("B6, the direction", num("B6"), f64::from(g.direction)),
+            (
+                "B17, what stayed",
+                num("B17"),
+                f64::from(g.beneath.count_ones()),
+            ),
+            ("B22, where it stopped", num("B22"), f64::from(g.stopped)),
+            ("B25, the result", num("B25"), f64::from(g.end.code())),
+            ("B26, the games", num("B26"), f64::from(g.games)),
+        ];
+        if let Some((first, last)) = kairos::ends(g.beneath) {
+            held.push(("B23, the run's first", num("B23"), f64::from(first)));
+            held.push(("B24, the run's last", num("B24"), f64::from(last)));
+        }
+        for (what, got, want) in held {
+            assert!(
+                got == want,
+                "frame {frame}: State!{what} is {got}, the game by hand's {want}"
+            );
+        }
+        let au = kairos_cells(c, "Audio", "B2:D5");
+        for (k, v) in g.voices().iter().enumerate() {
+            let r = k + 2;
+            let wave = au.get(&format!("B{r}")).cloned().unwrap_or_default();
+            let number = |col: &str| {
+                au.get(&format!("{col}{r}"))
+                    .and_then(|x| x.parse::<f64>().ok())
+                    .unwrap_or(f64::NAN)
+            };
+            let (note, volume) = (number("C"), number("D"));
+            assert!(
+                wave == v.wave && note == v.note && volume == v.volume,
+                "frame {frame}: voice {} is {wave} {note} {volume}, the game by hand's {} {} {}",
+                k + 1,
+                v.wave,
+                v.note,
+                v.volume
+            );
+        }
+    }
+
+    /// The Tally at a session's end, the game by hand's counts.
+    fn kairos_tally_holds(c: &Cartridge, g: &Game) {
+        let t = kairos_cells(c, "Tally", "A1:D23");
+        let num = |a: &str| {
+            t.get(a)
+                .and_then(|v| v.parse::<f64>().ok())
+                .unwrap_or(f64::NAN)
+        };
+        for lv in 1..=kairos::LEVELS {
+            let r = lv + 1;
+            let got = [
+                num(&format!("B{r}")),
+                num(&format!("C{r}")),
+                num(&format!("D{r}")),
+            ];
+            let want = [g.reached[lv - 1], g.stacked[lv - 1], g.fell[lv - 1]].map(f64::from);
+            assert_eq!(got, want, "the Tally's level {lv}: reached, stacked, fell");
+        }
+        let got = ["B18", "B19", "B20", "B21", "B22", "B23"].map(num);
+        let want = [g.games, g.presses, g.moves, g.minors, g.majors, g.falls].map(f64::from);
+        assert_eq!(
+            got, want,
+            "the Tally's games, presses, moves, minor prizes, major prizes and falls"
+        );
+    }
+
+    /// What a session of Kairos did: each game's end with its level, and how
+    /// often a row turned at the board's last column and at its first, so that
+    /// a session can say its rows travelled the whole board.
+    struct KairosRun {
+        cartridge: Cartridge,
+        game: Game,
+        ends: Vec<(End, usize)>,
+        turns: [u32; 2],
+    }
+
+    /// Kairos played by the bot over a cartridge's text for a number of
+    /// frames, every frame held: a person's edits written before the first
+    /// frame, and the Write sheet's rows issued before each frame as the host
+    /// issues them.
+    fn kairos_session(
+        text: &str,
+        settings: Settings,
+        edits: &[&str],
+        plans: Vec<KairosPlan>,
+        frames: u32,
+        upright: bool,
+    ) -> KairosRun {
+        let mut c = Cartridge::load(text, "kairos.vla", text.len()).expect("Kairos loads");
+        for e in edits {
+            assert_eq!(c.write(e), Ok(1), "{e}");
+        }
+        let mut g = Game::new(settings);
+        let mut bot = KairosBot::new(plans);
+        let mut pending: Vec<String> = Vec::new();
+        let (mut ends, mut turns) = (Vec::new(), [0u32; 2]);
+        for frame in 1..=frames {
+            let (stop, take) = bot.decide(&g);
+            for row in pending.drain(..) {
+                c.write(&row)
+                    .unwrap_or_else(|e| panic!("frame {frame}: {row}: {e:?}"));
+            }
+            c.write(&kairos_inputs(stop, take))
+                .expect("the Input sheet takes the host's rows");
+            assert!(c.step(0).done, "frame {frame} completes");
+            pending = derived_rows(&c);
+            let was = g.direction;
+            g.step(stop, take);
+            if g.moved && g.direction != was {
+                turns[usize::from(g.direction == 1)] += 1;
+            }
+            if g.phase == Phase::Over && g.since == 0 {
+                ends.push((g.end, g.level));
+            }
+            kairos_holds(&c, &g, frame, upright);
+        }
+        KairosRun {
+            cartridge: c,
+            game: g,
+            ends,
+            turns,
+        }
+    }
+
+    /// Four games of Kairos played by the bot, every frame held to the game by
+    /// hand (decision 11 of the second scoping): the major prize won, every
+    /// row bouncing off both ends of the board before its stop; a fall at
+    /// level 6, after stops half over the row beneath at levels 2 and 5; the
+    /// minor prize taken; and a fall at level 13 after going on past the minor
+    /// prize. Then the Tally is the game's, and the tower cleared after the
+    /// last game's hold. The plan is the one the scoping measured.
+    #[test]
+    fn kairos_plays_four_games_every_frame_the_game_by_hand() {
+        let c = Cartridge::load(KAIROS, "kairos.vla", KAIROS.len()).expect("Kairos loads");
+        assert_eq!(c.row(1), "(cartridge 1 \"Kairos\" plane 15 7 60)");
+        assert_eq!(
+            c.machine().formulas(),
+            (350, 64),
+            "350 formula cells in 64 shapes, the State's 31 cells each its own"
+        );
+        let plans = vec![
+            KairosPlan {
+                travel: 13,
+                ..KairosPlan::default()
+            },
+            KairosPlan {
+                miss_at: Some(6),
+                partial_at: &[2, 5],
+                ..KairosPlan::default()
+            },
+            KairosPlan {
+                take_minor: true,
+                ..KairosPlan::default()
+            },
+            KairosPlan {
+                miss_at: Some(13),
+                partial_at: &[3],
+                ..KairosPlan::default()
+            },
+        ];
+        let run = kairos_session(KAIROS, Settings::default(), &[], plans, 4_500, false);
+        assert_eq!(
+            run.ends,
+            [
+                (End::Major, 15),
+                (End::Fell, 6),
+                (End::Minor, 11),
+                (End::Fell, 13)
+            ]
+        );
+        assert!(
+            run.turns[0] >= 15 && run.turns[1] >= 15,
+            "every row of the first game turned at the board's last column and at its first: {:?}",
+            run.turns
+        );
+        kairos_tally_holds(&run.cartridge, &run.game);
+        assert!(
+            run.game.tower.iter().all(|&m| m == 0),
+            "the tower cleared after the last game's hold"
+        );
+    }
+
+    /// The cabinet's rigging, in the open (decision 5): a person's edit sets
+    /// level 2's window, and the bot presses a number of frames into a place of
+    /// ten, over the row beneath. A press in the window's frames stops the row
+    /// where it stands; a press on the frame after them, or later, stops it a
+    /// column on, so a light falls. Under the honest window, its period, the
+    /// late press stops the row where it stands. Every frame is held to the
+    /// game by hand given the same window.
+    #[test]
+    fn kairos_s_window_rigged_in_the_open_stops_the_row_a_column_on() {
+        // (the window, the frames into a place the press comes, the lights that fall)
+        let cases: [(u32, u32, u32); 4] = [(1, 4, 1), (2, 2, 1), (2, 1, 0), (10, 4, 0)];
+        for (window, late, falls) in cases {
+            let mut settings = Settings::default();
+            settings.window[1] = window;
+            let edit = format!("(cell \"Levels\" \"D3\" {window})");
+            let edits: &[&str] = if window == 10 { &[] } else { &[edit.as_str()] };
+            let plans = vec![KairosPlan {
+                late,
+                ..KairosPlan::default()
+            }];
+            let run = kairos_session(KAIROS, settings, edits, plans, 160, false);
+            let g = &run.game;
+            assert!(
+                g.level >= 3,
+                "a window of {window}: past level 2 by frame 160, at {}",
+                g.level
+            );
+            assert_eq!(
+                g.fell[1], falls,
+                "a window of {window}, a press {late} frames into a place: the lights that fell at level 2"
+            );
+        }
+    }
+
+    /// A press stops the row where the person saw it (decision 4): pressed in
+    /// the frame the row would move, the stop takes the last frame's place,
+    /// and the row does not move. Level 1's period is 10: the row appears in
+    /// frame 1, holds its place through frame 10, and would move in frame 11.
+    #[test]
+    fn kairos_stops_where_the_row_was_seen() {
+        let mut c = Cartridge::load(KAIROS, "kairos.vla", KAIROS.len()).expect("Kairos loads");
+        let mut g = Game::new(Settings::default());
+        for frame in 1..=11u32 {
+            let stop = frame == 11;
+            c.write(&kairos_inputs(stop, false)).expect("the inputs");
+            assert!(c.step(0).done, "frame {frame} completes");
+            g.step(stop, false);
+            kairos_holds(&c, &g, frame, false);
+        }
+        assert_eq!(
+            (g.phase, g.stopped, g.left),
+            (Phase::Stopped, 1, 1),
+            "stopped where the row was seen, not a column on"
+        );
+        let mut idle = Game::new(Settings::default());
+        for _ in 1..=11u32 {
+            idle.step(false, false);
+        }
+        assert_eq!(idle.left, 2, "without the press, frame 11 moves the row");
+    }
+
+    /// The cabinet stood up (decision 7): the same source with one word and
+    /// the manifest's window changed, expanded by the pass, has the same plan
+    /// and plays the same games, every frame the board by hand standing up,
+    /// and its State, its voices and its Tally the sideways build's. Read off
+    /// the folder at run time, as the pass's golden is: a package without the
+    /// repository's `cartridges/` has no source to turn.
+    #[test]
+    fn kairos_stands_up_by_one_word_and_its_window() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../cartridges");
+        let (Ok(source), Ok(library)) = (
+            std::fs::read_to_string(root.join("kairos").join("kairos.source.vla")),
+            std::fs::read_to_string(root.join("common.vla")),
+        ) else {
+            eprintln!("no cartridges/ beside the crate: the source is the repository's");
+            return;
+        };
+        assert_eq!(
+            (
+                source.matches("(board \"sideways\")").count(),
+                source.matches("(screen plane 15 7)").count()
+            ),
+            (1, 1),
+            "the word and the window, once each"
+        );
+        let upright = source
+            .replace("(board \"sideways\")", "(board \"upright\")")
+            .replace("(screen plane 15 7)", "(screen plane 7 15)");
+        let files = [("cartridges/common.vla".to_string(), library)];
+        let built = crate::pass::expand(&upright, "cartridges/kairos/kairos.source.vla", &files)
+            .unwrap_or_else(|r| panic!("the upright source: line {} {}", r.line, r.refusal.text));
+        let c = Cartridge::load(&built.text, "kairos.vla", built.text.len())
+            .expect("the upright build loads");
+        assert_eq!(c.row(1), "(cartridge 1 \"Kairos\" plane 7 15 60)");
+        assert_eq!(
+            c.machine().formulas(),
+            (350, 64),
+            "the sideways build's plan"
+        );
+        let plans = vec![
+            KairosPlan::default(),
+            KairosPlan {
+                miss_at: Some(6),
+                partial_at: &[2, 5],
+                ..KairosPlan::default()
+            },
+        ];
+        let run = kairos_session(&built.text, Settings::default(), &[], plans, 800, true);
+        assert_eq!(run.ends, [(End::Major, 15), (End::Fell, 6)]);
+        kairos_tally_holds(&run.cartridge, &run.game);
     }
 }

@@ -240,6 +240,8 @@ The reading is in `CHARTER.md` §7: canvas, by §8.1 step 4 as amended; the DOM'
 
 *Noted 2026-10-10 by `ENGINE.3`'s second slice (decisions 7, 8 and 11 of its scoping, below):* the recorder and the player are the host's. A replay is `SPEC.md` §7.6's rows, the Input sheet's cells that changed and each person's edit that landed, in its frame, not "the Input sheet recorded frame by frame as a sheet of its own": such a sheet would carry no person's edit, and its loader would be a second reader of the same facts. This item records a game in the page and commits its replay and its golden beside the cartridge, `<name>.replay.vla` and `<name>.golden.vla`, with their two places in the page. `tools/check_cartridge.ps1` reads them, and the loop oracle's `replay` case plays every committed replay to its golden on the module. `tools/check_cartridge_replays.ps1` is not written.
 
+*Corrected 2026-10-12 by the second scoping (the entry after `KIT.2`'s, below), decision 12:* this scoping, and the roadmap's line after it, called the game the first cartridge whose rule reads the Input sheet for play. Sand closed first, and its rule read the pointer, its buttons, the wheel and a key for play from its first slice, 2026-10-11. This item is the first game with a goal, a win and a loss; the first whose rule reads a button's rising edge for play; and the first whose replay records games won and lost. Where this entry and the second scoping differ, the second stands: the game is Kairos, `cartridges/kairos/`; its speed and window are a Levels sheet and not a formula of the row; its tower is values written one run a stop; and it draws on the plane in Lovelace Lavender, lying on its side.
+
 **Size.** `~days` after `ENGINE.4`. (*prediction*)
 
 ## `SPEC.1` — the page: the device sheets and the four calls
@@ -4434,3 +4436,292 @@ Then three of them again with the gun written over by the command line, as an au
 *Corrected after the hand test.* The owner's screenshot showed the page's own description of a source, in `web/index.template.html`, still saying "a pattern one call a row of it", which this item made stale. It now says "a pattern one picture, a string a row of it". The page was built again and the 12 checks passed over it, and the page's two controls passed over the corrected template: `check_web_offline.ps1 -Control` and the loop oracle's `check_host_loop.ps1 -Control`.
 
 `KIT.2` is closed ✅, its line in the ledger's kit section after `KIT.1`'s.
+
+## `CART.4` — the stacking game, scoped again: the cabinet's rules in cells over the kit, drawn on the plane a cell a light, its difficulty in the open
+
+*Scoped again 2026-10-12 at the owner's word. The first scoping, the entry of 2026-10-08 above, predates the Input, Clock and Audio devices, the replay, the kit, `SPEC.md` §2's rules of what a formula costs and the census, so it is the filing this entry updates and not a plan it follows. The scoping wrote the game before it proposed anything. In a scratch copy of `HEAD` with a target of its own, it wrote two candidate cartridges over a scratch copy of the library, a game written by hand in Rust, and a bot that plays through the engine by watching it; it held every frame of the candidates to the game by hand, timed them, and drew each through the page's own viewport and through the plane's arithmetic in headless Chrome. Nothing in this tree changed but this entry and the roadmap's note; Frazaro's tree was read nowhere.*
+
+**Substrate, verified.** Read on the day, by file and never by assumption; the language read from the registry's copy of 0.9.2.
+
+- *The pre-flight.* This tree clean at `b50473a`, four commits ahead of `origin/main` (`f3943a0`, `e66614d`, `a4ad3b6` and `b50473a`); `vla-lang` pinned `=0.9.2`; `run_checks.ps1` at 12 checks, `ALL GREEN`, on the day.
+- *The cabinet,* read on the day in the encyclopedia's article, "Stacker (arcade game)", as the first scoping read it (*exhibit*):
+  - LAI Games, 2004. "For the first three levels, there is a row of three blocks which move side-to-side on the LED display." A press stops the row; "Blocks that do not align directly above the previous set are removed. If the player misses completely, the game is over."
+  - "The number of blocks is automatically reduced to two at level four, then one at level 10."
+  - "A player who stacks 11 rows can choose to take a minor prize. If the player accepts the minor prize, the game ends. Alternatively, the player can continue playing for a major prize." At the fifteenth row "the lights will flash on and off, spelling the word 'Win.'"
+  - The odds: about one win in 800 at the regular model's hardest setting, one in 1,500 for the Mega Stacker. The window: "the block will shift a column if the button is not pressed within the extremely small opportunity window"; once the operator's ratio is met, "the window is left open for as long as the block is displayed on screen". The manual, as the article quotes it: "100% a game of skill so although it is very difficult, every single game can be a winning game."
+  - The article gives the fifteen rows (and the Mini's ten) and no column count. The seven columns are the filing's. An operator's manual, LAI's Mega Stacker manual as BMI Gaming hosts it, came down as a PDF that this machine could not render, so the article is the source, as it was on 2026-10-08.
+- *What a game needs, against what stands.*
+
+  | the game needs | what stands | what is open |
+  |---|---|---|
+  | a button's rising edge | `pressed`, over the Input sheet and its twin (`KIT.1`) | nothing |
+  | a step whose period falls with the level | the Clock's frame; `count` and `hold` | the verbs `every` and `since`; `KIT.1`'s decision 7 left `every` here |
+  | the tower as values | the Write sheet: a derived write, and a range that fills every cell with its value (§3.9) | the Write row's verb, which `KIT.1`'s decision 7 left here |
+  | the board drawn | the plane (`ENGINE.1`, `ENGINE.2`); the grid through looks (`ENGINE.8`'s first slice) | the choice (decision 6) |
+  | words: the level, the offer, the result | a grid's cells; on the plane, none | decision 6 |
+  | the sound | four voices (`ENGINE.4`) | nothing |
+  | a reference | Sand's shape: the rule by hand in Rust and in the page | the game by hand |
+  | a replay and a golden | the recorder and the two players, the loop oracle's and `cargo test`'s | the owner's session; the golden's sheet |
+  | the checks | `check_cartridge.ps1` at 7 cartridges, 7 sources, 1 library, 3 replays and 3 goldens; the loop oracle's `pass` at 7 sources and `replay` at 3; the page's places held to the folders both ways by `build_web.ps1` and `check_web_offline.ps1`; `cargo test`'s lists of 7 describe goldens and 3 replays; the pass's golden at no fewer than 6 | eight cartridges and eight sources, then four replays and four goldens |
+
+  The engine needs no change, and nor does the host.
+- *The language,* 0.9.2: fourteen functions; `&` joins texts (`eval.rs`'s `Concat`); a run computes `CHOOSE`, `MOD`, `ROW` and `COLUMN` across its cells since 0.9.1; `INDEX` is not computed (`KERNEL.8` open). So a table is read by a gated sum or by `CHOOSE`, never by a lookup.
+- *The house's oracle for a game* (`CART.1`, `CART.2`): every frame held to a reference by hand, Rust's and the page's, and a replay of the owner's play committed beside the cartridge with its golden; every committed cartridge's `describe` a golden.
+
+**The candidates, measured.** *Measurement*, 2026-10-12, on the owner's machine: the scratch copy over 0.9.2 (the session's scratchpad, `c4/`), each cartridge expanded by the command line and loaded by the engine, natively; timings are medians, unpinned and not opted out of the throttling, so magnitudes and never floors. The pictures are headless Chrome 154 at a ratio of 1.5.
+
+- *The game as cells,* the same in both candidates. A State sheet of 31 cells down column B, each beside its label: the phase (sliding, the beat after a stop, the offer, over); the frames since the phase began; the level; the row's width, left end and direction; its step; the press; the stop; the run that stayed, as its two ends; the result; the games; and the words a person reads. A row is always a run of columns, since a run cut by a run is one (*derived*), so a stop is the run's intersection with the run beneath, the larger of the two left ends and the smaller of the two right ends, and the run beneath is two cells. The tower is values: the Write sheet writes a stop's run as one range, `"K3:K5"`, and clears the tower once a result has been held; the rule reads no cell of it. A Levels sheet holds a row a level, read through gated columns.
+- *The reference by hand*, `plumb.rs`, written as a person writes the cabinet: a row a bitmask of its seven columns, a stop a bitwise AND with the row beneath, what stayed its population count, the phase an `enum` and a `match`. It shares no predicate with the cartridge's two ends and chains of `IF`.
+- *The bot* watches the reference after each frame and presses as a person would, the key down for one frame and up the next. Its sessions:
+  - four games: the major won; a fall at level 6, after stops half over the row beneath at levels 2 and 5; the minor prize taken; and a fall at level 13 after going on past the minor. Then it idles.
+  - the window of level 2 rigged to one frame by a person's edit, `(cell "Levels" "D3" 1)`, the bot pressing four frames or more into a place of ten: the row stopped a column on and a block fell, which the reference, given the same window, says too. The same press under the honest window stopped the row where it stood, and nothing fell.
+- *Every frame held.* After each step, the board through the plane projection, the State's cells, the four voices of the Audio sheet, and at the end the Tally, all equal to the reference: 9,000 frames over the three sessions, with 47, 32 and 32 derived writes.
+- *The grid candidate*: the Screen 15 by 9 cells drawn by the viewport through looks, 329 rows, 349 formula cells in 63 shapes. Kept in the scratch, not recommended (decision 6).
+- *The plane candidate*: the window 15 by 7, the Screen's extent `A1:O9`, its words beyond the window under a still Camera, 378 rows, 350 formula cells in 64 shapes, 16 levels deep, 14 runs over 300 lanes, 50 cells alone, none every frame, no cycle. `describe`'s budget, `(budget 60 350 21000 2000000)`, is 1% of the charter's line. Its formula cells: the Screen's 121 (the board 105, the prize names 15, the words 1), the Gate's 90, the Levels' 45, the State's 31, the Tally's 51, the Audio's 8 and the Write sheet's 4.
+- *What a frame costs*, natively: 9 µs sliding, 22 µs a move, 40 µs a stop, 53 µs a row's first frame, 9 µs the beat and the offer, 10 µs while WIN flashes, 130 µs frame 1, which computes every cell. A frame a derived write lands in, 22 µs. In the browser, about 1.4 times these (*derived* from Sand's ratio). It cannot test throughput, as the filing says.
+- *The tower filled with 0 at the load, or left empty* for its derived writes to make: the same times within noise. It is filled, so that the live sheet shows the tower's cells.
+- *The orientation*, the same source with one word and the manifest's window changed: 365 rows against 378, the same census, and 6,000 frames of the four games equal to the sideways frames turned upright (decision 7).
+- *The kit.* Five verbs added to a scratch copy of the library: `put` and `looks` rewrote the input card's Write row and the grid card's look map, `camera` the grid card's Camera, and `expand --check` answered eight `same`, the candidate among them.
+- *The pictures,* five moments of play: a row sliding at level 7, the beat after a stop half over the row beneath, the offer at level 11, WIN, and a fall. Each record was drawn by `web/viewport.js` in a box of the page's grid box's size, 676 by 440 CSS pixels (*derived* from the page's CSS: 440 tall, and three fifths of the engine panel inside the page's 1,200), and each board drawn as the host blits a plane, at the whole scale the host's `_fit` gives in the page's plane box of the same size. The pictures are in the scratch, `c4/render/`, beside the harness that drew them.
+
+**The work.** Two slices; the engine and the host unchanged.
+
+| File | What it is | Slice; decisions |
+|---|---|---|
+| `cartridges/common.vla` | `every`, `since`, `put`, `looks` and `camera`, each a template | 1; 10 |
+| `cartridges/inputcard/inputcard.source.vla`, `cartridges/gridcard/gridcard.source.vla` | rewritten over `put`, `looks` and `camera`; their cartridges unchanged | 1; 10 |
+| `engine/src/pass.rs` | the kit's test extended to the five verbs | 1; 10 |
+| `cartridges/plumb/plumb.source.vla`, `plumb.vla` | the game: Levels, State, Tally, Gate, Tower, Win, Audio, Keys, Camera, Write and the Palette; the orientation a word | 1; 1 to 9 |
+| `engine/src/plumb.rs`, `engine/src/lib.rs` | the game by hand, compiled for the tests alone, as `sand.rs` is | 1; 11 |
+| `engine/src/cartridge.rs` | the bot's sessions, every frame held; the rigged window; a press in a move's frame; the upright build held as the transpose; the describe golden's list; in slice 2, the replay's list and its reference | 1, 2; 4, 5, 7, 11 |
+| `engine/testdata/describe/plumb.vla` | its `describe` golden | 1; 11 |
+| `web/index.template.html` | the cartridge's places, its picker entry and its sentence; in slice 2, its replay's places and the replay case holding every frame to the page's game by hand | 1, 2; 11 |
+| `tools/check_cartridge.ps1`, `tools/check_host_loop.ps1` | eight cartridges and eight sources, the row floor and `pass` at eight; in slice 2, four replays and four goldens and the replay case's counts | 1, 2; 15 |
+| `cartridges/plumb/plumb.replay.vla`, `plumb.golden.vla` | the owner's session and the Tally at its end | 2; 11 |
+| `SPEC.md` | dated notes: Appendix B's tower write, §3.9's verb, §7.6's golden, §9's Levels, §13's Camera clause | 1; 6, 7, 10, 11 |
+| `ROADMAP.md`, `REARVIEW.md`, `README.md`, `engine/README.md`, `web/README.md`, `Delta/CLAUDE.md`, the memory | the line, this record, the pages; the dated notes of decision 12 | 1, 2; 12, 15 |
+
+**The decisions, the owner's.** Each with the sitting's recommendation and the alternatives it declines.
+
+1. **The name: Plumb, `cartridges/plumb/`, titled "Plumb".** A builder's word for true to the vertical: a block not plumb over the block beneath falls, which is the game's one rule, in one syllable. A search on the day found no game of that name; it was not checked against a trademark register, which a release would.
+
+   *Alternatives:*
+   - Overhang, the mechanic's name;
+   - Capstone, the top stone, the major prize;
+   - Tower, which is plain and is already the name of the sheet the values go in;
+   - Stack, too near the mark, and a programmer's data structure on a page for programmers;
+   - Ziggurat, a stepped tower, which this one is, and the title of two commercial games;
+   - Babel, the JavaScript compiler's name on a web page.
+2. **The cabinet's rules, as the article gives them; the minor prize a stop the player may take.**
+   - Fifteen levels of seven columns. Three blocks for the first three levels, two from level four, one from level ten.
+   - A row is as wide as what stayed of the row beneath, at most its level's width; a complete miss ends the game.
+   - At eleven rows the game waits for a choice: the first button goes on, and the second, b (X), takes the minor prize and ends the game.
+   - At fifteen rows the major prize: WIN in lights, flashing.
+   - The board's seven columns are fixed at build time, by the window and the board's macro.
+
+   *Alternatives:*
+   - The minor prize a light alone, the game going on, one button for everything. It leaves out the cabinet's one decision, the gamble at eleven, which the Tally counts, minor prizes taken against majors won.
+   - Another width: a fork, since the window and the board's columns are the build's.
+3. **The rule: the cabinet's state in one State sheet, a row as its run's two ends, the tower as values the Write sheet writes one run a stop.**
+   - The State holds the game in 31 cells, a label beside each.
+   - The run that stayed is two cells, and a stop is the larger left end and the smaller right end.
+   - The tower holds no formula: a stop is one derived write of its run's range, and a second Write row clears the tower once a result has been held.
+   - The rule reads the run beneath and never the tower.
+   - A game begins at frame 1, its first row sliding. A game over holds its picture 90 frames; then the tower clears, and a press plays again.
+   - *Measured* above: 350 formula cells, 9 to 130 µs a frame natively, every frame equal to the reference.
+
+   *Alternatives:*
+   - The tower as keep-last formulas, version 1's frame axiom, each cell reading its own twin. Under reach it costs nothing idle either (*derived*), but the Write row is the page's own design for this very game (Appendix B, §3.9), and its verb this item's to decide.
+   - A Board of seven cells a row with a per-cell AND, the filing's: 105 cells carrying what two carry.
+   - The run beneath read back from the tower, which needs `INDEX` (`KERNEL.8`) or `CHOOSE` over 105 cells.
+4. **The press: the row stops where the person saw it.** A key goes down between two frames, and the host writes it into the next frame's Input; what the person saw was the last frame's picture (§5's order, *derived*). So a stop takes the last frame's place, `State.last`, never this frame's, and a press in a frame the row would move stops it before it moves. The press is the rising edge of any of a, select or the left button: Z, Space or a click under `default-keys`.
+
+   *Alternatives:*
+   - This frame's place, which stops a press made just before a move a column on: the eye and the hand a step apart.
+   - The key's own time within the frame, which no cell holds.
+5. **The difficulty and the window as cells: the Levels sheet, the cabinet's operator menu in the open.**
+   - A row a level: its period, the frames the row holds a place, from 10 at level 1 to 3 at level 15 at a rate of 60 (6 places a second to 20); its width, 3, 2 from level four, 1 from level ten; and its window.
+   - The window is the cabinet's rigging, made a cell. It is the frames of a place, counted from its first, in which a press stops the row where it stands; a later press stops it a column on, as the article says the cabinet does.
+   - Every level's window equals its period, so every frame of a place counts and the game is honest, which a person can check by reading the sheet. Anyone may rig a copy, in the open.
+   - Beside the table: the minor prize at level 11, the major at 15, the beat after a stop of 20 frames, and the result's hold of 90.
+   - The State reads the current level's row through three gated columns: each cell holds its row's value when its level is the State's and 0 otherwise, and their sum is the value. No lookup, and the live sheet shows which row is live.
+   - *Measured* above: a rigged window cost a block, and the honest one none.
+
+   *Alternatives:*
+   - The speed a formula of the level, the filing's: no table, the curve hidden in a formula.
+   - `CHOOSE` over the column: no row shown live.
+   - No window at all, honest by construction: the claim against the cabinet would then be a sentence and not a cell.
+6. **How it draws: on the plane, a cell a light, the lights told apart by a checker; the same cells drawn as a grid by the panel's live sheet; no tile map.**
+   - *On the grid through looks* (drawn): every light shows its value's digit. A block that stayed shows its 1, a prize level's empty cell its 6 or 7, WIN its 4s. A format carries a fill, a number format and a wrap, and no font colour and no hidden number format, so nothing hides a digit. Around the board stand the sheet's headers, a screen of slack rows and columns, the tabs and the selection. What the grid gives free: words in cells, and gridlines between the lights.
+   - *On the plane* (drawn): a run of lights reads as one bar, two lights side by side being one colour.
+   - *The checker*: a light whose row and column sum odd is drawn through its colour's darker twin, its value plus 8, the Palette's indices 8 to 15. It is one term in the Screen's formula, `+IF(MOD(ROW()+COLUMN(),2)=1,8,0)`, computed across a run since 0.9.1, and nothing in the rule. So drawn, the lights read as the cabinet's matrix, at 67 device pixels a light (44.7 CSS) in the page's box, and WIN reads as letters.
+   - *The words*: the plane draws colour indices alone. The prize levels are marked by colour, the minor's column blinking at the offer. The words, the level, the offer's two keys and the result, are cells of the Screen beyond the window, which a still Camera allows (§3.1): the panel's live sheet draws them when a person picks the Screen, and the plane draws the window.
+   - *One model, two renderers on one page*: the Screen declares the Palette's sixteen colours as its looks too, so the live sheet draws its cells in the plane's colours beside the plane (decision 19). The source writes the Palette and the looks from one list, a macro of its own.
+
+   *Alternatives:*
+   - The grid as the game's renderer, as drawn: words free, a digit on every light, the sheet's chrome around the board. It can be taken the day oracle 11's format row carries a font colour or a hidden number format, which is Frazaro's to mint at the owner's word and is not asked now.
+   - The plane through a tile map built here, as `KIT.3`'s first client: separated lights and glyphs for words on the plane. `KIT.3`'s spelling is to be measured on a client that needs tiles, glyphs, a score in digits or a board of pieces, and a board of fifteen by seven needs none.
+   - The plane with no checker (drawn): a bar.
+7. **The orientation: a word of the source, the board built sideways for the page's wide box, the upright cabinet one word and the manifest's window away, held by a test as its transpose.**
+   - *A fill cannot transpose* (*derived*): a relative reference moves with its cell along the same axis, so no fill reads the cell across the diagonal. The board's picture is therefore laid in the Screen's own orientation, and the rule never reads it. The tower is values written at an address the orientation spells; the slider's span is a gate along the Screen's level axis; the run beneath is two cells of the State.
+   - *The rule is the same rows either way* (*measured*): `(board "upright")` and `(screen plane 7 15)` in place of `(board "sideways")` and `(screen plane 15 7)` build the cabinet standing up, as above. "A transpose and not a rule", the owner's words of 2026-10-08, is then a test.
+   - *The window's shape is the manifest's* (*measured* and *derived*): the host fits the window to its box at a whole number of device pixels a cell. In the page's box, sideways (15 by 7) draws a light at 67 device pixels (44.7 CSS), upright (7 by 15) at 44 (29.3), and a window holding both (15 by 15) at 44 either way. So an Orientation cell could turn the picture and never enlarge it: what the thought wants, a bigger cabinet on a wide screen, is the window's shape.
+   - The source names the word beside the manifest's window. In the page, the cabinet stands up by an edited source, built and loaded.
+
+   *Alternatives:*
+   - An Orientation cell in a window holding both: the same size either way. And the tower's values are already written in one orientation, so a turn mid-game would break the picture until the next game.
+   - Sideways only: the owner's claim left untested.
+   - Upright only: the cabinet's look, its lights two thirds the size in the page.
+8. **The rate: 60.** A place lasts 3 to 10 frames, 50 to 167 ms. Sand runs at 60 since `ENGINE.1`'s tick on the frame's grid.
+
+   *Alternative:* 30, the periods halved, the top level's place a frame and a half, which is no whole number of frames.
+9. **The sound: four voices, the sound card's shape.**
+   - A tick at each move: a square, note 72 plus the level, at 0.3, for one frame.
+   - A tone at each stop: a triangle, 60 plus twice the level, at 0.6, for 8 frames.
+   - A fall: a sawtooth sliding down from 55 by half a note a frame, at 0.5, for 40 frames, and for 8 frames at a stop where nothing stayed.
+   - A fanfare at the major prize: a square, C, E, G and C an octave up, 8 frames each, for 64 frames; and a chime at the offer, 16 frames.
+   - The voices read the State. Two notes read the frames since the phase began, one cell each a frame.
+
+   *Alternative:* the tick and the fanfare alone.
+10. **The kit: five verbs, two cards rewritten to their bytes; the source's own macros stay its own.** Each verb enters at its second appearance, in a cartridge or in the page's own words (`KIT.1`'s decision 2), and was measured byte for byte.
+
+    | verb | its rows | its appearances |
+    |---|---|---|
+    | `(every sheet range count n)` | `=IF(MOD(count,n)=0,1,0)` | the page's clock divider (§12); the State's step, over the frames since a row began |
+    | `(since sheet range event)` | `=IF(event,0,sheet.last!first+1)` | Appendix C's `age`; the State's frames since the phase began |
+    | `(put sheet at target when address what)` | A the target sheet; B `=IF(when,address,"")`; C `=what` | the input card's Write row, its bytes unchanged; the tower's two rows |
+    | `(looks sheet fill ...)` | a format and a look a fill, the value n through the format n+1 | the grid card's `looks-from`, its bytes unchanged; the Screen's looks |
+    | `(camera top left)` | the Camera's four cells, as values | the grid card's Camera, its bytes unchanged; this cartridge's |
+
+    - The panning Camera, `KIT.1`'s third shape, has no client: the cabinet's tower fits its window. `docs/ALGEBRA.md` §4's endless tower, which would pan, is named and not built.
+    - The source's own macros, one client each: `colours`, the Palette and the looks from one list; and `board`, the orientation.
+    - `put`'s last parameter is `what`, since `value` heads a row of the record.
+
+    *Alternatives:*
+    - The verbs written in the source alone, the cards keeping their rows by hand.
+    - `put` named `write`, the host's call's name, or `derive`.
+11. **The references, the oracle, the replay and its golden.**
+    - Two references by hand: Rust, compiled for the tests alone, `engine/src/plumb.rs`, the scratch's own; and JavaScript in the page. Each keeps a row as a bitmask, a stop as an AND and the phase as a match.
+    - The engine's tests play the bot's sessions, the rigged window, a press in a move's frame and the upright build, holding every frame: the board through the plane projection (the cells the plane draws), the State's cells, the four voices, and the Tally at the end.
+    - The replay is the owner's own session in the page, recorded at the first slice's hand test and committed in the second with its golden. The golden is the Tally: each level reached, stacked and the blocks that fell there; then games, presses, moves, minor prizes, major prizes and falls. It is the session's checksum. `cargo test` and the loop oracle play the replay, every frame held to their reference.
+
+    *Declined*, the owner's question: the Board with a Log of the Audio sheet. A golden is one window of one sheet. Both references hold the voices at every frame, where a Log holds the last 32, and the board at a replay's end shows only its last game.
+12. **The first scoping's claim, corrected by a dated note.** Sand's rule read the Input sheet for play first, the pointer, its buttons, the wheel and a key, from `CART.2`'s first slice on 2026-10-11. This cartridge is the first game with a goal, a win and a loss; the first whose rule reads a button's rising edge for play; and the first whose replay records games won and lost. The note goes on the first scoping, on the roadmap's line, and on `CART.6`'s line, whose dependency names the same claim: what `CART.6` takes from this item is the Write row's verb and a board of values written through it, and the replay golden's shape is Sand's.
+13. **Where it lives: here, under `cartridges/plumb/`, 0BSD**, until `REPO.5` adjudicates the arcade.
+14. **No ask of the language.** Named: oracle 11's format row with a font colour or a hidden number format, for a game drawn on the grid (decision 6), Frazaro's to mint at the owner's word; and `KERNEL.8`'s `INDEX`, which would read the Levels row directly, the gated sums standing in for it until then.
+15. **Two slices and the bookkeeping.**
+    - *Slice 1, the game:* the kit's verbs, the kit's test and the two cards; the cartridge and its source; the two references; the engine's tests; the describe golden; the page's places, picker entry and sentence; the pins, `check_cartridge.ps1` at eight and eight and the loop oracle's `pass` at eight; `SPEC.md`'s dated notes; the READMEs, the map, the roadmap's line and this record. Then the owner's hand test, and a session recorded as the replay.
+    - *Slice 2, the replay:* the replay and its golden; the page's replay case holding every frame to the page's game by hand; `check_cartridge.ps1` at four replays and four goldens; the loop oracle's replay counts; `cargo test`'s list of replays; the close.
+    - The roadmap's line goes 🟡 at the approval and leaves for the ledger with the second slice's commit. The commits are made at the owner's word, by `-F`, staged by hunk beside `ENGINE.8`'s session.
+    - The playtest pass comes at the owner's word after the close.
+
+    *Alternative:* one slice, the replay recorded before the cartridge is committed.
+
+**The catch.** Each met in the scratch work, or foreseen by reading.
+- A fill cannot transpose, so the board's picture is laid in the Screen's orientation and written there.
+- A derived write lands before the next frame, so a stop's run reaches the tower a frame late. The Gate draws the stopped row through the beat, so no frame shows a gap.
+- The plane draws colour indices alone: a word inside the window would draw magenta. The words stand beyond it, under a still Camera.
+- On the grid, every cell shows its value's text (decision 6).
+- A reference in a branch no cell takes is still a reader (§2, rule 7). The Gate's look is 0 in every column but the live one, so a blink reaches one column of the board.
+- At frame 1 every State cell's last value is 0; the first frame's test starts the game over them.
+- Each State cell is a shape of its own, 31 of the plan's 64: one cell each, and rule 2 concerns a rule split over fills.
+- A parameter is never named after a row the template writes: `put` takes `what`, never `value`.
+- The tree is shared with `ENGINE.8`'s second slice. `web/index.template.html`, `ROADMAP.md`, `REARVIEW.md`, `SPEC.md`, the READMEs and the two checks are re-read before each edit and staged by hunk, `HEAD` plus this item's.
+- Every `.vla` is CRLF on checkout, and none is written by `sed -i`.
+- The loop check's control plays every committed replay on each of its mutant pages, so a minute's replay adds about half a minute to the control (*prediction*).
+
+**The oracle.** On the owner's machine under Windows PowerShell 5.1, then on both jobs at the owner's push.
+- `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings` and `cargo test --workspace`: the kit's test over the five verbs; the cartridge its source's expansion and its describe golden; the bot's sessions, the rigged window, the press in a move's frame and the upright build, every frame held; in slice 2, the replay to its golden, every frame held.
+- `cargo run --release --example expand -- --check`: eight `same`.
+- `check_cartridge.ps1` and `check_web_offline.ps1`, with their controls.
+- `check_host_loop.ps1` at both ratios: `pass` at eight sources; in slice 2, `replay` at four, every frame of Plumb's held to the page's game by hand.
+- `run_checks.ps1 -WithExtras`: `ALL GREEN`.
+- *The owner's hand test,* slice 1:
+  - pick Plumb, press Sound on, play: stop rows, lose blocks, reach the offer and take or refuse the minor prize, win or fall, and play again;
+  - open the Levels sheet in the live sheet, then rig a window with an edit, `(cell "Levels" "D3" 1)`, press late in a place at level 2, and see the row stop a column on;
+  - stand the cabinet up: in the source's box write `upright` and `(screen plane 7 15)`, Build, Load, play;
+  - then record a session of about a minute, several games and a fall among them, and paste it.
+
+**The size.** `~days`, as filed. The scratch work has already written the cartridge in both orientations, the reference, the bot and the probe. The build is the verbs made final with their test, the page's reference and places, the engine's tests from the probe, the pins and the pages: about a day for the first slice, the second after the owner's session (*prediction*).
+
+*The scratch,* in the session's scratchpad: `c4/ws/` (the workspace copy: the library with the five verbs, the two cards rewritten, `cartridges/plumb/`, `engine/src/plumb.rs`, `engine/examples/c4probe.rs`), `c4/render/` (the harness, its pictures, and the grid candidate kept as `plumb.grid.source.vla`), `c4/probe-plane.txt` (the probe's census and timings).
+
+*Approved 2026-10-12, the same day, all fifteen, with two amendments, in the owner's words: "All recommendations approved, except the game should be called Kairos instead of Plumb, and the color palette should be consistently 'Lovelace Lavender' (my new name for Spreadsheet Company's, Frazaro's, vla-lang's, Alonzo's, etc., primary lavender in the logo and across all arcade games), which was already aptly applied to the gridcard cartridge."*
+- *Decision 1, amended:* the game is Kairos, `cartridges/kairos/`, titled "Kairos": the Greek for the opportune moment, which is the game's one skill. The reference by hand is `engine/src/kairos.rs`.
+- *Decision 6, amended:* the Palette, and with it the looks, is consistently Lovelace Lavender. That is the logo's lavender, `#a080e0`, read off the logo's pixels on 2026-10-05 and recorded in Frazaro's page, with the three shades both pages derive from it: `#e2d8f6`, a focused cell; `#f7f4fc`, its whisper; and `#6b4fc8`, its deep. The grid card already fills its wrapped text and its look of `"x"` with the whisper and the focus shade. So a block that stays is Lovelace Lavender, the sliding row the focus shade, a falling block the deep, WIN the whisper, and the board's night and the prize levels dark lavender greys. Each has a darker twin for the checker, and no colour outside the family.
+- The roadmap's line went to 🟡 the same hour. The other cartridges keep their palettes: Life's, the gun's and Sand's bytes are pinned by the frame floors' digests, and Sand's by its replay's, so recolouring them is a change of its own, the owner's to call.
+
+*The first slice built 2026-10-12, over `b50473a` and `vla-lang` 0.9.2, awaiting the owner's hand test.* No other session worked in the tree on the day. What landed:
+- `cartridges/common.vla`, 333 lines to 396:
+  - `every` and `since`, with its walk `since-from`, beside the other verbs;
+  - `looks`, with `looks-from`, the grid's twin of the Palette, in a section after the Palette's;
+  - `camera`, a still Camera, and `put`, with `put-from`, the Write sheet's row, each in a section of its own after the Audio sheet's;
+  - the header naming the five.
+
+  `palette-entry`, which the loop oracle's mutant K finds by its text, stands as it was.
+- `cartridges/inputcard/inputcard.source.vla` is written over `put`, and `cartridges/gridcard/gridcard.source.vla` over `looks` and `camera`, its own `looks-from` gone into the library. Both cartridges are unchanged, byte for byte.
+- `cartridges/kairos/kairos.source.vla` and `kairos.vla`, 378 rows: the candidate the scoping measured, renamed and recoloured.
+  - Every formula row is the candidate's, byte for byte (diffed).
+  - Its Palette and its looks are Lovelace Lavender, sixteen entries named in the Palette's column C. Its own macro `colours` writes them from one list: a Palette row, then the entry's fill through the library's `looks-from`.
+  - Its State's labels and its words are its own.
+- `engine/src/kairos.rs`, the game by hand: the scratch's `plumb.rs` renamed, given a board standing up with its own WIN, so that the upright build is held at every frame, WIN's among them. `engine/src/lib.rs` compiles it for the tests alone.
+- `engine/src/cartridge.rs`, four tests, every frame held to the game by hand:
+  - `kairos_plays_four_games_every_frame_the_game_by_hand`, 4,500 frames: the major won, every row of that game bouncing off both ends of the board before its stop, at least fifteen turns at each end; a fall at level 6 after two stops half over the row beneath; the minor prize taken; and a fall at level 13. At the end the Tally is the game's and the tower cleared.
+  - `kairos_s_window_rigged_in_the_open_stops_the_row_a_column_on`, four sessions of 160 frames at level 2. With a window of 1 and a press four frames into a place, one light falls; so it does with a window of 2 and a press on the place's third frame. With a window of 2 and a press on its second frame, none falls, and none with the honest window and a late press.
+  - `kairos_stops_where_the_row_was_seen`: a press in the frame the row would move.
+  - `kairos_stands_up_by_one_word_and_its_window`: the source turned and built by the pass, 800 frames.
+
+  The describe golden's list is at eight, with `engine/testdata/describe/kairos.vla`.
+- `engine/src/pass.rs`, the kit's test: nine cases for the five verbs.
+- `web/index.template.html`: Kairos's two places, its line in `CARTRIDGES`, its picker entry and its sentence; the stylesheet's comment names Lovelace Lavender.
+- The checks' pins:
+  - `tools/check_cartridge.ps1` at eight cartridges and eight sources, Kairos's floor 378 rows;
+  - `tools/check_host_loop.ps1`'s `pass` at eight;
+  - `tools/run_checks.ps1`, the cartridge control's line and the history.
+- The pages:
+  - `SPEC.md`'s dated notes on §3.9, §9, §13 and Appendix B, and the article among §14's sources;
+  - `CHARTER.md` §6's note;
+  - `README.md`, `engine/README.md` and `web/README.md`.
+- The record:
+  - `ROADMAP.md`: the line 🟡, the approval and decision 12's correction, and the correction on `CART.6`'s line;
+  - this record: the correction on the first scoping;
+  - `Delta/CLAUDE.md`'s map line, and the memory.
+
+*The oracle, on the day*, in the shared tree:
+- `cargo fmt --all -- --check` and `cargo clippy --workspace --all-targets -- -D warnings` are clean. Clippy's `int_plus_one` refused the reference's turn written `left + w - 1 >= 7`, which now names the row's right end.
+- `cargo test --workspace`: 37 passed, the 33 before and Kairos's four. The kit's test over its nine new cases is among the 33. Kairos's four take 4.1 s in a debug build.
+- `cargo run --release --example expand -- --check`: eight `same`, the two cards over the new verbs among them.
+- The page built: eight cartridges and eight sources. The module is 682,679 bytes, unchanged, since the engine's code outside its tests is unchanged.
+- `check_cartridge.ps1` and `check_web_offline.ps1` are clean.
+- `check_host_loop.ps1` is clean at both ratios: the eighteen cases' counts and digests are unchanged but `pass`, whose eight sources are the command line's bytes, 1,119 rows after their manifests.
+- `run_checks.ps1 -WithExtras`: 12 checks and 12 verifiers, `ALL GREEN`. Among them are the controls of `check_cartridge.ps1`, thirty-two mutants over eight cartridges, and of `check_host_loop.ps1`, thirty-four mutant pages.
+- `check_spdx.ps1` over a temporary index holding `HEAD` and the four new files: 91 files and 23 cartridge headers, the shared index untouched.
+- A smoke run of the real host over the module in headless Chrome, a scratch page. Kairos was loaded and Z pressed by a blind hand every 37 ticks of a 60 Hz clock for 2,400 ticks: 2,399 frames, 37 derived writes landed and none refused, no refusal said, no byte past the Palette, the window `A1:O7` throughout, and levels 1 to 11 reached.
+
+*The controls*, in a scratch copy of the tree: each one-byte mutant applied, the cartridges expanded again by the command line, then `cargo test`. All nine were caught:
+
+| mutant | the command line says differs | the tests that fail |
+|---|---|---|
+| `every`, `=0` as `=1` | Kairos | Kairos's four, the kit's, the describe goldens |
+| `since`, `,0,` as `,1,` | Kairos | Kairos's four, the kit's, the describe goldens |
+| `put`, the empty address as a space | the input card, Kairos | the replays (the input card's digest), three of Kairos's, the kit's, the describe goldens |
+| `looks`, `nowrap` as `wrap` | the grid card, Kairos | the kit's |
+| `camera`, `row` as `rows` | the grid card, Kairos | the kit's |
+| the rule, the turn at column 6 | Kairos | the four games, the describe golden |
+| the rule, the window compared by `<=` | Kairos | the rigged window, the describe golden |
+| the reference, a blink of three frames in eight | none | the four games, the rigged window, the upright build |
+| the upright branch, the Gate a row off | none | the upright build |
+
+*Found by the controls, and mended the same day.*
+- The first run of the controls, over the tests as first written, caught the turn at column 6 and the `<=` window only by the command line and by the describe golden's formula texts, which say that a cartridge changed and not that its rule is wrong.
+  - The bot stopped every row early in its travel, so no row reached the board's far end.
+  - It never pressed on a window's last frame.
+
+  So the first game now lets every row travel both ends of the board before its stop, and the session counts the turns at each end. The rigged test holds the window's edge from both sides.
+- The same run found `looks` caught by the grid card alone: Kairos's `colours` wrote its formats and looks itself, so the kit's look map had one client and not the two the scoping counted. `colours` now calls the library's `looks-from` an entry at a time, Kairos's bytes unchanged.
+- A sed through the Bash tool collapsed the backslashes of a runner's Windows paths, as the house's memory warns. The runner took a filter instead.
+
+*The scratch*, in the session's scratchpad: `c4/mut/` (the copy and `mut.ps1`), `c4/smoke/` (the smoke page and `smoke.ps1`).
+
+*What remains is the owner's:* the hand test, a session recorded as the replay, then the commit at the owner's word, staged by hunk.
+

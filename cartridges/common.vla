@@ -5,7 +5,9 @@
 ; its own beside them, or include a library of its own instead. They are examples, to
 ; be read, copied, changed and outgrown. Since KIT.1 they hold the kit's first verbs,
 ; the patterns two cartridges wrote alike by hand, or one wrote as the page spells it;
-; and since KIT.2 the picture, a string a row of cells and a character a cell.
+; since KIT.2 the picture, a string a row of cells and a character a cell; and since
+; CART.4, the stacking game Kairos, the verbs every and since, the look map, a still
+; Camera and the Write sheet's row.
 ;
 ; The rules each macro here keeps, which are the language's:
 ;   - Template macros only. A parameter is replaced by the form the caller passes; no
@@ -145,6 +147,25 @@
     ("#FFFF55" "yellow")            ; 14
     ("#FFFFFF" "white")))           ; 15
 
+; ---- the looks (SPEC.md section 7.3) ------------------------------------------------
+; The grid's twin of the Palette: a look map, each value drawn through a format whose
+; fill is a colour, so that the grid draws a sheet's values as the plane draws its bytes
+; (SPEC.md decision 19). A fill is written as the record writes it, six hex digits and
+; no #.
+
+(defmacro (looks sheet & fills)
+  "a sheet's look map from a list of fills: the value n drawn through the format n+1, its fill the nth, from 0"
+  (quasiquote (looks-from (unquote sheet) 0 (unquote fills))))
+
+(defmacro (looks-from sheet index fills)
+  "looks' walk: a format and a look a fill, from an index on"
+  (quote-if (null? fills)
+    (begin)
+    (begin
+      (format (+expand index 1) (car fills) general nowrap)
+      (look sheet index (+expand index 1))
+      (looks-from sheet (+expand index 1) (cdr fills)))))
+
 ; ---- the buttons and the keys (SPEC.md sections 3.3 and 3.4) --------------------------
 
 (defmacro (button-labels sheet)
@@ -187,7 +208,37 @@
   (headers "Audio" "A1" "voice" "wave" "note" "volume")
   (labels "Audio" "A2" 1 2 3 4))
 
-; ---- the verbs: the first frame, a press, a count, a hold and the dice ---------------
+; ---- the Camera (SPEC.md section 3.8) -----------------------------------------------
+; Two cells the host places the Screen's window by, each beside its label. A still
+; Camera holds two values, which only a person's edit moves; with a Camera, the Screen
+; may hold cells beyond the window, which the plane never draws and a grid of the
+; sheet does. A Camera that pans holds a formula, and is written as rows.
+
+(defmacro (camera top left)
+  "a still Camera: the window's top row and left column as values, each beside its label"
+  (cell "Camera" "A1" "row")
+  (cell "Camera" "B1" top)
+  (cell "Camera" "A2" "column")
+  (cell "Camera" "B2" left))
+
+; ---- the Write sheet (SPEC.md section 3.9) ------------------------------------------
+; A row a write, from its cell in column A: the sheet a value goes to; in column B its
+; address, or a range every cell of which takes the value, while a test holds, and
+; else empty, which writes nothing; in column C the value. After each step the host
+; issues each row as a derived write before the next frame, so a value lands a frame
+; late. The table's header is the headers macro's.
+
+(defmacro (put sheet at target when address what)
+  "a row of the Write sheet, from its cell in column A: the target sheet; =IF(when,address,\"\"); =what"
+  (quasiquote (put-from (unquote sheet) (unquote (row-expand at)) (unquote (column-expand at)) (unquote target) (unquote when) (unquote address) (unquote what))))
+
+(defmacro (put-from sheet row column target when address what)
+  "put, its row and column read; its value parameter is what, since value heads a row of the record"
+  (cell sheet (address-expand row column) target)
+  (quasiquote (formula (unquote sheet) (unquote (address-expand row (+expand column 1))) (&expand "=IF(" (unquote when) "," (unquote address) ",\"\")")))
+  (quasiquote (formula (unquote sheet) (unquote (address-expand row (+expand column 2))) (&expand "=" (unquote what)))))
+
+; ---- the verbs: the first frame, a press, a count, a hold, the dice, every, since ----
 ; Each verb writes one formula row, one shape filled over a range, which the language
 ; computes as a run (SPEC.md section 2's rules). The sheet comes first, so that on names
 ; it once, then the range, then what the verb means, in the order its formula reads it.
@@ -230,6 +281,18 @@
 (defmacro (dice sheet at)
   "Park and Miller's minimal standard in one cell (SPEC.md section 3.5): the seed in the first frame, then the last value times 16807, modulo 2147483647; one cell, since its Clock references are relative and a fill would move them"
   (quasiquote (formula (unquote sheet) (unquote at) (&expand "=IF(Clock!B1=1,Clock!B3,MOD(" (unquote sheet) ".last!" (unquote at) "*16807,2147483647))"))))
+
+(defmacro (every sheet range count n)
+  "1 in every nth frame of a count and 0 in the others, the clock divider of SPEC.md section 12 over any count: =IF(MOD(count,n)=0,1,0)"
+  (quasiquote (formula (unquote sheet) (unquote range) (&expand "=IF(MOD(" (unquote count) "," (unquote n) ")=0,1,0)"))))
+
+(defmacro (since sheet range event)
+  "the frames since an event, 0 in its frame and one more in each frame after, Appendix C's age: =IF(event,0,sheet.last!first+1)"
+  (first-cell range since-from sheet range event))
+
+(defmacro (since-from first sheet range event)
+  "since, its range's first cell found"
+  (quasiquote (formula (unquote sheet) (unquote range) (&expand "=IF(" (unquote event) ",0," (unquote sheet) ".last!" (unquote first) "+1)"))))
 
 ; A verb that reads its own last value writes the twin of its range's first cell,
 ; Tally.last!B1 for a fill over Tally!B1:E10, and pressed writes its button's twin,
