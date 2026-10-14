@@ -1,7 +1,8 @@
 <#
-bench_frames.ps1 - the frame floors' instrument: Life's frames and Sand's
-measured on the owner's machine, natively and in the browser, and printed as
-one block to paste into tools/check_frame_floors.ps1.
+bench_frames.ps1 - the frame floors' instrument: Life's frames and Sand's,
+and since ENGINE.9 the size ladder's, measured on the owner's machine,
+natively and in the browser, and printed as one block to paste into
+tools/check_frame_floors.ps1.
 
 WHY: CART.1's scoping, decisions 4 and 5 (REARVIEW.md). The engine's first
 number is cells evaluated a second (CHARTER.md section 7), on the benchmark
@@ -77,16 +78,36 @@ file the check's baseline measured (CART.2's decision 24), since cells a
 second count the fixture's cells: Sand with water steps its opening in
 slice 1's time over half again the cells.
 
+THE SIZE LADDER (ENGINE.9, 2026-10-14): Life and the gun at four and
+sixteen times the window's area, built by the pass from their sources with
+a larger board, natively by the runner and in the page by the module's own
+pass, so seven rows a half where there were three, each with its Memory,
+the heap's high-water bytes natively and the module's memory in the
+browser. Each rung is named by its cartridge's SHA-256 over LF in both
+halves, and this script prints no block when the halves name different
+rows, since then they measured different cartridges; the block gains a
+line, $baselineRungs. A frame under 2 ms is timed in runs of a fixed length
+over frames 32 to 671, back to back, ten of 64 natively and five of 128 in
+the browser, where every rung's board holds the same cells (the gun's
+published facts' span), so a row whose Run differs from the check's
+baseline measures other frames and is re-based, as a row timed alone where
+it was timed in runs is. After the block, the ladder's slope for each half:
+each rung's frame, load and memory over the window's, and the exponent
+against the formula cells, which REARVIEW.md records with the run.
+
 WHAT IT DOES:
   1. builds what it measures, unless -NoBuild: the runner (cargo build
      --release --example frames), the engine's module (cargo build --release
      -p alonzo --target wasm32-unknown-unknown) and the page
      (tools/build_web.ps1);
-  2. runs the runner over the three fixtures and reads its three native rows;
-  3. runs web/index.html?frames=1 and reads its three wasm rows, both halves
-     on the performance cores and opted out of the throttling;
+  2. runs the runner over the three fixtures and reads its seven native
+     rows, the three and the ladder's four, and its four rungs' digests;
+  3. runs web/index.html?frames=1 and reads its seven wasm rows and its
+     rungs' digests, both halves on the performance cores and opted out of
+     the throttling, and holds the two halves' digests equal;
   4. prints the block: the date, the environment, the pin of vla-lang in
-     Cargo.toml, each fixture's SHA-256 over LF bytes, the six rows, and the
+     Cargo.toml, each fixture's SHA-256 over LF bytes, each rung's, the
+     fourteen rows, and the
      floor history as the check holds it with this run's entry added last,
      each row's cells a second less the check's margin of 10%, rounded down
      to three figures, or the latest entry's floor for the row where that is
@@ -269,7 +290,7 @@ function Get-BaselineRuns([string]$path) {
     foreach ($line in [System.IO.File]::ReadAllLines($path)) {
         if (-not $inside) { if ($line -match '^\$baseline = @\(\s*$') { $inside = $true }; continue }
         if ($line -match '^\)\s*$') { break }
-        $m = [regex]::Match($line, "Runner = '([a-z]+)'; Fixture = '([a-z]+)';.*\bRun = (\d+);")
+        $m = [regex]::Match($line, "Runner = '([a-z]+)'; Fixture = '([a-z0-9-]+)';.*\bRun = (\d+);")
         if ($m.Success) { $runs[$m.Groups[1].Value + ' ' + $m.Groups[2].Value] = [int]$m.Groups[3].Value }
     }
     return $runs
@@ -288,6 +309,26 @@ function Get-BaselineFixtures([string]$path) {
         }
     }
     return $fixtures
+}
+# The size ladder's rungs the check's baseline measured, each its cartridge's
+# SHA-256 over LF (ENGINE.9), read as text as the fixtures are.
+function Get-BaselineRungs([string]$path) {
+    $rungs = @{}
+    if (-not (Test-Path -LiteralPath $path)) { return $rungs }
+    foreach ($line in [System.IO.File]::ReadAllLines($path)) {
+        if ($line -match '^\$baselineRungs = @\{') {
+            foreach ($m in [regex]::Matches($line, "'([a-z]+-x\d+)' = '([0-9A-F]{64})'")) { $rungs[$m.Groups[1].Value] = $m.Groups[2].Value }
+            break
+        }
+    }
+    return $rungs
+}
+# A half's rungs as its text prints them, @{ Rung = 'life-x4'; ...; Digest = '...' }:
+# each rung's name to its cartridge's SHA-256 over LF.
+function Get-Rungs([string]$text) {
+    $rungs = [ordered]@{}
+    foreach ($m in [regex]::Matches($text, "(?m)^\s+@\{ Rung = '([a-z]+-x\d+)'; Width = \d+; Height = \d+; Digest = '([0-9A-F]{64})' \}")) { $rungs[$m.Groups[1].Value] = $m.Groups[2].Value }
+    return $rungs
 }
 function Get-SameRows([string]$path) {
     $same = @{}
@@ -318,7 +359,7 @@ $runnerExe = Join-Path $repoRoot ('target/release/examples/frames' + $(if ($onWi
 $wasm = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
 $page = Join-Path $repoRoot 'web/index.html'
 
-Write-Output '=== THE FRAME FLOORS: LIFE AND SAND MEASURED NATIVELY AND IN THE BROWSER (CART.1, CART.2) ==='
+Write-Output '=== THE FRAME FLOORS: LIFE, THE SIZE LADDER AND SAND MEASURED NATIVELY AND IN THE BROWSER (CART.1, CART.2, ENGINE.9) ==='
 if (-not $NoBuild) {
     $cargo = Find-Cargo
     if ($cargo -eq '') { Write-Output 'FAIL: no cargo on PATH or in ~/.cargo/bin; build the runner and the module, then run with -NoBuild'; exit 1 }
@@ -358,11 +399,15 @@ $nativePinned = Set-PerformanceCores $proc
 $nativeText = $proc.StandardOutput.ReadToEnd()
 $proc.WaitForExit()
 $nativeRows = @(($nativeText -split "`r?`n") | Where-Object { $_ -match "^\s+@\{ Runner = 'native'" } | ForEach-Object { $_.Trim() })
-if ($nativeRows.Count -ne 3) {
+# Seven rows a half since ENGINE.9: life, gun and sand, and the size ladder's four rungs.
+$rowsAHalf = 7
+$rungNames = @('life-x4', 'life-x16', 'gun-x4', 'gun-x16')
+if ($nativeRows.Count -ne $rowsAHalf) {
     Write-Output $nativeText
-    Write-Output ("FAIL: the runner printed {0} row(s), not 3 (exit {1}); its words are above" -f $nativeRows.Count, $proc.ExitCode)
+    Write-Output ("FAIL: the runner printed {0} row(s), not {1} (exit {2}); its words are above" -f $nativeRows.Count, $rowsAHalf, $proc.ExitCode)
     exit 1
 }
+$nativeRungs = Get-Rungs $nativeText
 
 # --- the browser half ---
 $browser = Find-Browser $Browser
@@ -411,9 +456,25 @@ try {
     Remove-Item -Recurse -Force -LiteralPath $tmp -ErrorAction SilentlyContinue
 }
 $wasmRows = @(($wasmText -split "`r?`n") | Where-Object { $_ -match "^\s+@\{ Runner = 'wasm'" } | ForEach-Object { $_.Trim() })
-if ($wasmRows.Count -ne 3) {
+if ($wasmRows.Count -ne $rowsAHalf) {
     Write-Output $wasmText
-    Write-Output ("FAIL: the page printed {0} row(s), not 3; its words are above" -f $wasmRows.Count)
+    Write-Output ("FAIL: the page printed {0} row(s), not {1}; its words are above" -f $wasmRows.Count, $rowsAHalf)
+    exit 1
+}
+# The size ladder's rungs, the same cartridges in both halves (ENGINE.9): the runner's pass and the
+# page's build each rung from the same source and the same definition, so a digest that differs is
+# a half that measured other rows.
+$wasmRungs = Get-Rungs $wasmText
+$rungProblems = @()
+foreach ($rung in $rungNames) {
+    if (-not $nativeRungs.Contains($rung)) { $rungProblems += "the runner named no cartridge for the rung $rung" }
+    elseif (-not $wasmRungs.Contains($rung)) { $rungProblems += "the page named no cartridge for the rung $rung" }
+    elseif ($nativeRungs[$rung] -ne $wasmRungs[$rung]) { $rungProblems += ("the rung {0} is another cartridge in each half, {1}... natively and {2}... in the page" -f $rung, $nativeRungs[$rung].Substring(0, 8), $wasmRungs[$rung].Substring(0, 8)) }
+}
+if ($rungProblems.Count -gt 0) {
+    Write-Output $nativeText.TrimEnd()
+    Write-Output $wasmText.TrimEnd()
+    Write-Output ("FAIL: {0}: the two halves did not measure the same rows, so no block is printed. Build the page again (run without -NoBuild), so that its module and its sources are this tree's." -f ($rungProblems -join '; '))
     exit 1
 }
 
@@ -473,11 +534,14 @@ $checkFile = Join-Path $repoRoot 'tools/check_frame_floors.ps1'
 $entries = @(Get-HistoryEntries $checkFile)
 $was = Get-BaselineRuns $checkFile
 $measured = Get-BaselineFixtures $checkFile
+$measuredRungs = Get-BaselineRungs $checkFile
+foreach ($rung in $measuredRungs.Keys) { $measured[$rung] = $measuredRungs[$rung] }
 $rebuilt = Get-SameRows $checkFile
 $digestNow = @{ 'life' = (Get-LfDigest $life); 'gun' = (Get-LfDigest $gun); 'sand' = (Get-LfDigest $sand) }
+foreach ($rung in $rungNames) { $digestNow[$rung] = [string]$nativeRungs[$rung] }
 $latest = @{}
 if ($entries.Count -gt 0) {
-    foreach ($m in [regex]::Matches([string]$entries[$entries.Count - 1], "'([a-z]+ [a-z]+)' = (\d+)")) { $latest[$m.Groups[1].Value] = [double]$m.Groups[2].Value }
+    foreach ($m in [regex]::Matches([string]$entries[$entries.Count - 1], "'([a-z]+ [a-z0-9-]+)' = (\d+)")) { $latest[$m.Groups[1].Value] = [double]$m.Groups[2].Value }
 }
 $floors = @()
 $kept = @()
@@ -492,13 +556,19 @@ foreach ($r in $rows) {
     $floor = Get-RoundedDown ($cps * (1 - $margin))
     $now = [string]$digestNow[$fixture]
     $changed = $measured.ContainsKey($fixture) -and $now -ne $measured[$fixture] -and -not ($rebuilt.ContainsKey($now) -and $rebuilt[$now] -eq $measured[$fixture])
-    $retimed = $was.ContainsKey($key) -and (($was[$key] -gt 1) -ne ($run -gt 1))
+    # Timed another way: alone where the baseline timed runs or the other way about (2026-10-12), or
+    # since ENGINE.9 in runs of another length, which time other frames.
+    $retimed = $was.ContainsKey($key) -and $was[$key] -ne $run
     if ($changed -or $retimed) {
         $rebased += $key
         if ($latest.ContainsKey($key) -and $floor -lt $latest[$key]) {
             $whys = @()
             if ($changed) { $whys += ("its fixture is another file, {0}..., where the baseline before it measured {1}..., and cells a second count a fixture's cells (CART.2's decision 24)" -f $now.Substring(0, 8), ([string]$measured[$fixture]).Substring(0, 8)) }
-            if ($retimed) { $whys += $(if ($run -gt 1) { "timed in runs of $run from this entry, where the baseline before it timed its frames alone, and a frame under 2 ms timed alone, right after the clock, varied between sessions past the margin (CART.1's frame timer)" } else { 'timed alone from this entry, its frames 2 ms or more, where the baseline before it timed them in runs (CART.1''s frame timer)' }) }
+            if ($retimed) {
+                $whys += $(if ($run -gt 1 -and $was[$key] -gt 1) { "timed in runs of $run over frames 32 to 671 from this entry, where the baseline before it timed runs of $($was[$key]) further on, other frames (ENGINE.9's decision 5: the window where every rung's board holds the same cells)" }
+                           elseif ($run -gt 1) { "timed in runs of $run from this entry, where the baseline before it timed its frames alone, and a frame under 2 ms timed alone, right after the clock, varied between sessions past the margin (CART.1's frame timer)" }
+                           else { 'timed alone from this entry, its frames 2 ms or more, where the baseline before it timed them in runs (CART.1''s frame timer)' })
+            }
             $reasons += ("{0} re-based: {1}; its floor is this run's less 10%" -f $key, ($whys -join '; and '))
         }
     } elseif ($latest.ContainsKey($key) -and $latest[$key] -gt $floor) {
@@ -515,6 +585,7 @@ $block.Add(("`$baselineDate = '{0}'" -f $date))
 $block.Add(("`$baselineEnvironment = '{0}'" -f ($environment -replace "'", "''")))
 $block.Add(("`$baselinePin = '{0}'" -f $pin))
 $block.Add(("`$baselineFixtures = @{{ 'life' = '{0}'; 'gun' = '{1}'; 'sand' = '{2}' }}" -f (Get-LfDigest $life), (Get-LfDigest $gun), (Get-LfDigest $sand)))
+$block.Add(('$baselineRungs = @{ ' + (@($rungNames | ForEach-Object { "'{0}' = '{1}'" -f $_, $nativeRungs[$_] }) -join '; ') + ' }'))
 $block.Add('$baseline = @(')
 for ($i = 0; $i -lt $rows.Count; $i++) { $block.Add(('    ' + $rows[$i] + $(if ($i -lt $rows.Count - 1) { ',' } else { '' }))) }
 $block.Add(')')
@@ -534,6 +605,32 @@ Write-Output $nativeText.TrimEnd()
 Write-Output $wasmText.TrimEnd()
 Write-Output ''
 $block | ForEach-Object { Write-Output $_ }
+Write-Output ''
+# The size ladder's slope (ENGINE.9, decision 8), both halves, read off the rows: each rung's frame,
+# load and memory over the window's, and the exponent against the formula cells; for REARVIEW.md.
+$byKey = @{}
+foreach ($r in $rows) { $byKey[(Get-Field $r 'Runner') + ' ' + (Get-Field $r 'Fixture')] = $r }
+function Shape([double]$e) { if ($e -lt 0.9) { return 'less than linear' } elseif ($e -le 1.1) { return 'linear' } else { return 'more than linear' } }
+Write-Output 'The size ladder (ENGINE.9): each rung over the window''s, and the exponent against the formula cells, 1 where a quantity grows as the cells do:'
+foreach ($half in @('native', 'wasm')) {
+    foreach ($fixture in @('life', 'gun')) {
+        $v = @(@("$half $fixture", "$half $fixture-x4", "$half $fixture-x16") | ForEach-Object { $byKey[$_] })
+        if (@($v | Where-Object { $null -eq $_ }).Count -gt 0) { continue }
+        $cells = @($v | ForEach-Object { [double](Get-Field $_ 'Cells') })
+        $frame = @($v | ForEach-Object { [double](Get-Field $_ 'FrameP50') })
+        $load = @($v | ForEach-Object { [double](Get-Field $_ 'Load') })
+        $memory = @($v | ForEach-Object { [double](Get-Field $_ 'Memory') })
+        $span = [math]::Log($cells[2] / $cells[0])
+        $fe = [math]::Log($frame[2] / $frame[0]) / $span; $le = [math]::Log($load[2] / $load[0]) / $span; $me = [math]::Log($memory[2] / $memory[0]) / $span
+        Write-Output ('  {0} {1}: the {2} frame {3}, {4} and {5} ms, {6:N2} and {7:N2} times the window''s, the exponent {8:N2}, {9}; the load {10}, {11} and {12} ms, the exponent {13:N2}, {14}; the memory {15:N1}, {16:N1} and {17:N1} MB, the exponent {18:N2}, {19}' -f
+            $half, $fixture, $(if ($fixture -eq 'gun') { 'idle' } else { 'steady' }), (Get-Field $v[0] 'FrameP50'), (Get-Field $v[1] 'FrameP50'), (Get-Field $v[2] 'FrameP50'), ($frame[1] / $frame[0]), ($frame[2] / $frame[0]), $fe, (Shape $fe),
+            (Get-Field $v[0] 'Load'), (Get-Field $v[1] 'Load'), (Get-Field $v[2] 'Load'), $le, (Shape $le), ($memory[0] / 1e6), ($memory[1] / 1e6), ($memory[2] / 1e6), $me, (Shape $me))
+        if ($fixture -eq 'gun') {
+            $ratio = $frame[2] / $frame[0]
+            Write-Output ('  {0} gun: at {1:N0} times the window''s cells its idle frame costs {2:N2} times the window''s: {3}' -f $half, ($cells[2] / $cells[0]), $ratio, $(if ($ratio -le 1.0 + $margin) { 'the prediction, the window''s cost, held within the floors'' margin of 10%' } else { 'the prediction, the window''s cost, missed by {0:N0}%, past the floors'' margin of 10%' -f (($ratio - 1.0) * 100.0) }))
+        }
+    }
+}
 Write-Output ''
 if ($kept.Count -gt 0) { Write-Output ("Kept: {0}, measured slower than the run that set the latest floor and still above it, so the entry keeps that floor." -f ($kept -join ', ')) }
 if ($rebased.Count -gt 0) { Write-Output ("Re-based: {0}, each timed another way than the check's baseline timed it, or over another fixture than it measured: its floor is this run's less 10%{1}." -f ($rebased -join ', '), $(if ($reasons.Count -gt 0) { ', and where that is lower than the latest, the entry says why' } else { '' })) }

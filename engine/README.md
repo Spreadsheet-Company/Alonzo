@@ -149,8 +149,8 @@ demo (`CART.1`). The first game after it is a falling-sand toy, Sand
 The benchmark runs from a clone:
 
 ```text
-cargo run --release --example frames            # Life's soup, Gosper's glider gun and Sand's opening, 31 frames each
-cargo run --release --example frames -- --check # 4 frames each, the frames and the allocations held
+cargo run --release --example frames            # Life's soup, Gosper's glider gun, Sand's opening and the size ladder, 31 frames each
+cargo run --release --example frames -- --check # 4 frames each, the frames, the allocations and the memory held
 ```
 
 Each frame is one step, timed alone, and held to a Life written by hand, or
@@ -159,12 +159,13 @@ hold Sand to as well), before any number is printed; the steady frames' median g
 evaluated a second and the frames a second. A frame under 2 ms, the glider
 gun's, is timed again in runs of consecutive frames, as the browser's page
 times one, since a frame of microseconds timed alone measured the clock
-beside it as much as the step. Before a fixture's first frame and after its
+beside it as much as the step: ten runs of 64, back to back, over frames 32
+to 671, where the gun holds the same cells on a board of any size. Before a fixture's first frame and after its
 steady frames, and never between two frames, where it slowed the frame after
 it, the same hand-written Life runs a fixed workload, and a run whose clock
 moved more than 10%, as Windows' power throttling moves it in a background
 process, is named and prints no baseline. The check mode counts the allocations of a
-frame, an exact number the repository's checks hold to a ceiling. On the
+frame and the heap's bytes, exact numbers the repository's checks hold to ceilings. On the
 day the benchmark was first measured, Life stepped at about 218,000 cells a
 second natively and 229,000 in the browser, about a ninth of the line, and
 the engine's own profile of that step named where the rest went
@@ -220,6 +221,33 @@ opening never reaches: every press, release and material key computed all
 of Sand's 189,017 formula cells, 17 to 26 ms natively, where a stroke's
 frames take 1 to 2 ms. Over `vla-lang` 0.9.2 the session's 1,100 frames step
 in about 1.1 s, where they took 1.6 over 0.9.1.
+
+The same runner climbs a size ladder (`ENGINE.9`): Life's soup and the
+glider gun built again on boards of four and sixteen times the window's
+area, 640 by 400 and 1280 by 800 cells. Each source states its board once,
+as a parameter, a macro named `board-size`, and the pass builds it with a
+larger value handed in after the source's own (`pass::expand_with`), so the
+same rule covers the larger board. The window stays the manifest's 320 by
+200, placed by a still Camera at the board's top-left, and every frame is
+held to the hand-written Life over the whole board. Each rung's row carries
+the four numbers the ladder reads: the formula cells, the load, the frame,
+and the memory, the heap's high-water mark over a load and four frames,
+counted by the runner's own allocator. The browser's page measures the same
+rungs, built by the module's own pass, with the module's memory beside them.
+The top rung's grid holds 1,019,973 cells, under the language's cap of
+1,048,576 cells a grid.
+
+What the owner's run read (2026-10-14, the floors' ninth baseline): Life's
+steady frame grows in proportion to the board, 2.8, 14.1 and 57.7 ms
+natively and 4.0, 18.0 and 70.1 ms in the browser, so a board of a million
+formula cells steps at about 17 frames a second natively and 14 in the
+browser. The memory grows in proportion too, about 460 bytes a formula cell
+natively and 377 in the module, 469.5 MB and 384.9 MB at the top rung. The
+gun's frame, which the ladder predicted would cost the same on every board,
+since its work does not grow with the board, costs 27% more natively and 15%
+more in the browser at sixteen times the area, 0.026 against 0.033 ms
+natively and 0.038 against 0.043 in the browser: a small cost of the
+sheet's size in every frame.
 
 ## Where it comes from
 

@@ -170,6 +170,11 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # Sand's and the cards'; check_host_loop.ps1's replay case plays Kairos's to
 # its golden, every frame held to the page's Kairos, and its control is
 # thirty-five mutant pages, AI the turn a column early.
+# 2026-10-14, ENGINE.9, the size ladder: 12 still, no check added -
+# check_frame_floors.ps1 holds fourteen rows, the ladder's eight beside the
+# six, every row's memory, each rung's cartridge by its digest and every
+# fixture's heap bytes under a ceiling, its control twenty mutants of the
+# table and nine fake runners.
 $expectedAtLeast = 12
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
@@ -188,7 +193,7 @@ $extras = @(
     @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 blit floors: a clean table of three cases passes, eight mutants fail' },
     @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 and SPEC.3 export reader and judgment: nine modules built in memory, a non-module' },
     @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, its mutants fail (seven for a git pin, eight for a registry pin); of five baselines, a git one and a registry one pass and three fail' },
-    @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1, SPEC.3 and CART.2 frame floors: a clean table, a reasoned lowering, a row entering the history, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows pass, seventeen mutants fail, a frame read as 0 ms and a row dropped from the history among them; an entry added passes, an entry pasted over and one edited fail; six fake runners, the clean one passes and five fail' }
+    @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1, SPEC.3, CART.2 and ENGINE.9 frame floors: a clean table, a reasoned lowering, a row entering the history, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows pass, twenty mutants fail, a frame read as 0 ms, a row dropped from the history and a rung with no digest among them; an entry added passes, an entry pasted over and one edited fail; nine fake runners, the clean one passes and eight fail, a heap past its ceiling and a rung of another cartridge among them' }
 )
 
 # --- The shell each check runs under. ---

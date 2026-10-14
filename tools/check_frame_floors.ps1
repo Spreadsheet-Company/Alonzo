@@ -1,10 +1,12 @@
 <#
 check_frame_floors.ps1 - the engine's first number: the owner's measured
 baseline of Life's frames, the benchmark cartridge's two fixtures over the
-native runner and the engine's module, and since CART.2 Sand's, held to
-floors that never go down; and on every push where a runner is built, the
-frames held to a hand-written Life or Sand and their allocations to
-ceilings that never go up.
+native runner and the engine's module, since CART.2 Sand's, and since
+ENGINE.9 the size ladder's, Life and the gun at four and sixteen times the
+window's area, each row with its memory, held to floors that never go down;
+and on every push where a runner is built, the frames held to a hand-written
+Life or Sand, their allocations and the heap's bytes to ceilings that never
+go up, and each rung of the ladder to the cartridge measured.
 
 WHY: CART.1 (ROADMAP.md; REARVIEW.md, its scoping, decisions 4 to 7).
 CHARTER.md section 7 names the engine's measure, cells evaluated a second,
@@ -27,16 +29,24 @@ WHAT IT HOLDS, from the baseline pasted below:
     a language moved or a fixture edited without a new measurement fails by
     name, and every change to the language is measured on the benchmark
     before it lands here (SPEC.3 rebuilt both fixtures by the pass from
-    their sources, their rows unchanged: decision 30, REARVIEW.md);
+    their sources, their rows unchanged: decision 30, REARVIEW.md); and
+    since ENGINE.9 each rung of the size ladder named by its cartridge's
+    SHA-256 over LF, $baselineRungs, the cartridge the pass builds from Life's
+    or the gun's source on a larger board, which this file cannot build, so
+    the runner's check mode holds it where a runner is built;
   - the environment line saying, as the instrument writes it, that both
     halves ran opted out of Windows' power throttling and on the performance
     cores, or on a machine of one kind of core: the instrument's guards
     against measuring the power policy and the scheduler (CART.1's decisions
     5 and 13), since a run on an efficiency core is 23% slower with a clock
     that looks steady, and no other rule here would see it;
-  - six rows, native and wasm, life, gun and sand, each once (sand's two
-    since CART.2, 2026-10-11: Sand's opening, Life's soup as grains, the
-    charter's test of a chain two hundred rows deep): at least 30 steady
+  - fourteen rows, native and wasm, life, gun and sand, and since ENGINE.9
+    the size ladder's life-x4, life-x16, gun-x4 and gun-x16, each once
+    (sand's two since CART.2, 2026-10-11: Sand's opening, Life's soup as
+    grains, the charter's test of a chain two hundred rows deep), each with
+    its Memory a whole number above 0, the heap's high-water mark over a
+    load and four frames natively and the module's memory after frame 4 in
+    the browser (ENGINE.9, decision 6): at least 30 steady
     frames; the clock's spread and its drift from the run's start within
     10% (the instrument's own guard against Windows' power throttling,
     measured to slow a background run by about 40% three seconds in; the
@@ -69,8 +79,13 @@ WHAT IT HOLDS, from the baseline pasted below:
     reason says so. So does a row whose fixture is not the file the
     baseline before it measured (CART.2's decision 24), since cells a
     second count a fixture's cells: Sand with water steps its opening in
-    slice 1's time over half again the cells. tools/bench_frames.ps1 prints
-    the history with its run's entry added last, to paste whole.
+    slice 1's time over half again the cells. Since ENGINE.9 (decision 5)
+    the runs are of a fixed length over frames 32 to 671, back to back,
+    ten of 64 natively and five of 128 in the browser, inside the gun's
+    published facts' span, where every rung's board holds the same cells,
+    so a row whose Run differs from the baseline's before it is re-based.
+    tools/bench_frames.ps1 prints the history with its run's entry added
+    last, to paste whole.
   - the history appended to and never pasted over: every entry the last
     commit's copy of this file holds is still here, in its order, at the
     head of the history, read with git (SKIPPED where git or the commit is
@@ -82,16 +97,24 @@ WHAT IT HOLDS, from the baseline pasted below:
     charter's 30 frames a second, printed with the distance; out of reach
     when the first baseline was pasted, they were not gated, and a floor
     that reaches one makes it a gate from then on, since a floor never goes
-    down.
+    down;
+  - the size ladder's slope, printed and never gated (ENGINE.9, decision
+    8): for life and the gun, each rung's frame, load and memory over the
+    window's, the exponent against the formula cells, and the gun's idle
+    frame at sixteen times the area against the prediction that it costs
+    what it costs on the window.
 An empty baseline fails, since a floor with no number is no floor.
 
 WITH A BUILT RUNNER (target/release/examples/frames, or -Runner): its check
-mode, each fixture four frames, every frame equal to the runner's own Life
-or Sand, the gun held to its published facts and Sand's opening to its
-grains, every frame after the first keeping each material's count, and the
-allocations and reallocations of each fixture's second frame after a fresh
-load at most the ceilings below; a count under its ceiling is printed so
-the ceiling can be lowered.
+mode, each fixture four frames, and since ENGINE.9 each rung of the ladder
+its source climbs, every frame equal to the runner's own Life or Sand over
+its whole board, the gun held to its published facts at every rung and
+Sand's opening to its grains, every frame after the first keeping each
+material's count; the allocations and reallocations of each fixture's
+second frame after a fresh load, and the heap's high-water bytes over the
+load and the four frames, at most the ceilings below; and each rung's
+digest the baseline's. A count under its ceiling is printed so the ceiling
+can be lowered.
 SKIPPED without a runner: the ratchets job builds none, and the crate job
 builds it before this check runs.
 
@@ -107,15 +130,17 @@ the table does not name, a clock
 that moved, frames a second that disagree with cells a second, a frame read
 as 0 ms whose rates are infinite (CART.1, 2026-10-10), a run not
 opted out of the throttling, a run not on the performance cores, a row
-dropped from an entry after it entered the history and a latest entry
-without a row's floor must each fail; the history, read from text as the
-commit's copy is: an entry
+dropped from an entry after it entered the history, a latest entry
+without a row's floor, a row without its memory, a rung's row missing and a
+rung the baseline names no digest for must each fail; the history, read
+from text as the commit's copy is: an entry
 added after the committed ones passes, and so does a history unchanged,
 and an entry pasted over a committed one and a committed entry edited in
 place must each fail; then fake runners: a clean one passes, and one whose
-frame differs, one whose allocations pass the ceiling, one that never holds
-the gun's facts, one that never holds Sand's grains and one that leaves out
-a fixture must each fail.
+frame differs, one whose allocations pass the ceiling, one whose heap
+passes its ceiling, one that never holds the gun's facts, one that never
+holds Sand's grains, one that leaves out a fixture, one that leaves out a
+rung and one whose rung is another cartridge must each fail.
 
 House style (tools/check_*.ps1): PowerShell 5.1 and pwsh alike, host-free,
 no browser, no network; a hardcoded, reviewable baseline; exit 0 clean,
@@ -136,7 +161,8 @@ if ($Root -eq '') { $Root = $repoRoot }
 $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT
 
 # --- the baseline, hand-maintained: the owner's run of tools/bench_frames.ps1 ---
-# Paste the block the instrument prints over the six lines below, whole, and
+# Paste the block the instrument prints over the seven lines below, whole
+# (six until ENGINE.9 added $baselineRungs), and
 # the history it prints over $floorHistory, whole: it is this file's history
 # with the run's entry added last (the instrument writes both to
 # target/bench_frames.txt as well, to copy from). A later run that is slower
@@ -244,28 +270,57 @@ $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::W
 # browser, where it was 502 and 586. Life's and the gun's frames hold, their
 # loads nearly halved. Its entry raises Sand's two floors, to 45,500,000 and
 # 27,900,000, and the wasm life and gun floors, native life's kept.
-$baselineDate = '2026-10-12'
-$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 154.0.8037.98 headless | the engine''s module 682,679 bytes | vla-lang at 0.9.2 | power throttling opted out: the runner yes, 22 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 23 browser process(es)'
+# 2026-10-14, the ninth: the owner's run with ENGINE.9 built, the size ladder,
+# over vla-lang 0.9.2 and the respelled cartridges this file's $sameRows names
+# as the measured rows. Since that build the instrument's block holds fourteen
+# rows, the ladder's eight beside the six, every row with its Memory, and a
+# line more, $baselineRungs, each rung by its cartridge's digest; the ladder's
+# eight rows enter the history at this entry. The gun is timed in runs over
+# frames 32 to 671, where every rung's board holds the same cells, so the
+# native gun's floor is re-based on its runs of 64, higher, and the wasm gun's
+# rises on the same window; Sand's wasm floor rises too, and no floor goes
+# down, so the entry gives no reason. Its rows: native life 22,168,081 cells
+# a second (frame p50 2.8 ms), life-x4 18,062,791 (14.1), life-x16 17,668,708
+# (57.7), gun 2,435,008,762 (0.0259, runs of 64), gun-x4 9,009,638,808
+# (0.0282), gun-x16 30,857,609,682 (0.0330), sand 49,557,371 (3.8); wasm life
+# 15,546,667 (4.0), life-x4 14,146,184 (18.0), life-x16 14,538,047 (70.1), gun
+# 1,679,040,000 (0.0375, runs of 128), gun-x4 5,803,977,142 (0.0438), gun-x16
+# 23,734,551,273 (0.0430), sand 32,623,276 (5.8). The ladder's slope: Life's
+# frame, load and memory in proportion to the cells; the gun's idle frame 1.27
+# times the window's natively and 1.15 in the browser at sixteen times the
+# area, the prediction missed. Its floors are the history's ninth entry.
+$baselineDate = '2026-10-14'
+$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 155.0.8059.79 headless | the engine''s module 682,671 bytes | vla-lang at 0.9.2 | power throttling opted out: the runner yes, 42 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 42 browser process(es)'
 $baselinePin = '0.9.2'
-$baselineFixtures = @{ 'life' = '7220F8E1FBFF7A3B7F00DE9ECA5754E9A1877A8D1A766A251EB3811D0C937D89'; 'gun' = '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7'; 'sand' = '814983F85A9DA90155F0F58C6FE201C8750E588BF202BD54B18763C41DC594C7' }
+$baselineFixtures = @{ 'life' = '60220BAE07BBC3C15F671C7CAAE62B6DD6D14B67B9141150EC0023AFA0FFE0F4'; 'gun' = '64C9A6BA206003F15B73084FE90781BE60E34089D577CE0589DBAF5C737A0725'; 'sand' = 'F872498DEAFBCCB60133501B18E35BEC38A470C4A9AE8064505510D061EAD857' }
+$baselineRungs = @{ 'life-x4' = 'D841A88328E95AABB7603CC97B902447346E9A705E32C01770AE74319A252285'; 'life-x16' = '944AEF5CA1FD41FF9973CB4A31B04C98595A408F7F50E7C6FA50B8E0ADE56613'; 'gun-x4' = '09E2744A4117AE2FBF33369EC3BD0BED5F2A69FA532C09BB86DB6FEA3F05B863'; 'gun-x16' = 'B762A925CD57929507CAB39F93812F36EB1196AA3B8693A7E9E1CC1999A83B59' }
 $baseline = @(
-    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 38.6; FirstFrame = 10.3; FrameP50 = 2.8; FrameMin = 2.0; FrameMax = 5.7; CellsPerSecond = 22355009; FramesPerSecond = 355.044; ClockMs = 0.183; ClockSpread = 0.6; ClockDrift = 0.2 },
-    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 37.4; FirstFrame = 8.7; FrameP50 = 0.0422; FrameMin = 0.0218; FrameMax = 0.0516; CellsPerSecond = 1492037915; FramesPerSecond = 23696.682; ClockMs = 0.183; ClockSpread = 0.8; ClockDrift = 0.1 },
-    @{ Runner = 'native'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 132.7; FirstFrame = 39.5; FrameP50 = 3.7; FrameMin = 3.7; FrameMax = 23.6; CellsPerSecond = 50627442; FramesPerSecond = 267.566; ClockMs = 0.183; ClockSpread = 8.6; ClockDrift = 0.1 },
-    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 53.0; FirstFrame = 13.1; FrameP50 = 4.0; FrameMin = 2.9; FrameMax = 8.2; CellsPerSecond = 15940253; FramesPerSecond = 253.165; ClockMs = 0.255; ClockSpread = 2.0; ClockDrift = -3.8 },
-    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 3840; Run = 128; Load = 36.9; FirstFrame = 7.5; FrameP50 = 0.0602; FrameMin = 0.0313; FrameMax = 0.0664; CellsPerSecond = 1046674283; FramesPerSecond = 16623.377; ClockMs = 0.255; ClockSpread = 0.0; ClockDrift = -3.8 },
-    @{ Runner = 'wasm'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 159.2; FirstFrame = 33.0; FrameP50 = 6.1; FrameMin = 5.9; FrameMax = 30.4; CellsPerSecond = 31018852; FramesPerSecond = 163.934; ClockMs = 0.258; ClockSpread = 3.9; ClockDrift = -2.8 }
+    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 43.0; Memory = 29350561; FirstFrame = 11.4; FrameP50 = 2.8; FrameMin = 2.1; FrameMax = 6.3; CellsPerSecond = 22168081; FramesPerSecond = 352.075; ClockMs = 0.206; ClockSpread = 2.0; ClockDrift = 0.7 },
+    @{ Runner = 'native'; Fixture = 'life-x4'; Cells = 253924; Frames = 30; Run = 1; Load = 199.7; Memory = 117273335; FirstFrame = 40.8; FrameP50 = 14.1; FrameMin = 10.9; FrameMax = 24.9; CellsPerSecond = 18062791; FramesPerSecond = 71.135; ClockMs = 0.205; ClockSpread = 1.1; ClockDrift = 0.6 },
+    @{ Runner = 'native'; Fixture = 'life-x16'; Cells = 1019844; Frames = 30; Run = 1; Load = 894.2; Memory = 469546951; FirstFrame = 175.0; FrameP50 = 57.7; FrameMin = 45.9; FrameMax = 92.5; CellsPerSecond = 17668708; FramesPerSecond = 17.325; ClockMs = 0.205; ClockSpread = 4.4; ClockDrift = 0.3 },
+    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 640; Run = 64; Load = 38.1; Memory = 29274642; FirstFrame = 8.8; FrameP50 = 0.0259; FrameMin = 0.0133; FrameMax = 0.0381; CellsPerSecond = 2435008762; FramesPerSecond = 38673.032; ClockMs = 0.204; ClockSpread = 0.8; ClockDrift = -0.1 },
+    @{ Runner = 'native'; Fixture = 'gun-x4'; Cells = 253924; Frames = 640; Run = 64; Load = 194.2; Memory = 117197416; FirstFrame = 36.6; FrameP50 = 0.0282; FrameMin = 0.0148; FrameMax = 0.0487; CellsPerSecond = 9009638808; FramesPerSecond = 35481.635; ClockMs = 0.205; ClockSpread = 0.7; ClockDrift = 0.4 },
+    @{ Runner = 'native'; Fixture = 'gun-x16'; Cells = 1019844; Frames = 640; Run = 64; Load = 865.6; Memory = 469471032; FirstFrame = 150.2; FrameP50 = 0.0330; FrameMin = 0.0179; FrameMax = 0.0432; CellsPerSecond = 30857609682; FramesPerSecond = 30257.186; ClockMs = 0.206; ClockSpread = 4.6; ClockDrift = 0.9 },
+    @{ Runner = 'native'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 165.0; Memory = 80467762; FirstFrame = 36.3; FrameP50 = 3.8; FrameMin = 3.7; FrameMax = 23.2; CellsPerSecond = 49557371; FramesPerSecond = 261.910; ClockMs = 0.206; ClockSpread = 2.0; ClockDrift = 1.1 },
+    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 55.6; Memory = 28508160; FirstFrame = 14.2; FrameP50 = 4.0; FrameMin = 3.0; FrameMax = 9.0; CellsPerSecond = 15546667; FramesPerSecond = 246.914; ClockMs = 0.295; ClockSpread = 3.4; ClockDrift = -1.7 },
+    @{ Runner = 'wasm'; Fixture = 'life-x4'; Cells = 253924; Frames = 30; Run = 1; Load = 171.0; Memory = 97583104; FirstFrame = 39.2; FrameP50 = 18.0; FrameMin = 14.2; FrameMax = 30.5; CellsPerSecond = 14146184; FramesPerSecond = 55.710; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = -1.7 },
+    @{ Runner = 'wasm'; Fixture = 'life-x16'; Cells = 1019844; Frames = 30; Run = 1; Load = 914.9; Memory = 384892928; FirstFrame = 142.6; FrameP50 = 70.1; FrameMin = 51.7; FrameMax = 115.3; CellsPerSecond = 14538047; FramesPerSecond = 14.255; ClockMs = 0.295; ClockSpread = 3.4; ClockDrift = -1.7 },
+    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 640; Run = 128; Load = 38.2; Memory = 28508160; FirstFrame = 7.5; FrameP50 = 0.0375; FrameMin = 0.0219; FrameMax = 0.0523; CellsPerSecond = 1679040000; FramesPerSecond = 26666.667; ClockMs = 0.295; ClockSpread = 8.5; ClockDrift = -1.7 },
+    @{ Runner = 'wasm'; Fixture = 'gun-x4'; Cells = 253924; Frames = 640; Run = 128; Load = 176.2; Memory = 97583104; FirstFrame = 29.1; FrameP50 = 0.0438; FrameMin = 0.0234; FrameMax = 0.0555; CellsPerSecond = 5803977142; FramesPerSecond = 22857.143; ClockMs = 0.295; ClockSpread = 5.1; ClockDrift = -1.7 },
+    @{ Runner = 'wasm'; Fixture = 'gun-x16'; Cells = 1019844; Frames = 640; Run = 128; Load = 891.6; Memory = 384892928; FirstFrame = 110.3; FrameP50 = 0.0430; FrameMin = 0.0305; FrameMax = 0.0586; CellsPerSecond = 23734551273; FramesPerSecond = 23272.727; ClockMs = 0.288; ClockSpread = 5.2; ClockDrift = -4.2 },
+    @{ Runner = 'wasm'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 160.5; Memory = 65077248; FirstFrame = 33.0; FrameP50 = 5.8; FrameMin = 5.7; FrameMax = 29.5; CellsPerSecond = 32623276; FramesPerSecond = 172.414; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = -1.7 }
 )
 
 # --- the floors, in cells a second, a dated history that never goes down ---
 # One entry a measurement, one a line inside the parentheses, a comma after
 # the entry before it: @{ Date = 'yyyy-mm-dd'; Pin = '<vla-lang pin>';
 # Reason = ''; Floors = @{ 'native life' = n; 'native gun' = n; 'native sand'
-# = n; 'wasm life' = n; 'wasm gun' = n; 'wasm sand' = n } }. An entry lower
-# than the one before it in any row needs its Reason. A row enters at the
-# first entry holding it and stays in every entry after: the three entries
-# below are Life's alone, and Sand's rows enter with the owner's run that
-# measures them (CART.2, decision 11).
+# = n; 'wasm life' = n; 'wasm gun' = n; 'wasm sand' = n } }, and since
+# ENGINE.9 the size ladder's eight, 'native life-x4' to 'wasm gun-x16'. An
+# entry lower than the one before it in any row needs its Reason. A row enters
+# at the first entry holding it and stays in every entry after: the three
+# entries below are Life's alone, Sand's rows enter with the owner's run that
+# measures them (CART.2, decision 11), and so do the ladder's (ENGINE.9).
 $floorHistory = @(
     @{ Date = '2026-10-09'; Pin = 'c0686a9'; Reason = ''; Floors = @{ 'native life' = 196000; 'native gun' = 186000; 'wasm life' = 205000; 'wasm gun' = 197000 } },
     @{ Date = '2026-10-10'; Pin = 'f5dc344'; Reason = ''; Floors = @{ 'native life' = 560000; 'native gun' = 586000; 'wasm life' = 414000; 'wasm gun' = 419000 } },
@@ -274,7 +329,8 @@ $floorHistory = @(
     @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = 'native gun re-based: timed in runs of 128 from this entry, where the baseline before it timed its frames alone, and a frame under 2 ms timed alone, right after the clock, varied between sessions past the margin (CART.1''s frame timer); its floor is this run''s less 10%'; Floors = @{ 'native life' = 20300000; 'native gun' = 1340000000; 'native sand' = 13700000; 'wasm life' = 14100000; 'wasm gun' = 929000000; 'wasm sand' = 9550000 } },
     @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = 'native sand re-based: its fixture is another file, 177E8863..., where the baseline before it measured 3DFFD0BE..., and cells a second count a fixture''s cells (CART.2''s decision 24); its floor is this run''s less 10%; wasm sand re-based: its fixture is another file, 177E8863..., where the baseline before it measured 3DFFD0BE..., and cells a second count a fixture''s cells (CART.2''s decision 24); its floor is this run''s less 10%'; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 10800000; 'wasm life' = 14100000; 'wasm gun' = 929000000; 'wasm sand' = 7550000 } },
     @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 30500000; 'wasm life' = 14100000; 'wasm gun' = 935000000; 'wasm sand' = 20500000 } },
-    @{ Date = '2026-10-12'; Pin = '0.9.2'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 45500000; 'wasm life' = 14300000; 'wasm gun' = 942000000; 'wasm sand' = 27900000 } }
+    @{ Date = '2026-10-12'; Pin = '0.9.2'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 45500000; 'wasm life' = 14300000; 'wasm gun' = 942000000; 'wasm sand' = 27900000 } },
+    @{ Date = '2026-10-14'; Pin = '0.9.2'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native life-x4' = 16200000; 'native life-x16' = 15900000; 'native gun' = 2190000000; 'native gun-x4' = 8100000000; 'native gun-x16' = 27700000000; 'native sand' = 45500000; 'wasm life' = 14300000; 'wasm life-x4' = 12700000; 'wasm life-x16' = 13000000; 'wasm gun' = 1510000000; 'wasm gun-x4' = 5220000000; 'wasm gun-x16' = 21300000000; 'wasm sand' = 29300000 } }
 )
 
 # --- releases of a measured source: a registry release of the language whose
@@ -348,14 +404,34 @@ $sameRows = @{
 # the same, 516 and 5. Then the opening raining from the board's top third,
 # rows 2 to 67: 509 allocations and 5 reallocations, the same on every run,
 # the ceiling lowered with the fixture it measures.
+# 2026-10-14, ENGINE.9, over vla-lang 0.9.2: the size ladder's four rungs, 82
+# allocations and 5 reallocations each, two more than the window's at either
+# size, so no count grows with the board; and every fixture's Memory, the
+# heap's high-water mark in bytes over a fresh load and its first four frames,
+# each viewed and held as the host views one, counted by the runner's
+# allocator after a load counted nowhere has made the language's tables. The
+# same bytes on every run: 466 a formula cell for Life's soup at the window,
+# 462 at four times the area and 460 at sixteen, the gun's within a tenth of
+# a megabyte of Life's, Sand's 425 over three sheets. Measured on Windows; the type
+# sizes the engine allocates are the same on a 64-bit Linux, so the crate
+# job's runner reads the same, and a platform that reads fewer bytes passes
+# with its note to lower the ceiling. Raised only with a reason, as a count is.
 $allocationCeilings = [ordered]@{
-    'life' = @{ Allocs = 80; Reallocs = 5 }
-    'gun'  = @{ Allocs = 80; Reallocs = 5 }
-    'sand' = @{ Allocs = 509; Reallocs = 5 }
+    'life'     = @{ Allocs = 80; Reallocs = 5; Memory = 29350561 }
+    'life-x4'  = @{ Allocs = 82; Reallocs = 5; Memory = 117273335 }
+    'life-x16' = @{ Allocs = 82; Reallocs = 5; Memory = 469546951 }
+    'gun'      = @{ Allocs = 80; Reallocs = 5; Memory = 29274642 }
+    'gun-x4'   = @{ Allocs = 82; Reallocs = 5; Memory = 117197416 }
+    'gun-x16'  = @{ Allocs = 82; Reallocs = 5; Memory = 469471032 }
+    'sand'     = @{ Allocs = 509; Reallocs = 5; Memory = 80467762 }
 }
 
 # --- the rules ---
-$requiredRows = @('native life', 'native gun', 'native sand', 'wasm life', 'wasm gun', 'wasm sand')
+$requiredRows = @('native life', 'native gun', 'native sand', 'wasm life', 'wasm gun', 'wasm sand',
+                  'native life-x4', 'native life-x16', 'native gun-x4', 'native gun-x16',
+                  'wasm life-x4', 'wasm life-x16', 'wasm gun-x4', 'wasm gun-x16')
+# The size ladder's rungs (ENGINE.9), each named in $baselineRungs by its cartridge's SHA-256 over LF.
+$ladderRungs = @('life-x4', 'life-x16', 'gun-x4', 'gun-x16')
 $fixtureFiles = [ordered]@{ 'life' = 'cartridges/life/life.vla'; 'gun' = 'cartridges/gun/gun.vla'; 'sand' = 'cartridges/sand/sand.vla' }
 $minFrames = 30
 $clockMax = 10.0
@@ -388,7 +464,7 @@ function Get-Pin([string]$dir) {
 function Format-Count([double]$n) { return ([long][math]::Round($n)).ToString('N0', [System.Globalization.CultureInfo]::InvariantCulture) }
 
 # The static judgment of a pasted baseline: the problems, and the lines to print.
-function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin, [string]$currentPin, $fixtures, $currentDigests, $history, $same, $sameRowsOf = @{}) {
+function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin, [string]$currentPin, $fixtures, $currentDigests, $history, $same, $sameRowsOf = @{}, $rungs = @{}) {
     $problems = New-Object System.Collections.Generic.List[string]
     $lines = New-Object System.Collections.Generic.List[string]
     if ($null -eq $rows -or @($rows).Count -eq 0) {
@@ -411,6 +487,13 @@ function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin,
         elseif ($fixtures[$name] -ne $currentDigests[$name]) {
             if ($null -ne $sameRowsOf -and $sameRowsOf.ContainsKey($currentDigests[$name]) -and [string]$sameRowsOf[$currentDigests[$name]] -eq $fixtures[$name]) { $lines.Add(("  the fixture {0}: the measured file's rows, rebuilt, by this file's table ({1}...)" -f $name, $currentDigests[$name].Substring(0, 8))) }
             else { $problems.Add("the fixture $name is not the one measured: its SHA-256 over LF bytes is $($currentDigests[$name]), the baseline's $($fixtures[$name]); measure again") }
+        }
+    }
+    # Each rung of the size ladder named by the cartridge the pass built for it (ENGINE.9), which the
+    # runner's check mode holds where a runner is built.
+    foreach ($rung in $ladderRungs) {
+        if ($null -eq $rungs -or -not $rungs.ContainsKey($rung) -or [string]$rungs[$rung] -notmatch '^[0-9A-F]{64}$') {
+            $problems.Add("the baseline names no SHA-256 for the rung $rung of the size ladder: paste the block tools/bench_frames.ps1 prints, whose `$baselineRungs line names each rung's cartridge (ENGINE.9)")
         }
     }
 
@@ -467,6 +550,12 @@ function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin,
         if ([int]$r.Frames -lt $minFrames) { $problems.Add("the row $key holds $($r.Frames) steady frames, under the instrument's $minFrames (a short run is not the baseline)") }
         if ([double]$r.ClockSpread -gt $clockMax -or [math]::Abs([double]$r.ClockDrift) -gt $clockMax) { $problems.Add(("the row {0}: the clock moved during its run, a spread of {1}% and a drift of {2}%, beyond {3}%: a throttled run is not the baseline" -f $key, $r.ClockSpread, $r.ClockDrift, $clockMax)) }
         if ($cps -le 0 -or [math]::Abs($cps - $fps * $cells) -gt $unitsTolerance * $cps) { $problems.Add(("the row {0}: {1} cells a second is not {2} frames a second times {3} formula cells" -f $key, (Format-Count $cps), $fps, (Format-Count $cells))) }
+        # Since ENGINE.9 every row carries its memory: the heap's high-water bytes natively, the module's
+        # memory in the browser, a whole number above 0.
+        $memory = 0.0
+        if (-not $r.ContainsKey('Memory') -or -not [double]::TryParse([string]$r.Memory, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$memory) -or $memory -le 0 -or $memory -ne [math]::Floor($memory)) {
+            $problems.Add("the row $key names no memory: since ENGINE.9 each row carries its Memory, the heap's high-water bytes natively and the module's memory in the browser, a whole number above 0, so paste the block tools/bench_frames.ps1 prints")
+        }
         $floorText = 'no floor'
         if ($null -ne $latest -and $null -ne $latest.Floors -and $latest.Floors.ContainsKey($key)) {
             $floor = [double]$latest.Floors[$key]
@@ -480,7 +569,48 @@ function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin,
         $lines.Add(("  {0}: {1} cells a second, {2:N3} frames a second, frame p50 {3} ms; {4}; {5:N1}% of the line of {6}, {7}; the rate of {8} frames a second, {9}; the clock's spread {10}%, drift {11}%" -f
             $key, (Format-Count $cps), $fps, $r.FrameP50, $floorText, (100.0 * $cps / $barCells), (Format-Count $barCells), $toLine, $barFrames, $toRate, $r.ClockSpread, $r.ClockDrift))
     }
+    foreach ($line in @(Get-Slope $byKey)) { $lines.Add($line) }
     return @{ Problems = $problems; Lines = $lines }
+}
+
+# The size ladder's slope read off a baseline's rows (ENGINE.9, decision 8): for each half, life's
+# steady frame and the gun's idle frame, load and memory at each rung over the window's, and the
+# exponent against the formula cells, ln(v16 / v1) / ln(c16 / c1), linear from 0.9 to 1.1; the gun's
+# idle frame at the top rung against the prediction that it costs what it costs on the window, within
+# the floors' margin. Printed, never gated: the floors hold each row.
+function Get-Slope($byKey) {
+    $out = New-Object System.Collections.Generic.List[string]
+    function Shape([double]$e) { if ($e -lt 0.9) { return 'less than linear' } elseif ($e -le 1.1) { return 'linear' } else { return 'more than linear' } }
+    foreach ($half in @('native', 'wasm')) {
+        foreach ($fixture in @('life', 'gun')) {
+            $keys = @("$half $fixture", "$half $fixture-x4", "$half $fixture-x16")
+            if (@($keys | Where-Object { -not $byKey.ContainsKey($_) }).Count -gt 0) { continue }
+            $v = @($keys | ForEach-Object { $byKey[$_] })
+            $cells = @($v | ForEach-Object { [double]$_.Cells })
+            $frame = @($v | ForEach-Object { [double]$_.FrameP50 })
+            $load = @($v | ForEach-Object { [double]$_.Load })
+            $memory = @($v | ForEach-Object { if ($_.ContainsKey('Memory')) { [double]$_.Memory } else { 0.0 } })
+            if (@($cells + $frame + $load | Where-Object { $_ -le 0 }).Count -gt 0) { continue }
+            $span = [math]::Log($cells[2] / $cells[0])
+            $fe = [math]::Log($frame[2] / $frame[0]) / $span
+            $le = [math]::Log($load[2] / $load[0]) / $span
+            $memoryText = 'no memory'
+            if ($memory[0] -gt 0 -and $memory[2] -gt 0) {
+                $me = [math]::Log($memory[2] / $memory[0]) / $span
+                $memoryText = ('the memory {0:N1}, {1:N1} and {2:N1} MB, the exponent {3:N2}, {4}' -f ($memory[0] / 1e6), ($memory[1] / 1e6), ($memory[2] / 1e6), $me, (Shape $me))
+            }
+            $kind = if ($fixture -eq 'gun') { 'idle' } else { 'steady' }
+            $out.Add(('  the size ladder, {0} {1}: the {2} frame {3}, {4} and {5} ms, {6:N2} and {7:N2} times the window''s at {8:N0} and {9:N0} times its cells, the exponent {10:N2}, {11}; the load {12}, {13} and {14} ms, the exponent {15:N2}, {16}; {17}' -f
+                $half, $fixture, $kind, $v[0].FrameP50, $v[1].FrameP50, $v[2].FrameP50, ($frame[1] / $frame[0]), ($frame[2] / $frame[0]), ($cells[1] / $cells[0]), ($cells[2] / $cells[0]), $fe, (Shape $fe),
+                $v[0].Load, $v[1].Load, $v[2].Load, $le, (Shape $le), $memoryText))
+            if ($fixture -eq 'gun') {
+                $ratio = $frame[2] / $frame[0]
+                $verdict = if ($ratio -le 1.0 + $clockMax / 100.0) { 'the prediction, the window''s cost, held within the floors'' margin of {0}%' -f $clockMax } else { 'the prediction, the window''s cost, missed by {0:N0}%, past the floors'' margin of {1}%' -f (($ratio - 1.0) * 100.0), $clockMax }
+                $out.Add(('  the size ladder, {0} gun: at {1:N0} times the window''s cells its idle frame costs {2:N2} times the window''s: {3}' -f $half, ($cells[2] / $cells[0]), $ratio, $verdict))
+            }
+        }
+    }
+    return $out.ToArray()
 }
 
 # The shell a fake runner's script runs under.
@@ -499,8 +629,9 @@ function Invoke-Runner([string]$runner, $paths) {
     return @{ Text = (@($out) -join "`n"); Code = $code }
 }
 
-# The dynamic judgment: the runner's check mode over both fixtures.
-function Test-Runner([string]$runner, $paths, $ceilings) {
+# The dynamic judgment: the runner's check mode over the fixtures, and since ENGINE.9 the rungs of
+# the size ladder their sources climb, each rung's digest held to the baseline's where it names one.
+function Test-Runner([string]$runner, $paths, $ceilings, $rungs = @{}) {
     $problems = New-Object System.Collections.Generic.List[string]
     $lines = New-Object System.Collections.Generic.List[string]
     $run = Invoke-Runner $runner $paths
@@ -511,22 +642,30 @@ function Test-Runner([string]$runner, $paths, $ceilings) {
     $want = @($ceilings.Keys).Count
     if ($run.Text -notmatch ('\(frames-check-done ' + $want + '\)')) { $problems.Add("the runner's check did not finish the $want fixtures: " + $run.Text) }
     foreach ($name in @($ceilings.Keys)) {
-        $m = [regex]::Match($run.Text, '\(frames-check "' + $name + '" \(frames (\d+)\) \(equal (\d+)\) \(cells (\d+)\) \(allocs (\d+)\) \(reallocs (\d+)\)(?: \(facts (\d+)\))?(?: \(conserved (\d+)\))?\)')
+        $m = [regex]::Match($run.Text, '\(frames-check "' + [regex]::Escape($name) + '" \(frames (\d+)\) \(equal (\d+)\) \(cells (\d+)\) \(allocs (\d+)\) \(reallocs (\d+)\) \(memory (\d+)\)(?: \(digest "([0-9A-F]{64})"\))?(?: \(facts (\d+)\))?(?: \(conserved (\d+)\))?\)')
         if (-not $m.Success) { $problems.Add("the runner's check printed no row for the fixture $name"); continue }
         $frames = [int]$m.Groups[1].Value; $equal = [int]$m.Groups[2].Value; $cells = [double]$m.Groups[3].Value
-        $allocs = [long]$m.Groups[4].Value; $reallocs = [long]$m.Groups[5].Value
+        $allocs = [long]$m.Groups[4].Value; $reallocs = [long]$m.Groups[5].Value; $memory = [long]$m.Groups[6].Value
         $by = if ($name -eq 'sand') { 'Sand' } else { 'Life' }
         if ($frames -lt 2 -or $equal -ne $frames) { $problems.Add("$name`: $equal of $frames frames equal to the hand-written $by") }
-        if ($name -eq 'gun' -and -not $m.Groups[6].Success) { $problems.Add('gun: the runner did not hold the gun to its published facts') }
-        if ($name -eq 'sand' -and (-not $m.Groups[7].Success -or [int]$m.Groups[7].Value -ne $frames - 1)) { $problems.Add("sand: the runner did not hold the opening to its grains, each material's count kept in every frame after the first") }
+        if (($name -eq 'gun' -or $name -like 'gun-x*') -and -not $m.Groups[8].Success) { $problems.Add("$name`: the runner did not hold the gun to its published facts") }
+        if ($name -eq 'sand' -and (-not $m.Groups[9].Success -or [int]$m.Groups[9].Value -ne $frames - 1)) { $problems.Add("sand: the runner did not hold the opening to its grains, each material's count kept in every frame after the first") }
         $c = $ceilings[$name]
         $note = ''
         if ($allocs -gt [long]$c.Allocs) { $problems.Add(("{0}: the second frame's allocations rose to {1}, above the ceiling of {2}: a change made the evaluator allocate more" -f $name, (Format-Count $allocs), (Format-Count $c.Allocs))) }
         elseif ($allocs -lt [long]$c.Allocs) { $note += (", under the ceiling of {0}: lower it in this file" -f (Format-Count $c.Allocs)) }
         if ($reallocs -gt [long]$c.Reallocs) { $problems.Add(("{0}: the second frame's reallocations rose to {1}, above the ceiling of {2}" -f $name, (Format-Count $reallocs), (Format-Count $c.Reallocs))) }
         elseif ($reallocs -lt [long]$c.Reallocs) { $note += (", reallocations under the ceiling of {0}: lower it in this file" -f (Format-Count $c.Reallocs)) }
-        $facts = if ($m.Groups[6].Success) { ', the gun''s facts held ' + $m.Groups[6].Value + ' periods' } elseif ($m.Groups[7].Success) { ', every grain kept in ' + $m.Groups[7].Value + ' frames' } else { '' }
-        $lines.Add(("  {0}: {1} of {2} frames equal to the hand-written {3}{4}; the second frame {5} allocations ({6:N4} a cell) and {7} reallocations{8}" -f $name, $equal, $frames, $by, $facts, (Format-Count $allocs), ($allocs / [math]::Max(1, $cells)), (Format-Count $reallocs), $note))
+        if ($memory -gt [long]$c.Memory) { $problems.Add(("{0}: the heap's high-water mark over a load and four frames rose to {1} bytes, above the ceiling of {2}: a change made the grid hold more (ENGINE.9)" -f $name, (Format-Count $memory), (Format-Count $c.Memory))) }
+        elseif ($memory -lt [long]$c.Memory) { $note += (", the heap under its ceiling of {0} bytes: lower it in this file" -f (Format-Count $c.Memory)) }
+        if ($ladderRungs -contains $name) {
+            if (-not $m.Groups[7].Success) { $problems.Add("$name`: the runner printed no digest for the rung, the cartridge the pass built for it") }
+            elseif ($null -ne $rungs -and $rungs.ContainsKey($name) -and [string]$rungs[$name] -ne $m.Groups[7].Value) {
+                $problems.Add(("{0}: the rung is not the cartridge measured: the pass built one whose SHA-256 over LF is {1}, the baseline's {2}; a source, the library or the ladder's definition moved, so measure again" -f $name, $m.Groups[7].Value, $rungs[$name]))
+            }
+        }
+        $facts = if ($m.Groups[8].Success) { ', the gun''s facts held ' + $m.Groups[8].Value + ' periods' } elseif ($m.Groups[9].Success) { ', every grain kept in ' + $m.Groups[9].Value + ' frames' } else { '' }
+        $lines.Add(("  {0}: {1} of {2} frames equal to the hand-written {3}{4}; the second frame {5} allocations ({6:N4} a cell) and {7} reallocations; the heap {8} bytes ({9:N1} a cell){10}" -f $name, $equal, $frames, $by, $facts, (Format-Count $allocs), ($allocs / [math]::Max(1, $cells)), (Format-Count $reallocs), (Format-Count $memory), ($memory / [math]::Max(1, $cells)), $note))
     }
     return @{ Problems = $problems; Lines = $lines }
 }
@@ -563,21 +702,28 @@ if ($Control) {
     $ok = $true
     $verdicts = New-Object System.Collections.Generic.List[string]
     $digests = @{ 'life' = ('A' * 64); 'gun' = ('B' * 64); 'sand' = ('D' * 64) }
-    function Row([string]$runner, [string]$fixture, [double]$cps, [int]$cells = 62964) {
-        return @{ Runner = $runner; Fixture = $fixture; Cells = $cells; Frames = 30; Load = 160.0; FirstFrame = 200.0; FrameP50 = [math]::Round($cells / $cps * 1000, 1); FrameMin = 270.0; FrameMax = 290.0;
+    # the size ladder's rungs, each by its cartridge's digest (ENGINE.9)
+    $controlRungs = @{ 'life-x4' = ('1' * 64); 'life-x16' = ('2' * 64); 'gun-x4' = ('3' * 64); 'gun-x16' = ('4' * 64) }
+    $ladderKeys = @($requiredRows | Where-Object { $_ -like '*-x*' })
+    function Row([string]$runner, [string]$fixture, [double]$cps, [int]$cells = 62964, [double]$memory = 30000000) {
+        $ms = $cells / $cps * 1000
+        return @{ Runner = $runner; Fixture = $fixture; Cells = $cells; Frames = 30; Load = 160.0; Memory = $memory; FirstFrame = 200.0; FrameP50 = $(if ($ms -ge 1) { [math]::Round($ms, 1) } else { [math]::Round($ms, 4) }); FrameMin = 270.0; FrameMax = 290.0;
                   CellsPerSecond = $cps; FramesPerSecond = [math]::Round($cps / $cells, 3); ClockMs = 0.180; ClockSpread = 5.0; ClockDrift = -1.0 }
     }
-    # native life, native gun, native sand, wasm life, wasm gun, wasm sand
-    function Clean { return @((Row 'native' 'life' 225000), (Row 'native' 'gun' 214000), (Row 'native' 'sand' 10600000 126449), (Row 'wasm' 'life' 233000), (Row 'wasm' 'gun' 223000), (Row 'wasm' 'sand' 7700000 126449)) }
+    # the size ladder's rows for one half: life and the gun at four and sixteen times the window's area
+    function Ladder([string]$runner) { return @((Row $runner 'life-x4' 220000 253924 117000000), (Row $runner 'life-x16' 215000 1019844 469000000), (Row $runner 'gun-x4' 210000 253924 117000000), (Row $runner 'gun-x16' 205000 1019844 469000000)) }
+    # native life, native gun, native sand, wasm life, wasm gun, wasm sand, then the ladder's eight
+    function Clean { return @((Row 'native' 'life' 225000), (Row 'native' 'gun' 214000), (Row 'native' 'sand' 10600000 126449), (Row 'wasm' 'life' 233000), (Row 'wasm' 'gun' 223000), (Row 'wasm' 'sand' 7700000 126449)) + @(Ladder 'native') + @(Ladder 'wasm') }
+    # an entry's floors: Life's four, Sand's two when given, and with Sand's the ladder's eight
     function Floors([double]$a, [double]$b, [double]$c, [double]$d, [double]$e = -1, [double]$f = -1) {
         $fl = @{ 'native life' = $a; 'native gun' = $b; 'wasm life' = $c; 'wasm gun' = $d }
-        if ($e -ge 0) { $fl['native sand'] = $e }
+        if ($e -ge 0) { $fl['native sand'] = $e; foreach ($k in $ladderKeys) { $fl[$k] = 200000 } }
         if ($f -ge 0) { $fl['wasm sand'] = $f }
         return $fl
     }
     $history = @(@{ Date = '2026-10-09'; Pin = 'abc1234'; Reason = ''; Floors = (Floors 202000 192000 209000 200000 9500000 6900000) })
     $controlEnvironment = 'a control machine | power throttling opted out: the runner yes, 25 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 25 browser process(es)'
-    function Judge($rows, $hist, [string]$currentPin, $current, [string]$environment = $controlEnvironment, $same = @{}, $rowsOf = @{}) { return Test-Baseline $rows '2026-10-09' $environment 'abc1234' $currentPin $digests $current $hist $same $rowsOf }
+    function Judge($rows, $hist, [string]$currentPin, $current, [string]$environment = $controlEnvironment, $same = @{}, $rowsOf = @{}, $rungs = $controlRungs) { return Test-Baseline $rows '2026-10-09' $environment 'abc1234' $currentPin $digests $current $hist $same $rowsOf $rungs }
     function Expect([string]$name, $result, [string]$want) {
         $hit = @($result.Problems | Where-Object { $_ -like "*$want*" }).Count
         if ($want -eq '') {
@@ -626,6 +772,13 @@ if ($Control) {
     Expect 'a run not opted out of the throttling' (Judge (Clean) $history 'abc1234' $digests $notOptedOut) 'opted out of Windows'
     $anyCore = $controlEnvironment.Replace(' | ' + $coresPart, '')
     Expect 'a run not on the performance cores' (Judge (Clean) $history 'abc1234' $digests $anyCore) 'performance cores'
+    # The size ladder (ENGINE.9): a row's memory, a rung's row, a rung's digest.
+    $noMemory = Clean; $noMemory[9].Remove('Memory')
+    Expect 'a row without its memory' (Judge $noMemory $history 'abc1234' $digests) 'names no memory'
+    $clean = @(Clean)
+    Expect 'a rung''s row missing' (Judge @($clean[0..($clean.Count - 2)]) $history 'abc1234' $digests) 'wasm gun-x16 is missing'
+    $fewerRungs = @{ 'life-x4' = ('1' * 64); 'life-x16' = ('2' * 64); 'gun-x4' = ('3' * 64) }
+    Expect 'a rung the baseline names no digest for' (Judge (Clean) $history 'abc1234' $digests $controlEnvironment @{} @{} $fewerRungs) 'no SHA-256 for the rung gun-x16'
 
     # The history, read from text as the commit's copy of this file is read.
     $entryA = "@{ Date = '2026-10-09'; Pin = 'abc1234'; Reason = ''; Floors = @{ 'native life' = 202000; 'wasm life' = 209000 } }"
@@ -647,19 +800,30 @@ if ($Control) {
     $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('alonzo_frame_floors_' + [System.IO.Path]::GetRandomFileName())
     New-Item -ItemType Directory -Path $tmp | Out-Null
     try {
-        function CheckRow([string]$name, [long]$allocs, [string]$facts, [int]$cells = 62964) {
-            return ('(frames-check "{0}" (frames 4) (equal 4) (cells {4}) (allocs {1}) (reallocs {2}){3})' -f $name, $allocs, $allocationCeilings[$name].Reallocs, $facts, $cells)
+        function CheckRow([string]$name, [string]$facts, [int]$cells = 62964, [long]$plus = 0, [long]$heapPlus = 0, [string]$digest = '') {
+            $c = $allocationCeilings[$name]
+            $d = if ($digest -ne '') { $digest } elseif ($controlRungs.ContainsKey($name)) { $controlRungs[$name] } else { '' }
+            $digestPart = if ($d -ne '') { ' (digest "' + $d + '")' } else { '' }
+            return ('(frames-check "{0}" (frames 4) (equal 4) (cells {1}) (allocs {2}) (reallocs {3}) (memory {4}){5}{6})' -f $name, $cells, ($c.Allocs + $plus), $c.Reallocs, ($c.Memory + $heapPlus), $digestPart, $facts)
         }
-        $lifeRow = CheckRow 'life' $allocationCeilings['life'].Allocs ''
-        $gunRow = CheckRow 'gun' $allocationCeilings['gun'].Allocs ' (facts 24)'
-        $sandRow = CheckRow 'sand' $allocationCeilings['sand'].Allocs ' (conserved 3)' 126449
+        function Done($rows) { return @($rows) + @('(frames-check-done ' + @($rows).Count + ')') }
+        $lifeRow = CheckRow 'life' ''
+        $lifeX4 = CheckRow 'life-x4' '' 253924
+        $lifeX16 = CheckRow 'life-x16' '' 1019844
+        $gunRow = CheckRow 'gun' ' (facts 24)'
+        $gunX4 = CheckRow 'gun-x4' ' (facts 24)' 253924
+        $gunX16 = CheckRow 'gun-x16' ' (facts 24)' 1019844
+        $sandRow = CheckRow 'sand' ' (conserved 3)' 189215
         $fakes = @(
-            @{ Name = 'a clean runner'; Lines = @($lifeRow, $gunRow, $sandRow, '(frames-check-done 3)'); Exit = 0; Want = '' },
+            @{ Name = 'a clean runner'; Lines = (Done @($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow)); Exit = 0; Want = '' },
             @{ Name = 'a runner whose frame differs'; Lines = @('(frames-differ "life" (frame 3) (cell "B5") (engine 1) (reference 0))'); Exit = 1; Want = 'check failed' },
-            @{ Name = 'a runner allocating more'; Lines = @((CheckRow 'life' ($allocationCeilings['life'].Allocs + 1) ''), $gunRow, $sandRow, '(frames-check-done 3)'); Exit = 0; Want = 'rose to' },
-            @{ Name = 'a runner without the gun''s facts'; Lines = @($lifeRow, $gunRow.Replace(' (facts 24)', ''), $sandRow, '(frames-check-done 3)'); Exit = 0; Want = 'published facts' },
-            @{ Name = 'a runner without Sand''s grains'; Lines = @($lifeRow, $gunRow, $sandRow.Replace(' (conserved 3)', ''), '(frames-check-done 3)'); Exit = 0; Want = 'to its grains' },
-            @{ Name = 'a runner leaving out a fixture'; Lines = @($lifeRow, $gunRow, '(frames-check-done 2)'); Exit = 0; Want = 'no row for the fixture sand' }
+            @{ Name = 'a runner allocating more'; Lines = (Done @((CheckRow 'life' '' 62964 1), $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow)); Exit = 0; Want = 'rose to' },
+            @{ Name = 'a runner whose heap passes its ceiling'; Lines = (Done @($lifeRow, $lifeX4, (CheckRow 'life-x16' '' 1019844 0 1), $gunRow, $gunX4, $gunX16, $sandRow)); Exit = 0; Want = 'high-water mark over a load and four frames rose to' },
+            @{ Name = 'a runner without the gun''s facts'; Lines = (Done @($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16.Replace(' (facts 24)', ''), $sandRow)); Exit = 0; Want = 'published facts' },
+            @{ Name = 'a runner without Sand''s grains'; Lines = (Done @($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow.Replace(' (conserved 3)', ''))); Exit = 0; Want = 'to its grains' },
+            @{ Name = 'a runner leaving out a fixture'; Lines = (Done @($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16)); Exit = 0; Want = 'no row for the fixture sand' },
+            @{ Name = 'a runner leaving out a rung'; Lines = (Done @($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $sandRow)); Exit = 0; Want = 'no row for the fixture gun-x16' },
+            @{ Name = 'a runner whose rung is another cartridge'; Lines = (Done @($lifeRow, $lifeX4, $lifeX16, $gunRow, (CheckRow 'gun-x4' ' (facts 24)' 253924 0 0 ('9' * 64)), $gunX16, $sandRow)); Exit = 0; Want = 'is not the cartridge measured' }
         )
         $i = 0
         foreach ($f in $fakes) {
@@ -667,28 +831,28 @@ if ($Control) {
             $path = Join-Path $tmp ("fake$i.ps1")
             $body = (@($f.Lines | ForEach-Object { "Write-Output '" + ($_ -replace "'", "''") + "'" }) -join "`r`n") + "`r`nexit " + $f.Exit + "`r`n"
             [System.IO.File]::WriteAllText($path, $body, (New-Object System.Text.UTF8Encoding($false)))
-            Expect $f.Name (Test-Runner $path @('life.vla', 'gun.vla', 'sand.vla') $allocationCeilings) $f.Want
+            Expect $f.Name (Test-Runner $path @('life.vla', 'gun.vla', 'sand.vla') $allocationCeilings $controlRungs) $f.Want
         }
     } finally {
         Remove-Item -Recurse -Force -LiteralPath $tmp -ErrorAction SilentlyContinue
     }
     foreach ($v in $verdicts) { Write-Output ('control: ' + $v) }
     if ($ok) {
-        Write-Output ("OK: control: the judgment passes the clean table, a reasoned lowering, a row entering the history, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows, and fails seventeen mutants of the table; the history passes an entry added and a history unchanged, and fails an entry pasted over and one edited in place; over six fake runners it passes the clean one and fails five, each for its own reason")
+        Write-Output ("OK: control: the judgment passes the clean table, a reasoned lowering, a row entering the history, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows, and fails twenty mutants of the table; the history passes an entry added and a history unchanged, and fails an entry pasted over and one edited in place; over nine fake runners it passes the clean one and fails eight, each for its own reason")
         exit 0
     }
     Write-Output 'FAIL: control: the judgment did not behave as the header says'
     exit 1
 }
 
-Write-Output '=== THE FRAME FLOORS: LIFE''S AND SAND''S CELLS A SECOND, NATIVELY AND IN THE BROWSER, HELD TO FLOORS THAT NEVER GO DOWN (CART.1, CART.2) ==='
+Write-Output '=== THE FRAME FLOORS: LIFE''S, THE SIZE LADDER''S AND SAND''S CELLS A SECOND, NATIVELY AND IN THE BROWSER, HELD TO FLOORS THAT NEVER GO DOWN (CART.1, CART.2, ENGINE.9) ==='
 $problems = New-Object System.Collections.Generic.List[string]
 $currentDigests = @{}
 foreach ($name in $fixtureFiles.Keys) {
     $path = Join-Path $Root $fixtureFiles[$name]
     if (Test-Path -LiteralPath $path) { $currentDigests[$name] = Get-LfDigest $path } else { $problems.Add("the fixture $($fixtureFiles[$name]) is missing") }
 }
-$static = Test-Baseline $baseline $baselineDate $baselineEnvironment $baselinePin (Get-Pin $Root) $baselineFixtures $currentDigests $floorHistory $sameSource $sameRows
+$static = Test-Baseline $baseline $baselineDate $baselineEnvironment $baselinePin (Get-Pin $Root) $baselineFixtures $currentDigests $floorHistory $sameSource $sameRows $baselineRungs
 if ($baselineDate -ne '') { Write-Output ("  measured {0}: {1}" -f $baselineDate, $baselineEnvironment) }
 $static.Lines | ForEach-Object { Write-Output $_ }
 foreach ($p in $static.Problems) { $problems.Add($p) }
@@ -716,19 +880,19 @@ if ($Runner -eq '') {
     if (Test-Path -LiteralPath $candidate) { $Runner = $candidate }
 }
 if ($Runner -eq '') {
-    Write-Output '  the runner: SKIPPED, none built (cargo build --release --example frames); the frames and the allocation ceilings are held where it is'
+    Write-Output '  the runner: SKIPPED, none built (cargo build --release --example frames); the frames, the allocation and heap ceilings and the rungs'' digests are held where it is'
 } elseif (-not (Test-Path -LiteralPath $Runner)) {
     $problems.Add("the runner $Runner does not exist")
 } else {
     Write-Output ("  the runner: {0}, built {1}, in its check mode" -f $Runner, (Get-Item -LiteralPath $Runner).LastWriteTime.ToString('yyyy-MM-dd HH:mm'))
     $paths = @($fixtureFiles.Values | ForEach-Object { Join-Path $Root $_ })
-    $dyn = Test-Runner $Runner $paths $allocationCeilings
+    $dyn = Test-Runner $Runner $paths $allocationCeilings $baselineRungs
     $dyn.Lines | ForEach-Object { Write-Output $_ }
     foreach ($p in $dyn.Problems) { $problems.Add($p) }
 }
 Write-Output ''
 if ($problems.Count -eq 0) {
-    Write-Output '=== CHECK: clean - the six rows at or above their floors, the pin and the fixtures the measured ones, and, with a runner, every frame equal and every count under its ceiling ==='
+    Write-Output '=== CHECK: clean - the fourteen rows at or above their floors, the pin, the fixtures and the rungs the measured ones, and, with a runner, every frame equal and every count under its ceiling ==='
     exit 0
 }
 Write-Output "=== CHECK: $($problems.Count) problem(s) ==="

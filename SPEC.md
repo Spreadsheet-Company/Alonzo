@@ -453,6 +453,12 @@ The generality the owner's principle asks for, at the row, the column and the sh
 - What a picture costs, the pass natively and in the page: a sprite a millisecond or two, PICO-8's 128 by 128 sheet about a tenth of a second, and the Screen whole, 320 by 200, about half a second, its 64,000 cells loading in a tenth more. A chain counts its links, each application and each `begin` a macro made, and the other forms of such a `begin` are chains of their own, so a picture stops at 2,499 rows, or at a row of 2,499 cells.
 - The four seconds measured at 0.8.1 for a walk over the Screen's 64,000, in the list above, are 0.14 s at 0.9.2, where a walk that hands its list on whole costs its length (Frazaro's `VLA.2`); one that splices its rest still copies it at every step.
 
+(*Noted 2026-10-14*, `ENGINE.9`, the size ladder; *measurement* over `vla-lang` 0.9.2. `REARVIEW.md` holds the scoping, its eleven decisions and the build.)
+- A source states a parameter as a macro with its value, and a door builds the source at another value. The pass gains one function, `expand_with(source, path, files, definitions)`, whose definitions, VLA text, stand after the source's last line. Every `defmacro` is defined before any form expands, and the language's expander keeps a name's last definition, so a macro the definitions define overwrites the source's of the same name wherever the source calls it.
+- The pass still knows no macro by name. The page does the same act by appending the same text to the source before `alonzo_expand`, whose arguments are unchanged; the empty text is the pass itself; and a refusal of a definition's form stands on its line, counted past the source's last.
+- A parameter that an expand-time primitive needs is handed on, as the kit's walks hand on what they find, since a macro's call is no argument of a primitive: `life.source.vla` and `gun.source.vla` state their board as `(board-size then args...)`, which becomes `(then 320 200 args...)`, and write their rule over the kit's `interior`, which computes the interior's address from the size. Both expand to their bytes.
+- The size ladder builds both at 640 by 400 and at 1280 by 800 by a later `board-size` that writes a still Camera at the board's top-left before handing the size on, the window staying the manifest's (§10). This is the size knob `CART.9`, `CART.11` and `CART.12` name.
+
 ## 8. The host
 
 ### 8.1 The exports
@@ -511,7 +517,7 @@ A finished console states its limits rather than letting them be discovered (`CH
 | a sheet's name | 26 characters, so its twin fits 31 | Excel's rule |
 | a cartridge file | 16 MiB | a 32-bit memory's comfort; a 64,000-cell Screen as rows is about 3 MB |
 | cells per sheet | Excel's, 1,048,576 rows by 16,384 columns | the model's own constants (*shelf*) |
-| cells a grid holds | 1,048,576 beside its twins, refused `grid-too-many-cells` | sixteen Screens of 320 by 200, so that one range row cannot ask for the seventeen billion of Excel's sheet (*added 2026-10-09*, `ENGINE.1`'s second slice, the language's `CELLS`, `KERNEL.22`) |
+| cells a grid holds | 1,048,576 beside its twins, refused `grid-too-many-cells` | sixteen Screens of 320 by 200, so that one range row cannot ask for the seventeen billion of Excel's sheet (*added 2026-10-09*, `ENGINE.1`'s second slice, the language's `CELLS`, `KERNEL.22`); the engine's number for this version, and not a placeholder (*restated 2026-10-14*, `ENGINE.9`'s decision 9: the size ladder's top rung, Life on a board of 1280 by 800, holds 1,019,973 cells and needs 469.5 MB of heap natively and 384.9 MB of module memory, about 460 and 377 bytes a formula cell, in proportion to the cells, as its load and its frame are; a raise is asked of Frazaro when a cartridge needs one, with that slope in hand) |
 | cells a plane window holds | 1,048,576, refused `view-window-too-large` | the same number, a view of a window larger than a grid can hold (*added 2026-10-09*, as above) |
 | includes nested in a source | 16 | the reference's own cap, refused `vla-include-too-deep` (§7.8; *added 2026-10-10*, version 3) |
 | a macro's applications in one chain | 5,000 | the language's expander, refused `vla-macro-self-expansion-limit`, so that a macro walks dozens of items in one call and never thousands (§7.8) |

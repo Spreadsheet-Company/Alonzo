@@ -8,7 +8,7 @@
 ; previous frame, the twin sheet Screen.last; the border stays empty, which the plane
 ; reads as 0, dead. The format is SPEC.md section 7; the shape is its Appendix A.
 
-; The library whose macros this source calls, sheets, palette and first-frame among them:
+; The library whose macros this source calls, sheets, palette and interior among them:
 ; a file like any other, which a cartridge of your own may copy, change, outgrow or leave
 ; out.
 (include "../common.vla")
@@ -48,10 +48,22 @@
   ("#FF55FF" "light magenta")       ; 14
   ("#FFFF55" "yellow"))             ; 15
 
-; The rule, one row over the interior B2:LG199, which the library's first-frame writes:
-; the first frame's value, then the rule every later frame. Every reference is relative
-; but the Clock's, so the row is one shape over 62,964 cells, the shape KERNEL.20
-; vectorizes.
+; The board: the Screen's cells the rule covers, 320 by 200, the window's own size, so
+; that the plane draws all of it. It is this source's one parameter (ENGINE.9), a macro
+; that hands the width and the height on, since a macro's call is no argument of the
+; expand-time arithmetic: (board-size interior ...) becomes (interior 320 200 ...). A
+; door that hands the pass a later definition of it builds this source on another
+; board, and the same rule covers it: the engine's size ladder builds it so at 640 by
+; 400 and at 1280 by 800, each under a still Camera at the board's top-left, since the
+; window stays the manifest's (SPEC.md sections 7.8 and 10).
+(defmacro (board-size then & args)
+  "the board, 320 by 200 cells, handed on: (then 320 200 args...)"
+  (quasiquote ((unquote then) 320 200 (unquote-splicing args))))
+
+; The rule, one row over the board's interior, B2:LG199 on this board, which the
+; library's interior writes through first-frame: the first frame's value, then the rule
+; every later frame. Every reference is relative but the Clock's, so the row is one
+; shape over 62,964 cells, the shape KERNEL.20 vectorizes.
 ;   The first frame, Clock!B1 = 1, is a soup from the seed. Two linear forms of the seed,
 ;   ROW() and COLUMN() are reduced modulo the prime P = 2^26 - 5 = 67108859 and
 ;   multiplied, h = MOD(a*b, P), and a cell is alive when MOD(h*h, P) < 25165822, three
@@ -63,9 +75,8 @@
 ;   degrees of freedom against 300.7 without the square).
 ;   Every later frame is Conway's rule over the previous frame: a cell is alive when its
 ;   eight neighbors hold three live cells, or two and it was alive itself.
-(first-frame                        ; the rule, one fill over the interior:
-  "Screen"                          ;   the sheet it writes
-  "B2:LG199"                        ;   the interior; the border stays empty, dead
+(board-size interior                ; the rule, one fill over the board's interior:
+  "Screen"                          ;   the sheet it writes; the border stays empty, dead
   (&expand                          ;   the first frame: the soup, alive where h*h is under three eighths of P
     "IF(MOD(MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
     "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)"

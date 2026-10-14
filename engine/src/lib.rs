@@ -17,7 +17,9 @@
 //! example, `examples/frames.rs`, is the native runner of the frame floors
 //! (`CART.1`): Life's soup and the glider gun stepped through `Cartridge`,
 //! every frame held to a Life written by hand, timed, and in its check mode
-//! the allocations of a frame counted. The
+//! the allocations of a frame counted; since `ENGINE.9` each also at four
+//! and sixteen times the window's area, built by the pass from its source
+//! with a larger board, and the heap's bytes counted beside. The
 //! host shim that drives the module is `web/host.js`; what it holds in the
 //! order the roadmap lays it: the Screen device over the view record
 //! (`KERNEL.5`, laid here), the loop (`ENGINE.1`), the frame path
@@ -47,3 +49,15 @@ mod sand;
 /// stacking game's frames to, compiled for the tests alone.
 #[cfg(test)]
 mod kairos;
+
+/// SHA-256 in upper-case hex, the digest a replay names its cartridge by,
+/// compiled for the tests alone (`AD-5`); the native runner includes the
+/// same file by its path, to name each rung of the size ladder (`ENGINE.9`).
+#[cfg(test)]
+mod sha256;
+
+/// The size ladder's rungs and the definition that builds a source on one
+/// (`ENGINE.9`), compiled for the tests alone; the native runner includes
+/// the same file by its path.
+#[cfg(test)]
+mod ladder;

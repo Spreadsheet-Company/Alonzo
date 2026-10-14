@@ -5,9 +5,10 @@
 ; its own beside them, or include a library of its own instead. They are examples, to
 ; be read, copied, changed and outgrown. Since KIT.1 they hold the kit's first verbs,
 ; the patterns two cartridges wrote alike by hand, or one wrote as the page spells it;
-; since KIT.2 the picture, a string a row of cells and a character a cell; and since
-; CART.4, the stacking game Kairos, the verbs every and since, the look map, a still
-; Camera and the Write sheet's row.
+; since KIT.2 the picture, a string a row of cells and a character a cell; since CART.4,
+; the stacking game Kairos, the verbs every and since, the look map, a still Camera and
+; the Write sheet's row; and since ENGINE.9 interior, the rule over a board's interior,
+; whose size a source states once, as a parameter a door may give another value.
 ;
 ; The rules each macro here keeps, which are the language's:
 ;   - Template macros only. A parameter is replaced by the form the caller passes; no
@@ -238,7 +239,7 @@
   (quasiquote (formula (unquote sheet) (unquote (address-expand row (+expand column 1))) (&expand "=IF(" (unquote when) "," (unquote address) ",\"\")")))
   (quasiquote (formula (unquote sheet) (unquote (address-expand row (+expand column 2))) (&expand "=" (unquote what)))))
 
-; ---- the verbs: the first frame, a press, a count, a hold, the dice, every, since ----
+; ---- the verbs: first frame, interior, press, count, hold, dice, every, since ---------
 ; Each verb writes one formula row, one shape filled over a range, which the language
 ; computes as a run (SPEC.md section 2's rules). The sheet comes first, so that on names
 ; it once, then the range, then what the verb means, in the order its formula reads it.
@@ -253,6 +254,18 @@
 (defmacro (first-frame sheet range start rule)
   "the first frame's value, then the rule every later frame: =IF(Clock!$B$1=1,start,rule)"
   (quasiquote (formula (unquote sheet) (unquote range) (&expand "=IF(Clock!$B$1=1," (unquote start) "," (unquote rule) ")"))))
+
+; A board's interior (ENGINE.9): first-frame over every cell of a board but its border,
+; one cell wide, which stays empty and reads as 0. The board's size comes first, its
+; width and its height in cells, and not the sheet, so that a source states its board
+; once, as a parameter that hands the size on: (board-size interior sheet start rule)
+; becomes (interior 320 200 sheet start rule). A door builds the source on a larger board
+; by handing the pass a later definition of the parameter (SPEC.md section 7.8), and the
+; same rule covers it. Its sheet is no first argument, so on cannot name it.
+
+(defmacro (interior width height sheet start rule)
+  "first-frame over a board width by height cells, less its border: B2 to the cell before its last row and column"
+  (quasiquote (first-frame (unquote sheet) (unquote (&expand "B2:" (address-expand (-expand height 1) (-expand width 1)))) (unquote start) (unquote rule))))
 
 (defmacro (pressed sheet range button)
   "1 in the frame a button goes down and 0 otherwise, its cell 1 this frame and 0 the last, the rising edge (SPEC.md section 3.3): =IF(AND(button=1,its twin=0),1,0)"

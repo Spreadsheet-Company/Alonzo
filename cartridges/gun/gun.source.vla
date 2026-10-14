@@ -8,7 +8,7 @@
 ; pattern off the Seed sheet where life.vla computes a soup. The border stays empty,
 ; which the plane reads as 0, dead. The format is SPEC.md section 7.
 
-; The library whose macros this source calls: sheets, palette, picture and first-frame.
+; The library whose macros this source calls: sheets, palette, picture and interior.
 (include "../common.vla")
 
 (cartridge "gun"
@@ -67,17 +67,25 @@
   "...........1...1...................."
   "............11......................")
 
-; The rule, one row over the interior B2:LG199, which the library's first-frame writes,
-; every reference relative but the Clock's, so the row is one shape over 62,964 cells, as
-; life.vla's.
+; The board, as life.source.vla's: the Screen's cells the rule covers, 320 by 200, the
+; window's own size, and this source's one parameter (ENGINE.9). The engine's size
+; ladder builds this source on boards of 640 by 400 and 1280 by 800 by handing the pass
+; a later definition of it, each under a still Camera at the board's top-left, and the
+; gun stands at the same cells on every board.
+(defmacro (board-size then & args)
+  "the board, 320 by 200 cells, handed on: (then 320 200 args...)"
+  (quasiquote ((unquote then) 320 200 (unquote-splicing args))))
+
+; The rule, one row over the board's interior, B2:LG199 on this board, which the
+; library's interior writes through first-frame, every reference relative but the
+; Clock's, so the row is one shape over 62,964 cells, as life.vla's.
 ;   The first frame, Clock!B1 = 1, reads the Seed's cell at the same address: 1 where the
 ;   gun stands, and an empty cell elsewhere, which the formula's value settles to 0.
 ;   Every later frame is Conway's rule over the previous frame, life.vla's word for word:
 ;   a cell is alive when its eight neighbors hold three live cells, or two and it was
 ;   alive itself.
-(first-frame                        ; the rule, one fill over the interior:
-  "Screen"                          ;   the sheet it writes
-  "B2:LG199"                        ;   the interior; the border stays empty, dead
+(board-size interior                ; the rule, one fill over the board's interior:
+  "Screen"                          ;   the sheet it writes; the border stays empty, dead
   "Seed!B2"                         ;   the first frame: the Seed's cell at the same address
   (&expand                          ;   every later frame: Conway's rule over the previous frame,
     "IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,"                    ;   alive with three live neighbors,

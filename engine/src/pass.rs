@@ -316,6 +316,36 @@ pub fn expand(
     Ok(Expansion { text: out, rows })
 }
 
+/// The pass with a door's definitions (`ENGINE.9`; `SPEC.md` section 7.8,
+/// the note of 2026-10-14): `definitions`, VLA text, stands after the
+/// source's last line. Every `defmacro` is defined before any form expands,
+/// and the language's expander keeps a name's last definition, so a macro
+/// the definitions define overwrites the source's of the same name wherever
+/// the source calls it. A source states a parameter as a macro with its
+/// value, and a door builds it at another: the size ladder builds Life and
+/// the gun on larger boards by their `board-size` so. The pass still knows
+/// no macro by name. The page does the same act by appending the same text
+/// to the source before the module's `alonzo_expand`, and the empty text is
+/// the pass itself. A refusal of a definition's form stands on its line
+/// counted past the source's last.
+pub fn expand_with(
+    source: &str,
+    path: &str,
+    files: &[(String, String)],
+    definitions: &str,
+) -> Result<Expansion, LineRefusal> {
+    if definitions.is_empty() {
+        return expand(source, path, files);
+    }
+    let mut joined = String::with_capacity(source.len() + definitions.len() + 2);
+    joined.push_str(source);
+    if !source.is_empty() && !source.ends_with('\n') {
+        joined.push_str("\r\n");
+    }
+    joined.push_str(definitions);
+    expand(&joined, path, files)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -478,6 +508,45 @@ mod tests {
         assert_eq!(r.refusal.id, "cart-manifest-invalid");
     }
 
+    /// A door's definitions (`ENGINE.9`, decision 2): a definition standing
+    /// after the source's own gives the source's parameter another value
+    /// wherever the source calls it; the empty text is the pass itself; a
+    /// source with no line end after its last line still has the
+    /// definitions on lines of their own; and a refusal of a definition's
+    /// form stands on its line counted past the source's last.
+    #[test]
+    fn a_door_s_definition_gives_a_source_s_parameter_another_value() {
+        let source = format!(
+            "{MANIFEST}(defmacro (size then & args) (quasiquote ((unquote then) 2 3 (unquote-splicing args))))\n(defmacro (corner width height sheet) (quasiquote (cell (unquote sheet) (unquote (address-expand height width)) 1)))\n(size corner \"S\")\n"
+        );
+        let own = expand_with(&source, "t.source.vla", &[], "").expect("expands");
+        assert_eq!(own, expand(&source, "t.source.vla", &[]).expect("expands"));
+        assert!(
+            lf(&own.text).ends_with("(cell \"S\" \"B3\" 1)\n"),
+            "{}",
+            own.text
+        );
+        let wider =
+            "(defmacro (size then & args) (quasiquote ((unquote then) 4 5 (unquote-splicing args))))\n";
+        let e = expand_with(&source, "t.source.vla", &[], wider).expect("expands");
+        assert!(
+            lf(&e.text).ends_with("(cell \"S\" \"D5\" 1)\n"),
+            "{}",
+            e.text
+        );
+        assert_eq!(e.rows, 1);
+        let unended = source.trim_end();
+        assert_eq!(
+            expand_with(unended, "t.source.vla", &[], wider).expect("expands"),
+            e
+        );
+        let lines = source.lines().count() as u32;
+        let refused = format!("{wider}(corner 1)\n");
+        let r = expand_with(&source, "t.source.vla", &[], &refused).expect_err("arity");
+        assert_eq!(r.refusal.id, "vla-macro-arity");
+        assert_eq!(r.line, lines + 2);
+    }
+
     /// The golden (decision 28): every cartridge of the repository that has
     /// a source is the pass's expansion of it, byte for byte over LF, and
     /// loads. Read off the folder at run time, so a cartridge added with
@@ -541,6 +610,65 @@ mod tests {
         assert!(held >= 6, "{held} cartridges held to their sources");
     }
 
+    /// The size ladder (`ENGINE.9`, decisions 1 to 3): Life's and the gun's
+    /// sources state their board as `board-size`, and at their own value
+    /// they expand to the committed cartridges, with no Camera; handed the
+    /// ladder's definition after their own, the same rule covers a larger
+    /// Screen's interior under a still Camera, four rows more, and the board
+    /// of four times the window's area loads with a formula a cell of its
+    /// interior. The board of sixteen is loaded by the native runner of the
+    /// floors, in release, wherever it runs its check; here its rows alone
+    /// are read. Read off the folder at run time, as the golden above is.
+    #[test]
+    fn the_ladder_builds_life_and_the_gun_on_larger_boards() {
+        use crate::ladder;
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
+        let Ok(library) = std::fs::read_to_string(root.join("cartridges").join("common.vla"))
+        else {
+            eprintln!("no cartridges/ beside the crate: the ladder's sources are the repository's");
+            return;
+        };
+        let fs = files(&[("cartridges/common.vla", library.as_str())]);
+        let camera = "(cell \"Camera\" \"A1\" \"row\")\n(cell \"Camera\" \"B1\" 1)\n(cell \"Camera\" \"A2\" \"column\")\n(cell \"Camera\" \"B2\" 1)\n";
+        for name in ["life", "gun"] {
+            let read = |file: &str| {
+                std::fs::read_to_string(root.join("cartridges").join(name).join(file))
+                    .expect("the file reads")
+            };
+            let path = format!("cartridges/{name}/{name}.source.vla");
+            let source = read(&format!("{name}.source.vla"));
+            assert!(ladder::climbs(&source), "{path} states no board-size");
+            let own = expand_with(&source, &path, &fs, "").expect("expands");
+            assert_eq!(lf(&own.text), lf(&read(&format!("{name}.vla"))));
+            assert!(!own.text.contains("\"Camera\""), "{name} has a Camera");
+            for (times, w, h) in ladder::RUNGS {
+                let e = expand_with(&source, &path, &fs, &ladder::definition(w, h)).unwrap_or_else(
+                    |r| panic!("{name} x{times}: line {}: {}", r.line, r.refusal.text),
+                );
+                let text = lf(&e.text);
+                let interior = format!(
+                    "(formula \"Screen\" \"B2:{}{}\" ",
+                    ladder::letters(w - 1),
+                    h - 1
+                );
+                assert!(text.contains(&interior), "{name} x{times}: no {interior}");
+                assert!(text.contains(camera), "{name} x{times}: no still Camera");
+                let (ww, wh) = ladder::WINDOW;
+                let window = format!("  (screen plane {ww} {wh})\n");
+                assert!(text.contains(&window), "{name} x{times}: the window moved");
+                assert_eq!(e.rows, own.rows + 4, "{name} x{times}");
+                if times == 4 {
+                    let c = Cartridge::load(&e.text, "x4.vla", e.text.len()).unwrap_or_else(|r| {
+                        panic!("{name} x4: line {}: {}", r.line, r.refusal.text)
+                    });
+                    assert_eq!(c.machine().formulas().0, (w - 2) * (h - 2), "{name} x4");
+                }
+            }
+        }
+        assert_eq!(ladder::letters(639), "XO");
+        assert_eq!(ladder::letters(1279), "AWE");
+    }
+
     /// The kit's verbs (`KIT.1`, decision 9 of its scoping in `REARVIEW.md`):
     /// a source over the repository's own library calls each macro the kit
     /// added, at its edges, and each call is held to the rows its docstring
@@ -555,7 +683,8 @@ mod tests {
     /// alone. Since `CART.4` (decision 10 of its second scoping) it holds the
     /// five verbs the stacking game brought: `every` over a count and over
     /// the Clock, `since` over a cell and a range, `put` alone and inside
-    /// `on`, `looks` and a still `camera`.
+    /// `on`, `looks` and a still `camera`. Since `ENGINE.9`, `interior`,
+    /// the verb the size ladder builds Life and the gun over.
     #[test]
     fn the_kit_s_verbs_write_the_rows_they_name() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
@@ -653,6 +782,21 @@ mod tests {
             (
                 r#"(first-frame "Screen" "C2" (&expand "1+" "2") (&expand "Screen.last!" "C2"))"#,
                 &[r#"(formula "Screen" "C2" "=IF(Clock!$B$1=1,1+2,Screen.last!C2)")"#],
+            ),
+            // ENGINE.9's verb: first-frame over a board's interior, its range
+            // computed from the board's size: the window's, the smallest
+            // board with an interior, and the size ladder's top rung.
+            (
+                r#"(interior 320 200 "Screen" "Seed!B2" "0")"#,
+                &[r#"(formula "Screen" "B2:LG199" "=IF(Clock!$B$1=1,Seed!B2,0)")"#],
+            ),
+            (
+                r#"(interior 3 3 "Screen" "1" (&expand "Screen.last!" "B2"))"#,
+                &[r#"(formula "Screen" "B2:B2" "=IF(Clock!$B$1=1,1,Screen.last!B2)")"#],
+            ),
+            (
+                r#"(interior 1280 800 "Screen" "0" "1")"#,
+                &[r#"(formula "Screen" "B2:AWE799" "=IF(Clock!$B$1=1,0,1)")"#],
             ),
             (
                 r#"(pressed "Score" "C1:C10" "Input!B1")"#,

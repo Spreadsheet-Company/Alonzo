@@ -82,9 +82,12 @@
   glider gun, and since CART.2 Sand's opening, synchronously at the page's load, each
   frame timed alone and held to the page's own Life or Sand (sandStep, the page's
   sand by hand), or, where a frame reads under twenty steps of the page's
-  clock, the frames timed in runs, each run's last held and every frame held on a
-  second instance stepped untimed (CART.1, 2026-10-10), and the clock read before
-  each fixture's frames and after them (CART.1, 2026-10-12), printed into
+  clock, the frames timed in runs, back to back, the last held and every frame held on a
+  second instance stepped untimed (CART.1, 2026-10-10; ENGINE.9), and the clock read before
+  each fixture's frames and after them (CART.1, 2026-10-12); since ENGINE.9 Life and
+  the gun at four and sixteen times the window's area too, the size ladder, each
+  built here by the pass from its source with a larger board and held over its
+  whole board, with the module's memory a row; printed into
   <pre id="frames"> as the rows tools/check_frame_floors.ps1 holds;
   tools/bench_frames.ps1 runs it under headless Chrome on the owner's machine with
   Windows' power throttling opted out, the step's cost needing no display.
@@ -1216,30 +1219,32 @@
   }
   // Life by hand, the reference the engine's module is held to: the cartridge's soup, its formula's
   // own arithmetic, exact in doubles for any seed below 2^31, then Conway's rule over the previous
-  // generation with the border dead; a plane of 320 by 200 bytes, row by row.
+  // generation with the border dead; a plane of 320 by 200 bytes, row by row, or since ENGINE.9 of a
+  // board's width and height, a rung of the size ladder's.
   var LIFE_W = 320, LIFE_H = 200;
-  function lifeReference(seed, generations) {
-    var P = 67108859, T = 25165822, g = new Uint8Array(LIFE_W * LIFE_H), r, c;
-    for (r = 2; r <= LIFE_H - 1; r++) for (c = 2; c <= LIFE_W - 1; c++) {
+  function lifeReference(seed, generations, w, h) {
+    var W = w || LIFE_W, H = h || LIFE_H, P = 67108859, T = 25165822, g = new Uint8Array(W * H), r, c;
+    for (r = 2; r <= H - 1; r++) for (c = 2; c <= W - 1; c++) {
       var a = (seed * 1103515 + r * 1597334 + c * 1830421 + 12345) % P;
       var b = (seed * 2012345 + r * 1209487 + c * 1949213 + 54321) % P;
-      var h = (a * b) % P;
-      g[(r - 1) * LIFE_W + (c - 1)] = (h * h) % P < T ? 1 : 0;
+      var x = (a * b) % P;
+      g[(r - 1) * W + (c - 1)] = (x * x) % P < T ? 1 : 0;
     }
-    for (var n = 0; n < generations; n++) g = lifeGeneration(g);
+    for (var n = 0; n < generations; n++) g = lifeGeneration(g, W, H);
     return g;
   }
-  // One generation of Conway's rule over a 320 by 200 plane, the border dead.
-  function lifeGeneration(g) {
-    var next = new Uint8Array(LIFE_W * LIFE_H);
-    lifeGenerationInto(g, next);
+  // One generation of Conway's rule over a 320 by 200 plane, or a board's, the border dead.
+  function lifeGeneration(g, w, h) {
+    var next = new Uint8Array((w || LIFE_W) * (h || LIFE_H));
+    lifeGenerationInto(g, next, w, h);
     return next;
   }
   // The same into a plane kept by the caller, whose border is left as it is.
-  function lifeGenerationInto(g, next) {
-    for (var r = 2; r <= LIFE_H - 1; r++) for (var c = 2; c <= LIFE_W - 1; c++) {
-      var i = (r - 1) * LIFE_W + (c - 1), me = g[i];
-      var others = g[i - LIFE_W - 1] + g[i - LIFE_W] + g[i - LIFE_W + 1] + g[i - 1] + g[i + 1] + g[i + LIFE_W - 1] + g[i + LIFE_W] + g[i + LIFE_W + 1];
+  function lifeGenerationInto(g, next, w, h) {
+    var W = w || LIFE_W, H = h || LIFE_H;
+    for (var r = 2; r <= H - 1; r++) for (var c = 2; c <= W - 1; c++) {
+      var i = (r - 1) * W + (c - 1), me = g[i];
+      var others = g[i - W - 1] + g[i - W] + g[i - W + 1] + g[i - 1] + g[i + 1] + g[i + W - 1] + g[i + W] + g[i + W + 1];
       next[i] = (others === 3 || (me === 1 && others === 2)) ? 1 : 0;
     }
   }
@@ -3217,34 +3222,57 @@
   // 10%, from the page's start or between the two sides, prints no rows; never between two frames,
   // since a clock read there slowed the frame after it (CART.1, 2026-10-12). tools/bench_frames.ps1 runs it
   // under headless Chrome on the owner's machine with Windows' power throttling opted out, the step's
-  // cost needing no display; opened by hand, the page freezes while it steps, about twenty seconds
-  // today, and then prints the same. &n=31 sets the frames a fixture.
+  // cost needing no display; opened by hand, the page freezes while it steps, about twenty-five
+  // seconds since ENGINE.9, and then prints the same. &n=31 sets the frames a fixture, at most 80.
   // A frame too quick for the page's clock is timed in runs (2026-10-10, at the owner's word, when
   // Frazaro's KERNEL.26 stepped the gun in about 20 microseconds): Chrome gives a page that is not
   // cross-origin isolated performance.now() in steps of 0.1 ms, so a gun frame timed alone read 0,
   // its cells a second infinite. The page reads its clock's step first. Frames 2 to N are timed alone,
   // as before; when their median reads under twenty steps, 2 ms in Chrome, the steady frames are timed
-  // again past them in runs of consecutive steps, the run doubled from 2 until it reads twenty steps,
-  // each run a span with no view or read inside it and its frame the span over the run. Each run's
-  // last frame is held to this page's Life or Sand on the instance timed, and the whole fixture is stepped
-  // again on a second instance, untimed, every frame held, so that every frame is still held. A fixture
-  // whose frames read twenty steps alone is printed as before, its rows saying Run = 1.
+  // again past them in runs of consecutive steps, each run a span with no view or read inside it and
+  // its frame the span over the run, and the whole fixture is stepped again on a second instance,
+  // untimed, every frame held, so that every frame is still held. A fixture whose frames read twenty
+  // steps alone is printed as before, its rows saying Run = 1. Since ENGINE.9 the runs are five of 128
+  // frames, frames N + 1 to N + 640, back to back, the last frame held after them: for the gun at
+  // N = 31, frames 32 to 671, inside its published facts' span, where every rung of the size ladder
+  // holds the same cells. A run of 128 gun frames reads about forty steps of the clock, and runs whose
+  // median reads under twenty are refused in words. Until then the run doubled from 2 until it read
+  // twenty steps, the runs went on to about frame 4,000, and each run's last frame was held between
+  // the runs, whose Life and view swept a large board's megabytes through the cache before the next.
+  // The size ladder (ENGINE.9): Life and the gun at four and sixteen times the window's area, each
+  // built here by the module's own pass from its source with the ladder's definition of board-size
+  // after the source's own, the native runner's text (engine/src/ladder.rs), on a module of its own
+  // so that no fixture's memory holds the pass; each held over its whole board to this page's Life,
+  // and named by its SHA-256 over LF, which tools/bench_frames.ps1 holds to the native runner's.
+  // Every fixture's row carries the module's memory after its fourth frame, a fresh module a fixture,
+  // its high-water mark, since a module's memory never shrinks.
   function framesInstrument() {
     var pre = document.getElementById('frames');
     var nm = /[?&]n=(\d+)(&|$)/.exec(QS), N = nm ? Math.max(2, +nm[1]) : 31;
-    var PROBE_GENERATIONS = 20, PROBE_BATCHES = 3, START_READINGS = 5, SIDE_READINGS = 3, CLOCK_MOVED_MAX = 10, RUN_GRAINS = 20, RUN_MAX = 65536;
+    var PROBE_GENERATIONS = 20, PROBE_BATCHES = 3, START_READINGS = 5, SIDE_READINGS = 3, CLOCK_MOVED_MAX = 10, RUN_GRAINS = 20;
+    var RUNS = 5, RUN_FRAMES = 128, GUN_THROUGH = 720, MEMORY_FRAME = Math.min(4, N), RUNGS = [[4, 640, 400], [16, 1280, 800]];
     if (!builtModule()) { pre.textContent = 'frames failed: the page holds no engine module'; return; }
+    if (N + RUNS * RUN_FRAMES > GUN_THROUGH) {
+      pre.textContent = 'frames failed: &n=' + N + ' would carry the gun\'s runs to frame ' + (N + RUNS * RUN_FRAMES) + ', past generation ' + GUN_THROUGH + ', where the ladder\'s boards stop holding the same cells: at most ' + (GUN_THROUGH - RUNS * RUN_FRAMES);
+      return;
+    }
     var bytes = bytesOfBase64(builtModule());
-    // The gun's Seed rows as a plane: (cell "Seed" "J14" 1).
-    function seedPlane(text) {
-      var g = new Uint8Array(LIFE_W * LIFE_H), re = /^\(cell "Seed" "([A-Z]+)([0-9]+)" 1\)\s*$/mg, m;
+    // The gun's Seed rows as a plane of a board: (cell "Seed" "J14" 1).
+    function seedPlane(text, w, h) {
+      var g = new Uint8Array(w * h), re = /^\(cell "Seed" "([A-Z]+)([0-9]+)" 1\)\s*$/mg, m;
       while ((m = re.exec(text))) {
         var col = 0;
         for (var k = 0; k < m[1].length; k++) col = col * 26 + (m[1].charCodeAt(k) - 64);
         var row = +m[2];
-        if (row >= 1 && row <= LIFE_H && col >= 1 && col <= LIFE_W) g[(row - 1) * LIFE_W + (col - 1)] = 1;
+        if (row >= 1 && row <= h && col >= 1 && col <= w) g[(row - 1) * w + (col - 1)] = 1;
       }
       return g;
+    }
+    // The size ladder's definition of a source's board-size, the native runner's own text
+    // (engine/src/ladder.rs): a board of w by h cells under a still Camera at its top-left.
+    function ladderDefinition(w, h) {
+      return '(defmacro (board-size then & args)\r\n  "the size ladder (ENGINE.9): a board of ' + w + ' by ' + h +
+        ' cells under a still Camera at its top-left"\r\n  (quasiquote (begin (camera 1 1) ((unquote then) ' + w + ' ' + h + ' (unquote-splicing args)))))\r\n';
     }
     // The clock: this page's Life over a fixed workload in two planes it keeps, a generation untimed
     // to warm them, the best of a few batches, milliseconds a generation.
@@ -3277,15 +3305,32 @@
       return best < Infinity ? best : 0.1;
     }
     var grain = grainOf(), runMs = RUN_GRAINS * grain, grainText = String(+grain.toFixed(4));
+    // Each fixture with its board and the rule it is held to: the page's Life, or since CART.2 its
+    // Sand; and since ENGINE.9 the ladder's rungs of Life and the gun, built by the pass on a module
+    // of their own, after the fixture they climb from.
+    function lifeOn(w, h) { return function (g) { return lifeGeneration(g, w, h); }; }
+    var fixtures = [], passer = null, packed = [], libs = libraryPairs();
+    for (var li = 0; li < libs.length; li++) packed.push(libs[li][0], libs[li][1]);
+    var climbers = [{ name: 'life', text: lifeText, cart: CARTRIDGES.life }, { name: 'gun', text: gunText, cart: CARTRIDGES.gun }];
+    for (var bi = 0; bi < climbers.length; bi++) {
+      var base = climbers[bi];
+      fixtures.push({ name: base.name, text: base.text, by: 'Life', w: LIFE_W, h: LIFE_H, next: lifeOn(LIFE_W, LIFE_H) });
+      for (var ri = 0; ri < RUNGS.length; ri++) {
+        var mult = RUNGS[ri][0], rw = RUNGS[ri][1], rh = RUNGS[ri][2];
+        if (!passer) passer = new Driver({ exports: HOST.instantiateSync(bytes) });
+        var expanded = passer.call('alonzo_expand', [], [base.cart.source + '\n' + ladderDefinition(rw, rh), base.cart.sourcePath, packed.join('\u0000')]);
+        if (expanded.status !== 0) throw new Error(base.name + ': the pass refused the board of ' + rw + ' by ' + rh + ' at line ' + expanded.line + ': ' + expanded.text + ' [' + expanded.id + ']');
+        fixtures.push({ name: base.name + '-x' + mult, text: expanded.text, by: 'Life', w: rw, h: rh, next: lifeOn(rw, rh), digest: HOST.sha256(expanded.text.replace(/\r\n/g, '\n')) });
+      }
+    }
+    fixtures.push({ name: 'sand', text: sandText, by: 'Sand', w: LIFE_W, h: LIFE_H, next: function (g) { return sandStep(g, 2); } });
+    passer = null;
     var starts = [];
     for (var s0 = 0; s0 < START_READINGS; s0++) starts.push(probe());
     var startClock = median(starts);
-    // each fixture with the rule it is held to: the page's Life, or since CART.2 its Sand
-    var lifeNext = function (g) { return lifeGeneration(g); }, sandNext = function (g) { return sandStep(g, 2); };
-    var fixtures = [{ name: 'life', text: lifeText, by: 'Life', next: lifeNext }, { name: 'gun', text: gunText, by: 'Life', next: lifeNext }, { name: 'sand', text: sandText, by: 'Sand', next: sandNext }];
-    var lines = [], rows = [], moved = false;
+    var lines = [], rows = [], rungs = [], moved = false, measured = {};
     for (var fi = 0; fi < fixtures.length; fi++) {
-      var fx = fixtures[fi];
+      var fx = fixtures[fi], range = VP.rangeText({ top: 1, left: 1, bottom: fx.h, right: fx.w });
       var x = HOST.instantiateSync(bytes), d = new Driver({ exports: x });
       var t0 = performance.now(), ld = d.call('alonzo_load', [], [fx.text, fx.name + '.vla']), load = performance.now() - t0;
       if (ld.status !== 0) throw new Error(fx.name + ' was refused at its load: ' + ld.text + ' [' + ld.id + ']');
@@ -3294,7 +3339,7 @@
       if (!bm) throw new Error(fx.name + ': the describe holds no budget row');
       var cells = +bm[1];
       var sm = /\(seed (\d+)\)/.exec(fx.text);
-      var start = fx.by === 'Sand' ? sandOpening(sm ? +sm[1] : 1) : /^\(cell "Seed" /m.test(fx.text) ? seedPlane(fx.text) : lifeReference(sm ? +sm[1] : 1, 0), want = start, gen = 0;
+      var start = fx.by === 'Sand' ? sandOpening(sm ? +sm[1] : 1) : /^\(cell "Seed" /m.test(fx.text) ? seedPlane(fx.text, fx.w, fx.h) : lifeReference(sm ? +sm[1] : 1, 0, fx.w, fx.h), want = start, gen = 0;
       // n frames from frame f0 as one span, nothing viewed or read inside it; then each step's answer
       // read, said to be its frame and done, and freed
       var span = function (f0, n) {
@@ -3310,33 +3355,31 @@
         x.alonzo_free(outs, 4 * n);
         return ms;
       };
-      // the plane after frame n held to this page's Life at generation n - 1, or its Sand n - 1 frames on
+      // the plane after frame n held to this page's Life at generation n - 1, or its Sand n - 1 frames
+      // on, over the fixture's whole board
       var hold = function (n) {
         while (gen < n - 1) { want = fx.next(want); gen++; }
-        var plane = d.raw('alonzo_view', [h], ['plane', 'Screen', 'A1:LH200']).bytes, diff = firstDiff(plane, want);
+        var plane = d.raw('alonzo_view', [h], ['plane', 'Screen', range]).bytes, diff = firstDiff(plane, want, fx.w);
         if (diff) throw new Error(fx.name + ': frame ' + n + ' is not the page\'s ' + fx.by + ': ' + diff);
       };
       // frame 1 alone, then frames 2 to N alone, as before; when their median reads under twenty steps
-      // of the clock, the steady frames are timed again past them, in runs of k, k doubled from 2 until a
-      // run reads twenty steps. Frame 2 cannot decide alone: after a load the language may compute a
-      // frame whole before it computes only the cells a change reaches (Frazaro's KERNEL.20), and the
-      // gun's second frame over KERNEL.26 read over 2 ms where every later one read 0.
-      // The clock is read before frame 1 and after the steady frames or runs, never between two frames.
-      var times = [], clocks = [], k = 1, f;
+      // of the clock, the steady frames are timed again past them, in RUNS runs of RUN_FRAMES, back to
+      // back. Frame 2 cannot decide alone: after a load the language may compute a frame whole before it
+      // computes only the cells a change reaches (Frazaro's KERNEL.20), and the gun's second frame over
+      // KERNEL.26 read over 2 ms where every later one read 0. The clock is read before frame 1 and after
+      // the steady frames or runs, never between two frames; the module's memory after frame 4.
+      var times = [], spans = [], clocks = [], k = 1, f, memory = 0;
       for (var c1 = 0; c1 < SIDE_READINGS; c1++) clocks.push(probe());
       var firstMs = span(1, 1);
       hold(1);
-      for (f = 2; f <= N; f++) { var mf = span(f, 1); hold(f); times.push(mf); }
+      if (MEMORY_FRAME === 1) memory = x.memory.buffer.byteLength;
+      for (f = 2; f <= N; f++) { var mf = span(f, 1); hold(f); times.push(mf); if (f === MEMORY_FRAME) memory = x.memory.buffer.byteLength; }
       var alone = median(times);
       if (!(alone >= runMs)) {
-        times = [];
-        for (k = 2; ; k *= 2) {
-          if (k > RUN_MAX) throw new Error(fx.name + ': ' + RUN_MAX + ' frames in a row still read under ' + RUN_GRAINS + ' steps of this page\'s clock');
-          var sp = span(f, k);
-          hold(f + k - 1); f += k;
-          if (sp >= runMs) { times.push(sp / k); break; }
-        }
-        for (var r = 2; r < N; r++) { var sr = span(f, k); hold(f + k - 1); f += k; times.push(sr / k); }
+        times = []; k = RUN_FRAMES;
+        for (var r = 0; r < RUNS; r++) { var sp = span(f, k); f += k; spans.push(sp); times.push(sp / k); }
+        hold(f - 1);
+        if (median(spans) < runMs) throw new Error(fx.name + ': its runs of ' + k + ' frames read a median of ' + fms(median(spans)) + ' ms, under ' + RUN_GRAINS + ' steps of this page\'s clock of ' + grainText + ' ms, too quick to time so; the runs want more frames');
       }
       for (var c2 = 0; c2 < SIDE_READINGS; c2++) clocks.push(probe());
       if (k > 1) {
@@ -3349,7 +3392,7 @@
           if (g > 1) w2 = fx.next(w2);
           var p2 = x2.alonzo_step(h2, 0, out2);
           x2.alonzo_free(p2, new DataView(x2.memory.buffer).getUint32(out2, true));
-          var df2 = firstDiff(d2.raw('alonzo_view', [h2], ['plane', 'Screen', 'A1:LH200']).bytes, w2);
+          var df2 = firstDiff(d2.raw('alonzo_view', [h2], ['plane', 'Screen', range]).bytes, w2, fx.w);
           if (df2) throw new Error(fx.name + ': frame ' + g + ', stepped untimed on a second instance, is not the page\'s ' + fx.by + ': ' + df2);
         }
         x2.alonzo_free(out2, 4);
@@ -3357,22 +3400,47 @@
       var med = median(times), lo = Math.min.apply(null, times), hi = Math.max.apply(null, times);
       if (!(med > 0 && isFinite(med))) throw new Error(fx.name + ': its steady frames read ' + med + ' ms, which is no time, and no row is printed');
       var clock = median(clocks), spread = (Math.max.apply(null, clocks) - Math.min.apply(null, clocks)) / clock * 100, drift = (clock / startClock - 1) * 100;
-      var which = k === 1 ? 'frames 2 to ' + N + ': median ' : 'frames ' + (f - (N - 1) * k) + ' to ' + (f - 1) + ' in ' + (N - 1) + ' runs of ' + k + ', each run one span: a frame\'s median ';
+      var which = k === 1 ? 'frames 2 to ' + N + ': median ' : 'frames ' + (N + 1) + ' to ' + (f - 1) + ' in ' + RUNS + ' runs of ' + k + ', each run one span: a frame\'s median ';
       lines.push(fx.name + ': load ' + f1(load) + ' ms; ' + thousands(cells) + ' formula cells; frame 1 ' + fms(firstMs) + ' ms; ' + which + fms(med) + ' ms (min ' + fms(lo) + ', max ' + fms(hi) + '), ' +
                  thousands(Math.round(cells / (med / 1000))) + ' cells a second, ' + f3(1000 / med) + ' frames a second');
-      if (k > 1) lines.push('  frames 2 to ' + N + ' alone read a median of ' + fms(alone) + ' ms, under ' + RUN_GRAINS + ' steps of this page\'s clock of ' + grainText + ' ms, so the steady frames were timed in runs past them; each run\'s last frame held to the page\'s Life, and every frame from 1 to ' + (f - 1) + ' on a second instance stepped untimed');
+      if (k > 1) lines.push('  frames 2 to ' + N + ' alone read a median of ' + fms(alone) + ' ms, under ' + RUN_GRAINS + ' steps of this page\'s clock of ' + grainText + ' ms, so the steady frames were timed in runs past them, back to back; the last frame held to the page\'s Life after them, and every frame from 1 to ' + (f - 1) + ' on a second instance stepped untimed');
+      lines.push('  ' + (fx.digest ? 'a board of ' + fx.w + ' by ' + fx.h + ' under a still Camera, built here by the pass from ' + (fx.name.replace(/-x\d+$/, '')) + '.source.vla, the cartridge\'s SHA-256 over LF ' + fx.digest : 'the window\'s board, ' + fx.w + ' by ' + fx.h) +
+                 '; the module\'s memory after frame ' + MEMORY_FRAME + ', a fresh module, ' + thousands(memory) + ' bytes');
       lines.push('  the clock: this page\'s Life ' + f3(clock) + ' ms a generation, read ' + SIDE_READINGS + ' times before frame 1 and ' + SIDE_READINGS + ' after the steady ' + (k === 1 ? 'frames' : 'runs') + ', spread ' + f1(spread) + '%, ' + (drift >= 0 ? '+' : '') + f1(drift) + '% from ' + f3(startClock) + ' at the start; the engine ' + (med >= clock ? Math.round(med / clock) + ' times slower than it' : Math.round(clock / med) + ' times faster than it'));
       if (spread > CLOCK_MOVED_MAX || Math.abs(drift) > CLOCK_MOVED_MAX) {
         moved = true;
         lines.push('  the clock moved during the run, more than ' + CLOCK_MOVED_MAX + '%: power throttling or a thermal limit; these frames are not a baseline');
       }
-      rows.push("    @{ Runner = 'wasm'; Fixture = '" + fx.name + "'; Cells = " + cells + '; Frames = ' + (times.length * k) + '; Run = ' + k + '; Load = ' + f1(load) + '; FirstFrame = ' + fms(firstMs) + '; FrameP50 = ' + fms(med) + '; FrameMin = ' + fms(lo) + '; FrameMax = ' + fms(hi) +
+      measured[fx.name] = { cells: cells, frame: med, load: load, memory: memory };
+      rows.push("    @{ Runner = 'wasm'; Fixture = '" + fx.name + "'; Cells = " + cells + '; Frames = ' + (times.length * k) + '; Run = ' + k + '; Load = ' + f1(load) + '; Memory = ' + memory + '; FirstFrame = ' + fms(firstMs) + '; FrameP50 = ' + fms(med) + '; FrameMin = ' + fms(lo) + '; FrameMax = ' + fms(hi) +
                 '; CellsPerSecond = ' + Math.round(cells / (med / 1000)) + '; FramesPerSecond = ' + f3(1000 / med) + '; ClockMs = ' + f3(clock) + '; ClockSpread = ' + f1(spread) + '; ClockDrift = ' + f1(drift) + ' }');
+      if (fx.digest) rungs.push("    @{ Rung = '" + fx.name + "'; Width = " + fx.w + '; Height = ' + fx.h + "; Digest = '" + fx.digest + "' }");
     }
-    var head = 'frames: the engine\'s module, ' + thousands(bytes.length) + ' bytes, under ' + navigator.userAgent + '; ' + fixtures.length + ' cartridges, ' + N + ' frames each or, where a frame reads under ' + RUN_GRAINS + ' steps of this page\'s clock of ' + grainText + ' ms, ' + (N - 1) + ' runs past frame 2, every frame equal to the page\'s Life or Sand';
+    // The size ladder's slope (ENGINE.9, decision 8): each rung over the window's, and the exponent
+    // against the formula cells, 1 where a quantity grows as the cells do; and the gun's idle frame at
+    // the top rung against the prediction that it costs what it costs on the window.
+    function exponent(v1, v16, c1, c16) { return Math.log(v16 / v1) / Math.log(c16 / c1); }
+    function shape(e) { return e < 0.9 ? 'less than linear' : e <= 1.1 ? 'linear' : 'more than linear'; }
+    function mb(n) { return (n / 1e6).toFixed(1); }
+    var slope = [];
+    for (var ci = 0; ci < climbers.length; ci++) {
+      var cn = climbers[ci].name, a = measured[cn], b4 = measured[cn + '-x4'], b16 = measured[cn + '-x16'];
+      if (!a || !b4 || !b16) continue;
+      var idle = cn === 'gun', fe = exponent(a.frame, b16.frame, a.cells, b16.cells), le = exponent(a.load, b16.load, a.cells, b16.cells), me = exponent(a.memory, b16.memory, a.cells, b16.cells);
+      slope.push('  ' + cn + ': the ' + (idle ? 'idle' : 'steady') + ' frame ' + fms(a.frame) + ', ' + fms(b4.frame) + ' and ' + fms(b16.frame) + ' ms over ' + thousands(a.cells) + ', ' + thousands(b4.cells) + ' and ' + thousands(b16.cells) + ' formula cells, ' +
+                 (b4.frame / a.frame).toFixed(2) + ' and ' + (b16.frame / a.frame).toFixed(2) + ' times the window\'s, the exponent ' + fe.toFixed(2) + ', ' + shape(fe) + '; the load ' + f1(a.load) + ', ' + f1(b4.load) + ' and ' + f1(b16.load) + ' ms, the exponent ' + le.toFixed(2) + ', ' + shape(le) +
+                 '; the memory ' + mb(a.memory) + ', ' + mb(b4.memory) + ' and ' + mb(b16.memory) + ' MB, the exponent ' + me.toFixed(2) + ', ' + shape(me));
+      if (idle) {
+        var ratio = b16.frame / a.frame;
+        slope.push('  ' + cn + ': at ' + Math.round(b16.cells / a.cells) + ' times the window\'s formula cells its idle frame costs ' + ratio.toFixed(2) + ' times the window\'s: ' +
+                   (ratio <= 1 + CLOCK_MOVED_MAX / 100 ? 'the prediction, the window\'s cost, held within the floors\' margin of ' + CLOCK_MOVED_MAX + '%' : 'the prediction, the window\'s cost, missed by ' + Math.round((ratio - 1) * 100) + '%, past the floors\' margin of ' + CLOCK_MOVED_MAX + '%'));
+      }
+    }
+    var ladderText = slope.length ? '\nthe size ladder (ENGINE.9), in the browser: each rung over the window\'s, and the exponent against the formula cells, 1 where a quantity grows as the cells do\n' + slope.join('\n') : '';
+    var head = 'frames: the engine\'s module, ' + thousands(bytes.length) + ' bytes, under ' + navigator.userAgent + '; ' + fixtures.length + ' cartridges, ' + N + ' frames each or, where a frame reads under ' + RUN_GRAINS + ' steps of this page\'s clock of ' + grainText + ' ms, ' + RUNS + ' runs of ' + RUN_FRAMES + ' past frame ' + N + ', every frame equal to the page\'s Life or Sand';
     pre.textContent = moved
-      ? 'frames refused: the clock moved\n' + head + '\n' + lines.join('\n') + '\nno baseline rows: run it through tools/bench_frames.ps1, which opts the browser out of Windows\' power throttling'
-      : 'frames ok\n' + head + '\n' + lines.join('\n') + '\nthe baseline rows, for tools/check_frame_floors.ps1:\n' + rows.join('\n');
+      ? 'frames refused: the clock moved\n' + head + '\n' + lines.join('\n') + ladderText + '\nno baseline rows: run it through tools/bench_frames.ps1, which opts the browser out of Windows\' power throttling'
+      : 'frames ok\n' + head + '\n' + lines.join('\n') + ladderText + '\nthe baseline rows, for tools/check_frame_floors.ps1:\n' + rows.join('\n') + '\n' + rungs.join('\n');
   }
   if (MODE === 'frames') {
     try { framesInstrument(); } catch (e) { document.getElementById('frames').textContent = 'frames failed: ' + (e && e.message ? e.message : e); }

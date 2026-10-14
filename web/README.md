@@ -417,20 +417,30 @@ baseline to the roadmap's bars.
 - `index.html?frames=1` is the frame floors' instrument (`CART.1`), the
   engine's first number: the engine's module stepped over the benchmark's two
   fixtures, Life's soup and the glider gun, and since `CART.2` Sand's
-  opening, 31 frames each (`&n=` sets it),
+  opening, 31 frames each (`&n=` sets it, at most 80),
   each step timed alone with no budget and every frame's plane held to the
   page's own Life, or its own Sand (`sandStep`), so a fast wrong answer is never a number; before
   each fixture's frames and after them the page's Life runs a fixed workload
   three times, the clock, and a run whose clock moved more than 10% prints
   no rows; never between two frames, where it slowed the frame after it
-  (`CART.1`, 2026-10-12). It runs at the page's load and
+  (`CART.1`, 2026-10-12). A frame under twenty steps of the page's clock,
+  the gun's, is timed in five runs of 128 frames, back to back, over frames
+  32 to 671, the last frame held after them and every frame on a second
+  instance. Since `ENGINE.9` it climbs the size ladder too: Life and the
+  gun built here by the module's own pass at four and sixteen times the
+  window's area, 640 by 400 and 1280 by 800, from their sources with the
+  ladder's definition of their board, `board-size`, after the source's own,
+  each held over its whole board and named by its cartridge's SHA-256 over
+  LF, which the instrument holds to the native runner's; every row carries
+  the module's memory after frame 4, a fresh module a fixture, and the slope
+  is printed after the rows. It runs at the page's load and
   synchronously, since `--dump-dom` writes a page at its load:
   `tools/bench_frames.ps1` runs it under headless Chrome, with Chrome's flags
   against backgrounding and its processes opted out of Windows' power
   throttling, which slows a background process by about 40% three seconds
   in, and reads `<pre id="frames">`. A step costs computation and no display,
   so a headless run is a measurement here. Opened by hand, the page freezes
-  for about twenty seconds while it steps, then prints the same.
+  for about twenty-five seconds while it steps, then prints the same.
 
 ## For the first game: the API
 
