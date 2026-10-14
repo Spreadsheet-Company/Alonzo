@@ -554,14 +554,12 @@ mod tests {
     /// repository's folder holds nothing to compare.
     #[test]
     fn every_cartridge_with_a_source_is_its_expansion_and_loads() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
-        let dir = root.join("cartridges");
-        if !dir.is_dir() {
-            eprintln!("no cartridges/ beside the crate: the golden is the repository's");
+        let Some(dir) = crate::repository::cartridges() else {
             return;
-        }
+        };
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
         let mut texts: Vec<(String, String)> = Vec::new();
-        let mut stack = vec![dir.clone()];
+        let mut stack = vec![dir];
         while let Some(d) = stack.pop() {
             for entry in std::fs::read_dir(&d).expect("the folder reads") {
                 let p = entry.expect("an entry").path();
@@ -622,12 +620,10 @@ mod tests {
     #[test]
     fn the_ladder_builds_life_and_the_gun_on_larger_boards() {
         use crate::ladder;
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
-        let Ok(library) = std::fs::read_to_string(root.join("cartridges").join("common.vla"))
-        else {
-            eprintln!("no cartridges/ beside the crate: the ladder's sources are the repository's");
+        let Some(library) = crate::repository::read("common.vla") else {
             return;
         };
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
         let fs = files(&[("cartridges/common.vla", library.as_str())]);
         let camera = "(cell \"Camera\" \"A1\" \"row\")\n(cell \"Camera\" \"B1\" 1)\n(cell \"Camera\" \"A2\" \"column\")\n(cell \"Camera\" \"B2\" 1)\n";
         for name in ["life", "gun"] {
@@ -687,10 +683,7 @@ mod tests {
     /// the verb the size ladder builds Life and the gun over.
     #[test]
     fn the_kit_s_verbs_write_the_rows_they_name() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
-        let Ok(library) = std::fs::read_to_string(root.join("cartridges").join("common.vla"))
-        else {
-            eprintln!("no cartridges/common.vla beside the crate: the kit is the repository's");
+        let Some(library) = crate::repository::read("common.vla") else {
             return;
         };
         let fs = files(&[("cartridges/common.vla", library.as_str())]);

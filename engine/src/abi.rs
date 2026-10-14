@@ -398,11 +398,11 @@ mod tests {
     //! allocator, every answer read as the record's bytes and freed with the
     //! length it holds. One test, since the handle table is the thread's for
     //! the module's life and a second test on the same thread would see it.
+    //! Life and its source are the repository's, read at run time, so the
+    //! test stands down by name in a package, which holds no `cartridges/`
+    //! (`REPO.4`; `crate::repository`).
     use super::*;
 
-    const LIFE: &str = include_str!("../../cartridges/life/life.vla");
-    const LIFE_SOURCE: &str = include_str!("../../cartridges/life/life.source.vla");
-    const COMMON: &str = include_str!("../../cartridges/common.vla");
     const LIFE_SOURCE_PATH: &str = "cartridges/life/life.source.vla";
 
     /// A record as the host reads it, the text still bytes.
@@ -519,25 +519,37 @@ mod tests {
             v.text()
         );
 
+        // From here the surface is met with Life, the repository's: a package
+        // stands down, its version checked above.
+        let Some(life) = crate::repository::read("life/life.vla") else {
+            return;
+        };
+        let Some(life_source) = crate::repository::read("life/life.source.vla") else {
+            return;
+        };
+        let Some(common) = crate::repository::read("common.vla") else {
+            return;
+        };
+
         // The pass, an act of its own (SPEC.3's second slice): Life's source
         // and the library it includes expanded into Life's cartridge, the
         // command line's bytes, CRLF as it writes them.
-        let library = [("cartridges/common.vla", COMMON)];
-        let built = expand(LIFE_SOURCE.as_bytes(), LIFE_SOURCE_PATH, &library);
+        let library = [("cartridges/common.vla", common.as_str())];
+        let built = expand(life_source.as_bytes(), LIFE_SOURCE_PATH, &library);
         assert_eq!(
             (built.status, built.id.as_str()),
             (0, ""),
             "{}",
             built.text()
         );
-        assert_eq!(built.text(), lf(LIFE).replace('\n', "\r\n"));
+        assert_eq!(built.text(), lf(&life).replace('\n', "\r\n"));
         // An include the door did not hand in: refused at the include's line.
-        let alone = expand(LIFE_SOURCE.as_bytes(), LIFE_SOURCE_PATH, &[]);
+        let alone = expand(life_source.as_bytes(), LIFE_SOURCE_PATH, &[]);
         assert_eq!(
             (alone.status, alone.id.as_str()),
             (1, "vla-include-cannot-read")
         );
-        let include_line = LIFE_SOURCE
+        let include_line = life_source
             .lines()
             .position(|l| l.trim() == "(include \"../common.vla\")")
             .expect("Life's source includes the library")
@@ -548,7 +560,7 @@ mod tests {
         let raw = expand(&[0x28, 0xff, 0xfe, 0x29], LIFE_SOURCE_PATH, &library);
         assert_eq!((raw.status, raw.text()), (2, "the source is not UTF-8"));
         let (s, p, f) = (
-            put(LIFE_SOURCE.as_bytes()),
+            put(life_source.as_bytes()),
             put(LIFE_SOURCE_PATH.as_bytes()),
             put(b"cartridges/common.vla"),
         );
@@ -563,7 +575,7 @@ mod tests {
         assert_eq!(unpaired.id, "vla-include-cannot-read");
 
         // Life loads under handle 1 and says what it is: the pass took none.
-        let l = load(LIFE.as_bytes(), "life.vla");
+        let l = load(life.as_bytes(), "life.vla");
         assert_eq!((l.status, l.id.as_str()), (0, ""), "{}", l.text());
         assert_eq!(l.text(), "(cartridge 1 \"Life\" plane 320 200 30)");
         let mut len = 0u32;
@@ -576,11 +588,11 @@ mod tests {
 
         // A refused load: the manifest's own words and the line, status 1.
         let bad = load(
-            LIFE.replacen("(rate 30)", "(rate 121)", 1).as_bytes(),
+            life.replacen("(rate 30)", "(rate 121)", 1).as_bytes(),
             "life.vla",
         );
         assert_eq!((bad.status, bad.id.as_str()), (1, "cart-manifest-invalid"));
-        let rate_line = LIFE
+        let rate_line = life
             .lines()
             .position(|l| l.contains("(rate 30)"))
             .expect("Life's manifest gives its rate")

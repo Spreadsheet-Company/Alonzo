@@ -118,7 +118,11 @@ it: File (`ENGINE.5`); and the
 accelerators, each behind the naive evaluation's frames as its reference
 (`ENGINE.6`), after the naive evaluator's own costs, which the benchmark
 measured first and which are the language's to remove; the first of them
-are gone, and the twin's values kept as an array is the next.
+are gone, the twin's values kept as an array among them (Frazaro's
+`KERNEL.20`). Since `vla-lang` 0.9.3 a view has a third projection,
+`values`, the record without its formulas, which the language answers and
+the engine passes through; the host draws a grid from it in `ENGINE.8`'s
+second slice.
 
 ## The rules that bind every line
 
@@ -137,14 +141,51 @@ are gone, and the twin's values kept as an array is the next.
   the bottleneck: the rasterizer, the shaping engine and the fonts stay the
   browser's.
 
+## A first step
+
+The crate is the engine as a Rust library, beside the module the browser
+loads. Name it and the language it answers in, each pinned exactly:
+
+```toml
+[dependencies]
+alonzo = "=0.1.0"
+vla-lang = "=0.9.3"
+```
+
+A cartridge is rows in the one notation. The engine loads it, steps it and
+answers a view of any of its sheets; this is the crate's own example, run as
+a test:
+
+```rust
+use alonzo::cartridge::Cartridge;
+use vla_lang::machine::Viewed;
+
+let text = "(cartridge \"hello\"\n  (spec 3)\n  (title \"Hello\")\n  (rate 30)\n  (screen grid 4 2)\n  (seed 1))\n(sheet \"Screen\" visible)\n(formula \"Screen\" \"A1:D2\" \"=Clock!$B$1*COLUMN()\")\n";
+let mut cart = Cartridge::load(text, "hello.vla", text.len()).expect("the cartridge loads");
+assert!(cart.step(0).done, "the first frame, computed whole");
+let Ok(Viewed::Text(record)) = cart.view("values", "Screen", Some("A1:D1")) else {
+    panic!("a window of a sheet is a record");
+};
+assert!(record.contains("(value \"Screen\" \"D1\" 4)"), "{record}");
+```
+
+The package carries the License and the NOTICE. Its own tests build and run
+from it: those that read the repository's cartridges stand down by name
+without them, and run from a clone.
+
 ## What the first release shows
 
-Conway's Life on a 320 by 200 sheet at thirty frames a second, every cell
-the same formula of its eight neighbors, drawn through the canvas; its
-cells evaluated per second are the engine's first number, against a line
-of two million a second, and the cartridge ships with the engine as its
-demo (`CART.1`). The first game after it is a falling-sand toy, Sand
-(`CART.2`), built here first and then in a repository of its own.
+`alonzo` 0.1.0, over `vla-lang` 0.9.3 (`REPO.4`; the repository's
+`RELEASES.md`). Conway's Life on a 320 by 200 sheet, every cell the same
+formula of its eight neighbors, drawn through the canvas, steps in 2.9 ms
+natively and 4.2 ms in the browser, 342 and 235 frames a second, where the
+bar this release was to clear was thirty. Counted as the floors count, the
+frame's 62,964 formula cells over its time, that is 21.5 and 14.8 million
+cells a second, against a line of two million (`CART.1`, the floors' tenth
+baseline). The cartridge ships in the repository as the engine's demo,
+beside the falling-sand toy Sand (`CART.2`) and the stacking game Kairos
+(`CART.4`), and the page that plays them is deployed at each release to
+https://spreadsheet-company.github.io/Alonzo/.
 
 The benchmark runs from a clone:
 
@@ -248,6 +289,15 @@ since its work does not grow with the board, costs 27% more natively and 15%
 more in the browser at sixteen times the area, 0.026 against 0.033 ms
 natively and 0.038 against 0.043 in the browser: a small cost of the
 sheet's size in every frame.
+
+Over `vla-lang` 0.9.3, the first release's language, the floors' tenth
+baseline (the run of the session that prepared the release, on the same
+machine and the same instrument) read Life's frame at 2.9, 14.2 and 58.3 ms
+natively and 4.2, 18.2 and 70.0 in the browser. The heap holds about two
+bytes a formula cell more, the room the language's frame end now keeps for
+every cell a frame may change (Frazaro's `KERNEL.36`). The gun's idle frame
+at sixteen times the area costs 1.08 times the window's natively, inside
+the floors' margin, and 1.18 times in the browser.
 
 ## Where it comes from
 

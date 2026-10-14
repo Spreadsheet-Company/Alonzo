@@ -1,0 +1,77 @@
+# The engine's page, hosted on GitHub Pages: built from the engine's own
+# module at each release and deployed as the one file it is (REPO.4, in the
+# shape of Frazaro's pages.yml).
+#
+# web/index.html is a build artifact (tools/build_web.ps1 fills the template
+# with the viewport, the host, the double, the cartridges, their sources and
+# replays, and the module) that runs from disk and fetches nothing; GitHub
+# Pages serves it as it is, with nothing added, at
+# https://spreadsheet-company.github.io/Alonzo/. Before the deploy the module
+# is held to its imports and exports as CI's crate job holds it (AD-5), and
+# the page to the offline doctrine, so a page that reaches out is never
+# served. The module is built here, by CI, and never on a person's machine,
+# so the page names no builder's home folder: the language crate's panic
+# locations are absolute paths in a module, and a runner's are its own
+# (REPO.4's second gap, the first of its ways).
+#
+# Runs on a v* tag (the hosted page is always a released version), and by
+# hand from the Actions tab. Pages' source is set to GitHub Actions in the
+# repository's settings (done by the owner, 2026-10-14). The github-pages
+# environment allows a deploy from main alone until a v* tag rule is added
+# beside it (Settings > Environments > github-pages), as Frazaro's needed;
+# until then a run from a tag stops at the deploy, and a run by hand from
+# main deploys. A wrong page is replaced by the next deploy, never edited in
+# place.
+name: pages
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: build the engine's module
+        run: cargo build --release -p alonzo --target wasm32-unknown-unknown
+      - name: build the page over the module, and hold the module and the page to their doctrines
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File tools/build_web.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pwsh -NoProfile -File tools/check_host_imports.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pwsh -NoProfile -File tools/check_host_exports.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pwsh -NoProfile -File tools/check_web_offline.ps1
+          exit $LASTEXITCODE
+      - name: the site is the one file
+        run: |
+          mkdir -p site
+          cp web/index.html site/index.html
+          touch site/.nojekyll
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # The deploy alone may write Pages and mint the OIDC token it needs.
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

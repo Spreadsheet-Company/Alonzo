@@ -1,0 +1,60 @@
+# Publishing the engine crate to crates.io, started by hand, from a release
+# tag (REPO.4, in the shape of Frazaro's publish.yml).
+#
+# One crate leaves this workspace, alonzo, at the version the tag names. A
+# published version is permanent - crates.io can yank one, never delete it -
+# so nothing here runs on its own. The owner starts it from the Actions tab
+# (workflow_dispatch) on the tag v<version>, and the default is a rehearsal:
+# package and verify the crate, run its own tests from the package, upload
+# nothing.
+#
+# No token is stored anywhere. crates.io's Trusted Publishing hands the job a
+# token that lives for this run only, in exchange for GitHub's proof that this
+# workflow of this repository is running (id-token: write below, and
+# rust-lang/crates-io-auth-action makes the exchange and revokes the token
+# when the job ends). The crate's settings page on crates.io must name this
+# repository and this file first, which is possible once the crate exists, so
+# the first version, 0.1.0, is published from the owner's machine with a
+# scoped token, as Frazaro's docs/DEPLOY.md has it for a crate's first
+# version. The job names no environment, since a named one would make
+# crates.io refuse the token exchange unless its settings name it too.
+name: publish
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: 'Upload to crates.io (left unticked: package and verify only)'
+        type: boolean
+        default: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - name: an upload runs on the release tag of this version, and nowhere else
+        if: ${{ inputs.upload }}
+        run: |
+          version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "alonzo") | .version')
+          if [ "$GITHUB_REF" != "refs/tags/v$version" ]; then
+            echo "refusing: $GITHUB_REF is not refs/tags/v$version, the tag of this version"
+            exit 1
+          fi
+      - name: package and verify the crate, and run its own tests from the package, uploading nothing
+        run: |
+          cargo package -p alonzo --locked
+          mkdir -p "$RUNNER_TEMP/package"
+          tar -xzf target/package/alonzo-*.crate -C "$RUNNER_TEMP/package"
+          (cd "$RUNNER_TEMP"/package/alonzo-* && cargo test --locked)
+      - name: a token for this run only, from crates.io's Trusted Publishing
+        if: ${{ inputs.upload }}
+        id: auth
+        uses: rust-lang/crates-io-auth-action@v1
+      - name: publish the crate
+        if: ${{ inputs.upload }}
+        run: cargo publish -p alonzo --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}

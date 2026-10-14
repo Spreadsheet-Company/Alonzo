@@ -26,7 +26,7 @@ the header, so a run under each is the oracle's "under both" (REPO.2,
 decision 6).
 
 -WithExtras runs the hardcoded list below of the verifiers that take
-arguments, today the nine controls, each proving its check on mutants, and
+arguments, today the thirteen controls, each proving its check on mutants, and
 says so separately: pretending a control is interchangeable with a plain
 pass/fail scan would hide what each one asserts.
 
@@ -175,7 +175,14 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # six, every row's memory, each rung's cartridge by its digest and every
 # fixture's heap bytes under a ceiling, its control twenty mutants of the
 # table and nine fake runners.
-$expectedAtLeast = 12
+# 2026-10-14, REPO.4, the first release: 13 - check_crate_package.ps1 (the
+# engine crate's package carries the root's LICENSE and NOTICE byte for byte,
+# every build-time include of engine/src/ and engine/examples/ stays inside
+# the crate, so the package's own tests build, and the manifest names what
+# crates.io shows a visitor, with no publish = false); and the pin at
+# vla-lang 0.9.3 moves check_engine_deps.ps1's baseline and
+# check_frame_floors.ps1's tenth.
+$expectedAtLeast = 13
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
 # --- The other verifiers, each with the arguments it needs. ---
@@ -193,7 +200,8 @@ $extras = @(
     @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1 and ENGINE.2 blit floors: a clean table of three cases passes, eight mutants fail' },
     @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 and SPEC.3 export reader and judgment: nine modules built in memory, a non-module' },
     @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, its mutants fail (seven for a git pin, eight for a registry pin); of five baselines, a git one and a registry one pass and three fail' },
-    @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1, SPEC.3, CART.2 and ENGINE.9 frame floors: a clean table, a reasoned lowering, a row entering the history, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows pass, twenty mutants fail, a frame read as 0 ms, a row dropped from the history and a rung with no digest among them; an entry added passes, an entry pasted over and one edited fail; nine fake runners, the clean one passes and eight fail, a heap past its ceiling and a rung of another cartridge among them' }
+    @{ Script = 'check_frame_floors.ps1';  Args = @('-Control'); What = 'CART.1, SPEC.3, CART.2 and ENGINE.9 frame floors: a clean table, a reasoned lowering, a row entering the history, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows pass, twenty mutants fail, a frame read as 0 ms, a row dropped from the history and a rung with no digest among them; an entry added passes, an entry pasted over and one edited fail; nine fake runners, the clean one passes and eight fail, a heap past its ceiling and a rung of another cartridge among them' },
+    @{ Script = 'check_crate_package.ps1'; Args = @('-Control'); What = 'REPO.4 the crate''s package: a scratch copy passes, seven mutants fail, a license copy drifted or missing, an include of cartridges/ in a test, a #[path] out of the crate, a manifest without its description or its own readme, and publish = false put back' }
 )
 
 # --- The shell each check runs under. ---

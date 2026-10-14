@@ -34,6 +34,26 @@
 //! language crate and nothing else (`AD-5`): `tools/check_host_imports.ps1`,
 //! `tools/check_host_exports.ps1` and `tools/check_engine_deps.ps1` hold the
 //! three facts on the artifact and the manifests.
+//!
+//! # A first step
+//!
+//! A cartridge is rows in the one notation. The engine loads it, steps it
+//! and answers a view of any of its sheets, here the third projection,
+//! `values`, the record without its formulas (`vla-lang` 0.9.3). The crate's
+//! page, `README.md`, shows the same example.
+//!
+//! ```
+//! use alonzo::cartridge::Cartridge;
+//! use vla_lang::machine::Viewed;
+//!
+//! let text = "(cartridge \"hello\"\n  (spec 3)\n  (title \"Hello\")\n  (rate 30)\n  (screen grid 4 2)\n  (seed 1))\n(sheet \"Screen\" visible)\n(formula \"Screen\" \"A1:D2\" \"=Clock!$B$1*COLUMN()\")\n";
+//! let mut cart = Cartridge::load(text, "hello.vla", text.len()).expect("the cartridge loads");
+//! assert!(cart.step(0).done, "the first frame, computed whole");
+//! let Ok(Viewed::Text(record)) = cart.view("values", "Screen", Some("A1:D1")) else {
+//!     panic!("a window of a sheet is a record");
+//! };
+//! assert!(record.contains("(value \"Screen\" \"D1\" 4)"), "{record}");
+//! ```
 
 pub mod abi;
 pub mod cartridge;
@@ -61,3 +81,9 @@ mod sha256;
 /// the same file by its path.
 #[cfg(test)]
 mod ladder;
+
+/// The repository's `cartridges/` beside the crate, read at run time by the
+/// tests that need it, each standing down by name where a package has none
+/// (`REPO.4`), compiled for the tests alone.
+#[cfg(test)]
+mod repository;

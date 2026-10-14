@@ -4908,3 +4908,83 @@ Then three of them again with the gun written over by the command line, as an au
 - *Its entry.* The ladder's eight rows enter the history. The native gun's floor is re-based on its runs of 64 over the new window, from 1.34 to 2.19 billion cells a second; the wasm gun's floor rises on the same window, from 942 million to 1.51 billion, and Sand's wasm floor from 27.9 to 29.3 million; none goes down, so the entry gives no reason. The note above the check's baseline carries the run's rows.
 
 *Closed ✅ 2026-10-14, at the owner's word* ("Commit."), the item's line moved from the roadmap to the engine's ledger. One commit, staged by hunk: the owner's uncommitted edits of `README.md` left out.
+
+## `REPO.4` — the first release, `v0.1.0`: the crate on crates.io over `vla-lang` 0.9.3, its tests in its package, and the page deployed
+
+*Scoped and built 2026-10-14, at the owner's word. That morning the owner asked whether Alonzo was steady enough to publish `alonzo` 0.1.0 to crates.io, and for the steps to it. The assessment found the crate publishable and its surroundings not: CI fourteen commits behind, the pin about to be superseded, the package's tests unbuildable, the crate's page promising old numbers, and no release machinery. It recommended the release over `vla-lang` 0.9.3. Frazaro released 0.9.3 the same morning, and the owner wrote: "0.9.3 is deployed to GitHub and crates.io, so prepare Alonzo 0.1.0 for launch. REPO.4's second option is approved for running tests from the package. Add the license files. ENGINE.8's second slice can wait. GitHub Pages now builds and deploys from GitHub Actions. Once everything is ready, push to remote and list the exact steps remaining for deploying to crates.io." During the build the owner added that the session counts as this item's, to be marked 🟡, or ✅ if it is completed.*
+
+**Substrate, verified.** Read on the day, by file and request, never by assumption.
+- *The name.* `alonzo` is free on crates.io (HTTP 404), as it was on 2026-10-08 and 2026-10-10.
+- *The package before.* `cargo package -p alonzo` in a scratch worktree, `publish = false` lifted there alone: 25 files, 357.9 KiB, 94.0 KiB compressed, the library built from its tarball in 4 s; `cargo doc` with no warning. But `cargo test --no-run` over the extracted package failed at nine `include_str!` of `cartridges/`, eight files, where the note of 2026-10-11 counted seven: Sand and Kairos came since. The package held no LICENSE and no NOTICE, nor did `vla-lang` 0.9.2's, the house's precedent until Frazaro's `8993a7e` copied both into each of its crates for 0.9.3.
+- *A dependent builds the cdylib.* Buffet's `target/debug/deps` holds `alonzo.dll`. With `crate-type = ["rlib", "cdylib"]` and the twelve unconditional `#[no_mangle]` exports, every dependent builds a native cdylib exporting the twelve names; `vla-lang`'s `c-abi` feature is the house's pattern for the export half (decision 9).
+- *CI.* Its last green run is on `57cfdaf`, fourteen commits behind. `actions/checkout@v4` and `actions/upload-artifact@v4` are the Node 20 actions its annotations flag; both stand at v7, and their v5 to v7 notes change nothing these jobs use. `ubuntu-latest` moves to Ubuntu 26 on 2026-10-19.
+- *Pages.* Not enabled on the morning's read (HTTP 404). By the afternoon its source is GitHub Actions (`build_type` workflow, `https://spreadsheet-company.github.io/Alonzo/`), and its `github-pages` environment allows a deploy from `main` alone.
+- *The language at 0.9.3.* Frazaro's release commit is `17f9f3e`, the tag `v0.9.3` on `8993a7e`, crates.io's checksum `0321b8a4...`. By its notes no call of the crate changed, and `Machine::view` answers a third projection, `values` (`KERNEL.37`).
+
+**The decisions.** The owner's where the message above gives them, and the session's under it otherwise.
+
+1. **Publish `alonzo` to crates.io, over `vla-lang` 0.9.3** (the owner's). The pin is exact, so 0.1.0 holds every dependent to the language it names; the release waits for 0.9.3 rather than freeze 0.9.2.
+2. **The bar is met, and said in measured numbers.** The README promised thirty frames a second. Over 0.9.3 Life runs at 235 in the browser and 342 natively, and the README, the crate's page and the charter say so: the item's opening decision, answered by measurement.
+3. **The tests travel by the second way** (the owner's approval). The tests that need the repository read `cartridges/` at run time through `engine/src/repository.rs`, and where a package has none they stand down by name, on standard error under the test's own thread name, which the harness gives every test. `ALONZO_REQUIRE_CARTRIDGES` turns a stand-down into a failure, and CI's crate job sets it. A file missing where `cartridges/` is there is a defect, never a stand-down. The first way's copies would have put a copy step on every cartridge edit; the third way, the gap written down, would have left the package's tests unbuildable.
+4. **The License and the NOTICE in the package** (the owner's). `engine/LICENSE` and `engine/NOTICE` are the root's byte for byte, as Frazaro's crates carry theirs since 0.9.3; `REUSE.toml`'s documentation table reads the NOTICE copy as it reads the root's.
+5. **`publish = false` removed, as `REPO.1`'s decision 6 planned, and `examples/` left out of the package**, as `frazaro-core` leaves its runner out: the three examples read the repository's cartridges, and the pass's writes into them.
+6. **A thirteenth check, `tools/check_crate_package.ps1`.** It holds the copies byte for byte, every build-time include of `engine/src/` and `engine/examples/` inside the crate, and the manifest's crates.io fields, with no `publish = false`. Its control is seven mutants.
+7. **The release's machinery, in Frazaro's shape.**
+   - `RELEASES.md`, begun with `## 0.1.0`, naming every item since `REPO.1`.
+   - `.github/workflows/publish.yml`: by hand from the tag, a rehearsal unless Upload is ticked, Trusted Publishing and no stored token, no environment, the first version by hand.
+   - `.github/workflows/pages.yml`: the module built by CI and held to its imports, its exports and the offline doctrine before the deploy, on a `v*` tag and by hand.
+   - CI's crate job packages the crate and runs its own tests from the tarball, and the actions move to their v7 majors.
+8. **The second gap, the module naming its builder: the first way** (the session's). Every artifact the release ships is built by CI: the deployed page's module is built by `pages.yml` on a runner, whose paths name the runner. No check holds the module to no absolute path, since one would have to name a person to refuse it, and a module CI builds names none. The crates.io upload is source and carries none.
+9. **Left for a later release** (the session's): the cdylib a dependent builds and the exports it carries. Changing them moves the module's build line, the export check and Buffet's `HOUSE.4`, and breaks no API, so a patch release can take it.
+10. **`ENGINE.8`'s second slice waits** (the owner's). The module answers `values` from 0.9.3, passing a projection's name through. `SPEC.md` §4.5's correction says so, the host and its double draw and answer `plane` and `grid` until that slice, and an engine test holds the law.
+11. **The tenth baseline is the session's run** (the session's, under the owner's word to make the release ready and push it). A new pin fails the floors by name until it is measured, so CI could not pass without one. The instrument ran on the owner's machine with all its guards, and its entry says it was not the owner's hand; the owner's own run is the next entry, whenever it is made.
+12. **Two commits.** The pin at 0.9.3 under `ENGINE.1`'s ID, as the 0.9.x moves were, the first commit's tree verified alone; then the release's preparation under this item's.
+
+**The catch.**
+- `cargo package` verifies the library alone, so an `include_str!` in a test module never stops it; only the package's own tests find one, so CI runs them.
+- A stand-down that passes in silence could hide a broken repository, so CI requires none, and a stand-down is said on standard error, where `--nocapture` shows it.
+- The heap ceilings are exact. Over 0.9.3 every fixture holds about two bytes a formula cell more, so the ceilings rise with the language's reason written.
+- Kairos's describe golden gains `KERNEL.35`'s `(most k)` on its three sheets of 16 readers or more. The other seven goldens are unchanged.
+
+**Oracle.** As filed: the pushed commit's CI green on both jobs, and the tag on it; the crate, once published, building from crates.io in a fresh project, Buffet's `HOUSE.2`; the deployed page running Life in a browser that has never seen the repository, its frames held by `?frames=1`; the release notes naming every item since `REPO.1`. Beside it, on the owner's machine: the package's own tests run from its tarball, and `run_checks.ps1 -WithExtras` all green.
+
+*Built 2026-10-14.*
+- *The pin.* `Cargo.toml` at `vla-lang = "=0.9.3"`, and the lock; `tools/check_engine_deps.ps1`'s baseline and its history of pins. `SPEC.md` §4.5's and §4.6's dated corrections, the third projection and the census's `(most k)`. `engine/src/abi.rs`'s doc of the view. `engine/src/cartridge.rs`'s `a_window_s_values_are_its_record_without_its_formulas`, a cartridge of its own, so it travels: before the first step and after it, the window's `values` is its `grid` record without the `formula` rows, and a projection the grid does not have is refused naming the three. Kairos's describe golden.
+- *The floors.* `tools/check_frame_floors.ps1`'s tenth baseline, pasted from `target/bench_frames.txt` whole, and the heap ceilings raised with their reason.
+- *The tests in the package.* `engine/src/repository.rs`, test-only: `cartridges()` and `read(file)`, `REQUIRE`. The nine constants of `abi.rs` and `cartridge.rs` became run-time reads, `gun_seed` takes the gun's text, and the five stand-downs written by hand in `pass.rs` and `cartridge.rs` now go through the module, so CI's requirement covers them.
+- *The package.* `engine/LICENSE` and `engine/NOTICE`; `engine/Cargo.toml` without `publish = false`, with `exclude = ["examples/"]` and the comments that say why; `REUSE.toml`'s documentation table; `lib.rs`'s first step, a doctest, which `engine/README.md` shows as well.
+- *The checks and CI.* `tools/check_crate_package.ps1`; `tools/run_checks.ps1` at a floor of 13 with thirteen controls; `checks.yml` with the requirement, the package's tests and the actions at v7, its header's stale lines on the git pin and the eleven names corrected; `publish.yml`; `pages.yml`.
+- *The docs.* `RELEASES.md`; `README.md`'s release paragraph and its table; `engine/README.md`, the first step, the release section and the tenth baseline; `CHARTER.md` §7; the roadmap's line, 🟡, with what earns ✅.
+
+**Measured in the build** (*measurement*, 2026-10-14, the session's run of `tools/bench_frames.ps1` over `vla-lang` 0.9.3 on the owner's machine, both halves opted out and on the performance cores, every clock's spread within 6.7%):
+
+| | natively | in the browser |
+|---|---|---|
+| Life's frame, at 1, 4 and 16 times the area | 2.9, 14.2 and 58.3 ms | 4.2, 18.2 and 70.0 ms |
+| the gun's idle frame | 0.0283, 0.0270 and 0.0305 ms, 1.08 times at 16 | 0.0391, 0.0391 and 0.0461 ms, 1.18 times at 16 |
+| Sand's opening | 3.9 ms | 5.9 ms |
+| the heap or the module's memory, Life at 1 and 16 | 29,477,945 and 471,588,431 bytes | 28,508,160 and 384,892,928 bytes |
+
+*Found.*
+- The module is 749,135 bytes over 0.9.3, 66,464 more than over 0.9.2.
+- The heap holds 127,384 bytes more for Life's soup, about two a formula cell, and 368 more for Sand. That is the language's frame end keeping room for every cell it may change (`KERNEL.36`).
+- The gun's idle frame at sixteen times the area now costs 1.08 times the window's natively, inside the floors' margin, where over 0.9.2 it cost 1.27; in the browser it costs 1.18 times.
+- No row fell under its floor. Ten floors were kept, and four rose: the native gun's two rungs, the wasm gun's at four times the area and wasm Life's at sixteen.
+- From its package, 19 of the crate's 40 tests stand down by name and 21 run whole, the `values` law among them, with the doctest beside them. The package is 25 files, 313.1 KiB, 82.8 KiB compressed.
+
+*Checks.*
+- fmt; clippy `-D warnings` natively and for `wasm32-unknown-unknown`.
+- `cargo test --workspace` with `ALONZO_REQUIRE_CARTRIDGES` set: 40 tests and the doctest, none standing down.
+- The package: `cargo package -p alonzo --locked`, 25 files, 82.8 KiB compressed, built from its tarball. Its own tests, from the tarball extracted outside the repository and with no requirement: 40 and the doctest, 19 standing down by name.
+- `check_frame_floors.ps1` with the runner, clean over the tenth baseline; `check_crate_package.ps1` and its seven mutants.
+- `tools/run_checks.ps1 -WithExtras`: 13 checks and 13 verifiers, ALL GREEN, in 502 s.
+- The first commit's tree alone, in a worktree: fmt, clippy, `cargo test` 40, the runner, the module and the page built, and `run_checks.ps1`'s 12 checks ALL GREEN; its commit's tree asserted equal to the one verified.
+
+*What remains is the owner's*, in this order, each an act that leaves the machine or needs the owner's credentials.
+1. The pushed commit's CI run green on both jobs, the crate job's new steps among them; the run on Linux is also the first of the heap ceilings, exact since `ENGINE.9` and never run there before.
+2. A `v*` tag rule on the `github-pages` environment (Settings, Environments, `github-pages`, deployment branches and tags), so a tag deploys the page, as Frazaro's needed.
+3. The tag `v0.1.0`, annotated, on that commit, pushed; `pages.yml` deploys the page from it.
+4. A crates.io token with the `publish-new` scope for the pattern `alonzo` and a short expiry, given to `cargo login`. Then, from the clean tagged tree: `cargo clean`, `cargo package -p alonzo --locked`, `cargo publish -p alonzo --locked --dry-run`, and `cargo publish -p alonzo --locked`. A publish is permanent; crates.io can yank a version and never delete it.
+5. Trusted Publishing on the crate's settings on crates.io: owner `Spreadsheet-Company`, repository `Alonzo`, workflow `publish.yml`, environment empty. Then the token revoked.
+6. The oracle's rest: the page opened in a browser that has never seen the repository, with `?frames=1`; and Buffet's `HOUSE.2`, its patch deleted and its pins at `alonzo = "=0.1.0"` and `vla-lang = "=0.9.3"`, building the engine from crates.io. Its local build over the patch fails from this item's first commit, since the engine's pin is 0.9.3 and Buffet's 0.9.2.
+7. Then this item closes ✅, its line moved to the ledger, and `REPO.3`'s quarter may count from the release `REPO.5` settles.

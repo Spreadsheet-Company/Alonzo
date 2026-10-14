@@ -6,15 +6,24 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-# What crates.io will show and index. The page is this directory's README,
-# written for a first-time visitor, as frazaro-core's is.
+# What crates.io shows and indexes. The page is this directory's README,
+# written for a first-time visitor, as frazaro-core's is. A package is this
+# directory and nothing beside it: the catalog the engine embeds lives in
+# data/, the root's LICENSE and NOTICE are copied here, and the tests read
+# the repository's cartridges/ at run time and stand down by name without
+# it (src/repository.rs), so a package's own tests build and run;
+# tools/check_crate_package.ps1 holds all three.
 readme = "README.md"
 keywords = ["wasm", "game-engine", "spreadsheet", "lisp", "cellular-automaton"]
 categories = ["game-engines", "wasm"]
-# Nothing to publish until the engine renders: the first release removes
-# this line as one of its steps (REARVIEW.md, REPO.1, decision 6), so that
-# no rehearsal can upload an engine that draws nothing.
-publish = false
+# The three examples, the floors' runner, the pass's command line and the
+# playtest session, read the repository's cartridges/, and the pass writes
+# into it, so they stay out of the package a visitor downloads, as
+# frazaro-core's runner does. Published from 0.1.0 (REPO.4): the line
+# `publish = false`, which REPO.1's decision 6 set until the engine drew a
+# frame, went as that decision planned; the first version goes up by hand,
+# and every later one by .github/workflows/publish.yml.
+exclude = ["examples/"]
 
 [lib]
 # rlib for the native runner of the frame floors, examples/frames.rs (CART.1),

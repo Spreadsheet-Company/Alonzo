@@ -1004,10 +1004,19 @@ mod tests {
     use super::*;
     use crate::sha256::sha256_hex;
 
-    const LIFE: &str = include_str!("../../cartridges/life/life.vla");
+    // The repository's cartridges, read at run time by the tests that hold
+    // the engine to them, each `None` once its test has stood down by name in
+    // a package, which holds no `cartridges/` (REPO.4; `crate::repository`).
+
+    /// Life's soup (CART.1), the benchmark's first fixture.
+    fn life() -> Option<String> {
+        crate::repository::read("life/life.vla")
+    }
 
     /// The plane's test card (ENGINE.2): every kind of value under a panning Camera.
-    const TESTCARD: &str = include_str!("../../cartridges/testcard/testcard.vla");
+    fn testcard() -> Option<String> {
+        crate::repository::read("testcard/testcard.vla")
+    }
 
     const COLORS: [&str; 16] = [
         "#000000", "#FFFFFF", "#0000AA", "#00AA00", "#00AAAA", "#AA0000", "#AA00AA", "#AA5500",
@@ -1716,7 +1725,10 @@ mod tests {
 
     #[test]
     fn life_loads_and_describes_itself() {
-        let c = Cartridge::load(LIFE, "life.vla", LIFE.len()).expect("Life loads");
+        let Some(life) = life() else {
+            return;
+        };
+        let c = Cartridge::load(&life, "life.vla", life.len()).expect("Life loads");
         assert_eq!(c.row(1), "(cartridge 1 \"Life\" plane 320 200 30)");
         let d = c.describe();
         for want in [
@@ -1759,7 +1771,10 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         let goldens = root.join("testdata/describe");
         let bless = std::env::var_os("ALONZO_BLESS").is_some();
-        let mut folders: Vec<std::path::PathBuf> = std::fs::read_dir(root.join("../cartridges"))
+        let Some(cartridges) = crate::repository::cartridges() else {
+            return;
+        };
+        let mut folders: Vec<std::path::PathBuf> = std::fs::read_dir(cartridges)
             .expect("cartridges/")
             .filter_map(|e| e.ok().map(|e| e.path()))
             .filter(|p| p.is_dir())
@@ -1833,8 +1848,11 @@ mod tests {
 
     // ---- ENGINE.3: the input card ----
 
-    /// The input card (ENGINE.3): the Input and Clock devices drawn.
-    const INPUTCARD: &str = include_str!("../../cartridges/inputcard/inputcard.vla");
+    /// The input card (ENGINE.3): the Input and Clock devices drawn, read
+    /// from the repository at run time.
+    fn inputcard() -> Option<String> {
+        crate::repository::read("inputcard/inputcard.vla")
+    }
 
     /// The Input sheet's eighteen rows as the host writes them before a step:
     /// the held buttons as (button, player) from 0, the pointer's Screen cell,
@@ -1888,8 +1906,10 @@ mod tests {
     /// cursor drawn at the pointer's Screen cell through the Camera's window.
     #[test]
     fn the_input_card_counts_what_it_is_given() {
-        let mut c =
-            Cartridge::load(INPUTCARD, "inputcard.vla", INPUTCARD.len()).expect("the card loads");
+        let Some(card) = inputcard() else {
+            return;
+        };
+        let mut c = Cartridge::load(&card, "inputcard.vla", card.len()).expect("the card loads");
         assert!(
             cell_text(&c, "Clock", "B3").is_empty(),
             "the seed is the host's"
@@ -2172,7 +2192,9 @@ mod tests {
     /// board to the page's game.
     #[test]
     fn every_committed_replay_plays_to_its_golden() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../cartridges");
+        let Some(root) = crate::repository::cartridges() else {
+            return;
+        };
         let mut folders: Vec<std::path::PathBuf> = std::fs::read_dir(&root)
             .expect("cartridges/")
             .filter_map(|e| e.ok().map(|e| e.path()))
@@ -2229,8 +2251,11 @@ mod tests {
 
     // ---- CART.1: the gun, the benchmark's second fixture ----
 
-    /// Gosper's glider gun (CART.1): its pattern a Seed sheet the first frame reads.
-    const GUN: &str = include_str!("../../cartridges/gun/gun.vla");
+    /// Gosper's glider gun (CART.1): its pattern a Seed sheet the first frame
+    /// reads, read from the repository at run time.
+    fn gun() -> Option<String> {
+        crate::repository::read("gun/gun.vla")
+    }
 
     /// A cartridge's Screen whole, 320 by 200, as the plane reads it.
     fn screen(c: &Cartridge) -> Vec<u8> {
@@ -2242,9 +2267,9 @@ mod tests {
 
     /// The gun's Seed read off the cartridge's rows, `(cell "Seed" "J14" 1)`,
     /// as a plane of 320 by 200, and not off the engine's grid.
-    fn gun_seed() -> Vec<u8> {
+    fn gun_seed(gun: &str) -> Vec<u8> {
         let mut g = vec![0u8; 320 * 200];
-        for line in GUN.lines() {
+        for line in gun.lines() {
             let Some(rest) = line.trim().strip_prefix("(cell \"Seed\" \"") else {
                 continue;
             };
@@ -2293,7 +2318,10 @@ mod tests {
 
     #[test]
     fn the_gun_s_first_frame_is_its_seed_and_its_second_the_rule() {
-        let mut c = Cartridge::load(GUN, "gun.vla", GUN.len()).expect("the gun loads");
+        let Some(gun) = gun() else {
+            return;
+        };
+        let mut c = Cartridge::load(&gun, "gun.vla", gun.len()).expect("the gun loads");
         assert_eq!(
             c.row(1),
             "(cartridge 1 \"Gosper's glider gun\" plane 320 200 30)"
@@ -2303,7 +2331,7 @@ mod tests {
             (62_964, 1),
             "the rule is one shape over the interior"
         );
-        let seed = gun_seed();
+        let seed = gun_seed(&gun);
         assert_eq!(
             seed.iter().filter(|b| **b == 1).count(),
             36,
@@ -2323,8 +2351,11 @@ mod tests {
     fn the_two_fixtures_differ_only_in_their_first_frame() {
         // Life's rule word for word after the first frame's branch, so that the
         // floors of the soup and of the gun time the same formula (CART.1).
-        let life = screen_formula(LIFE);
-        let gun = screen_formula(GUN);
+        let (Some(life_text), Some(gun_text)) = (life(), gun()) else {
+            return;
+        };
+        let life = screen_formula(&life_text);
+        let gun = screen_formula(&gun_text);
         let tail = ",IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,AND(Screen.last!B2=1,SUM(Screen.last!A1:C3)-Screen.last!B2=2)),1,0))\")";
         assert!(life.ends_with(tail), "Life's rule: {life}");
         assert!(gun.ends_with(tail), "the gun's rule: {gun}");
@@ -2416,8 +2447,11 @@ mod tests {
     /// kind of value, 0 for an empty cell and for a formula with no value.
     #[test]
     fn the_test_card_s_plane_is_its_record_every_frame() {
+        let Some(card) = testcard() else {
+            return;
+        };
         let mut c =
-            Cartridge::load(TESTCARD, "testcard.vla", TESTCARD.len()).expect("the test card loads");
+            Cartridge::load(&card, "testcard.vla", card.len()).expect("the test card loads");
         let mut seen = std::collections::BTreeSet::new();
         for frame in 0..=24u32 {
             let camera = record_bytes(&c, "Camera", (1, 2, 2, 2));
@@ -2480,7 +2514,10 @@ mod tests {
     /// and at frame 1, the soup.
     #[test]
     fn life_s_plane_is_its_record_at_its_corners_and_a_band() {
-        let mut c = Cartridge::load(LIFE, "life.vla", LIFE.len()).expect("Life loads");
+        let Some(life) = life() else {
+            return;
+        };
+        let mut c = Cartridge::load(&life, "life.vla", life.len()).expect("Life loads");
         let windows = [
             (1, 1, 20, 20),
             (1, 301, 20, 320),
@@ -2569,8 +2606,11 @@ mod tests {
 
     // ---- CART.2: Sand, the first game ----
 
-    /// Sand (CART.2): a falling-sand toy, the floors' third fixture.
-    const SAND: &str = include_str!("../../cartridges/sand/sand.vla");
+    /// Sand (CART.2): a falling-sand toy, the floors' third fixture, read from
+    /// the repository at run time.
+    fn sand_text() -> Option<String> {
+        crate::repository::read("sand/sand.vla")
+    }
 
     use crate::sand;
 
@@ -2632,7 +2672,10 @@ mod tests {
     /// (2026-10-12).
     #[test]
     fn sand_s_opening_is_the_hand_written_sand_and_keeps_every_grain() {
-        let mut c = Cartridge::load(SAND, "sand.vla", SAND.len()).expect("Sand loads");
+        let Some(text) = sand_text() else {
+            return;
+        };
+        let mut c = Cartridge::load(&text, "sand.vla", text.len()).expect("Sand loads");
         assert_eq!(c.row(1), "(cartridge 1 \"Sand\" plane 320 200 60)");
         let (cells, shapes) = c.machine().formulas();
         assert_eq!(
@@ -2814,7 +2857,10 @@ mod tests {
     /// no paint keeps every grain.
     #[test]
     fn sand_paints_with_the_left_button_erases_with_the_right_and_the_wheel_sizes_the_brush() {
-        let mut c = Cartridge::load(SAND, "sand.vla", SAND.len()).expect("Sand loads");
+        let Some(text) = sand_text() else {
+            return;
+        };
+        let mut c = Cartridge::load(&text, "sand.vla", text.len()).expect("Sand loads");
         assert!(c.step(0).done, "frame 1, the soup");
         let mut want = sand::opening(1);
         let session: [Gesture; 9] = [
@@ -2861,16 +2907,19 @@ mod tests {
     /// a frame with no paint keeps every material.
     #[test]
     fn sand_s_water_falls_spreads_is_erased_and_never_settles() {
+        let Some(sand_cartridge) = sand_text() else {
+            return;
+        };
         let (sand_under, water_under) = ("<12582911,2,", "<25165822,3,0");
         assert_eq!(
             (
-                SAND.matches(sand_under).count(),
-                SAND.matches(water_under).count()
+                sand_cartridge.matches(sand_under).count(),
+                sand_cartridge.matches(water_under).count()
             ),
             (1, 1),
             "the opening's two thresholds, once each"
         );
-        let text = SAND
+        let text = sand_cartridge
             .replace(sand_under, "<0,2,")
             .replace(water_under, "<0,3,0");
         let mut c = Cartridge::load(&text, "sand.vla", text.len()).expect("the empty Sand loads");
@@ -2956,8 +3005,10 @@ mod tests {
     // ---- CART.4: Kairos, the stacking game ----
 
     /// Kairos (CART.4): the stacking game, the first game with a goal, a win
-    /// and a loss.
-    const KAIROS: &str = include_str!("../../cartridges/kairos/kairos.vla");
+    /// and a loss, read from the repository at run time.
+    fn kairos() -> Option<String> {
+        crate::repository::read("kairos/kairos.vla")
+    }
 
     use crate::kairos::{self, End, Game, Phase, Settings};
 
@@ -3316,7 +3367,10 @@ mod tests {
     /// last game's hold. The plan is the one the scoping measured.
     #[test]
     fn kairos_plays_four_games_every_frame_the_game_by_hand() {
-        let c = Cartridge::load(KAIROS, "kairos.vla", KAIROS.len()).expect("Kairos loads");
+        let Some(kairos) = kairos() else {
+            return;
+        };
+        let c = Cartridge::load(&kairos, "kairos.vla", kairos.len()).expect("Kairos loads");
         assert_eq!(c.row(1), "(cartridge 1 \"Kairos\" plane 15 7 60)");
         assert_eq!(
             c.machine().formulas(),
@@ -3343,7 +3397,7 @@ mod tests {
                 ..KairosPlan::default()
             },
         ];
-        let run = kairos_session(KAIROS, Settings::default(), &[], plans, 4_500, false);
+        let run = kairos_session(&kairos, Settings::default(), &[], plans, 4_500, false);
         assert_eq!(
             run.ends,
             [
@@ -3374,6 +3428,9 @@ mod tests {
     /// game by hand given the same window.
     #[test]
     fn kairos_s_window_rigged_in_the_open_stops_the_row_a_column_on() {
+        let Some(kairos) = kairos() else {
+            return;
+        };
         // (the window, the frames into a place the press comes, the lights that fall)
         let cases: [(u32, u32, u32); 4] = [(1, 4, 1), (2, 2, 1), (2, 1, 0), (10, 4, 0)];
         for (window, late, falls) in cases {
@@ -3385,7 +3442,7 @@ mod tests {
                 late,
                 ..KairosPlan::default()
             }];
-            let run = kairos_session(KAIROS, settings, edits, plans, 160, false);
+            let run = kairos_session(&kairos, settings, edits, plans, 160, false);
             let g = &run.game;
             assert!(
                 g.level >= 3,
@@ -3405,7 +3462,10 @@ mod tests {
     /// frame 1, holds its place through frame 10, and would move in frame 11.
     #[test]
     fn kairos_stops_where_the_row_was_seen() {
-        let mut c = Cartridge::load(KAIROS, "kairos.vla", KAIROS.len()).expect("Kairos loads");
+        let Some(kairos) = kairos() else {
+            return;
+        };
+        let mut c = Cartridge::load(&kairos, "kairos.vla", kairos.len()).expect("Kairos loads");
         let mut g = Game::new(Settings::default());
         for frame in 1..=11u32 {
             let stop = frame == 11;
@@ -3434,12 +3494,10 @@ mod tests {
     /// repository's `cartridges/` has no source to turn.
     #[test]
     fn kairos_stands_up_by_one_word_and_its_window() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../cartridges");
-        let (Ok(source), Ok(library)) = (
-            std::fs::read_to_string(root.join("kairos").join("kairos.source.vla")),
-            std::fs::read_to_string(root.join("common.vla")),
-        ) else {
-            eprintln!("no cartridges/ beside the crate: the source is the repository's");
+        let Some(source) = crate::repository::read("kairos/kairos.source.vla") else {
+            return;
+        };
+        let Some(library) = crate::repository::read("common.vla") else {
             return;
         };
         assert_eq!(
