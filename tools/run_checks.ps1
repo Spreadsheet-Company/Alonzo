@@ -7,7 +7,9 @@ past, and "they all seemed to pass" is not a result anybody can quote in a
 commit message. This prints one line per check and one total, and its own
 exit code is the answer. CONTRIBUTING.md names it as what to run before a
 pull request, and .github/workflows/checks.yml runs it on every push, once
-under Windows PowerShell 5.1 and once under pwsh beside the wasm it builds.
+under Windows PowerShell 5.1 and once under pwsh beside the wasm it builds;
+.github/workflows/controls.yml runs it with -WithExtras the same two ways,
+nightly and by hand.
 
 IT IS NOT NAMED check_*.ps1, deliberately: this file would otherwise match
 its own glob and run itself forever. It also skips itself by name as a belt

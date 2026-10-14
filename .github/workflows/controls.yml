@@ -1,0 +1,65 @@
+# The controls: every check run again with its control, the control proving
+# the check on its mutants (tools/run_checks.ps1 -WithExtras), nightly, by
+# hand from the Actions tab, and by hand before a release is tagged.
+#
+# The controls test the checks, not the engine: each builds what its check
+# reads with one defect in it, a cartridge, a table, a page, and asserts that
+# the check fails it by name. So they matter when a check, or a line a
+# mutant anchors on, changes, and they cost far more than the checks they
+# prove. The host loop's control alone runs the page's whole loop oracle
+# once for the real page and once for each of its forty mutants, over the
+# engine's own module. From REPO.2 they ran on every push in both of
+# checks.yml's jobs, until on 2026-10-14 they had grown to eighteen and a
+# half minutes of a push's 22m44s, the host loop's control 16m47s of it and
+# growing with every case and every mutant; they moved here that day, and
+# checks.yml keeps the checks themselves on every push.
+#
+# Two jobs, the two shells checks.yml runs the checks under: Windows
+# PowerShell 5.1 over the page without the module, and pwsh on Linux over the
+# page with the engine's module and the frame floors' runner built, where the
+# controls whose mutants need the module run too. A control that fails here
+# names its mutant and what the check said of it; the fix is to the check or
+# to the anchor, never to the control's want. A scheduled run that fails is
+# mailed to whoever last changed the schedule.
+name: controls
+on:
+  workflow_dispatch:
+  schedule:
+    # 10:17 UTC, after midnight in the Americas, off the hour's crowd
+    - cron: '17 10 * * *'
+jobs:
+  ratchets:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: build the engine's page, no cargo needed
+        shell: pwsh
+        run: |
+          & powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_web.ps1
+          exit $LASTEXITCODE
+      - name: every check and every control under Windows PowerShell 5.1
+        shell: pwsh
+        run: |
+          & powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_checks.ps1 -WithExtras
+          exit $LASTEXITCODE
+  module:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: build the wasm engine
+        run: cargo build --release -p alonzo --target wasm32-unknown-unknown
+      - name: build the native runner of the frame floors (CART.1)
+        run: cargo build --release --example frames
+      - name: build the engine's page, the wasm built in
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File tools/build_web.ps1
+          exit $LASTEXITCODE
+      - name: every check and every control under pwsh, over the engine's own module
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File tools/run_checks.ps1 -WithExtras
+          exit $LASTEXITCODE

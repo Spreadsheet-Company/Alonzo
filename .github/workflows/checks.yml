@@ -2,45 +2,51 @@
 # viewport's page and its oracle since KERNEL.5; the host's loop, the
 # cartridges and the blit floors since ENGINE.1; the engine's own module over
 # the language crate, its exports and its one dependency since ENGINE.1's
-# second slice). The crate job fetches vla-lang from crates.io at the one
-# version Cargo.toml pins (Cargo.lock holds its checksum; a git rev until
-# 2026-10-10), the build's one fetch and never the engine's, which imports
-# nothing.
+# second slice). The crate and module jobs fetch vla-lang from crates.io at
+# the one version Cargo.toml pins (Cargo.lock holds its checksum), the
+# build's one fetch and never the engine's, which imports nothing.
 #
-# Two jobs, in Frazaro's shape. The ratchets job builds the engine's page
-# (tools/build_web.ps1, which needs no cargo: without the wasm artifact the
-# page carries no engine module and says so, and the host's loop runs against
-# the fake module either way) and runs tools/run_checks.ps1 under Windows
-# PowerShell 5.1, the house's floor for every check, with the floor on the
-# count and the controls that prove each check on mutants; the render oracle
-# and the host loop's oracle run the page under the image's Chrome or Edge,
-# headless, at two pixel ratios; with no Rust toolchain on that job the import
-# check says SKIPPED, and the crate job is where it bites. The crate job builds, formats, lints and tests the workspace, builds
-# the engine for the browser, builds the page again, and runs the same runner
-# under pwsh, so that the engine's import section is read off the artifact
-# itself and held to the allowlist written in tools/check_host_imports.ps1, its
-# export section to the twelve names in tools/check_host_exports.ps1, and the
-# oracle runs under the image's Chrome on Linux, the host over the engine's
-# own module among its cases: AD-4 (zero imports in the
-# language, an allowlist here) and AD-5 (the imports named by hand, never
-# generated) are checked on the file, not taken on faith, and SD-13 crosses
-# the road with them. The wasm and the page are kept as artifacts of the run.
+# Three jobs, side by side, so that a push's answer takes the longest of them
+# and not their sum (2026-10-14: the run before took 22m44s, eighteen and a
+# half minutes of it the controls, which now run in controls.yml).
+#
+# - ratchets builds the engine's page with no cargo (without the wasm the
+#   page carries no engine module and says so, and the host's loop runs
+#   against the fake module either way) and runs tools/run_checks.ps1 under
+#   Windows PowerShell 5.1, the house's floor for every check, with the floor
+#   on the count. The render oracle and the host loop's oracle run the page
+#   under the image's Chrome or Edge, headless, at two pixel ratios. With no
+#   module and no runner here, the import check and the frame floors' check
+#   mode say SKIPPED, and the module job is where they bite.
+# - crate builds, formats, lints and tests the workspace, with
+#   ALONZO_REQUIRE_CARTRIDGES set so that a test standing down for want of
+#   the repository's cartridges/ fails here, where the repository is whole
+#   (engine/src/repository.rs, REPO.4). Its tests are built at opt-level 3
+#   (CARGO_PROFILE_DEV_OPT_LEVEL), their debug assertions and overflow checks
+#   still on: unoptimized they took 81 s of the job, and on the owner's
+#   machine optimizing took them from 34.5 s to 3.9 s. Then it packages the
+#   crate and runs its own tests from the tarball, as a stranger who
+#   downloads it would, where those tests stand down by name.
+# - module builds the engine for the browser and the native runner of the
+#   frame floors (CART.1), builds the page with the module in it, and runs
+#   the same runner under pwsh. So the engine's import section is read off
+#   the artifact itself and held to the allowlist in
+#   tools/check_host_imports.ps1, its export section to the twelve names in
+#   tools/check_host_exports.ps1, and the oracle runs under the image's
+#   Chrome on Linux, the host over the engine's own module among its cases:
+#   AD-4 (zero imports in the language, an allowlist here) and AD-5 (the
+#   imports named by hand, never generated) are checked on the file, not
+#   taken on faith, and SD-13 crosses the road with them. The frame floors'
+#   check mode holds Life and the glider gun frame by frame to a hand-written
+#   Life, and each one's allocations to ceilings, exact numbers that are the
+#   code's and not the machine's. The wasm and the page are kept as artifacts
+#   of the run.
+#
 # The render floors and the blit floors are the owner's measurements in a
 # real browser, pasted into tools/check_render_floors.ps1 and
 # tools/check_blit_floors.ps1, and the frame floors the owner's run of
 # tools/bench_frames.ps1, pasted into tools/check_frame_floors.ps1; no job
-# times anything. Since CART.1 the crate job builds the native runner,
-# engine/examples/frames.rs, before the runner script, so that
-# check_frame_floors.ps1 runs its check mode there: Life and the glider gun
-# held frame by frame to a hand-written Life, and each one's allocations held
-# to ceilings, exact numbers that are the code's and not the machine's; the
-# ratchets job builds no runner, and the check says SKIPPED for that half.
-# Since REPO.4 (2026-10-14) the crate job's tests run with
-# ALONZO_REQUIRE_CARTRIDGES set, so that a test standing down for want of the
-# repository's cartridges/ fails here, where the repository is whole
-# (engine/src/repository.rs); and the job packages the crate and runs its own
-# tests from the tarball, as a stranger who downloads it would, where those
-# tests stand down by name. The actions are at their Node 24 majors, v7.
+# times anything. The actions are at their Node 24 majors, v7.
 name: checks
 on:
   push:
@@ -56,10 +62,10 @@ jobs:
         run: |
           & powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_web.ps1
           exit $LASTEXITCODE
-      - name: every tools/check_*.ps1 under Windows PowerShell 5.1, the floor and the controls
+      - name: every tools/check_*.ps1 under Windows PowerShell 5.1, and the floor
         shell: pwsh
         run: |
-          & powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_checks.ps1 -WithExtras
+          & powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_checks.ps1
           exit $LASTEXITCODE
   crate:
     runs-on: ubuntu-latest
@@ -67,11 +73,11 @@ jobs:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: wasm32-unknown-unknown
           components: clippy, rustfmt
-      - name: build, format-check, lint and test the workspace, no test standing down (REPO.4)
+      - name: build, format-check, lint and test the workspace, its tests optimized, no test standing down (REPO.4)
         env:
           ALONZO_REQUIRE_CARTRIDGES: '1'
+          CARGO_PROFILE_DEV_OPT_LEVEL: '3'
         run: |
           cargo build --workspace
           cargo fmt --all -- --check
@@ -84,6 +90,13 @@ jobs:
           tar -xzf target/package/alonzo-*.crate -C "$RUNNER_TEMP/package"
           cd "$RUNNER_TEMP"/package/alonzo-*
           cargo test --locked
+  module:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
       - name: build the wasm engine
         run: cargo build --release -p alonzo --target wasm32-unknown-unknown
       - name: build the native runner of the frame floors (CART.1), whose check mode tools/check_frame_floors.ps1 runs
@@ -96,7 +109,7 @@ jobs:
       - name: the engine imports exactly its allowlist (AD-5, read off the artifact), the oracle under Chrome, and every check under pwsh
         shell: pwsh
         run: |
-          pwsh -NoProfile -File tools/run_checks.ps1 -WithExtras
+          pwsh -NoProfile -File tools/run_checks.ps1
           exit $LASTEXITCODE
       - name: keep the wasm engine
         uses: actions/upload-artifact@v7

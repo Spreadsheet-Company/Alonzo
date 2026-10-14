@@ -99,9 +99,11 @@ each check on mutants; beside it the Cargo oracle, `cargo build --workspace`,
 `cargo fmt --all -- --check`,
 `cargo clippy --workspace --all-targets -- -D warnings`,
 `cargo test --workspace`, and the wasm build, whose import section the first
-check reads. CI runs all of it on every push and pull request
-(`.github/workflows/checks.yml`): the checks under Windows PowerShell 5.1,
-and again under pwsh beside the wasm it builds.
+check reads. CI runs all of it but the controls on every push and pull
+request (`.github/workflows/checks.yml`): the checks under Windows
+PowerShell 5.1, and again under pwsh beside the wasm it builds. The
+controls run the same two ways, nightly and by hand
+(`.github/workflows/controls.yml`).
 
 ## The devices and the cartridges are the seams
 
