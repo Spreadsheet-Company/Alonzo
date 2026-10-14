@@ -1,8 +1,8 @@
-# Alonzo
+# Alonzo, the browser's Lisp machine
 
-*The browser's Lisp machine. A game engine in WebAssembly whose language is
-VLA, whose scene is a grid of cells, whose devices are sheets, and whose
-first game is Frazaro, the spreadsheet.*
+*Abstract: A self-aware game engine in WebAssembly (whose extension language is
+VLA (Visual Lisp [for] Applications), whose scene is a grid of cells, 
+whose devices are sheets, and whose telos is Frazaro, a spreadsheet generator).*
 
 ---
 
@@ -22,7 +22,7 @@ is a grid, in its own crate, `vla-lang`, cut out of Frazaro's core.
 **Frazaro** is the set of bridges into and out of it: from English and the
 other phrasebooks to VLA, with a proof per sentence, and from VLA to the
 spreadsheet hosts and back. **Alonzo** is the devices and the clock: a
-Screen, an Audio, an Input, a Clock, a File, a Camera and a Write sheet
+Screen, an Audio, an Input, a Clock, a File, a Camera, and a Write sheet
 mapped into VLA's grid, as uxn's Varvara maps its devices into memory, and
 a loop that writes
 the input and clock cells, asks the language to step, reads the Screen
@@ -36,8 +36,8 @@ shader, and a recalculation is a frame. The thesis in one line: a
 spreadsheet is a game whose frame rate is one, and an engine that can draw
 sixty can draw one.
 
-To a game programmer the same machine is a data-oriented entity-component
-system (ECS) where the systems are formulas, the scheduler is the
+To a game programmer: Alonzo is a data-oriented entity-component
+system [ECS] where the systems are formulas, the scheduler is the
 dependency graph, every component is inspectable live, and rollback is
 free. A sheet is an archetype table, a row is an entity, a column is a
 component, and one formula filled down a column is a system, run every
