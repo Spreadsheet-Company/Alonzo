@@ -105,16 +105,19 @@ sound the frame the grid holds again when it starts.
 | `tick(ts)` | one animation frame's work at its timestamp, what the loop calls |
 | `edit(row)` | a person's edit, one `cell` or `formula` row, issued after the next frame's inputs; at rate 0 it steps once; while the loop is paused at a rate above 0 it waits for the frame Run brings, and the host says so |
 | `keyDown(code, key)` / `keyUp(code)` / `releaseKeys()` | the keys held, by `KeyboardEvent.code` |
-| `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer's place as the window's cell under it, 0 when off the canvas, which the Input rows write as the Screen's own cell through the Camera; in grid mode, at a rate above zero, the viewport's cell under the pointer, 0 off the window's cells, and the wheel's notches with its scroll prevented, while a key the Keys sheet binds is taken before the viewport sees it (`ENGINE.8`) |
+| `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer's place as the window's cell under it, 0 when off the canvas, which the Input rows write as the Screen's own cell through the Camera; in grid mode, at a rate above zero, the viewport's cell under the pointer, 0 off the window's cells, and the wheel's notches with its scroll prevented, while a key the Keys sheet binds is taken before the viewport sees it (`ENGINE.8`). Since `ENGINE.14` the wheel is the game's over a cell of the Camera's window alone, where the pointer is, and scrolls over the tabs, the headers, the corner and the scrollbars; the buttons follow the pointer; while another sheet is shown the pointer is 0 and the wheel scrolls, and a bound key stays the game's |
 | `runFrameSync()` | one whole frame now, whatever the clock (the blit's instrument) |
 | `redraw()` | the last complete frame drawn again, nothing stepped: the Camera and the Palette read as they stand, the plane viewed through the window and blitted, no other effect read (the blit's instrument over the engine's module, where a step is the evaluator's); `false` without a plane cartridge |
-| `viewRecord(sheet, window)` | a sheet's record as the module prints it, for a page to show |
+| `viewRecord(sheet, window)` | a sheet's record as the module prints it, for a page to show; `null` while a frame is in progress, or refused, the refusal said once |
+| `answer(viewport, event)` | a viewport's `sheet` event answered (`ENGINE.14`; `KERNEL.5`'s decision 6): a sheet the viewport holds no record of is viewed and shown, one it holds is viewed again at once, and in the host's own viewport the Screen's tab gives the Camera's window back. The host answers its own viewport's tabs itself; a page wires a viewer of its own with `viewer.on('sheet', function (e) { host.answer(viewer, e); })`. A tab clicked while a frame is in progress is answered at the frame's end, and the events the host's own calls raise go unanswered |
+| `showSheet(viewport, name)` | a sheet viewed through the region the viewport shows, from `A1` at the default cell's size for one it has not drawn, loaded and shown, then viewed again at once when the sheet's own widths put more in view: `true`, or `false` when refused |
+| `refreshSheet(viewport, moved)` | the sheet a viewport shows viewed again through the region it shows, its view kept: what the host does at every frame for its own viewport, and a page at its viewer's refresh; `moved` only when the region has left the window the record was viewed through, at a scroll (`viewer.on('scroll', ...)`). The region and never the sheet whole: a full screen of Sand's Stay is 33 ms natively, its whole record 1.4 s and 34 MB |
 | `replayText()` | the replay of the run since the last load, as text, a replay played included; `null` with no cartridge loaded |
 | `play(text, all)` | a replay checked whole, then the cartridge loaded again with its seed and its frames played through the loop at the cartridge's rate, edits refused until it ends, the loop paused at its last frame: `{ ok, frames }`, or the refusal's sentence with nothing loaded; `all` plays every frame at once, synchronously (the oracle) |
 | `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`); every sentence said, in order |
 | `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
 | `unload()` / `destroy()` | frees the handle and empties the canvas and the viewport; removes the listeners, and the viewport with them |
-| `vp` | grid mode's viewport (`ENGINE.8`), made at the first grid load over `options.grid` and kept across loads: a grid cartridge's Screen, its record through the Camera's window drawn at frame 0 and after every frame, each frame's record replacing the last with the person's scroll and selection kept, scrolled to the window's corner at a load and by the Camera's move after it; a page focuses its `scroller` to give it the keys |
+| `vp` | grid mode's viewport (`ENGINE.8`), made at the first grid load over `options.grid` and kept across loads: a grid cartridge's Screen, its record through the Camera's window drawn at frame 0 and after every frame, each frame's record replacing the last with the person's scroll and selection kept, scrolled to the window's corner at a load and by the Camera's move after it; a page focuses its `scroller` to give it the keys. Its tabs are answered (`ENGINE.14`): while another sheet is shown, each frame views that sheet alone, through the region in view, and the Screen's tab gives the Camera's window back, scrolled to its corner as at a load |
 | `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat, refusal }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line, `refusal` true for a refusal or a failure; a notice of a value the host coerced, a Camera cell read as 1 or a color painted magenta, is not one), `frame` (`{ frame, window, scale, rate, replay }`, after a frame completes, `rate` the one the Clock now holds, `replay` the last frame of a replay playing or 0), `load` (`{ handle, title, mode, w, h, rate, window, scale }`, after frame 0 is drawn), `stop` (`{ frame }`, when a running loop stops, at Pause, a replay's end, a refused step, a load or an unload, so that a page draws what it shows of the grid at that frame) |
 
 `AlonzoHost.instantiate(bytes)` and `instantiateSync(bytes)` instantiate a
@@ -392,7 +395,17 @@ baseline to the roadmap's bars.
   its looks, the pointer and a bound key read back from the Input sheet, and
   an edit made while the loop is paused said to wait for the frame Run
   brings; over the engine's module the grid card, twenty-four frames under a
-  Camera an edit moves a column right at frames 10 and 20.
+  Camera an edit moves a column right at frames 10 and 20, its numbers too
+  wide for their columns drawn as #s; and the tabs (`tabs`, `ENGINE.14`): a
+  tab with no record clicked as a person clicks it, its sheet shown and held
+  at the click and after every frame to the record of a window that holds
+  every cell in view, a scroll with the loop paused viewing the new region at
+  once, the pointer and the wheel over another sheet the viewport's and a
+  bound key still the game's, the Screen's tab giving back the Camera's
+  window an edit moved meanwhile, and on the Screen the wheel counted over a
+  cell of the window and never over the column header, the tab strip or a
+  scrollbar; over the double its State sheet, over the module the grid
+  card's Clock, the frame's number drawn at every frame.
   One line a case into `<pre id="loop">` once the last has answered,
   which `tools/check_host_loop.ps1` reads.
 - `index.html?blit=1` is the blit's instrument, the engine's second number:
@@ -405,7 +418,9 @@ baseline to the roadmap's bars.
   `tools/check_blit_floors.ps1`, which holds the three cases from one run.
   Run it in Chrome in fullscreen.
 - `index.html?oracle=1` runs the render oracle and prints one line a case
-  into `<pre id="oracle">`, which the check reads under a headless browser.
+  into `<pre id="oracle">`, which the check reads under a headless browser;
+  since `ENGINE.14` each line counts its #s, and `sparse_hashes` narrows the
+  sparse record's column A until its three-digit numbers draw them.
 - `index.html?bench=1` is the floors' instrument, the renderer benchmark of
   `KERNEL.3` over the viewport: the 10,000-line record at the normal window
   (40 rows by 15 columns) and at full screen, 120 steps of three rows and 20
@@ -474,7 +489,7 @@ reads any text of forms into data, the host shim's one reader.
 | `freeze(rows, cols)` / `frozen()` | freezes the top rows and the left columns; what is frozen |
 | `columnWidth(letters, px)` / `columnWidths()` | a column's width in CSS pixels, the host's over the record's; `null` puts the record's back; the overrides |
 | `mark(name, ranges, style)` / `unmark(name)` | a named highlight over ranges the host computed, `style` `{ fill, border }`; `unmark()` with no name clears all |
-| `cellAt(clientX, clientY)` | the cell under a point of the page, or null |
+| `cellAt(clientX, clientY)` | the cell under a point of the page, or null: over a header, the corner, a scrollbar or the tab strip (the last two since `ENGINE.14`, which the hit test had counted as cells) |
 | `cell(row, col)` | a cell: `{ row, col, address, kind, vkind, text, formula, valued, style, sentence }`, `kind` one of `cell`, `formula`, `empty`; `text` what the cell shows, a formula's value once its value row lands and its text before, `formula` a formula's own text, the bar's, and `valued` whether a formula has its value |
 | `geometry()` | the last draw's geometry in device pixels: the ratio, the sizes, the row height, the column edges, the frozen bands, the scroll |
 | `draws()` | the last draw's list: every text, fill, line, header, selection and mark with its position (the oracle's) |
@@ -488,7 +503,7 @@ reads any text of forms into data, the host shim's one reader.
 | `select` | the selection changed by a click, a drag, a key, `select()`, or a sheet shown, which puts it at that sheet's A1: `{ sheet, text, kind, range, focus }` |
 | `scroll` | the window moved: `{ sheet, top, left, bottom, right, window }`, the rows and columns in view and their range text |
 | `columnresize` | a column's edge was dragged: `{ sheet, column, width }` in CSS pixels |
-| `sheet` | a tab was chosen or a record shown: `{ name, loaded, state }`; `loaded` false asks the host for that sheet's record |
+| `sheet` | a tab was chosen or a record shown: `{ name, loaded, state }`; `loaded` false asks the host for that sheet's record, which the engine's host answers with `answer(viewport, event)` (`ENGINE.14`) |
 | `cellopen` | a cell was double-clicked or Enter pressed on it: `{ sheet, address, row, col, cell }`; the first game's chrome opens the pane at the sentence here |
 
 The keyboard, with the grid focused: the arrows move the selection and bring
@@ -507,8 +522,11 @@ number right, a text left, `TRUE`, `FALSE` and an error centered, a date as
 the text inside, right; under a `text` format everything left. A `formula`
 row shows the formula's text, left, in green. A nowrap text spills into the
 empty cells to its right and stops at the first that holds anything; a
-number never spills; a wrapped text is broken at the column's width and the
-lines that fit the row are drawn. The layout is in device pixels, every size
+number never spills, and a number or a date under General whose text is
+wider than its column draws as many `#` as fit, as Excel fills a cell under
+a fixed number format, never a cut text (`ENGINE.14`); a wrapped text is
+broken at the column's width and the lines that fit the row are drawn, and
+a number is never wrapped. The layout is in device pixels, every size
 an integer of them, every gridline at an integer plus a half, so the image
 is crisp at the machine's ratio, and the backing store is remade when the
 ratio changes.
@@ -522,7 +540,9 @@ The viewport paints the record and these, and nothing of its own.
 
 **Taking a copy.** Frazaro's page takes `viewport.js` as a file, held byte
 for byte to this one by a check on its side; a change here is a copy there,
-in one reviewed commit.
+in one reviewed commit. It holds no copy yet (2026-10-14): the copy is a
+Frazaro item the owner mints, and `ENGINE.14`'s #s and its hit test travel
+with the file at that take.
 
 ## Not in this version
 

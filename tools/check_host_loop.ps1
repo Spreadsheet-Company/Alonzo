@@ -120,7 +120,17 @@ its rate said to wait for the frame Run brings, then written in it; over the
 engine's module, when the page holds one, the grid card,
 cartridges/gridcard/gridcard.vla, twenty-four frames under a Camera an edit
 moves a column right at frames 10 and 20, two edits seen in their frame, and
-a person's scroll kept through the Camera's move). It
+a person's scroll kept through the Camera's move); and since ENGINE.14 tabs
+(a tab with no record clicked as a person clicks it, its sheet shown and held
+at the click and after every frame to the record of a window holding every
+cell in view, a scroll with the loop paused viewing the new region at once,
+the pointer and the wheel over another sheet the viewport's and a bound key
+still the game's, the Screen's tab giving back the Camera's window an edit
+moved meanwhile, and on the Screen the wheel counted over a cell of the
+window and not over the column header, the tab strip or a scrollbar, nor the
+pointer over the tab strip; over the double, State, a grid of 20 by 40 taller
+than the stage's box; over the module, the grid card's Clock, the frame's
+number drawn at every frame). It
 prints one line a case into
 <pre id="loop"> and a last line, 'loop ok cases=N', once the last case has
 answered. This check runs the
@@ -145,7 +155,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds thirty-five mutant pages through tools/build_web.ps1 and runs
+-Control builds forty mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -215,7 +225,14 @@ card's tall row and hidden row among them; and since CART.4's second slice
 one more, when the real page holds the module: a template whose Kairos turns
 a row a column early, at the board's sixth column where the cartridge turns
 it at the seventh, which the replay case must fail by name on Kairos's
-committed replay. The real page must pass first.
+committed replay; and since ENGINE.14 five more, over the double, each
+failing the tabs case by name: a host that answers no tab, so a clicked tab
+shows nothing; one that views the sheet shown at the click alone, never at a
+frame, so it is drawn stale; one whose Screen tab keeps the person's scroll,
+so the Camera's window is not given back; one that takes the wheel over the
+viewport's whole root, the tabs, headers and scrollbars, as ENGINE.8 built it;
+and a viewport whose hit test counts the tab strip as cells, so the pointer
+over it is written as a cell. The real page must pass first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A headless run's clock is
@@ -357,6 +374,18 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # for replay over the module, 4 replays each played to its golden and recording
 # itself, Kairos's the fourth, the owner's two games: its 3,469 frames each
 # the page's Kairos under the replay's buttons, 30 rows stopped.
+# 2026-10-14, ENGINE.14: nineteen cases, the eighteen's counts and digests
+# unchanged but for grid over the module, which now draws a number too wide
+# for its column as #s: 168 cells over its 25 frames, the floor the card's
+# three constants wider than any default column (B5, C5 and F5, B5 scrolled
+# out at frame 20), 70. tabs over the double, a grid of 20 by 40: 14 frames,
+# State's tab clicked and its sheet shown, held to the record of the region in
+# view 8 times (at the click, 5 frames, the paused scroll and back), the
+# Screen held 9 frames, the pointer, a bound key, the tab strip and 5 wheels
+# routed (4 where a headless browser's scrollbars are overlays: noBar 1); over
+# the engine's module of 749,162 bytes, the grid card: 12 frames, its Clock
+# held 5 times and its frame's number drawn 4, the Screen 8, 5 wheels. The
+# texts' floors hold a margin below Chrome 155's counts on Windows.
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
@@ -377,10 +406,12 @@ $floors = @(
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } },
     @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 1913; fakeUnvalued = 244; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; pointer = 1; key = 1; edited = 1; waits = 1 };
-                            WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 11000; wraps = 20; fills = 10677; looks = 10311; styles = 40; columns = 326; unvalued = 350; hidden = 20; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1 } }
+                            WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 11000; wraps = 20; fills = 10677; looks = 10311; styles = 40; columns = 326; unvalued = 350; hidden = 20; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 70 } },
+    @{ Case = 'tabs';     Min = @{ fakeFrames = 14; fakeShown = 1; fakeHeld = 8; fakeScrolled = 1; fakeBack = 1; fakeScreen = 9; fakePointer = 1; fakeRouted = 1; fakeKey = 1; fakeStrip = 1; fakeWheel = 4; fakeTexts = 4600 };
+                            WithModule = @{ frames = 12; shown = 1; held = 5; back = 1; screen = 8; pointer = 1; routed = 1; strip = 1; wheel = 4; clock = 4; texts = 3400 } }
 )
 $zero = @('live', 'misfrees')
-$expectedCases = 18
+$expectedCases = 19
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
 
@@ -873,9 +904,46 @@ if ($Control) {
             if (-not ($g2Applied -and $g2Failed -ge 1)) { $gridOk = $false }
         }
         $gridNote = $gridNotes -join '; '
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk) {
-            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'thirty-five' } else { 'twenty-four applicable' }) + ' mutants for its own reason, each proving it applied')
+        # mutants AJ, AK, AL, AM and AN (ENGINE.14), over the double and so with or without the engine's module: a
+        # host that answers no tab; one that views the sheet shown at the click alone, never at a frame; one whose
+        # Screen tab keeps the person's scroll, the Camera's window not given back; one that takes the wheel over
+        # the viewport's whole root, as ENGINE.8 built it; and a viewport whose hit test counts the tab strip as
+        # cells. The tabs case must fail each by name.
+        $tabsMutants = @(
+            @{ L = 'aj'; Name = 'no tab answered'; File = 'host'; Anchor = "    this.vp.on('sheet', function (e) { self.answer(self.vp, e); });"; With = '    // the tabs answered by no one, by the control'
+               Want = 'case tabs.*fake frame 3: the tab State, clicked, did not show its sheet: the viewport shows Screen' },
+            @{ L = 'ak'; Name = 'the sheet shown viewed at the click alone'; File = 'host'; Anchor = '    if (!atLoad && this.vp && !isScreen(this.vp.sheet())) { if (this.refreshSheet(this.vp)) this.c.draws++; return; }'; With = '    if (!atLoad && this.vp && !isScreen(this.vp.sheet())) return;'
+               Want = 'case tabs.*fake frame \d+: B[12] shows "[^"]*", and the record says "[^"]*"' },
+            @{ L = 'al'; Name = 'the window not given back'; File = 'host'; Anchor = '    this._quiet(function () { self._drawGrid(true); });'; With = '    this._quiet(function () { self._drawGrid(false); });'
+               Want = 'case tabs.*fake frame 8: the Screen''s tab shows A1 at the viewport''s top left, and the Camera at E1 puts its corner there' },
+            @{ L = 'am'; Name = 'the wheel taken everywhere'; File = 'host'
+               Anchor = "    this._on(root, 'wheel', function (ev) { if (!playing() || !self._windowCellAt(ev)) return; self.wheel(ev.deltaY > 0 ? 1 : (ev.deltaY < 0 ? -1 : 0)); ev.preventDefault(); }, { passive: false, capture: true });"
+               With = "    this._on(root, 'wheel', function (ev) { if (!playing()) return; self.wheel(ev.deltaY > 0 ? 1 : (ev.deltaY < 0 ? -1 : 0)); ev.preventDefault(); }, { passive: false, capture: true });"
+               Want = 'case tabs.*fake frame 4: the wheel over a cell of State was taken by the game' },
+            @{ L = 'an'; Name = 'the tab strip counted as cells'; File = 'viewport'; Anchor = '    if (!this._inside({ clientX: clientX, clientY: clientY })) return null;'; With = '    // the hit test unbounded, by the control'
+               Want = 'case tabs.*fake frame 11: the pointer over the tab strip was written as column \d+ and row \d+, not 0' }
+        )
+        $tabsNotes = New-Object System.Collections.Generic.List[string]
+        $tabsJudged = New-Object System.Collections.Generic.List[object]
+        $tabsOk = $true
+        foreach ($mu in $tabsMutants) {
+            $orig = if ($mu.File -eq 'viewport') { $vpText } else { $js }
+            if (([regex]::Matches($orig, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in web/$($mu.File).js exactly once"; exit 1 }
+            $mutT = $orig.Replace($mu.Anchor, $mu.With)
+            $tApplied = $mutT -cne $orig
+            $fileT = Join-Path $tmp ($mu.L + '.' + $mu.File + '.js'); [System.IO.File]::WriteAllText($fileT, $mutT, $utf8)
+            $pageT = if ($mu.File -eq 'viewport') { New-MutantPage $mu.L $template $hostJs '' '' $fileT } else { New-MutantPage $mu.L $template $fileT }
+            $rT = Invoke-Loop $browser $pageT '1'
+            $tJudge = if ($rT.Text -ne '') { Test-Loop $rT.Text '1' } else { @{ Problems = @($rT.Reason) } }
+            $tFailed = @($tJudge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
+            $tabsJudged.Add(@{ Name = $mu.Name; Problems = @($tJudge.Problems) })
+            $tabsNotes.Add(("{0} applied ({1}) and failed the tabs case ({2})" -f $mu.Name, $tApplied, $tFailed))
+            if (-not ($tApplied -and $tFailed -ge 1)) { $tabsOk = $false }
+        }
+        $tabsNote = $tabsNotes -join '; '
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk) {
+            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'forty' } else { 'twenty-nine applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -908,6 +976,7 @@ if ($Control) {
         if ($moduleReal -gt 0) { foreach ($p in @($jAB.Problems) | Select-Object -First 3) { Write-Output ('  the brush without its rim: ' + $p) } }
         foreach ($gj in $gridJudged) { foreach ($p in @($gj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $gj.Name + ': ' + $p) } }
         if ($moduleReal -gt 0) { foreach ($p in @($jAI.Problems) | Select-Object -First 3) { Write-Output ('  the turn a column early: ' + $p) } }
+        foreach ($tj in $tabsJudged) { foreach ($p in @($tj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $tj.Name + ': ' + $p) } }
         exit 1
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue

@@ -14,7 +14,9 @@
   row maps a value to the format every cell holding it draws with, and a
   row row gives a row its height or hides it (SPEC.md decision 19; both read
   since ENGINE.8, when the host began drawing a grid cartridge's Screen
-  every frame); and an unknown row is counted, never refused.
+  every frame); a number or a date too wide for its column shows #s across
+  it and never a cut text (ENGINE.14); and an unknown row is counted, never
+  refused.
 
   What the viewport owns is the state no program sees (SD-23): the scroll, the
   selection, the widths a person dragged, the frozen panes, the marks a host
@@ -450,6 +452,17 @@
     if (cell.vkind === 'bool' || cell.vkind === 'error') return 'center';
     return 'left';
   }
+  // What a number or a date shows when its text, with the padding on both sides, is wider than its
+  // column: as many # as fit between the paddings, at least one, as Excel fills a cell under a fixed
+  // number format (ENGINE.14; KERNEL.5's decision 7 had clipped it, so a number lost its leading
+  // digits). Never wrapped, never cut, and never respelled: the value is the record's, and the
+  // viewport has no number format to round it by. Null when the text fits, or is no number.
+  function hashesOf(ctx, cell, fmt, w, pad) {
+    if (fmt.num === 'text' || (cell.vkind !== 'number' && cell.vkind !== 'date')) return null;
+    if (ctx.measureText(cell.text).width + 2 * pad <= w) return null;
+    var n = Math.max(1, Math.floor((w - 2 * pad) / ctx.measureText('#').width));
+    return new Array(n + 1).join('#');
+  }
 
   // ---- (3) the painter ----
   function Painter(ctx, colors) { this.ctx = ctx; this.colors = colors; this.ops = []; }
@@ -746,7 +759,8 @@
   };
 
   // One cell's text: aligned by its kind, a nowrap text spilling into empty
-  // neighbors to the right, a wrapped text broken at the column's width.
+  // neighbors to the right, a wrapped text broken at the column's width, a
+  // number too wide for its column drawn as #s.
   Viewport.prototype._paintCell = function (p, model, g, cell, r, c, left, top, cLast, quadrant, qclip) {
     var ctx = p.ctx, colors = this.colors;
     var w = g.colW[c], h = g.rowHeight(r), pad = g.pad;
@@ -755,6 +769,13 @@
     // a formula before its value shows its text in the formula's color; its value, the text's (KERNEL.5, decision 7)
     var color = cell.kind === 'formula' && !cell.valued ? colors.formula : colors.text;
     var op = { op: 'text', row: r, col: c, kind: cell.kind, valued: cell.valued, quadrant: quadrant };
+    var hashes = hashesOf(ctx, cell, fmt, w, pad);
+    if (hashes !== null) {
+      if (left + w <= qclip.x || left >= qclip.x + qclip.w) return;
+      op.wrap = false; op.hashes = true;
+      p.text(hashes, left + w - pad, top + Math.round(h / 2), 'right', color, { x: left, y: top, w: w, h: h }, op);
+      return;
+    }
     if (fmt.wrap) {
       if (left + w <= qclip.x || left >= qclip.x + qclip.w) return;
       var lines = wrapText(ctx, cell.text, Math.max(1, w - 2 * pad));
@@ -979,8 +1000,15 @@
     if (x < ox) return { kind: 'row', row: row };
     return { kind: 'cell', row: row, col: col };
   };
+  // Whether a point of the page lies in the scroller's client area, the cells, the headers and the corner:
+  // not over a scrollbar, and not below the box over the tab strip, both of which the hit test, which
+  // extends a drag past the edge, would answer as cells (ENGINE.14).
+  Viewport.prototype._inside = function (ev) {
+    var rect = this.box.getBoundingClientRect(), x = ev.clientX - rect.left, y = ev.clientY - rect.top;
+    return x >= 0 && y >= 0 && x < this.scroller.clientWidth && y < this.scroller.clientHeight;
+  };
   Viewport.prototype._mouseDown = function (ev) {
-    if (ev.button !== 0) return;
+    if (ev.button !== 0 || !this._inside(ev)) return;   // a press on a scrollbar is the browser's
     var hit = this._hit(ev);
     if (!hit) return;
     this.scroller.focus();
@@ -1281,8 +1309,9 @@
     else delete this.state.marks[String(name)];
     this._draw();
   };
-  // The cell under a point of the page, or null outside the cells.
+  // The cell under a point of the page, or null outside the cells: over a header, a scrollbar or the tabs.
   Viewport.prototype.cellAt = function (clientX, clientY) {
+    if (!this._inside({ clientX: clientX, clientY: clientY })) return null;
     var hit = this._hit({ clientX: clientX, clientY: clientY });
     if (!hit || hit.kind !== 'cell') return null;
     return this._cellInfo(hit.row, hit.col);

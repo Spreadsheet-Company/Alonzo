@@ -1675,6 +1675,13 @@
     if (cell.vkind === 'bool' || cell.vkind === 'error') return 'center';
     return 'left';
   }
+  // A number or a date under the general format too wide for its column: as many # as fit between the
+  // paddings, at least one, in the browser's font (ENGINE.14); the grid card's 1e300 among them.
+  function gqHashes(cell, f, w, pad, measure) {
+    if (f.num === 'text' || (cell.vkind !== 'number' && cell.vkind !== 'date')) return null;
+    if (measure.measureText(cell.text).width + 2 * pad <= w) return null;
+    return new Array(Math.max(1, Math.floor((w - 2 * pad) / measure.measureText('#').width)) + 1).join('#');
+  }
   // The layout in device pixels from the record and the viewport's size, ratio and scroll, which are the
   // host's state (SD-23): the columns by ECMA-376's rule, the rows by their points, the headers' sizes.
   function gqLayout(m, g) {
@@ -1721,6 +1728,12 @@
         var align = gqAlign(cell, fm.f);
         if (c < c0 && (fm.f.wrap || align !== 'left')) continue;
         var ax = align === 'left' ? left + L.pad : (align === 'right' ? left + w - L.pad : left + Math.round(w / 2));
+        var hashes = gqHashes(cell, fm.f, w, L.pad, measure);   // before the wrap: a number never wraps
+        if (hashes !== null) {
+          if (left + w <= clip.x || left >= clip.x + clip.w) continue;
+          E.texts[r + ',' + c] = { text: hashes, x: ax, y: top + Math.round(h / 2), align: align, clip: { x: left, y: top, w: w, h: h }, valued: cell.valued, formula: cell.kind === 'formula', hashes: true };
+          continue;
+        }
         if (fm.f.wrap) {
           if (left + w <= clip.x || left >= clip.x + clip.w) continue;
           E.wraps[r + ',' + c] = { text: cell.text, x: ax, y: top + Math.round(L.lineH / 2), clip: { x: left, y: top, w: w, h: h } };
@@ -1756,7 +1769,7 @@
       else if (got.align !== ex.align) say(name + ' is aligned ' + got.align + ', and the record says ' + ex.align);
       else if (got.clip.x !== ex.clip.x || got.clip.y !== ex.clip.y || got.clip.w !== ex.clip.w || got.clip.h !== ex.clip.h) say(name + ' is clipped to ' + [got.clip.x, got.clip.y, got.clip.w, got.clip.h].join(',') + ', and the record says ' + [ex.clip.x, ex.clip.y, ex.clip.w, ex.clip.h].join(','));
       else if (!!got.valued !== !!ex.valued || (got.kind === 'formula') !== ex.formula) say(name + ' is drawn as ' + (got.kind === 'formula' ? (got.valued ? 'a formula\'s value' : 'a formula before its value') : 'a value') + ', and the record holds ' + (ex.formula ? (ex.valued ? 'a formula with its value' : 'a formula with no value') : 'a value'));
-      else { k.texts++; if (ex.formula && !ex.valued) k.unvalued++; }
+      else { k.texts++; if (ex.formula && !ex.valued) k.unvalued++; if (ex.hashes) k.hashes = (k.hashes || 0) + 1; }
       delete texts[key];
     }
     for (key in texts) if (Object.prototype.hasOwnProperty.call(texts, key)) say('a text is drawn at ' + gqName(key) + ', ' + JSON.stringify(texts[key].text) + ', where the record holds none');
@@ -1939,7 +1952,187 @@
     }
     return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeTexts: kf.texts, fakeLooks: kf.looks, fakeUnvalued: kf.unvalued, fakeProbes: kf.probes, fakeKept: kf.kept, fakeCleared: kf.cleared,
                          pointer: x.pointer, key: x.key, edited: x.edited, waits: x.waits, module: module, frames: km.frames, equal: km.equal, windows: km.windows, texts: km.texts, wraps: km.wraps, fills: km.fills, looks: km.looks, styles: km.styles,
-                         columns: km.columns, unvalued: km.unvalued, hidden: km.hidden, probes: km.probes, kept: km.kept, followed: x.followed, edits: x.edits, cleared: km.cleared, live: st.live, misfrees: st.misfrees }, problems: P };
+                         columns: km.columns, unvalued: km.unvalued, hidden: km.hidden, probes: km.probes, kept: km.kept, followed: x.followed, edits: x.edits, cleared: km.cleared, hashes: km.hashes || 0, live: st.live, misfrees: st.misfrees }, problems: P };
+  }
+  // ---- ENGINE.14: the tabs answered, the sheet shown viewed through its region, the input routed ----
+  // The host over one module and a grid cartridge, its viewport in a box of the stage, stepped by manual
+  // ticks, a frame a tick, as the grid case runs it, and a person's acts dispatched as a browser dispatches
+  // them. A tab with no record, clicked, shows its sheet; at the click and after every frame while it shows,
+  // the window its record was viewed through holds every cell in view by the oracle's own arithmetic, and
+  // the record of that window, viewed here, is drawn cell for cell; a scroll with the loop paused views the
+  // new region at once. While it shows, the pointer over a cell is 0 to the game, the wheel over a cell is
+  // the viewport's and counted nowhere, and a bound key is still the game's. The Screen's tab gives back the
+  // Camera's window, moved by an edit meanwhile: scrolled to its corner at the click, drawn as the record of
+  // that window at the next frame. On the Screen the wheel over a cell of the window is counted, and over the
+  // column header, the tab strip and a scrollbar it is not, nor is the pointer over the tab strip. plan:
+  // sheet, the tab clicked before frame show; back, the frame the Screen's tab is clicked before; paused, the
+  // frame after which the paused scroll is made, to row scrollRow; edits[f]; drawn(f, at, ops), a pin on a
+  // frame's own draw of the sheet shown; keys, whether the cartridge binds ArrowRight; strict, no refusal said
+  // (the double refuses derived writes by its own rule, so its run is not).
+  function tabsRun(exports, label, text, file, frames, plan, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:' + GRID_BOX.w + 'px;height:' + GRID_BOX.h + 'px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box });
+    var D = new Driver({ exports: exports }), measure = document.createElement('canvas').getContext('2d');
+    try {
+      var a = host.attach(exports);
+      if (!a.ok) { P.push(label + ': the host refused the module: ' + a.sentence); return; }
+      var ld = host.load(text, file);
+      if (!ld.ok) { P.push(label + ': the cartridge did not load: ' + ld.sentence); return; }
+      if (ld.mode !== 'grid' || !host.vp) { P.push(label + ': the cartridge loaded as ' + ld.mode + (host.vp ? '' : ', and the host made no viewport')); return; }
+      var h = ld.handle, t = 1000, vp = host.vp, sc = vp.scroller, shown = null, f, at;
+      function values(sheet) { return recordValues(D.call('alonzo_view', [h], ['grid', sheet, '']).text); }
+      function numOf(v) { return v && v.num !== undefined ? v.num : 0; }
+      function input(addr) { return numOf(values('Input')[addr]); }
+      function camera() { var cam = values('Camera'); return { row: numOf(cam.B1) || 1, col: numOf(cam.B2) || 1 }; }
+      function tab(name) { return vp.tabs.querySelector('[data-sheet="' + name + '"]'); }
+      // points of the page: the middle of a cell of the sheet shown, of its column header, of the tab strip, of
+      // the vertical scrollbar (null when the scroller shows none, as an overlay's)
+      function cellPoint(r, c) { var g = vp.geometry(), rect = vp.box.getBoundingClientRect(); return { x: rect.left + (g.rhW + g.colX[c] - g.scrollX + g.colW[c] / 2) / g.dpr, y: rect.top + (g.headH + (r - 1) * g.rowH - g.scrollY + g.rowH / 2) / g.dpr }; }
+      function headerPoint(c) { var p = cellPoint(1, c), g = vp.geometry(); return { x: p.x, y: vp.box.getBoundingClientRect().top + g.headH / 2 / g.dpr }; }
+      function stripPoint(c) { var p = cellPoint(1, c), s = vp.tabs.getBoundingClientRect(); return { x: p.x, y: s.top + s.height / 2 }; }
+      function barPoint() { var rect = vp.box.getBoundingClientRect(); return sc.offsetWidth - sc.clientWidth >= 4 ? { x: rect.left + sc.clientWidth + (sc.offsetWidth - sc.clientWidth) / 2, y: rect.top + sc.clientHeight / 2 } : null; }
+      function move(target, p) { target.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: p.x, clientY: p.y })); }
+      function taken(target, p) { return !target.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, clientX: p.x, clientY: p.y, deltaY: 100 })); }
+      // the cells in view by the viewport's geometry and scroll, the oracle's own arithmetic over its edges (the
+      // sheets shown here hold no row settings, so every row is the default's)
+      function inView() {
+        var g = vp.geometry(), c0 = 1;
+        while (c0 < g.cols && g.colX[c0 + 1] <= g.scrollX) c0++;
+        var c1 = c0;
+        while (c1 < g.cols && g.colX[c1 + 1] <= g.scrollX + g.canvasW - g.rhW - 1) c1++;
+        return { top: Math.floor(g.scrollY / g.rowH) + 1, left: c0, bottom: Math.floor((g.scrollY + g.canvasH - g.headH - 1) / g.rowH) + 1, right: c1 };
+      }
+      // the sheet shown is the record of a window that holds every cell in view, drawn cell for cell
+      function heldShown(where) {
+        var model = vp.model(), win = model ? model.windowText : '', R = VP.parseRange(win), v = inView();
+        if (vp.sheet() !== shown || !model || model.sheet !== shown) { P.push(where + ': the viewport shows ' + (vp.sheet() || 'nothing') + ', where ' + shown + '\'s tab was clicked'); return false; }
+        if (!R || v.top < R.top || v.left < R.left || v.bottom > R.bottom || v.right > R.right) { P.push(where + ': ' + shown + ' was viewed through ' + (win || 'no window') + ', which does not hold the cells in view, ' + VP.rangeText(v)); return false; }
+        var m = gqRead(D.call('alonzo_view', [h], ['grid', shown, win]).text), L = gqLayout(m, vp.geometry()), E = gqExpect(m, L, measure);
+        if (!gqCompare(E, vp.draws(), where, P, k)) return false;
+        k.held++;
+        return true;
+      }
+      // the Screen through the Camera's window, drawn cell for cell
+      function heldScreen(where) {
+        var cam = camera(), want = lqRange(cam.row, cam.col, ld.h, ld.w), win = host.counters().window;
+        if (vp.sheet() !== 'Screen') { P.push(where + ': the viewport shows ' + vp.sheet() + ', where the Screen\'s tab was clicked'); return false; }
+        if (win !== want) { P.push(where + ': the host drew the Screen through ' + win + ' where the Camera\'s record places ' + want); return false; }
+        var m = gqRead(D.call('alonzo_view', [h], ['grid', 'Screen', win]).text), L = gqLayout(m, vp.geometry()), E = gqExpect(m, L, measure);
+        if (!gqCompare(E, vp.draws(), where, P, k)) return false;
+        k.screen++;
+        return true;
+      }
+      host.start(); host.tick(t);
+      for (f = 1; f <= frames; f++) {
+        at = label + ' frame ' + f;
+        var cam0 = camera(), p;
+        // a tab with no record, clicked as a person clicks it
+        if (f === plan.show) {
+          var b = tab(plan.sheet);
+          if (!b) { P.push(at + ': no tab ' + plan.sheet + ' in the strip'); break; }
+          b.click();
+          if (vp.sheet() !== plan.sheet) { P.push(at + ': the tab ' + plan.sheet + ', clicked, did not show its sheet: the viewport shows ' + (vp.sheet() || 'nothing')); break; }
+          shown = plan.sheet; k.shown++;
+          heldShown(at + ', at the click');
+        }
+        // the Screen's tab, after the Camera moved while another sheet showed
+        if (f === plan.back) {
+          var bs = tab('Screen');
+          if (!bs) { P.push(at + ': no tab Screen in the strip'); break; }
+          bs.click(); shown = null;
+          var s = vp.scrolled();
+          if (vp.sheet() !== 'Screen') P.push(at + ': the Screen\'s tab, clicked, did not show the Screen');
+          else if (s.top !== cam0.row || s.left !== cam0.col) P.push(at + ': the Screen\'s tab shows ' + VP.colName(s.left) + s.top + ' at the viewport\'s top left, and the Camera at ' + VP.colName(cam0.col) + cam0.row + ' puts its corner there');
+          else k.back++;
+        }
+        // the person's acts before the frame: the pointer and the wheel over the sheet shown, a bound key held;
+        // on the Screen, the wheel over a cell, the column header, the tab strip and a scrollbar, one a frame
+        var wheel = null;
+        if (f === plan.show - 2) move(sc, cellPoint(cam0.row + 2, cam0.col + 4));
+        if (f === plan.show + 1) {
+          p = cellPoint(2, 2); move(sc, p);
+          wheel = { what: 'a cell of ' + shown, took: taken(sc, p), want: false };
+          if (plan.keys) k.keyTaken = sc.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, code: 'ArrowRight', key: 'ArrowRight' })) ? 0 : 1;
+        }
+        if (f === plan.show + 2 && plan.keys) sc.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, cancelable: true, code: 'ArrowRight', key: 'ArrowRight' }));
+        if (f === plan.back + 1) { p = cellPoint(cam0.row + 2, cam0.col + 2); move(sc, p); wheel = { what: 'a cell of the Camera\'s window', took: taken(sc, p), want: true }; }
+        if (f === plan.back + 2) wheel = { what: 'the column header', took: taken(sc, headerPoint(cam0.col + 2)), want: false };
+        if (f === plan.back + 3) { p = stripPoint(cam0.col + 2); move(vp.tabs, p); wheel = { what: 'the tab strip', took: taken(vp.tabs, p), want: false }; }
+        if (f === plan.back + 4) { p = barPoint(); if (p) wheel = { what: 'the vertical scrollbar', took: taken(sc, p), want: false }; else k.noBar = 1; }
+        var evs = (plan.edits && plan.edits[f]) || [];
+        for (var e = 0; e < evs.length; e++) host.edit(evs[e]);
+        t += 34; host.tick(t);
+        if (host.counters().frame !== f) { P.push(at + ': after tick ' + f + ' the host is at frame ' + host.counters().frame); break; }
+        if (shown) { if (heldShown(at) && plan.drawn) plan.drawn(f, at, vp.draws()); }
+        else if (f < plan.show || f >= plan.back) heldScreen(at);
+        // what the game read of the person's acts, in the frame they were made before
+        var b11 = input('B11'), b12 = input('B12'), b16 = input('B16');
+        if (f === plan.show - 2) { if (b11 !== cam0.col + 4 || b12 !== cam0.row + 2) P.push(at + ': the pointer over the Screen\'s ' + VP.colName(cam0.col + 4) + (cam0.row + 2) + ' was written as column ' + b11 + ' and row ' + b12); else k.pointer++; }
+        if (f === plan.show + 1) {
+          if (b11 !== 0 || b12 !== 0) P.push(at + ': the pointer over a cell of ' + shown + ' was written as column ' + b11 + ' and row ' + b12 + ', where another sheet than the Screen leaves it 0');
+          else k.routed++;
+          if (plan.keys) { if (!k.keyTaken || input('B4') !== 1) P.push(at + ': ArrowRight, bound to player 1\'s right, was ' + (k.keyTaken ? '' : 'not ') + 'taken from the viewport while ' + shown + ' showed, and Input!B4 holds ' + input('B4') + ', not 1'); else k.key++; }
+        }
+        if (f === plan.back + 3) { if (b11 !== 0 || b12 !== 0) P.push(at + ': the pointer over the tab strip was written as column ' + b11 + ' and row ' + b12 + ', not 0'); else k.strip++; }
+        if (wheel) {
+          var counted = b16 !== 0;
+          if (wheel.took !== wheel.want || counted !== wheel.want) P.push(at + ': the wheel over ' + wheel.what + ' was ' + (wheel.took ? 'taken by the game' : 'left to the viewport') + ' and Input!B16 holds ' + b16 + ', where ' + (wheel.want ? 'the game takes it and counts its notch' : 'it scrolls and the game counts nothing'));
+          else k.wheel++;
+        }
+        // a scroll with the loop paused views the region it brings into view at once, and back again
+        if (f === plan.paused) {
+          host.stop();
+          vp.scrollTo(plan.scrollRow, 1);
+          var R2 = vp.model() ? VP.parseRange(vp.model().windowText) : null;
+          if (!R2 || R2.top > plan.scrollRow || R2.bottom < plan.scrollRow) P.push(at + ': a scroll to row ' + plan.scrollRow + ', the loop paused, left ' + shown + '\'s record at ' + (vp.model() ? vp.model().windowText : 'none') + ', not the region the scroll brought into view');
+          else if (heldShown(at + ', paused at row ' + plan.scrollRow)) k.scrolled++;
+          vp.scrollTo(1, 1);
+          heldShown(at + ', scrolled back');
+          host.start(); host.tick(t);   // the clock started again with nothing owed
+        }
+      }
+      k.frames = host.counters().frame;
+      var refusals = host.sentences().filter(function (sn) { return sn.refusal; });
+      if (plan.strict && refusals.length) P.push(label + ': the host was refused: ' + refusals[0].text);
+    } finally { host.destroy(); stage.removeChild(box); }
+  }
+  // ENGINE.14's oracle (decision 11). Over the double, a grid cartridge of 20 by 40, taller than the stage's
+  // box, so that the tab strip lies over the window's rows: the State sheet the double writes every frame, its
+  // tab clicked before frame 3 and held at every frame, scrolled with the loop paused after frame 6; the
+  // Camera moved by edits at frames 2 and 5, the Screen's tab clicked before frame 8. Over the engine's module,
+  // when the page holds one, the grid card: its Clock clicked before frame 3, the frame's number drawn in B1 at
+  // every frame, the Camera moved at frame 5 and the Screen's tab clicked before frame 7.
+  function caseTabs() {
+    var P = [], module = 0;
+    function counters() { return { frames: 0, shown: 0, held: 0, scrolled: 0, back: 0, screen: 0, pointer: 0, routed: 0, key: 0, strip: 0, wheel: 0, noBar: 0, clock: 0, keyTaken: 0,
+                                   texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0 }; }
+    var kf = counters(), km = counters();
+    var fake = FAKE.create({});
+    tabsRun(fake.exports, 'fake', lifeText.replace('(screen plane 320 200)', '(screen grid 20 40)'), 'grid.vla', 14, {
+      sheet: 'State', show: 3, back: 8, paused: 6, scrollRow: 30, keys: true,
+      edits: { 2: ['(cell "Camera" "B2" 12)'], 5: ['(cell "Camera" "B2" 5)'] }
+    }, kf, P);
+    var st = fake.stats();
+    var wasm = builtModule();
+    if (wasm) {
+      var bytes = bytesOfBase64(wasm);
+      module = bytes.length;
+      tabsRun(HOST.instantiateSync(bytes), 'engine', CARTRIDGES.gridcard.text, 'gridcard.vla', 12, {
+        sheet: 'Clock', show: 3, back: 7, paused: 0, keys: false, strict: true,
+        edits: { 5: ['(cell "Camera" "B2" 3)'] },
+        drawn: function (f, at, ops) {
+          var b1 = null;
+          for (var i = 0; i < ops.length; i++) if (ops[i].op === 'text' && ops[i].quadrant === 'body' && ops[i].row === 1 && ops[i].col === 2) b1 = ops[i];
+          if (!b1 || b1.text !== String(f)) P.push(at + ': the Clock\'s B1 is drawn as ' + (b1 ? JSON.stringify(b1.text) : 'nothing') + ', not the frame\'s number ' + f);
+          else km.clock++;
+        }
+      }, km, P);
+    }
+    return { counters: { fakeFrames: kf.frames, fakeShown: kf.shown, fakeHeld: kf.held, fakeScrolled: kf.scrolled, fakeBack: kf.back, fakeScreen: kf.screen, fakePointer: kf.pointer, fakeRouted: kf.routed,
+                         fakeKey: kf.key, fakeStrip: kf.strip, fakeWheel: kf.wheel, fakeTexts: kf.texts, noBar: kf.noBar, module: module, frames: km.frames, shown: km.shown, held: km.held, back: km.back,
+                         screen: km.screen, pointer: km.pointer, routed: km.routed, strip: km.strip, wheel: km.wheel, clock: km.clock, texts: km.texts, live: st.live, misfrees: st.misfrees }, problems: P };
   }
   // ---- SPEC.3's second slice: the pass in the page is the command line's ----
   // The first line two texts differ at, both shown without their line ends, for a failure's words;
@@ -3053,7 +3246,7 @@
     out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' snap=' + R.snapMs + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
-                 ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid]];
+                 ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs]];
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); if (!res.problems.length) ok++; }
     // A case answers its result, or a promise of it (sound, which waits on its render): the cases run in
@@ -3499,6 +3692,13 @@
     if (cell.vkind === 'bool' || cell.vkind === 'error') return 'center';
     return 'left';
   }
+  // A number or a date under the general format whose text, with the padding on both sides, is wider than
+  // its column draws as many # as fit between the paddings, at least one (ENGINE.14), and never wraps.
+  function hashRule(cell, fmt, w, pad) {
+    if (fmt.num === 'text' || (cell.vkind !== 'number' && cell.vkind !== 'date')) return null;
+    if (measureCtx.measureText(cell.text).width + 2 * pad <= w) return null;
+    return new Array(Math.max(1, Math.floor((w - 2 * pad) / measureCtx.measureText('#').width)) + 1).join('#');
+  }
   function colAt(L, x, c0) { var c = Math.max(1, c0); while (c <= L.cols && L.colX[c + 1] <= x) c++; return c; }
   function rowAt(L, y, r0) { return Math.max(r0, Math.floor(y / L.rowH) + 1); }
   // The expected draws of one quadrant.
@@ -3534,6 +3734,12 @@
         var fmt = fmtOf(model, cell, c), align = alignRule(cell, fmt);
         w = L.colW[c]; left = ox + L.colX[c] - sx;
         if (c < colStart && (fmt.wrap || align !== 'left')) continue;
+        var hashes = hashRule(cell, fmt, w, L.pad);
+        if (hashes !== null) {
+          if (left + w <= clip.x || left >= clip.x + clip.w) continue;
+          E.texts.push({ key: name + ':' + r + ',' + c, text: hashes, x: left + w - L.pad, y: y + Math.round(rowH / 2), align: align, clip: { x: left, y: y, w: w, h: rowH }, kind: cell.kind, hashes: true });
+          continue;
+        }
         if (fmt.wrap) {
           if (left + w <= clip.x || left >= clip.x + clip.w) continue;
           E.wraps.push({ key: name + ':' + r + ',' + c, text: cell.text, x: align === 'left' ? left + L.pad : (align === 'right' ? left + w - L.pad : left + Math.round(w / 2)), y: y + Math.round(L.lineH / 2), align: align, clip: { x: left, y: y, w: w, h: rowH } });
@@ -3581,7 +3787,7 @@
     box.className = 'case';
     box.style.cssText = 'width:' + cs.w + 'px;height:' + cs.h + 'px;';
     stage.appendChild(box);
-    var problems = [], counts = { texts: 0, wraps: 0, fills: 0, lines: 0, headers: 0, selection: 0, marks: 0, probes: 0 };
+    var problems = [], counts = { texts: 0, wraps: 0, fills: 0, lines: 0, headers: 0, selection: 0, marks: 0, probes: 0, hashes: 0 };
     var vp = null;
     try {
       vp = new VP(box);
@@ -3622,12 +3828,12 @@
       for (i = 0; i < E.texts.length; i++) {
         var ex = E.texts[i], got = drawn[ex.key];
         if (!got) { problems.push('cell ' + ex.key + ' (' + ex.text + ') not drawn'); continue; }
-        if (got.text !== ex.text) problems.push('cell ' + ex.key + ' shows ' + got.text + ', the record says ' + ex.text);
+        if (got.text !== ex.text) problems.push('cell ' + ex.key + ' shows ' + got.text + (ex.hashes ? ', a number too wide for its column, which draws ' + ex.text : ', the record says ' + ex.text));
         else if (got.x !== ex.x || got.y !== ex.y) problems.push('cell ' + ex.key + ' at ' + got.x + ',' + got.y + ', expected ' + ex.x + ',' + ex.y);
         else if (got.align !== ex.align) problems.push('cell ' + ex.key + ' aligned ' + got.align + ', expected ' + ex.align);
         else if (got.clip.x !== ex.clip.x || got.clip.y !== ex.clip.y || got.clip.w !== ex.clip.w || got.clip.h !== ex.clip.h) problems.push('cell ' + ex.key + ' clipped to ' + got.clip.x + ',' + got.clip.y + ' ' + got.clip.w + 'x' + got.clip.h + ', expected ' + ex.clip.x + ',' + ex.clip.y + ' ' + ex.clip.w + 'x' + ex.clip.h);
         else if ((got.kind === 'formula') !== (ex.kind === 'formula')) problems.push('cell ' + ex.key + ' drawn as a ' + got.kind);
-        else counts.texts++;
+        else { counts.texts++; if (ex.hashes) counts.hashes++; }
         delete drawn[ex.key];
       }
       for (k in drawn) if (Object.prototype.hasOwnProperty.call(drawn, k)) problems.push('a text drawn at ' + k + ' (' + drawn[k].text + ') that the record does not put there');
@@ -3743,7 +3949,7 @@
       if (vp) { try { vp.destroy(); } catch (e2) { } }
       if (box.parentNode) box.parentNode.removeChild(box);
     }
-    var head = 'case ' + cs.name + ' [' + cs.w + 'x' + cs.h + ' css]: texts ' + counts.texts + ', wrapped ' + counts.wraps + ', fills ' + counts.fills + ', lines ' + counts.lines + ', headers ' + counts.headers + ', selection ' + counts.selection + ', marks ' + counts.marks + ', probes ' + counts.probes + ': ';
+    var head = 'case ' + cs.name + ' [' + cs.w + 'x' + cs.h + ' css]: texts ' + counts.texts + ', wrapped ' + counts.wraps + ', fills ' + counts.fills + ', lines ' + counts.lines + ', headers ' + counts.headers + ', selection ' + counts.selection + ', marks ' + counts.marks + ', probes ' + counts.probes + ', hashes ' + counts.hashes + ': ';
     if (problems.length === 0) { out.push(head + 'OK'); return true; }
     out.push(head + 'FAIL: ' + problems.slice(0, 6).join('; ') + (problems.length > 6 ? '; and ' + (problems.length - 6) + ' more' : ''));
     return false;
@@ -3769,6 +3975,8 @@
       { name: 'sparse_end', fixture: 'sparse_10000', w: normalW, h: normalH, scrollTo: [9961, 1] },
       { name: 'sparse_frozen', fixture: 'sparse_10000', w: normalW, h: normalH, freeze: [2, 1], scrollTo: [100, 1] },
       { name: 'sparse_resized', fixture: 'sparse_10000', w: normalW, h: normalH, columnWidth: ['A', 200] },
+      // ENGINE.14: column A narrowed so that its two-digit numbers fit and its three-digit ones draw #s
+      { name: 'sparse_hashes', fixture: 'sparse_10000', w: normalW, h: normalH, columnWidth: ['A', 26], scrollTo: [89, 1] },
       { name: 'fixture_frazaro_selected', fixture: 'fixture_frazaro', w: 1100, h: 400, select: 'B2:C3', mark: ['precedents', ['B4'], { fill: 'rgba(10, 107, 79, 0.15)', border: '#0a6b4f' }] }
     ];
     var ok = 0;

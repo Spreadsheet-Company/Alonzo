@@ -34,9 +34,16 @@
   frame 0 at the load and each frame after, the record of the Screen
   through the Camera's window, every frame's record replacing the last with
   the person's scroll and selection kept, and the viewport scrolled by the
-  Camera's move. At a rate above zero the pointer over the viewport's cells,
-  its buttons, the wheel and the keys the Keys sheet binds are the Input
-  sheet's; at rate zero all of them are the viewport's.
+  Camera's move. Its tabs are answered (ENGINE.14): a sheet clicked is
+  viewed and shown, and while it shows, each frame and each scroll view it
+  alone, through the region the viewport shows and never the sheet whole;
+  the Screen's tab gives the Camera's window back. A page's own viewer of
+  the sheets is answered the same way (showSheet, refreshSheet, answer). At
+  a rate above zero the keys the Keys sheet binds are the Input sheet's,
+  and so, while the Screen shows, are the pointer over the cells of the
+  Camera's window, its buttons and the wheel there; over the tabs, the
+  headers and the scrollbars, and over another sheet, they are the
+  viewport's, to scroll and select by, and at rate zero all of them are.
 
   And it sounds the Audio sheet (SPEC.md section 3.6; ENGINE.4): after each
   frame, once the Clock's rate is read, its four voices, each the Web Audio
@@ -167,6 +174,27 @@
   function quote(s) { return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; }
   function spell(v) { return typeof v === 'string' ? quote(v) : (typeof v === 'boolean' ? (v ? 'true' : 'false') : String(v)); }
   function thousands(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  // The article a number takes as it is spoken: an 8, an 11, an 18, an 80 to 89, an 800 to 899, and their
+  // thousands; a for the rest (ENGINE.14: the load said "a 80 by 50 grid").
+  function article(n) { var s = String(n); return /^8/.test(s) || /^1[18](\d{3})*$/.test(s) ? 'an' : 'a'; }
+  // The Screen's name, as a viewport names the sheet it shows; nothing shown yet is the Screen.
+  function isScreen(name) { return !name || String(name).toLowerCase() === 'screen'; }
+  // The region a viewport shows, as the window a sheet is viewed through (ENGINE.14, decision 3): the cells
+  // its last draw put in view at its scroll, the frozen rows and columns from 1; never the sheet whole, so a
+  // view costs a screen wherever it stands. fresh: a sheet the viewport has not drawn, estimated from A1 at
+  // the default cell's size over the viewport's box, its own widths read once it is drawn.
+  function regionOf(vp, fresh) {
+    var V = VP(), g = vp.geometry();
+    if (!g) return 'A1';
+    if (fresh) return rangeOf(1, 1, Math.max(1, Math.ceil(g.clientH / V.RULES.row)), Math.max(1, Math.ceil(g.clientW / V.RULES.column)));
+    var s = vp.scrolled(), top = g.frozenRows > 0 ? 1 : s.top, left = g.frozenCols > 0 ? 1 : s.left;
+    return V.rangeText({ top: top, left: left, bottom: Math.max(top, s.bottom), right: Math.max(left, s.right) });
+  }
+  // Whether one window lies inside another.
+  function within(inner, outer) {
+    var a = VP().parseRange(inner), b = VP().parseRange(outer);
+    return !!a && !!b && a.top >= b.top && a.left >= b.left && a.bottom <= b.bottom && a.right <= b.right;
+  }
   // A refusal as the host prints it: the module's words once, then its id; the line only when a
   // write held more than one row, since a one-row write's line is always 1, and only when the
   // module's words do not already name it. The language's grid texts named it until KERNEL.23
@@ -310,6 +338,7 @@
     this.canvas = options.canvas || null;
     this.gridEl = options.grid || null;
     this.vp = null;   // grid mode's viewport, made at the first grid load and kept across loads
+    this.quieting = false;   // while the host itself loads or shows a viewport's sheet: the events that raises go unanswered
     this.box = options.box || (this.canvas ? this.canvas.parentNode : null);
     this.fixedScale = options.scale || 0;
     this.fixedBudget = options.budget;
@@ -344,6 +373,7 @@
     this.table = null; this.paletteText = ''; this.paletteCount = 0;
     this.audio = []; this.saveValue = 0; this.plane = null; this.record = null; this.followed = null; this.timing = null; this.said1 = {};
     this.windowsSeen = {};
+    this.tabsWaiting = [];   // tabs clicked while a frame was in progress, answered at its end (ENGINE.14)
     this.rec = null; this.player = null;   // the replay recorded since the load, and one playing
     this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
     this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, saves: 0,
@@ -384,7 +414,7 @@
     var c = this.cart = { title: str(f[2]), mode: sym(f[3]), w: num(f[4]), h: num(f[5]), rate: num(f[6]), seed: '', devices: {}, budget: null, name: null, digest: null };
     this._describe();
     this.window = rangeOf(1, 1, c.h, c.w);
-    this._say('Loaded ' + c.title + ': a ' + c.w + ' by ' + c.h + ' ' + c.mode + ' at ' + (c.rate ? c.rate + ' frames a second' : 'rate 0, a step on every edit') + ', seed ' + c.seed + ', on ' + this.version + '.');
+    this._say('Loaded ' + c.title + ': ' + article(c.w) + ' ' + c.w + ' by ' + c.h + ' ' + c.mode + ' at ' + (c.rate ? c.rate + ' frames a second' : 'rate 0, a step on every edit') + ', seed ' + c.seed + ', on ' + this.version + '.');
     if (c.budget) {
       // "may", since CART.2 (2026-10-11, decision 16): the budget counts every formula cell every frame,
       // and the engine computes only the cells a change reaches, so a cartridge over the line may run
@@ -679,6 +709,7 @@
     if (d.palette) this._readPalette();
     if (this.cart.mode === 'plane') this._drawPlane();
     if (this.cart.mode === 'grid') this._drawGrid(false);   // the record through the frame's own Camera (ENGINE.8)
+    if (this.tabsWaiting.length) this._answerWaiting();   // a tab clicked while the frame was in progress (ENGINE.14)
     if (d.keys) this._readKeys();
     if (d.audio) this._readAudio();
     if (d.file) this._readFile();
@@ -764,26 +795,35 @@
   // frame's replaces it with the person's scroll and selection kept (decision 5). The record is viewed
   // whether or not a viewport draws it, so a host with no element still counts its windows.
   Host.prototype._drawGrid = function (atLoad) {
+    // Another sheet shown in the Screen's place (ENGINE.14, decision 2): the frame views that sheet alone,
+    // through the region the viewport shows, and the Screen again when its tab gives the window back.
+    if (!atLoad && this.vp && !isScreen(this.vp.sheet())) { if (this.refreshSheet(this.vp)) this.c.draws++; return; }
     var t0 = this.now();
     var r = this.m.texts('alonzo_view', [this.handle], ['grid', 'Screen', this.window]);
     var t1 = this.now();
     if (r.status !== 0) { this._sayOnce('grid', 'frame ' + this.frame + ': the record of the Screen was refused: ' + words(r) + '.', true); return; }
     if (!this.windowsSeen[this.window]) { this.windowsSeen[this.window] = true; this.c.windows++; }
     this.record = r.text;
-    var vp = this._viewport();
+    var vp = this._viewport(), was = this.quieting;
     if (vp) {
-      vp.load(r.text, { keep: !atLoad });
-      this._follow(atLoad);
+      this.quieting = true;   // the events this load and the follow raise are the host's own, never a person's tab
+      try {
+        vp.load(r.text, { keep: !atLoad });
+        this._follow(atLoad);
+      } finally { this.quieting = was; }
       this.c.draws++;
     }
     this.timing = { view: t1 - t0, draw: this.now() - t1 };
   };
-  // The viewport, made over the page's element at the first grid load and kept across loads.
+  // The viewport, made over the page's element at the first grid load and kept across loads; its tabs
+  // answered, and the sheet it shows viewed again at a scroll that leaves its region (ENGINE.14).
   Host.prototype._viewport = function () {
     if (this.vp || !this.gridEl) return this.vp;
-    var V = VP();
+    var V = VP(), self = this;
     this.vp = new V(this.gridEl);
     this._listenGrid();
+    this.vp.on('sheet', function (e) { self.answer(self.vp, e); });
+    this.vp.on('scroll', function () { self.refreshSheet(self.vp, true); });
     return this.vp;
   };
   // The viewport follows the Camera (decision 6): at a load to the window's top-left; at a move, by the
@@ -797,6 +837,63 @@
     if (cam.row === was.row && cam.col === was.col) return;
     var at = this.vp.scrolled();
     this.vp.scrollTo(Math.max(1, at.top + cam.row - was.row), Math.max(1, at.left + cam.col - was.col));
+  };
+
+  // ---- the tabs (ENGINE.14; KERNEL.5's decision 6): a viewport's sheet event answered ----
+  // A person's click on a tab. A sheet the viewport holds no record of is viewed and shown; one it holds, which
+  // the viewport has shown already from its last record, is viewed again at once; and the Screen's tab, in the
+  // host's own viewport, gives the game's window back. A frame in progress is never viewed (viewRecord), so a
+  // tab clicked mid-frame waits for the frame's end. The events the host's own calls raise go unanswered.
+  Host.prototype.answer = function (vp, e) {
+    if (this.quieting || !vp || !e || !this.handle) return;
+    if (this.inFrame) { this.tabsWaiting.push({ vp: vp, e: e }); return; }
+    if (vp === this.vp && isScreen(e.name)) { this._screenTab(); return; }
+    if (e.loaded) this.refreshSheet(vp); else this.showSheet(vp, e.name);
+  };
+  Host.prototype._answerWaiting = function () {
+    var list = this.tabsWaiting;
+    this.tabsWaiting = [];
+    for (var i = 0; i < list.length; i++) this.answer(list[i].vp, list[i].e);
+  };
+  // The Screen's tab (decision 2): the Screen viewed through the Camera's window as at a load, the view reset
+  // and scrolled to the Camera's corner, the Camera followed from there; so a person who scrolled away, or who
+  // watched another sheet while the Camera moved, has the game's window back. A click on it while it shows
+  // does the same.
+  Host.prototype._screenTab = function () {
+    var self = this;
+    this._quiet(function () { self._drawGrid(true); });
+  };
+  // A sheet shown in a viewport (decisions 2, 3 and 10): viewed through the region the viewport shows, from A1
+  // at the default cell's size for a sheet it has not drawn, loaded and shown, then viewed again at once when
+  // the sheet's own widths put more in view than the estimate did. A page's viewer of the sheets calls it to
+  // show one by name. False, and a refusal said once, when the view is refused or a frame is in progress.
+  Host.prototype.showSheet = function (vp, name) {
+    if (!vp || !this.m || !this.handle) return false;
+    var win = regionOf(vp, true), t = this.viewRecord(name, win);
+    if (t === null) return false;
+    this._quiet(function () { vp.load(t, { keep: true }); vp.show(name); });
+    if (!within(regionOf(vp, false), win)) this.refreshSheet(vp);
+    return true;
+  };
+  // The sheet a viewport shows, viewed again through the region it shows, its view kept (decision 3): at every
+  // frame in the host's own viewport, at a page's refresh in its viewer. moved: only when the region has left
+  // the window the sheet's record was viewed through, at a scroll. The Screen in the host's own viewport is the
+  // frame's own draw, through the Camera's window, and is left to it. True when a record was loaded.
+  Host.prototype.refreshSheet = function (vp, moved) {
+    if (!vp || this.quieting || !this.m || !this.handle || this.inFrame) return false;
+    var name = vp.sheet(), model = vp.model();
+    if (!name || !model || (vp === this.vp && isScreen(name))) return false;
+    var win = regionOf(vp, false);
+    if (moved && model.windowText && within(win, model.windowText)) return false;
+    var t = this.viewRecord(name, win);
+    if (t === null) return false;
+    this._quiet(function () { vp.load(t, { keep: true }); });
+    return true;
+  };
+  Host.prototype._quiet = function (fn) {
+    var was = this.quieting;
+    this.quieting = true;
+    try { fn(); } finally { this.quieting = was; }
   };
   Host.prototype._fit = function () {
     var c = this.cart, dpr = global.devicePixelRatio || 1;
@@ -1109,9 +1206,11 @@
     this._on(cv, 'contextmenu', function (ev) { ev.preventDefault(); });
     this._on(cv, 'wheel', function (ev) { self.wheel(ev.deltaY > 0 ? 1 : (ev.deltaY < 0 ? -1 : 0)); ev.preventDefault(); }, { passive: false });
   };
-  // The Input device over the viewport (ENGINE.8, decision 7). At a rate above zero the pointer over the
-  // window's cells, its buttons and the wheel are the game's, and a key the Keys sheet binds is taken before
-  // the viewport sees it; every other key moves the viewport. At rate zero, where the Input sheet is not
+  // The Input device over the viewport (ENGINE.8, decision 7, as ENGINE.14 bounds it). At a rate above zero
+  // a key the Keys sheet binds is the game's whatever sheet shows, taken before the viewport sees it; every
+  // other key moves the viewport. While the Screen shows, the pointer over a cell of the Camera's window, its
+  // buttons and the wheel there are the game's too; over the tabs, the headers, the corner and the scrollbars,
+  // and over another sheet, the pointer is 0 and the wheel scrolls. At rate zero, where the Input sheet is not
   // written, all of them are the viewport's, to select, scroll and move by.
   Host.prototype._listenGrid = function () {
     var self = this, root = this.vp.root;
@@ -1123,18 +1222,26 @@
     this._on(root, 'mousedown', function (ev) { if (playing()) self._pointerFromGrid(ev); });
     this._on(root, 'mouseup', function (ev) { if (playing()) self._pointerFromGrid(ev); });
     this._on(root, 'mouseleave', function () { if (playing()) { self.pointerAt(0, 0); self.pointerButtons(0, 0, 0); } });
-    this._on(root, 'contextmenu', function (ev) { if (playing()) ev.preventDefault(); });
-    this._on(root, 'wheel', function (ev) { if (!playing()) return; self.wheel(ev.deltaY > 0 ? 1 : (ev.deltaY < 0 ? -1 : 0)); ev.preventDefault(); }, { passive: false, capture: true });
+    this._on(root, 'contextmenu', function (ev) { if (playing() && self._windowCellAt(ev)) ev.preventDefault(); });
+    this._on(root, 'wheel', function (ev) { if (!playing() || !self._windowCellAt(ev)) return; self.wheel(ev.deltaY > 0 ? 1 : (ev.deltaY < 0 ? -1 : 0)); ev.preventDefault(); }, { passive: false, capture: true });
+  };
+  // The cell of the Camera's window under a point, { col, row } counted from the window's corner, or null: off
+  // the window's cells, over a header, a scrollbar or the tabs, or while another sheet shows (ENGINE.14).
+  Host.prototype._windowCellAt = function (ev) {
+    var c = this.cart, cam = this.camera;
+    if (!c || !this.vp || !isScreen(this.vp.sheet())) return null;
+    var at = this.vp.cellAt(ev.clientX, ev.clientY);
+    var col = at ? at.col - cam.col + 1 : 0, row = at ? at.row - cam.row + 1 : 0;
+    return col >= 1 && col <= c.w && row >= 1 && row <= c.h ? { col: col, row: row } : null;
   };
   // The cell under the pointer, the sheet's own, held as the window's cell so that the Input rows add the
   // Camera back as they do a plane's: the viewport draws the sheet's own rows and columns, so a cell is the
   // pointer's when the window holds it, and the pointer is 0 off the window, as a plane's is off its canvas.
+  // The buttons follow the pointer, so a click on a tab or a header is never the game's.
   Host.prototype._pointerFromGrid = function (ev) {
-    var c = this.cart, cam = this.camera, at = this.vp.cellAt(ev.clientX, ev.clientY);
-    var col = at ? at.col - cam.col + 1 : 0, row = at ? at.row - cam.row + 1 : 0;
-    if (col < 1 || col > c.w || row < 1 || row > c.h) { col = 0; row = 0; }
-    this.pointerAt(col, row);
-    this.pointerButtons(ev.buttons & 1, ev.buttons & 2, ev.buttons & 4);
+    var at = this._windowCellAt(ev);
+    this.pointerAt(at ? at.col : 0, at ? at.row : 0);
+    this.pointerButtons(at && (ev.buttons & 1), at && (ev.buttons & 2), at && (ev.buttons & 4));
   };
   // A hidden page stops the ticks and the voices, and its return starts the clock again with nothing owed
   // and sounds the frame the grid holds (ENGINE.4, decision 6).

@@ -34,13 +34,16 @@ shell pipe, Edge's launcher detaches and the dump is empty. SKIPPED with exit
 without an artifact: CI builds the page before the runner and has the
 browser, so that is where this bites.
 
--Control builds three mutant pages from mutated sources through
+-Control builds four mutant pages from mutated sources through
 tools/build_web.ps1 and runs each: a viewport whose text padding is 5 and not
 4, which the oracle must fail naming cells at the wrong position, the page's
 header proving the mutant applied by printing pad=5; a viewport that drops
 the last visible column's texts, which the oracle must fail as cells not
-drawn; and a template whose oracle element is cut, which this check must fail
-for want of the block. The real page must pass first.
+drawn; a template whose oracle element is cut, which this check must fail
+for want of the block; and (ENGINE.14) a viewport that draws a number too
+wide for its column cut again, its leading digits lost, which sparse_hashes
+must fail at a three-digit number. Four mutants; the real page must pass
+first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A page's dump is read
@@ -74,22 +77,29 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # fills, lines the gridlines, headers the row and column headers, probes the
 # pixels read back. A floor is a lower bound: the tab strip's height varies
 # by a pixel between platforms, and so may the rows in view.
+# 2026-10-14, ENGINE.14: thirteen cases, the twelve's counts unchanged, and
+# every line counts its #s: sparse_hashes, the sparse record with column A
+# narrowed to 26 CSS px and scrolled to row 89, its six two-digit numbers
+# fitting and its fourteen three-digit ones drawn as #s, at both ratios under
+# headless Chrome 155 on Windows (39 texts); the floor holds a row's margin,
+# and a wider font on another platform draws more #s, never fewer.
 $scales = @('1', '1.5')
 $floors = @(
-    @{ Case = 'fixture_frazaro';          Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 0; Probes = 3 },
-    @{ Case = 'fixture_output';           Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2 },
-    @{ Case = 'fixture_output_b2_c3';     Texts = 4;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2 },
-    @{ Case = 'fixture_data';             Texts = 1;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2 },
-    @{ Case = 'into_output';              Texts = 2;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2 },
-    @{ Case = 'into_checks';              Texts = 1;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2 },
-    @{ Case = 'sparse_top';               Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2 },
-    @{ Case = 'sparse_middle';            Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2 },
-    @{ Case = 'sparse_end';               Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2 },
-    @{ Case = 'sparse_frozen';            Texts = 38; Fills = 0;  Lines = 100; Headers = 50; Selection = 1; Marks = 0; Probes = 2 },
-    @{ Case = 'sparse_resized';           Texts = 38; Fills = 0;  Lines = 48;  Headers = 48; Selection = 1; Marks = 0; Probes = 2 },
-    @{ Case = 'fixture_frazaro_selected'; Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 1; Probes = 3 }
+    @{ Case = 'fixture_frazaro';          Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 0; Probes = 3; Hashes = 0 },
+    @{ Case = 'fixture_output';           Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 },
+    @{ Case = 'fixture_output_b2_c3';     Texts = 4;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 },
+    @{ Case = 'fixture_data';             Texts = 1;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 },
+    @{ Case = 'into_output';              Texts = 2;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 },
+    @{ Case = 'into_checks';              Texts = 1;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 },
+    @{ Case = 'sparse_top';               Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 },
+    @{ Case = 'sparse_middle';            Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 },
+    @{ Case = 'sparse_end';               Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 },
+    @{ Case = 'sparse_frozen';            Texts = 38; Fills = 0;  Lines = 100; Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 },
+    @{ Case = 'sparse_resized';           Texts = 38; Fills = 0;  Lines = 48;  Headers = 48; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 },
+    @{ Case = 'fixture_frazaro_selected'; Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 1; Probes = 3; Hashes = 0 },
+    @{ Case = 'sparse_hashes';            Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 13 }
 )
-$expectedCases = 12
+$expectedCases = 13
 
 # The browser: named, from the environment, or found.
 function Find-Browser([string]$named) {
@@ -160,17 +170,17 @@ function Test-Oracle([string]$text, [string]$scale) {
     $cases = @{}
     $caseLines = New-Object System.Collections.Generic.List[string]
     foreach ($l in $lines) {
-        $m = [regex]::Match($l, '^case (\S+) \[[^\]]*\]: texts (\d+), wrapped (\d+), fills (\d+), lines (\d+), headers (\d+), selection (\d+), marks (\d+), probes (\d+): (OK|FAIL.*)$')
+        $m = [regex]::Match($l, '^case (\S+) \[[^\]]*\]: texts (\d+), wrapped (\d+), fills (\d+), lines (\d+), headers (\d+), selection (\d+), marks (\d+), probes (\d+), hashes (\d+): (OK|FAIL.*)$')
         if (-not $m.Success) { continue }
         $name = $m.Groups[1].Value
-        $cases[$name] = @{ Texts = [int]$m.Groups[2].Value + [int]$m.Groups[3].Value; Fills = [int]$m.Groups[4].Value; Lines = [int]$m.Groups[5].Value; Headers = [int]$m.Groups[6].Value; Selection = [int]$m.Groups[7].Value; Marks = [int]$m.Groups[8].Value; Probes = [int]$m.Groups[9].Value; Verdict = $m.Groups[10].Value }
+        $cases[$name] = @{ Texts = [int]$m.Groups[2].Value + [int]$m.Groups[3].Value; Fills = [int]$m.Groups[4].Value; Lines = [int]$m.Groups[5].Value; Headers = [int]$m.Groups[6].Value; Selection = [int]$m.Groups[7].Value; Marks = [int]$m.Groups[8].Value; Probes = [int]$m.Groups[9].Value; Hashes = [int]$m.Groups[10].Value; Verdict = $m.Groups[11].Value }
         $caseLines.Add(("  {0}: {1}" -f $name, ($l -replace '^case \S+ \[[^\]]*\]: ', '')))
     }
     foreach ($f in $floors) {
         $c = $cases[$f.Case]
         if ($null -eq $c) { $problems.Add("the case $($f.Case) was not run"); continue }
         if ($c.Verdict -ne 'OK') { $problems.Add("the case $($f.Case) at a ratio of $scale`: $($c.Verdict)") }
-        foreach ($k in @('Texts', 'Fills', 'Lines', 'Headers', 'Selection', 'Marks', 'Probes')) {
+        foreach ($k in @('Texts', 'Fills', 'Lines', 'Headers', 'Selection', 'Marks', 'Probes', 'Hashes')) {
             if ($c[$k] -lt $f[$k]) { $problems.Add("the case $($f.Case) at a ratio of $scale asserted $($c[$k]) $($k.ToLower()), below its floor of $($f[$k])") }
         }
     }
@@ -229,9 +239,20 @@ if ($Control) {
         $pageC = New-MutantPage 'c' $tplC $viewport
         $rC = Invoke-Oracle $browser $pageC '1'
         $cNoBlock = ($rC.Text -eq '') -and ($rC.Reason -like 'no oracle block*')
-        Write-Output ("control: the real page has {0} problem(s); the padding mutant applied ({1}) and failed on {2} position(s); the dropped column failed as {3} cell(s) not drawn; the cut element left no block ({4})" -f @($j0.Problems).Count, $aApplied, $aPosition, $bNotDrawn, $cNoBlock)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aPosition -ge 1 -and $bNotDrawn -ge 1 -and $cNoBlock) {
-            Write-Output 'OK: the check passes the real page and fails each of the three mutants for its own reason, each proving it applied'
+        # mutant D (ENGINE.14): a viewport that draws a number too wide for its column cut again, its leading
+        # digits lost, as KERNEL.5 drew it; the sparse_hashes case must fail it by name at a three-digit number
+        $anchorD = '    if (hashes !== null) {'
+        if (([regex]::Matches($js, [regex]::Escape($anchorD))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorD' is not in web/viewport.js exactly once"; exit 1 }
+        $mutD = $js.Replace($anchorD, '    if (false) {')
+        $dApplied = $mutD -cne $js
+        $jsD = Join-Path $tmp 'd.js'; [System.IO.File]::WriteAllText($jsD, $mutD, $utf8)
+        $pageD = New-MutantPage 'd' $template $jsD
+        $rD = Invoke-Oracle $browser $pageD '1'
+        $jD = if ($rD.Text -ne '') { Test-Oracle $rD.Text '1' } else { @{ Problems = @($rD.Reason) } }
+        $dFailed = @($jD.Problems | Where-Object { $_ -cmatch 'case sparse_hashes.*cell body:\d+,1 shows \d{3}, a number too wide for its column, which draws #+' }).Count
+        Write-Output ("control: the real page has {0} problem(s); the padding mutant applied ({1}) and failed on {2} position(s); the dropped column failed as {3} cell(s) not drawn; the cut element left no block ({4}); the number cut again applied ({5}) and failed sparse_hashes ({6})" -f @($j0.Problems).Count, $aApplied, $aPosition, $bNotDrawn, $cNoBlock, $dApplied, $dFailed)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aPosition -ge 1 -and $bNotDrawn -ge 1 -and $cNoBlock -and $dApplied -and $dFailed -ge 1) {
+            Write-Output 'OK: the check passes the real page and fails each of the four mutants for its own reason, each proving it applied'
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -239,6 +260,7 @@ if ($Control) {
         foreach ($p in @($jA.Problems) | Select-Object -First 3) { Write-Output ('  padding mutant: ' + $p) }
         foreach ($p in @($jB.Problems) | Select-Object -First 3) { Write-Output ('  dropped column mutant: ' + $p) }
         Write-Output ('  cut element: ' + $rC.Reason)
+        foreach ($p in @($jD.Problems) | Select-Object -First 3) { Write-Output ('  number cut again: ' + $p) }
         exit 1
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
