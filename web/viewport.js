@@ -2,7 +2,7 @@
   SPDX-FileCopyrightText: 2026 Spreadsheet Company
   SPDX-License-Identifier: Apache-2.0
 
-  web/viewport.js - the viewport: the Screen device in grid mode (SPEC.md,
+  web/viewport.js - the viewport: the Screen device in grid mode (docs/SPEC.md,
   section 3.1), KERNEL.5 laid here. One window of a sheet drawn on a canvas
   from the view record alone, the lines `frazaro view` prints (the treaty's
   oracle 11): every sheet as a tab, the window's columns at the widths the
@@ -12,7 +12,7 @@
   spells it, a formula row shows its text until its value row lands
   (KERNEL.7) and its value after it, keeping the text for the bar; a look
   row maps a value to the format every cell holding it draws with, and a
-  row row gives a row its height or hides it (SPEC.md decision 19; both read
+  row row gives a row its height or hides it (docs/SPEC.md decision 19; both read
   since ENGINE.8, when the host began drawing a grid cartridge's Screen
   every frame); a number or a date too wide for its column shows #s across
   it and never a cut text (ENGINE.14); and an unknown row is counted, never
@@ -33,7 +33,7 @@
 
   The layout is in device pixels: every size an integer of them, every
   gridline at an integer plus a half, every text at an integer position, so
-  the image is crisp at the machine's pixel ratio (SPEC.md section 1); the
+  the image is crisp at the machine's pixel ratio (docs/SPEC.md section 1); the
   backing store is the CSS size times the ratio and is remade when the ratio
   changes. The painter keeps a draw list of what it drew and where, which the
   page's oracle (web/index.template.html, ?oracle=1) holds equal to what the
@@ -170,7 +170,7 @@
   function strOf(d) { return typeof d === 'string' ? d : null; }
   function symOf(d) { return (d && d.sym !== undefined) ? d.sym : null; }
   function numOf(d) { return (d && d.num !== undefined) ? d.num : null; }
-  // A value as a look matches it (SPEC.md decision 19, as ENGINE.8 reads it): a number by its value, so 7
+  // A value as a look matches it (docs/SPEC.md decision 19, as ENGINE.8 reads it): a number by its value, so 7
   // and 7.0 are one value and so are 0 and -0, which the language spells apart in a cell row and a value
   // row; a text by its characters exactly; a truth value; an error by its name. Anything else, a date or a
   // value not computed, is matched by no look, and nor is an empty cell or a formula with no value.
@@ -300,14 +300,14 @@
         e.text = vv.text; e.vkind = vv.kind; e.valued = true; e.lookKey = lookKeyOf(f[3]);
         m.counts.values++;
       } else if (head === 'look') {
-        // the look map (SPEC.md decision 19): every cell whose value is the look's draws with its format in
+        // the look map (docs/SPEC.md decision 19): every cell whose value is the look's draws with its format in
         // place of its own; of two looks a value matches, the first the record holds
         var lk = lookKeyOf(f[2]), li = numOf(f[3]);
         if (strOf(f[1]) === null || lk === null || li === null || li < 0 || Math.floor(li) !== li) { m.counts.malformed++; continue; }
         if (!Object.prototype.hasOwnProperty.call(m.looks, lk)) m.looks[lk] = li;
         m.counts.looks++;
       } else if (head === 'row') {
-        // a row's settings (SPEC.md decision 19), the column row's twin: its height in points or none, shown or hidden
+        // a row's settings (docs/SPEC.md decision 19), the column row's twin: its height in points or none, shown or hidden
         var rn = numOf(f[2]), rh = numOf(f[3]), rs = symOf(f[4]);
         if (strOf(f[1]) === null || rn === null || rn < 1 || Math.floor(rn) !== rn || (rh === null && symOf(f[3]) !== 'none') || (rh !== null && rh < 0) || (rs !== 'shown' && rs !== 'hidden')) { m.counts.malformed++; continue; }
         m.rowSettings[rn] = { height: rh, hidden: rs === 'hidden' };
@@ -430,7 +430,7 @@
     while (lo < hi) { var mid = Math.floor((lo + hi + 1) / 2); if (this.rowTop(mid) <= y) lo = mid; else hi = mid - 1; }
     return lo;
   };
-  // The formats of a cell: its look's, when its value is a look's (SPEC.md decision 19), in place of its
+  // The formats of a cell: its look's, when its value is a look's (docs/SPEC.md decision 19), in place of its
   // own; else the cell's own; else, for an empty cell, its column's; else format 0.
   function formatOf(model, cell, c) {
     if (cell && cell.lookKey !== null && Object.prototype.hasOwnProperty.call(model.looks, cell.lookKey)) {

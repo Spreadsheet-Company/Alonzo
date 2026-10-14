@@ -1,10 +1,10 @@
 <#
-check_host_loop.ps1 - the host's loop does what SPEC.md section 5 says, over
+check_host_loop.ps1 - the host's loop does what docs/SPEC.md section 5 says, over
 a fixed input log against the fake module: the page's loop oracle, run
 under a headless browser at two pixel ratios, every case OK and its counts
 at their floors.
 
-WHY: ENGINE.1's oracle (REARVIEW.md, the scoping's decision 12). The built
+WHY: ENGINE.1's oracle (docs/REARVIEW.md, the scoping's decision 12). The built
 page, web/index.html, carries the host shim (web/host.js), the fake module
 (web/fake.js) and the Life cartridge; opened with ?loop=1 it drives the host
 tick by tick with synthetic timestamps and a frozen clock over a fixed log of
@@ -41,7 +41,7 @@ cells equal to the unchunked frame, the module's memory grown at the load)
 and parity (eleven refusals issued to the fake module and the engine's,
 each answered with the same status and id); and since ENGINE.2 plane (the
 plane the host draws held to the record of the same window, byte for value,
-by the page's own reading of SPEC.md section 3.1, at frame 0 and after every
+by the page's own reading of docs/SPEC.md section 3.1, at frame 0 and after every
 frame: the window to the Camera's, the bytes to the record, and the canvas's
 pixels at a cell of each kind to the Palette's color or magenta; over the
 double, its Camera moved by edits and a formula without a value written

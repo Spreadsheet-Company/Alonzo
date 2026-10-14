@@ -1,4 +1,4 @@
-//! The pass at the command line (`SPEC.3`; `SPEC.md` section 7.8): each
+//! The pass at the command line (`SPEC.3`; `docs/SPEC.md` section 7.8): each
 //! cartridge's source expanded by `alonzo::pass` into the cartridge beside
 //! it, then the cartridge loaded, as an act of its own, to say whether it
 //! loads. The pass reads no file; this door reads the source and every text
@@ -12,7 +12,7 @@
 //! ```
 //!
 //! A source is `<name>.source.vla`, and its cartridge is `<name>.vla` in the
-//! same folder (decision 28 of the scoping, `REARVIEW.md`). An include is
+//! same folder (decision 28 of the scoping, `docs/REARVIEW.md`). An include is
 //! resolved against the source's own folder, every include of an included
 //! text too, as the reference resolves each against the workbook's.
 //!

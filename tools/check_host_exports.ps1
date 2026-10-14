@@ -1,5 +1,5 @@
 <#
-check_host_exports.ps1 - the engine exports exactly the twelve names SPEC.md
+check_host_exports.ps1 - the engine exports exactly the twelve names docs/SPEC.md
 section 8.1 gives it, and nothing else: eleven functions and the memory.
 
 WHY (ENGINE.1's second slice, 2026-10-09): the host can reach into the
@@ -15,10 +15,10 @@ a C export of a library crate is exported again by every module built on it
 turns that feature on; if anything ever does, a module exports vla_load
 beside alonzo_load, a door past the engine's device checks, and this check
 fails by name. Frazaro's tools/check_wasm_exports.ps1 holds its two modules
-the same way. SPEC.md section 13 named this check as a candidate item; it
+the same way. docs/SPEC.md section 13 named this check as a candidate item; it
 rides under ENGINE.1, the list it holds being what that slice writes. SPEC.3's
 second slice (2026-10-10) raised the list to twelve with alonzo_expand, the
-pass in the page (SPEC.md section 7.8), an export added and no signature
+pass in the page (docs/SPEC.md section 7.8), an export added and no signature
 changed, so the ABI stays 1.
 
 WHAT IT READS: the binary format's section table (magic "\0asm", version 1,
@@ -66,7 +66,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 
-# --- The list, SPEC.md section 4.6's table, and the count beside it. The
+# --- The list, docs/SPEC.md section 4.6's table, and the count beside it. The
 #     memory is a memory and every other name a function; the two statements
 #     below are one fact and are raised in the same commit, with the page. ---
 $list = @(
@@ -302,5 +302,5 @@ if ($problems.Count -gt 0) {
     foreach ($p in $problems) { Write-Host "  ! $p" }
     exit 1
 }
-Write-Host "OK: $wasm exports exactly the twelve names of SPEC.md section 8.1 ($($bytes.Length) bytes, $($exports.Count) exports, pinned at $expectedExports)"
+Write-Host "OK: $wasm exports exactly the twelve names of docs/SPEC.md section 8.1 ($($bytes.Length) bytes, $($exports.Count) exports, pinned at $expectedExports)"
 exit 0

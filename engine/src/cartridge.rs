@@ -1,5 +1,5 @@
 //! The cartridge (ENGINE.1's second slice, 2026-10-09): what the engine adds
-//! to the language's machine, and nothing else (`SPEC.md` section 4.6): the
+//! to the language's machine, and nothing else (`docs/SPEC.md` section 4.6): the
 //! manifest, the device sheets' layouts and their checks, the engine's own
 //! sheets, the Clock's frame at every step, and `describe`. The grid, its
 //! rows, its twins, its step, its views and their refusals are the
@@ -66,7 +66,7 @@ fn refused(line: u32, id: &str, slots: &[(&str, &str)]) -> LineRefusal {
 
 // ---- the manifest (section 7.2) -------------------------------------------
 
-/// The versions of `SPEC.md` this engine reads. Version 3 adds no row and no
+/// The versions of `docs/SPEC.md` this engine reads. Version 3 adds no row and no
 /// directive, so a cartridge written to it loads as a version 2 cartridge.
 pub const SPECS: [u32; 3] = [1, 2, 3];
 /// The highest rate, in frames a second; 0 is a step on every edit.
@@ -843,7 +843,7 @@ impl Cartridge {
     /// the plan's row, a `readers` row for each sheet whose changes are
     /// followed, and a `shape` row for each shape with the path each of its
     /// reads takes, so that what a cartridge costs a frame is read before a
-    /// frame runs (`SPEC.md` section 2's rules, each read off a row).
+    /// frame runs (`docs/SPEC.md` section 2's rules, each read off a row).
     pub fn describe(&self) -> String {
         let mut out = String::new();
         for d in &self.manifest.directives {
@@ -1586,7 +1586,7 @@ mod tests {
             );
             assert!(r.refusal.text.contains(want), "{rows}: {}", r.refusal.text);
             assert!(
-                r.refusal.text.ends_with("(SPEC.md section 3.5)."),
+                r.refusal.text.ends_with("(docs/SPEC.md section 3.5)."),
                 "{}",
                 r.refusal.text
             );
@@ -1998,7 +1998,7 @@ mod tests {
         );
     }
 
-    /// The Write sheet's rows as the host reads them after a step (SPEC.md
+    /// The Write sheet's rows as the host reads them after a step (docs/SPEC.md
     /// section 3.9, `web/host.js`'s `_readWrite`): from row 2, a sheet in
     /// column A, an address in B and a value in C, each row the next frame's
     /// derived write, spelled as the record spells its values. A row without
@@ -2067,7 +2067,7 @@ mod tests {
         }
     }
 
-    /// One committed replay played as SPEC.md section 7.6 plays one, by this
+    /// One committed replay played as docs/SPEC.md section 7.6 plays one, by this
     /// test and not by the host: read with the language's reader, its
     /// header's digest held to the cartridge's text with LF line ends, so
     /// that it plays only on the file it was recorded from, as the page's
@@ -2117,7 +2117,7 @@ mod tests {
         let measured = sha256_hex(cart.replace("\r\n", "\n").as_bytes());
         assert_eq!(
             digest, measured,
-            "{name}: the replay was recorded from the cartridge whose SHA-256 is {digest}, and {name}.vla's is {measured}: a replay plays only on the file it was recorded from (SPEC.md section 7.6)"
+            "{name}: the replay was recorded from the cartridge whose SHA-256 is {digest}, and {name}.vla's is {measured}: a replay plays only on the file it was recorded from (docs/SPEC.md section 7.6)"
         );
         // Each frame one form, (frame n row ...), its rows the frame's one write.
         let frames: Vec<(u32, Vec<Form>)> = forms[1..]
@@ -2365,7 +2365,7 @@ mod tests {
 
     // ---- ENGINE.2: the plane is the record of the same window, byte for value ----
 
-    /// A value of the record as `SPEC.md` section 3.1 reads it into the plane, from the
+    /// A value of the record as `docs/SPEC.md` section 3.1 reads it into the plane, from the
     /// record's spelling alone: a whole number from 0 to 254 is itself, and any other value,
     /// a fraction, a number past 254, a text, a truth value, an error, is 255.
     fn record_byte(v: &Form) -> u8 {
@@ -2438,7 +2438,7 @@ mod tests {
         }
     }
 
-    /// `ENGINE.2`'s equality (`SPEC.md` section 13) over the test card, every frame from 0
+    /// `ENGINE.2`'s equality (`docs/SPEC.md` section 13) over the test card, every frame from 0
     /// to 24: the window the Camera places, read off the Camera's own record, which pans one
     /// column a frame and wraps after 21; the Screen's whole extent; a window past it; and
     /// the twin's window. At frame 5, a value, a formula and a derived row written inside
@@ -2550,7 +2550,7 @@ mod tests {
     /// `formula` rows, every other row as the record prints it, each
     /// formula's `value` row among them, before the first step and after it;
     /// the engine passes a projection's name to the language as it stands
-    /// (`SPEC.md` section 4.5, corrected 2026-10-14), and a projection the
+    /// (`docs/SPEC.md` section 4.5, corrected 2026-10-14), and a projection the
     /// grid does not have is refused naming the three. A cartridge of its
     /// own, so the test travels with the package.
     #[test]

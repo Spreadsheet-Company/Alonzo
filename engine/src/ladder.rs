@@ -1,4 +1,4 @@
-//! The size ladder's rungs (`ENGINE.9`; `REARVIEW.md`, the item's scoping,
+//! The size ladder's rungs (`ENGINE.9`; `docs/REARVIEW.md`, the item's scoping,
 //! decisions 1 to 3): the boards Life and the gun are built on past the
 //! window's own, and the definition that builds a source on one. A source
 //! whose rule covers a board states the board's size as a macro,
@@ -6,7 +6,7 @@
 //! kit's way of handing a value on; the pass, handed this file's definition
 //! after the source's own ([`crate::pass::expand_with`]), expands the same
 //! rule over a larger Screen. The window stays the manifest's, 320 by 200,
-//! `SPEC.md` section 10's limit for a plane, so a larger board stands under
+//! `docs/SPEC.md` section 10's limit for a plane, so a larger board stands under
 //! a still Camera at its top-left, which the definition writes before it
 //! hands the size on. Compiled for the tests alone; the native runner of
 //! the floors, `examples/frames.rs`, includes the same file by its path, and

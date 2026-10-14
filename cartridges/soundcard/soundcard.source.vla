@@ -1,14 +1,14 @@
 ; SPDX-License-Identifier: 0BSD
 ; soundcard.source.vla - the sound card, as its author writes it: the Audio device played, so that
 ; every cell the host reads after a step is heard (ENGINE.4). The pass expands this file into
-; soundcard.vla beside it, the rows the engine loads (SPEC.md section 7.8): edit this one, then
+; soundcard.vla beside it, the rows the engine loads (docs/SPEC.md section 7.8): edit this one, then
 ; expand it again. The fixture of ENGINE.4's oracle: the page's loop oracle drives it over a log of
 ; presses, a knob turned and the Clock's rate, and holds every frame's voices, and every call the
 ; host makes on the Web Audio graph, to the card computed by hand.
 ;
 ; What it plays, an eight-second loop of four sections of sixty frames, two seconds each at thirty
 ; frames a second. A voice is a row of the Audio sheet: its wave, its note as a MIDI number, and its
-; volume from 0 to 1 (SPEC.md section 3.6).
+; volume from 0 to 1 (docs/SPEC.md section 3.6).
 ;   - The four waves: voice 1 holds A4, note 69, and changes its wave every half second, square,
 ;     triangle, sawtooth and sine, each change made under the sound.
 ;   - A scale: voice 1 plays C major up, seven frames a note, the last frame of each a rest.
@@ -26,7 +26,7 @@
 (include "../common.vla")
 
 (cartridge "soundcard"
-  (spec 3)                          ; the version of SPEC.md this cartridge is written to
+  (spec 3)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Sound card")              ; what the host shows
   (rate 30)                         ; frames a second; every length below is in frames
   (screen plane 48 24)              ; the waterfall: 48 notes wide, 24 frames deep
@@ -39,11 +39,11 @@
 ; voices, the Knobs a person turns, the Log of the voices, the keys and the Palette.
 (sheets "Screen" "Audio" "Score" "Knobs" "Log" "Keys" "Palette")
 
-; ---- the Palette: the CGA's sixteen (SPEC.md section 3.2) ----------------------------
+; ---- the Palette: the CGA's sixteen (docs/SPEC.md section 3.2) ----------------------------
 (cga-palette)
 
-; ---- the Keys sheet: player 1's ten buttons, each a tick (SPEC.md section 3.4) -------
-(default-keys)                      ; the labels, and player 1: SPEC.md section 3.4's defaults, TIC-80's
+; ---- the Keys sheet: player 1's ten buttons, each a tick (docs/SPEC.md section 3.4) -------
+(default-keys)                      ; the labels, and player 1: docs/SPEC.md section 3.4's defaults, TIC-80's
 
 ; ---- the Knobs: the tick's wave and note, and every voice's volume -----------------
 (cells "Knobs"                      ; a label in column A, a knob in column B
@@ -70,7 +70,7 @@
   ; the presses this frame
   (formula "B3" "=SUM(C1:C11)"))
 
-; ---- the Audio sheet: the four voices (SPEC.md section 3.6) -------------------------
+; ---- the Audio sheet: the four voices (docs/SPEC.md section 3.6) -------------------------
 (audio)
 (cells "Audio"                      ; the two waves that never change
   ("B3" "triangle")                 ; voice 2's wave

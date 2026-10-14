@@ -3,9 +3,9 @@
   SPDX-License-Identifier: Apache-2.0
 
   web/fake.js - the fake module: a double of the engine's eleven exports
-  the loop calls (SPEC.md section 4.6), ten functions and the memory, the
+  the loop calls (docs/SPEC.md section 4.6), ten functions and the memory, the
   permanent test double of the host shim (ENGINE.1, decision 1 of its
-  scoping in REARVIEW.md). The twelfth, alonzo_expand, the pass (SPEC.3), it
+  scoping in docs/REARVIEW.md). The twelfth, alonzo_expand, the pass (SPEC.3), it
   does not hold, since it holds no expander, the language's: the host asks
   for that export at the act, and declines a build over the double in words.
   The shim must behave
@@ -14,7 +14,7 @@
   memory pair over a real WebAssembly.Memory, the record of four
   little-endian u32 (the status, a line, the id's length, the text's length)
   then the id and the text, status 0, 1 and 2, and the refusals by their
-  catalog ids (SPEC.md section 4.7).
+  catalog ids (docs/SPEC.md section 4.7).
 
   What it is not is an engine. It reads a cartridge's manifest, which is the
   engine's own duty (what alonzo_load adds to vla_load), and never a row
@@ -77,7 +77,7 @@
   };
   // The cells the host writes: a formula there is refused (cart-device-cell-formula).
   var HOST_CELLS = { input: [[1, 2, 10, 5], [11, 2, 18, 2]], clock: [[1, 2, 3, 2]], file: [[1, 2, 2, 2]] };
-  // Where a derived write is refused as a cell the host writes (SPEC.md section 3.9).
+  // Where a derived write is refused as a cell the host writes (docs/SPEC.md section 3.9).
   var DERIVED_BLOCKED = { input: [[1, 1, 18, 5]], clock: [[1, 1, 3, 2]], file: [[1, 1, 2, 2]] };
   var DEVICES = [
     ['Screen', 'effect'], ['Palette', 'effect'], ['Input', 'input'], ['Keys', 'effect'], ['Clock', 'input'],
@@ -178,7 +178,7 @@
     if (/^-?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/.test(t)) return { ok: true, v: Number(t) };
     return { ok: false };
   }
-  // A cell's byte in the plane (SPEC.md section 3.1): an absent cell, and a formula before its
+  // A cell's byte in the plane (docs/SPEC.md section 3.1): an absent cell, and a formula before its
   // first value, is 0, wherever it stands, as the record says by printing no value row for it.
   function byteOf(e) {
     if (!e || e.v === undefined) return 0;   // nothing here, or a formula with no value
@@ -214,7 +214,7 @@
       if (text.charAt(i) !== ';') break;
       while (i < n && text.charAt(i) !== '\n') i++;
     }
-    var bad = function (what) { return { refusal: { id: 'cart-manifest-invalid', text: 'the manifest ' + what + '; every directive is given (SPEC.md section 7.2)' } }; };
+    var bad = function (what) { return { refusal: { id: 'cart-manifest-invalid', text: 'the manifest ' + what + '; every directive is given (docs/SPEC.md section 7.2)' } }; };
     if (text.substr(i, 10) !== '(cartridge') return bad('is not the first form: a cartridge begins with (cartridge "name" ...)');
     var bare = '', depth = 0, inStr = false, closed = false;
     for (; i < n; i++) {   // the form's text without its comments, to its closing parenthesis
@@ -295,7 +295,7 @@
     }
     return e || null;
   };
-  // The twins: every sheet's cells as they were when the last step finished (SPEC.md section 2).
+  // The twins: every sheet's cells as they were when the last step finished (docs/SPEC.md section 2).
   Cart.prototype.snapshot = function () {
     this.twins = {};
     for (var k in this.cells) if (Object.prototype.hasOwnProperty.call(this.cells, k)) this.twins[k] = new Map(this.cells[k]);
@@ -474,7 +474,7 @@
                                                        : target + ' is a cell of ' + sk.name + ', the previous frame, which is read-only', ln);
           continue;
         }
-        if (LAYOUT[sk.key] && !within(R, LAYOUT[sk.key])) return refuse('cart-device-cell-outside', target + ' is outside the layout of the ' + sk.name + ' sheet (SPEC.md section 3)', ln, outLen);
+        if (LAYOUT[sk.key] && !within(R, LAYOUT[sk.key])) return refuse('cart-device-cell-outside', target + ' is outside the layout of the ' + sk.name + ' sheet (docs/SPEC.md section 3)', ln, outLen);
         if (kind === 'formula' && meets(R, HOST_CELLS[sk.key])) return refuse('cart-device-cell-formula', target + ' is a cell the host writes, which holds values and never formulas', ln, outLen);
         if (kind === 'derived' && meets(R, DERIVED_BLOCKED[sk.key])) return refuse('cart-write-derived', 'a derived write into ' + target + ' was refused: it is a cell the host writes', ln, outLen);
         if (kind === 'cell' && sk.key === 'clock') { var ck = clockRefusal(name, R, m[4].trim()); if (ck) return refuse('cart-write-clock', ck, ln, outLen); }

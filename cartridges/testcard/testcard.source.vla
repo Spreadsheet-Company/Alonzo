@@ -2,9 +2,9 @@
 ; testcard.source.vla - the plane's test card, as its author writes it: every kind of
 ; value a Screen cell can hold, drawn through the Palette, on a Screen wider than its
 ; window, which the Camera pans one column a frame. The pass expands this file into
-; testcard.vla beside it, the rows the engine loads (SPEC.md section 7.8): edit this one,
+; testcard.vla beside it, the rows the engine loads (docs/SPEC.md section 7.8): edit this one,
 ; then expand it again. The fixture of ENGINE.2's equality: the plane of a window is the
-; record of the same window, byte for value (SPEC.md sections 3.1, 4.5 and 13), which the
+; record of the same window, byte for value (docs/SPEC.md sections 3.1, 4.5 and 13), which the
 ; engine's tests and the page's loop oracle hold every frame. A whole number from 0 to 15
 ; is its color; from 16 to 254 it is a byte past the palette, which the host paints
 ; magenta; anything else is 255, magenta too; an empty cell, and a formula before its
@@ -15,7 +15,7 @@
 (include "../common.vla")
 
 (cartridge "testcard"
-  (spec 2)                          ; the version of SPEC.md this cartridge is written to
+  (spec 2)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Test card")               ; what the host shows
   (rate 30)                         ; frames a second
   (screen plane 40 24)              ; the window: 40 cells wide and 24 high, placed by the Camera
@@ -27,12 +27,12 @@
 ; The sheets, in tab order: the Screen, the Palette it draws with, the Camera that places it.
 (sheets "Screen" "Palette" "Camera")
 
-; The Palette (SPEC.md section 3.2): the CGA's sixteen in their own order, the library's
+; The Palette (docs/SPEC.md section 3.2): the CGA's sixteen in their own order, the library's
 ; palette with a name, which writes the index, the color as #RRGGBB and a name into
 ; columns A, B and C.
 (cga-palette)
 
-; The Camera (SPEC.md section 3.8): the window's top row stays 1, and its left column pans
+; The Camera (docs/SPEC.md section 3.8): the window's top row stays 1, and its left column pans
 ; from 1 to 21 and back, one column a frame, so the window's right edge passes the Screen's
 ; last column, BD, and the columns past it read blank. The value row after the formula is
 ; the column at frame 0, a save's spelling (section 7.3), so the first frame is drawn at

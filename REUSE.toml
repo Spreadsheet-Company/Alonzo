@@ -3,8 +3,8 @@
 # One repository, three license territories, no directory moves: path globs
 # resolve every file to one SPDX identifier. Later [[annotations]] tables
 # win when more than one matches a file, so the specific entries sit below
-# the general ones. The reasoning is CHARTER.md section 9 (Apache-2.0 for
-# the engine, the owner's decision of 2026-10-08) and REARVIEW.md's scoping
+# the general ones. The reasoning is docs/CHARTER.md section 9 (Apache-2.0 for
+# the engine, the owner's decision of 2026-10-08) and docs/REARVIEW.md's scoping
 # of REPO.1, decision 2: the cartridges carry the lightest terms in the
 # repository, as Frazaro's examples/ do, because a cartridge is made to be
 # copied. tools/check_spdx.ps1 verifies this map against the tree on every

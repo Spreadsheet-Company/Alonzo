@@ -1,7 +1,7 @@
 //! SHA-256 (FIPS 180-4) in upper-case hex, written here for the tests and
 //! the native runner alone (`ENGINE.3`; moved into a file of its own by
 //! `ENGINE.9`). A replay names the cartridge it was recorded from by the
-//! digest of the cartridge's text with LF line ends (SPEC.md section 7.6),
+//! digest of the cartridge's text with LF line ends (docs/SPEC.md section 7.6),
 //! as the page's host computes it for its player and
 //! `tools/check_cartridge.ps1` for the files; and the native runner of the
 //! floors, `examples/frames.rs`, names each rung of the size ladder by the

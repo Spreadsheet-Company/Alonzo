@@ -3,7 +3,7 @@
 **Opened plainly, the page is the player: the window the game's, the Screen
 filling it under a slim bar, the source, the replay, the log and the sheets
 in a drawer (`ENGINE.14`). Its other modes are the bench, the oracles the
-checks drive and the instruments the floors read. The host shim, `host.js`, runs a cartridge on the loop of `SPEC.md`
+checks drive and the instruments the floors read. The host shim, `host.js`, runs a cartridge on the loop of `docs/SPEC.md`
 section 5 over the engine's module, every input a cell it writes and every
 effect a cell it reads, and blits the Screen as a plane of color indices.
 It runs over the engine's own module, `alonzo.wasm`, built into the page,
@@ -55,7 +55,7 @@ each edit, and no Input. The blit puts the bytes through the palette into
 one `ImageData` and draws it at a whole number of device pixels a cell with
 smoothing off; a byte past the palette is magenta.
 
-The host keeps the replay of every load's run (`SPEC.md` section 7.6,
+The host keeps the replay of every load's run (`docs/SPEC.md` section 7.6,
 `ENGINE.3`'s second slice). Its header names the cartridge by the SHA-256 of
 its text with LF line ends, a digest the host computes itself, at once, and
 the seed `Clock!B3` held after the load. Each frame is one form, `(frame n
@@ -75,7 +75,7 @@ write after the derived writes. A person's edit is refused while it plays,
 and the loop pauses at the last frame. The recorder records what is played,
 so a replay played and copied is the replay played.
 
-The host sounds the Audio sheet (`SPEC.md` section 3.6, `ENGINE.4`), each of
+The host sounds the Audio sheet (`docs/SPEC.md` section 3.6, `ENGINE.4`), each of
 its four voices one `OscillatorNode` and one `GainNode` of the Web Audio
 graph into one shared gain, and nothing of the host's own: no sample is
 computed here, which `tools/check_web_offline.ps1` holds on this file. After
@@ -102,7 +102,7 @@ sound the frame the grid holds again when it starts.
 | `new AlonzoHost(options)` | `canvas` the plane's canvas (it takes the keys while focused); `box` the element the blit fits, the canvas's parent by default; `scale` a fixed number of device pixels a cell; `budget` a fixed budget in cells a step call, 0 for none; `callsPerTick` a fixed count of step calls a tick in place of the time slice; `now` the clock the budget is measured by; `drive: 'manual'` when the caller calls `tick` itself (the oracles); `seed` the number a `(seed host)` cartridge gets in place of the browser's random one, a whole number from 1 to 2147483646 (the oracle); `audio` an audio context the host sounds through from the start, in place of the one `soundOn` makes, and `audioNow` its clock in place of the context's `currentTime` (the oracle's double of the graph); `grid` the element a grid cartridge's viewport fills (`ENGINE.8`), without which a grid cartridge runs and nothing draws it |
 | `attach(exports)` | asks `alonzo_abi_version` and refuses another number, then every export the loop calls: `{ ok, abi, version }` or `{ ok: false, sentence }` |
 | `load(text, name)` / `loadBytes(bytes, name)` | unloads the grid it held, loads a cartridge, then `describe`, reads the Camera, the Palette and the Keys, and draws the new grid's frame 0 at once, nothing computed, on the plane's canvas or, for a grid cartridge, through the viewport, so that neither shows a grid the module no longer holds: `{ ok, handle, title, mode, w, h, rate }` or the refusal's sentence |
-| `expand(source, path, files)` | the pass (`SPEC.md` section 7.8): a cartridge's source, the path its includes resolve against (`cartridges/<name>/<name>.source.vla`, the command line's), and the texts it may include as `[path, text]` pairs, handed to the module's `alonzo_expand`, an act of its own that takes no handle, touches no grid and stops nothing: `{ ok, text, rows, ms }`, the cartridge's text CRLF as the command line writes it and its rows after the manifest, or the refusal's sentence with the source line it stands on; the export is asked for here and not at `attach`, so over a module without it, the double, the build is declined in words |
+| `expand(source, path, files)` | the pass (`docs/SPEC.md` section 7.8): a cartridge's source, the path its includes resolve against (`cartridges/<name>/<name>.source.vla`, the command line's), and the texts it may include as `[path, text]` pairs, handed to the module's `alonzo_expand`, an act of its own that takes no handle, touches no grid and stops nothing: `{ ok, text, rows, ms }`, the cartridge's text CRLF as the command line writes it and its rows after the manifest, or the refusal's sentence with the source line it stands on; the export is asked for here and not at `attach`, so over a module without it, the double, the build is declined in words |
 | `start()` / `stop()` | the animation-frame loop; the voices sound the frame the grid holds when it starts, and stop with it |
 | `soundOn()` / `soundOff()` / `soundIs()` | the sound, on only after a person's act: `soundOn` makes the audio context at its first call, which a page makes in a press's handler, and sounds the frame the grid holds; `soundOff` silences the voices, stops the oscillators and suspends the context; `soundIs` whether it is on |
 | `tick(ts)` | one animation frame's work at its timestamp, what the loop calls |
@@ -149,7 +149,7 @@ engine makes, and steps a frame in about 4.3 ms in Chrome over `vla-lang`
 0.9.0 (the owner's run of 2026-10-11), so it keeps its rate of thirty frames
 a second with most of each frame's interval to spare. The first engine,
 2026-10-09, stepped about 1.8 generations a second at the slice the host
-spends, the progress sentence showing between them (`SPEC.md` section 5's
+spends, the progress sentence showing between them (`docs/SPEC.md` section 5's
 slowness in plain sight); `CART.1` measured the cost, and the language's
 releases removed it.
 
@@ -189,7 +189,7 @@ It computes nothing: a value is shown as the reader spells it, a formula
 shows its text until the value row lands (`KERNEL.7`) and its value after it,
 its text kept for the bar, a `look` row maps a value to the format every cell
 holding it draws with, and a `row` row gives a row its height in points or
-hides it (`SPEC.md` decision 19, read since `ENGINE.8`); an unknown row is
+hides it (`docs/SPEC.md` decision 19, read since `ENGINE.8`); an unknown row is
 counted, never refused. What the viewport owns is the state no program sees:
 the scroll, the selection, the widths a person dragged, the frozen panes and
 the marks a host asked for. The record is never written.
@@ -355,7 +355,7 @@ page shows opened plainly and what Pages deploys.
   the module (`parity`); and the frame path's equality (`plane`, `ENGINE.2`):
   at frame 0 and after every frame, the window the host drew through is the
   Camera's, the bytes it holds are the record of that window read by the
-  page's own rule from `SPEC.md` section 3.1 (a whole number from 0 to 254
+  page's own rule from `docs/SPEC.md` section 3.1 (a whole number from 0 to 254
   itself, any other value 255, an absent cell and a formula with no value
   row 0), and the canvas's pixels at a cell of each kind are the Palette's
   color or magenta, over the double, its Camera moved by edits, and over the
@@ -596,7 +596,7 @@ viewport, not an Excel clone.
   are the page's own and never the host's, under
   `tools/check_host_loop.ps1`, and the blit by the owner's measurement under
   `tools/check_blit_floors.ps1`. A loop that changes on purpose is first
-  reworded in `SPEC.md` section 5, then in the page's oracle.
+  reworded in `docs/SPEC.md` section 5, then in the page's oracle.
 - **The fixtures are the door's records**, never typed or edited: a change
   in Frazaro's goldens is a copy here and a new pin in
   `tools/check_view_fixtures.ps1`.

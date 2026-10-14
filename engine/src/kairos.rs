@@ -1,4 +1,4 @@
-//! Kairos by hand (`CART.4`; `REARVIEW.md`, the item's second scoping,
+//! Kairos by hand (`CART.4`; `docs/REARVIEW.md`, the item's second scoping,
 //! decisions 3 and 11): the cabinet's rule written a second time, in Rust,
 //! the way a person would write the game, so that the cartridge's frames are
 //! held to a rule written twice. A row is a bitmask of its seven columns, a

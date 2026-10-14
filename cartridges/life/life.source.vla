@@ -2,11 +2,11 @@
 ; life.source.vla - Conway's Life on a 320 by 200 plane, as its author writes it: the
 ; engine's own cartridge, the fixture its floors are measured on (CART.1) and the first
 ; one its host loads (ENGINE.1). The pass expands this file into life.vla beside it, the
-; rows the engine loads (SPEC.md section 7.8): edit this one, then expand it again with
+; rows the engine loads (docs/SPEC.md section 7.8): edit this one, then expand it again with
 ;   cargo run --release --example expand
 ; Every cell of the interior, B2:LG199, is one formula of its eight neighbors in the
 ; previous frame, the twin sheet Screen.last; the border stays empty, which the plane
-; reads as 0, dead. The format is SPEC.md section 7; the shape is its Appendix A.
+; reads as 0, dead. The format is docs/SPEC.md section 7; the shape is its Appendix A.
 
 ; The library whose macros this source calls, sheets, palette and interior among them:
 ; a file like any other, which a cartridge of your own may copy, change, outgrow or leave
@@ -14,7 +14,7 @@
 (include "../common.vla")
 
 (cartridge "life"
-  (spec 2)                          ; the version of SPEC.md this cartridge is written to
+  (spec 2)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Life")                    ; what the host shows
   (rate 30)                         ; frames a second
   (screen plane 320 200)            ; plane mode, 320 cells wide and 200 high: A1:LH200
@@ -26,7 +26,7 @@
 ; The sheets, in tab order: the Screen the rule draws on, the Palette it draws with.
 (sheets "Screen" "Palette")
 
-; The Palette (SPEC.md section 3.2): sixteen entries from index 0, each a color as
+; The Palette (docs/SPEC.md section 3.2): sixteen entries from index 0, each a color as
 ; #RRGGBB and a name, which the library's palette writes into columns A, B and C. Index 0
 ; is a dead cell and index 1 a live one, so the rule's arithmetic over 0 and 1 is the
 ; color; the CGA's other fourteen follow, blue to yellow, for a modder to use.
@@ -55,7 +55,7 @@
 ; door that hands the pass a later definition of it builds this source on another
 ; board, and the same rule covers it: the engine's size ladder builds it so at 640 by
 ; 400 and at 1280 by 800, each under a still Camera at the board's top-left, since the
-; window stays the manifest's (SPEC.md sections 7.8 and 10).
+; window stays the manifest's (docs/SPEC.md sections 7.8 and 10).
 (defmacro (board-size then & args)
   "the board, 320 by 200 cells, handed on: (then 320 200 args...)"
   (quasiquote ((unquote then) 320 200 (unquote-splicing args))))

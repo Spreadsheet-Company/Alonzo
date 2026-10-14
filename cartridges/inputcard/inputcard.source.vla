@@ -2,23 +2,23 @@
 ; inputcard.source.vla - the input card, as its author writes it: the Input and Clock
 ; devices drawn on a plane, so that every cell the host writes before a step is seen
 ; (ENGINE.3). The pass expands this file into inputcard.vla beside it, the rows the
-; engine loads (SPEC.md section 7.8): edit this one, then expand it again. The fixture
+; engine loads (docs/SPEC.md section 7.8): edit this one, then expand it again. The fixture
 ; of ENGINE.3's oracle: the page's loop oracle drives it over a fixed log of keys, the
 ; pointer, clicks and the wheel, and holds what it counts to the log.
 ;
 ; What it shows, on a Screen 48 columns wide that its Camera pans by the mouse wheel:
 ;   - a lamp for each of the ten buttons of the four players, white while the button is
 ;     held, and otherwise a color that moves on with each press: a press counted on its
-;     rising edge, this frame against the last (SPEC.md section 3.3);
+;     rising edge, this frame against the last (docs/SPEC.md section 3.3);
 ;   - a lamp for each of the mouse's three buttons, and a cursor in the cell under the
 ;     pointer, colored by the button held: the pointer is the Screen's own cell, so the
 ;     cursor stays under it wherever the Camera stands;
 ;   - a lamp lit in the frame a key goes down; a bar of the rate, which a person may write
-;     into Clock!B2 (SPEC.md section 3.5); the bits of the frame, of the seed and of the
+;     into Clock!B2 (docs/SPEC.md section 3.5); the bits of the frame, of the seed and of the
 ;     dice, a Park and Miller cell seeded from the seed.
 ; A Tally sheet counts what the Input sheet held, laid out as the Input sheet is, so that
 ; each count sits beside the row it counts; a Write row records the frame of the last
-; left click as a value (SPEC.md section 3.9). The seed is the host's, chosen at the load.
+; left click as a value (docs/SPEC.md section 3.9). The seed is the host's, chosen at the load.
 
 ; The library whose macros this source calls: sheets; cga-palette, default-keys and keys;
 ; button-labels, labels and headers; on and formulas, each naming a sheet once over a run
@@ -26,7 +26,7 @@
 (include "../common.vla")
 
 (cartridge "inputcard"
-  (spec 3)                          ; the version of SPEC.md this cartridge is written to
+  (spec 3)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Input card")              ; what the host shows
   (rate 30)                         ; frames a second; a person may write another into Clock!B2
   (screen plane 40 24)              ; the window: 40 cells wide and 24 high, placed by the Camera
@@ -39,11 +39,11 @@
 ; the keys, the Camera, the Write sheet and the Palette.
 (sheets "Screen" "Panel" "Tally" "Keys" "Camera" "Write" "Palette")
 
-; ---- the Palette: the CGA's sixteen (SPEC.md section 3.2) ----------------------------
+; ---- the Palette: the CGA's sixteen (docs/SPEC.md section 3.2) ----------------------------
 (cga-palette)
 
-; ---- the Keys sheet: two players of four (SPEC.md section 3.4) -----------------------
-(default-keys)                      ; the labels, and player 1: SPEC.md section 3.4's defaults, TIC-80's
+; ---- the Keys sheet: two players of four (docs/SPEC.md section 3.4) -----------------------
+(default-keys)                      ; the labels, and player 1: docs/SPEC.md section 3.4's defaults, TIC-80's
 (keys "C"                           ; player 2: a cluster under the right hand
   "KeyI"                            ; up
   "KeyK"                            ; down
@@ -106,7 +106,7 @@
 ; the frame of the last left click, written as a value by the Write row below
 (cell "Tally" "B20" 0)
 
-; ---- the Write sheet: a left click's frame into Tally!B20 (SPEC.md section 3.9) ----
+; ---- the Write sheet: a left click's frame into Tally!B20 (docs/SPEC.md section 3.9) ----
 (headers "Write" "A1"               ; the header:
   "sheet"                           ;   the sheet a value goes to,
   "address"                         ;   its cell,

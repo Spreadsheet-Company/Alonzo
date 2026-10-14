@@ -2,7 +2,7 @@
   SPDX-FileCopyrightText: 2026 Spreadsheet Company
   SPDX-License-Identifier: Apache-2.0
 
-  web/host.js - the host shim: the loop of SPEC.md section 5 over the
+  web/host.js - the host shim: the loop of docs/SPEC.md section 5 over the
   engine's module (ENGINE.1). It instantiates nothing it was not handed and
   imports nothing: a page gives it a module's exports, the engine's own or
   the fake module's (web/fake.js), and it asks the ABI number before
@@ -29,7 +29,7 @@
   manifest says (seed host) the host chooses the seed, its one write of its
   own (ENGINE.3).
 
-  A grid cartridge (SPEC.md section 3.1; ENGINE.8) is drawn by a viewport
+  A grid cartridge (docs/SPEC.md section 3.1; ENGINE.8) is drawn by a viewport
   of the host's own (web/viewport.js) over an element the page hands it:
   frame 0 at the load and each frame after, the record of the Screen
   through the Camera's window, every frame's record replacing the last with
@@ -45,7 +45,7 @@
   headers and the scrollbars, and over another sheet, they are the
   viewport's, to scroll and select by, and at rate zero all of them are.
 
-  And it sounds the Audio sheet (SPEC.md section 3.6; ENGINE.4): after each
+  And it sounds the Audio sheet (docs/SPEC.md section 3.6; ENGINE.4): after each
   frame, once the Clock's rate is read, its four voices, each the Web Audio
   graph's own oscillator and gain and nothing else, scheduled on the audio
   clock and never on the animation clock. A frame sounds where the last
@@ -59,7 +59,7 @@
   once. The sound is on only after a person's act, the panel's Sound on, as
   Chrome's autoplay policy asks, and it stops with the loop.
 
-  Beside the loop it runs the pass (SPEC.md section 7.8, SPEC.3's second
+  Beside the loop it runs the pass (docs/SPEC.md section 7.8, SPEC.3's second
   slice): a cartridge's source, its path and the texts it includes handed to
   the module's twelfth export, alonzo_expand, an act of its own that takes no
   handle and touches no grid, its answer the cartridge's text for a page to
@@ -67,7 +67,7 @@
   at the attach, since the fake module holds no pass and still drives the
   loop; over a module without one, a build is declined in words.
 
-  And it keeps the replay (SPEC.md section 7.6; ENGINE.3's second slice):
+  And it keeps the replay (docs/SPEC.md section 7.6; ENGINE.3's second slice):
   every write a load's run makes, from frame 0, recorded as the replay's
   rows, the Input rows as the cells that changed and each person's edit
   that landed in its frame, the derived writes never, under a header that
@@ -285,7 +285,7 @@
     return hex.toUpperCase();
   }
 
-  // ---- (1) the module: the memory pair and the record (SPEC.md section 4.6) ----
+  // ---- (1) the module: the memory pair and the record (docs/SPEC.md section 4.6) ----
   function Module(x) { this.x = x; }
   Module.prototype.put = function (bytes) {
     var p = this.x.alonzo_alloc(bytes.length);
@@ -485,7 +485,7 @@
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   };
 
-  // ---- the pass (SPEC.md section 7.8; SPEC.3's second slice): an act of its own, before any load ----
+  // ---- the pass (docs/SPEC.md section 7.8; SPEC.3's second slice): an act of its own, before any load ----
   // A source, its path and the texts it may include, [path, text] pairs, handed to the module's
   // alonzo_expand, the texts joined path, NUL, text, NUL, as the export reads them; the answer is the
   // cartridge's text, the command line's bytes, for a page to show before anything loads it. The
@@ -495,7 +495,7 @@
   Host.prototype.expand = function (source, path, files) {
     if (!this.m) return this._fail('There is no engine module to run the pass.');
     var name = String(path || '').replace(/^.*[\/\\]/, '');
-    if (typeof this.m.x.alonzo_expand !== 'function') return this._fail('The module exports no alonzo_expand, so it holds no pass to build a cartridge from ' + (name || 'its source') + ': the engine\'s module holds one (SPEC.md section 7.8).');
+    if (typeof this.m.x.alonzo_expand !== 'function') return this._fail('The module exports no alonzo_expand, so it holds no pass to build a cartridge from ' + (name || 'its source') + ': the engine\'s module holds one (docs/SPEC.md section 7.8).');
     var parts = [];
     for (var i = 0; i < (files || []).length; i++) parts.push(String(files[i][0]), String(files[i][1]));
     var t0 = this.now(), r = this.m.texts('alonzo_expand', [], [source, path, parts.join('\u0000')]), ms = this.now() - t0;
@@ -562,7 +562,7 @@
       this._begin();
     }
   };
-  // A tick's time put on the grid of the frame's interval when within SNAP_MS of it (SPEC.md section 5, step 1,
+  // A tick's time put on the grid of the frame's interval when within SNAP_MS of it (docs/SPEC.md section 5, step 1,
   // corrected 2026-10-12): the grid's step is the frame's interval over the whole number of the display's
   // intervals it spans, or the frame's own interval where it is shorter than the display's. So at a rate of
   // 60 on a display of 60 every tick owes one frame, and at 30 every second tick, whatever the timestamps'
@@ -790,7 +790,7 @@
     this.ctx.drawImage(this.planeCanvas, 0, 0, w * this.scale, h * this.scale);
     this.c.draws++;
   };
-  // Grid mode (ENGINE.8; SPEC.md section 5, steps 5 and 6): the Screen's record through the window the
+  // Grid mode (ENGINE.8; docs/SPEC.md section 5, steps 5 and 6): the Screen's record through the window the
   // Camera places, drawn by the viewport. Frame 0's record is loaded whole, the view reset; every later
   // frame's replaces it with the person's scroll and selection kept (decision 5). The record is viewed
   // whether or not a viewport draws it, so a host with no element still counts its windows.
@@ -964,7 +964,7 @@
     this.pending = list;
   };
 
-  // ---- the sound (step 6; SPEC.md section 3.6; ENGINE.4) ----
+  // ---- the sound (step 6; docs/SPEC.md section 3.6; ENGINE.4) ----
   // A frame's four voices on the audio clock (decision 1). A frame sounds where the last frame's sound
   // ends, the last frame's time and 1/rate, the rate the host read after it; while the loop keeps up the
   // frames lie end to end, so a rhythm in the cells is a rhythm in the sound whatever the display's
@@ -1256,7 +1256,7 @@
     this._resound();
   };
 
-  // ---- the replay (SPEC.md section 7.6; ENGINE.3's second slice, decisions 8 to 10) ----
+  // ---- the replay (docs/SPEC.md section 7.6; ENGINE.3's second slice, decisions 8 to 10) ----
   // The recorder: from a load, every write that landed before each step, a frame logged at its end
   // as one form holding its rows, (frame n row ...), one row a line, the form the player issues as
   // one write (the owner's word after the close). The Input rows as the cells that changed against
@@ -1342,7 +1342,7 @@
       else return { error: shape + ', and ' + spellForm(d) + ' is none of its three.' };
     }
     if (rp.spec === null || rp.spec < 1) return { error: shape + ', and its (spec ...) is not a version of the page.' };
-    if (rp.spec > SPEC) return { error: 'The replay is written to the page\'s version ' + rp.spec + ', and this host implements versions 1 to ' + SPEC + ' (SPEC.md): a later version\'s replay may hold what this host cannot play.' };
+    if (rp.spec > SPEC) return { error: 'The replay is written to the page\'s version ' + rp.spec + ', and this host implements versions 1 to ' + SPEC + ' (docs/SPEC.md): a later version\'s replay may hold what this host cannot play.' };
     if (rp.digest === null || !/^[0-9A-F]{64}$/.test(rp.digest)) return { error: shape + ', and its (cartridge ...) is not a SHA-256 in sixty-four upper-case hex digits.' };
     if (rp.seed === null || rp.seed < 1 || rp.seed > MAX_SEED) return { error: shape + ', and its (seed ...) is not a whole number from 1 to ' + MAX_SEED + '.' };
     var frame = 0;
@@ -1354,7 +1354,7 @@
       frame = n; rp.last = n;
       for (var j = 2; j < f.length; j++) {
         var row = f[j], head = Array.isArray(row) ? sym(row[0]) : null;
-        if (head === 'derived') return { error: 'The replay holds a derived row, ' + spellForm(row) + ', in frame ' + n + ': the host\'s derived writes are re-derived as a replay plays and never logged (SPEC.md section 7.6).' };
+        if (head === 'derived') return { error: 'The replay holds a derived row, ' + spellForm(row) + ', in frame ' + n + ': the host\'s derived writes are re-derived as a replay plays and never logged (docs/SPEC.md section 7.6).' };
         if (head !== 'cell' && head !== 'formula') return { error: 'The replay holds ' + spellForm(row).slice(0, 60) + ' in frame ' + n + ', and a frame holds cell and formula rows.' };
         (rp.frames[n] = rp.frames[n] || []).push(spellForm(row));
       }
@@ -1372,7 +1372,7 @@
     var rp = this._readReplay(String(text || ''));
     if (rp.error) return this._fail(rp.error);
     var name = this._cartName(), digest = this._cartDigest(), c = this.cart;
-    if (rp.digest !== digest) return this._fail('The replay was recorded from ' + (rp.name || 'a cartridge') + ', its digest ' + rp.digest.slice(0, 16) + '..., and the cartridge loaded is ' + (name || 'another') + ', ' + digest.slice(0, 16) + '...: a replay plays only on the file it was recorded from (SPEC.md section 7.6).');
+    if (rp.digest !== digest) return this._fail('The replay was recorded from ' + (rp.name || 'a cartridge') + ', its digest ' + rp.digest.slice(0, 16) + '..., and the cartridge loaded is ' + (name || 'another') + ', ' + digest.slice(0, 16) + '...: a replay plays only on the file it was recorded from (docs/SPEC.md section 7.6).');
     if (typeof c.seed === 'number' && !c.seedChosen && rp.seed !== c.seed) return this._fail('The replay\'s seed is ' + rp.seed + ', and the cartridge\'s manifest says (seed ' + c.seed + '): a replay of this cartridge holds its manifest\'s seed.');
     var ld;
     this.playSeed = rp.seed;

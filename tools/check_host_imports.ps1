@@ -4,7 +4,7 @@ and held to a list, and nothing else. Pinned at 0 today.
 
 WHY: a WebAssembly module can reach the outside world only through the
 functions its host hands it, listed in the module's import section
-(CHARTER.md section 2, the honest bottom). Frazaro's core takes that to its
+(docs/CHARTER.md section 2, the honest bottom). Frazaro's core takes that to its
 limit and holds its section EMPTY (tools/check_core_imports.ps1, the twin of
 this file). The engine cannot: a game must draw, sound and listen, and each
 of those is the host's function. So the rule here is a list (AD-4: zero

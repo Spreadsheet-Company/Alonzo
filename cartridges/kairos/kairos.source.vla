@@ -2,7 +2,7 @@
 ; kairos.source.vla - Kairos, a stacking game in the shape of the arcade cabinet of 2004
 ; (CART.4): the engine's second cartridge, the first game with a goal, a win and a loss,
 ; and the first written in the kit's words. The pass expands this file into kairos.vla
-; beside it, the rows the engine loads (SPEC.md section 7.8): edit this one, then expand
+; beside it, the rows the engine loads (docs/SPEC.md section 7.8): edit this one, then expand
 ; it again with
 ;   cargo run --release --example expand
 ; Kairos is the Greek for the opportune moment, which is the game's one skill.
@@ -34,7 +34,7 @@
 ; sheet; and the Palette, Lovelace Lavender: the logo's lavender, #A080E0, and the shades
 ; derived from it, #E2D8F6, #F7F4FC and #6B4FC8, each light with a darker twin.
 ;
-; What a rule costs (SPEC.md section 2), and how this source keeps it:
+; What a rule costs (docs/SPEC.md section 2), and how this source keeps it:
 ;   - One fill a formula: the board is one fill, and each Gate row one.
 ;   - No term that changes every frame in a board cell's formula: the frames since the
 ;     phase began are read by the State's few cells and the voices', never the board's.
@@ -54,7 +54,7 @@
 
 ; ---- the colors: the Palette and the same as the Screen's looks, from one list ------
 ; The plane draws the Palette; the panel's live sheet draws the Screen's looks, the same
-; colors, so that one model is drawn by two renderers side by side (SPEC.md decision 19).
+; colors, so that one model is drawn by two renderers side by side (docs/SPEC.md decision 19).
 
 (defmacro (colors & entries)
   "each entry a fill and its name: a Palette row and a look for the value its place gives, from 0"
@@ -176,7 +176,7 @@
           "0")))))                  ;   what: no light
 
 (cartridge "kairos"
-  (spec 3)                          ; the version of SPEC.md this cartridge is written to
+  (spec 3)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Kairos")                  ; what the host shows
   (rate 60)                         ; frames a second: a level's period is in frames
   (screen plane 15 7)               ; the board on its side, a level a column; (screen plane 7 15) to stand it up
@@ -209,7 +209,7 @@
   ("433864" "the major prize's level, its twin"))       ; 15
 
 ; ---- the Keys and the Camera --------------------------------------------------------
-(default-keys)                      ; a is Z, b is X, select is Space: SPEC.md section 3.4's defaults
+(default-keys)                      ; a is Z, b is X, select is Space: docs/SPEC.md section 3.4's defaults
 (camera                             ; a still Camera, so that the Screen holds words beyond the window:
   1                                 ;   the window's top row
   1)                                ;   the window's left column

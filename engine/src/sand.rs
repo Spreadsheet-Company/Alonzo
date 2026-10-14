@@ -1,4 +1,4 @@
-//! Sand by hand (`CART.2`; `REARVIEW.md`, the item's scoping, decisions 13
+//! Sand by hand (`CART.2`; `docs/REARVIEW.md`, the item's scoping, decisions 13
 //! and 21): the rule of `cartridges/sand/sand.vla` written a second time, in
 //! Rust, the way a person would write a falling-sand toy: each row's grains
 //! propose a move and the cells beneath them claim it, in three passes, and

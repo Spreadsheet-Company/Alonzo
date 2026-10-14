@@ -4,8 +4,8 @@ and since ENGINE.9 the size ladder's, measured on the owner's machine,
 natively and in the browser, and printed as one block to paste into
 tools/check_frame_floors.ps1.
 
-WHY: CART.1's scoping, decisions 4 and 5 (REARVIEW.md). The engine's first
-number is cells evaluated a second (CHARTER.md section 7), on the benchmark
+WHY: CART.1's scoping, decisions 4 and 5 (docs/REARVIEW.md). The engine's first
+number is cells evaluated a second (docs/CHARTER.md section 7), on the benchmark
 cartridge's two fixtures, Life's soup (cartridges/life/life.vla) and Gosper's
 glider gun (cartridges/gun/gun.vla), and since CART.2 (decision 11) on Sand's
 opening (cartridges/sand/sand.vla), the charter's test of a chain two hundred
@@ -93,7 +93,7 @@ published facts' span), so a row whose Run differs from the check's
 baseline measures other frames and is re-based, as a row timed alone where
 it was timed in runs is. After the block, the ladder's slope for each half:
 each rung's frame, load and memory over the window's, and the exponent
-against the formula cells, which REARVIEW.md records with the run.
+against the formula cells, which docs/REARVIEW.md records with the run.
 
 WHAT IT DOES:
   1. builds what it measures, unless -NoBuild: the runner (cargo build
@@ -607,7 +607,7 @@ Write-Output ''
 $block | ForEach-Object { Write-Output $_ }
 Write-Output ''
 # The size ladder's slope (ENGINE.9, decision 8), both halves, read off the rows: each rung's frame,
-# load and memory over the window's, and the exponent against the formula cells; for REARVIEW.md.
+# load and memory over the window's, and the exponent against the formula cells; for docs/REARVIEW.md.
 $byKey = @{}
 foreach ($r in $rows) { $byKey[(Get-Field $r 'Runner') + ' ' + (Get-Field $r 'Fixture')] = $r }
 function Shape([double]$e) { if ($e -lt 0.9) { return 'less than linear' } elseif ($e -le 1.1) { return 'linear' } else { return 'more than linear' } }
@@ -634,7 +634,7 @@ foreach ($half in @('native', 'wasm')) {
 Write-Output ''
 if ($kept.Count -gt 0) { Write-Output ("Kept: {0}, measured slower than the run that set the latest floor and still above it, so the entry keeps that floor." -f ($kept -join ', ')) }
 if ($rebased.Count -gt 0) { Write-Output ("Re-based: {0}, each timed another way than the check's baseline timed it, or over another fixture than it measured: its floor is this run's less 10%{1}." -f ($rebased -join ', '), $(if ($reasons.Count -gt 0) { ', and where that is lower than the latest, the entry says why' } else { '' })) }
-if ($under.Count -gt 0) { Write-Output ("NOT A BASELINE for {0}: measured under the latest floor, so the check refuses this block. Run again at a quieter time; or, where the cause is known and accepted, lower that floor by hand with its reason written in the entry, and record the finding in REARVIEW.md." -f ($under -join ', ')) }
+if ($under.Count -gt 0) { Write-Output ("NOT A BASELINE for {0}: measured under the latest floor, so the check refuses this block. Run again at a quieter time; or, where the cause is known and accepted, lower that floor by hand with its reason written in the entry, and record the finding in docs/REARVIEW.md." -f ($under -join ', ')) }
 Write-Output ("The block above is also in {0}: copy it from there, since a terminal's line wrap can drop a space from a copy." -f $blockFile)
 Write-Output 'In tools/check_frame_floors.ps1, its baseline lines go over the baseline lines, and its history over $floorHistory = @( ... ), whole.'
 exit 0

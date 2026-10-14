@@ -3,7 +3,7 @@ check_render_oracle.ps1 - the viewport draws every cell where the record puts
 it: the page's render oracle, run under a headless browser at two pixel
 ratios, every case OK and its counts at their floors.
 
-WHY: KERNEL.5's deterministic oracle, the half CI gates (REARVIEW.md, the
+WHY: KERNEL.5's deterministic oracle, the half CI gates (docs/REARVIEW.md, the
 scoping's decision 4). The built page, web/index.html, carries the viewport
 and seven records the door printed; opened with ?oracle=1 it loads each
 record into the viewport at a fixed size, draws, and holds the viewport's own

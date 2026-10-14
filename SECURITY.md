@@ -2,7 +2,7 @@
 
 *A place a report can land, and a stated commitment, before the engine runs
 anyone's cartridge but its own. The threat model is written the day it does
-(`ROADMAP.md`, `CART.2`), not here.*
+(`docs/ROADMAP.md`, `CART.2`), not here.*
 
 ## Reporting a vulnerability
 
@@ -25,13 +25,13 @@ prioritized above all other work the moment it is confirmed.
 ## What a reviewer checks on the artifact, not on faith
 
 The engine makes no outbound network call, ever: Frazaro's `SD-13` crosses
-the road into this repository (`CHARTER.md`, section 8), and a multiplayer
+the road into this repository (`docs/CHARTER.md`, section 8), and a multiplayer
 game is fiction here, by file, if it is ever anything. A WebAssembly module
 can reach the outside world only through the functions its host hands it,
 listed in the module's import section, so the rule is a property of the
 file. The check `tools/check_host_imports.ps1` reads that section on every
 push and holds it to an allowlist written in the script: one module name,
-`alonzo`, and under it the host's functions as `SPEC.md` names them, the
+`alonzo`, and under it the host's functions as `docs/SPEC.md` names them, the
 canvas, the audio graph, the input events, the animation frame and the file
 picker, and nothing else. A name the list does not hold fails. A forbidden
 name fails even if someone lists it: `fetch` first among them, then
@@ -66,4 +66,4 @@ it was loaded with: the step computes values and never formulas (`AD-7`),
 so a cartridge cannot write code at run time, and the grid writes the grid
 only in data, through the Write sheet's values; the test that holds it is
 the language crate's, the formula cells equal before and after a step
-(`SPEC.md`, section 13).
+(`docs/SPEC.md`, section 13).

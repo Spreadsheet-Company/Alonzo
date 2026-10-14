@@ -4,7 +4,7 @@ is filled from the viewport's source and the fixtures through placeholders,
 each in its place.
 
 WHY: the twin of Frazaro's check of the same name (KERNEL.5, laid here;
-SPEC.md section 8.3: the shim draws the record through the viewport and
+docs/SPEC.md section 8.3: the shim draws the record through the viewport and
 never calls fetch). The page, web/index.template.html, is one HTML file that
 runs from disk, and its whole promise is SD-13 in a browser: it reads nothing
 from the network and writes nothing anywhere. The engine it will carry
@@ -37,7 +37,7 @@ web/index.html exists beside the template, its markup is held to the same
 list of tags (a record or a cartridge cannot spell a tag) and no
 placeholder is left in it.
 
-SINCE ENGINE.4 (2026-10-10; REARVIEW.md, decision 11): CHARTER.md section 8
+SINCE ENGINE.4 (2026-10-10; docs/REARVIEW.md, decision 11): docs/CHARTER.md section 8
 builds no sound synthesizer beyond the Web Audio graph's own nodes, and the
 Audio device is an oscillator and a gain a voice, scheduled from the cells.
 So the host's source, web/host.js, names none of the Web Audio calls that
@@ -85,7 +85,7 @@ $tagTokens = @('<script src', '<script type="module" src', '<link ', '<img ', '<
 # Code and style that reach out: held on the template and on the viewport's
 # source, which the builder inlines into the page.
 $codeTokens = @('fetch(', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'sendBeacon', 'import(', 'importScripts', '@import', 'url(', 'http://', 'https://')
-# The Web Audio names the host's source never holds (ENGINE.4; CHARTER.md section 8): a sample of its own
+# The Web Audio names the host's source never holds (ENGINE.4; docs/CHARTER.md section 8): a sample of its own
 # (a script processor, a worklet, a buffer, a periodic wave) or a reach past the graph's nodes (a media
 # element or stream, the microphone, a module fetched by address). Compared without case, as the code tokens are.
 $shimAudioTokens = @('createScriptProcessor', 'AudioWorklet', 'createBuffer', 'createPeriodicWave', 'createMediaElementSource', 'createMediaStreamSource', 'getUserMedia', 'addModule')
@@ -179,7 +179,7 @@ function Test-Template([string]$path, [string]$script, [string]$fixtures, [strin
         }
         if ($pair[1] -ne $hostjs) { continue }
         foreach ($t in $shimAudioTokens) {
-            if ($js.Contains($t.ToLowerInvariant())) { $problems += ("{0} names '{1}', a sound of the host's own or a reach past the Web Audio graph's oscillators and gains, which CHARTER.md section 8 builds no part of (ENGINE.4)" -f $pair[0], $t) }
+            if ($js.Contains($t.ToLowerInvariant())) { $problems += ("{0} names '{1}', a sound of the host's own or a reach past the Web Audio graph's oscillators and gains, which docs/CHARTER.md section 8 builds no part of (ENGINE.4)" -f $pair[0], $t) }
         }
     }
     # Returned without the comma, as Frazaro's twin returns it: the callers wrap the result in @().

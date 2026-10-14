@@ -1,4 +1,4 @@
-//! The native runner of the frame floors (`CART.1`; `REARVIEW.md`, the
+//! The native runner of the frame floors (`CART.1`; `docs/REARVIEW.md`, the
 //! item's scoping, decisions 2, 3, 5 and 7), and since `ENGINE.9` of the
 //! size ladder: a cartridge loaded through the engine's own `Cartridge`,
 //! stepped frame by frame and timed, every frame's plane held to a Life, or
@@ -12,7 +12,7 @@
 //! ```
 //!
 //! **The reference.** Life computed every cell every generation, the honest
-//! comparison `CHARTER.md` section 7 names: the soup of `life.vla` from its
+//! comparison `docs/CHARTER.md` section 7 names: the soup of `life.vla` from its
 //! own arithmetic and the manifest's seed, or the pattern of a cartridge's
 //! `Seed` sheet read off its rows, then Conway's rule with the border dead,
 //! over the fixture's whole board. It is a third Life outside the engine,

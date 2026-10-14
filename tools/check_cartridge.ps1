@@ -1,9 +1,9 @@
 <#
 check_cartridge.ps1 - every cartridge under cartridges/ is a cartridge as
-SPEC.md section 7 has it, read without an engine.
+docs/SPEC.md section 7 has it, read without an engine.
 
-WHY: ENGINE.1's scoping, decision 11 (REARVIEW.md). The engine refuses a
-defective cartridge at load, by name (SPEC.md section 4.2); but the language
+WHY: ENGINE.1's scoping, decision 11 (docs/REARVIEW.md). The engine refuses a
+defective cartridge at load, by name (docs/SPEC.md section 4.2); but the language
 crate's loader does not exist yet, and a cartridge in this repository is a
 fixture of the floors and the demo a stranger copies first, so its shape is
 held now, statically, on every push, and a defect fails here before any
@@ -41,11 +41,11 @@ WHAT IT HOLDS, for each .vla under cartridges/, with the catalog's ids:
 And a baseline that pins how many: the cartridges counted, and each one's
 rows as a floor that never goes down.
 
-SINCE SPEC.3 (2026-10-10; REARVIEW.md, decisions 28, 31 and 32): a
+SINCE SPEC.3 (2026-10-10; docs/REARVIEW.md, decisions 28, 31 and 32): a
 cartridge is the file of its folder's name, cartridges/<name>/<name>.vla,
 the rule tools/build_web.ps1 and tools/check_web_offline.ps1 already keep;
 beside it stands its source when it has one, <name>.source.vla, which the
-pass expands into it (SPEC.md section 7.8); a library is a file of
+pass expands into it (docs/SPEC.md section 7.8); a library is a file of
 cartridges/ itself. Any other .vla under cartridges/ is refused, and each
 kind is counted against its pin. Each source has its cartridge beside it,
 whose second line is the banner naming it; a cartridge whose second line is
@@ -56,10 +56,10 @@ a cartridge holding a (defmacro ...) or an (include ...) is refused as a
 source (cart-source-unexpanded), before its manifest, as the engine refuses
 it; and (spec 3) is read beside 1 and 2.
 
-SINCE ENGINE.3'S SECOND SLICE (2026-10-10; REARVIEW.md, decisions 8 and 11):
+SINCE ENGINE.3'S SECOND SLICE (2026-10-10; docs/REARVIEW.md, decisions 8 and 11):
 a cartridge's folder may hold its replay, <name>.replay.vla, and the replay's
 golden, <name>.golden.vla, one of each a cartridge, each counted against its
-pin. A replay is read as SPEC.md section 7.6 has it: the license header; its
+pin. A replay is read as docs/SPEC.md section 7.6 has it: the license header; its
 header (replay "<name>" (spec n) (cartridge "<SHA-256>") (seed n)), the name
 its folder's, the spec 1 to 3, the digest PowerShell's SHA-256 of the
 cartridge beside it over its LF bytes, the seed a whole number from 1 to
@@ -76,9 +76,9 @@ slice over every folder holding a replay: the input card's, Kairos's (since
 CART.4's second slice), Sand's (since CART.2's second slice) and the sound
 card's.
 
-SINCE ENGINE.4 (2026-10-10; REARVIEW.md, decisions 4 and 9): the Audio
+SINCE ENGINE.4 (2026-10-10; docs/REARVIEW.md, decisions 4 and 9): the Audio
 sheet's value cells are judged as the host judges a voice at run time
-(SPEC.md section 3.6): a wave in column B one of square, triangle, sawtooth
+(docs/SPEC.md section 3.6): a wave in column B one of square, triangle, sawtooth
 or sine, compared without case; a note in column C a number from 0 to 127;
 a volume in column D a number from 0 to 1. A formula there is the host's to
 judge after each step, which says a voice that is no voice once and silences
@@ -203,7 +203,7 @@ $expectedLibraries = 1
 $expectedReplays = 4
 $expectedGoldens = 4
 $rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 150; 'cartridges/kairos/kairos.vla' = 378 }
-$waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (SPEC.md section 3.6)
+$waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---
 $requiredDirectives = @('spec', 'title', 'rate', 'screen', 'seed')
@@ -309,14 +309,14 @@ function Test-Cartridge([string]$path) {
     $raw = [System.IO.File]::ReadAllText($path)
     $text = $raw -replace "`r`n", "`n"
     $firstLine = ($text -split "`n", 2)[0]
-    if ($firstLine -cne $header) { $problems.Add("line 1: the license header is not the first line, '$header' (SPEC.md section 7.1)") }
+    if ($firstLine -cne $header) { $problems.Add("line 1: the license header is not the first line, '$header' (docs/SPEC.md section 7.1)") }
     try { $forms = Read-Forms $text } catch { $problems.Add($_.Exception.Message); return @{ Problems = $problems; Rows = 0; Cells = 0; Formulas = 0 } }
     if ($forms.Count -eq 0) { $problems.Add('the file holds no form'); return @{ Problems = $problems; Rows = 0; Cells = 0; Formulas = 0 } }
 
     # -- a source is the pass's, refused before its manifest as the engine refuses it --
     foreach ($f in $forms) {
         if ((Test-Kind $f 'list') -and $f.Items.Count -gt 0 -and (Test-Kind $f.Items[0] 'symbol') -and (@('defmacro', 'include') -contains $f.Items[0].Text)) {
-            $problems.Add("line $($f.Line): cart-source-unexpanded: the file holds a ($($f.Items[0].Text.ToLowerInvariant()) ...) form, so it is a cartridge's source, which the pass expands into the rows a load takes (SPEC.md section 7.8)")
+            $problems.Add("line $($f.Line): cart-source-unexpanded: the file holds a ($($f.Items[0].Text.ToLowerInvariant()) ...) form, so it is a cartridge's source, which the pass expands into the rows a load takes (docs/SPEC.md section 7.8)")
             return @{ Problems = $problems; Rows = 0; Cells = 0; Formulas = 0 }
         }
     }
@@ -351,7 +351,7 @@ function Test-Cartridge([string]$path) {
                         $mode = $d.Items[1].Text; $width = [int]$d.Items[2].Text; $height = [int]$d.Items[3].Text
                         $limit = if ($mode -ceq 'plane') { @(320, 200) } elseif ($mode -ceq 'grid') { @(80, 50) } else { $null }
                         if ($null -eq $limit) { $problems.Add("line $($d.Line): cart-manifest-invalid: the screen's mode is $mode, not plane or grid") }
-                        elseif ($width -lt 1 -or $height -lt 1 -or $width -gt $limit[0] -or $height -gt $limit[1]) { $problems.Add("line $($d.Line): cart-manifest-invalid: the screen $mode $width by $height is past the limit of $($limit[0]) by $($limit[1]) (SPEC.md section 10)") }
+                        elseif ($width -lt 1 -or $height -lt 1 -or $width -gt $limit[0] -or $height -gt $limit[1]) { $problems.Add("line $($d.Line): cart-manifest-invalid: the screen $mode $width by $height is past the limit of $($limit[0]) by $($limit[1]) (docs/SPEC.md section 10)") }
                     }
                 }
                 'seed' {
@@ -365,7 +365,7 @@ function Test-Cartridge([string]$path) {
                 default { if ($args1 -ne 1 -or -not (Test-Kind $d.Items[1] 'string')) { $problems.Add("line $($d.Line): cart-manifest-invalid: ($dn `"...`") holds one text") } }
             }
         }
-        foreach ($rd in $requiredDirectives) { if (-not $seen.ContainsKey($rd)) { $problems.Add("line $($man.Line): cart-manifest-invalid: the manifest has no ($rd ...) directive; every directive is given (SPEC.md section 7.2)") } }
+        foreach ($rd in $requiredDirectives) { if (-not $seen.ContainsKey($rd)) { $problems.Add("line $($man.Line): cart-manifest-invalid: the manifest has no ($rd ...) directive; every directive is given (docs/SPEC.md section 7.2)") } }
     }
 
     # -- the rows --
@@ -377,8 +377,8 @@ function Test-Cartridge([string]$path) {
         $f = $forms[$k]
         if (-not (Test-Kind $f 'list') -or $f.Items.Count -eq 0 -or -not (Test-Kind $f.Items[0] 'symbol')) { $problems.Add("line $($f.Line): grid-row-unknown: $(Show-Datum $f) is not a row"); continue }
         $kind = $f.Items[0].Text
-        if ($kind -ceq 'derived') { $problems.Add("line $($f.Line): grid-row-unknown: a (derived ...) row is the host's write, never a cartridge's (SPEC.md section 3.9)"); continue }
-        if ($rowKinds -cnotcontains $kind) { $problems.Add("line $($f.Line): grid-row-unknown: ($kind ...) is not a row this version takes (SPEC.md section 7.3)"); continue }
+        if ($kind -ceq 'derived') { $problems.Add("line $($f.Line): grid-row-unknown: a (derived ...) row is the host's write, never a cartridge's (docs/SPEC.md section 3.9)"); continue }
+        if ($rowKinds -cnotcontains $kind) { $problems.Add("line $($f.Line): grid-row-unknown: ($kind ...) is not a row this version takes (docs/SPEC.md section 7.3)"); continue }
         $it = $f.Items
         $shapeOk = switch -CaseSensitive ($kind) {
             'sheet' { $it.Count -eq 3 -and (Test-Kind $it[1] 'string') -and ((Test-Sym $it[2] 'visible') -or (Test-Sym $it[2] 'hidden')) }
@@ -395,12 +395,12 @@ function Test-Cartridge([string]$path) {
             'row' { $it.Count -eq 5 -and (Test-Kind $it[1] 'string') -and (Test-Whole $it[2]) }
             default { $true }
         }
-        if (-not $shapeOk) { $problems.Add("line $($f.Line): grid-row-malformed: the ($kind ...) row is not in its shape (SPEC.md section 7.3)"); continue }
+        if (-not $shapeOk) { $problems.Add("line $($f.Line): grid-row-malformed: the ($kind ...) row is not in its shape (docs/SPEC.md section 7.3)"); continue }
         # every sheet a row names: the reserved names
         if ($kind -cne 'name' -and $kind -cne 'format' -and $kind -cne 'table' -and $kind -cne 'refers' -and (Test-Kind $it[1] 'string')) {
             $sheet = $it[1].Value
             $sheetsNamed[$sheet.ToLowerInvariant()] = $sheet
-            if ($sheet -match '(?i)\.last$') { $problems.Add("line $($f.Line): cart-sheet-reserved: the sheet $sheet ends in .last, the name of a twin (SPEC.md section 3.10)") }
+            if ($sheet -match '(?i)\.last$') { $problems.Add("line $($f.Line): cart-sheet-reserved: the sheet $sheet ends in .last, the name of a twin (docs/SPEC.md section 3.10)") }
             elseif ($sheet.Length -gt 26) { $problems.Add("line $($f.Line): cart-sheet-reserved: the sheet name $sheet is longer than 26 characters, so its twin would pass Excel's 31") }
         }
         if ($kind -cne 'cell' -and $kind -cne 'formula' -and $kind -cne 'value') { continue }
@@ -419,9 +419,9 @@ function Test-Cartridge([string]$path) {
             if ($area -le 100000) { for ($row = $rect.T; $row -le $rect.B; $row++) { for ($col = $rect.L; $col -le $rect.R; $col++) { $formulaCells[$key + '|' + $row + '|' + $col] = $true } } }
             $bare = [regex]::Replace($it[3].Value, '"(?:[^"]|"")*"', '""')
             $vm = [regex]::Match($bare, '(?i)(?<![A-Za-z0-9_.!$])(NOW|TODAY|RANDBETWEEN|RAND)\s*\(')
-            if ($vm.Success) { $problems.Add("line $($f.Line): cart-formula-volatile: the formula of $sheet!$($it[2].Value) calls $($vm.Groups[1].Value.ToUpperInvariant()), which reads the wall clock or the dice; the Clock sheet's frame and seed are the only clock and dice (SPEC.md section 3.5)") }
+            if ($vm.Success) { $problems.Add("line $($f.Line): cart-formula-volatile: the formula of $sheet!$($it[2].Value) calls $($vm.Groups[1].Value.ToUpperInvariant()), which reads the wall clock or the dice; the Clock sheet's frame and seed are the only clock and dice (docs/SPEC.md section 3.5)") }
         }
-        if ($layouts.ContainsKey($key) -and -not (Test-AllInside $layouts[$key] $rect)) { $problems.Add("line $($f.Line): cart-device-cell-outside: $sheet!$($it[2].Value) is outside the layout of the $sheet sheet (SPEC.md section 3)") }
+        if ($layouts.ContainsKey($key) -and -not (Test-AllInside $layouts[$key] $rect)) { $problems.Add("line $($f.Line): cart-device-cell-outside: $sheet!$($it[2].Value) is outside the layout of the $sheet sheet (docs/SPEC.md section 3)") }
         if ($kind -ceq 'formula' -and $hostCells.ContainsKey($key) -and (Test-AnyInside $hostCells[$key] $rect)) { $problems.Add("line $($f.Line): cart-device-cell-formula: $sheet!$($it[2].Value) holds a formula where the host writes values") }
         $writes.Add(@{ Key = $key; Sheet = $sheet; Rect = $rect; Line = $f.Line; Text = $it[2].Value; Kind = $kind; Value = $it[3] })
     }
@@ -460,7 +460,7 @@ function Test-Cartridge([string]$path) {
         }
         for ($row = 1; $row -le 16; $row++) {
             $ix = $pal[[string]$row + '|1']; $color = $pal[[string]$row + '|2']
-            if ($null -eq $ix -or -not (Test-Kind $ix 'number') -or [double]$ix.Text -ne ($row - 1)) { $problems.Add("cart-palette-invalid: Palette!A$row holds $(Show-Datum $ix), and the index $($row - 1) belongs there (SPEC.md section 3.2)") }
+            if ($null -eq $ix -or -not (Test-Kind $ix 'number') -or [double]$ix.Text -ne ($row - 1)) { $problems.Add("cart-palette-invalid: Palette!A$row holds $(Show-Datum $ix), and the index $($row - 1) belongs there (docs/SPEC.md section 3.2)") }
             if ($null -eq $color -or -not (Test-Kind $color 'string') -or $color.Value -cnotmatch '^#[0-9A-Fa-f]{6}$') { $problems.Add("cart-palette-invalid: Palette!B$row holds $(Show-Datum $color), not a color as #RRGGBB") }
         }
     }
@@ -474,11 +474,11 @@ function Test-Cartridge([string]$path) {
                 $at = 'Audio!' + [char](64 + $col) + $row
                 $num = if (Test-Kind $d 'number') { [double]$d.Text } else { $null }
                 if ($col -eq 2 -and -not ((Test-Kind $d 'string') -and ($waves -ccontains $d.Value.ToLowerInvariant()))) {
-                    $problems.Add("line $($w.Line): $at holds $(Show-Datum $d), which is no voice's wave: square, triangle, sawtooth or sine, compared without case (SPEC.md section 3.6); the host would silence the voice")
+                    $problems.Add("line $($w.Line): $at holds $(Show-Datum $d), which is no voice's wave: square, triangle, sawtooth or sine, compared without case (docs/SPEC.md section 3.6); the host would silence the voice")
                 } elseif ($col -eq 3 -and -not ($null -ne $num -and $num -ge 0 -and $num -le 127)) {
-                    $problems.Add("line $($w.Line): $at holds $(Show-Datum $d), which is no voice's note: a number from 0 to 127, MIDI's range (SPEC.md section 3.6); the host would silence the voice")
+                    $problems.Add("line $($w.Line): $at holds $(Show-Datum $d), which is no voice's note: a number from 0 to 127, MIDI's range (docs/SPEC.md section 3.6); the host would silence the voice")
                 } elseif ($col -eq 4 -and -not ($null -ne $num -and $num -ge 0 -and $num -le 1)) {
-                    $problems.Add("line $($w.Line): $at holds $(Show-Datum $d), which is no voice's volume: a number from 0 to 1 (SPEC.md section 3.6); the host would silence the voice")
+                    $problems.Add("line $($w.Line): $at holds $(Show-Datum $d), which is no voice's volume: a number from 0 to 1 (docs/SPEC.md section 3.6); the host would silence the voice")
                 }
             }
         }
@@ -498,7 +498,7 @@ function Get-SecondLine([string]$path) {
     return ''
 }
 
-# ---- a replay and its golden (ENGINE.3's second slice; SPEC.md section 7.6) ----
+# ---- a replay and its golden (ENGINE.3's second slice; docs/SPEC.md section 7.6) ----
 # A file's SHA-256 over its text with LF line ends, upper-case hex: what a replay's header names
 # its cartridge by, as tools/check_frame_floors.ps1 digests a fixture and the host its cartridge.
 function Get-LfDigest([string]$path) {
@@ -568,7 +568,7 @@ function Test-Replay([string]$path, [string]$name, [string]$cartridgePath) {
             $row = $f.Items[$j]
             $rowHead = ''
             if ((Test-Kind $row 'list') -and $row.Items.Count -ge 1 -and (Test-Kind $row.Items[0] 'symbol')) { $rowHead = $row.Items[0].Text }
-            if ($rowHead -ceq 'derived') { $problems.Add("line $($row.Line): a (derived ...) row: the host's derived writes are re-derived as a replay plays and never logged (SPEC.md section 7.6)"); continue }
+            if ($rowHead -ceq 'derived') { $problems.Add("line $($row.Line): a (derived ...) row: the host's derived writes are re-derived as a replay plays and never logged (docs/SPEC.md section 7.6)"); continue }
             if ($rowHead -cne 'cell' -and $rowHead -cne 'formula') { $problems.Add("line $($row.Line): $(if ($rowHead) { "($rowHead ...)" } else { Show-Datum $row }) in frame $frame, and a frame holds cell and formula rows alone"); continue }
             $ok = ($row.Items.Count -eq 4) -and (Test-Kind $row.Items[1] 'string') -and (Test-Kind $row.Items[2] 'string') -and ($null -ne (Get-Rect $row.Items[2].Value)) -and (Test-Value $row.Items[3])
             if ($ok -and $rowHead -ceq 'formula') { $ok = (Test-Kind $row.Items[3] 'string') -and $row.Items[3].Value.StartsWith('=') }
@@ -587,7 +587,7 @@ function Test-Golden([string]$path) {
     try { $forms = Read-Forms $text } catch { $problems.Add($_.Exception.Message); return $result }
     $result.Rows = $forms.Count
     $windows = @($forms | Where-Object { (Test-Kind $_ 'list') -and $_.Items.Count -ge 1 -and (Test-Sym $_.Items[0] 'window') })
-    if ($windows.Count -ne 1) { $problems.Add("the golden holds $($windows.Count) (window ...) row(s), and a golden is the record of one window of one sheet, its window row naming the sheet (SPEC.md section 7.6)"); return $result }
+    if ($windows.Count -ne 1) { $problems.Add("the golden holds $($windows.Count) (window ...) row(s), and a golden is the record of one window of one sheet, its window row naming the sheet (docs/SPEC.md section 7.6)"); return $result }
     $w = $windows[0]
     if ($w.Items.Count -ne 3 -or -not (Test-Kind $w.Items[1] 'string') -or -not (Test-Kind $w.Items[2] 'string') -or $null -eq (Get-Rect $w.Items[2].Value)) { $problems.Add("line $($w.Line): the window row is not (window `"sheet`" `"range`")"); return $result }
     $sheet = $w.Items[1].Value
@@ -792,7 +792,7 @@ if ($Control) {
     }
 }
 
-Write-Output '=== THE CARTRIDGES: EACH A CARTRIDGE AS SPEC.md SECTION 7 HAS IT, READ WITHOUT AN ENGINE (ENGINE.1) ==='
+Write-Output '=== THE CARTRIDGES: EACH A CARTRIDGE AS docs/SPEC.md SECTION 7 HAS IT, READ WITHOUT AN ENGINE (ENGINE.1) ==='
 $tr = Test-Tree $Root
 $tr.Lines | ForEach-Object { Write-Output $_ }
 Write-Output ''

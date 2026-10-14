@@ -2,7 +2,7 @@
 check_render_floors.ps1 - the viewport's frame floors: the owner's measured
 baseline, held to the roadmap's bars and never lowered.
 
-WHY: KERNEL.5's oracle names the floors (ROADMAP.md): on the 10,000-line
+WHY: KERNEL.5's oracle names the floors (docs/ROADMAP.md): on the 10,000-line
 record, the scroll p95 under one and a half display intervals and the max
 under two, the first draw of the normal window under 100 ms. Those are
 timings, and a timing is a measurement in a real browser on a real screen
@@ -15,7 +15,7 @@ main-thread cost), run by the owner in Chrome in fullscreen, and the table it
 prints is pasted below as the baseline, with the date and the environment
 line. This check holds that baseline to the bars and to its shape on every
 push, and holds it hand-maintained: a later run that is worse is a finding to
-record in REARVIEW.md, not a number to paste over a better one, and lowering
+record in docs/REARVIEW.md, not a number to paste over a better one, and lowering
 a floor is a reviewed act with its reason in the commit message
 (CONTRIBUTING.md). An empty baseline fails, since a floor with no number is
 no floor.
@@ -53,7 +53,7 @@ $ErrorActionPreference = 'Stop'
 # fullscreen on a 2560 by 1440 CSS screen at a ratio of 1.5, 60 Hz; the normal
 # window's step p95 0.9 ms and the full-screen window's 1.4 ms against a bar
 # of 24.9, the max 1.1 and 2.5 against 33.2, the first draw 8.2 and 8.3
-# against 100, no step dropped (KERNEL.5, REARVIEW.md's build record). The
+# against 100, no step dropped (KERNEL.5, docs/REARVIEW.md's build record). The
 # crispness verdict by eye on the page's HiDPI panel at that ratio, the
 # owner's the same day: crisp, which closes the clause PROTOCOL.md section
 # 8.1 left open when canvas was chosen.
@@ -65,7 +65,7 @@ $baseline = @(
     @{ Case = 'full-screen'; Rows = 69; Cols = 39; Cells = 69; FirstDraw = 8.3; StepP50 = 1.2; StepP95 = 1.4; PageP95 = 1.8; Max = 2.5; SyncP50 = 0.9; Dropped = 0; N = 140; Holds = 'yes' }
 )
 
-# --- the bars (ROADMAP.md, KERNEL.5's oracle) ---
+# --- the bars (docs/ROADMAP.md, KERNEL.5's oracle) ---
 $stepP95Intervals = 1.5
 $maxIntervals = 2
 $firstDrawBar = 100

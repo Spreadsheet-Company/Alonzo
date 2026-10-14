@@ -3,7 +3,7 @@
 //! whose first game is Frazaro, the spreadsheet.
 //!
 //! What the crate holds since `ENGINE.1`'s second slice (2026-10-09): the
-//! engine's module, the eleven exports of `SPEC.md` section 4.6 (`abi`) over
+//! engine's module, the eleven exports of `docs/SPEC.md` section 4.6 (`abi`) over
 //! the language's machine, `vla_lang::machine`, with what the engine adds to
 //! it (`cartridge`): the manifest read by the language's reader, the device
 //! sheets' layouts checked at load and at every write, the engine's own

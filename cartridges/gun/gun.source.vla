@@ -2,17 +2,17 @@
 ; gun.source.vla - Gosper's glider gun on Life's 320 by 200 plane, as its author writes
 ; it: the second fixture the engine's floors are measured on (CART.1), the sparse one
 ; beside the soup of life.vla. The pass expands this file into gun.vla beside it, the
-; rows the engine loads (SPEC.md section 7.8): edit this one, then expand it again.
+; rows the engine loads (docs/SPEC.md section 7.8): edit this one, then expand it again.
 ; Every cell of the interior, B2:LG199, is Life's rule over the previous frame, the twin
 ; sheet Screen.last, word for word; only the first frame differs, reading the gun's
 ; pattern off the Seed sheet where life.vla computes a soup. The border stays empty,
-; which the plane reads as 0, dead. The format is SPEC.md section 7.
+; which the plane reads as 0, dead. The format is docs/SPEC.md section 7.
 
 ; The library whose macros this source calls: sheets, palette, picture and interior.
 (include "../common.vla")
 
 (cartridge "gun"
-  (spec 2)                          ; the version of SPEC.md this cartridge is written to
+  (spec 2)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Gosper's glider gun")     ; what the host shows
   (rate 30)                         ; frames a second
   (screen plane 320 200)            ; plane mode, 320 cells wide and 200 high: A1:LH200
@@ -25,7 +25,7 @@
 ; the Seed the first frame reads.
 (sheets "Screen" "Palette" "Seed")
 
-; The Palette (SPEC.md section 3.2), as life.source.vla's: sixteen entries from index 0,
+; The Palette (docs/SPEC.md section 3.2), as life.source.vla's: sixteen entries from index 0,
 ; each a color as #RRGGBB and a name. Index 0 is a dead cell and index 1 a live one.
 (palette                            ; the sixteen colors, index 0 first
   ("#000000" "dead")                ; 0, black: a dead cell

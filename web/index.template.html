@@ -226,7 +226,7 @@
       <div id="eng-grid" class="grid sheets" aria-label="a sheet of the grid, live"></div>
       <details id="eng-texts">
         <summary>The source and the cartridge</summary>
-        <p>The source, <code id="eng-src-path">cartridges/life/life.source.vla</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one picture, a string a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load loads it: the pass loads nothing, and a cartridge running goes on running (SPEC.md section 7.8). The fake module holds no pass, and says so.</p>
+        <p>The source, <code id="eng-src-path">cartridges/life/life.source.vla</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one picture, a string a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load loads it: the pass loads nothing, and a cartridge running goes on running (docs/SPEC.md section 7.8). The fake module holds no pass, and says so.</p>
         <p class="controls"><button type="button" id="eng-build">Build the cartridge</button></p>
         <textarea id="eng-src" rows="14" spellcheck="false" aria-label="the cartridge's source"></textarea>
         <p>The cartridge, <code id="eng-cart-path">cartridges/life/life.vla</code>, the file the host loads, picked in the bar or pasted here: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no color; the input card, every cell the host writes before a step, drawn; the sound card, the Audio sheet's four voices played, heard after Sound on; or Sand, a falling-sand toy that opens raining sand: paint with the left button, erase with the right, size the brush with the wheel, and press 1, 2 or 0 for sand, wall or empty; or the grid card, a grid cartridge drawn by the viewport, every kind of value, format and look a grid cell can hold, through a Camera that only an edit moves: write <code>(cell "Camera" "B2" 5)</code> and the window moves four columns right, the viewport scrolling with it; or Kairos, the stacking game, in Lovelace Lavender: stop each row of lights over the row beneath with Z, Space or a click, take the minor prize at level 11 with X or go on with Z, and read every level's speed and window in its Levels sheet, which an edit such as <code>(cell "Levels" "D3" 1)</code> rigs in the open. Paste another cartridge, edit this one, or build it again from its source, and press Load: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
@@ -240,7 +240,7 @@
       <details id="eng-replay-box">
         <summary>The replay</summary>
         <p class="controls"><button type="button" id="eng-replay-play">Play the replay</button> <button type="button" id="eng-replay-copy">Copy the replay</button></p>
-        <p>A replay, <code id="eng-replay-path">none: this cartridge has no replay of its own</code>, is every write a run made between its steps: a header naming the cartridge by the SHA-256 of its text and the seed, then each frame as one form holding its rows, <code>(frame 12 (cell "Input" "B5" 1))</code>, the Input sheet's cells that changed and each person's edit that landed; the host's derived writes are never logged, a replay re-deriving them (SPEC.md section 7.6). Paste one here and press Play the replay: the host loads the cartridge again with the replay's seed and plays its frames at the cartridge's rate, a person's edits waiting until it ends, and pauses at its last frame; Run then carries on with the live inputs. Copy the replay puts what the host has recorded since the last load on the clipboard and in this box, a replay played among it, so a replay played and copied is the replay played. The input card's and the sound card's own replays are the loop oracle's runs of them: play the sound card's with the sound on and hear the run again, its ticks, the knob turned to a word that is no wave and back, and a stretch at a third of the speed. Kairos's is the owner's two games: the major prize won, the minor refused on the way, then a fall at the last level.</p>
+        <p>A replay, <code id="eng-replay-path">none: this cartridge has no replay of its own</code>, is every write a run made between its steps: a header naming the cartridge by the SHA-256 of its text and the seed, then each frame as one form holding its rows, <code>(frame 12 (cell "Input" "B5" 1))</code>, the Input sheet's cells that changed and each person's edit that landed; the host's derived writes are never logged, a replay re-deriving them (docs/SPEC.md section 7.6). Paste one here and press Play the replay: the host loads the cartridge again with the replay's seed and plays its frames at the cartridge's rate, a person's edits waiting until it ends, and pauses at its last frame; Run then carries on with the live inputs. Copy the replay puts what the host has recorded since the last load on the clipboard and in this box, a replay played among it, so a replay played and copied is the replay played. The input card's and the sound card's own replays are the loop oracle's runs of them: play the sound card's with the sound on and hear the run again, its ticks, the knob turned to a word that is no wave and back, and a stretch at a third of the speed. Kairos's is the owner's two games: the major prize won, the minor refused on the way, then a fall at the last level.</p>
         <textarea id="eng-replay" rows="10" spellcheck="false" aria-label="a replay to play"></textarea>
       </details>
       <p id="module-line" class="note"></p>
@@ -1078,7 +1078,7 @@
     var k = loopEnd(r, ['frame 1, 16,000 of 64,000 cells', 'frame 1, 48,000 of 64,000 cells', 'the edit (cell "State" "B1" 777) was written']);
     return { counters: k, problems: r.P };
   }
-  // The host's time slice (CART.2, decision 20; SPEC.md section 5, step 4, corrected 2026-10-12): the
+  // The host's time slice (CART.2, decision 20; docs/SPEC.md section 5, step 4, corrected 2026-10-12): the
   // steps of one tick may spend three quarters of the display's interval, so that a frame needing more
   // than half of it is still presented at the cartridge's rate. Over the double, in steps of 1,000 cells,
   // sixty-four a frame of Life's 64,000, under a clock this case keeps, which stands still but at a step
@@ -1114,7 +1114,7 @@
     var st = fake.stats();
     return { counters: { ticks: ticks, perTick: want, calls: total, frames: frames, live: st.live, misfrees: st.misfrees }, problems: P };
   }
-  // The host's pace (CART.2's playtest pass, 2026-10-12; SPEC.md section 5, step 1, corrected): a tick's time
+  // The host's pace (CART.2's playtest pass, 2026-10-12; docs/SPEC.md section 5, step 1, corrected): a tick's time
   // put on the grid of the frame's interval when within a quarter millisecond of it, so that the display's
   // timestamps, which jitter, never alias the accumulator. Over the double, under a clock this case keeps,
   // which stands still within a tick, the ticks come at 60 a second with their times to a tenth of a
@@ -1519,7 +1519,7 @@
     return { counters: { module: bytes.length, same: same }, problems: P };
   }
   // ---- ENGINE.2: the plane is the record of the same window, byte for value ----
-  // SPEC.md section 3.1 read off the record alone, this oracle's own rule: a cell row's value or a
+  // docs/SPEC.md section 3.1 read off the record alone, this oracle's own rule: a cell row's value or a
   // formula's value row; a whole number from 0 to 254 is itself, and any other value is 255, a
   // fraction, a number past 254, a text, a truth value, an error; an absent cell, and a formula
   // with no value row, is 0.
@@ -1616,7 +1616,7 @@
     } finally { host.destroy(); stage.removeChild(box); }
     k.windows = Object.keys(windows).length; k.kinds = Object.keys(kinds).length;
   }
-  // ENGINE.2's equality, the host's half (SPEC.md section 13): over the double, its tiles, the Camera
+  // ENGINE.2's equality, the host's half (docs/SPEC.md section 13): over the double, its tiles, the Camera
   // moved by edits, and a formula written outside the declared size, which has no value and reads 0
   // as its record says; over the engine's module, when the page holds one, the test card for
   // twenty-four frames, its Camera panning a column a frame by the card's formula, 1 + MOD(frame, 21),
@@ -1650,7 +1650,7 @@
     return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeProbes: kf.probes, module: module, frames: km.frames, equal: km.equal, windows: km.windows, probes: km.probes, kinds: km.kinds, live: st.live, misfrees: st.misfrees }, problems: P };
   }
   // ---- ENGINE.8: the grid the host draws is the record of the same window, cell for cell ----
-  // The oracle's own reading of a grid record and its own layout, never the viewport's: SPEC.md section 3.1
+  // The oracle's own reading of a grid record and its own layout, never the viewport's: docs/SPEC.md section 3.1
   // and decision 19 as ENGINE.8 reads them, with KERNEL.5's rules of the record. A cell row shows its value
   // as the record spells it; a formula row its text, until its value row lands and then its value. A cell
   // whose value equals a look's draws with the look's format in place of its own: a number by its value, so
@@ -2390,7 +2390,7 @@
         }
       };
       // ---- the drive: ticks at the rate the Clock holds, the frames they run by the page's own arithmetic ----
-      // SPEC.md section 5 as corrected by ENGINE.3's hand test: a tick's time held to a quarter second,
+      // docs/SPEC.md section 5 as corrected by ENGINE.3's hand test: a tick's time held to a quarter second,
       // the backlog to the larger of that and one interval, a frame for each interval the backlog holds,
       // and a rate that moves starting the backlog again. A tick here is never longer than a quarter
       // second, so at the rate of 1 a frame is owed at every fourth tick of 250 ms and none before it.
@@ -2455,7 +2455,7 @@
     } finally { host.destroy(); stage.removeChild(box); }
     return { counters: k, problems: P };
   }
-  // ---- ENGINE.3's second slice: the replay (SPEC.md section 7.6) ----
+  // ---- ENGINE.3's second slice: the replay (docs/SPEC.md section 7.6) ----
   // The host's SHA-256, which names a replay's cartridge, held to FIPS 180-2's vectors. Over the
   // double: a live run of Life's manifest, its keys, its pointer, its derived writes, a person's
   // edit of the State sheet and one of the Input sheet, copied and played on a fresh host all at
@@ -2812,7 +2812,7 @@
     }
     return { counters: k, problems: P };
   }
-  // ---- ENGINE.4: the Audio device (SPEC.md section 3.6) ----
+  // ---- ENGINE.4: the Audio device (docs/SPEC.md section 3.6) ----
   // A double of the Web Audio graph: every node made and every call on it recorded in order, each value and
   // each time as the host computed it. The host is handed it as its audio context, with the oracle's own
   // clock as its audio clock (options.audio, options.audioNow), and the oracle holds what was recorded,
@@ -3141,7 +3141,7 @@
   // ---- ENGINE.4's second slice: the sound itself, measured (decision 8) ----
   // The fifteenth case, sound: the host's own voices over the double, Life's manifest at its rate of 30,
   // handed an OfflineAudioContext as their audio context with the oracle's clock as the audio clock, so
-  // that what the host schedules is rendered into samples and measured, and never golden (SPEC.md
+  // that what the host schedules is rendered into samples and measured, and never golden (docs/SPEC.md
   // section 6). A sequence of voice states written by edits, each held three frames: the four waves,
   // notes from 36 to 96, rests, a voice sounding again on the oscillator it kept through its rest, and a
   // wave changed while its voice sounds, twice. Each frame is read between its own times on the page's

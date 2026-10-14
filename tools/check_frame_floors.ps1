@@ -8,8 +8,8 @@ and on every push where a runner is built, the frames held to a hand-written
 Life or Sand, their allocations and the heap's bytes to ceilings that never
 go up, and each rung of the ladder to the cartridge measured.
 
-WHY: CART.1 (ROADMAP.md; REARVIEW.md, its scoping, decisions 4 to 7).
-CHARTER.md section 7 names the engine's measure, cells evaluated a second,
+WHY: CART.1 (docs/ROADMAP.md; docs/REARVIEW.md, its scoping, decisions 4 to 7).
+docs/CHARTER.md section 7 names the engine's measure, cells evaluated a second,
 on the benchmark cartridge, Conway's Life at 320 by 200, against section 3's
 line of two million a second; the honest comparison is a Life that computes
 every cell every generation. This check holds that number where it can be
@@ -29,7 +29,7 @@ WHAT IT HOLDS, from the baseline pasted below:
     a language moved or a fixture edited without a new measurement fails by
     name, and every change to the language is measured on the benchmark
     before it lands here (SPEC.3 rebuilt both fixtures by the pass from
-    their sources, their rows unchanged: decision 30, REARVIEW.md); and
+    their sources, their rows unchanged: decision 30, docs/REARVIEW.md); and
     since ENGINE.9 each rung of the size ladder named by its cartridge's
     SHA-256 over LF, $baselineRungs, the cartridge the pass builds from Life's
     or the gun's source on a larger board, which this file cannot build, so
@@ -93,7 +93,7 @@ WHAT IT HOLDS, from the baseline pasted below:
     would erase the record, and a slower run's entry pasted over the latest
     would lower a floor with no reason written, past the rule above (the
     second baseline's paste lost the first entry, 2026-10-10);
-  - the bars, 2,000,000 cells a second (CHARTER.md section 3) and the
+  - the bars, 2,000,000 cells a second (docs/CHARTER.md section 3) and the
     charter's 30 frames a second, printed with the distance; out of reach
     when the first baseline was pasted, they were not gated, and a floor
     that reaches one makes it a gate from then on, since a floor never goes
@@ -166,7 +166,7 @@ $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::W
 # the history it prints over $floorHistory, whole: it is this file's history
 # with the run's entry added last (the instrument writes both to
 # target/bench_frames.txt as well, to copy from). A later run that is slower
-# than the floor is a finding to record in REARVIEW.md, never a number to
+# than the floor is a finding to record in docs/REARVIEW.md, never a number to
 # paste over a faster one.
 # 2026-10-09, the first baseline: the owner's run, over vla-lang at c0686a9,
 # both halves opted out of Windows' power throttling and every clock within
@@ -204,7 +204,7 @@ $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::W
 # run measured Life's two native rows slower than the third on unchanged
 # code: the same runner, built from 96fe7a5's engine, and the slice's
 # measured the same in an A/B that evening, the clock beside every frame and
-# the browser's rows unchanged (REARVIEW.md, CART.2). The instrument then
+# the browser's rows unchanged (docs/REARVIEW.md, CART.2). The instrument then
 # printed every floor as the run less 10%, so the pasted entry lowered both,
 # and the check refused it. At the owner's word the entry keeps native
 # life's floor, which the run clears, and lowers the native gun's with its
@@ -233,7 +233,7 @@ $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::W
 # 0.9.1 each marked cell reads its row's gate and splits its lanes, and the
 # opening's frames take 15.8 ms natively and 22.5 in the browser against the
 # fifth's 12.3 and 17.8, until a run reads a held column once, asked of
-# Frazaro the same day (REARVIEW.md, CART.2). Life's and the gun's rows are
+# Frazaro the same day (docs/REARVIEW.md, CART.2). Life's and the gun's rows are
 # held, native life's floor raised to 20,500,000. (This note was cut short at
 # a quotation mark when it was spliced in, and was restored with the
 # seventh.) Its rows, the seventh having replaced them: native life
@@ -251,7 +251,7 @@ $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::W
 # grains falling, and not the engine, which with the language is the sixth's.
 # From this entry Sand's rows measure a gentler opening than the worst a
 # person can make; a fixture of the whole board falling, for the floors
-# alone, is slice 4's to weigh (REARVIEW.md, CART.2; REPO.5's since CART.2's
+# alone, is slice 4's to weigh (docs/REARVIEW.md, CART.2; REPO.5's since CART.2's
 # close). Life's and the gun's rows are held, the wasm gun's floor raised to
 # 935,000,000. Its rows, the eighth having replaced them: native life
 # 22,500,402 cells a second (frame p50 2.8 ms), native gun 1,487,370,607
@@ -363,7 +363,7 @@ $floorHistory = @(
 #     crate is a measured git commit's source byte for byte measures the same,
 #     so the baseline's pin may name the commit while Cargo.toml names the
 #     release. Each entry is a reviewed fact, checked file by file by whoever
-#     adds it, with its record in REARVIEW.md (ENGINE.1's second slice, the
+#     adds it, with its record in docs/REARVIEW.md (ENGINE.1's second slice, the
 #     note on the registry pin). ---
 # 2026-10-10: vla-lang 0.8.1 on crates.io is f5dc344's vla-lang/ byte for
 # byte: of the crate's 34 files, 27 equal the commit's blobs, its two data
@@ -403,7 +403,7 @@ $sameRows = @{
 # 2026-10-09, CART.1's first slice, the runner's check mode over vla-lang at
 # c0686a9: Life's soup 4,470,549 allocations and 1,129,229 reallocations, 71.0
 # and 17.9 a formula cell; the gun 4,848,335 and 1,129,229, 77.0 a cell, its
-# Seed sheet making each reference fold one sheet's name more (REARVIEW.md,
+# Seed sheet making each reference fold one sheet's name more (docs/REARVIEW.md,
 # the scoping's profile). The same integers on every run and every machine:
 # no step calls the platform. Lowered when the language allocates less;
 # raised only by a reviewed act with its reason in the commit message.

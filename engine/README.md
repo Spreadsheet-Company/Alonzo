@@ -51,7 +51,7 @@ engine is:
   the tenth a person's write into the Clock, its frame, or a rate or a seed
   outside its range (`ENGINE.3`).
 
-Beside the engine, the pass (`src/pass.rs`, `SPEC.md` section 7.8): a
+Beside the engine, the pass (`src/pass.rs`, `docs/SPEC.md` section 7.8): a
 cartridge's source, VLA with template macros and `include`s, expanded by the
 language's own expander into the rows a load takes, as an act of its own
 that no load calls. It reads no file, so the command line and the page run
@@ -94,7 +94,7 @@ read with the language's own reader, every frame of the repository's test
 card, a cartridge holding every kind of value a Screen cell can under a
 Camera that pans a column a frame, and Life at its corners (`ENGINE.2`).
 And one plays every committed replay, the input card's, Kairos's, Sand's and
-the sound card's, as `SPEC.md` section 7.6 plays one, the derived writes the
+the sound card's, as `docs/SPEC.md` section 7.6 plays one, the derived writes the
 Write sheet leaves before each frame's rows, to the golden beside it, byte
 for byte, so the host's player and the engine alone end in the same sheet
 (`ENGINE.3`, made general over every folder holding a replay by `ENGINE.4`).
@@ -113,7 +113,7 @@ end, so a view is a copy. The host sounds the Audio sheet too (`ENGINE.4`):
 this module holds the sheet's layout and checks it at
 load and at a write, and the host reads the four voices after each step and
 schedules the Web Audio graph's own oscillators and gains from them; the
-module computes no sound. What comes next, in the order `ROADMAP.md` lays
+module computes no sound. What comes next, in the order `docs/ROADMAP.md` lays
 it: File (`ENGINE.5`); and the
 accelerators, each behind the naive evaluation's frames as its reference
 (`ENGINE.6`), after the naive evaluator's own costs, which the benchmark
@@ -176,7 +176,7 @@ without them, and run from a clone.
 ## What the first release shows
 
 `alonzo` 0.1.0, over `vla-lang` 0.9.3 (`REPO.4`; the repository's
-`RELEASES.md`). Conway's Life on a 320 by 200 sheet, every cell the same
+`docs/RELEASES.md`). Conway's Life on a 320 by 200 sheet, every cell the same
 formula of its eight neighbors, drawn through the canvas, steps in 2.9 ms
 natively and 4.2 ms in the browser, 342 and 235 frames a second, where the
 bar this release was to clear was thirty. Counted as the floors count, the
@@ -210,7 +210,7 @@ frame and the heap's bytes, exact numbers the repository's checks hold to ceilin
 day the benchmark was first measured, Life stepped at about 218,000 cells a
 second natively and 229,000 in the browser, about a ninth of the line, and
 the engine's own profile of that step named where the rest went
-(`REARVIEW.md`, `CART.1`). The first of it, the evaluator's hot path, was
+(`docs/REARVIEW.md`, `CART.1`). The first of it, the evaluator's hot path, was
 made cheaper bit for bit in the language (Frazaro's `KERNEL.25`): a step
 makes 4.0 allocations a cell where it made 71, and Life steps at about
 623,000 cells a second natively and 461,000 in the browser, about a third
@@ -302,9 +302,9 @@ the floors' margin, and 1.18 times in the browser.
 ## Where it comes from
 
 The repository is `Spreadsheet-Company/Alonzo`, beside Frazaro, whose
-`core/` is the crate the language is cut out of. `CHARTER.md` there holds
+`core/` is the crate the language is cut out of. `docs/CHARTER.md` there holds
 the thesis, the rules, the lineage and the social hypothesis stated so that
-it can fail; `ROADMAP.md` the open items; `REARVIEW.md` the record.
+it can fail; `docs/ROADMAP.md` the open items; `docs/REARVIEW.md` the record.
 
 ## License
 

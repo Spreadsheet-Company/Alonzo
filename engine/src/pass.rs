@@ -1,4 +1,4 @@
-//! The pass (`SPEC.3`, 2026-10-10; `SPEC.md` section 7.8): a cartridge's
+//! The pass (`SPEC.3`, 2026-10-10; `docs/SPEC.md` section 7.8): a cartridge's
 //! source expanded into the rows a load takes. It is an act of its own
 //! between the source and the load: it reads no file and loads nothing, so
 //! the command line (`examples/expand.rs`) and the page run the same
@@ -323,7 +323,7 @@ pub fn expand(
     Ok(Expansion { text: out, rows })
 }
 
-/// The pass with a door's definitions (`ENGINE.9`; `SPEC.md` section 7.8,
+/// The pass with a door's definitions (`ENGINE.9`; `docs/SPEC.md` section 7.8,
 /// the note of 2026-10-14): `definitions`, VLA text, stands after the
 /// source's last line. Every `defmacro` is defined before any form expands,
 /// and the language's expander keeps a name's last definition, so a macro
@@ -687,7 +687,7 @@ mod tests {
         assert_eq!(ladder::letters(1279), "AWE");
     }
 
-    /// The kit's verbs (`KIT.1`, decision 9 of its scoping in `REARVIEW.md`):
+    /// The kit's verbs (`KIT.1`, decision 9 of its scoping in `docs/REARVIEW.md`):
     /// a source over the repository's own library calls each macro the kit
     /// added, at its edges, and each call is held to the rows its docstring
     /// names, exactly. A cartridge holds only the paths it uses; this holds

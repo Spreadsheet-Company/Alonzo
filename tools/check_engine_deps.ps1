@@ -13,7 +13,7 @@ dependency wrote this check with it. A second dependency, a build script's,
 a test's, or one pulled in by the language crate itself (it has none, its
 own contract), shows in the lock and fails here by name.
 
-THE PIN, the owner's route of 2026-10-09 (REARVIEW.md, ENGINE.1's second
+THE PIN, the owner's route of 2026-10-09 (docs/REARVIEW.md, ENGINE.1's second
 slice, decision 1): vla-lang by git at a commit of Frazaro's while the
 language's change is unreleased, and the exact registry pin once it is
 released. Since 2026-10-14 it is "=0.9.3" from crates.io, Frazaro's release

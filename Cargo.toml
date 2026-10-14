@@ -1,7 +1,7 @@
 # The Cargo workspace: the engine, one member. The native runner the frame
 # floors need (CART.1) is an example of the engine crate,
 # engine/examples/frames.rs, and no member of its own, so the lock holds no
-# third package. CHARTER.md section 4 is the constitution.
+# third package. docs/CHARTER.md section 4 is the constitution.
 # Its first rule puts the language in its own crate, vla-lang, cut out of
 # frazaro-core in the Frazaro repository, which this workspace pins under
 # [workspace.dependencies] since ENGINE.1's second slice. Its fifth rule,
@@ -55,7 +55,7 @@ repository = "https://github.com/Spreadsheet-Company/Alonzo"
 # ten expand-time primitives (VLA.3); over 0.8.1, the evaluator's hot path
 # (KERNEL.25), the plane kept at the frame's end (KERNEL.24) and the handle
 # and the four calls (KERNEL.22). The owner's route (2026-10-09;
-# REARVIEW.md, ENGINE.1's second slice, decision 1): a git rev while the
+# docs/REARVIEW.md, ENGINE.1's second slice, decision 1): a git rev while the
 # language's change is unreleased, and the exact registry pin once it is,
 # 0.8.1 on 2026-10-10, 0.9.0 on 2026-10-11, 0.9.1 and 0.9.2 on 2026-10-12,
 # and 0.9.3 on 2026-10-14, no git rev between them. An exact version and

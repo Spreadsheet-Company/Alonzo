@@ -72,7 +72,7 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # ratios; SKIPPED without a built page or a browser) and
 # check_render_floors.ps1 (the owner's measured baseline held to the bars).
 # 2026-10-08, ENGINE.1's first slice: 9 - check_cartridge.ps1 (every
-# cartridge under cartridges/ holds to SPEC.md section 7, read without an
+# cartridge under cartridges/ holds to docs/SPEC.md section 7, read without an
 # engine; the count and each one's rows pinned), check_host_loop.ps1 (the
 # host's loop over a fixed log against the fake module, under a headless
 # browser at two ratios; SKIPPED without a built page or a browser) and
@@ -80,7 +80,7 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # engine's second number, held to its bars; empty, and so failing, until the
 # owner's first fullscreen run is pasted in).
 # 2026-10-09, ENGINE.1's second slice: 11 - check_host_exports.ps1 (the
-# engine exports exactly SPEC.md section 8.1's eleven names, read off the
+# engine exports exactly docs/SPEC.md section 8.1's eleven names, read off the
 # wasm artifact, the twin of the import check; SKIPPED without one) and
 # check_engine_deps.ps1 (AD-5's second sentence on the manifests and the
 # lock: the language crate and nothing else, pinned to one commit, never

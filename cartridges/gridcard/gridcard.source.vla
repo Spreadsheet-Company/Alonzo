@@ -2,14 +2,14 @@
 ; gridcard.source.vla - the grid card, as its author writes it: the test card's twin in
 ; grid mode, every kind of value, format and look a grid cell can hold, drawn by the
 ; viewport (ENGINE.8). The pass expands this file into gridcard.vla beside it, the rows
-; the engine loads (SPEC.md section 7.8): edit this one, then expand it again. The
+; the engine loads (docs/SPEC.md section 7.8): edit this one, then expand it again. The
 ; fixture of ENGINE.8's oracle: the page's loop oracle holds the window the host draws
 ; to the record of the same window at every frame, cell for cell, text, fill and place.
 ;
 ; What it shows, through a window of 80 by 50 cells, section 10's limit, on a Screen 96
 ; columns wide under a Camera that a person's edit moves, the viewport following it:
 ;   - the sixteen colors, each a number drawn through its look: the plane's Palette as
-;     the grid's look map, one model with two renderers (SPEC.md decision 19);
+;     the grid's look map, one model with two renderers (docs/SPEC.md decision 19);
 ;   - a value of each kind a cell can hold, and the numbers as the record spells them;
 ;   - a formula computing each kind every frame, a number among them whose look, and so
 ;     whose fill, changes every frame;
@@ -52,7 +52,7 @@
     "FFFFFF"))                      ; 15, white
 
 (cartridge "gridcard"
-  (spec 3)                          ; the version of SPEC.md this cartridge is written to
+  (spec 3)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Grid card")               ; what the host shows
   (rate 30)                         ; frames a second
   (screen grid 80 50)               ; the window: 80 cells wide and 50 high, section 10's limit, placed by the Camera
@@ -65,7 +65,7 @@
 (sheet "Screen" visible)
 (sheet "Camera" visible)
 
-; The Camera (SPEC.md section 3.8): the window's top row and left column, two values that
+; The Camera (docs/SPEC.md section 3.8): the window's top row and left column, two values that
 ; nothing but a person's edit moves, so that the card holds still to be clicked, scrolled
 ; and edited as a sheet. (cell "Camera" "B2" 5) moves the window four columns right and the
 ; viewport scrolls by the move, the person's place inside the window kept; from column 18
@@ -75,7 +75,7 @@
   1                                 ;   the window's top row
   1)                                ;   the window's left column, which an edit moves
 
-; The looks (SPEC.md section 7.3): the CGA's sixteen for the numbers 0 to 15, then the
+; The looks (docs/SPEC.md section 7.3): the CGA's sixteen for the numbers 0 to 15, then the
 ; formats the other looks and the styles name, then the looks on a text, a truth value
 ; and an error. A cell whose value is a look's draws with the look's format in place of
 ; its own; an empty cell and a formula with no value match none.

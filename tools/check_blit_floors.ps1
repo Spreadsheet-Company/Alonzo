@@ -3,8 +3,8 @@ check_blit_floors.ps1 - the engine's second number: the owner's measured
 baseline of the blit, a 320 by 200 plane drawn through the host's whole
 frame, held to its bars and never lowered.
 
-WHY: ENGINE.1's scoping, decision 9 (REARVIEW.md). The frame path minus the
-evaluator is the engine's second number (CHARTER.md section 7): the host's
+WHY: ENGINE.1's scoping, decision 9 (docs/REARVIEW.md). The frame path minus the
+evaluator is the engine's second number (docs/CHARTER.md section 7): the host's
 frame over the fake module, whose step computes nothing, so that what is
 timed is the writes, the reads, the plane's view and the blit, the bytes
 through the palette into an ImageData drawn at a whole number of device
@@ -17,7 +17,7 @@ frame the next animation frame later than one and a half intervals, run by
 the owner in Chrome in fullscreen; the table it prints is pasted below as
 the baseline with the date and the environment line. This check holds that
 baseline to the bars and to its shape on every push. A later run that is
-worse is a finding to record in REARVIEW.md, never a number to paste over a
+worse is a finding to record in docs/REARVIEW.md, never a number to paste over a
 better one, and lowering a bar is a reviewed act with its reason in the
 commit message (CONTRIBUTING.md). An empty baseline fails, since a floor
 with no number is no floor.
@@ -34,7 +34,7 @@ which is 10 device pixels a cell on the owner's 2560 by 1440 screen at a
 ratio of 1.5 (3,200 by 2,000 device pixels), so a p50 under 1.5 ms and a
 p95 under 2.0.
 
-THE ENGINE'S CASE, since ENGINE.2's second slice (REARVIEW.md, decision 6):
+THE ENGINE'S CASE, since ENGINE.2's second slice (docs/REARVIEW.md, decision 6):
 the same frame path over the engine's own module, which the page holds, Life
 stepped once to its soup and then that frame drawn again 120 times through
 the host's redraw(), the Camera and the Palette read, the plane viewed
@@ -81,7 +81,7 @@ $ErrorActionPreference = 'Stop'
 # prediction said; the frame p95 0.9 ms at that scale and 1.1 at a scale of 1
 # against a bar of 2.0, the max 1.6 and 2.1 against 4.0, no frame dropped; the
 # prediction (a p50 under 1.5 ms and a p95 under 2.0) met at 0.7 and 0.9
-# (ENGINE.1, REARVIEW.md's build record). Its two rows, kept here for the
+# (ENGINE.1, docs/REARVIEW.md's build record). Its two rows, kept here for the
 # record since the second run replaced them whole:
 #   fit:     FirstFrame 1.3, ViewP50 0.1, BlitP50 0.1, SyncP50 0.6, FrameP50 0.7, FrameP95 0.9, Max 1.6, Dropped 0, N 120
 #   scale-1: FirstFrame 0.8, ViewP50 0.2, BlitP50 0.1, SyncP50 0.6, FrameP50 0.7, FrameP95 1.1, Max 2.1, Dropped 0, N 120
@@ -95,7 +95,7 @@ $ErrorActionPreference = 'Stop'
 # where the engine's case redraws, so the two agree on the view and the blit
 # and not on the frame. The double's fit row moved from a p95 of 0.9 to 1.1
 # and a view of 0.1 to 0.2, a newer Chrome on another run, both far under the
-# bars; recorded as a finding in REARVIEW.md and not hidden by the paste.
+# bars; recorded as a finding in docs/REARVIEW.md and not hidden by the paste.
 $baselineDate = '2026-10-09'
 $baselineInterval = 16.7
 $baselineEnvironment = 'Environment: Google Chrome 154.0.8037.98, Chromium 154.0.8037.98 on Windows | DPR 1.5 | screen 2560x1440 | fullscreen yes | frame interval 16.7 ms (about 60 Hz) | the fake module, the Life cartridge, 120 frames a case; the engine case over the module built into this page, 458,702 bytes, Life at its first frame redrawn'

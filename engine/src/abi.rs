@@ -1,5 +1,5 @@
 //! The engine's C surface (ENGINE.1's second slice, 2026-10-09): the twelve
-//! exports of `SPEC.md` section 4.6, which the host shim calls (`web/host.js`)
+//! exports of `docs/SPEC.md` section 4.6, which the host shim calls (`web/host.js`)
 //! and `tools/check_host_exports.ps1` holds name for name: eleven functions
 //! and the module's memory. Each is a thin door onto `crate::cartridge`, which
 //! is the language's machine with the engine's manifest and devices around
@@ -36,7 +36,7 @@ const STATUS_OK: u32 = 0;
 const STATUS_REFUSED: u32 = 1;
 const STATUS_NOT_UTF8: u32 = 2;
 
-/// The surface's version, the page's (`SPEC.md` section 8.1): it stays while
+/// The surface's version, the page's (`docs/SPEC.md` section 8.1): it stays while
 /// an export is added and no signature changes its meaning.
 pub const ABI_VERSION: u32 = 1;
 
@@ -346,7 +346,7 @@ fn included(all: &str) -> Vec<(String, String)> {
         .collect()
 }
 
-/// `expand`: the pass (`SPEC.md` section 7.8), a cartridge's source, its
+/// `expand`: the pass (`docs/SPEC.md` section 7.8), a cartridge's source, its
 /// path, and the texts it may include, expanded into the cartridge's text,
 /// the bytes the command line writes (`examples/expand.rs`); refused with the
 /// source line of the form that raised the refusal. It takes no handle and

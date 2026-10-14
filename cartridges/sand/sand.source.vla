@@ -1,7 +1,7 @@
 ; SPDX-License-Identifier: 0BSD
 ; sand.source.vla - Sand, a falling-sand toy on a 320 by 200 plane, as its author writes
 ; it (CART.2): the first game, and a fixture of the engine's floors beside Life. The pass
-; expands this file into sand.vla beside it, the rows the engine loads (SPEC.md section
+; expands this file into sand.vla beside it, the rows the engine loads (docs/SPEC.md section
 ; 7.8): edit this one, then expand it again with
 ;   cargo run --release --example expand
 ;
@@ -42,8 +42,8 @@
 ; board holding water is never still. Once the pouring stops, the shimmer costs 0.2 to
 ; 0.5 ms a frame in the browser, since a frame computes only the cells a change reaches.
 ;
-; What a rule costs, as Sand's scoping measured it (REARVIEW.md, CART.2, decisions 2 and
-; 23; the rules are SPEC.md section 2's note of 2026-10-11), and which this source keeps:
+; What a rule costs, as Sand's scoping measured it (docs/REARVIEW.md, CART.2, decisions 2 and
+; 23; the rules are docs/SPEC.md section 2's note of 2026-10-11), and which this source keeps:
 ;   1. A sheet reads itself this frame only in the row beneath. Another sheet's same row
 ;      is free. A row that reads the row beside collapses its run to one lane.
 ;   2. One fill a formula. The same rule written a fill a row made 398 shapes, and a
@@ -70,7 +70,7 @@
 (include "../common.vla")
 
 (cartridge "sand"
-  (spec 3)                          ; the version of SPEC.md this cartridge is written to
+  (spec 3)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Sand")                    ; what the host shows
   (rate 60)                         ; frames a second: a grain moves a cell a frame
   (screen plane 320 200)            ; plane mode, 320 cells wide and 200 high: A1:LH200
@@ -84,7 +84,7 @@
 ; Tally of each row; the Palette.
 (sheets "Screen" "Stay" "Side" "Parity" "Brush" "Gate" "State" "Tally" "Palette")
 
-; ---- the Palette (SPEC.md section 3.2): the codes first ------------------------------
+; ---- the Palette (docs/SPEC.md section 3.2): the codes first ------------------------------
 ; Index 0 is empty, 1 a wall, 2 sand and 3 water, so that what moves is the codes from 2
 ; up, one comparison. The CGA's colors follow for a modder to use.
 (palette                            ; the sixteen colors, index 0 first

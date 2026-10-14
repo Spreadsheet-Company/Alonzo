@@ -4,7 +4,7 @@ check_spdx.ps1 - the license map, REUSE.toml, verified against the tree.
 WHY: one repository, three license territories, no directory moves. The map
 is REUSE.toml (reuse.software, specification 3.3): path globs resolve every
 file to one SPDX identifier, Apache-2.0 for the engine, 0BSD for the
-cartridges, CC-BY-4.0 for the documents (CHARTER.md section 9; REARVIEW.md,
+cartridges, CC-BY-4.0 for the documents (docs/CHARTER.md section 9; docs/REARVIEW.md,
 REPO.1, decision 2). A map is worth what the last check of it was worth,
 and the day a file lands at a path the map does not name it has no license
 at all. This script is Frazaro's tools/check_spdx.ps1 adapted to the three

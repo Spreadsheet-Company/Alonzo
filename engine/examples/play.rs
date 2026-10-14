@@ -1,4 +1,4 @@
-//! The playtest pass's session (`CART.2`, 2026-10-12; `REARVIEW.md`, the
+//! The playtest pass's session (`CART.2`, 2026-10-12; `docs/REARVIEW.md`, the
 //! item's entry, "The playtest pass"): Sand played as the host plays it, the
 //! Input sheet's eighteen rows written before every step, through a session
 //! of eight phases, and every frame's plane held to the sand written by hand,
@@ -134,7 +134,7 @@ fn stroke(k: usize, n: usize, from: (u32, u32), to: (u32, u32)) -> (u32, u32) {
     (at(from.0, to.0), at(from.1, to.1))
 }
 
-/// The Input sheet's eighteen rows as the host writes them (`SPEC.md` section
+/// The Input sheet's eighteen rows as the host writes them (`docs/SPEC.md` section
 /// 3.3): no player's button held, the pointer, its three buttons, no wheel,
 /// and the key twice, as itself and as its code.
 fn rows(i: &Input) -> String {

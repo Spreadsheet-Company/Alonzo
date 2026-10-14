@@ -1,6 +1,6 @@
 ; SPDX-License-Identifier: 0BSD
 ; common.vla - a library of template macros that a cartridge's source includes
-; (SPEC.md section 7.8), 0BSD with the cartridges, so it is copied freely. The pass
+; (docs/SPEC.md section 7.8), 0BSD with the cartridges, so it is copied freely. The pass
 ; knows none of these by name: each is a text an author wrote, and a source may define
 ; its own beside them, or include a library of its own instead. They are examples, to
 ; be read, copied, changed and outgrown. Since KIT.1 they hold the kit's first verbs,
@@ -27,7 +27,7 @@
 ;     &expand joins its atoms into one text and +expand adds two numbers as the macro
 ;     expands. A column is reached by arithmetic too, (address-expand row column) or
 ;     (column-letters-expand column), and a text is split by characters-expand: the
-;     expand-time primitives vla-lang 0.9.0 added (SPEC.md section 7.8).
+;     expand-time primitives vla-lang 0.9.0 added (docs/SPEC.md section 7.8).
 ;   - A macro's call is no argument of &expand, nor of any expand-time primitive, which
 ;     takes its arguments as data: (&expand "=" (twin ...)) is refused, with the id
 ;     vla-expand-arg-is-list. So a macro that finds a text hands it on to the macro
@@ -43,7 +43,7 @@
 ; row: cells and formulas take entries, each an address or a range and what it holds,
 ; and on takes rows, or calls of a verb or a picture, each written without its sheet.
 ; The cartridge the pass writes still names the sheet on every row, which stands alone
-; there, as the record prints it (SPEC.md section 7.3).
+; there, as the record prints it (docs/SPEC.md section 7.3).
 
 (defmacro (cells sheet & entries)
   "value cells of one sheet, named once: each entry an address or a range, then its value"
@@ -73,7 +73,7 @@
 ; A cartridge's sheets in tab order, each visible; a sheet hidden is written as its own
 ; row, (sheet "X" hidden). Then a sheet's own words: a block of settings holds a label
 ; in column A beside each value in column B, and a table holds its headers in row 1
-; over its columns (SPEC.md section 3). Each takes the cell its first text goes in, and
+; over its columns (docs/SPEC.md section 3). Each takes the cell its first text goes in, and
 ; the texts in order, a text or a number each.
 
 (defmacro (sheets & tabs)
@@ -108,7 +108,7 @@
       (cell sheet (address-expand row column) (car texts))
       (quasiquote (headers-from (unquote sheet) (unquote row) (unquote (+expand column 1)) (unquote-splicing (cdr texts)))))))
 
-; ---- the Palette (SPEC.md section 3.2) ----------------------------------------------
+; ---- the Palette (docs/SPEC.md section 3.2) ----------------------------------------------
 
 (defmacro (palette & entries)
   "the Palette's sixteen rows: each entry a color and a name, its index its place from 0"
@@ -129,7 +129,7 @@
   (cell "Palette" (symbol "\"C" (+expand index 1)) (car (cdr entry))))
 
 (defmacro (cga-palette)
-  "the CGA's sixteen in their own order, SPEC.md section 3.2's table, a palette with a name"
+  "the CGA's sixteen in their own order, docs/SPEC.md section 3.2's table, a palette with a name"
   (palette                          ; the sixteen colors, index 0 first
     ("#000000" "black")             ; 0
     ("#0000AA" "blue")              ; 1
@@ -148,10 +148,10 @@
     ("#FFFF55" "yellow")            ; 14
     ("#FFFFFF" "white")))           ; 15
 
-; ---- the looks (SPEC.md section 7.3) ------------------------------------------------
+; ---- the looks (docs/SPEC.md section 7.3) ------------------------------------------------
 ; The grid's twin of the Palette: a look map, each value drawn through a format whose
 ; fill is a color, so that the grid draws a sheet's values as the plane draws its bytes
-; (SPEC.md decision 19). A fill is written as the record writes it, six hex digits and
+; (docs/SPEC.md decision 19). A fill is written as the record writes it, six hex digits and
 ; no #.
 
 (defmacro (looks sheet & fills)
@@ -167,7 +167,7 @@
       (look sheet index (+expand index 1))
       (looks-from sheet (+expand index 1) (cdr fills)))))
 
-; ---- the buttons and the keys (SPEC.md sections 3.3 and 3.4) --------------------------
+; ---- the buttons and the keys (docs/SPEC.md sections 3.3 and 3.4) --------------------------
 
 (defmacro (button-labels sheet)
   "the Input sheet's ten button labels in a sheet's column A, up to select, rows 1 to 10"
@@ -186,9 +186,9 @@
       (keys-from letter (+expand index 1) (cdr codes)))))
 
 (defmacro (default-keys)
-  "the Keys sheet as SPEC.md section 3.4 tabulates it: the ten labels in column A, and player 1's keys, TIC-80's, in column B; a later player is a keys call"
+  "the Keys sheet as docs/SPEC.md section 3.4 tabulates it: the ten labels in column A, and player 1's keys, TIC-80's, in column B; a later player is a keys call"
   (button-labels "Keys")
-  (keys "B"                         ; player 1: SPEC.md section 3.4's defaults, TIC-80's
+  (keys "B"                         ; player 1: docs/SPEC.md section 3.4's defaults, TIC-80's
     "ArrowUp"                       ; up
     "ArrowDown"                     ; down
     "ArrowLeft"                     ; left
@@ -200,7 +200,7 @@
     "Enter"                         ; start
     "Space"))                       ; select
 
-; ---- the Audio sheet (SPEC.md section 3.6) ------------------------------------------
+; ---- the Audio sheet (docs/SPEC.md section 3.6) ------------------------------------------
 ; A table, a voice a row: the header in row 1 and the voices' numbers in column A, rows 2
 ; to 5; a cartridge writes each voice's wave, note and volume in columns B to D itself.
 
@@ -209,7 +209,7 @@
   (headers "Audio" "A1" "voice" "wave" "note" "volume")
   (labels "Audio" "A2" 1 2 3 4))
 
-; ---- the Camera (SPEC.md section 3.8) -----------------------------------------------
+; ---- the Camera (docs/SPEC.md section 3.8) -----------------------------------------------
 ; Two cells the host places the Screen's window by, each beside its label. A still
 ; Camera holds two values, which only a person's edit moves; with a Camera, the Screen
 ; may hold cells beyond the window, which the plane never draws and a grid of the
@@ -222,7 +222,7 @@
   (cell "Camera" "A2" "column")
   (cell "Camera" "B2" left))
 
-; ---- the Write sheet (SPEC.md section 3.9) ------------------------------------------
+; ---- the Write sheet (docs/SPEC.md section 3.9) ------------------------------------------
 ; A row a write, from its cell in column A: the sheet a value goes to; in column B its
 ; address, or a range every cell of which takes the value, while a test holds, and
 ; else empty, which writes nothing; in column C the value. After each step the host
@@ -241,7 +241,7 @@
 
 ; ---- the verbs: first frame, interior, press, count, hold, dice, every, since ---------
 ; Each verb writes one formula row, one shape filled over a range, which the language
-; computes as a run (SPEC.md section 2's rules). The sheet comes first, so that on names
+; computes as a run (docs/SPEC.md section 2's rules). The sheet comes first, so that on names
 ; it once, then the range, then what the verb means, in the order its formula reads it.
 ; Its other arguments are pieces of a formula without the = sign, a reference, a test
 ; or an expression, written as the range's first cell reads it; the fill moves them as
@@ -260,7 +260,7 @@
 ; width and its height in cells, and not the sheet, so that a source states its board
 ; once, as a parameter that hands the size on: (board-size interior sheet start rule)
 ; becomes (interior 320 200 sheet start rule). A door builds the source on a larger board
-; by handing the pass a later definition of the parameter (SPEC.md section 7.8), and the
+; by handing the pass a later definition of the parameter (docs/SPEC.md section 7.8), and the
 ; same rule covers it. Its sheet is no first argument, so on cannot name it.
 
 (defmacro (interior width height sheet start rule)
@@ -268,7 +268,7 @@
   (quasiquote (first-frame (unquote sheet) (unquote (&expand "B2:" (address-expand (-expand height 1) (-expand width 1)))) (unquote start) (unquote rule))))
 
 (defmacro (pressed sheet range button)
-  "1 in the frame a button goes down and 0 otherwise, its cell 1 this frame and 0 the last, the rising edge (SPEC.md section 3.3): =IF(AND(button=1,its twin=0),1,0)"
+  "1 in the frame a button goes down and 0 otherwise, its cell 1 this frame and 0 the last, the rising edge (docs/SPEC.md section 3.3): =IF(AND(button=1,its twin=0),1,0)"
   (twin button pressed-from sheet range button))
 
 (defmacro (pressed-from last sheet range button)
@@ -284,7 +284,7 @@
   (quasiquote (formula (unquote sheet) (unquote range) (&expand "=" (unquote sheet) ".last!" (unquote first) "+" (unquote event)))))
 
 (defmacro (hold sheet range when new)
-  "each cell its own last value until an event replaces it, SPEC.md section 3.9's keep-last: =IF(when,new,sheet.last!first)"
+  "each cell its own last value until an event replaces it, docs/SPEC.md section 3.9's keep-last: =IF(when,new,sheet.last!first)"
   (first-cell range hold-from sheet range when new))
 
 (defmacro (hold-from first sheet range when new)
@@ -292,11 +292,11 @@
   (quasiquote (formula (unquote sheet) (unquote range) (&expand "=IF(" (unquote when) "," (unquote new) "," (unquote sheet) ".last!" (unquote first) ")"))))
 
 (defmacro (dice sheet at)
-  "Park and Miller's minimal standard in one cell (SPEC.md section 3.5): the seed in the first frame, then the last value times 16807, modulo 2147483647; one cell, since its Clock references are relative and a fill would move them"
+  "Park and Miller's minimal standard in one cell (docs/SPEC.md section 3.5): the seed in the first frame, then the last value times 16807, modulo 2147483647; one cell, since its Clock references are relative and a fill would move them"
   (quasiquote (formula (unquote sheet) (unquote at) (&expand "=IF(Clock!B1=1,Clock!B3,MOD(" (unquote sheet) ".last!" (unquote at) "*16807,2147483647))"))))
 
 (defmacro (every sheet range count n)
-  "1 in every nth frame of a count and 0 in the others, the clock divider of SPEC.md section 12 over any count: =IF(MOD(count,n)=0,1,0)"
+  "1 in every nth frame of a count and 0 in the others, the clock divider of docs/SPEC.md section 12 over any count: =IF(MOD(count,n)=0,1,0)"
   (quasiquote (formula (unquote sheet) (unquote range) (&expand "=IF(MOD(" (unquote count) "," (unquote n) ")=0,1,0)"))))
 
 (defmacro (since sheet range event)
@@ -341,7 +341,7 @@
 ; A picture is rows of text: each string one row of cells, down from a top-left cell,
 ; and each character one cell, its value the legend's, so that a sprite, a tile or a
 ; pattern is written as it looks. A dot writes no cell, in every legend, so a picture's
-; empty cells are no rows at all, which the plane reads as 0 (SPEC.md section 3.1); a
+; empty cells are no rows at all, which the plane reads as 0 (docs/SPEC.md section 3.1); a
 ; legend's entry for a dot is never read, and a space is a character like any other. A
 ; row shorter than another writes nothing past its end. The legend is hex, PICO-8's
 ; sixteen digits, 0 to 9 and a to f the Palette's indices 0 to 15, as a PICO-8
@@ -352,7 +352,7 @@
 ; cell would be, so that the cartridge says where. A picture writes a row a cell and
 ; never a range, so a block of one value is a cells entry. Each row and each cell begins
 ; a chain of its own, so a picture the Screen's size, 320 by 200, expands in about half
-; a second, and the chain stops one at 2,499 rows, or at a row of 2,499 cells (SPEC.md
+; a second, and the chain stops one at 2,499 rows, or at a row of 2,499 cells (docs/SPEC.md
 ; section 7.8).
 
 (defmacro (picture sheet top-left legend & rows)

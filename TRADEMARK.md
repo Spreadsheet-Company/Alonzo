@@ -36,7 +36,7 @@ Ask at english@spreadsheet.company.
 
 A game written on Alonzo is its author's, under its author's name and
 terms, and nothing here reaches it. The license-side statement of that is
-written the day the first game ships (`CHARTER.md`, section 9).
+written the day the first game ships (`docs/CHARTER.md`, section 9).
 
 ## Registration
 

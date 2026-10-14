@@ -30,11 +30,11 @@ of the file it touches, as declared in `REUSE.toml`:
 
 ## What a change needs
 
-- **A device** is a sheet's layout written into `SPEC.md` first, with its
+- **A device** is a sheet's layout written into `docs/SPEC.md` first, with its
   direction, input or effect, and its row among the host's duties; then
   its code in the shim, and in the engine where a layout is checked
   (`AD-6`). The first specification has no import at all: every device is
-  a read or a write through the module's exports (`SPEC.md`, section 8).
+  a read or a write through the module's exports (`docs/SPEC.md`, section 8).
   A device that needs one is an `extern "C"` function the host shim
   provides under the one module name `alonzo`, its name added, as
   `alonzo.<function>`, to the allowlist `tools/check_host_imports.ps1`
@@ -48,7 +48,7 @@ of the file it touches, as declared in `REUSE.toml`:
   mechanism; its text names the cell it stands on as `sheet!addr` and
   leaves the row's line to the record's field. A refusal of the grid, the
   view or recalculation is the language crate's and changes in Frazaro,
-  never here. An export added to the engine is a line in `SPEC.md`'s table
+  never here. An export added to the engine is a line in `docs/SPEC.md`'s table
   first, then in `tools/check_host_exports.ps1`'s list with its count.
 - **A cartridge** is a VLA program and its sheets, with a Palette sheet.
   One that ships in this repository is a fixture of a floor or a demo, and
@@ -57,12 +57,12 @@ of the file it touches, as declared in `REUSE.toml`:
   expands it into the cartridge beside it, `<name>.vla`
   (`cargo run --release --example expand`; the page's Build runs the same
   pass to the same bytes, to try a change in the browser before the file is
-  written; `SPEC.md`, section 7.8). Commit
+  written; `docs/SPEC.md`, section 7.8). Commit
   both: `cargo test` holds each cartridge byte for byte to its source's
   expansion, so edit the source and expand it again, never the cartridge. A game is a repository of its own, under its author's name
   and terms. Its formulas are fixed at load: the step computes values and
   never formulas, and a cartridge that keeps a state writes it through the
-  Write sheet as a value (`AD-7`; `SPEC.md`, section 3.9). A change to the
+  Write sheet as a value (`AD-7`; `docs/SPEC.md`, section 3.9). A change to the
   engine or to the language that lets a step install a formula fails
   `AD-7`'s test and is not merged.
 - **An accelerator** needs its oracle before it is merged: the naive
@@ -88,7 +88,7 @@ of the file it touches, as declared in `REUSE.toml`:
   purpose is first reworded in the page's oracle; a draw that slows is
   measured before it is merged. Frazaro's page takes the file as a copy, so
   a change here is a copy there.
-- **A roadmap ID** is minted in `ROADMAP.md`, in its family, and never
+- **A roadmap ID** is minted in `docs/ROADMAP.md`, in its family, and never
   reused; an item that is Frazaro's by ID keeps Frazaro's ID.
 - **A commit** is titled `<ID>: <the claim, in plain English>`; its body
   gives the defect and the fix, then `Pins:`, `Floors:` and `Docs:`.
