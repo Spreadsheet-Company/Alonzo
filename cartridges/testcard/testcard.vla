@@ -8,7 +8,7 @@
   (seed 1)
   (author "Spreadsheet Company")
   (licence "0BSD")
-  (notes "The plane's test card: the sixteen colours as bars, then every kind of value a Screen cell can hold, then formulas that compute each kind, on a Screen 56 columns wide that the Camera pans one column a frame. Anything that is not a whole number from 0 to 15 is magenta, so a wrong value is seen."))
+  (notes "The plane's test card: the sixteen colors as bars, then every kind of value a Screen cell can hold, then formulas that compute each kind, on a Screen 56 columns wide that the Camera pans one column a frame. Anything that is not a whole number from 0 to 15 is magenta, so a wrong value is seen."))
 (sheet "Screen" visible)
 (sheet "Palette" visible)
 (sheet "Camera" visible)

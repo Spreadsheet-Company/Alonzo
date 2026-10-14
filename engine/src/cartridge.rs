@@ -465,8 +465,8 @@ fn held(cell: Option<&Cell>) -> String {
     }
 }
 
-/// A colour as the Palette spells one: `#` and six hexadecimal digits.
-fn is_colour(t: &str) -> bool {
+/// A color as the Palette spells one: `#` and six hexadecimal digits.
+fn is_color(t: &str) -> bool {
     t.len() == 7 && t.starts_with('#') && t[1..].bytes().all(|b| b.is_ascii_hexdigit())
 }
 
@@ -549,7 +549,7 @@ fn check_devices(draft: &Draft, m: &Manifest, camera: bool) -> Result<(), LineRe
 }
 
 /// The Palette of a plane cartridge: sixteen rows, the index in order in
-/// column A and a colour, or a formula, in column B (section 3.2).
+/// column A and a color, or a formula, in column B (section 3.2).
 fn check_palette(draft: &Draft) -> Result<(), LineRefusal> {
     let book = &draft.workbook;
     let Some(si) = book.find_sheet("Palette") else {
@@ -580,13 +580,13 @@ fn check_palette(draft: &Draft) -> Result<(), LineRefusal> {
         }
         let b = sheet.cells.get(&(row, 2));
         let fine = match b.map(|c| &c.content) {
-            Some(Content::Text(t)) => is_colour(t),
+            Some(Content::Text(t)) => is_color(t),
             Some(c) => is_formula(c),
             None => false,
         };
         if !fine {
             let what = format!(
-                "The Palette's B{row} holds {}, which is no colour #RRGGBB",
+                "The Palette's B{row} holds {}, which is no color #RRGGBB",
                 held(b)
             );
             return Err(refused(
@@ -1008,7 +1008,7 @@ mod tests {
     /// The plane's test card (ENGINE.2): every kind of value under a panning Camera.
     const TESTCARD: &str = include_str!("../../cartridges/testcard/testcard.vla");
 
-    const COLOURS: [&str; 16] = [
+    const COLORS: [&str; 16] = [
         "#000000", "#FFFFFF", "#0000AA", "#00AA00", "#00AAAA", "#AA0000", "#AA00AA", "#AA5500",
         "#AAAAAA", "#555555", "#5555FF", "#55FF55", "#55FFFF", "#FF5555", "#FF55FF", "#FFFF55",
     ];
@@ -1038,7 +1038,7 @@ mod tests {
 
     fn palette() -> String {
         let mut out = String::new();
-        for (i, c) in COLOURS.iter().enumerate() {
+        for (i, c) in COLORS.iter().enumerate() {
             out.push_str(&format!(
                 "(cell \"Palette\" \"A{r}\" {i})\n(cell \"Palette\" \"B{r}\" \"{c}\")\n",
                 r = i + 1
@@ -1236,7 +1236,7 @@ mod tests {
             ("(title \"Small\")", "(title Small)", "where (title ...)"),
             (
                 "(seed 1)",
-                "(seed 1) (colour 3)",
+                "(seed 1) (color 3)",
                 "a directive this version does not know",
             ),
             (
@@ -1365,7 +1365,7 @@ mod tests {
             assert!(text.starts_with(want), "{row}: {text}");
             assert!(text.contains(named), "{row}: {text}");
         }
-        // The Palette: an index out of order, a colour that is no colour, a
+        // The Palette: an index out of order, a color that is no color, a
         // formula allowed, and a plane cartridge with no Palette at all.
         let swapped = good.replacen(
             "(cell \"Palette\" \"A5\" 4)",
@@ -1496,7 +1496,7 @@ mod tests {
             ("(cell \"Nowhere\" \"A1\" 1)", "grid-sheet-unknown"),
             ("(cell \"Screen.last\" \"B1\" 1)", "grid-write-last"),
             ("(derived \"Screen\" \"B2\" 1)", "grid-write-derived"),
-            ("(colour \"Screen\" \"B2\" 1)", "grid-row-unknown"),
+            ("(color \"Screen\" \"B2\" 1)", "grid-row-unknown"),
             // The machine refuses line 1, the engine line 2: the engine's checks run first.
             (
                 "(cell \"Nowhere\" \"A1\" 1)\n(formula \"Clock\" \"B2\" \"=1\")",
@@ -1971,7 +1971,7 @@ mod tests {
             15,
             "the cursor at the Screen's H4, the window's fifth column"
         );
-        assert_eq!(at(6, 6), 2, "right, pressed once and let go: colour 1 + 1");
+        assert_eq!(at(6, 6), 2, "right, pressed once and let go: color 1 + 1");
         assert_eq!(
             [at(20, 6), at(20, 7), at(20, 8), at(20, 9)],
             [1, 1, 11, 11],
@@ -2488,7 +2488,7 @@ mod tests {
     /// column a frame and wraps after 21; the Screen's whole extent; a window past it; and
     /// the twin's window. At frame 5, a value, a formula and a derived row written inside
     /// the window between two steps, each held at once, and a derived row refused. Every arm
-    /// of section 3.1 is reached: a colour, a byte past the palette, 255 for every other
+    /// of section 3.1 is reached: a color, a byte past the palette, 255 for every other
     /// kind of value, 0 for an empty cell and for a formula with no value.
     #[test]
     fn the_test_card_s_plane_is_its_record_every_frame() {

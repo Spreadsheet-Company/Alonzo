@@ -43,7 +43,7 @@ each answered with the same status and id); and since ENGINE.2 plane (the
 plane the host draws held to the record of the same window, byte for value,
 by the page's own reading of SPEC.md section 3.1, at frame 0 and after every
 frame: the window to the Camera's, the bytes to the record, and the canvas's
-pixels at a cell of each kind to the Palette's colour or magenta; over the
+pixels at a cell of each kind to the Palette's color or magenta; over the
 double, its Camera moved by edits and a formula without a value written
 outside its declared size; over the engine's module, when the page holds
 one, the test card, cartridges/testcard/testcard.vla, twenty-four frames
@@ -162,7 +162,7 @@ whose rate30 case must fail by name, since the page paints every marked
 refusal red; and since ENGINE.2 three more, each failing the plane case by
 name: a host that reads the Camera after it draws the plane, whose plane is
 a frame late; a host whose blit masks a byte to the palette, so a byte past
-it draws as a colour; and a double that reads a formula without a value as
+it draws as a color; and a double that reads a formula without a value as
 255 again, which its own record says is 0; and since SPEC.3's second slice,
 when the real page holds the engine's module, a page built from a scratch
 copy of cartridges/ whose library writes the Palette's names to column D
@@ -589,7 +589,7 @@ if ($Control) {
         $rH = Invoke-Loop $browser (New-MutantPage 'h' $template $jsH) '1'
         $jH = if ($rH.Text -ne '') { Test-Loop $rH.Text '1' } else { @{ Problems = @($rH.Reason) } }
         $hFailed = @($jH.Problems | Where-Object { $_ -like "*case plane*in the host's plane and*by the record of*" }).Count
-        # mutant I: the blit masks a byte to the palette; a byte past it draws as a colour, and the plane case's pixels must fail
+        # mutant I: the blit masks a byte to the palette; a byte past it draws as a color, and the plane case's pixels must fail
         $anchorI = '    for (var i = 0; i < n; i++) px[i] = pal[bytes[i]];'
         if (([regex]::Matches($js, [regex]::Escape($anchorI))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorI' is not in web/host.js exactly once"; exit 1 }
         $mutI = $js.Replace($anchorI, '    for (var i = 0; i < n; i++) px[i] = pal[bytes[i] & 15];')

@@ -109,7 +109,7 @@
 
 ; ---- the Screen: the waterfall ------------------------------------------------------
 ; The top row lights the column of each sounding voice's note, to the nearest, notes 48 to 95, in
-; the voice's colour: voice 1 light green, voice 2 light cyan, voice 3 yellow, voice 4 light red.
+; the voice's color: voice 1 light green, voice 2 light cyan, voice 3 yellow, voice 4 light red.
 ; Every row below holds the last frame's row above it, so the notes fall down the Screen as they
 ; are played.
 (formula "Screen" "A1:AV1" "=IF(AND(Audio!$D$2>0,INT(Audio!$C$2+0.5)=COLUMN()+47),10,IF(AND(Audio!$D$3>0,INT(Audio!$C$3+0.5)=COLUMN()+47),11,IF(AND(Audio!$D$4>0,INT(Audio!$C$4+0.5)=COLUMN()+47),14,IF(AND(Audio!$D$5>0,INT(Audio!$C$5+0.5)=COLUMN()+47),12,0))))")

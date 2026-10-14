@@ -808,7 +808,7 @@ The game written by hand in the engine's tests, every frame held; closed forms (
 - **No formulas at run time.** The step computes values only (`AD-7`). Every vehicle exists at load, locked; adding a class is data, not engine work. A person may type formulas (the Strategy sheet is within the rules).
 - **The Write sheet is short.** One formula row per write, evaluated every frame (`SPEC.md` 3.9). Positions as formula state where possible.
 - **Text is data.** Strings are cell values. A picker is `CHOOSE(k, ref1, ref2, ...)`, limited by the 8,192-character formula limit: about a thousand references. A kit macro generates it.
-- **Grid mode.** The UI is a grid-mode cartridge (`ENGINE.8`): a window of at most 80 by 50 cells; a cell shows its value's text; a `look` fills by value; **a format has no font colour** (found at `CART.4`). Whether custom number formats with literal glyphs (`▲0.0%;▼0.0%`) are honoured by the viewport is (check).
+- **Grid mode.** The UI is a grid-mode cartridge (`ENGINE.8`): a window of at most 80 by 50 cells; a cell shows its value's text; a `look` fills by value; **a format has no font color** (found at `CART.4`). Whether custom number formats with literal glyphs (`▲0.0%;▼0.0%`) are honoured by the viewport is (check).
 - **Palette.** Lovelace Lavender: `#A080E0`, `#E2D8F6`, `#F7F4FC`, `#6B4FC8`, and the dark lavender greys; nothing else.
 - **Numbers.** Doubles end near 1.8e308 and then an error value; "no NaN reaches a cell". The end of the game is a designed thing.
 - **Time.** The frame number is the only clock; the host writes no time into any cell. Offline progress is a seek (`ENGINE.13`), not a wall-clock read in a formula.
@@ -824,7 +824,7 @@ The game written by hand in the engine's tests, every frame held; closed forms (
 - **Loss aversion.** Idle games rarely let numbers fall. Give floors: insured cash, a one-time "too big to fail" bailout, crash insurance, and a difficulty dial (bull market, real world, lost decade).
 - **Scope.** Seven classes by twelve vehicles by eight mechanics is a year of content. Slice vertically (section 13).
 - **The ceiling.** An error value at the end of the numbers. Plan the ending ("retire to the island").
-- **Text-heavy UI in a grid.** Fixed-width cells, no font colour, an 80 by 50 window. The UI is a *sheet*: embrace it as the aesthetic (the spreadsheet is the joke).
+- **Text-heavy UI in a grid.** Fixed-width cells, no font color, an 80 by 50 window. The UI is a *sheet*: embrace it as the aesthetic (the spreadsheet is the joke).
 - **The open-book problem** (section 5).
 - **Education liability** (section 10).
 - **Contribution hygiene.** Jokes as pull requests need a content policy and a reviewer.

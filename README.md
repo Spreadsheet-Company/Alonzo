@@ -30,7 +30,7 @@ sheet and the effect cells, and draws. Every input is a cell the engine
 writes. Every effect is a cell it reads. The engine's whole contract is
 four calls into the language: load a cartridge, write cells, step, view.
 
-A spreadsheet is a member of class game: a sheet of coloured cells is a
+A spreadsheet is a member of class game: a sheet of colored cells is a
 framebuffer, a cell that is a formula of its neighbours is a fragment
 shader, and a recalculation is a frame. The thesis in one line: a
 spreadsheet is a game whose frame rate is one, and an engine that can draw

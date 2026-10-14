@@ -8,7 +8,7 @@
 (seed host)
 (author "Spreadsheet Company")
 (licence "0BSD")
-(notes "The input card: every cell the host writes before a step, drawn. Press the arrows, Z, X, A, S, Enter and Space for player 1, and I, K, J, L, U, O, Y, P, 9 and 0 for player 2; click, and turn the wheel to pan the card. A lamp is white while its button is held, and moves to another colour with each press.")
+(notes "The input card: every cell the host writes before a step, drawn. Press the arrows, Z, X, A, S, Enter and Space for player 1, and I, K, J, L, U, O, Y, P, 9 and 0 for player 2; click, and turn the wheel to pan the card. A lamp is white while its button is held, and moves to another color with each press.")
 (device "Screen" "A1:AN24" effect)
 (device "Palette" "A1:C16" effect)
 (device "Input" "A1:E18" input)

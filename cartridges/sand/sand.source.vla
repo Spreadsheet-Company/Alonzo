@@ -86,8 +86,8 @@
 
 ; ---- the Palette (SPEC.md section 3.2): the codes first ------------------------------
 ; Index 0 is empty, 1 a wall, 2 sand and 3 water, so that what moves is the codes from 2
-; up, one comparison. The CGA's colours follow for a modder to use.
-(palette                            ; the sixteen colours, index 0 first
+; up, one comparison. The CGA's colors follow for a modder to use.
+(palette                            ; the sixteen colors, index 0 first
   ("#000000" "empty")               ; 0, black
   ("#808080" "wall")                ; 1, grey
   ("#E8C872" "sand")                ; 2

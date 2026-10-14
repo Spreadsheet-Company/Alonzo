@@ -179,7 +179,7 @@
     <div class="inner">
       <div class="engine">
         <div>
-          <div id="plane-box" class="plane-box"><canvas id="plane" tabindex="0" aria-label="the Screen, drawn as a plane of colour indices"></canvas></div>
+          <div id="plane-box" class="plane-box"><canvas id="plane" tabindex="0" aria-label="the Screen, drawn as a plane of color indices"></canvas></div>
           <div id="eng-screen-grid" class="grid screen" hidden aria-label="the Screen, drawn as a grid by the viewport"></div>
           <p id="frame-line" class="frame-line"></p>
         </div>
@@ -196,7 +196,7 @@
         <summary>The source and the cartridge</summary>
         <p>The source, <code id="eng-src-path">cartridges/life/life.source.vla</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one picture, a string a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load the cartridge loads it: the pass loads nothing, and a cartridge running goes on running (SPEC.md section 7.8). The fake module holds no pass, and says so.</p>
         <textarea id="eng-src" rows="14" spellcheck="false" aria-label="the cartridge's source"></textarea>
-        <p>The cartridge, <code id="eng-cart-path">cartridges/life/life.vla</code>, the file the host loads, picked above: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no colour; the input card, every cell the host writes before a step, drawn; the sound card, the Audio sheet's four voices played, heard after Sound on; or Sand, a falling-sand toy that opens raining sand: paint with the left button, erase with the right, size the brush with the wheel, and press 1, 2 or 0 for sand, wall or empty; or the grid card, a grid cartridge drawn by the viewport, every kind of value, format and look a grid cell can hold, through a Camera that only an edit moves: write <code>(cell "Camera" "B2" 5)</code> and the window moves four columns right, the viewport scrolling with it; or Kairos, the stacking game, in Lovelace Lavender: stop each row of lights over the row beneath with Z, Space or a click, take the minor prize at level 11 with X or go on with Z, and read every level's speed and window in its Levels sheet, which an edit such as <code>(cell "Levels" "D3" 1)</code> rigs in the open. Edit it, or build it again from its source, and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
+        <p>The cartridge, <code id="eng-cart-path">cartridges/life/life.vla</code>, the file the host loads, picked above: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no color; the input card, every cell the host writes before a step, drawn; the sound card, the Audio sheet's four voices played, heard after Sound on; or Sand, a falling-sand toy that opens raining sand: paint with the left button, erase with the right, size the brush with the wheel, and press 1, 2 or 0 for sand, wall or empty; or the grid card, a grid cartridge drawn by the viewport, every kind of value, format and look a grid cell can hold, through a Camera that only an edit moves: write <code>(cell "Camera" "B2" 5)</code> and the window moves four columns right, the viewport scrolling with it; or Kairos, the stacking game, in Lovelace Lavender: stop each row of lights over the row beneath with Z, Space or a click, take the minor prize at level 11 with X or go on with Z, and read every level's speed and window in its Levels sheet, which an edit such as <code>(cell "Levels" "D3" 1)</code> rigs in the open. Edit it, or build it again from its source, and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
         <textarea id="eng-cart" rows="14" spellcheck="false" aria-label="the cartridge, the rows a load takes"></textarea>
         <details>
           <summary>The library the sources include, <code id="eng-lib-path">cartridges/common.vla</code></summary>
@@ -523,7 +523,7 @@
       }
       sheetEl.value = names.indexOf(keep) >= 0 ? keep : (names.indexOf('Write') >= 0 ? 'Write' : (names.indexOf('Clock') >= 0 ? 'Clock' : names[0]));
     }
-    // Every refusal one colour, red until the page's palette is drawn (the owner's word, 2026-10-09):
+    // Every refusal one color, red until the page's palette is drawn (the owner's word, 2026-10-09):
     // the status line while it shows one, each refused line of the log, the frame line after a refused load.
     host.on('status', function (s) {
       if (!s.repeat) { statusEl.textContent = s.text; statusEl.className = s.refusal ? 'status refused' : 'status'; }
@@ -934,7 +934,7 @@
       if (said[j].split('was refused').length > 2) { P.push('a sentence says its refusal twice: ' + said[j]); break; }
       if (said[j].indexOf('(line ') >= 0) { P.push('a refusal of a one-row write names its line: ' + said[j]); break; }
     }
-    // A refusal is marked as one, for a page to paint every refusal one colour (the owner's word,
+    // A refusal is marked as one, for a page to paint every refusal one color (the owner's word,
     // 2026-10-09): every sentence holding a catalogue id in brackets is marked, and no other is here.
     var marks = r.host.sentences();
     for (var q = 0; q < marks.length; q++) {
@@ -1165,7 +1165,7 @@
     return { counters: { refused: refused, marked: marked, live: st.live, misfrees: st.misfrees }, problems: P };
   }
   // The blit: the backing store at a whole number of device pixels a cell, and pixels read back,
-  // each at the middle of a cell: a colour through the Palette, black for 0, magenta past it.
+  // each at the middle of a cell: a color through the Palette, black for 0, magenta past it.
   function caseScale() {
     var P = [], probes = 0, reloaded = 0, cleared = 0, s = 0, stage = document.getElementById('stage');
     var box = document.createElement('div');
@@ -1493,7 +1493,7 @@
   // frame 0 and after every frame, the window the host drew through is the Camera's, by its record
   // and, when one is given, by the page's own arithmetic; the bytes the host holds are the record of
   // that window; and the canvas's pixels, at the first cell of each kind the window holds, are the
-  // Palette's colour below its count and magenta past it, black for 0. edits[f] are the person's
+  // Palette's color below its count and magenta past it, black for 0. edits[f] are the person's
   // edits made before the tick that runs frame f; check(f, at, rec, R, text) adds a frame's own pins.
   var PLANE_SCALE = 3;   // device pixels a cell, fixed, so the probes' arithmetic is the page's own
   function planeRun(exports, label, frames, edits, expectWindow, check, strict, k, P) {
@@ -1536,15 +1536,15 @@
         k.equal++;
         if (check) check(f, at, rec, R, text);
         // The pixels: the first cell of each kind, through the Palette's record.
-        var pal = recordValues(D.call('alonzo_view', [h], ['grid', 'Palette', '']).text), colours = [];
-        for (var p = 1; p <= 16; p++) { var hx = pal['B' + p]; if (typeof hx !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(hx)) break; colours.push(hexOf(hx)); }
+        var pal = recordValues(D.call('alonzo_view', [h], ['grid', 'Palette', '']).text), colors = [];
+        for (var p = 1; p <= 16; p++) { var hx = pal['B' + p]; if (typeof hx !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(hx)) break; colors.push(hexOf(hx)); }
         var picked = {};
         for (var j = 0; j < rec.length; j++) {
-          var b = rec[j], kind = b === 0 ? 'zero' : (b < colours.length ? 'colour' : (b === 255 ? 'none' : 'past'));
+          var b = rec[j], kind = b === 0 ? 'zero' : (b < colors.length ? 'color' : (b === 255 ? 'none' : 'past'));
           if (picked[kind]) continue;
           picked[kind] = true;
           var x = (j % W) * PLANE_SCALE + Math.floor(PLANE_SCALE / 2), y = Math.floor(j / W) * PLANE_SCALE + Math.floor(PLANE_SCALE / 2);
-          var px = ctx.getImageData(x, y, 1, 1).data, exp = b < colours.length ? colours[b] : [255, 0, 255];
+          var px = ctx.getImageData(x, y, 1, 1).data, exp = b < colors.length ? colors[b] : [255, 0, 255];
           if (px[0] !== exp[0] || px[1] !== exp[1] || px[2] !== exp[2] || px[3] !== 255) P.push(at + ': the cell ' + VP.colName(R.left + j % W) + (R.top + Math.floor(j / W)) + ' (byte ' + b + ') reads ' + px[0] + ',' + px[1] + ',' + px[2] + ' at alpha ' + px[3] + ', not ' + exp.join(','));
           else k.probes++;
         }
@@ -1778,7 +1778,7 @@
     return bad === 0;
   }
   // A pixel at a corner of the first visible cell of each kind of fill, a look's, a style's and a column's,
-  // off the selection: the canvas holds the fill's colour exactly.
+  // off the selection: the canvas holds the fill's color exactly.
   function gqProbes(E, vp, at, P, k) {
     var ctx = vp.canvas.getContext('2d'), seen = {}, sr = vp.selection().range;
     for (var key in E.fills) {
@@ -2824,11 +2824,11 @@
     var g2 = new GraphDouble(), clock2 = { t: 0 }, M2 = new SoundModel(), check2 = new SoundCheck(g2, M2, 'over the module, the sound card', P);
     var card = new HOST({ drive: 'manual', now: frozen, budget: 0, audio: g2, audioNow: function () { return clock2.t; } });
     var N = CARD_FRAMES, PRESS = CARD_PRESS, rateAfter = cardRateAfter, hc2 = 0, W = 48, H = 24, prevPlane = new Uint8Array(W * H);
-    // The waterfall's top row by hand: each sounding voice's note to the nearest, notes 48 to 95, in its colour.
+    // The waterfall's top row by hand: each sounding voice's note to the nearest, notes 48 to 95, in its color.
     function topRow(rows) {
-      var out = new Uint8Array(W), colours = [10, 11, 14, 12];
+      var out = new Uint8Array(W), colors = [10, 11, 14, 12];
       for (var c = 1; c <= W; c++) {
-        for (var v = 0; v < 4; v++) if (rows[v].volume > 0 && Math.floor(rows[v].note + 0.5) === c + 47) { out[c - 1] = colours[v]; break; }
+        for (var v = 0; v < 4; v++) if (rows[v].volume > 0 && Math.floor(rows[v].note + 0.5) === c + 47) { out[c - 1] = colors[v]; break; }
       }
       return out;
     }
@@ -3628,7 +3628,7 @@
         else counts.marks++;
       }
       // (7) the pixel probes, each at a corner inside the cell, off the glyphs and off a neighbour's spilled
-      // text: a styled cell's corner is its fill, a plain cell's is white, its bottom edge a gridline's colour
+      // text: a styled cell's corner is its fill, a plain cell's is white, its bottom edge a gridline's color
       var ctx = vp.canvas.getContext('2d');
       function pixel(x, y) { var d = ctx.getImageData(x, y, 1, 1).data; return [d[0], d[1], d[2]]; }
       function inRange(rg, r, c) { return r >= rg.top && r <= rg.bottom && c >= rg.left && c <= rg.right; }

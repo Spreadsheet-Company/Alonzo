@@ -48,26 +48,26 @@
 ; The library whose macros this source calls: sheets, labels and headers; on, cells and
 ; formulas, each naming a sheet once over a run of its rows; default-keys; picture;
 ; camera; put, the Write sheet's row; palette-entry and looks-from, a Palette row and the
-; look map's walk, which this source's colours calls an entry at a time; audio; and the
+; look map's walk, which this source's colors calls an entry at a time; audio; and the
 ; verbs first-frame, pressed, count, hold, every and since.
 (include "../common.vla")
 
-; ---- the colours: the Palette and the same as the Screen's looks, from one list ------
+; ---- the colors: the Palette and the same as the Screen's looks, from one list ------
 ; The plane draws the Palette; the panel's live sheet draws the Screen's looks, the same
-; colours, so that one model is drawn by two renderers side by side (SPEC.md decision 19).
+; colors, so that one model is drawn by two renderers side by side (SPEC.md decision 19).
 
-(defmacro (colours & entries)
+(defmacro (colors & entries)
   "each entry a fill and its name: a Palette row and a look for the value its place gives, from 0"
-  (quasiquote (colours-from 0 (unquote entries))))
+  (quasiquote (colors-from 0 (unquote entries))))
 
-(defmacro (colours-from index entries)
-  "colours' walk: a Palette row, then the entry's fill through the library's look map, an entry at a time from an index on"
+(defmacro (colors-from index entries)
+  "colors' walk: a Palette row, then the entry's fill through the library's look map, an entry at a time from an index on"
   (quote-if (null? entries)
     (begin)
     (begin
       (palette-entry index ((&expand "#" (car (car entries))) (car (cdr (car entries)))))
       (looks-from "Screen" index ((car (car entries))))
-      (colours-from (+expand index 1) (cdr entries)))))
+      (colors-from (+expand index 1) (cdr entries)))))
 
 ; ---- the board, lying on its side or standing up -----------------------------------
 ; Everything that turns with the board: the Gate's rows, the Tower, the WIN picture, the
@@ -190,7 +190,7 @@
 (sheets "Screen" "Levels" "State" "Tally" "Gate" "Tower" "Win" "Audio" "Keys" "Camera" "Write" "Palette")
 
 ; ---- the Palette: Lovelace Lavender, and the same as looks ---------------------------
-(colours                            ; each a fill without its #, and its name
+(colors                             ; each a fill without its #, and its name
   ("1C1828" "night: no light")                          ; 0
   ("A080E0" "Lovelace Lavender: a light that stayed")   ; 1, the logo's lavender
   ("E2D8F6" "lavender: the row sliding")                ; 2, a focused cell's

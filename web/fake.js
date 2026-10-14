@@ -23,8 +23,8 @@
   AlonzoFake.RULES, so that an oracle can compute what it answers without
   asking it: the Screen's cells inside the declared size are formula cells
   whose bytes follow the frame number (eight-by-eight tiles cycling through
-  the sixteen colours, one row swept by a byte past the palette, one error
-  byte, and in grid mode a look of the palette's sixteen for each colour,
+  the sixteen colors, one row swept by a byte past the palette, one error
+  byte, and in grid mode a look of the palette's sixteen for each color,
   ENGINE.8); the device sheets sit at their section 3 layouts as value cells,
   the Palette the CGA's sixteen and the Keys TIC-80's defaults for player 1;
   the Write sheet carries rows on a rule of the frame, one that lands and
@@ -92,10 +92,10 @@
     growEvery: 17,       // every seventeenth allocation, and every load, grows the memory by zero pages
     tile: 8,             // the plane's tiles, eight cells a side
     sweepByte: 200,      // the byte swept down the rows, one a frame: past the palette, so painted magenta
-    errorByte: 255,      // the byte of a cell that holds no colour: A1 holds one always
+    errorByte: 255,      // the byte of a cell that holds no color: A1 holds one always
     saveEvery: 25,       // File!B3 is 1 on every twenty-fifth frame, 0 otherwise
     gridLooks: 16,       // in grid mode the Screen's record holds the palette's sixteen as formats 1 to 16, and a look
-                         // for each colour index, 0 to 15, to its format, so its tiles draw through a look (ENGINE.8)
+                         // for each color index, 0 to 15, to its format, so its tiles draw through a look (ENGINE.8)
     sheets: SHEETS,
     palette: PALETTE,
     buttons: BUTTONS,

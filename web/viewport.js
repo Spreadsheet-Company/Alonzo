@@ -752,7 +752,7 @@
     var w = g.colW[c], h = g.rowHeight(r), pad = g.pad;
     var fmt = formatOf(model, cell, c);
     var align = alignOf(cell, fmt);
-    // a formula before its value shows its text in the formula's colour; its value, the text's (KERNEL.5, decision 7)
+    // a formula before its value shows its text in the formula's color; its value, the text's (KERNEL.5, decision 7)
     var color = cell.kind === 'formula' && !cell.valued ? colors.formula : colors.text;
     var op = { op: 'text', row: r, col: c, kind: cell.kind, valued: cell.valued, quadrant: quadrant };
     if (fmt.wrap) {

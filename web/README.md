@@ -2,7 +2,7 @@
 
 **The host shim, `host.js`, runs a cartridge on the loop of `SPEC.md`
 section 5 over the engine's module, every input a cell it writes and every
-effect a cell it reads, and blits the Screen as a plane of colour indices.
+effect a cell it reads, and blits the Screen as a plane of color indices.
 It runs over the engine's own module, `alonzo.wasm`, built into the page,
 the language computing every cell; `fake.js`, a double of the eleven
 exports the loop calls, is what its oracle drives and what the page falls
@@ -38,7 +38,7 @@ frame the person sees, the wheel and the last key; a person's edits, each
 its own write; the step with a budget in cells, which may yield and continue
 on the next tick, the progress a sentence; then the effects, the Camera
 first and the Palette, so the frame is drawn through its own Camera and
-colours, the Screen as the plane through the Camera's window, the Keys, the
+colors, the Screen as the plane through the Camera's window, the Keys, the
 Audio rows, the File's save cell, the Write sheet and the Clock's rate,
 which a person may write into `Clock!B2` and the loop then steps at. At a
 load whose manifest says `(seed host)` the host writes the seed into
@@ -115,7 +115,7 @@ sound the frame the grid holds again when it starts.
 | `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
 | `unload()` / `destroy()` | frees the handle and empties the canvas and the viewport; removes the listeners, and the viewport with them |
 | `vp` | grid mode's viewport (`ENGINE.8`), made at the first grid load over `options.grid` and kept across loads: a grid cartridge's Screen, its record through the Camera's window drawn at frame 0 and after every frame, each frame's record replacing the last with the person's scroll and selection kept, scrolled to the window's corner at a load and by the Camera's move after it; a page focuses its `scroller` to give it the keys |
-| `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat, refusal }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line, `refusal` true for a refusal or a failure; a notice of a value the host coerced, a Camera cell read as 1 or a colour painted magenta, is not one), `frame` (`{ frame, window, scale, rate, replay }`, after a frame completes, `rate` the one the Clock now holds, `replay` the last frame of a replay playing or 0), `load` (`{ handle, title, mode, w, h, rate, window, scale }`, after frame 0 is drawn), `stop` (`{ frame }`, when a running loop stops, at Pause, a replay's end, a refused step, a load or an unload, so that a page draws what it shows of the grid at that frame) |
+| `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat, refusal }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line, `refusal` true for a refusal or a failure; a notice of a value the host coerced, a Camera cell read as 1 or a color painted magenta, is not one), `frame` (`{ frame, window, scale, rate, replay }`, after a frame completes, `rate` the one the Clock now holds, `replay` the last frame of a replay playing or 0), `load` (`{ handle, title, mode, w, h, rate, window, scale }`, after frame 0 is drawn), `stop` (`{ frame }`, when a running loop stops, at Pause, a replay's end, a refused step, a load or an unload, so that a page draws what it shows of the grid at that frame) |
 
 `AlonzoHost.instantiate(bytes)` and `instantiateSync(bytes)` instantiate a
 module with the empty import object of section 8.1; `AlonzoHost.RULES` holds
@@ -155,7 +155,7 @@ over it in words. It reads a cartridge's
 manifest, the engine's own duty, and never a row after it, and it evaluates
 nothing (`AD-1`); its grid is hard-coded and declared in `AlonzoFake.RULES`:
 the Screen's bytes as eight-by-eight tiles cycling through the sixteen
-colours with one row swept by a byte past the palette, the CGA palette,
+colors with one row swept by a byte past the palette, the CGA palette,
 TIC-80's keys, a Write sheet whose rows land or are refused on a rule of the
 frame, and a history cell that makes the end state's digest witness the
 order of every write; in grid mode its Screen's record draws the tiles through
@@ -232,15 +232,15 @@ gun fire a glider every thirty frames, south-east until the stream meets the
 border; its pattern is the Seed sheet, which the first frame reads, drawn in
 its source as one picture, a string a row and a hex digit a cell, `1` alive
 and a dot nothing (`KIT.2`). Pick the test card to see the plane's
-whole rule: the sixteen colours as bars, magenta wherever a value is no
-colour (a byte past the palette, a fraction, a text, a truth value, an
+whole rule: the sixteen colors as bars, magenta wherever a value is no
+color (a byte past the palette, a fraction, a text, a truth value, an
 error), black for an empty cell, the window panning a column a frame across
 a Screen wider than it and wrapping after 21 frames. Pick the input card,
 click the plane to give it the keys, and see every cell the host writes
 before a step: a lamp for each button of four players, white while held and
-a new colour after each press (the arrows, Z, X, A, S, Enter and Space for
+a new color after each press (the arrows, Z, X, A, S, Enter and Space for
 player 1; I, K, J, L, U, O, Y, P, 9 and 0 for player 2), the mouse's three
-buttons and a cursor under the pointer in their colours, the wheel panning
+buttons and a cursor under the pointer in their colors, the wheel panning
 the card with the cursor still under the pointer, the frame's bits, and the
 seed's and the dice's from the seed the host chose; write `(cell "Clock"
 "B2" 1)` to watch it step once a second. Open The replay: the input card's
@@ -251,7 +251,7 @@ replay, reload the page, paste it into the box, and press Play the replay
 to watch the same run again. Pick the sound card, press Sound on, and hear
 its eight-second loop: A4 through the four waves, a scale, two chords and a
 slide under a swell, the notes falling down the Screen in each voice's
-colour; press Z or an arrow for a tick; write `(cell "Knobs" "B1" "saw")`
+color; press Z or an arrow for a tick; write `(cell "Knobs" "B1" "saw")`
 and the log says voice 4's wave is no wave and the tick is silent, then
 `(cell "Knobs" "B1" "square")` for a square one; Pause and the sound stops,
 Run and it sounds again. Open The replay with the sound card picked: its
@@ -268,7 +268,7 @@ water, which spreads along whatever it lands on and never settles, a lake's
 edge shimmering; press 2 and paint walls, press 0 and the left button paints
 empty, as the right button always does; turn the wheel to size the brush
 from 1 to 8, and see the material the left button paints in the floor's
-colour. Its Stay sheet, the cells that keep their occupant this frame, 2
+color. Its Stay sheet, the cells that keep their occupant this frame, 2
 where it is water, its Side sheet, the cells occupied once the water has
 moved sideways, its Parity column and its Tally, each row's codes and
 occupied cells, are in the sheet picker. Open The replay with Sand picked:
@@ -331,7 +331,7 @@ baseline to the roadmap's bars.
   page's own rule from `SPEC.md` section 3.1 (a whole number from 0 to 254
   itself, any other value 255, an absent cell and a formula with no value
   row 0), and the canvas's pixels at a cell of each kind are the Palette's
-  colour or magenta, over the double, its Camera moved by edits, and over the
+  color or magenta, over the double, its Camera moved by edits, and over the
   engine's module, the test card's twenty-four frames under a Camera that
   pans a column a frame; and the pass in the page (`pass`, `SPEC.3`): every
   source the page holds, expanded over the module, is its cartridge as the
@@ -503,7 +503,7 @@ an integer of them, every gridline at an integer plus a half, so the image
 is crisp at the machine's ratio, and the backing store is remade when the
 ratio changes.
 
-**The colours** are options with defaults: `background` `#ffffff`,
+**The colors** are options with defaults: `background` `#ffffff`,
 `gridline` `#d9d9d2`, `header` `#f3f3ee`, `headerText` `#6b6b66`,
 `headerSelected` `#e2d8f6`, `text` `#1d1d1b`, `formula` `#0a6b4f`,
 `selectionFill` `rgba(226, 216, 246, 0.45)`, `selectionBorder` `#6b4fc8`,

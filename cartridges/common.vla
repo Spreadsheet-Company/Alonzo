@@ -110,7 +110,7 @@
 ; ---- the Palette (SPEC.md section 3.2) ----------------------------------------------
 
 (defmacro (palette & entries)
-  "the Palette's sixteen rows: each entry a colour and a name, its index its place from 0"
+  "the Palette's sixteen rows: each entry a color and a name, its index its place from 0"
   (quasiquote (palette-from 0 (unquote entries))))
 
 (defmacro (palette-from index entries)
@@ -122,14 +122,14 @@
       (palette-from (+expand index 1) (cdr entries)))))
 
 (defmacro (palette-entry index entry)
-  "one Palette row: the index in column A, the colour in B, the name in C"
+  "one Palette row: the index in column A, the color in B, the name in C"
   (cell "Palette" (symbol "\"A" (+expand index 1)) index)
   (cell "Palette" (symbol "\"B" (+expand index 1)) (car entry))
   (cell "Palette" (symbol "\"C" (+expand index 1)) (car (cdr entry))))
 
 (defmacro (cga-palette)
   "the CGA's sixteen in their own order, SPEC.md section 3.2's table, a palette with a name"
-  (palette                          ; the sixteen colours, index 0 first
+  (palette                          ; the sixteen colors, index 0 first
     ("#000000" "black")             ; 0
     ("#0000AA" "blue")              ; 1
     ("#00AA00" "green")             ; 2
@@ -149,7 +149,7 @@
 
 ; ---- the looks (SPEC.md section 7.3) ------------------------------------------------
 ; The grid's twin of the Palette: a look map, each value drawn through a format whose
-; fill is a colour, so that the grid draws a sheet's values as the plane draws its bytes
+; fill is a color, so that the grid draws a sheet's values as the plane draws its bytes
 ; (SPEC.md decision 19). A fill is written as the record writes it, six hex digits and
 ; no #.
 

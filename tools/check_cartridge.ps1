@@ -35,7 +35,7 @@ WHAT IT HOLDS, for each .vla under cartridges/, with the catalogue's ids:
   - the Screen's cells inside the declared size when no Camera sheet is
     written (cart-screen-outside);
   - in plane mode, the Palette's sixteen rows: A1 to A16 holding 0 to 15 in
-    order and B1 to B16 a colour as #RRGGBB (cart-palette-invalid);
+    order and B1 to B16 a color as #RRGGBB (cart-palette-invalid);
   - no NOW, TODAY, RAND or RANDBETWEEN in any formula, string literals
     aside (cart-formula-volatile, the Clock named).
 And a baseline that pins how many: the cartridges counted, and each one's
@@ -90,7 +90,7 @@ to (spec 3); thirty-two mutants must each fail for its own reason, each
 asserting its anchor once and proving it applied before the check is asked.
 Thirteen are of life.vla: a directive dropped, a rate of 121, a screen 321
 wide, a cell written twice, a cell outside the Screen, a Palette index out
-of order, a colour that is not #RRGGBB, NOW() in the rule, a sheet named
+of order, a color that is not #RRGGBB, NOW() in the rule, a sheet named
 Board.last, the header dropped, an unknown row kind, a formula into
 Input!B1, and the file renamed out of its folder's name, which the count
 must catch. Seven are SPEC.3's: a (spec 4), a macro left in a cartridge,
@@ -459,9 +459,9 @@ function Test-Cartridge([string]$path) {
             for ($row = $w.Rect.T; $row -le $w.Rect.B; $row++) { for ($col = $w.Rect.L; $col -le $w.Rect.R; $col++) { $pal[[string]$row + '|' + $col] = $w.Value } }
         }
         for ($row = 1; $row -le 16; $row++) {
-            $ix = $pal[[string]$row + '|1']; $colour = $pal[[string]$row + '|2']
+            $ix = $pal[[string]$row + '|1']; $color = $pal[[string]$row + '|2']
             if ($null -eq $ix -or -not (Test-Kind $ix 'number') -or [double]$ix.Text -ne ($row - 1)) { $problems.Add("cart-palette-invalid: Palette!A$row holds $(Show-Datum $ix), and the index $($row - 1) belongs there (SPEC.md section 3.2)") }
-            if ($null -eq $colour -or -not (Test-Kind $colour 'string') -or $colour.Value -cnotmatch '^#[0-9A-Fa-f]{6}$') { $problems.Add("cart-palette-invalid: Palette!B$row holds $(Show-Datum $colour), not a colour as #RRGGBB") }
+            if ($null -eq $color -or -not (Test-Kind $color 'string') -or $color.Value -cnotmatch '^#[0-9A-Fa-f]{6}$') { $problems.Add("cart-palette-invalid: Palette!B$row holds $(Show-Datum $color), not a color as #RRGGBB") }
         }
     }
 
@@ -707,7 +707,7 @@ if ($Control) {
             @{ Name = 'a cell written twice'; Append = '(cell "Palette" "C2" "twice")'; Want = 'cart-cell-written-twice: Palette!C2' },
             @{ Name = 'a cell outside the Screen'; Append = '(cell "Screen" "A201" 1)'; Want = 'cart-screen-outside: Screen!A201' },
             @{ Name = 'a Palette index out of order'; Anchor = '(cell "Palette" "A2" 1)'; With = '(cell "Palette" "A2" 2)'; Want = 'cart-palette-invalid: Palette!A2 holds 2' },
-            @{ Name = 'a colour that is not #RRGGBB'; Anchor = '"#FFFFFF"'; With = '"white"'; Want = 'cart-palette-invalid: Palette!B2 holds "white"' },
+            @{ Name = 'a color that is not #RRGGBB'; Anchor = '"#FFFFFF"'; With = '"white"'; Want = 'cart-palette-invalid: Palette!B2 holds "white"' },
             @{ Name = 'NOW() in the rule'; Anchor = 'Clock!$B$1=1'; With = 'NOW()>0'; Want = 'cart-formula-volatile' },
             @{ Name = 'a sheet named Board.last'; Append = '(cell "Board.last" "A1" 1)'; Want = 'cart-sheet-reserved: the sheet Board.last' },
             @{ Name = 'the header dropped'; Anchor = $header; With = '; no licence'; Want = 'the licence header is not the first line' },

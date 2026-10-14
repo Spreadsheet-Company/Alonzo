@@ -19,7 +19,7 @@
   person's edits, each its own write; the step with a budget in cells,
   which may yield and continue on the next tick, its progress a sentence
   (SD-34); the effects read after the step, the Camera first and the
-  Palette, so that a frame is drawn through its own Camera and colours,
+  Palette, so that a frame is drawn through its own Camera and colors,
   then the Screen as the plane through the Camera's window, the Keys, the
   Audio rows, the File's save cell, the Write sheet and the Clock's rate,
   which a person may write and the loop then steps at; and the blit, the
@@ -84,7 +84,7 @@
   status and the last twenty events in a log, a repeat of an event counted in
   the line it first made rather than pushing the others out (SD-30), and a
   refusal or a failure is marked as one, so that a page paints every refusal
-  one colour. Every view over the module's memory is made fresh for each
+  one color. Every view over the module's memory is made fresh for each
   read, since any growth of the memory detaches the buffer the earlier views
   were made over. A page hears four events: status, a sentence; load, frame 0
   drawn; frame, a frame completed; and stop, a running loop stopped at its
@@ -726,7 +726,7 @@
       else bad.push('B' + i);
     }
     this.table = table; this.paletteCount = count;
-    if (bad.length) this._say('frame ' + this.frame + ': the Palette\'s ' + bad.join(', ') + ' hold no #RRGGBB colour; those indices paint magenta.');
+    if (bad.length) this._say('frame ' + this.frame + ': the Palette\'s ' + bad.join(', ') + ' hold no #RRGGBB color; those indices paint magenta.');
   };
   Host.prototype._drawPlane = function () {
     var c = this.cart, t0 = this.now();
@@ -1351,7 +1351,7 @@
   // Every sentence goes into the history; an event goes into the log as well, a new line for a new
   // event and a count for a repeat; a repeat leaves the status line to the last new event. A refusal
   // or a failure is marked as one, the module's or the host's, so that a page paints it so (the
-  // owner's word, 2026-10-09: every refusal one colour); a notice of a value coerced is not one.
+  // owner's word, 2026-10-09: every refusal one color); a notice of a value coerced is not one.
   Host.prototype._say = function (text, kind, refusal) {
     kind = kind || 'event'; refusal = !!refusal;
     this.history.push({ text: text, kind: kind, refusal: refusal });

@@ -26,11 +26,11 @@
 ; The sheets, in tab order: the Screen the rule draws on, the Palette it draws with.
 (sheets "Screen" "Palette")
 
-; The Palette (SPEC.md section 3.2): sixteen entries from index 0, each a colour as
+; The Palette (SPEC.md section 3.2): sixteen entries from index 0, each a color as
 ; #RRGGBB and a name, which the library's palette writes into columns A, B and C. Index 0
 ; is a dead cell and index 1 a live one, so the rule's arithmetic over 0 and 1 is the
-; colour; the CGA's other fourteen follow, blue to yellow, for a modder to use.
-(palette                            ; the sixteen colours, index 0 first
+; color; the CGA's other fourteen follow, blue to yellow, for a modder to use.
+(palette                            ; the sixteen colors, index 0 first
   ("#000000" "dead")                ; 0, black: a dead cell
   ("#FFFFFF" "alive")               ; 1, white: a live cell
   ("#0000AA" "blue")                ; 2
