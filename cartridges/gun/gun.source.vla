@@ -18,7 +18,7 @@
   (screen plane 320 200)            ; plane mode, 320 cells wide and 200 high: A1:LH200
   (seed 1)                          ; the dice, Clock!B3: the gun reads none, and every directive is given
   (author "Spreadsheet Company")    ; who wrote it
-  (licence "0BSD")                  ; the header's twin: copy this file to start a cartridge of your own
+  (license "0BSD")                  ; the header's twin: copy this file to start a cartridge of your own
   (notes "Gosper's glider gun, found by Bill Gosper's group at MIT in 1970, the first pattern known to grow without bound: a glider every thirty frames, south-east across the plane until the stream meets the border at frame 741. Every cell is Life's rule; the first frame reads the Seed sheet. Edit the Seed's rows and load again to fire another pattern."))
 
 ; The sheets, in tab order: the Screen the rule draws on, the Palette it draws with, and
@@ -36,8 +36,8 @@
   ("#AA0000" "red")                 ; 5
   ("#AA00AA" "magenta")             ; 6
   ("#AA5500" "brown")               ; 7
-  ("#AAAAAA" "light grey")          ; 8
-  ("#555555" "dark grey")           ; 9
+  ("#AAAAAA" "light gray")          ; 8
+  ("#555555" "dark gray")           ; 9
   ("#5555FF" "light blue")          ; 10
   ("#55FF55" "light green")         ; 11
   ("#55FFFF" "light cyan")          ; 12
@@ -49,7 +49,7 @@
 ; from its published pattern (LifeWiki, "Gosper glider gun"; RLE x = 36, y = 9:
 ; 24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!).
 ; Its facts, which the runner holds its own Life to: period 30; 36 cells, then 5 more a
-; period, one glider each, travelling south-east a cell every four frames.
+; period, one glider each, traveling south-east a cell every four frames.
 ; One picture of the box, the library's: each string a row of the box and each character
 ; a cell, in PICO-8's legend, hex, so 1 is a live cell and the Palette's alive, and a dot
 ; writes no cell, dead, which the first frame reads as 0.
@@ -73,12 +73,12 @@
 ;   The first frame, Clock!B1 = 1, reads the Seed's cell at the same address: 1 where the
 ;   gun stands, and an empty cell elsewhere, which the formula's value settles to 0.
 ;   Every later frame is Conway's rule over the previous frame, life.vla's word for word:
-;   a cell is alive when its eight neighbours hold three live cells, or two and it was
+;   a cell is alive when its eight neighbors hold three live cells, or two and it was
 ;   alive itself.
 (first-frame                        ; the rule, one fill over the interior:
   "Screen"                          ;   the sheet it writes
   "B2:LG199"                        ;   the interior; the border stays empty, dead
   "Seed!B2"                         ;   the first frame: the Seed's cell at the same address
   (&expand                          ;   every later frame: Conway's rule over the previous frame,
-    "IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,"                    ;   alive with three live neighbours,
+    "IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,"                    ;   alive with three live neighbors,
     "AND(Screen.last!B2=1,SUM(Screen.last!A1:C3)-Screen.last!B2=2)),1,0)"))  ;   or with two and alive itself

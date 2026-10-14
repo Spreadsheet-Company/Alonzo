@@ -5,7 +5,7 @@
 ; The second loses a light at levels 2 and 4, refuses the minor prize again, and misses
 ; at level 15, so the stack falls; the replay ends after the fall's hold, the tower
 ; cleared. Its golden is the Tally at its last frame.
-(replay "kairos" (spec 3) (cartridge "F84EFCE27AB4E880B43B4869FA07ED012180AEE8642AA92ACEBD9B9B02E3C6E8") (seed 1))
+(replay "kairos" (spec 3) (cartridge "A4A95C6757B7DDC245A5B21D4A2F573CF56458B1B58189D36A06A6A142A5EA58") (seed 1))
 (frame 1
   (cell "Input" "B1" 0)
   (cell "Input" "C1" 0)

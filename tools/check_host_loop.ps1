@@ -152,7 +152,7 @@ a host that issues the derived writes after the inputs, whose edit of
 State!B1 must lose to the derived write and fail by name; a template
 whose loop element is cut, which this check must fail for want of the
 block; when the real page holds the engine's module, a template whose
-reference Life lets a cell survive on three neighbours alone, which the
+reference Life lets a cell survive on three neighbors alone, which the
 engine case must fail by name at frame 11, proving the comparison bites
 (not applicable to a page without a module); a host that draws no frame 0
 at a load, whose scale case must fail after its reload; a host that
@@ -536,7 +536,7 @@ if ($Control) {
         $rC = Invoke-Loop $browser (New-MutantPage 'c' $tplC $hostJs) '1'
         $cNoBlock = ($rC.Text -eq '') -and ($rC.Reason -like 'no loop block*')
         # mutant D, when the real page holds the engine's module: the reference Life lets a cell
-        # survive on three neighbours alone; the engine case must fail by name at frame 11
+        # survive on three neighbors alone; the engine case must fail by name at frame 11
         $moduleReal = 0
         if ($r0.Text -ne '') { $am = [regex]::Match($r0.Text, 'case abi: [^\n]*module (\d+)'); if ($am.Success) { $moduleReal = [int]$am.Groups[1].Value } }
         $dApplied = $false; $dFailed = 0; $dNote = 'not applicable, the real page holding no engine module'

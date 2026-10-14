@@ -21,7 +21,7 @@
   (screen plane 40 24)              ; the window: 40 cells wide and 24 high, placed by the Camera
   (seed 1)                          ; the dice, which nothing here reads
   (author "Spreadsheet Company")    ; who wrote it
-  (licence "0BSD")                  ; the header's twin
+  (license "0BSD")                  ; the header's twin
   (notes "The plane's test card: the sixteen colors as bars, then every kind of value a Screen cell can hold, then formulas that compute each kind, on a Screen 56 columns wide that the Camera pans one column a frame. Anything that is not a whole number from 0 to 15 is magenta, so a wrong value is seen."))
 
 ; The sheets, in tab order: the Screen, the Palette it draws with, the Camera that places it.
@@ -53,8 +53,8 @@
   ("M1:O8" 4)                       ; red
   ("P1:R8" 5)                       ; magenta
   ("S1:U8" 6)                       ; brown
-  ("V1:X8" 7)                       ; light grey
-  ("Y1:AA8" 8)                      ; dark grey
+  ("V1:X8" 7)                       ; light gray
+  ("Y1:AA8" 8)                      ; dark gray
   ("AB1:AD8" 9)                     ; light blue
   ("AE1:AG8" 10)                    ; light green
   ("AH1:AJ8" 11)                    ; light cyan

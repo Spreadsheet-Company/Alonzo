@@ -43,7 +43,7 @@ Four claims, each a thing to protect:
 1. **It is funny.** The game is fun insofar as it is funny (owner). Every string is a chance.
 2. **It is a spreadsheet.** Every number on every screen is a cell in a workbook the player may open. By the late game the player has written a trading bot in formulas and nobody told them that was programming.
 3. **It teaches.** The market is a model the player can inspect and change; the options pane builds iron condors; the exam teaches economics by being ridiculous.
-4. **It is checkers first and chess later.** AdVenture Capitalist is checkers; Buffet is chess (owner). The first five minutes must be checkers. The chess arrives one licence at a time.
+4. **It is checkers first and chess later.** AdVenture Capitalist is checkers; Buffet is chess (owner). The first five minutes must be checkers. The chess arrives one license at a time.
 
 ---
 
@@ -75,7 +75,7 @@ Every player-visible string, which is to say:
 - the exam, its proctor and its certificate (section 3);
 - vehicle names, tickers, and what the index funds are called;
 - the news ticker and event headlines;
-- licence names, compliance memos and the audit's findings;
+- license names, compliance memos and the audit's findings;
 - staff, rivals, clients, the league table;
 - achievements, titles (Intern, Associate, VP "a title given instead of a raise", Director, Managing Director, Partner, Legend);
 - error values (`#NUM!` reads "net worth exceeds the known universe");
@@ -118,7 +118,7 @@ It is also the controls tutorial: every answer is a click, so the player has lea
 ### Scoring and consequence (rec)
 
 - Starting capital: a base plus a small amount per correct answer. (The first purchase is penny stocks; the first dollar should feel like a dollar.)
-- The final question picks the archetype, which sets the firm's *flavour*, not its power: **Prudent & Sons** (reads the prospectus), **Headline Capital** (reads the headlines), **Read-the-Room Partners** (reads the room), **Vibes LLC** (feels).
+- The final question picks the archetype, which sets the firm's *flavor*, not its power: **Prudent & Sons** (reads the prospectus), **Headline Capital** (reads the headlines), **Read-the-Room Partners** (reads the room), **Vibes LLC** (feels).
 - The certificate prints the firm's name, the date, and a signature that is, on inspection, a doodle of a bull.
 
 ### The bank (draft; correct answer marked ✔)
@@ -146,11 +146,11 @@ It is also the controls tutorial: every answer is a click, so the player has lea
 
 The bank should reach 40 to 60 over time. Every question carries a one-line "why" the game can show later in a concept card (section 10).
 
-### The licence ladder as progressive disclosure (rec)
+### The license ladder as progressive disclosure (rec)
 
-Each licence is an exam *and a layer of the interface*. A player cannot see the options pane until they have earned the option approval, which is how chess is kept from frightening checkers players.
+Each license is an exam *and a layer of the interface*. A player cannot see the options pane until they have earned the option approval, which is how chess is kept from frightening checkers players.
 
-| Licence | The real thing | What it unlocks here |
+| License | The real thing | What it unlocks here |
 |---|---|---|
 | Series 777 | fictional entry exam | cash, stocks (the first rungs), net worth |
 | SIE and Series 7 | Securities Industry Essentials; general securities representative | stocks and bonds |
@@ -161,12 +161,12 @@ Each licence is an exam *and a layer of the interface*. A player cannot see the 
 | Series 24 | general securities principal | staff and the firm's structure |
 | Series 79 | investment banking | the IPO prestige |
 | Series 82 | private securities offerings | private equity and venture |
-| State broker licence | real estate | real estate |
-| State insurance producer licence | insurance | the insurance class |
+| State broker license | real estate | real estate |
+| State insurance producer license | insurance | the insurance class |
 | BitLicense, in spirit | crypto | crypto vehicles |
 | Accredited investor, qualified purchaser | net-worth gates, not exams | private deals; the hedge-fund structure |
 
-Joke licences, for the gag cabinet: Series 404 (licence not found), Series 1040 (mostly forms), Series 11 (goes to eleven), Series 42 (the answer), Series 99 (the dollar-store licence), Series 0 (the trivial one). (check) The real licence names above are the sitting's reading; verify before they appear on screen.
+Joke licenses, for the gag cabinet: Series 404 (license not found), Series 1040 (mostly forms), Series 11 (goes to eleven), Series 42 (the answer), Series 99 (the dollar-store license), Series 0 (the trivial one). (check) The real license names above are the sitting's reading; verify before they appear on screen.
 
 ---
 
@@ -189,8 +189,8 @@ The tension (rec): every dollar drawn is a dollar not compounding in the firm. A
 | Analyst | cleans the signal in the indicators | has opinions; most are footnotes |
 | Trader | cuts execution costs; runs the strategy sheet at lower slippage | shouts at screens; they do not shout back |
 | Quant | unlocks the model inspector and factor views | has Greek letters; does not share |
-| Compliance officer | lowers audit and fine risk; required per licence | has a binder; the binder has a binder |
-| Lobbyist | shifts regulatory events; unlocks grey-area ventures | has a golf bag; the golf bag has a lobbyist |
+| Compliance officer | lowers audit and fine risk; required per license | has a binder; the binder has a binder |
+| Lobbyist | shifts regulatory events; unlocks gray-area ventures | has a golf bag; the golf bag has a lobbyist |
 | Steve | nobody knows | things go wrong when he is out |
 
 Staff are paid every tick. The *burn rate* is a number on the dashboard, and a bust makes fixed costs hurt (operating leverage, taught by being fired).
@@ -208,7 +208,7 @@ Client money is how the firm scales and what the firm can lose.
 | A Sovereign Wealth Fund | scale | never; it just moves the market |
 | A Guy Named Chad | 10x, immediately | the first red day, loudly |
 
-### Fees (the maths)
+### Fees (the math)
 
 ```text
 management fee   = 2% a year of AUM, accrued each tick
@@ -238,7 +238,7 @@ Yes. The difficulty picker *is* the model's complexity, and each tier is a lesso
 2. **Exogenous.** The player does not move the market (execution slippage is a cost, not a path change). That keeps scores comparable and replays verifiable. (An endgame twist, "you are now the weather", may let a sovereign-scale player move prices; it belongs to a career mode, not the leaderboards.)
 3. **Quasi-periodic, never periodic.** A pure sine is solvable: two peaks reveal period and phase, and timing becomes arithmetic. Cycles must be incommensurate, modulated, noisy and punctured by shocks.
 4. **Partly informative.** Leading indicators are noisy views of hidden state. Analysts buy a cleaner view. Nothing is certain; a lot is knowable.
-5. **A toy, labelled as one.** Parameters are loosely calibrated and honestly flagged. The game shows its work and keeps a "Things this game gets wrong" sheet (section 10).
+5. **A toy, labeled as one.** Parameters are loosely calibrated and honestly flagged. The game shows its work and keeps a "Things this game gets wrong" sheet (section 10).
 
 ### The shape
 
@@ -256,7 +256,7 @@ vehicle(v)  = price0(v) * class(c(v), t) * (1 + idio(v, t))
 - **Noise** is an AR(1) walk from the seeded stream: `n(t) = phi*n(t-1) + sigma*z(t)`. A near-normal `z` is a sum of uniforms (Irwin and Hall: twelve uniforms minus six); there is no `LN` for Box and Muller.
 - **Volatility clusters:** `sigma(t) = sigma0 * (1 + k*stress(t))`, stress rising in drawdowns.
 - **Shocks** are rare and asymmetric: down fast, up slowly ("the stairs up and the elevator down"). A heavy tail is `u^(-1/alpha)`, a Pareto draw by inverse transform; `^` makes it one cell.
-- **Class phases** follow the Investment Clock: recovery favours stocks, overheating commodities, stagflation cash, reflation bonds. *Rotation* is therefore a skill and not a slogan.
+- **Class phases** follow the Investment Clock: recovery favors stocks, overheating commodities, stagflation cash, reflation bonds. *Rotation* is therefore a skill and not a slogan.
 - **Crisis correlation:** `rho(t) = rho + stress(t) * (1 - rho)`. In a crisis every correlation goes to one, which is when diversification fails and tail hedges earn their keep. Teach this by letting it hurt.
 - **Seasonality** per class: harvests for grain, driving season for oil, December tax-loss selling, the January effect, "sell in May".
 - **Per-class cycles:** crypto's four-year halving beat, real estate's long slow wave, the commodity supercycle.
@@ -296,7 +296,7 @@ The cartridge is open (`AD-6`) and deterministic. The market is a function of a 
 
 - **Score by alpha on your own seed** (rec): the score is excess return over a benchmark *on the same market* (buy and hold, 60/40), so runs on different seeds are comparable, and the seed travels in the replay header. Foresight is then a skill you may exercise but cannot make comparable by *choosing* a seed.
 - **Daily market, as a puzzle** (rec): everyone gets the same seed, spoilers are expected (like any daily puzzle), and the best replay is shared; the leaderboard is "who found the cleverest path", which is a perfectly respectable game.
-- **Open-book category:** the model is public by design and the competition is *out-modelling the model*. This is the Excel-modelling-competition culture exactly, and it may be the sharpest marketing hook in the file.
+- **Open-book category:** the model is public by design and the competition is *out-modeling the model*. This is the Excel-modeling-competition culture exactly, and it may be the sharpest marketing hook in the file.
 - **The Strategy sheet's sandbox** (see section 8.6): whether rules may reference hidden state is a decision for the owner.
 
 ---
@@ -445,7 +445,7 @@ Each row below is: **vehicle**, then **what it does to the player**. Real names 
 
 - **Cash and banking, insurance, alternatives and collectibles:** the bunker; section 7.
 - **Venture and IP:** angel checks, seed, Series A to C, growth equity, unicorns, patents, royalty streams, the SPAC (a joke vehicle). *Page mechanic:* power-law payoffs (most go to zero, one pays a hundredfold), dilution, follow-on decisions.
-- **Infrastructure and energy** (later): toll roads, pipelines, solar farms, data centres, a nuclear plant. *Page mechanic:* build timers before income.
+- **Infrastructure and energy** (later): toll roads, pipelines, solar farms, data centers, a nuclear plant. *Page mechanic:* build timers before income.
 
 ---
 
@@ -499,7 +499,7 @@ These three classes are not an afterthought; they are the **other half of the ga
 | 11 | Catastrophe bonds | high yield until a hurricane |
 | 12 | Reinsurance treaty | underwrite the underwriters |
 
-*Mechanics:* **float** (premiums now, claims later) is leverage that feels free until the hurricane: steady pennies, a rare steamroller, a negative-skew payoff the player must provision for; premiums against payouts; claim events with seeded schedules; **counterparty risk** (the insurer can fail, which is a lesson from 2008 and funny only afterwards); the indexed annuity's capped upside as a teaching moment about structured products.
+*Mechanics:* **float** (premiums now, claims later) is leverage that feels free until the hurricane: steady pennies, a rare steamroller, a negative-skew payoff the player must provision for; premiums against payouts; claim events with seeded schedules; **counterparty risk** (the insurer can fail, which is a lesson from 2008 and funny only afterward); the indexed annuity's capped upside as a teaching moment about structured products.
 
 ### Alternatives and collectibles (The Attic)
 
@@ -540,11 +540,11 @@ The brief (owner): avoid "the inevitable monotony of clicking and waiting for ti
 - **Failure modes.** A death spiral that cannot be escaped (soft-lock); a first AUM so punishing that the early game is not checkers. Always leave a recoverable path, and make the first client forgiving.
 - **Teaches.** Why performance fees reward risk; why the high-water mark exists; why funds gate.
 
-### 8.2 Licences, exams and audits
+### 8.2 Licenses, exams and audits
 
-- **The loop.** Study (time and analysts), book the exam (a timer), sit it (a short mini-game), earn the licence, pay continuing education and compliance, and survive audits.
+- **The loop.** Study (time and analysts), book the exam (a timer), sit it (a short mini-game), earn the license, pay continuing education and compliance, and survive audits.
 - **The audit is a spreadsheet mini-game.** The examiner arrives (probability rises with size and falls with compliance), and the player must **find the planted error in their own books**: a typed-over constant, an inconsistent formula in a fill, a range that omits a cell. Defects are laid at build time (the step never writes formulas, `AD-7`), and a seeded one is "active". Click the cell. Correct: "a clean exam" (Mildred wept). Wrong: a fine and a reputational hit.
-- **The finance and compliance.** Real licence structure (section 3); fiduciary duty; recordkeeping; the idea that regulation is a cost centre and a moat.
+- **The finance and compliance.** Real license structure (section 3); fiduciary duty; recordkeeping; the idea that regulation is a cost center and a moat.
 - **The jokes.** The proctor; "Series 404"; the study montage.
 - **The engine.** Questions are rows (a `Exam` sheet); draws are seeded; the audit's defect index is a seeded value and the cell clicked is the pointer's Screen cell (`Input!B11` and `B12`).
 - **Failure modes.** Exam tedium: keep exams under about 90 seconds, make them skippable by delegating to staff (at a cost, "Steve sits the Series 7").
@@ -615,7 +615,7 @@ The brief (owner): avoid "the inevitable monotony of clicking and waiting for ti
 
 - **Taxes and holding periods.** Long-term against short-term gains, the wash-sale rule, year-end tax-loss harvesting, and an "April 15" ritual. **Tax lots** (FIFO, LIFO, highest-in-first-out) are a small optimization the spreadsheet community will enjoy.
 - **Position sizing and the Kelly gauge** on gambles (the IPO lottery, venture): overbetting ruins.
-- **Rumour against news.** Buy the rumour, sell the news: a drift then a reversal, as an event shape.
+- **Rumor against news.** Buy the rumor, sell the news: a drift then a reversal, as an event shape.
 - **The opening bell.** A 30-second optional skill burst, for the people who like to click.
 - **Earnings season.** Quarterly volatility spikes.
 - **Splits, reverse splits, delistings, bankruptcies.** Cosmetic and funny: "your one share is now ten shares of the same thing; nothing changed; everyone cheers".
@@ -628,7 +628,7 @@ The brief (owner): avoid "the inevitable monotony of clicking and waiting for ti
 
 > "Devising an option strategy construction pane would allow players to construct all sort of compound option strategies to 'speculate' against the market by constructing iron condors and other multi-leg strategies." (owner)
 
-This is the tutorial's centrepiece and the cartridge's most spreadsheet-native screen.
+This is the tutorial's centerpiece and the cartridge's most spreadsheet-native screen.
 
 ### The interface (rec)
 
@@ -678,8 +678,8 @@ q(i+1,j) = q(i,j-1)*p + q(i,j)*(1-p)                       ; Pascal's triangle o
 | **Iron butterfly**, "The Pin" | short straddle, long wings | a narrow profit tent |
 | **Long butterfly**, "The Sniper" | buy, sell two, buy | cheap bet on a price |
 | **Broken-wing butterfly**, "The Limp" | an asymmetric butterfly | a free-ish trade with a tail |
-| **Calendar spread**, "The Time Traveller" | sell near, buy far | time decay as a weapon; needs two expiries |
-| **Diagonal**, "The Time Traveller's Cousin" | calendar with strikes | |
+| **Calendar spread**, "The Time Traveler" | sell near, buy far | time decay as a weapon; needs two expiries |
+| **Diagonal**, "The Time Traveler's Cousin" | calendar with strikes | |
 | **Ratio spread**, "The Ratio Rat" | 1 long, 2 short | undefined risk with a smile |
 | **Jade lizard**, "The Lizard" | short put, short call spread | no upside risk if the credit exceeds the spread width |
 | **The Wheel**, "The Hamster" | cash-secured put, assignment, covered call, repeat | a loop that feels like an income and is a position |
@@ -715,7 +715,7 @@ It can, because the properties that make it a game (determinism, inspectability,
 
 ### Accuracy policy (rec)
 
-- **Toy models, labelled.** Every simplification is on a sheet called *Things this game gets wrong* (funny and honest): "volatility does not cluster this neatly; the Kondratiev wave is a crime against statistics; the yield curve has six points; real banks are worse".
+- **Toy models, labeled.** Every simplification is on a sheet called *Things this game gets wrong* (funny and honest): "volatility does not cluster this neatly; the Kondratiev wave is a crime against statistics; the yield curve has six points; real banks are worse".
 - **Not advice.** A plain statement, and the joke version beside it.
 - **Reviewed.** A finance educator reads the concept cards. (The owner's degree is tingling for a reason.)
 - **No real data.** No tickers with real prices, no feeds (`SD-13`).
@@ -765,9 +765,9 @@ Why it might be false: the sheet may be ignored and the game played as a game; t
 Gently, and in order of importance:
 
 1. **"Killer app" is a hypothesis, not a fact.** The enthusiasm is warranted; the claim should be written down as a prediction and given a way to fail (section 11). Chess is also a lot to ship.
-2. **Chess is the risk and the point.** Ship the checkers. The first playable must be fun in five minutes with ten rows, one cycle and the exam; the chess lives in data and unlocks one licence at a time. Progressive disclosure is not a nicety here, it is the product.
+2. **Chess is the risk and the point.** Ship the checkers. The first playable must be fun in five minutes with ten rows, one cycle and the exam; the chess lives in data and unlocks one license at a time. Progressive disclosure is not a nicety here, it is the product.
 3. **The cart before the horse.** The marketing tool needs a product to market. The spreadsheet cartridge (Frazaro the spreadsheet) needs `ENGINE.8`'s second slice and more; Buffet must not delay it, and Buffet's own first slice should run on what exists.
-4. **Education is a promise.** "Tutorial" implies correctness. The accuracy policy (section 10) is not optional, and a simplification labelled is a lesson while a simplification hidden is a liability.
+4. **Education is a promise.** "Tutorial" implies correctness. The accuracy policy (section 10) is not optional, and a simplification labeled is a lesson while a simplification hidden is a liability.
 5. **The funnel cannot be measured the usual way.** There is no analytics (`SD-13`). The only counters are what strangers do in public: forks, pull requests, stars, strategies and posts. That is a fine discipline, but it is a different one from every other game's.
 6. **Keep the seams.** "Everything finally comes together" is a feeling; chat, radio, collaboration, tutorial and the options pane are separate items that should each stay shippable alone (the house's ratchet: the instrument before the operation). Buffet needs none of the network items to be a great single-player game.
 7. **The open-book problem will be found in a week.** Plan for it (section 5); it is a feature if you frame it.
@@ -808,8 +808,8 @@ The game written by hand in the engine's tests, every frame held; closed forms (
 - **No formulas at run time.** The step computes values only (`AD-7`). Every vehicle exists at load, locked; adding a class is data, not engine work. A person may type formulas (the Strategy sheet is within the rules).
 - **The Write sheet is short.** One formula row per write, evaluated every frame (`SPEC.md` 3.9). Positions as formula state where possible.
 - **Text is data.** Strings are cell values. A picker is `CHOOSE(k, ref1, ref2, ...)`, limited by the 8,192-character formula limit: about a thousand references. A kit macro generates it.
-- **Grid mode.** The UI is a grid-mode cartridge (`ENGINE.8`): a window of at most 80 by 50 cells; a cell shows its value's text; a `look` fills by value; **a format has no font color** (found at `CART.4`). Whether custom number formats with literal glyphs (`▲0.0%;▼0.0%`) are honoured by the viewport is (check).
-- **Palette.** Lovelace Lavender: `#A080E0`, `#E2D8F6`, `#F7F4FC`, `#6B4FC8`, and the dark lavender greys; nothing else.
+- **Grid mode.** The UI is a grid-mode cartridge (`ENGINE.8`): a window of at most 80 by 50 cells; a cell shows its value's text; a `look` fills by value; **a format has no font color** (found at `CART.4`). Whether custom number formats with literal glyphs (`▲0.0%;▼0.0%`) are honored by the viewport is (check).
+- **Palette.** Lovelace Lavender: `#A080E0`, `#E2D8F6`, `#F7F4FC`, `#6B4FC8`, and the dark lavender grays; nothing else.
 - **Numbers.** Doubles end near 1.8e308 and then an error value; "no NaN reaches a cell". The end of the game is a designed thing.
 - **Time.** The frame number is the only clock; the host writes no time into any cell. Offline progress is a seek (`ENGINE.13`), not a wall-clock read in a formula.
 - **Determinism.** The same module gives the same bits on every browser; the native runner may differ in a transcendental's last bit, so goldens are held on the module. `SIN` and `^` are computed inside it.
@@ -873,7 +873,7 @@ The game written by hand in the engine's tests, every frame held; closed forms (
 - "Soybean futures bean-up after surprise harvest."
 - "Crypto exchange loses all customer funds, describes it as 'a learning process'."
 - "Board assures investors the losses are merely unrealized, 'like everything else'."
-- "Yield curve inverts; bonds observed walking backwards."
+- "Yield curve inverts; bonds observed walking backward."
 - "SEC announces new rule against funny business; definitions to follow."
 - "Company announces 'strategic pivot to AI'; stock up 40%; company still sells ice cream."
 - "Local man buys everything at the top; market tops."

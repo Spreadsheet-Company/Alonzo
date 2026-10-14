@@ -4,7 +4,7 @@
 ; one its host loads (ENGINE.1). The pass expands this file into life.vla beside it, the
 ; rows the engine loads (SPEC.md section 7.8): edit this one, then expand it again with
 ;   cargo run --release --example expand
-; Every cell of the interior, B2:LG199, is one formula of its eight neighbours in the
+; Every cell of the interior, B2:LG199, is one formula of its eight neighbors in the
 ; previous frame, the twin sheet Screen.last; the border stays empty, which the plane
 ; reads as 0, dead. The format is SPEC.md section 7; the shape is its Appendix A.
 
@@ -20,8 +20,8 @@
   (screen plane 320 200)            ; plane mode, 320 cells wide and 200 high: A1:LH200
   (seed 1)                          ; the dice, Clock!B3: the soup of the first frame
   (author "Spreadsheet Company")    ; who wrote it
-  (licence "0BSD")                  ; the header's twin: copy this file to start a cartridge of your own
-  (notes "Conway's Life, every cell one formula of its eight neighbours in the previous frame. The first frame is a soup from the seed; change (seed 1) for another."))
+  (license "0BSD")                  ; the header's twin: copy this file to start a cartridge of your own
+  (notes "Conway's Life, every cell one formula of its eight neighbors in the previous frame. The first frame is a soup from the seed; change (seed 1) for another."))
 
 ; The sheets, in tab order: the Screen the rule draws on, the Palette it draws with.
 (sheets "Screen" "Palette")
@@ -39,8 +39,8 @@
   ("#AA0000" "red")                 ; 5
   ("#AA00AA" "magenta")             ; 6
   ("#AA5500" "brown")               ; 7
-  ("#AAAAAA" "light grey")          ; 8
-  ("#555555" "dark grey")           ; 9
+  ("#AAAAAA" "light gray")          ; 8
+  ("#555555" "dark gray")           ; 9
   ("#5555FF" "light blue")          ; 10
   ("#55FF55" "light green")         ; 11
   ("#55FFFF" "light cyan")          ; 12
@@ -62,7 +62,7 @@
 ;   outside the engine: 23,683 of 62,964 cells alive, a 2x2 chi-square of 17.1 on 15
 ;   degrees of freedom against 300.7 without the square).
 ;   Every later frame is Conway's rule over the previous frame: a cell is alive when its
-;   eight neighbours hold three live cells, or two and it was alive itself.
+;   eight neighbors hold three live cells, or two and it was alive itself.
 (first-frame                        ; the rule, one fill over the interior:
   "Screen"                          ;   the sheet it writes
   "B2:LG199"                        ;   the interior; the border stays empty, dead
@@ -73,5 +73,5 @@
     "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859),"
     "67108859)<25165822,1,0)")
   (&expand                          ;   every later frame: Conway's rule over the previous frame,
-    "IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,"                    ;   alive with three live neighbours,
+    "IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,"                    ;   alive with three live neighbors,
     "AND(Screen.last!B2=1,SUM(Screen.last!A1:C3)-Screen.last!B2=2)),1,0)"))  ;   or with two and alive itself

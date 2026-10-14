@@ -67,7 +67,7 @@ pub fn at(row: usize, col: usize) -> usize {
     (row - 1) * W + (col - 1)
 }
 
-/// A disc of paint: its centre's row and column, its radius, and the
+/// A disc of paint: its center's row and column, its radius, and the
 /// material it paints.
 #[derive(Clone, Copy, Debug)]
 pub struct Brush {

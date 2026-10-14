@@ -7,7 +7,7 @@
 (screen plane 320 200)
 (seed 1)
 (author "Spreadsheet Company")
-(licence "0BSD")
+(license "0BSD")
 (notes "Gosper's glider gun, found by Bill Gosper's group at MIT in 1970, the first pattern known to grow without bound: a glider every thirty frames, south-east across the plane until the stream meets the border at frame 741. Every cell is Life's rule; the first frame reads the Seed sheet. Edit the Seed's rows and load again to fire another pattern.")
 (device "Screen" "A1:LH200" effect)
 (device "Palette" "A1:C16" effect)

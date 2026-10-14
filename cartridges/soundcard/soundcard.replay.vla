@@ -1,5 +1,5 @@
 ; SPDX-License-Identifier: 0BSD
-(replay "soundcard" (spec 3) (cartridge "EE6EC71E15851A5940043CC5C4E3D09EC38050E2A6D8A1450B8616F880BFBFDE") (seed 1))
+(replay "soundcard" (spec 3) (cartridge "F51C1190C0BCEEED29B216BD4432623254356E73A9C0E3DDFB4ECB1B10C230A1") (seed 1))
 (frame 1
   (cell "Input" "B1" 0)
   (cell "Input" "C1" 0)

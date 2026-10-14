@@ -251,7 +251,7 @@
       <li><b>sheet</b> rows are the tabs; a hidden or very-hidden sheet shows under the tabs' toggle. A tab without a record asks the host for one: here, the fixture of the same program if there is one.</li>
       <li><b>window</b> is the record's scope, the scroll's extent, never less than a screen; <b>extent</b> is the sheet's used rectangle; <b>gridlines</b> on or off.</li>
       <li><b>column</b> rows give widths in characters, the file's own unit, turned into pixels by ECMA-376's rule (72 is 504 px, 60 is 420 px; a column without a row is 64 px, Excel's default); a hidden column is skipped; a column's format fills its empty cells.</li>
-      <li><b>format</b> rows give a fill, general or text, wrap or nowrap. <b>cell</b> rows show their value as the reader spells it, numbers right, text left, TRUE and FALSE and errors centred; <b>formula</b> rows show the formula's text, in green, until the value row lands (KERNEL.7). A nowrap text spills into empty neighbours to the right; a number never does.</li>
+      <li><b>format</b> rows give a fill, general or text, wrap or nowrap. <b>cell</b> rows show their value as the reader spells it, numbers right, text left, TRUE and FALSE and errors centered; <b>formula</b> rows show the formula's text, in green, until the value row lands (KERNEL.7). A nowrap text spills into empty neighbors to the right; a number never does.</li>
       <li><b>style</b> and <b>sentence</b> rows ride on their cell: the sentence's row is in the selection's line below the grid, and in the <code>select</code> event the first game's chrome reads.</li>
     </ul>
   </details>
@@ -935,7 +935,7 @@
       if (said[j].indexOf('(line ') >= 0) { P.push('a refusal of a one-row write names its line: ' + said[j]); break; }
     }
     // A refusal is marked as one, for a page to paint every refusal one color (the owner's word,
-    // 2026-10-09): every sentence holding a catalogue id in brackets is marked, and no other is here.
+    // 2026-10-09): every sentence holding a catalog id in brackets is marked, and no other is here.
     var marks = r.host.sentences();
     for (var q = 0; q < marks.length; q++) {
       var hasId = /\[[a-z]+(?:-[a-z0-9]+)+\]/.test(marks[q].text);
@@ -1695,7 +1695,7 @@
     return L;
   }
   // What the viewport must draw in its body, by the record: each visible cell's fill, and each text, where
-  // it sits, how it aligns and where it is clipped, a nowrap text spilling into empty neighbours and one
+  // it sits, how it aligns and where it is clipped, a nowrap text spilling into empty neighbors and one
   // left of the view reaching into it; and the cells the record holds in a hidden row or column, counted.
   function gqExpect(m, L, measure) {
     var E = { texts: {}, wraps: {}, fills: {}, hiddenHeld: 0 }, ox = L.ox, oy = L.oy, sx = L.sx, sy = L.sy;
@@ -2232,7 +2232,7 @@
     ['abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu', 'CF5B16A778AF8380036CE59E7B0492370B249B11E8F07A51AFAC45037AFEE9D1'],
     [null, 'CDC76E5C9914FB9281A1C7E284D73E67F1809A48A497200E046D39CCC7112CD0']   // a million a's
   ];
-  // A replay's or a golden's file as the page holds it, its comment lines, the licence first, dropped.
+  // A replay's or a golden's file as the page holds it, its comment lines, the license first, dropped.
   function afterComments(text) { return String(text).replace(/\r\n/g, '\n').replace(/^(?:;[^\n]*\n)+/, ''); }
   // A replay's rows by frame, each frame one form holding them, read with the viewport's reader and
   // spelled back as the recorder spells a row.
@@ -2646,7 +2646,7 @@
     this.c.sounded++;
   };
   SoundModel.prototype.start = function (wants, rate, now) { this.end = null; this.frame(wants, rate, now); };
-  // A stop (decision 6): every voice's later events cancelled and its gain approaching 0 from now, its pitch forgotten.
+  // A stop (decision 6): every voice's later events canceled and its gain approaching 0 from now, its pitch forgotten.
   SoundModel.prototype.silence = function (now) {
     this.end = null;
     if (this.silent || !this.voices) return;
@@ -3627,7 +3627,7 @@
         else if (markOps[0].x !== mrect.x || markOps[0].y !== mrect.y || markOps[0].w !== mrect.w || markOps[0].h !== mrect.h) problems.push('the mark at ' + markOps[0].x + ',' + markOps[0].y + ', expected ' + mrect.x + ',' + mrect.y);
         else counts.marks++;
       }
-      // (7) the pixel probes, each at a corner inside the cell, off the glyphs and off a neighbour's spilled
+      // (7) the pixel probes, each at a corner inside the cell, off the glyphs and off a neighbor's spilled
       // text: a styled cell's corner is its fill, a plain cell's is white, its bottom edge a gridline's color
       var ctx = vp.canvas.getContext('2d');
       function pixel(x, y) { var d = ctx.getImageData(x, y, 1, 1).data; return [d[0], d[1], d[2]]; }

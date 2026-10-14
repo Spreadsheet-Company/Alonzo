@@ -137,8 +137,8 @@
     ("#AA0000" "red")               ; 4
     ("#AA00AA" "magenta")           ; 5
     ("#AA5500" "brown")             ; 6
-    ("#AAAAAA" "light grey")        ; 7
-    ("#555555" "dark grey")         ; 8
+    ("#AAAAAA" "light gray")        ; 7
+    ("#555555" "dark gray")         ; 8
     ("#5555FF" "light blue")        ; 9
     ("#55FF55" "light green")       ; 10
     ("#55FFFF" "light cyan")        ; 11

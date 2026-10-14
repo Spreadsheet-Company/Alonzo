@@ -26,7 +26,7 @@
 //! the step's own write being the frame's only one, and the rate and the
 //! seed are held to their ranges.
 //!
-//! **The refusals** are the engine's own catalogue, `data/messages.vla`, the
+//! **The refusals** are the engine's own catalog, `data/messages.vla`, the
 //! `cart` family, read by the language's mechanism; every other id is the
 //! language's.
 
@@ -40,19 +40,19 @@ use vla_lang::printer::write_datum;
 use vla_lang::reader::read_forms;
 use vla_lang::sheet::{number_text, parse_a1_range, A1Range, Cell, Content, MAX_ROW};
 
-/// The engine's half of the catalogue, embedded at build time: no file is
+/// The engine's half of the catalog, embedded at build time: no file is
 /// read when the module runs.
-const CATALOGUE_TEXT: &str = include_str!("../data/messages.vla");
+const CATALOG_TEXT: &str = include_str!("../data/messages.vla");
 
-fn catalogue() -> &'static Catalogue {
-    static CATALOGUE: OnceLock<Catalogue> = OnceLock::new();
-    CATALOGUE.get_or_init(|| Catalogue::parse(CATALOGUE_TEXT))
+fn catalog() -> &'static Catalogue {
+    static CATALOG: OnceLock<Catalogue> = OnceLock::new();
+    CATALOG.get_or_init(|| Catalogue::parse(CATALOG_TEXT))
 }
 
-/// A refusal from the engine's catalogue, or from the language's for an id
+/// A refusal from the engine's catalog, or from the language's for an id
 /// the engine does not hold.
 pub fn raise(id: &str, slots: &[(&str, &str)]) -> Refusal {
-    catalogue()
+    catalog()
         .raise(id, slots)
         .unwrap_or_else(|| messages::raise(id, slots))
 }
@@ -81,7 +81,7 @@ pub const GRID_MAX: (u32, u32) = (80, 50);
 pub const LINE: u64 = 2_000_000;
 
 const REQUIRED: [&str; 5] = ["spec", "title", "rate", "screen", "seed"];
-const OPTIONAL: [&str; 3] = ["author", "licence", "notes"];
+const OPTIONAL: [&str; 3] = ["author", "license", "notes"];
 
 /// The Screen's mode: a byte a cell through the Palette, or the record.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1160,7 +1160,7 @@ mod tests {
     }
 
     #[test]
-    fn the_catalogue_holds_every_id_the_engine_raises() {
+    fn the_catalog_holds_every_id_the_engine_raises() {
         let ids = [
             ("cart-manifest-invalid", vec![("what", "x")]),
             ("cart-spec-unsupported", vec![("spec", "3")]),
@@ -1185,11 +1185,9 @@ mod tests {
             ("cart-source-unexpanded", vec![("form", "x")]),
             ("cart-write-clock", vec![("target", "x"), ("what", "x")]),
         ];
-        assert_eq!(catalogue().count(), ids.len(), "every entry is raised");
+        assert_eq!(catalog().count(), ids.len(), "every entry is raised");
         for (id, slots) in &ids {
-            let r = catalogue()
-                .raise(id, slots)
-                .expect("the id is the engine's");
+            let r = catalog().raise(id, slots).expect("the id is the engine's");
             assert!(
                 !r.text.contains("RaiseMsg"),
                 "{id} fills every slot: {}",
@@ -1724,7 +1722,7 @@ mod tests {
             "(spec 2)\n",
             "(title \"Life\")\n",
             "(seed 1)\n",
-            "(licence \"0BSD\")\n",
+            "(license \"0BSD\")\n",
             "(device \"Screen\" \"A1:LH200\" effect)\n",
             "(device \"Palette\" \"A1:C16\" effect)\n",
             "(device \"Input\" \"A1:E18\" input)\n",
@@ -2222,7 +2220,7 @@ mod tests {
             "{name}: every frame of the replay played"
         );
         let golden = golden.replace("\r\n", "\n");
-        let (_, body) = golden.split_once('\n').expect("the licence line");
+        let (_, body) = golden.split_once('\n').expect("the license line");
         let (sheet, window) = body
             .lines()
             .find_map(|l| l.strip_prefix("(window \""))
@@ -3268,7 +3266,7 @@ mod tests {
 
     /// What a session of Kairos did: each game's end with its level, and how
     /// often a row turned at the board's last column and at its first, so that
-    /// a session can say its rows travelled the whole board.
+    /// a session can say its rows traveled the whole board.
     struct KairosRun {
         cartridge: Cartridge,
         game: Game,

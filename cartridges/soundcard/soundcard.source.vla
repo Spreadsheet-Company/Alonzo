@@ -32,7 +32,7 @@
   (screen plane 48 24)              ; the waterfall: 48 notes wide, 24 frames deep
   (seed 1)                          ; the dice, which nothing here throws
   (author "Spreadsheet Company")    ; who wrote it
-  (licence "0BSD")                  ; the header's twin
+  (license "0BSD")                  ; the header's twin
   (notes "The sound card: press Sound on, then hear the four waves, a scale, two chords and a slide under a swell, an eight-second loop. Press the arrows, Z, X, A, S, Enter or Space, or click the plane, for a tick; write another wave into Knobs!B1 to change it."))
 
 ; The sheets, in tab order: the Screen, the Audio sheet it draws, the Score that times the

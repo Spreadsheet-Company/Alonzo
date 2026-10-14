@@ -13,7 +13,7 @@
 //! and the length each had; every answer is one record, four little-endian
 //! `u32` (status, line, id length, text length), then the id's bytes and the
 //! text's bytes, its total length written to `out_len`. Status 0: the text is
-//! the answer. Status 1: a refusal, the id the catalogue's, the text its
+//! the answer. Status 1: a refusal, the id the catalog's, the text its
 //! words, the line the row it stands on or 0. Status 2: an input that is not
 //! UTF-8, named. The plane's answer is the one record whose text is bytes and
 //! not UTF-8.

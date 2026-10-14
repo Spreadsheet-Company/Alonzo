@@ -61,7 +61,7 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # 2026-10-08, REPO.2: 2 - check_host_imports.ps1 (the engine imports exactly
 # its allowlist, read off the wasm artifact; the forbidden names first, fetch
 # first among them) and check_spdx.ps1 (every tracked file resolves to one
-# licence through REUSE.toml, every licence has its text, every cartridge
+# license through REUSE.toml, every license has its text, every cartridge
 # carries its 0BSD header).
 # 2026-10-08, KERNEL.5 (laid here): 6 - check_web_offline.ps1 (the page and
 # the viewport's source load nothing and link nowhere, the placeholders in
@@ -178,7 +178,7 @@ if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 # quietly stop covering something the day a file was renamed.
 $extras = @(
     @{ Script = 'check_host_imports.ps1';  Args = @('-Control'); What = 'REPO.2 import reader and judgment: twelve modules built in memory, an unknown kind, a non-module' },
-    @{ Script = 'check_spdx.ps1';          Args = @('-Control'); What = 'REPO.2 licence map: a clean scratch tree passes, four mutants fail' },
+    @{ Script = 'check_spdx.ps1';          Args = @('-Control'); What = 'REPO.2 license map: a clean scratch tree passes, four mutants fail' },
     @{ Script = 'check_web_offline.ps1';   Args = @('-Control'); What = 'KERNEL.5, ENGINE.1, SPEC.3, ENGINE.3 and ENGINE.4 offline doctrine: the template and the three scripts pass, twenty-one mutants fail, eight of them a Web Audio name planted in the host' },
     @{ Script = 'check_view_fixtures.ps1'; Args = @('-Control'); What = 'KERNEL.5 fixtures: a clean scratch folder passes, four mutants fail each for its own reason' },
     @{ Script = 'check_render_oracle.ps1'; Args = @('-Control'); What = 'KERNEL.5 render oracle: the real page passes, three mutant pages fail under the browser (SKIPPED without one)' },

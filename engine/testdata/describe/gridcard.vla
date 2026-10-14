@@ -7,7 +7,7 @@
 (screen grid 80 50)
 (seed 1)
 (author "Spreadsheet Company")
-(licence "0BSD")
+(license "0BSD")
 (notes "The grid card: every kind of value, format and look a grid cell can hold, drawn by the viewport, on a Screen 96 columns wide under a Camera that an edit moves. The sixteen colors are numbers drawn through their looks, a formula's value changes its fill every frame, and a stripe moves below.")
 (device "Screen" "A1:CB50" effect)
 (device "Input" "A1:E18" input)

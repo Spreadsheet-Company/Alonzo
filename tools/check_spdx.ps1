@@ -1,17 +1,17 @@
 <#
-check_spdx.ps1 - the licence map, REUSE.toml, verified against the tree.
+check_spdx.ps1 - the license map, REUSE.toml, verified against the tree.
 
-WHY: one repository, three licence territories, no directory moves. The map
+WHY: one repository, three license territories, no directory moves. The map
 is REUSE.toml (reuse.software, specification 3.3): path globs resolve every
 file to one SPDX identifier, Apache-2.0 for the engine, 0BSD for the
 cartridges, CC-BY-4.0 for the documents (CHARTER.md section 9; REARVIEW.md,
 REPO.1, decision 2). A map is worth what the last check of it was worth,
-and the day a file lands at a path the map does not name it has no licence
+and the day a file lands at a path the map does not name it has no license
 at all. This script is Frazaro's tools/check_spdx.ps1 adapted to the three
 territories, as REUSE.toml's own comment promised at REPO.2.
 
 WHAT IT HOLDS, four things, none needing a host:
-  1. Every tracked file, except the licence texts themselves (LICENSE and
+  1. Every tracked file, except the license texts themselves (LICENSE and
      LICENSES/*), resolves to exactly one identifier through REUSE.toml's
      [[annotations]] tables, later tables winning (the specification's
      ordering rule), a glob's * staying within one path segment and **
@@ -25,12 +25,12 @@ WHAT IT HOLDS, four things, none needing a host:
      the notice travels with the copy, as the 0BSD runtime module's header
      travels into customers' workbooks in Frazaro. Vacuous today; it bites
      at CART.1. Rust sources carry no header, as Frazaro's do not: a Rust
-     file's licence is the map's alone.
+     file's license is the map's alone.
   4. A header never disagrees with the map.
 
 -Control proves the check on a scratch tree with a synthetic file list, so it
 needs no repository: the clean copy passes; a file at a path the map does
-not name fails; a licence text removed fails; a cartridge without its header
+not name fails; a license text removed fails; a cartridge without its header
 fails; a cartridge whose territory the map moves fails as a disagreement.
 Each mutant proves it applied before the check is asked.
 
@@ -113,7 +113,7 @@ function Get-Report([string]$Root, [string[]]$Files) {
         if (-not (Test-Path -LiteralPath $p)) { $failures.Add("LICENSES/$id.txt missing (REUSE.toml names $id)") }
     }
 
-    # ---- 1. every tracked file resolves to one licence ----
+    # ---- 1. every tracked file resolves to one license ----
     if ($Files.Count -eq 0) { $failures.Add('no tracked files were listed; is this the repository?') }
     foreach ($f in $Files) {
         if ($f -ceq 'LICENSE' -or $f -clike 'LICENSES/*') { continue }
@@ -192,7 +192,7 @@ if ($Control) {
                Apply = { $p = Join-Path $tmp 'stray/thing.rs'; New-Item -ItemType Directory -Path (Split-Path -Parent $p) -Force | Out-Null; [System.IO.File]::WriteAllText($p, "// stray`n", $utf8); $script:mutFiles = $files + 'stray/thing.rs' }
                Applied = { (Test-Path -LiteralPath (Join-Path $tmp 'stray/thing.rs')) -and ($script:mutFiles -ccontains 'stray/thing.rs') }
                Want = 'uncovered: stray/thing.rs' },
-            @{ Name = 'a licence text removed'
+            @{ Name = 'a license text removed'
                Apply = { Remove-Item -LiteralPath $zero -Force; $script:mutFiles = $files }
                Applied = { -not (Test-Path -LiteralPath $zero) }
                Want = 'LICENSES/0BSD.txt missing' },
@@ -248,5 +248,5 @@ if ($report.Failures.Count -gt 0) {
     $report.Failures | ForEach-Object { Write-Host "  - $_" }
     exit 1
 }
-Write-Host 'OK: every tracked file has one licence, every licence has its text, every cartridge carries its header'
+Write-Host 'OK: every tracked file has one license, every license has its text, every cartridge carries its header'
 exit 0

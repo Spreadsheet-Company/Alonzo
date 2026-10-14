@@ -5,7 +5,7 @@
 ; four notches, so the brush is 7, and more water; then the right button erasing near the
 ; bottom of the board; the pointer off the plane at frame 1223, and the toy left alone to
 ; frame 2085. Its golden is the Tally at its last frame.
-(replay "sand" (spec 3) (cartridge "814983F85A9DA90155F0F58C6FE201C8750E588BF202BD54B18763C41DC594C7") (seed 1))
+(replay "sand" (spec 3) (cartridge "F872498DEAFBCCB60133501B18E35BEC38A470C4A9AE8064505510D061EAD857") (seed 1))
 (frame 1
   (cell "Input" "B1" 0)
   (cell "Input" "C1" 0)

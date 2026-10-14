@@ -13,7 +13,7 @@
 ;   - a value of each kind a cell can hold, and the numbers as the record spells them;
 ;   - a formula computing each kind every frame, a number among them whose look, and so
 ;     whose fill, changes every frame;
-;   - a text that spills into its empty neighbours and one its neighbour cuts; a number
+;   - a text that spills into its empty neighbors and one its neighbor cuts; a number
 ;     under a text format; a wrapped text in a tall row; a cell's own style, and a look
 ;     over a style; a sentence row; a hidden row and a hidden column, each holding a
 ;     value that is never drawn; a narrow column and a column whose style fills its
@@ -41,8 +41,8 @@
     "AA0000"                        ; 4, red
     "AA00AA"                        ; 5, magenta
     "AA5500"                        ; 6, brown
-    "AAAAAA"                        ; 7, light grey
-    "555555"                        ; 8, dark grey
+    "AAAAAA"                        ; 7, light gray
+    "555555"                        ; 8, dark gray
     "5555FF"                        ; 9, light blue
     "55FF55"                        ; 10, light green
     "55FFFF"                        ; 11, light cyan
@@ -58,7 +58,7 @@
   (screen grid 80 50)               ; the window: 80 cells wide and 50 high, section 10's limit, placed by the Camera
   (seed 1)                          ; the dice, which nothing here reads
   (author "Spreadsheet Company")    ; who wrote it
-  (licence "0BSD")                  ; the header's twin
+  (license "0BSD")                  ; the header's twin
   (notes "The grid card: every kind of value, format and look a grid cell can hold, drawn by the viewport, on a Screen 96 columns wide under a Camera that an edit moves. The sixteen colors are numbers drawn through their looks, a formula's value changes its fill every frame, and a stripe moves below."))
 
 ; The sheets, in tab order: the Screen, and the Camera that places its window.
@@ -106,7 +106,7 @@
   (row 9 45 shown)                  ; a tall row, 45 points: the wrapped text's
   (row 12 none hidden))             ; a hidden row: its cells are never drawn
 
-; Row 1: a text that spills into its empty neighbours to the right.
+; Row 1: a text that spills into its empty neighbors to the right.
 (cell "Screen" "A1" "The grid card: every kind of value, format and look a grid cell can hold, drawn by the viewport through a Camera that an edit moves")
 
 ; Rows 3 to 6, a label in column A and the cells after it.
@@ -155,7 +155,7 @@
 
 ; Rows 7 to 15: texts, formats, styles, a sentence, the hidden row and column, the looks.
 (cells "Screen"                     ; the sheet every entry below writes
-  ("A7" "a text cut by its neighbour")
+  ("A7" "a text cut by its neighbor")
   ("B7" "this text stops where the next cell holds a value")
   ("C7" "stop")
   ("A8" "a number under a text format, then under general")

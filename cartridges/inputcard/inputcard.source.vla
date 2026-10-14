@@ -32,7 +32,7 @@
   (screen plane 40 24)              ; the window: 40 cells wide and 24 high, placed by the Camera
   (seed host)                       ; the dice: the host chooses the seed at the load
   (author "Spreadsheet Company")    ; who wrote it
-  (licence "0BSD")                  ; the header's twin
+  (license "0BSD")                  ; the header's twin
   (notes "The input card: every cell the host writes before a step, drawn. Press the arrows, Z, X, A, S, Enter and Space for player 1, and I, K, J, L, U, O, Y, P, 9 and 0 for player 2; click, and turn the wheel to pan the card. A lamp is white while its button is held, and moves to another color with each press."))
 
 ; The sheets, in tab order: the Screen, the Panel of lamps it draws, the Tally of counts,

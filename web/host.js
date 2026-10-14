@@ -971,7 +971,7 @@
     v.gain.gain.setTargetAtTime(value, at, GAIN_TAU);   // the graph's own approach, never a sample of the host's (decision 3)
     v.target = value;
   };
-  // The voices stopped with the loop (decision 6): every voice's later events cancelled and its gain
+  // The voices stopped with the loop (decision 6): every voice's later events canceled and its gain
   // approaching 0 from the audio clock's now; the timeline and each voice's pitch forgotten, so that the
   // next frame sets every voice whole. A voice already silent since its last silence is left alone.
   Host.prototype._silence = function () {

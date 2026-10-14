@@ -746,7 +746,7 @@
   };
 
   // One cell's text: aligned by its kind, a nowrap text spilling into empty
-  // neighbours to the right, a wrapped text broken at the column's width.
+  // neighbors to the right, a wrapped text broken at the column's width.
   Viewport.prototype._paintCell = function (p, model, g, cell, r, c, left, top, cLast, quadrant, qclip) {
     var ctx = p.ctx, colors = this.colors;
     var w = g.colW[c], h = g.rowHeight(r), pad = g.pad;

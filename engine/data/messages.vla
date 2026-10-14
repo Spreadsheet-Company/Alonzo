@@ -1,6 +1,6 @@
 ; messages.vla - the engine's own refusals, the cart family (ENGINE.1's second
 ; slice, 2026-10-09; SPEC.md section 4.7). One (message <id> <number> "<source>"
-; "<template>") form an entry, the shape of the language's catalogue, read by
+; "<template>") form an entry, the shape of the language's catalog, read by
 ; its mechanism, vla_lang::messages::Catalogue, which fills each {slot}; an id
 ; this file does not hold is the language's (the grid, view and calc families).
 ; Each text names its target as sheet!addr where it has one, so that the host

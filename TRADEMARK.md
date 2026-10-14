@@ -1,10 +1,10 @@
 # Trademark policy
 
 "Alonzo" is a name held by Spreadsheet Company for this engine. The
-source-code licences in this repository (Apache-2.0, 0BSD, CC-BY-4.0) grant
+source-code licenses in this repository (Apache-2.0, 0BSD, CC-BY-4.0) grant
 rights in the *code and text*; they grant no rights in the name or any
 logo. The code forks and the name does not, which is why this file exists
-on the same day as the licences, as Frazaro's does. The name is a given
+on the same day as the licenses, as Frazaro's does. The name is a given
 name, Church's, and a weaker mark than a coined word; this policy does not
 pretend otherwise, and states the practice anyway, so that it is written
 down from the first day of use.
@@ -25,7 +25,7 @@ down from the first day of use.
 
 - Using the name, or a confusingly similar one, as the name of a modified
   engine, a fork, a hosted service, a company, a product or a domain. A
-  fork is welcome under the licences; it needs its own name.
+  fork is welcome under the licenses; it needs its own name.
 - Using the name in a way that suggests the project endorses, certifies or
   supports your cartridge, product or service.
 - Any use of a logo, once one exists.
@@ -35,7 +35,7 @@ Ask at english@spreadsheet.company.
 ## Games
 
 A game written on Alonzo is its author's, under its author's name and
-terms, and nothing here reaches it. The licence-side statement of that is
+terms, and nothing here reaches it. The license-side statement of that is
 written the day the first game ships (`CHARTER.md`, section 9).
 
 ## Registration

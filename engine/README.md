@@ -46,7 +46,7 @@ engine is:
   (Frazaro's `KERNEL.30`, laid here; each cartridge's held to a golden in
   `testdata/describe/`, which `ALONZO_BLESS=1 cargo test describe` writes
   again);
-- the engine's own refusals, a catalogue of ten in `data/messages.vla`: the
+- the engine's own refusals, a catalog of ten in `data/messages.vla`: the
   ninth a cartridge's source handed to the load, which never expands, and
   the tenth a person's write into the Clock, its frame, or a rate or a seed
   outside its range (`ENGINE.3`).
@@ -140,7 +140,7 @@ are gone, and the twin's values kept as an array is the next.
 ## What the first release shows
 
 Conway's Life on a 320 by 200 sheet at thirty frames a second, every cell
-the same formula of its eight neighbours, drawn through the canvas; its
+the same formula of its eight neighbors, drawn through the canvas; its
 cells evaluated per second are the engine's first number, against a line
 of two million a second, and the cartridge ships with the engine as its
 demo (`CART.1`). The first game after it is a falling-sand toy, Sand
@@ -228,8 +228,8 @@ The repository is `Spreadsheet-Company/Alonzo`, beside Frazaro, whose
 the thesis, the rules, the lineage and the social hypothesis stated so that
 it can fail; `ROADMAP.md` the open items; `REARVIEW.md` the record.
 
-## Licence
+## License
 
 Apache-2.0. The cartridges in the repository are under 0BSD, so that one
 may be copied to start your own; a game written on Alonzo is its author's.
-The repository's `REUSE.toml` maps every file to its licence.
+The repository's `REUSE.toml` maps every file to its license.

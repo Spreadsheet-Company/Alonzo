@@ -302,9 +302,19 @@ $sameSource = @{ '0.8.1' = 'f5dc344' }
 # and 19,753 live cells, the gun 36, 39 and 43). Only the comments and the
 # manifest's layout moved, and the pass carries no comment, so these bytes
 # move again only with a row.
+# 2026-10-14, at the owner's word: life.vla, gun.vla and sand.vla respelled in
+# American English, the manifest's license directive, Life's notes, and the
+# Palette's two gray names, text cells of the same length that no formula
+# reads (C9 and C10 in Life and the gun, C11 in Sand). Every other row is byte
+# for byte the measured file's; each file's census, its describe golden, is
+# unchanged; and the runner's check mode holds every frame to the Life and
+# the Sand written by hand and every allocation count under its ceiling.
 $sameRows = @{
     '7220F8E1FBFF7A3B7F00DE9ECA5754E9A1877A8D1A766A251EB3811D0C937D89' = '90B24FF2E98530FF530C9E573DAC0E2FB4F5968ABE378D0A673C3E9DCA8D70DB'
     '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7' = '0BD138CBE43825F93EA2235F755DE6A46F18CCF7B7DAEC33B6D38D8365E64234'
+    '60220BAE07BBC3C15F671C7CAAE62B6DD6D14B67B9141150EC0023AFA0FFE0F4' = '7220F8E1FBFF7A3B7F00DE9ECA5754E9A1877A8D1A766A251EB3811D0C937D89'
+    '64C9A6BA206003F15B73084FE90781BE60E34089D577CE0589DBAF5C737A0725' = '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7'
+    'F872498DEAFBCCB60133501B18E35BEC38A470C4A9AE8064505510D061EAD857' = '814983F85A9DA90155F0F58C6FE201C8750E588BF202BD54B18763C41DC594C7'
 }
 
 # --- the allocation ceilings, the second frame after a fresh load, exact ---

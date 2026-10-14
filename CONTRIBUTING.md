@@ -14,15 +14,15 @@ git commit -s
 
 That adds a `Signed-off-by:` line certifying you wrote the change or have
 the right to submit it. There is no Contributor License Agreement, and there
-will not be one: every file's licence is permissive enough that none is
+will not be one: every file's license is permissive enough that none is
 needed.
 
 ## Inbound = outbound
 
-By contributing, you agree your contribution is licensed under the licence
+By contributing, you agree your contribution is licensed under the license
 of the file it touches, as declared in `REUSE.toml`:
 
-| Path | Licence |
+| Path | License |
 |---|---|
 | `engine/**`, `web/**`, `tools/**`, the workspace's own files | Apache-2.0 |
 | `cartridges/**` | 0BSD |
@@ -42,7 +42,7 @@ of the file it touches, as declared in `REUSE.toml`:
   the check on every push, a forbidden name (`fetch` first) fails even when
   listed, a listed name the engine no longer imports fails too, and the
   list grows by a reviewed line, never by a generated one (`AD-5`).
-- **A refusal** the engine raises is an entry of its own catalogue,
+- **A refusal** the engine raises is an entry of its own catalog,
   `engine/data/messages.vla`, the `cart` family, an id, a number, a source
   and a template whose slots the code fills, read by the language crate's
   mechanism; its text names the cell it stands on as `sheet!addr` and
@@ -119,4 +119,4 @@ Do not open a public issue for a vulnerability. See `SECURITY.md`.
 ## The name
 
 "Alonzo" is a name held by Spreadsheet Company; see `TRADEMARK.md`. A fork
-is welcome under the licences above and needs its own name.
+is welcome under the licenses above and needs its own name.

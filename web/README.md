@@ -493,7 +493,7 @@ DPI): 72 is 504 px and 60 is 420 px; a column with no row is 64 px, Excel's
 default; a hidden column is skipped; a column's format fills its empty cells.
 A row is 20 px, the headers one row high, the text 13 px `system-ui`. A
 `cell` row shows its value aligned as Excel aligns it under General: a
-number right, a text left, `TRUE`, `FALSE` and an error centred, a date as
+number right, a text left, `TRUE`, `FALSE` and an error centered, a date as
 the text inside, right; under a `text` format everything left. A `formula`
 row shows the formula's text, left, in green. A nowrap text spills into the
 empty cells to its right and stops at the first that holds anything; a

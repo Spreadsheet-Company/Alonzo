@@ -15,7 +15,7 @@
 //! the first other form, is copied as written and never expanded. Every
 //! form after it is expanded to its fixpoint by the language's expander,
 //! template macros alone, no gensym and no eval, and each `begin` is
-//! flattened. Then the cartridge is written: the source's licence line, a
+//! flattened. Then the cartridge is written: the source's license line, a
 //! banner naming the source, the manifest one directive a line, and the
 //! rows one a line, CRLF, as every `.vla` stands in the working tree.
 //!
@@ -390,7 +390,7 @@ mod tests {
     }
 
     #[test]
-    fn the_pass_writes_the_licence_the_banner_the_manifest_and_the_rows() {
+    fn the_pass_writes_the_license_the_banner_the_manifest_and_the_rows() {
         let source = format!(
             "; SPDX-License-Identifier: 0BSD\r\n; a comment the cartridge does not carry\r\n{MANIFEST}(defmacro (two sheet a b) (cell sheet a 1) (cell sheet b 2))\n(sheet \"Screen\" visible)\n(two \"Screen\" \"A1\" \"B1\")\n(formula \"Screen\" \"C1\" \"=A1+B1\")\n"
         );
@@ -401,7 +401,7 @@ mod tests {
         );
         assert_eq!(e.rows, 4);
         assert!(e.text.contains("\r\n") && !e.text.replace("\r\n", "").contains('\n'));
-        // No licence line, no line for it; the banner is then the first.
+        // No license line, no line for it; the banner is then the first.
         let bare = expand(MANIFEST, "tiny.source.vla", &[]).expect("expands");
         assert!(bare
             .text

@@ -182,7 +182,7 @@
   (screen plane 15 7)               ; the board on its side, a level a column; (screen plane 7 15) to stand it up
   (seed 1)                          ; the dice, which nothing here throws
   (author "Spreadsheet Company")    ; who wrote it
-  (licence "0BSD")                  ; the header's twin: copy this file to start a game of your own
+  (license "0BSD")                  ; the header's twin: copy this file to start a game of your own
   (notes "Kairos: stop each row of lights over the row beneath with Z, Space or a click. Lights not over a light fall; a complete miss ends the game. At level 11, X takes the minor prize and Z goes on; level 15 wins the major. The Levels sheet holds every level's speed and window in the open."))
 
 ; The sheets, in tab order: the Screen and the sheets a player reads, then the workings,

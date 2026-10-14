@@ -25,7 +25,7 @@
 //! rule, every frame after the first keeping every grain.
 //!
 //! **The timings.** Each frame is one `step` with no budget, timed alone; the
-//! steady frames are the second onwards, and their median is the floor's
+//! steady frames are the second onward, and their median is the floor's
 //! number, in cells evaluated a second (the step's formula cells over the
 //! median) and in frames a second (one over it), one measurement in two units.
 //! A steady frame under 2 ms, the page's own line, is timed again past them in

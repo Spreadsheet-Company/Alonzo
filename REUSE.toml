@@ -1,6 +1,6 @@
-# REUSE.toml - the licence map (reuse.software, specification 3.3).
+# REUSE.toml - the license map (reuse.software, specification 3.3).
 #
-# One repository, three licence territories, no directory moves: path globs
+# One repository, three license territories, no directory moves: path globs
 # resolve every file to one SPDX identifier. Later [[annotations]] tables
 # win when more than one matches a file, so the specific entries sit below
 # the general ones. The reasoning is CHARTER.md section 9 (Apache-2.0 for

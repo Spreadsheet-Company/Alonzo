@@ -14,7 +14,7 @@
   memory pair over a real WebAssembly.Memory, the record of four
   little-endian u32 (the status, a line, the id's length, the text's length)
   then the id and the text, status 0, 1 and 2, and the refusals by their
-  catalogue ids (SPEC.md section 4.7).
+  catalog ids (SPEC.md section 4.7).
 
   What it is not is an engine. It reads a cartridge's manifest, which is the
   engine's own duty (what alonzo_load adds to vla_load), and never a row
@@ -63,8 +63,8 @@
   var SHEETS = ['Screen', 'Palette', 'Input', 'Keys', 'Clock', 'Audio', 'File', 'Camera', 'Write', 'State'];
   var PALETTE = [
     ['#000000', 'black'], ['#0000AA', 'blue'], ['#00AA00', 'green'], ['#00AAAA', 'cyan'],
-    ['#AA0000', 'red'], ['#AA00AA', 'magenta'], ['#AA5500', 'brown'], ['#AAAAAA', 'light grey'],
-    ['#555555', 'dark grey'], ['#5555FF', 'light blue'], ['#55FF55', 'light green'], ['#55FFFF', 'light cyan'],
+    ['#AA0000', 'red'], ['#AA00AA', 'magenta'], ['#AA5500', 'brown'], ['#AAAAAA', 'light gray'],
+    ['#555555', 'dark gray'], ['#5555FF', 'light blue'], ['#55FF55', 'light green'], ['#55FFFF', 'light cyan'],
     ['#FF5555', 'light red'], ['#FF55FF', 'light magenta'], ['#FFFF55', 'yellow'], ['#FFFFFF', 'white']
   ];
   var BUTTONS = ['up', 'down', 'left', 'right', 'a', 'b', 'x', 'y', 'start', 'select'];

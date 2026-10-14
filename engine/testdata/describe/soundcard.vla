@@ -7,7 +7,7 @@
 (screen plane 48 24)
 (seed 1)
 (author "Spreadsheet Company")
-(licence "0BSD")
+(license "0BSD")
 (notes "The sound card: press Sound on, then hear the four waves, a scale, two chords and a slide under a swell, an eight-second loop. Press the arrows, Z, X, A, S, Enter or Space, or click the plane, for a tick; write another wave into Knobs!B1 to change it.")
 (device "Screen" "A1:AV24" effect)
 (device "Palette" "A1:C16" effect)

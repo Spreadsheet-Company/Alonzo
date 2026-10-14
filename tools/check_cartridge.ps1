@@ -12,15 +12,15 @@ engine reads the file. The reader of forms below is this script's own
 since the engine reads no VLA and the language's reader lives in another
 repository.
 
-WHAT IT HOLDS, for each .vla under cartridges/, with the catalogue's ids:
-  - the licence header as the first line, '; SPDX-License-Identifier: 0BSD'
-    (section 7.1; tools/check_spdx.ps1 holds the map), and a (licence ...)
+WHAT IT HOLDS, for each .vla under cartridges/, with the catalog's ids:
+  - the license header as the first line, '; SPDX-License-Identifier: 0BSD'
+    (section 7.1; tools/check_spdx.ps1 holds the map), and a (license ...)
     directive, when given, the header's twin;
   - the manifest form first, (cartridge "name" ...), the name lowercase
     letters, digits and hyphens; every directive present once and in range
     (cart-manifest-invalid): (spec 1|2), (title "..."), (rate 0..120),
     (screen plane w h) at most 320 by 200 or (screen grid w h) at most 80 by
-    50, (seed 1..2147483646|host); author, licence and notes optional and at
+    50, (seed 1..2147483646|host); author, license and notes optional and at
     most once; an unknown directive refused; a (spec n) past 2 refused as
     cart-spec-unsupported;
   - every row after it one of section 7.3's kinds in its shape (grid-row-
@@ -59,7 +59,7 @@ it; and (spec 3) is read beside 1 and 2.
 SINCE ENGINE.3'S SECOND SLICE (2026-10-10; REARVIEW.md, decisions 8 and 11):
 a cartridge's folder may hold its replay, <name>.replay.vla, and the replay's
 golden, <name>.golden.vla, one of each a cartridge, each counted against its
-pin. A replay is read as SPEC.md section 7.6 has it: the licence header; its
+pin. A replay is read as SPEC.md section 7.6 has it: the license header; its
 header (replay "<name>" (spec n) (cartridge "<SHA-256>") (seed n)), the name
 its folder's, the spec 1 to 3, the digest PowerShell's SHA-256 of the
 cartridge beside it over its LF bytes, the seed a whole number from 1 to
@@ -207,7 +207,7 @@ $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's ow
 
 # --- section 7 and section 3, as data ---
 $requiredDirectives = @('spec', 'title', 'rate', 'screen', 'seed')
-$optionalDirectives = @('author', 'licence', 'notes')
+$optionalDirectives = @('author', 'license', 'notes')
 $rowKinds = @('sheet', 'cell', 'formula', 'value', 'name', 'column', 'format', 'style', 'gridlines', 'sentence', 'table', 'refers', 'look', 'row')
 function New-Rect([int]$top, [int]$left, [int]$bottom, [int]$right) { return @{ T = $top; L = $left; B = $bottom; R = $right } }
 $layouts = @{
@@ -309,7 +309,7 @@ function Test-Cartridge([string]$path) {
     $raw = [System.IO.File]::ReadAllText($path)
     $text = $raw -replace "`r`n", "`n"
     $firstLine = ($text -split "`n", 2)[0]
-    if ($firstLine -cne $header) { $problems.Add("line 1: the licence header is not the first line, '$header' (SPEC.md section 7.1)") }
+    if ($firstLine -cne $header) { $problems.Add("line 1: the license header is not the first line, '$header' (SPEC.md section 7.1)") }
     try { $forms = Read-Forms $text } catch { $problems.Add($_.Exception.Message); return @{ Problems = $problems; Rows = 0; Cells = 0; Formulas = 0 } }
     if ($forms.Count -eq 0) { $problems.Add('the file holds no form'); return @{ Problems = $problems; Rows = 0; Cells = 0; Formulas = 0 } }
 
@@ -358,9 +358,9 @@ function Test-Cartridge([string]$path) {
                     $ok = ($args1 -eq 1) -and ((Test-Sym $d.Items[1] 'host') -or ((Test-Whole $d.Items[1]) -and [double]$d.Items[1].Text -ge 1 -and [double]$d.Items[1].Text -le 2147483646))
                     if (-not $ok) { $problems.Add("line $($d.Line): cart-manifest-invalid: (seed $(Show-Datum $d.Items[1])); a seed is a whole number from 1 to 2147483646, or host") }
                 }
-                'licence' {
-                    if ($args1 -ne 1 -or -not (Test-Kind $d.Items[1] 'string')) { $problems.Add("line $($d.Line): cart-manifest-invalid: (licence `"...`") holds one SPDX identifier") }
-                    elseif ($d.Items[1].Value -cne '0BSD') { $problems.Add("line $($d.Line): cart-manifest-invalid: the licence directive says $($d.Items[1].Value) and the header 0BSD") }
+                'license' {
+                    if ($args1 -ne 1 -or -not (Test-Kind $d.Items[1] 'string')) { $problems.Add("line $($d.Line): cart-manifest-invalid: (license `"...`") holds one SPDX identifier") }
+                    elseif ($d.Items[1].Value -cne '0BSD') { $problems.Add("line $($d.Line): cart-manifest-invalid: the license directive says $($d.Items[1].Value) and the header 0BSD") }
                 }
                 default { if ($args1 -ne 1 -or -not (Test-Kind $d.Items[1] 'string')) { $problems.Add("line $($d.Line): cart-manifest-invalid: ($dn `"...`") holds one text") } }
             }
@@ -517,7 +517,7 @@ function Test-Replay([string]$path, [string]$name, [string]$cartridgePath) {
     $problems = New-Object System.Collections.Generic.List[string]
     $result = @{ Problems = $problems; Frames = 0; Rows = 0; Last = 0; Seed = '' }
     $text = [System.IO.File]::ReadAllText($path) -replace "`r`n", "`n"
-    if (($text -split "`n", 2)[0] -cne $header) { $problems.Add("line 1: the licence header is not the first line, '$header'") }
+    if (($text -split "`n", 2)[0] -cne $header) { $problems.Add("line 1: the license header is not the first line, '$header'") }
     try { $forms = Read-Forms $text } catch { $problems.Add($_.Exception.Message); return $result }
     $shape = '(replay "<name>" (spec <n>) (cartridge "<SHA-256>") (seed <n>))'
     $h = $null
@@ -583,7 +583,7 @@ function Test-Golden([string]$path) {
     $problems = New-Object System.Collections.Generic.List[string]
     $result = @{ Problems = $problems; Sheet = ''; Window = ''; Rows = 0 }
     $text = [System.IO.File]::ReadAllText($path) -replace "`r`n", "`n"
-    if (($text -split "`n", 2)[0] -cne $header) { $problems.Add("line 1: the licence header is not the first line, '$header'") }
+    if (($text -split "`n", 2)[0] -cne $header) { $problems.Add("line 1: the license header is not the first line, '$header'") }
     try { $forms = Read-Forms $text } catch { $problems.Add($_.Exception.Message); return $result }
     $result.Rows = $forms.Count
     $windows = @($forms | Where-Object { (Test-Kind $_ 'list') -and $_.Items.Count -ge 1 -and (Test-Sym $_.Items[0] 'window') })
@@ -710,7 +710,7 @@ if ($Control) {
             @{ Name = 'a color that is not #RRGGBB'; Anchor = '"#FFFFFF"'; With = '"white"'; Want = 'cart-palette-invalid: Palette!B2 holds "white"' },
             @{ Name = 'NOW() in the rule'; Anchor = 'Clock!$B$1=1'; With = 'NOW()>0'; Want = 'cart-formula-volatile' },
             @{ Name = 'a sheet named Board.last'; Append = '(cell "Board.last" "A1" 1)'; Want = 'cart-sheet-reserved: the sheet Board.last' },
-            @{ Name = 'the header dropped'; Anchor = $header; With = '; no licence'; Want = 'the licence header is not the first line' },
+            @{ Name = 'the header dropped'; Anchor = $header; With = '; no license'; Want = 'the license header is not the first line' },
             @{ Name = 'an unknown row kind'; Append = '(paint "Screen" "A1" 1)'; Want = 'grid-row-unknown: (paint ...)' },
             @{ Name = 'a formula into Input!B1'; Append = '(formula "Input" "B1" "=1")'; Want = 'cart-device-cell-formula: Input!B1' },
             @{ Name = 'the file renamed out of its folder''s name'; Rename = 'life.txt'; Want = ("found {0} cartridge(s)" -f ($expectedCartridges - 1)) },
