@@ -2508,6 +2508,65 @@ mod tests {
         assert!(live > 0, "the soup reached none of the windows");
     }
 
+    /// The third projection (`REPO.4`, the pin at `vla-lang` 0.9.3, Frazaro's
+    /// `KERNEL.37`): a window's `values` is its `grid` record without the
+    /// `formula` rows, every other row as the record prints it, each
+    /// formula's `value` row among them, before the first step and after it;
+    /// the engine passes a projection's name to the language as it stands
+    /// (`SPEC.md` section 4.5, corrected 2026-10-14), and a projection the
+    /// grid does not have is refused naming the three. A cartridge of its
+    /// own, so the test travels with the package.
+    #[test]
+    fn a_window_s_values_are_its_record_without_its_formulas() {
+        let text = concat!(
+            "(cartridge \"values\"\n",
+            "  (spec 3)\n",
+            "  (title \"Values\")\n",
+            "  (rate 30)\n",
+            "  (screen grid 4 2)\n",
+            "  (seed 1))\n",
+            "(sheet \"Screen\" visible)\n",
+            "(sheet \"Board\" visible)\n",
+            "(cell \"Board\" \"A1\" 7)\n",
+            "(formula \"Screen\" \"A1:D2\" \"=Board!$A$1+Clock!$B$1*COLUMN()\")\n",
+        );
+        let mut c = Cartridge::load(text, "values.vla", text.len()).expect("the cartridge loads");
+        let record = |c: &Cartridge, projection: &str| match c.view(projection, "Screen", None) {
+            Ok(Viewed::Text(t)) => t,
+            Ok(Viewed::Bytes(_)) => panic!("{projection}: bytes, where a record is text"),
+            Err(r) => panic!("{projection}: {} {}", r.id, r.text),
+        };
+        for frame in 0..=2u32 {
+            if frame > 0 {
+                assert!(c.step(0).done, "frame {frame}");
+            }
+            let grid = record(&c, "grid");
+            let values = record(&c, "values");
+            assert!(
+                grid.lines().any(|l| l.starts_with("(formula ")),
+                "frame {frame}: the record holds the Screen's formulas:\n{grid}"
+            );
+            let without: Vec<&str> = grid
+                .lines()
+                .filter(|l| !l.starts_with("(formula "))
+                .collect();
+            assert_eq!(
+                values.lines().collect::<Vec<_>>(),
+                without,
+                "frame {frame}: the values are the record without its formulas"
+            );
+            if frame > 0 {
+                let d1 = format!("(value \"Screen\" \"D1\" {})", 7 + 4 * frame);
+                assert!(values.contains(&d1), "frame {frame}: no {d1}:\n{values}");
+            }
+        }
+        let Err(refused) = c.view("photo", "Screen", None) else {
+            panic!("a projection the grid does not have was answered");
+        };
+        assert_eq!(refused.id, "view-projection-unknown");
+        assert!(refused.text.contains("values"), "{}", refused.text);
+    }
+
     // ---- CART.2: Sand, the first game ----
 
     /// Sand (CART.2): a falling-sand toy, the floors' third fixture.
