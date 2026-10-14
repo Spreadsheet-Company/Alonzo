@@ -4980,6 +4980,11 @@ Then three of them again with the gun written over by the command line, as an au
 - `tools/run_checks.ps1 -WithExtras`: 13 checks and 13 verifiers, ALL GREEN, in 502 s.
 - The first commit's tree alone, in a worktree: fmt, clippy, `cargo test` 40, the runner, the module and the page built, and `run_checks.ps1`'s 12 checks ALL GREEN; its commit's tree asserted equal to the one verified.
 
+*Found by CI, at the first push* (run `38550260599`, 2026-10-14, `57cfdaf..5a689a4` pushed at the owner's word).
+- The ratchets job was green, and so was the crate job through its new steps: the tests with the requirement set, and the package's own tests from its tarball.
+- The crate job was red at `check_frame_floors.ps1`'s check mode, the first run of `ENGINE.9`'s runner on Linux. The pass resolved `../common.vla` against a folder from the root, `/home/runner/work/...`, as `home/runner/work/...`, the root lost, so the size ladder's rungs could not be built. On Windows a path keeps its drive letter, which is why no run on the owner's machine saw it. The crate's public `pass::resolve` had the defect since `SPEC.3`.
+- The fix: `resolve` keeps a rooted folder's root, and its test holds four cases from the root. The module is 749,162 bytes, 27 more than the one the tenth baseline measured. Fixed under `SPEC.3`'s ID, the pass's, in a commit of its own, and the push repeated.
+
 *What remains is the owner's*, in this order, each an act that leaves the machine or needs the owner's credentials.
 1. The pushed commit's CI run green on both jobs, the crate job's new steps among them; the run on Linux is also the first of the heap ceilings, exact since `ENGINE.9` and never run there before.
 2. A `v*` tag rule on the `github-pages` environment (Settings, Environments, `github-pages`, deployment branches and tags), so a tag deploys the page, as Frazaro's needed.

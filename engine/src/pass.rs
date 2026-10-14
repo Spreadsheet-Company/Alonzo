@@ -68,12 +68,19 @@ pub fn include_name(line: &str) -> Option<String> {
 }
 
 /// A path joined to a folder with `/`, `.` and `..` folded away, `\` read
-/// as `/`: the key under which a door hands the pass an included text.
+/// as `/`: the key under which a door hands the pass an included text. A
+/// path from the root keeps its root, the name's own or, for a name relative
+/// to it, the folder's (since 2026-10-14: a folder such as
+/// `/home/runner/work/...` lost its root, and the floors' runner, which
+/// hands the pass an absolute path, could not build the size ladder on
+/// Linux, where CI's first run of it found the defect).
 pub fn resolve(folder: &str, name: &str) -> String {
     let name = name.replace('\\', "/");
+    let folder = folder.replace('\\', "/");
+    let rooted = name.starts_with('/') || folder.starts_with('/');
     let mut parts: Vec<String> = Vec::new();
     if !name.starts_with('/') {
-        for p in folder.replace('\\', "/").split('/') {
+        for p in folder.split('/') {
             if !p.is_empty() {
                 parts.push(p.to_string());
             }
@@ -89,7 +96,7 @@ pub fn resolve(folder: &str, name: &str) -> String {
         }
     }
     let joined = parts.join("/");
-    if name.starts_with('/') {
+    if rooted {
         format!("/{joined}")
     } else {
         joined
@@ -405,6 +412,21 @@ mod tests {
             "C:/r/cartridges/common.vla"
         );
         assert_eq!(resolve("cartridges/life", "/abs/x.vla"), "/abs/x.vla");
+        // A folder from the root keeps its root (2026-10-14, found by CI on
+        // Linux, where the floors' runner hands the pass an absolute path).
+        assert_eq!(
+            resolve(
+                "/home/runner/work/Alonzo/Alonzo/cartridges/life",
+                "../common.vla"
+            ),
+            "/home/runner/work/Alonzo/Alonzo/cartridges/common.vla"
+        );
+        assert_eq!(resolve("/", "x.vla"), "/x.vla");
+        assert_eq!(resolve("/r", "../../x.vla"), "/x.vla");
+        assert_eq!(
+            includes("(include \"../common.vla\")\n", "/r/cartridges/gun"),
+            vec!["/r/cartridges/common.vla".to_string()]
+        );
         assert_eq!(
             cartridge_path("cartridges/life/life.source.vla").as_deref(),
             Some("cartridges/life/life.vla")
