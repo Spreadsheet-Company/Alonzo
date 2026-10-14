@@ -579,7 +579,9 @@
     box.appendChild(scroller);
     var tabs = this.tabs = d.createElement('div');
     tabs.className = 'alonzo-tabs';
-    tabs.style.cssText = 'flex:none;display:flex;align-items:center;gap:2px;padding:3px 4px;background:' + this.colors.tabBackground + ';border-top:1px solid ' + this.colors.gridline + ';font:12px system-ui, "Segoe UI", sans-serif;color:' + this.colors.headerText + ';min-height:22px;';
+    // the strip wraps onto a further row when its tabs outrun the box, so that no tab lies past the edge
+    // and a narrow viewport never scrolls its page sideways (ENGINE.14's hand test: Sand's twelve tabs in a drawer)
+    tabs.style.cssText = 'flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:3px 4px;background:' + this.colors.tabBackground + ';border-top:1px solid ' + this.colors.gridline + ';font:12px system-ui, "Segoe UI", sans-serif;color:' + this.colors.headerText + ';min-height:22px;';
     root.appendChild(box);
     root.appendChild(tabs);
     element.appendChild(root);
@@ -1128,7 +1130,7 @@
       b.textContent = sh.name + (sh.state !== 'visible' ? ' (' + sh.state + ')' : '');
       b.title = this.records[sh.name] ? 'the sheet ' + sh.name : 'no record loaded for ' + sh.name + ': the host is asked for one';
       b.setAttribute('data-sheet', sh.name);
-      b.style.cssText = 'font:inherit;padding:2px 10px;border:1px solid ' + this.colors.gridline + ';border-radius:3px;cursor:pointer;background:' + (sh.name === this.active ? this.colors.tabActive : this.colors.tabBackground) + ';color:' + (this.records[sh.name] ? this.colors.text : this.colors.headerText) + ';' + (sh.name === this.active ? 'font-weight:600;' : '') + (this.records[sh.name] ? '' : 'font-style:italic;');
+      b.style.cssText = 'font:inherit;white-space:nowrap;padding:2px 10px;border:1px solid ' + this.colors.gridline + ';border-radius:3px;cursor:pointer;background:' + (sh.name === this.active ? this.colors.tabActive : this.colors.tabBackground) + ';color:' + (this.records[sh.name] ? this.colors.text : this.colors.headerText) + ';' + (sh.name === this.active ? 'font-weight:600;' : '') + (this.records[sh.name] ? '' : 'font-style:italic;');
       b.addEventListener('click', function (ev) { self._tabClick(ev.currentTarget.getAttribute('data-sheet')); });
       tabs.appendChild(b);
     }

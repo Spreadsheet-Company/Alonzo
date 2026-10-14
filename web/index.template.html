@@ -612,8 +612,11 @@
       moduleEl.textContent = why + ' The loop runs against the fake module, web/fake.js.';
       if (a.ok) loadCartridge();
     }
-    document.getElementById('eng-run').addEventListener('click', function () { host.start(); focusScreen(); });
-    document.getElementById('eng-pause').addEventListener('click', function () { host.stop(); statusEl.textContent = 'Paused at frame ' + host.counters().frame + '.'; });
+    // Run and Pause each say so in the bar with the frame, so that the line never reads paused while the loop
+    // runs (the owner's hand test of ENGINE.14: "Paused at frame 740." beside the frame counter at 1,553).
+    function sayBar(text) { statusEl.textContent = text; statusEl.title = text; statusEl.className = 'status'; }
+    document.getElementById('eng-run').addEventListener('click', function () { host.start(); if (host.running) sayBar('Running from frame ' + thousands(host.counters().frame) + '.'); focusScreen(); });
+    document.getElementById('eng-pause').addEventListener('click', function () { host.stop(); sayBar('Paused at frame ' + thousands(host.counters().frame) + '.'); });
     // Sound on and off (ENGINE.4, decision 5): the audio context is made at this press, a person's act, as
     // the browser's autoplay policy asks; a click on the plane gives it the keys and never the sound.
     var soundEl = document.getElementById('eng-sound');

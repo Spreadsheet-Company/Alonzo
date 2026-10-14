@@ -484,7 +484,8 @@ page shows opened plainly and what Pages deploys.
 ## For the first game: the API
 
 The host hands the viewport a box and gets a grid inside it, with its own
-canvas, its scroller and its tab strip:
+canvas, its scroller and its tab strip, which wraps onto a further row when
+its tabs outrun the box (`ENGINE.14`):
 
 ```js
 var vp = new AlonzoViewport(document.getElementById('grid'), { record: text });
