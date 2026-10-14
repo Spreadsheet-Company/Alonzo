@@ -17,16 +17,22 @@
   file and the three scripts to that doctrine on every push, as Frazaro's page is
   held.
 
-  Six modes, one page. Opened plainly, it is the engine's panel, a cartridge
-  picked, Life, the glider gun, the test card, the input card, the sound card or Sand, its Audio sheet heard after
-  Sound on (ENGINE.4), running on the host's loop over the engine's own
-  module, the language computing every cell (ENGINE.1's second slice), or over the
-  fake module when no engine is built in, with the cartridge editable, its source
-  editable and built into the cartridge by the pass in the page, the module's
-  alonzo_expand, a press of its own before the load (SPEC.3's second slice), an edit
-  row, Run and Pause, and any sheet of the grid shown live; then the viewport over the
-  fixtures: a record picked, its sheets as tabs, scroll, select, resize a column,
-  freeze panes, a record of one's own pasted in. With ?loop=1 it runs the host
+  Seven modes, one page: the player, and the bench (ENGINE.14). Opened plainly,
+  it is the player, the window the game's: a cartridge picked or pasted, Life, the
+  glider gun, the cards, Sand, Kairos or the grid card, its Audio sheet heard after
+  Sound on (ENGINE.4), running on the host's loop over the engine's own module,
+  the language computing every cell (ENGINE.1's second slice), or over the fake
+  module when no engine is built in; the Screen filling the window under a slim
+  bar, a plane at the largest whole number of device pixels a cell and a grid at
+  its cells' own sizes, its sheet tabs answered by the host, never fitted or
+  zoomed; full screen at a press; and a drawer that pushes the Screen aside,
+  holding the edit row, the log, any sheet of the grid shown live, the cartridge
+  and its source, built into the cartridge by the pass in the page, the module's
+  alonzo_expand, a press of its own before the load (SPEC.3's second slice), and
+  the replay. The bench is every other mode, each judged on its one element as
+  before. With ?viewport=1 it is the viewport over the fixtures: a record picked,
+  its sheets as tabs, scroll, select, resize a column, freeze panes, a record of
+  one's own pasted in, and the HiDPI panel. With ?loop=1 it runs the host
   loop's oracle, the host driven over a fixed input log against the fake module,
   its writes, frames, windows and sentences held to expectations the page computes
   from the log, and, when the page holds the engine's module, the same host over
@@ -149,57 +155,81 @@
   #stage .case { background: #fff; }
   pre.result { display: none; margin: 14px 0; padding: 10px; border: 1px solid #d9d9d2; background: #fff; font: 12.5px/1.4 ui-monospace, Consolas, "Cascadia Mono", monospace; white-space: pre-wrap; word-break: break-word; }
   body.oracle pre#oracle, body.bench pre#bench, body.loop pre#loop, body.blit pre#blit, body.frames pre#frames { display: block; }
-  body.oracle .page-only, body.bench .page-only, body.loop .page-only, body.blit .page-only, body.frames .page-only { display: none; }
+  /* What each mode shows (ENGINE.14): the player opened plainly, and the bench's sections in their own modes. */
+  body:not(.page) .page-only { display: none; }
+  body.page > header, body.page > main { display: none; }
+  body:not(.viewport) .viewport-only { display: none; }
   body:not(.bench):not(.blit) .bench-only { display: none; }
-  /* The engine's panel: the plane in a box the blit fits, the controls and the log beside it. */
-  .engine { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; align-items: start; }
-  @media (max-width: 860px) { .engine { grid-template-columns: minmax(0, 1fr); } }
-  .plane-box { height: 440px; background: #1d1d1b; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  body:not(.viewport):not(.bench) .hidpi-only { display: none; }
+  /* The player: the window the game's, a slim bar along the top, the Screen filling the rest, the drawer at the
+     right pushing the Screen aside and never covering it (ENGINE.14). */
+  body.page { overflow: hidden; }
+  .player { display: flex; flex-direction: column; height: 100vh; }
+  .player-bar { flex: none; display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; padding: 5px 10px; background: #f3f3ee; border-bottom: 1px solid #d9d9d2; font-size: 13px; color: #4b4b47; }
+  .player-bar .brand { font-weight: 700; color: var(--lavender-deep); margin-right: 4px; }
+  .player-bar select { font: inherit; font-size: 13px; color: #1d1d1b; padding: 2px 4px; border: 1px solid #c8c8c0; border-radius: 3px; background: #fff; }
+  .player-bar .frame-short { color: #6b6b66; white-space: nowrap; font-variant-numeric: tabular-nums; margin-left: 6px; }
+  .player-bar .status { flex: 1 1 160px; min-width: 0; min-height: 0; margin: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .player-bar button[aria-pressed="true"], .player-bar button[aria-expanded="true"] { background: var(--lavender); border-color: var(--lavender-deep); }
+  .player-body { flex: 1 1 auto; min-height: 0; display: flex; }
+  .player-screen { flex: 1 1 auto; min-width: 0; position: relative; background: #1d1d1b; }
+  /* the plane centered in the Screen's box at the whole number of device pixels a cell that fits it */
+  .plane-box { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: #1d1d1b; display: flex; align-items: center; justify-content: center; overflow: hidden; }
   /* hidden while a grid cartridge's viewport shows the Screen: its flex would keep it shown (ENGINE.8's hand test) */
   .plane-box[hidden] { display: none; }
   .plane-box canvas { display: block; outline: none; image-rendering: pixelated; }
   .plane-box canvas:focus { box-shadow: 0 0 0 2px var(--lavender-deep); }
-  .engine-side .controls { margin: 0 0 8px; }
-  .engine-side input[type="text"] { width: 100%; box-sizing: border-box; font: 12.5px/1.4 ui-monospace, Consolas, "Cascadia Mono", monospace; }
-  .engine-log { margin: 6px 0 0; padding: 6px 8px 6px 26px; height: 250px; overflow: auto; border: 1px solid #d9d9d2; background: #fafaf7; font-size: 12.5px; color: #4b4b47; }
+  /* a grid cartridge's Screen, drawn by the host's viewport in the plane's place at the cells' own sizes (ENGINE.8) */
+  .grid.screen { position: absolute; left: 0; top: 0; right: 0; bottom: 0; height: auto; border: 0; }
+  .drawer { flex: none; width: 460px; max-width: 45vw; overflow: auto; box-sizing: border-box; padding: 8px 12px 16px; background: #fafaf7; border-left: 1px solid #d9d9d2; font-size: 13px; color: #4b4b47; }
+  .drawer[hidden] { display: none; }
+  .drawer h2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; margin: 14px 0 6px; color: #1d1d1b; }
+  .drawer .controls { margin: 6px 0; }
+  .drawer input[type="text"] { flex: 1 1 auto; min-width: 0; box-sizing: border-box; font: 12.5px/1.4 ui-monospace, Consolas, "Cascadia Mono", monospace; }
+  .drawer .edit-row { display: flex; gap: 6px; align-items: center; }
+  .drawer .note { margin: 6px 0; font-size: 12.5px; color: #6b6b66; }
+  .drawer details { margin: 10px 0; }
+  .engine-log { margin: 0; padding: 6px 8px 6px 26px; height: 200px; overflow: auto; border: 1px solid #d9d9d2; background: #fff; font-size: 12.5px; color: #4b4b47; }
   .engine-log li { margin: 2px 0; }
-  .frame-line { font-size: 13px; color: #6b6b66; margin: 6px 0 0; min-height: 1.4em; }
+  .frame-line { font-size: 13px; color: #6b6b66; margin: 4px 0 0; min-height: 1.4em; }
   .frame-line.refused, .engine-log li.refused { color: #a2262b; }
-  .grid.small { height: 220px; }
-  /* A grid cartridge's Screen, drawn by the host's viewport in the plane's place (ENGINE.8). */
-  .grid.screen { height: 440px; }
+  .grid.sheets { height: 300px; }
 </style>
 </head>
 <body>
-<header>
-  <h1>Alonzo: <em>the engine's loop and the viewport</em></h1>
-  <p class="lede">A cartridge running on the host's loop: every input is a cell the host writes, every effect a cell it reads, and the Screen's cells are drawn as one byte each through the Palette. Below it, a window of a sheet drawn from the view record alone, the lines <code>frazaro view</code> prints, every cell where the record puts it. Nothing on this page leaves it: it reads nothing from the network and writes nothing anywhere.</p>
-  <p id="about" class="about"></p>
-</header>
-<main>
-  <section class="panel page-only" aria-label="the engine">
-    <div class="bar"><span>The engine &middot; the host's loop over the module, a cartridge from cartridges/</span><span id="module-line"></span></div>
-    <div class="inner">
-      <div class="engine">
-        <div>
-          <div id="plane-box" class="plane-box"><canvas id="plane" tabindex="0" aria-label="the Screen, drawn as a plane of color indices"></canvas></div>
-          <div id="eng-screen-grid" class="grid screen" hidden aria-label="the Screen, drawn as a grid by the viewport"></div>
-          <p id="frame-line" class="frame-line"></p>
-        </div>
-        <div class="engine-side">
-          <p class="controls"><label>Cartridge <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="gun">Glider gun</option><option value="testcard">Test card</option><option value="inputcard">Input card</option><option value="soundcard">Sound card</option><option value="sand">Sand</option><option value="gridcard">Grid card</option><option value="kairos">Kairos</option></select></label></p>
-          <p class="controls"><button type="button" id="eng-run">Run</button> <button type="button" id="eng-pause">Pause</button> <button type="button" id="eng-sound" aria-pressed="false">Sound on</button> <button type="button" id="eng-build">Build the cartridge</button> <button type="button" id="eng-load">Load the cartridge</button> <button type="button" id="eng-copy">Copy the log</button></p>
-          <p class="controls"><button type="button" id="eng-replay-play">Play the replay</button> <button type="button" id="eng-replay-copy">Copy the replay</button></p>
-          <p class="controls"><label style="flex:1 1 100%">An edit, one row: <input type="text" id="eng-edit" spellcheck="false" value="(cell &quot;Palette&quot; &quot;B1&quot; &quot;#FF8800&quot;)"></label> <button type="button" id="eng-write">Write</button></p>
-          <p id="eng-status" class="status"></p>
-          <ol id="eng-log" class="engine-log" aria-label="the host's sentences"></ol>
-        </div>
-      </div>
+<div id="player" class="player page-only">
+  <div class="player-bar" role="toolbar" aria-label="the player">
+    <span class="brand">Alonzo</span>
+    <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="gun">Glider gun</option><option value="testcard">Test card</option><option value="inputcard">Input card</option><option value="soundcard">Sound card</option><option value="sand">Sand</option><option value="gridcard">Grid card</option><option value="kairos">Kairos</option></select>
+    <button type="button" id="eng-run">Run</button>
+    <button type="button" id="eng-pause">Pause</button>
+    <button type="button" id="eng-sound" aria-pressed="false">Sound on</button>
+    <button type="button" id="eng-load" title="the cartridge in the drawer's box, loaded again from frame 0">Load</button>
+    <span id="frame-short" class="frame-short"></span>
+    <p id="eng-status" class="status"></p>
+    <button type="button" id="eng-full" aria-pressed="false">Full screen</button>
+    <button type="button" id="eng-drawer" aria-expanded="false" aria-controls="drawer">Drawer</button>
+  </div>
+  <div class="player-body">
+    <div class="player-screen">
+      <div id="plane-box" class="plane-box"><canvas id="plane" tabindex="0" aria-label="the Screen, drawn as a plane of color indices"></canvas></div>
+      <div id="eng-screen-grid" class="grid screen" hidden aria-label="the Screen, drawn as a grid by the viewport"></div>
+    </div>
+    <aside id="drawer" class="drawer" hidden aria-label="the drawer">
+      <p id="frame-line" class="frame-line"></p>
+      <p class="controls edit-row"><label for="eng-edit">An edit, one row:</label> <input type="text" id="eng-edit" spellcheck="false" value="(cell &quot;Palette&quot; &quot;B1&quot; &quot;#FF8800&quot;)"> <button type="button" id="eng-write">Write</button></p>
+      <p class="note">Click the Screen to give it the keys: the arrows, Z, X, A, S, Enter and Space are player 1's. In a grid, a key the Keys sheet does not bind moves the selection, and the wheel scrolls everywhere but over the cells of the Camera's window, where the game takes it.</p>
+      <h2>The log <button type="button" id="eng-copy">Copy the log</button></h2>
+      <ol id="eng-log" class="engine-log" aria-label="the host's sentences"></ol>
+      <h2>The sheets</h2>
+      <p class="note">Any sheet of the grid, live: a tab shows it, and every frame and every scroll views it again through the cells in view; the previous frame's twins are among the hidden sheets.</p>
+      <div id="eng-grid" class="grid sheets" aria-label="a sheet of the grid, live"></div>
       <details id="eng-texts">
         <summary>The source and the cartridge</summary>
-        <p>The source, <code id="eng-src-path">cartridges/life/life.source.vla</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one picture, a string a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load the cartridge loads it: the pass loads nothing, and a cartridge running goes on running (SPEC.md section 7.8). The fake module holds no pass, and says so.</p>
+        <p>The source, <code id="eng-src-path">cartridges/life/life.source.vla</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one picture, a string a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load loads it: the pass loads nothing, and a cartridge running goes on running (SPEC.md section 7.8). The fake module holds no pass, and says so.</p>
+        <p class="controls"><button type="button" id="eng-build">Build the cartridge</button></p>
         <textarea id="eng-src" rows="14" spellcheck="false" aria-label="the cartridge's source"></textarea>
-        <p>The cartridge, <code id="eng-cart-path">cartridges/life/life.vla</code>, the file the host loads, picked above: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no color; the input card, every cell the host writes before a step, drawn; the sound card, the Audio sheet's four voices played, heard after Sound on; or Sand, a falling-sand toy that opens raining sand: paint with the left button, erase with the right, size the brush with the wheel, and press 1, 2 or 0 for sand, wall or empty; or the grid card, a grid cartridge drawn by the viewport, every kind of value, format and look a grid cell can hold, through a Camera that only an edit moves: write <code>(cell "Camera" "B2" 5)</code> and the window moves four columns right, the viewport scrolling with it; or Kairos, the stacking game, in Lovelace Lavender: stop each row of lights over the row beneath with Z, Space or a click, take the minor prize at level 11 with X or go on with Z, and read every level's speed and window in its Levels sheet, which an edit such as <code>(cell "Levels" "D3" 1)</code> rigs in the open. Edit it, or build it again from its source, and press Load the cartridge: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
+        <p>The cartridge, <code id="eng-cart-path">cartridges/life/life.vla</code>, the file the host loads, picked in the bar or pasted here: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no color; the input card, every cell the host writes before a step, drawn; the sound card, the Audio sheet's four voices played, heard after Sound on; or Sand, a falling-sand toy that opens raining sand: paint with the left button, erase with the right, size the brush with the wheel, and press 1, 2 or 0 for sand, wall or empty; or the grid card, a grid cartridge drawn by the viewport, every kind of value, format and look a grid cell can hold, through a Camera that only an edit moves: write <code>(cell "Camera" "B2" 5)</code> and the window moves four columns right, the viewport scrolling with it; or Kairos, the stacking game, in Lovelace Lavender: stop each row of lights over the row beneath with Z, Space or a click, take the minor prize at level 11 with X or go on with Z, and read every level's speed and window in its Levels sheet, which an edit such as <code>(cell "Levels" "D3" 1)</code> rigs in the open. Paste another cartridge, edit this one, or build it again from its source, and press Load: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
         <textarea id="eng-cart" rows="14" spellcheck="false" aria-label="the cartridge, the rows a load takes"></textarea>
         <details>
           <summary>The library the sources include, <code id="eng-lib-path">cartridges/common.vla</code></summary>
@@ -209,17 +239,23 @@
       </details>
       <details id="eng-replay-box">
         <summary>The replay</summary>
+        <p class="controls"><button type="button" id="eng-replay-play">Play the replay</button> <button type="button" id="eng-replay-copy">Copy the replay</button></p>
         <p>A replay, <code id="eng-replay-path">none: this cartridge has no replay of its own</code>, is every write a run made between its steps: a header naming the cartridge by the SHA-256 of its text and the seed, then each frame as one form holding its rows, <code>(frame 12 (cell "Input" "B5" 1))</code>, the Input sheet's cells that changed and each person's edit that landed; the host's derived writes are never logged, a replay re-deriving them (SPEC.md section 7.6). Paste one here and press Play the replay: the host loads the cartridge again with the replay's seed and plays its frames at the cartridge's rate, a person's edits waiting until it ends, and pauses at its last frame; Run then carries on with the live inputs. Copy the replay puts what the host has recorded since the last load on the clipboard and in this box, a replay played among it, so a replay played and copied is the replay played. The input card's and the sound card's own replays are the loop oracle's runs of them: play the sound card's with the sound on and hear the run again, its ticks, the knob turned to a word that is no wave and back, and a stretch at a third of the speed. Kairos's is the owner's two games: the major prize won, the minor refused on the way, then a fall at the last level.</p>
         <textarea id="eng-replay" rows="10" spellcheck="false" aria-label="a replay to play"></textarea>
       </details>
-      <p class="controls"><label>A sheet, live <select id="eng-sheet" aria-label="the sheet to show">
-        <option value="Write" selected>Write</option><option value="Camera">Camera</option><option value="Clock">Clock</option><option value="Input">Input</option>
-        <option value="Keys">Keys</option><option value="Palette">Palette</option><option value="Audio">Audio</option><option value="File">File</option><option value="State">State</option>
-      </select></label> <span class="status">Click the Screen to give it the keys: the arrows, Z, X, A, S, Enter and Space are player 1's; in a grid, a key the Keys sheet does not bind moves the selection.</span></p>
-      <div id="eng-grid" class="grid small" aria-label="the device sheet's record"></div>
-    </div>
-  </section>
-  <p class="controls page-only">
+      <p id="module-line" class="note"></p>
+      <p id="player-about" class="note"></p>
+      <p class="note">The bench is this page opened with a mode: <code>?loop=1</code> the host loop's oracle, <code>?oracle=1</code> the render oracle, <code>?viewport=1</code> the viewport over the fixtures, <code>?frames=1</code> the frame floors, <code>?blit=1</code> the blit's and <code>?bench=1</code> the renderer's floors, the last two run in fullscreen.</p>
+    </aside>
+  </div>
+</div>
+<header>
+  <h1>Alonzo: <em>the bench</em></h1>
+  <p class="lede">The engine page's bench, each a mode of the one page the checks open: <code>?loop=1</code> the host loop's oracle, <code>?oracle=1</code> the render oracle, <code>?viewport=1</code> the viewport over the fixtures, <code>?frames=1</code>, <code>?blit=1</code> and <code>?bench=1</code> the floors' instruments. Opened plainly, the page is the player. Nothing on this page leaves it: it reads nothing from the network and writes nothing anywhere.</p>
+  <p id="about" class="about"></p>
+</header>
+<main>
+  <p class="controls viewport-only">
     <label>Record <select id="fixture" aria-label="the record to draw">
       <optgroup label="fixture.txt, the build golden's program">
         <option value="fixture_frazaro" selected>Frazaro, the whole sheet</option>
@@ -240,21 +276,21 @@
     <button type="button" id="freeze">Freeze</button>
     <span id="status" class="status"></span>
   </p>
-  <div id="grid" class="grid page-only" aria-label="the viewport"></div>
-  <p id="selection" class="status page-only"></p>
-  <details class="page-only">
+  <div id="grid" class="grid viewport-only" aria-label="the viewport"></div>
+  <p id="selection" class="status viewport-only"></p>
+  <details class="viewport-only">
     <summary>Paste a record</summary>
     <p>A view record of your own, the lines <code>frazaro view &lt;program&gt; --sheet &lt;name&gt;</code> prints: it is read here, drawn, and never saved. An unknown row is counted and the status line says how many.</p>
     <textarea id="paste" rows="8" spellcheck="false" placeholder="(sheet &quot;Output&quot; visible)&#10;(window &quot;Output&quot; &quot;A1:B3&quot;)&#10;(extent &quot;Output&quot; &quot;A1:B3&quot;)&#10;(gridlines &quot;Output&quot; on)&#10;(format 0 none general nowrap)&#10;(cell &quot;Output&quot; &quot;A1&quot; &quot;west&quot;)"></textarea>
     <button type="button" id="load">Load</button>
   </details>
-  <details class="page-only">
+  <details class="viewport-only">
     <summary>How the viewport reads the record</summary>
     <ul>
       <li><b>sheet</b> rows are the tabs; a hidden or very-hidden sheet shows under the tabs' toggle. A tab without a record asks the host for one: here, the fixture of the same program if there is one.</li>
       <li><b>window</b> is the record's scope, the scroll's extent, never less than a screen; <b>extent</b> is the sheet's used rectangle; <b>gridlines</b> on or off.</li>
       <li><b>column</b> rows give widths in characters, the file's own unit, turned into pixels by ECMA-376's rule (72 is 504 px, 60 is 420 px; a column without a row is 64 px, Excel's default); a hidden column is skipped; a column's format fills its empty cells.</li>
-      <li><b>format</b> rows give a fill, general or text, wrap or nowrap. <b>cell</b> rows show their value as the reader spells it, numbers right, text left, TRUE and FALSE and errors centered; <b>formula</b> rows show the formula's text, in green, until the value row lands (KERNEL.7). A nowrap text spills into empty neighbors to the right; a number never does.</li>
+      <li><b>format</b> rows give a fill, general or text, wrap or nowrap. <b>cell</b> rows show their value as the reader spells it, numbers right, text left, TRUE and FALSE and errors centered; <b>formula</b> rows show the formula's text, in green, until the value row lands (KERNEL.7). A nowrap text spills into empty neighbors to the right; a number never does, and a number too wide for its column draws #s across it, as Excel fills a cell under a fixed number format (ENGINE.14).</li>
       <li><b>style</b> and <b>sentence</b> rows ride on their cell: the sentence's row is in the selection's line below the grid, and in the <code>select</code> event the first game's chrome reads.</li>
     </ul>
   </details>
@@ -265,7 +301,7 @@
       <p id="instrument-note">The page runs once on opening, not in fullscreen; press Fullscreen to enter it and run again. The full-screen row is honest only in fullscreen, since a browser culls painting outside its viewport. Copy takes the table and the baseline lines for <code>tools/check_render_floors.ps1</code>.</p>
     </div>
   </section>
-  <section class="panel" aria-label="HiDPI crispness">
+  <section class="panel hidpi-only" aria-label="HiDPI crispness">
     <div class="bar"><span>HiDPI &middot; the same text in a DOM cell and in the viewport's canvas, 13 px, at the machine's ratio</span></div>
     <div class="inner">
       <div class="hd"><span>DOM</span><div class="cell-dom" id="hd-dom"></div><span>canvas</span><canvas id="hd-canvas" width="160" height="20"></canvas></div>
@@ -329,7 +365,8 @@
 (function () {
   'use strict';
   var QS = location.search;
-  var MODE = /[?&]oracle=1(&|$)/.test(QS) ? 'oracle' : /[?&]bench=1(&|$)/.test(QS) ? 'bench' : /[?&]loop=1(&|$)/.test(QS) ? 'loop' : /[?&]blit=1(&|$)/.test(QS) ? 'blit' : /[?&]frames=1(&|$)/.test(QS) ? 'frames' : 'page';
+  // the bench's modes, each a query; opened plainly, the player, 'page' (ENGINE.14)
+  var MODE = /[?&]oracle=1(&|$)/.test(QS) ? 'oracle' : /[?&]bench=1(&|$)/.test(QS) ? 'bench' : /[?&]loop=1(&|$)/.test(QS) ? 'loop' : /[?&]blit=1(&|$)/.test(QS) ? 'blit' : /[?&]frames=1(&|$)/.test(QS) ? 'frames' : /[?&]viewport=1(&|$)/.test(QS) ? 'viewport' : 'page';
   document.body.className = MODE;
   var VP = window.AlonzoViewport, HOST = window.AlonzoHost, FAKE = window.AlonzoFake;
   var lifeText = (document.getElementById('cartridge-life') || {}).textContent || '';
@@ -413,11 +450,13 @@
   if (!built) {
     aboutEl.textContent = 'This page was not built: run tools/build_web.ps1 to fill it.';
     if (MODE === 'oracle' || MODE === 'loop' || MODE === 'blit' || MODE === 'frames') document.getElementById(MODE).textContent = MODE + ' failed: the page was not built';
+    if (MODE === 'page') { var unbuilt = document.getElementById('eng-status'); unbuilt.textContent = aboutEl.textContent; unbuilt.className = 'status refused'; }
     return;
   }
   var engineB64 = builtModule().replace(/\s+/g, '');
   var engineBytes = engineB64 ? engineB64.length / 4 * 3 - (/==$/.test(engineB64) ? 2 : /=$/.test(engineB64) ? 1 : 0) : 0;
   aboutEl.textContent = 'The host, version ' + HOST.version + (engineBytes ? ', over the engine\'s module built into this page, ' + thousands(engineBytes) + ' bytes, with the fake module, version ' + FAKE.version + ', for its oracle' : ', over the fake module, version ' + FAKE.version + ', no engine module being built into this page') + '; and the viewport, version ' + VP.version + ', over seven records the door printed: the six view goldens of Frazaro\'s scripts/view/ and the 10,000-line program\'s, ' + thousands(fixtureText('sparse_10000').split('\n').length - 1) + ' lines. Device pixel ratio ' + (window.devicePixelRatio || 1) + '.';
+  document.getElementById('player-about').textContent = aboutEl.textContent;
 
   // ---- the HiDPI panel: the same text in a DOM cell and in a canvas cell, drawn as the viewport draws ----
   function hidpiPanel() {
@@ -450,7 +489,7 @@
   }
   hidpiPanel();
 
-  // ---- the engine's panel (ENGINE.1): the host's loop over the module, the Life cartridge ----
+  // ---- the player (ENGINE.14; ENGINE.1's panel before it): the host's loop over the module, the window the game's ----
   function bytesOfBase64(s) {
     var bin = atob(s.replace(/\s+/g, ''));
     var out = new Uint8Array(bin.length);
@@ -458,21 +497,27 @@
     return out;
   }
   function builtModule() { return (document.getElementById('alonzo-wasm').textContent || '').trim(); }
-  function enginePanel() {
+  function player() {
     var planeCv = document.getElementById('plane'), planeBox = document.getElementById('plane-box');
     var cartEl = document.getElementById('eng-cart'), editEl = document.getElementById('eng-edit');
     var statusEl = document.getElementById('eng-status'), logEl = document.getElementById('eng-log');
-    var frameEl = document.getElementById('frame-line'), moduleEl = document.getElementById('module-line');
-    var sheetEl = document.getElementById('eng-sheet'), pickEl = document.getElementById('eng-pick');
+    var frameEl = document.getElementById('frame-line'), frameShort = document.getElementById('frame-short'), moduleEl = document.getElementById('module-line');
+    var pickEl = document.getElementById('eng-pick'), drawer = document.getElementById('drawer'), drawerBtn = document.getElementById('eng-drawer'), fullBtn = document.getElementById('eng-full');
     var pathEl = document.getElementById('eng-cart-path'), srcEl = document.getElementById('eng-src'), srcPathEl = document.getElementById('eng-src-path');
     var libEl = document.getElementById('eng-lib'), textsEl = document.getElementById('eng-texts');
     var replayEl = document.getElementById('eng-replay'), replayBoxEl = document.getElementById('eng-replay-box'), replayPathEl = document.getElementById('eng-replay-path');
     cartEl.value = lifeText; srcEl.value = CARTRIDGES.life.source; libEl.value = LIBRARIES.common.text;
-    // A grid cartridge's Screen is drawn by the host's own viewport, in the plane's place (ENGINE.8).
+    // A grid cartridge's Screen is drawn by the host's own viewport, in the plane's place (ENGINE.8), its tabs
+    // answered by the host (ENGINE.14).
     var screenGrid = document.getElementById('eng-screen-grid');
     var host = new HOST({ canvas: planeCv, box: planeBox, grid: screenGrid });
+    // The drawer's sheets (ENGINE.14, decision 10): a viewer of the grid's sheets for every cartridge, a plane's
+    // having no tabs of its own, its tab strip the picker and its tabs answered by the host as its own viewport's
+    // are, every sheet viewed through the cells in view and never whole.
     var dvp = new VP(document.getElementById('eng-grid'));
-    var shownAt = -1, shownTime = -1e9, rate = -1, mode = 'plane', items = {};
+    var shownAt = -1, shownTime = -1e9, rate = -1, mode = 'plane', items = {}, viewerSheet = 'Clock', choosing = false;
+    dvp.on('sheet', function (e) { if (e.loaded && !choosing) viewerSheet = e.name; host.answer(dvp, e); });
+    dvp.on('scroll', function () { host.refreshSheet(dvp, true); });
     // The keys go to what shows the Screen: the plane's canvas, or the viewport's scroller.
     function focusScreen() { if (mode === 'grid' && host.vp) host.vp.scroller.focus(); else planeCv.focus(); }
     // The log drawn in place: a new event appends a line, a repeat changes only its own line's
@@ -490,53 +535,35 @@
       for (var id in items) if (Object.prototype.hasOwnProperty.call(items, id) && !keep[id]) { logEl.removeChild(items[id]); delete items[id]; }
       if (added && atBottom) logEl.scrollTop = logEl.scrollHeight;
     }
-    // Any sheet's record, as the module prints it, in a viewport of its own: AD-6 seen. The Screen
-    // and its twin through a 20 by 20 window at the Camera's place, since a whole Screen's record
-    // is a formula row a cell, tens of megabytes for Life, which nothing here asks for.
-    function windowOf(name) {
-      if (!/^screen(\.last)?$/i.test(name)) return '';
-      var cam = host.camera || { row: 1, col: 1 };
-      return VP.rangeText({ top: cam.row, left: cam.col, bottom: cam.row + 19, right: cam.col + 19 });
-    }
-    // Each refresh replaces the record with the scroll and the selection kept (ENGINE.8, decision 5): drawn
-    // whole, the sheet went back to A1 five times a second while the loop ran.
-    function showSheet() {
-      var t = host.viewRecord(sheetEl.value, windowOf(sheetEl.value));
-      if (t) { dvp.load(t, { keep: true }); dvp.show(sheetEl.value); }
-    }
-    // The picker holds the sheets the grid holds, read off a record's sheet rows, the twins last:
-    // the engine's Life holds Screen, Palette, Clock, File and Input, the fake module its nine and State.
-    function fillSheets() {
-      var t = host.viewRecord('Clock', 'A1');
-      if (!t) return;
-      var forms = VP.readForms(t), own = [], twins = [];
+    // The sheet the viewer shows, viewed again through the cells in view with its scroll and selection kept
+    // (ENGINE.8, decision 5; ENGINE.14): never while the drawer is closed, a sheet nobody sees being viewed for
+    // nothing. Its old windows, 20 by 20 at the Camera for the Screen and every other sheet whole, would print
+    // Sand's Stay, 34 MB, five times a second.
+    function refreshViewer() { if (!drawer.hidden) host.refreshSheet(dvp); }
+    // After a load, the sheet the person last chose when the new grid holds it, read off a record's sheet rows,
+    // else the Clock, which every grid holds.
+    function showViewer() {
+      var t = host.viewRecord('Clock', 'A1'), forms = t ? VP.readForms(t) : [], names = {};
       for (var i = 0; i < forms.length; i++) {
         var f = forms[i];
-        if (!Array.isArray(f) || !f[0] || f[0].sym !== 'sheet' || typeof f[1] !== 'string') continue;
-        (/\.last$/i.test(f[1]) ? twins : own).push(f[1]);
+        if (Array.isArray(f) && f[0] && f[0].sym === 'sheet' && typeof f[1] === 'string') names[f[1].toLowerCase()] = f[1];
       }
-      if (!own.length) return;
-      var keep = sheetEl.value, names = own.concat(twins);
-      sheetEl.textContent = '';
-      for (var j = 0; j < names.length; j++) {
-        var o = document.createElement('option');
-        o.value = names[j];
-        o.textContent = /\.last$/i.test(names[j]) ? names[j] + ', the previous frame' : names[j];
-        sheetEl.appendChild(o);
-      }
-      sheetEl.value = names.indexOf(keep) >= 0 ? keep : (names.indexOf('Write') >= 0 ? 'Write' : (names.indexOf('Clock') >= 0 ? 'Clock' : names[0]));
+      choosing = true;
+      try { dvp.clear(); host.showSheet(dvp, names[viewerSheet.toLowerCase()] || 'Clock'); } finally { choosing = false; }
     }
     // Every refusal one color, red until the page's palette is drawn (the owner's word, 2026-10-09):
     // the status line while it shows one, each refused line of the log, the frame line after a refused load.
+    // The bar's status line holds the latest sentence whole in its title, the line itself cut to the bar.
     host.on('status', function (s) {
-      if (!s.repeat) { statusEl.textContent = s.text; statusEl.className = s.refusal ? 'status refused' : 'status'; }
+      if (!s.repeat) { statusEl.textContent = s.text; statusEl.title = s.text; statusEl.className = s.refusal ? 'status refused' : 'status'; }
       if (s.kind !== 'progress') renderLog();
     });
     host.on('frame', function (e) {
       var c = host.counters();
       if (e.rate !== undefined) rate = e.rate;   // the Clock's rate, which a person may write (ENGINE.3)
       var many = function (n, one, more) { return n + ' ' + (n === 1 ? one : more); };
-      // a replay playing says where it is in it (ENGINE.3's second slice)
+      // a replay playing says where it is in it (ENGINE.3's second slice); the bar the frame alone, the drawer the whole line
+      frameShort.textContent = e.replay ? 'Replaying ' + thousands(e.frame) + ' of ' + thousands(e.replay) : 'Frame ' + thousands(e.frame);
       frameEl.textContent = (e.replay ? 'Replaying frame ' + e.frame + ' of ' + e.replay : 'Frame ' + e.frame) + ', the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + '; ' + many(c.derivedApplied, 'derived write', 'derived writes') + ' landed and ' + c.derivedRefused + ' refused, ' + many(c.edits, 'edit', 'edits') + ' written, ' + many(c.yields, 'yield', 'yields') + '.' +
         // while the sound is on, the frames sounded and the timeline's restarts and skips (ENGINE.4, decision 1)
         (host.soundIs() ? ' The sound: ' + many(c.sounded, 'frame', 'frames') + ' sounded, ' + many(c.restarts, 'restart', 'restarts') + ', ' + c.skipped + ' skipped.' : '');
@@ -544,12 +571,12 @@
       // (the engine's Life draws about two a second); every frame at rate zero, where a frame is an
       // edit (found in the owner's hand test, 2026-10-09: the sheet lagged the edits)
       var now = performance.now();
-      if (rate === 0 || now - shownTime >= 200 || e.frame < shownAt) { shownAt = e.frame; shownTime = now; showSheet(); }
+      if (rate === 0 || now - shownTime >= 200 || e.frame < shownAt) { shownAt = e.frame; shownTime = now; refreshViewer(); }
     });
     // When the loop stops (Pause, a replay's end, a refused step), the sheet is drawn at the frame it
     // stopped at, so that it and the frame line say one frame: the refresh above had left it up to
     // 200 ms behind (found in the owner's hand test of ENGINE.4, 2026-10-10, frame 234 under frame 240).
-    host.on('stop', function (e) { if (e.frame !== shownAt) { shownAt = e.frame; shownTime = performance.now(); showSheet(); } });
+    host.on('stop', function (e) { if (e.frame !== shownAt) { shownAt = e.frame; shownTime = performance.now(); refreshViewer(); } });
     // A load is frame 0, drawn at once, nothing computed; the line says so until the first frame lands.
     host.on('load', function (e) {
       shownAt = -1; shownTime = -1e9; rate = e.rate; mode = e.mode;
@@ -558,21 +585,23 @@
       planeBox.hidden = mode === 'grid'; screenGrid.hidden = mode !== 'grid';
       if (mode === 'grid' && host.vp) host.vp.redraw();
       frameEl.className = 'frame-line';
+      frameShort.textContent = 'Frame 0';
       frameEl.textContent = 'Frame 0, the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + ': the cartridge as loaded, nothing computed until ' + (e.rate ? 'the first step.' : 'an edit steps it.');
     });
     function loadCartridge() {
       var r = host.load(cartEl.value, (CARTRIDGES[pickEl.value] || CARTRIDGES.life).file);
-      if (r.ok) { fillSheets(); host.start(); showSheet(); return; }
+      if (r.ok) { host.start(); showViewer(); return; }
       // a refusal is red, as the viewport's own status line paints one (the owner's hand test, 2026-10-09)
       frameEl.className = 'frame-line refused';
       frameEl.textContent = 'No cartridge is loaded: the last load was refused, and the log says why.';
+      frameShort.textContent = 'No cartridge';
     }
     // Build: the pass in the page (SPEC.3), an act of its own. The cartridge it writes goes into the
-    // cartridge's box, opened, to be read before Load the cartridge loads it; nothing is loaded and
-    // nothing stopped, so a cartridge running goes on running.
+    // cartridge's box, opened, to be read before Load loads it; nothing is loaded and nothing stopped,
+    // so a cartridge running goes on running.
     function buildCartridge() {
       var c = CARTRIDGES[pickEl.value] || CARTRIDGES.life;
-      if (!c.sourcePath) { statusEl.textContent = c.file + ' has no source: it is written by hand, and Load the cartridge loads it as it stands.'; statusEl.className = 'status'; return; }
+      if (!c.sourcePath) { statusEl.textContent = c.file + ' has no source: it is written by hand, and Load loads it as it stands.'; statusEl.className = 'status'; return; }
       var r = host.expand(srcEl.value, c.sourcePath, libraryPairs({ common: libEl.value }));
       if (!r.ok) return;
       cartEl.value = r.text;
@@ -639,11 +668,33 @@
     document.getElementById('eng-replay-play').addEventListener('click', function () {
       if (!replayEl.value.trim()) { replayBoxEl.open = true; statusEl.textContent = 'Paste a replay into the box under The replay, then press Play the replay.'; statusEl.className = 'status'; return; }
       var r = host.play(replayEl.value);
-      if (r.ok) { fillSheets(); showSheet(); focusScreen(); }
+      if (r.ok) { showViewer(); focusScreen(); }
     });
     document.getElementById('eng-write').addEventListener('click', function () { host.edit(editEl.value); });
     editEl.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); host.edit(editEl.value); } });
-    sheetEl.addEventListener('change', showSheet);
+    // The drawer (ENGINE.14, decision 9), closed at first so the window is the game's: opened, it pushes the
+    // Screen aside, which refits, and its sheet, measured again in its box, is viewed through the cells in view.
+    drawerBtn.addEventListener('click', function () {
+      drawer.hidden = !drawer.hidden;
+      drawerBtn.setAttribute('aria-expanded', drawer.hidden ? 'false' : 'true');
+      if (!drawer.hidden) { dvp.redraw(); host.refreshSheet(dvp); renderLog(); logEl.scrollTop = logEl.scrollHeight; }
+    });
+    // Full screen, the browser's, over the whole player, the bar kept: Esc leaves it, as the button does.
+    fullBtn.addEventListener('click', function () {
+      if (document.fullscreenElement) { document.exitFullscreen(); return; }
+      var el = document.documentElement;
+      if (!el.requestFullscreen) { statusEl.textContent = 'This browser offers no fullscreen to a page: its own key, F11, may.'; statusEl.className = 'status'; return; }
+      el.requestFullscreen().then(focusScreen, function (err) { statusEl.textContent = 'Fullscreen was refused: ' + (err && err.message ? err.message : err); statusEl.className = 'status'; });
+    });
+    document.addEventListener('fullscreenchange', function () {
+      var on = !!document.fullscreenElement;
+      fullBtn.textContent = on ? 'Exit full screen' : 'Full screen';
+      fullBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    // The plane refitted to its box when the box changes, the window resized, the drawer opened or full screen
+    // entered, paused or at rate zero too, where no frame would bring the next blit (ENGINE.14); the grid's
+    // viewport refits by its own observer.
+    if (window.ResizeObserver) new ResizeObserver(function () { host.refit(); }).observe(planeBox);
     var wasm = builtModule();
     if (!wasm) { useFake('No engine module was built into this page.'); return; }
     var bytes = bytesOfBase64(wasm);
@@ -654,8 +705,11 @@
     }, function (e) { useFake('The engine module built into this page did not instantiate: ' + (e && e.message ? e.message : e) + '.'); });
   }
 
-  // ---- the page: the viewport over the fixtures ----
-  if (MODE === 'page') {
+  // ---- the player, opened plainly (ENGINE.14) ----
+  if (MODE === 'page') { player(); return; }
+
+  // ---- the bench's viewport over the fixtures (?viewport=1; KERNEL.5's page, its own mode since ENGINE.14) ----
+  if (MODE === 'viewport') {
     var gridEl = document.getElementById('grid');
     var statusEl = document.getElementById('status');
     var selEl = document.getElementById('selection');
@@ -724,7 +778,6 @@
       selEl.textContent = 'Selected ' + vp.selection().text + '.';
     });
     loadFixture(fixtureEl.value, false);
-    enginePanel();
     return;
   }
 

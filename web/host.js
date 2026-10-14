@@ -1426,6 +1426,15 @@
     this._drawPlane();
     return true;
   };
+  // The last plane blitted again at the scale its box now fits, nothing viewed and nothing stepped: a page
+  // calls it when the box changes size, the window resized, a drawer opened or full screen entered, so that a
+  // paused loop or rate zero refits too, where no frame would bring the next blit (ENGINE.14). False with no
+  // plane drawn.
+  Host.prototype.refit = function () {
+    if (!this.canvas || !this.plane || !this.cart || this.cart.mode !== 'plane') return false;
+    this._blit(this.plane);
+    return true;
+  };
   // A sheet's record as the module prints it, for a page to show; null and a sentence when refused.
   Host.prototype.viewRecord = function (sheet, win) {
     if (!this.m || !this.handle || this.inFrame) return null;

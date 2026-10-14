@@ -1,6 +1,9 @@
 # The engine's page: the host's loop, and the viewport
 
-**The host shim, `host.js`, runs a cartridge on the loop of `SPEC.md`
+**Opened plainly, the page is the player: the window the game's, the Screen
+filling it under a slim bar, the source, the replay, the log and the sheets
+in a drawer (`ENGINE.14`). Its other modes are the bench, the oracles the
+checks drive and the instruments the floors read. The host shim, `host.js`, runs a cartridge on the loop of `SPEC.md`
 section 5 over the engine's module, every input a cell it writes and every
 effect a cell it reads, and blits the Screen as a plane of color indices.
 It runs over the engine's own module, `alonzo.wasm`, built into the page,
@@ -193,7 +196,7 @@ the marks a host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
-test card, the input card, the sound card, Sand, the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), or Kairos, the stacking game (`CART.4`), each with its source, which the panel's Build expands into the
+test card, the input card, the sound card, Sand, the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), or Kairos, the stacking game (`CART.4`), each with its source, which the drawer's Build expands into the
 cartridge in the page, the input card, the sound card, Sand and Kairos each with its replay, which Play the replay plays, the
 Audio sheet heard after Sound on, and
 below it the viewport over seven
@@ -211,26 +214,31 @@ powershell -File tools\build_web.ps1
 
 writes `web/index.html`; open it from disk. Build the engine first,
 `cargo build --release -p alonzo --target wasm32-unknown-unknown`, and the
-builder puts it in the page: the engine's panel then runs Life as the
-language computes it, at its rate of thirty frames a second; without it the panel
-runs against the fake module and says so. Type a row in the edit box and
-press Write (`(cell "Palette" "B1" "#FF8800")` turns the dead cells orange,
+builder puts it in the page. Opened plainly, the page is the player
+(`ENGINE.14`): the window is the game's, Life filling it as the language
+computes it, at its rate of thirty frames a second, under a slim bar with
+the cartridge, Run, Pause, Sound, Load, the frame and the latest sentence;
+without the engine the player runs against the fake module and says so.
+Press Full screen for the browser's fullscreen over the whole player, the bar
+kept; Esc leaves it. Press Drawer, and the drawer opens at the right and
+pushes the Screen aside, which refits. Type a row in its edit box and press
+Write (`(cell "Palette" "B1" "#FF8800")` turns the dead cells orange,
 `(cell "Screen" "B2:K11" 1)` holds a block alive while Life flows around
 it), watch the log, each repeat counted in its first line, and press Copy
-the log to take it as text; pick a sheet of the grid, the Clock's frame
-counting or the previous frame's twin, to see its record live, drawn about
-five times a second while the loop runs and again whenever it stops, so
-that at a pause the sheet and the frame line say the same frame; edit the
-cartridge's `(rate 30)` to `(rate 0)` and press Load the cartridge to see a
-step on every edit. Open The source and the cartridge to see both texts: the
+the log to take it as text; click a tab of the drawer's sheets, the Clock's
+frame counting or, under the hidden sheets, the previous frame's twin, to
+see its record live through the cells in view, viewed again about five
+times a second while the loop runs, at every scroll and whenever it stops,
+so that at a pause the sheet and the frame line say the same frame; edit the
+cartridge's `(rate 30)` to `(rate 0)` and press Load to see a step on every
+edit. Open The source and the cartridge to see both texts: the
 source a person writes, its palette one macro call, and the cartridge the
 pass writes from it. Press Build the cartridge to run the pass in the page,
 the function `cargo run --release --example expand` runs, to the same bytes:
 it puts the cartridge it built in the second box and loads nothing, so the
-cartridge running goes on running until Load the cartridge loads what was
-built. Change a macro of the library at the bottom, `cartridges/common.vla`,
+cartridge running goes on running until Load loads what was built. Change a macro of the library at the bottom, `cartridges/common.vla`,
 and build again to see every row it writes change; over the fake module the
-build is declined, in words. Pick the glider gun above the buttons to see Gosper's
+build is declined, in words. Pick the glider gun in the bar to see Gosper's
 gun fire a glider every thirty frames, south-east until the stream meets the
 border; its pattern is the Seed sheet, which the first frame reads, drawn in
 its source as one picture, a string a row and a hex digit a cell, `1` alive
@@ -274,7 +282,8 @@ from 1 to 8, and see the material the left button paints in the floor's
 color. Its Stay sheet, the cells that keep their occupant this frame, 2
 where it is water, its Side sheet, the cells occupied once the water has
 moved sideways, its Parity column and its Tally, each row's codes and
-occupied cells, are in the sheet picker. Open The replay with Sand picked:
+occupied cells, are among the drawer's sheets, each viewed through the cells
+in view, where the whole of Stay is 34 MB of record. Open The replay with Sand picked:
 its own replay waits in the box, a person's painting session, 2,085 frames;
 press Play the replay and watch sand painted into the rain, water after the
 key 3, sand after the key 1, a wall after the key 2, water again with the
@@ -286,8 +295,8 @@ Space, or click the plane, to stop it over the row beneath. The lights that
 miss blink and fall, and the next row is no wider than what stayed. At level
 11 the minor prize's column blinks: X takes it and ends the game, Z goes on;
 level 15 wins the major, and WIN flashes. Its Levels sheet, each level's
-speed and window, and its State sheet, the game's thirty-one cells, are in
-the sheet picker; write `(cell "Levels" "D3" 1)` and level 2's row stops
+speed and window, and its State sheet, the game's thirty-one cells, are among
+the drawer's sheets; write `(cell "Levels" "D3" 1)` and level 2's row stops
 where it stands only in the first frame of each place, a column on after it,
 the cabinet rigged in the open. Open The replay with Kairos picked: its own
 replay waits in the box, the owner's two games, 3,469 frames; press Play the
@@ -295,7 +304,15 @@ replay and watch the major prize won, every row stopped over the one beneath
 and the minor refused at level 11, then a second game that loses a light at
 levels 2 and 4, refuses the minor again and misses at level 15, the replay
 pausing after the fall's hold, its Tally the golden's.
-Below it, pick a
+Pick the grid card, or paste a grid cartridge of your own into the
+drawer's cartridge box and press Load, and its Screen fills the window at
+the cells' own sizes, never fitted or zoomed: click a tab and the sheet
+shows live in the Screen's place, the pointer and the wheel the viewport's
+while it shows and the keys the Keys sheet binds still the game's; the
+Screen's tab gives the Camera's window back. Over the Screen the wheel is the
+game's over the cells of the Camera's window and scrolls over the tabs, the
+headers and the scrollbars; a number too wide for its column reads as #s.
+Open the page with `?viewport=1` for the viewport over the fixtures: pick a
 record, scroll on both
 axes, click a cell or drag a range, click a column or row header or the
 corner, drag a column's right edge in the header, set rows and columns and
@@ -317,10 +334,17 @@ each record says, cell for cell, every coordinate on a device pixel. And the
 frame holds: `tools/check_render_floors.ps1` holds the owner's measured
 baseline to the roadmap's bars.
 
-## The six modes
+## The seven modes: the player, and the bench
 
-- Opened plainly, the page is the engine's panel and the viewport over the
-  fixtures, above.
+One template and one built page (`ENGINE.14`): every check opens
+`web/index.html` with its mode and reads one element, so the bench kept as
+the page's modes keeps each check's contract, and the player is what the
+page shows opened plainly and what Pages deploys.
+
+- Opened plainly, the page is the player, above.
+- `index.html?viewport=1` is the viewport over the fixtures, `KERNEL.5`'s own
+  page, above, with the HiDPI panel, the same text in a DOM cell and in the
+  canvas, by which the crispness verdict was taken.
 - `index.html?loop=1` runs the host loop's oracle: the host driven over a
   fixed input log against the fake module, its frames, writes, windows,
   sentences and end state held to what the page computes from the log, and
@@ -476,7 +500,7 @@ reads any text of forms into data, the host shim's one reader.
 
 | Method | What it does |
 |---|---|
-| `load(text, options)` | reads a record; its sheet becomes a tab, replacing an earlier record of that sheet; the record's `sheet` rows become the tab strip; returns the counts (`sheet`, `lines`, `cells`, `formulas`, `values`, `styles`, `sentences`, `looks`, `rows`, `unknown`, `malformed`, `window`, `extent`, `readMs`). With `{ keep: true }` (`ENGINE.8`), a later frame of the sheet shown: the record replaces the last with the scroll, the selection, the widths, the frozen panes and the marks kept and no event raised, the tabs remade only when the sheet rows changed; the host draws every frame of a grid cartridge so, and the panel its live sheet |
+| `load(text, options)` | reads a record; its sheet becomes a tab, replacing an earlier record of that sheet; the record's `sheet` rows become the tab strip; returns the counts (`sheet`, `lines`, `cells`, `formulas`, `values`, `styles`, `sentences`, `looks`, `rows`, `unknown`, `malformed`, `window`, `extent`, `readMs`). With `{ keep: true }` (`ENGINE.8`), a later frame of the sheet shown: the record replaces the last with the scroll, the selection, the widths, the frozen panes and the marks kept and no event raised, the tabs remade only when the sheet rows changed; the host draws every frame of a grid cartridge so, and the player's sheets viewer its sheet |
 | `clear()` | forgets every record and draws the grid empty: the host's grid unloaded (`ENGINE.8`) |
 | `scrolled()` | the window the scrolled quadrant shows, `{ top, left, bottom, right, window }`: the host follows a Camera's move by it (`ENGINE.8`) |
 | `show(name)` | shows a sheet whose record is loaded (the name compared without case); false when none is |
