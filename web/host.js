@@ -45,6 +45,18 @@
   headers and the scrollbars, and over another sheet, they are the
   viewport's, to scroll and select by, and at rate zero all of them are.
 
+  A grid cartridge written to version 4 (ENGINE.18) has its views on its
+  own sheets. It opens on the sheet its Camera's third row names, else on
+  its first visible sheet, so a Screen it hides is never opened on; a
+  change of that row shows the sheet it names at the frame's end, the
+  person's tabs winning between its changes, as the person's scroll wins
+  between the Camera's moves. The Input sheet's nineteenth row names the
+  sheet shown, and the pointer and its buttons over any cell of it are the
+  game's, that sheet's own cell. Every sheet the host draws, for any
+  cartridge, is the values record after frame 0, as the Screen's frames
+  have been since ENGINE.8's second slice. A cartridge written to 1 to 3
+  opens, points and replays as before.
+
   And it sounds the Audio sheet (docs/SPEC.md section 3.6; ENGINE.4): after each
   frame, once the Clock's rate is read, its four voices, each the Web Audio
   graph's own oscillator and gain and nothing else, scheduled on the audio
@@ -129,7 +141,8 @@
   var HISTORY_LINES = 2000;
   var MAX_SEED = 2147483646;         // the highest seed, so a Park and Miller cell never sticks at 0 (section 3.5)
   var MAX_RATE = 120;                // the highest rate, in frames a second (section 10)
-  var SPEC = 3;                      // the page's version this host implements, which a replay's header names
+  var SPEC = 4;                      // the page's version this host implements; a replay's header names its
+                                     // cartridge's, 3 for a cartridge written to 1 to 3 (ENGINE.18, decision 7)
   var REPLAY_CAP = 8 * 1048576;      // the replay's text, past which the recorder stops and says so: about an
                                      // hour of a pointer that never rests (ENGINE.3, decision 10)
   // ---- the sound's rules, as ENGINE.4's scoping states them (decisions 1 to 4) ----
@@ -179,6 +192,9 @@
   function article(n) { var s = String(n); return /^8/.test(s) || /^1[18](\d{3})*$/.test(s) ? 'an' : 'a'; }
   // The Screen's name, as a viewport names the sheet it shows; nothing shown yet is the Screen.
   function isScreen(name) { return !name || String(name).toLowerCase() === 'screen'; }
+  // A cell's value as one text, to tell whether it changed between two reads: empty for an empty cell, a formula
+  // before its first value and the empty text alike (ENGINE.18, the Camera's third row).
+  function valueKey(v) { return v === null || v === undefined || v === '' ? '' : (typeof v === 'object' ? 'error ' + v.error : typeof v + ' ' + v); }
   // The region a viewport shows, as the window a sheet is viewed through (ENGINE.14, decision 3): the cells
   // its last draw put in view at its scroll, the frozen rows and columns from 1; never the sheet whole, so a
   // view costs a screen wherever it stands. fresh: a sheet the viewport has not drawn, estimated from A1 at
@@ -368,16 +384,20 @@
     this.cellsPerMs = 0; this.frameCells = 0;
     this.pending = []; this.edits = [];
     this.held = Object.create(null); this.lastKey = null; this.notches = 0;
-    this.pointer = { col: 0, row: 0, left: 0, right: 0, middle: 0 };
+    this.pointer = { col: 0, row: 0, left: 0, right: 0, middle: 0, sheetCell: false };   // sheetCell: a sheet's own cell, no Camera added (ENGINE.18)
     this.keymap = null; this.window = ''; this.camera = { row: 1, col: 1 }; this.badCamera = {};
     this.table = null; this.paletteText = ''; this.paletteCount = 0;
     this.audio = []; this.saveValue = 0; this.plane = null; this.record = null; this.followed = null; this.timing = null; this.said1 = {};
     this.windowsSeen = {};
     this.loads = [];   // { vp, text, model } a viewport: the record the host last loaded into it, and the model it made (ENGINE.17)
     this.tabsWaiting = [];   // tabs clicked while a frame was in progress, answered at its end (ENGINE.14)
+    // Version 4's views (ENGINE.18): the sheet the host last showed itself, kept without a viewport too; the
+    // Camera's third row as the load and the last step left it; the grid's sheets, read once a load; and a
+    // sheet the Camera asked for, shown at the frame's end.
+    this.shownName = null; this.cameraSheet = null; this.sheetsList = null; this.showWanted = null;
     this.rec = null; this.player = null;   // the replay recorded since the load, and one playing
     this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
-    this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, saves: 0,
+    this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, shows: 0, saves: 0,
                sounded: 0, restarts: 0, skipped: 0, silences: 0 };
   };
 
@@ -412,7 +432,7 @@
     if (!f) return this._fail('The module answered the load with ' + r.text.trim() + ', not a cartridge row.');
     this.handle = num(f[1]);
     this.cartBytes = bytes; this.cartFile = name || '';
-    var c = this.cart = { title: str(f[2]), mode: sym(f[3]), w: num(f[4]), h: num(f[5]), rate: num(f[6]), seed: '', devices: {}, budget: null, name: null, digest: null };
+    var c = this.cart = { title: str(f[2]), mode: sym(f[3]), w: num(f[4]), h: num(f[5]), rate: num(f[6]), seed: '', spec: 0, devices: {}, budget: null, name: null, digest: null };
     this._describe();
     this.window = rangeOf(1, 1, c.h, c.w);
     this._say('Loaded ' + c.title + ': ' + article(c.w) + ' ' + c.w + ' by ' + c.h + ' ' + c.mode + ' at ' + (c.rate ? c.rate + ' frames a second' : 'rate 0, a step on every edit') + ', seed ' + c.seed + ', on ' + this.version + '.');
@@ -427,14 +447,14 @@
     if (c.mode === 'grid' && !this.gridEl) this._say('This page gave the host no element for grid mode: the cartridge runs, and nothing draws it.');
     if (c.seed === 'host') this._seed();
     this._startReplay();   // the replay of this load's run, from frame 0 (section 7.6)
-    if (c.devices.camera) this._readCamera();
+    if (c.devices.camera) this._readCamera('load');
     if (c.devices.palette) this._readPalette();
     if (c.devices.keys) this._readKeys();
     // The new grid drawn at once, frame 0 with nothing computed (a formula with no value yet reads
     // 0, a value cell its value): a load completes no frame, and without this draw the canvas kept
     // the last run's picture, a grid that no longer exists (the owner's hand test, 2026-10-09).
     if (c.mode === 'plane') this._drawPlane();   // frame 0, drawn at the load
-    if (c.mode === 'grid') this._drawGrid(true);   // and a grid's, its record as loaded (ENGINE.8)
+    if (c.mode === 'grid') this._open();   // and a grid's, its record as loaded (ENGINE.8), on the sheet it opens on (ENGINE.18)
     this._emit('load', { handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate, window: this.window, scale: this.scale || 0 });
     return { ok: true, handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate };
   };
@@ -464,6 +484,7 @@
     for (var i = 0; i < forms.length; i++) {
       var f = forms[i], head = Array.isArray(f) ? sym(f[0]) : null;
       if (head === 'seed') c.seed = num(f[1]) !== null ? num(f[1]) : sym(f[1]);
+      else if (head === 'spec') c.spec = num(f[1]) || 0;   // the page the cartridge is written to: version 4's views its alone (ENGINE.18)
       else if (head === 'device' && str(f[1])) c.devices[str(f[1]).toLowerCase()] = { range: str(f[2]), direction: sym(f[3]) };
       else if (head === 'budget') c.budget = { rate: num(f[1]), cells: num(f[2]), perSecond: num(f[3]), line: num(f[4]) };
     }
@@ -684,9 +705,11 @@
   // pointer is held as the window's cell under it, and written as the Screen's own cell (ENGINE.3,
   // decision 4): the window's cell plus the offset of the Camera the person sees, the one the last
   // frame was drawn through, so that ROW() and COLUMN() find the cell pointed at wherever the Camera
-  // stands; 0 off the canvas.
+  // stands; 0 off the canvas. A cartridge written to version 4 (ENGINE.18, decision 4) has a nineteenth
+  // row, the sheet the host shows, a plane's being the Screen, and its pointer over any other sheet is that
+  // sheet's own cell, the Camera added on the Screen alone.
   Host.prototype._inputRows = function () {
-    var out = [], km = this.keymap, held = this.held, pt = this.pointer, k = this.lastKey, cam = this.camera;
+    var out = [], km = this.keymap, held = this.held, pt = this.pointer, k = this.lastKey, cam = pt.sheetCell ? { col: 1, row: 1 } : this.camera;
     for (var b = 0; b < 10; b++) {
       for (var p = 0; p < 4; p++) {
         var code = km ? km[b][p] : '';
@@ -698,6 +721,7 @@
     out.push('(cell "Input" "B13" ' + pt.left + ')', '(cell "Input" "B14" ' + pt.right + ')', '(cell "Input" "B15" ' + pt.middle + ')');
     out.push('(cell "Input" "B16" ' + this.notches + ')');
     out.push('(cell "Input" "B17" ' + quote(k ? k.key : '') + ')', '(cell "Input" "B18" ' + quote(k ? k.code : '') + ')');
+    if (this._four()) out.push('(cell "Input" "B19" ' + quote(this.cart.mode === 'grid' ? this._shown() : 'Screen') + ')');
     return out.join('\n');
   };
 
@@ -728,8 +752,10 @@
     return r.text;
   };
   Host.prototype._cells = function (sheet) { var t = this._record(sheet); return t === null ? null : sheetCells(t); };
-  // The Camera's two cells place the window this frame is drawn through (section 3.8).
-  Host.prototype._readCamera = function () {
+  // The Camera's two cells place the window this frame is drawn through (section 3.8). A cartridge written to
+  // version 4 has its third row read too (ENGINE.18): stage 'load' at the load, none after a step, and
+  // 'redraw' from redraw(), which steps nothing and so reads no sheet.
+  Host.prototype._readCamera = function (stage) {
     var cells = this._cells('Camera');
     if (!cells) return;
     var c = this.cart;
@@ -737,6 +763,31 @@
     var text = rangeOf(row, col, c.h, c.w);
     if (text !== this.window) this._say('frame ' + this.frame + ': the Camera placed the window at ' + text + '.');
     this.window = text; this.camera = { row: row, col: col };
+    if (stage !== 'redraw' && this._four()) this._readCameraSheet(cells.B3, stage);
+  };
+  // The Camera's third row (ENGINE.18, decision 5), a cartridge's written to version 4: the sheet the game
+  // shows. At the load it names the sheet the cartridge opens on (decision 2); after a step, a change of its
+  // value that names a sheet the grid holds is shown at the frame's end, as a tab clicked is shown, and between
+  // its changes the person's tabs win, as the person's scroll does between the Camera's moves.
+  Host.prototype._readCameraSheet = function (v, stage) {
+    var key = valueKey(v), was = this.cameraKey;
+    this.cameraSheet = v; this.cameraKey = key;
+    if (stage === 'load' || key === was) return;
+    var name = this._cameraSheetName(v);
+    if (name !== null) this.showWanted = name;
+  };
+  // A value of the Camera's third row read as a sheet: the grid's own spelling of the sheet it names, compared
+  // without case as the model compares names, or null. Empty, or a formula before its first value, names none;
+  // a value the grid holds no sheet for is said once, as a Camera cell is (SD-30), and so is a sheet a plane's
+  // Camera names, a plane drawing its Screen alone.
+  Host.prototype._cameraSheetName = function (v) {
+    if (valueKey(v) === '') { this.badCamera.sheet = undefined; return null; }
+    var name = this._sheetNamed(v), plane = this.cart.mode === 'plane';
+    var why = name === null ? (typeof v === 'string' ? ', a sheet the grid does not hold' : ', not a sheet\'s name') : (plane && !isScreen(name) ? ': a plane cartridge draws its Screen alone' : '');
+    if (!why) { this.badCamera.sheet = undefined; return plane ? null : name; }
+    var shown = typeof v === 'string' ? '"' + v + '"' : (typeof v === 'object' ? 'an error, ' + v.error : String(v));
+    if (this.badCamera.sheet !== shown) { this.badCamera.sheet = shown; this._say('frame ' + this.frame + ': the Camera\'s sheet is ' + shown + why + '; nothing is shown.'); }
+    return null;
   };
   Host.prototype._cameraCell = function (v, what) {
     if (typeof v === 'number' && v >= 1 && Math.floor(v) === v) { this.badCamera[what] = undefined; return v; }
@@ -803,6 +854,10 @@
   // neither loaded nor painted, and counted; the view still runs, its text being what tells, and the viewport
   // paints a person's scroll and selection itself. A load, a tab clicked and redraw() always draw.
   Host.prototype._drawGrid = function (atLoad, frame) {
+    // A frame's draw when the Camera asked for a sheet: that sheet shown (ENGINE.18, decision 5).
+    if (frame && this.showWanted) { this._drawShown(); return; }
+    // A host with no viewport views no sheet it shows other than the Screen, nothing drawing it (ENGINE.18).
+    if (!atLoad && !this.vp && !isScreen(this._shown())) return;
     // Another sheet shown in the Screen's place (ENGINE.14, decision 2): the frame views that sheet alone,
     // through the region the viewport shows, and the Screen again when its tab gives the window back.
     if (!atLoad && this.vp && !isScreen(this.vp.sheet())) { if (this.refreshSheet(this.vp, false, frame)) this.c.draws++; return; }
@@ -822,6 +877,7 @@
       this.quieting = true;   // the events this load and the follow raise are the host's own, never a person's tab
       try {
         vp.load(r.text, { keep: !atLoad });
+        if (atLoad && !isScreen(vp.sheet())) vp.show('Screen');   // the Screen a version 4 cartridge's Camera shows from another sheet (ENGINE.18)
         this._follow(atLoad);
       } finally { this.quieting = was; }
       this._noteLoad(vp, r.text);
@@ -877,13 +933,79 @@
     var self = this;
     this._quiet(function () { self._drawGrid(true); });
   };
+
+  // ---- version 4's views (ENGINE.18): the sheet a grid cartridge opens on, and the sheet the game shows ----
+  // Whether the cartridge is written to version 4, whose rows and behaviors are its alone (decision 1).
+  Host.prototype._four = function () { return !!this.cart && this.cart.spec >= 4; };
+  // The sheet the host's viewport shows, the Screen while none is shown; without a viewport, the one the host
+  // last showed itself, so that a host with no element never views a hidden Screen nobody draws.
+  Host.prototype._shown = function () { return (this.vp && this.vp.sheet()) || this.shownName || 'Screen'; };
+  // The grid's sheets in tab order with their states, read once a load off the record of the Clock's first
+  // cell, which every grid holds: a write makes no sheet, so the list holds for the load.
+  Host.prototype._sheets = function () {
+    if (this.sheetsList) return this.sheetsList;
+    var t = this.viewRecord('Clock', 'A1'), forms = t === null ? [] : VP().readForms(t), list = [];
+    for (var i = 0; i < forms.length; i++) {
+      var f = forms[i];
+      if (Array.isArray(f) && sym(f[0]) === 'sheet' && str(f[1]) !== null) list.push({ name: str(f[1]), state: sym(f[2]) });
+    }
+    this.sheetsList = list;
+    return list;
+  };
+  // The grid's own spelling of the sheet a text names, compared without case as the model compares names; null
+  // for anything else.
+  Host.prototype._sheetNamed = function (v) {
+    if (typeof v !== 'string' || v === '') return null;
+    var want = v.toLowerCase(), list = this._sheets();
+    for (var i = 0; i < list.length; i++) if (list[i].name.toLowerCase() === want) return list[i].name;
+    return null;
+  };
+  // The sheet a grid cartridge opens on (decision 2). Written to version 4: the one its Camera's third row names
+  // at the load, a value or a formula's value row, else the first visible sheet of the record's sheet rows, the
+  // cartridge's own order, so that a hidden Screen is never opened on. Written to 1 to 3: its Screen, through
+  // the Camera's window, as before.
+  Host.prototype._open = function () {
+    if (!this._four()) { this._drawGrid(true); return; }
+    var name = this._cameraSheetName(this.cameraSheet), list = this._sheets();
+    for (var i = 0; name === null && i < list.length; i++) if (list[i].state === 'visible') name = list[i].name;
+    this._showAt(name || 'Screen');
+  };
+  // A sheet the host shows itself, at the opening or for the Camera (decisions 2 and 5), as a tab clicked is
+  // shown: the Screen through the Camera's window, as its tab gives it back, any other sheet through showSheet,
+  // its load noted (ENGINE.17's rule), either counted a draw. Without a viewport the host keeps the name alone.
+  Host.prototype._showAt = function (name) {
+    this.shownName = name;
+    if (isScreen(name)) { var self = this; this._quiet(function () { self._drawGrid(true); }); return; }
+    var vp = this._viewport();
+    if (vp && this.showSheet(vp, name)) this.c.draws++;
+  };
+  // The frame's draw when the Camera asked for a sheet (decision 5): that sheet shown, the frame's own draw and
+  // never a still frame.
+  Host.prototype._drawShown = function () {
+    var name = this.showWanted;
+    this.showWanted = null;
+    this.c.shows++;
+    this._showAt(name);
+  };
+  // The record a sheet is drawn from (decision 3): the values projection once a frame has computed values, the
+  // grid record less its formula rows, as the Screen's frame is drawn (ENGINE.8's second slice), and the grid
+  // record at frame 0, its formulas shown as their texts until their first values. viewRecord, a page's read of
+  // a sheet's record, stays the grid record.
+  Host.prototype._viewDrawn = function (sheet, win) {
+    if (!this.m || !this.handle || this.inFrame) return null;
+    var r = this.m.texts('alonzo_view', [this.handle], [this.frame > 0 ? 'values' : 'grid', sheet, win || '']);
+    if (r.status !== 0) { this._sayOnce('record-' + sheet, 'The view of ' + sheet + ' was refused: ' + words(r) + '.', true); return null; }
+    return r.text;
+  };
+
   // A sheet shown in a viewport (decisions 2, 3 and 10): viewed through the region the viewport shows, from A1
   // at the default cell's size for a sheet it has not drawn, loaded and shown, then viewed again at once when
   // the sheet's own widths put more in view than the estimate did. A page's viewer of the sheets calls it to
-  // show one by name. False, and a refusal said once, when the view is refused or a frame is in progress.
+  // show one by name. False, and a refusal said once, when the view is refused or a frame is in progress. The
+  // record is the values projection after frame 0 (ENGINE.18, decision 3).
   Host.prototype.showSheet = function (vp, name) {
     if (!vp || !this.m || !this.handle) return false;
-    var win = regionOf(vp, true), t = this.viewRecord(name, win);
+    var win = regionOf(vp, true), t = this._viewDrawn(name, win);
     if (t === null) return false;
     this._quiet(function () { vp.load(t, { keep: true }); vp.show(name); });
     this._noteLoad(vp, t);
@@ -895,14 +1017,15 @@
   // the window the sheet's record was viewed through, at a scroll. still: a record still the one the host last
   // loaded into the viewport is not loaded again, and in the host's own viewport the frame is counted still
   // (ENGINE.17); a frame passes it, and a page's refresh of its viewer may. The Screen in the host's own viewport
-  // is the frame's own draw, through the Camera's window, and is left to it. True when a record was loaded.
+  // is the frame's own draw, through the Camera's window, and is left to it. True when a record was loaded. The
+  // record is the values projection after frame 0 (ENGINE.18, decision 3).
   Host.prototype.refreshSheet = function (vp, moved, still) {
     if (!vp || this.quieting || !this.m || !this.handle || this.inFrame) return false;
     var name = vp.sheet(), model = vp.model();
     if (!name || !model || (vp === this.vp && isScreen(name))) return false;
     var win = regionOf(vp, false);
     if (moved && model.windowText && within(win, model.windowText)) return false;
-    var t = this.viewRecord(name, win);
+    var t = this._viewDrawn(name, win);
     if (t === null) return false;
     if (still && this._still(vp, t)) { if (vp === this.vp) this.c.stills++; return false; }   // a still sheet (ENGINE.17)
     this._quiet(function () { vp.load(t, { keep: true }); });
@@ -1215,7 +1338,7 @@
     for (var b = 0; b < km.length; b++) for (var p = 0; p < km[b].length; p++) if (km[b][p] === code) return true;
     return false;
   };
-  Host.prototype.pointerAt = function (col, row) { this.pointer.col = col | 0; this.pointer.row = row | 0; };
+  Host.prototype.pointerAt = function (col, row) { this.pointer.col = col | 0; this.pointer.row = row | 0; this.pointer.sheetCell = false; };
   Host.prototype.pointerButtons = function (left, right, middle) { this.pointer.left = left ? 1 : 0; this.pointer.right = right ? 1 : 0; this.pointer.middle = middle ? 1 : 0; };
   Host.prototype.wheel = function (notches) { this.notches += notches | 0; };
   Host.prototype._pointerFrom = function (ev) {
@@ -1244,8 +1367,10 @@
   // a key the Keys sheet binds is the game's whatever sheet shows, taken before the viewport sees it; every
   // other key moves the viewport. While the Screen shows, the pointer over a cell of the Camera's window, its
   // buttons and the wheel there are the game's too; over the tabs, the headers, the corner and the scrollbars,
-  // and over another sheet, the pointer is 0 and the wheel scrolls. At rate zero, where the Input sheet is not
-  // written, all of them are the viewport's, to select, scroll and move by.
+  // and over another sheet, the pointer is 0 and the wheel scrolls. A cartridge written to version 4 has the
+  // pointer and its buttons over any cell of another sheet shown too, that sheet's own cell, the wheel still
+  // scrolling there (ENGINE.18, decision 4). At rate zero, where the Input sheet is not written, all of them are
+  // the viewport's, to select, scroll and move by.
   Host.prototype._listenGrid = function () {
     var self = this, root = this.vp.root;
     function playing() { return !!self.cart && self.cart.mode === 'grid' && self.cart.rate > 0; }
@@ -1256,7 +1381,7 @@
     this._on(root, 'mousedown', function (ev) { if (playing()) self._pointerFromGrid(ev); });
     this._on(root, 'mouseup', function (ev) { if (playing()) self._pointerFromGrid(ev); });
     this._on(root, 'mouseleave', function () { if (playing()) { self.pointerAt(0, 0); self.pointerButtons(0, 0, 0); } });
-    this._on(root, 'contextmenu', function (ev) { if (playing() && self._windowCellAt(ev)) ev.preventDefault(); });
+    this._on(root, 'contextmenu', function (ev) { if (playing() && self._pointerCellAt(ev)) ev.preventDefault(); });
     this._on(root, 'wheel', function (ev) { if (!playing() || !self._windowCellAt(ev)) return; self.wheel(ev.deltaY > 0 ? 1 : (ev.deltaY < 0 ? -1 : 0)); ev.preventDefault(); }, { passive: false, capture: true });
   };
   // The cell of the Camera's window under a point, { col, row } counted from the window's corner, or null: off
@@ -1268,13 +1393,25 @@
     var col = at ? at.col - cam.col + 1 : 0, row = at ? at.row - cam.row + 1 : 0;
     return col >= 1 && col <= c.w && row >= 1 && row <= c.h ? { col: col, row: row } : null;
   };
-  // The cell under the pointer, the sheet's own, held as the window's cell so that the Input rows add the
-  // Camera back as they do a plane's: the viewport draws the sheet's own rows and columns, so a cell is the
-  // pointer's when the window holds it, and the pointer is 0 off the window, as a plane's is off its canvas.
+  // The pointer's cell (ENGINE.18, decision 4): over the Screen, the Camera's window's cell, as before; over
+  // another sheet shown, for a cartridge written to version 4, that sheet's own cell under the pointer, any cell
+  // in view, marked so that the Input rows add no Camera; null over the headers, the corner, the tabs and the
+  // scrollbars, and over another sheet for a cartridge written to 1 to 3 (ENGINE.14).
+  Host.prototype._pointerCellAt = function (ev) {
+    if (!this.vp) return null;
+    if (isScreen(this.vp.sheet())) return this._windowCellAt(ev);
+    if (!this._four()) return null;
+    var at = this.vp.cellAt(ev.clientX, ev.clientY);
+    return at ? { col: at.col, row: at.row, sheet: true } : null;
+  };
+  // The cell under the pointer, the sheet's own, held on the Screen as the window's cell so that the Input rows
+  // add the Camera back as they do a plane's: the viewport draws the sheet's own rows and columns, so a cell is
+  // the pointer's when the window holds it, and the pointer is 0 off the window, as a plane's is off its canvas.
   // The buttons follow the pointer, so a click on a tab or a header is never the game's.
   Host.prototype._pointerFromGrid = function (ev) {
-    var at = this._windowCellAt(ev);
+    var at = this._pointerCellAt(ev);
     this.pointerAt(at ? at.col : 0, at ? at.row : 0);
+    this.pointer.sheetCell = !!(at && at.sheet);
     this.pointerButtons(at && (ev.buttons & 1), at && (ev.buttons & 2), at && (ev.buttons & 4));
   };
   // A hidden page stops the ticks and the voices, and its return starts the clock again with nothing owed
@@ -1357,7 +1494,11 @@
     var rec = this.rec;
     if (!rec || !this.handle || !this.cart) return null;
     if (rec.seed === null) { this._sayOnce('replay-seed', 'There is no replay of this run: Clock!B3 holds no seed the load wrote, and a replay names its seed.', true); return null; }
-    var out = '(replay ' + quote(this._cartName()) + ' (spec ' + SPEC + ') (cartridge "' + this._cartDigest() + '") (seed ' + rec.seed + '))\n' + rec.blocks.join('');
+    // the page its rows are written to (ENGINE.18, decision 7): its cartridge's version, and 3 for a cartridge
+    // written to 1 to 3, whose rows are version 3's, so that every replay version 3's host recorded is recorded
+    // again byte for byte
+    var spec = Math.max(3, Math.min(this.cart.spec || 3, SPEC));
+    var out = '(replay ' + quote(this._cartName()) + ' (spec ' + spec + ') (cartridge "' + this._cartDigest() + '") (seed ' + rec.seed + '))\n' + rec.blocks.join('');
     if (rec.last > rec.written) out += '(frame ' + rec.last + ')\n';
     return out;
   };
@@ -1457,7 +1598,7 @@
   Host.prototype.redraw = function () {
     if (!this.handle || !this.cart) return false;
     var d = this.cart.devices;
-    if (d.camera) this._readCamera();
+    if (d.camera) this._readCamera('redraw');
     if (d.palette) this._readPalette();
     if (this.cart.mode === 'grid') this._drawGrid(false, false); else this._drawPlane();   // never still (ENGINE.17)
     return true;

@@ -67,8 +67,11 @@ fn refused(line: u32, id: &str, slots: &[(&str, &str)]) -> LineRefusal {
 // ---- the manifest (section 7.2) -------------------------------------------
 
 /// The versions of `docs/SPEC.md` this engine reads. Version 3 adds no row and no
-/// directive, so a cartridge written to it loads as a version 2 cartridge.
-pub const SPECS: [u32; 3] = [1, 2, 3];
+/// directive, so a cartridge written to it loads as a version 2 cartridge. Version 4
+/// adds a row to two layouts, the Input sheet's nineteenth and the Camera's third,
+/// which a cartridge written to it alone has, so that a cartridge written to 1 to 3
+/// loads and describes as it did (`ENGINE.18`, decision 1).
+pub const SPECS: [u32; 4] = [1, 2, 3, 4];
 /// The highest rate, in frames a second; 0 is a step on every edit.
 pub const MAX_RATE: u32 = 120;
 /// The highest seed, so that a Park and Miller cell never sticks at 0.
@@ -225,7 +228,7 @@ impl Manifest {
             match head {
                 "spec" => match args {
                     [n] if whole(n).is_some() => spec = whole(n).unwrap_or(0) as u32,
-                    _ => return Err(wrong("(spec ...) holds the page's version, 1 or 2")),
+                    _ => return Err(wrong("(spec ...) holds the page's version, a whole number")),
                 },
                 "title" => match args {
                     [Form::Str(t)] => title = t.clone(),
@@ -371,25 +374,30 @@ impl Device {
             .find(|d| d.name().eq_ignore_ascii_case(name))
     }
 
-    /// Where its cells may be, row bands from the top; the Screen's window is
-    /// the manifest's.
-    fn layout(self) -> &'static [Rect] {
+    /// Where its cells may be, row bands from the top, by the version of the
+    /// page the cartridge is written to: from version 4 the Input sheet's
+    /// nineteenth row, the sheet shown, and the Camera's third, the sheet the
+    /// game shows (`ENGINE.18`); the Screen's window is the manifest's.
+    fn layout(self, spec: u32) -> &'static [Rect] {
         match self {
             Device::Screen => &[],
             Device::Palette => &[(1, 1, 16, 3)],
+            Device::Input if spec >= 4 => &[(1, 1, 10, 5), (11, 1, 19, 2)],
             Device::Input => &[(1, 1, 10, 5), (11, 1, 18, 2)],
             Device::Keys => &[(1, 1, 10, 5)],
             Device::Clock => &[(1, 1, 3, 2)],
             Device::Audio => &[(1, 1, 5, 4)],
             Device::File => &[(1, 1, 3, 2)],
+            Device::Camera if spec >= 4 => &[(1, 1, 3, 2)],
             Device::Camera => &[(1, 1, 2, 2)],
             Device::Write => &[(1, 1, MAX_ROW, 3)],
         }
     }
 
     /// The cells the host writes, which hold values and never formulas.
-    fn host_cells(self) -> &'static [Rect] {
+    fn host_cells(self, spec: u32) -> &'static [Rect] {
         match self {
+            Device::Input if spec >= 4 => &[(1, 2, 10, 5), (11, 2, 19, 2)],
             Device::Input => &[(1, 2, 10, 5), (11, 2, 18, 2)],
             Device::Clock => &[(1, 2, 3, 2)],
             Device::File => &[(1, 2, 2, 2)],
@@ -399,8 +407,9 @@ impl Device {
 
     /// The cells no derived write lands in: the Input sheet, the Clock and
     /// the File's first two rows (section 3.9).
-    fn derived_blocked(self) -> &'static [Rect] {
+    fn derived_blocked(self, spec: u32) -> &'static [Rect] {
         match self {
+            Device::Input if spec >= 4 => &[(1, 1, 19, 5)],
             Device::Input => &[(1, 1, 18, 5)],
             Device::Clock => &[(1, 1, 3, 2)],
             Device::File => &[(1, 1, 2, 2)],
@@ -497,24 +506,26 @@ fn check_devices(draft: &Draft, m: &Manifest, camera: bool) -> Result<(), LineRe
                 continue;
             }
             let at = (row, col, row, col);
-            if !within(at, device.layout()) {
+            if !within(at, device.layout(m.spec)) {
                 return Err(refused(
                     line(si, row, col),
                     "cart-device-cell-outside",
                     &[
                         ("target", &target),
                         ("sheet", &sheet.name),
-                        ("layout", &spell_all(&sheet.name, device.layout())),
+                        ("layout", &spell_all(&sheet.name, device.layout(m.spec))),
                     ],
                 ));
             }
-            if is_formula(&cell.content) && device.host_cells().iter().any(|h| intersects(*h, at)) {
+            if is_formula(&cell.content)
+                && device.host_cells(m.spec).iter().any(|h| intersects(*h, at))
+            {
                 return Err(refused(
                     line(si, row, col),
                     "cart-device-cell-formula",
                     &[
                         ("target", &target),
-                        ("cells", &spell_all(&sheet.name, device.host_cells())),
+                        ("cells", &spell_all(&sheet.name, device.host_cells(m.spec))),
                     ],
                 ));
             }
@@ -620,6 +631,10 @@ pub const INPUT_LABELS: [&str; 18] = [
     "key",
     "code",
 ];
+
+/// The Input sheet's nineteenth label, from version 4: the sheet the host's
+/// viewport shows, its name as the record spells it (`ENGINE.18`, decision 4).
+pub const INPUT_SHEET_LABEL: &str = "sheet";
 
 /// One cell of the engine's own written into the draft, its style kept when
 /// the rows wrote the cell, and counted when it is new.
@@ -730,9 +745,12 @@ fn make_own_sheets(draft: &mut Draft, m: &Manifest, name: &str, size: usize) -> 
     put(draft, file, 3, 1, Content::Text("save".to_string()));
     if draft.workbook.find_sheet("Input").is_none() {
         let input = draft.workbook.ensure_sheet("Input");
-        for (i, label) in INPUT_LABELS.iter().enumerate() {
+        // Version 4's nineteenth row, the sheet shown, empty until the host's
+        // first write names it, as the key's rows are.
+        let sheet_row = (m.spec >= 4).then_some(INPUT_SHEET_LABEL);
+        for (i, label) in INPUT_LABELS.iter().copied().chain(sheet_row).enumerate() {
             let row = i as u32 + 1;
-            put(draft, input, row, 1, Content::Text((*label).to_string()));
+            put(draft, input, row, 1, Content::Text(label.to_string()));
             let last = if row <= 10 { 5 } else { 2 };
             let fill = if row >= 17 {
                 Content::Text(String::new())
@@ -860,7 +878,7 @@ impl Cartridge {
             let range = match device {
                 Device::Screen => self.manifest.window(),
                 _ => {
-                    let l = device.layout();
+                    let l = device.layout(self.manifest.spec);
                     let (top, left) = (l[0].0, l[0].1);
                     let bottom = l.iter().map(|r| r.2).max().unwrap_or(top);
                     let right = l.iter().map(|r| r.3).max().unwrap_or(left);
@@ -934,34 +952,40 @@ impl Cartridge {
             }
             return Ok(());
         }
-        if !within(at, device.layout()) {
+        let spec = self.manifest.spec;
+        if !within(at, device.layout(spec)) {
             return Err(refused(
                 l.line,
                 "cart-device-cell-outside",
                 &[
                     ("target", &target),
                     ("sheet", name),
-                    ("layout", &spell_all(name, device.layout())),
+                    ("layout", &spell_all(name, device.layout(spec))),
                 ],
             ));
         }
-        if head == "formula" && device.host_cells().iter().any(|h| intersects(*h, at)) {
+        if head == "formula" && device.host_cells(spec).iter().any(|h| intersects(*h, at)) {
             return Err(refused(
                 l.line,
                 "cart-device-cell-formula",
                 &[
                     ("target", &target),
-                    ("cells", &spell_all(name, device.host_cells())),
+                    ("cells", &spell_all(name, device.host_cells(spec))),
                 ],
             ));
         }
-        if head == "derived" && device.derived_blocked().iter().any(|b| intersects(*b, at)) {
+        if head == "derived"
+            && device
+                .derived_blocked(spec)
+                .iter()
+                .any(|b| intersects(*b, at))
+        {
             return Err(refused(
                 l.line,
                 "cart-write-derived",
                 &[
                     ("target", &target),
-                    ("cells", &spell_all(name, device.derived_blocked())),
+                    ("cells", &spell_all(name, device.derived_blocked(spec))),
                 ],
             ));
         }
@@ -1275,21 +1299,99 @@ mod tests {
 
     #[test]
     fn a_later_spec_is_refused_before_its_directives() {
-        let text = small(30).replacen("(spec 2)", "(spec 4)\n  (layers 2)", 1);
+        let text = small(30).replacen("(spec 2)", "(spec 5)\n  (layers 2)", 1);
         let r = load(&text).expect_err("a later page is refused");
         assert_eq!(r.refusal.id, "cart-spec-unsupported");
         assert_eq!(r.line, 2, "the spec's own line");
+        assert!(r.refusal.text.contains("(spec 5)"), "{}", r.refusal.text);
         assert!(r.refusal.text.contains("(spec 4)"), "{}", r.refusal.text);
-        assert!(r.refusal.text.contains("(spec 3)"), "{}", r.refusal.text);
-        // Version 3 adds no row and no directive: the earlier pages' and its
-        // own load alike.
-        for spec in ["(spec 1)", "(spec 3)"] {
+        // Version 3 adds no row and no directive, and version 4's rows are a
+        // (spec 4) cartridge's alone: the earlier pages' and their own load alike.
+        for spec in ["(spec 1)", "(spec 3)", "(spec 4)"] {
             assert_eq!(
                 id_of(load(&small(30).replacen("(spec 2)", spec, 1))),
                 "loaded",
                 "{spec}"
             );
         }
+    }
+
+    /// Version 4's two rows (`ENGINE.18`, decision 1): the Input sheet's
+    /// nineteenth, the sheet shown, and the Camera's third, the sheet the game
+    /// shows, are a (spec 4) cartridge's alone. A cartridge written to 1 to 3
+    /// is refused them where version 3 refused them, its layouts named as
+    /// before, and makes and describes the Input sheet of eighteen rows.
+    #[test]
+    fn version_four_s_rows_are_a_version_four_cartridge_s_alone() {
+        let three = small(30).replacen("(spec 2)", "(spec 3)", 1);
+        let four = small(30).replacen("(spec 2)", "(spec 4)", 1);
+        let camera = "(cell \"Camera\" \"A1\" \"row\")\n(cell \"Camera\" \"B1\" 1)\n\
+                      (cell \"Camera\" \"A2\" \"column\")\n(cell \"Camera\" \"B2\" 1)\n\
+                      (cell \"Camera\" \"A3\" \"sheet\")\n(cell \"Camera\" \"B3\" \"Seed\")\n";
+        let refused = text_of(load(&format!("{three}{camera}")));
+        assert!(
+            refused.starts_with("cart-device-cell-outside")
+                && refused.contains("Camera!A3")
+                && refused.contains("Camera!A1:B2"),
+            "{refused}"
+        );
+        let c = load(&format!("{four}{camera}")).expect("a (spec 4) Camera of three rows loads");
+        assert_eq!(
+            cell_text(&c, "Camera", "B3"),
+            "(cell \"Camera\" \"B3\" \"Seed\")"
+        );
+        let d = c.describe();
+        assert!(d.contains("(device \"Input\" \"A1:E19\" input)\n"), "{d}");
+        assert!(d.contains("(device \"Camera\" \"A1:B3\" effect)\n"), "{d}");
+        // The engine's own Input sheet: nineteen rows at version 4, eighteen before.
+        let mut c = load(&four).expect("loads");
+        assert_eq!(
+            cell_text(&c, "Input", "A19"),
+            "(cell \"Input\" \"A19\" \"sheet\")"
+        );
+        assert_eq!(
+            cell_text(&c, "Input", "B19"),
+            "(cell \"Input\" \"B19\" \"\")"
+        );
+        let mut old = load(&three).expect("loads");
+        assert!(
+            cell_text(&old, "Input", "A19").is_empty(),
+            "no nineteenth row"
+        );
+        assert!(old
+            .describe()
+            .contains("(device \"Input\" \"A1:E18\" input)\n"));
+        // The host's write of the sheet shown lands at 4 and is refused before;
+        // a formula there and a derived row are refused at 4, a cell the host writes.
+        let sheet_row = "(cell \"Input\" \"B19\" \"Seed\")";
+        assert_eq!(c.write(sheet_row).expect("lands"), 1);
+        let r = old
+            .write(sheet_row)
+            .expect_err("outside version 3's layout");
+        assert_eq!(r.refusal.id, "cart-device-cell-outside");
+        assert!(
+            r.refusal.text.contains("Input!A11:B18"),
+            "{}",
+            r.refusal.text
+        );
+        let r = c
+            .write("(formula \"Input\" \"B19\" \"=Seed!B2\")")
+            .expect_err("a host cell");
+        assert_eq!(r.refusal.id, "cart-device-cell-formula");
+        assert!(
+            r.refusal.text.contains("Input!B11:B19"),
+            "{}",
+            r.refusal.text
+        );
+        let r = c
+            .write("(derived \"Input\" \"B19\" \"Seed\")")
+            .expect_err("no derived write into the Input sheet");
+        assert_eq!(r.refusal.id, "cart-write-derived");
+        assert!(
+            r.refusal.text.contains("Input!A1:E19"),
+            "{}",
+            r.refusal.text
+        );
     }
 
     #[test]

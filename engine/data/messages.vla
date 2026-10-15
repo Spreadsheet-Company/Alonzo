@@ -9,7 +9,7 @@
 ; every id the engine raises to this file.
 
 (message cart-manifest-invalid 5 "Alonzo-Cart" "The cartridge's manifest {what}. A cartridge begins with (cartridge \"name\" ...), the name in lowercase letters, digits and hyphens, and gives (spec ...), (title ...), (rate ...), (screen ...) and (seed ...) once each, nothing defaulted (docs/SPEC.md section 7.2).")
-(message cart-spec-unsupported 5 "Alonzo-Cart" "The cartridge is written to (spec {spec}), and this engine reads (spec 1), (spec 2) and (spec 3); a cartridge written to a later page waits for an engine that reads it.")
+(message cart-spec-unsupported 5 "Alonzo-Cart" "The cartridge is written to (spec {spec}), and this engine reads (spec 1), (spec 2), (spec 3) and (spec 4); a cartridge written to a later page waits for an engine that reads it.")
 (message cart-screen-outside 5 "Alonzo-Cart" "{target} is outside the Screen's window, {window}, which the manifest's (screen ...) declares; without a Camera sheet the Screen holds cells only inside that window (docs/SPEC.md section 3.1).")
 (message cart-palette-invalid 5 "Alonzo-Cart" "{what}. A plane cartridge's Palette holds sixteen rows, column A the index from 0 to 15 in order and column B its color as #RRGGBB, or a formula that computes one (docs/SPEC.md section 3.2).")
 (message cart-device-cell-formula 5 "Alonzo-Cart" "A formula cannot go into {target}: {cells} are the host's to write, and hold values, since the host would write over a formula there and nobody would see why (docs/SPEC.md section 3).")
