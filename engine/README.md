@@ -122,7 +122,10 @@ are gone, the twin's values kept as an array among them (Frazaro's
 `KERNEL.20`). Since `vla-lang` 0.9.3 a view has a third projection,
 `values`, the record without its formulas, which the language answers and
 the engine passes through; the host draws a grid's every frame after the
-first from it (`ENGINE.8`'s second slice).
+first from it (`ENGINE.8`'s second slice). Since 0.9.4 it has a fourth,
+`changes`: the values' rows of the cells of a window the last frame changed,
+or `whole` where the language cannot say which (Frazaro's `KERNEL.42`),
+passed through the same way.
 
 ## The rules that bind every line
 

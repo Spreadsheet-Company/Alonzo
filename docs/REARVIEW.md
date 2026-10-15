@@ -5549,3 +5549,291 @@ Buffet's sheets today keep a still frame a tenth of a millisecond of view at mos
 - The edit `(cell "Camera" "B3" "Ledger")`, written at frame 2,801 by the log's line: "switches the view to the Ledger tab as though it were clicked at the bottom." Then the input card, a version 3 plane, loaded and played as before.
 
 The module's line still names `alonzo 0.1.3`, the crate's version, its release the owner's to name.
+
+## `ENGINE.19` — a frame read by its changes: a window patched from the cells the last frame changed, the devices read the same way, and the Input rows written only when one changed
+
+*Minted and scoped 2026-10-15 at the owner's word, Alonzo's half of Frazaro's `KERNEL.42`; nothing built but the pin. `ENGINE.17`'s decision 10 filed the ask, the language's report of a window's changes, so that a host skips the view of a still window too. Frazaro built it as `KERNEL.42` (`fb64e3a`) and released it in `vla-lang` 0.9.4 (`e8911f6`): a fourth projection by name, `changes`, and no new export. The owner's prompt moved the pin first and named Alonzo's half in five parts, each taken by a decision below. "Measure in Chrome before and after, on the still card and on Buffet." Frazaro's tree was read nowhere; the language was read in the registry's copy of 0.9.4.*
+
+- (a) The host asks for a window's changes before viewing it. If `<since>` is the frame of the record it holds, for the same window, it patches the held record and the viewport's model instead of viewing; if `<at>` is that frame, the frame is still; otherwise it views as today (decisions 2 and 3).
+- (b) The viewport repaints only the named cells, the DOM diff's step (`ENGINE.20`; decision 1).
+- (c) The device reads, a grid view of the Clock, the File and the Camera at every frame, go through changes (decision 4).
+- (d) The Input rows are written only when one of them changed: natively the largest part of what a still frame has left, about 60 of 83 µs (decision 5).
+- (e) The double: its refusal's words, and a `changes` answer (decision 6).
+
+*The pin at `vla-lang` 0.9.4, 2026-10-15, at the owner's word, the prompt's first step.*
+
+The release is Frazaro's `e8911f6`, carrying `KERNEL.42` (`fb64e3a`).
+- A fourth projection, `changes`, written into `SPEC.md` §4.5 as a dated correction of the day. Its answer is a header, `(changes "<sheet>" "<range>" <since> <at> <n>)`, then each changed cell's rows exactly as `values` prints them, in row-major order, with `(empty "<sheet>" "<addr>")` for a cell with none; or the header ending `whole`. The host's rule: holding the window's `values` record at frame `<since>`, replace each named cell's rows with the given ones, and the result is the record at `<at>`, byte for byte.
+- Natively, by Frazaro's measurement, relayed: a still window answers in 0.6 to 0.8 µs against `values`' 4 to 178 µs, and about 0.5 µs a changed cell.
+- `view-projection-unknown`'s words name the four; its id is unchanged. No signature changed, and no git rev was pinned between 0.9.3 and it.
+
+What moved:
+- `Cargo.toml`'s pin and its comment, and the lock: the checksum `c94867ca...`, still two packages.
+- `check_engine_deps.ps1`'s baseline and its header.
+- `check_frame_floors.ps1`: a dated note, and the six Memory ceilings of Life and the gun raised by exactly 1,536 bytes at every rung, the same bytes on every run. Since 0.9.4 a frame's end keeps room for 64 changes that a record spells as it spelled them before (`ALIKE`, in the language's `src/machine/mod.rs`), 24 bytes each, a constant for a grid of any size. Every count stands, and Sand's high-water mark stands where it stood.
+- `SPEC.md` §4.5's correction; the `view` export's doc comment in `engine/src/abi.rs`; and the paragraph on the projections in `engine/README.md`. That file's two pins, `alonzo = "=0.1.3"` and `vla-lang = "=0.9.3"`, wait for the release, which names the crate's version.
+
+The oracle, on the day (*measurement*):
+- `cargo test`: 41 tests of the library and 1 more, as CI's crate job counts them, the describe goldens among them; `cargo clippy --workspace --all-targets -- -D warnings` and `cargo fmt --check` clean.
+- The module: 766,043 bytes, from 749,336 (+16,707, +2.2%); the page built over it.
+- `run_checks.ps1`: 12 of 13. `check_frame_floors.ps1` refuses the pin, its baseline having been measured at 0.9.3. It waits on the owner's run of `tools/bench_frames.ps1` over 0.9.4, its block pasted whole.
+
+**Substrate, verified.** Read in the code on the day, `199789c` (`ENGINE.18`'s commit) with the pin's hunks; measured where a decision needed a fact.
+- *The frame path* (`web/host.js`).
+  - A frame begins with the derived writes, then `_issueInputs`: at a rate above zero, the Input sheet's eighteen rows (nineteen at version 4) as one write at every frame, recorded by `_recordInputs`, then each person's edit as its own write.
+  - Its end, `_complete`, reads the Camera and the Palette, draws, then reads the Keys, the Audio, the File, the Write sheet and the Clock. Each read is a `grid` view of the whole sheet, parsed into its cells (`_cells`, `sheetCells`); the Palette compares its record's text with the last.
+  - The Screen's draw (`_drawGrid`) views `values` through the Camera's window; a sheet in the Screen's place is viewed through the region in view (`refreshSheet`). `ENGINE.17`'s comparison then skips the load and the paint of a record byte for byte the last one loaded while the viewport still holds the model it made of it (`_lastLoad`, `_noteLoad`, `_still`).
+  - The player's drawer refreshes its viewer at a frame's event at most every 200 ms, and at every frame at rate zero (`refreshViewer`).
+- *The recorder* logs the Input cells that changed against its own record of the sheet. That record is forgotten, and the next frame's rows logged whole, after a person's edit of the Input sheet and after a replay's rows (`_recordEdit`, `_recordPlayed`). A replay plays back only the cells it logged, so a replay already writes only the Input rows that changed, and every committed replay plays to its golden.
+- *The engine's Input sheet.* A formula into a cell the host writes is refused at the load and at a write (`cart-device-cell-formula`), and a derived write into the Input sheet is refused (`cart-write-derived`). So only the host's rows, a person's edit and a replay's rows write the Input sheet, each through the host.
+- *The language's changes*, read in 0.9.4's `src/machine/mod.rs`.
+  - `at` is the machine's frame and `since` is `at - 1`, so the answer is the last complete frame's alone.
+  - Its cells are the twin cells that frame's end changed, inside the window, less those a record spells as before (`ALIKE`, 64 kept).
+  - It is whole after a frame that computes every cell next (`every_next`: more changes than its room, `cells / 2 + 64`, or a twin that gained or lost a cell), after more alike changes than it keeps, or after a write before the frame that changed a formula or added a cell (`reshaped`). Between frames it is whole while `reshaped`, or while a value written since lies in the window.
+- *Measured* over the module of the pin in Node 24.21 (*measurement*):
+  - Before any step the answer is `(changes "S" "R" 0 0 whole)`, and after frame 1 `0 1 whole`; after frame f, `f-1 f` and the cells. An empty window is the sheet's extent, as it is for `values` (the Clock's is `A1:B3`).
+  - The still card's day boundary answers whole: 401 of its Screen's formulas change at once, past the room.
+  - A value written into the window answers whole until the next frame's end, which names it, and the frame after that answers 0.
+  - A formula whose value turns to a reason (`not-computed`) or to an error answers whole, its twin gaining or losing a cell.
+  - A reference to an empty cell reads 0, so no `(empty ...)` row arose on any card.
+  - An unknown projection's words name the four.
+  - *The rule, held.* A probe kept each watched window's last values record and its frame. After every frame it patched the record when `since` was that frame, kept it when `at` was, and viewed whole otherwise, then held the result to the `values` view of the same window byte for byte. No record differed:
+
+    | card | frames | windows watched | patched (cells) | still | whole |
+    |---|---|---|---|---|---|
+    | the still card, its plan's edits and the Camera's move | 90 | the Screen, Board, Day, Clock, File, Camera | 176 (577) | 258 | 21 |
+    | Buffet | 200 | Stocks, Market, Day, Dice, the Screen, Clock, File | 416 (696) | 977 | 14 |
+    | a probe card: cells changing on rules of the frame, a long text, a value an edit rewrites, a formula written | 40 | the Screen, the Day through two windows, Clock | 148 (289) | 0 | 16 |
+
+  - *The Input rows.* Two grids of one cartridge were driven by one scripted person. The first was written the eighteen rows whole at every frame. The second was written only the rows that changed since the rows it last wrote, whole at the first frame and after a person's edit of the Input sheet. Every sheet's grid record was equal at every frame over the input card's 240 frames, the still card's 120 and Buffet's 120, with 0 differences; the second grid was written at 37, 18 and 18 of them.
+  - *The costs*, each the median of 200 calls, in microseconds in V8. The still card is `ENGINE.17`'s, through `A1:CB50`; Buffet's Stocks is through the owner's full screen of default cells, `A1:AN68`, after frame 31.
+
+    | a still frame's call | the still card | Buffet's Stocks |
+    |---|---|---|
+    | the Input sheet's 48 rows written | 51.5 | 51.7 |
+    | the step | 5.4 | 6.3 |
+    | the Clock's `grid` view | 9.8 | 11.3 |
+    | the File's `grid` view | 8.5 | 10.2 |
+    | the Camera's `grid` view | 7.7 | none |
+    | the window's `values` view | 143.0 | 27.5 |
+    | the sum | 225.9 | 107.0 |
+    | the window's `changes` | 2.8 | 4.7 |
+    | a device's `changes` | 2.6 | 2.9 to 3.6 |
+
+    Two of the 48 rows write in 4.1 µs. A step after a write of rows that changed nothing costs more on a cartridge that reads them, since a written cell's readers are computed again: 42 µs on the input card against 10.7 after no write. The still card and Buffet step in 3.6 and 4.5 µs after no write, about as after one.
+
+**The measurement before the operation.** The instrument is `ENGINE.17`'s scratch page script, given a sheet to show in the Screen's place, over the page built at the pin, `ENGINE.18`'s host over 0.9.4. It runs in headless Chrome 155 on the GPU at the owner's full screen, 2,560 by 1,440 CSS pixels at a ratio of 1.5 (a canvas of 3,840 by 2,117), its processes opted out of power throttling and pinned to the performance cores. Each run times `runFrameSync`'s frames 21 to 140 after 20 warm, and is held when its clock moved 10% or less (*measurement*):
+
+| frames 21 to 140, 116 of them still | frame p50 | p95 | max | a still frame: main, sync | a drawn frame: main, sync | main thread a frame |
+|---|---|---|---|---|---|---|
+| the still card's Screen (3 runs of 4 held) | 0.5 to 0.6 ms | 0.8 to 1.1 | 3.3 to 4.8 | 0.5 to 0.6, 0.4 to 0.5 | 3.0 to 3.3, 2.5 to 2.8 | 0.80 to 0.90 |
+| Buffet's Stocks in the Screen's place (6 runs of 10 held) | 0.4 | 0.7 to 0.8 | 1.4 to 3.7 | 0.4, 0.3 | 1.3 to 1.5, 1.1 to 1.3 | 0.57 to 0.62 |
+
+- The page's timer counts tenths of a millisecond, so a still frame's view, 0.2 ms on the still card, reads 0.0 to 0.1 on Buffet.
+- The blit's `grid` case beside them, at 5.6, 6.2 and 6.5 ms against the owner's baseline of 5.2, 6.1 and 6.7, places this machine about a tenth slower at p50, as it did at `ENGINE.17`.
+- Buffet's drawn frames are its market days, with three or four cells of Stocks changed.
+
+**The prediction**, written before the build.
+- In V8 the module's calls on a still frame fall from 226 µs to about 14 on the still card, and from 107 to about 16 on Buffet's Stocks: the step after no write, one `changes` a device, and the window's `changes` (*derived*, from the table).
+- In Chrome a still frame's sync falls from 0.4 to 0.5 ms, and from 0.3, to 0.0 to 0.1, the timer's grain; its frame p50 falls to 0.1 to 0.2. The main thread a frame falls from 0.80 to 0.90 ms to 0.40 to 0.55 on the still card, and from 0.57 to 0.62 to 0.30 to 0.40 on Buffet (*derived*: what a still frame keeps is Chrome's own frame, about 0.3 to 0.4 ms by `ENGINE.17`'s runs, and the host's own work).
+- The still card's boundaries stay whole frames, drawn as before at 3.0 to 3.3 ms. Buffet's market days are patched: they lose their view and their parse, about 0.1 ms of 1.3 to 1.5, and their paint stays whole until `ENGINE.20`.
+- Exactly: every committed replay, re-recording, describe golden and digest unchanged, and every case's counts as before but the new counters (*prediction*, exact).
+
+**The decisions**, each the scoping's recommendation.
+1. **Two items: this one the host's and the double's, (a), (c), (d) and (e), and `ENGINE.20` the viewport's repaint, (b).** The four parts are one frame path and one hand test, each a change in what the host asks of the module. The repaint is the viewport's own and has an oracle of its own, the canvas's pixels; `ENGINE.17`'s decision 10 named it that half, unminted. It depends on this item's patch, and its measured share differs: a still frame paints nothing under either item, and a market day's paint is about 1 ms once in 30 frames. *Alternatives:* one ID in two slices; or five IDs, one a part, though (e) is (a)'s double and (c) is (a)'s path again.
+2. **A window's changes before its view, at a frame's own draw.** (a) This covers the Screen's draw through the Camera's window, and `refreshSheet`'s `still` refresh: the frame's draw of a sheet in the Screen's place, and a page's refresh that passes it, the drawer's among them. For each viewport the host keeps, beside `ENGINE.17`'s last load, that load's frame, sheet, window as asked and projection. When the viewport still holds that model, the sheet and the window are the same and the projection is `values`, the host asks for the window's changes:
+   - `whole`: it views as today, and `ENGINE.17`'s comparison of the text still finds a still record;
+   - `<at>` the held frame: the frame is still, nothing having stepped since the record;
+   - `<since>` the held frame and `<n>` 0: still;
+   - `<since>` the held frame and `<n>` above 0: the held text and the viewport's model are patched (decision 3);
+   - otherwise it views as today.
+
+   A load, `showSheet`, the Screen's tab, a scroll's refresh and `redraw()` always view whole; `redraw()` is the explicit "draw again", whose time the blit's baseline measures. On the frame path the held record is always the last frame's, so `<since>` guards a page's refresh, which may come frames apart: the drawer's views whole as today at a rate above zero, and patches at rate zero, where a frame is an edit. A host with no viewport patches its text alone. *Alternative:* the changes asked of the Screen alone, which leaves Buffet, whose views are sheets in the Screen's place, as it is.
+3. **The patch: the held text byte for byte, and the viewport's model with it, in place.**
+   - The host keeps the held record's rows by cell, made at its first patch. A named cell's rows are replaced with the given ones, an `empty` row's cell is removed, and a cell the record lacks goes in at its place in row-major order.
+   - The text is joined at once, so that `this.record`, the last load's text and `ENGINE.17`'s comparison stay strings, as today; the join costs a patched frame alone.
+   - The viewport gains `patch(text)`. It reads the rows as `readRecord` reads them, one reading of a row serving both, and replaces each named cell's entry in the model it holds, the model's counts with it. It counts its patches, and the host notes that count with the load, so that a model a page patched is never taken for the host's (`ENGINE.17`'s guard, extended). In this item it repaints whole; `ENGINE.20` makes the repaint the cells'.
+
+   *Why the text as well:* `host.record` and `_lastLoad(vp).text` are what the loop oracle holds byte for byte to the `values` view (the `grid`, `still` and `views` cases), so the rule's proof is pins the oracle already has. *Alternatives:* the model alone, the text made when a reader asks; or the text alone, the model loaded again from it, though the parse is what a patch saves (0.77 ms for a 27 KB record, `ENGINE.18`'s table).
+4. **Every device read by its changes, all seven.** (c) The owner named the Clock, the File and the Camera, the three the still card reads at every frame. The same path serves the Palette, the Keys, the Audio and the Write sheet, so one rule reads them all. The host keeps each device sheet's cells as last read, with their frame, and asks for the sheet's changes over its extent, an empty window:
+   - `whole`, at frame 0 and the frame after a load: the sheet is read whole, as today;
+   - `<at>` the held frame, or `<n>` 0: the cells are kept;
+   - `<since>` the held frame: the named cells are replaced, and an `empty` row's address is removed.
+
+   Each device's own reading of its cells runs as today, over the kept cells. So the Write sheet's rows still become every frame's derived writes, every edge is found as it was, and the Palette makes its table again only when its cells changed. *Alternative:* the three alone, the other four left to a later measurement.
+5. **The Input rows: only those that changed are written.** (d) The host keeps the rows it last wrote. At each frame at a rate above zero it writes the rows that differ from them, in their order, and nothing when none does. It writes them whole at the first frame, after a person's edit of the Input sheet lands (the sheet named without case, as the recorder names it), after a replay's rows and after a refused write; a load forgets them too. The recorder is given the frame's rows whenever they differ from the last written, and is otherwise not called, where it would have logged nothing. Its record of the sheet and the host's are forgotten at the same acts, so every replay keeps its bytes of today. The wheel's notches and the last key are cleared at every frame, as now. *Measured above:* 0 differences over 480 frames of three cards, and the write of two rows in 4.1 µs against 47; and a replay already plays back only the cells that changed. *Alternative:* the rows whole whenever one changed, the prompt's words read narrowly: the same gain on a still frame, and 47 µs at a frame where the pointer moved and two rows changed.
+6. **The double answers `changes`.** (e) `view-projection-unknown`'s words name the four. The double keeps the `values` rows of every cell at the last two frames' ends, and answers the cells in the window whose rows differ, in row-major order, `(empty ...)` for a cell with none. It answers whole:
+   - before the first frame since the load;
+   - after a write that changed a formula or added a cell, until and at the next frame's end;
+   - while a value written since the last frame lies in the window;
+   - when the window's sheet changed its extent between the two frames, since the record's header would change; its Write sheet's rows do so on a rule of the frame.
+
+   It keeps room for every change, as its `RULES` say, so its Screen, whose tiles all change at every frame, is patched whole at every frame: the patch held at up to four thousand cells a frame, which the module's room never asks for.
+7. **What a page sees.**
+   - Two counters: `patches`, the frames drawn from their changes, each also a draw; and `inputsKept`, the frames whose Input rows all stood as last written.
+   - The timing: a patched frame's is `{ view, draw, patched }`, `patched` being its cells and `view` the changes' time. A still frame's keeps `ENGINE.17`'s shape, its view the changes' time.
+   - The drawer's frame line in grid mode: `S of N frames still and P patched`.
+
+   The held records and the last rows written are the host's own state, invisible to formulas; `SPEC.md` §8.3's list of that state grows by both.
+8. **The oracle**, in three parts.
+   - *The loop oracle's twenty-third case, `changes`*, over the module. Its card is inline, as the still card is, so by `ENGINE.16`'s rule it runs on a game's page too. The card is at rate 30, a grid of 20 by 10. Its Screen holds a cell of the frame, a cell of every seventh frame, a long text on even frames, a value an edit rewrites, and a fill of 64 formulas reading only the day, so that a boundary changes 64 cells, under the room. The card also has a Day, a Camera, a Keys sheet, a Write row landing a value in the Day at every frame, and a File whose save cell rises every 25th frame. Over 60 frames, at every frame:
+     - the host's choice for the Screen, whole, patched or still, is the oracle's own from its own `changes` after the frame, and the counters move by it;
+     - `host.record` is the `values` view byte for byte;
+     - the viewport's model is cell for cell, its counts included, the one a load of that record makes;
+     - the drawn window is held to the record;
+     - the module's calls, counted by projection through a wrapper: no `values` or `grid` view on a still or patched frame, a `changes` for each device, and a device's `grid` view only where its changes said whole;
+     - the host's device state equals a whole read's: the window, the key map, the derived writes, the rate and the save edges;
+     - the Input rows written: none at a frame of no input; two at frames 10 to 12, where the pointer moves; one at a key pressed at 15 and one at its release at 16; and whole at the first frame and at frame 21, after a person's edit of `Input!C5` at 20;
+     - the value's edit at frame 30 is patched, and a formula written at 50 is whole;
+     - the Camera's move at 40 is whole, the window being new, and the patches start again at 41;
+     - a page's viewer of the Day, refreshed at every frame, is patched at every frame, and a second viewer refreshed every third frame views whole;
+     - the run's replay, played on a fresh host, reaches every frame's Input record and Screen.
+   - *The pins moved.* `ENGINE.17`'s `still` and `stillSheets` read a load by the model's identity, which a patch keeps (the catch); they read a patch by the host's counters and the viewport's count, every choice of theirs standing. `views`, `grid` and `still` keep holding the text the host drew to the `values` view, now through patches too. The oracle's own model of the loop writes the rows that changed at step 3. Over the double, the `grid` case is patched at every frame from the second.
+   - *Crafted patches*: the host's pure patch over records the oracle writes. An `empty` row removes its cell, a new cell goes in at its place, a value and its style are replaced together, and the header is untouched.
+9. **The mutants**, lettered after `ENGINE.18`'s, each anchored on a line this item writes and failing `changes` by name:
+   - `BL` patches whatever the `<since>`, failing at the viewer refreshed every third frame;
+   - `BM` takes a `whole` answer as still, failing at frame 1;
+   - `BN` compares no window, failing at the Camera's move;
+   - `BO` never patches;
+   - `BP` patches the text and not the model, failing the drawn window;
+   - `BQ` keeps a device's cells when its changes name some, missing the Keys' rebinding;
+   - `BR` keeps the Input rows after a person's edit of the Input sheet, so the edit stands a frame too long;
+   - `BS` writes the rows whole whenever one changed, failing the two rows' count;
+   - `BT` never keeps the rows;
+   - `BU` leaves an `empty` row's cell in place, failing the crafted patch.
+10. **Measured before and after, in Chrome and in V8.** The same instrument and settings, the same day, on the still card and on Buffet's Stocks, the runs before taken again beside the runs after from the page saved at the pin; and the V8 costs of a still frame's calls, again, over the host's own frame path. The owner's `?blit=1` in Chrome in fullscreen follows the build, its `still` row expected to fall and its bars standing.
+11. **The pin first, a commit of its own; then one slice and one commit.**
+    - The pin is needed whatever is built on it, and is closed by the owner's baseline of the floors: `ENGINE.19: the pin moved to vla-lang 0.9.4, a window's changes, the frame floors held to the owner's run`.
+    - The build follows it as one commit, its four parts being one frame path with one hand test, and `ENGINE.20` follows the build.
+    - A release, its version the owner's to name, follows either at the owner's word, and Buffet then pins and vendors its tag.
+12. **The record.**
+    - `SPEC.md`: §4.5's correction, made with the pin; §5's steps 3, 5 and 6 and §8.3, dated corrections at the build.
+    - `web/README.md`: the host's counters and the viewport's `patch`.
+    - `ROADMAP.md`, this record, `Delta/CLAUDE.md`'s map and the memory.
+
+    The charter needs no amendment: nothing becomes state of the engine's, and `AD-6` and `AD-7` stand.
+
+**Not this item, named.**
+- The viewport's repaint of the named cells, `ENGINE.20`.
+- The drawer's viewer patched at a rate above zero, which needs more than one frame's changes, the language's to keep.
+- The plane: its view of a kept plane is 0.003 ms and its blit 0.1 (`ENGINE.17`'s decision 3).
+- The building of the Input rows at every frame, a few microseconds, which a key's or the pointer's event could mark when a measurement asks.
+- Frazaro's page, which consumes the viewport and takes `patch` when it vendors the file again.
+
+**The work.**
+
+| File | What changes | Decisions |
+|---|---|---|
+| `Cargo.toml`, `Cargo.lock`, `tools/check_engine_deps.ps1`, `tools/check_frame_floors.ps1`, `engine/src/abi.rs`, `engine/README.md`, `docs/SPEC.md` §4.5 | the pin, moved on the day of the scoping; the floors' baseline the owner's | 11 |
+| `web/host.js` | the held load's frame, sheet, window and projection; a window's changes before its view, in `_drawGrid` and `refreshSheet`; the held record's rows by cell, and the patch; every device's cells by their changes; the Input rows by their changes, forgotten at a person's edit of the sheet, a replay's rows and a refused write; `patches` and `inputsKept`; the timing's `patched` | 2 to 5, 7 |
+| `web/viewport.js` | `patch(text)`: the model's entries replaced as `readRecord` reads their rows, its counts kept and its patches counted; one reading of a row for both; a whole repaint | 3 |
+| `web/fake.js` | the refusal's words; the `changes` answer from the last two frames' rows, whole by decision 6's rules, with room for every change | 6 |
+| `web/index.template.html` | the case `changes` and its card; the pins of `still`, `stillSheets` and `views` that read a patch; the model's step 3; the crafted patches; the drawer's frame line | 7, 8 |
+| `tools/check_host_loop.ps1` | twenty-three cases, eight on a game's page; `changes`'s floors; mutants `BL` to `BU`, seventy-three pages | 8, 9 |
+| `tools/run_checks.ps1` | the check's line | 9 |
+| `docs/SPEC.md`, `docs/ROADMAP.md`, `web/README.md`, this record, `Delta/CLAUDE.md`, the memory | the record | 12 |
+
+**The catch.**
+- A patch keeps the viewport's model object, and `ENGINE.17`'s pins read a load by that object's identity. They must read a patch by the host's counters and the viewport's count, or every patched frame of the Day and the Board fails them.
+- On the frame path the held record is always the last frame's, so a host that drops the `<since>` comparison fails no case that refreshes at every frame: `BL` needs the oracle's second viewer, refreshed every third frame.
+- The recorder is given the rows exactly when they differ from the last written. Its record and the host's must be forgotten at the same acts, or a replay changes by a row.
+- A device's reading reads its kept cells and never changes them, and the Write sheet's rows become derived writes at every frame from the kept cells, as they did from a fresh read.
+- A formula whose value turns to a reason or an error makes its frame whole (measured), so the case's card keeps its formulas' values plain.
+- The double's Write sheet changes its extent on a rule of the frame, so its `whole` there comes from the extent's rule, not a write's.
+- PowerShell 5.1 as every check met it: ASCII, `return ,$list`. A script with a backslash goes through the Write tool: on the day, the Bash tool's heredoc collapsed two backslashes into one.
+- `docs/ROADMAP.md` and this file are CRLF.
+
+**Oracle.**
+- Under Windows PowerShell 5.1: `cargo test`; `build_web.ps1`; `check_host_loop.ps1` at both ratios, twenty-three cases, and its control, every new mutant page failing by name; `check_web_offline.ps1`; and `run_checks.ps1` 13 of 13 once the owner's baseline of the floors is in.
+- The measurement after, set against the prediction.
+- The owner's hand test in the player built from the tree:
+  - Buffet's text pasted into the drawer, its Stocks shown, the frame line's still and patched counts rising, and a market day drawn when it comes;
+  - the input card played by hand with the keys and the pointer, its replay copied and played back.
+
+  That earns ✅.
+
+**Size.** `~days`: the host about 150 lines, the viewport about 50, the double about 50, the oracle's case and card about 250, the checks about 60, and the page's text in five sections (*prediction*).
+
+*Scoped 2026-10-15. Awaiting the owner's approval of the twelve decisions; nothing is built but the pin, whose commit waits on the owner's run of `tools/bench_frames.ps1`.*
+
+*Approved by the owner 2026-10-15, all twelve as recommended, with `ENGINE.20`'s seven: "Recommendations approved; provide a starting prompt for a new session to scope and implement ENGINE.19." The build is a session of its own, from a starting prompt given in chat the same day. It is laid on the pin's commit, which still waits on the owner's run of `tools/bench_frames.ps1`.*
+
+## `ENGINE.20` — a patch repainted cell by cell: the viewport repaints only the cells a window's changes name, the rest of its canvas kept
+
+*Minted and scoped 2026-10-15 at the owner's word, with `ENGINE.19`, whose decision 1 gives the reason for two items. It is the prompt's (b): "The viewport repaints only the named cells (the DOM-diff step)." `ENGINE.17`'s decision 10 left this half to the viewport, unminted, in the owner's reading of `KERNEL.42` as the precursor of a diff of the drawn grid against its last draw, as a DOM diff is. It builds on `ENGINE.19`'s `patch`; nothing is built.*
+
+**Substrate, verified.** `web/viewport.js` at `199789c`.
+- *The paint.* `_draw` paints the canvas whole, in this order:
+  - a clear, then the background;
+  - the body, then up to three frozen quadrants, each clipped to its rectangle. Each paints its fills (a look's, a styled cell's, or a styled column's for its empty cells), then its gridlines a device pixel wide, then its texts, then the selection and the marks;
+  - the frozen separators;
+  - the headers.
+
+  Every op is recorded (`this.ops`), and `draws()` hands them to the loop oracle, whose held windows (`gqCompare`) compare them with the record cell for cell.
+- *What a cell's paint depends on:*
+  - its entry: the text, the kind, the value's kind, the style and the look;
+  - its column's width, since a number too wide draws #s;
+  - whether the cells to its right are empty, since a left-aligned text that does not wrap spills into them;
+  - a text up to eight columns to its left (`OVERFLOW_LOOKBACK`) that spills into it;
+  - the selection and the marks, painted over it.
+- *No value moves the geometry.* Widths come from the record's column rows and heights from its row rows, with no fit to the content, and the frozen panes, the window and the extent stand. A change in any of them makes the answer whole, so it never reaches a patch (`ENGINE.19`).
+- *The canvas is current after every event.* A scroll draws at its event and a resize at the observer's; a ratio's change, a selection, a freeze, a width and a mark draw at once. The one state in which the canvas lags is a scroll whose event has not yet fired: the scroller is then not at `lastScroll`.
+- *The calls.* A text is drawn by `fillText`, clipped to its cell's span (`Painter.text`); fills and gridlines sit at whole device pixels.
+
+**The measurement before the operation.** Buffet's Stocks in the Screen's place at the owner's full screen, `ENGINE.19`'s table. Its four drawn frames of 120, the market days, take a main-thread p50 of 1.3 to 1.5 ms, 1.1 to 1.3 of it the frame's own work. Its `values` view is 0.025 ms and its parse 0.035 (`ENGINE.18`'s table), so nearly all of a drawn frame is the paint, which `ENGINE.19`'s patch leaves whole. The still card's boundaries are whole frames, 401 cells past the room, and full paints under either item.
+
+**The prediction**, written before the build.
+- A patched frame of a few cells repaints in 0.05 to 0.1 ms, where a full paint at full screen is about 1 ms.
+- Buffet's market day falls from 1.3 to 1.5 ms of main thread to 0.2 to 0.4: about 0.03 ms a frame over a market day's 30 frames (*derived*).
+- A window that changes a few cells at every frame, a clock or a ticker, saves about a millisecond at every frame.
+
+**The decisions**, each the scoping's recommendation.
+1. **The repaint is the full paint under a clip, by one painter.**
+   - The dirty rectangles are each named cell's rectangle, in each quadrant it lies in, widened along its row, before the patch and after, to the span its text spills over and to the span of any text from its left that spills into or through it.
+   - Under a clip of their union, the viewport runs the full paint's own steps over the rows and columns they meet, in the full paint's order: the background, the fills, the gridlines, the texts, the selection and the marks, and the frozen separators. The headers are never repainted.
+
+   *Alternative:* a painter of one cell, a second implementation of the paint, which would have to agree with the first on every rule above.
+2. **When it paints whole instead:**
+   - before a full paint of the model since its load or its show;
+   - when the scroller is not where the last paint left it, a scroll's event pending, or the canvas's size or ratio is not the last paint's;
+   - when the cells named are more than a share of the cells in view, the crossover measured in the build, with a quarter as the prior.
+3. **The draw list describes the canvas.** After a repaint, `draws()` gives the last full paint's ops with each repainted cell's fill and text ops replaced by the repaint's, so every held window of the loop oracle stands as it is. The viewport counts its repaints.
+4. **The oracle: pixels.**
+   - After every patched frame of the loop oracle's `changes` case, over the module, the canvas's pixels (`getImageData`) are held byte for byte to a full paint's of the same model and state, and the draw list op for op to a full paint's.
+   - The case's card gains cells a repaint must get right: a number turning to #s; a long text spilling over empty neighbors, growing, shrinking, and cut by a neighbor that fills; a neighbor's spill restored when its blocker empties; a wrapped text; a look's fill turning on and off; a cell under the selection and one under a mark; a cell in each frozen quadrant; a cell in a hidden row; and a cell scrolled out of view, which repaints nothing.
+   - The mutants, lettered after `ENGINE.19`'s, each failing by name: a repaint without the spill's widening; one without the left neighbor's; one with no clip; one that leaves out the selection; and one whose draw list keeps the old ops.
+   - *The catch:* the build first probes whether Chrome's GPU canvas paints a clipped repaint to exactly a full paint's pixels. Where it does not, the oracle's viewport paints into a context made `willReadFrequently`, which Chrome rasterizes on the CPU.
+5. **Measured before and after in Chrome,** as `ENGINE.19` is, on Buffet's Stocks and on the `changes` card.
+6. **Its own commit, after `ENGINE.19`'s.** The release follows either item at the owner's word.
+7. **The record:**
+   - `SPEC.md` §5's step 6, a dated correction;
+   - `web/README.md`'s section on the viewport, and the viewport's version;
+   - `ROADMAP.md` and this record.
+
+   The viewport is `KERNEL.5`'s, laid here and consumed by Frazaro's page, which takes the change when it vendors the file again.
+
+**Not this item, named.**
+- The plane's dirty regions, `ENGINE.6`'s.
+- A repaint of the headers or the tabs, which no value changes.
+- The drawer's viewer patched at a rate above zero (`ENGINE.19`).
+
+**The work.**
+
+| File | What changes | Decisions |
+|---|---|---|
+| `web/viewport.js` | a patch's dirty rectangles, the clipped repaint, the draw list's splice, the repaints counted | 1 to 3 |
+| `web/index.template.html` | the `changes` case's holds on the pixels and the draw list, and its card's cells | 4 |
+| `tools/check_host_loop.ps1` | the floors and the mutants | 4 |
+| `docs/SPEC.md`, `web/README.md`, `docs/ROADMAP.md`, this record | the record | 7 |
+
+**Oracle.**
+- `check_host_loop.ps1` at both ratios, and its control.
+- `?bench=1`'s render floors, run again by the owner if the full paint's own code moves.
+- The measurement after.
+- The owner's hand test: Buffet's market day drawn, and a selection and a scroll over a patched cell.
+
+**Size.** `~days`: the viewport about 120 lines, the oracle about 150 (*prediction*).
+
+*Scoped 2026-10-15. Awaiting the owner's approval of the seven decisions; nothing is built, and the build starts from `ENGINE.19`'s commit.*
+
+*Approved by the owner 2026-10-15 with `ENGINE.19`'s decisions, all seven as recommended. The build starts from `ENGINE.19`'s commit.*

@@ -314,26 +314,41 @@ $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::W
 # gun 1,611,878,400 (0.0391, runs of 128), gun-x4 6,500,454,400 (0.0391),
 # gun-x16 22,125,429,151 (0.0461), sand 32,070,339 (5.9). Its floors are the
 # history's tenth entry.
-$baselineDate = '2026-10-14'
-$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 155.0.8059.79 headless | the engine''s module 749,135 bytes | vla-lang at 0.9.3 | power throttling opted out: the runner yes, 35 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 36 browser process(es)'
-$baselinePin = '0.9.3'
+# 2026-10-15, the eleventh: the owner's run over vla-lang 0.9.4, Frazaro's
+# KERNEL.42 (a window's changes, a fourth projection), which the module
+# carries (766,043 bytes), with ENGINE.14 to ENGINE.18 built. Pasted from
+# target/bench_frames.txt whole, no value touched; every clock's spread within
+# 5.5%. No row fell under its floor. Its entry keeps twelve floors and raises
+# two, native Life's at sixteen times the area and wasm Life's at four, and
+# gives no reason, since none goes down. The heap's six Memory rows of Life
+# and the gun rose by 1,536 bytes, the language's (the ceilings' note below).
+# Its rows: native life 21,922,253 cells a second (frame p50 2.9 ms), life-x4
+# 17,767,671 (14.3), life-x16 17,992,950 (56.7), gun 2,308,884,432 (0.0273,
+# runs of 64), gun-x4 8,881,130,147 (0.0286), gun-x16 32,792,411,576 (0.0311),
+# sand 48,418,588 (3.9); wasm life 14,815,059 (4.3), life-x4 14,635,389
+# (17.3), life-x16 14,517,352 (70.3), gun 1,679,040,001 (0.0375, runs of 128),
+# gun-x4 6,500,454,400 (0.0391), gun-x16 23,310,719,963 (0.0438), sand
+# 32,070,339 (5.9). Its floors are the history's eleventh entry.
+$baselineDate = '2026-10-15'
+$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 155.0.8059.79 headless | the engine''s module 766,043 bytes | vla-lang at 0.9.4 | power throttling opted out: the runner yes, 41 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 41 browser process(es)'
+$baselinePin = '0.9.4'
 $baselineFixtures = @{ 'life' = '60220BAE07BBC3C15F671C7CAAE62B6DD6D14B67B9141150EC0023AFA0FFE0F4'; 'gun' = '64C9A6BA206003F15B73084FE90781BE60E34089D577CE0589DBAF5C737A0725'; 'sand' = 'F872498DEAFBCCB60133501B18E35BEC38A470C4A9AE8064505510D061EAD857' }
 $baselineRungs = @{ 'life-x4' = 'D841A88328E95AABB7603CC97B902447346E9A705E32C01770AE74319A252285'; 'life-x16' = '944AEF5CA1FD41FF9973CB4A31B04C98595A408F7F50E7C6FA50B8E0ADE56613'; 'gun-x4' = '09E2744A4117AE2FBF33369EC3BD0BED5F2A69FA532C09BB86DB6FEA3F05B863'; 'gun-x16' = 'B762A925CD57929507CAB39F93812F36EB1196AA3B8693A7E9E1CC1999A83B59' }
 $baseline = @(
-    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 41.2; Memory = 29477945; FirstFrame = 11.1; FrameP50 = 2.9; FrameMin = 2.1; FrameMax = 5.8; CellsPerSecond = 21505935; FramesPerSecond = 341.559; ClockMs = 0.202; ClockSpread = 1.3; ClockDrift = -0.4 },
-    @{ Runner = 'native'; Fixture = 'life-x4'; Cells = 253924; Frames = 30; Run = 1; Load = 181.1; Memory = 117782975; FirstFrame = 46.5; FrameP50 = 14.2; FrameMin = 10.9; FrameMax = 25.6; CellsPerSecond = 17871966; FramesPerSecond = 70.383; ClockMs = 0.202; ClockSpread = 0.9; ClockDrift = -0.5 },
-    @{ Runner = 'native'; Fixture = 'life-x16'; Cells = 1019844; Frames = 30; Run = 1; Load = 797.9; Memory = 471588431; FirstFrame = 206.1; FrameP50 = 58.3; FrameMin = 46.3; FrameMax = 105.5; CellsPerSecond = 17484609; FramesPerSecond = 17.144; ClockMs = 0.202; ClockSpread = 1.9; ClockDrift = -0.6 },
-    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 640; Run = 64; Load = 37.7; Memory = 29402362; FirstFrame = 9.2; FrameP50 = 0.0283; FrameMin = 0.0164; FrameMax = 0.0389; CellsPerSecond = 2223464563; FramesPerSecond = 35313.267; ClockMs = 0.202; ClockSpread = 0.9; ClockDrift = -0.5 },
-    @{ Runner = 'native'; Fixture = 'gun-x4'; Cells = 253924; Frames = 640; Run = 64; Load = 176.0; Memory = 117707392; FirstFrame = 39.6; FrameP50 = 0.0270; FrameMin = 0.0148; FrameMax = 0.0396; CellsPerSecond = 9409493370; FramesPerSecond = 37056.337; ClockMs = 0.202; ClockSpread = 3.6; ClockDrift = -0.6 },
-    @{ Runner = 'native'; Fixture = 'gun-x16'; Cells = 1019844; Frames = 640; Run = 64; Load = 772.4; Memory = 471512848; FirstFrame = 157.9; FrameP50 = 0.0305; FrameMin = 0.0182; FrameMax = 0.0445; CellsPerSecond = 33422954144; FramesPerSecond = 32772.614; ClockMs = 0.203; ClockSpread = 1.0; ClockDrift = -0.2 },
-    @{ Runner = 'native'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 158.5; Memory = 80468130; FirstFrame = 37.1; FrameP50 = 3.9; FrameMin = 3.8; FrameMax = 23.8; CellsPerSecond = 48383921; FramesPerSecond = 255.709; ClockMs = 0.202; ClockSpread = 0.9; ClockDrift = -0.8 },
-    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 53.6; Memory = 28508160; FirstFrame = 13.3; FrameP50 = 4.2; FrameMin = 3.0; FrameMax = 8.8; CellsPerSecond = 14815059; FramesPerSecond = 235.294; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 },
-    @{ Runner = 'wasm'; Fixture = 'life-x4'; Cells = 253924; Frames = 30; Run = 1; Load = 164.7; Memory = 97583104; FirstFrame = 37.2; FrameP50 = 18.2; FrameMin = 13.8; FrameMax = 30.8; CellsPerSecond = 13951868; FramesPerSecond = 54.945; ClockMs = 0.298; ClockSpread = 6.7; ClockDrift = 0.8 },
-    @{ Runner = 'wasm'; Fixture = 'life-x16'; Cells = 1019844; Frames = 30; Run = 1; Load = 793.6; Memory = 384892928; FirstFrame = 146.5; FrameP50 = 70.0; FrameMin = 55.4; FrameMax = 120.3; CellsPerSecond = 14569200; FramesPerSecond = 14.286; ClockMs = 0.295; ClockSpread = 3.4; ClockDrift = 0.0 },
-    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 640; Run = 128; Load = 36.2; Memory = 28508160; FirstFrame = 8.7; FrameP50 = 0.0391; FrameMin = 0.0242; FrameMax = 0.0555; CellsPerSecond = 1611878400; FramesPerSecond = 25600.000; ClockMs = 0.293; ClockSpread = 1.7; ClockDrift = -0.8 },
-    @{ Runner = 'wasm'; Fixture = 'gun-x4'; Cells = 253924; Frames = 640; Run = 128; Load = 159.5; Memory = 97583104; FirstFrame = 30.6; FrameP50 = 0.0391; FrameMin = 0.0227; FrameMax = 0.0547; CellsPerSecond = 6500454400; FramesPerSecond = 25600.000; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 },
-    @{ Runner = 'wasm'; Fixture = 'gun-x16'; Cells = 1019844; Frames = 640; Run = 128; Load = 856.1; Memory = 384892928; FirstFrame = 127.3; FrameP50 = 0.0461; FrameMin = 0.0313; FrameMax = 0.0609; CellsPerSecond = 22125429151; FramesPerSecond = 21694.915; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 },
-    @{ Runner = 'wasm'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 159.1; Memory = 65077248; FirstFrame = 34.0; FrameP50 = 5.9; FrameMin = 5.7; FrameMax = 30.0; CellsPerSecond = 32070339; FramesPerSecond = 169.492; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 }
+    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 36.6; Memory = 29479481; FirstFrame = 10.8; FrameP50 = 2.9; FrameMin = 2.1; FrameMax = 6.9; CellsPerSecond = 21922253; FramesPerSecond = 348.171; ClockMs = 0.202; ClockSpread = 0.9; ClockDrift = 0.1 },
+    @{ Runner = 'native'; Fixture = 'life-x4'; Cells = 253924; Frames = 30; Run = 1; Load = 178.7; Memory = 117784511; FirstFrame = 42.8; FrameP50 = 14.3; FrameMin = 11.2; FrameMax = 26.7; CellsPerSecond = 17767671; FramesPerSecond = 69.972; ClockMs = 0.202; ClockSpread = 0.4; ClockDrift = 0.2 },
+    @{ Runner = 'native'; Fixture = 'life-x16'; Cells = 1019844; Frames = 30; Run = 1; Load = 725.6; Memory = 471589967; FirstFrame = 175.0; FrameP50 = 56.7; FrameMin = 46.1; FrameMax = 104.2; CellsPerSecond = 17992950; FramesPerSecond = 17.643; ClockMs = 0.201; ClockSpread = 1.0; ClockDrift = -0.3 },
+    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 640; Run = 64; Load = 36.3; Memory = 29403898; FirstFrame = 9.3; FrameP50 = 0.0273; FrameMin = 0.0139; FrameMax = 0.0393; CellsPerSecond = 2308884432; FramesPerSecond = 36669.913; ClockMs = 0.201; ClockSpread = 1.0; ClockDrift = -0.2 },
+    @{ Runner = 'native'; Fixture = 'gun-x4'; Cells = 253924; Frames = 640; Run = 64; Load = 168.4; Memory = 117708928; FirstFrame = 37.7; FrameP50 = 0.0286; FrameMin = 0.0154; FrameMax = 0.0435; CellsPerSecond = 8881130147; FramesPerSecond = 34975.544; ClockMs = 0.202; ClockSpread = 5.5; ClockDrift = -0.1 },
+    @{ Runner = 'native'; Fixture = 'gun-x16'; Cells = 1019844; Frames = 640; Run = 64; Load = 717.1; Memory = 471514384; FirstFrame = 152.9; FrameP50 = 0.0311; FrameMin = 0.0187; FrameMax = 0.0440; CellsPerSecond = 32792411576; FramesPerSecond = 32154.341; ClockMs = 0.202; ClockSpread = 0.7; ClockDrift = -0.1 },
+    @{ Runner = 'native'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 148.9; Memory = 80468130; FirstFrame = 35.8; FrameP50 = 3.9; FrameMin = 3.8; FrameMax = 23.1; CellsPerSecond = 48418588; FramesPerSecond = 255.892; ClockMs = 0.202; ClockSpread = 0.7; ClockDrift = -0.1 },
+    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 49.5; Memory = 28508160; FirstFrame = 13.8; FrameP50 = 4.3; FrameMin = 3.0; FrameMax = 9.2; CellsPerSecond = 14815059; FramesPerSecond = 235.294; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 },
+    @{ Runner = 'wasm'; Fixture = 'life-x4'; Cells = 253924; Frames = 30; Run = 1; Load = 157.2; Memory = 97583104; FirstFrame = 35.2; FrameP50 = 17.3; FrameMin = 13.4; FrameMax = 30.2; CellsPerSecond = 14635389; FramesPerSecond = 57.637; ClockMs = 0.293; ClockSpread = 1.7; ClockDrift = -0.8 },
+    @{ Runner = 'wasm'; Fixture = 'life-x16'; Cells = 1019844; Frames = 30; Run = 1; Load = 748.9; Memory = 384892928; FirstFrame = 141.1; FrameP50 = 70.3; FrameMin = 56.3; FrameMax = 117.0; CellsPerSecond = 14517352; FramesPerSecond = 14.235; ClockMs = 0.292; ClockSpread = 1.7; ClockDrift = -0.8 },
+    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 640; Run = 128; Load = 32.7; Memory = 28508160; FirstFrame = 7.4; FrameP50 = 0.0375; FrameMin = 0.0211; FrameMax = 0.0531; CellsPerSecond = 1679040001; FramesPerSecond = 26666.667; ClockMs = 0.290; ClockSpread = 1.7; ClockDrift = -1.7 },
+    @{ Runner = 'wasm'; Fixture = 'gun-x4'; Cells = 253924; Frames = 640; Run = 128; Load = 148.1; Memory = 97583104; FirstFrame = 29.2; FrameP50 = 0.0391; FrameMin = 0.0234; FrameMax = 0.0555; CellsPerSecond = 6500454400; FramesPerSecond = 25600.000; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 },
+    @{ Runner = 'wasm'; Fixture = 'gun-x16'; Cells = 1019844; Frames = 640; Run = 128; Load = 815.2; Memory = 384892928; FirstFrame = 116.8; FrameP50 = 0.0438; FrameMin = 0.0281; FrameMax = 0.0578; CellsPerSecond = 23310719963; FramesPerSecond = 22857.143; ClockMs = 0.292; ClockSpread = 3.4; ClockDrift = -0.8 },
+    @{ Runner = 'wasm'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 149.6; Memory = 65077248; FirstFrame = 32.1; FrameP50 = 5.9; FrameMin = 5.7; FrameMax = 28.8; CellsPerSecond = 32070339; FramesPerSecond = 169.492; ClockMs = 0.290; ClockSpread = 1.7; ClockDrift = -1.7 }
 )
 
 # --- the floors, in cells a second, a dated history that never goes down ---
@@ -356,7 +371,8 @@ $floorHistory = @(
     @{ Date = '2026-10-12'; Pin = '0.9.1'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 30500000; 'wasm life' = 14100000; 'wasm gun' = 935000000; 'wasm sand' = 20500000 } },
     @{ Date = '2026-10-12'; Pin = '0.9.2'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native gun' = 1340000000; 'native sand' = 45500000; 'wasm life' = 14300000; 'wasm gun' = 942000000; 'wasm sand' = 27900000 } },
     @{ Date = '2026-10-14'; Pin = '0.9.2'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native life-x4' = 16200000; 'native life-x16' = 15900000; 'native gun' = 2190000000; 'native gun-x4' = 8100000000; 'native gun-x16' = 27700000000; 'native sand' = 45500000; 'wasm life' = 14300000; 'wasm life-x4' = 12700000; 'wasm life-x16' = 13000000; 'wasm gun' = 1510000000; 'wasm gun-x4' = 5220000000; 'wasm gun-x16' = 21300000000; 'wasm sand' = 29300000 } },
-    @{ Date = '2026-10-14'; Pin = '0.9.3'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native life-x4' = 16200000; 'native life-x16' = 15900000; 'native gun' = 2190000000; 'native gun-x4' = 8460000000; 'native gun-x16' = 30000000000; 'native sand' = 45500000; 'wasm life' = 14300000; 'wasm life-x4' = 12700000; 'wasm life-x16' = 13100000; 'wasm gun' = 1510000000; 'wasm gun-x4' = 5850000000; 'wasm gun-x16' = 21300000000; 'wasm sand' = 29300000 } }
+    @{ Date = '2026-10-14'; Pin = '0.9.3'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native life-x4' = 16200000; 'native life-x16' = 15900000; 'native gun' = 2190000000; 'native gun-x4' = 8460000000; 'native gun-x16' = 30000000000; 'native sand' = 45500000; 'wasm life' = 14300000; 'wasm life-x4' = 12700000; 'wasm life-x16' = 13100000; 'wasm gun' = 1510000000; 'wasm gun-x4' = 5850000000; 'wasm gun-x16' = 21300000000; 'wasm sand' = 29300000 } },
+    @{ Date = '2026-10-15'; Pin = '0.9.4'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native life-x4' = 16200000; 'native life-x16' = 16100000; 'native gun' = 2190000000; 'native gun-x4' = 8460000000; 'native gun-x16' = 30000000000; 'native sand' = 45500000; 'wasm life' = 14300000; 'wasm life-x4' = 13100000; 'wasm life-x16' = 13100000; 'wasm gun' = 1510000000; 'wasm gun-x4' = 5850000000; 'wasm gun-x16' = 21300000000; 'wasm sand' = 29300000 } }
 )
 
 # --- releases of a measured source: a registry release of the language whose
@@ -451,13 +467,20 @@ $sameRows = @{
 # changed, keeping room among its changes for every formula cell (Frazaro's
 # KERNEL.36, by 0.9.3's notes four bytes a formula cell), where 0.9.2 walked
 # the twin once more than half the cells changed.
+# 2026-10-15, the pin moved to vla-lang 0.9.4 (KERNEL.42, a window's
+# changes): every count the same, and the six Memory ceilings of Life and the
+# gun raised by exactly 1,536 bytes at every rung, the same bytes on every
+# run. The reason is the language's: since 0.9.4 a frame's end keeps room for
+# 64 changes that a record spells as it spelled them before (ALIKE, in
+# vla-lang's src/machine/mod.rs), 24 bytes each, a constant a grid whatever
+# its size. Sand's high-water mark stands where it stood, its peak elsewhere.
 $allocationCeilings = [ordered]@{
-    'life'     = @{ Allocs = 80; Reallocs = 5; Memory = 29477945 }
-    'life-x4'  = @{ Allocs = 82; Reallocs = 5; Memory = 117782975 }
-    'life-x16' = @{ Allocs = 82; Reallocs = 5; Memory = 471588431 }
-    'gun'      = @{ Allocs = 80; Reallocs = 5; Memory = 29402362 }
-    'gun-x4'   = @{ Allocs = 82; Reallocs = 5; Memory = 117707392 }
-    'gun-x16'  = @{ Allocs = 82; Reallocs = 5; Memory = 471512848 }
+    'life'     = @{ Allocs = 80; Reallocs = 5; Memory = 29479481 }
+    'life-x4'  = @{ Allocs = 82; Reallocs = 5; Memory = 117784511 }
+    'life-x16' = @{ Allocs = 82; Reallocs = 5; Memory = 471589967 }
+    'gun'      = @{ Allocs = 80; Reallocs = 5; Memory = 29403898 }
+    'gun-x4'   = @{ Allocs = 82; Reallocs = 5; Memory = 117708928 }
+    'gun-x16'  = @{ Allocs = 82; Reallocs = 5; Memory = 471514384 }
     'sand'     = @{ Allocs = 509; Reallocs = 5; Memory = 80468130 }
 }
 

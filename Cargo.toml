@@ -35,8 +35,10 @@ repository = "https://github.com/Spreadsheet-Company/Alonzo"
 
 [workspace.dependencies]
 # The language crate and nothing else (AD-5), pinned to one version on
-# crates.io: vla-lang 0.9.3 (Frazaro's release commit 17f9f3e, tagged
-# v0.9.3 on 8993a7e, 2026-10-14): a formula written into a running grid in
+# crates.io: vla-lang 0.9.4 (Frazaro's KERNEL.42, fb64e3a, released as
+# e8911f6, 2026-10-15): a window's changes since a frame, a fourth projection
+# by name and no new export; over 0.9.3 (Frazaro's release commit 17f9f3e,
+# tagged v0.9.3 on 8993a7e, 2026-10-14), a formula written into a running grid in
 # the time its cells take (KERNEL.34); a changed cell checked against the
 # readers kept where it stands (KERNEL.35); a frame's end copying what
 # changed, however much changed (KERNEL.36); a window's values without its
@@ -58,9 +60,9 @@ repository = "https://github.com/Spreadsheet-Company/Alonzo"
 # docs/REARVIEW.md, ENGINE.1's second slice, decision 1): a git rev while the
 # language's change is unreleased, and the exact registry pin once it is,
 # 0.8.1 on 2026-10-10, 0.9.0 on 2026-10-11, 0.9.1 and 0.9.2 on 2026-10-12,
-# and 0.9.3 on 2026-10-14, no git rev between them. An exact version and
+# 0.9.3 on 2026-10-14 and 0.9.4 on 2026-10-15, no git rev between them. An exact version and
 # never a range, a rev and never a branch, since a range and a branch move.
-vla-lang = "=0.9.3"
+vla-lang = "=0.9.4"
 
 [profile.release]
 # Small, deterministic, and without an unwinder: a panic aborts, so the wasm
