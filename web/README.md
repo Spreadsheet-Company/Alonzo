@@ -112,14 +112,14 @@ sound the frame the grid holds again when it starts.
 | `keyDown(code, key)` / `keyUp(code)` / `releaseKeys()` | the keys held, by `KeyboardEvent.code` |
 | `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer's place as the window's cell under it, 0 when off the canvas, which the Input rows write as the Screen's own cell through the Camera; in grid mode, at a rate above zero, the viewport's cell under the pointer, 0 off the window's cells, and the wheel's notches with its scroll prevented, while a key the Keys sheet binds is taken before the viewport sees it (`ENGINE.8`). Since `ENGINE.14` the wheel is the game's over a cell of the Camera's window alone, where the pointer is, and scrolls over the tabs, the headers, the corner and the scrollbars; the buttons follow the pointer; while another sheet is shown the pointer is 0 and the wheel scrolls, and a bound key stays the game's |
 | `runFrameSync()` | one whole frame now, whatever the clock (the blit's instrument) |
-| `redraw()` | the last complete frame drawn again, nothing stepped: the Camera and the Palette read as they stand, the plane viewed through the window and blitted, or a grid's Screen drawn through the viewport (`ENGINE.8`'s second slice), no other effect read (the blit's instrument over the engine's module, where a step is the evaluator's); `false` without a cartridge |
+| `redraw()` | the last complete frame drawn again, nothing stepped: the Camera and the Palette read as they stand, the plane viewed through the window and blitted, or a grid's Screen drawn through the viewport (`ENGINE.8`'s second slice), always, never found still (`ENGINE.17`), no other effect read (the blit's instrument over the engine's module, where a step is the evaluator's); `false` without a cartridge |
 | `viewRecord(sheet, window)` | a sheet's record as the module prints it, for a page to show; `null` while a frame is in progress, or refused, the refusal said once |
 | `answer(viewport, event)` | a viewport's `sheet` event answered (`ENGINE.14`; `KERNEL.5`'s decision 6): a sheet the viewport holds no record of is viewed and shown, one it holds is viewed again at once, and in the host's own viewport the Screen's tab gives the Camera's window back. The host answers its own viewport's tabs itself; a page wires a viewer of its own with `viewer.on('sheet', function (e) { host.answer(viewer, e); })`. A tab clicked while a frame is in progress is answered at the frame's end, and the events the host's own calls raise go unanswered |
 | `showSheet(viewport, name)` | a sheet viewed through the region the viewport shows, from `A1` at the default cell's size for one it has not drawn, loaded and shown, then viewed again at once when the sheet's own widths put more in view: `true`, or `false` when refused |
-| `refreshSheet(viewport, moved)` | the sheet a viewport shows viewed again through the region it shows, its view kept: what the host does at every frame for its own viewport, and a page at its viewer's refresh; `moved` only when the region has left the window the record was viewed through, at a scroll (`viewer.on('scroll', ...)`). The region and never the sheet whole: a full screen of Sand's Stay is 33 ms natively, its whole record 1.4 s and 34 MB |
+| `refreshSheet(viewport, moved, still)` | the sheet a viewport shows viewed again through the region it shows, its view kept: what the host does at every frame for its own viewport, and a page at its viewer's refresh; `moved` only when the region has left the window the record was viewed through, at a scroll (`viewer.on('scroll', ...)`); `still` (`ENGINE.17`) not loaded again when the record is the one the host last loaded into the viewport and the viewport holds the model it made of it, as a frame does and the player's drawer does. The region and never the sheet whole: a full screen of Sand's Stay is 33 ms natively, its whole record 1.4 s and 34 MB |
 | `replayText()` | the replay of the run since the last load, as text, a replay played included; `null` with no cartridge loaded |
 | `play(text, all)` | a replay checked whole, then the cartridge loaded again with its seed and its frames played through the loop at the cartridge's rate, edits refused until it ends, the loop paused at its last frame: `{ ok, frames }`, or the refusal's sentence with nothing loaded; `all` plays every frame at once, synchronously (the oracle) |
-| `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`); every sentence said, in order |
+| `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`), and a grid's frames drawn and still (`draws`, `stills`: a frame whose record of the Screen, or of a sheet shown in its place, is byte for byte the one the host last loaded into the viewport, and whose model it still holds, is neither read nor painted, `ENGINE.17`; a still Screen's `timing` is `{ view, draw: 0, skipped: true }`); every sentence said, in order |
 | `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
 | `unload()` / `destroy()` | frees the handle and empties the canvas and the viewport; removes the listeners, and the viewport with them |
 | `vp` | grid mode's viewport (`ENGINE.8`), made at the first grid load over `options.grid` and kept across loads: a grid cartridge's Screen, its record through the Camera's window drawn at frame 0 and after every frame, the grid record at frame 0, its formulas as their texts, and the values record after it, the grid record less its formula rows, so that no formula's text is moved at a frame (`ENGINE.8`'s second slice, Frazaro's `KERNEL.37`), each frame's record replacing the last with the person's scroll and selection kept, scrolled to the window's corner at a load and by the Camera's move after it; a page focuses its `scroller` to give it the keys. Its tabs are answered (`ENGINE.14`): while another sheet is shown, each frame views that sheet alone, through the region in view, and the Screen's tab gives the Camera's window back, scrolled to its corner as at a load |
@@ -456,9 +456,11 @@ page shows opened plainly and what Pages deploys.
   times at the scale that fits, the step left out as the evaluator's; and
   the grid card the same way (`grid`, `ENGINE.8`'s second slice), its frame
   drawn again 120 times through the viewport from the values view in a box of
-  the screen's size; each
+  the screen's size; and the still card's frame path (`still`, `ENGINE.17`),
+  stepped and drawn 120 times as the loop draws it, a day's boundary drawn
+  every 30 frames and the frames between still, which its row counts; each
   frame's main-thread cost, printed as the table and the baseline lines for
-  `tools/check_blit_floors.ps1`, which holds the four cases from one run.
+  `tools/check_blit_floors.ps1`, which holds the five cases from one run.
   Run it in Chrome in fullscreen.
 - `index.html?oracle=1` runs the render oracle and prints one line a case
   into `<pre id="oracle">`, which the check reads under a headless browser;
@@ -520,7 +522,7 @@ reads any text of forms into data, the host shim's one reader.
 
 | Method | What it does |
 |---|---|
-| `load(text, options)` | reads a record; its sheet becomes a tab, replacing an earlier record of that sheet; the record's `sheet` rows become the tab strip; returns the counts (`sheet`, `lines`, `cells`, `formulas`, `values`, `styles`, `sentences`, `looks`, `rows`, `unknown`, `malformed`, `window`, `extent`, `readMs`). With `{ keep: true }` (`ENGINE.8`), a later frame of the sheet shown: the record replaces the last with the scroll, the selection, the widths, the frozen panes and the marks kept and no event raised, the tabs remade only when the sheet rows changed; the host draws every frame of a grid cartridge so, and the player's sheets viewer its sheet |
+| `load(text, options)` | reads a record; its sheet becomes a tab, replacing an earlier record of that sheet; the record's `sheet` rows become the tab strip; returns the counts (`sheet`, `lines`, `cells`, `formulas`, `values`, `styles`, `sentences`, `looks`, `rows`, `unknown`, `malformed`, `window`, `extent`, `readMs`). With `{ keep: true }` (`ENGINE.8`), a later frame of the sheet shown: the record replaces the last with the scroll, the selection, the widths, the frozen panes and the marks kept and no event raised, the tabs remade only when the sheet rows changed; the host draws every frame of a grid cartridge so, a still one excepted (`ENGINE.17`), and the player's sheets viewer its sheet |
 | `clear()` | forgets every record and draws the grid empty: the host's grid unloaded (`ENGINE.8`) |
 | `scrolled()` | the window the scrolled quadrant shows, `{ top, left, bottom, right, window }`: the host follows a Camera's move by it (`ENGINE.8`) |
 | `show(name)` | shows a sheet whose record is loaded (the name compared without case); false when none is |
@@ -647,14 +649,15 @@ viewport, not an Excel clone.
   The page opens on the empty sheet whatever it holds and offers its
   cartridges in the picker, each by its manifest's title, its notes in the
   drawer. A page that does not hold Alonzo's own cartridges and records is
-  a game's (`ENGINE.16`). Its `?loop=1` runs the five cases that need
+  a game's (`ENGINE.16`). Its `?loop=1` runs the six cases that need
   nothing of Alonzo's own files, over its own blocks: `abi`; `pass`, every
   source to its cartridge; `replay`, every replay to its golden and its
   recording, every frame to its hand; `grid`, every grid cartridge's drawn
   window held to its record for frame 0 and twelve frames with no edits;
-  and `empty`. Each of the fifteen others prints
+  `empty`; and `still`, the page's own still card (`ENGINE.17`). Each of
+  the fifteen others prints
   `case <name>: not on this page`, being proven in Alonzo's CI, and the
-  last line reads `loop ok cases=5 dpr=1; 15 of Alonzo's own not on this
+  last line reads `loop ok cases=6 dpr=1; 15 of Alonzo's own not on this
   page` at a ratio of 1. A replay with no hand is held to its golden alone, counted `alone`
   and said in a note under the case. Every other mode of the bench is
   Alonzo's own and says so on a game's page; `?frames=1` and `?blit=1` over

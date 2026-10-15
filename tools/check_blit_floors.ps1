@@ -61,19 +61,38 @@ the max under 16.7. The prediction written before the owner's first run of
 the case (the scoping, 2026-10-12): a p95 of about 5 to 6 ms; over the full
 grid record the same case would read about 12 to 15 ms and fail.
 
+THE STILL CASE, since ENGINE.17 (docs/REARVIEW.md, decision 7, the owner's
+word of 2026-10-15): the still card of the loop oracle over the engine's
+module, its frame path itself, runFrameSync, 120 frames after 20 warm, in a
+box of the screen's size. Its Screen changes only at a day's boundary, every
+30 frames, so of frames 21 to 140 the four at 31, 61, 91 and 121 are drawn
+and the 116 between are still, neither read nor painted, which the row
+counts. Its bars: the frame p95 under 2.0 ms, the plane's, so that a frame
+whose Screen holds still costs what the plane's frame path costs, where the
+same frames drawn every one measured 3.1 to 3.4 (headless Chrome 155 at the
+owner's full screen, the scoping); and the max under 16.7, one interval, a
+boundary's frame drawing the whole window. Its floor: 116 still frames. The
+prediction written before the owner's first run of the case, from that
+headless measurement less the tenth by which the owner's Chrome runs the
+grid case faster: a p50 of about 0.5 ms, a p95 of 0.8 to 1.1, a max of 3 to
+4.5, the view's p50 0.2, the blit's 0.0, the still frames drawing nothing.
+
 WHAT IT HOLDS: a date, an interval above zero and an environment line; the
-four cases once, 'fit', 'scale-1', 'engine' and 'grid', from one run; each
-with at least 120 frames (a smoke run has 8 and cannot be pasted); the fit
-and engine cases at a scale of at least 2, so a run in a small window is not
-the baseline, the scale-1 case at 1, and the grid case on a canvas of at
-least 1920 by 1080 device pixels, a full screen's; and for each its bars.
+five cases once, 'fit', 'scale-1', 'engine', 'grid' and 'still', from one
+run; each with at least 120 frames (a smoke run has 8 and cannot be pasted);
+the fit and engine cases at a scale of at least 2, so a run in a small window
+is not the baseline, the scale-1 case at 1, and the grid and still cases on a
+canvas of at least 1920 by 1080 device pixels, a full screen's; the still
+case's 116 still frames; and for each its bars.
 
 -Control proves the judgment on tables made in memory: a clean table passes,
 its grid case over the plane's bars and under its own; a p95 over the bar, a
 max over, a dropped frame, the scale-1 case missing, a smoke run's 8 frames,
 an empty table, a fit case at a scale of 1, the engine case missing, the
 grid case over its own p95 bar, the grid case missing and the grid case in a
-small box must each fail.
+small box must each fail; and since ENGINE.17 the still case over its p95
+bar, with every frame drawn, with too few still frames, missing, and in a
+small box.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no browser, no
 network; a hardcoded, reviewable baseline; exit 0 clean, exit 1 with every
@@ -128,14 +147,33 @@ $ErrorActionPreference = 'Stop'
 #   fit:     FirstFrame 1.3, ViewP50 0.2, BlitP50 0.1, SyncP50 0.5, FrameP50 0.7, FrameP95 1.1, Max 1.6, Dropped 0, N 120
 #   scale-1: FirstFrame 0.8, ViewP50 0.2, BlitP50 0.1, SyncP50 0.5, FrameP50 0.7, FrameP95 1.0, Max 1.3, Dropped 0, N 120
 #   engine:  FirstFrame 0.5, ViewP50 0.1, BlitP50 0.1, SyncP50 0.2, FrameP50 0.3, FrameP95 0.5, Max 0.8, Dropped 0, N 120
-$baselineDate = '2026-10-14'
+# 2026-10-15, the fourth baseline (ENGINE.17): the owner's run, Google Chrome
+# 155.0.8059.79, the same screen, ratio and display, with the fifth case,
+# 'still', the still card's frame path on a canvas of 3,840 by 2,117 device
+# pixels: 116 of its 120 frames still, frame p50 0.8 ms, p95 1.3, max 5.1, the
+# view's p50 0.3 and the blit's 0.0, against bars of 2.0 and 16.7. The
+# prediction, a p50 of about 0.5, a p95 of 0.8 to 1.1 and a max of 3 to 4.5,
+# missed high on all three: it came from headless runs of the card alone in a
+# page of its own, where this case follows four others in one page, in a
+# visible window; not measured apart. The four other cases moved by a grain or
+# two of the page's 0.1 ms timer, each under its bars: fit's p95 1.6 to 1.6
+# and max 2.1 to 1.8, scale-1's 1.6 to 1.7 and 1.7 to 2.0, engine's 0.8 to 0.7
+# and 3.2 to 1.1, grid's 6.1 to 5.8 and 6.7 to 6.3; scale-1's two, the worse,
+# recorded as a finding in docs/REARVIEW.md and not hidden by the paste. The
+# third baseline's four rows, kept here for the record:
+#   fit:     FirstFrame 2.1, ViewP50 0.4, BlitP50 0.1, SyncP50 0.9, FrameP50 1.1, FrameP95 1.6, Max 2.1, Dropped 0, N 120
+#   scale-1: FirstFrame 0.8, ViewP50 0.3, BlitP50 0.1, SyncP50 0.9, FrameP50 1.0, FrameP95 1.6, Max 1.7, Dropped 0, N 120
+#   engine:  FirstFrame 3.2, ViewP50 0.1, BlitP50 0.1, SyncP50 0.4, FrameP50 0.5, FrameP95 0.8, Max 3.2, Dropped 0, N 120
+#   grid:    FirstFrame 6.4, ViewP50 1.1, BlitP50 3.1, SyncP50 4.3, FrameP50 5.2, FrameP95 6.1, Max 6.7, Dropped 0, N 120
+$baselineDate = '2026-10-15'
 $baselineInterval = 16.7
-$baselineEnvironment = 'Environment: Google Chrome 155.0.8059.79, Chromium 155.0.8059.79 on Windows | DPR 1.5 | screen 2560x1440 | fullscreen yes | frame interval 16.7 ms (about 60 Hz) | the fake module, the Life cartridge, 120 frames a case; the engine case over the module built into this page, 749,218 bytes, Life at its first frame redrawn; the grid case, the grid card at its first frame drawn again from the values view'
+$baselineEnvironment = 'Environment: Google Chrome 155.0.8059.79, Chromium 155.0.8059.79 on Windows | DPR 1.5 | screen 2560x1440 | fullscreen yes | frame interval 16.7 ms (about 60 Hz) | the fake module, the Life cartridge, 120 frames a case; the engine case over the module built into this page, 749,218 bytes, Life at its first frame redrawn; the grid case, the grid card at its first frame drawn again from the values view; the still case, the still card''s frame path, a day''s boundary drawn every 30 frames and the frames between still'
 $baseline = @(
-    @{ Case = 'fit'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 2.1; ViewP50 = 0.4; BlitP50 = 0.1; SyncP50 = 0.9; FrameP50 = 1.1; FrameP95 = 1.6; Max = 2.1; Dropped = 0; N = 120; Holds = 'yes' },
-    @{ Case = 'scale-1'; Scale = 1; Width = 320; Height = 200; FirstFrame = 0.8; ViewP50 = 0.3; BlitP50 = 0.1; SyncP50 = 0.9; FrameP50 = 1.0; FrameP95 = 1.6; Max = 1.7; Dropped = 0; N = 120; Holds = 'yes' },
-    @{ Case = 'engine'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 3.2; ViewP50 = 0.1; BlitP50 = 0.1; SyncP50 = 0.4; FrameP50 = 0.5; FrameP95 = 0.8; Max = 3.2; Dropped = 0; N = 120; Holds = 'yes' },
-    @{ Case = 'grid'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 6.4; ViewP50 = 1.1; BlitP50 = 3.1; SyncP50 = 4.3; FrameP50 = 5.2; FrameP95 = 6.1; Max = 6.7; Dropped = 0; N = 120; Holds = 'yes' }
+    @{ Case = 'fit'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 1.1; ViewP50 = 0.3; BlitP50 = 0.1; SyncP50 = 0.8; FrameP50 = 0.9; FrameP95 = 1.6; Max = 1.8; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'scale-1'; Scale = 1; Width = 320; Height = 200; FirstFrame = 1.0; ViewP50 = 0.3; BlitP50 = 0.1; SyncP50 = 0.8; FrameP50 = 1.0; FrameP95 = 1.7; Max = 2.0; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'engine'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 0.5; ViewP50 = 0.1; BlitP50 = 0.1; SyncP50 = 0.3; FrameP50 = 0.5; FrameP95 = 0.7; Max = 1.1; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'grid'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 5.6; ViewP50 = 1.1; BlitP50 = 3.2; SyncP50 = 4.4; FrameP50 = 5.3; FrameP95 = 5.8; Max = 6.3; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'still'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 0.7; ViewP50 = 0.3; BlitP50 = 0.0; SyncP50 = 0.6; FrameP50 = 0.8; FrameP95 = 1.3; Max = 5.1; Dropped = 0; N = 120; Holds = 'yes'; Stills = 116 }
 )
 
 # --- the bars ---
@@ -143,10 +181,14 @@ $frameP95Bar = 2.0
 $maxBar = 4.0
 $gridP95Bar = 8.3
 $gridMaxBar = 16.7
-$requiredCases = @('fit', 'scale-1', 'engine', 'grid')
+$stillP95Bar = 2.0
+$stillMaxBar = 16.7
+$minStills = 116
+$requiredCases = @('fit', 'scale-1', 'engine', 'grid', 'still')
 $minFrames = 120
 $minFitScale = 2
 $fitCases = @('fit', 'engine')
+$screenCases = @('grid', 'still')
 $minGridArea = 1920 * 1080
 
 function Test-Baseline($table, [double]$interval, [string]$date, [string]$environment) {
@@ -172,9 +214,10 @@ function Test-Baseline($table, [double]$interval, [string]$date, [string]$enviro
         if ([int]$r.N -lt $minFrames) { $problems.Add("the case $name has $($r.N) frames, under the instrument's $minFrames (a smoke run cannot be the baseline)") }
         if ($fitCases -contains $name -and [int]$r.Scale -lt $minFitScale) { $problems.Add("the $name case drew at a scale of $($r.Scale), under ${minFitScale}; run it in fullscreen") }
         if ($name -eq 'scale-1' -and [int]$r.Scale -ne 1) { $problems.Add("the scale-1 case drew at a scale of $($r.Scale), not 1") }
-        if ($name -eq 'grid' -and [double]$r.Width * [double]$r.Height -lt $minGridArea) { $problems.Add("the grid case drew on $($r.Width) x $($r.Height) device pixels, under a full screen's 1920 x 1080; run it in fullscreen") }
-        $p95Bar = if ($name -eq 'grid') { $gridP95Bar } else { $frameP95Bar }
-        $caseMaxBar = if ($name -eq 'grid') { $gridMaxBar } else { $maxBar }
+        if ($screenCases -contains $name -and [double]$r.Width * [double]$r.Height -lt $minGridArea) { $problems.Add("the $name case drew on $($r.Width) x $($r.Height) device pixels, under a full screen's 1920 x 1080; run it in fullscreen") }
+        if ($name -eq 'still' -and -not ($r.ContainsKey('Stills') -and [int]$r.Stills -ge $minStills)) { $problems.Add("the still case found $($r.Stills) of its $($r.N) frames still, under its floor of $minStills") }
+        $p95Bar = if ($name -eq 'grid') { $gridP95Bar } elseif ($name -eq 'still') { $stillP95Bar } else { $frameP95Bar }
+        $caseMaxBar = if ($name -eq 'grid') { $gridMaxBar } elseif ($name -eq 'still') { $stillMaxBar } else { $maxBar }
         if ([double]$r.FrameP95 -ge $p95Bar) { $problems.Add(("the case {0}: frame p95 {1} ms is not under {2} ms" -f $name, $r.FrameP95, $p95Bar)) }
         if ([double]$r.Max -ge $caseMaxBar) { $problems.Add(("the case {0}: max {1} ms is not under {2} ms" -f $name, $r.Max, $caseMaxBar)) }
         if ([int]$r.Dropped -ne 0) { $problems.Add("the case $name dropped $($r.Dropped) frame(s)") }
@@ -188,7 +231,8 @@ if ($Control) {
         @{ Case = 'fit'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 1.6; ViewP50 = 0.1; BlitP50 = 0.4; SyncP50 = 0.7; FrameP50 = 1.0; FrameP95 = 1.4; Max = 2.2; Dropped = 0; N = 120; Holds = 'yes' },
         @{ Case = 'scale-1'; Scale = 1; Width = 320; Height = 200; FirstFrame = 1.1; ViewP50 = 0.1; BlitP50 = 0.2; SyncP50 = 0.4; FrameP50 = 0.6; FrameP95 = 0.9; Max = 1.5; Dropped = 0; N = 120; Holds = 'yes' },
         @{ Case = 'engine'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 1.5; ViewP50 = 0.0; BlitP50 = 0.4; SyncP50 = 0.5; FrameP50 = 0.9; FrameP95 = 1.3; Max = 2.0; Dropped = 0; N = 120; Holds = 'yes' },
-        @{ Case = 'grid'; Scale = 0; Width = 3840; Height = 2160; FirstFrame = 6.1; ViewP50 = 1.4; BlitP50 = 3.2; SyncP50 = 4.7; FrameP50 = 5.0; FrameP95 = 5.6; Max = 7.9; Dropped = 0; N = 120; Holds = 'yes' }
+        @{ Case = 'grid'; Scale = 0; Width = 3840; Height = 2160; FirstFrame = 6.1; ViewP50 = 1.4; BlitP50 = 3.2; SyncP50 = 4.7; FrameP50 = 5.0; FrameP95 = 5.6; Max = 7.9; Dropped = 0; N = 120; Holds = 'yes' },
+        @{ Case = 'still'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 0.6; ViewP50 = 0.2; BlitP50 = 0.0; SyncP50 = 0.4; FrameP50 = 0.5; FrameP95 = 1.0; Max = 4.3; Dropped = 0; N = 120; Holds = 'yes'; Stills = 116 }
     )
     function Mutate($rows, [int]$which, [string]$key, $value) {
         $out = @()
@@ -208,10 +252,17 @@ if ($Control) {
     $r5 = Test-Baseline (Mutate $clean 1 'N' 8) 16.6 '2026-10-08' 'a control environment'
     $r6 = Test-Baseline @() 16.6 '2026-10-08' 'a control environment'
     $r7 = Test-Baseline (Mutate $clean 0 'Scale' 1) 16.6 '2026-10-08' 'a control environment'
-    $r8 = Test-Baseline @($clean[0], $clean[1], $clean[3]) 16.6 '2026-10-08' 'a control environment'
+    $r8 = Test-Baseline @($clean[0], $clean[1], $clean[3], $clean[4]) 16.6 '2026-10-08' 'a control environment'
     $r9 = Test-Baseline (Mutate $clean 3 'FrameP95' 9.0) 16.6 '2026-10-08' 'a control environment'
-    $r10 = Test-Baseline @($clean[0], $clean[1], $clean[2]) 16.6 '2026-10-08' 'a control environment'
+    $r10 = Test-Baseline @($clean[0], $clean[1], $clean[2], $clean[4]) 16.6 '2026-10-08' 'a control environment'
     $r11 = Test-Baseline (Mutate $clean 3 'Height' 400) 16.6 '2026-10-08' 'a control environment'
+    # the still case (ENGINE.17): over its p95 bar, as every frame drawn would be; every frame drawn, none still;
+    # four still frames short of its floor; missing; and in a small box
+    $r12 = Test-Baseline (Mutate $clean 4 'FrameP95' 3.3) 16.6 '2026-10-08' 'a control environment'
+    $r13 = Test-Baseline (Mutate $clean 4 'Stills' 0) 16.6 '2026-10-08' 'a control environment'
+    $r14 = Test-Baseline (Mutate $clean 4 'Stills' 112) 16.6 '2026-10-08' 'a control environment'
+    $r15 = Test-Baseline @($clean[0], $clean[1], $clean[2], $clean[3]) 16.6 '2026-10-08' 'a control environment'
+    $r16 = Test-Baseline (Mutate $clean 4 'Height' 400) 16.6 '2026-10-08' 'a control environment'
     $p1 = @($r1.Problems | Where-Object { $_ -like '*frame p95*' }).Count
     $p2 = @($r2.Problems | Where-Object { $_ -like '*max*' }).Count
     $p3 = @($r3.Problems | Where-Object { $_ -like '*dropped*' }).Count
@@ -223,9 +274,14 @@ if ($Control) {
     $p9 = @($r9.Problems | Where-Object { $_ -like '*case grid: frame p95 * ms is not under 8.3 ms*' }).Count
     $p10 = @($r10.Problems | Where-Object { $_ -like '*grid is missing*' }).Count
     $p11 = @($r11.Problems | Where-Object { $_ -like '*grid case drew on 3840 x 400 device pixels*' }).Count
-    Write-Output ("control: the clean table has {0} problem(s); the p95 over the bar {1}, the max over {2}, the dropped frame {3}, the missing case {4}, the smoke run {5}, the empty table {6}, the unfitted scale {7}, the engine's case missing {8}, the grid over its own bar {9}, the grid's case missing {10}, the grid in a small box {11}" -f $r0.Problems.Count, $p1, $p2, $p3, $p4, $p5, $p6, $p7, $p8, $p9, $p10, $p11)
-    if ($r0.Problems.Count -eq 0 -and $p1 -ge 1 -and $p2 -ge 1 -and $p3 -ge 1 -and $p4 -ge 1 -and $p5 -ge 1 -and $p6 -ge 1 -and $p7 -ge 1 -and $p8 -ge 1 -and $p9 -ge 1 -and $p10 -ge 1 -and $p11 -ge 1) {
-        Write-Output 'OK: the judgment passes the clean table and fails each of the eleven mutants for its own reason'
+    $p12 = @($r12.Problems | Where-Object { $_ -like '*case still: frame p95 3.3 ms is not under 2 ms*' }).Count
+    $p13 = @($r13.Problems | Where-Object { $_ -like '*still case found 0 of its 120 frames still, under its floor of 116*' }).Count
+    $p14 = @($r14.Problems | Where-Object { $_ -like '*still case found 112 of its 120 frames still*' }).Count
+    $p15 = @($r15.Problems | Where-Object { $_ -like '*still is missing*' }).Count
+    $p16 = @($r16.Problems | Where-Object { $_ -like '*still case drew on 3840 x 400 device pixels*' }).Count
+    Write-Output ("control: the clean table has {0} problem(s); the p95 over the bar {1}, the max over {2}, the dropped frame {3}, the missing case {4}, the smoke run {5}, the empty table {6}, the unfitted scale {7}, the engine's case missing {8}, the grid over its own bar {9}, the grid's case missing {10}, the grid in a small box {11}, the still over its bar {12}, no frame still {13}, four still frames short {14}, the still case missing {15}, the still in a small box {16}" -f $r0.Problems.Count, $p1, $p2, $p3, $p4, $p5, $p6, $p7, $p8, $p9, $p10, $p11, $p12, $p13, $p14, $p15, $p16)
+    if ($r0.Problems.Count -eq 0 -and $p1 -ge 1 -and $p2 -ge 1 -and $p3 -ge 1 -and $p4 -ge 1 -and $p5 -ge 1 -and $p6 -ge 1 -and $p7 -ge 1 -and $p8 -ge 1 -and $p9 -ge 1 -and $p10 -ge 1 -and $p11 -ge 1 -and $p12 -ge 1 -and $p13 -ge 1 -and $p14 -ge 1 -and $p15 -ge 1 -and $p16 -ge 1) {
+        Write-Output 'OK: the judgment passes the clean table and fails each of the sixteen mutants for its own reason'
         exit 0
     }
     Write-Output 'FAIL: the control did not behave as the header says'
@@ -233,13 +289,13 @@ if ($Control) {
     exit 1
 }
 
-Write-Output "=== THE BLIT FLOORS: THE OWNER'S BASELINE OF THE FRAME PATH MINUS THE EVALUATOR, OVER THE DOUBLE AND THE ENGINE'S MODULE, AND THE GRID DRAWN BY THE VIEWPORT, HELD TO THE BARS (ENGINE.1, ENGINE.2, ENGINE.8) ==="
+Write-Output "=== THE BLIT FLOORS: THE OWNER'S BASELINE OF THE FRAME PATH MINUS THE EVALUATOR, OVER THE DOUBLE AND THE ENGINE'S MODULE, THE GRID DRAWN BY THE VIEWPORT, AND THE STILL CARD'S FRAME PATH, HELD TO THE BARS (ENGINE.1, ENGINE.2, ENGINE.8, ENGINE.17) ==="
 $t = Test-Baseline $baseline $baselineInterval $baselineDate $baselineEnvironment
 if ($baselineDate -ne '') { Write-Output ("  measured {0}: {1}" -f $baselineDate, $baselineEnvironment) }
 $t.Lines | ForEach-Object { Write-Output $_ }
 Write-Output ''
 if ($t.Problems.Count -eq 0) {
-    Write-Output ("=== CHECK: clean - the {2} cases hold the frame: frame p95 under {0} ms, max under {1} ms, the grid's under {3} and {4}, no frame dropped ===" -f $frameP95Bar, $maxBar, $requiredCases.Count, $gridP95Bar, $gridMaxBar)
+    Write-Output ("=== CHECK: clean - the {2} cases hold the frame: frame p95 under {0} ms, max under {1} ms, the grid's under {3} and {4}, the still card's under {5} and {6} with {7} still frames, no frame dropped ===" -f $frameP95Bar, $maxBar, $requiredCases.Count, $gridP95Bar, $gridMaxBar, $stillP95Bar, $stillMaxBar, $minStills)
     exit 0
 }
 Write-Output "=== CHECK: $($t.Problems.Count) problem(s) ==="

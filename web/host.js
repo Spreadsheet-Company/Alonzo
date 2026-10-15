@@ -373,10 +373,11 @@
     this.table = null; this.paletteText = ''; this.paletteCount = 0;
     this.audio = []; this.saveValue = 0; this.plane = null; this.record = null; this.followed = null; this.timing = null; this.said1 = {};
     this.windowsSeen = {};
+    this.loads = [];   // { vp, text, model } a viewport: the record the host last loaded into it, and the model it made (ENGINE.17)
     this.tabsWaiting = [];   // tabs clicked while a frame was in progress, answered at its end (ENGINE.14)
     this.rec = null; this.player = null;   // the replay recorded since the load, and one playing
     this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
-    this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, saves: 0,
+    this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, saves: 0,
                sounded: 0, restarts: 0, skipped: 0, silences: 0 };
   };
 
@@ -708,7 +709,7 @@
     if (d.camera) this._readCamera();
     if (d.palette) this._readPalette();
     if (this.cart.mode === 'plane') this._drawPlane();
-    if (this.cart.mode === 'grid') this._drawGrid(false);   // the record through the frame's own Camera (ENGINE.8)
+    if (this.cart.mode === 'grid') this._drawGrid(false, true);   // the record through the frame's own Camera (ENGINE.8), a still one not drawn again (ENGINE.17)
     if (this.tabsWaiting.length) this._answerWaiting();   // a tab clicked while the frame was in progress (ENGINE.14)
     if (d.keys) this._readKeys();
     if (d.audio) this._readAudio();
@@ -796,24 +797,34 @@
   // whether or not a viewport draws it, so a host with no element still counts its windows. Once a frame
   // has computed values the record is the values projection, the grid record less its formula rows, so no
   // formula's text is moved at a frame (the second slice, KERNEL.37); frame 0, nothing computed since the
-  // load, is the grid record, its formulas shown as their texts until their first values.
-  Host.prototype._drawGrid = function (atLoad) {
+  // load, is the grid record, its formulas shown as their texts until their first values. A still frame
+  // (ENGINE.17): at a frame's own draw, of the Screen or of a sheet shown in its place, a record byte for byte
+  // the one the host last loaded into the viewport, the viewport still holding the model it made of it, is
+  // neither loaded nor painted, and counted; the view still runs, its text being what tells, and the viewport
+  // paints a person's scroll and selection itself. A load, a tab clicked and redraw() always draw.
+  Host.prototype._drawGrid = function (atLoad, frame) {
     // Another sheet shown in the Screen's place (ENGINE.14, decision 2): the frame views that sheet alone,
     // through the region the viewport shows, and the Screen again when its tab gives the window back.
-    if (!atLoad && this.vp && !isScreen(this.vp.sheet())) { if (this.refreshSheet(this.vp)) this.c.draws++; return; }
+    if (!atLoad && this.vp && !isScreen(this.vp.sheet())) { if (this.refreshSheet(this.vp, false, frame)) this.c.draws++; return; }
     var t0 = this.now(), projection = this.frame > 0 ? 'values' : 'grid';
     var r = this.m.texts('alonzo_view', [this.handle], [projection, 'Screen', this.window]);
     var t1 = this.now();
     if (r.status !== 0) { this._sayOnce('grid', 'frame ' + this.frame + ': the record of the Screen was refused: ' + words(r) + '.', true); return; }
     if (!this.windowsSeen[this.window]) { this.windowsSeen[this.window] = true; this.c.windows++; }
-    this.record = r.text;
     var vp = this._viewport(), was = this.quieting;
+    if (frame && vp && this._still(vp, r.text)) {
+      this.c.stills++;
+      this.timing = { view: t1 - t0, draw: 0, skipped: true };
+      return;
+    }
+    this.record = r.text;
     if (vp) {
       this.quieting = true;   // the events this load and the follow raise are the host's own, never a person's tab
       try {
         vp.load(r.text, { keep: !atLoad });
         this._follow(atLoad);
       } finally { this.quieting = was; }
+      this._noteLoad(vp, r.text);
       this.c.draws++;
     }
     this.timing = { view: t1 - t0, draw: this.now() - t1 };
@@ -875,14 +886,17 @@
     var win = regionOf(vp, true), t = this.viewRecord(name, win);
     if (t === null) return false;
     this._quiet(function () { vp.load(t, { keep: true }); vp.show(name); });
+    this._noteLoad(vp, t);
     if (!within(regionOf(vp, false), win)) this.refreshSheet(vp);
     return true;
   };
   // The sheet a viewport shows, viewed again through the region it shows, its view kept (decision 3): at every
   // frame in the host's own viewport, at a page's refresh in its viewer. moved: only when the region has left
-  // the window the sheet's record was viewed through, at a scroll. The Screen in the host's own viewport is the
-  // frame's own draw, through the Camera's window, and is left to it. True when a record was loaded.
-  Host.prototype.refreshSheet = function (vp, moved) {
+  // the window the sheet's record was viewed through, at a scroll. still: a record still the one the host last
+  // loaded into the viewport is not loaded again, and in the host's own viewport the frame is counted still
+  // (ENGINE.17); a frame passes it, and a page's refresh of its viewer may. The Screen in the host's own viewport
+  // is the frame's own draw, through the Camera's window, and is left to it. True when a record was loaded.
+  Host.prototype.refreshSheet = function (vp, moved, still) {
     if (!vp || this.quieting || !this.m || !this.handle || this.inFrame) return false;
     var name = vp.sheet(), model = vp.model();
     if (!name || !model || (vp === this.vp && isScreen(name))) return false;
@@ -890,13 +904,30 @@
     if (moved && model.windowText && within(win, model.windowText)) return false;
     var t = this.viewRecord(name, win);
     if (t === null) return false;
+    if (still && this._still(vp, t)) { if (vp === this.vp) this.c.stills++; return false; }   // a still sheet (ENGINE.17)
     this._quiet(function () { vp.load(t, { keep: true }); });
+    this._noteLoad(vp, t);
     return true;
   };
   Host.prototype._quiet = function (fn) {
     var was = this.quieting;
     this.quieting = true;
     try { fn(); } finally { this.quieting = was; }
+  };
+  // The record the host last loaded into a viewport, and the model the viewport made of it (ENGINE.17). A text
+  // is still when it is that record byte for byte and the viewport holds that very model, so that a record
+  // anyone else loaded into it, or a viewport cleared, is never taken for the host's: the text names its sheet
+  // and its window, and the model is the sheet the viewport shows.
+  Host.prototype._lastLoad = function (vp) {
+    for (var i = 0; i < this.loads.length; i++) if (this.loads[i].vp === vp) return this.loads[i];
+    var l = { vp: vp, text: null, model: null };
+    this.loads.push(l);
+    return l;
+  };
+  Host.prototype._noteLoad = function (vp, text) { var l = this._lastLoad(vp); l.text = text; l.model = vp.model(); };
+  Host.prototype._still = function (vp, text) {
+    var l = this._lastLoad(vp);
+    return l.text === text && vp.model() === l.model;
   };
   Host.prototype._fit = function () {
     var c = this.cart, dpr = global.devicePixelRatio || 1;
@@ -1421,13 +1452,14 @@
   // stand, the plane viewed through the window and blitted, or a grid's Screen viewed through it and
   // drawn by the viewport (ENGINE.8's second slice), and no other effect read, so no derived write,
   // save edge or key map moves. The blit's instrument times it over the engine's module, where a step
-  // is the evaluator's and not the frame path's (ENGINE.2).
+  // is the evaluator's and not the frame path's (ENGINE.2). A grid is always drawn, never found still
+  // (ENGINE.17): this is the explicit "draw again", and the blit's baseline times a whole draw.
   Host.prototype.redraw = function () {
     if (!this.handle || !this.cart) return false;
     var d = this.cart.devices;
     if (d.camera) this._readCamera();
     if (d.palette) this._readPalette();
-    if (this.cart.mode === 'grid') this._drawGrid(false); else this._drawPlane();
+    if (this.cart.mode === 'grid') this._drawGrid(false, false); else this._drawPlane();   // never still (ENGINE.17)
     return true;
   };
   // The last plane blitted again at the scale its box now fits, nothing viewed and nothing stepped: a page
