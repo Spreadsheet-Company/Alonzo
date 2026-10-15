@@ -2686,6 +2686,11 @@
   // a Day, its phase moving at every frame and a value the Write sheet lands in it at every frame; a Camera; a Keys sheet
   // binding KeyZ to player 1's a; and a File whose save cell rises every 25th frame. Every value is plain, since a
   // formula whose value turns to an error or a reason makes its frame whole (the scoping's measurement).
+  // Since ENGINE.20 the Screen holds the cells a repaint must get right, the fill moved to C3:J10 to make room: a number
+  // turning to #s every third frame (M1); a look's fill on and off (N1); the long text growing and shrinking (K2); a
+  // constant long text cut by a neighbor that fills on even frames and spilling again when it empties (L6, N6); a wrapped
+  // text in a tall row, two lines and three, every line in the row (B7); a cell in a hidden row (A9); and a cell in the
+  // columns the view freezes (A5).
   var CHANGES = { file: 'changes.vla',
                   text: '(cartridge "changes"\n  (spec 3)\n  (title "A changes card")\n  (rate 30)\n  (screen grid 20 10)\n  (seed 1))\n' +
                         '(sheet "Screen" visible)\n(sheet "Day" visible)\n(sheet "Camera" visible)\n(sheet "Keys" visible)\n(sheet "Write" visible)\n' +
@@ -2693,9 +2698,14 @@
                         '(cell "Day" "A1" "day")\n(formula "Day" "B1" "=INT((Clock!$B$1-1)/20)")\n(cell "Day" "A2" "phase")\n(formula "Day" "B2" "=MOD(Clock!$B$1-1,20)")\n(cell "Day" "A3" "written")\n(cell "Day" "B3" 0)\n' +
                         '(cell "Write" "A1" "sheet")\n(cell "Write" "B1" "address")\n(cell "Write" "C1" "value")\n(cell "Write" "A2" "Day")\n(cell "Write" "B2" "B3")\n(formula "Write" "C2" "=Clock!$B$1")\n' +
                         '(formula "File" "B3" "=IF(MOD(Clock!$B$1,25)=0,1,0)")\n' +
+                        '(format 1 "F7F4FC" general wrap)\n(format 2 "C8E6C9" general nowrap)\n(look "Screen" "on" 2)\n(row "Screen" 7 45 shown)\n(row "Screen" 9 none hidden)\n' +
                         '(cell "Screen" "A1" "frame")\n(formula "Screen" "B1" "=Clock!$B$1")\n(cell "Screen" "J1" "seventh")\n(formula "Screen" "K1" "=INT(Clock!$B$1/7)")\n' +
+                        '(formula "Screen" "M1" "=IF(MOD(Clock!$B$1,3)=0,1234567890123,Clock!$B$1)")\n(formula "Screen" "N1" "=IF(MOD(Clock!$B$1,2)=0,\\"on\\",\\"off\\")")\n' +
                         '(cell "Screen" "J2" "text")\n(formula "Screen" "K2" "=IF(MOD(Clock!$B$1,2)=0,\\"a text much longer than its column\\",\\"short\\")")\n' +
-                        '(cell "Screen" "J4" "edited")\n(cell "Screen" "K4" 1)\n(formula "Screen" "A3:H10" "=Day!$B$1*100+ROW()*10+COLUMN()")\n' };
+                        '(cell "Screen" "K4" 1)\n(formula "Screen" "A5" "=MOD(Clock!$B$1,10)")\n' +
+                        '(cell "Screen" "L6" "a constant text much longer than its column")\n(formula "Screen" "N6" "=IF(MOD(Clock!$B$1,2)=0,\\"x\\",\\"\\")")\n' +
+                        '(formula "Screen" "B7" "=IF(MOD(Clock!$B$1,2)=0,\\"wrapped in two\\",\\"and in three lines\\")")\n(style "Screen" "B7" 1)\n' +
+                        '(formula "Screen" "A9" "=Clock!$B$1")\n(formula "Screen" "C3:J10" "=Day!$B$1*100+ROW()*10+COLUMN()")\n' };
   var CHANGES_FRAMES = 60, CHANGES_DEVICES = ['Camera', 'Keys', 'File', 'Write', 'Clock'];
   // The person's acts before each frame: the pointer over three cells, a bound key pressed and let go, an edit of the
   // Input sheet, the Keys rebound and the new key pressed and let go, the value's edit, a notch of the wheel, the Camera
@@ -2705,6 +2715,41 @@
     20: [['edit', '(cell "Input" "C5" 1)']], 25: [['edit', '(cell "Keys" "B5" "KeyX")']], 27: [['down', 'KeyX', 'x']], 28: [['up', 'KeyX']],
     30: [['edit', '(cell "Screen" "K4" 2)']], 33: [['wheel', 1]], 40: [['edit', '(cell "Camera" "B2" 2)']], 50: [['edit', '(formula "Screen" "L4" "=K4*2")']]
   };
+  // ENGINE.20: the view's own acts before a frame, on the host's viewport: its panes frozen two by two at 25 and thawed at
+  // 36; the window scrolled out of view at 44, every cell of it, and back at 49. Its selection over K1:M2 and its mark
+  // over L6:O6 stand from frame 0.
+  var CHANGES_VIEW = { 25: 'freeze', 36: 'thaw', 44: 'away', 49: 'back' };
+  var CHANGES_MARK = { fill: 'rgba(255, 200, 0, 0.35)', border: '#c08000' };
+  // A viewport's canvas as numbers, a pixel each.
+  function pixelsOf(vp) { var c = vp.canvas; return new Uint32Array(c.getContext('2d').getImageData(0, 0, c.width, c.height).data.buffer); }
+  // Where two canvases differ, in words: '' when they are one, pixel for pixel; else the count and the first pixel, with
+  // the cell under it in the second viewport.
+  function pixelsDiff(a, b, vp) {
+    if (a.length !== b.length) return 'canvases of ' + a.length + ' and ' + b.length + ' pixels';
+    var n = 0, first = -1;
+    for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) { if (first < 0) first = i; n++; }
+    if (!n) return '';
+    var w = vp.canvas.width, x = first % w, y = Math.floor(first / w), r = vp.box.getBoundingClientRect(), dpr = vp.geometry().dpr;
+    var cell = vp.cellAt(r.left + (x + 0.5) / dpr, r.top + (y + 0.5) / dpr);
+    return n + ' pixel(s), the first at ' + x + ',' + y + (cell ? ' in ' + cell.address : ' off the cells');
+  }
+  // Where two draw lists differ, in words: '' when they are one, op for op.
+  function drawsDiff(a, b) {
+    for (var i = 0; i < Math.max(a.length, b.length); i++) {
+      var p = JSON.stringify(a[i]), q = JSON.stringify(b[i]);
+      if (p !== q) return 'op ' + i + ' of ' + a.length + ' is ' + (p ? p.slice(0, 200) : 'none') + ', where the full paint\'s ' + b.length + ' have ' + (q ? q.slice(0, 200) : 'none');
+    }
+    return '';
+  }
+  // A full paint of a record in a viewport's state (ENGINE.20): the twin loads the record and takes the viewport's frozen
+  // panes, selection and scroll, each a full paint; the marks it is given at its making, as the viewport's were.
+  function twinPaint(twin, vp, text) {
+    twin.load(text, { keep: twin.sheet() !== '' });
+    var fz = vp.frozen(), tf = twin.frozen();
+    if (fz.rows !== tf.rows || fz.cols !== tf.cols) twin.freeze(fz.rows, fz.cols);
+    if (twin.selection().text !== vp.selection().text) twin.select(vp.selection().text);
+    if (twin.scroller.scrollLeft !== vp.scroller.scrollLeft || twin.scroller.scrollTop !== vp.scroller.scrollTop) twin.scrollToPixels(vp.scroller.scrollLeft, vp.scroller.scrollTop);
+  }
   // A module's exports with its view and write calls logged, each view by its projection, sheet and window and each
   // write by its rows, read off the module's memory at the call: what the host asked, never what it says it asked.
   function loggedExports(exports, log) {
@@ -2762,6 +2807,9 @@
   // cell goes in at its place, a value and its style are replaced together, a cell loses its style, several cells at
   // once, and the header is untouched; and a whole answer patches nothing. Each laid on a viewport's model too, which
   // stays the same object, counts the patch and is the model a load of the patched record makes, every cell and count.
+  // Since ENGINE.20 each is repainted by its cells, the canvas pixel for pixel and the draw list op for op a fresh
+  // viewport's full paint of the record after it; and a patch of every cell of a window of 8 by 8, more than a quarter of
+  // the cells in view, is painted whole, held the same way.
   function changesCrafted(P) {
     var head = '(sheet "Crafted" visible)\n(window "Crafted" "A1:D4")\n(extent "Crafted" "A1:D4")\n(gridlines "Crafted" on)\n(format 0 none general nowrap)\n(format 2 "00AA00" general nowrap)\n';
     var a1 = '(cell "Crafted" "A1" "a")\n', b1 = '(value "Crafted" "B1" 1)\n(style "Crafted" "B1" 2)\n', c2 = '(value "Crafted" "C2" 3)\n', d4 = '(cell "Crafted" "D4" 4)\n';
@@ -2774,27 +2822,45 @@
       ['a style lost', changes(1, '(value "Crafted" "B1" 1)\n'), head + a1 + '(value "Crafted" "B1" 1)\n' + c2 + d4],
       ['several cells', changes(3, '(cell "Crafted" "A1" "b")\n(empty "Crafted" "C2")\n(value "Crafted" "D3" 7)\n'), head + '(cell "Crafted" "A1" "b")\n' + b1 + '(value "Crafted" "D3" 7)\n' + d4]
     ];
-    var stage = document.getElementById('stage'), box = document.createElement('div');
-    box.style.cssText = 'width:640px;height:200px;position:relative;background:#fff;';
-    stage.appendChild(box);
-    var vp = new VP(box);
+    var stage = document.getElementById('stage'), box = document.createElement('div'), box2 = document.createElement('div');
+    box.style.cssText = box2.style.cssText = 'width:640px;height:200px;position:relative;background:#fff;';
+    stage.appendChild(box); stage.appendChild(box2);
+    // both read back at every patch, so painted on the CPU from the first (ENGINE.20's catch)
+    var vp = new VP(box, { willReadFrequently: true }), fresh = new VP(box2, { willReadFrequently: true });
+    // the patch painted as owed, by its cells or whole, and the canvas a full paint's of the record after it
+    function painted(at, after, repaints) {
+      fresh.load(after);
+      var pd = pixelsDiff(pixelsOf(vp), pixelsOf(fresh), fresh), od = pd ? '' : drawsDiff(vp.draws(), fresh.draws());
+      if (vp.repaints() !== repaints) P.push(at + ': the viewport ' + (vp.repaints() > repaints ? 'repainted the patch by its cells, where it is painted whole' : 'painted the patch whole, where its cells are repainted alone'));
+      else if (pd) P.push(at + ': the canvas is not a full paint\'s of the record after the patch: ' + pd);
+      else if (od) P.push(at + ': the draw list is not a full paint\'s of the record after the patch: ' + od);
+      else return true;
+      return false;
+    }
     try {
       for (var i = 0; i < cases.length; i++) {
         var c = cases[i], at = 'crafted, ' + c[0], got = HOST.patchRecord(rec, c[1]);
         if (got !== c[2]) { P.push(at + ': the host\'s patch gives ' + JSON.stringify(got) + ', where the record after it is ' + JSON.stringify(c[2])); continue; }
         vp.load(rec);
-        var m0 = vp.model(), p0 = vp.patches(), r = vp.patch(c[1]);
+        var m0 = vp.model(), p0 = vp.patches(), rp0 = vp.repaints(), r = vp.patch(c[1]);
         if (!r || vp.model() !== m0 || vp.patches() !== p0 + 1) { P.push(at + ': the viewport ' + (r ? 'replaced its model or counted no patch' : 'refused the patch')); continue; }
         var diff = modelDiff(vp.model(), VP.readRecord(c[2]));
         if (diff) { P.push(at + ': the viewport\'s patched model is not the one a load of the record after it makes: ' + diff); continue; }
-        held++;
+        if (painted(at, c[2], rp0 + 1)) held++;
       }
       var whole = '(changes "Crafted" "A1:D4" 1 2 whole)\n';
       vp.load(rec);
       if (HOST.patchRecord(rec, whole) !== null) P.push('crafted: the host patched a record by a whole answer');
       else if (vp.patch(whole) !== false) P.push('crafted: the viewport patched its model by a whole answer');
       else held++;
-    } finally { vp.destroy(); stage.removeChild(box); }
+      // a patch of every cell of a window of 8 by 8, more than a quarter of the 80 or so cells in view: painted whole
+      var big = '(sheet "Crafted" visible)\n(window "Crafted" "A1:H8")\n(extent "Crafted" "A1:H8")\n(gridlines "Crafted" on)\n(format 0 none general nowrap)\n', b0 = big, rows = '';
+      for (var br = 1; br <= 8; br++) for (var bc = 1; bc <= 8; bc++) { b0 += '(cell "Crafted" "' + VP.colName(bc) + br + '" ' + (br * 10 + bc) + ')\n'; rows += '(cell "Crafted" "' + VP.colName(bc) + br + '" ' + (br * 1000 + bc) + ')\n'; }
+      vp.load(b0);
+      var rb = vp.repaints();
+      if (!vp.patch('(changes "Crafted" "A1:H8" 1 2 64)\n' + rows)) P.push('crafted, a patch of every cell: the viewport refused it');
+      else if (painted('crafted, a patch of every cell', big + rows, rb)) held++;
+    } finally { vp.destroy(); fresh.destroy(); stage.removeChild(box); stage.removeChild(box2); }
     return held;
   }
   // The double's changes (decision 6), driven here with no host between and held to the oracle's own diff of its values
@@ -2863,14 +2929,21 @@
   // refreshed at every frame, is patched from frame 2 but at 50; a second viewer, of the Screen, refreshed every third
   // frame, views whole each time. The run's replay, played on a fresh host without a viewport, reaches every frame's
   // Input sheet and Screen record.
+  // Since ENGINE.20, at every frame, the host's viewport's canvas is a full paint's of the record in the viewport's state,
+  // pixel for pixel, and its draw list op for op, the full paint a twin's: a viewport beside it that loads host.record
+  // and takes its frozen panes, selection, scroll and mark. A patched frame is repainted by its cells, and no other frame
+  // is. The view acts between frames (CHANGES_VIEW): its panes frozen from 25 to 35, the window held to the record cell
+  // for cell at every other frame; and at 44 to 48 every cell of the window out of view, each patch then repainting
+  // nothing, the canvas as the frame before left it. Both viewports paint on the CPU from the first (the catch).
   function changesRun(bytes, k, P) {
-    var stage = document.getElementById('stage'), box = document.createElement('div'), dayBox = document.createElement('div'), screenBox = document.createElement('div');
-    box.style.cssText = 'width:' + GRID_BOX.w + 'px;height:' + GRID_BOX.h + 'px;position:relative;background:#fff;';
+    var stage = document.getElementById('stage'), box = document.createElement('div'), dayBox = document.createElement('div'), screenBox = document.createElement('div'), twinBox = document.createElement('div');
+    box.style.cssText = twinBox.style.cssText = 'width:' + GRID_BOX.w + 'px;height:' + GRID_BOX.h + 'px;position:relative;background:#fff;';
     dayBox.style.cssText = 'width:640px;height:200px;position:relative;background:#fff;';
     screenBox.style.cssText = 'width:1500px;height:300px;position:relative;background:#fff;';
-    stage.appendChild(box); stage.appendChild(dayBox); stage.appendChild(screenBox);
+    stage.appendChild(box); stage.appendChild(dayBox); stage.appendChild(screenBox); stage.appendChild(twinBox);
     var raw = HOST.instantiateSync(bytes), log = [], D = new Driver({ exports: raw }), measure = document.createElement('canvas').getContext('2d');
-    var host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box }), dayView = new VP(dayBox), screenView = new VP(screenBox);
+    var host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box, viewport: { willReadFrequently: true } }), dayView = new VP(dayBox), screenView = new VP(screenBox);
+    var twin = new VP(twinBox, { willReadFrequently: true });
     var gk = { texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0 }, live = {};
     try {
       if (!host.attach(loggedExports(raw, log)).ok) { P.push('changes: the host refused the module'); return; }
@@ -2900,9 +2973,18 @@
       // the page's viewers, shown at frame 0 as a page shows one, before the first frame
       if (!host.showSheet(dayView, 'Day') || !host.showSheet(screenView, 'Screen')) { P.push('changes: a page\'s viewer did not show its sheet'); return; }
       var dayHeld = 0, screenHeld = 0;
+      // the view's state from frame 0 (ENGINE.20): a selection over K1:M2 and a mark over L6:O6, both translucent, the twin's alike
+      vp.select('K1:M2'); vp.mark('changes', ['L6:O6'], CHANGES_MARK); twin.mark('changes', ['L6:O6'], CHANGES_MARK);
+      var backTo = null;
       host.start(); host.tick(t);
       for (var f = 1; f <= CHANGES_FRAMES; f++) {
-        var at = 'changes frame ' + f, evs = CHANGES_PLAN[f] || [], edits = [];
+        var at = 'changes frame ' + f, evs = CHANGES_PLAN[f] || [], edits = [], act = CHANGES_VIEW[f];
+        // the view's own act before the frame, a full paint
+        if (act === 'freeze') vp.freeze(2, 2);
+        else if (act === 'thaw') vp.freeze(0, 0);
+        else if (act === 'away') { backTo = { x: vp.scroller.scrollLeft, y: vp.scroller.scrollTop }; vp.scrollToPixels(1e6, 1e6); }
+        else if (act === 'back') vp.scrollToPixels(backTo.x, backTo.y);
+        var unseen = f >= 44 && f < 49, shot = unseen ? pixelsOf(vp) : null, rp0 = vp.repaints();
         for (var e = 0; e < evs.length; e++) {
           var ev = evs[e];
           if (ev[0] === 'pointer') { host.pointerAt(ev[1], ev[2]); ptr = { col: ev[1], row: ev[2] }; }
@@ -2942,8 +3024,27 @@
         var md = modelDiff(vp.model(), VP.readRecord(V));
         if (md) P.push(at + ': the viewport\'s model is not the one a load of the record makes: ' + md);
         else k.models++;
-        var gm = gqRead(V);
-        if (gqCompare(gqExpect(gm, gqLayout(gm, vp.geometry()), measure), vp.draws(), at, P, gk)) k.drawnHeld++;
+        // the window drawn held to the record cell for cell while the panes are thawed, the oracle's own layout having none
+        var gm = gqRead(V), fz = vp.frozen();
+        if (!fz.rows && !fz.cols && gqCompare(gqExpect(gm, gqLayout(gm, vp.geometry()), measure), vp.draws(), at, P, gk)) k.drawnHeld++;
+        // ---- ENGINE.20: the canvas a full paint's, pixel for pixel and op for op; a patched frame repainted by its cells ----
+        var drp = vp.repaints() - rp0;
+        if (drp !== (choice === 'patch' ? 1 : 0)) P.push(at + ': the viewport repainted ' + drp + ' patch(es) by their cells, where the frame is ' + (choice === 'patch' ? 'a patch' : (choice === 'drawn' ? 'a whole view' : 'still')));
+        else if (choice === 'patch') k.repainted++;
+        twinPaint(twin, vp, V);
+        var px = pixelsOf(vp), pd = pixelsDiff(px, pixelsOf(twin), twin), od = drawsDiff(vp.draws(), twin.draws());
+        if (pd) P.push(at + ': the canvas is not a full paint\'s of the record in the view\'s state: ' + pd);
+        else k.pixels++;
+        if (od) P.push(at + ': the draw list is not a full paint\'s: ' + od);
+        else k.ops++;
+        if ((fz.rows || fz.cols) && !pd && !od) k.frozen++;
+        if (unseen) {
+          // every cell of the window out of view: the patch repaints nothing, the canvas as the frame before left it
+          var sv = vp.scrolled(), ud = pixelsDiff(px, shot, vp);
+          if (sv.top <= ld.h || sv.left <= ld.w + 1) P.push(at + ': the view shows ' + sv.window + ', where every cell of the window lies out of it');
+          else if (choice !== 'patch' || ud) P.push(at + ': a patch of cells out of view ' + (choice !== 'patch' ? 'was not one, the frame being ' + choice : 'changed the canvas: ' + ud));
+          else k.unseen++;
+        }
         if (f === 30 && choice !== 'patch') P.push(at + ': the value\'s edit of K4 made the frame ' + choice + ', where it is patched');
         if (f === 40 && choice !== 'drawn') P.push(at + ': the Camera\'s move to ' + win + ' made the frame ' + choice + ', where the window is new and viewed whole');
         if (f === 41 && choice !== 'patch') P.push(at + ': the frame after the Camera\'s move is ' + choice + ', where the patches start again');
@@ -3024,11 +3125,12 @@
       } finally { M.destroy(); }
       var refusals = host.sentences().filter(function (sn) { return sn.refusal; });
       if (refusals.length) P.push('changes: the host was refused: ' + refusals[0].text);
-    } finally { host.destroy(); dayView.destroy(); screenView.destroy(); stage.removeChild(box); stage.removeChild(dayBox); stage.removeChild(screenBox); }
+    } finally { host.destroy(); dayView.destroy(); screenView.destroy(); twin.destroy(); stage.removeChild(box); stage.removeChild(dayBox); stage.removeChild(screenBox); stage.removeChild(twinBox); }
   }
   function caseChanges() {
     var P = [], k = { crafted: 0, double: 0, module: 0, frames: 0, decided: 0, drawn: 0, patched: 0, still: 0, equal: 0, models: 0, drawnHeld: 0, calls: 0, devices: 0, inputs: 0, kept: 0, two: 0, whole: 0,
-                      dayViewer: 0, dayPatched: 0, screenViewer: 0, patches: 0, inputsKept: 0, saves: 0, replayed: 0, replayFrames: 0 };
+                      dayViewer: 0, dayPatched: 0, screenViewer: 0, patches: 0, inputsKept: 0, saves: 0, replayed: 0, replayFrames: 0,
+                      repainted: 0, pixels: 0, ops: 0, frozen: 0, unseen: 0 };
     k.crafted = changesCrafted(P);
     k.double = changesDouble(P);
     var wasm = builtModule();

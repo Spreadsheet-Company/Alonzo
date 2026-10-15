@@ -18,7 +18,10 @@
   it and never a cut text (ENGINE.14); and an unknown row is counted, never
   refused. Since ENGINE.19 a host may lay a window's changes on the model it
   holds (patch), each named cell's entry read again as a load reads it, the
-  model and the view kept.
+  model and the view kept; since ENGINE.20 the named cells alone are painted
+  again, each with the span its text spills over and a neighbor's text that
+  spills into it, by the full paint's own steps under a clip, the rest of the
+  canvas kept.
 
   What the viewport owns is the state no program sees (SD-23): the scroll, the
   selection, the widths a person dragged, the frozen panes, the marks a host
@@ -64,6 +67,7 @@
   var RESIZE_GRIP_PX = 4;        // how near a column boundary a press must be to resize it
   var LINE_HEIGHT = 1.2;         // a wrapped line's height, in font sizes
   var OVERFLOW_LOOKBACK = 8;     // columns to look back for a text that overflows into view
+  var REPAINT_SHARE = 0.25;      // a patch naming more of the cells in view than this is painted whole (ENGINE.20)
   var DEFAULT_COLORS = {
     background: '#ffffff',
     gridline: '#d9d9d2',
@@ -506,17 +510,23 @@
     this.ctx.fillRect(x, y, w, h);
     if (op) { op.x = x; op.y = y; op.w = w; op.h = h; op.color = color; this.ops.push(op); }
   };
+  // Lines a device pixel wide, each across or down at an integer plus a half. In an opaque color each is filled as a
+  // rectangle a pixel wide, which every rasterizer covers exactly (ENGINE.20): Chrome's CPU rasterizer strokes a long
+  // line a few pixels short of covered, and otherwise under another clip, so a repaint's few lines would not paint the
+  // full paint's pixels. In a color with alpha they are stroked as one path, as before, so that a crossing blends once.
   Painter.prototype.lines = function (segments, color, kind) {
     var ctx = this.ctx;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
+    ctx.fillStyle = color;
+    var opaque = String(ctx.fillStyle).charAt(0) === '#';
+    if (!opaque) { ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.beginPath(); }
     for (var i = 0; i < segments.length; i++) {
       var s = segments[i];
-      ctx.moveTo(s[0], s[1]); ctx.lineTo(s[2], s[3]);
+      if (!opaque) { ctx.moveTo(s[0], s[1]); ctx.lineTo(s[2], s[3]); }
+      else if (s[0] === s[2]) ctx.fillRect(s[0] - 0.5, s[1], 1, s[3] - s[1]);
+      else ctx.fillRect(s[0], s[1] - 0.5, s[2] - s[0], 1);
       this.ops.push({ op: 'line', kind: kind, x1: s[0], y1: s[1], x2: s[2], y2: s[3], color: color });
     }
-    ctx.stroke();
+    if (!opaque) ctx.stroke();
   };
   Painter.prototype.clipped = function (rect, fn) {
     var ctx = this.ctx;
@@ -537,6 +547,12 @@
     ctx.textAlign = align;
     ctx.fillText(text, x, y);
     ctx.restore();
+    if (op) { op.text = text; op.x = x; op.y = y; op.align = align; op.color = color; op.clip = { x: clip.x, y: clip.y, w: clip.w, h: clip.h }; this.ops.push(op); }
+  };
+  // A painter that paints nothing (ENGINE.20): a cell's paint run through it keeps the ops the full paint would draw,
+  // so that a repaint finds where a text lies, its spill with it, by the full paint's own code.
+  function Tracer(ctx) { this.ctx = ctx; this.ops = []; }
+  Tracer.prototype.text = function (text, x, y, align, color, clip, op) {
     if (op) { op.text = text; op.x = x; op.y = y; op.align = align; op.color = color; op.clip = { x: clip.x, y: clip.y, w: clip.w, h: clip.h }; this.ops.push(op); }
   };
   // A text broken at word boundaries to a width, in the context's font; a
@@ -576,6 +592,13 @@
     if (options.colors) for (var k2 in options.colors) if (Object.prototype.hasOwnProperty.call(options.colors, k2)) this.colors[k2] = options.colors[k2];
     this.records = {};         // sheet name -> model
     this.patchCount = 0;       // the patches laid on its models (ENGINE.19)
+    this.repaintCount = 0;     // the patches painted by their cells alone (ENGINE.20)
+    // The last full paint (ENGINE.20): the model and the environment it painted, its quadrants as it left them, the cells
+    // in view, and the cells a repaint drew since, by quadrant, which stand in its draw list in place of its own.
+    this.painted = null; this.quads = []; this.inView = 0; this.over = null;
+    // A context the CPU rasterizes from the first paint (ENGINE.20): for a page that reads the pixels back, an oracle,
+    // since Chrome moves a GPU canvas read back often to the CPU midway, whose text it rasterizes otherwise.
+    this.readback = !!options.willReadFrequently;
     this.sheetList = [];       // every sheet row of the latest record, in tab order
     this.active = '';          // the sheet shown
     this.state = { widths: {}, frozenRows: 0, frozenCols: 0, marks: {}, showHidden: !!options.showHidden,
@@ -621,7 +644,7 @@
     root.appendChild(box);
     root.appendChild(tabs);
     element.appendChild(root);
-    this.ctx = canvas.getContext('2d');
+    this.ctx = canvas.getContext('2d', { willReadFrequently: this.readback });
     this._renderTabs();
     this._resize();
   };
@@ -695,6 +718,7 @@
     var W = env.canvasW, H = env.canvasH;
     var p = new Painter(this.ctx, this.colors);
     var ctx = this.ctx;
+    this.quads = []; this.over = null;   // the quadrants this paint leaves, and no repaint over it yet (ENGINE.20)
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = this.colors.background;
@@ -718,17 +742,28 @@
       this._paintQuadrant(p, null, g, { x: fx, y: fy, w: W - fx, h: H - fy }, 1, g.rows, 1, g.cols, sx, sy, 'body');
     }
     // the frozen separators
-    var seps = [];
-    if (g.fr > 0) seps.push([ox, fy - 0.5, W, fy - 0.5]);
-    if (g.fc > 0) seps.push([fx - 0.5, oy, fx - 0.5, H]);
+    var seps = separators(g, W, H);
     if (seps.length) p.lines(seps, this.colors.frozenLine, 'frozen');
     this._paintHeaders(p, g, sx, sy, W, H);
     this.ops = p.ops;
+    this.inView = 0;
+    for (var i = 0; i < this.quads.length; i++) { var q = this.quads[i]; this.inView += (q.rowEnd - q.rowStart + 1) * (q.colEnd - q.colStart + 1); }
+    this.painted = { model: model, env: env };
   };
+  // The frozen separators: a line under the frozen rows and one right of the frozen columns, across the canvas.
+  function separators(g, W, H) {
+    var seps = [], fx = g.ox + g.frozenW, fy = g.oy + g.frozenH;
+    if (g.fr > 0) seps.push([g.ox, fy - 0.5, W, fy - 0.5]);
+    if (g.fc > 0) seps.push([fx - 0.5, g.oy, fx - 0.5, H]);
+    return seps;
+  }
 
   // One quadrant: the cells of rows r1..r2 and columns c1..c2 drawn at the
   // content position less the quadrant's scroll, clipped to its rectangle.
-  Viewport.prototype._paintQuadrant = function (p, model, g, clip, r1, r2, c1, c2, sx, sy, name) {
+  // A full paint notes each quadrant as it leaves it (ENGINE.20): its rows and columns in view, and where its fills,
+  // its gridlines, its texts and its ranges begin in the draw list. A repaint passes part, { row, left, right }: the
+  // same steps over that row's columns left to right alone, under the clip the repaint has set.
+  Viewport.prototype._paintQuadrant = function (p, model, g, clip, r1, r2, c1, c2, sx, sy, name, part) {
     var self = this, colors = this.colors;
     var ox = g.ox, oy = g.oy, rh;
     if (clip.w <= 0 || clip.h <= 0) return;
@@ -738,8 +773,12 @@
     var colStart = Math.max(c1, g.columnAt(clip.x - ox + sx, c1));
     var colEnd = Math.min(c2, g.columnAt(clip.x + clip.w - 1 - ox + sx, c1));
     if (rowStart > rowEnd || colStart > colEnd) return;
+    var q = null;
+    if (part) { rowStart = rowEnd = part.row; colStart = part.left; colEnd = part.right; }
+    else this.quads.push(q = { index: this.quads.length, name: name, clip: clip, r1: r1, r2: r2, c1: c1, c2: c2, sx: sx, sy: sy, rowStart: rowStart, rowEnd: rowEnd, colStart: colStart, colEnd: colEnd });
     var r, c, cell, x, y, w;
     p.clipped(clip, function () {
+      if (q) q.fills = p.ops.length;
       // the fills: a look's, a styled cell's, or a styled column's for its empty cells
       if (model) {
         for (r = rowStart; r <= rowEnd; r++) {
@@ -755,6 +794,7 @@
           }
         }
       }
+      if (q) q.lines = p.ops.length;
       // the gridlines, at an integer plus a half so that each is one device pixel; a hidden row draws none
       if (!model || model.gridlines) {
         var segs = [];
@@ -771,6 +811,7 @@
         }
         p.lines(segs, colors.gridline, 'grid-' + name);
       }
+      if (q) q.texts = p.ops.length;
       // the texts
       if (model) {
         for (r = rowStart; r <= rowEnd; r++) {
@@ -791,6 +832,7 @@
           }
         }
       }
+      if (q) q.ranges = p.ops.length;
       // the selection and the marks
       self._paintRanges(p, model, g, clip, r1, r2, c1, c2, sx, sy, name);
     });
@@ -942,6 +984,124 @@
     p.fillRect(0, 0, g.rhW, headH, colors.header, { op: 'header', kind: 'corner', index: 0, text: '', selected: !!sel.sheet });
     p.lines([[g.rhW - 0.5, 0, g.rhW - 0.5, headH], [0, headH - 0.5, g.rhW, headH - 0.5]], colors.gridline, 'header-corner');
   };
+
+  // ---- the repaint (ENGINE.20): a patch's cells painted again alone, the rest of the canvas kept ----
+  // Whether a patch of n cells to a model may be painted by its cells (decision 2): the canvas holds that model's full
+  // paint, the scroller is where the paint left it (no scroll's event pending), the canvas's size and ratio and the
+  // scroller's area are the paint's, and the cells named are no more than a share of the cells in view. Every other
+  // change to what the canvas shows paints whole at once, so the full paint is otherwise current.
+  Viewport.prototype._repaintable = function (model, n) {
+    var at = this.painted;
+    if (!at || at.model !== model || !this.g) return false;
+    var env = this._env(), was = at.env;
+    if (env.dpr !== was.dpr || env.canvasW !== was.canvasW || env.canvasH !== was.canvasH || env.clientW !== was.clientW || env.clientH !== was.clientH) return false;
+    if (this.scroller.scrollLeft !== this.lastScroll.x || this.scroller.scrollTop !== this.lastScroll.y) return false;
+    return n <= REPAINT_SHARE * this.inView;
+  };
+  // The quadrant that paints a cell, as the last full paint left it; null where that paint drew no such quadrant.
+  Viewport.prototype._quadOf = function (r, c) {
+    var g = this.g, name = r <= g.fr ? (c <= g.fc ? 'frozen-corner' : 'frozen-rows') : (c <= g.fc ? 'frozen-cols' : 'body');
+    for (var i = 0; i < this.quads.length; i++) if (this.quads[i].name === name) return this.quads[i];
+    return null;
+  };
+  // Where a cell's paint lies on the canvas, in the model as it stands (decision 1), added to spans as { q, row, y, h,
+  // x0, x1 }, each cut to its quadrant's rectangle: its row's band over its own column, its fill and its text; the span
+  // its text spills over; and the span of the nearest text on its left, every cell between them empty, the one text that
+  // can spill into it or through it. Each is where the full paint's own code draws it, run through a tracer, and the left
+  // is looked for as far as the full paint looks, the columns in view and eight before them. Nothing for a cell in a
+  // hidden row or out of view.
+  Viewport.prototype._footprint = function (model, r, c, spans) {
+    var g = this.g, q = this._quadOf(r, c), h = g.rowHeight(r);
+    if (!q || h === 0 || r < q.rowStart || r > q.rowEnd) return;
+    var clip = q.clip, top = g.oy + g.rowTop(r) - q.sy, x = g.ox - q.sx, xs = [];
+    var y0 = Math.max(top, clip.y), y1 = Math.min(top + h, clip.y + clip.h);
+    if (y0 >= y1) return;
+    if (g.colW[c] > 0) xs.push(x + g.colX[c], x + g.colX[c + 1]);
+    var own = this._traced(model, g, q, r, c, top);
+    if (own) xs.push(own.x, own.x + own.w);
+    for (var cc = c - 1, from = Math.max(q.c1, q.colStart - OVERFLOW_LOOKBACK); cc >= from; cc--) {
+      var e = model.cells.get(cellKey(r, cc));
+      if (!e || e.text === '') continue;
+      var left = this._traced(model, g, q, r, cc, top);
+      if (left && left.x + left.w > x + g.colX[c]) xs.push(left.x, left.x + left.w);
+      break;
+    }
+    for (var i = 0; i < xs.length; i += 2) {
+      var x0 = Math.max(xs[i], clip.x), x1 = Math.min(xs[i + 1], clip.x + clip.w);
+      if (x0 < x1) spans.push({ q: q, row: r, y: y0, h: y1 - y0, x0: x0, x1: x1 });
+    }
+  };
+  // Where the full paint clips a cell's text: the cell's paint run through a tracer. Null for a cell it draws no text for.
+  Viewport.prototype._traced = function (model, g, q, r, c, top) {
+    var cell = model.cells.get(cellKey(r, c));
+    if (!cell || cell.text === '' || g.colW[c] === 0) return null;
+    var t = new Tracer(this.ctx);
+    this._paintCell(t, model, g, cell, r, c, g.ox + g.colX[c] - q.sx, top, q.c2, q.name, q.clip);
+    return t.ops.length ? t.ops[0].clip : null;
+  };
+  // A patch's cells painted again (decision 1): their spans merged into rectangles, one a run of a row in its quadrant,
+  // each painted by the full paint's steps (_repaintRect); the cells whose fills and texts it drew stand in the draw list
+  // in place of the last full paint's (decision 3), and the repaint is counted.
+  Viewport.prototype._repaint = function (model, spans) {
+    var g = this.g, ctx = this.ctx, p = new Painter(ctx, this.colors), seps = separators(g, g.canvasW, g.canvasH), rects = [], cur = null, i;
+    spans.sort(function (a, b) { return a.q.index - b.q.index || a.row - b.row || a.x0 - b.x0; });
+    for (i = 0; i < spans.length; i++) {
+      var s = spans[i];
+      if (cur && cur.q === s.q && cur.row === s.row && s.x0 <= cur.x1) { if (s.x1 > cur.x1) cur.x1 = s.x1; continue; }
+      rects.push(cur = { q: s.q, row: s.row, y: s.y, h: s.h, x0: s.x0, x1: s.x1 });
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.font = g.font;
+    ctx.textBaseline = 'middle';
+    for (i = 0; i < rects.length; i++) {
+      var R = rects[i], q = R.q, at = p.ops.length;
+      var part = { row: R.row, left: Math.max(q.colStart, g.columnAt(R.x0 - g.ox + q.sx, q.colStart)), right: Math.min(q.colEnd, g.columnAt(R.x1 - 1 - g.ox + q.sx, q.colStart)) };
+      this._repaintRect(p, model, g, q, { x: R.x0, y: R.y, w: R.x1 - R.x0, h: R.h }, part, seps);
+      this._override(q, part, p.ops, at);
+    }
+    this.repaintCount++;
+  };
+  // One rectangle of a repaint: under its clip, the canvas cleared to the background, then the quadrant's steps over the
+  // row's columns part.left to part.right, its fills, gridlines and texts, the selection and the marks, then the frozen
+  // separators; never the headers, which no value changes. Every step of the full paint that touches a pixel of the
+  // rectangle runs again, in the full paint's order, so the rectangle's pixels are the full paint's.
+  Viewport.prototype._repaintRect = function (p, model, g, q, rect, part, seps) {
+    var self = this, ctx = p.ctx, colors = this.colors;
+    p.clipped(rect, function () {
+      ctx.clearRect(rect.x, rect.y, rect.w, rect.h);
+      ctx.fillStyle = colors.background;
+      ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+      self._paintQuadrant(p, model, g, q.clip, q.r1, q.r2, q.c1, q.c2, q.sx, q.sy, q.name, part);
+      if (seps.length) p.lines(seps, colors.frozenLine, 'frozen');
+    });
+  };
+  // A rectangle's ops laid over the last full paint's in the draw list (decision 3), for each cell whose paint the repaint
+  // decided as the full paint decides it: every cell of the row's columns part.left to part.right, its fill and its
+  // texts, drawn or not; the cells left of them it looked back to, a text it drew; and, left of the columns in view,
+  // where the full paint looks back by the same rule, a text it did not draw too.
+  Viewport.prototype._override = function (q, part, ops, at) {
+    var over = this.over || (this.over = {}), o = over[q.name] || (over[q.name] = { fills: new Map(), texts: new Map() });
+    var row = part.row, drawn = new Map(), c, key;
+    for (c = part.left; c <= part.right; c++) { key = cellKey(row, c); o.fills.set(key, null); o.texts.set(key, []); }
+    for (c = Math.max(q.c1, part.left - OVERFLOW_LOOKBACK); c < part.left && c < q.colStart; c++) o.texts.set(cellKey(row, c), []);
+    for (var i = at; i < ops.length; i++) {
+      var op = ops[i];
+      if (!op.row) continue;
+      key = cellKey(op.row, op.col);
+      if (op.op === 'fill') o.fills.set(key, op);
+      else if (op.op === 'text') { if (!drawn.has(key)) drawn.set(key, []); drawn.get(key).push(op); }
+    }
+    drawn.forEach(function (list, k) { o.texts.set(k, list); });
+  };
+  // A section of the draw list, ops from to to, with the cells a repaint drew taken out and the repaint's put in, by row,
+  // then column, then line: the order the full paint draws them in.
+  function spliced(ops, from, to, cells, out) {
+    var list = [], i;
+    for (i = from; i < to; i++) if (!cells.has(cellKey(ops[i].row, ops[i].col))) list.push(ops[i]);
+    cells.forEach(function (v) { if (v === null) return; if (Array.isArray(v)) { for (var k = 0; k < v.length; k++) list.push(v[k]); } else list.push(v); });
+    list.sort(function (a, b) { return a.row - b.row || a.col - b.col || (a.line || 0) - (b.line || 0); });
+    for (i = 0; i < list.length; i++) out.push(list[i]);
+  }
 
   // ---- the selection ----
   Viewport.prototype._selectionRange = function () {
@@ -1237,7 +1397,9 @@
   // cell's entry is replaced as readRecord reads its rows, one reading of a row serving both, a cell the model lacks
   // put in and an empty one's taken out, the model's counts and lines with them, so that the model is the one a load
   // of the patched record makes. The model object and the view are kept, the patch counted (patches), and the sheet
-  // shown painted again, whole; ENGINE.20 makes the paint the cells'. False, and nothing changed, for a text that is
+  // shown painted again: the named cells alone (ENGINE.20, repaints), where the canvas holds the model's full paint,
+  // still current, and they are no more than a share of the cells in view; whole otherwise. False, and nothing
+  // changed, for a text that is
   // no such answer: a header ending whole or counting other cells than its rows name, a sheet the viewport holds no
   // record of, another window, a row that is no cell's of that window or a cell's rows not together, and a model
   // holding a row its reader counted unknown or malformed, whose counts no patch can keep. Else the model's counts
@@ -1257,25 +1419,34 @@
       if (!last || last.key !== key) {
         if (seen[key]) return false;
         seen[key] = true;
-        groups.push(last = { key: key, rows: [] });
+        groups.push(last = { key: key, row: a.row, col: a.col, rows: [] });
       }
       if (head !== 'empty') last.rows.push(f);
     }
     if (groups.length !== numOf(h[5])) return false;
+    // the named cells repainted alone (ENGINE.20) where decision 2 allows: what their paint covered before the patch,
+    // found now, and what it covers after; else the sheet shown painted whole
+    var shown = this.active === name, spans = shown && this._repaintable(model, groups.length) ? [] : null, i;
+    if (spans) { this.ctx.font = this.g.font; for (i = 0; i < groups.length; i++) this._footprint(model, groups[i].row, groups[i].col, spans); }
     var reach = { row: 0, col: 0 };
-    for (var i = 0; i < groups.length; i++) {
+    for (i = 0; i < groups.length; i++) {
       var g = groups[i], e = model.cells.get(g.key);
       if (e) unread(model, e);
       for (var j = 0; j < g.rows.length; j++) { readRow(model, g.rows[j], reach); model.lines++; }
     }
     this.patchCount++;
-    if (this.active === name) this._draw();
+    if (spans) {
+      for (i = 0; i < groups.length; i++) this._footprint(model, groups[i].row, groups[i].col, spans);
+      this._repaint(model, spans);
+    } else if (shown) this._draw();
     return { sheet: name, patched: groups.length, lines: model.lines, cells: model.counts.cells, formulas: model.counts.formulas, values: model.counts.values, styles: model.counts.styles, sentences: model.counts.sentences,
              looks: model.counts.looks, rows: model.counts.rows, unknown: model.counts.unknown, malformed: model.counts.malformed, window: model.windowText, extent: model.extentText, patchMs: now() - t0 };
   };
   // The patches this viewport has taken since it was made (ENGINE.19): a host notes the count with each record it
   // loads, so that a model a page patched is never taken for the one the host made.
   Viewport.prototype.patches = function () { return this.patchCount; };
+  // The patches it has painted by their cells alone since it was made (ENGINE.20), the others painted whole.
+  Viewport.prototype.repaints = function () { return this.repaintCount; };
   function sameSheets(a, b) {
     if (a.length !== b.length) return false;
     for (var i = 0; i < a.length; i++) if (a[i].name !== b[i].name || a[i].state !== b[i].state) return false;
@@ -1410,7 +1581,23 @@
              colW: g.colW.slice(), colX: g.colX.slice(), frozenRows: g.fr, frozenCols: g.fc, frozenW: g.frozenW, frozenH: g.frozenH,
              scrollX: this.scroll.x, scrollY: this.scroll.y, scrollLeft: this.scroller.scrollLeft, scrollTop: this.scroller.scrollTop };
   };
-  Viewport.prototype.draws = function () { return this.ops.slice(); };
+  // The draw list (ENGINE.20, decision 3): the last full paint's, each cell a repaint drew since in its place, in the
+  // full paint's order, so that it describes the canvas op for op as a full paint of the model would.
+  Viewport.prototype.draws = function () {
+    if (!this.over) return this.ops.slice();
+    var ops = this.ops, out = [], at = 0, i, j;
+    for (i = 0; i < this.quads.length; i++) {
+      var q = this.quads[i], o = this.over[q.name];
+      if (!o) continue;
+      for (j = at; j < q.fills; j++) out.push(ops[j]);
+      spliced(ops, q.fills, q.lines, o.fills, out);
+      for (j = q.lines; j < q.texts; j++) out.push(ops[j]);
+      spliced(ops, q.texts, q.ranges, o.texts, out);
+      at = q.ranges;
+    }
+    for (j = at; j < ops.length; j++) out.push(ops[j]);
+    return out;
+  };
   Viewport.prototype.model = function () { return this._model(); };
   Viewport.prototype.redraw = function () { this._resize(); this._draw(); };
   Viewport.prototype.destroy = function () {
@@ -1437,7 +1624,7 @@
   Viewport.colIndex = colIndex;
   Viewport.RULES = RULES;
   Viewport.DEFAULT_COLORS = DEFAULT_COLORS;
-  Viewport.version = 1;
+  Viewport.version = 2;
 
   global.AlonzoViewport = Viewport;
 })(typeof window !== 'undefined' ? window : this);

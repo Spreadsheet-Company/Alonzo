@@ -457,8 +457,9 @@
   // (seed host) cartridge gets in place of the browser's random one, a whole number from 1 to
   // 2147483646), audio (an audio context the host sounds through from the start, in place of the
   // one Sound on makes: an oracle's double of the graph, or an offline context to render),
-  // audioNow (the audio clock, in place of that context's currentTime), and grid (the element a
-  // grid cartridge's viewport fills, ENGINE.8; without one a grid cartridge runs and nothing draws it).
+  // audioNow (the audio clock, in place of that context's currentTime), grid (the element a grid
+  // cartridge's viewport fills, ENGINE.8; without one a grid cartridge runs and nothing draws it), and
+  // viewport (the options that viewport is made with, ENGINE.20: an oracle's willReadFrequently).
   function Host(options) {
     options = options || {};
     VP();
@@ -1054,7 +1055,7 @@
   Host.prototype._viewport = function () {
     if (this.vp || !this.gridEl) return this.vp;
     var V = VP(), self = this;
-    this.vp = new V(this.gridEl);
+    this.vp = new V(this.gridEl, this.options.viewport);
     this._listenGrid();
     this.vp.on('sheet', function (e) { self.answer(self.vp, e); });
     this.vp.on('scroll', function () { self.refreshSheet(self.vp, true); });

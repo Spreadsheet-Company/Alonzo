@@ -101,7 +101,7 @@ sound the frame the grid holds again when it starts.
 
 | Method | What it does |
 |---|---|
-| `new AlonzoHost(options)` | `canvas` the plane's canvas (it takes the keys while focused); `box` the element the blit fits, the canvas's parent by default; `scale` a fixed number of device pixels a cell; `budget` a fixed budget in cells a step call, 0 for none; `callsPerTick` a fixed count of step calls a tick in place of the time slice; `now` the clock the budget is measured by; `drive: 'manual'` when the caller calls `tick` itself (the oracles); `seed` the number a `(seed host)` cartridge gets in place of the browser's random one, a whole number from 1 to 2147483646 (the oracle); `audio` an audio context the host sounds through from the start, in place of the one `soundOn` makes, and `audioNow` its clock in place of the context's `currentTime` (the oracle's double of the graph); `grid` the element a grid cartridge's viewport fills (`ENGINE.8`), without which a grid cartridge runs and nothing draws it |
+| `new AlonzoHost(options)` | `canvas` the plane's canvas (it takes the keys while focused); `box` the element the blit fits, the canvas's parent by default; `scale` a fixed number of device pixels a cell; `budget` a fixed budget in cells a step call, 0 for none; `callsPerTick` a fixed count of step calls a tick in place of the time slice; `now` the clock the budget is measured by; `drive: 'manual'` when the caller calls `tick` itself (the oracles); `seed` the number a `(seed host)` cartridge gets in place of the browser's random one, a whole number from 1 to 2147483646 (the oracle); `audio` an audio context the host sounds through from the start, in place of the one `soundOn` makes, and `audioNow` its clock in place of the context's `currentTime` (the oracle's double of the graph); `grid` the element a grid cartridge's viewport fills (`ENGINE.8`), without which a grid cartridge runs and nothing draws it; `viewport` the options that viewport is made with (`ENGINE.20`), the loop oracle's `{ willReadFrequently: true }` |
 | `attach(exports)` | asks `alonzo_abi_version` and refuses another number, then every export the loop calls: `{ ok, abi, version }` or `{ ok: false, sentence }` |
 | `load(text, name)` / `loadBytes(bytes, name)` | unloads the grid it held, loads a cartridge, then `describe`, reads the Camera, the Palette and the Keys, and draws the new grid's frame 0 at once, nothing computed, on the plane's canvas or, for a grid cartridge, through the viewport, so that neither shows a grid the module no longer holds: `{ ok, handle, title, mode, w, h, rate }` or the refusal's sentence |
 | `expand(source, path, files)` | the pass (`docs/SPEC.md` section 7.8): a cartridge's source, the path its includes resolve against (`cartridges/<name>/<name>.source.vla`, the command line's), and the texts it may include as `[path, text]` pairs, handed to the module's `alonzo_expand`, an act of its own that takes no handle, touches no grid and stops nothing: `{ ok, text, rows, ms }`, the cartridge's text CRLF as the command line writes it and its rows after the manifest, or the refusal's sentence with the source line it stands on; the export is asked for here and not at `attach`, so over a module without it, the double, the build is declined in words |
@@ -523,8 +523,12 @@ vp.on('select', function (s) { /* s.text is 'B2:C3'; s.focus.sentence the row th
 ```
 
 `AlonzoViewport` is a global set by the script; `AlonzoViewport.version` is
-1. The options: `record`, a record's text to load at once; `colors`, any of
-the defaults below; `showHidden`, whether hidden sheets' tabs show at first.
+2, since `ENGINE.20`'s repaint. The options: `record`, a record's text to
+load at once; `colors`, any of the defaults below; `showHidden`, whether
+hidden sheets' tabs show at first; `willReadFrequently`, a canvas the CPU
+rasterizes from the first paint, for a page that reads its pixels back
+(`ENGINE.20`): Chrome moves a canvas read back often from the GPU to the
+CPU midway, and the two rasterize text apart.
 Beside the constructor, `AlonzoViewport.readRecord(text)` reads a record
 into the model the viewport draws, and `AlonzoViewport.readForms(text)`
 reads any text of forms into data, the host shim's one reader.
@@ -532,8 +536,9 @@ reads any text of forms into data, the host shim's one reader.
 | Method | What it does |
 |---|---|
 | `load(text, options)` | reads a record; its sheet becomes a tab, replacing an earlier record of that sheet; the record's `sheet` rows become the tab strip; returns the counts (`sheet`, `lines`, `cells`, `formulas`, `values`, `styles`, `sentences`, `looks`, `rows`, `unknown`, `malformed`, `window`, `extent`, `readMs`). With `{ keep: true }` (`ENGINE.8`), a later frame of the sheet shown: the record replaces the last with the scroll, the selection, the widths, the frozen panes and the marks kept and no event raised, the tabs remade only when the sheet rows changed; the host draws every frame of a grid cartridge so, a still one excepted (`ENGINE.17`), and the player's sheets viewer its sheet |
-| `patch(text)` | a window's changes laid on the model of their sheet (`ENGINE.19`), the text a view of the projection `changes` answers: each named cell's entry read again from its rows as `load` reads them, a cell put in or an empty one taken out, the model's counts and lines kept as a load of the patched record makes them, the model object, the scroll and the selection kept, and the sheet shown painted again. Returns the counts as `load` does, with `patched` the cells named and `patchMs`; `false`, and nothing changed, for a whole answer, another window, a sheet it holds no record of, rows that are no cell's of the window, or a model holding a row its reader counted unknown or malformed |
+| `patch(text)` | a window's changes laid on the model of their sheet (`ENGINE.19`), the text a view of the projection `changes` answers: each named cell's entry read again from its rows as `load` reads them, a cell put in or an empty one taken out, the model's counts and lines kept as a load of the patched record makes them, the model object, the scroll and the selection kept, and the sheet shown painted again: the named cells alone (`ENGINE.20`), each cell's band of its row with the span its text spills over and the span of a text on its left that spills into it, before the patch and after, painted again by the full paint's own steps under each band's clip, the rest of the canvas kept, wherever the canvas holds the model's full paint, unscrolled and unresized since, and the cells named are no more than a quarter of the cells in view; whole otherwise. Returns the counts as `load` does, with `patched` the cells named and `patchMs`; `false`, and nothing changed, for a whole answer, another window, a sheet it holds no record of, rows that are no cell's of the window, or a model holding a row its reader counted unknown or malformed |
 | `patches()` | the patches laid on its models since it was made: a host notes the count with each record it loads, so that a model a page patched is never taken for the host's (`ENGINE.19`) |
+| `repaints()` | the patches it painted by their cells alone since it was made, the others painted whole (`ENGINE.20`) |
 | `clear()` | forgets every record and draws the grid empty: the host's grid unloaded (`ENGINE.8`) |
 | `scrolled()` | the window the scrolled quadrant shows, `{ top, left, bottom, right, window }`: the host follows a Camera's move by it (`ENGINE.8`) |
 | `show(name)` | shows a sheet whose record is loaded (the name compared without case); false when none is |
@@ -549,7 +554,7 @@ reads any text of forms into data, the host shim's one reader.
 | `cellAt(clientX, clientY)` | the cell under a point of the page, or null: over a header, the corner, a scrollbar or the tab strip (the last two since `ENGINE.14`, which the hit test had counted as cells) |
 | `cell(row, col)` | a cell: `{ row, col, address, kind, vkind, text, formula, valued, style, sentence }`, `kind` one of `cell`, `formula`, `empty`; `text` what the cell shows, a formula's value once its value row lands and its text before, `formula` a formula's own text, the bar's, and `valued` whether a formula has its value |
 | `geometry()` | the last draw's geometry in device pixels: the ratio, the sizes, the row height, the column edges, the frozen bands, the scroll |
-| `draws()` | the last draw's list: every text, fill, line, header, selection and mark with its position (the oracle's) |
+| `draws()` | the draw list: every text, fill, line, header, selection and mark with its position, as the last full paint drew it, each cell a repaint drew since in its place, in the full paint's order (`ENGINE.20`), so that it describes the canvas op for op (the oracle's) |
 | `model()` | the record shown, as read |
 | `redraw()` | sizes the canvas to the box again and draws |
 | `destroy()` | removes the viewport and its listeners |
@@ -586,7 +591,9 @@ broken at the column's width and the lines that fit the row are drawn, and
 a number is never wrapped. The layout is in device pixels, every size
 an integer of them, every gridline at an integer plus a half, so the image
 is crisp at the machine's ratio, and the backing store is remade when the
-ratio changes.
+ratio changes. A line in an opaque color is filled as a rectangle one
+device pixel wide, which every rasterizer covers exactly, so that a
+repaint's few lines paint the full paint's pixels (`ENGINE.20`).
 
 **The colors** are options with defaults: `background` `#ffffff`,
 `gridline` `#d9d9d2`, `header` `#f3f3ee`, `headerText` `#6b6b66`,
@@ -668,7 +675,9 @@ viewport, not an Excel clone.
   version 4 cartridge's sheet shown held as the record of its region
   (`ENGINE.18`); `empty`; `still`, the page's own still card (`ENGINE.17`);
   `views`, the page's own views card (`ENGINE.18`); and `changes`, the
-  page's own changes card, a frame read by its changes (`ENGINE.19`). Each of
+  page's own changes card, a frame read by its changes (`ENGINE.19`), each
+  patch repainted by its cells and held pixel for pixel to a full paint
+  (`ENGINE.20`). Each of
   the fifteen others prints
   `case <name>: not on this page`, being proven in Alonzo's CI, and the
   last line reads `loop ok cases=8 dpr=1; 15 of Alonzo's own not on this
