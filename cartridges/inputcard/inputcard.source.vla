@@ -20,11 +20,6 @@
 ; each count sits beside the row it counts; a Write row records the frame of the last
 ; left click as a value (docs/SPEC.md section 3.9). The seed is the host's, chosen at the load.
 
-; The library whose macros this source calls: sheets; cga-palette, default-keys and keys;
-; button-labels, labels and headers; on and formulas, each naming a sheet once over a run
-; of its rows; the verbs count, hold and dice; and put, the Write sheet's row.
-(include "../common.vla")
-
 (cartridge "inputcard"
   (spec 3)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Input card")              ; what the host shows
@@ -34,6 +29,11 @@
   (author "Spreadsheet Company")    ; who wrote it
   (license "0BSD")                  ; the header's twin
   (notes "The input card: every cell the host writes before a step, drawn. Press the arrows, Z, X, A, S, Enter and Space for player 1, and I, K, J, L, U, O, Y, P, 9 and 0 for player 2; click, and turn the wheel to pan the card. A lamp is white while its button is held, and moves to another color with each press."))
+
+; The library whose macros this source calls: sheets; cga-palette, default-keys and keys;
+; button-labels, labels and headers; on and formulas, each naming a sheet once over a run
+; of its rows; the verbs count, hold and dice; and put, the Write sheet's row.
+(include "../common.vla")
 
 ; The sheets, in tab order: the Screen, the Panel of lamps it draws, the Tally of counts,
 ; the keys, the Camera, the Write sheet and the Palette.

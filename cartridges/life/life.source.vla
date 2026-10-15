@@ -8,11 +8,6 @@
 ; previous frame, the twin sheet Screen.last; the border stays empty, which the plane
 ; reads as 0, dead. The format is docs/SPEC.md section 7; the shape is its Appendix A.
 
-; The library whose macros this source calls, sheets, palette and interior among them:
-; a file like any other, which a cartridge of your own may copy, change, outgrow or leave
-; out.
-(include "../common.vla")
-
 (cartridge "life"
   (spec 2)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Life")                    ; what the host shows
@@ -22,6 +17,11 @@
   (author "Spreadsheet Company")    ; who wrote it
   (license "0BSD")                  ; the header's twin: copy this file to start a cartridge of your own
   (notes "Conway's Life, every cell one formula of its eight neighbors in the previous frame. The first frame is a soup from the seed; change (seed 1) for another."))
+
+; The library whose macros this source calls, sheets, palette and interior among them:
+; a file like any other, which a cartridge of your own may copy, change, outgrow or leave
+; out.
+(include "../common.vla")
 
 ; The sheets, in tab order: the Screen the rule draws on, the Palette it draws with.
 (sheets "Screen" "Palette")

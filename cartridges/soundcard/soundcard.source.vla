@@ -20,11 +20,6 @@
 ; wave silences the tick, which the host says. The Log keeps the four voices of the last 32 frames,
 ; and the Screen draws the notes as a waterfall, the newest row on top.
 
-; The library whose macros this source calls: sheets; cga-palette and default-keys; audio
-; and labels; on, cells and formulas, each naming a sheet once over a run of its rows; and
-; the verb pressed.
-(include "../common.vla")
-
 (cartridge "soundcard"
   (spec 3)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Sound card")              ; what the host shows
@@ -34,6 +29,11 @@
   (author "Spreadsheet Company")    ; who wrote it
   (license "0BSD")                  ; the header's twin
   (notes "The sound card: press Sound on, then hear the four waves, a scale, two chords and a slide under a swell, an eight-second loop. Press the arrows, Z, X, A, S, Enter or Space, or click the plane, for a tick; write another wave into Knobs!B1 to change it."))
+
+; The library whose macros this source calls: sheets; cga-palette and default-keys; audio
+; and labels; on, cells and formulas, each naming a sheet once over a run of its rows; and
+; the verb pressed.
+(include "../common.vla")
 
 ; The sheets, in tab order: the Screen, the Audio sheet it draws, the Score that times the
 ; voices, the Knobs a person turns, the Log of the voices, the keys and the Palette.

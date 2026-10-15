@@ -8,9 +8,6 @@
 ; pattern off the Seed sheet where life.vla computes a soup. The border stays empty,
 ; which the plane reads as 0, dead. The format is docs/SPEC.md section 7.
 
-; The library whose macros this source calls: sheets, palette, picture and interior.
-(include "../common.vla")
-
 (cartridge "gun"
   (spec 2)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Gosper's glider gun")     ; what the host shows
@@ -20,6 +17,9 @@
   (author "Spreadsheet Company")    ; who wrote it
   (license "0BSD")                  ; the header's twin: copy this file to start a cartridge of your own
   (notes "Gosper's glider gun, found by Bill Gosper's group at MIT in 1970, the first pattern known to grow without bound: a glider every thirty frames, south-east across the plane until the stream meets the border at frame 741. Every cell is Life's rule; the first frame reads the Seed sheet. Edit the Seed's rows and load again to fire another pattern."))
+
+; The library whose macros this source calls: sheets, palette, picture and interior.
+(include "../common.vla")
 
 ; The sheets, in tab order: the Screen the rule draws on, the Palette it draws with, and
 ; the Seed the first frame reads.

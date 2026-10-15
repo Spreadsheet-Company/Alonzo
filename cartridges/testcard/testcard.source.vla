@@ -10,10 +10,6 @@
 ; magenta; anything else is 255, magenta too; an empty cell, and a formula before its
 ; first value, is 0.
 
-; The library whose macros this source calls: sheets; cga-palette, a palette with a name;
-; on and cells, each naming a sheet once over a run of its rows; and the verb count.
-(include "../common.vla")
-
 (cartridge "testcard"
   (spec 2)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Test card")               ; what the host shows
@@ -23,6 +19,10 @@
   (author "Spreadsheet Company")    ; who wrote it
   (license "0BSD")                  ; the header's twin
   (notes "The plane's test card: the sixteen colors as bars, then every kind of value a Screen cell can hold, then formulas that compute each kind, on a Screen 56 columns wide that the Camera pans one column a frame. Anything that is not a whole number from 0 to 15 is magenta, so a wrong value is seen."))
+
+; The library whose macros this source calls: sheets; cga-palette, a palette with a name;
+; on and cells, each naming a sheet once over a run of its rows; and the verb count.
+(include "../common.vla")
 
 ; The sheets, in tab order: the Screen, the Palette it draws with, the Camera that places it.
 (sheets "Screen" "Palette" "Camera")

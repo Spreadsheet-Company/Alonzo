@@ -65,10 +65,6 @@
 ;      Each reference is a reader marked at every change, in a branch no cell takes as
 ;      well: Side reading the last frame beside Stay made every board two thirds dearer.
 
-; The library whose macros this source calls: sheets, palette, labels and headers; cells
-; and formulas, each naming a sheet once over a run of its rows; and the verb first-frame.
-(include "../common.vla")
-
 (cartridge "sand"
   (spec 3)                          ; the version of docs/SPEC.md this cartridge is written to
   (title "Sand")                    ; what the host shows
@@ -78,6 +74,10 @@
   (author "Spreadsheet Company")    ; who wrote it
   (license "0BSD")                  ; the header's twin: copy this file to start a cartridge of your own
   (notes "A falling-sand toy. Paint with the left button, erase with the right, and turn the wheel to size the brush; press 1 for sand, 3 for water, 2 for wall and 0 for empty. The floor shows what the left button paints. It opens raining sand and water from its top third, Life's first frame as grains."))
+
+; The library whose macros this source calls: sheets, palette, labels and headers; cells
+; and formulas, each naming a sheet once over a run of its rows; and the verb first-frame.
+(include "../common.vla")
 
 ; The sheets, in tab order: the Screen the rule draws on, and Stay and Side beside it;
 ; Parity, the direction of each row; the brush, its Gate and the material in State; the

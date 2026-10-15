@@ -22,6 +22,16 @@
 ; A formula before its first value shows its text, so frame 0 shows the Screen's
 ; formulas as written.
 
+(cartridge "gridcard"
+  (spec 3)                          ; the version of docs/SPEC.md this cartridge is written to
+  (title "Grid card")               ; what the host shows
+  (rate 30)                         ; frames a second
+  (screen grid 80 50)               ; the window: 80 cells wide and 50 high, section 10's limit, placed by the Camera
+  (seed 1)                          ; the dice, which nothing here reads
+  (author "Spreadsheet Company")    ; who wrote it
+  (license "0BSD")                  ; the header's twin
+  (notes "The grid card: every kind of value, format and look a grid cell can hold, drawn by the viewport, on a Screen 96 columns wide under a Camera that an edit moves. The sixteen colors are numbers drawn through their looks, a formula's value changes its fill every frame, and a stripe moves below."))
+
 ; The library whose macros this source calls: on, cells and formulas, each naming a
 ; sheet once over a run of its rows; looks, a look map from a list of fills; and camera,
 ; a still Camera.
@@ -50,16 +60,6 @@
     "FF55FF"                        ; 13, light magenta
     "FFFF55"                        ; 14, yellow
     "FFFFFF"))                      ; 15, white
-
-(cartridge "gridcard"
-  (spec 3)                          ; the version of docs/SPEC.md this cartridge is written to
-  (title "Grid card")               ; what the host shows
-  (rate 30)                         ; frames a second
-  (screen grid 80 50)               ; the window: 80 cells wide and 50 high, section 10's limit, placed by the Camera
-  (seed 1)                          ; the dice, which nothing here reads
-  (author "Spreadsheet Company")    ; who wrote it
-  (license "0BSD")                  ; the header's twin
-  (notes "The grid card: every kind of value, format and look a grid cell can hold, drawn by the viewport, on a Screen 96 columns wide under a Camera that an edit moves. The sixteen colors are numbers drawn through their looks, a formula's value changes its fill every frame, and a stripe moves below."))
 
 ; The sheets, in tab order: the Screen, and the Camera that places its window.
 (sheet "Screen" visible)
