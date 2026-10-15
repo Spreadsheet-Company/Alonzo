@@ -2,7 +2,9 @@
 
 **Opened plainly, the page is the player: the window the game's, the Screen
 filling it under a slim bar, the source, the replay, the log and the sheets
-in a drawer (`ENGINE.14`). Its other modes are the bench, the oracles the
+in a drawer (`ENGINE.14`). It opens on an empty sheet, its cartridges in the
+picker after it, and it names no game's file, so a game vendors it unchanged
+and builds a page of its own (`ENGINE.15`). Its other modes are the bench, the oracles the
 checks drive and the instruments the floors read. The host shim, `host.js`, runs a cartridge on the loop of `docs/SPEC.md`
 section 5 over the engine's module, every input a cell it writes and every
 effect a cell it reads, and blits the Screen as a plane of color indices.
@@ -215,7 +217,13 @@ powershell -File tools\build_web.ps1
 writes `web/index.html`; open it from disk. Build the engine first,
 `cargo build --release -p alonzo --target wasm32-unknown-unknown`, and the
 builder puts it in the page. Opened plainly, the page is the player
-(`ENGINE.14`): the window is the game's, Life filling it as the language
+(`ENGINE.14`), and it opens on an empty sheet (`ENGINE.15`): a grid of
+eighty columns by fifty rows at rate zero, nothing running, the same in
+every page whatever cartridges it holds. Open the Drawer and press Write:
+its edit row holds `(formula "Screen" "A1" "=6*7")`, and A1 reads 42 at
+once, since at rate zero an edit is a step. Pick Life in the bar, the
+picker holding the page's cartridges after the empty sheet, each by its
+manifest's title: the window is the game's, Life filling it as the language
 computes it, at its rate of thirty frames a second, under a slim bar with
 the cartridge, Run, Pause, Sound, Load, the frame and the latest sentence;
 without the engine the player runs against the fake module and says so.
@@ -585,13 +593,33 @@ viewport, not an Excel clone.
   (gitignored). `tools/build_web.ps1` fills `{{VIEWPORT_JS}}`,
   `{{FAKE_JS}}` and `{{HOST_JS}}` once each, `{{ALONZO_WASM}}` with the
   engine's module as base64 when it is built and with nothing when it is
-  not, each `{{CARTRIDGE:name}}` with `cartridges/<name>/<name>.vla`, each
-  `{{SOURCE:name}}` with its source, `cartridges/<name>/<name>.source.vla`,
-  each `{{LIBRARY:name}}` with a library the sources include,
-  `cartridges/<name>.vla`, and each `{{FIXTURE:name}}` with
-  `fixtures/<name>.vla`, each family held to its folder both ways; `-Template`, `-ViewportJs`, `-FakeJs`, `-HostJs`,
+  not, and `{{BLOCKS}}` with every text the page holds, a block each
+  (`ENGINE.15`, below): the page's name, each cartridge in the order the
+  builder names, `cartridges/<name>/<name>.vla`, with its source, replay and
+  golden beside it, each library, `cartridges/<name>.vla`, and each fixture,
+  `fixtures/<name>.vla`, the order held to the folder both ways; `-Template`, `-ViewportJs`, `-FakeJs`, `-HostJs`,
   `-FixturesDir`, `-CartridgesDir`, `-Wasm`, `-NoWasm` and `-Out` exist for a
   check that builds a page from mutated sources, never for the real page.
+- **A game's page** (`ENGINE.15`): the template names no game's file, so a
+  game vendors the template and the three scripts unchanged and fills them
+  with a builder of its own. Its builder fills the same five places, the
+  three scripts, the module and `{{BLOCKS}}`, writing each text as
+  `<script type="text/plain" id="KIND-NAME" data-path="PATH">TEXT</script>`,
+  the path the file's from its repository's root, and refusing a text that
+  holds `</script`:
+  - `page-name`, the name the bar and the title show (Alonzo here);
+  - `cartridge-<name>`, with `data-file`, the file name a load passes on,
+    the picker offering the cartridges in the order their blocks stand;
+  - `source-<name>`, its source, and `replay-<name>` with `golden-<name>`
+    when it has them;
+  - `library-<name>`, each library a source includes, at the path the
+    source's includes resolve to, so that Build in the drawer runs the pass
+    over them as the command line does.
+
+  The page opens on the empty sheet whatever it holds and offers its
+  cartridges in the picker, each by its manifest's title, its notes in the
+  drawer. The bench's modes name Alonzo's own cartridges and fixtures, so a
+  game's page says what its bench lacks and runs none of them.
 - **A change to the host** is held by the loop's oracle, whose expectations
   are the page's own and never the host's, under
   `tools/check_host_loop.ps1`, and the blit by the owner's measurement under

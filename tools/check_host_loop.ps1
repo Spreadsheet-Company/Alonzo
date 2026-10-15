@@ -130,7 +130,12 @@ moved meanwhile, and on the Screen the wheel counted over a cell of the
 window and not over the column header, the tab strip or a scrollbar, nor the
 pointer over the tab strip; over the double, State, a grid of 20 by 40 taller
 than the stage's box; over the module, the grid card's Clock, the frame's
-number drawn at every frame). It
+number drawn at every frame); and since ENGINE.15 empty (the page any game's:
+the picker's entries the empty sheet the page opens on and then the page's
+cartridge blocks in the builder's order, each by its manifest's title, each
+library held at its block's path, and the empty sheet loaded as a grid of 80
+by 50 at rate zero on the double and on the module, its Screen holding no
+cell). It
 prints one line a case into
 <pre id="loop"> and a last line, 'loop ok cases=N', once the last case has
 answered. This check runs the
@@ -155,7 +160,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds forty mutant pages through tools/build_web.ps1 and runs
+-Control builds forty-two mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -232,7 +237,10 @@ frame, so it is drawn stale; one whose Screen tab keeps the person's scroll,
 so the Camera's window is not given back; one that takes the wheel over the
 viewport's whole root, the tabs, headers and scrollbars, as ENGINE.8 built it;
 and a viewport whose hit test counts the tab strip as cells, so the pointer
-over it is written as a cell. The real page must pass first.
+over it is written as a cell; and since ENGINE.15 two more, over the double,
+each failing the empty case by name: a template whose empty sheet steps at
+rate 30, and one whose picker offers the page's cartridges in reverse. The
+real page must pass first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A headless run's clock is
@@ -386,6 +394,12 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # the engine's module of 749,162 bytes, the grid card: 12 frames, its Clock
 # held 5 times and its frame's number drawn 4, the Screen 8, 5 wheels. The
 # texts' floors hold a margin below Chrome 155's counts on Windows.
+# 2026-10-14, ENGINE.15: twenty cases, the nineteen's counts unchanged. empty,
+# the page any game's: the picker's entries the empty sheet and then the
+# page's 8 cartridge blocks in the builder's order, all 8 titled from their
+# manifests, the 1 library held at its block's path, and the empty sheet
+# loaded as a grid of 80 by 50 at rate zero on the double and, over the
+# module, its Screen holding no cell (filled, which must be 0).
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
@@ -408,10 +422,11 @@ $floors = @(
     @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 1913; fakeUnvalued = 244; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; pointer = 1; key = 1; edited = 1; waits = 1 };
                             WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 11000; wraps = 20; fills = 10677; looks = 10311; styles = 40; columns = 326; unvalued = 350; hidden = 20; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 70 } },
     @{ Case = 'tabs';     Min = @{ fakeFrames = 14; fakeShown = 1; fakeHeld = 8; fakeScrolled = 1; fakeBack = 1; fakeScreen = 9; fakePointer = 1; fakeRouted = 1; fakeKey = 1; fakeStrip = 1; fakeWheel = 4; fakeTexts = 4600 };
-                            WithModule = @{ frames = 12; shown = 1; held = 5; back = 1; screen = 8; pointer = 1; routed = 1; strip = 1; wheel = 4; clock = 4; texts = 3400 } }
+                            WithModule = @{ frames = 12; shown = 1; held = 5; back = 1; screen = 8; pointer = 1; routed = 1; strip = 1; wheel = 4; clock = 4; texts = 3400 } },
+    @{ Case = 'empty';    Min = @{ cartridges = 8; ordered = 8; titled = 8; libraries = 1; double = 1 }; WithModule = @{ engine = 1 } }
 )
-$zero = @('live', 'misfrees')
-$expectedCases = 19
+$zero = @('live', 'misfrees', 'filled')
+$expectedCases = 20
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
 
@@ -941,9 +956,35 @@ if ($Control) {
             if (-not ($tApplied -and $tFailed -ge 1)) { $tabsOk = $false }
         }
         $tabsNote = $tabsNotes -join '; '
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk) {
-            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'forty' } else { 'twenty-nine applicable' }) + ' mutants for its own reason, each proving it applied')
+        # mutants AO and AP (ENGINE.15), over the double and so with or without the engine's module: a template
+        # whose empty sheet steps at rate 30, and one whose picker offers the page's cartridges in reverse. The
+        # empty case must fail each by name.
+        $emptyMutants = @(
+            @{ L = 'ao'; Name = 'the empty sheet at rate 30'; Anchor = '(title "An empty sheet")\n  (rate 0)'; With = '(title "An empty sheet")\n  (rate 30)'
+               Want = 'case empty.*the empty sheet on the double steps at a rate of 30, where it waits at 0 for an edit' },
+            @{ L = 'ap'; Name = 'the picker in reverse'; Anchor = '    for (var i = 0; i < ORDER.length; i++) out.push({ value: ORDER[i], label: CARTRIDGES[ORDER[i]].title });'
+               With = '    for (var i = ORDER.length - 1; i >= 0; i--) out.push({ value: ORDER[i], label: CARTRIDGES[ORDER[i]].title });'
+               Want = 'case empty.*the picker''s entry 2 is kairos, and the page''s cartridge block 1 is life' }
+        )
+        $emptyNotes = New-Object System.Collections.Generic.List[string]
+        $emptyJudged = New-Object System.Collections.Generic.List[object]
+        $emptyOk = $true
+        foreach ($mu in $emptyMutants) {
+            if (([regex]::Matches($tpl, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in the template exactly once"; exit 1 }
+            $mutE2 = $tpl.Replace($mu.Anchor, $mu.With)
+            $e2Applied = $mutE2 -cne $tpl
+            $tplE2 = Join-Path $tmp ($mu.L + '.template.html'); [System.IO.File]::WriteAllText($tplE2, $mutE2, $utf8)
+            $rE2 = Invoke-Loop $browser (New-MutantPage $mu.L $tplE2 $hostJs) '1'
+            $e2Judge = if ($rE2.Text -ne '') { Test-Loop $rE2.Text '1' } else { @{ Problems = @($rE2.Reason) } }
+            $e2Failed = @($e2Judge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
+            $emptyJudged.Add(@{ Name = $mu.Name; Problems = @($e2Judge.Problems) })
+            $emptyNotes.Add(("{0} applied ({1}) and failed the empty case ({2})" -f $mu.Name, $e2Applied, $e2Failed))
+            if (-not ($e2Applied -and $e2Failed -ge 1)) { $emptyOk = $false }
+        }
+        $emptyNote = $emptyNotes -join '; '
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk) {
+            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'forty-two' } else { 'thirty-one applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -977,6 +1018,7 @@ if ($Control) {
         foreach ($gj in $gridJudged) { foreach ($p in @($gj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $gj.Name + ': ' + $p) } }
         if ($moduleReal -gt 0) { foreach ($p in @($jAI.Problems) | Select-Object -First 3) { Write-Output ('  the turn a column early: ' + $p) } }
         foreach ($tj in $tabsJudged) { foreach ($p in @($tj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $tj.Name + ': ' + $p) } }
+        foreach ($ej in $emptyJudged) { foreach ($p in @($ej.Problems) | Select-Object -First 3) { Write-Output ('  ' + $ej.Name + ': ' + $p) } }
         exit 1
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue

@@ -199,8 +199,8 @@
 <body>
 <div id="player" class="player page-only">
   <div class="player-bar" role="toolbar" aria-label="the player">
-    <span class="brand">Alonzo</span>
-    <select id="eng-pick" aria-label="the cartridge to load"><option value="life" selected>Life</option><option value="gun">Glider gun</option><option value="testcard">Test card</option><option value="inputcard">Input card</option><option value="soundcard">Sound card</option><option value="sand">Sand</option><option value="gridcard">Grid card</option><option value="kairos">Kairos</option></select>
+    <span class="brand" id="eng-brand">Alonzo</span>
+    <select id="eng-pick" aria-label="the cartridge to load"></select>
     <button type="button" id="eng-run">Run</button>
     <button type="button" id="eng-pause">Pause</button>
     <button type="button" id="eng-sound" aria-pressed="false">Sound on</button>
@@ -217,7 +217,7 @@
     </div>
     <aside id="drawer" class="drawer" hidden aria-label="the drawer">
       <p id="frame-line" class="frame-line"></p>
-      <p class="controls edit-row"><label for="eng-edit">An edit, one row:</label> <input type="text" id="eng-edit" spellcheck="false" value="(cell &quot;Palette&quot; &quot;B1&quot; &quot;#FF8800&quot;)"> <button type="button" id="eng-write">Write</button></p>
+      <p class="controls edit-row"><label for="eng-edit">An edit, one row:</label> <input type="text" id="eng-edit" spellcheck="false" value="(formula &quot;Screen&quot; &quot;A1&quot; &quot;=6*7&quot;)"> <button type="button" id="eng-write">Write</button></p>
       <p class="note">Click the Screen to give it the keys: the arrows, Z, X, A, S, Enter and Space are player 1's. In a grid, a key the Keys sheet does not bind moves the selection, and the wheel scrolls everywhere but over the cells of the Camera's window, where the game takes it.</p>
       <h2>The log <button type="button" id="eng-copy">Copy the log</button></h2>
       <ol id="eng-log" class="engine-log" aria-label="the host's sentences"></ol>
@@ -226,14 +226,17 @@
       <div id="eng-grid" class="grid sheets" aria-label="a sheet of the grid, live"></div>
       <details id="eng-texts">
         <summary>The source and the cartridge</summary>
-        <p>The source, <code id="eng-src-path">cartridges/life/life.source.vla</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one picture, a string a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load loads it: the pass loads nothing, and a cartridge running goes on running (docs/SPEC.md section 7.8). The fake module holds no pass, and says so.</p>
+        <p>The source, <code id="eng-src-path">none: an empty sheet has no source</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one picture, a string a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load loads it: the pass loads nothing, and a cartridge running goes on running (docs/SPEC.md section 7.8). The fake module holds no pass, and says so.</p>
         <p class="controls"><button type="button" id="eng-build">Build the cartridge</button></p>
         <textarea id="eng-src" rows="14" spellcheck="false" aria-label="the cartridge's source"></textarea>
-        <p>The cartridge, <code id="eng-cart-path">cartridges/life/life.vla</code>, the file the host loads, picked in the bar or pasted here: Life; Gosper's glider gun, a glider every thirty frames, its pattern the Seed sheet; the test card, every kind of value a Screen cell can hold under a Camera that pans a column a frame, magenta wherever a value is no color; the input card, every cell the host writes before a step, drawn; the sound card, the Audio sheet's four voices played, heard after Sound on; or Sand, a falling-sand toy that opens raining sand: paint with the left button, erase with the right, size the brush with the wheel, and press 1, 2 or 0 for sand, wall or empty; or the grid card, a grid cartridge drawn by the viewport, every kind of value, format and look a grid cell can hold, through a Camera that only an edit moves: write <code>(cell "Camera" "B2" 5)</code> and the window moves four columns right, the viewport scrolling with it; or Kairos, the stacking game, in Lovelace Lavender: stop each row of lights over the row beneath with Z, Space or a click, take the minor prize at level 11 with X or go on with Z, and read every level's speed and window in its Levels sheet, which an edit such as <code>(cell "Levels" "D3" 1)</code> rigs in the open. Paste another cartridge, edit this one, or build it again from its source, and press Load: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
+        <p>The cartridge, <code id="eng-cart-path">none: the empty sheet is the page's own</code>, the file the host loads, picked in the bar or pasted here.</p>
+        <p id="eng-cart-notes" class="note"></p>
+        <p>Paste another cartridge, edit this one, or build it again from its source, and press Load: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
         <textarea id="eng-cart" rows="14" spellcheck="false" aria-label="the cartridge, the rows a load takes"></textarea>
         <details>
-          <summary>The library the sources include, <code id="eng-lib-path">cartridges/common.vla</code></summary>
-          <p>Template macros, the author's and never the engine's: change one, or write one of your own in a source, and build again.</p>
+          <summary>The libraries the sources include</summary>
+          <p class="controls"><select id="eng-lib-pick" aria-label="the library shown in the box"></select> <code id="eng-lib-path"></code></p>
+          <p>Template macros, the author's and never the engine's: change one, or write one of your own in a source, and build again. Build hands the pass every library the page holds, as edited here.</p>
           <textarea id="eng-lib" rows="14" spellcheck="false" aria-label="the library the sources include"></textarea>
         </details>
       </details>
@@ -319,39 +322,11 @@
   <pre id="frames" class="result"></pre>
   <div id="stage"></div>
 </main>
-<script type="text/plain" id="cartridge-life">{{CARTRIDGE:life}}</script>
-<script type="text/plain" id="cartridge-gun">{{CARTRIDGE:gun}}</script>
-<script type="text/plain" id="cartridge-testcard">{{CARTRIDGE:testcard}}</script>
-<script type="text/plain" id="cartridge-inputcard">{{CARTRIDGE:inputcard}}</script>
-<script type="text/plain" id="cartridge-soundcard">{{CARTRIDGE:soundcard}}</script>
-<script type="text/plain" id="cartridge-sand">{{CARTRIDGE:sand}}</script>
-<script type="text/plain" id="cartridge-gridcard">{{CARTRIDGE:gridcard}}</script>
-<script type="text/plain" id="cartridge-kairos">{{CARTRIDGE:kairos}}</script>
-<script type="text/plain" id="source-life">{{SOURCE:life}}</script>
-<script type="text/plain" id="source-gun">{{SOURCE:gun}}</script>
-<script type="text/plain" id="source-testcard">{{SOURCE:testcard}}</script>
-<script type="text/plain" id="source-inputcard">{{SOURCE:inputcard}}</script>
-<script type="text/plain" id="source-soundcard">{{SOURCE:soundcard}}</script>
-<script type="text/plain" id="source-sand">{{SOURCE:sand}}</script>
-<script type="text/plain" id="source-gridcard">{{SOURCE:gridcard}}</script>
-<script type="text/plain" id="source-kairos">{{SOURCE:kairos}}</script>
-<script type="text/plain" id="replay-inputcard">{{REPLAY:inputcard}}</script>
-<script type="text/plain" id="golden-inputcard">{{GOLDEN:inputcard}}</script>
-<script type="text/plain" id="replay-soundcard">{{REPLAY:soundcard}}</script>
-<script type="text/plain" id="golden-soundcard">{{GOLDEN:soundcard}}</script>
-<script type="text/plain" id="replay-sand">{{REPLAY:sand}}</script>
-<script type="text/plain" id="golden-sand">{{GOLDEN:sand}}</script>
-<script type="text/plain" id="replay-kairos">{{REPLAY:kairos}}</script>
-<script type="text/plain" id="golden-kairos">{{GOLDEN:kairos}}</script>
-<script type="text/plain" id="library-common">{{LIBRARY:common}}</script>
+<!-- The page's texts, the blocks its builder writes here (ENGINE.15): a text block a file, its id the kind and the
+     name (cartridge-, source-, replay-, golden-, library-, fixture-, and page-name) and its data-path the file's path
+     from the repository's root, so that the page names no game's file and any game's builder fills it. -->
+{{BLOCKS}}
 <script type="text/plain" id="alonzo-wasm">{{ALONZO_WASM}}</script>
-<script type="text/plain" id="fixture-fixture_frazaro">{{FIXTURE:fixture_frazaro}}</script>
-<script type="text/plain" id="fixture-fixture_output">{{FIXTURE:fixture_output}}</script>
-<script type="text/plain" id="fixture-fixture_output_b2_c3">{{FIXTURE:fixture_output_b2_c3}}</script>
-<script type="text/plain" id="fixture-fixture_data">{{FIXTURE:fixture_data}}</script>
-<script type="text/plain" id="fixture-into_output">{{FIXTURE:into_output}}</script>
-<script type="text/plain" id="fixture-into_checks">{{FIXTURE:into_checks}}</script>
-<script type="text/plain" id="fixture-sparse_10000">{{FIXTURE:sparse_10000}}</script>
 <script>
 {{VIEWPORT_JS}}
 </script>
@@ -369,34 +344,78 @@
   var MODE = /[?&]oracle=1(&|$)/.test(QS) ? 'oracle' : /[?&]bench=1(&|$)/.test(QS) ? 'bench' : /[?&]loop=1(&|$)/.test(QS) ? 'loop' : /[?&]blit=1(&|$)/.test(QS) ? 'blit' : /[?&]frames=1(&|$)/.test(QS) ? 'frames' : /[?&]viewport=1(&|$)/.test(QS) ? 'viewport' : 'page';
   document.body.className = MODE;
   var VP = window.AlonzoViewport, HOST = window.AlonzoHost, FAKE = window.AlonzoFake;
-  var lifeText = (document.getElementById('cartridge-life') || {}).textContent || '';
-  var gunText = (document.getElementById('cartridge-gun') || {}).textContent || '';
-  var testcardText = (document.getElementById('cartridge-testcard') || {}).textContent || '';
-  var inputcardText = (document.getElementById('cartridge-inputcard') || {}).textContent || '';
-  var soundcardText = (document.getElementById('cartridge-soundcard') || {}).textContent || '';
-  var sandText = (document.getElementById('cartridge-sand') || {}).textContent || '';
   function embedded(id) { var el = document.getElementById(id); return el ? el.textContent : ''; }
-  // The cartridges built into the page, each its text and the file name a load passes on, and its
-  // source with the path the pass resolves its includes against, the command line's own (SPEC.3);
-  // and a cartridge's replay with its golden, when it has them (ENGINE.3's second slice).
-  var CARTRIDGES = {
-    life: { text: lifeText, file: 'life.vla', path: 'cartridges/life/life.vla', source: embedded('source-life'), sourcePath: 'cartridges/life/life.source.vla' },
-    gun: { text: gunText, file: 'gun.vla', path: 'cartridges/gun/gun.vla', source: embedded('source-gun'), sourcePath: 'cartridges/gun/gun.source.vla' },
-    testcard: { text: testcardText, file: 'testcard.vla', path: 'cartridges/testcard/testcard.vla', source: embedded('source-testcard'), sourcePath: 'cartridges/testcard/testcard.source.vla' },
-    inputcard: { text: inputcardText, file: 'inputcard.vla', path: 'cartridges/inputcard/inputcard.vla', source: embedded('source-inputcard'), sourcePath: 'cartridges/inputcard/inputcard.source.vla',
-                 replay: embedded('replay-inputcard'), replayPath: 'cartridges/inputcard/inputcard.replay.vla', golden: embedded('golden-inputcard') },
-    soundcard: { text: soundcardText, file: 'soundcard.vla', path: 'cartridges/soundcard/soundcard.vla', source: embedded('source-soundcard'), sourcePath: 'cartridges/soundcard/soundcard.source.vla',
-                 replay: embedded('replay-soundcard'), replayPath: 'cartridges/soundcard/soundcard.replay.vla', golden: embedded('golden-soundcard') },
-    sand: { text: sandText, file: 'sand.vla', path: 'cartridges/sand/sand.vla', source: embedded('source-sand'), sourcePath: 'cartridges/sand/sand.source.vla',
-            replay: embedded('replay-sand'), replayPath: 'cartridges/sand/sand.replay.vla', golden: embedded('golden-sand') },
-    gridcard: { text: embedded('cartridge-gridcard'), file: 'gridcard.vla', path: 'cartridges/gridcard/gridcard.vla', source: embedded('source-gridcard'), sourcePath: 'cartridges/gridcard/gridcard.source.vla' },
-    kairos: { text: embedded('cartridge-kairos'), file: 'kairos.vla', path: 'cartridges/kairos/kairos.vla', source: embedded('source-kairos'), sourcePath: 'cartridges/kairos/kairos.source.vla',
-              replay: embedded('replay-kairos'), replayPath: 'cartridges/kairos/kairos.replay.vla', golden: embedded('golden-kairos') }
-  };
-  // The libraries the sources include, each under the path an include resolves to.
-  var LIBRARIES = {
-    common: { text: embedded('library-common'), path: 'cartridges/common.vla' }
-  };
+  // The page's texts are the blocks its builder wrote (ENGINE.15): a text block a file, its id the kind and
+  // the name, its data-path the file's path from the repository's root, in the builder's order. The page
+  // names no game's file: Alonzo's builder writes its eight cartridges and a game's builder its own, and
+  // the page reads whatever it holds.
+  function blocksOf(kind) {
+    var out = [], els = document.getElementsByTagName('script');
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      if (el.type !== 'text/plain' || el.id.indexOf(kind + '-') !== 0) continue;
+      out.push({ name: el.id.slice(kind.length + 1), text: el.textContent, path: el.getAttribute('data-path') || '', file: el.getAttribute('data-file') || '' });
+    }
+    return out;
+  }
+  // A cartridge's manifest, read for the page alone: the title the picker shows and the notes the drawer
+  // shows, the cartridge's own words for what it is and how it is played.
+  function manifestOf(text) {
+    var out = { title: '', notes: '' };
+    try {
+      var forms = VP ? VP.readForms(text) : [];
+      for (var i = 0; i < forms.length; i++) {
+        var f = forms[i];
+        if (!Array.isArray(f) || !f[0] || f[0].sym !== 'cartridge') continue;
+        for (var j = 2; j < f.length; j++) {
+          var d = f[j];
+          if (Array.isArray(d) && d[0] && (d[0].sym === 'title' || d[0].sym === 'notes') && typeof d[1] === 'string') out[d[0].sym] = d[1];
+        }
+        break;
+      }
+    } catch (e) { /* a manifest the reader refuses names nothing; the load says why */ }
+    return out;
+  }
+  // The cartridges built into the page, in the builder's order, each its text and the file name a load
+  // passes on, its title and notes, and its source with the path the pass resolves its includes against,
+  // the command line's own (SPEC.3), and its replay with its golden when it has them (ENGINE.3's second slice).
+  var CARTRIDGES = {}, ORDER = [];
+  (function () {
+    var carts = blocksOf('cartridge');
+    for (var i = 0; i < carts.length; i++) {
+      var b = carts[i], m = manifestOf(b.text);
+      var c = { name: b.name, text: b.text, file: b.file || b.name + '.vla', path: b.path, title: m.title || b.name, notes: m.notes };
+      var src = document.getElementById('source-' + b.name), rp = document.getElementById('replay-' + b.name), gd = document.getElementById('golden-' + b.name);
+      if (src) { c.source = src.textContent; c.sourcePath = src.getAttribute('data-path') || ''; }
+      if (rp && gd) { c.replay = rp.textContent; c.replayPath = rp.getAttribute('data-path') || ''; c.golden = gd.textContent; }
+      CARTRIDGES[b.name] = c; ORDER.push(b.name);
+    }
+  })();
+  // The bench's own cartridges by name, read off the same blocks; empty in a page that holds none of them.
+  function cartText(name) { return CARTRIDGES[name] ? CARTRIDGES[name].text : ''; }
+  var lifeText = cartText('life'), gunText = cartText('gun'), testcardText = cartText('testcard');
+  var inputcardText = cartText('inputcard'), soundcardText = cartText('soundcard'), sandText = cartText('sand');
+  // The libraries the sources include, each under the path an include resolves to, in the builder's order.
+  var LIBRARIES = {}, LIBRARY_ORDER = [];
+  (function () {
+    var libs = blocksOf('library');
+    for (var i = 0; i < libs.length; i++) { LIBRARIES[libs[i].name] = { text: libs[i].text, path: libs[i].path }; LIBRARY_ORDER.push(libs[i].name); }
+  })();
+  // The page's name, its builder's: Alonzo for the engine's own page, a game's for its own.
+  var PAGE_NAME = embedded('page-name').trim() || 'Alonzo';
+  // The empty sheet every page opens on (ENGINE.15, the owner's word of 2026-10-14): a grid at rate zero whose
+  // Screen holds nothing, the page's own and no game's, so that every page starts alike and the picker holds
+  // the page's cartridges after it. Nothing runs on it; an edit steps it, so a formula written into it computes
+  // at once. Written here and never a file.
+  var EMPTY = { name: '', title: 'An empty sheet', file: 'empty.vla', path: '',
+                notes: 'An empty sheet, eighty columns by fifty rows at rate zero: nothing runs, and an edit steps it, so that (formula "Screen" "A1" "=6*7"), written in the edit row at the top of this drawer, computes at once. Pick a cartridge in the bar to load it.',
+                text: '(cartridge "empty"\n  (spec 3)\n  (title "An empty sheet")\n  (rate 0)\n  (screen grid 80 50)\n  (seed 1))\n(sheet "Screen" visible)\n' };
+  // The picker's entries: the empty sheet first, then the page's cartridges in the builder's order, each by its title.
+  function pickerEntries() {
+    var out = [{ value: '', label: EMPTY.title }];
+    for (var i = 0; i < ORDER.length; i++) out.push({ value: ORDER[i], label: CARTRIDGES[ORDER[i]].title });
+    return out;
+  }
   // What the pass is handed beside a source: every library the page holds, [path, text], the
   // texts given in place of the embedded ones (a person's edits).
   function libraryPairs(texts) {
@@ -429,23 +448,9 @@
   }
   function thousands(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
   function fmt1(x) { return (Math.round(x * 10) / 10).toFixed(1); }
-  var built = true;
-  for (var fx in FIXTURES) {
-    if (!Object.prototype.hasOwnProperty.call(FIXTURES, fx)) continue;
-    var t = fixtureText(fx);
-    if (!t.trim() || t.indexOf('{{FIXTURE') >= 0) built = false;
-  }
-  if (!VP || !HOST || !FAKE) { built = false; }
-  for (var cn in CARTRIDGES) {
-    if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn)) continue;
-    if (!CARTRIDGES[cn].text.trim() || CARTRIDGES[cn].text.indexOf('{{CARTRIDGE') >= 0) built = false;
-    if (CARTRIDGES[cn].sourcePath && (!CARTRIDGES[cn].source.trim() || CARTRIDGES[cn].source.indexOf('{{SOURCE') >= 0)) built = false;
-    if (CARTRIDGES[cn].replayPath && (!CARTRIDGES[cn].replay.trim() || CARTRIDGES[cn].replay.indexOf('{{REPLAY') >= 0 || !CARTRIDGES[cn].golden.trim() || CARTRIDGES[cn].golden.indexOf('{{GOLDEN') >= 0)) built = false;
-  }
-  for (var lb in LIBRARIES) {
-    if (!Object.prototype.hasOwnProperty.call(LIBRARIES, lb)) continue;
-    if (!LIBRARIES[lb].text.trim() || LIBRARIES[lb].text.indexOf('{{LIBRARY') >= 0) built = false;
-  }
+  // Built: the three scripts inlined, which a template opened as it stands lacks, its places not being code.
+  // A page holding no cartridge at all is built still, and opens on the empty sheet (ENGINE.15).
+  var built = !!(VP && HOST && FAKE);
   var aboutEl = document.getElementById('about');
   if (!built) {
     aboutEl.textContent = 'This page was not built: run tools/build_web.ps1 to fill it.';
@@ -455,7 +460,7 @@
   }
   var engineB64 = builtModule().replace(/\s+/g, '');
   var engineBytes = engineB64 ? engineB64.length / 4 * 3 - (/==$/.test(engineB64) ? 2 : /=$/.test(engineB64) ? 1 : 0) : 0;
-  aboutEl.textContent = 'The host, version ' + HOST.version + (engineBytes ? ', over the engine\'s module built into this page, ' + thousands(engineBytes) + ' bytes, with the fake module, version ' + FAKE.version + ', for its oracle' : ', over the fake module, version ' + FAKE.version + ', no engine module being built into this page') + '; and the viewport, version ' + VP.version + ', over seven records the door printed: the six view goldens of Frazaro\'s scripts/view/ and the 10,000-line program\'s, ' + thousands(fixtureText('sparse_10000').split('\n').length - 1) + ' lines. Device pixel ratio ' + (window.devicePixelRatio || 1) + '.';
+  aboutEl.textContent = 'The host, version ' + HOST.version + (engineBytes ? ', over the engine\'s module built into this page, ' + thousands(engineBytes) + ' bytes, with the fake module, version ' + FAKE.version + ', for its oracle' : ', over the fake module, version ' + FAKE.version + ', no engine module being built into this page') + '; and the viewport, version ' + VP.version + (fixtureText('sparse_10000') ? ', over seven records the door printed: the six view goldens of Frazaro\'s scripts/view/ and the 10,000-line program\'s, ' + thousands(fixtureText('sparse_10000').split('\n').length - 1) + ' lines' : '') + '. Device pixel ratio ' + (window.devicePixelRatio || 1) + '.';
   document.getElementById('player-about').textContent = aboutEl.textContent;
 
   // ---- the HiDPI panel: the same text in a DOM cell and in a canvas cell, drawn as the viewport draws ----
@@ -506,7 +511,42 @@
     var pathEl = document.getElementById('eng-cart-path'), srcEl = document.getElementById('eng-src'), srcPathEl = document.getElementById('eng-src-path');
     var libEl = document.getElementById('eng-lib'), textsEl = document.getElementById('eng-texts');
     var replayEl = document.getElementById('eng-replay'), replayBoxEl = document.getElementById('eng-replay-box'), replayPathEl = document.getElementById('eng-replay-path');
-    cartEl.value = lifeText; srcEl.value = CARTRIDGES.life.source; libEl.value = LIBRARIES.common.text;
+    // The bar named for the page, and the picker's entries: the empty sheet first, which the page opens on
+    // whatever cartridges it holds, and each cartridge after it, loaded in its place when picked (ENGINE.15).
+    document.getElementById('eng-brand').textContent = PAGE_NAME;
+    document.title = PAGE_NAME;
+    var notesEl = document.getElementById('eng-cart-notes'), entries = pickerEntries();
+    for (var pe = 0; pe < entries.length; pe++) {
+      var opt = document.createElement('option');
+      opt.value = entries[pe].value; opt.textContent = entries[pe].label;
+      pickEl.appendChild(opt);
+    }
+    pickEl.value = '';
+    function current() { return CARTRIDGES[pickEl.value] || EMPTY; }
+    // The drawer's texts for what is picked: the cartridge, its source and their paths, and its notes, the
+    // cartridge's own words for what it is and how it is played.
+    function showTexts(c) {
+      cartEl.value = c.text; pathEl.textContent = c.path || 'none: the empty sheet is the page\'s own';
+      srcEl.value = c.source || ''; srcPathEl.textContent = c.sourcePath || (c === EMPTY ? 'none: an empty sheet has no source' : 'none: this cartridge is written by hand');
+      notesEl.textContent = c.notes || c.title;
+    }
+    showTexts(EMPTY);
+    // The libraries the sources include, one in the box at a time, a person's edits kept for each and handed
+    // to the pass with every other at Build.
+    var libPick = document.getElementById('eng-lib-pick'), libEdits = {}, libShown = '';
+    for (var lo = 0; lo < LIBRARY_ORDER.length; lo++) {
+      var lopt = document.createElement('option');
+      lopt.value = LIBRARY_ORDER[lo]; lopt.textContent = LIBRARIES[LIBRARY_ORDER[lo]].path;
+      libPick.appendChild(lopt);
+    }
+    function showLibrary(name) {
+      if (libShown) libEdits[libShown] = libEl.value;
+      libShown = name;
+      libEl.value = !name ? '' : libEdits[name] !== undefined ? libEdits[name] : LIBRARIES[name].text;
+    }
+    function libraryTexts() { if (libShown) libEdits[libShown] = libEl.value; return libEdits; }
+    libPick.addEventListener('change', function () { showLibrary(libPick.value); });
+    showLibrary(LIBRARY_ORDER.length ? LIBRARY_ORDER[0] : '');
     // A grid cartridge's Screen is drawn by the host's own viewport, in the plane's place (ENGINE.8), its tabs
     // answered by the host (ENGINE.14).
     var screenGrid = document.getElementById('eng-screen-grid');
@@ -589,7 +629,7 @@
       frameEl.textContent = 'Frame 0, the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + ': the cartridge as loaded, nothing computed until ' + (e.rate ? 'the first step.' : 'an edit steps it.');
     });
     function loadCartridge() {
-      var r = host.load(cartEl.value, (CARTRIDGES[pickEl.value] || CARTRIDGES.life).file);
+      var r = host.load(cartEl.value, current().file);
       if (r.ok) { host.start(); showViewer(); return; }
       // a refusal is red, as the viewport's own status line paints one (the owner's hand test, 2026-10-09)
       frameEl.className = 'frame-line refused';
@@ -600,9 +640,9 @@
     // cartridge's box, opened, to be read before Load loads it; nothing is loaded and nothing stopped,
     // so a cartridge running goes on running.
     function buildCartridge() {
-      var c = CARTRIDGES[pickEl.value] || CARTRIDGES.life;
-      if (!c.sourcePath) { statusEl.textContent = c.file + ' has no source: it is written by hand, and Load loads it as it stands.'; statusEl.className = 'status'; return; }
-      var r = host.expand(srcEl.value, c.sourcePath, libraryPairs({ common: libEl.value }));
+      var c = current();
+      if (!c.sourcePath) { statusEl.textContent = c === EMPTY ? 'The empty sheet has no source: it is the page\'s own, and Load loads it as it stands.' : c.file + ' has no source: it is written by hand, and Load loads it as it stands.'; statusEl.className = 'status'; return; }
+      var r = host.expand(srcEl.value, c.sourcePath, libraryPairs(libraryTexts()));
       if (!r.ok) return;
       cartEl.value = r.text;
       textsEl.open = true;
@@ -637,9 +677,8 @@
       replayPathEl.textContent = c.replayPath || 'none: this cartridge has no replay of its own';
     }
     pickEl.addEventListener('change', function () {
-      var c = CARTRIDGES[pickEl.value] || CARTRIDGES.life;
-      cartEl.value = c.text; pathEl.textContent = c.path;
-      srcEl.value = c.source || ''; srcPathEl.textContent = c.sourcePath || 'none: this cartridge is written by hand';
+      var c = current();
+      showTexts(c);
       offerReplay(c);
       if (host.m) loadCartridge();
     });
@@ -658,7 +697,7 @@
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
     }
     // The log as text on the clipboard, every line as it reads, its counts included.
-    offerReplay(CARTRIDGES.life);
+    offerReplay(EMPTY);
     document.getElementById('eng-copy').addEventListener('click', function () { copyText(this, 'Copy the log', host.log().join('\n'), 'the log'); });
     // The replay of the run since the last load, put in the box as well, where it can be read and played.
     document.getElementById('eng-replay-copy').addEventListener('click', function () {
@@ -710,6 +749,20 @@
 
   // ---- the player, opened plainly (ENGINE.14) ----
   if (MODE === 'page') { player(); return; }
+
+  // ---- the bench is Alonzo's own (ENGINE.15) ----
+  // Its modes run over Alonzo's eight cartridges, the common library and the seven records by name, so a page
+  // that does not hold them, a game's, says what its bench lacks and runs none of them.
+  var BENCH = ['life', 'gun', 'testcard', 'inputcard', 'soundcard', 'sand', 'gridcard', 'kairos'], lacks = [];
+  for (var bi = 0; bi < BENCH.length; bi++) if (!CARTRIDGES[BENCH[bi]]) lacks.push('the cartridge ' + BENCH[bi]);
+  if (!LIBRARIES.common) lacks.push('the library common');
+  for (var bf in FIXTURES) if (Object.prototype.hasOwnProperty.call(FIXTURES, bf) && !fixtureText(bf).trim()) lacks.push('the record ' + bf);
+  if (lacks.length) {
+    var benchWhy = 'the bench runs over Alonzo\'s own page, and this one lacks ' + lacks.join(', ');
+    if (MODE === 'oracle' || MODE === 'loop' || MODE === 'blit' || MODE === 'frames') document.getElementById(MODE).textContent = MODE + ' failed: ' + benchWhy;
+    aboutEl.textContent = 'The bench is not on this page: ' + benchWhy + '.';
+    return;
+  }
 
   // ---- the bench's viewport over the fixtures (?viewport=1; KERNEL.5's page, its own mode since ENGINE.14) ----
   if (MODE === 'viewport') {
@@ -2190,6 +2243,54 @@
                          fakeKey: kf.key, fakeStrip: kf.strip, fakeWheel: kf.wheel, fakeTexts: kf.texts, noBar: kf.noBar, module: module, frames: km.frames, shown: km.shown, held: km.held, back: km.back,
                          screen: km.screen, pointer: km.pointer, routed: km.routed, strip: km.strip, wheel: km.wheel, clock: km.clock, texts: km.texts, live: st.live, misfrees: st.misfrees }, problems: P };
   }
+  // ---- ENGINE.15: the page any game's, its texts read off its blocks, and opened on the empty sheet ----
+  // The picker's entries the empty sheet and then the page's cartridge blocks in the builder's order, each by
+  // the title its manifest gives; each library held at its block's path; and the empty sheet itself loaded on
+  // the double and on the engine's module, a grid of 80 by 50 at rate zero, its Screen holding no cell.
+  function caseEmpty() {
+    var P = [], k = { cartridges: 0, ordered: 0, titled: 0, libraries: 0, double: 0, engine: 0, filled: 0 };
+    var blocks = blocksOf('cartridge'), entries = pickerEntries();
+    k.cartridges = blocks.length;
+    if (!entries.length || entries[0].value !== '' || entries[0].label !== EMPTY.title) P.push('the picker opens on ' + (entries.length ? '"' + entries[0].label + '"' : 'nothing') + ', and the page on "' + EMPTY.title + '"');
+    if (entries.length !== blocks.length + 1) P.push('the picker holds ' + entries.length + ' entries, where the empty sheet and the page\'s ' + blocks.length + ' cartridge block(s) are ' + (blocks.length + 1));
+    for (var i = 0; i < blocks.length; i++) {
+      var e = entries[i + 1];
+      if (!e || e.value !== blocks[i].name) { P.push('the picker\'s entry ' + (i + 2) + ' is ' + (e ? e.value : 'missing') + ', and the page\'s cartridge block ' + (i + 1) + ' is ' + blocks[i].name); continue; }
+      k.ordered++;
+      var title = manifestOf(blocks[i].text).title;
+      if (title !== '' && e.label === title) k.titled++;
+      else P.push('the picker names ' + blocks[i].name + ' "' + e.label + '", and its manifest\'s title is "' + title + '"');
+    }
+    var libs = blocksOf('library');
+    for (var j = 0; j < libs.length; j++) {
+      var held = LIBRARIES[libs[j].name];
+      if (held && libs[j].path !== '' && held.path === libs[j].path && held.text === libs[j].text) k.libraries++;
+      else P.push('the library ' + libs[j].name + ' is not held at its block\'s path, "' + libs[j].path + '"');
+    }
+    function onEmpty(exports, who, view) {
+      var h = new HOST({ drive: 'manual' });
+      try {
+        var a = h.attach(exports);
+        if (!a.ok) { P.push(who + ' was refused: ' + a.sentence); return 0; }
+        var r = h.load(EMPTY.text, EMPTY.file);
+        if (!r.ok) { P.push('the empty sheet was refused on ' + who + ': ' + r.sentence); return 0; }
+        var c = h.cart, ok = 1;
+        if (c.mode !== 'grid' || c.w !== 80 || c.h !== 50) { P.push('the empty sheet on ' + who + ' is a ' + c.mode + ' of ' + c.w + ' by ' + c.h + ', where it is a grid of 80 by 50'); ok = 0; }
+        if (c.rate !== 0) { P.push('the empty sheet on ' + who + ' steps at a rate of ' + c.rate + ', where it waits at 0 for an edit'); ok = 0; }
+        if (view) {
+          var rec = h.viewRecord('Screen', 'A1:CB50');
+          if (rec === null) { var said = h.sentences(); P.push('the empty sheet\'s Screen on ' + who + ' could not be viewed: ' + (said.length ? said[said.length - 1].text : 'the host said nothing')); return 0; }
+          k.filled = Object.keys(gqRead(rec).cells).length;
+          if (k.filled) { P.push('the empty sheet\'s Screen on ' + who + ' holds ' + k.filled + ' cell(s), where it holds none'); ok = 0; }
+        }
+        return ok;
+      } finally { h.destroy(); }
+    }
+    k.double = onEmpty(FAKE.create({}).exports, 'the double', false);
+    var wasm = builtModule();
+    if (wasm) k.engine = onEmpty(HOST.instantiateSync(bytesOfBase64(wasm)), 'the engine\'s module', true);
+    return { counters: k, problems: P };
+  }
   // ---- SPEC.3's second slice: the pass in the page is the command line's ----
   // The first line two texts differ at, both shown without their line ends, for a failure's words;
   // a line that differs in its end alone is named so.
@@ -3302,7 +3403,7 @@
     out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' snap=' + R.snapMs + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
-                 ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs]];
+                 ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty]];
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); if (!res.problems.length) ok++; }
     // A case answers its result, or a promise of it (sound, which waits on its render): the cases run in
