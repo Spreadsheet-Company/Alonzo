@@ -514,7 +514,7 @@ mod tests {
         let v = take(unsafe { alonzo_version_text(&mut len) }, len);
         assert_eq!(v.status, 0);
         assert!(
-            v.text().starts_with("alonzo 0.1.2 (vla-lang "),
+            v.text().starts_with("alonzo 0.1.3 (vla-lang "),
             "{}",
             v.text()
         );

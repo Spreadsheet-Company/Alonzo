@@ -2,6 +2,42 @@
 
 *Newest first, as Frazaro keeps its `docs/RELEASES.md`. A release's section is written before its tag, never after: `REPO.4` began this file with the first, `0.1.0`. Each section says what the release holds and what it measures, names the items in it by their IDs (`ROADMAP.md` for the open, `REARVIEW.md` for the closed), says what it does not hold, and ends with a short* Known open security items *block that points to `SECURITY.md` rather than copying it.*
 
+## 0.1.3
+
+The grid drawn from the values view: a grid cartridge's Screen is drawn at every frame from the language's `values` projection, the record without its formulas' texts, so that a full window of formulas is drawn well inside a 60 Hz frame (`ENGINE.8`'s second slice). The engine crate's code is 0.1.2's and still pinned to `vla-lang` 0.9.3 exactly; what changed is the page, served at https://spreadsheet-company.github.io/Alonzo/. In a crate's manifest, `alonzo = "=0.1.3"` and, for the types its calls answer, `vla-lang = "=0.9.3"`.
+
+### What it holds
+
+- **The grid drawn from the values view.** Every frame after the first draws a grid cartridge's Screen from `values`, the grid record less its `formula` rows (Frazaro's `KERNEL.37`), so no formula's text is moved at a frame. Frame 0, before anything is computed, is drawn from the full record, its formulas shown as their texts until their first values. `redraw()` draws a grid cartridge too.
+- **The viewport reads a values record.** A `value` row with no `formula` row before it is a formula known by its value, its text not in the record; a `style` row alone is a formula with no value yet, drawn empty in its style.
+- **The double answers `values`**, as the module does.
+
+### What it measures
+
+The blit floors' third baseline, the owner's `?blit=1` in Chrome 155 in fullscreen on a 2560 by 1440 screen at a pixel ratio of 1.5 (`tools/check_blit_floors.ps1`):
+
+- **The grid card's 80 by 50 window, drawn again from the values view** on 3,840 by 2,117 device pixels: a frame at 5.2 ms at the median, 6.1 at the 95th percentile and 6.7 at most, the module's view 1.1 ms of it and the viewport's reading and drawing 3.1, against bars of 8.3 and 16.7, half and one interval of a 60 Hz display.
+- **The three plane cases** stay under their bars and are slower than the second baseline of 2026-10-09: the double's frame 1.6 ms at the 95th percentile where it was 1.1, the engine's 0.8 where it was 0.5. Not measured apart: a newer Chrome, and a host frame that has grown since; recorded as a finding in `REARVIEW.md`.
+- The frame floors are 0.1.0's tenth baseline: neither the engine nor the language changed.
+
+### The items in it
+
+- **Closed**, each with its line in `REARVIEW.md`'s ledger: `ENGINE.8`, the host drawing a grid-mode cartridge, by its second slice; and `REPO.4`, the first release, on the owner's run of the deployed page.
+
+### For a game that carries the page
+
+Take the template and the three scripts again: `host.js` asks the module for `values`, `viewport.js` reads it, and `fake.js` answers it. A game's builder and blocks are 0.1.2's. In the host's own viewport a cell of the Screen no longer carries its formula's text, since the values record holds none (`cell()` answers `formula: ''`); a page that wants the text views that cell's `grid` record.
+
+### Not in this release
+
+- The bench over a game's own cartridges: the bench's modes run over Alonzo's eight cartridges by name, and on a game's page they say what they lack.
+- A frame not drawn again when its record is unchanged.
+- What 0.1.2 left out: a cartridge loaded from a file (`ENGINE.5`) or an address (`REPO.6`), the accelerators (`ENGINE.6`), edit and continue (`ENGINE.7`), proof of play (`ENGINE.10`), a scroll or a dropdown for dozens of tabs, and Excel's General format.
+
+### Known open security items
+
+**None.** The engine imports nothing and makes no outbound call, ever; the page fetches nothing, and a built page's blocks are held to the repository's files both ways. Both are checked on every push, by `tools/check_host_imports.ps1` and `tools/check_web_offline.ps1`. `SECURITY.md` is the policy and the place to report.
+
 ## 0.1.2
 
 The page any game's: the engine's page opens on an empty sheet, and its code names no game's file, so that a game carries the same page unchanged (`ENGINE.15`). The engine crate's code is 0.1.1's and still pinned to `vla-lang` 0.9.3 exactly; what changed is the page, served at https://spreadsheet-company.github.io/Alonzo/. In a crate's manifest, `alonzo = "=0.1.2"` and, for the types its calls answer, `vla-lang = "=0.9.3"`.
