@@ -2,6 +2,46 @@
 
 *Newest first, as Frazaro keeps its `docs/RELEASES.md`. A release's section is written before its tag, never after: `REPO.4` began this file with the first, `0.1.0`. Each section says what the release holds and what it measures, names the items in it by their IDs (`ROADMAP.md` for the open, `REARVIEW.md` for the closed), says what it does not hold, and ends with a short* Known open security items *block that points to `SECURITY.md` rather than copying it.*
 
+## 0.1.2
+
+The page any game's: the engine's page opens on an empty sheet, and its code names no game's file, so that a game carries the same page unchanged (`ENGINE.15`). The engine crate's code is 0.1.1's and still pinned to `vla-lang` 0.9.3 exactly; what changed is the page, served at https://spreadsheet-company.github.io/Alonzo/. In a crate's manifest, `alonzo = "=0.1.2"` and, for the types its calls answer, `vla-lang = "=0.9.3"`.
+
+### What it holds
+
+- **An empty sheet first.** Opened plainly, the player starts on an empty sheet, a grid of 80 columns by 50 rows at rate zero, the same whatever cartridges a page holds. Nothing runs on it, and an edit is a step: the drawer's edit row holds `(formula "Screen" "A1" "=6*7")`, and A1 reads 42 once it is written.
+- **The picker.** The bar's picker offers the empty sheet and then the page's cartridges, each by its manifest's title, and loads a cartridge when it is picked. Alonzo's page offers its eight, the test cards among them for now.
+- **The cartridge's own words.** The drawer shows the picked cartridge's notes from its manifest, its own account of what it is and how it is played. A picker in the drawer chooses which library the box shows, and Build hands the pass every library, as edited.
+- **A page for any game.** The template names no game's file: its builder writes every text the page holds as a block that names its kind, its name and its path. A game copies the template and the three scripts unchanged and fills them with a builder of its own: its cartridges, its libraries, and its name in the bar and the title. Buffet, the first game native to Alonzo, is built to take the page this way.
+
+### What it measures
+
+Nothing new. Neither the engine nor the language changed, so the frame floors are 0.1.0's tenth baseline, and the module is 0.1.1's but for its version text. The page's loop oracle holds twenty cases, the twentieth the empty sheet and the picker.
+
+### The items in it
+
+- **Closed:** `ENGINE.15`, with its line in `REARVIEW.md`'s ledger.
+
+### For a game that carries the page
+
+A game's builder fills the template's five places: the three scripts, the module and the blocks. Each block is `<script type="text/plain" id="KIND-NAME" data-path="PATH">`, the path the file's from the repository's root, and `web/README.md`, "A game's page", is the full account:
+
+- `page-name`: the name in the bar and the title.
+- `cartridge-<name>`, with `data-file`, the file name a load passes on; the picker offers the cartridges in the order their blocks stand.
+- `source-<name>`, its source; `replay-<name>` and `golden-<name>`, together, when it has them.
+- `library-<name>`, at the path the source's includes resolve to, so that Build in the drawer runs the pass as the command line does.
+
+The bench, `?loop=1`, `?oracle=1` and the other modes, runs over Alonzo's own cartridges and records, and on a game's page says what it lacks.
+
+### Not in this release
+
+- A cartridge loaded from a file (`ENGINE.5`) or from an address (`REPO.6`, the network's question under `SD-13`). The picker's list is open to them.
+- The test cartridges hidden from the picker.
+- What 0.1.1 left out: the accelerators (`ENGINE.6`), edit and continue (`ENGINE.7`), the grid drawn from the `values` projection (`ENGINE.8`'s second slice), proof of play (`ENGINE.10`), a scroll or a dropdown for dozens of tabs, and Excel's General format.
+
+### Known open security items
+
+**None.** The engine imports nothing and makes no outbound call, ever; the page fetches nothing, and a built page's blocks are held to the repository's files both ways. Both are checked on every push, by `tools/check_host_imports.ps1` and `tools/check_web_offline.ps1`. `SECURITY.md` is the policy and the place to report.
+
 ## 0.1.1
 
 The player: the engine's page, opened plainly, is a full-screen player, and a grid cartridge's sheet tabs, wheel and wide numbers behave as a spreadsheet's do (`ENGINE.14`). The engine crate's code is unchanged, its refusals aside, and it is still pinned to `vla-lang` 0.9.3 exactly; what changed is the page, served at https://spreadsheet-company.github.io/Alonzo/. In a crate's manifest, `alonzo = "=0.1.1"` and, for the types its calls answer, `vla-lang = "=0.9.3"`.
