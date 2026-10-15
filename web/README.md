@@ -112,7 +112,7 @@ sound the frame the grid holds again when it starts.
 | `keyDown(code, key)` / `keyUp(code)` / `releaseKeys()` | the keys held, by `KeyboardEvent.code` |
 | `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer's place as the window's cell under it, 0 when off the canvas, which the Input rows write as the Screen's own cell through the Camera; in grid mode, at a rate above zero, the viewport's cell under the pointer, 0 off the window's cells, and the wheel's notches with its scroll prevented, while a key the Keys sheet binds is taken before the viewport sees it (`ENGINE.8`). Since `ENGINE.14` the wheel is the game's over a cell of the Camera's window alone, where the pointer is, and scrolls over the tabs, the headers, the corner and the scrollbars; the buttons follow the pointer; while another sheet is shown the pointer is 0 and the wheel scrolls, and a bound key stays the game's |
 | `runFrameSync()` | one whole frame now, whatever the clock (the blit's instrument) |
-| `redraw()` | the last complete frame drawn again, nothing stepped: the Camera and the Palette read as they stand, the plane viewed through the window and blitted, no other effect read (the blit's instrument over the engine's module, where a step is the evaluator's); `false` without a plane cartridge |
+| `redraw()` | the last complete frame drawn again, nothing stepped: the Camera and the Palette read as they stand, the plane viewed through the window and blitted, or a grid's Screen drawn through the viewport (`ENGINE.8`'s second slice), no other effect read (the blit's instrument over the engine's module, where a step is the evaluator's); `false` without a cartridge |
 | `viewRecord(sheet, window)` | a sheet's record as the module prints it, for a page to show; `null` while a frame is in progress, or refused, the refusal said once |
 | `answer(viewport, event)` | a viewport's `sheet` event answered (`ENGINE.14`; `KERNEL.5`'s decision 6): a sheet the viewport holds no record of is viewed and shown, one it holds is viewed again at once, and in the host's own viewport the Screen's tab gives the Camera's window back. The host answers its own viewport's tabs itself; a page wires a viewer of its own with `viewer.on('sheet', function (e) { host.answer(viewer, e); })`. A tab clicked while a frame is in progress is answered at the frame's end, and the events the host's own calls raise go unanswered |
 | `showSheet(viewport, name)` | a sheet viewed through the region the viewport shows, from `A1` at the default cell's size for one it has not drawn, loaded and shown, then viewed again at once when the sheet's own widths put more in view: `true`, or `false` when refused |
@@ -122,7 +122,7 @@ sound the frame the grid holds again when it starts.
 | `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`); every sentence said, in order |
 | `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
 | `unload()` / `destroy()` | frees the handle and empties the canvas and the viewport; removes the listeners, and the viewport with them |
-| `vp` | grid mode's viewport (`ENGINE.8`), made at the first grid load over `options.grid` and kept across loads: a grid cartridge's Screen, its record through the Camera's window drawn at frame 0 and after every frame, each frame's record replacing the last with the person's scroll and selection kept, scrolled to the window's corner at a load and by the Camera's move after it; a page focuses its `scroller` to give it the keys. Its tabs are answered (`ENGINE.14`): while another sheet is shown, each frame views that sheet alone, through the region in view, and the Screen's tab gives the Camera's window back, scrolled to its corner as at a load |
+| `vp` | grid mode's viewport (`ENGINE.8`), made at the first grid load over `options.grid` and kept across loads: a grid cartridge's Screen, its record through the Camera's window drawn at frame 0 and after every frame, the grid record at frame 0, its formulas as their texts, and the values record after it, the grid record less its formula rows, so that no formula's text is moved at a frame (`ENGINE.8`'s second slice, Frazaro's `KERNEL.37`), each frame's record replacing the last with the person's scroll and selection kept, scrolled to the window's corner at a load and by the Camera's move after it; a page focuses its `scroller` to give it the keys. Its tabs are answered (`ENGINE.14`): while another sheet is shown, each frame views that sheet alone, through the region in view, and the Screen's tab gives the Camera's window back, scrolled to its corner as at a load |
 | `on(name, fn)` / `off(name, fn)` | `status` (`{ text, kind, repeat, refusal }`: a sentence, `kind` `event` or `progress`, `repeat` true when it only counted an earlier line, `refusal` true for a refusal or a failure; a notice of a value the host coerced, a Camera cell read as 1 or a color painted magenta, is not one), `frame` (`{ frame, window, scale, rate, replay }`, after a frame completes, `rate` the one the Clock now holds, `replay` the last frame of a replay playing or 0), `load` (`{ handle, title, mode, w, h, rate, window, scale }`, after frame 0 is drawn), `stop` (`{ frame }`, when a running loop stops, at Pause, a replay's end, a refused step, a load or an unload, so that a page draws what it shows of the grid at that frame) |
 
 `AlonzoHost.instantiate(bytes)` and `instantiateSync(bytes)` instantiate a
@@ -167,7 +167,8 @@ colors with one row swept by a byte past the palette, the CGA palette,
 TIC-80's keys, a Write sheet whose rows land or are refused on a rule of the
 frame, and a history cell that makes the end state's digest witness the
 order of every write; in grid mode its Screen's record draws the tiles through
-a look of the CGA's sixteen (`ENGINE.8`). Its memory grows by zero pages at every load and every
+a look of the CGA's sixteen (`ENGINE.8`), and it answers the values
+projection as its grid record less the formula rows. Its memory grows by zero pages at every load and every
 seventeenth allocation, detaching the buffer, and its allocator counts what
 is live and what is freed wrongly. `options.abi`, `options.omit` and
 `options.growEvery` make the doubles the loop's oracle refuses or strains.
@@ -189,7 +190,10 @@ the record declares, the fills and number formats of its formats, each
 cell's text where the record puts it, the gridlines when the record says so.
 It computes nothing: a value is shown as the reader spells it, a formula
 shows its text until the value row lands (`KERNEL.7`) and its value after it,
-its text kept for the bar, a `look` row maps a value to the format every cell
+its text kept for the bar; in a values record, which prints no formula row, a
+value row is a formula known by its value, its text not in the record, and a
+style or sentence row alone a formula with no value yet, drawn empty in its
+style (`KERNEL.37`, read since `ENGINE.8`'s second slice); a `look` row maps a value to the format every cell
 holding it draws with, and a `row` row gives a row its height in points or
 hides it (`docs/SPEC.md` decision 19, read since `ENGINE.8`); an unknown row is
 counted, never refused. What the viewport owns is the state no program sees:
@@ -423,7 +427,10 @@ page shows opened plainly and what Pages deploys.
   visible cell's text, fill, alignment and place both ways, a formula's value
   once it has one and its text before, a look's fill, a style's and a
   column's each read back as a pixel, the selection kept, and the viewport
-  emptied at the unload; over the double, a grid of 20 by 12 drawn through
+  emptied at the unload; the record the host drew the grid record at frame 0
+  and the values record after it, held byte for byte to the grid record less
+  its formula rows, and a values record written in the page read whole by a
+  viewport of its own; over the double, a grid of 20 by 12 drawn through
   its looks, the pointer and a bound key read back from the Input sheet, and
   an edit made while the loop is paused said to wait for the frame Run
   brings; over the engine's module the grid card, twenty-four frames under a
@@ -445,9 +452,12 @@ page shows opened plainly and what Pages deploys.
   120 times at the scale that fits the screen and 120 at a scale of 1, and,
   when the page holds the engine's module, the same path over it (`engine`,
   `ENGINE.2`): Life stepped once to its soup, then that frame redrawn 120
-  times at the scale that fits, the step left out as the evaluator's; each
+  times at the scale that fits, the step left out as the evaluator's; and
+  the grid card the same way (`grid`, `ENGINE.8`'s second slice), its frame
+  drawn again 120 times through the viewport from the values view in a box of
+  the screen's size; each
   frame's main-thread cost, printed as the table and the baseline lines for
-  `tools/check_blit_floors.ps1`, which holds the three cases from one run.
+  `tools/check_blit_floors.ps1`, which holds the four cases from one run.
   Run it in Chrome in fullscreen.
 - `index.html?oracle=1` runs the render oracle and prints one line a case
   into `<pre id="oracle">`, which the check reads under a headless browser;

@@ -160,7 +160,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds forty-two mutant pages through tools/build_web.ps1 and runs
+-Control builds forty-five mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -219,8 +219,8 @@ and since CART.2's second slice one more, when the real page holds the
 module: a template whose sand paints a brush without its rim, < where the
 cartridge's Gate says <=, which the replay case must fail by name on Sand's
 committed replay; and since ENGINE.8 six more, each failing the grid case
-by name: a viewport that reads no value row, so a formula's text is drawn
-where its value is due; one that matches no look, so a look's fill is
+by name: a viewport that reads no value row, so a formula's value is not
+drawn from the values record; one that matches no look, so a look's fill is
 missing; a host that draws each frame without keeping the view, so the
 selection and the Camera's scroll go back to A1; a host that draws the grid
 before it reads the Camera, a frame late; a host that says nothing of an
@@ -239,8 +239,13 @@ viewport's whole root, the tabs, headers and scrollbars, as ENGINE.8 built it;
 and a viewport whose hit test counts the tab strip as cells, so the pointer
 over it is written as a cell; and since ENGINE.15 two more, over the double,
 each failing the empty case by name: a template whose empty sheet steps at
-rate 30, and one whose picker offers the page's cartridges in reverse. The
-real page must pass first.
+rate 30, and one whose picker offers the page's cartridges in reverse; and
+since ENGINE.8's second slice three more, over the double, each failing the
+grid case by name: a host that draws the grid record at every frame, where
+the values record is due once a frame has computed values; one that draws
+the values record at frame 0 too, where the grid record is due; and a
+viewport that reads no style row for a cell no row wrote, a formula with no
+value yet in a values record. The real page must pass first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A headless run's clock is
@@ -400,6 +405,14 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # manifests, the 1 library held at its block's path, and the empty sheet
 # loaded as a grid of 80 by 50 at rate zero on the double and, over the
 # module, its Screen holding no cell (filled, which must be 0).
+# 2026-10-14, ENGINE.8's second slice: the twenty cases' counts unchanged but
+# for grid, every frame after the first drawn from the values record and held
+# byte for byte to the grid record less its formula rows (fakeValues 12,
+# values 24). Over the double, U5, a formula with no value outside the declared
+# size, is drawn empty from frame 5 where it was its text, so fakeUnvalued is
+# frame 0's 240 where it was 244; over the module frame 0 is still the grid
+# record, its 350 formulas as their texts. lone: a values record written in
+# the oracle, read whole by a viewport of its own, 1.
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
@@ -419,8 +432,8 @@ $floors = @(
     @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 4; frames = 26; same = 26; golden = 4; round = 4; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosStops = 30 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } },
-    @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 1913; fakeUnvalued = 244; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; pointer = 1; key = 1; edited = 1; waits = 1 };
-                            WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 11000; wraps = 20; fills = 10677; looks = 10311; styles = 40; columns = 326; unvalued = 350; hidden = 20; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 70 } },
+    @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 1913; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1 };
+                            WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 11000; wraps = 20; fills = 10677; looks = 10311; styles = 40; columns = 326; unvalued = 350; hidden = 20; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 70; values = 24 } },
     @{ Case = 'tabs';     Min = @{ fakeFrames = 14; fakeShown = 1; fakeHeld = 8; fakeScrolled = 1; fakeBack = 1; fakeScreen = 9; fakePointer = 1; fakeRouted = 1; fakeKey = 1; fakeStrip = 1; fakeWheel = 4; fakeTexts = 4600 };
                             WithModule = @{ frames = 12; shown = 1; held = 5; back = 1; screen = 8; pointer = 1; routed = 1; strip = 1; wheel = 4; clock = 4; texts = 3400 } },
     @{ Case = 'empty';    Min = @{ cartridges = 8; ordered = 8; titled = 8; libraries = 1; double = 1 }; WithModule = @{ engine = 1 } }
@@ -882,10 +895,12 @@ if ($Control) {
         # and AG when the real page holds it: a viewport that reads no value row, one that matches no look, a host
         # that draws each frame without keeping the view, a host that draws the grid before it reads the Camera,
         # a host silent over an edit made while the loop is paused at its rate (the owner's hand test), and a
-        # viewport that lays every row at the default height. The grid case must fail each by name.
+        # viewport that lays every row at the default height. And AQ, AR and AS (ENGINE.8's second slice), over the
+        # double: a host that draws the grid record at every frame, one that draws the values record at frame 0 too,
+        # and a viewport that reads no style row for a cell no row wrote. The grid case must fail each by name.
         $gridMutants = @(
             @{ L = 'ac'; Name = 'the value row unread'; File = 'viewport'; Anchor = "      } else if (head === 'value') {"; With = "      } else if (head === 'value-unread') {"
-               Want = 'case grid.*fake frame 1: \w+\d+ shows "=FAKE\.PLANE\(\)", and the record says "\d+"' },
+               Want = 'case grid.*fake frame 1: \w+\d+ \("\d+"\) is not drawn' },
             @{ L = 'ad'; Name = 'no look matched'; File = 'viewport'; Anchor = '    if (cell && cell.lookKey !== null && Object.prototype.hasOwnProperty.call(model.looks, cell.lookKey)) {'; With = '    if (false) {'
                Want = 'case grid.*fake frame 1: \w+\d+''s fill, #[0-9A-Fa-f]{6} by its look, is not drawn' },
             @{ L = 'ae'; Name = 'the view not kept'; File = 'host'; Anchor = '      vp.load(r.text, { keep: !atLoad });'; With = '      vp.load(r.text);'
@@ -897,7 +912,13 @@ if ($Control) {
             @{ L = 'ag'; Name = 'every row at the default height'; File = 'viewport'; Module = $true; Anchor = '    if (model && model.rowSettings) {'; With = '    if (false) {'
                Want = 'case grid.*engine frame 0: (A9|B9|A10|B10|C10|A11|B11|A12|B12)\b' },
             @{ L = 'ah'; Name = 'a paused edit unsaid'; File = 'host'; Anchor = '    else if (this.cart.rate > 0 && !this.running) this._say('; With = '    else if (false) this._say('
-               Want = 'case grid.*fake: the edit \(cell "Screen" "W7" 1\), made while the loop was paused at its rate, was not said to wait' }
+               Want = 'case grid.*fake: the edit \(cell "Screen" "W7" 1\), made while the loop was paused at its rate, was not said to wait' },
+            @{ L = 'aq'; Name = 'the grid record at every frame'; File = 'host'; Anchor = "    var t0 = this.now(), projection = this.frame > 0 ? 'values' : 'grid';"; With = "    var t0 = this.now(), projection = 'grid';"
+               Want = 'case grid.*fake frame 1: the host drew the grid record of [A-Z]+\d+:[A-Z]+\d+, where the values record is due' },
+            @{ L = 'ar'; Name = 'the values record at frame 0'; File = 'host'; Anchor = "    var t0 = this.now(), projection = this.frame > 0 ? 'values' : 'grid';"; With = "    var t0 = this.now(), projection = 'values';"
+               Want = 'case grid.*fake frame 0: the host drew the values record of [A-Z]+\d+:[A-Z]+\d+, where the grid record is due' },
+            @{ L = 'as'; Name = 'the lone style row unread'; File = 'viewport'; Anchor = '        if (a && !e && n !== null) e = formulaCell(m, a);'; With = '        // the lone style row unread, by the control'
+               Want = 'case grid.*values read whole: C1''s fill, #00AA00 by its style, is not drawn' }
         )
         $gridNotes = New-Object System.Collections.Generic.List[string]
         $gridJudged = New-Object System.Collections.Generic.List[object]
@@ -984,7 +1005,7 @@ if ($Control) {
         $emptyNote = $emptyNotes -join '; '
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk) {
-            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'forty-two' } else { 'thirty-one applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'forty-five' } else { 'thirty-four applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

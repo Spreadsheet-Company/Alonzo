@@ -241,6 +241,15 @@
     };
     m.formats[0] = { fill: null, num: 'general', wrap: false };
     var f, maxRow = 0, maxCol = 0;
+    // A formula cell the values projection prints by its value or its style alone, never by its text
+    // (KERNEL.37): no value yet, no text for the bar; its value row, when one comes, gives it both.
+    function formulaCell(m, a) {
+      var e = { row: a.row, col: a.col, address: colName(a.col) + a.row, kind: 'formula', vkind: 'formula', text: '', style: 0, sentence: 0, formula: '', valued: false, lookKey: null };
+      m.cells.set(cellKey(a.row, a.col), e);
+      if (a.row > maxRow) maxRow = a.row;
+      if (a.col > maxCol) maxCol = a.col;
+      return e;
+    }
     while ((f = rd.readForm()) !== null) {
       m.counts.forms++;
       if (!Array.isArray(f) || f.length === 0 || !f[0] || f[0].sym === undefined) { m.counts.unknown++; continue; }
@@ -292,9 +301,12 @@
         if (head === 'cell') m.counts.cells++; else m.counts.formulas++;
       } else if (head === 'value') {
         // a formula's computed value (KERNEL.7's row, drawn since ENGINE.8): the cell shows it, aligned by its
-        // kind, and matches a look by it; a value row for a cell no formula row wrote is malformed
+        // kind, and matches a look by it. In the values projection (KERNEL.37, ENGINE.8's second slice) no formula
+        // row comes before it, and the cell is a formula known by its value alone, its text not in the record;
+        // a value row for a value cell is malformed
         a = parseA1(strOf(f[2]) || '');
         e = a ? m.cells.get(cellKey(a.row, a.col)) : null;
+        if (a && !e && f.length >= 4) e = formulaCell(m, a);
         if (!e || e.kind !== 'formula' || f.length < 4) { m.counts.malformed++; continue; }
         var vv = valueOf(f[3]);
         e.text = vv.text; e.vkind = vv.kind; e.valued = true; e.lookKey = lookKeyOf(f[3]);
@@ -313,9 +325,11 @@
         m.rowSettings[rn] = { height: rh, hidden: rs === 'hidden' };
         m.counts.rows++;
       } else if (head === 'style' || head === 'sentence') {
+        // with no row before it, in the values projection, a formula with no value yet: drawn empty, styled
         a = parseA1(strOf(f[2]) || '');
         var n = numOf(f[3]);
         e = a ? m.cells.get(cellKey(a.row, a.col)) : null;
+        if (a && !e && n !== null) e = formulaCell(m, a);
         if (!a || n === null || !e) { m.counts.malformed++; continue; }
         e[head] = n;
         if (head === 'style') m.counts.styles++; else m.counts.sentences++;

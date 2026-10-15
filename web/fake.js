@@ -525,12 +525,12 @@
       var pj = input(projPtr, projLen, 'the projection', outLen); if (pj.rec) return pj.rec;
       var sh = input(sheetPtr, sheetLen, 'the sheet', outLen); if (sh.rec) return sh.rec;
       var wn = input(winPtr, winLen, 'the window', outLen); if (wn.rec) return wn.rec;
-      if (pj.text !== 'plane' && pj.text !== 'grid') return refuse('view-projection-unknown', 'the projection ' + pj.text + '; this version has plane and grid', 0, outLen);
+      if (pj.text !== 'plane' && pj.text !== 'grid' && pj.text !== 'values') return refuse('view-projection-unknown', 'the projection ' + pj.text + '; this version has plane, grid and values', 0, outLen);
       var sk = sheetKey(sh.text);
       if (!sk) return refuse('view-sheet-unknown', 'the grid holds no sheet ' + sh.text + '; it holds ' + sheetList(), 0, outLen);
       var R = wn.text === '' ? (c.extent(sk.key, sk.twin) || parseRange('A1')) : parseRange(wn.text);
       if (!R) return refuse('view-window-not-a-range', 'the window "' + wn.text + '" is not a range such as A1:F20', 0, outLen);
-      return pj.text === 'plane' ? plane(c, sk, R, outLen) : grid(c, sk, R, outLen);
+      return pj.text === 'plane' ? plane(c, sk, R, outLen) : grid(c, sk, R, outLen, pj.text === 'values');
     }
     function plane(c, sk, R, outLen) {
       st.planeViews++;
@@ -564,7 +564,9 @@
       }
       return record(0, 0, '', out, outLen);
     }
-    function grid(c, sk, R, outLen) {
+    // The grid record, or with values the values projection (KERNEL.37, ENGINE.8's second slice): the same
+    // record with its formula rows left out, every other row as the grid prints it.
+    function grid(c, sk, R, outLen, values) {
       var lines = [];
       for (var i = 0; i < SHEETS.length; i++) lines.push('(sheet ' + quote(SHEETS[i]) + ' visible)');
       for (var j = 0; j < SHEETS.length; j++) lines.push('(sheet ' + quote(SHEETS[j] + '.last') + ' hidden)');
@@ -589,7 +591,7 @@
         var at = addrOf(addrs[k].r, addrs[k].c), e = c.content(sk.key, addrs[k].r, addrs[k].c, sk.twin);
         if (!e) continue;
         if (e.f) {
-          lines.push('(formula ' + name + ' ' + quote(at) + ' ' + quote(e.f) + ')');
+          if (!values) lines.push('(formula ' + name + ' ' + quote(at) + ' ' + quote(e.f) + ')');
           if (e.v !== undefined) lines.push('(value ' + name + ' ' + quote(at) + ' ' + spell(e.v) + ')');
         } else {
           lines.push('(cell ' + name + ' ' + quote(at) + ' ' + spell(e.v) + ')');

@@ -72,7 +72,9 @@
   reads under a headless browser. With ?blit=1 it is the
   blit's instrument, a 320 by 200 plane drawn 120 times at the scale that fits the
   screen and at a scale of 1 over the double, and at the scale that fits over the
-  engine's module, Life's first frame redrawn (ENGINE.2), each frame's main-thread
+  engine's module, Life's first frame redrawn (ENGINE.2), and the grid card's first
+  frame drawn again through the viewport from the values view at the screen's size
+  (ENGINE.8's second slice), each frame's main-thread
   cost, printed as the table tools/check_blit_floors.ps1 holds as its baseline.
   With ?oracle=1 it runs the
   render oracle, the viewport's draw list held equal to what each record says, cell
@@ -1738,6 +1740,7 @@
   }
   function gqColumnPixels(width) { return Math.floor(((256 * width + Math.floor(128 / GQ.digit)) / 256) * GQ.digit); }
   function gqName(key) { var p = key.split(','); return VP.colName(+p[1]) + p[0]; }
+  function gqLessFormulas(text) { return text.split('\n').filter(function (l) { return l.indexOf('(formula ') !== 0; }).join('\n'); }
   function gqRead(text) {
     var forms = VP.readForms(text), m = { window: null, gridlines: true, columns: {}, rows: {}, formats: { 0: { fill: null, num: 'general', wrap: false } }, looks: [], cells: {} };
     for (var i = 0; i < forms.length; i++) {
@@ -1756,6 +1759,10 @@
         var key = a.top + ',' + a.left;
         if (head === 'cell') m.cells[key] = { kind: 'cell', text: gqText(f[3]), vkind: gqKind(f[3]), key: gqKey(f[3]), valued: true, style: 0 };
         else if (head === 'formula') m.cells[key] = { kind: 'formula', text: f[3], vkind: 'formula', key: null, valued: false, style: 0 };
+        // the values projection (KERNEL.37): a formula's value row with no formula row before it is its cell,
+        // shown by its value; its style row alone, a formula with no value yet, shown empty in its style
+        else if (!m.cells[key]) m.cells[key] = head === 'value' ? { kind: 'formula', text: gqText(f[3]), vkind: gqKind(f[3]), key: gqKey(f[3]), valued: true, style: 0 }
+                                                                : { kind: 'formula', text: '', vkind: 'formula', key: null, valued: false, style: f[3].num };
         else if ((e = m.cells[key])) {
           if (head === 'value') { e.text = gqText(f[3]); e.vkind = gqKind(f[3]); e.key = gqKey(f[3]); e.valued = true; }
           else e.style = f[3].num;
@@ -1957,7 +1964,15 @@
         windows[win] = true;
         var s = host.vp.scrolled(), wantTop = row + (plan.offset ? plan.offset(f) : 0);
         if (s.top !== wantTop || s.left !== col) { P.push(at + ': the viewport shows ' + VP.colName(s.left) + s.top + ' at its top left, and the Camera at ' + VP.colName(col) + row + (wantTop !== row ? ' with the person\'s scroll of ' + (wantTop - row) + ' rows' : '') + ' puts ' + VP.colName(col) + wantTop + ' there'); continue; }
-        var m = gqRead(D.call('alonzo_view', [h], ['grid', 'Screen', win]).text), L = gqLayout(m, host.vp.geometry()), E = gqExpect(m, L, measure);
+        // the record the host drew (ENGINE.8's second slice): once a frame has computed values, the values
+        // projection, which is the grid record less its formula rows byte for byte (KERNEL.37's law, the free
+        // oracle, held here at every frame); at frame 0, nothing computed, the grid record
+        var G = D.call('alonzo_view', [h], ['grid', 'Screen', win]).text, V = D.call('alonzo_view', [h], ['values', 'Screen', win]).text;
+        if (V !== gqLessFormulas(G)) { P.push(at + ': the values record of ' + win + ' is not its grid record less its formula rows'); continue; }
+        var due = f > 0 ? V : G;
+        if (host.record !== due) { P.push(at + ': the host drew the ' + (host.record === G ? 'grid' : (host.record === V ? 'values' : 'unknown')) + ' record of ' + win + ', where the ' + (f > 0 ? 'values' : 'grid') + ' record is due'); continue; }
+        if (f > 0) k.values++;
+        var m = gqRead(due), L = gqLayout(m, host.vp.geometry()), E = gqExpect(m, L, measure);
         if (!gqCompare(E, host.vp.draws(), at, P, k)) continue;
         k.hidden = Math.max(k.hidden, E.hiddenHeld);
         gqProbes(E, host.vp, at, P, k);
@@ -1966,7 +1981,7 @@
           if (sel !== plan.selected.cell) { P.push(at + ': the selection is ' + sel + ', where the person selected ' + plan.selected.cell + ' before frame ' + plan.selected.from + ' and each frame since must keep it'); continue; }
           k.kept++;
         }
-        if (plan.check) plan.check(f, at, m, E, host);
+        if (plan.check) plan.check(f, at, m, E, host, G);
         k.equal++;
         if (plan.after) plan.after(f, host);
       }
@@ -1983,17 +1998,19 @@
   }
   // ENGINE.8's oracle (decision 9). Over the double, a grid cartridge of 20 by 12 whose tiles draw through
   // the double's looks: its Camera moved by edits, a formula written outside the declared size, with no
-  // value and so its text, a value beside it through its look, a cell selected and kept, the pointer moved
-  // onto a cell and read back from the Input sheet as the Screen's own cell, a bound key taken from the
-  // viewport and read back, and, the loop paused at its rate, an edit said to wait for the frame Run brings
-  // and written in it. Over the engine's module, when the page holds one, the grid card for twenty-four
-  // frames, its Camera moved a column right by an edit at frames 10 and 20: frame 0's formulas as their
-  // texts, a value and a formula written into the window at frame 6 and seen in that frame, a cell selected
-  // and kept, and a person's scroll of two rows kept through the Camera's move at frame 20.
+  // value and so no row in the values record the host draws, a value beside it through its look, a cell
+  // selected and kept, the pointer moved onto a cell and read back from the Input sheet as the Screen's own
+  // cell, a bound key taken from the viewport and read back, and, the loop paused at its rate, an edit said
+  // to wait for the frame Run brings and written in it. Over the engine's module, when the page holds one,
+  // the grid card for twenty-four frames, its Camera moved a column right by an edit at frames 10 and 20:
+  // frame 0's formulas as their texts, a value and a formula written into the window at frame 6 and seen in
+  // that frame, a cell selected and kept, and a person's scroll of two rows kept through the Camera's move at
+  // frame 20. Every frame after the first is drawn from the values projection (the second slice), and a
+  // values record written here is read whole by a viewport of its own (gqLone).
   function caseGrid() {
-    var P = [], kf = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0 };
-    var km = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0 };
-    var x = { pointer: 0, key: 0, edited: 0, waits: 0, edits: 0, followed: 0 }, module = 0;
+    var P = [], kf = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0 };
+    var km = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0 };
+    var x = { pointer: 0, key: 0, edited: 0, waits: 0, edits: 0, followed: 0, lone: 0 }, module = 0;
     var fake = FAKE.create({}), taken = false;
     function cellCenter(host, r, c) {
       var g = host.vp.geometry(), rect = host.vp.box.getBoundingClientRect();
@@ -2009,13 +2026,14 @@
         if (f === 7) taken = !sc.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, code: 'ArrowRight', key: 'ArrowRight' }));
         if (f === 8) sc.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, cancelable: true, code: 'ArrowRight', key: 'ArrowRight' }));
       },
-      check: function (f, at, m, E, host) {
+      check: function (f, at, m, E, host, G) {
         var hh = host.counters().handle;
         function v(addr) { var en = fake.peek(hh, 'Input', addr); return en ? en.v : undefined; }
-        // a formula outside the declared size has no value and shows its text; a value beside it, its look
+        // a formula outside the declared size has no value: the grid record holds its text, the values record
+        // the host draws holds no row of it, and it is drawn empty; a value beside it, its look
         if (f === 5) {
           var u5 = E.texts['5,21'], v6 = E.fills['6,22'];
-          if (!u5 || u5.text !== '=1' || u5.valued) P.push(at + ': U5, a formula written outside the declared size, is not drawn as its text before a value');
+          if (G.indexOf('(formula "Screen" "U5" "=1")') < 0 || G.indexOf('(value "Screen" "U5"') >= 0 || u5) P.push(at + ': U5, a formula written outside the declared size with no value, is not drawn empty from the values record');
           else if (!v6 || v6.src !== 'look' || v6.color.toLowerCase() !== '#00aaaa') P.push(at + ': V6, the value 3, is not drawn through the look of 3');
           else x.edited = 1;
         }
@@ -2037,6 +2055,7 @@
       }
     }, kf, P);
     var st = fake.stats();
+    x.lone = gqLone(P);
     var wasm = builtModule();
     if (wasm) {
       var bytes = bytesOfBase64(wasm);
@@ -2059,9 +2078,32 @@
         strict: true
       }, km, P);
     }
-    return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeTexts: kf.texts, fakeLooks: kf.looks, fakeUnvalued: kf.unvalued, fakeProbes: kf.probes, fakeKept: kf.kept, fakeCleared: kf.cleared,
-                         pointer: x.pointer, key: x.key, edited: x.edited, waits: x.waits, module: module, frames: km.frames, equal: km.equal, windows: km.windows, texts: km.texts, wraps: km.wraps, fills: km.fills, looks: km.looks, styles: km.styles,
-                         columns: km.columns, unvalued: km.unvalued, hidden: km.hidden, probes: km.probes, kept: km.kept, followed: x.followed, edits: x.edits, cleared: km.cleared, hashes: km.hashes || 0, live: st.live, misfrees: st.misfrees }, problems: P };
+    return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeTexts: kf.texts, fakeLooks: kf.looks, fakeUnvalued: kf.unvalued, fakeProbes: kf.probes, fakeKept: kf.kept, fakeCleared: kf.cleared, fakeValues: kf.values,
+                         pointer: x.pointer, key: x.key, edited: x.edited, waits: x.waits, lone: x.lone, module: module, frames: km.frames, equal: km.equal, windows: km.windows, texts: km.texts, wraps: km.wraps, fills: km.fills, looks: km.looks, styles: km.styles,
+                         columns: km.columns, unvalued: km.unvalued, hidden: km.hidden, probes: km.probes, kept: km.kept, followed: x.followed, edits: x.edits, cleared: km.cleared, hashes: km.hashes || 0, values: km.values, live: st.live, misfrees: st.misfrees }, problems: P };
+  }
+  // A values record read whole (ENGINE.8's second slice, KERNEL.37) by a viewport of its own: a formula known by
+  // its value alone, drawn as a formula's value through its look, its text not in the record; a text value; and
+  // a formula with no value yet, its style row alone, drawn empty in its style's fill. Held to the oracle's own
+  // reading, and each pinned by name, so that the two readers cannot agree on a wrong one. 1, or 0 and a problem.
+  function gqLone(P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div'), at = 'values read whole';
+    box.style.cssText = 'width:640px;height:200px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var vp = new VP(box), measure = document.createElement('canvas').getContext('2d'), k = { texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0 };
+    try {
+      var rec = '(sheet "Lone" visible)\n(window "Lone" "A1:C2")\n(extent "Lone" "A1:C1")\n(gridlines "Lone" on)\n(format 0 none general nowrap)\n(format 1 "AA00AA" general nowrap)\n(format 2 "00AA00" general nowrap)\n' +
+                '(look "Lone" 7 1)\n(value "Lone" "A1" 7)\n(value "Lone" "B1" "x")\n(style "Lone" "C1" 2)\n';
+      vp.load(rec);
+      var m = gqRead(rec), E = gqExpect(m, gqLayout(m, vp.geometry()), measure), a1 = E.texts['1,1'], b1 = E.texts['1,2'], c1 = E.fills['1,3'];
+      if (!a1 || a1.text !== '7' || !a1.valued || !a1.formula || !E.fills['1,1'] || E.fills['1,1'].src !== 'look') { P.push(at + ': A1, a formula known by its value 7, is not read as a formula\'s value through the look of 7'); return 0; }
+      if (!b1 || b1.text !== 'x' || !b1.valued || !b1.formula) { P.push(at + ': B1, a formula known by its value "x", is not read as a formula\'s value'); return 0; }
+      if (!c1 || c1.src !== 'style' || E.texts['1,3']) { P.push(at + ': C1, a formula with no value yet, is not read as an empty cell in its style'); return 0; }
+      if (!gqCompare(E, vp.draws(), at, P, k)) return 0;
+      var cell = vp.cell(1, 1);
+      if (cell.kind !== 'formula' || !cell.valued || cell.formula !== '' || cell.text !== '7') { P.push(at + ': the viewport answers A1 as ' + JSON.stringify(cell) + ', where it is a formula with the value 7 and no text in the record'); return 0; }
+      return 1;
+    } finally { vp.destroy(); stage.removeChild(box); }
   }
   // ---- ENGINE.14: the tabs answered, the sheet shown viewed through its region, the input routed ----
   // The host over one module and a grid cartridge, its viewport in a box of the stage, stepped by manual
@@ -3439,13 +3481,16 @@
   // tools/check_blit_floors.ps1; a headless run's clock is virtual, and its numbers are not a
   // measurement (&smoke=1 runs the shape alone, waiting on tasks and never on frames). Since
   // ENGINE.2 a third case, engine, measures the same path over the engine's module when the page
-  // holds one: the language's plane view in place of the double's copy, the blit the same.
+  // holds one: the language's plane view in place of the double's copy, the blit the same. Since
+  // ENGINE.8's second slice a fourth, grid: the grid card stepped once, then its frame drawn again
+  // through the viewport, the values view of its 80 by 50 window read and drawn, in a box of the
+  // screen's size; its view column is the module's, its blit column the viewport's load and draw.
   function blitInstrument() {
     var SMOKE_B = /[?&]smoke=1(&|$)/.test(QS);
     var FRAMES = SMOKE_B ? 8 : 120, WARM = SMOKE_B ? 2 : 20;
     var statusEl = document.getElementById('bench-status'), outEl = document.getElementById('out'), pre = document.getElementById('blit');
     var runBtn = document.getElementById('run'), fsBtn = document.getElementById('fullscreen'), copyBtn = document.getElementById('copy');
-    document.getElementById('instrument-title').textContent = 'The blit\'s instrument \u00b7 a 320 by 200 plane at the scale that fits the screen, at a scale of 1, and over the engine\'s module';
+    document.getElementById('instrument-title').textContent = 'The blit\'s instrument \u00b7 a 320 by 200 plane at the scale that fits the screen, at a scale of 1, and over the engine\'s module, and the grid card drawn by the viewport';
     document.getElementById('instrument-note').textContent = 'The page runs once on opening, not in fullscreen; press Fullscreen to enter it and run again. The fit case is honest only in fullscreen, where the plane fills the screen. Copy takes the table and the baseline lines for tools/check_blit_floors.ps1.';
     var running = false;
     function say(t) { statusEl.textContent = t; }
@@ -3464,23 +3509,25 @@
     async function runCase(spec, iv) {
       var stage = document.getElementById('stage'), box = document.createElement('div');
       box.className = 'case';
-      box.style.cssText = 'width:' + spec.W + 'px;height:' + spec.H + 'px;background:#1d1d1b;display:flex;align-items:center;justify-content:center;overflow:hidden;';
+      box.style.cssText = 'width:' + spec.W + 'px;height:' + spec.H + 'px;' + (spec.grid ? 'position:relative;background:#fff;' : 'background:#1d1d1b;display:flex;align-items:center;justify-content:center;overflow:hidden;');
       var cv = document.createElement('canvas');
       cv.style.display = 'block';
-      box.appendChild(cv); stage.appendChild(box);
-      var host = new HOST({ drive: 'manual', budget: 0, canvas: cv, box: box, scale: spec.scale || 0 });
+      if (!spec.grid) box.appendChild(cv);
+      stage.appendChild(box);
+      var host = spec.grid ? new HOST({ drive: 'manual', budget: 0, grid: box }) : new HOST({ drive: 'manual', budget: 0, canvas: cv, box: box, scale: spec.scale || 0 });
       try {
         // Over the double, the host's whole frame, whose step computes nothing. Over the engine's
         // module (ENGINE.2), Life stepped once, untimed, to its soup, and then the same frame drawn
         // again and again, redraw(): the Camera and the Palette read, the plane viewed through the
         // window and blitted, since a step there is the evaluator's, Life's some 270 ms, and not the
-        // frame path. The language keeps the Screen's plane from the end of that first frame.
+        // frame path. The language keeps the Screen's plane from the end of that first frame. The
+        // grid case the same over the grid card, its Screen drawn by the viewport from the values view.
         var a = host.attach(spec.engine ? HOST.instantiateSync(bytesOfBase64(builtModule())) : FAKE.create({}).exports);
         if (!a.ok) throw new Error(a.sentence);
-        var ld = host.load(lifeText, 'life.vla');
+        var ld = spec.grid ? host.load(CARTRIDGES.gridcard.text, 'gridcard.vla') : host.load(lifeText, 'life.vla');
         if (!ld.ok) throw new Error(ld.sentence);
         var once = spec.engine ? function () { host.redraw(); } : function () { host.runFrameSync(); };
-        if (spec.engine && !host.runFrameSync()) throw new Error('Life\'s first frame did not complete on the engine\'s module');
+        if (spec.engine && !host.runFrameSync()) throw new Error((spec.grid ? 'The grid card\'s' : 'Life\'s') + ' first frame did not complete on the engine\'s module');
         for (var w = 0; w < WARM; w++) once();
         await frame();
         var mains = [], syncs = [], views = [], blits = [], dropped = 0, first = 0;
@@ -3491,11 +3538,11 @@
           var sync = performance.now() - t0, afterP = task(), ts = await frame(), after = await afterP, main = after - t0;
           if (i === 0) first = main;
           mains.push(main); syncs.push(sync);
-          if (host.timing) { views.push(host.timing.view); blits.push(host.timing.blit); }
+          if (host.timing) { views.push(host.timing.view); blits.push(spec.grid ? host.timing.draw : host.timing.blit); }
           if (ts - t0 > 1.5 * iv) dropped++;
         }
-        var sm = ordered(mains), p95 = pct(sm, 0.95);
-        return { name: spec.name, scale: host.counters().scale, width: cv.width, height: cv.height, first: first, view: pct(ordered(views), 0.5), blit: pct(ordered(blits), 0.5), sync: pct(ordered(syncs), 0.5),
+        var sm = ordered(mains), p95 = pct(sm, 0.95), drawn = spec.grid ? host.vp.canvas : cv;
+        return { name: spec.name, scale: host.counters().scale, width: drawn.width, height: drawn.height, first: first, view: pct(ordered(views), 0.5), blit: pct(ordered(blits), 0.5), sync: pct(ordered(syncs), 0.5),
                  p50: pct(sm, 0.5), p95: p95, max: sm[sm.length - 1], dropped: dropped, n: FRAMES, holds: dropped === 0 && p95 < iv };
       } finally {
         host.destroy();
@@ -3533,8 +3580,9 @@
         rs.push(await runCase({ name: 'scale-1', W: 400, H: 300, scale: 1 }, iv));
         var withEngine = !!builtModule();
         if (withEngine) rs.push(await runCase({ name: 'engine', W: screen.width, H: screen.height, scale: 0, engine: true }, iv));
+        if (withEngine) rs.push(await runCase({ name: 'grid', W: screen.width, H: screen.height, engine: true, grid: true }, iv));
         var env = 'Environment: ' + browser + ' | DPR ' + (window.devicePixelRatio || 1) + ' | screen ' + screen.width + 'x' + screen.height + ' | fullscreen ' + (fullscreen ? 'yes' : 'no') + ' | frame interval ' + fmt1(iv) + ' ms (about ' + (iv > 0 ? Math.round(1000 / iv) : 0) + ' Hz) | the fake module, the Life cartridge, ' + FRAMES + ' frames a case' +
-                  (withEngine ? '; the engine case over the module built into this page, ' + thousands(bytesOfBase64(builtModule()).length) + ' bytes, Life at its first frame redrawn' : '; no engine module built into this page, so no engine case');
+                  (withEngine ? '; the engine case over the module built into this page, ' + thousands(bytesOfBase64(builtModule()).length) + ' bytes, Life at its first frame redrawn; the grid case, the grid card at its first frame drawn again from the values view' : '; no engine module built into this page, so no engine or grid case');
         var md = env + '\n\n' + table(rs) + '\n\n' + baseline(rs, iv, env);
         outEl.value = md;
         pre.textContent = (SMOKE_B ? 'smoke ok (a virtual clock: numbers, not a measurement)\n' : 'blit ok\n') + md;

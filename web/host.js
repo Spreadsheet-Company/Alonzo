@@ -793,13 +793,16 @@
   // Grid mode (ENGINE.8; docs/SPEC.md section 5, steps 5 and 6): the Screen's record through the window the
   // Camera places, drawn by the viewport. Frame 0's record is loaded whole, the view reset; every later
   // frame's replaces it with the person's scroll and selection kept (decision 5). The record is viewed
-  // whether or not a viewport draws it, so a host with no element still counts its windows.
+  // whether or not a viewport draws it, so a host with no element still counts its windows. Once a frame
+  // has computed values the record is the values projection, the grid record less its formula rows, so no
+  // formula's text is moved at a frame (the second slice, KERNEL.37); frame 0, nothing computed since the
+  // load, is the grid record, its formulas shown as their texts until their first values.
   Host.prototype._drawGrid = function (atLoad) {
     // Another sheet shown in the Screen's place (ENGINE.14, decision 2): the frame views that sheet alone,
     // through the region the viewport shows, and the Screen again when its tab gives the window back.
     if (!atLoad && this.vp && !isScreen(this.vp.sheet())) { if (this.refreshSheet(this.vp)) this.c.draws++; return; }
-    var t0 = this.now();
-    var r = this.m.texts('alonzo_view', [this.handle], ['grid', 'Screen', this.window]);
+    var t0 = this.now(), projection = this.frame > 0 ? 'values' : 'grid';
+    var r = this.m.texts('alonzo_view', [this.handle], [projection, 'Screen', this.window]);
     var t1 = this.now();
     if (r.status !== 0) { this._sayOnce('grid', 'frame ' + this.frame + ': the record of the Screen was refused: ' + words(r) + '.', true); return; }
     if (!this.windowsSeen[this.window]) { this.windowsSeen[this.window] = true; this.c.windows++; }
@@ -1415,15 +1418,16 @@
     return this._continue({ used: 0, limit: 0x7fffffff, deadline: Infinity });
   };
   // The last complete frame drawn again, nothing stepped: the Camera and the Palette read as they
-  // stand, the plane viewed through the window and blitted, and no other effect read, so no derived
-  // write, save edge or key map moves. The blit's instrument times it over the engine's module,
-  // where a step is the evaluator's and not the frame path's (ENGINE.2).
+  // stand, the plane viewed through the window and blitted, or a grid's Screen viewed through it and
+  // drawn by the viewport (ENGINE.8's second slice), and no other effect read, so no derived write,
+  // save edge or key map moves. The blit's instrument times it over the engine's module, where a step
+  // is the evaluator's and not the frame path's (ENGINE.2).
   Host.prototype.redraw = function () {
-    if (!this.handle || !this.cart || this.cart.mode !== 'plane') return false;
+    if (!this.handle || !this.cart) return false;
     var d = this.cart.devices;
     if (d.camera) this._readCamera();
     if (d.palette) this._readPalette();
-    this._drawPlane();
+    if (this.cart.mode === 'grid') this._drawGrid(false); else this._drawPlane();
     return true;
   };
   // The last plane blitted again at the scale its box now fits, nothing viewed and nothing stepped: a page
