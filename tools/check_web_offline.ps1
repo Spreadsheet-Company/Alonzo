@@ -34,7 +34,11 @@ are the folders' files both ways: each cartridge
 (<name>.source.vla, <name>.replay.vla, <name>.golden.vla), each library
 (cartridges/<name>.vla) and each record (web/fixtures/<name>.vla) a block of
 its kind and name, and each such block a file, so a built page is whole and
-the page and its sources cannot drift apart.
+the page and its sources cannot drift apart. Since ENGINE.16 a cartridge's
+hand, <name>.hand.js beside it, is a block too, hand-<name>, the one block
+that is a script the page runs, so each hand's source is held to the code
+tokens the three scripts are held to, and to no eval and no Function, since
+the page runs nothing it was handed as text.
 
 SINCE ENGINE.4 (2026-10-10; docs/REARVIEW.md, decision 11): docs/CHARTER.md section 8
 builds no sound synthesizer beyond the Web Audio graph's own nodes, and the
@@ -57,7 +61,9 @@ naming a file appended and one with the BLOCKS place removed, and, over a
 page tools/build_web.ps1 builds in a scratch folder, which passes, that page
 without Life's cartridge block, with a block for a library the folder does
 not hold, without the input card's golden block, and the template itself
-standing as a built page, its places left: twenty-one mutants.
+standing as a built page, its places left; and since ENGINE.16 that page
+without Kairos's hand block, a hand whose source calls fetch, and one whose
+source calls eval: twenty-four mutants.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named.
@@ -94,6 +100,8 @@ $blocksPlaceholder = '{{BLOCKS}}'
 $oncePlaceholders = @($viewportPlaceholder, '{{FAKE_JS}}', '{{HOST_JS}}', '{{ALONZO_WASM}}', $blocksPlaceholder)
 # A place naming a file, which the template no longer has (ENGINE.15).
 $namedPlace = '\{\{[A-Z]+:[^}]*\}\}'
+# A hand's source runs as the page's code (ENGINE.16): the code tokens, and no text made code.
+$handEval = '\beval\s*\(|\bFunction\s*\('
 
 function Get-FixtureNames([string]$dir) {
     $names = @()
@@ -134,6 +142,7 @@ function Get-OwedBlocks([string]$cartridges, [string]$fixtures) {
     foreach ($n in (Get-BesideNames $cartridges '.source.vla')) { $owed['source-' + $n] = $cartridges }
     foreach ($n in (Get-BesideNames $cartridges '.replay.vla')) { $owed['replay-' + $n] = $cartridges }
     foreach ($n in (Get-BesideNames $cartridges '.golden.vla')) { $owed['golden-' + $n] = $cartridges }
+    foreach ($n in (Get-BesideNames $cartridges '.hand.js')) { $owed['hand-' + $n] = $cartridges }
     foreach ($n in (Get-LibraryNames $cartridges)) { $owed['library-' + $n] = $cartridges }
     foreach ($n in (Get-FixtureNames $fixtures)) { $owed['fixture-' + $n] = $fixtures }
     return $owed
@@ -169,6 +178,19 @@ function Test-Template([string]$path, [string]$script, [string]$fake = $fakePath
     return $problems
 }
 
+# The hands' sources (ENGINE.16), cartridges/<name>/<name>.hand.js: each is the page's code once its block runs.
+function Test-Hands([string]$cartridges = $cartridgesDir) {
+    $problems = @()
+    foreach ($n in (Get-BesideNames $cartridges '.hand.js')) {
+        $path = Join-Path (Join-Path $cartridges $n) ($n + '.hand.js')
+        $js = [System.IO.File]::ReadAllText($path)
+        $lower = $js.ToLowerInvariant()
+        foreach ($t in $codeTokens) { if ($lower.Contains($t.ToLowerInvariant())) { $problems += ("the hand of {0} reaches out: '{1}'" -f $n, $t) } }
+        if ([regex]::IsMatch($js, $handEval)) { $problems += ("the hand of {0} makes code of a text: '{1}'" -f $n, [regex]::Match($js, $handEval).Value) }
+    }
+    return $problems
+}
+
 # A built page: its markup, no placeholder left, and its blocks the folders' files both ways (ENGINE.15).
 function Test-Built([string]$path, [string]$cartridges = $cartridgesDir, [string]$fixtures = $fixturesDir) {
     $problems = @()
@@ -182,9 +204,10 @@ function Test-Built([string]$path, [string]$cartridges = $cartridgesDir, [string
     }
     foreach ($m in [regex]::Matches($text, $namedPlace)) { $problems += ("the built page has {0} left in it" -f $m.Value) }
     $held = @{}
-    foreach ($m in [regex]::Matches($text, '<script type="text/plain" id="((cartridge|source|replay|golden|library|fixture)-[a-z0-9_-]+)"')) {
-        if ($held.ContainsKey($m.Groups[1].Value)) { $problems += ("the built page holds the block {0} twice" -f $m.Groups[1].Value) }
-        $held[$m.Groups[1].Value] = $true
+    foreach ($m in [regex]::Matches($text, '<script type="text/plain" id="((cartridge|source|replay|golden|library|fixture)-[a-z0-9_-]+)"|<script id="(hand-[a-z0-9_-]+)"')) {
+        $id = if ($m.Groups[1].Success) { $m.Groups[1].Value } else { $m.Groups[3].Value }
+        if ($held.ContainsKey($id)) { $problems += ("the built page holds the block {0} twice" -f $id) }
+        $held[$id] = $true
     }
     $owed = Get-OwedBlocks $cartridges $fixtures
     foreach ($id in @($owed.Keys | Sort-Object)) { if (-not $held.ContainsKey($id)) { $problems += ("{0} holds the file of the block {1}, and the built page holds no such block: build it again (tools/build_web.ps1)" -f $owed[$id], $id) } }
@@ -238,6 +261,25 @@ if ($Control) {
         $kHit = @($rk | Where-Object { $_ -like '*holds the block library-nowhere, and no file*' }).Count
         $lHit = @($rl | Where-Object { $_ -like '*has {{BLOCKS}} left in it*' }).Count
         $mHit = @($rm | Where-Object { $_ -like '*block golden-inputcard, and the built page holds no such block*' }).Count
+        # ENGINE.16: the page without Kairos's hand block; a scratch copy of cartridges/ whose hand of Kairos calls
+        # fetch, and one whose hand calls eval; the real hands pass first.
+        $realHands = @(Test-Hands)
+        $n2 = Join-Path $tmp 'n.html'; [System.IO.File]::WriteAllText($n2, [regex]::Replace($built, '<script id="hand-kairos"[^>]*>[\s\S]*?</script>\n?', ''), $utf8)
+        $nApplied = ([System.IO.File]::ReadAllText($n2)).Length -lt $built.Length
+        $nHit = @(@(Test-Built $n2) | Where-Object { $_ -like '*block hand-kairos, and the built page holds no such block*' }).Count
+        $handPath = Join-Path $cartridgesDir 'kairos/kairos.hand.js'
+        $handText = [System.IO.File]::ReadAllText($handPath)
+        $handHits = New-Object System.Collections.Generic.List[string]
+        $handsOk = $true
+        foreach ($pl in @(@('fetch', "`n  fetch('x');", "the hand of kairos reaches out: 'fetch('"), @('eval', "`n  eval('1');", "the hand of kairos makes code of a text: 'eval('"))) {
+            $copy = Join-Path $tmp ('cartridges_' + $pl[0])
+            Copy-Item -Recurse -LiteralPath $cartridgesDir -Destination $copy
+            [System.IO.File]::WriteAllText((Join-Path $copy 'kairos/kairos.hand.js'), ($handText + $pl[1] + "`n"), $utf8)
+            $hApplied = ([System.IO.File]::ReadAllText((Join-Path $copy 'kairos/kairos.hand.js'))).Contains($pl[1].Trim())
+            $hHit2 = @(@(Test-Hands $copy) | Where-Object { $_ -like ($pl[2] + '*') }).Count
+            $handHits.Add(("{0} {1}" -f $pl[0], $(if ($hApplied -and $hHit2 -ge 1) { 'failed' } else { 'NOT failed' })))
+            if (-not ($hApplied -and $hHit2 -ge 1)) { $handsOk = $false }
+        }
         # ENGINE.4: each Web Audio name planted in a copy of the host's source, each failing by its own name
         $hostText = [System.IO.File]::ReadAllText($hostPath)
         $audioHits = New-Object System.Collections.Generic.List[string]
@@ -252,9 +294,9 @@ if ($Control) {
             $audioHits.Add(("{0} {1}" -f $tok, $(if ($applied -and $hit -ge 1) { 'failed' } else { 'NOT failed' })))
             if (-not ($applied -and $hit -ge 1)) { $audioOk = $false }
         }
-        Write-Output ("control: the real set has {0} problem(s) and the page built from it {1}; the script src {2}, the fetch {3}, the missing placeholder {4}, the anchor {5}, the image {6}, the place naming a file {7}, the fetch in the viewport {8}, the blocks' place removed {9}, the fetch in the host {10}; built, Life's block cut ({11}) {12}, the stray library block {13}, the template as a page {14}, the golden's block cut ({15}) {16}; the Web Audio names planted in the host: {17}" -f $real.Count, $realBuilt.Count, $ra.Count, $rb.Count, $rc.Count, $rd.Count, $re.Count, $fHit, $rg.Count, $hHit, $iHit, $jApplied, $jHit, $kHit, $lHit, $mApplied, $mHit, ($audioHits -join ', '))
-        if ($real.Count -eq 0 -and $realBuilt.Count -eq 0 -and $ra.Count -ge 1 -and $rb.Count -ge 1 -and $rc.Count -ge 1 -and $rd.Count -ge 1 -and $re.Count -ge 1 -and $fHit -ge 1 -and $rg.Count -ge 1 -and $hHit -ge 1 -and $iHit -ge 1 -and $jApplied -and $jHit -ge 1 -and $kHit -ge 1 -and $lHit -ge 1 -and $mApplied -and $mHit -ge 1 -and $audioOk) {
-            Write-Output 'OK: the check passes the template, the three scripts and a page built from them, and fails each of the twenty-one mutants'
+        Write-Output ("control: the real set has {0} problem(s), its hands {18} and the page built from it {1}; the script src {2}, the fetch {3}, the missing placeholder {4}, the anchor {5}, the image {6}, the place naming a file {7}, the fetch in the viewport {8}, the blocks' place removed {9}, the fetch in the host {10}; built, Life's block cut ({11}) {12}, the stray library block {13}, the template as a page {14}, the golden's block cut ({15}) {16}, Kairos's hand's block cut ({19}) {20}; the Web Audio names planted in the host: {17}; planted in Kairos's hand: {21}" -f $real.Count, $realBuilt.Count, $ra.Count, $rb.Count, $rc.Count, $rd.Count, $re.Count, $fHit, $rg.Count, $hHit, $iHit, $jApplied, $jHit, $kHit, $lHit, $mApplied, $mHit, ($audioHits -join ', '), $realHands.Count, $nApplied, $nHit, ($handHits -join ', '))
+        if ($real.Count -eq 0 -and $realBuilt.Count -eq 0 -and $realHands.Count -eq 0 -and $ra.Count -ge 1 -and $rb.Count -ge 1 -and $rc.Count -ge 1 -and $rd.Count -ge 1 -and $re.Count -ge 1 -and $fHit -ge 1 -and $rg.Count -ge 1 -and $hHit -ge 1 -and $iHit -ge 1 -and $jApplied -and $jHit -ge 1 -and $kHit -ge 1 -and $lHit -ge 1 -and $mApplied -and $mHit -ge 1 -and $audioOk -and $nApplied -and $nHit -ge 1 -and $handsOk) {
+            Write-Output 'OK: the check passes the template, the three scripts, the hands and a page built from them, and fails each of the twenty-four mutants'
             exit 0
         }
         Write-Output 'FAIL: the control did not behave'
@@ -268,6 +310,8 @@ if ($Control) {
 
 if (-not (Test-Path -LiteralPath $templatePath)) { Write-Output ("FAIL: no template at {0}" -f $templatePath); exit 1 }
 $problems = @(Test-Template $templatePath $scriptPath)
+$problems += @(Test-Hands)
+$handCount = (Get-BesideNames $cartridgesDir '.hand.js').Count
 $builtNote = 'no built page beside it (tools/build_web.ps1 writes one)'
 if (Test-Path -LiteralPath $builtPath) {
     $problems += @(Test-Built $builtPath)
@@ -275,7 +319,7 @@ if (Test-Path -LiteralPath $builtPath) {
     $builtNote = ("the built page ({0:N0} characters) holds too, its {1} blocks the folders' files both ways" -f (Get-Item -LiteralPath $builtPath).Length, $owedCount)
 }
 if ($problems.Count -eq 0) {
-    Write-Output ("OK: web/index.template.html, web/viewport.js, web/fake.js and web/host.js load nothing and link nowhere, the host names no Web Audio call past the graph's oscillators and gains, the scripts', the module's and the blocks' placeholders each in its one place, and no place naming a file; {0}" -f $builtNote)
+    Write-Output ("OK: web/index.template.html, web/viewport.js, web/fake.js, web/host.js and the {0} hand(s) load nothing and link nowhere, no hand makes code of a text, the host names no Web Audio call past the graph's oscillators and gains, the scripts', the module's and the blocks' placeholders each in its one place, and no place naming a file; {1}" -f $handCount, $builtNote)
     exit 0
 }
 Write-Output ("FAIL: the web page has {0} problem(s):" -f $problems.Count)

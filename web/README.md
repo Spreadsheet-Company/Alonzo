@@ -405,10 +405,11 @@ page shows opened plainly and what Pages deploys.
   recorded it the card's committed replay, which `replay` plays to every
   frame of the card and to its golden, the Log's record; `replay` plays
   Sand's committed replay too, a person's painting session (`CART.2`'s
-  second slice), every frame's Screen equal to the page's own sand under the
-  brush the replay's Input rows make, and its end its golden, the Tally's
-  record; and Kairos's, the owner's two games (`CART.4`'s second slice),
-  every frame's board equal to the page's own Kairos under the buttons the
+  second slice), every frame's Screen equal to Sand's hand (its block
+  `hand-sand` since `ENGINE.16`) under the brush the replay's Input rows
+  make, and its end its golden, the Tally's record; and Kairos's, the
+  owner's two games (`CART.4`'s second slice), every frame's board and,
+  since `ENGINE.16`, its Tally equal to Kairos's hand under the buttons the
   replay's Input rows press, and its end its golden, the Tally's record;
   and the sound
   itself (`sound`, `ENGINE.4`'s second slice): the host's own voices over
@@ -609,7 +610,8 @@ viewport, not an Excel clone.
   golden beside it, each library, `cartridges/<name>.vla`, and each fixture,
   `fixtures/<name>.vla`, the order held to the folder both ways; `-Template`, `-ViewportJs`, `-FakeJs`, `-HostJs`,
   `-FixturesDir`, `-CartridgesDir`, `-Wasm`, `-NoWasm` and `-Out` exist for a
-  check that builds a page from mutated sources, never for the real page.
+  check that builds a page from mutated sources, never for the real page, and
+  `-PageOrder` for a check's page of a scratch folder (`ENGINE.16`).
 - **A game's page** (`ENGINE.15`): the template names no game's file, so a
   game vendors the template and the three scripts unchanged and fills them
   with a builder of its own. Its builder fills the same five places, the
@@ -624,12 +626,39 @@ viewport, not an Excel clone.
     when it has them;
   - `library-<name>`, each library a source includes, at the path the
     source's includes resolve to, so that Build in the drawer runs the pass
-    over them as the command line does.
+    over them as the command line does;
+  - `hand-<name>` (`ENGINE.16`), the game written a third time in
+    JavaScript, the one block that is a script:
+    `<script id="hand-NAME" data-path="PATH">TEXT</script>`, which the page
+    runs where it stands and never through `eval`. It registers one
+    constructor under its cartridge's name,
+    `(window.AlonzoHands = window.AlonzoHands || {}).NAME = Hand`. The page
+    makes it with the replay's seed, `new Hand(seed)`, and asks it
+    `hand.frame(n, rows)` for each frame of the cartridge's committed replay,
+    n from 1 and the frame's rows as the page's reader reads them. It answers
+    `{ plane }`, the Screen's window row by row, held byte for byte to the
+    host's plane, and or `{ cells }`, `{ "Sheet!A1": value }`, each value a
+    number, a text, `true` or `false`, or `null` for an empty cell, held to
+    that sheet's record at that frame; a grid game answers cells. An optional
+    `hand.counts()` names counts of its own. Alonzo's two,
+    `cartridges/sand/sand.hand.js` and `cartridges/kairos/kairos.hand.js`,
+    are the examples, Kairos's answering both.
 
   The page opens on the empty sheet whatever it holds and offers its
   cartridges in the picker, each by its manifest's title, its notes in the
-  drawer. The bench's modes name Alonzo's own cartridges and fixtures, so a
-  game's page says what its bench lacks and runs none of them.
+  drawer. A page that does not hold Alonzo's own cartridges and records is
+  a game's (`ENGINE.16`). Its `?loop=1` runs the five cases that need
+  nothing of Alonzo's own files, over its own blocks: `abi`; `pass`, every
+  source to its cartridge; `replay`, every replay to its golden and its
+  recording, every frame to its hand; `grid`, every grid cartridge's drawn
+  window held to its record for frame 0 and twelve frames with no edits;
+  and `empty`. Each of the fifteen others prints
+  `case <name>: not on this page`, being proven in Alonzo's CI, and the
+  last line reads `loop ok cases=5 dpr=1; 15 of Alonzo's own not on this
+  page` at a ratio of 1. A replay with no hand is held to its golden alone, counted `alone`
+  and said in a note under the case. Every other mode of the bench is
+  Alonzo's own and says so on a game's page; `?frames=1` and `?blit=1` over
+  a game's own fixtures are a later slice.
 - **A change to the host** is held by the loop's oracle, whose expectations
   are the page's own and never the host's, under
   `tools/check_host_loop.ps1`, and the blit by the owner's measurement under

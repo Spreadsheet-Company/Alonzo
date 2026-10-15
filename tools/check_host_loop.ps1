@@ -145,6 +145,21 @@ to the floors below; the floors over the engine's module apply when the page
 holds one, as abi's module count says, and a page built beside the engine's
 artifact must hold that artifact, byte count for byte count, or it is stale.
 
+SINCE ENGINE.16, the bench over a game's own cartridges: replay holds Sand's
+and Kairos's committed replays to their hands, each a block of the page's
+(hand-sand, hand-kairos) registered by its cartridge's name and held to the
+blocks (hands 2), Kairos's Tally held cell by cell at every frame beside its
+board (kairosCells), and no replay held to its golden alone (alone, held at
+zero); and grid runs its game's half over every grid cartridge the page
+holds, the grid card here, a short run with no edits (grids, gridFrames,
+gridEqual, gridValues, gridTexts, gridCleared). On every run this check also
+builds a game's page, from a scratch folder holding Kairos alone, its
+cartridge, source, replay, golden and hand and the library its source
+includes, and runs its loop at a ratio of 1: abi, pass, replay with the
+hand, grid over an empty set and empty must be OK at their own floors, each
+of Alonzo's fifteen other cases must say it is not on this page, and the
+last line must count five cases.
+
 THE BROWSER, as tools/check_render_oracle.ps1 finds and launches it:
 -Browser, else $env:ALONZO_BROWSER, else Google Chrome, Microsoft Edge or
 Chromium at their known paths on Windows and by name on the PATH elsewhere;
@@ -160,7 +175,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds forty-five mutant pages through tools/build_web.ps1 and runs
+-Control builds forty-nine mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -245,7 +260,13 @@ grid case by name: a host that draws the grid record at every frame, where
 the values record is due once a frame has computed values; one that draws
 the values record at frame 0 too, where the grid record is due; and a
 viewport that reads no style row for a cell no row wrote, a formula with no
-value yet in a values record. The real page must pass first.
+value yet in a values record; and since ENGINE.16, AB and AI now mutate
+scratch copies of the hands' own files, and four more mutate a game's page of
+Kairos alone, which must pass first, each failing by name: its hand a frame
+late, at frame 1; its hand's Tally counting a stack at the level above, at the
+first stack's frame; its hand's block dropped, the replay then counted alone;
+and a template whose bench refuses a game's page wholesale in the loop too,
+as it did before. The real page must pass first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A headless run's clock is
@@ -413,6 +434,17 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # frame 0's 240 where it was 244; over the module frame 0 is still the grid
 # record, its 350 formulas as their texts. lone: a values record written in
 # the oracle, read whole by a viewport of its own, 1.
+# 2026-10-15, ENGINE.16: the twenty cases' counts unchanged, new counts beside
+# them. replay: hands 2, the blocks hand-sand and hand-kairos registered and
+# matched; alone 0; kairosCells 156,105, Kairos's Tally (B2:D16, 45 cells)
+# held at each of its 3,469 frames. grid's game half over the grid card: 1
+# grid, 12 frames, 13 equal with frame 0, 12 from the values record, 5,369
+# texts under Chrome 155 on Windows (the floor a margin below, as texts'),
+# the viewport cleared. The game's page, Kairos alone, at a ratio of 1: abi
+# 3 refused and the module attached; pass 1 source the same (378 rows);
+# replay 5 vectors, 1 hand, 1 replay to its golden and its recording, every
+# one of its 3,469 frames and 156,105 cells held, 30 rows stopped; grid over
+# no grid cartridge; empty 1 cartridge, 1 library, the double and the module.
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
@@ -429,17 +461,31 @@ $floors = @(
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
     @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 8; same = 8; refused = 1; handle = 1; ranOn = 1 } },
     @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 5; players = 2; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 7; rate = 5; refused = 1 } },
-    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 4; frames = 26; same = 26; golden = 4; round = 4; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosStops = 30 } },
+    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 2 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 4; frames = 26; same = 26; golden = 4; round = 4; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } },
     @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 1913; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1 };
-                            WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 11000; wraps = 20; fills = 10677; looks = 10311; styles = 40; columns = 326; unvalued = 350; hidden = 20; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 70; values = 24 } },
+                            WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 11000; wraps = 20; fills = 10677; looks = 10311; styles = 40; columns = 326; unvalued = 350; hidden = 20; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 70; values = 24;
+                                            grids = 1; gridFrames = 12; gridEqual = 13; gridValues = 12; gridTexts = 5200; gridCleared = 1 } },
     @{ Case = 'tabs';     Min = @{ fakeFrames = 14; fakeShown = 1; fakeHeld = 8; fakeScrolled = 1; fakeBack = 1; fakeScreen = 9; fakePointer = 1; fakeRouted = 1; fakeKey = 1; fakeStrip = 1; fakeWheel = 4; fakeTexts = 4600 };
                             WithModule = @{ frames = 12; shown = 1; held = 5; back = 1; screen = 8; pointer = 1; routed = 1; strip = 1; wheel = 4; clock = 4; texts = 3400 } },
     @{ Case = 'empty';    Min = @{ cartridges = 8; ordered = 8; titled = 8; libraries = 1; double = 1 }; WithModule = @{ engine = 1 } }
 )
-$zero = @('live', 'misfrees', 'filled')
+$zero = @('live', 'misfrees', 'filled', 'alone')
 $expectedCases = 20
+# ENGINE.16: a game's page, built on every run from a scratch folder holding Kairos alone, its cartridge, source,
+# replay, golden and hand and the library its source includes. Its loop runs the five cases that need nothing
+# of Alonzo's own files, over its own blocks, and each of the fifteen others says it is not on the page.
+$gameFloors = @(
+    @{ Case = 'abi';    Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
+    @{ Case = 'pass';   Min = @{}; WithModule = @{ sources = 1; same = 1 } },
+    @{ Case = 'replay'; Min = @{ vectors = 5; hands = 1 }; WithModule = @{ replays = 1; golden = 1; round = 1; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30 } },
+    @{ Case = 'grid';   Min = @{ grids = 0 } },
+    @{ Case = 'empty';  Min = @{ cartridges = 1; ordered = 1; titled = 1; libraries = 1; double = 1 }; WithModule = @{ engine = 1 } }
+)
+$gameAbsent = @('rate30', 'rate0', 'yield', 'slice', 'pace', 'memory', 'refusals', 'scale', 'engine', 'parity', 'plane', 'input', 'audio', 'sound', 'tabs')
+$gameCases = 5
+$gameFiles = @('kairos/kairos.vla', 'kairos/kairos.source.vla', 'kairos/kairos.replay.vla', 'kairos/kairos.golden.vla', 'kairos/kairos.hand.js', 'common.vla')
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
 
@@ -494,8 +540,35 @@ function Invoke-Loop([string]$browser, [string]$page, [string]$scale) {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
     }
 }
-# The judgment of one run's text at one scale: the problems, and the case lines to print.
-function Test-Loop([string]$text, [string]$scale) {
+# A game's page (ENGINE.16) in $dir: a scratch folder holding Kairos alone, its cartridge, source, replay, golden
+# and hand and the library its source includes, built by tools/build_web.ps1 with no fixtures and Kairos its one
+# name. -Hand replaces the hand's text (a mutant's), -NoHand leaves the hand out, -Template names a mutant template.
+function New-GamePage([string]$dir, [string]$name, [string]$Hand = '', [switch]$NoHand, [string]$Template = '') {
+    $carts = Join-Path $dir ($name + '_cartridges')
+    $fix = Join-Path $dir ($name + '_fixtures')
+    New-Item -ItemType Directory -Path (Join-Path $carts 'kairos') -Force | Out-Null
+    New-Item -ItemType Directory -Path $fix -Force | Out-Null
+    foreach ($f in $gameFiles) {
+        $to = Join-Path $carts $f
+        if ($f -like '*.hand.js') {
+            if ($NoHand) { continue }
+            if ($Hand -ne '') { [System.IO.File]::WriteAllText($to, $Hand, (New-Object System.Text.UTF8Encoding($false))); continue }
+        }
+        Copy-Item -LiteralPath (Join-Path $repoRoot ('cartridges/' + $f)) -Destination $to
+    }
+    $out = Join-Path $dir ($name + '.html')
+    $shellG = if (Get-Command powershell.exe -ErrorAction SilentlyContinue) { 'powershell.exe' } else { 'pwsh' }
+    $builderArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $PSScriptRoot 'build_web.ps1'), '-CartridgesDir', $carts, '-FixturesDir', $fix, '-PageOrder', 'kairos', '-Out', $out)
+    if ($Template -ne '') { $builderArgs += @('-Template', $Template) }
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { $null = & $shellG @builderArgs 2>&1; $code = $LASTEXITCODE } finally { $ErrorActionPreference = $prev }
+    if ($code -ne 0 -or -not (Test-Path -LiteralPath $out)) { throw "the builder could not build the game's page $name" }
+    return $out
+}
+# The judgment of one run's text at one scale: the problems, and the case lines to print. A game's page
+# (ENGINE.16) is judged by its own floors, its own count of cases, and the cases each must say are not on it.
+function Test-Loop([string]$text, [string]$scale, [object[]]$table = $floors, [int]$want = $expectedCases, [string[]]$absent = @()) {
     $problems = New-Object System.Collections.Generic.List[string]
     $lines = @($text -split "`n" | ForEach-Object { $_.TrimEnd("`r") })
     $header = $lines[0]
@@ -504,7 +577,10 @@ function Test-Loop([string]$text, [string]$scale) {
     if (-not $dm.Success -or $dm.Groups[1].Value -ne $scale) { $problems.Add("the page saw a ratio of '$($dm.Groups[1].Value)', the run asked for $scale") }
     $cases = @{}
     $caseLines = New-Object System.Collections.Generic.List[string]
+    $notHere = @{}
     foreach ($l in $lines) {
+        $nh = [regex]::Match($l, '^case (\S+): not on this page')
+        if ($nh.Success) { $notHere[$nh.Groups[1].Value] = $true; continue }
         $m = [regex]::Match($l, '^case (\S+): ([^:]*): (OK|FAIL.*)$')
         if (-not $m.Success) { continue }
         $counts = @{}
@@ -519,7 +595,12 @@ function Test-Loop([string]$text, [string]$scale) {
         $size = (Get-Item -LiteralPath $artifact).Length
         if ($module -ne $size) { $problems.Add("the page holds an engine module of $module bytes and $artifact is $size; a page built beside the artifact holds it, so rebuild the page (tools/build_web.ps1)") }
     }
-    foreach ($f in $floors) {
+    foreach ($name in $absent) {
+        if (-not $notHere.ContainsKey($name)) { $problems.Add("the case $name, Alonzo's own, did not say it is not on this page") }
+        if ($cases.ContainsKey($name)) { $problems.Add("the case $name, Alonzo's own, ran on a game's page") }
+    }
+    foreach ($name in @($notHere.Keys | Sort-Object)) { if ($absent -notcontains $name) { $problems.Add("the case $name said it is not on this page, where it runs") } }
+    foreach ($f in $table) {
         $c = $cases[$f.Case]
         if ($null -eq $c) { $problems.Add("the case $($f.Case) was not run"); continue }
         if ($c.Verdict -ne 'OK') { $problems.Add("the case $($f.Case) at a ratio of $scale`: $($c.Verdict)") }
@@ -535,7 +616,7 @@ function Test-Loop([string]$text, [string]$scale) {
     }
     $last = $lines[$lines.Count - 1]
     if ($last -notmatch '^loop ok cases=(\d+)') { $problems.Add("the last line is not 'loop ok': $last") }
-    elseif ([int]$Matches[1] -ne $expectedCases) { $problems.Add("the oracle ran $($Matches[1]) case(s), not the $expectedCases pinned here") }
+    elseif ([int]$Matches[1] -ne $want) { $problems.Add("the oracle ran $($Matches[1]) case(s), not the $want pinned here") }
     return @{ Problems = $problems; Lines = $caseLines; Header = $header }
 }
 
@@ -858,36 +939,44 @@ if ($Control) {
         $aaFailed = @($jAA.Problems | Where-Object { $_ -cmatch 'case pace.*at a rate of 60, on ticks 16\.6 or 16\.7 ms apart, a tick presents one frame, and tick 2 presented 0' }).Count
         $aaNote = "the tick on no grid applied ($aaApplied) and failed the pace case ($aaFailed)"
         $aaOk = $aaApplied -and $aaFailed -ge 1
-        # mutant AB (CART.2's second slice), when the real page holds the engine's module: the page's sand
-        # paints a brush without its rim, < where the cartridge's Gate says <=; Sand's committed replay
-        # paints with the rim, and the replay case must fail it by name at the first frame the rim lands.
+        # The two hands' files (ENGINE.16, before it the template's): a scratch copy of cartridges/ with one hand
+        # mutated, and the real page built from it.
+        $sandHandText = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'cartridges/sand/sand.hand.js'))
+        $kairosHandText = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'cartridges/kairos/kairos.hand.js'))
+        function New-HandCopy([string]$name, [string]$file, [string]$text) {
+            $carts = Join-Path $tmp ('cartridges_' + $name)
+            Copy-Item -Recurse -LiteralPath (Join-Path $repoRoot 'cartridges') -Destination $carts
+            [System.IO.File]::WriteAllText((Join-Path $carts $file), $text, $utf8)
+            return $carts
+        }
+        # mutant AB (CART.2's second slice), when the real page holds the engine's module: Sand's hand paints a
+        # brush without its rim, < where the cartridge's Gate says <=; Sand's committed replay paints with the rim,
+        # and the replay case must fail it by name at the first frame the rim lands.
         $abApplied = $false; $abFailed = 0; $abNote = 'the brush without its rim: not applicable, the real page holding no engine module'
         if ($moduleReal -gt 0) {
             $anchorAB = '      return dr * dr + dc * dc <= brush.radius * brush.radius ? brush.material : -1;'
-            if (([regex]::Matches($tpl, [regex]::Escape($anchorAB))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorAB' is not in the template exactly once"; exit 1 }
-            $mutAB = $tpl.Replace($anchorAB, '      return dr * dr + dc * dc < brush.radius * brush.radius ? brush.material : -1;')
-            $abApplied = $mutAB -cne $tpl
-            $tplAB = Join-Path $tmp 'ab.template.html'; [System.IO.File]::WriteAllText($tplAB, $mutAB, $utf8)
-            $rAB = Invoke-Loop $browser (New-MutantPage 'ab' $tplAB $hostJs) '1'
+            if (([regex]::Matches($sandHandText, [regex]::Escape($anchorAB))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorAB' is not in cartridges/sand/sand.hand.js exactly once"; exit 1 }
+            $mutAB = $sandHandText.Replace($anchorAB, '      return dr * dr + dc * dc < brush.radius * brush.radius ? brush.material : -1;')
+            $abApplied = $mutAB -cne $sandHandText
+            $rAB = Invoke-Loop $browser (New-MutantPage 'ab' $template $hostJs '' (New-HandCopy 'ab' 'sand/sand.hand.js' $mutAB)) '1'
             $jAB = if ($rAB.Text -ne '') { Test-Loop $rAB.Text '1' } else { @{ Problems = @($rAB.Reason) } }
-            $abFailed = @($jAB.Problems | Where-Object { $_ -like "*case replay*Sand's committed replay, played on a fresh host, is not the page's sand at frame*" }).Count
+            $abFailed = @($jAB.Problems | Where-Object { $_ -like "*case replay*sand's committed replay, played on a fresh host, is not its hand's at frame*" }).Count
             $abNote = "the brush without its rim applied ($abApplied) and failed the replay case ($abFailed)"
         }
         $abOk = ($moduleReal -eq 0) -or ($abApplied -and $abFailed -ge 1)
-        # mutant AI (CART.4's second slice), when the real page holds the engine's module: the page's Kairos
-        # turns a row a column early, its right end at the board's sixth column where the cartridge turns it
-        # at the seventh; Kairos's committed replay slides rows to both ends of the board, and the replay case
-        # must fail it by name at the first frame a row reaches the seventh column.
+        # mutant AI (CART.4's second slice), when the real page holds the engine's module: Kairos's hand turns a
+        # row a column early, its right end at the board's sixth column where the cartridge turns it at the
+        # seventh; Kairos's committed replay slides rows to both ends of the board, and the replay case must fail
+        # it by name at the first frame a row reaches the seventh column.
         $aiApplied = $false; $aiFailed = 0; $aiNote = 'the turn a column early: not applicable, the real page holding no engine module'
         if ($moduleReal -gt 0) {
             $anchorAI = '    var turn = (this.direction === 1 && right >= KAIROS.columns) || (this.direction === -1 && this.left <= 1);'
-            if (([regex]::Matches($tpl, [regex]::Escape($anchorAI))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorAI' is not in the template exactly once"; exit 1 }
-            $mutAI = $tpl.Replace($anchorAI, '    var turn = (this.direction === 1 && right >= KAIROS.columns - 1) || (this.direction === -1 && this.left <= 1);')
-            $aiApplied = $mutAI -cne $tpl
-            $tplAI = Join-Path $tmp 'ai.template.html'; [System.IO.File]::WriteAllText($tplAI, $mutAI, $utf8)
-            $rAI = Invoke-Loop $browser (New-MutantPage 'ai' $tplAI $hostJs) '1'
+            if (([regex]::Matches($kairosHandText, [regex]::Escape($anchorAI))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorAI' is not in cartridges/kairos/kairos.hand.js exactly once"; exit 1 }
+            $mutAI = $kairosHandText.Replace($anchorAI, '    var turn = (this.direction === 1 && right >= KAIROS.columns - 1) || (this.direction === -1 && this.left <= 1);')
+            $aiApplied = $mutAI -cne $kairosHandText
+            $rAI = Invoke-Loop $browser (New-MutantPage 'ai' $template $hostJs '' (New-HandCopy 'ai' 'kairos/kairos.hand.js' $mutAI)) '1'
             $jAI = if ($rAI.Text -ne '') { Test-Loop $rAI.Text '1' } else { @{ Problems = @($rAI.Reason) } }
-            $aiFailed = @($jAI.Problems | Where-Object { $_ -like "*case replay*Kairos's committed replay, played on a fresh host, is not the page's Kairos at frame*" }).Count
+            $aiFailed = @($jAI.Problems | Where-Object { $_ -like "*case replay*kairos's committed replay, played on a fresh host, is not its hand's at frame*" }).Count
             $aiNote = "the turn a column early applied ($aiApplied) and failed the replay case ($aiFailed)"
         }
         $aiOk = ($moduleReal -eq 0) -or ($aiApplied -and $aiFailed -ge 1)
@@ -1003,9 +1092,58 @@ if ($Control) {
             if (-not ($e2Applied -and $e2Failed -ge 1)) { $emptyOk = $false }
         }
         $emptyNote = $emptyNotes -join '; '
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk) {
-            Write-Output ('OK: the check passes the real page and fails each of the ' + $(if ($moduleReal -gt 0) { 'forty-five' } else { 'thirty-four applicable' }) + ' mutants for its own reason, each proving it applied')
+        # mutants AT, AU, AV and AW (ENGINE.16), each a game's page of Kairos alone, which must pass first: its
+        # hand a frame late, answering each frame with the frame before it; its hand's Tally counting a stack at
+        # the level above its own, which moves no light; its hand's block dropped, so that its replay is held to
+        # its golden alone; and a template whose bench refuses a game's page wholesale in the loop too, as it did
+        # before. Each must fail by name; the first three need the module's replay, the last nothing.
+        $gameJudged = New-Object System.Collections.Generic.List[object]
+        $gameNotes = New-Object System.Collections.Generic.List[string]
+        $gameOk = $true
+        $rG0 = Invoke-Loop $browser (New-GamePage $tmp 'g0') '1'
+        $jG0 = if ($rG0.Text -ne '') { Test-Loop $rG0.Text '1' $gameFloors $gameCases $gameAbsent } else { @{ Problems = @($rG0.Reason) } }
+        if (@($jG0.Problems).Count -ne 0) { $gameOk = $false }
+        $gameNotes.Add(("the game's page has {0} problem(s)" -f @($jG0.Problems).Count))
+        $anchorAT = "    this.step(down('B5') || down('B10') || down('B13'), down('B6'));`n    return { plane: this.board(), cells: this.tally() };"
+        $withAT = "    var late = { plane: this.board(), cells: this.tally() };`n    this.step(down('B5') || down('B10') || down('B13'), down('B6'));`n    return late;"
+        $anchorAU = '        if (this.beneath) this.stacked[this.level - 1]++;'
+        $withAU = '        if (this.beneath) this.stacked[Math.min(this.level, KAIROS.levels - 1)]++;'
+        $anchorAW = "    if (MODE !== 'loop') {"
+        foreach ($pair in @(@($kairosHandText, $anchorAT, 'cartridges/kairos/kairos.hand.js'), @($kairosHandText, $anchorAU, 'cartridges/kairos/kairos.hand.js'), @($tpl, $anchorAW, 'the template'))) {
+            if (([regex]::Matches($pair[0], [regex]::Escape($pair[1]))).Count -ne 1) { Write-Output "FAIL: the anchor '$($pair[1])' is not in $($pair[2]) exactly once"; exit 1 }
+        }
+        $tplAW = Join-Path $tmp 'aw.template.html'; [System.IO.File]::WriteAllText($tplAW, $tpl.Replace($anchorAW, '    if (true) {'), $utf8)
+        $gameMutants = @(
+            @{ L = 'at'; Name = 'the hand a frame late'; Module = $true; Hand = $kairosHandText.Replace($anchorAT, $withAT)
+               Want = "case replay.*kairos's committed replay, played on a fresh host, is not its hand's at frame 1: row \d+, column \d+ reads" },
+            @{ L = 'au'; Name = 'the Tally a level up'; Module = $true; Hand = $kairosHandText.Replace($anchorAU, $withAU)
+               Want = "case replay.*kairos's committed replay, played on a fresh host, is not its hand's at frame \d+: Tally!C\d+ holds" },
+            @{ L = 'av'; Name = 'the hand''s block dropped'; Module = $true; NoHand = $true
+               Want = 'the case replay at a ratio of 1 counted 1 alone, where it must count none' },
+            @{ L = 'aw'; Name = 'the bench refusing a game''s page'; Template = $tplAW
+               Want = "the first line is not the loop oracle's header: loop: not on this page" }
+        )
+        foreach ($mu in $gameMutants) {
+            if ($mu.Module -and $moduleReal -eq 0) { $gameNotes.Add(("{0}: not applicable, the real page holding no engine module" -f $mu.Name)); continue }
+            if ($mu.NoHand) { $pageGm = New-GamePage $tmp $mu.L -NoHand }
+            elseif ($mu.ContainsKey('Hand')) { $pageGm = New-GamePage $tmp $mu.L -Hand $mu.Hand }
+            else { $pageGm = New-GamePage $tmp $mu.L -Template $mu.Template }
+            # applied: the hand's text changed, the block absent from the page, or the template changed
+            $gmText = [System.IO.File]::ReadAllText($pageGm)
+            if ($mu.NoHand) { $gmApplied = -not $gmText.Contains('<script id="hand-kairos"') }
+            elseif ($mu.ContainsKey('Hand')) { $gmApplied = ($mu.Hand -cne $kairosHandText) -and $gmText.Contains('<script id="hand-kairos"') }
+            else { $gmApplied = ([System.IO.File]::ReadAllText($mu.Template)) -cne $tpl }
+            $rGm = Invoke-Loop $browser $pageGm '1'
+            $gmJudge = if ($rGm.Text -ne '') { Test-Loop $rGm.Text '1' $gameFloors $gameCases $gameAbsent } else { @{ Problems = @($rGm.Reason) } }
+            $gmFailed = @($gmJudge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
+            $gameJudged.Add(@{ Name = $mu.Name; Problems = @($gmJudge.Problems) })
+            $gameNotes.Add(("{0} applied ({1}) and failed by name ({2})" -f $mu.Name, $gmApplied, $gmFailed))
+            if (-not ($gmApplied -and $gmFailed -ge 1)) { $gameOk = $false }
+        }
+        $gameNote = $gameNotes -join '; '
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $gameNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $gameOk) {
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'forty-nine' } else { 'thirty-five applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -1040,6 +1178,8 @@ if ($Control) {
         if ($moduleReal -gt 0) { foreach ($p in @($jAI.Problems) | Select-Object -First 3) { Write-Output ('  the turn a column early: ' + $p) } }
         foreach ($tj in $tabsJudged) { foreach ($p in @($tj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $tj.Name + ': ' + $p) } }
         foreach ($ej in $emptyJudged) { foreach ($p in @($ej.Problems) | Select-Object -First 3) { Write-Output ('  ' + $ej.Name + ': ' + $p) } }
+        foreach ($p in @($jG0.Problems) | Select-Object -First 3) { Write-Output ('  the game''s page: ' + $p) }
+        foreach ($gj in $gameJudged) { foreach ($p in @($gj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $gj.Name + ': ' + $p) } }
         exit 1
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
@@ -1063,9 +1203,30 @@ foreach ($scale in $scales) {
     foreach ($l in $j.Lines) { Write-Output ('  ' + $l) }
     foreach ($p in $j.Problems) { $failed.Add($p); Write-Output ("    {0}  FAIL" -f $p) }
 }
+# The game's page (ENGINE.16), at a ratio of 1, since it holds no grid cartridge: Kairos alone, its hand a block.
+$gameTmp = Join-Path ([System.IO.Path]::GetTempPath()) ('alonzo_loop_game_' + [System.IO.Path]::GetRandomFileName())
+New-Item -ItemType Directory -Path $gameTmp | Out-Null
+try {
+    $gamePage = New-GamePage $gameTmp 'game'
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    $r = Invoke-Loop $browser $gamePage '1'
+    $sw.Stop()
+    if ($r.Text -eq '') { $failed.Add("the game's page: $($r.Reason)"); Write-Output ("  the game's page: {0}  FAIL" -f $r.Reason) }
+    else {
+        $j = Test-Loop $r.Text '1' $gameFloors $gameCases $gameAbsent
+        $lastLine = @($r.Text -split "`n")[-1].Trim()
+        Write-Output ("  the game's page, Kairos alone, ratio 1 ({0:N1} s): {1}" -f $sw.Elapsed.TotalSeconds, $lastLine)
+        foreach ($l in $j.Lines) { Write-Output ('  ' + $l) }
+        foreach ($p in $j.Problems) { $failed.Add("the game's page: " + $p); Write-Output ("    {0}  FAIL" -f $p) }
+    }
+} catch {
+    $failed.Add("the game's page: " + $_.Exception.Message); Write-Output ("  the game's page: {0}  FAIL" -f $_.Exception.Message)
+} finally {
+    Remove-Item -Recurse -Force $gameTmp -ErrorAction SilentlyContinue
+}
 Write-Output ''
 if ($failed.Count -eq 0) {
-    Write-Output "=== CHECK: clean - every case OK at both ratios, every count at or above its floor ==="
+    Write-Output "=== CHECK: clean - every case OK at both ratios, every count at or above its floor, and the game's page's five cases OK with Alonzo's fifteen said absent ==="
     exit 0
 }
 Write-Output "=== CHECK: $($failed.Count) problem(s) ==="

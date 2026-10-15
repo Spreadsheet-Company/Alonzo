@@ -13,9 +13,13 @@
   include (SPEC.3), and each FIXTURE place
   with a record the door printed, and writes web/index.html, one file that runs
   from disk. The page loads nothing from the network, writes nothing anywhere and
-  executes nothing but the scripts below: tools/check_web_offline.ps1 holds this
-  file and the three scripts to that doctrine on every push, as Frazaro's page is
-  held.
+  executes nothing but the scripts below and its cartridges' hands, each a block
+  the builder writes as a script (ENGINE.16): tools/check_web_offline.ps1 holds
+  this file, the three scripts and the hands to that doctrine on every push, as
+  Frazaro's page is held. A page that does not hold Alonzo's own cartridges and
+  records is a game's: its loop oracle runs the cases that need nothing of
+  Alonzo's own files over its own blocks and hands, and says of every other case,
+  and of every other mode of the bench, that it is not on the page (ENGINE.16).
 
   Seven modes, one page: the player, and the bench (ENGINE.14). Opened plainly,
   it is the player, the window the game's: a cartridge picked or pasted, Life, the
@@ -88,8 +92,8 @@
   never a shared runner. With ?frames=1 it is the frame floors' instrument (CART.1):
   the engine's module stepped over the benchmark's two fixtures, Life's soup and the
   glider gun, and since CART.2 Sand's opening, synchronously at the page's load, each
-  frame timed alone and held to the page's own Life or Sand (sandStep, the page's
-  sand by hand), or, where a frame reads under twenty steps of the page's
+  frame timed alone and held to the page's own Life or Sand (Sand's hand's rule,
+  SandHand.step, since ENGINE.16), or, where a frame reads under twenty steps of the page's
   clock, the frames timed in runs, back to back, the last held and every frame held on a
   second instance stepped untimed (CART.1, 2026-10-10; ENGINE.9), and the clock read before
   each fixture's frames and after them (CART.1, 2026-10-12); since ENGINE.9 Life and
@@ -361,9 +365,10 @@
     return out;
   }
   // A cartridge's manifest, read for the page alone: the title the picker shows and the notes the drawer
-  // shows, the cartridge's own words for what it is and how it is played.
+  // shows, the cartridge's own words for what it is and how it is played; and since ENGINE.16 its screen's
+  // mode and its rate, by which the loop oracle's grid case finds a game's grid cartridges.
   function manifestOf(text) {
-    var out = { title: '', notes: '' };
+    var out = { title: '', notes: '', mode: '', rate: -1 };
     try {
       var forms = VP ? VP.readForms(text) : [];
       for (var i = 0; i < forms.length; i++) {
@@ -372,6 +377,8 @@
         for (var j = 2; j < f.length; j++) {
           var d = f[j];
           if (Array.isArray(d) && d[0] && (d[0].sym === 'title' || d[0].sym === 'notes') && typeof d[1] === 'string') out[d[0].sym] = d[1];
+          if (Array.isArray(d) && d[0] && d[0].sym === 'screen' && d[1] && typeof d[1].sym === 'string') out.mode = d[1].sym;
+          if (Array.isArray(d) && d[0] && d[0].sym === 'rate' && d[1] && d[1].num !== undefined) out.rate = +d[1].num;
         }
         break;
       }
@@ -386,7 +393,7 @@
     var carts = blocksOf('cartridge');
     for (var i = 0; i < carts.length; i++) {
       var b = carts[i], m = manifestOf(b.text);
-      var c = { name: b.name, text: b.text, file: b.file || b.name + '.vla', path: b.path, title: m.title || b.name, notes: m.notes };
+      var c = { name: b.name, text: b.text, file: b.file || b.name + '.vla', path: b.path, title: m.title || b.name, notes: m.notes, mode: m.mode, rate: m.rate };
       var src = document.getElementById('source-' + b.name), rp = document.getElementById('replay-' + b.name), gd = document.getElementById('golden-' + b.name);
       if (src) { c.source = src.textContent; c.sourcePath = src.getAttribute('data-path') || ''; }
       if (rp && gd) { c.replay = rp.textContent; c.replayPath = rp.getAttribute('data-path') || ''; c.golden = gd.textContent; }
@@ -402,6 +409,19 @@
   (function () {
     var libs = blocksOf('library');
     for (var i = 0; i < libs.length; i++) { LIBRARIES[libs[i].name] = { text: libs[i].text, path: libs[i].path }; LIBRARY_ORDER.push(libs[i].name); }
+  })();
+  // The hands (ENGINE.16): a game's own JavaScript, each a block of its own, hand-NAME, which the builder writes
+  // as a script the page runs where it stands, before this one, never through eval; each registers one
+  // constructor under its cartridge's name in window.AlonzoHands, read here once. The replay case answers a hand
+  // each frame of its cartridge's committed replay (caseReplay) and holds the registry to the blocks.
+  var HANDS = {}, HAND_BLOCKS = [];
+  (function () {
+    var reg = window.AlonzoHands || {}, els = document.getElementsByTagName('script');
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      if (el.id.indexOf('hand-') === 0 && (el.type === '' || el.type === 'text/javascript')) HAND_BLOCKS.push({ name: el.id.slice(5), path: el.getAttribute('data-path') || '' });
+    }
+    for (var n in reg) if (Object.prototype.hasOwnProperty.call(reg, n)) HANDS[n] = reg[n];
   })();
   // The page's name, its builder's: Alonzo for the engine's own page, a game's for its own.
   var PAGE_NAME = embedded('page-name').trim() || 'Alonzo';
@@ -752,18 +772,25 @@
   // ---- the player, opened plainly (ENGINE.14) ----
   if (MODE === 'page') { player(); return; }
 
-  // ---- the bench is Alonzo's own (ENGINE.15) ----
-  // Its modes run over Alonzo's eight cartridges, the common library and the seven records by name, so a page
-  // that does not hold them, a game's, says what its bench lacks and runs none of them.
+  // ---- the bench: Alonzo's own, and a game's (ENGINE.15, ENGINE.16) ----
+  // A page that holds everything the bench names, Alonzo's eight cartridges, the common library and the seven
+  // records, is Alonzo's own, and every mode runs over them by name. Any other page is a game's: its loop
+  // oracle runs the cases that need nothing of Alonzo's own files over the page's own blocks, and each of the
+  // rest says in one line that it is not on the page; every other mode is Alonzo's own and says so.
   var BENCH = ['life', 'gun', 'testcard', 'inputcard', 'soundcard', 'sand', 'gridcard', 'kairos'], lacks = [];
   for (var bi = 0; bi < BENCH.length; bi++) if (!CARTRIDGES[BENCH[bi]]) lacks.push('the cartridge ' + BENCH[bi]);
   if (!LIBRARIES.common) lacks.push('the library common');
   for (var bf in FIXTURES) if (Object.prototype.hasOwnProperty.call(FIXTURES, bf) && !fixtureText(bf).trim()) lacks.push('the record ' + bf);
-  if (lacks.length) {
-    var benchWhy = 'the bench runs over Alonzo\'s own page, and this one lacks ' + lacks.join(', ');
-    if (MODE === 'oracle' || MODE === 'loop' || MODE === 'blit' || MODE === 'frames') document.getElementById(MODE).textContent = MODE + ' failed: ' + benchWhy;
-    aboutEl.textContent = 'The bench is not on this page: ' + benchWhy + '.';
-    return;
+  var OWN = !lacks.length;
+  if (!OWN) {
+    var benchWhy = 'it runs over Alonzo\'s own cartridges and records, and this page lacks ' + lacks.join(', ');
+    if (MODE !== 'loop') {
+      var modeEl = document.getElementById(MODE);
+      if (modeEl) modeEl.textContent = MODE + ': not on this page: ' + benchWhy + (MODE === 'blit' || MODE === 'frames' ? '; a game\'s own fixtures are a later slice' : '');
+      aboutEl.textContent = 'The bench\'s mode ' + MODE + ' is not on this page: ' + benchWhy + '.';
+      return;
+    }
+    aboutEl.textContent = 'A game\'s page: its loop oracle runs the cases that need nothing of Alonzo\'s own files over this page\'s cartridges and hands, and says of each other case that it is not on this page.';
   }
 
   // ---- the bench's viewport over the fixtures (?viewport=1; KERNEL.5's page, its own mode since ENGINE.14) ----
@@ -1359,93 +1386,8 @@
       next[i] = (others === 3 || (me === 1 && others === 2)) ? 1 : 0;
     }
   }
-  // Sand by hand (CART.2, decisions 13 and 21), the page's own, a third beside the engine's and the Rust
-  // one, engine/src/sand.rs: the rule of cartridges/sand/sand.vla as a person writes a falling-sand toy,
-  // each row's grains, sand and water alike, proposing a move and the cells beneath them claiming it,
-  // from the bottom row up, in three passes: straight down, then each grain's first diagonal, then its
-  // second, the first to the right on an even row; a cell is claimed once, by the first grain to ask.
-  // Then the row's water that stayed claims a cell of its row left free, in two passes, the side its
-  // row's direction names first. The codes are the cartridge's, 0 empty, 1 wall, 2 sand and 3 water; the
-  // interior is C2:LF199, the walls two cells wide down each side, row 1 empty and row 200 the floor,
-  // which shows the swatch. A plane as Life's.
-  var SAND_TOP = 2, SAND_BOTTOM = LIFE_H - 1, SAND_LEFT = 3, SAND_RIGHT = LIFE_W - 2;
-  function sandEmpty(swatch) {
-    var b = new Uint8Array(LIFE_W * LIFE_H), r, c;
-    for (r = 1; r <= LIFE_H; r++) { var at = (r - 1) * LIFE_W; b[at] = b[at + 1] = b[at + LIFE_W - 2] = b[at + LIFE_W - 1] = 1; }
-    for (c = SAND_LEFT; c <= SAND_RIGHT; c++) b[(LIFE_H - 1) * LIFE_W + (c - 1)] = swatch;
-    return b;
-  }
-  // The opening: Life's soup as grains, Life's own arithmetic over the interior's top third, rows 2 to
-  // 67 (CART.2's playtest pass), sand where the soup's square is under three sixteenths of the prime and
-  // water where it is under three eighths.
-  var SAND_RAIN = 67;
-  function sandOpening(seed) {
-    var P = 67108859, T = 25165822, TS = 12582911, b = sandEmpty(2);
-    for (var r = SAND_TOP; r <= SAND_RAIN; r++) for (var c = SAND_LEFT; c <= SAND_RIGHT; c++) {
-      var a = (seed * 1103515 + r * 1597334 + c * 1830421 + 12345) % P;
-      var d = (seed * 2012345 + r * 1209487 + c * 1949213 + 54321) % P;
-      var h = (a * d) % P, sq = (h * h) % P;
-      if (sq < TS) b[(r - 1) * LIFE_W + (c - 1)] = 2;
-      else if (sq < T) b[(r - 1) * LIFE_W + (c - 1)] = 3;
-    }
-    return b;
-  }
-  // One frame of the rule over the last frame's board, the floor showing the swatch: the row beneath
-  // known after its departures and its water's sideways moves, occupied or not and what it holds, the
-  // floor first. A brush, { row, col, radius, material }, paints the cells of the interior its disc
-  // covers (CART.2's second slice, as engine/src/sand.rs paints them): a painted cell holds its paint at
-  // the frame's end and is occupied when the paint is not empty, while the grain it held still moves as
-  // the rule says, falling or moving sideways.
-  function sandStep(old, swatch, brush) {
-    var W = LIFE_W, next = old.slice(), occ = new Uint8Array(W + 1), holds = new Uint8Array(W + 1);
-    var claimed = new Uint8Array(W + 1), moved = new Uint8Array(W + 1), arrives = new Uint8Array(W + 1), r, c, pass, p;
-    var taken = new Uint8Array(W + 1), went = new Uint8Array(W + 1);
-    // the paint at a cell, or -1 where the disc does not reach or there is no brush
-    function paint(pr, pc) {
-      if (!brush || pr < SAND_TOP || pr > SAND_BOTTOM || pc < SAND_LEFT || pc > SAND_RIGHT) return -1;
-      var dr = pr - brush.row, dc = pc - brush.col;
-      return dr * dr + dc * dc <= brush.radius * brush.radius ? brush.material : -1;
-    }
-    for (c = SAND_LEFT; c <= SAND_RIGHT; c++) next[(LIFE_H - 1) * W + (c - 1)] = swatch;
-    for (c = 1; c <= W; c++) { occ[c] = 1; holds[c] = 1; }
-    for (r = SAND_BOTTOM; r >= SAND_TOP; r--) {
-      var row = (r - 1) * W, rightFirst = r % 2 === 0;
-      claimed.fill(0); moved.fill(0); arrives.fill(0);
-      for (pass = 0; pass < 3; pass++) for (c = SAND_LEFT; c <= SAND_RIGHT; c++) {
-        var g = old[row + c - 1];
-        if (g < 2 || moved[c]) continue;
-        var t = pass === 0 ? c : ((pass === 1) === rightFirst ? c + 1 : c - 1);
-        if (!occ[t] && !claimed[t]) { claimed[t] = 1; moved[c] = 1; arrives[t] = g; }
-      }
-      if (r < SAND_BOTTOM) for (c = SAND_LEFT; c <= SAND_RIGHT; c++) { p = paint(r + 1, c); next[row + W + c - 1] = p >= 0 ? p : occ[c] ? holds[c] : arrives[c]; }
-      // this row after its departures
-      for (c = 1; c <= W; c++) {
-        var m = old[row + c - 1];
-        p = paint(r, c);
-        if (p >= 0) { occ[c] = p !== 0 ? 1 : 0; holds[c] = p; continue; }
-        if (c < SAND_LEFT || c > SAND_RIGHT) { occ[c] = 1; holds[c] = m; continue; }
-        var stays = m === 1 || (m >= 2 && !moved[c]);
-        occ[c] = stays ? 1 : 0; holds[c] = stays ? m : 0;
-      }
-      // its water that stayed, into a cell of the row left free, its direction's side first; a grain
-      // moving out frees no cell for another this frame
-      taken.fill(0); went.fill(0);
-      for (pass = 0; pass < 2; pass++) for (c = SAND_LEFT; c <= SAND_RIGHT; c++) {
-        if (!occ[c] || old[row + c - 1] !== 3 || went[c]) continue;
-        var s = (pass === 0) === rightFirst ? c + 1 : c - 1;
-        if (!occ[s] && !taken[s]) { taken[s] = 1; went[c] = 1; }
-      }
-      // this row after its sideways moves, a painted cell holding its paint whatever moved
-      for (c = SAND_LEFT; c <= SAND_RIGHT; c++) {
-        if (went[c]) { occ[c] = 0; holds[c] = 0; }
-        if (taken[c]) { occ[c] = 1; holds[c] = 3; }
-        p = paint(r, c);
-        if (p >= 0) { occ[c] = p !== 0 ? 1 : 0; holds[c] = p; }
-      }
-    }
-    for (c = SAND_LEFT; c <= SAND_RIGHT; c++) { p = paint(SAND_TOP, c); next[(SAND_TOP - 1) * W + c - 1] = p >= 0 ? p : occ[c] ? holds[c] : 0; }
-    return next;
-  }
+  // Sand by hand (CART.2, decisions 13 and 21) is its hand since ENGINE.16, cartridges/sand/sand.hand.js, the block
+  // hand-sand: the replay case answers it each frame, and the frames instrument reads its rule off it.
   function liveOf(bytes) { var n = 0; for (var i = 0; i < bytes.length; i++) if (bytes[i] === 1) n++; return n; }
   // The first byte two planes differ at, by the row and column of a plane w wide, Life's unless named.
   function firstDiff(a, b, w) {
@@ -1956,7 +1898,8 @@
           if (host.counters().frame !== f) { P.push(label + ': after tick ' + f + ' the host is at frame ' + host.counters().frame); break; }
         }
         var at = label + ' frame ' + f;
-        var cam = recordValues(D.call('alonzo_view', [h], ['grid', 'Camera', '']).text);
+        // a cartridge without a Camera sheet (a game's, ENGINE.16) is drawn through A1's window
+        var camView = D.call('alonzo_view', [h], ['grid', 'Camera', '']), cam = camView.status === 0 ? recordValues(camView.text) : {};
         var row = cam.B1 && cam.B1.num !== undefined ? cam.B1.num : 1, col = cam.B2 && cam.B2.num !== undefined ? cam.B2.num : 1;
         var want = lqRange(row, col, ld.h, ld.w), win = host.counters().window;
         if (plan.window && plan.window(f) !== want) P.push(at + ': the Camera\'s record places ' + want + ' where the card and its edits place ' + plan.window(f));
@@ -2006,8 +1949,9 @@
   // frame 0's formulas as their texts, a value and a formula written into the window at frame 6 and seen in
   // that frame, a cell selected and kept, and a person's scroll of two rows kept through the Camera's move at
   // frame 20. Every frame after the first is drawn from the values projection (the second slice), and a
-  // values record written here is read whole by a viewport of its own (gqLone).
-  function caseGrid() {
+  // values record written here is read whole by a viewport of its own (gqLone). Alonzo's own half since
+  // ENGINE.16, run by caseGrid on Alonzo's page alone.
+  function gridOwn() {
     var P = [], kf = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0 };
     var km = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0 };
     var x = { pointer: 0, key: 0, edited: 0, waits: 0, edits: 0, followed: 0, lone: 0 }, module = 0;
@@ -2081,6 +2025,28 @@
     return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeTexts: kf.texts, fakeLooks: kf.looks, fakeUnvalued: kf.unvalued, fakeProbes: kf.probes, fakeKept: kf.kept, fakeCleared: kf.cleared, fakeValues: kf.values,
                          pointer: x.pointer, key: x.key, edited: x.edited, waits: x.waits, lone: x.lone, module: module, frames: km.frames, equal: km.equal, windows: km.windows, texts: km.texts, wraps: km.wraps, fills: km.fills, looks: km.looks, styles: km.styles,
                          columns: km.columns, unvalued: km.unvalued, hidden: km.hidden, probes: km.probes, kept: km.kept, followed: x.followed, edits: x.edits, cleared: km.cleared, hashes: km.hashes || 0, values: km.values, live: st.live, misfrees: st.misfrees }, problems: P };
+  }
+  // ENGINE.16's half, a game's page's and Alonzo's alike: every grid cartridge the page holds, by its manifest,
+  // on the engine's module, a short run with no edits, frame 0 and GAME_GRID_FRAMES more (frame 0 alone at rate
+  // zero, where only an edit steps), each frame's drawn window held to the record of that window as gridRun
+  // holds it, the values record after frame 0, and no refusal said. On Alonzo's own page the grid card, after
+  // Alonzo's own half, so that the code a game's page runs is held here on every push.
+  var GAME_GRID_FRAMES = 12;
+  function caseGrid() {
+    var res = OWN ? gridOwn() : { counters: {}, problems: [] }, k = res.counters, P = res.problems;
+    k.grids = 0; k.gridFrames = 0; k.gridEqual = 0; k.gridValues = 0; k.gridTexts = 0; k.gridCleared = 0;
+    var wasm = builtModule();
+    if (!wasm) return res;
+    var bytes = bytesOfBase64(wasm);
+    k.module = bytes.length;
+    for (var i = 0; i < ORDER.length; i++) {
+      var c = CARTRIDGES[ORDER[i]];
+      if (c.mode !== 'grid') continue;
+      var g = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0 };
+      gridRun(HOST.instantiateSync(bytes), c.name, c.text, c.file, c.rate > 0 ? GAME_GRID_FRAMES : 0, { strict: true }, g, P);
+      k.grids++; k.gridFrames += g.frames; k.gridEqual += g.equal; k.gridValues += g.values; k.gridTexts += g.texts; k.gridCleared += g.cleared;
+    }
+    return res;
   }
   // A values record read whole (ENGINE.8's second slice, KERNEL.37) by a viewport of its own: a formula known by
   // its value alone, drawn as a formula's value through its look, its text not in the record; a text value; and
@@ -2354,18 +2320,21 @@
   // doors run one pass; a source whose include is not handed in is refused at the include's own
   // line, read off the record's fields; the pass takes no handle, so the first load after it, the
   // test card the page's pass built, is handle 1; and a build between two frames leaves the loop
-  // running, the next frame stepped, nothing refused.
+  // running, the next frame stepped, nothing refused. On a game's page (ENGINE.16) every source the page
+  // holds is expanded so, and the rest, over Life's source, the test card and the gun's, is Alonzo's own.
   function casePass() {
-    var P = [], k = { declined: 0, module: 0, sources: 0, same: 0, rows: 0, refused: 0, handle: 0, ranOn: 0 };
-    var fh = new HOST({ drive: 'manual' });
-    try {
-      fh.attach(FAKE.create({}).exports);
-      var d = fh.expand(CARTRIDGES.life.source, CARTRIDGES.life.sourcePath, libraryPairs());
-      var said = fh.sentences().filter(function (s) { return s.refusal && s.text.indexOf('exports no alonzo_expand') >= 0; }).length;
-      if (d.ok) P.push('the double built a cartridge, holding no pass');
-      else if (!said) P.push('the double\'s build was not declined in its words, marked as a refusal: ' + d.sentence);
-      else k.declined = 1;
-    } finally { fh.destroy(); }
+    var P = [], k = OWN ? { declined: 0, module: 0, sources: 0, same: 0, rows: 0, refused: 0, handle: 0, ranOn: 0 } : { module: 0, sources: 0, same: 0, rows: 0 };
+    if (OWN) {
+      var fh = new HOST({ drive: 'manual' });
+      try {
+        fh.attach(FAKE.create({}).exports);
+        var d = fh.expand(CARTRIDGES.life.source, CARTRIDGES.life.sourcePath, libraryPairs());
+        var said = fh.sentences().filter(function (s) { return s.refusal && s.text.indexOf('exports no alonzo_expand') >= 0; }).length;
+        if (d.ok) P.push('the double built a cartridge, holding no pass');
+        else if (!said) P.push('the double\'s build was not declined in its words, marked as a refusal: ' + d.sentence);
+        else k.declined = 1;
+      } finally { fh.destroy(); }
+    }
     var wasm = builtModule();
     if (!wasm) return { counters: k, problems: P };
     var bytes = bytesOfBase64(wasm), exports = HOST.instantiateSync(bytes), built = {};
@@ -2382,6 +2351,11 @@
         var want = c.text.replace(/\n/g, '\r\n');
         if (r.text !== want) { P.push(name + ': the page\'s pass differs from ' + c.path + ', the command line\'s, ' + lineDiff(r.text, want)); continue; }
         k.same++; k.rows += r.rows; built[name] = r.text;
+      }
+      if (!OWN) {
+        var gameRefusals = host.sentences().filter(function (s) { return s.refusal; });
+        if (gameRefusals.length) P.push('the host was refused: ' + gameRefusals[0].text);
+        return { counters: k, problems: P };
       }
       // An include the page does not hand in: refused at the include's own line, by the record.
       var src = CARTRIDGES.life.source, lines = src.split('\n'), incLine = 0;
@@ -2653,265 +2627,203 @@
     }
     return out;
   }
-  // A replay of Sand on the page's sand (CART.2's second slice), the brush as the cartridge reads it: the
-  // Input sheet's cells as the replay's rows leave them, since a replay logs a cell only in the frame it
-  // changes; the material and the radius as the State and the Brush keep them, sand and 3 at the first
-  // frame, then a key's pick and the wheel's notches; the disc the left or the right button paints while
-  // the pointer is over the Screen, empty under the right; and the board, the opening from the seed at
-  // the first frame. engine/src/cartridge.rs holds the same replay natively to engine/src/sand.rs.
-  var SAND_PICKS = { '1': 2, '2': 1, '3': 3, '0': 0 };
-  function SandHand(seed) { this.seed = seed; this.input = {}; this.material = 2; this.radius = 3; this.board = null; this.painted = 0; }
-  SandHand.prototype.frame = function (n, rows) {
-    for (var i = 0; i < rows.length; i++) {
-      var row = rows[i];
-      if (Array.isArray(row) && row[0] && row[0].sym === 'cell' && row[1] === 'Input' && typeof row[2] === 'string') this.input[row[2]] = row[3];
+  // ---- ENGINE.16: a replay held to its hand, a block of the page's own ----
+  // The hands of Sand and Kairos (CART.2's and CART.4's second slices) are blocks since ENGINE.16, each its
+  // cartridge's own file, cartridges/sand/sand.hand.js and cartridges/kairos/kairos.hand.js, and a game's
+  // hand is the same: a constructor given the replay's seed, answered each frame's number and rows (the
+  // page's reader's forms) with what the frame must hold, { plane } and or { cells }, and asked its own counts.
+  // The blocks against the registry: each block registered a hand under its own name, each hand registered
+  // stands in a block, and each holds a cartridge of the page's with a replay to hold. The count that did.
+  function handsHeld(P) {
+    var n = 0, blocks = {};
+    for (var i = 0; i < HAND_BLOCKS.length; i++) {
+      var b = HAND_BLOCKS[i];
+      blocks[b.name] = true;
+      if (typeof HANDS[b.name] !== 'function') { P.push('the block hand-' + b.name + ' registered no hand under ' + b.name + ': its script did not run to its end, or it registered another name'); continue; }
+      if (!CARTRIDGES[b.name]) { P.push('the block hand-' + b.name + ' holds a hand for ' + b.name + ', and this page holds no cartridge of that name'); continue; }
+      if (!CARTRIDGES[b.name].replayPath) { P.push('the hand of ' + b.name + ' holds nothing: this page holds no replay of ' + b.name + ' with its golden'); continue; }
+      n++;
     }
-    var input = this.input, num = function (a) { var v = input[a]; return v && v.num !== undefined ? +v.num : 0; };
-    if (n === 1) { this.material = 2; this.radius = 3; this.board = sandOpening(this.seed); return this.board; }
-    var key = typeof input.B17 === 'string' ? input.B17 : '';
-    if (Object.prototype.hasOwnProperty.call(SAND_PICKS, key)) this.material = SAND_PICKS[key];
-    this.radius = Math.max(1, Math.min(8, this.radius - num('B16')));
-    var col = num('B11'), row1 = num('B12'), left = num('B13'), right = num('B14');
-    var brush = left + right > 0 && col > 0 && row1 > 0 ? { row: row1, col: col, radius: this.radius, material: right === 1 ? 0 : this.material } : null;
-    if (brush) this.painted++;
-    this.board = sandStep(this.board, this.material, brush);
-    return this.board;
-  };
-  // Kairos by hand (CART.4's second slice), the page's own, a third beside the engine's and the Rust one,
-  // engine/src/kairos.rs: the stacking game as a person writes it, a row a bitmask of its seven columns, a
-  // stop a bitwise AND with the row beneath, and the game a switch on its phase, the cartridge's codes: 1
-  // sliding, 2 stopped, 3 the minor prize offered, 4 over; a game's end 1 fell, 2 the minor prize taken, 3
-  // the major. The Levels sheet's own values, each window its period. The board lies on its side as the
-  // plane reads the Screen's A1:O7, the cabinet's column a row and its level a column, with the checker.
-  var KAIROS = {
-    levels: 15, columns: 7, minor: 11, major: 15, beat: 20, hold: 90,
-    period: [10, 10, 9, 9, 8, 8, 7, 7, 6, 6, 5, 5, 4, 4, 3],
-    width: [3, 3, 3, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1],
-    window: [10, 10, 9, 9, 8, 8, 7, 7, 6, 6, 5, 5, 4, 4, 3],
-    win: ['#...#.###.#...#', '#...#..#..##..#', '#...#..#..##..#', '#.#.#..#..#.#.#', '#.#.#..#..#..##', '##.##..#..#..##', '#...#.###.#...#']
-  };
-  // The run of columns from to to, both from 1, as a mask; a mask's lights.
-  function kairosRun(from, to) { var m = 0; for (var c = Math.max(1, from); c <= Math.min(KAIROS.columns, to); c++) m |= 1 << (c - 1); return m; }
-  function kairosLights(m) { var n = 0; for (; m; m &= m - 1) n++; return n; }
-  // A replay of Kairos on the page's Kairos: the Input sheet's cells as the replay's rows leave them, the
-  // stop's button held while a, select or the left button is down (the State's B8, their MAX) and the
-  // minor prize's while b is, each a press on its rising edge; the Tower the Write sheet's, a stop's lights
-  // landing before the next frame and the clear once a result has been held. Each frame's board is held.
-  function KairosHand() {
-    this.input = {}; this.frame = 0; this.phase = 4; this.since = 0; this.level = 1; this.width = 3; this.left = 1; this.direction = 1;
-    this.stopped = 0; this.beneath = kairosRun(1, KAIROS.columns); this.end = 0; this.tower = []; this.pending = [];
-    this.heldLast = false; this.takeLast = false; this.stops = 0;
-    for (var c = 0; c < KAIROS.levels; c++) this.tower.push(0);
+    for (var h in HANDS) if (Object.prototype.hasOwnProperty.call(HANDS, h) && !blocks[h]) P.push('a hand was registered under ' + h + ' by no block hand-' + h);
+    return n;
   }
-  // The row's next place and direction: a column on, turning at an end.
-  KairosHand.prototype.onward = function () {
-    var right = this.left + this.width - 1;
-    var turn = (this.direction === 1 && right >= KAIROS.columns) || (this.direction === -1 && this.left <= 1);
-    var d = turn ? -this.direction : this.direction;
-    return [this.left + d, d];
-  };
-  KairosHand.prototype.begin = function () { this.left = 1; this.direction = 1; this.phase = 1; };
-  KairosHand.prototype.start = function () {
-    this.level = 1; this.beneath = kairosRun(1, KAIROS.columns);
-    this.width = Math.min(KAIROS.width[0], kairosLights(this.beneath)); this.end = 0; this.begin();
-  };
-  KairosHand.prototype.over = function (end) { this.end = end; this.phase = 4; };
-  KairosHand.prototype.advance = function () {
-    this.level++; this.width = Math.min(KAIROS.width[this.level - 1], kairosLights(this.beneath)); this.begin();
-  };
-  KairosHand.prototype.step = function (held, takeHeld) {
-    for (var i = 0; i < this.pending.length; i++) {
-      var w = this.pending[i];
-      if (w === 'clear') for (var c = 0; c < KAIROS.levels; c++) this.tower[c] = 0;
-      else this.tower[w[0] - 1] |= w[1];
+  // A hand's value against a record's datum as sndPlain reads it: null for an empty cell, an error by its name,
+  // and a number, a text or a truth value by itself; each spelled for a failure's words.
+  function handSame(got, want) {
+    if (want === null || want === undefined) return got === undefined;
+    if (typeof want === 'object' && typeof want.error === 'string') return !!got && typeof got === 'object' && got.error === want.error;
+    return got === want;
+  }
+  function handSpell(x) { return x === undefined || x === null ? 'nothing' : (typeof x === 'object' ? 'the error ' + x.error : JSON.stringify(x)); }
+  // What a hand answers for a frame, held to the frame: its plane, byte for byte, the host's plane of the window;
+  // its cells, each Sheet!A1 to that sheet's record at the frame, one view a sheet over the range its cells span.
+  // { diff } at the first that differs, else { cells }, the count of cells held.
+  function handHeld(want, M, D) {
+    if (!want || typeof want !== 'object' || (!want.plane && !want.cells)) return { diff: 'the hand answered neither a plane nor cells' };
+    if (want.plane) { var pd = firstDiff(M.plane, want.plane, M.cart ? M.cart.w : 0); if (pd) return { diff: pd }; }
+    var held = 0, sheets = {}, order = [];
+    for (var at in want.cells || {}) {
+      if (!Object.prototype.hasOwnProperty.call(want.cells, at)) continue;
+      var bang = at.lastIndexOf('!'), a = bang > 0 ? VP.parseRange(at.slice(bang + 1)) : null;
+      if (!a || a.top !== a.bottom || a.left !== a.right) return { diff: 'the hand names ' + JSON.stringify(at) + ', which is no Sheet!A1' };
+      var sh = at.slice(0, bang), s = sheets[sh];
+      if (!s) { s = sheets[sh] = { cells: [], top: a.top, left: a.left, bottom: a.top, right: a.left }; order.push(sh); }
+      s.cells.push({ name: at, addr: VP.colName(a.left) + a.top, want: want.cells[at] });
+      s.top = Math.min(s.top, a.top); s.left = Math.min(s.left, a.left); s.bottom = Math.max(s.bottom, a.top); s.right = Math.max(s.right, a.left);
     }
-    this.pending = [];
-    this.frame++;
-    var press = held && !this.heldLast, take = takeHeld && !this.takeLast, was = this.phase, period = KAIROS.period[this.level - 1];
-    this.heldLast = held; this.takeLast = takeHeld;
-    if (this.frame === 1) this.start();
-    else if (was === 1 && press) {
-      // stopped where the person saw it, or a column on after the window
-      this.stopped = this.since % period < KAIROS.window[this.level - 1] ? this.left : this.onward()[0];
-      var stayed = kairosRun(this.stopped, this.stopped + this.width - 1) & this.beneath;
-      this.beneath = stayed;
-      if (stayed) this.pending.push([this.level, stayed]);
-      this.phase = 2; this.stops++;
-    } else if (was === 1) {
-      if ((this.since + 1) % period === 0) { var o = this.onward(); this.left = o[0]; this.direction = o[1]; }
-    } else if (was === 2) {
-      if (this.since + 1 >= KAIROS.beat) {
-        if (!this.beneath) this.over(1);
-        else if (this.level === KAIROS.major) this.over(3);
-        else if (this.level === KAIROS.minor) this.phase = 3;
-        else this.advance();
+    for (var i = 0; i < order.length; i++) {
+      var S = sheets[order[i]], v = D.call('alonzo_view', [M.counters().handle], ['grid', order[i], VP.rangeText(S)]);
+      if (v.status !== 0) return { diff: 'the view of ' + order[i] + ' was refused: ' + (v.id || 'status ' + v.status) };
+      var rec = recordValues(v.text);
+      for (var j = 0; j < S.cells.length; j++) {
+        var c = S.cells[j], got = sndPlain(rec[c.addr]);
+        if (!handSame(got, c.want)) return { diff: c.name + ' holds ' + handSpell(got) + ', and the hand ' + handSpell(c.want) };
+        held++;
       }
-    } else if (was === 3) {
-      if (take) this.over(2); else if (press) this.advance();
-    } else if (press && this.since >= KAIROS.hold) this.start();
-    this.since = this.phase !== was ? 0 : this.since + 1;
-    if (this.phase === 4 && this.since === KAIROS.hold) this.pending.push('clear');
-  };
-  // The light at the cabinet's column r and level c, both from 1, before the checker: 0 none, 1 a light
-  // that stayed, 2 the row sliding, 3 a light falling (blinking), 6 and 7 the minor and the major prize's
-  // level unlit, 5 the minor's while it is offered (blinking).
-  KairosHand.prototype.light = function (r, c) {
-    var blink = this.since % 8 < 4, bit = 1 << (r - 1), span = 0, look = 0;
-    var falling = this.phase === 2 || (this.phase === 4 && this.end === 1 && this.since < KAIROS.hold);
-    if (this.phase === 1) { span = kairosRun(this.left, this.left + this.width - 1); look = 2; }
-    else if (falling) { span = kairosRun(this.stopped, this.stopped + this.width - 1); look = blink ? 3 : 0; }
-    var stayed = this.phase === 2 ? this.beneath : 0;
-    if (c === this.level && (stayed & bit)) return 1;
-    if (c === this.level && (span & bit)) return look;
-    if (this.tower[c - 1] & bit) return 1;
-    if (c === KAIROS.minor) return this.phase === 3 && blink ? 5 : 6;
-    if (c === KAIROS.major) return 7;
-    return 0;
-  };
-  // The board row by row, WIN by half seconds while the major prize is won, the checker's twin, 8 more, on
-  // a light whose row and column sum odd.
-  KairosHand.prototype.board = function () {
-    var out = new Uint8Array(KAIROS.columns * KAIROS.levels), win = this.phase === 4 && this.end === 3 ? this.since % 30 < 15 : null;
-    for (var r = 1; r <= KAIROS.columns; r++) for (var c = 1; c <= KAIROS.levels; c++) {
-      var v = win === null ? this.light(r, c) : win && KAIROS.win[r - 1].charAt(c - 1) === '#' ? 4 : 0;
-      out[(r - 1) * KAIROS.levels + (c - 1)] = v + ((r + c) % 2 === 1 ? 8 : 0);
     }
-    return out;
-  };
-  KairosHand.prototype.frameOf = function (n, rows) {
-    for (var i = 0; i < rows.length; i++) {
-      var row = rows[i];
-      if (Array.isArray(row) && row[0] && row[0].sym === 'cell' && row[1] === 'Input' && typeof row[2] === 'string') this.input[row[2]] = row[3];
-    }
-    var input = this.input, down = function (a) { var v = input[a]; return !!v && v.num !== undefined && +v.num === 1; };
-    this.step(down('B5') || down('B10') || down('B13'), down('B6'));
-    return this.board();
-  };
+    return { diff: '', cells: held };
+  }
   function firstDiffLine(a, b) {
     var x = String(a).split('\n'), y = String(b).split('\n');
     for (var i = 0; i < Math.max(x.length, y.length); i++) if (x[i] !== y[i]) return 'at line ' + (i + 1) + ', ' + JSON.stringify((x[i] === undefined ? 'no line' : x[i]).slice(0, 80)) + ' against ' + JSON.stringify((y[i] === undefined ? 'no line' : y[i]).slice(0, 80));
     return 'nowhere by line';
   }
   function caseReplay() {
-    var P = [], k = { vectors: 0, liveFrames: 0, doubleSame: 0, doubleRound: 0, paced: 0, stopped: 0, waited: 0, refused: 0 };
+    var P = [], notes = [], k = OWN ? { vectors: 0, liveFrames: 0, doubleSame: 0, doubleRound: 0, paced: 0, stopped: 0, waited: 0, refused: 0 } : { vectors: 0 };
     // ---- the digest ----
     for (var v = 0; v < SHA_VECTORS.length; v++) {
       var msg = SHA_VECTORS[v][0] === null ? new Array(1000001).join('a') : SHA_VECTORS[v][0], sha = HOST.sha256(msg);
       if (sha === SHA_VECTORS[v][1]) k.vectors++;
       else P.push('the host\'s SHA-256 of ' + (SHA_VECTORS[v][0] === null ? 'a million a\'s' : JSON.stringify(msg.slice(0, 20))) + ' is ' + sha + ', and FIPS 180-2 gives ' + SHA_VECTORS[v][1]);
     }
-    // ---- over the double: a live run, copied and played ----
-    var r = loopRun({ text: lifeText, budget: 0, ticks: loopTicks(50, -1), events: {
-      3: [['down', 'ArrowRight', 'ArrowRight']], 7: [['edit', '(cell "State" "B1" 555)']], 9: [['up', 'ArrowRight']],
-      12: [['pointer', 6, 5], ['buttons', 1, 0, 0]], 15: [['edit', '(cell "Input" "B5" 1)']], 17: [['buttons', 0, 0, 0]],
-      20: [['wheel', 2]], 24: [['down', 'KeyZ', 'z']], 26: [['up', 'KeyZ']], 30: [['edit', '(cell "Camera" "B1" 3)']]
-    } });
-    var text = r.host.replayText(), liveFrame = r.host.counters().frame, liveDigest = r.fake.digest(r.host.counters().handle);
-    loopEnd(r, ['the edit (cell "State" "B1" 555) was written', 'the edit (cell "Input" "B5" 1) was written', 'the Camera placed the window at A3:LH202']);
-    P = P.concat(r.P);
-    k.liveFrames = liveFrame;
-    if (text === null) { P.push('the live run over the double has no replay'); return { counters: k, problems: P }; }
-    function doubleHost() {
-      var fk = FAKE.create({}), h = new HOST({ drive: 'manual', now: frozen, budget: 0 });
-      if (!h.attach(fk.exports).ok || !h.load(lifeText, 'life.vla').ok) throw new Error('a fresh host did not load Life over the double');
-      return { fake: fk, host: h };
+    // ---- the hands the page's blocks registered (ENGINE.16) ----
+    k.hands = handsHeld(P);
+    if (OWN) {
+      // ---- over the double: a live run, copied and played ----
+      var r = loopRun({ text: lifeText, budget: 0, ticks: loopTicks(50, -1), events: {
+        3: [['down', 'ArrowRight', 'ArrowRight']], 7: [['edit', '(cell "State" "B1" 555)']], 9: [['up', 'ArrowRight']],
+        12: [['pointer', 6, 5], ['buttons', 1, 0, 0]], 15: [['edit', '(cell "Input" "B5" 1)']], 17: [['buttons', 0, 0, 0]],
+        20: [['wheel', 2]], 24: [['down', 'KeyZ', 'z']], 26: [['up', 'KeyZ']], 30: [['edit', '(cell "Camera" "B1" 3)']]
+      } });
+      var text = r.host.replayText(), liveFrame = r.host.counters().frame, liveDigest = r.fake.digest(r.host.counters().handle);
+      loopEnd(r, ['the edit (cell "State" "B1" 555) was written', 'the edit (cell "Input" "B5" 1) was written', 'the Camera placed the window at A3:LH202']);
+      P = P.concat(r.P);
+      k.liveFrames = liveFrame;
+      if (text === null) { P.push('the live run over the double has no replay'); return { counters: k, problems: P }; }
+      function doubleHost() {
+        var fk = FAKE.create({}), h = new HOST({ drive: 'manual', now: frozen, budget: 0 });
+        if (!h.attach(fk.exports).ok || !h.load(lifeText, 'life.vla').ok) throw new Error('a fresh host did not load Life over the double');
+        return { fake: fk, host: h };
+      }
+      // all at once
+      var A = doubleHost(), pa = A.host.play(text, true), da = A.fake.digest(A.host.counters().handle);
+      if (!pa.ok || A.host.counters().frame !== liveFrame) P.push('over the double, the live run\'s replay played all at once ends at frame ' + A.host.counters().frame + ', the live run at ' + liveFrame);
+      if (da === liveDigest) k.doubleSame++;
+      else P.push('over the double, the live run\'s replay played on a fresh host ends in the digest ' + da + ', where the live run ended in ' + liveDigest);
+      var againA = A.host.replayText();
+      if (againA === text) k.doubleRound = 1;
+      else P.push('over the double, the player\'s own recording is not the replay it played, ' + firstDiffLine(againA || '', text));
+      A.host.destroy();
+      // through the loop, at the rate, a person's edit refused while it plays
+      var B = doubleHost(), told = [], stops = [], t = 1000;
+      B.host.on('frame', function (e) { told.push(e.replay); });
+      B.host.on('stop', function (e) { stops.push(e.frame); });
+      var pb = B.host.play(text);
+      if (!pb.ok || !B.host.running) P.push('the replay played through the loop did not start: ' + (pb.sentence || 'the loop is not running'));
+      B.host.tick(t);
+      for (var i = 0; i < 400 && B.host.running; i++) {
+        t += 17; B.host.tick(t);
+        if (i === 5) { if (B.host.edit('(cell "State" "B1" 1)')) P.push('a person\'s edit was taken while a replay played'); else k.waited = 1; }
+      }
+      var db = B.fake.digest(B.host.counters().handle);
+      if (B.host.running) P.push('the replay played through the loop had not ended after 400 ticks, at frame ' + B.host.counters().frame);
+      else if (B.host.counters().frame !== liveFrame || db !== liveDigest) P.push('over the double, the replay played through the loop ends at frame ' + B.host.counters().frame + ' in the digest ' + db + ', the live run at frame ' + liveFrame + ' in ' + liveDigest);
+      else if (told.length !== liveFrame || told.some(function (x) { return x !== liveFrame; })) P.push('the frames played through the loop said they replayed ' + told.length + ' frame(s), not ' + liveFrame + ' each of ' + liveFrame);
+      else k.paced = 1;
+      var saidB = B.host.sentences().map(function (s) { return s.text; });
+      if (!saidB.some(function (s) { return s.indexOf('frame ' + liveFrame + ': the replay ended at its last frame; the loop is paused') === 0; })) P.push('no sentence says the replay ended at its last frame, ' + liveFrame + ', and the loop paused');
+      if (!B.host.sentences().some(function (s) { return s.refusal && s.text.indexOf('The edit (cell "State" "B1" 1) was not written: a replay is playing') === 0; })) P.push('the edit made while the replay played was not refused in words');
+      // the loop's stop at the replay's end said once, at its last frame, so that a page draws what it
+      // shows of the grid at the frame the frame line says (the panel's live sheet, 2026-10-10)
+      if (stops.length === 1 && stops[0] === liveFrame) k.stopped = 1;
+      else P.push('the replay played through the loop said the loop stopped ' + stops.length + ' time(s)' + (stops.length ? ', at frame(s) ' + stops.join(', ') : '') + ', where it says so once, at its last frame, ' + liveFrame);
+      B.host.destroy();
+      // the replays a player refuses, each in words, the cartridge loaded untouched
+      var C = doubleHost();
+      var wrong = [
+        ['another cartridge\'s replay', CARTRIDGES.inputcard.replay, 'a replay plays only on the file it was recorded from'],
+        ['a later version\'s replay', text.replace('(spec 3)', '(spec 4)'), 'this host implements versions 1 to 3'],
+        ['a derived row', text.replace('(frame 1\n', '(frame 1\n  (derived "State" "B1" 1)\n'), 'holds a derived row'],
+        ['frames out of order', text + '(frame 1)\n', 'frames are out of order'],
+        ['a row outside a frame', text.replace('(frame 1\n', '(cell "State" "B1" 1)\n(frame 1\n'), 'outside a frame'],
+        ['a seed not the manifest\'s', text.replace(/\(seed \d+\)\)\n/, '(seed 7))\n'), 'holds its manifest\'s seed']
+      ];
+      for (var w = 0; w < wrong.length; w++) {
+        if (wrong[w][1] === text) { P.push(wrong[w][0] + ': the mutation did not apply'); continue; }
+        var before = C.host.counters(), pr = C.host.play(wrong[w][1], true), after = C.host.counters();
+        var last = C.host.sentences().slice(-1)[0];
+        if (pr.ok) P.push('a player took ' + wrong[w][0]);
+        else if (!last || !last.refusal || last.text.indexOf(wrong[w][2]) < 0) P.push('a player refused ' + wrong[w][0] + ' without saying ' + JSON.stringify(wrong[w][2]) + ': ' + (last ? last.text : 'nothing said'));
+        else if (after.handle !== before.handle || after.frame !== before.frame) P.push('a player refused ' + wrong[w][0] + ' and still loaded the cartridge again');
+        else k.refused++;
+      }
+      C.host.destroy();
     }
-    // all at once
-    var A = doubleHost(), pa = A.host.play(text, true), da = A.fake.digest(A.host.counters().handle);
-    if (!pa.ok || A.host.counters().frame !== liveFrame) P.push('over the double, the live run\'s replay played all at once ends at frame ' + A.host.counters().frame + ', the live run at ' + liveFrame);
-    if (da === liveDigest) k.doubleSame++;
-    else P.push('over the double, the live run\'s replay played on a fresh host ends in the digest ' + da + ', where the live run ended in ' + liveDigest);
-    var againA = A.host.replayText();
-    if (againA === text) k.doubleRound = 1;
-    else P.push('over the double, the player\'s own recording is not the replay it played, ' + firstDiffLine(againA || '', text));
-    A.host.destroy();
-    // through the loop, at the rate, a person's edit refused while it plays
-    var B = doubleHost(), told = [], stops = [], t = 1000;
-    B.host.on('frame', function (e) { told.push(e.replay); });
-    B.host.on('stop', function (e) { stops.push(e.frame); });
-    var pb = B.host.play(text);
-    if (!pb.ok || !B.host.running) P.push('the replay played through the loop did not start: ' + (pb.sentence || 'the loop is not running'));
-    B.host.tick(t);
-    for (var i = 0; i < 400 && B.host.running; i++) {
-      t += 17; B.host.tick(t);
-      if (i === 5) { if (B.host.edit('(cell "State" "B1" 1)')) P.push('a person\'s edit was taken while a replay played'); else k.waited = 1; }
-    }
-    var db = B.fake.digest(B.host.counters().handle);
-    if (B.host.running) P.push('the replay played through the loop had not ended after 400 ticks, at frame ' + B.host.counters().frame);
-    else if (B.host.counters().frame !== liveFrame || db !== liveDigest) P.push('over the double, the replay played through the loop ends at frame ' + B.host.counters().frame + ' in the digest ' + db + ', the live run at frame ' + liveFrame + ' in ' + liveDigest);
-    else if (told.length !== liveFrame || told.some(function (x) { return x !== liveFrame; })) P.push('the frames played through the loop said they replayed ' + told.length + ' frame(s), not ' + liveFrame + ' each of ' + liveFrame);
-    else k.paced = 1;
-    var saidB = B.host.sentences().map(function (s) { return s.text; });
-    if (!saidB.some(function (s) { return s.indexOf('frame ' + liveFrame + ': the replay ended at its last frame; the loop is paused') === 0; })) P.push('no sentence says the replay ended at its last frame, ' + liveFrame + ', and the loop paused');
-    if (!B.host.sentences().some(function (s) { return s.refusal && s.text.indexOf('The edit (cell "State" "B1" 1) was not written: a replay is playing') === 0; })) P.push('the edit made while the replay played was not refused in words');
-    // the loop's stop at the replay's end said once, at its last frame, so that a page draws what it
-    // shows of the grid at the frame the frame line says (the panel's live sheet, 2026-10-10)
-    if (stops.length === 1 && stops[0] === liveFrame) k.stopped = 1;
-    else P.push('the replay played through the loop said the loop stopped ' + stops.length + ' time(s)' + (stops.length ? ', at frame(s) ' + stops.join(', ') : '') + ', where it says so once, at its last frame, ' + liveFrame);
-    B.host.destroy();
-    // the replays a player refuses, each in words, the cartridge loaded untouched
-    var C = doubleHost();
-    var wrong = [
-      ['another cartridge\'s replay', CARTRIDGES.inputcard.replay, 'a replay plays only on the file it was recorded from'],
-      ['a later version\'s replay', text.replace('(spec 3)', '(spec 4)'), 'this host implements versions 1 to 3'],
-      ['a derived row', text.replace('(frame 1\n', '(frame 1\n  (derived "State" "B1" 1)\n'), 'holds a derived row'],
-      ['frames out of order', text + '(frame 1)\n', 'frames are out of order'],
-      ['a row outside a frame', text.replace('(frame 1\n', '(cell "State" "B1" 1)\n(frame 1\n'), 'outside a frame'],
-      ['a seed not the manifest\'s', text.replace(/\(seed \d+\)\)\n/, '(seed 7))\n'), 'holds its manifest\'s seed']
-    ];
-    for (var w = 0; w < wrong.length; w++) {
-      if (wrong[w][1] === text) { P.push(wrong[w][0] + ': the mutation did not apply'); continue; }
-      var before = C.host.counters(), pr = C.host.play(wrong[w][1], true), after = C.host.counters();
-      var last = C.host.sentences().slice(-1)[0];
-      if (pr.ok) P.push('a player took ' + wrong[w][0]);
-      else if (!last || !last.refusal || last.text.indexOf(wrong[w][2]) < 0) P.push('a player refused ' + wrong[w][0] + ' without saying ' + JSON.stringify(wrong[w][2]) + ': ' + (last ? last.text : 'nothing said'));
-      else if (after.handle !== before.handle || after.frame !== before.frame) P.push('a player refused ' + wrong[w][0] + ' and still loaded the cartridge again');
-      else k.refused++;
-    }
-    C.host.destroy();
     // ---- over the engine's module: the card's replay and its golden ----
     var wasm = builtModule();
-    if (!wasm) return { counters: k, problems: P };
-    var bytes = bytesOfBase64(wasm), body = afterComments(CARTRIDGES.inputcard.replay);
-    k.module = bytes.length; k.digest = 0; k.seed = 0; k.recorded = 0; k.edits = 0; k.whole = 0; k.frames = 0; k.same = 0; k.golden = 0; k.round = 0;
-    var hm = /^\(replay "inputcard" \(spec 3\) \(cartridge "([0-9A-F]{64})"\) \(seed (\d+)\)\)\n/.exec(body), cardDigest = HOST.sha256(inputcardText.replace(/\r\n/g, '\n'));
-    if (!hm) P.push('the committed replay\'s header is not (replay "inputcard" (spec 3) (cartridge "<SHA-256>") (seed <n>)): ' + body.split('\n')[0].slice(0, 120));
-    else {
-      if (hm[1] === cardDigest) k.digest = 1; else P.push('the committed replay names the cartridge ' + hm[1] + ', and the input card\'s text, its line ends LF, is ' + cardDigest);
-      if (+hm[2] === CARD_SEED) k.seed = 1; else P.push('the committed replay\'s seed is ' + hm[2] + ', not the input case\'s ' + CARD_SEED);
+    if (!wasm) return { counters: k, problems: P, notes: notes };
+    var bytes = bytesOfBase64(wasm);
+    k.module = bytes.length; k.golden = 0; k.round = 0;
+    if (OWN) {
+      var body = afterComments(CARTRIDGES.inputcard.replay);
+      k.digest = 0; k.seed = 0; k.recorded = 0; k.edits = 0; k.whole = 0; k.frames = 0; k.same = 0;
+      var hm = /^\(replay "inputcard" \(spec 3\) \(cartridge "([0-9A-F]{64})"\) \(seed (\d+)\)\)\n/.exec(body), cardDigest = HOST.sha256(inputcardText.replace(/\r\n/g, '\n'));
+      if (!hm) P.push('the committed replay\'s header is not (replay "inputcard" (spec 3) (cartridge "<SHA-256>") (seed <n>)): ' + body.split('\n')[0].slice(0, 120));
+      else {
+        if (hm[1] === cardDigest) k.digest = 1; else P.push('the committed replay names the cartridge ' + hm[1] + ', and the input card\'s text, its line ends LF, is ' + cardDigest);
+        if (+hm[2] === CARD_SEED) k.seed = 1; else P.push('the committed replay\'s seed is ' + hm[2] + ', not the input case\'s ' + CARD_SEED);
+      }
+      if (!INPUT_RUN || !INPUT_RUN.text) P.push('the input case left no live run to copy');
+      else {
+        // what the recorder logged of the live run: each edit that landed in its frame, the refused one nowhere,
+        // and the Input sheet whole at the first frame and after a person's edit of it
+        var blocks = replayFrames(INPUT_RUN.text);
+        [[9, '(cell "Input" "C5" 1)'], [18, '(cell "Clock" "B2" 1)'], [21, '(cell "Clock" "B2" 30)']].forEach(function (e) {
+          if ((blocks[e[0]] || []).indexOf(e[1]) >= 0) k.edits++;
+          else P.push('the replay of the input case\'s live run does not log the edit ' + e[1] + ' in frame ' + e[0] + ', where it landed');
+        });
+        if (INPUT_RUN.text.indexOf('(cell "Clock" "B1" 99)') >= 0) P.push('the replay of the input case\'s live run logs the refused edit (cell "Clock" "B1" 99)');
+        [1, 10].forEach(function (n) {
+          var inputs = (blocks[n] || []).filter(function (x) { return x.indexOf('(cell "Input" ') === 0; }).length;
+          if (inputs === 48) k.whole++;
+          else P.push('frame ' + n + ' of the live run\'s replay logs ' + inputs + ' Input row(s), not the sheet\'s 48 ' + (n === 1 ? 'at the first frame' : 'after a person\'s edit of the Input sheet in frame 9'));
+        });
+        if (INPUT_RUN.text === body) k.recorded = 1;
+        else P.push('the input case\'s live run recorded a replay that is not the committed one, cartridges/inputcard/inputcard.replay.vla, ' + firstDiffLine(INPUT_RUN.text, body));
+      }
     }
-    if (!INPUT_RUN || !INPUT_RUN.text) P.push('the input case left no live run to copy');
-    else {
-      // what the recorder logged of the live run: each edit that landed in its frame, the refused one nowhere,
-      // and the Input sheet whole at the first frame and after a person's edit of it
-      var blocks = replayFrames(INPUT_RUN.text);
-      [[9, '(cell "Input" "C5" 1)'], [18, '(cell "Clock" "B2" 1)'], [21, '(cell "Clock" "B2" 30)']].forEach(function (e) {
-        if ((blocks[e[0]] || []).indexOf(e[1]) >= 0) k.edits++;
-        else P.push('the replay of the input case\'s live run does not log the edit ' + e[1] + ' in frame ' + e[0] + ', where it landed');
-      });
-      if (INPUT_RUN.text.indexOf('(cell "Clock" "B1" 99)') >= 0) P.push('the replay of the input case\'s live run logs the refused edit (cell "Clock" "B1" 99)');
-      [1, 10].forEach(function (n) {
-        var inputs = (blocks[n] || []).filter(function (x) { return x.indexOf('(cell "Input" ') === 0; }).length;
-        if (inputs === 48) k.whole++;
-        else P.push('frame ' + n + ' of the live run\'s replay logs ' + inputs + ' Input row(s), not the sheet\'s 48 ' + (n === 1 ? 'at the first frame' : 'after a person\'s edit of the Input sheet in frame 9'));
-      });
-      if (INPUT_RUN.text === body) k.recorded = 1;
-      else P.push('the input case\'s live run recorded a replay that is not the committed one, cartridges/inputcard/inputcard.replay.vla, ' + firstDiffLine(INPUT_RUN.text, body));
-    }
-    // every cartridge's committed replay, played on a fresh host over a fresh instance: its end its golden
-    // and its recording itself; the input card's, every frame the live run's window as well; the sound
-    // card's, every frame's Audio sheet the card by hand (ENGINE.4's second slice); Sand's, every frame's
-    // Screen the page's sand under the replay's brush (CART.2's second slice); Kairos's, every frame's
-    // board the page's Kairos under the replay's buttons (CART.4's second slice)
-    k.replays = 0; k.cardSame = 0; k.sandFrames = 0; k.sandPainted = 0; k.kairosFrames = 0; k.kairosStops = 0;
+    // every cartridge's committed replay, played on a fresh host over a fresh instance: its end its golden and
+    // its recording itself; every frame held to its hand where the page holds one (ENGINE.16), the plane or the
+    // cells the hand answers; on Alonzo's own page the input card's, every frame the live run's window, and the
+    // sound card's, every frame's Audio sheet the card by hand (ENGINE.4's second slice); any other replay without
+    // a hand held to its golden and its recording alone, and the case says so
+    k.replays = 0; k.alone = 0;
+    if (OWN) k.cardSame = 0;
     for (var cn in CARTRIDGES) {
       if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn) || !CARTRIDGES[cn].replayPath) continue;
-      var cart = CARTRIDGES[cn], card = cn === 'inputcard', sound = cn === 'soundcard', rBody = afterComments(cart.replay), gBody = afterComments(cart.golden);
+      var cart = CARTRIDGES[cn], card = OWN && cn === 'inputcard', sound = OWN && cn === 'soundcard', rBody = afterComments(cart.replay), gBody = afterComments(cart.golden);
       var ex = HOST.instantiateSync(bytes), DS = new Driver({ exports: ex });
-      var M = new HOST({ drive: 'manual', budget: 0, now: frozen }), firstOff = 0, soundOff = '', sandOff = '', kairosOff = '';
+      var M = new HOST({ drive: 'manual', budget: 0, now: frozen }), firstOff = 0, soundOff = '', handOff = '';
       var seedM = /^\(replay "[^"]*" \(spec \d+\) \(cartridge "[0-9A-F]{64}"\) \(seed (\d+)\)\)\n/.exec(rBody);
-      var hand = cn === 'sand' ? new SandHand(seedM ? +seedM[1] : 0) : null, handRows = hand ? replayForms(rBody) : null;
-      var kh = cn === 'kairos' ? new KairosHand() : null, khRows = kh ? replayForms(rBody) : null;
+      // a count's name is the cartridge's, its word characters alone: sandFrames, kairosCells, kairosStops
+      var tag = cn.replace(/\W/g, '_'), Hand = Object.prototype.hasOwnProperty.call(HANDS, cn) && typeof HANDS[cn] === 'function' ? HANDS[cn] : null, hand = null, handRows = null;
+      if (Hand) {
+        try { hand = new Hand(seedM ? +seedM[1] : 0); handRows = replayForms(rBody); k[tag + 'Frames'] = 0; }
+        catch (he) { P.push('the hand of ' + cn + ' could not be made: ' + (he && he.message ? he.message : he)); }
+      } else if (!card && !sound) {
+        k.alone++;
+        notes.push(cn + '\'s committed replay is held to its golden and its recording alone: this page holds no hand-' + cn + ' block');
+      }
       k.replays++;
       try {
         if (!M.attach(ex).ok || !M.load(cart.text, cart.file).ok) { P.push('a fresh host did not load ' + cart.file + ' over the module'); continue; }
@@ -2925,22 +2837,24 @@
           var diff = cardDiff(e.frame, recordValues(DS.call('alonzo_view', [M.counters().handle], ['grid', 'Audio', 'A1:D5']).text));
           if (!diff) k.cardSame++; else if (!soundOff) soundOff = 'frame ' + e.frame + ': ' + diff;
         });
+        // the hand answered every frame, whatever an earlier one held, and the first frame it differs at named
         if (hand) M.on('frame', function (e) {
-          var diff = firstDiff(M.plane, hand.frame(e.frame, handRows[e.frame] || []));
-          if (!diff) k.sandFrames++; else if (!sandOff) sandOff = 'frame ' + e.frame + ': ' + diff;
-        });
-        if (kh) M.on('frame', function (e) {
-          var diff = firstDiff(M.plane, kh.frameOf(e.frame, khRows[e.frame] || []), KAIROS.levels);
-          if (!diff) k.kairosFrames++; else if (!kairosOff) kairosOff = 'frame ' + e.frame + ': ' + diff;
+          var held;
+          try { held = handHeld(hand.frame(e.frame, handRows[e.frame] || []), M, DS); } catch (fe) { held = { diff: 'the hand threw: ' + (fe && fe.message ? fe.message : fe) }; }
+          if (held.diff) { if (!handOff) handOff = 'frame ' + e.frame + ': ' + held.diff; return; }
+          k[tag + 'Frames']++;
+          if (held.cells) k[tag + 'Cells'] = (k[tag + 'Cells'] || 0) + held.cells;
         });
         var pm = M.play(cart.replay, true);
         if (!pm.ok) P.push('the committed replay of ' + cart.file + ' played on a fresh host stopped at frame ' + pm.frames + ': ' + (pm.sentence || M.sentences().slice(-1)[0].text));
         if (firstOff) P.push('frame ' + firstOff + ' of the committed replay, played on a fresh host, draws a window that is not the live run\'s');
         if (soundOff) P.push('the sound card\'s committed replay, played on a fresh host, is not the card by hand at ' + soundOff);
-        if (sandOff) P.push('Sand\'s committed replay, played on a fresh host, is not the page\'s sand at ' + sandOff);
-        if (kairosOff) P.push('Kairos\'s committed replay, played on a fresh host, is not the page\'s Kairos at ' + kairosOff);
-        if (hand) k.sandPainted = hand.painted;
-        if (kh) k.kairosStops = kh.stops;
+        if (handOff) P.push(cn + '\'s committed replay, played on a fresh host, is not its hand\'s at ' + handOff);
+        // the hand's own counts, each its cartridge's name and its own: sandPainted, kairosStops
+        if (hand && typeof hand.counts === 'function') {
+          var own = hand.counts() || {};
+          for (var ck in own) if (Object.prototype.hasOwnProperty.call(own, ck)) k[tag + ck.charAt(0).toUpperCase() + ck.slice(1)] = own[ck];
+        }
         var wm = /^\(window "([^"]+)" "([^"]+)"\)$/m.exec(gBody);
         if (!wm) P.push('the golden of ' + cart.file + ' has no (window ...) row naming its sheet');
         else {
@@ -2953,7 +2867,7 @@
         else P.push('the player\'s own recording of ' + cart.file + '\'s committed replay is not the replay it played, ' + firstDiffLine(again || '', rBody));
       } finally { M.destroy(); }
     }
-    return { counters: k, problems: P };
+    return { counters: k, problems: P, notes: notes };
   }
   // ---- ENGINE.4: the Audio device (docs/SPEC.md section 3.6) ----
   // A double of the Web Audio graph: every node made and every call on it recorded in order, each value and
@@ -3446,14 +3360,20 @@
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty]];
+    // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
+    // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
+    // and says so in one line.
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
-    function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); if (!res.problems.length) ok++; }
+    // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
+    function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }
     // A case answers its result, or a promise of it (sound, which waits on its render): the cases run in
     // order, and the loop element is printed once the last has answered.
     var i = 0;
     function next() {
       while (i < cases.length) {
         var c = cases[i++], res;
+        if (!OWN && !GAME_CASES[c[0]]) { out.push('case ' + c[0] + ': not on this page: Alonzo\'s own, over its own cartridges and records, proven in Alonzo\'s CI'); absent++; continue; }
         try { res = c[1](); } catch (e) { res = failed(e); }
         if (res && typeof res.then === 'function') {
           res.then(function (r) { record(c[0], r); next(); }, function (e) { record(c[0], failed(e)); next(); });
@@ -3461,7 +3381,8 @@
         }
         record(c[0], res);
       }
-      out.push(ok === cases.length ? 'loop ok cases=' + cases.length + ' dpr=' + dpr : 'loop failed: ' + (cases.length - ok) + ' of ' + cases.length + ' cases dpr=' + dpr);
+      var ran = cases.length - absent, tail = absent ? '; ' + absent + ' of Alonzo\'s own not on this page' : '';
+      out.push(ok === ran ? 'loop ok cases=' + ran + ' dpr=' + dpr + tail : 'loop failed: ' + (ran - ok) + ' of ' + ran + ' cases dpr=' + dpr + tail);
       document.getElementById('loop').textContent = out.join('\n');
     }
     next();
@@ -3650,6 +3571,9 @@
     var PROBE_GENERATIONS = 20, PROBE_BATCHES = 3, START_READINGS = 5, SIDE_READINGS = 3, CLOCK_MOVED_MAX = 10, RUN_GRAINS = 20;
     var RUNS = 5, RUN_FRAMES = 128, GUN_THROUGH = 720, MEMORY_FRAME = Math.min(4, N), RUNGS = [[4, 640, 400], [16, 1280, 800]];
     if (!builtModule()) { pre.textContent = 'frames failed: the page holds no engine module'; return; }
+    // Sand's rule is its hand's since ENGINE.16, the block hand-sand, one Sand by hand on the page
+    var SAND = typeof HANDS.sand === 'function' && typeof HANDS.sand.step === 'function' && typeof HANDS.sand.opening === 'function' ? HANDS.sand : null;
+    if (!SAND) { pre.textContent = 'frames failed: the page holds no hand-sand block, whose rule the Sand fixture is held to'; return; }
     if (N + RUNS * RUN_FRAMES > GUN_THROUGH) {
       pre.textContent = 'frames failed: &n=' + N + ' would carry the gun\'s runs to frame ' + (N + RUNS * RUN_FRAMES) + ', past generation ' + GUN_THROUGH + ', where the ladder\'s boards stop holding the same cells: at most ' + (GUN_THROUGH - RUNS * RUN_FRAMES);
       return;
@@ -3721,7 +3645,7 @@
         fixtures.push({ name: base.name + '-x' + mult, text: expanded.text, by: 'Life', w: rw, h: rh, next: lifeOn(rw, rh), digest: HOST.sha256(expanded.text.replace(/\r\n/g, '\n')) });
       }
     }
-    fixtures.push({ name: 'sand', text: sandText, by: 'Sand', w: LIFE_W, h: LIFE_H, next: function (g) { return sandStep(g, 2); } });
+    fixtures.push({ name: 'sand', text: sandText, by: 'Sand', w: LIFE_W, h: LIFE_H, next: function (g) { return SAND.step(g, 2); } });
     passer = null;
     var starts = [];
     for (var s0 = 0; s0 < START_READINGS; s0++) starts.push(probe());
@@ -3737,7 +3661,7 @@
       if (!bm) throw new Error(fx.name + ': the describe holds no budget row');
       var cells = +bm[1];
       var sm = /\(seed (\d+)\)/.exec(fx.text);
-      var start = fx.by === 'Sand' ? sandOpening(sm ? +sm[1] : 1) : /^\(cell "Seed" /m.test(fx.text) ? seedPlane(fx.text, fx.w, fx.h) : lifeReference(sm ? +sm[1] : 1, 0, fx.w, fx.h), want = start, gen = 0;
+      var start = fx.by === 'Sand' ? SAND.opening(sm ? +sm[1] : 1) : /^\(cell "Seed" /m.test(fx.text) ? seedPlane(fx.text, fx.w, fx.h) : lifeReference(sm ? +sm[1] : 1, 0, fx.w, fx.h), want = start, gen = 0;
       // n frames from frame f0 as one span, nothing viewed or read inside it; then each step's answer
       // read, said to be its frame and done, and freed
       var span = function (f0, n) {

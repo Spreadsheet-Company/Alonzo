@@ -19,7 +19,11 @@ passes on), its source beside it when it has one, <name>.source.vla (source-,
 SPEC.3's second slice: the pass runs in the page over the texts the page
 holds), and its replay and its golden when it has them, <name>.replay.vla and
 <name>.golden.vla (replay- and golden-, ENGINE.3's second slice: the page
-plays the replay and holds its end to the golden); each library the sources
+plays the replay and holds its end to the golden), and since ENGINE.16 its
+hand when it has one, <name>.hand.js (hand-, the one block that is a script:
+<script id="hand-NAME" data-path="PATH">, which the page runs where it stands
+and which registers one constructor under its cartridge's name, the loop
+oracle's replay case answering it each frame); each library the sources
 include, cartridges/<name>.vla (library-); and each of the bench's records,
 web/fixtures/<name>.vla (fixture-). Every text is inlined with its line
 endings normalized to LF, so that the page holds the bytes the checks pin.
@@ -44,7 +48,9 @@ House style (tools/*.ps1): PowerShell 5.1, host-free, no network; exit 0
 with the output named, exit 1 with the reason. -Template, -ViewportJs,
 -FakeJs, -HostJs, -FixturesDir, -CartridgesDir, -Wasm, -NoWasm and -Out
 exist so that a check can build a page of its own from mutated sources (the
-oracles' controls), never for the real page.
+oracles' controls), never for the real page; and -PageOrder, the names of a
+scratch folder's cartridges in its page's order, comma-separated, so that a
+check builds a game's page from a folder of its own (ENGINE.16).
 
 Usage:  powershell -File tools\build_web.ps1
         powershell -File tools\build_web.ps1 -Out C:\somewhere\index.html
@@ -60,6 +66,7 @@ param(
     [string]$FixturesDir = '',
     [string]$CartridgesDir = '',
     [string]$Wasm = '',
+    [string]$PageOrder = '',
     [switch]$NoWasm
 )
 $ErrorActionPreference = 'Stop'
@@ -84,6 +91,8 @@ foreach ($d in @($FixturesDir, $CartridgesDir)) { if (-not (Test-Path -LiteralPa
 # opens on, Life first, the benchmark, as the page has always offered them. Held to the cartridge folders
 # both ways, so that a cartridge added without a place here, or a place without its folder, is refused.
 $order = @('life', 'gun', 'testcard', 'inputcard', 'soundcard', 'sand', 'gridcard', 'kairos')
+# A check's page of a scratch folder names its own (ENGINE.16); one string under -File, split here.
+if ($PageOrder -ne '') { $order = @($PageOrder.Split(',') | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }) }
 
 $html = [System.IO.File]::ReadAllText($Template)
 
@@ -104,6 +113,7 @@ $cartridgeFiles = @{}
 $sourceFiles = @{}
 $replayFiles = @{}
 $goldenFiles = @{}
+$handFiles = @{}
 foreach ($d in @(Get-ChildItem -LiteralPath $CartridgesDir -Directory | Sort-Object Name)) {
     $file = Join-Path $d.FullName ($d.Name + '.vla')
     # A folder holding no .vla at all is a design folder, a cartridge's notes ahead of its file
@@ -118,6 +128,8 @@ foreach ($d in @(Get-ChildItem -LiteralPath $CartridgesDir -Directory | Sort-Obj
     if (Test-Path -LiteralPath $replay) { $replayFiles[$d.Name] = $replay }
     $golden = Join-Path $d.FullName ($d.Name + '.golden.vla')
     if (Test-Path -LiteralPath $golden) { $goldenFiles[$d.Name] = $golden }
+    $hand = Join-Path $d.FullName ($d.Name + '.hand.js')
+    if (Test-Path -LiteralPath $hand) { $handFiles[$d.Name] = $hand }
 }
 $libraryFiles = @{}
 foreach ($f in @(Get-ChildItem -LiteralPath $CartridgesDir -Filter '*.vla' -File | Sort-Object Name)) { $libraryFiles[[System.IO.Path]::GetFileNameWithoutExtension($f.Name)] = $f.FullName }
@@ -140,6 +152,10 @@ function New-Block([string]$id, [string]$path, [string]$text, [string]$file = ''
     if ($path -ne '') { $attrs += ' data-path="' + $path + '"' }
     return '<script type="text/plain" id="' + $id + '"' + $attrs + '>' + $text + '</script>'
 }
+# A hand (ENGINE.16): the one block that is a script, run where it stands, never through eval.
+function New-HandBlock([string]$name, [string]$path, [string]$text) {
+    return '<script id="hand-' + $name + '" data-path="' + $path + '">' + $text + '</script>'
+}
 try {
     $scripts = @{ '{{VIEWPORT_JS}}' = (Read-Inlined $ViewportJs $false); '{{FAKE_JS}}' = (Read-Inlined $FakeJs $false); '{{HOST_JS}}' = (Read-Inlined $HostJs $false) }
     $blocks = New-Object System.Collections.Generic.List[string]
@@ -152,6 +168,7 @@ try {
             $blocks.Add((New-Block ('replay-' + $name) ($dir + '.replay.vla') (Read-Inlined $replayFiles[$name] $true)))
             $blocks.Add((New-Block ('golden-' + $name) ($dir + '.golden.vla') (Read-Inlined $goldenFiles[$name] $true)))
         }
+        if ($handFiles.ContainsKey($name)) { $blocks.Add((New-HandBlock $name ($dir + '.hand.js') (Read-Inlined $handFiles[$name] $true))) }
     }
     foreach ($name in @($libraryFiles.Keys | Sort-Object)) { $blocks.Add((New-Block ('library-' + $name) ('cartridges/' + $name + '.vla') (Read-Inlined $libraryFiles[$name] $true))) }
     $fixtureBytes = 0
@@ -181,5 +198,5 @@ foreach ($ph in @('{{VIEWPORT_JS}}', '{{FAKE_JS}}', '{{HOST_JS}}', '{{ALONZO_WAS
 $outDir = Split-Path -Parent $Out
 if ($outDir -ne '' -and -not (Test-Path -LiteralPath $outDir)) { New-Item -ItemType Directory -Path $outDir | Out-Null }
 [System.IO.File]::WriteAllText($Out, $page, (New-Object System.Text.UTF8Encoding($false)))
-Write-Output ("OK: wrote {0} ({1:N0} characters): the viewport, the fake module and the host, {2} block(s): {3} cartridge(s) in the page's order, {4} source(s), {5} replay(s) with {6} golden(s) and {7} librar{8}, {9}, {10} fixture(s) holding {11:N0} bytes" -f $Out, $page.Length, $blocks.Count, $cartridgeFiles.Count, $sourceFiles.Count, $replayFiles.Count, $goldenFiles.Count, $libraryFiles.Count, $(if ($libraryFiles.Count -eq 1) { 'y' } else { 'ies' }), $wasmNote, $fixtureFiles.Count, $fixtureBytes)
+Write-Output ("OK: wrote {0} ({1:N0} characters): the viewport, the fake module and the host, {2} block(s): {3} cartridge(s) in the page's order, {4} source(s), {5} replay(s) with {6} golden(s), {7} hand(s) and {8} librar{9}, {10}, {11} fixture(s) holding {12:N0} bytes" -f $Out, $page.Length, $blocks.Count, $cartridgeFiles.Count, $sourceFiles.Count, $replayFiles.Count, $goldenFiles.Count, $handFiles.Count, $libraryFiles.Count, $(if ($libraryFiles.Count -eq 1) { 'y' } else { 'ies' }), $wasmNote, $fixtureFiles.Count, $fixtureBytes)
 exit 0
