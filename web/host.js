@@ -57,6 +57,19 @@
   have been since ENGINE.8's second slice. A cartridge written to 1 to 3
   opens, points and replays as before.
 
+  A frame is read by its changes (ENGINE.19), the language's report of the
+  cells of a window the last frame changed (docs/SPEC.md section 4.5). The
+  frame's own draw of the Screen, or of a sheet in its place, and a page's
+  refresh that passes still, ask a window's changes before its view, while
+  the viewport still holds the values record the host noted for it: cells
+  named since that record's frame are laid on the held text, by cell, and on
+  the viewport's model in place, a patch; none named is a still frame; and
+  an answer of whole, another window or another frame views as before. A
+  load, a tab, a scroll and redraw() always view. Every device sheet is read
+  the same way, its cells kept and patched, and only the Input rows that
+  differ from the rows last written are written, all of them after a
+  person's edit of the Input sheet, a replay's rows or a refused write.
+
   And it sounds the Audio sheet (docs/SPEC.md section 3.6; ENGINE.4): after each
   frame, once the Clock's rate is read, its four voices, each the Web Audio
   graph's own oscillator and gain and nothing else, scheduled on the audio
@@ -97,8 +110,10 @@
   the keys held, the pointer's place, the accumulator, the budget's
   measurement, the palette's table, the key map, the Camera's two cells,
   the derived rows waiting for the next frame, the replay's record and the
-  frames a replay has left to play, and the audio context with the voices'
-  nodes and the timeline's end. Every value is the module's.
+  frames a replay has left to play, the audio context with the voices'
+  nodes and the timeline's end, and since ENGINE.19 the records it holds
+  with their frames, the device sheets' cells as last read and the Input
+  rows last written. Every value is the module's.
   Every refusal and every event is a sentence, the latest new one in the
   status and the last twenty events in a log, a repeat of an event counted in
   the line it first made rather than pushing the others out (SD-30), and a
@@ -264,6 +279,104 @@
     return m ? m[1] : '';
   }
 
+  // ---- a window's changes (ENGINE.19; docs/SPEC.md section 4.5, the language's KERNEL.42) ----
+  // The answer's header, (changes "<sheet>" "<range>" <since> <at> <n>), ending whole where the language cannot say
+  // which cells changed; then each changed cell's rows as the values record prints them, (empty "<sheet>" "<addr>")
+  // for a cell with none, in row-major order.
+  var CHANGES_HEAD = /^\(changes "((?:[^"\\]|\\.)*)" "([^"]*)" (\d+) (\d+) (whole|\d+)\)$/;
+  // A cell's row of a values record or of a changes answer, its address the first group and its row the second.
+  var CELL_LINE = /^\((?:cell|value|style|sentence|formula|empty) "(?:[^"\\]|\\.)*" "([A-Z]+)([0-9]+)"/;
+  // A record's window row, its sheet and its range.
+  var WINDOW_LINE = /^\(window "((?:[^"\\]|\\.)*)" "([^"]*)"\)$/m;
+  function unquote(s) { return s.replace(/\\(.)/g, '$1'); }
+  // Whether a person's edit, one cell or formula row, writes the Input sheet, its name compared without case as the
+  // recorder compares it (ENGINE.19, decision 5).
+  function editsInput(row) { var f = VP().readForms(row)[0]; return Array.isArray(f) && String(str(f[1])).toLowerCase() === 'input'; }
+  function readChanges(text) {
+    var nl = text.indexOf('\n'), m = CHANGES_HEAD.exec(nl < 0 ? text : text.slice(0, nl));
+    if (!m) return null;
+    return { sheet: unquote(m[1]), range: m[2], since: +m[3], at: +m[4], whole: m[5] === 'whole', n: m[5] === 'whole' ? -1 : +m[5], rows: nl < 0 ? '' : text.slice(nl + 1) };
+  }
+  // What a window's changes make of a record held at a frame, its sheet and range as the record's window row names
+  // them (decisions 2 and 4): whole, the view to run; still, the held record the frame's own, being the held frame's
+  // or naming no cell since it; patch, the cells named since the held frame laid on it.
+  function decide(held, ch) {
+    if (!ch || ch.whole) return 'whole';
+    if (ch.sheet !== held.sheet || ch.range !== held.range) return 'whole';
+    if (ch.at === held.frame) return 'still';
+    if (ch.since !== held.frame) return 'whole';
+    return ch.n === 0 ? 'still' : 'patch';
+  }
+  // A cell's place in row-major order, one number: a row's 16,384 columns fit under 32,768.
+  function placeOf(letters, row) { return +row * 32768 + VP().colIndex(letters); }
+  // A values record by cell (decision 3): the rows before the first cell's as one text, and each cell's rows as one
+  // text in the record's row-major order; null for a record whose rows after the first cell's are not all a cell's
+  // in that order, which no patch is laid on.
+  function byCell(text) {
+    var lines = text.split('\n'), n = lines.length, i = 0, head = '', keys = [], pieces = new Map(), last = -1;
+    if (n && lines[n - 1] === '') n--;
+    for (; i < n && !CELL_LINE.test(lines[i]); i++) head += lines[i] + '\n';
+    for (; i < n; i++) {
+      var m = CELL_LINE.exec(lines[i]);
+      if (!m) return null;
+      var k = placeOf(m[1], m[2]);
+      if (k === last) { pieces.set(k, pieces.get(k) + lines[i] + '\n'); continue; }
+      if (k < last) return null;
+      keys.push(k); pieces.set(k, lines[i] + '\n'); last = k;
+    }
+    return { head: head, keys: keys, pieces: pieces };
+  }
+  // The first place in keys at or after k.
+  function keyAt(keys, k) {
+    var lo = 0, hi = keys.length;
+    while (lo < hi) { var mid = (lo + hi) >> 1; if (keys[mid] < k) lo = mid + 1; else hi = mid; }
+    return lo;
+  }
+  // A changes answer's rows laid on a record by cell (the host's rule, docs/SPEC.md section 4.5): each named cell's
+  // rows replaced with the given ones, a cell the record lacks put in at its place in row-major order, an empty one's
+  // taken out, and the header untouched; the record's text, joined at once. Null, the record untouched, for rows that
+  // are not cells' in row-major order, each cell's together.
+  function patchRecord(rec, rows) {
+    var lines = rows.split('\n'), n = lines.length, groups = [], last = -1;
+    if (n && lines[n - 1] === '') n--;
+    for (var i = 0; i < n; i++) {
+      var m = CELL_LINE.exec(lines[i]);
+      if (!m) return null;
+      var k = placeOf(m[1], m[2]), empty = lines[i].lastIndexOf('(empty ', 0) === 0;
+      if (k === last) { if (empty || groups[groups.length - 1].empty) return null; groups[groups.length - 1].text += lines[i] + '\n'; continue; }
+      if (k < last) return null;
+      groups.push({ k: k, empty: empty, text: empty ? '' : lines[i] + '\n' }); last = k;
+    }
+    for (var g = 0; g < groups.length; g++) {
+      var c = groups[g], had = rec.pieces.has(c.k);
+      if (c.empty) {
+        if (had) { rec.pieces.delete(c.k); rec.keys.splice(keyAt(rec.keys, c.k), 1); }
+        continue;
+      }
+      if (!had) rec.keys.splice(keyAt(rec.keys, c.k), 0, c.k);
+      rec.pieces.set(c.k, c.text);
+    }
+    var out = rec.head;
+    for (var j = 0; j < rec.keys.length; j++) out += rec.pieces.get(rec.keys[j]);
+    return out;
+  }
+  // A changes answer's rows laid on a device sheet's cells as sheetCells reads them (decision 4): each named cell's
+  // rows replace its value, a cell or value row its value and a formula row null, and an empty cell's address is
+  // removed. False, the cells untouched, for rows that are not cells'.
+  function patchCells(cells, rows) {
+    var forms = VP().readForms(rows), i, f;
+    for (i = 0; i < forms.length; i++) { f = forms[i]; if (!Array.isArray(f) || !sym(f[0]) || !str(f[2])) return false; }
+    var seen = {};
+    for (i = 0; i < forms.length; i++) {
+      f = forms[i];
+      var a = str(f[2]).toUpperCase(), head = sym(f[0]);
+      if (!seen[a]) { seen[a] = true; delete cells[a]; }
+      if (head === 'cell' || head === 'value') cells[a] = valueOf(f[3]);
+      else if (head === 'formula') cells[a] = null;
+    }
+    return true;
+  }
+
   // ---- SHA-256 (FIPS 180-4), synchronous: a replay names its cartridge by the digest of its text
   // with LF line ends, the bytes tools/check_frame_floors.ps1 digests (ENGINE.3, decision 9), in a
   // call that answers at once, where crypto.subtle answers with a promise and only in a secure context ----
@@ -389,7 +502,13 @@
     this.table = null; this.paletteText = ''; this.paletteCount = 0;
     this.audio = []; this.saveValue = 0; this.plane = null; this.record = null; this.followed = null; this.timing = null; this.said1 = {};
     this.windowsSeen = {};
-    this.loads = [];   // { vp, text, model } a viewport: the record the host last loaded into it, and the model it made (ENGINE.17)
+    // { vp, text, model, patches, frame, sheet, range, values, rec } a viewport, or null for a host without one: the record
+    // the host last loaded into it and the model it made (ENGINE.17); the viewport's patches then, the frame the record
+    // is of, its sheet and range as its window row names them, whether it is a values record, and its rows by cell,
+    // made at its first patch (ENGINE.19)
+    this.loads = [];
+    this.kept = {};   // a device sheet's name: { frame, sheet, range, cells } as last read (ENGINE.19, decision 4)
+    this.inputsLast = null;   // the Input rows last written, one a line; null where the next frame writes them whole (decision 5)
     this.tabsWaiting = [];   // tabs clicked while a frame was in progress, answered at its end (ENGINE.14)
     // Version 4's views (ENGINE.18): the sheet the host last showed itself, kept without a viewport too; the
     // Camera's third row as the load and the last step left it; the grid's sheets, read once a load; and a
@@ -397,7 +516,7 @@
     this.shownName = null; this.cameraSheet = null; this.sheetsList = null; this.showWanted = null;
     this.rec = null; this.player = null;   // the replay recorded since the load, and one playing
     this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
-    this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, shows: 0, saves: 0,
+    this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, inputsKept: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, patches: 0, shows: 0, saves: 0,
                sounded: 0, restarts: 0, skipped: 0, silences: 0 };
   };
 
@@ -677,13 +796,24 @@
       this._refuse('frame ' + (this.frame + 1) + ': ' + said + '.');
     }
   };
+  // Step 3's Input rows by their changes (ENGINE.19, decision 5): the rows that differ from the rows last written, in
+  // their order, and none when none does, the frame counted kept; all of them at the first frame since the load and
+  // after a person's edit of the Input sheet, a replay's rows or a refused write, each of which forgets the rows last
+  // written, as the recorder forgets its record of the sheet at the same acts. The recorder is given the frame's rows
+  // whenever they differ from the last written and logs the cells that changed against its own record, as before.
   Host.prototype._issueInputs = function () {
     if (this.player) { this._issuePlayed(); return; }   // a replay's rows in place of the live inputs and edits (section 7.6)
     if (this.cart.rate > 0) {
-      var rows = this._inputRows(), r = this._write(rows);
+      var rows = this._inputRows(), lines = rows.split('\n'), last = this.inputsLast, changed = [];
+      if (last && last.length !== lines.length) last = null;
+      for (var i = 0; i < lines.length; i++) if (!last || last[i] !== lines[i]) changed.push(lines[i]);
       this.c.inputs++;
-      if (r.status !== 0) this._refuse('frame ' + (this.frame + 1) + ': the Input rows were refused: ' + words(r) + '.');
-      else this._recordInputs(rows);
+      if (!changed.length) this.c.inputsKept++;
+      else {
+        var r = this._write(changed.join('\n'));
+        if (r.status !== 0) { this.inputsLast = null; this._refuse('frame ' + (this.frame + 1) + ': the Input rows were refused: ' + words(r) + '.'); }
+        else { this.inputsLast = lines; this._recordInputs(rows); }
+      }
       this.notches = 0; this.lastKey = null;
     }
     while (this.edits.length) this._issueEdit(this.edits.shift(), false);
@@ -693,6 +823,7 @@
     if (r.status === 0) {
       this.c.edits++;
       this._recordEdit(row);   // the replay logs a person's edit that landed, in its frame (section 7.6)
+      if (editsInput(row)) this.inputsLast = null;   // the Input sheet a person wrote: the next frame's rows written whole (ENGINE.19)
       if (!atRateZero) this._say('frame ' + (this.frame + 1) + ': the edit ' + row + ' was written.');
       return true;
     }
@@ -751,7 +882,27 @@
     if (r.status !== 0) { this._sayOnce('view-' + sheet, 'frame ' + this.frame + ': the view of ' + sheet + ' was refused: ' + words(r) + '.', true); return null; }
     return r.text;
   };
-  Host.prototype._cells = function (sheet) { var t = this._record(sheet); return t === null ? null : sheetCells(t); };
+  Host.prototype._cells = function (sheet) { var d = this._device(sheet); return d ? d.cells : null; };
+  // A device sheet read by its changes (ENGINE.19, decision 4): its cells kept as last read with the frame they hold,
+  // and the sheet's changes over its extent asked first. Whole, no cells kept (the first read since the load) or any
+  // other frame: the sheet read whole, as before. The held frame's own, or no cell named since it: the cells kept.
+  // Cells named since it: each named cell's rows replace its value, and an empty cell's address is removed. Each
+  // device's own reading runs over the cells as before, so the Write sheet's rows become the next frame's derived
+  // writes at every frame. { cells, text, changed }: text the record when the sheet was read whole, and changed false
+  // when the cells were kept; null, the refusal said once, when the view is refused.
+  Host.prototype._device = function (sheet) {
+    var d = this.kept[sheet];
+    if (d) {
+      var r = this.m.texts('alonzo_view', [this.handle], ['changes', sheet, '']), ch = r.status === 0 ? readChanges(r.text) : null, how = decide(d, ch);
+      if (how === 'still') { d.frame = ch.at; return { cells: d.cells, text: null, changed: false }; }
+      if (how === 'patch' && patchCells(d.cells, ch.rows)) { d.frame = ch.at; return { cells: d.cells, text: null, changed: true }; }
+    }
+    var t = this._record(sheet);
+    if (t === null) { delete this.kept[sheet]; return null; }
+    var w = WINDOW_LINE.exec(t);
+    d = this.kept[sheet] = { frame: this.frame, sheet: w ? unquote(w[1]) : '', range: w ? w[2] : '', cells: sheetCells(t) };
+    return { cells: d.cells, text: t, changed: true };
+  };
   // The Camera's two cells place the window this frame is drawn through (section 3.8). A cartridge written to
   // version 4 has its third row read too (ENGINE.18): stage 'load' at the load, none after a step, and
   // 'redraw' from redraw(), which steps nothing and so reads no sheet.
@@ -795,11 +946,13 @@
     if (this.badCamera[what] !== shown) { this.badCamera[what] = shown; this._say('frame ' + this.frame + ': the Camera\'s ' + what + ' is ' + shown + ', not a whole number from 1; the window takes 1.'); }
     return 1;
   };
+  // The Palette's table, made again only when its cells changed: kept by their changes, or a record read whole that is
+  // the last one byte for byte; a patch leaves no record to compare the next with (ENGINE.19).
   Host.prototype._readPalette = function () {
-    var text = this._record('Palette');
-    if (text === null || text === this.paletteText) return;
-    this.paletteText = text;
-    var cells = sheetCells(text), table = new Uint32Array(256), bad = [], count = 0;
+    var d = this._device('Palette');
+    if (!d || !d.changed || (d.text !== null && d.text === this.paletteText)) return;
+    this.paletteText = d.text;
+    var cells = d.cells, table = new Uint32Array(256), bad = [], count = 0;
     table.fill(MAGENTA);
     for (var i = 1; i <= 255; i++) {
       var v = cells['B' + i];
@@ -861,15 +1014,26 @@
     // Another sheet shown in the Screen's place (ENGINE.14, decision 2): the frame views that sheet alone,
     // through the region the viewport shows, and the Screen again when its tab gives the window back.
     if (!atLoad && this.vp && !isScreen(this.vp.sheet())) { if (this.refreshSheet(this.vp, false, frame)) this.c.draws++; return; }
+    // A frame's own draw asks the window's changes first (ENGINE.19, decisions 2 and 3), when the viewport, or a host
+    // without one, still holds the values record the host noted for this window. Cells named since its frame patch the
+    // held text and the viewport's model in place, a draw; none named, or the held frame's own, hand the held record to
+    // the still frame's test below in the place of a view; whole, or any other frame, view as before.
+    var d = frame ? this._byChanges(this._viewport(), 'Screen', this.window) : null;
+    if (d && d.how === 'patch') {
+      this.record = d.text;
+      if (this.vp) { this.c.patches++; this.c.draws++; }
+      this.timing = { view: d.view, draw: d.draw, patched: d.cells };
+      return;
+    }
     var t0 = this.now(), projection = this.frame > 0 ? 'values' : 'grid';
-    var r = this.m.texts('alonzo_view', [this.handle], [projection, 'Screen', this.window]);
-    var t1 = this.now();
+    var r = d ? { status: 0, text: d.text } : this.m.texts('alonzo_view', [this.handle], [projection, 'Screen', this.window]);
+    var t1 = this.now(), asked = d ? d.view : 0;
     if (r.status !== 0) { this._sayOnce('grid', 'frame ' + this.frame + ': the record of the Screen was refused: ' + words(r) + '.', true); return; }
     if (!this.windowsSeen[this.window]) { this.windowsSeen[this.window] = true; this.c.windows++; }
     var vp = this._viewport(), was = this.quieting;
     if (frame && vp && this._still(vp, r.text)) {
       this.c.stills++;
-      this.timing = { view: t1 - t0, draw: 0, skipped: true };
+      this.timing = { view: asked + t1 - t0, draw: 0, skipped: true };
       return;
     }
     this.record = r.text;
@@ -882,8 +1046,8 @@
       } finally { this.quieting = was; }
       this._noteLoad(vp, r.text);
       this.c.draws++;
-    }
-    this.timing = { view: t1 - t0, draw: this.now() - t1 };
+    } else this._noteLoad(null, r.text);   // a host without a viewport holds its text alone (ENGINE.19)
+    this.timing = { view: asked + t1 - t0, draw: this.now() - t1 };
   };
   // The viewport, made over the page's element at the first grid load and kept across loads; its tabs
   // answered, and the sheet it shows viewed again at a scroll that leaves its region (ENGINE.14).
@@ -1025,7 +1189,12 @@
     if (!name || !model || (vp === this.vp && isScreen(name))) return false;
     var win = regionOf(vp, false);
     if (moved && model.windowText && within(win, model.windowText)) return false;
-    var t = this._viewDrawn(name, win);
+    // A still refresh asks the window's changes first (ENGINE.19, decision 2): cells named since the held frame patch
+    // the held record and the model in place, a load; none named hand the held record to the still sheet's test below,
+    // in the place of a view; whole, or any other frame, views as before.
+    var d = still ? this._byChanges(vp, name, win) : null;
+    if (d && d.how === 'patch') { if (vp === this.vp) this.c.patches++; return true; }
+    var t = d ? d.text : this._viewDrawn(name, win);
     if (t === null) return false;
     if (still && this._still(vp, t)) { if (vp === this.vp) this.c.stills++; return false; }   // a still sheet (ENGINE.17)
     this._quiet(function () { vp.load(t, { keep: true }); });
@@ -1041,16 +1210,46 @@
   // is still when it is that record byte for byte and the viewport holds that very model, so that a record
   // anyone else loaded into it, or a viewport cleared, is never taken for the host's: the text names its sheet
   // and its window, and the model is the sheet the viewport shows.
+  // Since ENGINE.19 the viewport's patches are noted with the load too, so that a model a page patched is never taken
+  // for the host's; and the record's frame, sheet, range and projection, which its changes are asked against. A host
+  // without a viewport holds its record under null, its text alone.
   Host.prototype._lastLoad = function (vp) {
     for (var i = 0; i < this.loads.length; i++) if (this.loads[i].vp === vp) return this.loads[i];
-    var l = { vp: vp, text: null, model: null };
+    var l = { vp: vp, text: null, model: null, patches: 0, frame: -1, sheet: '', range: '', values: false, rec: null };
     this.loads.push(l);
     return l;
   };
-  Host.prototype._noteLoad = function (vp, text) { var l = this._lastLoad(vp); l.text = text; l.model = vp.model(); };
+  Host.prototype._noteLoad = function (vp, text) {
+    var l = this._lastLoad(vp), w = WINDOW_LINE.exec(text);
+    l.text = text; l.model = vp ? vp.model() : null; l.patches = vp ? vp.patches() : 0;
+    l.frame = this.frame; l.values = this.frame > 0; l.sheet = w ? unquote(w[1]) : ''; l.range = w ? w[2] : ''; l.rec = null;
+  };
   Host.prototype._still = function (vp, text) {
     var l = this._lastLoad(vp);
+    if (l.patches !== vp.patches()) return false;   // a model a page patched is never the host's (ENGINE.19)
+    if (l.text === text && vp.model() === l.model) { l.frame = this.frame; l.values = this.frame > 0; }   // the held record this frame's too
     return l.text === text && vp.model() === l.model;
+  };
+  // A window's changes asked against the record a viewport, or a host without one, holds (ENGINE.19, decisions 2 and
+  // 3): only while the viewport still holds the model the host noted, unpatched by anyone else, and the record is a
+  // values record of the same sheet; and decided by the held frame, sheet and range. Cells named since the held frame
+  // are laid on the held text by cell, joined at once, and on the viewport's model in place: { how: 'patch', text, view,
+  // draw, cells }. None named, or the held frame's own: { how: 'still', text, view }, the held text, which the still
+  // frame's test then finds as it finds a record viewed whole. Null for whole, another window or sheet, any other frame,
+  // or a patch either side refuses, which forgets the held text so that the view that follows loads afresh.
+  Host.prototype._byChanges = function (vp, sheet, win) {
+    var l = this._lastLoad(vp);
+    if (l.text === null || l.rec === false || !l.values || l.sheet.toLowerCase() !== String(sheet).toLowerCase()) return null;
+    if (vp && (vp.model() !== l.model || vp.patches() !== l.patches)) return null;
+    var t0 = this.now(), r = this.m.texts('alonzo_view', [this.handle], ['changes', sheet, win]), t1 = this.now();
+    var ch = r.status === 0 ? readChanges(r.text) : null, how = decide(l, ch);
+    if (how === 'whole') return null;
+    if (how === 'still') return { how: how, text: l.text, view: t1 - t0 };
+    if (l.rec === null) l.rec = byCell(l.text) || false;
+    var text = l.rec ? patchRecord(l.rec, ch.rows) : null;
+    if (text === null || (vp && !vp.patch(r.text))) { l.text = null; l.rec = null; return null; }
+    l.text = text; l.frame = ch.at; l.patches = vp ? vp.patches() : 0;
+    return { how: how, text: text, view: t1 - t0, draw: this.now() - t1, cells: ch.n };
   };
   Host.prototype._fit = function () {
     var c = this.cart, dpr = global.devicePixelRatio || 1;
@@ -1572,7 +1771,7 @@
     var n = this.frame + 1, rows = this.player.frames[n];
     if (!rows) return;
     var r = this._write(rows.join('\n'));
-    if (r.status === 0) { this._recordPlayed(rows); return; }
+    if (r.status === 0) { this._recordPlayed(rows); this.inputsLast = null; return; }   // the rows last written forgotten with the recorder's record (ENGINE.19)
     this.inFrame = false; this.progress = null; this.player = null; this.stop();
     this._refuse('frame ' + n + ': the replay\'s rows were refused: ' + words(r) + '; the replay stops, and the cartridge stands at frame ' + this.frame + '.');
   };
@@ -1688,6 +1887,13 @@
   Host.SPEC = SPEC;
   // The host's SHA-256 of bytes, or of a text's UTF-8, in upper-case hex: an oracle holds it to FIPS 180-2's vectors.
   Host.sha256 = function (x) { return sha256(typeof x === 'string' ? enc.encode(x) : x); };
+  // The host's patch of a values record by a window's changes (ENGINE.19, decision 3), pure: the record's text after
+  // the answer's rows, or null for a whole answer, or a record or rows it lays no patch on. An oracle holds it to
+  // records of its own.
+  Host.patchRecord = function (record, changes) {
+    var rec = byCell(String(record)), ch = readChanges(String(changes));
+    return rec && ch && !ch.whole ? patchRecord(rec, ch.rows) : null;
+  };
   Host.version = 1;
 
   global.AlonzoHost = Host;

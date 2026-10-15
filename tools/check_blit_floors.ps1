@@ -165,15 +165,33 @@ $ErrorActionPreference = 'Stop'
 #   scale-1: FirstFrame 0.8, ViewP50 0.3, BlitP50 0.1, SyncP50 0.9, FrameP50 1.0, FrameP95 1.6, Max 1.7, Dropped 0, N 120
 #   engine:  FirstFrame 3.2, ViewP50 0.1, BlitP50 0.1, SyncP50 0.4, FrameP50 0.5, FrameP95 0.8, Max 3.2, Dropped 0, N 120
 #   grid:    FirstFrame 6.4, ViewP50 1.1, BlitP50 3.1, SyncP50 4.3, FrameP50 5.2, FrameP95 6.1, Max 6.7, Dropped 0, N 120
+# 2026-10-15, the fifth baseline (ENGINE.19, a frame read by its changes): the
+# owner's run, Google Chrome 155.0.8059.79, the same screen, ratio and display,
+# over the module at vla-lang 0.9.4 (766,043 bytes). The still case fell as
+# predicted, its bars standing: frame p50 0.8 to 0.2 ms, p95 1.3 to 0.4, max
+# 5.1 to 3.0, sync 0.6 to 0.1, the view's p50 0.3 to 0.0, the window's changes
+# asked in its place, and 116 of its 120 frames still. The two cases over the
+# double ran faster too, their devices read by their changes and their Input
+# rows written only when one changed: fit's p95 1.6 to 1.1, max 1.8 to 1.3 and
+# sync 0.8 to 0.6, scale-1's 1.7 to 1.1, 2.0 to 1.5 and 0.8 to 0.6. engine's
+# p50 0.5 to 0.4, its redraw keeping the Camera's and the Palette's cells; and
+# grid, a redraw that always views whole, held within a grain or two, p95 5.8
+# to 6.0, max 6.3 to 6.8. The fourth baseline's five rows, kept here for the
+# record:
+#   fit:     FirstFrame 1.1, ViewP50 0.3, BlitP50 0.1, SyncP50 0.8, FrameP50 0.9, FrameP95 1.6, Max 1.8, Dropped 0, N 120
+#   scale-1: FirstFrame 1.0, ViewP50 0.3, BlitP50 0.1, SyncP50 0.8, FrameP50 1.0, FrameP95 1.7, Max 2.0, Dropped 0, N 120
+#   engine:  FirstFrame 0.5, ViewP50 0.1, BlitP50 0.1, SyncP50 0.3, FrameP50 0.5, FrameP95 0.7, Max 1.1, Dropped 0, N 120
+#   grid:    FirstFrame 5.6, ViewP50 1.1, BlitP50 3.2, SyncP50 4.4, FrameP50 5.3, FrameP95 5.8, Max 6.3, Dropped 0, N 120
+#   still:   FirstFrame 0.7, ViewP50 0.3, BlitP50 0.0, SyncP50 0.6, FrameP50 0.8, FrameP95 1.3, Max 5.1, Dropped 0, N 120, Stills 116
 $baselineDate = '2026-10-15'
 $baselineInterval = 16.7
-$baselineEnvironment = 'Environment: Google Chrome 155.0.8059.79, Chromium 155.0.8059.79 on Windows | DPR 1.5 | screen 2560x1440 | fullscreen yes | frame interval 16.7 ms (about 60 Hz) | the fake module, the Life cartridge, 120 frames a case; the engine case over the module built into this page, 749,218 bytes, Life at its first frame redrawn; the grid case, the grid card at its first frame drawn again from the values view; the still case, the still card''s frame path, a day''s boundary drawn every 30 frames and the frames between still'
+$baselineEnvironment = 'Environment: Google Chrome 155.0.8059.79, Chromium 155.0.8059.79 on Windows | DPR 1.5 | screen 2560x1440 | fullscreen yes | frame interval 16.7 ms (about 60 Hz) | the fake module, the Life cartridge, 120 frames a case; the engine case over the module built into this page, 766,043 bytes, Life at its first frame redrawn; the grid case, the grid card at its first frame drawn again from the values view; the still case, the still card''s frame path, a day''s boundary drawn every 30 frames and the frames between still'
 $baseline = @(
-    @{ Case = 'fit'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 1.1; ViewP50 = 0.3; BlitP50 = 0.1; SyncP50 = 0.8; FrameP50 = 0.9; FrameP95 = 1.6; Max = 1.8; Dropped = 0; N = 120; Holds = 'yes' },
-    @{ Case = 'scale-1'; Scale = 1; Width = 320; Height = 200; FirstFrame = 1.0; ViewP50 = 0.3; BlitP50 = 0.1; SyncP50 = 0.8; FrameP50 = 1.0; FrameP95 = 1.7; Max = 2.0; Dropped = 0; N = 120; Holds = 'yes' },
-    @{ Case = 'engine'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 0.5; ViewP50 = 0.1; BlitP50 = 0.1; SyncP50 = 0.3; FrameP50 = 0.5; FrameP95 = 0.7; Max = 1.1; Dropped = 0; N = 120; Holds = 'yes' },
-    @{ Case = 'grid'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 5.6; ViewP50 = 1.1; BlitP50 = 3.2; SyncP50 = 4.4; FrameP50 = 5.3; FrameP95 = 5.8; Max = 6.3; Dropped = 0; N = 120; Holds = 'yes' },
-    @{ Case = 'still'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 0.7; ViewP50 = 0.3; BlitP50 = 0.0; SyncP50 = 0.6; FrameP50 = 0.8; FrameP95 = 1.3; Max = 5.1; Dropped = 0; N = 120; Holds = 'yes'; Stills = 116 }
+    @{ Case = 'fit'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 1.1; ViewP50 = 0.2; BlitP50 = 0.1; SyncP50 = 0.6; FrameP50 = 0.7; FrameP95 = 1.1; Max = 1.3; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'scale-1'; Scale = 1; Width = 320; Height = 200; FirstFrame = 1.2; ViewP50 = 0.2; BlitP50 = 0.1; SyncP50 = 0.6; FrameP50 = 0.8; FrameP95 = 1.1; Max = 1.5; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'engine'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 1.0; ViewP50 = 0.1; BlitP50 = 0.1; SyncP50 = 0.3; FrameP50 = 0.4; FrameP95 = 0.7; Max = 1.0; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'grid'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 5.3; ViewP50 = 1.0; BlitP50 = 3.3; SyncP50 = 4.5; FrameP50 = 5.4; FrameP95 = 6.0; Max = 6.8; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'still'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 0.3; ViewP50 = 0.0; BlitP50 = 0.0; SyncP50 = 0.1; FrameP50 = 0.2; FrameP95 = 0.4; Max = 3.0; Dropped = 0; N = 120; Holds = 'yes'; Stills = 116 }
 )
 
 # --- the bars ---

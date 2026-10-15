@@ -627,7 +627,8 @@
       // a replay playing says where it is in it (ENGINE.3's second slice); the bar the frame alone, the drawer the whole line
       frameShort.textContent = e.replay ? 'Replaying ' + thousands(e.frame) + ' of ' + thousands(e.replay) : 'Frame ' + thousands(e.frame);
       // a grid's frames found still, neither read nor painted again (ENGINE.17), of the frames since the load
-      frameEl.textContent = (e.replay ? 'Replaying frame ' + e.frame + ' of ' + e.replay : 'Frame ' + e.frame) + ', the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport, ' + thousands(c.stills) + ' of ' + thousands(c.frames) + ' frames still' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + '; ' + many(c.derivedApplied, 'derived write', 'derived writes') + ' landed and ' + c.derivedRefused + ' refused, ' + many(c.edits, 'edit', 'edits') + ' written, ' + many(c.yields, 'yield', 'yields') + '.' +
+      // and since ENGINE.19 those patched, drawn from their changes alone
+      frameEl.textContent = (e.replay ? 'Replaying frame ' + e.frame + ' of ' + e.replay : 'Frame ' + e.frame) + ', the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport, ' + thousands(c.stills) + ' of ' + thousands(c.frames) + ' frames still and ' + thousands(c.patches) + ' patched' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + '; ' + many(c.derivedApplied, 'derived write', 'derived writes') + ' landed and ' + c.derivedRefused + ' refused, ' + many(c.edits, 'edit', 'edits') + ' written, ' + many(c.yields, 'yield', 'yields') + '.' +
         // while the sound is on, the frames sounded and the timeline's restarts and skips (ENGINE.4, decision 1)
         (host.soundIs() ? ' The sound: ' + many(c.sounded, 'frame', 'frames') + ' sounded, ' + many(c.restarts, 'restart', 'restarts') + ', ' + c.skipped + ' skipped.' : '');
       // about five times a second while the loop runs, so every frame of a cartridge slower than that
@@ -915,6 +916,7 @@
     this.held = {}; this.lastKey = null; this.pointer = { col: 0, row: 0, left: 0, right: 0, middle: 0 }; this.notches = 0;
     this.edits = []; this.pending = []; this.windows = []; this.progress = []; this.saveValue = 0; this.stateEditFrame = 0;
     this.calls = 0; this.yields = 0; this.inputs = 0; this.applied = 0; this.refused = 0; this.editsOk = 0; this.editsRefused = 0; this.saves = 0;
+    this.lastRows = null; this.inputsKept = 0;   // the Input rows last written, and the frames that wrote none (ENGINE.19)
     this.refusedBy = {};   // the derived writes refused, by the cell they named
     this.cam = { row: 1, col: 1 };   // the Camera of the frame last drawn, which places the pointer (ENGINE.3)
     if (m[2] === 'plane') this.windows.push(this.windowNow());   // the load draws frame 0 through the Camera's window
@@ -951,12 +953,19 @@
       this.refusedBy[rows[i].where] = (this.refusedBy[rows[i].where] || 0) + 1;
     }
   };
+  // Step 3 (ENGINE.19, decision 5): the Input rows that differ from the rows last written, none when none does, all of
+  // them at the first frame and after a person's edit of the Input sheet, the sheet named without case.
   Model.prototype.begin = function () {
     this.issueDerived();
-    if (this.rate > 0) { this.write(this.inputRows()); this.inputs++; this.notches = 0; this.lastKey = null; }
+    if (this.rate > 0) {
+      var rows = this.inputRows().split('\n'), last = this.lastRows, changed = rows.filter(function (r, i) { return !last || last[i] !== r; });
+      if (!changed.length) this.inputsKept++;
+      else this.lastRows = this.write(changed.join('\n')).status === 0 ? rows : null;
+      this.inputs++; this.notches = 0; this.lastKey = null;
+    }
     while (this.edits.length) {
       var row = this.edits.shift();
-      if (this.write(row).status === 0) { this.editsOk++; if (row.indexOf('"State"') >= 0 && !this.stateEditFrame) this.stateEditFrame = this.frame + 1; }
+      if (this.write(row).status === 0) { this.editsOk++; if (row.indexOf('"State"') >= 0 && !this.stateEditFrame) this.stateEditFrame = this.frame + 1; if (/^\((?:cell|formula) "input" /i.test(row)) this.lastRows = null; }
       else this.editsRefused++;
     }
     this.inFrame = true; this.evaluated = 0;
@@ -1061,6 +1070,7 @@
     function eq(what, got, exp) { if (got !== exp) P.push(what + ' ' + got + ', the log says ' + exp); }
     eq('the frames', hc.frame, M.frame); eq('the step calls', hc.calls, M.calls); eq('the yields', hc.yields, M.yields);
     eq('the Input writes', hc.inputs, M.inputs); eq('the derived writes landed', hc.derivedApplied, M.applied); eq('the derived writes refused', hc.derivedRefused, M.refused);
+    eq('the frames whose Input rows all stood as last written', hc.inputsKept, M.inputsKept);
     eq('the edits written', hc.edits, M.editsOk); eq('the edits refused', hc.editsRefused, M.editsRefused); eq('the save edges', hc.saves, M.saves);
     if (st.windows.join(' ') !== M.windows.join(' ')) P.push('the plane was viewed through ' + st.windows.length + ' windows, not the log\'s ' + M.windows.length + ' in its order');
     var dh = r.fake.digest(hc.handle), dm = M.fake.digest(M.h);
@@ -1090,7 +1100,7 @@
     var st2 = r.fake.stats();
     if (st2.live !== 0) P.push(st2.live + ' allocation(s) live after the unload');
     if (st2.misfrees !== 0) P.push(st2.misfrees + ' free(s) of a pointer or a length the module never gave');
-    return { frames: hc.frame, calls: hc.calls, yields: hc.yields, inputs: hc.inputs, applied: hc.derivedApplied, refused: hc.derivedRefused, edits: hc.edits, windows: hc.windows, sentences: said.length, live: st2.live, misfrees: st2.misfrees, detaches: st2.detaches, digest: dh };
+    return { frames: hc.frame, calls: hc.calls, yields: hc.yields, inputs: hc.inputs, inputsKept: hc.inputsKept, applied: hc.derivedApplied, refused: hc.derivedRefused, edits: hc.edits, windows: hc.windows, sentences: said.length, live: st2.live, misfrees: st2.misfrees, detaches: st2.detaches, digest: dh };
   }
   // Rate 30: keys, the pointer, the wheel, the Camera moved by edits, an edit that wins over a
   // derived write, a refused edit, a Camera cell that is not a number, and a stall of a second.
@@ -1957,7 +1967,7 @@
         k.equal++;
         if (plan.after) plan.after(f, host);
       }
-      k.frames = host.counters().frame;
+      k.frames = host.counters().frame; k.patches = host.counters().patches;   // the frames drawn by their changes (ENGINE.19)
       if (plan.end) plan.end(host, t);
       var refusals = host.sentences().filter(function (sn) { return sn.refusal; });
       if (plan.strict && refusals.length) P.push(label + ': the host was refused: ' + refusals[0].text);
@@ -2053,7 +2063,8 @@
     }
     return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeTexts: kf.texts, fakeLooks: kf.looks, fakeUnvalued: kf.unvalued, fakeProbes: kf.probes, fakeKept: kf.kept, fakeCleared: kf.cleared, fakeValues: kf.values,
                          pointer: x.pointer, key: x.key, edited: x.edited, waits: x.waits, lone: x.lone, module: module, frames: km.frames, equal: km.equal, windows: km.windows, texts: km.texts, wraps: km.wraps, fills: km.fills, looks: km.looks, styles: km.styles,
-                         columns: km.columns, unvalued: km.unvalued, hidden: km.hidden, probes: km.probes, kept: km.kept, followed: x.followed, edits: x.edits, cleared: km.cleared, hashes: km.hashes || 0, values: km.values, live: st.live, misfrees: st.misfrees }, problems: P };
+                         columns: km.columns, unvalued: km.unvalued, hidden: km.hidden, probes: km.probes, kept: km.kept, followed: x.followed, edits: x.edits, cleared: km.cleared, hashes: km.hashes || 0, values: km.values,
+                         fakePatches: kf.patches || 0, patches: km.patches || 0, live: st.live, misfrees: st.misfrees }, problems: P };
   }
   // ENGINE.16's half, a game's page's and Alonzo's alike: every grid cartridge the page holds, by its manifest,
   // on the engine's module, a short run with no edits, frame 0 and GAME_GRID_FRAMES more (frame 0 alone at rate
@@ -2446,22 +2457,25 @@
           if (f === 5) { host.showSheet(dv, 'Board'); wasViewer = held(dv, at + ', the viewer at the click'); }
           if (f < 45) was = held(vp, at + ', at the click');
         }
-        var m0 = vp.model(), c0 = host.counters();
+        // a load replaces the model, and a patch (ENGINE.19) lays the record's changes on it in place, counted by the
+        // host and by the viewport: either is the record taken again
+        var m0 = vp.model(), p0 = vp.patches(), c0 = host.counters();
         t += 1000 / 30; host.tick(t);
         if (host.counters().frame !== f) { P.push(at + ': after tick ' + f + ' the host is at frame ' + host.counters().frame); break; }
         var c1 = host.counters(), drew = c1.draws - c0.draws, stood = c1.stills - c0.stills;
         if (f === 45) { if (vp.sheet() !== 'Screen' || drew !== 0 || stood !== 1) P.push(at + ': the frame after the Screen\'s tab counted ' + drew + ' draw(s) and ' + stood + ' still frame(s), where its record is the one the tab drew'); else k.back = 1; continue; }
         if (f < 5) continue;
-        var text = held(vp, at), loaded = vp.model() !== m0, owed = text !== was;
+        var text = held(vp, at), patched = vp.patches() !== p0, loaded = vp.model() !== m0 || patched, owed = text !== was;
+        if (patched !== (c1.patches - c0.patches === 1)) P.push(at + ': the viewport took ' + (vp.patches() - p0) + ' patch(es), and the host counted ' + (c1.patches - c0.patches));
         if (text !== null) {
           if (loaded !== owed || drew !== (owed ? 1 : 0) || stood !== (owed ? 0 : 1)) P.push(at + ': ' + shown + '\'s record ' + (owed ? 'changed since the frame before' : 'is the frame before\'s') + ', and the host ' + (loaded ? 'loaded it' : 'kept it') + ', counting ' + drew + ' draw(s) and ' + stood + ' still frame(s)');
           else { k.sheets++; if (!owed) k.sheetStills++; if (owed && f === 31) k.turned++; if (owed && shown === 'Day') k.daily++; }
         }
         was = text;
         // the page's viewer, refreshed as the drawer refreshes it, may be still too, and counts no frame of the host's
-        var d0 = dv.model();
+        var d0 = dv.model(), q0 = dv.patches();
         host.refreshSheet(dv, false, true);
-        var vtext = held(dv, at + ', the viewer'), vloaded = dv.model() !== d0, vowed = vtext !== wasViewer, c2 = host.counters();
+        var vtext = held(dv, at + ', the viewer'), vloaded = dv.model() !== d0 || dv.patches() !== q0, vowed = vtext !== wasViewer, c2 = host.counters();
         if (vtext !== null) {
           if (vloaded !== vowed || c2.draws !== c1.draws || c2.stills !== c1.stills) P.push(at + ': the viewer\'s Board ' + (vowed ? 'changed since the frame before' : 'is the frame before\'s') + ', and the host ' + (vloaded ? 'loaded it' : 'kept it') + (c2.stills !== c1.stills || c2.draws !== c1.draws ? ', counting it as a frame of its own viewport' : ''));
           else { k.viewer++; if (!vowed) k.viewerStills++; if (vowed && f === 31) k.turned++; }
@@ -2663,6 +2677,366 @@
       else if (!/^\(replay "still" \(spec 3\) /.test(host.replayText() || '')) P.push('views, version 3: the replay\'s header is ' + (host.replayText() || '').split('\n')[0] + ', where a version 3 cartridge\'s names version 3');
       else k.older = 1;
     } finally { host.destroy(); stage.removeChild(box); }
+  }
+  // ---- ENGINE.19: a frame read by its changes ----
+  // The changes card, the page's own as the still card is, written here and never a file, so that the case runs on a
+  // game's page too (ENGINE.16): a Screen of 20 by 10 holding the frame's number, a cell of every seventh frame, a text
+  // long on even frames and short on odd ones, a value an edit rewrites, and a fill of 64 formulas reading only the day,
+  // 20 frames long, so that a day's boundary changes 64 cells, under the room the language keeps for a frame's changes;
+  // a Day, its phase moving at every frame and a value the Write sheet lands in it at every frame; a Camera; a Keys sheet
+  // binding KeyZ to player 1's a; and a File whose save cell rises every 25th frame. Every value is plain, since a
+  // formula whose value turns to an error or a reason makes its frame whole (the scoping's measurement).
+  var CHANGES = { file: 'changes.vla',
+                  text: '(cartridge "changes"\n  (spec 3)\n  (title "A changes card")\n  (rate 30)\n  (screen grid 20 10)\n  (seed 1))\n' +
+                        '(sheet "Screen" visible)\n(sheet "Day" visible)\n(sheet "Camera" visible)\n(sheet "Keys" visible)\n(sheet "Write" visible)\n' +
+                        '(cell "Camera" "A1" "row")\n(cell "Camera" "B1" 1)\n(cell "Camera" "A2" "column")\n(cell "Camera" "B2" 1)\n(cell "Keys" "A5" "a")\n(cell "Keys" "B5" "KeyZ")\n' +
+                        '(cell "Day" "A1" "day")\n(formula "Day" "B1" "=INT((Clock!$B$1-1)/20)")\n(cell "Day" "A2" "phase")\n(formula "Day" "B2" "=MOD(Clock!$B$1-1,20)")\n(cell "Day" "A3" "written")\n(cell "Day" "B3" 0)\n' +
+                        '(cell "Write" "A1" "sheet")\n(cell "Write" "B1" "address")\n(cell "Write" "C1" "value")\n(cell "Write" "A2" "Day")\n(cell "Write" "B2" "B3")\n(formula "Write" "C2" "=Clock!$B$1")\n' +
+                        '(formula "File" "B3" "=IF(MOD(Clock!$B$1,25)=0,1,0)")\n' +
+                        '(cell "Screen" "A1" "frame")\n(formula "Screen" "B1" "=Clock!$B$1")\n(cell "Screen" "J1" "seventh")\n(formula "Screen" "K1" "=INT(Clock!$B$1/7)")\n' +
+                        '(cell "Screen" "J2" "text")\n(formula "Screen" "K2" "=IF(MOD(Clock!$B$1,2)=0,\\"a text much longer than its column\\",\\"short\\")")\n' +
+                        '(cell "Screen" "J4" "edited")\n(cell "Screen" "K4" 1)\n(formula "Screen" "A3:H10" "=Day!$B$1*100+ROW()*10+COLUMN()")\n' };
+  var CHANGES_FRAMES = 60, CHANGES_DEVICES = ['Camera', 'Keys', 'File', 'Write', 'Clock'];
+  // The person's acts before each frame: the pointer over three cells, a bound key pressed and let go, an edit of the
+  // Input sheet, the Keys rebound and the new key pressed and let go, the value's edit, a notch of the wheel, the Camera
+  // moved a column, and a formula written into the window.
+  var CHANGES_PLAN = {
+    10: [['pointer', 3, 3]], 11: [['pointer', 4, 4]], 12: [['pointer', 5, 5]], 15: [['down', 'KeyZ', 'z']], 16: [['up', 'KeyZ']],
+    20: [['edit', '(cell "Input" "C5" 1)']], 25: [['edit', '(cell "Keys" "B5" "KeyX")']], 27: [['down', 'KeyX', 'x']], 28: [['up', 'KeyX']],
+    30: [['edit', '(cell "Screen" "K4" 2)']], 33: [['wheel', 1]], 40: [['edit', '(cell "Camera" "B2" 2)']], 50: [['edit', '(formula "Screen" "L4" "=K4*2")']]
+  };
+  // A module's exports with its view and write calls logged, each view by its projection, sheet and window and each
+  // write by its rows, read off the module's memory at the call: what the host asked, never what it says it asked.
+  function loggedExports(exports, log) {
+    var x = {}, td = new TextDecoder();
+    for (var key in exports) if (Object.prototype.hasOwnProperty.call(exports, key)) x[key] = exports[key];
+    function text(p, n) { return td.decode(new Uint8Array(exports.memory.buffer, p >>> 0, n >>> 0)); }
+    x.alonzo_view = function (h, pp, pn, sp, sn, wp, wn, out) { log.push({ call: 'view', projection: text(pp, pn), sheet: text(sp, sn), window: text(wp, wn) }); return exports.alonzo_view(h, pp, pn, sp, sn, wp, wn, out); };
+    x.alonzo_write = function (h, p, n, out) { log.push({ call: 'write', rows: text(p, n) }); return exports.alonzo_write(h, p, n, out); };
+    return x;
+  }
+  // A changes answer's header read here, the oracle's own: { sheet, range, since, at, whole, n }, or null.
+  function changesHead(text) {
+    var m = /^\(changes "((?:[^"\\]|\\.)*)" "([^"]*)" (\d+) (\d+) (whole|\d+)\)/.exec(text);
+    return m ? { sheet: m[1], range: m[2], since: +m[3], at: +m[4], whole: m[5] === 'whole', n: m[5] === 'whole' ? -1 : +m[5] } : null;
+  }
+  // A record's cells by their rows, the oracle's own: { key: { addr, r, c, rows } } and the keys in row-major order.
+  function rowsByCell(text) {
+    var cells = {}, order = [];
+    text.split('\n').forEach(function (l) {
+      var m = /^\((?:cell|value|style|sentence|formula) "(?:[^"\\]|\\.)*" "([A-Z]+)(\d+)"/.exec(l);
+      if (!m) return;
+      var r = +m[2], c = VP.colIndex(m[1]), key = r * 32768 + c;
+      if (!cells[key]) { cells[key] = { addr: m[1] + m[2], r: r, c: c, rows: '' }; order.push(key); }
+      cells[key].rows += l + '\n';
+    });
+    return cells;
+  }
+  // Where two models of a record differ, a viewport's patched one and a fresh read's, in words; '' when they are one,
+  // every cell and every count, the read's time aside.
+  function modelDiff(a, b) {
+    var keys = ['sheet', 'windowText', 'extentText', 'gridlines', 'rows', 'cols', 'lines'], i;
+    for (i = 0; i < keys.length; i++) if (a[keys[i]] !== b[keys[i]]) return keys[i] + ' ' + JSON.stringify(a[keys[i]]) + ' against ' + JSON.stringify(b[keys[i]]);
+    var parts = ['sheets', 'columns', 'formats', 'looks', 'rowSettings', 'counts'];
+    for (i = 0; i < parts.length; i++) if (JSON.stringify(a[parts[i]]) !== JSON.stringify(b[parts[i]])) return parts[i] + ' ' + JSON.stringify(a[parts[i]]) + ' against ' + JSON.stringify(b[parts[i]]);
+    if (a.cells.size !== b.cells.size) return 'the cells, ' + a.cells.size + ' against ' + b.cells.size;
+    var bad = '';
+    b.cells.forEach(function (e, key) { if (!bad && JSON.stringify(a.cells.get(key)) !== JSON.stringify(e)) bad = e.address + ', ' + JSON.stringify(a.cells.get(key)) + ' against ' + JSON.stringify(e); });
+    return bad;
+  }
+  // A device sheet's cells off its grid record, the oracle's own reading of what the host keeps: a cell or value row's
+  // value as the host reads one (a text, a number, true or false, an error as { error }), a formula with no value null.
+  function deviceCells(text) {
+    var forms = VP.readForms(text), out = {};
+    for (var i = 0; i < forms.length; i++) {
+      var f = forms[i], head = Array.isArray(f) && f[0] ? f[0].sym : null;
+      if ((head !== 'cell' && head !== 'value' && head !== 'formula') || typeof f[2] !== 'string') continue;
+      var d = f[3], v = null;
+      if (head !== 'formula') v = typeof d === 'string' ? d : (d && d.num !== undefined ? d.num : (d && d.sym === 'true' ? true : (d && d.sym === 'false' ? false : (Array.isArray(d) && d[0] && d[0].sym === 'error' ? { error: d[1] } : null))));
+      out[f[2].toUpperCase()] = v;
+    }
+    return out;
+  }
+  function canonCells(cells) { return JSON.stringify(Object.keys(cells).sort().map(function (a) { return [a, cells[a]]; })); }
+  // The host's patch, pure, over a record written here (decision 8's third part): an empty row takes its cell out, a new
+  // cell goes in at its place, a value and its style are replaced together, a cell loses its style, several cells at
+  // once, and the header is untouched; and a whole answer patches nothing. Each laid on a viewport's model too, which
+  // stays the same object, counts the patch and is the model a load of the patched record makes, every cell and count.
+  function changesCrafted(P) {
+    var head = '(sheet "Crafted" visible)\n(window "Crafted" "A1:D4")\n(extent "Crafted" "A1:D4")\n(gridlines "Crafted" on)\n(format 0 none general nowrap)\n(format 2 "00AA00" general nowrap)\n';
+    var a1 = '(cell "Crafted" "A1" "a")\n', b1 = '(value "Crafted" "B1" 1)\n(style "Crafted" "B1" 2)\n', c2 = '(value "Crafted" "C2" 3)\n', d4 = '(cell "Crafted" "D4" 4)\n';
+    var rec = head + a1 + b1 + c2 + d4, held = 0;
+    function changes(n, rows) { return '(changes "Crafted" "A1:D4" 1 2 ' + n + ')\n' + rows; }
+    var cases = [
+      ['an empty row', changes(1, '(empty "Crafted" "C2")\n'), head + a1 + b1 + d4],
+      ['a new cell', changes(1, '(value "Crafted" "A2" 9)\n'), head + a1 + b1 + '(value "Crafted" "A2" 9)\n' + c2 + d4],
+      ['a value and its style', changes(1, '(value "Crafted" "B1" 5)\n(style "Crafted" "B1" 2)\n'), head + a1 + '(value "Crafted" "B1" 5)\n(style "Crafted" "B1" 2)\n' + c2 + d4],
+      ['a style lost', changes(1, '(value "Crafted" "B1" 1)\n'), head + a1 + '(value "Crafted" "B1" 1)\n' + c2 + d4],
+      ['several cells', changes(3, '(cell "Crafted" "A1" "b")\n(empty "Crafted" "C2")\n(value "Crafted" "D3" 7)\n'), head + '(cell "Crafted" "A1" "b")\n' + b1 + '(value "Crafted" "D3" 7)\n' + d4]
+    ];
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:640px;height:200px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var vp = new VP(box);
+    try {
+      for (var i = 0; i < cases.length; i++) {
+        var c = cases[i], at = 'crafted, ' + c[0], got = HOST.patchRecord(rec, c[1]);
+        if (got !== c[2]) { P.push(at + ': the host\'s patch gives ' + JSON.stringify(got) + ', where the record after it is ' + JSON.stringify(c[2])); continue; }
+        vp.load(rec);
+        var m0 = vp.model(), p0 = vp.patches(), r = vp.patch(c[1]);
+        if (!r || vp.model() !== m0 || vp.patches() !== p0 + 1) { P.push(at + ': the viewport ' + (r ? 'replaced its model or counted no patch' : 'refused the patch')); continue; }
+        var diff = modelDiff(vp.model(), VP.readRecord(c[2]));
+        if (diff) { P.push(at + ': the viewport\'s patched model is not the one a load of the record after it makes: ' + diff); continue; }
+        held++;
+      }
+      var whole = '(changes "Crafted" "A1:D4" 1 2 whole)\n';
+      vp.load(rec);
+      if (HOST.patchRecord(rec, whole) !== null) P.push('crafted: the host patched a record by a whole answer');
+      else if (vp.patch(whole) !== false) P.push('crafted: the viewport patched its model by a whole answer');
+      else held++;
+    } finally { vp.destroy(); stage.removeChild(box); }
+    return held;
+  }
+  // The double's changes (decision 6), driven here with no host between and held to the oracle's own diff of its values
+  // records: a grid of 20 by 12, frames 1 to 9, the Screen's window and the State and Write sheets' extents. At each frame
+  // the answer names exactly the cells whose values rows differ from the frame before's, row by row, an empty one's as
+  // (empty ...); whole before the first frame, at a frame whose sheet's extent changed (the Write sheet's rule of the
+  // frame at 7 and 8), and, for a formula written before frame 5, from the write until and at that frame's end. Between
+  // frames 3 and 4 a value written into State answers whole for State while the Screen keeps frame 3's answer.
+  function changesDouble(P) {
+    // the double reads a manifest alone: one written here, so that a game's page, which holds no Life, runs it too
+    var fake = FAKE.create({}), D = new Driver(fake), held = 0, manifest = '(cartridge "double"\n  (spec 3)\n  (title "The double\'s grid")\n  (rate 30)\n  (screen grid 20 12)\n  (seed 1))\n';
+    var ld = /^\(cartridge (\d+) /.exec(D.call('alonzo_load', [], [manifest, 'double.vla']).text);
+    if (!ld) { P.push('the double did not load a grid of 20 by 12'); return 0; }
+    var h = +ld[1], wins = [['Screen', 'A1:T12'], ['State', ''], ['Write', '']], last = {}, answered = {};
+    function extentOf(text) { var m = /^\(extent "[^"]*" (?:"([^"]*)"|none)\)$/m.exec(text); return m ? (m[1] || 'none') : '?'; }
+    function look(f, why) {
+      wins.forEach(function (w) {
+        var at = 'the double, frame ' + f + ', ' + w[0], V = D.call('alonzo_view', [h], ['values', w[0], w[1]]).text, C = D.call('alonzo_view', [h], ['changes', w[0], w[1]]).text, ch = changesHead(C);
+        var prev = last[w[0]], whole = why || (prev && extentOf(prev) !== extentOf(V) ? 'its extent changed' : '');
+        last[w[0]] = V; answered[w[0]] = C;
+        if (!ch || ch.at !== f || ch.since !== (f > 0 ? f - 1 : 0)) { P.push(at + ': the answer\'s header is ' + C.split('\n')[0] + ', where it names frames ' + (f > 0 ? f - 1 : 0) + ' and ' + f); return; }
+        if (whole) { if (!ch.whole) P.push(at + ': the answer names ' + ch.n + ' cell(s), where it is whole, ' + whole); else held++; return; }
+        if (ch.whole) { P.push(at + ': the answer is whole, where it names the cells that changed'); return; }
+        var a = rowsByCell(prev), b = rowsByCell(V), keys = {}, want = [];
+        Object.keys(a).concat(Object.keys(b)).forEach(function (key) { keys[key] = true; });
+        Object.keys(keys).map(Number).sort(function (x, y) { return x - y; }).forEach(function (key) {
+          var was = a[key] ? a[key].rows : '', now = b[key] ? b[key].rows : '';
+          if (was !== now) want.push(now || '(empty "' + w[0] + '" "' + (a[key] || b[key]).addr + '")\n');
+        });
+        var body = C.slice(C.indexOf('\n') + 1);
+        if (ch.n !== want.length || body !== want.join('')) P.push(at + ': the answer names ' + ch.n + ' cell(s), ' + JSON.stringify(body.slice(0, 80)) + ', where the values records differ in ' + want.length + ', ' + JSON.stringify(want.join('').slice(0, 80)));
+        else held++;
+      });
+    }
+    look(0, 'before the first frame');
+    for (var f = 1; f <= 9; f++) {
+      if (f === 4) {
+        var screen3 = answered.Screen;
+        D.call('alonzo_write', [h], ['(cell "State" "B1" 99)']);
+        var s1 = changesHead(D.call('alonzo_view', [h], ['changes', 'State', '']).text), s2 = D.call('alonzo_view', [h], ['changes', 'Screen', 'A1:T12']).text;
+        if (!s1 || !s1.whole) P.push('the double, between frames 3 and 4: State answers ' + (s1 ? s1.n + ' cell(s)' : 'nothing') + ' while a value written since lies in it, where it is whole');
+        else if (s2 !== screen3) P.push('the double, between frames 3 and 4: the Screen, which no write reached, answers ' + s2.split('\n')[0] + ', not frame 3\'s answer');
+        else held++;
+      }
+      if (f === 5) {
+        D.call('alonzo_write', [h], ['(formula "State" "C1" "=1")']);
+        var s3 = changesHead(D.call('alonzo_view', [h], ['changes', 'Screen', 'A1:T12']).text);
+        if (!s3 || !s3.whole) P.push('the double, between frames 4 and 5: the Screen answers ' + (s3 ? s3.n + ' cell(s)' : 'nothing') + ' after a formula was written, where it is whole until the next frame\'s end');
+        else held++;
+      }
+      D.call('alonzo_step', [h, 0], []);
+      look(f, f === 5 ? 'a formula written before the frame' : '');
+    }
+    return held;
+  }
+  // The changes card over the engine's module, frames 1 to 60, its viewport in a box of the stage and the module's view
+  // and write calls logged. At every frame: the host's choice for the Screen, a whole view, a patch or a still frame, is
+  // the oracle's own from its own changes after the frame, and the counters move by it; host.record is the values view
+  // byte for byte; the viewport's model is the one a load of that record makes, cell for cell and every count; and the
+  // window drawn is held to the record. No values or grid view on a still or patched frame, a changes view for each
+  // device the host holds, and a device's grid view only where its changes said whole. The host's device state is a
+  // whole read's: the cells it keeps, the window, the key map, the derived writes, the rate and the save edges. The
+  // Input rows written are exactly those that differ from the rows last written, all of them at the first frame and after
+  // the person's edit of Input!C5 at 20. The value's edit at 30 is patched; the Camera's move at 40 views whole, the
+  // window being new, and the patches start again at 41; the formula at 50 is whole. A page's viewer of the Day,
+  // refreshed at every frame, is patched from frame 2 but at 50; a second viewer, of the Screen, refreshed every third
+  // frame, views whole each time. The run's replay, played on a fresh host without a viewport, reaches every frame's
+  // Input sheet and Screen record.
+  function changesRun(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div'), dayBox = document.createElement('div'), screenBox = document.createElement('div');
+    box.style.cssText = 'width:' + GRID_BOX.w + 'px;height:' + GRID_BOX.h + 'px;position:relative;background:#fff;';
+    dayBox.style.cssText = 'width:640px;height:200px;position:relative;background:#fff;';
+    screenBox.style.cssText = 'width:1500px;height:300px;position:relative;background:#fff;';
+    stage.appendChild(box); stage.appendChild(dayBox); stage.appendChild(screenBox);
+    var raw = HOST.instantiateSync(bytes), log = [], D = new Driver({ exports: raw }), measure = document.createElement('canvas').getContext('2d');
+    var host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box }), dayView = new VP(dayBox), screenView = new VP(screenBox);
+    var gk = { texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0 }, live = {};
+    try {
+      if (!host.attach(loggedExports(raw, log)).ok) { P.push('changes: the host refused the module'); return; }
+      var ld = host.load(CHANGES.text, CHANGES.file);
+      if (!ld.ok) { P.push('changes: the changes card did not load: ' + ld.sentence); return; }
+      var h = ld.handle, vp = host.vp, t = 1000;
+      function grid(sheet, win) { return D.call('alonzo_view', [h], ['grid', sheet, win || '']).text; }
+      function values(sheet, win) { return D.call('alonzo_view', [h], ['values', sheet, win || '']).text; }
+      function answer(sheet, win) { return changesHead(D.call('alonzo_view', [h], ['changes', sheet, win || '']).text); }
+      function num(v) { return v && v.num !== undefined ? v.num : null; }
+      // the oracle's own reading of what the host reads after a frame: the Camera's corner and the key map
+      function camera() { var c = recordValues(grid('Camera')); return { row: num(c.B1) || 1, col: num(c.B2) || 1 }; }
+      function keymap() { var c = recordValues(grid('Keys')), km = []; for (var b = 0; b < 10; b++) { km.push([]); for (var p = 0; p < 4; p++) { var v = c['BCDE'.charAt(p) + (b + 1)]; km[b].push(typeof v === 'string' ? v : ''); } } return km; }
+      // the oracle's own Input rows (docs/SPEC.md section 3.3, version 3's eighteen) from its own log of the person
+      var held = {}, ptr = { col: 0, row: 0 }, notches = 0, lastKey = null, cam = camera(), km = keymap(), lastRows = null, saves = 0, saveWas = 0;
+      function inputRows() {
+        var out = [];
+        for (var b = 0; b < 10; b++) for (var p = 0; p < 4; p++) { var code = km[b][p]; out.push('(cell "Input" "' + 'BCDE'.charAt(p) + (b + 1) + '" ' + (code && held[code] ? 1 : 0) + ')'); }
+        var on = ptr.col > 0 && ptr.row > 0;
+        out.push('(cell "Input" "B11" ' + (on ? cam.col + ptr.col - 1 : 0) + ')', '(cell "Input" "B12" ' + (on ? cam.row + ptr.row - 1 : 0) + ')');
+        out.push('(cell "Input" "B13" 0)', '(cell "Input" "B14" 0)', '(cell "Input" "B15" 0)', '(cell "Input" "B16" ' + notches + ')');
+        out.push('(cell "Input" "B17" ' + lqQuote(lastKey ? lastKey.key : '') + ')', '(cell "Input" "B18" ' + lqQuote(lastKey ? lastKey.code : '') + ')');
+        return out;
+      }
+      // the record the host holds for its own viewport, as the oracle follows it: its frame, window and projection
+      var oHeld = { frame: 0, window: lqRange(1, 1, ld.h, ld.w), values: false }, oLast = host.record, deviceHeld = { Camera: true, Keys: true };
+      // the page's viewers, shown at frame 0 as a page shows one, before the first frame
+      if (!host.showSheet(dayView, 'Day') || !host.showSheet(screenView, 'Screen')) { P.push('changes: a page\'s viewer did not show its sheet'); return; }
+      var dayHeld = 0, screenHeld = 0;
+      host.start(); host.tick(t);
+      for (var f = 1; f <= CHANGES_FRAMES; f++) {
+        var at = 'changes frame ' + f, evs = CHANGES_PLAN[f] || [], edits = [];
+        for (var e = 0; e < evs.length; e++) {
+          var ev = evs[e];
+          if (ev[0] === 'pointer') { host.pointerAt(ev[1], ev[2]); ptr = { col: ev[1], row: ev[2] }; }
+          else if (ev[0] === 'down') { host.keyDown(ev[1], ev[2]); held[ev[1]] = true; lastKey = { key: ev[2], code: ev[1] }; }
+          else if (ev[0] === 'up') { host.keyUp(ev[1]); delete held[ev[1]]; }
+          else if (ev[0] === 'wheel') { host.wheel(ev[1]); notches += ev[1]; }
+          else if (ev[0] === 'edit') { host.edit(ev[1]); edits.push(ev[1]); }
+        }
+        // the rows the oracle owes the frame: those that differ from the last written, all of them after an Input edit
+        var rows = inputRows(), want = rows.filter(function (r, i) { return !lastRows || lastRows[i] !== r; });
+        if (want.length) lastRows = rows;
+        notches = 0; lastKey = null;
+        if (edits.some(function (r) { return /^\((?:cell|formula) "input" /i.test(r); })) lastRows = null;
+        log.length = 0;
+        var c0 = host.counters();
+        t += 1000 / 30; host.tick(t);
+        var c1 = host.counters();
+        if (c1.frame !== f) { P.push(at + ': after tick ' + f + ' the host is at frame ' + c1.frame); break; }
+        k.frames = f;
+        // ---- the Screen: the oracle's own choice from its own changes ----
+        cam = camera();
+        // the changes are asked whenever the viewport holds a values record of the Screen; the answer's header names the
+        // window asked, and another window than the held one's views whole
+        var win = lqRange(cam.row, cam.col, ld.h, ld.w), V = values('Screen', win), asked = oHeld.values, choice = 'view', byChanges = false;
+        if (asked && oHeld.window === win) {
+          var ch = answer('Screen', win);
+          if (ch && !ch.whole && ch.since === oHeld.frame) { choice = ch.n === 0 ? 'still' : 'patch'; byChanges = true; }
+        }
+        if (choice === 'view') choice = V === oLast ? 'still' : 'drawn';
+        var dd = c1.draws - c0.draws, dp = c1.patches - c0.patches, ds = c1.stills - c0.stills, owed = choice === 'drawn' ? [1, 0, 0] : (choice === 'patch' ? [1, 1, 0] : [0, 0, 1]);
+        if (dd !== owed[0] || dp !== owed[1] || ds !== owed[2]) P.push(at + ': the host counted ' + dd + ' draw(s), ' + dp + ' patch(es) and ' + ds + ' still frame(s), where the window\'s changes make the frame ' + (choice === 'drawn' ? 'a whole view' : (choice === 'patch' ? 'a patch' : 'still')));
+        else { k.decided++; if (choice === 'patch') k.patched++; else if (choice === 'still') k.still++; else k.drawn++; }
+        if (choice === 'drawn') oHeld = { frame: f, window: win, values: true }; else oHeld.frame = f;
+        oLast = V;
+        if (host.record !== V) P.push(at + ': host.record is not the values view of ' + win + ' byte for byte: ' + lineDiff(host.record || '', V));
+        else k.equal++;
+        var md = modelDiff(vp.model(), VP.readRecord(V));
+        if (md) P.push(at + ': the viewport\'s model is not the one a load of the record makes: ' + md);
+        else k.models++;
+        var gm = gqRead(V);
+        if (gqCompare(gqExpect(gm, gqLayout(gm, vp.geometry()), measure), vp.draws(), at, P, gk)) k.drawnHeld++;
+        if (f === 30 && choice !== 'patch') P.push(at + ': the value\'s edit of K4 made the frame ' + choice + ', where it is patched');
+        if (f === 40 && choice !== 'drawn') P.push(at + ': the Camera\'s move to ' + win + ' made the frame ' + choice + ', where the window is new and viewed whole');
+        if (f === 41 && choice !== 'patch') P.push(at + ': the frame after the Camera\'s move is ' + choice + ', where the patches start again');
+        if (f === 50 && choice !== 'drawn') P.push(at + ': the formula written into L4 made the frame ' + choice + ', where its changes are whole');
+        // ---- the module's calls in the frame ----
+        var bad = '', views = function (s) { return log.filter(function (x) { return x.call === 'view' && x.sheet === s; }).map(function (x) { return x.projection; }).join(' '); };
+        var screenWant = (asked ? 'changes' : '') + (byChanges ? '' : (asked ? ' values' : 'values'));
+        if (views('Screen') !== screenWant) bad = 'the Screen was viewed "' + views('Screen') + '", where the frame is "' + screenWant + '"';
+        for (var di = 0; !bad && di < CHANGES_DEVICES.length; di++) {
+          var s = CHANGES_DEVICES[di], heldIt = !!deviceHeld[s], whole = !heldIt || answer(s).whole, dw = (heldIt ? 'changes' : '') + (whole ? (heldIt ? ' grid' : 'grid') : '');
+          if (views(s) !== dw) bad = s + ' was viewed "' + views(s) + '", where its changes ask "' + dw + '"';
+          deviceHeld[s] = true;
+        }
+        if (!bad && log.some(function (x) { return x.call === 'view' && x.sheet !== 'Screen' && CHANGES_DEVICES.indexOf(x.sheet) < 0; })) bad = 'a sheet no device reads was viewed';
+        if (bad) P.push(at + ': ' + bad); else k.calls++;
+        // ---- the Input rows written ----
+        var inputWrites = log.filter(function (x) { return x.call === 'write' && edits.indexOf(x.rows) < 0 && x.rows.split('\n').every(function (l) { return l.indexOf('(cell "Input" ') === 0; }); });
+        var gotRows = inputWrites.length ? inputWrites[0].rows.split('\n') : [];
+        if (inputWrites.length > 1 || gotRows.join('\n') !== want.join('\n')) P.push(at + ': the host wrote ' + gotRows.length + ' Input row(s), ' + JSON.stringify(gotRows.slice(0, 3)) + ', where the rows that differ from the last written are ' + want.length + ', ' + JSON.stringify(want.slice(0, 3)));
+        else if ((c1.inputsKept - c0.inputsKept) !== (want.length ? 0 : 1)) P.push(at + ': the host counted ' + (c1.inputsKept - c0.inputsKept) + ' frame(s) of Input rows kept, where it wrote ' + want.length + ' row(s)');
+        else { k.inputs++; if (!want.length) k.kept++; if (want.length === 2) k.two++; if (want.length === rows.length) k.whole++; }
+        // ---- the host's device state, a whole read's ----
+        km = keymap();
+        var fileB3 = num(recordValues(grid('File')).B3) === 1 ? 1 : 0;
+        if (fileB3 === 1 && saveWas !== 1) saves++;
+        saveWas = fileB3;
+        var derived = recordValues(grid('Write')), owedRows = [], dbad = '';
+        for (var wr = 2; wr <= 9; wr++) { var ws = derived['A' + wr], wa = derived['B' + wr], wv = derived['C' + wr]; if (typeof ws === 'string' && typeof wa === 'string' && wv !== undefined) owedRows.push('(derived ' + lqQuote(ws) + ' ' + lqQuote(wa) + ' ' + (typeof wv === 'string' ? lqQuote(wv) : wv.text) + ')'); }
+        CHANGES_DEVICES.forEach(function (s) { if (!dbad && (!host.kept[s] || canonCells(host.kept[s].cells) !== canonCells(deviceCells(grid(s))))) dbad = 'the host keeps ' + s + '\'s cells as ' + (host.kept[s] ? canonCells(host.kept[s].cells) : 'nothing') + ', where a whole read gives ' + canonCells(deviceCells(grid(s))); });
+        if (!dbad && c1.window !== win) dbad = 'the host\'s window is ' + c1.window + ', where the Camera places ' + win;
+        if (!dbad && JSON.stringify(host.keymap) !== JSON.stringify(km)) dbad = 'the host\'s key map is ' + JSON.stringify(host.keymap[4]) + ' for the button a, where the Keys sheet binds ' + JSON.stringify(km[4]);
+        if (!dbad && host.pending.map(function (x) { return x.text; }).join(' ') !== owedRows.join(' ')) dbad = 'the host\'s derived writes are ' + host.pending.map(function (x) { return x.text; }).join(' ') + ', where the Write sheet makes ' + owedRows.join(' ');
+        if (!dbad && host.cart.rate !== num(recordValues(grid('Clock')).B2)) dbad = 'the host steps at ' + host.cart.rate + ', where the Clock says ' + num(recordValues(grid('Clock')).B2);
+        if (!dbad && c1.saves !== saves) dbad = 'the host counted ' + c1.saves + ' save edge(s), where the File rose ' + saves + ' time(s)';
+        if (dbad) P.push(at + ': ' + dbad); else k.devices++;
+        // ---- a page's viewers: the Day at every frame, the Screen at every third ----
+        // each viewer views the region it shows, which its first draws may move; a patch is owed on the window held
+        log.length = 0;
+        var d0 = dayView.patches(), dm0 = dayView.model(), dWas = dm0 ? dm0.windowText : '';
+        host.refreshSheet(dayView, false, true);
+        var dWin = dayView.model() ? dayView.model().windowText : '', dch = answer('Day', dWin), dowed = dWin === dWas && !!dch && !dch.whole && dch.since === dayHeld && dch.n > 0;
+        var dText = values('Day', dWin), dl = host._lastLoad(dayView);
+        if (dl.text !== dText) P.push(at + ': the viewer of the Day holds a record that is not the values view of ' + dWin + ': ' + lineDiff(dl.text || '', dText));
+        else if (modelDiff(dayView.model(), VP.readRecord(dText))) P.push(at + ': the viewer of the Day holds a model that is not the record\'s: ' + modelDiff(dayView.model(), VP.readRecord(dText)));
+        else if ((dayView.patches() !== d0) !== dowed || (!dowed && dayView.model() === dm0 && dText !== dl.text)) P.push(at + ': the viewer of the Day was ' + (dayView.patches() !== d0 ? 'patched' : (dayView.model() !== dm0 ? 'loaded' : 'kept')) + ', where its changes ' + (dowed ? 'name cells since its frame' : 'are ' + (dch && dch.whole ? 'whole' : 'not since its frame')));
+        else { k.dayViewer++; if (dowed) k.dayPatched++; }
+        dayHeld = f;
+        if (f % 3 === 0) {
+          log.length = 0;
+          var s0 = screenView.patches(), sm0 = screenView.model();
+          host.refreshSheet(screenView, false, true);
+          var sWin = screenView.model() ? screenView.model().windowText : '';
+          // views whole: the changes asked against a values record are another frame's; a grid record, frame 0's, asks none
+          var sText = values('Screen', sWin), sl = host._lastLoad(screenView), sviews = log.filter(function (x) { return x.call === 'view'; }).map(function (x) { return x.projection; }).join(' '), sowed = screenHeld > 0 ? 'changes values' : 'values';
+          if (sl.text !== sText) P.push(at + ': the viewer of the Screen, refreshed every third frame, holds a record that is not the values view of ' + sWin + ': ' + lineDiff(sl.text || '', sText));
+          else if (screenView.patches() !== s0 || screenView.model() === sm0 || sviews !== sowed) P.push(at + ': the viewer of the Screen, refreshed every third frame, was ' + (screenView.patches() !== s0 ? 'patched' : (screenView.model() === sm0 ? 'kept' : 'loaded')) + ' (' + sviews + '), where its changes since frame ' + screenHeld + ' are another frame\'s and it views whole (' + sowed + ')');
+          else k.screenViewer++;
+          screenHeld = f;
+        }
+        live[f] = { screen: V, input: canonCells(deviceCells(grid('Input'))) };
+      }
+      k.patches = host.counters().patches; k.inputsKept = host.counters().inputsKept; k.saves = saves;
+      // ---- the run's replay, played on a fresh host without a viewport ----
+      var text = host.replayText() || '', M = new HOST({ drive: 'manual', budget: 0, now: frozen }), ex2 = HOST.instantiateSync(bytes), MD = new Driver({ exports: ex2 }), off = '';
+      try {
+        if (!M.attach(ex2).ok || !M.load(CHANGES.text, CHANGES.file).ok) P.push('changes: a fresh host did not load the changes card');
+        else {
+          M.on('frame', function (ev) {
+            var L = live[ev.frame], inp = canonCells(deviceCells(MD.call('alonzo_view', [M.counters().handle], ['grid', 'Input', '']).text));
+            if (L && M.record === L.screen && inp === L.input) k.replayFrames++;
+            else if (!off) off = 'frame ' + ev.frame + (L && M.record !== L.screen ? ': its Screen record' : ': its Input sheet');
+          });
+          var pm = M.play(text, true);
+          if (!pm.ok || pm.frames !== CHANGES_FRAMES) P.push('changes: the replay played on a fresh host stopped at frame ' + pm.frames);
+          else if (off) P.push('changes: the replay played on a fresh host is not the live run at ' + off);
+          else k.replayed = 1;
+        }
+      } finally { M.destroy(); }
+      var refusals = host.sentences().filter(function (sn) { return sn.refusal; });
+      if (refusals.length) P.push('changes: the host was refused: ' + refusals[0].text);
+    } finally { host.destroy(); dayView.destroy(); screenView.destroy(); stage.removeChild(box); stage.removeChild(dayBox); stage.removeChild(screenBox); }
+  }
+  function caseChanges() {
+    var P = [], k = { crafted: 0, double: 0, module: 0, frames: 0, decided: 0, drawn: 0, patched: 0, still: 0, equal: 0, models: 0, drawnHeld: 0, calls: 0, devices: 0, inputs: 0, kept: 0, two: 0, whole: 0,
+                      dayViewer: 0, dayPatched: 0, screenViewer: 0, patches: 0, inputsKept: 0, saves: 0, replayed: 0, replayFrames: 0 };
+    k.crafted = changesCrafted(P);
+    k.double = changesDouble(P);
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm);
+    k.module = bytes.length;
+    changesRun(bytes, k, P);
+    return { counters: k, problems: P };
   }
   // ---- SPEC.3's second slice: the pass in the page is the command line's ----
   // The first line two texts differ at, both shown without their line ends, for a failure's words;
@@ -3724,11 +4098,11 @@
     out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' snap=' + R.snapMs + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
-                 ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews]];
+                 ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges]];
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }

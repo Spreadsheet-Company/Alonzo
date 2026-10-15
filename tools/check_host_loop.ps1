@@ -163,7 +163,18 @@ at frame 40 and the Screen at 70, the person's tab kept between its changes;
 the run's replay, version 4's, played to every frame's Input rows; a Camera
 whose value row opens the card on the Ledger; and the still card, version
 3's, opened on its Screen, its pointer 0 over another sheet, its Input sheet
-of eighteen rows and its replay version 3's). It
+of eighteen rows and its replay version 3's); and since ENGINE.19 changes (a
+frame read by its changes: the host's pure patch over records the page
+writes and a viewport's model patched with it, cell for cell; the double's
+answers held to the page's own diff of its values records; and over the
+engine's module, when the page holds one, the changes card, written in the
+page, 60 frames, each frame's choice of a whole view, a patch or a still
+frame the oracle's own from its own changes, the record, the model and the
+drawn window held, no values view on a patched frame and a device's grid
+view only where its changes say whole, the device state a whole read's, the
+Input rows written exactly those that changed, a viewer of the Day patched
+at every frame and one of the Screen refreshed every third frame viewing
+whole, and the run's replay played on a fresh host without a viewport). It
 prints one line a case into
 <pre id="loop"> and a last line, 'loop ok cases=N', once the last case has
 answered. This check runs the
@@ -184,10 +195,10 @@ gridEqual, gridValues, gridTexts, gridCleared). On every run this check also
 builds a game's page, from a scratch folder holding Kairos alone, its
 cartridge, source, replay, golden and hand and the library its source
 includes, and runs its loop at a ratio of 1: abi, pass, replay with the
-hand, grid over an empty set, empty and, since ENGINE.17 and ENGINE.18,
-still and views must be OK at their own floors, each of Alonzo's fifteen
-other cases must say it is not on this page, and the last line must count
-seven cases.
+hand, grid over an empty set, empty and, since ENGINE.17, ENGINE.18 and
+ENGINE.19, still, views and changes must be OK at their own floors, each of
+Alonzo's fifteen other cases must say it is not on this page, and the last
+line must count eight cases.
 
 THE BROWSER, as tools/check_render_oracle.ps1 finds and launches it:
 -Browser, else $env:ALONZO_BROWSER, else Google Chrome, Microsoft Edge or
@@ -204,7 +215,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds sixty-three mutant pages through tools/build_web.ps1 and runs
+-Control builds seventy-three mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -310,8 +321,21 @@ pointer is 0 off the Screen; one that writes no Input!B19; one that writes
 the pointer over another sheet for a version 3 cartridge too; one that never
 shows the sheet the Camera names; one that shows it at every frame, over the
 person's tab; and one whose replay names the host's version for a version 3
-cartridge, which the replay case must fail on the committed replays. The
-real page must pass first.
+cartridge, which the replay case must fail on the committed replays; and
+since ENGINE.19 ten more, each failing the changes case by name, nine when
+the real page holds the module: a host that patches whatever the since,
+which the Screen's viewer refreshed every third frame finds; one that takes
+a whole answer as still, which frame 50's formula finds; one that compares
+no window, which the viewport's own patch refuses, so that the replay's host,
+which has no viewport, finds it at the Camera's move; one that never
+patches; one that patches the text and not the model; one that keeps a
+device's cells when its changes name some; one that keeps the Input rows
+after a person's edit of the Input sheet; one that writes the rows whole
+whenever one changed; and one that never keeps them; and, with or without
+the module, a patch that leaves an empty row's cell in place, which the
+crafted patches find. ENGINE.19 moved two anchors of ENGINE.8's, the
+viewport's reading of a row having moved into readRow: AC's and AS's lines
+are anchored where readRow holds them. The real page must pass first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A headless run's clock is
@@ -515,6 +539,16 @@ $stillFloors = @{ frames = 90; equal = 91; stills = 84; decided = 90; boundaries
 # 90 frames; the value row's opening and its empty first value; and the still card kept at version 3.
 $viewsFloors = @{ frames = 90; opened = 1; held = 80; values = 80; screen = 10; hidden = 70; inputs = 90; pressed = 1; unpressed = 3; tabs = 4; shows = 2; kept = 19;
                   replayed = 1; replayFrames = 90; replayInputs = 90; valueRow = 1; unmoved = 1; older = 1; texts = 5000 }
+# 2026-10-15, ENGINE.19: the twenty-two cases' counts unchanged, new counts beside them: inputsKept in every case the
+# loop's model runs (rate30 28, yield 9, memory 10), and the grid case's patches, the double's frames 2, 4, 6 to 8 and
+# 10 to 12 (8) and the grid card's (20). A twenty-third, changes, on both pages, its counts a function of its plan: the
+# crafted patches, 5 records and a whole answer refused (6); the double's answers held to the oracle's own diff, 30 at
+# frames 0 to 9 and 2 between frames (32); and over the module the changes card, 60 frames, each decided as the oracle
+# decides it, 3 whole (1, 40, 50) and 57 patched, every record, model, drawn window, device state and Input write held;
+# the rows written two at 10, 11 and 12, all of them at 1 and 21, none at 48 frames; the Day's viewer patched at 58
+# frames, the Screen's viewer whole at its 20 refreshes; 2 saves; the replay to all 60 frames.
+$changesFloors = @{ crafted = 6; double = 32; frames = 60; decided = 60; drawn = 3; patched = 57; equal = 60; models = 60; drawnHeld = 60; calls = 60; devices = 60;
+                    inputs = 60; kept = 48; two = 3; whole = 2; dayViewer = 60; dayPatched = 58; screenViewer = 20; patches = 57; inputsKept = 48; saves = 2; replayed = 1; replayFrames = 60 }
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
@@ -534,21 +568,22 @@ $floors = @(
     @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 2 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 4; frames = 26; same = 26; golden = 4; round = 4; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } },
-    @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 1913; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1 };
-                            WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 11000; wraps = 20; fills = 10677; looks = 10311; styles = 40; columns = 326; unvalued = 350; hidden = 20; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 70; values = 24;
+    @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 1913; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1; fakePatches = 8 };
+                            WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 11000; wraps = 20; fills = 10677; looks = 10311; styles = 40; columns = 326; unvalued = 350; hidden = 20; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 70; values = 24; patches = 20;
                                             grids = 1; gridFrames = 12; gridEqual = 13; gridValues = 12; gridTexts = 5200; gridCleared = 1 } },
     @{ Case = 'tabs';     Min = @{ fakeFrames = 14; fakeShown = 1; fakeHeld = 8; fakeScrolled = 1; fakeBack = 1; fakeScreen = 9; fakePointer = 1; fakeRouted = 1; fakeKey = 1; fakeStrip = 1; fakeWheel = 4; fakeTexts = 4600 };
                             WithModule = @{ frames = 12; shown = 1; held = 5; back = 1; screen = 8; pointer = 1; routed = 1; strip = 1; wheel = 4; clock = 4; texts = 3400 } },
     @{ Case = 'empty';    Min = @{ cartridges = 8; ordered = 8; titled = 8; libraries = 1; double = 1 }; WithModule = @{ engine = 1 } },
     @{ Case = 'still';    Min = @{}; WithModule = $stillFloors },
-    @{ Case = 'views';    Min = @{}; WithModule = $viewsFloors }
+    @{ Case = 'views';    Min = @{}; WithModule = $viewsFloors },
+    @{ Case = 'changes';  Min = @{ crafted = 6; double = 32 }; WithModule = $changesFloors }
 )
 $zero = @('live', 'misfrees', 'filled', 'alone')
-$expectedCases = 22
+$expectedCases = 23
 # ENGINE.16: a game's page, built on every run from a scratch folder holding Kairos alone, its cartridge, source,
-# replay, golden and hand and the library its source includes. Its loop runs the seven cases that need nothing
-# of Alonzo's own files, over its own blocks, still since ENGINE.17 and views since ENGINE.18 among them, and
-# each of the fifteen others says it is not on the page.
+# replay, golden and hand and the library its source includes. Its loop runs the eight cases that need nothing
+# of Alonzo's own files, over its own blocks, still since ENGINE.17, views since ENGINE.18 and changes since
+# ENGINE.19 among them, and each of the fifteen others says it is not on the page.
 $gameFloors = @(
     @{ Case = 'abi';    Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
     @{ Case = 'pass';   Min = @{}; WithModule = @{ sources = 1; same = 1 } },
@@ -556,10 +591,11 @@ $gameFloors = @(
     @{ Case = 'grid';   Min = @{ grids = 0 } },
     @{ Case = 'empty';  Min = @{ cartridges = 1; ordered = 1; titled = 1; libraries = 1; double = 1 }; WithModule = @{ engine = 1 } },
     @{ Case = 'still';  Min = @{}; WithModule = $stillFloors },
-    @{ Case = 'views';  Min = @{}; WithModule = $viewsFloors }
+    @{ Case = 'views';  Min = @{}; WithModule = $viewsFloors },
+    @{ Case = 'changes'; Min = @{ crafted = 6; double = 32 }; WithModule = $changesFloors }
 )
 $gameAbsent = @('rate30', 'rate0', 'yield', 'slice', 'pace', 'memory', 'refusals', 'scale', 'engine', 'parity', 'plane', 'input', 'audio', 'sound', 'tabs')
-$gameCases = 7
+$gameCases = 8
 $gameFiles = @('kairos/kairos.vla', 'kairos/kairos.source.vla', 'kairos/kairos.replay.vla', 'kairos/kairos.golden.vla', 'kairos/kairos.hand.js', 'common.vla')
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
@@ -1063,7 +1099,7 @@ if ($Control) {
         # double: a host that draws the grid record at every frame, one that draws the values record at frame 0 too,
         # and a viewport that reads no style row for a cell no row wrote. The grid case must fail each by name.
         $gridMutants = @(
-            @{ L = 'ac'; Name = 'the value row unread'; File = 'viewport'; Anchor = "      } else if (head === 'value') {"; With = "      } else if (head === 'value-unread') {"
+            @{ L = 'ac'; Name = 'the value row unread'; File = 'viewport'; Anchor = "    } else if (head === 'value') {"; With = "    } else if (head === 'value-unread') {"
                Want = 'case grid.*fake frame 1: \w+\d+ \("\d+"\) is not drawn' },
             @{ L = 'ad'; Name = 'no look matched'; File = 'viewport'; Anchor = '    if (cell && cell.lookKey !== null && Object.prototype.hasOwnProperty.call(model.looks, cell.lookKey)) {'; With = '    if (false) {'
                Want = 'case grid.*fake frame 1: \w+\d+''s fill, #[0-9A-Fa-f]{6} by its look, is not drawn' },
@@ -1081,7 +1117,7 @@ if ($Control) {
                Want = 'case grid.*fake frame 1: the host drew the grid record of [A-Z]+\d+:[A-Z]+\d+, where the values record is due' },
             @{ L = 'ar'; Name = 'the values record at frame 0'; File = 'host'; Anchor = "    var t0 = this.now(), projection = this.frame > 0 ? 'values' : 'grid';"; With = "    var t0 = this.now(), projection = 'values';"
                Want = 'case grid.*fake frame 0: the host drew the values record of [A-Z]+\d+:[A-Z]+\d+, where the grid record is due' },
-            @{ L = 'as'; Name = 'the lone style row unread'; File = 'viewport'; Anchor = '        if (a && !e && n !== null) e = formulaCell(m, a);'; With = '        // the lone style row unread, by the control'
+            @{ L = 'as'; Name = 'the lone style row unread'; File = 'viewport'; Anchor = '      if (a && !e && n !== null) e = formulaCell(m, a, reach);'; With = '      // the lone style row unread, by the control'
                Want = 'case grid.*values read whole: C1''s fill, #00AA00 by its style, is not drawn' }
         )
         $gridNotes = New-Object System.Collections.Generic.List[string]
@@ -1253,6 +1289,55 @@ if ($Control) {
             if (-not ($vApplied -and $vFailed -ge 1)) { $viewsOk = $false }
         }
         $viewsNote = $viewsNotes -join '; '
+        # mutants BL to BU (ENGINE.19), the changes card being the module's but for BU: a host that patches whatever the
+        # since, which the Screen's viewer refreshed every third frame finds; one that takes a whole answer as still,
+        # which frame 50's formula finds; one that compares no window, which the viewport's own patch refuses, so that it
+        # fails where no viewport stands, the replay's host at the Camera's move; one that never patches; one that patches
+        # the text and not the model; one that keeps a device's cells when its changes name some; one that keeps the
+        # Input rows after a person's edit of the Input sheet, the edit standing a frame too long; one that writes the
+        # rows whole whenever one changed; one that never keeps them; and, with or without the module, one whose patch
+        # leaves an empty row's cell in place, which the crafted patches find. Each must fail the changes case by name.
+        $changesMutants = @(
+            @{ L = 'bl'; Name = 'a patch whatever the since'; Module = $true; Anchor = "    if (ch.since !== held.frame) return 'whole';"; With = '    // the since unasked, by the control'
+               Want = 'case changes.*changes frame \d+: the viewer of the Screen, refreshed every third frame, was patched' },
+            @{ L = 'bm'; Name = 'a whole answer taken as still'; Module = $true; Anchor = "    if (!ch || ch.whole) return 'whole';"; With = "    if (!ch) return 'whole';`n    if (ch.whole) return 'still';"
+               Want = 'case changes.*changes frame 50: the host counted 0 draw\(s\), 0 patch\(es\) and 1 still frame\(s\), where the window''s changes make the frame a whole view' },
+            @{ L = 'bn'; Name = 'no window compared'; Module = $true; Anchor = "    if (ch.sheet !== held.sheet || ch.range !== held.range) return 'whole';"; With = '    // the window uncompared, by the control'
+               Want = 'case changes.*changes: the replay played on a fresh host is not the live run at frame 40: its Screen record' },
+            @{ L = 'bo'; Name = 'never a patch'; Module = $true; Anchor = "    return ch.n === 0 ? 'still' : 'patch';"; With = "    return ch.n === 0 ? 'still' : 'whole';"
+               Want = 'case changes.*changes frame 2: the host counted 1 draw\(s\), 0 patch\(es\) and 0 still frame\(s\), where the window''s changes make the frame a patch' },
+            @{ L = 'bp'; Name = 'the text patched and not the model'; Module = $true; Anchor = '    if (text === null || (vp && !vp.patch(r.text))) { l.text = null; l.rec = null; return null; }'; With = '    if (text === null) { l.text = null; l.rec = null; return null; }'
+               Want = 'case changes.*changes frame 2: the viewport''s model is not the one a load of the record makes' },
+            @{ L = 'bq'; Name = 'a device''s named cells kept'; Module = $true; Anchor = "      if (how === 'patch' && patchCells(d.cells, ch.rows)) { d.frame = ch.at; return { cells: d.cells, text: null, changed: true }; }"
+               With = "      if (how === 'patch') { d.frame = ch.at; return { cells: d.cells, text: null, changed: false }; }"
+               Want = 'case changes.*changes frame \d+: the host keeps \w+''s cells as' },
+            @{ L = 'br'; Name = 'the rows kept across an edit of the Input sheet'; Module = $true; Anchor = "      if (editsInput(row)) this.inputsLast = null;   // the Input sheet a person wrote: the next frame's rows written whole (ENGINE.19)"
+               With = '      // the rows last written kept across a person''s edit of the Input sheet, by the control'
+               Want = 'case changes.*changes frame 21: the host wrote 0 Input row\(s\), \[\], where the rows that differ from the last written are 48' },
+            @{ L = 'bs'; Name = 'the rows whole when one changed'; Module = $true; Anchor = "        var r = this._write(changed.join('\n'));"; With = '        var r = this._write(rows);'
+               Want = 'case changes.*changes frame 10: the host wrote 48 Input row\(s\), .*, where the rows that differ from the last written are 2' },
+            @{ L = 'bt'; Name = 'the rows never kept'; Module = $true; Anchor = '      for (var i = 0; i < lines.length; i++) if (!last || last[i] !== lines[i]) changed.push(lines[i]);'; With = '      for (var i = 0; i < lines.length; i++) changed.push(lines[i]);'
+               Want = 'case changes.*changes frame 2: the host wrote 48 Input row\(s\), .*, where the rows that differ from the last written are 0' },
+            @{ L = 'bu'; Name = 'an empty row''s cell left in place'; Module = $false; Anchor = '        if (had) { rec.pieces.delete(c.k); rec.keys.splice(keyAt(rec.keys, c.k), 1); }'; With = '        // the empty cell left in place, by the control'
+               Want = 'case changes.*crafted, an empty row: the host''s patch gives' }
+        )
+        $changesNotes = New-Object System.Collections.Generic.List[string]
+        $changesJudged = New-Object System.Collections.Generic.List[object]
+        $changesOk = $true
+        foreach ($mu in $changesMutants) {
+            if ($mu.Module -and $moduleReal -eq 0) { $changesNotes.Add(("{0}: not applicable, the real page holding no engine module" -f $mu.Name)); continue }
+            if (([regex]::Matches($js, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in web/host.js exactly once"; exit 1 }
+            $mutC2 = $js.Replace($mu.Anchor, $mu.With)
+            $c2Applied = $mutC2 -cne $js
+            $fileC2 = Join-Path $tmp ($mu.L + '.host.js'); [System.IO.File]::WriteAllText($fileC2, $mutC2, $utf8)
+            $rC2 = Invoke-Loop $browser (New-MutantPage $mu.L $template $fileC2) '1'
+            $c2Judge = if ($rC2.Text -ne '') { Test-Loop $rC2.Text '1' } else { @{ Problems = @($rC2.Reason) } }
+            $c2Failed = @($c2Judge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
+            $changesJudged.Add(@{ Name = $mu.Name; Problems = @($c2Judge.Problems) })
+            $changesNotes.Add(("{0} applied ({1}) and failed by name ({2})" -f $mu.Name, $c2Applied, $c2Failed))
+            if (-not ($c2Applied -and $c2Failed -ge 1)) { $changesOk = $false }
+        }
+        $changesNote = $changesNotes -join '; '
         # mutants AT, AU, AV and AW (ENGINE.16), each a game's page of Kairos alone, which must pass first: its
         # hand a frame late, answering each frame with the frame before it; its hand's Tally counting a stack at
         # the level above its own, which moves no light; its hand's block dropped, so that its replay is held to
@@ -1302,9 +1387,9 @@ if ($Control) {
             if (-not ($gmApplied -and $gmFailed -ge 1)) { $gameOk = $false }
         }
         $gameNote = $gameNotes -join '; '
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $gameNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $gameOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'sixty-three' } else { 'thirty-five applicable' }) + ' mutants for its own reason, each proving it applied')
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $gameNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $gameOk) {
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'seventy-three' } else { 'thirty-six applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -1341,6 +1426,7 @@ if ($Control) {
         foreach ($ej in $emptyJudged) { foreach ($p in @($ej.Problems) | Select-Object -First 3) { Write-Output ('  ' + $ej.Name + ': ' + $p) } }
         foreach ($sj2 in $stillJudged) { foreach ($p in @($sj2.Problems) | Select-Object -First 3) { Write-Output ('  ' + $sj2.Name + ': ' + $p) } }
         foreach ($vj in $viewsJudged) { foreach ($p in @($vj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $vj.Name + ': ' + $p) } }
+        foreach ($cj in $changesJudged) { foreach ($p in @($cj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $cj.Name + ': ' + $p) } }
         foreach ($p in @($jG0.Problems) | Select-Object -First 3) { Write-Output ('  the game''s page: ' + $p) }
         foreach ($gj in $gameJudged) { foreach ($p in @($gj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $gj.Name + ': ' + $p) } }
         exit 1
@@ -1389,7 +1475,7 @@ try {
 }
 Write-Output ''
 if ($failed.Count -eq 0) {
-    Write-Output "=== CHECK: clean - every case OK at both ratios, every count at or above its floor, and the game's page's seven cases OK with Alonzo's fifteen said absent ==="
+    Write-Output "=== CHECK: clean - every case OK at both ratios, every count at or above its floor, and the game's page's eight cases OK with Alonzo's fifteen said absent ==="
     exit 0
 }
 Write-Output "=== CHECK: $($failed.Count) problem(s) ==="

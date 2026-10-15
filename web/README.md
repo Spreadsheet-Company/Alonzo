@@ -116,10 +116,10 @@ sound the frame the grid holds again when it starts.
 | `viewRecord(sheet, window)` | a sheet's record as the module prints it, for a page to show; `null` while a frame is in progress, or refused, the refusal said once |
 | `answer(viewport, event)` | a viewport's `sheet` event answered (`ENGINE.14`; `KERNEL.5`'s decision 6): a sheet the viewport holds no record of is viewed and shown, one it holds is viewed again at once, and in the host's own viewport the Screen's tab gives the Camera's window back. The host answers its own viewport's tabs itself; a page wires a viewer of its own with `viewer.on('sheet', function (e) { host.answer(viewer, e); })`. A tab clicked while a frame is in progress is answered at the frame's end, and the events the host's own calls raise go unanswered |
 | `showSheet(viewport, name)` | a sheet viewed through the region the viewport shows, from `A1` at the default cell's size for one it has not drawn, loaded and shown, then viewed again at once when the sheet's own widths put more in view: `true`, or `false` when refused. The record is the values record after frame 0 and the grid record at frame 0, as the Screen's is (`ENGINE.18`) |
-| `refreshSheet(viewport, moved, still)` | the sheet a viewport shows viewed again through the region it shows, its view kept: what the host does at every frame for its own viewport, and a page at its viewer's refresh; `moved` only when the region has left the window the record was viewed through, at a scroll (`viewer.on('scroll', ...)`); `still` (`ENGINE.17`) not loaded again when the record is the one the host last loaded into the viewport and the viewport holds the model it made of it, as a frame does and the player's drawer does. The region and never the sheet whole: a full screen of Sand's Stay is 33 ms natively, its whole record 1.4 s and 34 MB. The record is the values record after frame 0 (`ENGINE.18`), so a still sheet's frame keeps only that view: a sheet of 1,000 formulas views in about 0.35 ms where its grid record took 2 |
+| `refreshSheet(viewport, moved, still)` | the sheet a viewport shows viewed again through the region it shows, its view kept: what the host does at every frame for its own viewport, and a page at its viewer's refresh; `moved` only when the region has left the window the record was viewed through, at a scroll (`viewer.on('scroll', ...)`); `still` (`ENGINE.17`) not loaded again when the record is the one the host last loaded into the viewport and the viewport holds the model it made of it, as a frame does and the player's drawer does. The region and never the sheet whole: a full screen of Sand's Stay is 33 ms natively, its whole record 1.4 s and 34 MB. The record is the values record after frame 0 (`ENGINE.18`), so a still sheet's frame keeps only that view: a sheet of 1,000 formulas views in about 0.35 ms where its grid record took 2. Since `ENGINE.19` a `still` refresh asks the window's changes first: patched in place when they name cells since the record the host holds for that viewport, kept when they name none, viewed whole otherwise, as at a refresh frames apart, the drawer's at a rate above zero |
 | `replayText()` | the replay of the run since the last load, as text, a replay played included; `null` with no cartridge loaded. Its header names the page its rows are written to, the cartridge's version, and 3 for a cartridge written to 1 to 3 (`ENGINE.18`) |
 | `play(text, all)` | a replay checked whole, then the cartridge loaded again with its seed and its frames played through the loop at the cartridge's rate, edits refused until it ends, the loop paused at its last frame: `{ ok, frames }`, or the refusal's sentence with nothing loaded; `all` plays every frame at once, synchronously (the oracle) |
-| `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`), and a grid's frames drawn and still (`draws`, `stills`: a frame whose record of the Screen, or of a sheet shown in its place, is byte for byte the one the host last loaded into the viewport, and whose model it still holds, is neither read nor painted, `ENGINE.17`; a still Screen's `timing` is `{ view, draw: 0, skipped: true }`), and the sheets a version 4 cartridge's Camera showed (`shows`, `ENGINE.18`); every sentence said, in order |
+| `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`), and a grid's frames drawn and still (`draws`, `stills`: a frame whose record of the Screen, or of a sheet shown in its place, is byte for byte the one the host last loaded into the viewport, and whose model it still holds, is neither read nor painted, `ENGINE.17`; a still Screen's `timing` is `{ view, draw: 0, skipped: true }`), and the sheets a version 4 cartridge's Camera showed (`shows`, `ENGINE.18`). Since `ENGINE.19` a frame asks the window's changes before its view, so a still frame views nothing at all, and a frame whose changes name cells since the record the host holds is patched, the held record and the viewport's model laid with them in place: `patches`, each also a draw, its `timing` `{ view, draw, patched }`, `view` the changes' time and `patched` the cells named; and `inputsKept`, the frames whose Input rows all stood as last written, so that none was written; every sentence said, in order |
 | `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
 | `unload()` / `destroy()` | frees the handle and empties the canvas and the viewport; removes the listeners, and the viewport with them |
 | `vp` | grid mode's viewport (`ENGINE.8`), made at the first grid load over `options.grid` and kept across loads: a grid cartridge's Screen, its record through the Camera's window drawn at frame 0 and after every frame, the grid record at frame 0, its formulas as their texts, and the values record after it, the grid record less its formula rows, so that no formula's text is moved at a frame (`ENGINE.8`'s second slice, Frazaro's `KERNEL.37`), each frame's record replacing the last with the person's scroll and selection kept, scrolled to the window's corner at a load and by the Camera's move after it; a page focuses its `scroller` to give it the keys. Its tabs are answered (`ENGINE.14`): while another sheet is shown, each frame views that sheet alone, through the region in view, and the Screen's tab gives the Camera's window back, scrolled to its corner as at a load. Since `ENGINE.18` a cartridge written to version 4 opens on the sheet its Camera's third row names, else on its first visible sheet, so a Screen it hides is never opened on, and a change of that row shows the sheet it names at the frame's end, the person's tabs winning between its changes; a page that shows the viewport's box only after the load calls `refreshSheet(host.vp)` once it is laid out, as the player does |
@@ -129,7 +129,10 @@ sound the frame the grid holds again when it starts.
 module with the empty import object of section 8.1; `AlonzoHost.RULES` holds
 the loop's constants; `AlonzoHost.sha256(bytes or text)` is the host's
 digest in upper-case hex, and `AlonzoHost.SPEC` the page's version a
-replay's header names. The first step call of a cartridge asks for 2,000
+replay's header names. `AlonzoHost.patchRecord(record, changes)` is the
+host's patch alone (`ENGINE.19`): a values record's text after a window's
+changes, each named cell's rows replaced, put in or taken out and the header
+untouched, or `null` for a whole answer. The first step call of a cartridge asks for 2,000
 cells, about 9 ms of the engine's module, before the host has measured how
 many cells a millisecond the machine does; after it the budget is three
 quarters of the display's interval turned into cells, where it was half
@@ -168,7 +171,13 @@ TIC-80's keys, a Write sheet whose rows land or are refused on a rule of the
 frame, and a history cell that makes the end state's digest witness the
 order of every write; in grid mode its Screen's record draws the tiles through
 a look of the CGA's sixteen (`ENGINE.8`), and it answers the values
-projection as its grid record less the formula rows. Its memory grows by zero pages at every load and every
+projection as its grid record less the formula rows. Since `ENGINE.19` it
+answers a window's changes too, from the twins of its last two frames' ends
+with room for every change, whole before the first frame, after a write that
+changed a formula or added a cell until and at the next frame's end, while a
+value written since the last frame lies in the window, and when the sheet's
+extent moved, as its Write sheet's does on its rule of the frame; its tiles
+all change at every frame, so its Screen is patched whole. Its memory grows by zero pages at every load and every
 seventeenth allocation, detaching the buffer, and its allocator counts what
 is live and what is freed wrongly. `options.abi`, `options.omit` and
 `options.growEvery` make the doubles the loop's oracle refuses or strains.
@@ -523,6 +532,8 @@ reads any text of forms into data, the host shim's one reader.
 | Method | What it does |
 |---|---|
 | `load(text, options)` | reads a record; its sheet becomes a tab, replacing an earlier record of that sheet; the record's `sheet` rows become the tab strip; returns the counts (`sheet`, `lines`, `cells`, `formulas`, `values`, `styles`, `sentences`, `looks`, `rows`, `unknown`, `malformed`, `window`, `extent`, `readMs`). With `{ keep: true }` (`ENGINE.8`), a later frame of the sheet shown: the record replaces the last with the scroll, the selection, the widths, the frozen panes and the marks kept and no event raised, the tabs remade only when the sheet rows changed; the host draws every frame of a grid cartridge so, a still one excepted (`ENGINE.17`), and the player's sheets viewer its sheet |
+| `patch(text)` | a window's changes laid on the model of their sheet (`ENGINE.19`), the text a view of the projection `changes` answers: each named cell's entry read again from its rows as `load` reads them, a cell put in or an empty one taken out, the model's counts and lines kept as a load of the patched record makes them, the model object, the scroll and the selection kept, and the sheet shown painted again. Returns the counts as `load` does, with `patched` the cells named and `patchMs`; `false`, and nothing changed, for a whole answer, another window, a sheet it holds no record of, rows that are no cell's of the window, or a model holding a row its reader counted unknown or malformed |
+| `patches()` | the patches laid on its models since it was made: a host notes the count with each record it loads, so that a model a page patched is never taken for the host's (`ENGINE.19`) |
 | `clear()` | forgets every record and draws the grid empty: the host's grid unloaded (`ENGINE.8`) |
 | `scrolled()` | the window the scrolled quadrant shows, `{ top, left, bottom, right, window }`: the host follows a Camera's move by it (`ENGINE.8`) |
 | `show(name)` | shows a sheet whose record is loaded (the name compared without case); false when none is |
@@ -649,17 +660,18 @@ viewport, not an Excel clone.
   The page opens on the empty sheet whatever it holds and offers its
   cartridges in the picker, each by its manifest's title, its notes in the
   drawer. A page that does not hold Alonzo's own cartridges and records is
-  a game's (`ENGINE.16`). Its `?loop=1` runs the seven cases that need
+  a game's (`ENGINE.16`). Its `?loop=1` runs the eight cases that need
   nothing of Alonzo's own files, over its own blocks: `abi`; `pass`, every
   source to its cartridge; `replay`, every replay to its golden and its
   recording, every frame to its hand; `grid`, every grid cartridge's drawn
   window held to its record for frame 0 and twelve frames with no edits, a
   version 4 cartridge's sheet shown held as the record of its region
   (`ENGINE.18`); `empty`; `still`, the page's own still card (`ENGINE.17`);
-  and `views`, the page's own views card (`ENGINE.18`). Each of
+  `views`, the page's own views card (`ENGINE.18`); and `changes`, the
+  page's own changes card, a frame read by its changes (`ENGINE.19`). Each of
   the fifteen others prints
   `case <name>: not on this page`, being proven in Alonzo's CI, and the
-  last line reads `loop ok cases=7 dpr=1; 15 of Alonzo's own not on this
+  last line reads `loop ok cases=8 dpr=1; 15 of Alonzo's own not on this
   page` at a ratio of 1. A replay with no hand is held to its golden alone, counted `alone`
   and said in a note under the case. Every other mode of the bench is
   Alonzo's own and says so on a game's page; `?frames=1` and `?blit=1` over

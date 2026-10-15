@@ -16,7 +16,9 @@
   since ENGINE.8, when the host began drawing a grid cartridge's Screen
   every frame); a number or a date too wide for its column shows #s across
   it and never a cut text (ENGINE.14); and an unknown row is counted, never
-  refused.
+  refused. Since ENGINE.19 a host may lay a window's changes on the model it
+  holds (patch), each named cell's entry read again as a load reads it, the
+  model and the view kept.
 
   What the viewport owns is the state no program sees (SD-23): the scroll, the
   selection, the widths a person dragged, the frozen panes, the marks a host
@@ -240,109 +242,128 @@
       lines: 0, readMs: 0
     };
     m.formats[0] = { fill: null, num: 'general', wrap: false };
-    var f, maxRow = 0, maxCol = 0;
-    // A formula cell the values projection prints by its value or its style alone, never by its text
-    // (KERNEL.37): no value yet, no text for the bar; its value row, when one comes, gives it both.
-    function formulaCell(m, a) {
-      var e = { row: a.row, col: a.col, address: colName(a.col) + a.row, kind: 'formula', vkind: 'formula', text: '', style: 0, sentence: 0, formula: '', valued: false, lookKey: null };
-      m.cells.set(cellKey(a.row, a.col), e);
-      if (a.row > maxRow) maxRow = a.row;
-      if (a.col > maxCol) maxCol = a.col;
-      return e;
-    }
-    while ((f = rd.readForm()) !== null) {
-      m.counts.forms++;
-      if (!Array.isArray(f) || f.length === 0 || !f[0] || f[0].sym === undefined) { m.counts.unknown++; continue; }
-      var head = f[0].sym, name, r, a, e;
-      if (head === 'sheet') {
-        name = strOf(f[1]);
-        if (name === null) { m.counts.malformed++; continue; }
-        m.sheets.push({ name: name, state: symOf(f[2]) || 'visible' });
-      } else if (head === 'window') {
-        name = strOf(f[1]); r = parseRange(strOf(f[2]));
-        if (name === null || !r || r.columns || r.rows) { m.counts.malformed++; continue; }
-        m.sheet = name; m.windowText = strOf(f[2]); m.window = r;
-      } else if (head === 'extent') {
-        name = strOf(f[1]);
-        if (name === null) { m.counts.malformed++; continue; }
-        if (symOf(f[2]) === 'none') { m.extentText = 'none'; m.extent = null; continue; }
-        r = parseRange(strOf(f[2]));
-        if (!r || r.columns || r.rows) { m.counts.malformed++; continue; }
-        m.extentText = strOf(f[2]); m.extent = r;
-      } else if (head === 'gridlines') {
-        var g = symOf(f[2]);
-        if (g !== 'on' && g !== 'off') { m.counts.malformed++; continue; }
-        m.gridlines = (g === 'on');
-      } else if (head === 'column') {
-        var letters = strOf(f[2]);
-        if (letters === null || !/^[A-Za-z]+$/.test(letters)) { m.counts.malformed++; continue; }
-        var width = numOf(f[3]);
-        if (width === null && symOf(f[3]) !== 'none') { m.counts.malformed++; continue; }
-        var shown = symOf(f[4]);
-        if (shown !== 'shown' && shown !== 'hidden') { m.counts.malformed++; continue; }
-        var cstyle = numOf(f[5]);
-        if (cstyle === null && symOf(f[5]) !== 'none') { m.counts.malformed++; continue; }
-        var col = { letters: letters.toUpperCase(), index: colIndex(letters), width: width, hidden: shown === 'hidden', style: cstyle };
-        m.columns[col.index] = col;
-        m.columnList.push(col);
-      } else if (head === 'format') {
-        var idx = numOf(f[1]), fill = strOf(f[2]), num = symOf(f[3]), wrap = symOf(f[4]);
-        if (idx === null || (fill === null && symOf(f[2]) !== 'none') || (num !== 'general' && num !== 'text') || (wrap !== 'wrap' && wrap !== 'nowrap')) { m.counts.malformed++; continue; }
-        m.formats[idx] = { fill: fill === null ? null : '#' + fill, num: num, wrap: wrap === 'wrap' };
-      } else if (head === 'cell' || head === 'formula') {
-        a = parseA1(strOf(f[2]) || '');
-        if (!a) { m.counts.malformed++; continue; }
-        var v = head === 'cell' ? valueOf(f[3]) : { kind: 'formula', text: strOf(f[3]) === null ? valueOf(f[3]).text : strOf(f[3]) };
-        // text is what the cell shows; a formula keeps its own text for the bar, and has a value once its value row lands
-        m.cells.set(cellKey(a.row, a.col), { row: a.row, col: a.col, address: colName(a.col) + a.row, kind: head, vkind: v.kind, text: v.text, style: 0, sentence: 0,
-                                             formula: head === 'formula' ? v.text : '', valued: head === 'cell', lookKey: head === 'cell' ? lookKeyOf(f[3]) : null });
-        if (a.row > maxRow) maxRow = a.row;
-        if (a.col > maxCol) maxCol = a.col;
-        if (head === 'cell') m.counts.cells++; else m.counts.formulas++;
-      } else if (head === 'value') {
-        // a formula's computed value (KERNEL.7's row, drawn since ENGINE.8): the cell shows it, aligned by its
-        // kind, and matches a look by it. In the values projection (KERNEL.37, ENGINE.8's second slice) no formula
-        // row comes before it, and the cell is a formula known by its value alone, its text not in the record;
-        // a value row for a value cell is malformed
-        a = parseA1(strOf(f[2]) || '');
-        e = a ? m.cells.get(cellKey(a.row, a.col)) : null;
-        if (a && !e && f.length >= 4) e = formulaCell(m, a);
-        if (!e || e.kind !== 'formula' || f.length < 4) { m.counts.malformed++; continue; }
-        var vv = valueOf(f[3]);
-        e.text = vv.text; e.vkind = vv.kind; e.valued = true; e.lookKey = lookKeyOf(f[3]);
-        m.counts.values++;
-      } else if (head === 'look') {
-        // the look map (docs/SPEC.md decision 19): every cell whose value is the look's draws with its format in
-        // place of its own; of two looks a value matches, the first the record holds
-        var lk = lookKeyOf(f[2]), li = numOf(f[3]);
-        if (strOf(f[1]) === null || lk === null || li === null || li < 0 || Math.floor(li) !== li) { m.counts.malformed++; continue; }
-        if (!Object.prototype.hasOwnProperty.call(m.looks, lk)) m.looks[lk] = li;
-        m.counts.looks++;
-      } else if (head === 'row') {
-        // a row's settings (docs/SPEC.md decision 19), the column row's twin: its height in points or none, shown or hidden
-        var rn = numOf(f[2]), rh = numOf(f[3]), rs = symOf(f[4]);
-        if (strOf(f[1]) === null || rn === null || rn < 1 || Math.floor(rn) !== rn || (rh === null && symOf(f[3]) !== 'none') || (rh !== null && rh < 0) || (rs !== 'shown' && rs !== 'hidden')) { m.counts.malformed++; continue; }
-        m.rowSettings[rn] = { height: rh, hidden: rs === 'hidden' };
-        m.counts.rows++;
-      } else if (head === 'style' || head === 'sentence') {
-        // with no row before it, in the values projection, a formula with no value yet: drawn empty, styled
-        a = parseA1(strOf(f[2]) || '');
-        var n = numOf(f[3]);
-        e = a ? m.cells.get(cellKey(a.row, a.col)) : null;
-        if (a && !e && n !== null) e = formulaCell(m, a);
-        if (!a || n === null || !e) { m.counts.malformed++; continue; }
-        e[head] = n;
-        if (head === 'style') m.counts.styles++; else m.counts.sentences++;
-      } else {
-        m.counts.unknown++;
-      }
-    }
+    var f, reach = { row: 0, col: 0 };
+    while ((f = rd.readForm()) !== null) readRow(m, f, reach);
     // The sheet's scope: the window's range, or the cells' reach when the record holds no window row.
     if (m.window) { m.rows = m.window.bottom; m.cols = m.window.right; }
-    else { m.rows = Math.max(1, maxRow); m.cols = Math.max(1, maxCol); }
+    else { m.rows = Math.max(1, reach.row); m.cols = Math.max(1, reach.col); }
     m.lines = countLines(text);
     m.readMs = now() - t0;
     return m;
+  }
+  // The heads of a cell's rows, a bit each: an entry notes the rows read into it (rows), so that a patch takes back
+  // exactly what they counted (ENGINE.19).
+  var CELL_ROWS = { cell: 1, formula: 2, value: 4, style: 8, sentence: 16 };
+  // A formula cell the values projection prints by its value or its style alone, never by its text
+  // (KERNEL.37): no value yet, no text for the bar; its value row, when one comes, gives it both.
+  function formulaCell(m, a, reach) {
+    var e = { row: a.row, col: a.col, address: colName(a.col) + a.row, kind: 'formula', vkind: 'formula', text: '', style: 0, sentence: 0, formula: '', valued: false, lookKey: null, rows: 0 };
+    m.cells.set(cellKey(a.row, a.col), e);
+    if (a.row > reach.row) reach.row = a.row;
+    if (a.col > reach.col) reach.col = a.col;
+    return e;
+  }
+  // One form of a record read into a model and counted (ENGINE.19: one reading of a row, readRecord's and a patch's
+  // alike): a sheet's row into the model's tables, a cell's into its entry; reach, the farthest row and column a cell
+  // stands at, the scope of a record with no window row.
+  function readRow(m, f, reach) {
+    m.counts.forms++;
+    if (!Array.isArray(f) || f.length === 0 || !f[0] || f[0].sym === undefined) { m.counts.unknown++; return; }
+    var head = f[0].sym, name, r, a, e;
+    if (head === 'sheet') {
+      name = strOf(f[1]);
+      if (name === null) { m.counts.malformed++; return; }
+      m.sheets.push({ name: name, state: symOf(f[2]) || 'visible' });
+    } else if (head === 'window') {
+      name = strOf(f[1]); r = parseRange(strOf(f[2]));
+      if (name === null || !r || r.columns || r.rows) { m.counts.malformed++; return; }
+      m.sheet = name; m.windowText = strOf(f[2]); m.window = r;
+    } else if (head === 'extent') {
+      name = strOf(f[1]);
+      if (name === null) { m.counts.malformed++; return; }
+      if (symOf(f[2]) === 'none') { m.extentText = 'none'; m.extent = null; return; }
+      r = parseRange(strOf(f[2]));
+      if (!r || r.columns || r.rows) { m.counts.malformed++; return; }
+      m.extentText = strOf(f[2]); m.extent = r;
+    } else if (head === 'gridlines') {
+      var g = symOf(f[2]);
+      if (g !== 'on' && g !== 'off') { m.counts.malformed++; return; }
+      m.gridlines = (g === 'on');
+    } else if (head === 'column') {
+      var letters = strOf(f[2]);
+      if (letters === null || !/^[A-Za-z]+$/.test(letters)) { m.counts.malformed++; return; }
+      var width = numOf(f[3]);
+      if (width === null && symOf(f[3]) !== 'none') { m.counts.malformed++; return; }
+      var shown = symOf(f[4]);
+      if (shown !== 'shown' && shown !== 'hidden') { m.counts.malformed++; return; }
+      var cstyle = numOf(f[5]);
+      if (cstyle === null && symOf(f[5]) !== 'none') { m.counts.malformed++; return; }
+      var col = { letters: letters.toUpperCase(), index: colIndex(letters), width: width, hidden: shown === 'hidden', style: cstyle };
+      m.columns[col.index] = col;
+      m.columnList.push(col);
+    } else if (head === 'format') {
+      var idx = numOf(f[1]), fill = strOf(f[2]), num = symOf(f[3]), wrap = symOf(f[4]);
+      if (idx === null || (fill === null && symOf(f[2]) !== 'none') || (num !== 'general' && num !== 'text') || (wrap !== 'wrap' && wrap !== 'nowrap')) { m.counts.malformed++; return; }
+      m.formats[idx] = { fill: fill === null ? null : '#' + fill, num: num, wrap: wrap === 'wrap' };
+    } else if (head === 'cell' || head === 'formula') {
+      a = parseA1(strOf(f[2]) || '');
+      if (!a) { m.counts.malformed++; return; }
+      var v = head === 'cell' ? valueOf(f[3]) : { kind: 'formula', text: strOf(f[3]) === null ? valueOf(f[3]).text : strOf(f[3]) };
+      // text is what the cell shows; a formula keeps its own text for the bar, and has a value once its value row lands
+      m.cells.set(cellKey(a.row, a.col), { row: a.row, col: a.col, address: colName(a.col) + a.row, kind: head, vkind: v.kind, text: v.text, style: 0, sentence: 0,
+                                           formula: head === 'formula' ? v.text : '', valued: head === 'cell', lookKey: head === 'cell' ? lookKeyOf(f[3]) : null, rows: CELL_ROWS[head] });
+      if (a.row > reach.row) reach.row = a.row;
+      if (a.col > reach.col) reach.col = a.col;
+      if (head === 'cell') m.counts.cells++; else m.counts.formulas++;
+    } else if (head === 'value') {
+      // a formula's computed value (KERNEL.7's row, drawn since ENGINE.8): the cell shows it, aligned by its
+      // kind, and matches a look by it. In the values projection (KERNEL.37, ENGINE.8's second slice) no formula
+      // row comes before it, and the cell is a formula known by its value alone, its text not in the record;
+      // a value row for a value cell is malformed
+      a = parseA1(strOf(f[2]) || '');
+      e = a ? m.cells.get(cellKey(a.row, a.col)) : null;
+      if (a && !e && f.length >= 4) e = formulaCell(m, a, reach);
+      if (!e || e.kind !== 'formula' || f.length < 4) { m.counts.malformed++; return; }
+      var vv = valueOf(f[3]);
+      e.text = vv.text; e.vkind = vv.kind; e.valued = true; e.lookKey = lookKeyOf(f[3]); e.rows |= CELL_ROWS.value;
+      m.counts.values++;
+    } else if (head === 'look') {
+      // the look map (docs/SPEC.md decision 19): every cell whose value is the look's draws with its format in
+      // place of its own; of two looks a value matches, the first the record holds
+      var lk = lookKeyOf(f[2]), li = numOf(f[3]);
+      if (strOf(f[1]) === null || lk === null || li === null || li < 0 || Math.floor(li) !== li) { m.counts.malformed++; return; }
+      if (!Object.prototype.hasOwnProperty.call(m.looks, lk)) m.looks[lk] = li;
+      m.counts.looks++;
+    } else if (head === 'row') {
+      // a row's settings (docs/SPEC.md decision 19), the column row's twin: its height in points or none, shown or hidden
+      var rn = numOf(f[2]), rh = numOf(f[3]), rs = symOf(f[4]);
+      if (strOf(f[1]) === null || rn === null || rn < 1 || Math.floor(rn) !== rn || (rh === null && symOf(f[3]) !== 'none') || (rh !== null && rh < 0) || (rs !== 'shown' && rs !== 'hidden')) { m.counts.malformed++; return; }
+      m.rowSettings[rn] = { height: rh, hidden: rs === 'hidden' };
+      m.counts.rows++;
+    } else if (head === 'style' || head === 'sentence') {
+      // with no row before it, in the values projection, a formula with no value yet: drawn empty, styled
+      a = parseA1(strOf(f[2]) || '');
+      var n = numOf(f[3]);
+      e = a ? m.cells.get(cellKey(a.row, a.col)) : null;
+      if (a && !e && n !== null) e = formulaCell(m, a, reach);
+      if (!a || n === null || !e) { m.counts.malformed++; return; }
+      e[head] = n; e.rows |= CELL_ROWS[head];
+      if (head === 'style') m.counts.styles++; else m.counts.sentences++;
+    } else {
+      m.counts.unknown++;
+    }
+  }
+  // An entry's rows taken back from its model's counts and lines, the entry removed (ENGINE.19, a patch): one form
+  // and one line a row, as the language prints a record, each counted by its head.
+  function unread(m, e) {
+    var n = 0;
+    for (var head in CELL_ROWS) {
+      if (!(e.rows & CELL_ROWS[head])) continue;
+      n++;
+      m.counts[head === 'cell' ? 'cells' : head === 'formula' ? 'formulas' : head === 'value' ? 'values' : head === 'style' ? 'styles' : 'sentences']--;
+    }
+    m.counts.forms -= n; m.lines -= n;
+    m.cells.delete(cellKey(e.row, e.col));
   }
 
   // The forms of a text, each a datum as the reader reads it: a list (an
@@ -554,6 +575,7 @@
     for (var k in DEFAULT_COLORS) if (Object.prototype.hasOwnProperty.call(DEFAULT_COLORS, k)) this.colors[k] = DEFAULT_COLORS[k];
     if (options.colors) for (var k2 in options.colors) if (Object.prototype.hasOwnProperty.call(options.colors, k2)) this.colors[k2] = options.colors[k2];
     this.records = {};         // sheet name -> model
+    this.patchCount = 0;       // the patches laid on its models (ENGINE.19)
     this.sheetList = [];       // every sheet row of the latest record, in tab order
     this.active = '';          // the sheet shown
     this.state = { widths: {}, frozenRows: 0, frozenCols: 0, marks: {}, showHidden: !!options.showHidden,
@@ -1209,6 +1231,51 @@
     return { sheet: name, lines: model.lines, cells: model.counts.cells, formulas: model.counts.formulas, values: model.counts.values, styles: model.counts.styles, sentences: model.counts.sentences,
              looks: model.counts.looks, rows: model.counts.rows, unknown: model.counts.unknown, malformed: model.counts.malformed, window: model.windowText, extent: model.extentText, readMs: model.readMs };
   };
+  // A window's changes laid on the model of their sheet (ENGINE.19, decision 3): the text a host's view of changes
+  // answered (docs/SPEC.md section 4.5), its header (changes "<sheet>" "<range>" <since> <at> <n>), then the rows of
+  // each cell it names as the values record prints them, (empty "<sheet>" "<addr>") for a cell with none. Each named
+  // cell's entry is replaced as readRecord reads its rows, one reading of a row serving both, a cell the model lacks
+  // put in and an empty one's taken out, the model's counts and lines with them, so that the model is the one a load
+  // of the patched record makes. The model object and the view are kept, the patch counted (patches), and the sheet
+  // shown painted again, whole; ENGINE.20 makes the paint the cells'. False, and nothing changed, for a text that is
+  // no such answer: a header ending whole or counting other cells than its rows name, a sheet the viewport holds no
+  // record of, another window, a row that is no cell's of that window or a cell's rows not together, and a model
+  // holding a row its reader counted unknown or malformed, whose counts no patch can keep. Else the model's counts
+  // as a load returns them, with patched, the cells named, and patchMs.
+  Viewport.prototype.patch = function (text) {
+    var t0 = now(), rd = new Reader(String(text || '')), h = rd.readForm();
+    if (!Array.isArray(h) || h.length !== 6 || symOf(h[0]) !== 'changes' || numOf(h[5]) === null) return false;
+    var name = strOf(h[1]), model = name !== null && Object.prototype.hasOwnProperty.call(this.records, name) ? this.records[name] : null;
+    if (!model || !model.window || model.windowText !== strOf(h[2]) || model.counts.unknown || model.counts.malformed) return false;
+    // the rows by cell, in the order printed, every one checked before the model is touched
+    var W = model.window, groups = [], seen = {}, last = null, f;
+    while ((f = rd.readForm()) !== null) {
+      var head = Array.isArray(f) ? symOf(f[0]) : null, a = head ? parseA1(strOf(f[2]) || '') : null;
+      if (!a || (head !== 'empty' && !Object.prototype.hasOwnProperty.call(CELL_ROWS, head)) || strOf(f[1]) !== name) return false;
+      if (a.row < W.top || a.row > W.bottom || a.col < W.left || a.col > W.right) return false;
+      var key = cellKey(a.row, a.col);
+      if (!last || last.key !== key) {
+        if (seen[key]) return false;
+        seen[key] = true;
+        groups.push(last = { key: key, rows: [] });
+      }
+      if (head !== 'empty') last.rows.push(f);
+    }
+    if (groups.length !== numOf(h[5])) return false;
+    var reach = { row: 0, col: 0 };
+    for (var i = 0; i < groups.length; i++) {
+      var g = groups[i], e = model.cells.get(g.key);
+      if (e) unread(model, e);
+      for (var j = 0; j < g.rows.length; j++) { readRow(model, g.rows[j], reach); model.lines++; }
+    }
+    this.patchCount++;
+    if (this.active === name) this._draw();
+    return { sheet: name, patched: groups.length, lines: model.lines, cells: model.counts.cells, formulas: model.counts.formulas, values: model.counts.values, styles: model.counts.styles, sentences: model.counts.sentences,
+             looks: model.counts.looks, rows: model.counts.rows, unknown: model.counts.unknown, malformed: model.counts.malformed, window: model.windowText, extent: model.extentText, patchMs: now() - t0 };
+  };
+  // The patches this viewport has taken since it was made (ENGINE.19): a host notes the count with each record it
+  // loads, so that a model a page patched is never taken for the one the host made.
+  Viewport.prototype.patches = function () { return this.patchCount; };
   function sameSheets(a, b) {
     if (a.length !== b.length) return false;
     for (var i = 0; i < a.length; i++) if (a[i].name !== b[i].name || a[i].state !== b[i].state) return false;

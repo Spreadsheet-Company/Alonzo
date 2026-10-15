@@ -31,7 +31,10 @@
   three that are refused; and a State sheet holds a value cell the derived
   writes land in and a history cell that folds every frame's State!B1 and
   Input sheet into one number, so that the end state's digest witnesses the
-  order of every write the host made.
+  order of every write the host made. Since ENGINE.19 it answers a window's
+  changes, the fourth projection, from the twins of the last two frames' ends,
+  with room for every change, so that its Screen, whose tiles all change at
+  every frame, is patched whole at every frame.
 
   What it exercises in the host, on purpose: its memory grows by zero pages
   on a schedule, at every load and every seventeenth allocation, which
@@ -290,20 +293,27 @@
     put('write', 1, 1, 'sheet'); put('write', 1, 2, 'address'); put('write', 1, 3, 'value');
     put('state', 1, 1, 'derived'); put('state', 1, 2, 0);
     put('state', 2, 1, 'history'); this.cells.state.set('B2', { f: HISTORY_FORMULA });
+    // A window's changes (ENGINE.19): the twins of the frame before the last kept beside the last's, a write that
+    // changed a formula or added a cell since the last frame (reshaped), the last frame's own (changesWhole), and the
+    // value cells written since the last frame's end.
+    this.prevTwins = null; this.prevTwinFrame = 0; this.reshaped = false; this.changesWhole = false; this.written = [];
     this.snapshot();
   }
   // The content of a cell: { v } a value, { f, v } a formula with its value, or null.
   Cart.prototype.content = function (key, r, c, twin) {
-    var map = twin ? this.twins[key] : this.cells[key];
+    return this.contentIn(key, r, c, twin ? this.twins[key] : this.cells[key], twin ? this.twinFrame : this.frame);
+  };
+  // The content of a cell of a sheet's map at frame n: the Screen's formula cells inside the declared size take frame
+  // n's byte.
+  Cart.prototype.contentIn = function (key, r, c, map, n) {
     var e = map.get(addrOf(r, c));
-    if (key === 'screen' && r <= this.h && c <= this.w && (!e || e.f)) {
-      var n = twin ? this.twinFrame : this.frame;
-      return { f: e ? e.f : SCREEN_FORMULA, v: n > 0 ? RULES.byteAt(n, r, c, this.h) : undefined };
-    }
+    if (key === 'screen' && r <= this.h && c <= this.w && (!e || e.f)) return { f: e ? e.f : SCREEN_FORMULA, v: n > 0 ? RULES.byteAt(n, r, c, this.h) : undefined };
     return e || null;
   };
-  // The twins: every sheet's cells as they were when the last step finished (docs/SPEC.md section 2).
+  // The twins: every sheet's cells as they were when the last step finished (docs/SPEC.md section 2), the last
+  // twins kept as the frame before's.
   Cart.prototype.snapshot = function () {
+    this.prevTwins = this.twins || null; this.prevTwinFrame = this.twinFrame || 0;
     this.twins = {};
     for (var k in this.cells) if (Object.prototype.hasOwnProperty.call(this.cells, k)) this.twins[k] = new Map(this.cells[k]);
     this.twinFrame = this.frame;
@@ -331,9 +341,11 @@
     }
     this.cells.file.set('B3', { v: n % RULES.saveEvery === 0 ? 1 : 0 });
     this.snapshot();
+    this.changesWhole = this.reshaped; this.reshaped = false; this.written = [];   // the frame's end, its changes' own (ENGINE.19)
   };
-  Cart.prototype.extent = function (key, twin) {
-    var map = twin ? this.twins[key] : this.cells[key], R = null;
+  Cart.prototype.extent = function (key, twin) { return this.extentOf(key, twin ? this.twins[key] : this.cells[key]); };
+  Cart.prototype.extentOf = function (key, map) {
+    var R = null;
     var grow = function (r, c) {
       if (!R) R = { top: r, left: c, bottom: r, right: c };
       else { R.top = Math.min(R.top, r); R.left = Math.min(R.left, c); R.bottom = Math.max(R.bottom, r); R.right = Math.max(R.right, c); }
@@ -505,6 +517,9 @@
             var before = c.content(op.key, r, cc, false), after = op.kind === 'formula' ? { f: op.v } : { v: op.v };
             var same = before && (op.kind === 'formula' ? before.f === op.v : (!before.f && before.v === op.v));
             if (!same) written++;
+            // a window's changes whole until the next frame's end: a formula changed, or a cell added (ENGINE.19)
+            if (!before || (op.kind === 'formula' ? before.f !== op.v : !!before.f)) c.reshaped = true;
+            if (op.kind !== 'formula') c.written.push({ key: op.key, r: r, c: cc });
             map.set(addrOf(r, cc), after);
           }
         }
@@ -534,12 +549,46 @@
       var pj = input(projPtr, projLen, 'the projection', outLen); if (pj.rec) return pj.rec;
       var sh = input(sheetPtr, sheetLen, 'the sheet', outLen); if (sh.rec) return sh.rec;
       var wn = input(winPtr, winLen, 'the window', outLen); if (wn.rec) return wn.rec;
-      if (pj.text !== 'plane' && pj.text !== 'grid' && pj.text !== 'values') return refuse('view-projection-unknown', 'the projection ' + pj.text + '; this version has plane, grid and values', 0, outLen);
+      if (pj.text !== 'plane' && pj.text !== 'grid' && pj.text !== 'values' && pj.text !== 'changes') return refuse('view-projection-unknown', 'the projection ' + pj.text + '; this version has plane, grid, values and changes', 0, outLen);
       var sk = sheetKey(sh.text);
       if (!sk) return refuse('view-sheet-unknown', 'the grid holds no sheet ' + sh.text + '; it holds ' + sheetList(), 0, outLen);
       var R = wn.text === '' ? (c.extent(sk.key, sk.twin) || parseRange('A1')) : parseRange(wn.text);
       if (!R) return refuse('view-window-not-a-range', 'the window "' + wn.text + '" is not a range such as A1:F20', 0, outLen);
+      if (pj.text === 'changes') return changes(c, sk, R, outLen);
       return pj.text === 'plane' ? plane(c, sk, R, outLen) : grid(c, sk, R, outLen, pj.text === 'values');
+    }
+    // A window's changes (ENGINE.19, decision 6; the language's KERNEL.42, docs/SPEC.md section 4.5), by the double's
+    // own rule: the cells of the window whose values rows differ between the last two frames' ends, row by row, each
+    // as the values record prints it and (empty ...) for a cell with none, under (changes "<sheet>" "<range>" <since>
+    // <at> <n>), with room for every change. Whole before the first frame since the load; after a write that changed
+    // a formula or added a cell, until and at the next frame's end; while a value written since the last frame lies
+    // in the window; and when the sheet's extent differs between the two frames, its record's header changing with it.
+    function changes(c, sk, R, outLen) {
+      var at = c.frame, name = quote(sk.name), head = '(changes ' + name + ' ' + quote(rangeText(R)) + ' ' + (at > 0 ? at - 1 : 0) + ' ' + at + ' ';
+      var now = c.twins[sk.key], was = c.prevTwins ? c.prevTwins[sk.key] : null;
+      var written = !sk.twin && c.written.some(function (w) { return w.key === sk.key && w.r >= R.top && w.r <= R.bottom && w.c >= R.left && w.c <= R.right; });
+      var E1 = was ? c.extentOf(sk.key, was) : null, E2 = c.extentOf(sk.key, now);
+      if (at === 0 || !was || c.reshaped || c.changesWhole || written || (E1 ? rangeText(E1) : 'none') !== (E2 ? rangeText(E2) : 'none')) return record(0, 0, '', head + 'whole)\n', outLen);
+      var seen = {}, list = [];
+      function add(r, cc) { var k = r * 32768 + cc; if (!seen[k]) { seen[k] = true; list.push({ r: r, c: cc }); } }
+      [was, now].forEach(function (map) {
+        map.forEach(function (e, addr) { var p = rcOf(addr); if (p && p.r >= R.top && p.r <= R.bottom && p.c >= R.left && p.c <= R.right) add(p.r, p.c); });
+      });
+      if (sk.key === 'screen') for (var r = R.top; r <= Math.min(R.bottom, c.h); r++) for (var cc = R.left; cc <= Math.min(R.right, c.w); cc++) add(r, cc);
+      list.sort(function (a, b) { return a.r - b.r || a.c - b.c; });
+      var out = [];
+      for (var i = 0; i < list.length; i++) {
+        var p = list[i], addr = addrOf(p.r, p.c);
+        var a = valuesRow(name, addr, c.contentIn(sk.key, p.r, p.c, now, at)), b = valuesRow(name, addr, c.contentIn(sk.key, p.r, p.c, was, at - 1));
+        if (a !== b) out.push(a === '' ? '(empty ' + name + ' ' + quote(addr) + ')' : a);
+      }
+      return record(0, 0, '', head + out.length + ')\n' + (out.length ? out.join('\n') + '\n' : ''), outLen);
+    }
+    // A cell's row in the values record: a value cell's cell row, a formula's value row once it has a value, else none.
+    function valuesRow(name, addr, e) {
+      if (!e) return '';
+      if (e.f) return e.v === undefined ? '' : '(value ' + name + ' ' + quote(addr) + ' ' + spell(e.v) + ')';
+      return '(cell ' + name + ' ' + quote(addr) + ' ' + spell(e.v) + ')';
     }
     function plane(c, sk, R, outLen) {
       st.planeViews++;
