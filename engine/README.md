@@ -151,8 +151,8 @@ loads. Name it and the language it answers in, each pinned exactly:
 
 ```toml
 [dependencies]
-alonzo = "=0.1.3"
-vla-lang = "=0.9.3"
+alonzo = "=0.1.4"
+vla-lang = "=0.9.4"
 ```
 
 A cartridge is rows in the one notation. The engine loads it, steps it and

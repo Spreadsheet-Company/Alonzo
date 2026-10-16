@@ -2,6 +2,56 @@
 
 *Newest first, as Frazaro keeps its `docs/RELEASES.md`. A release's section is written before its tag, never after: `REPO.4` began this file with the first, `0.1.0`. Each section says what the release holds and what it measures, names the items in it by their IDs (`ROADMAP.md` for the open, `REARVIEW.md` for the closed), says what it does not hold, and ends with a short* Known open security items *block that points to `SECURITY.md` rather than copying it.*
 
+## 0.1.4
+
+The views on sheets and the frame read by its changes. A grid cartridge written to the page's version 4 is played on its own sheets (`ENGINE.18`). A frame is read by what changed since the last one: a still frame is neither viewed nor painted, and a changed one is patched and repainted cell by cell (`ENGINE.17`, `ENGINE.19`, `ENGINE.20`). The bench runs over a game's own cartridges (`ENGINE.16`). The engine crate reads a `(spec 4)` cartridge and is pinned to `vla-lang` 0.9.4 exactly, for its `changes` projection. The page is served at https://spreadsheet-company.github.io/Alonzo/. In a crate's manifest, `alonzo = "=0.1.4"` and, for the types its calls answer, `vla-lang = "=0.9.4"`.
+
+### What it holds
+
+- **The views on sheets.** A cartridge that says `(spec 4)` opens on the sheet its Camera's third row names, else on its first visible sheet, so a Screen it hides is never opened on. A change of that row shows the sheet it names, and the person's tabs win between its changes. The Input sheet's nineteenth row names the sheet shown, and the pointer over any cell of it is the game's. A replay's header names its cartridge's version. A cartridge written to versions 1 to 3 loads, describes, opens, points and replays exactly as before (`SPEC.md`, version 4).
+- **Every sheet drawn from the values view.** A sheet shown in the Screen's place is drawn from `values` after frame 0, as the Screen is.
+- **A still frame not drawn again.** A frame whose record of the Screen, or of a sheet in its place, is the one the viewport holds is neither loaded nor painted, and is counted in `stills`. A load, a tab and `redraw()` always draw.
+- **A frame read by its changes.** The host asks the language for a window's changes since the frame it holds, and lays them on the held record and the viewport's model in place, so a patched frame views nothing. Every device sheet is read the same way, and only the Input rows that changed are written. Every replay keeps its bytes. The host counts `patches` and `inputsKept`.
+- **A patch repainted cell by cell.** The viewport paints again only the cells a patch names, each with the span its text spills over and the span of a text on its left that spills into it, by the full paint's own steps under a clip. It paints whole when the canvas is not the model's current full paint, or the patch names more than a quarter of the cells in view. Its opaque lines are filled a device pixel wide, the same pixels on the GPU, so that every rasterizer paints a repaint's lines as the full paint's.
+- **The bench over a game's own cartridges.** On a game's page `?loop=1` runs the eight cases that need nothing of Alonzo's own files, over the page's own blocks. A game's replays are held to its own hand, a block `hand-<cartridge>`.
+
+### What it measures
+
+In headless Chrome 155 at the owner's full screen, 2,560 by 1,440 at a pixel ratio of 1.5:
+
+- **A still frame**, the main thread's work, from 2.8 to 3.3 ms down to 0.8 to 1.0 over a card that changes once in 30 frames (`ENGINE.17`), and since `ENGINE.19` down to 0.49 to 0.56 there and to 0.42 to 0.46 over Buffet's Stocks. Its module calls in V8 fell from 226 µs to 13.
+- **A market day on Buffet's Stocks**, a patch of about three cells, from 1.3 to 1.7 ms of main thread to 0.6 to 0.8 (`ENGINE.20`). A window that changes about eight cells at every frame fell from 1.3 ms to 0.6 to 0.7.
+
+The floors:
+
+- **The blit floors' fifth baseline**, the owner's `?blit=1` in Chrome 155 in fullscreen: the still row's p50 fell from 0.8 ms to 0.2.
+- **The frame floors' eleventh baseline**, the owner's run over `vla-lang` 0.9.4: the Memory ceilings of Life and the gun rose by exactly 1,536 bytes at every rung, the room a frame's end keeps for its changes.
+- **The render floors** keep their baseline of 2026-10-08. The owner's `?bench=1` of 2026-10-15 is worse than it on most rows, and the same on the page before and after `ENGINE.20`. The slip came between the baseline's day and `ENGINE.19`, with Chrome 155 among the changes; it is recorded as a finding in `REARVIEW.md`, not pasted.
+- **The module** is 766,043 bytes, from 749,218.
+
+### The items in it
+
+- **Closed**, each with its line in `REARVIEW.md`'s ledger: `ENGINE.16`, the bench over a game's own cartridges; `ENGINE.17`, a still frame not drawn again; `ENGINE.18`, the views on sheets; `ENGINE.19`, a frame read by its changes; and `ENGINE.20`, a patch repainted cell by cell.
+
+### For a game that carries the page
+
+Take the template and the three scripts again, and the module built over `vla-lang` 0.9.4.
+- The host asks for `changes`. A module over 0.9.3 refuses the projection, and the host then views every frame whole, as 0.1.3 did.
+- The viewport adds `patch`, `patches()` and `repaints()`, and the option `willReadFrequently` for a page that reads its pixels back. The host passes it through its option `viewport`.
+- A game's replays are held to its hand, if it adds one as a block `hand-<cartridge>`, where one registers its constructor under the cartridge's name.
+- A game whose views are sheets writes `(spec 4)` in its manifest. Its Camera's third row then names the sheet it opens on and the sheet it shows.
+
+### Not in this release
+
+- Key chords, Alt and a sequence of keys: the views' sitting recorded them, their item to be filed after this release.
+- Edit and continue (`ENGINE.7`), a cartridge loaded from a file (`ENGINE.5`) or an address (`REPO.6`), the accelerators (`ENGINE.6`) and proof of play (`ENGINE.10`).
+- The drawer's viewer patched at a rate above zero, which needs more than one frame's changes, the language's to keep.
+- A scroll or a dropdown for dozens of tabs, and Excel's General format.
+
+### Known open security items
+
+**None.** The engine imports nothing and makes no outbound call, ever; the page fetches nothing, and a built page's blocks are held to the repository's files both ways. Both are checked on every push, by `tools/check_host_imports.ps1` and `tools/check_web_offline.ps1`. `SECURITY.md` is the policy and the place to report.
+
 ## 0.1.3
 
 The grid drawn from the values view: a grid cartridge's Screen is drawn at every frame from the language's `values` projection, the record without its formulas' texts, so that a full window of formulas is drawn well inside a 60 Hz frame (`ENGINE.8`'s second slice). The engine crate's code is 0.1.2's and still pinned to `vla-lang` 0.9.3 exactly; what changed is the page, served at https://spreadsheet-company.github.io/Alonzo/. In a crate's manifest, `alonzo = "=0.1.3"` and, for the types its calls answer, `vla-lang = "=0.9.3"`.
