@@ -33,7 +33,12 @@
   holding the edit row, the log, any sheet of the grid shown live, the cartridge
   and its source, built into the cartridge by the pass in the page, the module's
   alonzo_expand, a press of its own before the load (SPEC.3's second slice), and
-  the replay. The bench is every other mode, each judged on its one element as
+  the replay. Every act of the player is a command (ENGINE.23), run from the
+  palette, a prompt over the page on Ctrl+K, Cmd+K on a Mac, or Ctrl+Shift+`,
+  Frazaro's CLI key: a command by its name, a sheet by its name, and a row of
+  VLA written as a person's edit; in a full screen it asked for, the page holds
+  Escape where the browser lets it, a second Escape leaving full screen.
+  The bench is every other mode, each judged on its one element as
   before. With ?viewport=1 it is the viewport over the fixtures: a record picked,
   its sheets as tabs, scroll, select, resize a column, freeze panes, a record of
   one's own pasted in, and the HiDPI panel. With ?loop=1 it runs the host
@@ -200,10 +205,26 @@
   .frame-line { font-size: 13px; color: #6b6b66; margin: 4px 0 0; min-height: 1.4em; }
   .frame-line.refused, .engine-log li.refused { color: #a2262b; }
   .grid.sheets { height: 300px; }
+  /* The command palette (ENGINE.23): a one-line prompt over the page, its lines below it, Lovelace Lavender's own; and
+     the hint that drops from the top at a first Escape in full screen. */
+  .palette { position: fixed; top: 44px; left: 50%; transform: translateX(-50%); width: min(640px, 92vw); z-index: 50; background: #fff; border: 1px solid var(--lavender-deep); border-radius: 6px; box-shadow: 0 8px 28px rgba(29, 29, 27, 0.25); color: #1d1d1b; font: 13px/1.45 system-ui, "Segoe UI", sans-serif; }
+  .palette[hidden] { display: none; }
+  .palette-input { display: block; width: 100%; box-sizing: border-box; border: 0; border-bottom: 1px solid #d9d9d2; border-radius: 6px 6px 0 0; padding: 9px 12px; background: var(--lavender-whisper); color: #1d1d1b; font: 14px/1.4 ui-monospace, Consolas, "Cascadia Mono", monospace; outline: none; }
+  .palette-lines { list-style: none; margin: 0; padding: 4px 0; max-height: 50vh; overflow: auto; }
+  .palette-lines li { display: flex; gap: 10px; align-items: baseline; padding: 4px 12px; cursor: pointer; }
+  .palette-lines li[aria-selected="true"] { background: var(--lavender); }
+  .palette-lines .name { font-weight: 600; white-space: nowrap; }
+  .palette-lines .words { flex: 1 1 auto; min-width: 0; color: #4b4b47; }
+  .palette-lines .keys { color: #6b6b66; font-size: 12px; white-space: nowrap; }
+  .palette-note { margin: 0; padding: 6px 12px; border-top: 1px solid #ecece6; color: #6b6b66; font-size: 12px; }
+  .palette-note:empty { display: none; }
+  .full-hint { position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 60; margin: 0; padding: 6px 14px; border-radius: 0 0 6px 6px; background: var(--lavender-deep); color: #fff; font-size: 13px; }
+  .full-hint[hidden] { display: none; }
 </style>
 </head>
 <body>
 <div id="player" class="player page-only">
+  <p id="full-hint" class="full-hint" role="status" hidden>Escape again leaves full screen, or hold it.</p>
   <div class="player-bar" role="toolbar" aria-label="the player">
     <span class="brand" id="eng-brand">Alonzo</span>
     <select id="eng-pick" aria-label="the cartridge to load"></select>
@@ -213,6 +234,7 @@
     <button type="button" id="eng-load" title="the cartridge in the drawer's box, loaded again from frame 0; Ctrl+Enter in that box, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Load</button>
     <span id="frame-short" class="frame-short"></span>
     <p id="eng-status" class="status"></p>
+    <button type="button" id="eng-palette" title="the command palette: every act of the page by its name, a sheet by its name, a row of VLA written as a person's edit; Ctrl+K, Cmd+K on a Mac, or Ctrl+Shift+`" aria-keyshortcuts="Control+K Meta+K Control+Shift+`">Commands</button>
     <button type="button" id="eng-full" aria-pressed="false">Full screen</button>
     <button type="button" id="eng-drawer" aria-expanded="false" aria-controls="drawer">Drawer</button>
   </div>
@@ -517,6 +539,223 @@
   }
   hidpiPanel();
 
+  // ---- the commands and the palette (ENGINE.23): every act of the player a command, run from one prompt ----
+  // Keyboard-first at the owner's word (ENGINE.22): every act a key, a button its convenience. Every act of the player is
+  // a command, its name and its words, and the palette, a one-line prompt over the page, runs any of them by its name,
+  // shows a sheet by its name and writes a row of VLA as a person's edit, as Frazaro's CLI runs what is typed. It opens on
+  // Ctrl+K, which Cmd+K presses on a Mac, the web's key for a command palette, and on Ctrl+Shift+`, Frazaro's CLI key: two
+  // keys Chrome, Edge, Opera and Firefox measured hand to the page first (docs/REARVIEW.md, ENGINE.23). The registry's
+  // names and words are the page's, a game's page vendoring them; player() gives each name its act, and the loop oracle's
+  // palette case holds the rest. keys: the keys that press a command besides the palette, said beside its line.
+  var COMMANDS = [
+    { name: 'pick', words: 'pick a cartridge: the picker opened, Enter loading the one chosen' },
+    { name: 'run', words: 'run the loop from the frame it stands at, the Screen given the keys' },
+    { name: 'pause', words: 'pause the loop at its frame' },
+    { name: 'sound', words: 'turn the sound on, or off' },
+    { name: 'load', words: 'load the cartridge in the drawer\'s box again from frame 0', keys: 'Ctrl+Enter in the cartridge\'s box' },
+    { name: 'full-screen', words: 'enter full screen, or leave it' },
+    { name: 'drawer', words: 'open the drawer, or close it' },
+    { name: 'sheet', words: 'show a sheet as its tab shows it', arg: 'sheet' },
+    { name: 'next-sheet', words: 'show the next sheet', keys: 'Ctrl+Alt+PageDown; Ctrl+PageDown in full screen' },
+    { name: 'previous-sheet', words: 'show the previous sheet', keys: 'Ctrl+Alt+PageUp; Ctrl+PageUp in full screen' },
+    { name: 'hidden-sheets', words: 'show the hidden sheets\' tabs, or hide them' },
+    { name: 'game', words: 'give the game the keys, the Screen\'s place' },
+    { name: 'edit', words: 'give the drawer\'s edit row the keys' },
+    { name: 'write', words: 'write the edit row\'s row as a person\'s edit at the next frame', keys: 'Enter in the edit row' },
+    { name: 'copy-log', words: 'copy the log to the clipboard' },
+    { name: 'viewer', words: 'give the drawer\'s sheets the keys' },
+    { name: 'source', words: 'give the source\'s box the keys' },
+    { name: 'build', words: 'build the source into the cartridge\'s box, nothing loaded', keys: 'Ctrl+Enter in the source\'s box or a library\'s' },
+    { name: 'apply', words: 'apply the source to the running game, its state kept', keys: 'Ctrl+Shift+Enter in the source\'s box or a library\'s' },
+    { name: 'cartridge', words: 'give the cartridge\'s box the keys' },
+    { name: 'apply-cartridge', words: 'apply the cartridge\'s box to the running game as it stands', keys: 'Ctrl+Shift+Enter in the cartridge\'s box' },
+    { name: 'library', words: 'give the libraries\' picker the keys' },
+    { name: 'replay', words: 'give the replay\'s box the keys' },
+    { name: 'play-replay', words: 'play the replay in its box from frame 0', keys: 'Ctrl+Enter in the replay\'s box' },
+    { name: 'copy-replay', words: 'copy the run\'s replay to the clipboard and into its box' }
+  ];
+  // The palette's keys. Ctrl+K and Cmd+K alike (ENGINE.22's rule), the K the key that types k, or on a layout whose keys
+  // type no Latin letter the key in K's place; never with Shift, Edge keeping Ctrl+Shift+K for a duplicated tab though the
+  // page cancels it, nor with Alt, which Windows reports with Ctrl for AltGr. And Ctrl+Shift+`, the Control key alone, a
+  // Mac keeping Cmd+` for its windows and Opera Ctrl+` for its tabs (measured), matched by the key's place under Escape,
+  // which every layout has. A repeat is the palette's too, taken and ignored by the listener.
+  function isPaletteKey(ev) {
+    if (!ev || ev.altKey || ev.isComposing) return false;
+    var key = String(ev.key || '').toLowerCase();
+    if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey) return key === 'k' || (ev.code === 'KeyK' && !/^[a-z0-9]$/.test(key));
+    return !!(ev.ctrlKey && !ev.metaKey && ev.shiftKey && ev.code === 'Backquote');
+  }
+  // How well a text matches a name or words, both in lower case: from its start, from a word's start, inside it, or its
+  // letters in order; 0 for none.
+  function matchScore(q, s) {
+    if (!q) return 1;
+    if (s.indexOf(q) === 0) return 4;
+    var words = s.split(/[\s-]+/), w, i, j = 0, qs = q.replace(/\s+/g, '');
+    for (w = 0; w < words.length; w++) if (words[w].indexOf(q) === 0) return 3;
+    if (s.indexOf(q) >= 0) return 2;
+    for (i = 0; i < s.length && j < qs.length; i++) if (s.charAt(i) === qs.charAt(j)) j++;
+    return j === qs.length ? 1 : 0;
+  }
+  // The palette's lines for a text. A text that begins with ( or ;, as Frazaro's CLI reads one, is a row of VLA, one line
+  // that writes it as a person's edit, as the edit row does. Any other text lists the commands and the sheets that match
+  // it, every match of a name before every match of words, ties in the registry's order and then the tab order, a hidden
+  // sheet listed for a text typed alone; an empty text lists the lines run last first. sheets: [{ name, state }] in the
+  // tab order; recent: the keys of the lines run last, the latest first.
+  function paletteLines(text, commands, sheets, recent) {
+    var t = String(text || ''), q = t.trim().toLowerCase(), all = [], out = [], seen = {};
+    var isRow = /^\s*[(;]/.test(t);
+    if (isRow) return [{ kind: 'row', key: 'row', name: 'write', label: 'a row', words: 'written as a person\'s edit at the next frame, as the edit row writes it', keys: '' }];
+    commands.forEach(function (c, i) { if (!c.arg) all.push({ kind: 'command', key: 'command:' + c.name, name: c.name, label: c.name, words: c.words, keys: c.keys || '', order: i }); });
+    (sheets || []).forEach(function (s, i) {
+      all.push({ kind: 'sheet', key: 'sheet:' + s.name, name: 'sheet', arg: s.name, label: s.name, words: 'show the sheet ' + s.name + (s.state && s.state !== 'visible' ? ', ' + s.state : ''), keys: '', order: commands.length + i, hidden: !!s.state && s.state !== 'visible' });
+    });
+    if (!q) {
+      (recent || []).forEach(function (key) { all.forEach(function (l) { if (l.key === key && !seen[key]) { seen[key] = true; out.push(l); } }); });
+      all.forEach(function (l) { if (!seen[l.key] && !l.hidden) out.push(l); });
+      return out;
+    }
+    all.forEach(function (l) {
+      var byName = Math.max(matchScore(q, l.label.toLowerCase()), l.kind === 'sheet' ? matchScore(q, ('sheet ' + l.label).toLowerCase()) : 0);
+      l.score = byName ? 10 + byName : matchScore(q, l.words.toLowerCase());
+      if (l.score) out.push(l);
+    });
+    out.sort(function (a, b) { return b.score - a.score || a.order - b.order; });
+    return out;
+  }
+  // The palette itself, made in the element it is handed, the player's body or a box of the loop oracle's stage: a one-line
+  // prompt, its lines below it, and a note. opts.lines(text) answers the lines for a text and opts.run(line, text) runs one.
+  // listen(target) hears the palette's keys on the target in the capture phase, before the game, the viewport or a box: the
+  // player's document, or the oracle's box. Enter runs the line chosen, the arrows choose, a click runs a line, Escape
+  // closes, and Ctrl+Up and Ctrl+Down, Frazaro's CLI's keys, bring back what was run; the focus goes back where it was.
+  var paletteCount = 0;
+  function Palette(parent, opts) {
+    var d = document, self = this;
+    this.opts = opts; this.n = ++paletteCount; this.lines = []; this.sel = 0; this.history = []; this.at = -1; this.recent = []; this.before = null; this.handlers = [];
+    var root = this.root = d.createElement('div');
+    root.className = 'palette'; root.hidden = true;
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'the command palette');
+    var input = this.input = d.createElement('input');
+    input.type = 'text'; input.className = 'palette-input'; input.spellcheck = false; input.autocomplete = 'off';
+    input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list'); input.setAttribute('aria-expanded', 'true');
+    input.setAttribute('aria-label', 'a command, a sheet\'s name, or a row of VLA');
+    var list = this.list = d.createElement('ul');
+    list.className = 'palette-lines'; list.id = 'palette-' + this.n + '-lines'; list.setAttribute('role', 'listbox');
+    input.setAttribute('aria-controls', list.id);
+    this.note = d.createElement('p');
+    this.note.className = 'palette-note';
+    root.appendChild(input); root.appendChild(list); root.appendChild(this.note);
+    parent.appendChild(root);
+    input.addEventListener('input', function () { self.at = -1; self.render(); });
+    input.addEventListener('keydown', function (ev) { self._key(ev); });
+    // a click elsewhere shuts it and leaves the focus where the click put it; a press inside it keeps the prompt's focus,
+    // and a press on a line runs that line
+    input.addEventListener('blur', function () { self.close(false); });
+    root.addEventListener('mousedown', function (ev) {
+      if (ev.target === input) return;
+      ev.preventDefault();
+      var li = ev.target && ev.target.closest ? ev.target.closest('li[data-line]') : null;
+      if (li) self.runLine(+li.getAttribute('data-line'));
+    });
+  }
+  Palette.prototype.isOpen = function () { return !this.root.hidden; };
+  // back: the element the focus goes back to, the one that had it by default.
+  Palette.prototype.open = function (back) {
+    if (this.isOpen()) return;
+    this.before = back || document.activeElement;
+    this.root.hidden = false;
+    this.input.value = ''; this.at = -1;
+    this.render();
+    this.input.focus();
+  };
+  Palette.prototype.close = function (restore) {
+    if (!this.isOpen()) return;
+    this.root.hidden = true;
+    var b = this.before;
+    this.before = null;
+    if (restore !== false && b && b.focus && b !== this.input) { try { b.focus(); } catch (e) { /* an element gone */ } }
+  };
+  Palette.prototype.toggle = function (back) { if (this.isOpen()) this.close(true); else this.open(back); };
+  Palette.prototype.render = function () {
+    var self = this, d = document;
+    this.lines = this.opts.lines(this.input.value) || [];
+    while (this.list.firstChild) this.list.removeChild(this.list.firstChild);
+    this.lines.forEach(function (l, i) {
+      var li = d.createElement('li');
+      li.id = 'palette-' + self.n + '-line-' + i; li.setAttribute('role', 'option'); li.setAttribute('data-line', String(i));
+      var name = d.createElement('span'); name.className = 'name'; name.textContent = l.label;
+      var words = d.createElement('span'); words.className = 'words'; words.textContent = l.words;
+      li.appendChild(name); li.appendChild(words);
+      if (l.keys) { var keys = d.createElement('span'); keys.className = 'keys'; keys.textContent = l.keys; li.appendChild(keys); }
+      self.list.appendChild(li);
+    });
+    this._choose(0);
+    var typed = this.input.value.trim();
+    this.note.textContent = this.lines.length ? 'Enter runs the line chosen, the arrows choose, Escape closes; Ctrl+Up and Ctrl+Down bring back what was run; a text that begins with ( or ; is a row of VLA.' : (typed ? 'No command or sheet is named ' + JSON.stringify(typed) + '.' : '');
+  };
+  Palette.prototype._choose = function (i) {
+    var items = this.list.children;
+    this.sel = items.length ? Math.max(0, Math.min(items.length - 1, i)) : 0;
+    for (var j = 0; j < items.length; j++) items[j].setAttribute('aria-selected', j === this.sel ? 'true' : 'false');
+    if (items.length) { this.input.setAttribute('aria-activedescendant', items[this.sel].id); if (items[this.sel].scrollIntoView) items[this.sel].scrollIntoView({ block: 'nearest' }); }
+    else this.input.removeAttribute('aria-activedescendant');
+  };
+  // What was run, brought back into the prompt: dir 1 the one before, -1 the one after.
+  Palette.prototype._recall = function (dir) {
+    if (!this.history.length) return;
+    var at = Math.max(-1, Math.min(this.history.length - 1, this.at + dir));
+    this.input.value = at < 0 ? '' : this.history[at];
+    this.render();
+    this.at = at;
+  };
+  Palette.prototype._key = function (ev) {
+    if (ev.isComposing) return;
+    var k = ev.key, held = ev.ctrlKey || ev.metaKey;
+    if (k === 'Enter') { ev.preventDefault(); this.runLine(this.sel); return; }
+    if (k === 'Escape') { ev.preventDefault(); ev.stopPropagation(); this.close(true); return; }
+    if ((k === 'ArrowUp' || k === 'ArrowDown') && held) { ev.preventDefault(); this._recall(k === 'ArrowUp' ? 1 : -1); return; }
+    if (k === 'ArrowUp' || k === 'ArrowDown') { ev.preventDefault(); this._choose(this.sel + (k === 'ArrowDown' ? 1 : -1)); return; }
+    if (k === 'Tab') ev.preventDefault();   // the keys stay in the palette while it is open
+  };
+  // A line run: remembered, the palette shut and the focus given back, then the line's act, which may move the focus.
+  Palette.prototype.runLine = function (i) {
+    var line = this.lines[i], text = this.input.value;
+    if (!line) { this.note.textContent = text.trim() ? 'No command or sheet is named ' + JSON.stringify(text.trim()) + '.' : 'Type a command, a sheet\'s name, or a row of VLA.'; return false; }
+    var said = line.kind === 'row' ? text.trim() : (line.kind === 'sheet' ? line.arg : line.name);
+    if (this.history[0] !== said) this.history.unshift(said);
+    if (this.history.length > 50) this.history.length = 50;
+    if (line.kind !== 'row') this.recent = [line.key].concat(this.recent.filter(function (r) { return r !== line.key; })).slice(0, 8);
+    this.close(true);   // the palette shut before its line runs, the focus given back first
+    this.opts.run(line, text);
+    return true;
+  };
+  Palette.prototype.listen = function (target) {
+    var self = this;
+    var fn = function (ev) {
+      if (!isPaletteKey(ev)) return;
+      ev.preventDefault(); ev.stopPropagation();
+      if (!ev.repeat) self.toggle();
+    };
+    target.addEventListener('keydown', fn, true);
+    this.handlers.push([target, fn]);
+  };
+  Palette.prototype.destroy = function () {
+    this.handlers.forEach(function (h) { h[0].removeEventListener('keydown', h[1], true); });
+    this.handlers = [];
+    this.close(false);
+    if (this.root.parentNode) this.root.parentNode.removeChild(this.root);
+  };
+  // Escape in full screen (the owner's word, ENGINE.23): the page locks Escape in a full screen it asked for, where the
+  // browser has Keyboard Lock, so that the palette's Escape closes it; otherwise the first Escape passes on, to the game
+  // or a box as before, with a hint, and a second within the window leaves full screen; held, it is the browser's own way
+  // out. press(now) answers 'hint' or 'leave'.
+  function FullEscape(windowMs) { this.windowMs = windowMs || 3000; this.at = -Infinity; }
+  FullEscape.prototype.press = function (now) {
+    if (now - this.at <= this.windowMs) { this.at = -Infinity; return 'leave'; }
+    this.at = now;
+    return 'hint';
+  };
+  FullEscape.prototype.reset = function () { this.at = -Infinity; };
+
   // ---- the player (ENGINE.14; ENGINE.1's panel before it): the host's loop over the module, the window the game's ----
   function bytesOfBase64(s) {
     var bin = atob(s.replace(/\s+/g, ''));
@@ -718,11 +957,14 @@
       replayEl.value = c.replay || '';
       replayPathEl.textContent = c.replayPath || 'none: this cartridge has no replay of its own';
     }
+    // A cartridge picked, by the mouse or by Enter in the list the palette's pick opens, gives the game the keys once it
+    // is loaded, so that a keyboard goes on into the game and never down the bar's buttons (the owner's hand test of
+    // ENGINE.23).
     pickEl.addEventListener('change', function () {
       var c = current();
       showTexts(c);
       offerReplay(c);
-      if (host.m) loadCartridge();
+      if (host.m) { loadCartridge(); focusScreen(); }
     });
     // A text on the clipboard, the button saying so, or the way to copy it by hand when the browser keeps the clipboard closed.
     function copyText(btn, label, text, what) {
@@ -784,18 +1026,124 @@
       drawerBtn.setAttribute('aria-expanded', drawer.hidden ? 'false' : 'true');
       if (!drawer.hidden) { dvp.redraw(); host.refreshSheet(dvp); renderLog(); logEl.scrollTop = logEl.scrollHeight; }
     });
-    // Full screen, the browser's, over the whole player, the bar kept: Esc leaves it, as the button does.
+    // Full screen, the browser's, over the whole player, the bar kept: Esc leaves it, as the button does. Entered, the page
+    // locks Escape where the browser has Keyboard Lock (ENGINE.23, the owner's word): a second Escape leaves, or one held.
+    var escapeLocked = false;
     fullBtn.addEventListener('click', function () {
       if (document.fullscreenElement) { document.exitFullscreen(); return; }
       var el = document.documentElement;
       if (!el.requestFullscreen) { statusEl.textContent = 'This browser offers no fullscreen to a page: its own key, F11, may.'; statusEl.className = 'status'; return; }
-      el.requestFullscreen().then(focusScreen, function (err) { statusEl.textContent = 'Fullscreen was refused: ' + (err && err.message ? err.message : err); statusEl.className = 'status'; });
+      el.requestFullscreen().then(function () { lockEscape(); focusScreen(); }, function (err) { statusEl.textContent = 'Fullscreen was refused: ' + (err && err.message ? err.message : err); statusEl.className = 'status'; });
     });
+    // A browser without Keyboard Lock, Firefox's and Safari's, keeps Escape for its full screen: the hint says so as full
+    // screen begins, and names the browser's own full screen, which leaves Escape to the page.
+    function lockEscape() {
+      var kb = navigator.keyboard;
+      if (!kb || !kb.lock) { showHint('In this browser Escape leaves full screen at once; the browser\'s own full screen, F11, leaves Escape to the page.', 6000); return; }
+      kb.lock(['Escape']).then(function () { escapeLocked = !!document.fullscreenElement; }, function () { escapeLocked = false; });
+    }
     document.addEventListener('fullscreenchange', function () {
       var on = !!document.fullscreenElement;
       fullBtn.textContent = on ? 'Exit full screen' : 'Full screen';
       fullBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      if (!on) { escapeLocked = false; fullEscape.reset(); hideHint(); if (navigator.keyboard && navigator.keyboard.unlock) navigator.keyboard.unlock(); }
     });
+    // ---- the commands and the palette (ENGINE.23) ----
+    // Each command's act: the button's own where it has one, the button its convenience; a box's name gives that box the
+    // keys, the drawer and its section opened.
+    function openDrawer() { if (drawer.hidden) drawerBtn.click(); }
+    function give(el, section) { openDrawer(); if (section) section.open = true; el.focus(); }
+    // The viewport a sheet command shows a sheet in: the one that has the keys, else the Screen's place for a grid, its
+    // tabs answered by the host, and the drawer's sheets for a plane, whose Screen's place has no tabs.
+    function sheetsViewport() {
+      var a = document.activeElement;
+      if (host.vp && host.vp.root.contains(a)) return host.vp;
+      if (dvp.root.contains(a)) return dvp;
+      return mode === 'grid' && host.vp ? host.vp : dvp;
+    }
+    function tabOf(vp, name) {
+      var tabs = vp.tabs.querySelectorAll('[data-sheet]');
+      for (var i = 0; i < tabs.length; i++) if (tabs[i].getAttribute('data-sheet') === name) return tabs[i];
+      return null;
+    }
+    // A sheet shown as its tab shows it: its tab pressed, the strip's box of hidden sheets ticked first for a hidden one, as
+    // a click would tick it; else viewed by the host, the Screen in the host's own viewport through the Camera's window,
+    // as its tab gives it back.
+    function showSheetIn(vp, name) {
+      if (vp === dvp) openDrawer();
+      var tab = tabOf(vp, name), box = vp.tabs.querySelector('input[type="checkbox"]');
+      if (!tab && box && !box.checked) { box.click(); tab = tabOf(vp, name); }
+      if (tab) { tab.click(); return; }
+      if (vp === host.vp && /^screen$/i.test(name)) { host.answer(vp, { name: name, loaded: true }); return; }
+      host.showSheet(vp, name);
+    }
+    // The next or the previous sheet of those the strip shows, the hidden among them while its box is ticked.
+    function stepSheet(dir) {
+      var vp = sheetsViewport(), list = vp.sheets(), all = !!(vp.state && vp.state.showHidden), names = [], at = -1;
+      for (var i = 0; i < list.length; i++) if (all || list[i].state === 'visible') { if (list[i].active) at = names.length; names.push(list[i].name); }
+      if (!names.length) return;
+      showSheetIn(vp, names[at < 0 ? (dir > 0 ? 0 : names.length - 1) : (at + dir + names.length) % names.length]);
+    }
+    function toggleHidden() {
+      var vp = sheetsViewport(), box = vp.tabs.querySelector('input[type="checkbox"]');
+      if (box) box.click(); else sayBar('This grid has no hidden sheets.');
+    }
+    var ACTS = {
+      pick: function () { pickEl.focus(); try { if (pickEl.showPicker) pickEl.showPicker(); } catch (e) { /* a browser that shows the list only on a click */ } },
+      run: function () { document.getElementById('eng-run').click(); },
+      pause: function () { document.getElementById('eng-pause').click(); },
+      sound: function () { soundEl.click(); },
+      load: function () { document.getElementById('eng-load').click(); },
+      'full-screen': function () { fullBtn.click(); },
+      drawer: function () { drawerBtn.click(); },
+      sheet: function (name) { showSheetIn(sheetsViewport(), name); },
+      'next-sheet': function () { stepSheet(1); },
+      'previous-sheet': function () { stepSheet(-1); },
+      'hidden-sheets': toggleHidden,
+      game: focusScreen,
+      edit: function () { give(editEl); },
+      write: function () { document.getElementById('eng-write').click(); },
+      'copy-log': function () { document.getElementById('eng-copy').click(); },
+      viewer: function () { openDrawer(); dvp.scroller.focus(); },
+      source: function () { give(srcEl, textsEl); },
+      build: function () { document.getElementById('eng-build').click(); },
+      apply: function () { document.getElementById('eng-apply').click(); },
+      cartridge: function () { give(cartEl, textsEl); },
+      'apply-cartridge': function () { host.apply(cartEl.value); },
+      library: function () { openDrawer(); textsEl.open = true; libEl.parentNode.open = true; libPick.focus(); },
+      replay: function () { give(replayEl, replayBoxEl); },
+      'play-replay': function () { document.getElementById('eng-replay-play').click(); },
+      'copy-replay': function () { document.getElementById('eng-replay-copy').click(); }
+    };
+    var actless = COMMANDS.filter(function (c) { return !ACTS[c.name]; }).map(function (c) { return c.name; });
+    if (actless.length) { statusEl.textContent = 'The commands ' + actless.join(', ') + ' have no act on this page.'; statusEl.className = 'status refused'; }
+    // The palette over the page, its keys heard on the document before the game, the viewport or a box hear them; a row of
+    // VLA written as the edit row writes one, a person's edit at the next frame.
+    var palette = new Palette(document.body, {
+      lines: function (text) { return paletteLines(text, COMMANDS, sheetsViewport().sheets(), palette.recent); },
+      run: function (line, text) { if (line.kind === 'row') host.edit(text.trim()); else ACTS[line.name](line.arg); }
+    });
+    palette.listen(document);
+    // the Commands button, the palette's convenience: pressed while the palette is open, it keeps the prompt's focus, so
+    // that its click shuts the palette rather than opening it again
+    var paletteBtn = document.getElementById('eng-palette');
+    paletteBtn.addEventListener('mousedown', function (ev) { if (palette.isOpen()) ev.preventDefault(); });
+    paletteBtn.addEventListener('click', function () { palette.toggle(mode === 'grid' && host.vp ? host.vp.scroller : planeCv); });
+    // The next and the previous sheet: Excel's Ctrl+PageDown and Ctrl+PageUp, the page's in full screen, and Excel for the
+    // web's Ctrl+Alt+PageDown and Ctrl+Alt+PageUp, the page's in a window too, where Chrome, Edge and Opera keep the first
+    // pair for their tabs, unseen by the page (measured; AltGr, Windows' Ctrl with Alt, types nothing with Page Down). And
+    // Escape in full screen, locked to the page: the palette's own while it is open, else the first passes on with a hint,
+    // and a second within three seconds leaves full screen.
+    var fullEscape = new FullEscape(3000), hintEl = document.getElementById('full-hint'), hintTimer = 0, hintWords = hintEl.textContent;
+    function hideHint() { hintEl.hidden = true; clearTimeout(hintTimer); }
+    function showHint(text, ms) { hintEl.textContent = text || hintWords; hintEl.hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(hideHint, ms || fullEscape.windowMs); }
+    document.addEventListener('keydown', function (ev) {
+      if (palette.isOpen() || ev.isComposing) return;
+      if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && (ev.key === 'PageDown' || ev.key === 'PageUp')) { ev.preventDefault(); ev.stopPropagation(); stepSheet(ev.key === 'PageDown' ? 1 : -1); return; }
+      if (ev.key !== 'Escape' || ev.altKey || ev.repeat || !escapeLocked || !document.fullscreenElement) return;
+      if (fullEscape.press(performance.now()) === 'hint') { showHint(); return; }
+      ev.preventDefault(); ev.stopPropagation(); hideHint(); document.exitFullscreen();
+    }, true);
     // The plane refitted to its box when the box changes, the window resized, the drawer opened or full screen
     // entered, paused or at rate zero too, where no frame would bring the next blit (ENGINE.14); the grid's
     // viewport refits by its own observer.
@@ -4417,6 +4765,124 @@
     }
     return { counters: k, problems: P };
   }
+  // The palette (ENGINE.23): the registry, the palette's keys and its lines, pure; then the palette itself made in a box
+  // of the stage, its keys heard there in the capture phase as the player hears them on the document, each event
+  // dispatched as a browser reports a keyboard's and every line run counted by a stand-in; and Escape in full screen, its
+  // rule over a clock of the case's own. It needs no file, so a game's page runs it, holding the vendored template there.
+  function casePalette() {
+    var P = [], k = { commands: 0, keyed: 0, lines: 0, opened: 0, ran: 0, chosen: 0, rows: 0, recalled: 0, closed: 0, restored: 0, held: 0, passed: 0, clicked: 0, escapes: 0 };
+    var seen = {};
+    COMMANDS.forEach(function (c) {
+      if (!/^[a-z]+(-[a-z]+)*$/.test(c.name) || !c.words || seen[c.name]) P.push('palette: the command ' + JSON.stringify(c.name) + ' is ill-named, without words or named twice');
+      else { seen[c.name] = true; k.commands++; }
+    });
+    // the palette's keys, each as a browser reports it
+    [[{ ctrlKey: true, key: 'k', code: 'KeyK' }, true, 'Ctrl+K'],
+     [{ metaKey: true, key: 'k', code: 'KeyK' }, true, 'Cmd+K'],
+     [{ ctrlKey: true, key: 'л', code: 'KeyK' }, true, 'Ctrl+K on a Cyrillic layout'],
+     [{ ctrlKey: true, shiftKey: true, key: '~', code: 'Backquote' }, true, 'Ctrl+Shift+`'],
+     [{ ctrlKey: true, shiftKey: true, key: 'K', code: 'KeyK' }, false, 'Ctrl+Shift+K, which Edge keeps,'],
+     [{ ctrlKey: true, altKey: true, key: 'k', code: 'KeyK' }, false, 'Ctrl+Alt+K, an AltGr,'],
+     [{ metaKey: true, shiftKey: true, key: '~', code: 'Backquote' }, false, 'Cmd+Shift+`, a Mac\'s,'],
+     [{ ctrlKey: true, key: '`', code: 'Backquote' }, false, 'Ctrl+`, Opera\'s,'],
+     [{ ctrlKey: true, key: 't', code: 'KeyK' }, false, 'Ctrl with the key in K\'s place typing t'],
+     [{ key: 'k', code: 'KeyK' }, false, 'K alone'],
+     [{ ctrlKey: true, key: 'k', code: 'KeyK', isComposing: true }, false, 'Ctrl+K while an input method composes']].forEach(function (x) {
+      if (isPaletteKey(x[0]) === x[1]) k.keyed++; else P.push('palette: ' + x[2] + (x[1] ? ' does not open the palette' : ' opens the palette'));
+    });
+    // the lines: the first for a text, a row for ( and for ;, and an empty text's list
+    var SHEETS = [{ name: 'Portfolio', state: 'visible' }, { name: 'Day', state: 'visible' }, { name: 'Dice', state: 'visible' }, { name: 'Screen', state: 'hidden' }, { name: 'Questions', state: 'hidden' }];
+    [['run', 'command:run'], ['pause', 'command:pause'], ['pl rep', 'command:play-replay'], ['port', 'sheet:Portfolio'], ['sheet d', 'sheet:Day'], ['ques', 'sheet:Questions'],
+     ['(cell "Screen" "A1" 1)', 'row'], ['  ; a comment', 'row'], ['zzzz', 'nothing']].forEach(function (x) {
+      var l = paletteLines(x[0], COMMANDS, SHEETS, [])[0], got = l ? l.key : 'nothing';
+      if (got === x[1]) k.lines++; else P.push('palette: the text ' + JSON.stringify(x[0]) + ' gives ' + got + ' first, where ' + x[1] + ' is due');
+    });
+    var empty = paletteLines('', COMMANDS, SHEETS, ['command:pause', 'sheet:Day']), hiddenListed = empty.filter(function (l) { return l.hidden; }).length;
+    if (empty.length === COMMANDS.length - 1 + 3 && empty[0].key === 'command:pause' && empty[1].key === 'sheet:Day' && !hiddenListed) k.lines++;
+    else P.push('palette: an empty text lists ' + empty.length + ' line(s), ' + (empty[0] ? empty[0].key : 'none') + ' and ' + (empty[1] ? empty[1].key : 'none') + ' first and ' + hiddenListed + ' hidden sheet(s), where every command and the 3 visible sheets are due, the lines run last first');
+    // the palette over a box of the stage
+    var stage = document.getElementById('stage'), box = document.createElement('div'), before = document.createElement('button'), area = document.createElement('textarea');
+    box.style.cssText = 'width:640px;height:420px;position:relative;background:#fff;';
+    before.type = 'button'; before.textContent = 'before';
+    box.appendChild(before); box.appendChild(area); stage.appendChild(box);
+    var ran = [], rows = [];
+    var pal = new Palette(box, {
+      lines: function (t) { return paletteLines(t, COMMANDS, SHEETS, pal.recent); },
+      run: function (line, text) { if (line.kind === 'row') rows.push(text.trim()); else ran.push(line.name + (line.arg ? ' ' + line.arg : '')); }
+    });
+    pal.listen(box);
+    function key(el, init) {
+      var o = { bubbles: true, cancelable: true };
+      for (var p in init) if (Object.prototype.hasOwnProperty.call(init, p)) o[p] = init[p];
+      var ev = new KeyboardEvent('keydown', o);
+      el.dispatchEvent(ev);
+      return ev;
+    }
+    function type(text) { pal.input.value = text; pal.input.dispatchEvent(new Event('input', { bubbles: true })); }
+    function focused() { var a = document.activeElement; return a === pal.input ? 'the palette\'s prompt' : a === before ? 'the box\'s button' : a === area ? 'the box\'s text' : (a ? a.tagName.toLowerCase() : 'nothing'); }
+    try {
+      before.focus();
+      var opened = key(before, { ctrlKey: true, key: 'k', code: 'KeyK' });
+      if (opened.defaultPrevented && pal.isOpen() && document.activeElement === pal.input) k.opened++;
+      else P.push('palette: Ctrl+K on the box was ' + (opened.defaultPrevented ? '' : 'not ') + 'taken and the palette ' + (pal.isOpen() ? 'opened' : 'stayed shut') + ', the focus on ' + focused());
+      type('pause');
+      key(pal.input, { key: 'Enter', code: 'Enter' });
+      if (ran.join(',') === 'pause') k.ran++; else P.push('palette: Enter after "pause" ran ' + JSON.stringify(ran) + ', where pause is due once');
+      if (!pal.isOpen()) k.closed++; else P.push('palette: the palette is open after the line pause ran');
+      if (document.activeElement === before) k.restored++; else P.push('palette: after a line ran the focus is on ' + focused() + ', where it was before the palette opened, on the box\'s button');
+      // the other key opens it too; ArrowDown chooses the second line
+      key(before, { ctrlKey: true, shiftKey: true, key: '~', code: 'Backquote' });
+      type('sheet d');
+      key(pal.input, { key: 'ArrowDown', code: 'ArrowDown' });
+      key(pal.input, { key: 'Enter', code: 'Enter' });
+      if (ran[1] === 'sheet Dice') k.chosen++; else P.push('palette: the line chosen by ArrowDown after "sheet d" ran ' + JSON.stringify(ran[1]) + ', where the second line, sheet Dice, is due');
+      // a row of VLA, written as the edit row writes one
+      key(before, { metaKey: true, key: 'k', code: 'KeyK' });
+      type('(cell "Screen" "A1" 1)');
+      key(pal.input, { key: 'Enter', code: 'Enter' });
+      if (rows.length === 1 && rows[0] === '(cell "Screen" "A1" 1)') k.rows++; else P.push('palette: the row typed was written as ' + JSON.stringify(rows) + ', where the row once is due');
+      // Ctrl+Up brings back what was run, the latest first
+      key(before, { ctrlKey: true, key: 'k', code: 'KeyK' });
+      key(pal.input, { key: 'ArrowUp', code: 'ArrowUp', ctrlKey: true });
+      var back1 = pal.input.value;
+      key(pal.input, { key: 'ArrowUp', code: 'ArrowUp', ctrlKey: true });
+      var back2 = pal.input.value;
+      if (back1 === '(cell "Screen" "A1" 1)' && back2 === 'Dice') k.recalled++; else P.push('palette: Ctrl+Up brought back ' + JSON.stringify(back1) + ' then ' + JSON.stringify(back2) + ', where the row and then Dice are due');
+      // Escape closes, nothing run, the focus given back
+      var count = ran.length + rows.length;
+      key(pal.input, { key: 'Escape', code: 'Escape' });
+      if (!pal.isOpen() && ran.length + rows.length === count && document.activeElement === before) k.closed++;
+      else P.push('palette: Escape left the palette ' + (pal.isOpen() ? 'open' : 'shut') + ', ' + (ran.length + rows.length - count) + ' line(s) run and the focus on ' + focused() + ', where it shuts, runs nothing and gives the box\'s button the focus');
+      // the palette's key in the open palette shuts it
+      key(before, { ctrlKey: true, key: 'k', code: 'KeyK' });
+      var again = key(pal.input, { ctrlKey: true, key: 'k', code: 'KeyK' });
+      if (again.defaultPrevented && !pal.isOpen()) k.closed++; else P.push('palette: Ctrl+K in the open palette left it ' + (pal.isOpen() ? 'open' : 'shut') + ', where it shuts');
+      // a held key's repeat taken and ignored
+      var rep = key(before, { ctrlKey: true, key: 'k', code: 'KeyK', repeat: true });
+      if (rep.defaultPrevented && !pal.isOpen()) k.held++; else P.push('palette: a held Ctrl+K\'s repeat was ' + (rep.defaultPrevented ? 'taken' : 'left to the browser') + ' and the palette ' + (pal.isOpen() ? 'opened' : 'stayed shut') + ', where a repeat is taken and ignored');
+      // keys not the palette's pass on to the box
+      area.focus();
+      var plain = key(area, { key: 'k', code: 'KeyK' }), edge = key(area, { ctrlKey: true, shiftKey: true, key: 'K', code: 'KeyK' });
+      if (!plain.defaultPrevented && !edge.defaultPrevented && !pal.isOpen()) k.passed++; else P.push('palette: K or Ctrl+Shift+K in the box was taken, where both pass on');
+      // a click on a line runs it, the focus given back to the box
+      key(area, { ctrlKey: true, key: 'k', code: 'KeyK' });
+      type('sound');
+      var li = pal.list.querySelector('li');
+      if (li) li.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }));
+      if (ran[ran.length - 1] === 'sound' && !pal.isOpen() && document.activeElement === area) k.clicked++;
+      else P.push('palette: a click on the line sound ran ' + JSON.stringify(ran[ran.length - 1]) + ', the palette ' + (pal.isOpen() ? 'open' : 'shut') + ' and the focus on ' + focused() + ', where sound runs and the box\'s text has the focus');
+      // Escape in full screen over the case's own clock: the first a hint, a second within three seconds leaves
+      var fe = new FullEscape(3000);
+      [[0, 'hint'], [1000, 'leave'], [5000, 'hint'], [9000, 'hint'], [10500, 'leave']].forEach(function (x) {
+        var got = fe.press(x[0]);
+        if (got === x[1]) k.escapes++; else P.push('palette: an Escape in full screen at ' + x[0] + ' ms answered ' + got + ', where ' + x[1] + ' is due');
+      });
+    } finally {
+      pal.destroy();
+      stage.removeChild(box);
+    }
+    return { counters: k, problems: P };
+  }
   function loopLine(name, k, problems) {
     var parts = [];
     for (var key in k) if (Object.prototype.hasOwnProperty.call(k, key)) parts.push(key + ' ' + k[key]);
@@ -4432,7 +4898,7 @@
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
-                 ['continue', caseContinue]];
+                 ['continue', caseContinue], ['palette', casePalette]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -4441,7 +4907,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }

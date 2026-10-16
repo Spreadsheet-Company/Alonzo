@@ -195,7 +195,14 @@ changed, a row removed, a column's width and a cell written twice, and one at
 the write, a formula closing a cycle with a person's, nothing written; the
 run's replay the twin's byte for byte and played on a third host to every
 frame; a continue refused while a replay plays; and the host's comparison,
-pure, held to the rows named by hand). It
+pure, held to the rows named by hand); and since ENGINE.23 palette (the
+command palette: its registry of twenty-five commands, its keys as browsers
+report them and its lines for a text, pure; the palette itself in a box of
+the stage, opened by Ctrl+K, Cmd+K and Ctrl+Shift+`, a line run by Enter,
+by ArrowDown and by a click, a row of VLA written, what was run brought back
+by Ctrl+Up, Escape and its own key shutting it, the focus given back, a held
+key's repeat ignored and every other key passed on; and Escape in full
+screen, a hint and then a leave, over a clock of its own). It
 prints one line a case into
 <pre id="loop"> and a last line, 'loop ok cases=N', once the last case has
 answered. This check runs the
@@ -217,9 +224,9 @@ builds a game's page, from a scratch folder holding Kairos alone, its
 cartridge, source, replay, golden and hand and the library its source
 includes, and runs its loop at a ratio of 1: abi, pass, replay with the
 hand, grid over an empty set, empty and, since ENGINE.17, ENGINE.18,
-ENGINE.19 and ENGINE.7, still, views, changes and continue must be OK at
-their own floors, each of Alonzo's fifteen other cases must say it is not on
-this page, and the last line must count nine cases.
+ENGINE.19, ENGINE.7 and ENGINE.23, still, views, changes, continue and palette
+must be OK at their own floors, each of Alonzo's fifteen other cases must say
+it is not on this page, and the last line must count ten cases.
 
 THE BROWSER, as tools/check_render_oracle.ps1 finds and launches it:
 -Browser, else $env:ALONZO_BROWSER, else Google Chrome, Microsoft Edge or
@@ -236,7 +243,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds eighty-eight mutant pages through tools/build_web.ps1 and runs
+-Control builds ninety-six mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -377,11 +384,17 @@ cell written twice answered ok; one that writes the rows at the press, the
 frame's derived write landing after D1's; one that compares no manifest,
 the rate changed answered ok; one that counts no removed row's cells,
 Screen!A3 dropped answered ok; and one that compares no row a write cannot
-take, a column's width answered ok. The real page must pass first.
+take, a column's width answered ok. And since ENGINE.23 eight templates,
+each failing the palette case by name: one that takes Ctrl+Shift+K, Edge's,
+for the palette's key; one that takes Cmd+Shift+`, a Mac's; one whose Enter
+runs the first line whatever is chosen; one that gives the focus nowhere
+back; one that reads a row in ( alone; one whose first Escape in full screen
+leaves; one that leaves the palette open after its line runs; and one whose
+held key's repeat toggles it. The real page must pass first.
 
 Since 2026-10-15 each mutant page runs `abi`, which names the page's
-module, and the cases its reason is judged by (?loop=1&cases=), never the
-twenty-four: replay after input, whose live run it copies; the real page
+module, and the cases its reason is judged by (?loop=1&cases=), never every
+case: replay after input, whose live run it copies; the real page
 and the game's page run every case. Every case run alone prints the counts
 it prints among the rest (measured that day), and the control went from 12
 minutes to 3.6 on the owner's machine.
@@ -614,6 +627,12 @@ $changesFloors = @{ crafted = 7; double = 32; frames = 60; decided = 60; drawn =
 # frames; a continue refused while a replay plays; and the host's three comparisons, pure.
 $continueFloors = @{ built = 10; compared = 3; frames = 20; hand = 20; twin = 21; applied = 2; replaced = 1; waited = 1; refused = 5; writeRefused = 1; whole = 1; patched = 1;
                      replays = 1; played = 20; replaying = 1 }
+# 2026-10-16, ENGINE.23: the twenty-four cases' counts unchanged, and a twenty-fifth, palette, on both pages and needing
+# no module, its counts a function of its plan: the 25 commands of the registry; 11 key events held to opening it or not;
+# 9 texts held to their first line and an empty text's list; the palette opened, a line run, the second line chosen, a
+# row written and what was run brought back once each; shut 3 times, after a line, by Escape and by its own key; the
+# focus given back, a repeat ignored, the box's keys passed on and a line clicked once each; and 5 Escapes in full screen.
+$paletteFloors = @{ commands = 25; keyed = 11; lines = 10; opened = 1; ran = 1; chosen = 1; rows = 1; recalled = 1; closed = 3; restored = 1; held = 1; passed = 1; clicked = 1; escapes = 5 }
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
@@ -642,14 +661,16 @@ $floors = @(
     @{ Case = 'still';    Min = @{}; WithModule = $stillFloors },
     @{ Case = 'views';    Min = @{}; WithModule = $viewsFloors },
     @{ Case = 'changes';  Min = @{ crafted = 7; double = 32 }; WithModule = $changesFloors },
-    @{ Case = 'continue'; Min = @{}; WithModule = $continueFloors }
+    @{ Case = 'continue'; Min = @{}; WithModule = $continueFloors },
+    @{ Case = 'palette';  Min = $paletteFloors }
 )
 $zero = @('live', 'misfrees', 'filled', 'alone')
-$expectedCases = 24
+$expectedCases = 25
 # ENGINE.16: a game's page, built on every run from a scratch folder holding Kairos alone, its cartridge, source,
-# replay, golden and hand and the library its source includes. Its loop runs the nine cases that need nothing
+# replay, golden and hand and the library its source includes. Its loop runs the ten cases that need nothing
 # of Alonzo's own files, over its own blocks, still since ENGINE.17, views since ENGINE.18, changes since
-# ENGINE.19 and continue since ENGINE.7 among them, and each of the fifteen others says it is not on the page.
+# ENGINE.19, continue since ENGINE.7 and palette since ENGINE.23 among them, and each of the fifteen others says
+# it is not on the page.
 $gameFloors = @(
     @{ Case = 'abi';    Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
     @{ Case = 'pass';   Min = @{}; WithModule = @{ sources = 1; same = 1 } },
@@ -659,10 +680,11 @@ $gameFloors = @(
     @{ Case = 'still';  Min = @{}; WithModule = $stillFloors },
     @{ Case = 'views';  Min = @{}; WithModule = $viewsFloors },
     @{ Case = 'changes'; Min = @{ crafted = 7; double = 32 }; WithModule = $changesFloors },
-    @{ Case = 'continue'; Min = @{}; WithModule = $continueFloors }
+    @{ Case = 'continue'; Min = @{}; WithModule = $continueFloors },
+    @{ Case = 'palette'; Min = $paletteFloors }
 )
 $gameAbsent = @('rate30', 'rate0', 'yield', 'slice', 'pace', 'memory', 'refusals', 'scale', 'engine', 'parity', 'plane', 'input', 'audio', 'sound', 'tabs')
-$gameCases = 9
+$gameCases = 10
 $gameFiles = @('kairos/kairos.vla', 'kairos/kairos.source.vla', 'kairos/kairos.replay.vla', 'kairos/kairos.golden.vla', 'kairos/kairos.hand.js', 'common.vla')
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
@@ -836,8 +858,8 @@ if ($Control) {
             if ($code -ne 0 -or -not (Test-Path -LiteralPath $out)) { throw "the builder could not build the mutant page $name" }
             return $out
         }
-        # A mutant page runs abi, which names the page's module, and the cases its reason is judged by, not all
-        # twenty-four (2026-10-15, fix 5 of the controls' time); the real page and the game's page run every case.
+        # A mutant page runs abi, which names the page's module, and the cases its reason is judged by, not every
+        # case (2026-10-15, fix 5 of the controls' time); the real page and the game's page run every case.
         function Get-MutantCases([string]$cases) { return 'abi' + $(if ($cases -ne '') { ',' + $cases } else { '' }) }
         function Invoke-Mutant([string]$page, [string]$cases) { return Invoke-Loop $browser $page '1' (Get-MutantCases $cases) }
         function Test-Mutant($run, [string]$cases, [object[]]$table = $floors) {
@@ -1490,6 +1512,50 @@ if ($Control) {
             if (-not ($c7Applied -and $c7Failed -ge 1)) { $continueOk = $false }
         }
         $continueNote = $continueNotes -join '; '
+        # CK to CR (ENGINE.23), templates, each failing the palette case by name, with or without the module: Ctrl+Shift+K,
+        # Edge's, taken for the palette's key; Cmd+Shift+`, a Mac's, taken; Enter running the first line whatever is
+        # chosen; the focus given nowhere back; a row read in ( alone; the first Escape in full screen leaving; the palette
+        # left open after its line runs; and a held key's repeat toggling it.
+        $paletteMutants = @(
+            @{ L = 'ck'; Name = 'Ctrl+Shift+K taken'; Anchor = "    if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey) return key === 'k' || (ev.code === 'KeyK' && !/^[a-z0-9]$/.test(key));"
+               With = "    if ((ev.ctrlKey || ev.metaKey) && (key === 'k' || (ev.code === 'KeyK' && !/^[a-z0-9]$/.test(key)))) return true;"
+               Want = 'case palette.*palette: Ctrl\+Shift\+K, which Edge keeps, opens the palette' },
+            @{ L = 'cl'; Name = 'Cmd+Shift+` taken'; Anchor = "    return !!(ev.ctrlKey && !ev.metaKey && ev.shiftKey && ev.code === 'Backquote');"
+               With = "    return !!((ev.ctrlKey || ev.metaKey) && ev.shiftKey && ev.code === 'Backquote');"
+               Want = 'case palette.*palette: Cmd\+Shift\+`, a Mac''s, opens the palette' },
+            @{ L = 'cm'; Name = 'Enter running the first line'; Anchor = "    if (k === 'Enter') { ev.preventDefault(); this.runLine(this.sel); return; }"
+               With = "    if (k === 'Enter') { ev.preventDefault(); this.runLine(0); return; }"
+               Want = 'case palette.*palette: the line chosen by ArrowDown after "sheet d" ran "sheet Day"' },
+            @{ L = 'cn'; Name = 'the focus given nowhere back'; Anchor = '    if (restore !== false && b && b.focus && b !== this.input) { try { b.focus(); } catch (e) { /* an element gone */ } }'
+               With = '    // the focus given nowhere back, by the control'
+               Want = 'case palette.*palette: after a line ran the focus is on' },
+            @{ L = 'co'; Name = 'a row read in ( alone'; Anchor = '    var isRow = /^\s*[(;]/.test(t);'; With = '    var isRow = /^\s*\(/.test(t);'
+               Want = 'case palette.*palette: the text "  ; a comment" gives' },
+            @{ L = 'cp'; Name = 'the first Escape leaving full screen'; Anchor = "    if (now - this.at <= this.windowMs) { this.at = -Infinity; return 'leave'; }"
+               With = "    if (true) { this.at = -Infinity; return 'leave'; }"
+               Want = 'case palette.*palette: an Escape in full screen at 0 ms answered leave, where hint is due' },
+            @{ L = 'cq'; Name = 'the palette left open after its line'; Anchor = '    this.close(true);   // the palette shut before its line runs, the focus given back first'
+               With = '    // the palette left open, by the control'
+               Want = 'case palette.*palette: the palette is open after the line pause ran' },
+            @{ L = 'cr'; Name = 'a repeat toggling the palette'; Anchor = '      if (!ev.repeat) self.toggle();'; With = '      self.toggle();'
+               Want = 'case palette.*palette: a held Ctrl\+K''s repeat was taken and the palette opened' }
+        )
+        $paletteNotes = New-Object System.Collections.Generic.List[string]
+        $paletteJudged = New-Object System.Collections.Generic.List[object]
+        $paletteOk = $true
+        foreach ($mu in $paletteMutants) {
+            if (([regex]::Matches($tpl, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in the template exactly once"; exit 1 }
+            $mutP = $tpl.Replace($mu.Anchor, $mu.With)
+            $pApplied = $mutP -cne $tpl
+            $tplP = Join-Path $tmp ($mu.L + '.template.html'); [System.IO.File]::WriteAllText($tplP, $mutP, $utf8)
+            $rP = Invoke-Mutant (New-MutantPage $mu.L $tplP $hostJs) 'palette'
+            $pJudge = Test-Mutant $rP 'palette'
+            $pFailed = @($pJudge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
+            $paletteJudged.Add(@{ Name = $mu.Name; Problems = @($pJudge.Problems) })
+            $paletteNotes.Add(("{0} applied ({1}) and failed by name ({2})" -f $mu.Name, $pApplied, $pFailed))
+            if (-not ($pApplied -and $pFailed -ge 1)) { $paletteOk = $false }
+        }
+        $paletteNote = $paletteNotes -join '; '
         # mutants AT, AU, AV and AW (ENGINE.16), each a game's page of Kairos alone, which must pass first: its
         # hand a frame late, answering each frame with the frame before it; its hand's Tally counting a stack at
         # the level above its own, which moves no light; its hand's block dropped, so that its replay is held to
@@ -1539,9 +1605,9 @@ if ($Control) {
             if (-not ($gmApplied -and $gmFailed -ge 1)) { $gameOk = $false }
         }
         $gameNote = $gameNotes -join '; '
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $gameNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $gameOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'eighty-eight' } else { 'thirty-eight applicable' }) + ' mutants for its own reason, each proving it applied')
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $gameNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $gameOk) {
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'ninety-six' } else { 'forty-six applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -1580,6 +1646,7 @@ if ($Control) {
         foreach ($vj in $viewsJudged) { foreach ($p in @($vj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $vj.Name + ': ' + $p) } }
         foreach ($cj in $changesJudged) { foreach ($p in @($cj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $cj.Name + ': ' + $p) } }
         foreach ($kj in $continueJudged) { foreach ($p in @($kj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $kj.Name + ': ' + $p) } }
+        foreach ($pj in $paletteJudged) { foreach ($p in @($pj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $pj.Name + ': ' + $p) } }
         foreach ($p in @($jG0.Problems) | Select-Object -First 3) { Write-Output ('  the game''s page: ' + $p) }
         foreach ($gj in $gameJudged) { foreach ($p in @($gj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $gj.Name + ': ' + $p) } }
         exit 1
@@ -1628,7 +1695,7 @@ try {
 }
 Write-Output ''
 if ($failed.Count -eq 0) {
-    Write-Output "=== CHECK: clean - every case OK at both ratios, every count at or above its floor, and the game's page's nine cases OK with Alonzo's fifteen said absent ==="
+    Write-Output "=== CHECK: clean - every case OK at both ratios, every count at or above its floor, and the game's page's ten cases OK with Alonzo's fifteen said absent ==="
     exit 0
 }
 Write-Output "=== CHECK: $($failed.Count) problem(s) ==="

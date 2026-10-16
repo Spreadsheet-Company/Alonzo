@@ -267,7 +267,7 @@ computes it, at its rate of thirty frames a second, under a slim bar with
 the cartridge, Run, Pause, Sound, Load, the frame and the latest sentence;
 without the engine the player runs against the fake module and says so.
 Press Full screen for the browser's fullscreen over the whole player, the bar
-kept; Esc leaves it. Press Drawer, and the drawer opens at the right and
+kept; Esc leaves it, pressed twice where the page holds Escape (below). Press Drawer, and the drawer opens at the right and
 pushes the Screen aside, which refits. Type a row in its edit box and press
 Write (`(cell "Palette" "B1" "#FF8800")` turns the dead cells orange,
 `(cell "Screen" "B2:K11" 1)` holds a block alive while Life flows around
@@ -292,7 +292,28 @@ Ctrl on a Mac: in the source's box Ctrl+Enter builds and Ctrl+Shift+Enter
 applies, the caret staying where it was, so a rule is tuned without leaving
 the box, and a library's box does the same; in the cartridge's box
 Ctrl+Enter loads it from frame 0 and Ctrl+Shift+Enter applies it as it
-stands; in the replay's box Ctrl+Enter plays it. Change a macro of the library at the bottom, `cartridges/common.vla`,
+stands; in the replay's box Ctrl+Enter plays it. Every act of the player is
+a command too (`ENGINE.23`), run from the palette: press Ctrl+K, Cmd+K on a
+Mac, or Ctrl+Shift+`, Frazaro's CLI key, anywhere on the page or the Commands
+button, and type a command's name, `run`, `pause`, `drawer`, `source`,
+`full-screen`, the lines narrowing as you type, each with its words and the
+keys that also press it. Enter runs the line chosen, the arrows choose, a
+click runs one, Escape closes, Ctrl+Up and Ctrl+Down bring back what was run,
+and the focus goes back where it was. A sheet's name shows that sheet as its
+tab does, in the Screen's place for a grid and in the drawer's sheets for a
+plane; a text that begins with `(` or `;` is a row of VLA, written as a
+person's edit as the edit row writes it. A cartridge picked from the list
+`pick` opens gives the game the keys once it loads. Ctrl+Alt+PageDown and
+Ctrl+Alt+PageUp, Excel for the web's keys, move between the sheets in a
+window and in full screen, and Ctrl+PageDown and Ctrl+PageUp, Excel's own, in
+full screen, a window's browser keeping them for its tabs. Where the browser
+has Keyboard Lock, Chrome, Edge and Opera, the page holds Escape in a full
+screen it asked for: Escape closes the palette, a first Escape otherwise
+drops a hint from the top, and a second within three seconds leaves full
+screen, as Escape held does, the browser's own way out. Firefox and Safari
+keep Escape, which leaves full screen at once, and the hint says so as full
+screen begins, naming the browser's own full screen, F11, which leaves
+Escape to the page. Change a macro of the library at the bottom, `cartridges/common.vla`,
 and build again to see every row it writes change; over the fake module the
 build is declined, in words. Pick the glider gun in the bar to see Gosper's
 gun fire a glider every thirty frames, south-east until the stream meets the
