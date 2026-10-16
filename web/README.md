@@ -456,7 +456,11 @@ page shows opened plainly and what Pages deploys.
   scrollbar; over the double its State sheet, over the module the grid
   card's Clock, the frame's number drawn at every frame.
   One line a case into `<pre id="loop">` once the last has answered,
-  which `tools/check_host_loop.ps1` reads.
+  which `tools/check_host_loop.ps1` reads. `?loop=1&cases=abi,grid` runs
+  those cases alone, in the list's order, and names them in the header; the
+  check's control runs each mutant page so, with `abi` and the cases its
+  reason is judged by, the `replay` case after `input`, whose live run it
+  copies.
 - `index.html?blit=1` is the blit's instrument, the engine's second number:
   a 320 by 200 plane drawn through the host's whole frame over the double
   120 times at the scale that fits the screen and 120 at a scale of 1, and,

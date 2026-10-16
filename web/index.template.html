@@ -4197,10 +4197,19 @@
   }
   function runLoopOracle() {
     var out = [], dpr = window.devicePixelRatio || 1, ok = 0, R = HOST.RULES;
-    out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' snap=' + R.snapMs + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + navigator.userAgent);
+    // ?loop=1&cases=a,b: only the cases named run, in the list's order, so that a control's mutant page runs the case
+    // it is judged by and not every case (2026-10-15, the controls' fix 5); the header names them, and a name that is no
+    // case's fails the loop rather than running nothing
+    var askedText = (/[?&]cases=([^&]*)/.exec(QS) || [])[1], asked = askedText ? decodeURIComponent(askedText).split(',').filter(function (n) { return n !== ''; }) : null;
+    out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' snap=' + R.snapMs + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + (asked ? 'asked=' + asked.join(',') + '; ' : '') + navigator.userAgent);
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges]];
+    if (asked) {
+      var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
+      if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
+      cases = cases.filter(function (c) { return asked.indexOf(c[0]) >= 0; });
+    }
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.

@@ -353,6 +353,13 @@ clip, which the first crafted patch finds in A1, the selection blended
 twice, and a draw list that keeps the last full paint's ops, which the
 first crafted patch finds too. The real page must pass first.
 
+Since 2026-10-15 each mutant page runs `abi`, which names the page's
+module, and the cases its reason is judged by (?loop=1&cases=), never the
+twenty-three: replay after input, whose live run it copies; the real page
+and the game's page run every case. Every case run alone prints the counts
+it prints among the rest (measured that day), and the control went from 12
+minutes to 3.6 on the owner's machine.
+
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A headless run's clock is
 virtual, so nothing here is a timing.
@@ -644,13 +651,15 @@ function Find-Browser([string]$named) {
     }
     return ''
 }
-function Get-PageUrl([string]$path) {
+function Get-PageUrl([string]$path, [string]$cases = '') {
     $slashed = [System.IO.Path]::GetFullPath($path) -replace '\\', '/'
-    if ($slashed.StartsWith('/')) { return 'file://' + $slashed + '?loop=1' }
-    return 'file:///' + $slashed + '?loop=1'
+    $query = '?loop=1' + $(if ($cases -ne '') { '&cases=' + $cases } else { '' })
+    if ($slashed.StartsWith('/')) { return 'file://' + $slashed + $query }
+    return 'file:///' + $slashed + $query
 }
-# One headless run: the loop element's text, or '' with the reason.
-function Invoke-Loop([string]$browser, [string]$page, [string]$scale) {
+# One headless run: the loop element's text, or '' with the reason. $cases, a comma-separated list, runs those cases
+# alone (a mutant page's, 2026-10-15); empty runs every case.
+function Invoke-Loop([string]$browser, [string]$page, [string]$scale, [string]$cases = '') {
     $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('alonzo_loop_' + [System.IO.Path]::GetRandomFileName())
     New-Item -ItemType Directory -Path $tmp | Out-Null
     try {
@@ -660,7 +669,7 @@ function Invoke-Loop([string]$browser, [string]$page, [string]$scale) {
                      '--virtual-time-budget=60000', ('--force-device-scale-factor=' + $scale), '--window-size=1600,1200', '--no-first-run', '--no-default-browser-check',
                      ('--user-data-dir="' + (Join-Path $tmp 'profile') + '"'))
         if (-not $onWindows) { $argList += @('--no-sandbox', '--disable-dev-shm-usage') }
-        $argList += @('--dump-dom', ('"' + (Get-PageUrl $page) + '"'))
+        $argList += @('--dump-dom', ('"' + (Get-PageUrl $page $cases) + '"'))
         $start = @{ FilePath = $browser; ArgumentList = $argList; RedirectStandardOutput = $dump; RedirectStandardError = $err; Wait = $true }
         if ($onWindows) { $start['NoNewWindow'] = $true }
         Start-Process @start
@@ -702,12 +711,19 @@ function New-GamePage([string]$dir, [string]$name, [string]$Hand = '', [switch]$
     return $out
 }
 # The judgment of one run's text at one scale: the problems, and the case lines to print. A game's page
-# (ENGINE.16) is judged by its own floors, its own count of cases, and the cases each must say are not on it.
-function Test-Loop([string]$text, [string]$scale, [object[]]$table = $floors, [int]$want = $expectedCases, [string[]]$absent = @()) {
+# (ENGINE.16) is judged by its own floors, its own count of cases, and the cases each must say are not on it. $only,
+# a run of some cases alone (a mutant page's, 2026-10-15), judges those cases' floors and counts them alone, and the
+# header must name them.
+function Test-Loop([string]$text, [string]$scale, [object[]]$table = $floors, [int]$want = $expectedCases, [string[]]$absent = @(), [string[]]$only = @()) {
     $problems = New-Object System.Collections.Generic.List[string]
     $lines = @($text -split "`n" | ForEach-Object { $_.TrimEnd("`r") })
     $header = $lines[0]
     if ($header -notlike 'loop: host *') { $problems.Add("the first line is not the loop oracle's header: $header") }
+    if ($only.Count -gt 0) {
+        $table = @($table | Where-Object { $only -contains $_.Case })
+        $want = $table.Count
+        if ($header -notlike ('*; asked=' + ($only -join ',') + ';*')) { $problems.Add("the page's header names no cases asked as " + ($only -join ',') + ": $header") }
+    }
     $dm = [regex]::Match($header, 'dpr=([0-9.]+)')
     if (-not $dm.Success -or $dm.Groups[1].Value -ne $scale) { $problems.Add("the page saw a ratio of '$($dm.Groups[1].Value)', the run asked for $scale") }
     $cases = @{}
@@ -784,6 +800,14 @@ if ($Control) {
             if ($code -ne 0 -or -not (Test-Path -LiteralPath $out)) { throw "the builder could not build the mutant page $name" }
             return $out
         }
+        # A mutant page runs abi, which names the page's module, and the cases its reason is judged by, not all
+        # twenty-three (2026-10-15, fix 5 of the controls' time); the real page and the game's page run every case.
+        function Get-MutantCases([string]$cases) { return 'abi' + $(if ($cases -ne '') { ',' + $cases } else { '' }) }
+        function Invoke-Mutant([string]$page, [string]$cases) { return Invoke-Loop $browser $page '1' (Get-MutantCases $cases) }
+        function Test-Mutant($run, [string]$cases, [object[]]$table = $floors) {
+            if ($run.Text -eq '') { return @{ Problems = @($run.Reason) } }
+            return Test-Loop $run.Text '1' $table $expectedCases @() @((Get-MutantCases $cases) -split ',')
+        }
         # the real page first
         $r0 = Invoke-Loop $browser $Page '1'
         $j0 = if ($r0.Text -ne '') { Test-Loop $r0.Text '1' } else { @{ Problems = @($r0.Reason) } }
@@ -791,9 +815,9 @@ if ($Control) {
         $anchorA = 'var ACCUMULATOR_CAP_MS = 250;'
         if (([regex]::Matches($js, [regex]::Escape($anchorA))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorA' is not in web/host.js exactly once"; exit 1 }
         $jsA = Join-Path $tmp 'a.js'; [System.IO.File]::WriteAllText($jsA, $js.Replace($anchorA, 'var ACCUMULATOR_CAP_MS = 2500;'), $utf8)
-        $rA = Invoke-Loop $browser (New-MutantPage 'a' $template $jsA) '1'
+        $rA = Invoke-Mutant (New-MutantPage 'a' $template $jsA) 'rate30'
         $aApplied = ($rA.Text -ne '') -and ($rA.Text.Split("`n")[0] -like '*cap=2500*')
-        $jA = if ($rA.Text -ne '') { Test-Loop $rA.Text '1' } else { @{ Problems = @($rA.Reason) } }
+        $jA = Test-Mutant $rA 'rate30'
         $aStall = @($jA.Problems | Where-Object { $_ -like '*rate30*after tick 60 the host is at frame*' }).Count
         # mutant B: the derived writes issued after the inputs; the edit of State!B1 must lose and fail by name
         $anchorB = "    this._issueDerived();   // section 5, step 2: the derived writes, before the inputs`n    this._issueInputs();    // step 3: the Input rows, then a person's edits, each its own write"
@@ -801,14 +825,14 @@ if ($Control) {
         if (([regex]::Matches($js, [regex]::Escape($anchorB))).Count -ne 1) { Write-Output "FAIL: the two lines of the frame's writes are not in web/host.js exactly once, in order"; exit 1 }
         $jsB = Join-Path $tmp 'b.js'; $mutB = $js.Replace($anchorB, $swapB); [System.IO.File]::WriteAllText($jsB, $mutB, $utf8)
         $bApplied = ([regex]::Matches($mutB, [regex]::Escape($swapB))).Count -eq 1
-        $rB = Invoke-Loop $browser (New-MutantPage 'b' $template $jsB) '1'
-        $jB = if ($rB.Text -ne '') { Test-Loop $rB.Text '1' } else { @{ Problems = @($rB.Reason) } }
+        $rB = Invoke-Mutant (New-MutantPage 'b' $template $jsB) 'rate30'
+        $jB = Test-Mutant $rB 'rate30'
         $bLost = @($jB.Problems | Where-Object { $_ -like '*must win over the derived write*' }).Count
         # mutant C: the loop element cut from the template
         $anchorC = '<pre id="loop" class="result">'
         if (([regex]::Matches($tpl, [regex]::Escape($anchorC))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorC' is not in the template exactly once"; exit 1 }
         $tplC = Join-Path $tmp 'c.template.html'; [System.IO.File]::WriteAllText($tplC, $tpl.Replace($anchorC, '<pre id="loop-cut" class="result">'), $utf8)
-        $rC = Invoke-Loop $browser (New-MutantPage 'c' $tplC $hostJs) '1'
+        $rC = Invoke-Mutant (New-MutantPage 'c' $tplC $hostJs) ''
         $cNoBlock = ($rC.Text -eq '') -and ($rC.Reason -like 'no loop block*')
         # mutant D, when the real page holds the engine's module: the reference Life lets a cell
         # survive on three neighbors alone; the engine case must fail by name at frame 11
@@ -821,8 +845,8 @@ if ($Control) {
             $mutD = $tpl.Replace($anchorD, 'next[i] = (others === 3 || (me === 1 && others === 3)) ? 1 : 0;')
             $dApplied = $mutD -cne $tpl
             $tplD = Join-Path $tmp 'd.template.html'; [System.IO.File]::WriteAllText($tplD, $mutD, $utf8)
-            $rD = Invoke-Loop $browser (New-MutantPage 'd' $tplD $hostJs) '1'
-            $jD = if ($rD.Text -ne '') { Test-Loop $rD.Text '1' } else { @{ Problems = @($rD.Reason) } }
+            $rD = Invoke-Mutant (New-MutantPage 'd' $tplD $hostJs) 'engine'
+            $jD = Test-Mutant $rD 'engine'
             $dFailed = @($jD.Problems | Where-Object { $_ -like '*case engine*frame 11 differs from the reference Life*' }).Count
             $dNote = "applied ($dApplied) and failed the engine case at frame 11 ($dFailed)"
         }
@@ -833,8 +857,8 @@ if ($Control) {
         $mutE = $js.Replace($anchorE, '    // the frame-0 draw cut by the control')
         $eApplied = $mutE -cne $js
         $jsE = Join-Path $tmp 'e.js'; [System.IO.File]::WriteAllText($jsE, $mutE, $utf8)
-        $rE = Invoke-Loop $browser (New-MutantPage 'e' $template $jsE) '1'
-        $jE = if ($rE.Text -ne '') { Test-Loop $rE.Text '1' } else { @{ Problems = @($rE.Reason) } }
+        $rE = Invoke-Mutant (New-MutantPage 'e' $template $jsE) 'scale'
+        $jE = Test-Mutant $rE 'scale'
         $eFailed = @($jE.Problems | Where-Object { $_ -like '*case scale*after the reload the cell*' }).Count
         # mutant F: the canvas left as it was at an unload; the scale case's refused load must fail by name
         $anchorF = '    this._clear();'
@@ -842,8 +866,8 @@ if ($Control) {
         $mutF = $js.Replace($anchorF, '    // the clear cut by the control')
         $fApplied = $mutF -cne $js
         $jsF = Join-Path $tmp 'f.js'; [System.IO.File]::WriteAllText($jsF, $mutF, $utf8)
-        $rF = Invoke-Loop $browser (New-MutantPage 'f' $template $jsF) '1'
-        $jF = if ($rF.Text -ne '') { Test-Loop $rF.Text '1' } else { @{ Problems = @($rF.Reason) } }
+        $rF = Invoke-Mutant (New-MutantPage 'f' $template $jsF) 'scale'
+        $jF = Test-Mutant $rF 'scale'
         $fFailed = @($jF.Problems | Where-Object { $_ -like '*case scale*after a refused load the cell*' }).Count
         # mutant G: a refusal said without its mark; the rate30 case must fail, a refusal not marked as one
         $anchorG = "Host.prototype._refuse = function (text) { this._say(text, 'event', true); };"
@@ -851,8 +875,8 @@ if ($Control) {
         $mutG = $js.Replace($anchorG, "Host.prototype._refuse = function (text) { this._say(text, 'event', false); };")
         $gApplied = $mutG -cne $js
         $jsG = Join-Path $tmp 'g.js'; [System.IO.File]::WriteAllText($jsG, $mutG, $utf8)
-        $rG = Invoke-Loop $browser (New-MutantPage 'g' $template $jsG) '1'
-        $jG = if ($rG.Text -ne '') { Test-Loop $rG.Text '1' } else { @{ Problems = @($rG.Reason) } }
+        $rG = Invoke-Mutant (New-MutantPage 'g' $template $jsG) 'rate30'
+        $jG = Test-Mutant $rG 'rate30'
         $gFailed = @($jG.Problems | Where-Object { $_ -like '*case rate30*a refusal is not marked as one*' }).Count
         # mutant H: the Camera read after the plane is drawn; the plane is a frame late and the plane case must fail by name
         $anchorH = "    if (d.camera) this._readCamera();`n    if (d.palette) this._readPalette();`n    if (this.cart.mode === 'plane') this._drawPlane();"
@@ -861,8 +885,8 @@ if ($Control) {
         $mutH = $js.Replace($anchorH, $swapH)
         $hApplied = ([regex]::Matches($mutH, [regex]::Escape($swapH))).Count -eq 1
         $jsH = Join-Path $tmp 'h.js'; [System.IO.File]::WriteAllText($jsH, $mutH, $utf8)
-        $rH = Invoke-Loop $browser (New-MutantPage 'h' $template $jsH) '1'
-        $jH = if ($rH.Text -ne '') { Test-Loop $rH.Text '1' } else { @{ Problems = @($rH.Reason) } }
+        $rH = Invoke-Mutant (New-MutantPage 'h' $template $jsH) 'plane'
+        $jH = Test-Mutant $rH 'plane'
         $hFailed = @($jH.Problems | Where-Object { $_ -like "*case plane*in the host's plane and*by the record of*" }).Count
         # mutant I: the blit masks a byte to the palette; a byte past it draws as a color, and the plane case's pixels must fail
         $anchorI = '    for (var i = 0; i < n; i++) px[i] = pal[bytes[i]];'
@@ -870,8 +894,8 @@ if ($Control) {
         $mutI = $js.Replace($anchorI, '    for (var i = 0; i < n; i++) px[i] = pal[bytes[i] & 15];')
         $iApplied = $mutI -cne $js
         $jsI = Join-Path $tmp 'i.js'; [System.IO.File]::WriteAllText($jsI, $mutI, $utf8)
-        $rI = Invoke-Loop $browser (New-MutantPage 'i' $template $jsI) '1'
-        $jI = if ($rI.Text -ne '') { Test-Loop $rI.Text '1' } else { @{ Problems = @($rI.Reason) } }
+        $rI = Invoke-Mutant (New-MutantPage 'i' $template $jsI) 'plane'
+        $jI = Test-Mutant $rI 'plane'
         $iFailed = @($jI.Problems | Where-Object { $_ -like '*case plane*reads*not 255,0,255*' }).Count
         # mutant J: the double reads a formula without a value as 255 again; the plane case must fail over the double
         $anchorJ = '    if (!e || e.v === undefined) return 0;   // nothing here, or a formula with no value'
@@ -879,8 +903,8 @@ if ($Control) {
         $mutJ = $fk.Replace($anchorJ, '    if (!e) return 0;')
         $jApplied = $mutJ -cne $fk
         $fkJ = Join-Path $tmp 'j.fake.js'; [System.IO.File]::WriteAllText($fkJ, $mutJ, $utf8)
-        $rJ = Invoke-Loop $browser (New-MutantPage 'j' $template $hostJs $fkJ) '1'
-        $jJ = if ($rJ.Text -ne '') { Test-Loop $rJ.Text '1' } else { @{ Problems = @($rJ.Reason) } }
+        $rJ = Invoke-Mutant (New-MutantPage 'j' $template $hostJs $fkJ) 'plane'
+        $jJ = Test-Mutant $rJ 'plane'
         $jFailed = @($jJ.Problems | Where-Object { $_ -like "*case plane*fake frame*holds 255 in the host's plane and 0 by the record*" }).Count
         # mutant K, when the real page holds the engine's module: a scratch copy of cartridges/ whose
         # library writes the Palette's names to column D; the page's pass writes rows the command line
@@ -896,8 +920,8 @@ if ($Control) {
             $mutK = $lib.Replace($anchorK, '(cell "Palette" (symbol "\"D" (+expand index 1))')
             $kApplied = $mutK -cne $lib
             [System.IO.File]::WriteAllText($libK, $mutK, $utf8)
-            $rK = Invoke-Loop $browser (New-MutantPage 'k' $template $hostJs '' $cartsK) '1'
-            $jK = if ($rK.Text -ne '') { Test-Loop $rK.Text '1' } else { @{ Problems = @($rK.Reason) } }
+            $rK = Invoke-Mutant (New-MutantPage 'k' $template $hostJs '' $cartsK) 'pass'
+            $jK = Test-Mutant $rK 'pass'
             $kFailed = @($jK.Problems | Where-Object { $_ -like "*case pass*the page's pass differs from*the command line's*" }).Count
             $kNote = "applied ($kApplied) and failed the pass case ($kFailed)"
         }
@@ -909,8 +933,8 @@ if ($Control) {
         $mutL = $js.Replace($anchorL, "    out.push('(cell `"Input`" `"B11`" ' + (on ? pt.col : 0) + ')', '(cell `"Input`" `"B12`" ' + (on ? pt.row : 0) + ')');")
         $lApplied = $mutL -cne $js
         $jsL = Join-Path $tmp 'l.js'; [System.IO.File]::WriteAllText($jsL, $mutL, $utf8)
-        $rL = Invoke-Loop $browser (New-MutantPage 'l' $template $jsL) '1'
-        $jL = if ($rL.Text -ne '') { Test-Loop $rL.Text '1' } else { @{ Problems = @($rL.Reason) } }
+        $rL = Invoke-Mutant (New-MutantPage 'l' $template $jsL) 'rate30,input'
+        $jL = Test-Mutant $rL 'rate30,input'
         $lFailed = @($jL.Problems | Where-Object { $_ -like '*case rate30*the pointer at the window*' }).Count
         $lInput = @($jL.Problems | Where-Object { $_ -like '*case input*in the card by hand*' }).Count
         $lOk = $lApplied -and $lFailed -ge 1 -and (($moduleReal -eq 0) -or $lInput -ge 1)
@@ -925,16 +949,16 @@ if ($Control) {
             $mutM = $js.Replace($anchorM, '    // the rate read cut by the control')
             $mApplied = $mutM -cne $js
             $jsM = Join-Path $tmp 'm.js'; [System.IO.File]::WriteAllText($jsM, $mutM, $utf8)
-            $rM = Invoke-Loop $browser (New-MutantPage 'm' $template $jsM) '1'
-            $jM = if ($rM.Text -ne '') { Test-Loop $rM.Text '1' } else { @{ Problems = @($rM.Reason) } }
+            $rM = Invoke-Mutant (New-MutantPage 'm' $template $jsM) 'input'
+            $jM = Test-Mutant $rM 'input'
             $mFailed = @($jM.Problems | Where-Object { $_ -like '*case input*before its interval was owed*' }).Count
             $anchorN = "    if (c.seed === 'host') this._seed();"
             if (([regex]::Matches($js, [regex]::Escape($anchorN))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorN' is not in web/host.js exactly once"; exit 1 }
             $mutN = $js.Replace($anchorN, '    // the seed cut by the control')
             $nApplied = $mutN -cne $js
             $jsN = Join-Path $tmp 'n.js'; [System.IO.File]::WriteAllText($jsN, $mutN, $utf8)
-            $rN = Invoke-Loop $browser (New-MutantPage 'n' $template $jsN) '1'
-            $jN = if ($rN.Text -ne '') { Test-Loop $rN.Text '1' } else { @{ Problems = @($rN.Reason) } }
+            $rN = Invoke-Mutant (New-MutantPage 'n' $template $jsN) 'input'
+            $jN = Test-Mutant $rN 'input'
             $nFailed = @($jN.Problems | Where-Object { $_ -like '*case input*Clock!B3 holds*' }).Count
             # mutant O (ENGINE.3's hand test): the backlog held to the quarter second whatever the rate,
             # as it was, which starved the teacher's rate of 1; the input case must fail at the frame it never ran
@@ -943,8 +967,8 @@ if ($Control) {
             $mutO = $js.Replace($anchorO, '    this.acc = Math.min(this.acc + Math.min(dt, ACCUMULATOR_CAP_MS), ACCUMULATOR_CAP_MS);')
             $oApplied = $mutO -cne $js
             $jsO = Join-Path $tmp 'o.js'; [System.IO.File]::WriteAllText($jsO, $mutO, $utf8)
-            $rO = Invoke-Loop $browser (New-MutantPage 'o' $template $jsO) '1'
-            $jO = if ($rO.Text -ne '') { Test-Loop $rO.Text '1' } else { @{ Problems = @($rO.Reason) } }
+            $rO = Invoke-Mutant (New-MutantPage 'o' $template $jsO) 'input'
+            $jO = Test-Mutant $rO 'input'
             $oFailed = @($jO.Problems | Where-Object { $_ -like '*case input*ticks of 250 ms at the Clock*rate of 1 the host is at frame 18, not 19*' }).Count
             $mnNote = "the rate read cut applied ($mApplied) and failed the input case ($mFailed); the seed cut applied ($nApplied) and failed it ($nFailed); the backlog held to the quarter second applied ($oApplied) and failed it ($oFailed)"
         }
@@ -961,24 +985,24 @@ if ($Control) {
             $mutP = $js.Replace($anchorP, "      // the edit's record cut by the control")
             $pApplied = $mutP -cne $js
             $jsP = Join-Path $tmp 'p.js'; [System.IO.File]::WriteAllText($jsP, $mutP, $utf8)
-            $rP = Invoke-Loop $browser (New-MutantPage 'p' $template $jsP) '1'
-            $jP = if ($rP.Text -ne '') { Test-Loop $rP.Text '1' } else { @{ Problems = @($rP.Reason) } }
+            $rP = Invoke-Mutant (New-MutantPage 'p' $template $jsP) 'input,replay'
+            $jP = Test-Mutant $rP 'input,replay'
             $pFailed = @($jP.Problems | Where-Object { $_ -like '*case replay*does not log the edit*' }).Count
             $anchorQ = '    this._issueDerived();   // section 5, step 2: the derived writes, before the inputs'
             if (([regex]::Matches($js, [regex]::Escape($anchorQ))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorQ' is not in web/host.js exactly once"; exit 1 }
             $mutQ = $js.Replace($anchorQ, '    if (!this.player) this._issueDerived();   // the derived writes cut from a replay by the control')
             $qApplied = $mutQ -cne $js
             $jsQ = Join-Path $tmp 'q.js'; [System.IO.File]::WriteAllText($jsQ, $mutQ, $utf8)
-            $rQ = Invoke-Loop $browser (New-MutantPage 'q' $template $jsQ) '1'
-            $jQ = if ($rQ.Text -ne '') { Test-Loop $rQ.Text '1' } else { @{ Problems = @($rQ.Reason) } }
+            $rQ = Invoke-Mutant (New-MutantPage 'q' $template $jsQ) 'input,replay'
+            $jQ = Test-Mutant $rQ 'input,replay'
             $qFailed = @($jQ.Problems | Where-Object { $_ -like '*case replay*that is not its golden*' }).Count
             $anchorR = "    if (String(str(f[1])).toLowerCase() === 'input') rec.input = null;   // the Input sheet unknown to the replay: its next rows are logged whole"
             if (([regex]::Matches($js, [regex]::Escape($anchorR))).Count -ne 1) { Write-Output "FAIL: the Input sheet's record made unknown is not in web/host.js exactly once"; exit 1 }
             $mutR = $js.Replace($anchorR, "    // the Input sheet's record kept across a person's edit of it, by the control")
             $rApplied = $mutR -cne $js
             $jsR = Join-Path $tmp 'r.js'; [System.IO.File]::WriteAllText($jsR, $mutR, $utf8)
-            $rR = Invoke-Loop $browser (New-MutantPage 'r' $template $jsR) '1'
-            $jR = if ($rR.Text -ne '') { Test-Loop $rR.Text '1' } else { @{ Problems = @($rR.Reason) } }
+            $rR = Invoke-Mutant (New-MutantPage 'r' $template $jsR) 'input,replay'
+            $jR = Test-Mutant $rR 'input,replay'
             $rFailed = @($jR.Problems | Where-Object { $_ -like "*case replay*after a person's edit of the Input sheet*" }).Count
             $pqrNote = "the edit's record cut applied ($pApplied) and failed the replay case ($pFailed); the derived writes cut from a replay applied ($qApplied) and failed it ($qFailed); the Input sheet's record kept applied ($rApplied) and failed it ($rFailed)"
         }
@@ -1007,9 +1031,9 @@ if ($Control) {
             $mutS = $js.Replace($mu.Anchor, $mu.With)
             $sApplied = $mutS -cne $js
             $jsS = Join-Path $tmp ($mu.L + '.js'); [System.IO.File]::WriteAllText($jsS, $mutS, $utf8)
-            $rS = Invoke-Loop $browser (New-MutantPage $mu.L $template $jsS) '1'
+            $rS = Invoke-Mutant (New-MutantPage $mu.L $template $jsS) 'audio'
             # not $jS: names fold case here, and $jS would be $js, the host's text the next mutant reads
-            $sJudge = if ($rS.Text -ne '') { Test-Loop $rS.Text '1' } else { @{ Problems = @($rS.Reason) } }
+            $sJudge = Test-Mutant $rS 'audio'
             $sFailed = @($sJudge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
             $sndJudged.Add(@{ Name = $mu.Name; Problems = @($sJudge.Problems) })
             $sndNotes.Add(("{0} applied ({1}) and failed the audio case ({2})" -f $mu.Name, $sApplied, $sFailed))
@@ -1029,8 +1053,8 @@ if ($Control) {
         $xApplied = ($mutXh -cne $js) -and ($mutXt -cne $tpl)
         $jsX = Join-Path $tmp 'x.js'; [System.IO.File]::WriteAllText($jsX, $mutXh, $utf8)
         $tplX = Join-Path $tmp 'x.template.html'; [System.IO.File]::WriteAllText($tplX, $mutXt, $utf8)
-        $rX = Invoke-Loop $browser (New-MutantPage 'x' $tplX $jsX) '1'
-        $jX = if ($rX.Text -ne '') { Test-Loop $rX.Text '1' } else { @{ Problems = @($rX.Reason) } }
+        $rX = Invoke-Mutant (New-MutantPage 'x' $tplX $jsX) 'audio,sound'
+        $jX = Test-Mutant $rX 'audio,sound'
         $xFailed = @($jX.Problems | Where-Object { $_ -cmatch 'case sound.*the sound, frame \d+ \(voice \d, a \w+ at note \d+\): its rms [\d.]+, and the volume over four times the \w+''s own [\d.]+, [\d.]+% apart, over 4%' }).Count
         $xAudio = @($jX.Problems | Where-Object { $_ -like '*case audio*' }).Count
         $xNote = "the time constant in milliseconds, in the host and the page alike, applied ($xApplied), passed the audio case ($($xAudio -eq 0)) and failed the sound case ($xFailed)"
@@ -1043,8 +1067,8 @@ if ($Control) {
         $mutY = $js.Replace($anchorY, '    // the stop said to no one, by the control')
         $yApplied = $mutY -cne $js
         $jsY = Join-Path $tmp 'y.js'; [System.IO.File]::WriteAllText($jsY, $mutY, $utf8)
-        $rY = Invoke-Loop $browser (New-MutantPage 'y' $template $jsY) '1'
-        $jY = if ($rY.Text -ne '') { Test-Loop $rY.Text '1' } else { @{ Problems = @($rY.Reason) } }
+        $rY = Invoke-Mutant (New-MutantPage 'y' $template $jsY) 'input,replay'
+        $jY = Test-Mutant $rY 'input,replay'
         $yFailed = @($jY.Problems | Where-Object { $_ -cmatch 'case replay.*said the loop stopped 0 time\(s\), where it says so once, at its last frame' }).Count
         $yNote = "the stop said to no one applied ($yApplied) and failed the replay case ($yFailed)"
         $yOk = $yApplied -and $yFailed -ge 1
@@ -1055,9 +1079,9 @@ if ($Control) {
         if (([regex]::Matches($js, [regex]::Escape($anchorZ))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorZ' is not in web/host.js exactly once"; exit 1 }
         $mutZ = $js.Replace($anchorZ, '  var SLICE_FRACTION = 0.5;')
         $jsZ = Join-Path $tmp 'z.js'; [System.IO.File]::WriteAllText($jsZ, $mutZ, $utf8)
-        $rZ = Invoke-Loop $browser (New-MutantPage 'z' $template $jsZ) '1'
+        $rZ = Invoke-Mutant (New-MutantPage 'z' $template $jsZ) 'slice'
         $zApplied = ($mutZ -cne $js) -and ($rZ.Text -ne '') -and ($rZ.Text.Split("`n")[0] -like '*slice=0.5;*')
-        $jZ = if ($rZ.Text -ne '') { Test-Loop $rZ.Text '1' } else { @{ Problems = @($rZ.Reason) } }
+        $jZ = Test-Mutant $rZ 'slice'
         $zFailed = @($jZ.Problems | Where-Object { $_ -cmatch 'case slice.*a tick spends 0\.75 of a display interval of 20 ms, 15 step calls of 1 ms, and tick 2 made 10' }).Count
         $zNote = "the slice at a half applied ($zApplied) and failed the slice case ($zFailed)"
         $zOk = $zApplied -and $zFailed -ge 1
@@ -1068,9 +1092,9 @@ if ($Control) {
         if (([regex]::Matches($js, [regex]::Escape($anchorAA))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorAA' is not in web/host.js exactly once"; exit 1 }
         $mutAA = $js.Replace($anchorAA, '  var SNAP_MS = 0;')
         $jsAA = Join-Path $tmp 'aa.js'; [System.IO.File]::WriteAllText($jsAA, $mutAA, $utf8)
-        $rAA = Invoke-Loop $browser (New-MutantPage 'aa' $template $jsAA) '1'
+        $rAA = Invoke-Mutant (New-MutantPage 'aa' $template $jsAA) 'pace'
         $aaApplied = ($mutAA -cne $js) -and ($rAA.Text -ne '') -and ($rAA.Text.Split("`n")[0] -like '* snap=0 slice=*')
-        $jAA = if ($rAA.Text -ne '') { Test-Loop $rAA.Text '1' } else { @{ Problems = @($rAA.Reason) } }
+        $jAA = Test-Mutant $rAA 'pace'
         $aaFailed = @($jAA.Problems | Where-Object { $_ -cmatch 'case pace.*at a rate of 60, on ticks 16\.6 or 16\.7 ms apart, a tick presents one frame, and tick 2 presented 0' }).Count
         $aaNote = "the tick on no grid applied ($aaApplied) and failed the pace case ($aaFailed)"
         $aaOk = $aaApplied -and $aaFailed -ge 1
@@ -1093,8 +1117,8 @@ if ($Control) {
             if (([regex]::Matches($sandHandText, [regex]::Escape($anchorAB))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorAB' is not in cartridges/sand/sand.hand.js exactly once"; exit 1 }
             $mutAB = $sandHandText.Replace($anchorAB, '      return dr * dr + dc * dc < brush.radius * brush.radius ? brush.material : -1;')
             $abApplied = $mutAB -cne $sandHandText
-            $rAB = Invoke-Loop $browser (New-MutantPage 'ab' $template $hostJs '' (New-HandCopy 'ab' 'sand/sand.hand.js' $mutAB)) '1'
-            $jAB = if ($rAB.Text -ne '') { Test-Loop $rAB.Text '1' } else { @{ Problems = @($rAB.Reason) } }
+            $rAB = Invoke-Mutant (New-MutantPage 'ab' $template $hostJs '' (New-HandCopy 'ab' 'sand/sand.hand.js' $mutAB)) 'input,replay'
+            $jAB = Test-Mutant $rAB 'input,replay'
             $abFailed = @($jAB.Problems | Where-Object { $_ -like "*case replay*sand's committed replay, played on a fresh host, is not its hand's at frame*" }).Count
             $abNote = "the brush without its rim applied ($abApplied) and failed the replay case ($abFailed)"
         }
@@ -1109,8 +1133,8 @@ if ($Control) {
             if (([regex]::Matches($kairosHandText, [regex]::Escape($anchorAI))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorAI' is not in cartridges/kairos/kairos.hand.js exactly once"; exit 1 }
             $mutAI = $kairosHandText.Replace($anchorAI, '    var turn = (this.direction === 1 && right >= KAIROS.columns - 1) || (this.direction === -1 && this.left <= 1);')
             $aiApplied = $mutAI -cne $kairosHandText
-            $rAI = Invoke-Loop $browser (New-MutantPage 'ai' $template $hostJs '' (New-HandCopy 'ai' 'kairos/kairos.hand.js' $mutAI)) '1'
-            $jAI = if ($rAI.Text -ne '') { Test-Loop $rAI.Text '1' } else { @{ Problems = @($rAI.Reason) } }
+            $rAI = Invoke-Mutant (New-MutantPage 'ai' $template $hostJs '' (New-HandCopy 'ai' 'kairos/kairos.hand.js' $mutAI)) 'input,replay'
+            $jAI = Test-Mutant $rAI 'input,replay'
             $aiFailed = @($jAI.Problems | Where-Object { $_ -like "*case replay*kairos's committed replay, played on a fresh host, is not its hand's at frame*" }).Count
             $aiNote = "the turn a column early applied ($aiApplied) and failed the replay case ($aiFailed)"
         }
@@ -1155,9 +1179,9 @@ if ($Control) {
             $g2Applied = $mutG2 -cne $orig
             $fileG2 = Join-Path $tmp ($mu.L + '.' + $mu.File + '.js'); [System.IO.File]::WriteAllText($fileG2, $mutG2, $utf8)
             $pageG2 = if ($mu.File -eq 'viewport') { New-MutantPage $mu.L $template $hostJs '' '' $fileG2 } else { New-MutantPage $mu.L $template $fileG2 }
-            $rG2 = Invoke-Loop $browser $pageG2 '1'
+            $rG2 = Invoke-Mutant $pageG2 'grid'
             # not $jG2 alone: names fold case here, so every judgment of this loop keeps a name of its own
-            $g2Judge = if ($rG2.Text -ne '') { Test-Loop $rG2.Text '1' } else { @{ Problems = @($rG2.Reason) } }
+            $g2Judge = Test-Mutant $rG2 'grid'
             $g2Failed = @($g2Judge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
             $gridJudged.Add(@{ Name = $mu.Name; Problems = @($g2Judge.Problems) })
             $gridNotes.Add(("{0} applied ({1}) and failed the grid case ({2})" -f $mu.Name, $g2Applied, $g2Failed))
@@ -1193,8 +1217,8 @@ if ($Control) {
             $tApplied = $mutT -cne $orig
             $fileT = Join-Path $tmp ($mu.L + '.' + $mu.File + '.js'); [System.IO.File]::WriteAllText($fileT, $mutT, $utf8)
             $pageT = if ($mu.File -eq 'viewport') { New-MutantPage $mu.L $template $hostJs '' '' $fileT } else { New-MutantPage $mu.L $template $fileT }
-            $rT = Invoke-Loop $browser $pageT '1'
-            $tJudge = if ($rT.Text -ne '') { Test-Loop $rT.Text '1' } else { @{ Problems = @($rT.Reason) } }
+            $rT = Invoke-Mutant $pageT 'tabs'
+            $tJudge = Test-Mutant $rT 'tabs'
             $tFailed = @($tJudge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
             $tabsJudged.Add(@{ Name = $mu.Name; Problems = @($tJudge.Problems) })
             $tabsNotes.Add(("{0} applied ({1}) and failed the tabs case ({2})" -f $mu.Name, $tApplied, $tFailed))
@@ -1219,8 +1243,8 @@ if ($Control) {
             $mutE2 = $tpl.Replace($mu.Anchor, $mu.With)
             $e2Applied = $mutE2 -cne $tpl
             $tplE2 = Join-Path $tmp ($mu.L + '.template.html'); [System.IO.File]::WriteAllText($tplE2, $mutE2, $utf8)
-            $rE2 = Invoke-Loop $browser (New-MutantPage $mu.L $tplE2 $hostJs) '1'
-            $e2Judge = if ($rE2.Text -ne '') { Test-Loop $rE2.Text '1' } else { @{ Problems = @($rE2.Reason) } }
+            $rE2 = Invoke-Mutant (New-MutantPage $mu.L $tplE2 $hostJs) 'empty'
+            $e2Judge = Test-Mutant $rE2 'empty'
             $e2Failed = @($e2Judge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
             $emptyJudged.Add(@{ Name = $mu.Name; Problems = @($e2Judge.Problems) })
             $emptyNotes.Add(("{0} applied ({1}) and failed the empty case ({2})" -f $mu.Name, $e2Applied, $e2Failed))
@@ -1257,8 +1281,8 @@ if ($Control) {
             $mutS2 = $js.Replace($mu.Anchor, $mu.With)
             $s2Applied = $mutS2 -cne $js
             $fileS2 = Join-Path $tmp ($mu.L + '.host.js'); [System.IO.File]::WriteAllText($fileS2, $mutS2, $utf8)
-            $rS2 = Invoke-Loop $browser (New-MutantPage $mu.L $template $fileS2) '1'
-            $s2Judge = if ($rS2.Text -ne '') { Test-Loop $rS2.Text '1' } else { @{ Problems = @($rS2.Reason) } }
+            $rS2 = Invoke-Mutant (New-MutantPage $mu.L $template $fileS2) 'still'
+            $s2Judge = Test-Mutant $rS2 'still'
             $s2Failed = @($s2Judge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
             $stillJudged.Add(@{ Name = $mu.Name; Problems = @($s2Judge.Problems) })
             $stillNotes.Add(("{0} applied ({1}) and failed the still case ({2})" -f $mu.Name, $s2Applied, $s2Failed))
@@ -1293,7 +1317,7 @@ if ($Control) {
                Want = 'case views.*views frame 40: the viewport shows Desk, where the Camera shows Ledger' },
             @{ L = 'bj'; Name = 'the Camera''s sheet at every frame'; Anchor = "    if (stage === 'load' || key === was) return;"; With = "    if (stage === 'load' || key === '') return;"
                Want = 'case views.*views frame 41: the host counted 1 show\(s\) of the Camera''s sheet, where its third row holds still' },
-            @{ L = 'bk'; Name = 'the replay at the host''s version'; Anchor = '    var spec = Math.max(3, Math.min(this.cart.spec || 3, SPEC));'; With = '    var spec = SPEC;'
+            @{ L = 'bk'; Name = 'the replay at the host''s version'; Cases = 'input,replay'; Anchor = '    var spec = Math.max(3, Math.min(this.cart.spec || 3, SPEC));'; With = '    var spec = SPEC;'
                Want = 'case replay.*the player''s own recording of \w+\.vla''s committed replay is not the replay it played' }
         )
         $viewsNotes = New-Object System.Collections.Generic.List[string]
@@ -1305,8 +1329,9 @@ if ($Control) {
             $mutV = $js.Replace($mu.Anchor, $mu.With)
             $vApplied = $mutV -cne $js
             $fileV = Join-Path $tmp ($mu.L + '.host.js'); [System.IO.File]::WriteAllText($fileV, $mutV, $utf8)
-            $rV = Invoke-Loop $browser (New-MutantPage $mu.L $template $fileV) '1'
-            $vJudge = if ($rV.Text -ne '') { Test-Loop $rV.Text '1' } else { @{ Problems = @($rV.Reason) } }
+            $vCases = if ($mu.ContainsKey('Cases')) { $mu.Cases } else { 'views' }
+            $rV = Invoke-Mutant (New-MutantPage $mu.L $template $fileV) $vCases
+            $vJudge = Test-Mutant $rV $vCases
             $vFailed = @($vJudge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
             $viewsJudged.Add(@{ Name = $mu.Name; Problems = @($vJudge.Problems) })
             $viewsNotes.Add(("{0} applied ({1}) and failed by name ({2})" -f $mu.Name, $vApplied, $vFailed))
@@ -1372,8 +1397,8 @@ if ($Control) {
             $c2Applied = $mutC2 -cne $c2Orig
             $fileC2 = Join-Path $tmp ($mu.L + '.' + $c2File + '.js'); [System.IO.File]::WriteAllText($fileC2, $mutC2, $utf8)
             $pageC2 = if ($c2File -eq 'viewport') { New-MutantPage $mu.L $template $hostJs '' '' $fileC2 } else { New-MutantPage $mu.L $template $fileC2 }
-            $rC2 = Invoke-Loop $browser $pageC2 '1'
-            $c2Judge = if ($rC2.Text -ne '') { Test-Loop $rC2.Text '1' } else { @{ Problems = @($rC2.Reason) } }
+            $rC2 = Invoke-Mutant $pageC2 'changes'
+            $c2Judge = Test-Mutant $rC2 'changes'
             $c2Failed = @($c2Judge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
             $changesJudged.Add(@{ Name = $mu.Name; Problems = @($c2Judge.Problems) })
             $changesNotes.Add(("{0} applied ({1}) and failed by name ({2})" -f $mu.Name, $c2Applied, $c2Failed))
@@ -1402,13 +1427,13 @@ if ($Control) {
         }
         $tplAW = Join-Path $tmp 'aw.template.html'; [System.IO.File]::WriteAllText($tplAW, $tpl.Replace($anchorAW, '    if (true) {'), $utf8)
         $gameMutants = @(
-            @{ L = 'at'; Name = 'the hand a frame late'; Module = $true; Hand = $kairosHandText.Replace($anchorAT, $withAT)
+            @{ L = 'at'; Name = 'the hand a frame late'; Cases = 'replay'; Module = $true; Hand = $kairosHandText.Replace($anchorAT, $withAT)
                Want = "case replay.*kairos's committed replay, played on a fresh host, is not its hand's at frame 1: row \d+, column \d+ reads" },
-            @{ L = 'au'; Name = 'the Tally a level up'; Module = $true; Hand = $kairosHandText.Replace($anchorAU, $withAU)
+            @{ L = 'au'; Name = 'the Tally a level up'; Cases = 'replay'; Module = $true; Hand = $kairosHandText.Replace($anchorAU, $withAU)
                Want = "case replay.*kairos's committed replay, played on a fresh host, is not its hand's at frame \d+: Tally!C\d+ holds" },
-            @{ L = 'av'; Name = 'the hand''s block dropped'; Module = $true; NoHand = $true
+            @{ L = 'av'; Name = 'the hand''s block dropped'; Cases = 'replay'; Module = $true; NoHand = $true
                Want = 'the case replay at a ratio of 1 counted 1 alone, where it must count none' },
-            @{ L = 'aw'; Name = 'the bench refusing a game''s page'; Template = $tplAW
+            @{ L = 'aw'; Name = 'the bench refusing a game''s page'; Cases = ''; Template = $tplAW
                Want = "the first line is not the loop oracle's header: loop: not on this page" }
         )
         foreach ($mu in $gameMutants) {
@@ -1421,8 +1446,8 @@ if ($Control) {
             if ($mu.NoHand) { $gmApplied = -not $gmText.Contains('<script id="hand-kairos"') }
             elseif ($mu.ContainsKey('Hand')) { $gmApplied = ($mu.Hand -cne $kairosHandText) -and $gmText.Contains('<script id="hand-kairos"') }
             else { $gmApplied = ([System.IO.File]::ReadAllText($mu.Template)) -cne $tpl }
-            $rGm = Invoke-Loop $browser $pageGm '1'
-            $gmJudge = if ($rGm.Text -ne '') { Test-Loop $rGm.Text '1' $gameFloors $gameCases $gameAbsent } else { @{ Problems = @($rGm.Reason) } }
+            $rGm = Invoke-Mutant $pageGm $mu.Cases
+            $gmJudge = Test-Mutant $rGm $mu.Cases $gameFloors
             $gmFailed = @($gmJudge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
             $gameJudged.Add(@{ Name = $mu.Name; Problems = @($gmJudge.Problems) })
             $gameNotes.Add(("{0} applied ({1}) and failed by name ({2})" -f $mu.Name, $gmApplied, $gmFailed))
