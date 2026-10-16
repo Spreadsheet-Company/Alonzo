@@ -92,6 +92,19 @@
   at the attach, since the fake module holds no pass and still drives the
   loop; over a module without one, a build is declined in words.
 
+  And it continues the running game with a rebuilt cartridge (docs/SPEC.md
+  section 7.8; ENGINE.7), edit and continue: apply(text) compares it with the
+  cartridge the grid was last given, the one loaded or the one last applied,
+  each cell or formula row by its sheet and its address, and writes the rows
+  it changed or added as one person's edit at the next frame's start, the
+  frame number and every other cell kept; the replay records them as a
+  person's edits in their frame, under the header of the cartridge loaded.
+  What a write cannot carry, a line of the manifest, a sheet added or removed,
+  a row that is no cell or formula row, or a cell a removed row wrote that no
+  rebuilt row writes, is named in words with Load offered, and nothing is
+  written; and the rebuilt cartridge is first loaded in a second handle and
+  given back, so that nothing Load would refuse is applied.
+
   And it keeps the replay (docs/SPEC.md section 7.6; ENGINE.3's second slice):
   every write a load's run makes, from frame 0, recorded as the replay's
   rows, the Input rows as the cells that changed and each person's edit
@@ -113,7 +126,8 @@
   frames a replay has left to play, the audio context with the voices'
   nodes and the timeline's end, and since ENGINE.19 the records it holds
   with their frames, the device sheets' cells as last read and the Input
-  rows last written. Every value is the module's.
+  rows last written, and since ENGINE.7 the text of the cartridge the grid
+  was last given. Every value is the module's.
   Every refusal and every event is a sentence, the latest new one in the
   status and the last twenty events in a log, a repeat of an event counted in
   the line it first made rather than pushing the others out (SD-30), and a
@@ -377,6 +391,102 @@
     return true;
   }
 
+  // ---- edit and continue (ENGINE.7; docs/SPEC.md section 7.8): a rebuilt cartridge against the grid's ----
+  // A cartridge's rows after its manifest (decision 2): the rows a write carries, cell and formula rows, by their sheet
+  // without case and their address or range in capitals, each spelled back as the reader reads it, so that spacing is
+  // never a change; the sheet rows in their order; every other row by its spelling, counted; and the sheets every row
+  // names. A value row is a formula's value before its first step, which a running grid is past: neither written nor
+  // compared (decision 3).
+  var NAMES_A_SHEET = { sheet: 1, cell: 1, formula: 1, value: 1, column: 1, row: 1, look: 1, style: 1, sentence: 1, gridlines: 1 };
+  function rowsOf(text) {
+    var forms = VP().readForms(text), out = { manifest: forms[0], carried: new Map(), sheetRows: [], other: new Map(), sheets: new Map() };
+    for (var i = 1; i < forms.length; i++) {
+      var f = forms[i], head = Array.isArray(f) ? sym(f[0]) : null, sheet = Array.isArray(f) ? str(f[1]) : null, s = spellForm(f);
+      if (head && NAMES_A_SHEET[head] && sheet !== null) out.sheets.set(sheet.toLowerCase(), sheet);
+      if ((head === 'cell' || head === 'formula') && sheet !== null && str(f[2]) !== null) out.carried.set(sheet.toLowerCase() + '!' + str(f[2]).toUpperCase(), { text: s, head: head, sheet: sheet, range: str(f[2]), at: i });
+      else if (head === 'sheet') out.sheetRows.push(s);
+      else if (head !== 'value') out.other.set(s, (out.other.get(s) || 0) + 1);
+    }
+    return out;
+  }
+  function shortly(s) { return s.length > 90 ? s.slice(0, 87) + '...' : s; }
+  // The manifest's change in words, or null for the same manifest: its name, then a directive changed, added or dropped.
+  function manifestChange(was, now) {
+    var a = Array.isArray(was) ? was : [], b = Array.isArray(now) ? now : [], heads = {}, i;
+    if (spellForm(a) === spellForm(b)) return null;
+    if (spellForm(a.slice(0, 2)) !== spellForm(b.slice(0, 2))) return 'its manifest names the cartridge ' + shortly(spellForm(b[1])) + ', where the running game\'s names ' + shortly(spellForm(a[1]));
+    for (i = 2; i < a.length; i++) heads[Array.isArray(a[i]) ? sym(a[i][0]) : spellForm(a[i])] = spellForm(a[i]);
+    for (i = 2; i < b.length; i++) {
+      var h = Array.isArray(b[i]) ? sym(b[i][0]) : spellForm(b[i]), s = spellForm(b[i]);
+      if (heads[h] === s) { delete heads[h]; continue; }
+      return heads[h] !== undefined ? 'its manifest says ' + shortly(s) + ', where the running game\'s says ' + shortly(heads[h]) : 'its manifest adds ' + shortly(s);
+    }
+    for (var k in heads) if (Object.prototype.hasOwnProperty.call(heads, k)) return 'its manifest drops ' + shortly(heads[k]);
+    return 'its manifest\'s directives stand in another order';
+  }
+  // Whether a range as parseRange reads it holds a cell; and how many cells of a rectangle no range of a list holds.
+  function covers(r, row, col) {
+    if (!r) return false;
+    if (r.columns) return col >= r.left && col <= r.right;
+    if (r.rows) return row >= r.top && row <= r.bottom;
+    return row >= r.top && row <= r.bottom && col >= r.left && col <= r.right;
+  }
+  function uncovered(q, rs) {
+    for (var k = 0; k < rs.length; k++) if (covers(rs[k], q.top, q.left) && covers(rs[k], q.bottom, q.right)) return 0;   // one range holds it whole
+    var n = 0;
+    for (var row = q.top; row <= q.bottom; row++) {
+      for (var col = q.left; col <= q.right; col++) {
+        var hit = false;
+        for (var j = 0; j < rs.length && !hit; j++) hit = covers(rs[j], row, col);
+        if (!hit) n++;
+      }
+    }
+    return n;
+  }
+  function cellsOf(range) { var q = VP().parseRange(range); return q && !q.rows && !q.columns ? (q.bottom - q.top + 1) * (q.right - q.left + 1) : 0; }
+  // A rebuilt cartridge against the one the grid was last given (decisions 2 to 5): why a write cannot carry the change,
+  // each difference in words, the manifest's first, then the sheets, the sheet rows, the rows no write takes, and a
+  // removed row's cells that no rebuilt row writes; and the rows to write, the rebuilt cartridge's changed and added
+  // cell and formula rows in its own order, with their count by kind and their cells.
+  function compareCartridges(baseText, nextText) {
+    var A = rowsOf(baseText), B = rowsOf(nextText), why = [], m = manifestChange(A.manifest, B.manifest), i;
+    if (m) why.push(m);
+    B.sheets.forEach(function (name, key) { if (!A.sheets.has(key)) why.push('it adds the sheet ' + name + ', which a write cannot make'); });
+    A.sheets.forEach(function (name, key) { if (!B.sheets.has(key)) why.push('it drops the sheet ' + name + ', which a write cannot remove'); });
+    for (i = 0; i < Math.max(A.sheetRows.length, B.sheetRows.length); i++) {
+      if (A.sheetRows[i] === B.sheetRows[i]) continue;
+      why.push('its sheet rows change the tabs\' order or a sheet\'s visibility, ' + (B.sheetRows[i] || 'one row fewer') + ' where the running game has ' + (A.sheetRows[i] || 'none') + ', which a write cannot carry');
+      break;
+    }
+    [[B.other, A.other, 'it writes '], [A.other, B.other, 'it no longer writes ']].forEach(function (d) { d[0].forEach(function (n, s) { if ((d[1].get(s) || 0) < n) why.push(d[2] + shortly(s) + ', a row that is no cell or formula row, which a write cannot carry'); }); });
+    var ranges = {};
+    B.carried.forEach(function (v) { var key = v.sheet.toLowerCase(); (ranges[key] = ranges[key] || []).push(VP().parseRange(v.range)); });
+    A.carried.forEach(function (v, key) {
+      if (B.carried.has(key)) return;
+      var q = VP().parseRange(v.range), left = q && !q.rows && !q.columns ? uncovered(q, ranges[v.sheet.toLowerCase()] || []) : -1;
+      if (left !== 0) why.push('it no longer writes ' + v.sheet + '!' + v.range + (left > 0 ? ', ' + thousands(left) + ' cell' + (left === 1 ? '' : 's') + ' no row of it writes,' : ',') + ' and no write empties a cell');
+    });
+    var write = [], formulas = 0, values = 0, cells = 0;
+    B.carried.forEach(function (v, key) { var o = A.carried.get(key); if (!o || o.text !== v.text) write.push(v); });
+    write.sort(function (p, q) { return p.at - q.at; });
+    for (i = 0; i < write.length; i++) { if (write[i].head === 'formula') formulas++; else values++; cells += cellsOf(write[i].range); }
+    return { why: why, rows: write.map(function (v) { return v.text; }), formulas: formulas, values: values, cells: cells };
+  }
+  // What a continue writes, in words: its rows by kind, and their cells.
+  function appliedWords(b) {
+    var parts = [];
+    if (b.formulas) parts.push(b.formulas + ' formula row' + (b.formulas === 1 ? '' : 's'));
+    if (b.values) parts.push(b.values + ' value row' + (b.values === 1 ? '' : 's'));
+    return parts.join(' and ') + ', ' + thousands(b.cells) + ' cell' + (b.cells === 1 ? '' : 's');
+  }
+  // Each row's line in a cartridge's text, where a line holds it as the reader spells it back, a row a line as the
+  // pass writes them; 0 where none does.
+  function linesOf(text, rows) {
+    var at = new Map(), lines = String(text).split('\n');
+    for (var i = 0; i < lines.length; i++) { var t = lines[i].trim(); if (!at.has(t)) at.set(t, i + 1); }
+    return rows.map(function (r) { return at.get(r) || 0; });
+  }
+
   // ---- SHA-256 (FIPS 180-4), synchronous: a replay names its cartridge by the digest of its text
   // with LF line ends, the bytes tools/check_frame_floors.ps1 digests (ENGINE.3, decision 9), in a
   // call that answers at once, where crypto.subtle answers with a promise and only in a secure context ----
@@ -516,9 +626,10 @@
     // sheet the Camera asked for, shown at the frame's end.
     this.shownName = null; this.cameraSheet = null; this.sheetsList = null; this.showWanted = null;
     this.rec = null; this.player = null;   // the replay recorded since the load, and one playing
+    this.given = null;   // the text of the cartridge the grid was last given by a continue, null for the bytes loaded (ENGINE.7)
     this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
     this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, inputsKept: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, patches: 0, shows: 0, saves: 0,
-               sounded: 0, restarts: 0, skipped: 0, silences: 0 };
+               sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0 };
   };
 
   // The module: its ABI number asked first, then every export the loop calls.
@@ -647,6 +758,42 @@
     return { ok: true, text: r.text, rows: rows, ms: ms };
   };
 
+  // ---- edit and continue (ENGINE.7; docs/SPEC.md section 7.8): a rebuilt cartridge applied to the running game ----
+  // The cartridge the grid was last given (decision 10): the one loaded, or the one a continue last applied.
+  Host.prototype._given = function () { return this.given !== null ? this.given : dec.decode(this.cartBytes); };
+  // A rebuilt cartridge applied to the running game, its state kept (decisions 1 to 8). Compared with the cartridge the
+  // grid was last given, row by row; what a write cannot carry named in words with Load offered, and nothing written;
+  // the rebuilt cartridge loaded in a second handle and given back at once, so that nothing Load would refuse is
+  // applied; then the rows it changed or added, one act in the place of a person's edits at the next frame's start, a
+  // press waiting replaced by the next; at rate zero, one edit and one step. name: the file's name in the sentences, the
+  // name the cartridge loaded was given by default.
+  Host.prototype.apply = function (text, name) {
+    if (!this.m) return this._fail('There is no engine module to apply a cartridge to.');
+    if (!this.handle || !this.cart || !this.cartBytes) return this._fail('No cartridge is loaded to apply a rebuilt one to: Load starts one from frame 0.');
+    var file = name || this.cartFile || 'the cartridge', next = String(text || '');
+    if (this.player) return this._fail('The rebuilt ' + file + ' was not applied: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s edits wait until it ends, so that what plays is the replay alone.');
+    var cmp = compareCartridges(this._given(), next), at = 'frame ' + this.frame + ': ';
+    if (cmp.why.length) return this._fail(at + file + ' cannot be applied to the running game: ' + cmp.why[0] + (cmp.why.length > 1 ? ', and ' + (cmp.why.length - 1) + ' more' : '') + '. Load starts it from frame 0.');
+    if (!cmp.rows.length) { this._say(at + file + ' changes no cell or formula row of the cartridge the running game holds: nothing to apply.'); return { ok: true, rows: 0, cells: 0, formulas: 0, values: 0 }; }
+    var r = this._checkLoad(next, file);
+    if (r) return this._fail(at + file + ' cannot be applied to the running game, since a load refuses it: ' + words(r) + '; nothing was written.');
+    for (var i = this.edits.length - 1; i >= 0; i--) if (typeof this.edits[i] !== 'string') this.edits.splice(i, 1);   // a press waiting, replaced
+    var b = { text: next, file: file, rows: cmp.rows, lines: linesOf(next, cmp.rows), formulas: cmp.formulas, values: cmp.values, cells: cmp.cells };
+    this.edits.push(b);
+    if (!this.inFrame && this.cart.rate === 0) this._editFrames(this._window());
+    else if (!this.running && this.cart.rate > 0) this._say(at + file + ' waits for the next frame, which Run brings: ' + appliedWords(b) + ' to write; the loop is paused at ' + this.cart.rate + ' frame' + (this.cart.rate === 1 ? '' : 's') + ' a second.');
+    return { ok: true, rows: cmp.rows.length, cells: cmp.cells, formulas: cmp.formulas, values: cmp.values };
+  };
+  // The rebuilt cartridge loaded in a second handle of the same module and given back at once (decision 6): false when
+  // it loads, else the load's refusal, its line the rebuilt cartridge's. The grid that runs is the first handle's alone.
+  Host.prototype._checkLoad = function (text, name) {
+    var b = this.m.text(text), n = this.m.text(name || ''), r;
+    try { r = this.m.call('alonzo_load', [b.ptr, b.len, n.ptr, n.len]); } finally { this.m.release(b); this.m.release(n); }
+    var f = r.status === 0 ? first(r.text, 'cartridge') : null;
+    if (f) this.m.call('alonzo_unload', [num(f[1])]);
+    return f ? false : r;
+  };
+
   // ---- the loop (section 5) ----
   Host.prototype.start = function () {
     if (this.running || !this.handle) return;
@@ -735,8 +882,8 @@
       this.progress = { evaluated: 0, of: this.frameCells };
       this._issueDerived();
       var row = this.edits.shift();
-      if (!this._issueEdit(row, true)) { this.inFrame = false; this.progress = null; continue; }
-      this.stepEdit = row;
+      if (!this._issueAct(row, true)) { this.inFrame = false; this.progress = null; continue; }
+      this.stepEdit = typeof row === 'string' ? 'the edit ' + row : 'the source applied, ' + row.file;
       if (!this._continue(win)) return;
     }
   };
@@ -817,7 +964,31 @@
       }
       this.notches = 0; this.lastKey = null;
     }
-    while (this.edits.length) this._issueEdit(this.edits.shift(), false);
+    while (this.edits.length) this._issueAct(this.edits.shift(), false);
+  };
+  // A person's act at a frame's start, in the order acts were made: an edit, one row; or a rebuilt cartridge's rows.
+  Host.prototype._issueAct = function (act, atRateZero) { return typeof act === 'string' ? this._issueEdit(act, atRateZero) : this._issueApplied(act, atRateZero); };
+  // A rebuilt cartridge's rows as one write, all or none (ENGINE.7, decisions 7 and 8), in the place of a person's edits.
+  // Landed: each row recorded as a person's edit in its frame (decision 9), an Input sheet's row making the next frame's
+  // Input rows whole, and the cartridge the base of the next continue (decision 10). Refused: nothing written, the game
+  // running on under the rules it had, the row the write refused named with its line in the rebuilt cartridge.
+  Host.prototype._issueApplied = function (b, atRateZero) {
+    var r = this._write(b.rows.join('\n'));
+    if (r.status === 0) {
+      this.c.applied++;
+      for (var i = 0; i < b.rows.length; i++) {
+        this._recordEdit(b.rows[i]);
+        if (editsInput(b.rows[i])) this.inputsLast = null;
+      }
+      this.given = b.text;
+      this._say('frame ' + (this.frame + 1) + ': applied ' + b.file + ' to the running game: ' + appliedWords(b) + ' written, the frame number and every other cell kept.');
+      return true;
+    }
+    this.c.appliedRefused++;
+    var k = r.line >= 1 && r.line <= b.rows.length ? r.line - 1 : -1;
+    var where = k >= 0 ? ', its row ' + shortly(b.rows[k]) + (b.lines[k] ? ' at line ' + b.lines[k] : '') : '';
+    this._refuse('frame ' + (this.frame + 1) + ': ' + b.file + ' was not applied: the write of its rows was refused' + where + ': ' + r.text + ' [' + r.id + ']; nothing was written, and the game runs on under the rules it had. Load starts the rebuilt cartridge from frame 0' + (atRateZero ? '; no step.' : '.'));
+    return false;
   };
   Host.prototype._issueEdit = function (row, atRateZero) {
     var r = this._write(row);
@@ -873,7 +1044,7 @@
     if (d.write) this._readWrite();
     if (d.clock) this._readClock();
     if (d.audio) this._sound();   // step 6, the sound, after the Clock's rate that times it (ENGINE.4)
-    if (this.stepEdit) { this._say('frame ' + n + ': stepped once for the edit ' + this.stepEdit + '.'); this.stepEdit = null; }
+    if (this.stepEdit) { this._say('frame ' + n + ': stepped once for ' + this.stepEdit + '.'); this.stepEdit = null; }
     var p = this.player;
     this._emit('frame', { frame: n, window: this.window, scale: this.scale || 0, rate: this.cart.rate, replay: p ? p.last : 0 });
     if (p && p === this.player && n >= p.last) this._endReplay(n);
@@ -1894,6 +2065,12 @@
   Host.patchRecord = function (record, changes) {
     var rec = byCell(String(record)), ch = readChanges(String(changes));
     return rec && ch && !ch.whole ? patchRecord(rec, ch.rows) : null;
+  };
+  // The host's comparison of a rebuilt cartridge with the one a grid was given (ENGINE.7, decisions 2 to 5), pure: why a
+  // write cannot carry the change, each difference in words, and the rows a continue writes. An oracle holds it.
+  Host.compareCartridges = function (base, rebuilt) {
+    var c = compareCartridges(String(base), String(rebuilt));
+    return { why: c.why.slice(), rows: c.rows.slice(), formulas: c.formulas, values: c.values, cells: c.cells };
   };
   Host.version = 1;
 

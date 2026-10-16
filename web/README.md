@@ -77,6 +77,28 @@ write after the derived writes. A person's edit is refused while it plays,
 and the loop pauses at the last frame. The recorder records what is played,
 so a replay played and copied is the replay played.
 
+The host continues the running game with a rebuilt cartridge, edit and
+continue (`docs/SPEC.md` section 7.8, `ENGINE.7`). `apply(text)` compares it
+with the cartridge the grid was last given, the one loaded or the one last
+applied, row by row: each `cell` or `formula` row by its sheet, without case,
+and its address or range, as the reader spells it back. The rows it changed
+or added, values and formulas alike, are written as one person's edit at the
+next frame's start, one write after the Input rows and the edits made before,
+and recorded as a person's edits in that frame, under the header of the
+cartridge loaded, so a session of rule changes replays from it. A row it left
+alone is never written, so every cell the run moved keeps what the run gave
+it, and the frame number goes on. What a write cannot carry is named in
+words, with Load offered, and nothing is written: a directive of the
+manifest; a sheet added or removed, or the tabs' order or a sheet's
+visibility; any row that is not a cell or formula row; and a cell a removed
+row wrote that no rebuilt row writes, since no write empties a cell. The
+rebuilt cartridge is first loaded in a second handle and given back, so
+nothing a load would refuse is applied, and a write refused writes nothing,
+the game running on under the rules it had. At rate 0 a continue is one edit
+and one step; paused at a rate above 0, it waits for Run and says so; while
+a replay plays it is refused, as an edit is; and a second press before the
+first lands replaces it.
+
 The host sounds the Audio sheet (`docs/SPEC.md` section 3.6, `ENGINE.4`), each of
 its four voices one `OscillatorNode` and one `GainNode` of the Web Audio
 graph into one shared gain, and nothing of the host's own: no sample is
@@ -105,6 +127,7 @@ sound the frame the grid holds again when it starts.
 | `attach(exports)` | asks `alonzo_abi_version` and refuses another number, then every export the loop calls: `{ ok, abi, version }` or `{ ok: false, sentence }` |
 | `load(text, name)` / `loadBytes(bytes, name)` | unloads the grid it held, loads a cartridge, then `describe`, reads the Camera, the Palette and the Keys, and draws the new grid's frame 0 at once, nothing computed, on the plane's canvas or, for a grid cartridge, through the viewport, so that neither shows a grid the module no longer holds: `{ ok, handle, title, mode, w, h, rate }` or the refusal's sentence |
 | `expand(source, path, files)` | the pass (`docs/SPEC.md` section 7.8): a cartridge's source, the path its includes resolve against (`cartridges/<name>/<name>.source.vla`, the command line's), and the texts it may include as `[path, text]` pairs, handed to the module's `alonzo_expand`, an act of its own that takes no handle, touches no grid and stops nothing: `{ ok, text, rows, ms }`, the cartridge's text CRLF as the command line writes it and its rows after the manifest, or the refusal's sentence with the source line it stands on; the export is asked for here and not at `attach`, so over a module without it, the double, the build is declined in words |
+| `apply(text, name)` | a rebuilt cartridge applied to the running game, its state kept (`ENGINE.7`): compared with the cartridge the grid was last given, then loaded in a second handle and given back, then its changed and added cell and formula rows queued as one person's edit for the next frame's start, a press waiting replaced: `{ ok, rows, cells, formulas, values }`, `rows` 0 when it changes none, or the refusal's sentence, which names what a write cannot carry and offers Load. `name` is the file's name in the sentences, the loaded one's by default |
 | `start()` / `stop()` | the animation-frame loop; the voices sound the frame the grid holds when it starts, and stop with it |
 | `soundOn()` / `soundOff()` / `soundIs()` | the sound, on only after a person's act: `soundOn` makes the audio context at its first call, which a page makes in a press's handler, and sounds the frame the grid holds; `soundOff` silences the voices, stops the oscillators and suspends the context; `soundIs` whether it is on |
 | `tick(ts)` | one animation frame's work at its timestamp, what the loop calls |
@@ -119,7 +142,7 @@ sound the frame the grid holds again when it starts.
 | `refreshSheet(viewport, moved, still)` | the sheet a viewport shows viewed again through the region it shows, its view kept: what the host does at every frame for its own viewport, and a page at its viewer's refresh; `moved` only when the region has left the window the record was viewed through, at a scroll (`viewer.on('scroll', ...)`); `still` (`ENGINE.17`) not loaded again when the record is the one the host last loaded into the viewport and the viewport holds the model it made of it, as a frame does and the player's drawer does. The region and never the sheet whole: a full screen of Sand's Stay is 33 ms natively, its whole record 1.4 s and 34 MB. The record is the values record after frame 0 (`ENGINE.18`), so a still sheet's frame keeps only that view: a sheet of 1,000 formulas views in about 0.35 ms where its grid record took 2. Since `ENGINE.19` a `still` refresh asks the window's changes first: patched in place when they name cells since the record the host holds for that viewport, kept when they name none, viewed whole otherwise, as at a refresh frames apart, the drawer's at a rate above zero |
 | `replayText()` | the replay of the run since the last load, as text, a replay played included; `null` with no cartridge loaded. Its header names the page its rows are written to, the cartridge's version, and 3 for a cartridge written to 1 to 3 (`ENGINE.18`) |
 | `play(text, all)` | a replay checked whole, then the cartridge loaded again with its seed and its frames played through the loop at the cartridge's rate, edits refused until it ends, the loop paused at its last frame: `{ ok, frames }`, or the refusal's sentence with nothing loaded; `all` plays every frame at once, synchronously (the oracle) |
-| `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`), and a grid's frames drawn and still (`draws`, `stills`: a frame whose record of the Screen, or of a sheet shown in its place, is byte for byte the one the host last loaded into the viewport, and whose model it still holds, is neither read nor painted, `ENGINE.17`; a still Screen's `timing` is `{ view, draw: 0, skipped: true }`), and the sheets a version 4 cartridge's Camera showed (`shows`, `ENGINE.18`). Since `ENGINE.19` a frame asks the window's changes before its view, so a still frame views nothing at all, and a frame whose changes name cells since the record the host holds is patched, the held record and the viewport's model laid with them in place: `patches`, each also a draw, its `timing` `{ view, draw, patched }`, `view` the changes' time and `patched` the cells named; and `inputsKept`, the frames whose Input rows all stood as last written, so that none was written; every sentence said, in order |
+| `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`), and a grid's frames drawn and still (`draws`, `stills`: a frame whose record of the Screen, or of a sheet shown in its place, is byte for byte the one the host last loaded into the viewport, and whose model it still holds, is neither read nor painted, `ENGINE.17`; a still Screen's `timing` is `{ view, draw: 0, skipped: true }`), and the sheets a version 4 cartridge's Camera showed (`shows`, `ENGINE.18`). Since `ENGINE.19` a frame asks the window's changes before its view, so a still frame views nothing at all, and a frame whose changes name cells since the record the host holds is patched, the held record and the viewport's model laid with them in place: `patches`, each also a draw, its `timing` `{ view, draw, patched }`, `view` the changes' time and `patched` the cells named; and `inputsKept`, the frames whose Input rows all stood as last written, so that none was written; since `ENGINE.7` `applied` and `appliedRefused`, the continues written and those whose write was refused; every sentence said, in order |
 | `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
 | `unload()` / `destroy()` | frees the handle and empties the canvas and the viewport; removes the listeners, and the viewport with them |
 | `vp` | grid mode's viewport (`ENGINE.8`), made at the first grid load over `options.grid` and kept across loads: a grid cartridge's Screen, its record through the Camera's window drawn at frame 0 and after every frame, the grid record at frame 0, its formulas as their texts, and the values record after it, the grid record less its formula rows, so that no formula's text is moved at a frame (`ENGINE.8`'s second slice, Frazaro's `KERNEL.37`), each frame's record replacing the last with the person's scroll and selection kept, scrolled to the window's corner at a load and by the Camera's move after it; a page focuses its `scroller` to give it the keys. Its tabs are answered (`ENGINE.14`): while another sheet is shown, each frame views that sheet alone, through the region in view, and the Screen's tab gives the Camera's window back, scrolled to its corner as at a load. Since `ENGINE.18` a cartridge written to version 4 opens on the sheet its Camera's third row names, else on its first visible sheet, so a Screen it hides is never opened on, and a change of that row shows the sheet it names at the frame's end, the person's tabs winning between its changes; a page that shows the viewport's box only after the load calls `refreshSheet(host.vp)` once it is laid out, as the player does |
@@ -132,7 +155,10 @@ digest in upper-case hex, and `AlonzoHost.SPEC` the page's version a
 replay's header names. `AlonzoHost.patchRecord(record, changes)` is the
 host's patch alone (`ENGINE.19`): a values record's text after a window's
 changes, each named cell's rows replaced, put in or taken out and the header
-untouched, or `null` for a whole answer. The first step call of a cartridge asks for 2,000
+untouched, or `null` for a whole answer. `AlonzoHost.compareCartridges(base,
+rebuilt)` is the continue's comparison alone (`ENGINE.7`): `{ why, rows,
+formulas, values, cells }`, each reason a write cannot carry the change in
+words, and the rows a continue writes. The first step call of a cartridge asks for 2,000
 cells, about 9 ms of the engine's module, before the host has measured how
 many cells a millisecond the machine does; after it the budget is three
 quarters of the display's interval turned into cells, where it was half
@@ -257,7 +283,10 @@ source a person writes, its palette one macro call, and the cartridge the
 pass writes from it. Press Build the cartridge to run the pass in the page,
 the function `cargo run --release --example expand` runs, to the same bytes:
 it puts the cartridge it built in the second box and loads nothing, so the
-cartridge running goes on running until Load loads what was built. Change a macro of the library at the bottom, `cartridges/common.vla`,
+cartridge running goes on running until Load loads what was built. Press
+Apply the source instead to build it and apply it to the game that runs:
+change a rule of Sand's source while the sand falls, and the next frame
+falls by the new rule, every grain where it was (`ENGINE.7`). Change a macro of the library at the bottom, `cartridges/common.vla`,
 and build again to see every row it writes change; over the fake module the
 build is declined, in words. Pick the glider gun in the bar to see Gosper's
 gun fire a glider every thirty frames, south-east until the stream meets the

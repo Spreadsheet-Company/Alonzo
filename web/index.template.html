@@ -232,8 +232,8 @@
       <div id="eng-grid" class="grid sheets" aria-label="a sheet of the grid, live"></div>
       <details id="eng-texts">
         <summary>The source and the cartridge</summary>
-        <p>The source, <code id="eng-src-path">none: an empty sheet has no source</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one picture, a string a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load loads it: the pass loads nothing, and a cartridge running goes on running (docs/SPEC.md section 7.8). The fake module holds no pass, and says so.</p>
-        <p class="controls"><button type="button" id="eng-build">Build the cartridge</button></p>
+        <p>The source, <code id="eng-src-path">none: an empty sheet has no source</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one picture, a string a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load loads it: the pass loads nothing, and a cartridge running goes on running (docs/SPEC.md section 7.8). Apply the source builds it the same way and applies the cartridge to the game that runs, edit and continue: the rows it changed are written as a person's edit at the next frame, the frame number and every other cell kept, and the replay records them; what a write cannot carry, a line of the manifest, a sheet added or removed, a look, or a row removed, is named, and Load starts the cartridge from frame 0. The fake module holds no pass, and says so.</p>
+        <p class="controls"><button type="button" id="eng-build">Build the cartridge</button> <button type="button" id="eng-apply" title="the source built, and the rows it changed written into the running game at the next frame, its frame number and every other cell kept">Apply the source</button></p>
         <textarea id="eng-src" rows="14" spellcheck="false" aria-label="the cartridge's source"></textarea>
         <p>The cartridge, <code id="eng-cart-path">none: the empty sheet is the page's own</code>, the file the host loads, picked in the bar or pasted here.</p>
         <p id="eng-cart-notes" class="note"></p>
@@ -628,7 +628,7 @@
       frameShort.textContent = e.replay ? 'Replaying ' + thousands(e.frame) + ' of ' + thousands(e.replay) : 'Frame ' + thousands(e.frame);
       // a grid's frames found still, neither read nor painted again (ENGINE.17), of the frames since the load
       // and since ENGINE.19 those patched, drawn from their changes alone
-      frameEl.textContent = (e.replay ? 'Replaying frame ' + e.frame + ' of ' + e.replay : 'Frame ' + e.frame) + ', the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport, ' + thousands(c.stills) + ' of ' + thousands(c.frames) + ' frames still and ' + thousands(c.patches) + ' patched' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + '; ' + many(c.derivedApplied, 'derived write', 'derived writes') + ' landed and ' + c.derivedRefused + ' refused, ' + many(c.edits, 'edit', 'edits') + ' written, ' + many(c.yields, 'yield', 'yields') + '.' +
+      frameEl.textContent = (e.replay ? 'Replaying frame ' + e.frame + ' of ' + e.replay : 'Frame ' + e.frame) + ', the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport, ' + thousands(c.stills) + ' of ' + thousands(c.frames) + ' frames still and ' + thousands(c.patches) + ' patched' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + '; ' + many(c.derivedApplied, 'derived write', 'derived writes') + ' landed and ' + c.derivedRefused + ' refused, ' + many(c.edits, 'edit', 'edits') + ' written, ' + (c.applied ? many(c.applied, 'source', 'sources') + ' applied, ' : '') + many(c.yields, 'yield', 'yields') + '.' +
         // while the sound is on, the frames sounded and the timeline's restarts and skips (ENGINE.4, decision 1)
         (host.soundIs() ? ' The sound: ' + many(c.sounded, 'frame', 'frames') + ' sounded, ' + many(c.restarts, 'restart', 'restarts') + ', ' + c.skipped + ' skipped.' : '');
       // about five times a second while the loop runs, so every frame of a cartridge slower than that
@@ -673,6 +673,19 @@
       cartEl.value = r.text;
       textsEl.open = true;
     }
+    // Apply the source (ENGINE.7): built as Build builds it, its cartridge put in the box, then applied to the running
+    // game, the rows it changed written as a person's edit at the next frame; a cartridge with no source applies its
+    // box as it stands. What a write cannot carry the host names, Load starting the box from frame 0.
+    function applySource() {
+      var c = current();
+      if (c.sourcePath) {
+        var r = host.expand(srcEl.value, c.sourcePath, libraryPairs(libraryTexts()));
+        if (!r.ok) return;
+        cartEl.value = r.text;
+      }
+      host.apply(cartEl.value);
+      focusScreen();
+    }
     function useFake(why) {
       var a = host.attach(FAKE.create({}).exports);
       moduleEl.textContent = why + ' The loop runs against the fake module, web/fake.js.';
@@ -694,6 +707,7 @@
       if (r.ok) focusScreen();
     });
     document.getElementById('eng-build').addEventListener('click', buildCartridge);
+    document.getElementById('eng-apply').addEventListener('click', applySource);
     document.getElementById('eng-load').addEventListener('click', loadCartridge);
     // A cartridge picked is put in the text box and loaded, its file's name passed with it, and its
     // source put in the source's box.
@@ -4190,6 +4204,196 @@
       }).catch(function (e) { clearTimeout(dog); end('the render failed: ' + (e && e.message ? e.message : e)); });
     });
   }
+  // ---- ENGINE.7: edit and continue, a rebuilt source applied to the running game, its state kept ----
+  // The continue card, the page's own as the still card is, written here as a source and never a file, so that the
+  // case needs nothing of Alonzo's own files and runs on a game's page too (ENGINE.16): the page's pass builds it and
+  // each rebuilt source after it. A rule, State!B1, the last frame's count and a step, by a macro of the source's own; a
+  // knob, Knob!B1, that a person's edit sets and State!B2 sums; two cells the Write sheet counts in, State!C1, whose row
+  // no rebuilt source changes, and State!D1, whose opening the first changes from 0 to 100; a constant, Params!B1, that
+  // the Screen multiplies by the frame; and a formula the first rebuilt source adds, Screen!A3. The options name what a
+  // rebuilt source changes: the rule's step, D1's opening, the constant, Screen!A3, the rate, Screen!A's width, a sheet,
+  // and rows added.
+  var CONTINUE = { path: 'continue.source.vla', file: 'continue.vla', frames: 20, sheets: ['Screen', 'State', 'Knob', 'Params', 'Write'] };
+  function continueSource(o) {
+    o = o || {};
+    return '(cartridge "continue"\n  (spec 3)\n  (title "A continue card")\n  (rate ' + (o.rate || 30) + ')\n  (screen grid 20 12)\n  (seed 7))\n' +
+      '(defmacro (rule step)\n  "the State\'s rule: the last frame\'s count and a step"\n  (formula "State" "B1" (&expand "=State.last!B1+" step)))\n' +
+      '(sheet "Screen" visible)\n(sheet "State" visible)\n(sheet "Knob" visible)\n(sheet "Params" visible)\n(sheet "Write" visible)\n' + (o.sheet || '') +
+      '(rule ' + (o.step || 1) + ')\n' +
+      '(cell "Knob" "A1" "knob")\n(cell "Knob" "B1" 1)\n(formula "State" "B2" "=State.last!B2+Knob!B1")\n' +
+      '(cell "State" "C1" 0)\n(cell "State" "D1" ' + (o.d1 || 0) + ')\n' +
+      '(cell "Write" "A1" "sheet")\n(cell "Write" "B1" "address")\n(cell "Write" "C1" "value")\n' +
+      '(cell "Write" "A2" "State")\n(cell "Write" "B2" "C1")\n(formula "Write" "C2" "=State!C1+1")\n' +
+      '(cell "Write" "A3" "State")\n(cell "Write" "B3" "D1")\n(formula "Write" "C3" "=State!D1+1")\n' +
+      '(cell "Params" "A1" "the multiplier")\n(cell "Params" "B1" ' + (o.params || 2) + ')\n' + (o.twice || '') +
+      '(formula "Screen" "A1" "=State!B1")\n(formula "Screen" "B1" "=State!B2")\n(formula "Screen" "C1" "=State!C1")\n(formula "Screen" "D1" "=State!D1")\n' +
+      '(formula "Screen" "A2" "=Params!B1*Clock!B1")\n' + (o.a3 ? '(formula "Screen" "A3" "=State!B1*2")\n' : '') + (o.extra || '') +
+      '(column "Screen" "A" ' + (o.width || 12) + ' shown none)\n';
+  }
+  // What the oracle names by hand: the rows the first rebuilt source changes against the cartridge loaded, in its order,
+  // and the one the second changes against the first; and each cell at every frame, by its rule.
+  var CONTINUE_ROWS_B = ['(formula "State" "B1" "=State.last!B1+10")', '(cell "State" "D1" 100)', '(cell "Params" "B1" 3)', '(formula "Screen" "A3" "=State!B1*2")'];
+  var CONTINUE_ROWS_C = ['(cell "Params" "B1" 2)'];
+  function continueWant(f) {
+    var params = f <= 10 ? 2 : (f <= 15 ? 3 : 2), b1 = f <= 10 ? f : 10 + 10 * (f - 10);
+    return [
+      ['Knob', 'B1', f >= 3 ? 5 : 1, f >= 3 ? 'the person\'s edit at frame 3 gives 5' : 'the cartridge gives 1'],
+      ['State', 'C1', f - 1, 'the Write sheet\'s count gives ' + (f - 1)],
+      ['State', 'D1', f <= 10 ? f - 1 : 100 + f - 11, f <= 10 ? 'the Write sheet\'s count gives ' + (f - 1) : 'the rebuilt row\'s 100, written after frame 11\'s derived writes, and the count after it give ' + (100 + f - 11)],
+      ['State', 'B1', b1, 'the rule, +1 to frame 10 and +10 after, gives ' + b1],
+      ['State', 'B2', f <= 2 ? f : 2 + 5 * (f - 2), 'the knob\'s sum gives ' + (f <= 2 ? f : 2 + 5 * (f - 2))],
+      ['Params', 'B1', params, 'the constant, 2, then 3 from the first continue and 2 from the second, gives ' + params],
+      ['Screen', 'A2', params * f, 'Params!B1 times the frame gives ' + params * f],
+      ['Screen', 'A3', f >= 11 ? b1 * 2 : null, f >= 11 ? 'the formula the first continue adds gives ' + b1 * 2 : 'nothing before the first continue gives no cell']
+    ];
+  }
+  // The continue card over the engine's module, 20 frames at its rate, its viewport in a box of the stage. A person's
+  // edit of the knob before frame 3. Before frame 11 a rebuilt source pressed and, before it lands, another in its place,
+  // which changes the rule's step to 10, D1's opening to 100 and the constant to 3, and adds Screen!A3. Before frame 16,
+  // the loop paused, a second rebuilt source setting the constant back to 2, said to wait for Run, then Run. Before
+  // frame 17 a person's formula, Knob!B2, and five rebuilt sources each refused at the press: a sheet added, the rate
+  // changed, Screen!A3 dropped, a column's width, a cell written twice. Before frame 18 a sixth, a formula closing a
+  // cycle with the person's beside a changed constant, refused at the write. Held: the host's comparison of the cartridges,
+  // pure; the frame number after each tick; every cell at every frame against its rule; every frame's records of the five
+  // sheets equal to a twin host's, which writes the rows named by hand as a person's edits in the same frames; the frame
+  // after the first continue viewed whole and the one after it patched (ENGINE.19); each refusal's words, nothing written;
+  // the two replays equal byte for byte, the run's played on a third host equal to the run at every frame; and a
+  // continue refused while a replay plays. Without the engine's module, nothing: the double holds no pass.
+  function caseContinue() {
+    var P = [], k = { module: 0, built: 0, compared: 0, frames: 0, hand: 0, twin: 0, applied: 0, replaced: 0, waited: 0, refused: 0, writeRefused: 0, whole: 0, patched: 0,
+                      replays: 0, played: 0, replaying: 0 };
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm), stage = document.getElementById('stage'), box = document.createElement('div');
+    k.module = bytes.length;
+    box.style.cssText = 'width:' + GRID_BOX.w + 'px;height:' + GRID_BOX.h + 'px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var H = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box }), M = new HOST({ drive: 'manual', budget: 0, now: frozen }), hosts = [H, M];
+    try {
+      if (!H.attach(HOST.instantiateSync(bytes)).ok || !M.attach(HOST.instantiateSync(bytes)).ok) { P.push('continue: a host refused the module'); return { counters: k, problems: P }; }
+      // the sources, built by the page's pass as Apply the source builds them
+      var C3 = { step: 10, d1: 100, params: 2, a3: true }, built = {};
+      var SOURCES = { A: {}, B0: { step: 5, a3: true }, B: { step: 10, d1: 100, params: 3, a3: true }, C: C3,
+                      R1: { step: 10, d1: 100, params: 2, a3: true, sheet: '(sheet "Extra" visible)\n', extra: '(cell "Extra" "A1" 1)\n' },
+                      R2: { step: 10, d1: 100, params: 2, a3: true, rate: 60 }, R3: { step: 10, d1: 100, params: 2 },
+                      R4: { step: 10, d1: 100, params: 2, a3: true, width: 14 }, R5: { step: 10, d1: 100, params: 2, a3: true, twice: '(cell "Params" "B1:B2" 2)\n' },
+                      R6: { step: 10, d1: 100, params: 5, a3: true, extra: '(formula "State" "E1" "=Knob!B2")\n' } };
+      for (var name in SOURCES) {
+        if (!Object.prototype.hasOwnProperty.call(SOURCES, name)) continue;
+        var b = H.expand(continueSource(SOURCES[name]), CONTINUE.path, []);
+        if (!b.ok) { P.push('continue: the page\'s pass refused the source ' + name + ': ' + b.sentence); return { counters: k, problems: P }; }
+        built[name] = b.text; k.built++;
+      }
+      var ldH = H.load(built.A, CONTINUE.file), ldM = M.load(built.A, CONTINUE.file);
+      if (!ldH.ok || !ldM.ok) { P.push('continue: the card did not load: ' + (ldH.sentence || ldM.sentence)); return { counters: k, problems: P }; }
+      function records(h) { return CONTINUE.sheets.map(function (s) { return h.viewRecord(s, ''); }).join('\n--\n'); }
+      function firstDiff(a, b) {
+        var la = String(a).split('\n'), lb = String(b).split('\n');
+        for (var i = 0; i < Math.max(la.length, lb.length); i++) if (la[i] !== lb[i]) return 'line ' + (i + 1) + ', ' + (la[i] === undefined ? 'nothing' : la[i].slice(0, 120)) + ' where the other holds ' + (lb[i] === undefined ? 'nothing' : lb[i].slice(0, 120));
+        return 'no line';
+      }
+      function said(h, words) { return h.sentences().some(function (s) { return s.text.indexOf(words) >= 0; }); }
+      var run = [records(H)], t = 1000;
+      if (run[0] === records(M)) k.twin++; else P.push('continue frame 0: the run\'s records are not the twin\'s: ' + firstDiff(run[0], records(M)));
+      H.start(); M.start(); H.tick(t); M.tick(t);
+      var c10 = null, c11 = null;
+      for (var f = 1; f <= CONTINUE.frames; f++) {
+        var at = 'continue frame ' + f, r;
+        if (f === 3) { H.edit('(cell "Knob" "B1" 5)'); M.edit('(cell "Knob" "B1" 5)'); }
+        if (f === 11) {
+          r = H.apply(built.B0);
+          if (!r.ok || r.rows !== 2) P.push(at + ': the press of a rebuilt source answered ' + JSON.stringify(r) + ', where it waits with its 2 rows');
+          r = H.apply(built.B);
+          if (!r.ok || r.rows !== 4 || r.formulas !== 2 || r.values !== 2) P.push(at + ': the press of the rebuilt source answered ' + JSON.stringify(r) + ', where it waits with 2 formula rows and 2 value rows, in the place of the press before it');
+          CONTINUE_ROWS_B.forEach(function (row) { M.edit(row); });
+        }
+        if (f === 16) {
+          H.stop();
+          r = H.apply(built.C);
+          if (!r.ok || r.rows !== 1 || !said(H, 'continue.vla waits for the next frame, which Run brings: 1 value row, 1 cell to write')) P.push(at + ': the press while paused answered ' + JSON.stringify(r) + ' and said ' + JSON.stringify(H.sentences().slice(-1)) + ', where it says it waits for Run');
+          else k.waited++;
+          H.start(); H.tick(t);
+          CONTINUE_ROWS_C.forEach(function (row) { M.edit(row); });
+        }
+        if (f === 17) {
+          H.edit('(formula "Knob" "B2" "=State!E1")'); M.edit('(formula "Knob" "B2" "=State!E1")');
+          [['R1', 'the rebuilt source with a sheet added', 'it adds the sheet Extra, which a write cannot make'],
+           ['R2', 'the rebuilt source with (rate 60)', 'its manifest says (rate 60), where the running game\'s says (rate 30)'],
+           ['R3', 'the rebuilt source without Screen!A3', 'it no longer writes Screen!A3, 1 cell no row of it writes, and no write empties a cell'],
+           ['R4', 'the rebuilt source with column A 14 wide', 'it writes (column "Screen" "A" 14 shown none), a row that is no cell or formula row, which a write cannot carry'],
+           ['R5', 'the rebuilt source with a cell written twice', 'a load refuses it']].forEach(function (x) {
+            var q = H.apply(built[x[0]]), words = q.sentence || '';
+            if (q.ok) P.push('continue: ' + x[1] + ' was answered ok, where ' + x[2]);
+            else if (words.indexOf(x[2]) < 0 || words.indexOf(x[0] === 'R5' ? 'written-twice' : 'Load starts it from frame 0') < 0) P.push('continue: ' + x[1] + ' was refused in the words ' + JSON.stringify(words) + ', where they say ' + x[2]);
+            else k.refused++;
+          });
+        }
+        if (f === 18) {
+          r = H.apply(built.R6);
+          if (!r.ok || r.rows !== 2) P.push(at + ': the press of a rebuilt source whose write the running grid refuses answered ' + JSON.stringify(r) + ', where it waits with its 2 rows');
+        }
+        var cb = H.counters();
+        t += 1000 / 30; H.tick(t); M.tick(t);
+        var c = H.counters();
+        if (c.frame !== f || M.counters().frame !== f) { P.push(at + ': after its tick the host is at frame ' + c.frame + ' and its twin at ' + M.counters().frame + ', where a continue keeps the frame number'); break; }
+        k.frames++;
+        if (f === 10) c10 = c;
+        if (f === 11) { c11 = c; if (c.applied === 1 && c10 && c.draws - c10.draws === 1 && c.patches === c10.patches) k.whole++; else P.push(at + ': the frame after the continue counted ' + (c10 ? (c.draws - c10.draws) + ' draw(s) and ' + (c.patches - c10.patches) + ' patch(es)' : 'nothing') + ' with ' + c.applied + ' continue(s) applied, where its formulas make the Screen a whole view'); }
+        if (f === 11 && built.B0 && c.applied === 1) k.replaced++;
+        if (f === 12) { if (c11 && c.patches - c11.patches === 1) k.patched++; else P.push(at + ': the frame after that counted ' + (c11 ? c.patches - c11.patches : 0) + ' patch(es), where it is patched'); }
+        if (f === 18) { if (c.appliedRefused === 1 && said(H, 'frame 18: continue.vla was not applied: the write of its rows was refused')) k.writeRefused++; else P.push(at + ': the rebuilt source whose write the running grid refuses counted ' + c.appliedRefused + ' refusal(s) and said ' + JSON.stringify(H.sentences().slice(-2).map(function (s) { return s.text; })) + ', where its write is refused and nothing written'); }
+        // every cell against its rule, the first that differs named
+        var cells = {}, bad = '';
+        CONTINUE.sheets.forEach(function (s) { cells[s] = deviceCells(H.viewRecord(s, '')); });
+        continueWant(f).forEach(function (w) {
+          if (bad) return;
+          var got = cells[w[0]][w[1]];
+          if (got === undefined) got = null;
+          if (got !== w[2]) bad = at + ': ' + w[0] + '!' + w[1] + ' is ' + (got === null ? 'empty' : got) + ', where ' + w[3];
+        });
+        if (bad) P.push(bad); else k.hand++;
+        var now = records(H), twin = records(M);
+        run.push(now);
+        if (now === twin) k.twin++; else P.push(at + ': the run\'s records are not the twin\'s, which wrote the same rows as a person\'s edits: ' + firstDiff(now, twin));
+        if (c.frame !== cb.frame + 1) break;
+      }
+      if (H.counters().applied !== 2) P.push('continue: the host counted ' + H.counters().applied + ' continue(s) applied, where the run applied 2');
+      else k.applied = 2;
+      // the replay: the run's the twin's byte for byte, and played on a third host to every frame of the run
+      var rpH = H.replayText() || '', rpM = M.replayText() || '';
+      if (rpH !== rpM) P.push('continue: the run\'s replay is not the twin\'s: ' + firstDiff(rpH, rpM));
+      else k.replays++;
+      var R = new HOST({ drive: 'manual', budget: 0, now: frozen }), played = {};
+      hosts.push(R);
+      if (!R.attach(HOST.instantiateSync(bytes)).ok || !R.load(built.A, CONTINUE.file).ok) P.push('continue: the third host did not load the card');
+      else {
+        R.on('frame', function (e) { played[e.frame] = records(R); });
+        var pr = R.play(rpH, true);
+        if (!pr.ok) P.push('continue: the run\'s replay did not play: ' + JSON.stringify(pr));
+        for (var g = 1; g < run.length; g++) {
+          if (played[g] === run[g]) { k.played++; continue; }
+          P.push('continue: the replay played on a fresh host is not the run at frame ' + g + ': ' + firstDiff(played[g] || '', run[g]));
+          break;
+        }
+      }
+      // a continue while a replay plays is refused, as a person's edit is
+      var Q = new HOST({ drive: 'manual', budget: 0, now: frozen });
+      hosts.push(Q);
+      if (Q.attach(HOST.instantiateSync(bytes)).ok && Q.load(built.A, CONTINUE.file).ok && Q.play(rpH).ok) {
+        var qr = Q.apply(built.B);
+        if (qr.ok || (qr.sentence || '').indexOf('a replay is playing') < 0) P.push('continue: a continue while a replay plays answered ' + JSON.stringify(qr) + ', where it is refused as an edit is'); else k.replaying++;
+      } else P.push('continue: the fourth host did not start the replay');
+      // the host's comparison, pure, against the rows named by hand
+      var ab = HOST.compareCartridges(built.A, built.B), bc = HOST.compareCartridges(built.B, built.C), cr = HOST.compareCartridges(built.C, built.R3);
+      if (ab.why.length || JSON.stringify(ab.rows) !== JSON.stringify(CONTINUE_ROWS_B)) P.push('continue: the host compares the first rebuilt cartridge to ' + JSON.stringify(ab) + ', where the rows named by hand are ' + JSON.stringify(CONTINUE_ROWS_B)); else k.compared++;
+      if (bc.why.length || JSON.stringify(bc.rows) !== JSON.stringify(CONTINUE_ROWS_C)) P.push('continue: the host compares the second rebuilt cartridge with the first to ' + JSON.stringify(bc) + ', where the row named by hand is ' + JSON.stringify(CONTINUE_ROWS_C)); else k.compared++;
+      if (cr.why.length !== 1 || cr.why[0] !== 'it no longer writes Screen!A3, 1 cell no row of it writes, and no write empties a cell') P.push('continue: the host compares a source without Screen!A3 to ' + JSON.stringify(cr.why) + ', where the cell no row writes is named'); else k.compared++;
+    } finally {
+      hosts.forEach(function (h) { h.destroy(); });
+      stage.removeChild(box);
+    }
+    return { counters: k, problems: P };
+  }
   function loopLine(name, k, problems) {
     var parts = [];
     for (var key in k) if (Object.prototype.hasOwnProperty.call(k, key)) parts.push(key + ' ' + k[key]);
@@ -4204,7 +4408,8 @@
     out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' snap=' + R.snapMs + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + (asked ? 'asked=' + asked.join(',') + '; ' : '') + navigator.userAgent);
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
-                 ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges]];
+                 ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
+                 ['continue', caseContinue]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -4213,7 +4418,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }
