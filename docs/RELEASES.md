@@ -2,6 +2,45 @@
 
 *Newest first, as Frazaro keeps its `docs/RELEASES.md`. A release's section is written before its tag, never after: `REPO.4` began this file with the first, `0.1.0`. Each section says what the release holds and what it measures, names the items in it by their IDs (`ROADMAP.md` for the open, `REARVIEW.md` for the closed), says what it does not hold, and ends with a short* Known open security items *block that points to `SECURITY.md` rather than copying it.*
 
+## 0.1.5
+
+Edit and continue. A rebuilt source is applied to the running game, its frame number and its state kept (`ENGINE.7`): the drawer's Apply the source builds the source and writes the rows it changed into the game at the next frame, as a person's edit the replay records. The engine crate's code is 0.1.4's and still pinned to `vla-lang` 0.9.4 exactly; what changed is the page, served at https://spreadsheet-company.github.io/Alonzo/. In a crate's manifest, `alonzo = "=0.1.5"` and, for the types its calls answer, `vla-lang = "=0.9.4"`.
+
+### What it holds
+
+- **Edit and continue.** Apply the source, beside Build the cartridge in the drawer, builds the source as Build does and applies the cartridge it writes to the game that runs. The cartridge is compared with the one the grid was last given, row by row, a cell or formula row by its sheet and its address. The rows it changed or added, values and formulas alike, are written as one person's edit at the next frame's start, all or none, and the frame number and every other cell are kept. The replay records them as a person's edits under the cartridge loaded, so a session of rule changes replays from it.
+- **What a continue cannot carry is said, and Load offered.** A line of the manifest, a sheet added or removed, a row that is no cell or formula row (a column's width, a format, a name), or a removed row's cell that no rebuilt row writes, since no write empties a cell. A load of the rebuilt cartridge in a second handle, given back at once, first refuses whatever Load would, so a continue applies no cartridge Load refuses. Paused, a continue waits for Run; at rate 0 it is one edit and one step; while a replay plays it is refused, as an edit is.
+- **The host's call** is `apply(text)`, its comparison alone `AlonzoHost.compareCartridges(base, rebuilt)`, and its counters `applied` and `appliedRefused`.
+- **The host loop's control runs each mutant page's own cases alone** (`?loop=1&cases=`), in about 4 minutes where it took 12.
+
+### What it measures
+
+In headless Chrome 155 on the owner's machine, from the press to the frame that computes the rows:
+
+- **Buffet's rule**, a formula over 4 cells, applied at frame 1,806 in 12.7 ms. The route it replaces, Build, Load and a replay back to the frame, took a minute at Buffet's rate.
+- **Sand's Stay rule**, 62,568 cells, applied at frame 2,096 in 0.32 s, where the route took 35 s. The load in a second handle is 0.16 s of it, and the whole of a color's continue.
+
+The floors and the module, 766,043 bytes, are unchanged.
+
+### The items in it
+
+- **Closed**, with its line in `REARVIEW.md`'s ledger: `ENGINE.7`, edit and continue.
+- **Minted**: `ENGINE.21`, a column's width and a row's height fitted to what they hold by a double-click on a divider.
+
+### For a game that carries the page
+
+Take the template and the three scripts again; the module built over `vla-lang` 0.9.4 serves as it did, its exports unchanged. The drawer gains Apply the source, and a game's page runs the loop oracle's `continue` case, nine cases in all.
+
+### Not in this release
+
+- A key in the source's box that applies it.
+- A write that empties a cell, which would let a continue apply a row the source no longer has: the language's, asked of Frazaro.
+- Key chords, a cartridge loaded from a file (`ENGINE.5`) or an address (`REPO.6`), the accelerators (`ENGINE.6`), proof of play (`ENGINE.10`) and auto-fit (`ENGINE.21`).
+
+### Known open security items
+
+**None.** The engine imports nothing and makes no outbound call, ever; the page fetches nothing, and a built page's blocks are held to the repository's files both ways. Both are checked on every push, by `tools/check_host_imports.ps1` and `tools/check_web_offline.ps1`. `SECURITY.md` is the policy and the place to report.
+
 ## 0.1.4
 
 The views on sheets and the frame read by its changes. A grid cartridge written to the page's version 4 is played on its own sheets (`ENGINE.18`). A frame is read by what changed since the last one: a still frame is neither viewed nor painted, and a changed one is patched and repainted cell by cell (`ENGINE.17`, `ENGINE.19`, `ENGINE.20`). The bench runs over a game's own cartridges (`ENGINE.16`). The engine crate reads a `(spec 4)` cartridge and is pinned to `vla-lang` 0.9.4 exactly, for its `changes` projection. The page is served at https://spreadsheet-company.github.io/Alonzo/. In a crate's manifest, `alonzo = "=0.1.4"` and, for the types its calls answer, `vla-lang = "=0.9.4"`.

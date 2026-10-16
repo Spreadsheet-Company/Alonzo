@@ -151,7 +151,7 @@ loads. Name it and the language it answers in, each pinned exactly:
 
 ```toml
 [dependencies]
-alonzo = "=0.1.4"
+alonzo = "=0.1.5"
 vla-lang = "=0.9.4"
 ```
 
