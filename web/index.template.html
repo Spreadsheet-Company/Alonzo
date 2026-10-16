@@ -210,7 +210,7 @@
     <button type="button" id="eng-run">Run</button>
     <button type="button" id="eng-pause">Pause</button>
     <button type="button" id="eng-sound" aria-pressed="false">Sound on</button>
-    <button type="button" id="eng-load" title="the cartridge in the drawer's box, loaded again from frame 0">Load</button>
+    <button type="button" id="eng-load" title="the cartridge in the drawer's box, loaded again from frame 0; Ctrl+Enter in that box, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Load</button>
     <span id="frame-short" class="frame-short"></span>
     <p id="eng-status" class="status"></p>
     <button type="button" id="eng-full" aria-pressed="false">Full screen</button>
@@ -223,7 +223,7 @@
     </div>
     <aside id="drawer" class="drawer" hidden aria-label="the drawer">
       <p id="frame-line" class="frame-line"></p>
-      <p class="controls edit-row"><label for="eng-edit">An edit, one row:</label> <input type="text" id="eng-edit" spellcheck="false" value="(formula &quot;Screen&quot; &quot;A1&quot; &quot;=6*7&quot;)"> <button type="button" id="eng-write">Write</button></p>
+      <p class="controls edit-row"><label for="eng-edit">An edit, one row:</label> <input type="text" id="eng-edit" spellcheck="false" value="(formula &quot;Screen&quot; &quot;A1&quot; &quot;=6*7&quot;)"> <button type="button" id="eng-write" title="the row written as a person's edit at the next frame; Enter in the row" aria-keyshortcuts="Enter">Write</button></p>
       <p class="note">Click the Screen to give it the keys: the arrows, Z, X, A, S, Enter and Space are player 1's. In a grid, a key the Keys sheet does not bind moves the selection, and the wheel scrolls everywhere but over the cells of the Camera's window, where the game takes it.</p>
       <h2>The log <button type="button" id="eng-copy">Copy the log</button></h2>
       <ol id="eng-log" class="engine-log" aria-label="the host's sentences"></ol>
@@ -233,7 +233,8 @@
       <details id="eng-texts">
         <summary>The source and the cartridge</summary>
         <p>The source, <code id="eng-src-path">none: an empty sheet has no source</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one picture, a string a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load loads it: the pass loads nothing, and a cartridge running goes on running (docs/SPEC.md section 7.8). Apply the source builds it the same way and applies the cartridge to the game that runs, edit and continue: the rows it changed are written as a person's edit at the next frame, the frame number and every other cell kept, and the replay records them; what a write cannot carry, a line of the manifest, a sheet added or removed, a look, or a row removed, is named, and Load starts the cartridge from frame 0. The fake module holds no pass, and says so.</p>
-        <p class="controls"><button type="button" id="eng-build">Build the cartridge</button> <button type="button" id="eng-apply" title="the source built, and the rows it changed written into the running game at the next frame, its frame number and every other cell kept">Apply the source</button></p>
+        <p class="controls"><button type="button" id="eng-build" title="the source built by the pass into the cartridge's box, nothing loaded; Ctrl+Enter in the source's box or a library's, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Build the cartridge</button> <button type="button" id="eng-apply" title="the source built, and the rows it changed written into the running game at the next frame, its frame number and every other cell kept; Ctrl+Shift+Enter in the source's box or a library's, Cmd+Shift+Enter on a Mac" aria-keyshortcuts="Control+Shift+Enter Meta+Shift+Enter">Apply the source</button></p>
+        <p class="note">The keys, Cmd for Ctrl on a Mac: Ctrl+Enter in a box presses its button, building in the source's box or a library's, loading in the cartridge's and playing in the replay's; Ctrl+Shift+Enter in the source's box, a library's or the cartridge's applies it to the game that runs, its state kept, the source built first and the cartridge as it stands. A key leaves the caret where it was.</p>
         <textarea id="eng-src" rows="14" spellcheck="false" aria-label="the cartridge's source"></textarea>
         <p>The cartridge, <code id="eng-cart-path">none: the empty sheet is the page's own</code>, the file the host loads, picked in the bar or pasted here.</p>
         <p id="eng-cart-notes" class="note"></p>
@@ -248,7 +249,7 @@
       </details>
       <details id="eng-replay-box">
         <summary>The replay</summary>
-        <p class="controls"><button type="button" id="eng-replay-play">Play the replay</button> <button type="button" id="eng-replay-copy">Copy the replay</button></p>
+        <p class="controls"><button type="button" id="eng-replay-play" title="the cartridge loaded again with the replay's seed and its frames played; Ctrl+Enter in the replay's box, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Play the replay</button> <button type="button" id="eng-replay-copy">Copy the replay</button></p>
         <p>A replay, <code id="eng-replay-path">none: this cartridge has no replay of its own</code>, is every write a run made between its steps: a header naming the cartridge by the SHA-256 of its text and the seed, then each frame as one form holding its rows, <code>(frame 12 (cell "Input" "B5" 1))</code>, the Input sheet's cells that changed and each person's edit that landed; the host's derived writes are never logged, a replay re-deriving them (docs/SPEC.md section 7.6). Paste one here and press Play the replay: the host loads the cartridge again with the replay's seed and plays its frames at the cartridge's rate, a person's edits waiting until it ends, and pauses at its last frame; Run then carries on with the live inputs. Copy the replay puts what the host has recorded since the last load on the clipboard and in this box, a replay played among it, so a replay played and copied is the replay played. The input card's and the sound card's own replays are the loop oracle's runs of them: play the sound card's with the sound on and hear the run again, its ticks, the knob turned to a word that is no wave and back, and a stretch at a third of the speed. Kairos's is the owner's two games: the major prize won, the minor refused on the way, then a fall at the last level.</p>
         <textarea id="eng-replay" rows="10" spellcheck="false" aria-label="a replay to play"></textarea>
       </details>
@@ -675,8 +676,9 @@
     }
     // Apply the source (ENGINE.7): built as Build builds it, its cartridge put in the box, then applied to the running
     // game, the rows it changed written as a person's edit at the next frame; a cartridge with no source applies its
-    // box as it stands. What a write cannot carry the host names, Load starting the box from frame 0.
-    function applySource() {
+    // box as it stands. What a write cannot carry the host names, Load starting the box from frame 0. keep: true from a
+    // key, which leaves the focus in its box (ENGINE.22); the press gives the Screen the keys.
+    function applySource(keep) {
       var c = current();
       if (c.sourcePath) {
         var r = host.expand(srcEl.value, c.sourcePath, libraryPairs(libraryTexts()));
@@ -684,7 +686,7 @@
         cartEl.value = r.text;
       }
       host.apply(cartEl.value);
-      focusScreen();
+      if (keep !== true) focusScreen();
     }
     function useFake(why) {
       var a = host.attach(FAKE.create({}).exports);
@@ -746,14 +748,35 @@
       replayEl.value = text; replayPathEl.textContent = 'the run since the last load, as the host recorded it';
       copyText(this, 'Copy the replay', text, 'the replay in its box');
     });
-    // Play: the cartridge loaded again with the replay's seed and its frames played through the loop.
-    document.getElementById('eng-replay-play').addEventListener('click', function () {
+    // Play: the cartridge loaded again with the replay's seed and its frames played through the loop. keep: true from
+    // a key, as for Apply.
+    function playReplay(keep) {
       if (!replayEl.value.trim()) { replayBoxEl.open = true; statusEl.textContent = 'Paste a replay into the box under The replay, then press Play the replay.'; statusEl.className = 'status'; return; }
       var r = host.play(replayEl.value);
-      if (r.ok) { showViewer(); focusScreen(); }
-    });
+      if (r.ok) { showViewer(); if (keep !== true) focusScreen(); }
+    }
+    document.getElementById('eng-replay-play').addEventListener('click', playReplay);
     document.getElementById('eng-write').addEventListener('click', function () { host.edit(editEl.value); });
     editEl.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); host.edit(editEl.value); } });
+    // The drawer's keys (ENGINE.22), keyboard-first at the owner's word: every act a key, and a button its convenience.
+    // Ctrl+Enter, or Cmd+Enter, in a box presses its own button: Build in the source's box or a library's, Load in the
+    // cartridge's, Play in the replay's. With Shift it applies the box to the game that runs, its state kept, the source
+    // built first and the cartridge as it stands. Alt is never taken: the views' chords are Alt's, and Windows reports
+    // AltGr as Ctrl with Alt. A held key's repeats and an input method's Enter press nothing, and the focus stays in the box.
+    function boxKey(box, press, apply) {
+      box.addEventListener('keydown', function (ev) {
+        if (ev.key !== 'Enter' || !(ev.ctrlKey || ev.metaKey) || ev.altKey || ev.isComposing) return;
+        var act = ev.shiftKey ? apply : press;
+        if (!act) return;
+        ev.preventDefault();
+        if (!ev.repeat) act();
+      });
+    }
+    var applyKept = function () { applySource(true); };
+    boxKey(srcEl, buildCartridge, applyKept);
+    boxKey(libEl, buildCartridge, applyKept);
+    boxKey(cartEl, loadCartridge, function () { host.apply(cartEl.value); });
+    boxKey(replayEl, function () { playReplay(true); }, null);
     // The drawer (ENGINE.14, decision 9), closed at first so the window is the game's: opened, it pushes the
     // Screen aside, which refits, and its sheet, measured again in its box, is viewed through the cells in view.
     drawerBtn.addEventListener('click', function () {

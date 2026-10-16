@@ -286,7 +286,13 @@ it puts the cartridge it built in the second box and loads nothing, so the
 cartridge running goes on running until Load loads what was built. Press
 Apply the source instead to build it and apply it to the game that runs:
 change a rule of Sand's source while the sand falls, and the next frame
-falls by the new rule, every grain where it was (`ENGINE.7`). Change a macro of the library at the bottom, `cartridges/common.vla`,
+falls by the new rule, every grain where it was (`ENGINE.7`). Every act of
+the drawer is a key too, its button a convenience (`ENGINE.22`), Cmd for
+Ctrl on a Mac: in the source's box Ctrl+Enter builds and Ctrl+Shift+Enter
+applies, the caret staying where it was, so a rule is tuned without leaving
+the box, and a library's box does the same; in the cartridge's box
+Ctrl+Enter loads it from frame 0 and Ctrl+Shift+Enter applies it as it
+stands; in the replay's box Ctrl+Enter plays it. Change a macro of the library at the bottom, `cartridges/common.vla`,
 and build again to see every row it writes change; over the fake module the
 build is declined, in words. Pick the glider gun in the bar to see Gosper's
 gun fire a glider every thirty frames, south-east until the stream meets the
