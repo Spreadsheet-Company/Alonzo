@@ -2717,7 +2717,7 @@ The candidate the decisions recommend, frames 2 to 31:
     *Named, not asked:*
     - *The frame's start,* 22 to 24% of Sand's worst frames, marking the readers of tens of thousands of changed twin cells. It moves none of the three fixtures, whose edits reach through a part or a short list; a pasted column would show it.
     - *One formula's fills as one shape,* `KERNEL.20`'s ground of content addressing. It moves no fixture, each being one fill a formula; Sand avoids the cliff by decision 2.
-    - *A macro's text inside `&expand`,* by the next free `VLA` number (`VLA.4` today), so that a rule's predicates are named macros. It moves no fixture, being expand time.
+    - *A macro's text inside `&expand`,* by the next free `VLA` number (`VLA.4` today), so that a rule's predicates are named macros. It moves no fixture, being expand time. *(Taken 2026-10-17 by Frazaro's `VLA.4`, by another route the owner approved: a rule's predicates composed as expressions, `formula-expand` expanding a macro's call inside the expression before it writes the formula; `&expand` still refuses a list. Sand's Stay and Screen and Kairos's `B31`, rewritten so in a scratch copy, expanded to today's rows byte for byte; the cartridges move when the pin reaches the `vla-lang` release that carries it.)*
 
     The prompt for the Frazaro session is given in the chat at the approval and kept nowhere on disk.
 
