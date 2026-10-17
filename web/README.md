@@ -315,8 +315,8 @@ stands; in the replay's box Ctrl+Enter plays it. Every act of the player is
 a command too (`ENGINE.23`), run from the palette: press Ctrl+K, Cmd+K on a
 Mac, or Ctrl+Shift+`, Frazaro's CLI key, anywhere on the page or the Commands
 button, and type a command's name, `run`, `pause`, `drawer`, `source`,
-`full-screen`, the lines narrowing as you type, each with its words and the
-keys that also press it. Enter runs the line chosen, the arrows choose, a
+`full-screen`, the lines narrowing as you type, a command of your own and the
+game's before the page's, each with its words and the keys that also press it. Enter runs the line chosen, the arrows choose, a
 click runs one, Escape closes, Ctrl+Up and Ctrl+Down bring back what was run,
 and the focus goes back where it was. A sheet's name shows that sheet as its
 tab does, in the Screen's place for a grid and in the drawer's sheets for a
@@ -347,7 +347,8 @@ as a person's edit: `(command "again" "the cartridge loaded again and run"
 (load) (run))`, then type `again` in the palette, or bind it, `(bind
 "Alt+Shift+A" again)`. Record a key writes the next key pressed into the box
 at the caret, as the keymap spells it. Under the box every command is
-listed with its words and its keys, and each button's tip says the same;
+listed with its words and its keys, yours and the game's first, and each button's
+tip says the same;
 the list says, too, what keeps a key from the page, Ctrl+W a window's
 browser's and Cmd+Q a Mac's, and which binding shadows a button of the game
 loaded on the Screen, a plain Z beside Kairos's, or a key the game reads as
@@ -358,10 +359,22 @@ on none, so that each tab has keys of its own: on Buffet's page P opens the
 drawer on the Portfolio and stays the game's on Gigs. The note under the edit
 row names the game's own keys, player by player as its Keys sheet binds them
 now, the four arrows as one, and says when the game reads any key; Buffet's
-changes from view to view.
+changes from view to view. A cartridge of version 5 brings commands of its
+own (`ENGINE.25`), its Commands sheet a row a command, a name, its words,
+whether it holds now and its key: the palette lists each while it holds as
+`<cartridge>.<command>`, `commandcard.count-up` in the loop's card, before
+the page's own, and runs it as the game reads it, its name in the Input
+sheet's twentieth row for one frame. Bind one as any other, `(bind "Ctrl+J"
+commandcard.count-up)`, on one sheet too, or make it a step of a command of
+your own; while its cartridge is not loaded, or the command holds not, its
+keys press nothing and pass on to the game, and the list says so, marking
+the game's commands (game). Its own key, the sheet's column D, runs it on
+the Screen with no Ctrl, Cmd or Alt, the drawer's note naming it, and the
+list says which binding of yours shadows it.
 The keymap applied is kept in this browser, the one thing the page writes
-(below), and holds again at the next load; Back to the defaults puts the
-page's own in the box, and applying it forgets the one kept. In a box the
+(below), and holds again at the next load; Back to the defaults, `default-keys` in the
+palette, puts the page's own in the box and gives the box the keys, the caret at
+its end, and applying it forgets the one kept. In a box the
 typing is the box's: a binding written for anywhere holds there only for a
 key held with Ctrl or Cmd, or a function key, and never for the box's
 editing keys, Ctrl with A, C, V, X, Y or Z, an arrow, Home, End, Backspace
@@ -788,7 +801,7 @@ viewport, not an Excel clone.
   The page opens on the empty sheet whatever it holds and offers its
   cartridges in the picker, each by its manifest's title, its notes in the
   drawer. A page that does not hold Alonzo's own cartridges and records is
-  a game's (`ENGINE.16`). Its `?loop=1` runs the eleven cases that need
+  a game's (`ENGINE.16`). Its `?loop=1` runs the twelve cases that need
   nothing of Alonzo's own files, over its own blocks: `abi`; `pass`, every
   source to its cartridge; `replay`, every replay to its golden and its
   recording, every frame to its hand; `grid`, every grid cartridge's drawn
@@ -803,11 +816,13 @@ viewport, not an Excel clone.
   keys, lines and second Escape over the page's own registry (`ENGINE.23`);
   and `keys`, the page's own keymap read, crafted ones refused by line, a
   key's command in each place, a person's own command's steps and the
-  keymap kept through a double of the browser's storage (its second slice).
-  Each of
+  keymap kept through a double of the browser's storage (its second slice);
+  and `commands`, the page's own command card, a game's commands named,
+  listed and bound, and run by name and by key into the Input sheet's
+  twentieth row (`ENGINE.25`). Each of
   the fifteen others prints
   `case <name>: not on this page`, being proven in Alonzo's CI, and the
-  last line reads `loop ok cases=11 dpr=1; 15 of Alonzo's own not on this
+  last line reads `loop ok cases=12 dpr=1; 15 of Alonzo's own not on this
   page` at a ratio of 1. A replay with no hand is held to its golden alone, counted `alone`
   and said in a note under the case. Every other mode of the bench is
   Alonzo's own and says so on a game's page; `?frames=1` and `?blit=1` over

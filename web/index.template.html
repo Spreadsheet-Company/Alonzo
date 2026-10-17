@@ -614,7 +614,8 @@
     '; the default, every place but a box, and a box too for a key held with Ctrl or Cmd; screen; viewer; or a box,',
     '; edit, source, library, cartridge, replay or keys. And a sheet, (on "Portfolio"): the Screen or the drawer\'s',
     '; sheets while that sheet shows, before a binding of the same key on none. The palette keeps a key, the way to',
-    '; every command.',
+    '; every command. A game\'s own command is its cartridge\'s name and its own, (bind "B" buffet.buy-1): it holds',
+    '; while that cartridge is loaded and the command holds, its key passing on otherwise (ENGINE.25).',
     '(bind "Ctrl+K" palette)',
     '(bind "Control+Shift+[Backquote]" palette)',
     '(bind "Ctrl+Alt+PageDown" next-sheet)',
@@ -704,11 +705,29 @@
     if (k.mod && !k.alt && /^(a|c|v|x|y|z|arrowleft|arrowright|arrowup|arrowdown|home|end|backspace|delete)$/.test(k.value.toLowerCase())) return false;
     return true;
   }
+  // A game's command as a page names it (ENGINE.25; docs/SPEC.md section 3.10): its cartridge's name and its own joined by
+  // one dot, each lowercase letters, digits and hyphens, a spelling no page command and no person's own takes, so that a
+  // person's keymap holds each game's commands apart; { cart, name }, or null for any other name.
+  var GAME_COMMAND = /^([a-z0-9-]+)\.([a-z0-9-]+)$/;
+  function gameName(s) { var m = GAME_COMMAND.exec(String(s)); return m ? { cart: m[1], name: m[2] } : null; }
+  // A cartridge's commands as a page lists them: the host's commands(), each named with the cartridge's name, its words
+  // or its name, whether it holds now, and its own key, a code, and in words, on the Screen.
+  function gameCommands(list, cart) {
+    return (list || []).map(function (c) {
+      return { name: cart + '.' + c.name, bare: c.name, words: c.words || c.name, holds: !!c.holds, code: c.key || '', own: c.key ? codeWords(c.key) + ' on the Screen' : '' };
+    });
+  }
+  // Where a command stands in the palette's lines and in the list, the owner's word at ENGINE.25's hand test: a person's own
+  // first, then a game's, what this browser and the cartridge loaded brought, then the page's own.
+  function commandRank(c) { return c.custom ? 0 : c.game ? 1 : 2; }
   // The binding a key event presses in a place showing a sheet, or null; an input method's composing is its own. A binding
-  // on the sheet shown goes before one on none, so that a sheet's own key is its own there and the other's elsewhere.
-  function keymapFind(map, ev, place, shown) {
+  // on the sheet shown goes before one on none, so that a sheet's own key is its own there and the other's elsewhere. A
+  // binding of a game's command (ENGINE.25) holds only while live(name) says the command is, its cartridge loaded and the
+  // command holding now; otherwise its key passes on, to a binding after it, the game or the viewport.
+  function keymapFind(map, ev, place, shown, live) {
     if (!map || !ev || ev.isComposing) return null;
     var i, b;
+    map = { bindings: map.bindings.filter(function (x) { return !x.game || (!!live && live(x.command)); }) };   // a game's command, while it is live
     for (i = 0; i < map.bindings.length; i++) { b = map.bindings[i]; if (b.sheets && holdsIn(b, place, shown) && keyMatches(b.keys, ev)) return b; }
     for (i = 0; i < map.bindings.length; i++) { b = map.bindings[i]; if (!b.sheets && holdsIn(b, place, shown) && keyMatches(b.keys, ev)) return b; }
     return null;
@@ -745,7 +764,8 @@
     commands.forEach(function (c) { builtin[c.name] = c; });
     var forms = top.forms.map(function (f) { return { line: f.line, d: (VP.readForms(f.text) || [])[0] }; });
     function head(d) { return Array.isArray(d) && d[0] && d[0].sym !== undefined ? d[0].sym : null; }
-    function known(name) { return builtin[name] || customs[String(name).toLowerCase()]; }
+    // a command of the page's, of the person's own, or of a game's by its spelling (ENGINE.25), whatever cartridge is loaded
+    function known(name) { return builtin[name] || customs[String(name).toLowerCase()] || !!gameName(name); }
     // the commands of a person's own first, so that a binding or a step may name one written below it
     forms.forEach(function (f) {
       if (head(f.d) !== 'command') return;
@@ -786,6 +806,8 @@
       if (!cmd) { problems.push(at + 'a binding names its command after its keys: (bind "' + d[1] + '" run)'); return; }
       if (!known(cmd)) { if (lenient) notes.push(at + 'the binding of ' + k.text + ' to ' + cmd + ', which this page has no command of: set aside'); else problems.push(at + k.text + ' names no command: ' + cmd); return; }
       var b = { keys: k, command: customs[cmd.toLowerCase()] ? customs[cmd.toLowerCase()].name : cmd, custom: !!customs[cmd.toLowerCase()], arg: null, places: null, line: f.line };
+      var gn = gameName(cmd);
+      if (gn) { b.game = true; b.cart = gn.cart; }   // a game's command (ENGINE.25), held while its cartridge is loaded and it holds
       for (i = 3; i < d.length; i++) {
         if (typeof d[i] === 'string') { if (cmd !== 'sheet') { problems.push(at + cmd + ' takes nothing after its name'); return; } b.arg = d[i]; continue; }
         if (head(d[i]) === 'on') {
@@ -809,6 +831,7 @@
     for (i = 0; i < bindings.length; i++) for (var j = i + 1; j < bindings.length; j++) {
       var bi = bindings[i], bj = bindings[j];
       if (bi.keys.text !== bj.keys.text || !bi.sheets !== !bj.sheets) continue;
+      if (bi.game && bj.game && bi.cart !== bj.cart) continue;   // two games' commands, never loaded at once (ENGINE.25)
       var pi = placesOf(bi), pj = placesOf(bj), both = pi.filter(function (p) { return pj.indexOf(p) >= 0; });
       var shared = bi.sheets ? Object.keys(bi.sheets).filter(function (s) { return bj.sheets[s]; }) : null;
       if (both.length && (!shared || shared.length)) problems.push('lines ' + bi.line + ' and ' + bj.line + ' both bind ' + bi.keys.text + (both[0] === 'page' ? '' : ' ' + (PLACE_WORDS[both[0]] || 'in a box')) + (shared ? ' while ' + bi.sheets[shared[0]] + ' shows' : ''));
@@ -883,11 +906,16 @@
   // or, since ENGINE.24, any key at all when the cartridge reads the last key pressed (readsKey), as Sand reads 1 to 3. The
   // game's keys are those it binds now, a view's key bound by formula among them, so a binding on a sheet shadows one only
   // while its sheet shows on the Screen (shown, the sheet there now).
-  function bindingNotes(b, codes, readsKey, shown) {
+  // Since ENGINE.25 a binding's key that a game's command holding now takes on the Screen is said too, a key held with no
+  // Ctrl, Cmd or Alt, as the host takes a command's key: commands, [{ code, name, full }] of the commands holding with a
+  // key, a binding of that command itself shadowing nothing.
+  function bindingNotes(b, codes, readsKey, shown, commands) {
     var out = [], kept = keptWords(b.keys), screen = !b.keys.mod && (!b.places || !!b.places.screen) && (!b.sheets || (shown !== null && shown !== undefined && !!b.sheets[String(shown).toLowerCase()]));
     if (kept) out.push(kept);
     if (screen && codes && codes.length && keyCodes(b.keys).some(function (c) { return codes.indexOf(c) >= 0; })) out.push('shadows the game\'s button on the Screen');
     else if (screen && readsKey) out.push('shadows a key the game reads on the Screen');
+    var taken = screen && !b.keys.alt && commands ? commands.filter(function (c) { return c.full !== b.command && keyCodes(b.keys).indexOf(c.code) >= 0; }) : [];
+    if (taken.length) out.push('shadows the game\'s command ' + andList(taken.map(function (c) { return c.name; })) + ' on the Screen');
     return out.join('; ');
   }
   // Whether a cartridge's formulas read the last key, Input!B17 or B18, the frame's or the last frame's (docs/SPEC.md
@@ -921,7 +949,8 @@
     return m ? 'pad ' + m[1] : code;
   }
   function andList(items) { return items.length > 1 ? items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1] : items.join(''); }
-  function gameKeysWords(km, hasKeys, readsKey) {
+  // Since ENGINE.25 the keys of the game's commands holding now are said after its buttons': commands, [{ code, name }].
+  function gameKeysWords(km, hasKeys, readsKey, commands) {
     var players = [], p, b;
     for (p = 0; p < 4; p++) {
       var words = [], arrows = !!km && km[0][p] === 'ArrowUp' && km[1][p] === 'ArrowDown' && km[2][p] === 'ArrowLeft' && km[3][p] === 'ArrowRight';
@@ -930,7 +959,26 @@
       if (words.length) players.push(andList(words) + (words.length === 1 && !arrows ? ' is' : ' are') + ' player ' + (p + 1) + '\'s');
     }
     var said = players.length ? players.join('; ') : hasKeys ? 'the game binds no key now' : readsKey ? '' : 'this cartridge binds no key';
+    if (commands && commands.length) said = (players.length ? said + '; ' : '') + andList(commands.map(function (c) { return codeWords(c.code); })) + (commands.length === 1 ? ' runs one of its commands' : ' run its commands');
     return readsKey ? said + (said ? ', and ' : '') + 'it reads any key, the last one pressed' : said;
+  }
+  // The list in the drawer, every command with its words and its keys (ENGINE.23), in commandRank's order (ENGINE.25): a
+  // person's own commands, then the loaded game's, holding or not now, and after them the game's commands a person binds
+  // that press nothing, of a cartridge not loaded or a name the loaded one's Commands sheet does not hold, then the page's
+  // own. commands: the page's; map: the keymap; games: gameCommands of the cartridge loaded, named loaded; keysOf(name): a
+  // command's keys in words. Each entry { name, words, keys, tag }, tag 'custom', 'game' or ''.
+  function keyListEntries(commands, map, games, loaded, keysOf) {
+    var out = [], others = {};
+    commands.forEach(function (c) { out.push({ name: c.name, words: c.words, keys: keysOf(c.name), tag: '' }); });
+    map.order.forEach(function (n) { var c = map.customs[n]; out.push({ name: c.name, words: c.words, keys: keysOf(c.name), tag: 'custom', custom: true }); });
+    games.forEach(function (g) { out.push({ name: g.name, words: g.words + (g.holds ? '' : ', holding not now'), keys: [g.own, keysOf(g.name)].filter(Boolean).join('; '), tag: 'game', game: true }); });
+    map.bindings.forEach(function (b) { if (b.game && !games.some(function (g) { return g.name === b.command; })) others[b.command] = true; });
+    Object.keys(others).forEach(function (o) {
+      var c = gameName(o).cart;
+      out.push({ name: o, words: (c === loaded ? 'a name ' + c + '\'s Commands sheet does not hold' : 'a command of ' + c + ', which is not loaded') + ', so its keys press nothing', keys: keysOf(o), tag: 'game', game: true });
+    });
+    out.forEach(function (e, i) { e.at = commandRank(e) * out.length + i; });
+    return out.sort(function (a, b) { return a.at - b.at; });
   }
   // A key event spelled as the keymap spells a key, for Record a key: the modifiers, then a Latin letter or a digit as
   // itself, a named key by its name, and any other key by its place, since a character Shift or a layout made moves.
@@ -961,7 +1009,7 @@
     if (!q) return 1;
     if (s === q) return 5;
     if (s.indexOf(q) === 0) return 4;
-    var words = s.split(/[\s-]+/), w, i, j = 0, qs = q.replace(/\s+/g, '');
+    var words = s.split(/[\s.-]+/), w, i, j = 0, qs = q.replace(/\s+/g, '');   // a word begins after a space, a hyphen or a game's dot
     for (w = 0; w < words.length; w++) if (words[w].indexOf(q) === 0) return 3;
     if (s.indexOf(q) >= 0) return 2;
     for (i = 0; i < s.length && j < qs.length; i++) if (s.charAt(i) === qs.charAt(j)) j++;
@@ -969,21 +1017,23 @@
   }
   // The palette's lines for a text. A text that begins with ( or ;, as Frazaro's CLI reads one, is a row of VLA, one line
   // that writes it as a person's edit, as the edit row does. Any other text lists the commands and the sheets that match
-  // it, every match of a name before every match of words, ties in the registry's order and then the tab order, a hidden
-  // sheet listed for a text typed alone; an empty text lists the lines run last first. commands: the page's and a person's
-  // own (custom), each with its keys in words; sheets: [{ name, state }] in the tab order; recent: the keys of the lines run
-  // last, the latest first.
+  // it, every match of a name before every match of words, ties a person's own command first, then a game's, then the
+  // page's (commandRank), each in the registry's order, and the sheets last in the tab order, a hidden sheet listed for a
+  // text typed alone; an empty text lists the lines run last first and the rest in that order. commands: the page's, a
+  // person's own (custom) and a game's (game, ENGINE.25, listed while it holds), each with its keys in words; sheets:
+  // [{ name, state }] in the tab order; recent: the keys of the lines run last, the latest first.
   function paletteLines(text, commands, sheets, recent) {
     var t = String(text || ''), q = t.trim().toLowerCase(), all = [], out = [], seen = {};
     var isRow = /^\s*[(;]/.test(t);
     if (isRow) return [{ kind: 'row', key: 'row', name: 'write', label: 'a row', words: 'written as a person\'s edit at the next frame, as the edit row writes it', keys: '' }];
     commands.forEach(function (c, i) {
-      if (c.arg || c.hidden) return;
-      all.push({ kind: c.custom ? 'custom' : 'command', key: (c.custom ? 'custom:' : 'command:') + c.name, name: c.name, label: c.name, words: c.words, keys: c.keys || '', order: i });
+      if (c.arg || c.hidden || (c.game && !c.holds)) return;   // a game's command that holds not is no line (ENGINE.25)
+      all.push({ kind: c.custom ? 'custom' : c.game ? 'game' : 'command', key: (c.custom ? 'custom:' : c.game ? 'game:' : 'command:') + c.name, name: c.name, label: c.name, words: c.words, keys: c.keys || '', order: commandRank(c) * commands.length + i });
     });
     (sheets || []).forEach(function (s, i) {
-      all.push({ kind: 'sheet', key: 'sheet:' + s.name, name: 'sheet', arg: s.name, label: s.name, words: 'show the sheet ' + s.name + (s.state && s.state !== 'visible' ? ', ' + s.state : ''), keys: '', order: commands.length + i, hidden: !!s.state && s.state !== 'visible' });
+      all.push({ kind: 'sheet', key: 'sheet:' + s.name, name: 'sheet', arg: s.name, label: s.name, words: 'show the sheet ' + s.name + (s.state && s.state !== 'visible' ? ', ' + s.state : ''), keys: '', order: 3 * commands.length + i, hidden: !!s.state && s.state !== 'visible' });
     });
+    all.sort(function (a, b) { return a.order - b.order; });   // a person's own and a game's before the page's, the sheets last
     if (!q) {
       (recent || []).forEach(function (key) { all.forEach(function (l) { if (l.key === key && !seen[key]) { seen[key] = true; out.push(l); } }); });
       all.forEach(function (l) { if (!seen[l.key] && !l.hidden) out.push(l); });
@@ -1487,8 +1537,25 @@
     if (actless.length) { statusEl.textContent = 'The commands ' + actless.join(', ') + ' have no act on this page.'; statusEl.className = 'status refused'; }
     // A step of a person's own command: a row of VLA written as a person's edit, or a command of the page pressed as the
     // palette presses it; and a binding pressed, a command of the person's by its steps.
-    function step(name, arg, row) { if (name === 'write' && row) host.edit(row); else ACTS[name](arg, 'palette'); }
-    function press(b) { if (b.custom) runSteps(keymap, b.command, step); else ACTS[b.command](b.arg, 'key'); }
+    function step(name, arg, row) { if (name === 'write' && row) host.edit(row); else if (gameName(name)) runGame(name, 'palette'); else ACTS[name](arg, 'palette'); }
+    function press(b) { if (b.custom) runSteps(keymap, b.command, step); else if (b.game) runGame(b.command, 'key'); else ACTS[b.command](b.arg, 'key'); }
+    // A game's command (ENGINE.25), by the name a page writes it, <cartridge>.<command>: run by the host when its cartridge is
+    // the one loaded, else said; and whether it is live, its cartridge loaded and the command holding now, which a binding
+    // of it waits for, its key passing on meanwhile.
+    function loadedName() { return host.cart ? host._cartName() : ''; }
+    function runGame(full, how) {
+      var g = gameName(full);
+      if (!g) return;
+      if (!host.cart || g.cart !== loadedName()) { sayBar('The command ' + full + ' was not run: it is ' + g.cart + '\'s, and ' + (host.cart ? 'the cartridge loaded is ' + loadedName() : 'no cartridge is loaded') + '.'); statusEl.className = 'status refused'; return; }
+      host.command(g.name, how);
+    }
+    function gameLive(full) {
+      var g = gameName(full);
+      return !!g && !!host.cart && g.cart === loadedName() && host.commands().some(function (c) { return c.name === g.name && c.holds; });
+    }
+    // The loaded game's commands as the palette and the list show them, and the keys of those holding now.
+    function gameList() { return host.cart ? gameCommands(host.commands(), loadedName()) : []; }
+    function gameCommandKeys() { return gameList().filter(function (g) { return g.holds && g.code; }).map(function (g) { return { code: g.code, name: g.bare, full: g.name }; }); }
     // The keymap: the page's own, or the one a person applied and this browser keeps (decision 8, the owner's word),
     // read at the load through the same reader, a refused one said and the page's own holding.
     function browserStore() { try { return window.localStorage; } catch (e) { return null; } }
@@ -1517,12 +1584,13 @@
     var gameKeysEl = document.getElementById('eng-game-keys'), lastKeyRead = false, keysSeen = null, givenSeen;
     function refreshGameKeys(atLoad) {
       var km = host.keymap, codes = (km ? km.map(function (r) { return r.join(','); }).join(';') : '') + '|' + shownIn('screen');
+      codes += '|' + gameList().map(function (g) { return g.name + ':' + g.holds + ':' + g.code + ':' + (g.words !== g.bare); }).join(',');   // the game's commands (ENGINE.25), and whether each has its words yet, a formula's having none at frame 0; the words themselves read live by the palette alone
       if (atLoad || host.given !== givenSeen) {
         givenSeen = host.given;
         try { lastKeyRead = !!host.cart && readsLastKey(host._given()); } catch (e) { lastKeyRead = false; }
       } else if (codes === keysSeen) return;
       keysSeen = codes;
-      gameKeysEl.textContent = gameKeysWords(km, !!(host.cart && host.cart.devices.keys), lastKeyRead);
+      gameKeysEl.textContent = gameKeysWords(km, !!(host.cart && host.cart.devices.keys), lastKeyRead, gameCommandKeys());
       if (keymap) sayKeys();
     }
     // The sheet a place shows, for a binding on a sheet (ENGINE.24): in the Screen's place a grid's sheet shown and a
@@ -1545,16 +1613,17 @@
     }
     function sayKeys() {
       while (keysList.firstChild) keysList.removeChild(keysList.firstChild);
-      function item(name, words, keys, mine) {
+      function item(name, words, keys, tag) {
         var li = document.createElement('li'), n = document.createElement('span'), k = document.createElement('span');
-        n.className = 'name'; n.textContent = name + (mine ? ' (custom)' : '');
+        n.className = 'name'; n.textContent = name + (tag ? ' (' + tag + ')' : '');
         k.className = keys ? 'keys' : 'none'; k.textContent = keys || 'the palette, by its name';
         li.appendChild(n); li.appendChild(document.createTextNode(' ' + words + ': ')); li.appendChild(k);
         keysList.appendChild(li);
       }
-      var codes = gameCodes(), shown = shownIn('screen'), notes = function (b) { return bindingNotes(b, codes, lastKeyRead, shown); };
-      COMMANDS.forEach(function (c) { item(c.name, c.words, commandKeys(keymap, c.name, undefined, notes)); });
-      keymap.order.forEach(function (n) { var c = keymap.customs[n]; item(c.name, c.words, commandKeys(keymap, c.name, undefined, notes), true); });
+      // a person's own commands and the loaded game's first (ENGINE.25), each with its own key and a person's, the game's a
+      // person binds that press nothing after them, then the page's own
+      var codes = gameCodes(), shown = shownIn('screen'), held = gameCommandKeys(), notes = function (b) { return bindingNotes(b, codes, lastKeyRead, shown, held); };
+      keyListEntries(COMMANDS, keymap, gameList(), loadedName(), function (name) { return commandKeys(keymap, name, undefined, notes); }).forEach(function (e) { item(e.name, e.words, e.keys, e.tag); });
       var buttons = document.querySelectorAll('[data-command]');
       for (var i = 0; i < buttons.length; i++) {
         var name = buttons[i].getAttribute('data-command'), c = COMMANDS.filter(function (x) { return x.name === name; })[0], keys = commandKeys(keymap, name), aria = ariaKeys(name);
@@ -1575,7 +1644,15 @@
       sayKeysLine('The keys applied: ' + r.bindings.length + ' binding' + (r.bindings.length === 1 ? '' : 's') + (mine ? ' and ' + mine + ' command' + (mine === 1 ? '' : 's') + ' of your own' : '') +
         (own ? ', the page\'s own, no keymap kept in this browser' : kept ? ', kept in this browser' : ', which this browser will not keep, so a reload brings back the page\'s own') + '.', false);
     }
-    function defaultKeys() { openDrawer(); keysBox.open = true; keysEl.value = KEYMAP_DEFAULTS; sayKeysLine('The page\'s own keymap is in the box: Apply the keys applies it, and forgets the one kept.', false); }
+    // Back to the defaults: the page's own keymap in the box, and the box given the keys as keys gives them, the caret at its
+    // end, where a line of a person's own goes (the owner's word at ENGINE.25's hand test).
+    function defaultKeys() {
+      keysEl.value = KEYMAP_DEFAULTS;
+      give(keysEl, keysBox);
+      keysEl.selectionStart = keysEl.selectionEnd = keysEl.value.length;
+      keysEl.scrollTop = keysEl.scrollHeight;
+      sayKeysLine('The page\'s own keymap is in the box: Apply the keys applies it, and forgets the one kept.', false);
+    }
     // Record a key: the next key pressed, a modifier alone waiting for its key, written into the box at the caret.
     var recording = false, recordAt = 0;
     function recordKey() {
@@ -1600,11 +1677,13 @@
       lines: function (text) {
         var cmds = COMMANDS.map(function (c) { return { name: c.name, words: c.words, arg: c.arg, hidden: c.hidden, keys: commandKeys(keymap, c.name) }; });
         keymap.order.forEach(function (n) { var c = keymap.customs[n]; cmds.push({ name: c.name, words: c.words, keys: commandKeys(keymap, c.name), custom: true }); });
+        gameList().forEach(function (g) { cmds.push({ name: g.name, words: g.words, keys: [g.own, commandKeys(keymap, g.name)].filter(Boolean).join('; '), game: true, holds: g.holds }); });   // ENGINE.25
         return paletteLines(text, cmds, sheetsViewport().sheets(), palette.recent);
       },
       run: function (line, text) {
         if (line.kind === 'row') host.edit(text.trim());
         else if (line.kind === 'custom') runSteps(keymap, line.name, step);
+        else if (line.kind === 'game') runGame(line.name, 'palette');
         else ACTS[line.name](line.arg, 'palette');
       }
     });
@@ -1651,7 +1730,7 @@
         if (b && b.command === 'palette') { ev.preventDefault(); ev.stopPropagation(); if (!ev.repeat) palette.toggle(); }
         return;
       }
-      b = keymapFind(keymap, ev, place, shownIn(place));
+      b = keymapFind(keymap, ev, place, shownIn(place), gameLive);
       if (b) {
         ev.preventDefault(); ev.stopPropagation();
         if (!ev.repeat || repeats(b.command)) press(b);
@@ -5587,9 +5666,11 @@
   // a fresh host to every frame's cells; a command refused while a replay plays; then rate 0, a command its own step and
   // the next edit's step seeing B20 empty, replayed; and the card written to version 4, its Commands sheet its own.
   function caseCommands() {
-    var P = [], k = { module: 0, opened: 0, listed: 0, frames: 0, ran: 0, landed: 0, emptied: 0, apart: 0, twice: 0, repeats: 0, ctrl: 0, holdsNot: 0, refused: 0,
+    var P = [], k = { named: 0, lines: 0, read: 0, refusals: 0, found: 0, steps: 0, shadow: 0, note: 0, order: 0,
+                      module: 0, opened: 0, listed: 0, frames: 0, ran: 0, landed: 0, emptied: 0, apart: 0, twice: 0, repeats: 0, ctrl: 0, holdsNot: 0, refused: 0,
                       passed: 0, noted: 0, words: 0, waited: 0, dropped: 0, said: 0, replayed: 0, replayFrames: 0, replaySame: 0, during: 0, rate0: 0, rate0Empty: 0,
                       rate0Replayed: 0, older: 0 };
+    commandsPage(k, P);
     var wasm = builtModule();
     if (!wasm) return { counters: k, problems: P };
     var bytes = bytesOfBase64(wasm);
@@ -5597,6 +5678,98 @@
     commandsRun(bytes, k, P);
     commandsOlder(bytes, k, P);
     return { counters: k, problems: P };
+  }
+  // The case's page half (slice 2), pure, needing no module: a game's command as a page names it; the palette's lines of a
+  // game's commands, the one that holds with its own key and found by a word of its name, the one that holds not no line;
+  // the keymap reading a game's commands, two games' bindings of one key no clash, and its refusals; a binding of a game's
+  // command found while live and passing its key on while not, a binding on a sheet before one on none; a person's command
+  // running a game's twice; the list's word of a game's command key a person's binding shadows; and the drawer's note.
+  function commandsPage(k, P) {
+    [['commandcard.count-up', 'commandcard count-up'], ['buffet.buy-1', 'buffet buy-1'], ['count-up', null], ['Buffet.buy-1', null], ['a.b.c', null], ['.x', null]].forEach(function (x) {
+      var g = gameName(x[0]), got = g ? g.cart + ' ' + g.name : null;
+      if (got === x[1]) k.named++; else P.push('commands: ' + JSON.stringify(x[0]) + ' names ' + JSON.stringify(got) + ', where ' + JSON.stringify(x[1]) + ' is due');
+    });
+    // the palette's lines over the page's commands and the card's, count-down holding not
+    var games = gameCommands([{ name: 'count-up', words: 'add one', holds: true, key: 'KeyU' }, { name: 'count-down', words: 'take one', holds: false, key: 'KeyD' }, { name: 'note', words: '', holds: true, key: '' }], 'commandcard');
+    var cmds = COMMANDS.map(function (c) { return { name: c.name, words: c.words, arg: c.arg, hidden: c.hidden, keys: '' }; });
+    games.forEach(function (g) { cmds.push({ name: g.name, words: g.words, keys: g.own, game: true, holds: g.holds }); });
+    var up = paletteLines('count', cmds, [], [])[0], every = paletteLines('', cmds, [], []), byWord = paletteLines('up', cmds, [], [])[0], nt = paletteLines('note', cmds, [], [])[0];
+    if (up && up.key === 'game:commandcard.count-up' && up.keys === 'U on the Screen') k.lines++; else P.push('commands: the palette\'s first line for "count" is ' + JSON.stringify(up) + ', where commandcard.count-up with U on the Screen is due');
+    if (!every.some(function (l) { return l.key === 'game:commandcard.count-down'; })) k.lines++; else P.push('commands: the palette lists commandcard.count-down, which holds not');
+    if (byWord && byWord.key === 'game:commandcard.count-up') k.lines++; else P.push('commands: the palette\'s first line for "up" is ' + JSON.stringify(byWord) + ', where commandcard.count-up, a word of its name after the dot, is due');
+    if (nt && nt.key === 'game:commandcard.note' && nt.words === 'note' && nt.keys === '') k.lines++; else P.push('commands: the palette\'s first line for "note" is ' + JSON.stringify(nt) + ', where commandcard.note, its words its name and no key, is due');
+    // the keymap reading a game's commands, typed and kept
+    var base = KEYMAP_DEFAULTS + '\n';
+    var mine = base + '(bind "U" commandcard.count-up)\n(bind "B" commandcard.note)\n(bind "B" kairos.boost)\n(bind "P" commandcard.count-up (on "Desk"))\n(bind "P" pause)\n' +
+               '(command "twice" "count up twice" (commandcard.count-up) (commandcard.count-up))\n(bind "Ctrl+J" twice)\n';
+    var m = readKeymap(mine, COMMANDS), kept = readKeymap(mine, COMMANDS, true);
+    var gameBindings = m.ok ? m.bindings.filter(function (b) { return b.game; }).map(function (b) { return b.cart + ':' + b.command; }).join(' ') : '';
+    if (m.ok && gameBindings === 'commandcard:commandcard.count-up commandcard:commandcard.note kairos:kairos.boost commandcard:commandcard.count-up' && m.customs.twice) k.read++;
+    else P.push('commands: the keymap naming a game\'s commands was ' + (m.ok ? 'read as ' + JSON.stringify(gameBindings) : 'refused: ' + m.problems.join('; ')) + ', where four bindings of a game\'s commands and the person\'s twice are due');
+    if (kept.ok && !kept.notes.length) k.read++; else P.push('commands: the keymap kept, read leniently, was ' + (kept.ok ? 'read with ' + kept.notes.length + ' note(s)' : 'refused') + ', where a game\'s commands are known by their spelling');
+    var at = base.split('\n').length;
+    [[base + '(bind "U" Commandcard.count-up)', 'line ' + at + ': U names no command: Commandcard.count-up'],
+     [base + '(bind "U" commandcard.count-up)\n(bind "U" pause)', 'lines ' + at + ' and ' + (at + 1) + ' both bind U'],
+     [base + '(bind "U" commandcard.count-up)\n(bind "U" commandcard.count-down)', 'lines ' + at + ' and ' + (at + 1) + ' both bind U'],
+     [base + '(bind "U" commandcard.count-up "x")', 'line ' + at + ': commandcard.count-up takes nothing after its name']].forEach(function (x) {
+      var r = readKeymap(x[0], COMMANDS), said = r.problems.join('; ');
+      if (!r.ok && said.indexOf(x[1]) >= 0) k.refusals++; else P.push('commands: the text ending ' + JSON.stringify(x[0].slice(-50)) + ' was ' + (r.ok ? 'applied' : 'refused in the words ' + JSON.stringify(said)) + ', where it is refused, saying ' + JSON.stringify(x[1]));
+    });
+    if (!m.ok) return;
+    // a binding of a game's command found while live, its key passing on while not
+    var live = function (full) { return full === 'commandcard.count-up'; }, dead = function () { return false; };
+    [['U on the Screen while count-up holds', { key: 'u', code: 'KeyU' }, 'screen', 'Desk', live, 'commandcard.count-up'],
+     ['U on the Screen while count-up holds not', { key: 'u', code: 'KeyU' }, 'screen', 'Desk', dead, 'nothing'],
+     ['U with no game asked', { key: 'u', code: 'KeyU' }, 'screen', 'Desk', undefined, 'nothing'],
+     ['B on the Screen, note and boost not live', { key: 'b', code: 'KeyB' }, 'screen', 'Desk', live, 'nothing'],
+     ['P on the Desk while count-up holds', { key: 'p', code: 'KeyP' }, 'screen', 'Desk', live, 'commandcard.count-up'],
+     ['P on the Desk while count-up holds not', { key: 'p', code: 'KeyP' }, 'screen', 'Desk', dead, 'pause'],
+     ['P on the Ledger', { key: 'p', code: 'KeyP' }, 'screen', 'Ledger', live, 'pause'],
+     ['Ctrl+J on the page', { ctrlKey: true, key: 'j', code: 'KeyJ' }, 'page', null, live, 'twice']].forEach(function (x) {
+      var b = keymapFind(m, x[1], x[2], x[3], x[4]), got = b ? b.command : 'nothing';
+      if (got === x[5]) k.found++; else P.push('commands: ' + x[0] + ' presses ' + got + ', where ' + x[5] + ' is due');
+    });
+    var ran = [];
+    runSteps(m, 'twice', function (name, arg, row) { ran.push(row || name); });
+    if (ran.join(' | ') === 'commandcard.count-up | commandcard.count-up') k.steps++; else P.push('commands: the command twice ran ' + JSON.stringify(ran) + ', where commandcard.count-up twice is due');
+    // the list's word of a game's command key a person's binding shadows on the Screen
+    var held = [{ code: 'KeyU', name: 'count-up', full: 'commandcard.count-up' }];
+    [['(bind "U" pause)', 'shadows the game\'s command count-up on the Screen'], ['(bind "Ctrl+U" pause)', ''], ['(bind "Alt+U" pause)', ''], ['(bind "U" commandcard.count-up)', ''],
+     ['(bind "U" pause source)', '']].forEach(function (x) {
+      var r = readKeymap(base + x[0] + '\n', COMMANDS), b = r.ok ? r.bindings[r.bindings.length - 1] : null, said = b ? bindingNotes(b, [], false, 'Desk', held) : 'refused';
+      if (said === x[1]) k.shadow++; else P.push('commands: the list says of ' + x[0] + ' beside the game\'s U ' + JSON.stringify(said) + ', where ' + JSON.stringify(x[1]) + ' is due');
+    });
+    // the drawer's note, the keys of the game's commands holding now after its buttons'
+    var onlyP = [];
+    for (var r0 = 0; r0 < 10; r0++) onlyP.push([r0 === 4 ? 'KeyP' : '', '', '', '']);
+    var two = [{ code: 'KeyU', name: 'count-up' }, { code: 'KeyN', name: 'note' }], one = [{ code: 'KeyU', name: 'count-up' }];
+    [[gameKeysWords(null, false, false, two), 'U and N run its commands'], [gameKeysWords(null, false, false, one), 'U runs one of its commands'],
+     [gameKeysWords(onlyP, true, false, one), 'P is player 1\'s; U runs one of its commands'], [gameKeysWords(null, false, false, []), 'this cartridge binds no key'],
+     [gameKeysWords(null, false, true, [{ code: 'Digit1', name: 'buy' }]), '1 runs one of its commands, and it reads any key, the last one pressed']].forEach(function (x) {
+      if (x[0] === x[1]) k.note++; else P.push('commands: the drawer\'s note says ' + JSON.stringify(x[0]) + ', where ' + JSON.stringify(x[1]) + ' is due');
+    });
+    // a person's own commands and the game's first, in the palette and in the list (the owner's word at the hand test)
+    var pageFirst = COMMANDS.filter(function (c) { return !c.arg && !c.hidden; })[0].name;
+    var mineCmds = cmds.slice(0, COMMANDS.length).concat([{ name: 'twice', words: 'count up twice', keys: '', custom: true }], cmds.slice(COMMANDS.length));
+    var empty = paletteLines('', mineCmds, [{ name: 'Desk', state: 'visible' }], []).map(function (l) { return l.key; });
+    var due = ['custom:twice', 'game:commandcard.count-up', 'game:commandcard.note', 'command:' + pageFirst];
+    if (empty.slice(0, 4).join(' ') === due.join(' ') && empty[empty.length - 1] === 'sheet:Desk') k.order++;
+    else P.push('commands: an empty palette lists ' + JSON.stringify(empty.slice(0, 4)) + ' first and ' + empty[empty.length - 1] + ' last, where ' + JSON.stringify(due) + ' first and the sheet last are due');
+    var tie = paletteLines('ru', COMMANDS.map(function (c) { return { name: c.name, words: c.words, arg: c.arg, hidden: c.hidden, keys: '' }; }).concat([{ name: 'run-twice', words: 'run, then run', keys: '', custom: true }]), [], [])[0];
+    if (tie && tie.key === 'custom:run-twice') k.order++; else P.push('commands: the palette\'s first line for "ru" is ' + JSON.stringify(tie && tie.key) + ', where the person\'s run-twice, before the page\'s run of the same score, is due');
+    var m2 = readKeymap(base + '(bind "U" commandcard.count-up)\n(bind "F8" commandcard.nope)\n(bind "B" kairos.boost)\n(command "twice" "count up twice" (commandcard.count-up) (commandcard.count-up))\n', COMMANDS);
+    if (!m2.ok) { P.push('commands: the list\'s keymap was refused: ' + m2.problems.join('; ')); return; }
+    var keysOf = function (n) { return commandKeys(m2, n); }, listed = keyListEntries(COMMANDS, m2, games, 'commandcard', keysOf), entry = function (n) { return listed.filter(function (e) { return e.name === n; })[0] || {}; };
+    var seq = listed.slice(0, 7).map(function (e) { return e.name + (e.tag ? ' (' + e.tag + ')' : ''); }).join(', ');
+    var seqDue = 'twice (custom), commandcard.count-up (game), commandcard.count-down (game), commandcard.note (game), commandcard.nope (game), kairos.boost (game), ' + COMMANDS[0].name;
+    if (seq === seqDue && listed.length === COMMANDS.length + 6) k.order++; else P.push('commands: the list begins ' + JSON.stringify(seq) + ', where ' + JSON.stringify(seqDue) + ' is due');
+    var cd = entry('commandcard.count-down'), np = entry('commandcard.nope'), kb = entry('kairos.boost'), cu = entry('commandcard.count-up');
+    if (cd.words === 'take one, holding not now' && np.words === 'a name commandcard\'s Commands sheet does not hold, so its keys press nothing' && np.keys === 'F8' &&
+        kb.words === 'a command of kairos, which is not loaded, so its keys press nothing' && cu.keys === 'U on the Screen; U') k.order++;
+    else P.push('commands: the list says ' + JSON.stringify([cd.words, np.words, np.keys, kb.words, cu.keys]) + ', where count-down holding not, nope a name the card lacks on F8, boost a cartridge not loaded and count-up\'s two keys are due');
+    var under = keyListEntries(COMMANDS, m2, [], 'kairos', keysOf).filter(function (e) { return e.name === 'commandcard.count-up'; })[0];
+    if (under && under.words === 'a command of commandcard, which is not loaded, so its keys press nothing' && under.keys === 'U') k.order++;
+    else P.push('commands: with Kairos loaded the list says of commandcard.count-up ' + JSON.stringify(under) + ', where a command of a cartridge not loaded on U is due');
   }
   function commandsRun(bytes, k, P) {
     var stage = document.getElementById('stage'), box = document.createElement('div');

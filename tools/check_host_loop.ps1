@@ -221,7 +221,11 @@ running, a command's key on the Desk counted once with its repeat and nothing wi
 Ctrl, a command that holds not on the Ledger refused and its key passed on, sixteen
 waiting and a seventeenth refused, the rows the host cannot take said once, the run's
 replay played on a fresh host to every frame, a command refused while a replay plays,
-a step a command at rate 0, and the card kept at version 4). It
+a step a command at rate 0, and the card kept at version 4; and since its second
+slice a page half, pure and on every page, module or not: a game's command named
+<cartridge>.<command>, its palette lines while it holds, the keymap reading it, a
+binding of it pressed while it is live and its key passed on while not, a person's
+command running it, and the list's and the drawer's words of its keys). It
 prints one line a case into
 <pre id="loop"> and a last line, 'loop ok cases=N', once the last case has
 answered. This check runs the
@@ -263,7 +267,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds one hundred and nineteen mutant pages through tools/build_web.ps1 and runs
+-Control builds one hundred and twenty-four mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -427,7 +431,12 @@ waiting, the first of two in a frame dropped; one that writes B20 for a version 
 cartridge too, whose Input rows the engine refuses; one that runs a command that holds
 not; one that runs a command while a replay plays; one that takes a command's key with
 Ctrl held; one whose command's key runs again at its repeat; and one that leaves B20
-for the step after a command's at rate 0. The real page must pass first.
+for the step after a command's at rate 0. And since its second slice five templates, with or
+without the module, each failing the commands case's page half by name: one whose palette lists a
+game's command that holds not; one whose keymap refuses a game's commands; one that presses a binding of
+a game's command that holds not, its key never passed on; one whose list says nothing of a game's
+command key a person's binding shadows; and one that ranks the page's own commands with a person's own and
+the game's, the page's listed first in the palette and in the list. The real page must pass first.
 
 Since 2026-10-15 each mutant page runs `abi`, which names the page's
 module, and the cases its reason is judged by (?loop=1&cases=), never every
@@ -687,6 +696,13 @@ $paletteFloors = @{ commands = 30; keyed = 11; lines = 10; opened = 1; ran = 1; 
 $commandsFloors = @{ opened = 1; listed = 1; frames = 40; ran = 3; landed = 23; emptied = 17; apart = 1; twice = 1; repeats = 1; ctrl = 1; holdsNot = 2; refused = 1;
                      passed = 1; noted = 1; words = 1; waited = 16; dropped = 1; said = 4; replayed = 1; replayFrames = 40; replaySame = 40; during = 1; rate0 = 1;
                      rate0Empty = 1; rate0Replayed = 1; older = 1 }
+# 2026-10-17, ENGINE.25's second slice: the case's page half, pure and so on every page, module or not, its counts a function of
+# its plan: 6 names a page writes a game's command by, held to the cartridge and the command or to none; 4 of the palette's
+# lines, the command that holds with its own key, found by a word after the dot, the one that holds not no line, and one
+# with no key; the keymap naming a game's commands read typed and kept (2); 4 of its refusals; 8 keys held to the binding
+# each presses, a game's command's while it is live and passing on while not; a person's command running a game's twice;
+# 5 of the list's words beside a game's command key; and 5 of the drawer's notes.
+$commandsPageFloors = @{ named = 6; lines = 4; read = 2; refusals = 4; found = 8; steps = 1; shadow = 5; note = 5; order = 5 }
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
@@ -718,7 +734,7 @@ $floors = @(
     @{ Case = 'continue'; Min = @{}; WithModule = $continueFloors },
     @{ Case = 'palette';  Min = $paletteFloors },
     @{ Case = 'keys';     Min = $keysFloors },
-    @{ Case = 'commands'; Min = @{}; WithModule = $commandsFloors }
+    @{ Case = 'commands'; Min = $commandsPageFloors; WithModule = $commandsFloors }
 )
 $zero = @('live', 'misfrees', 'filled', 'alone')
 $expectedCases = 27
@@ -739,7 +755,7 @@ $gameFloors = @(
     @{ Case = 'continue'; Min = @{}; WithModule = $continueFloors },
     @{ Case = 'palette'; Min = $paletteFloors },
     @{ Case = 'keys'; Min = $keysFloors },
-    @{ Case = 'commands'; Min = @{}; WithModule = $commandsFloors }
+    @{ Case = 'commands'; Min = $commandsPageFloors; WithModule = $commandsFloors }
 )
 $gameAbsent = @('rate30', 'rate0', 'yield', 'slice', 'pace', 'memory', 'refusals', 'scale', 'engine', 'parity', 'plane', 'input', 'audio', 'sound', 'tabs')
 $gameCases = 12
@@ -1721,6 +1737,43 @@ if ($Control) {
             if (-not ($cmdApplied -and $cmdFailed -ge 1)) { $commandsOk = $false }
         }
         $commandsNote = $commandsNotes -join '; '
+        # DP to DT (ENGINE.25's second slice), templates, each failing the commands case's page half by name, with or without the
+        # module: the palette listing a game's command that holds not; the keymap refusing a game's commands, a binding of a
+        # cartridge not loaded among them; a binding of a game's command pressed while it holds not, its key never passed on;
+        # the list silent of a game's command key a person's binding shadows on the Screen; and, at the owner's hand test, the page's own commands ranked with a person's own and the game's, listed first in the palette and in the list.
+        $pageMutants = @(
+            @{ L = 'dp'; Name = 'a game''s command that holds not listed'; Anchor = '      if (c.arg || c.hidden || (c.game && !c.holds)) return;   // a game''s command that holds not is no line (ENGINE.25)'
+               With = '      if (c.arg || c.hidden) return;'
+               Want = 'case commands.*commands: the palette lists commandcard.count-down, which holds not' },
+            @{ L = 'dq'; Name = 'a game''s commands unknown to the keymap'; Anchor = '    function known(name) { return builtin[name] || customs[String(name).toLowerCase()] || !!gameName(name); }'
+               With = '    function known(name) { return builtin[name] || customs[String(name).toLowerCase()]; }'
+               Want = 'case commands.*commands: the keymap naming a game''s commands was refused' },
+            @{ L = 'dr'; Name = 'a binding of a command that holds not pressed'; Anchor = '    map = { bindings: map.bindings.filter(function (x) { return !x.game || (!!live && live(x.command)); }) };   // a game''s command, while it is live'
+               With = '    map = { bindings: map.bindings };'
+               Want = 'case commands.*commands: U on the Screen while count-up holds not presses commandcard.count-up' },
+            @{ L = 'ds'; Name = 'a game''s command key unsaid'; Anchor = "    if (taken.length) out.push('shadows the game\'s command ' + andList(taken.map(function (c) { return c.name; })) + ' on the Screen');"
+               With = '    // the game''s command keys unsaid, by the control'
+               Want = 'case commands.*commands: the list says of \(bind "U" pause\) beside the game''s U ""' },
+            @{ L = 'dt'; Name = 'the page''s own commands listed first'; Anchor = '  function commandRank(c) { return c.custom ? 0 : c.game ? 1 : 2; }'
+               With = '  function commandRank(c) { return 2; }'
+               Want = 'case commands.*commands: an empty palette lists' }
+        )
+        $pageNotes = New-Object System.Collections.Generic.List[string]
+        $pageJudged = New-Object System.Collections.Generic.List[object]
+        $pageOk = $true
+        foreach ($mu in $pageMutants) {
+            if (([regex]::Matches($tpl, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in the template exactly once"; exit 1 }
+            $mutPg = $tpl.Replace($mu.Anchor, $mu.With)
+            $pgApplied = $mutPg -cne $tpl
+            $tplPg = Join-Path $tmp ($mu.L + '.template.html'); [System.IO.File]::WriteAllText($tplPg, $mutPg, $utf8)
+            $rPg = Invoke-Mutant (New-MutantPage $mu.L $tplPg $hostJs) 'commands'
+            $pgJudge = Test-Mutant $rPg 'commands'
+            $pgFailed = @($pgJudge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
+            $pageJudged.Add(@{ Name = $mu.Name; Problems = @($pgJudge.Problems) })
+            $pageNotes.Add(("{0} applied ({1}) and failed by name ({2})" -f $mu.Name, $pgApplied, $pgFailed))
+            if (-not ($pgApplied -and $pgFailed -ge 1)) { $pageOk = $false }
+        }
+        $pageNote = $pageNotes -join '; '
         # mutants AT, AU, AV and AW (ENGINE.16), each a game's page of Kairos alone, which must pass first: its
         # hand a frame late, answering each frame with the frame before it; its hand's Tally counting a stack at
         # the level above its own, which moves no light; its hand's block dropped, so that its replay is held to
@@ -1770,9 +1823,9 @@ if ($Control) {
             if (-not ($gmApplied -and $gmFailed -ge 1)) { $gameOk = $false }
         }
         $gameNote = $gameNotes -join '; '
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $gameNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $gameOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and nineteen' } else { 'sixty applicable' }) + ' mutants for its own reason, each proving it applied')
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $gameNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $gameOk) {
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and twenty-four' } else { 'sixty-five applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -1814,6 +1867,7 @@ if ($Control) {
         foreach ($pj in $paletteJudged) { foreach ($p in @($pj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $pj.Name + ': ' + $p) } }
         foreach ($kj2 in $keysJudged) { foreach ($p in @($kj2.Problems) | Select-Object -First 3) { Write-Output ('  ' + $kj2.Name + ': ' + $p) } }
         foreach ($cmj in $commandsJudged) { foreach ($p in @($cmj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $cmj.Name + ': ' + $p) } }
+        foreach ($pgj in $pageJudged) { foreach ($p in @($pgj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $pgj.Name + ': ' + $p) } }
         foreach ($p in @($jG0.Problems) | Select-Object -First 3) { Write-Output ('  the game''s page: ' + $p) }
         foreach ($gj in $gameJudged) { foreach ($p in @($gj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $gj.Name + ': ' + $p) } }
         exit 1
