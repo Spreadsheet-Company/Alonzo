@@ -210,7 +210,10 @@ composing Enter none, a person's own
 command run step by step and listed in the palette with its keys, the keymap kept,
 read again and forgotten through a double of the browser's storage, a later
 page's line set aside, Record a key's spellings read back, and the list's words of a
-key a browser or the system keeps and of a game's button a binding shadows). It
+key a browser or the system keeps and of a game's button a binding shadows; and since
+ENGINE.24 a binding on a sheet held before one on none where its sheet shows and the
+other's elsewhere, the last key a game reads seen in its formulas' references alone,
+and the drawer's note of the game's own keys, player by player). It
 prints one line a case into
 <pre id="loop"> and a last line, 'loop ok cases=N', once the last case has
 answered. This check runs the
@@ -251,7 +254,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds one hundred and six mutant pages through tools/build_web.ps1 and runs
+-Control builds one hundred and ten mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -405,7 +408,10 @@ keymap without the palette's key applied; AltGr's Ctrl with Alt and a letter bou
 the page's own keymap applied and the kept one never forgotten; a kept keymap naming
 a later page's command refused whole; a box's editing keys taken; a key a window's
 browser keeps said nothing of in the list; and a game's button said shadowed by a key
-held with Ctrl. The real page must pass first.
+held with Ctrl. And since ENGINE.24 four more: a binding on a sheet held on every
+sheet; a binding on no sheet pressed before one on the sheet shown; a key a game reads
+as the last key said nothing of; and the drawer's note naming the input card's keys
+whatever the cartridge binds. The real page must pass first.
 
 Since 2026-10-15 each mutant page runs `abi`, which names the page's
 module, and the cases its reason is judged by (?loop=1&cases=), never every
@@ -652,7 +658,7 @@ $continueFloors = @{ built = 10; compared = 3; frames = 20; hand = 20; twin = 21
 # words; 24 keys held to the command each presses in its place; a person's command run in its 3 checks; 3 of the
 # palette's lines; the keymap kept, read again, forgotten, a later page's line set aside and a refusing store, 5;
 # and 6 of Record a key's spellings, each read back.
-$keysFloors = @{ defaults = 1; refused = 18; places = 25; steps = 3; lines = 3; kept = 5; spelled = 6; said = 21 }
+$keysFloors = @{ defaults = 1; refused = 18; places = 25; steps = 3; lines = 3; kept = 5; spelled = 6; said = 21; sheets = 14; last = 9; game = 5 }
 $paletteFloors = @{ commands = 30; keyed = 11; lines = 10; opened = 1; ran = 1; chosen = 1; rows = 1; recalled = 1; closed = 3; restored = 1; held = 1; passed = 1; clicked = 1; escapes = 5 }
 $scales = @('1', '1.5')
 $floors = @(
@@ -1579,12 +1585,14 @@ if ($Control) {
             if (-not ($pApplied -and $pFailed -ge 1)) { $paletteOk = $false }
         }
         $paletteNote = $paletteNotes -join '; '
-        # CS to DB (ENGINE.23's second slice), templates, each failing the keys case by name, with or without the module: a
+        # CS to DF (ENGINE.23's second slice and ENGINE.24), templates, each failing the keys case by name, with or without the module: a
         # refused keymap applied anyway; a box's typing keys taken by a binding written for anywhere; a person's command
         # running its first step alone; a keymap without the palette's key applied; AltGr's Ctrl with Alt and a letter
         # bound; the page's own keymap applied and the one kept never forgotten; a kept keymap naming a later page's
         # command refused whole; a box's editing keys taken; DA and DB, the list's words: a key a window's browser keeps
-        # said nothing of; and a game's button said shadowed by a key held with Ctrl.
+        # said nothing of; and a game's button said shadowed by a key held with Ctrl. DC to DF (ENGINE.24): a binding on a
+        # sheet holding on every sheet; a binding on no sheet pressed before one on the sheet shown; a key a game reads as
+        # the last key said nothing of; and the drawer's note naming the input card's keys whatever the cartridge binds.
         $keysMutants = @(
             @{ L = 'cs'; Name = 'a refused keymap applied'; Anchor = '    if (problems.length) return { ok: false, problems: problems, notes: notes };'; With = '    // the refusals ignored, by the control'
                Want = 'case keys.*keys: the text ending .* was applied, where it is refused whole' },
@@ -1608,8 +1616,18 @@ if ($Control) {
             @{ L = 'da'; Name = 'a window''s browser''s keys unsaid'; Anchor = "    if (!k.alt && ((ctrl && /^(t|n|w|tab)$/.test(v)) || (k.mod === 'meta' && /^(t|n|w)$/.test(v)) || (ctrl && !k.shift && /^(f4|pagedown|pageup)$/.test(v)))) out.push('the browser\'s in a window, the page\'s in full screen');"
                With = '    // a window''s browser''s keys unsaid, by the control'
                Want = 'case keys.*keys: the list says of Ctrl\+W "", where it names' },
-            @{ L = 'db'; Name = 'a shadow said of a key held with Ctrl'; Anchor = 'codes.length && !b.keys.mod && (!b.places || b.places.screen)'; With = 'codes.length && (!b.places || b.places.screen)'
-               Want = 'case keys.*keys: the list says of \(bind "Ctrl\+Z" run\) beside a game''s Z.*where no shadow is due' }
+            @{ L = 'db'; Name = 'a shadow said of a key held with Ctrl'; Anchor = 'screen = !b.keys.mod && (!b.places || !!b.places.screen)'; With = 'screen = (!b.places || !!b.places.screen)'
+               Want = 'case keys.*keys: the list says of \(bind "Ctrl\+Z" run\) beside a game''s Z.*where no shadow is due' },
+            @{ L = 'dc'; Name = 'a binding on a sheet held on every sheet'; Anchor = '      return shown !== null && shown !== undefined && !!b.sheets[String(shown).toLowerCase()];'; With = '      return true;'
+               Want = 'case keys.*keys: P in the place screen showing Day presses pause, where run is due' },
+            @{ L = 'dd'; Name = 'a binding on no sheet pressed first'; Anchor = '    for (i = 0; i < map.bindings.length; i++) { b = map.bindings[i]; if (b.sheets && holdsIn(b, place, shown) && keyMatches(b.keys, ev)) return b; }'
+               With = '    for (i = 0; i < map.bindings.length; i++) { b = map.bindings[i]; if (holdsIn(b, place, shown) && keyMatches(b.keys, ev)) return b; }'
+               Want = 'case keys.*keys: P in the place screen showing Gigs presses run, where pause is due' },
+            @{ L = 'de'; Name = 'the last key unsaid'; Anchor = "    else if (screen && readsKey) out.push('shadows a key the game reads on the Screen');"; With = '    // the last key unsaid, by the control'
+               Want = 'case keys.*keys: beside a game that reads the last key, the list says of 3 ""' },
+            @{ L = 'df'; Name = 'the input card''s keys said of every game'; Anchor = "    var said = players.length ? players.join('; ') : hasKeys ? 'the game binds no key now' : readsKey ? '' : 'this cartridge binds no key';"
+               With = "    var said = 'the arrows, Z, X, A, S, Enter and Space are player 1\'s';"
+               Want = 'case keys.*keys: the drawer''s note says the game''s keys' }
         )
         $keysNotes = New-Object System.Collections.Generic.List[string]
         $keysJudged = New-Object System.Collections.Generic.List[object]
@@ -1678,7 +1696,7 @@ if ($Control) {
         $gameNote = $gameNotes -join '; '
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $gameNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $gameOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and six' } else { 'fifty-six applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and ten' } else { 'sixty applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

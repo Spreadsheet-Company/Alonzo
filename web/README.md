@@ -331,7 +331,15 @@ at the caret, as the keymap spells it. Under the box every command is
 listed with its words and its keys, and each button's tip says the same;
 the list says, too, what keeps a key from the page, Ctrl+W a window's
 browser's and Cmd+Q a Mac's, and which binding shadows a button of the game
-loaded on the Screen, a plain Z beside Kairos's.
+loaded on the Screen, a plain Z beside Kairos's, or a key the game reads as
+the last one pressed, a plain 3 beside Sand's (`ENGINE.24`). A binding may
+hold on one sheet, `(bind "P" drawer (on "Portfolio"))`, on the Screen or in
+the drawer's sheets while that sheet shows, before a binding of the same key
+on none, so that each tab has keys of its own: on Buffet's page P opens the
+drawer on the Portfolio and stays the game's on Gigs. The note under the edit
+row names the game's own keys, player by player as its Keys sheet binds them
+now, the four arrows as one, and says when the game reads any key; Buffet's
+changes from view to view.
 The keymap applied is kept in this browser, the one thing the page writes
 (below), and holds again at the next load; Back to the defaults puts the
 page's own in the box, and applying it forgets the one kept. In a box the
