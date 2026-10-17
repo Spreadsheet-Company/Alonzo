@@ -313,7 +313,34 @@ drops a hint from the top, and a second within three seconds leaves full
 screen, as Escape held does, the browser's own way out. Firefox and Safari
 keep Escape, which leaves full screen at once, and the hint says so as full
 screen begins, naming the browser's own full screen, F11, which leaves
-Escape to the page. Change a macro of the library at the bottom, `cartridges/common.vla`,
+Escape to the page. Open The keys in the drawer, or type `keys` in the
+palette (`ENGINE.23`'s second slice): the page's keymap is a text, a
+binding a line, `(bind "Ctrl+K" palette)`, and yours to change. Bind a key,
+`(bind "Ctrl+J" pause)`, or a key in one place alone, `(bind "Ctrl+Shift+Enter"
+run screen)`, and press Apply the keys, or Ctrl+Enter in the box. A keymap
+is read whole and refused whole, every problem said by its line and nothing
+changed: a line that names no command, a key Windows keeps (Alt+Tab, Alt+F4,
+Ctrl+Alt+Delete), Ctrl with Alt and a letter, which is AltGr on Windows,
+two lines binding one key in one place, or no key left for the palette.
+Write commands of your own, a name, its words and the steps it runs in
+order, each a command of the page's, one of yours, or a row of VLA written
+as a person's edit: `(command "again" "the cartridge loaded again and run"
+(load) (run))`, then type `again` in the palette, or bind it, `(bind
+"Alt+Shift+A" again)`. Record a key writes the next key pressed into the box
+at the caret, as the keymap spells it. Under the box every command is
+listed with its words and its keys, and each button's tip says the same;
+the list says, too, what keeps a key from the page, Ctrl+W a window's
+browser's and Cmd+Q a Mac's, and which binding shadows a button of the game
+loaded on the Screen, a plain Z beside Kairos's.
+The keymap applied is kept in this browser, the one thing the page writes
+(below), and holds again at the next load; Back to the defaults puts the
+page's own in the box, and applying it forgets the one kept. In a box the
+typing is the box's: a binding written for anywhere holds there only for a
+key held with Ctrl or Cmd, or a function key, and never for the box's
+editing keys, Ctrl with A, C, V, X, Y or Z, an arrow, Home, End, Backspace
+or Delete. On the Screen of a cartridge with a rate, a game in time, Tab is
+the game's, never walking the focus out of the page; the palette's key
+leads out. Change a macro of the library at the bottom, `cartridges/common.vla`,
 and build again to see every row it writes change; over the fake module the
 build is declined, in words. Pick the glider gun in the bar to see Gosper's
 gun fire a glider every thirty frames, south-east until the stream meets the
@@ -402,7 +429,14 @@ the sheet's name) and names the sentence that wrote the cell.
 
 Nothing on the page leaves it: no script, stylesheet, font, image, frame,
 form, link or fetch, which `tools/check_web_offline.ps1` holds on the
-template and on the viewport's source on every push, and the records inside
+template and on the viewport's source on every push. It writes one thing, a
+person's keymap, when they apply it, under the one name `alonzo-keys` in the
+browser's storage for pages, kept until the page's own
+keymap is applied (`ENGINE.23`, the owner's word); in Chrome, Edge, Opera
+and Firefox every page opened from disk shares that store (measured), so a
+keymap follows a person from Alonzo's page to a game's. The same check holds
+the template to naming that store once and every source to naming no
+other: no session store, database, cookie or cache. And the records inside
 are the door's own output, pinned byte for byte by
 `tools/check_view_fixtures.ps1`. Every cell is drawn where the record puts it:
 `tools/check_render_oracle.ps1` runs the page's own oracle under a headless
@@ -727,7 +761,7 @@ viewport, not an Excel clone.
   The page opens on the empty sheet whatever it holds and offers its
   cartridges in the picker, each by its manifest's title, its notes in the
   drawer. A page that does not hold Alonzo's own cartridges and records is
-  a game's (`ENGINE.16`). Its `?loop=1` runs the eight cases that need
+  a game's (`ENGINE.16`). Its `?loop=1` runs the eleven cases that need
   nothing of Alonzo's own files, over its own blocks: `abi`; `pass`, every
   source to its cartridge; `replay`, every replay to its golden and its
   recording, every frame to its hand; `grid`, every grid cartridge's drawn
@@ -737,10 +771,16 @@ viewport, not an Excel clone.
   `views`, the page's own views card (`ENGINE.18`); and `changes`, the
   page's own changes card, a frame read by its changes (`ENGINE.19`), each
   patch repainted by its cells and held pixel for pixel to a full paint
-  (`ENGINE.20`). Each of
+  (`ENGINE.20`); `continue`, the page's own continue card, its source
+  rebuilt and applied as it runs (`ENGINE.7`); `palette`, the palette's
+  keys, lines and second Escape over the page's own registry (`ENGINE.23`);
+  and `keys`, the page's own keymap read, crafted ones refused by line, a
+  key's command in each place, a person's own command's steps and the
+  keymap kept through a double of the browser's storage (its second slice).
+  Each of
   the fifteen others prints
   `case <name>: not on this page`, being proven in Alonzo's CI, and the
-  last line reads `loop ok cases=8 dpr=1; 15 of Alonzo's own not on this
+  last line reads `loop ok cases=11 dpr=1; 15 of Alonzo's own not on this
   page` at a ratio of 1. A replay with no hand is held to its golden alone, counted `alone`
   and said in a note under the case. Every other mode of the bench is
   Alonzo's own and says so on a game's page; `?frames=1` and `?blit=1` over

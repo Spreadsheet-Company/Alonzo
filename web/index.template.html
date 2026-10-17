@@ -12,7 +12,9 @@
   a cartridge's source beside it and each LIBRARY place with a library the sources
   include (SPEC.3), and each FIXTURE place
   with a record the door printed, and writes web/index.html, one file that runs
-  from disk. The page loads nothing from the network, writes nothing anywhere and
+  from disk. The page loads nothing from the network, writes nothing anywhere but
+  a person's keymap, kept when they apply it, under one name in the
+  browser's storage for pages (ENGINE.23, the owner's word), and
   executes nothing but the scripts below and its cartridges' hands, each a block
   the builder writes as a script (ENGINE.16): tools/check_web_offline.ps1 holds
   this file, the three scripts and the hands to that doctrine on every push, as
@@ -220,6 +222,14 @@
   .palette-note:empty { display: none; }
   .full-hint { position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 60; margin: 0; padding: 6px 14px; border-radius: 0 0 6px 6px; background: var(--lavender-deep); color: #fff; font-size: 13px; }
   .full-hint[hidden] { display: none; }
+  /* The keymap's list in the drawer (ENGINE.23's second slice): every command, its words and its keys. */
+  .keys-head { font-size: 13px; margin: 10px 0 4px; color: #1d1d1b; }
+  .keys-list { list-style: none; margin: 4px 0; padding: 0; font-size: 12.5px; }
+  .keys-list li { padding: 2px 0; }
+  .keys-list .name { font-weight: 600; color: #1d1d1b; }
+  .keys-list .keys { color: var(--lavender-deep); }
+  .keys-list .none { color: #9a9a94; }
+  .note.refused { color: #a2262b; }
 </style>
 </head>
 <body>
@@ -228,15 +238,15 @@
   <div class="player-bar" role="toolbar" aria-label="the player">
     <span class="brand" id="eng-brand">Alonzo</span>
     <select id="eng-pick" aria-label="the cartridge to load"></select>
-    <button type="button" id="eng-run">Run</button>
-    <button type="button" id="eng-pause">Pause</button>
-    <button type="button" id="eng-sound" aria-pressed="false">Sound on</button>
-    <button type="button" id="eng-load" title="the cartridge in the drawer's box, loaded again from frame 0; Ctrl+Enter in that box, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Load</button>
+    <button type="button" id="eng-run" data-command="run">Run</button>
+    <button type="button" id="eng-pause" data-command="pause">Pause</button>
+    <button type="button" id="eng-sound" data-command="sound" aria-pressed="false">Sound on</button>
+    <button type="button" id="eng-load" data-command="load" title="the cartridge in the drawer's box, loaded again from frame 0; Ctrl+Enter in that box, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Load</button>
     <span id="frame-short" class="frame-short"></span>
     <p id="eng-status" class="status"></p>
-    <button type="button" id="eng-palette" title="the command palette: every act of the page by its name, a sheet by its name, a row of VLA written as a person's edit; Ctrl+K, Cmd+K on a Mac, or Ctrl+Shift+`" aria-keyshortcuts="Control+K Meta+K Control+Shift+`">Commands</button>
-    <button type="button" id="eng-full" aria-pressed="false">Full screen</button>
-    <button type="button" id="eng-drawer" aria-expanded="false" aria-controls="drawer">Drawer</button>
+    <button type="button" id="eng-palette" data-command="palette" title="the command palette: every act of the page by its name, a sheet by its name, a row of VLA written as a person's edit; Ctrl+K, Cmd+K on a Mac, or Ctrl+Shift+`" aria-keyshortcuts="Control+K Meta+K Control+Shift+`">Commands</button>
+    <button type="button" id="eng-full" data-command="full-screen" aria-pressed="false">Full screen</button>
+    <button type="button" id="eng-drawer" data-command="drawer" aria-expanded="false" aria-controls="drawer">Drawer</button>
   </div>
   <div class="player-body">
     <div class="player-screen">
@@ -245,9 +255,9 @@
     </div>
     <aside id="drawer" class="drawer" hidden aria-label="the drawer">
       <p id="frame-line" class="frame-line"></p>
-      <p class="controls edit-row"><label for="eng-edit">An edit, one row:</label> <input type="text" id="eng-edit" spellcheck="false" value="(formula &quot;Screen&quot; &quot;A1&quot; &quot;=6*7&quot;)"> <button type="button" id="eng-write" title="the row written as a person's edit at the next frame; Enter in the row" aria-keyshortcuts="Enter">Write</button></p>
-      <p class="note">Click the Screen to give it the keys: the arrows, Z, X, A, S, Enter and Space are player 1's. In a grid, a key the Keys sheet does not bind moves the selection, and the wheel scrolls everywhere but over the cells of the Camera's window, where the game takes it.</p>
-      <h2>The log <button type="button" id="eng-copy">Copy the log</button></h2>
+      <p class="controls edit-row"><label for="eng-edit">An edit, one row:</label> <input type="text" id="eng-edit" spellcheck="false" value="(formula &quot;Screen&quot; &quot;A1&quot; &quot;=6*7&quot;)"> <button type="button" id="eng-write" data-command="write" title="the row written as a person's edit at the next frame; Enter in the row" aria-keyshortcuts="Enter">Write</button></p>
+      <p class="note">Click the Screen to give it the keys: the arrows, Z, X, A, S, Enter and Space are player 1's. In a grid, a key the Keys sheet does not bind moves the selection, and the wheel scrolls everywhere but over the cells of the Camera's window, where the game takes it. While a game runs, Tab is the game's too; Ctrl+K opens the palette, whose commands give any box the keys.</p>
+      <h2>The log <button type="button" id="eng-copy" data-command="copy-log">Copy the log</button></h2>
       <ol id="eng-log" class="engine-log" aria-label="the host's sentences"></ol>
       <h2>The sheets</h2>
       <p class="note">Any sheet of the grid, live: a tab shows it, and every frame and every scroll views it again through the cells in view; the previous frame's twins are among the hidden sheets.</p>
@@ -255,7 +265,7 @@
       <details id="eng-texts">
         <summary>The source and the cartridge</summary>
         <p>The source, <code id="eng-src-path">none: an empty sheet has no source</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one picture, a string a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load loads it: the pass loads nothing, and a cartridge running goes on running (docs/SPEC.md section 7.8). Apply the source builds it the same way and applies the cartridge to the game that runs, edit and continue: the rows it changed are written as a person's edit at the next frame, the frame number and every other cell kept, and the replay records them; what a write cannot carry, a line of the manifest, a sheet added or removed, a look, or a row removed, is named, and Load starts the cartridge from frame 0. The fake module holds no pass, and says so.</p>
-        <p class="controls"><button type="button" id="eng-build" title="the source built by the pass into the cartridge's box, nothing loaded; Ctrl+Enter in the source's box or a library's, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Build the cartridge</button> <button type="button" id="eng-apply" title="the source built, and the rows it changed written into the running game at the next frame, its frame number and every other cell kept; Ctrl+Shift+Enter in the source's box or a library's, Cmd+Shift+Enter on a Mac" aria-keyshortcuts="Control+Shift+Enter Meta+Shift+Enter">Apply the source</button></p>
+        <p class="controls"><button type="button" id="eng-build" data-command="build" title="the source built by the pass into the cartridge's box, nothing loaded; Ctrl+Enter in the source's box or a library's, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Build the cartridge</button> <button type="button" id="eng-apply" data-command="apply" title="the source built, and the rows it changed written into the running game at the next frame, its frame number and every other cell kept; Ctrl+Shift+Enter in the source's box or a library's, Cmd+Shift+Enter on a Mac" aria-keyshortcuts="Control+Shift+Enter Meta+Shift+Enter">Apply the source</button></p>
         <p class="note">The keys, Cmd for Ctrl on a Mac: Ctrl+Enter in a box presses its button, building in the source's box or a library's, loading in the cartridge's and playing in the replay's; Ctrl+Shift+Enter in the source's box, a library's or the cartridge's applies it to the game that runs, its state kept, the source built first and the cartridge as it stands. A key leaves the caret where it was.</p>
         <textarea id="eng-src" rows="14" spellcheck="false" aria-label="the cartridge's source"></textarea>
         <p>The cartridge, <code id="eng-cart-path">none: the empty sheet is the page's own</code>, the file the host loads, picked in the bar or pasted here.</p>
@@ -271,9 +281,18 @@
       </details>
       <details id="eng-replay-box">
         <summary>The replay</summary>
-        <p class="controls"><button type="button" id="eng-replay-play" title="the cartridge loaded again with the replay's seed and its frames played; Ctrl+Enter in the replay's box, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Play the replay</button> <button type="button" id="eng-replay-copy">Copy the replay</button></p>
+        <p class="controls"><button type="button" id="eng-replay-play" data-command="play-replay" title="the cartridge loaded again with the replay's seed and its frames played; Ctrl+Enter in the replay's box, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Play the replay</button> <button type="button" id="eng-replay-copy" data-command="copy-replay">Copy the replay</button></p>
         <p>A replay, <code id="eng-replay-path">none: this cartridge has no replay of its own</code>, is every write a run made between its steps: a header naming the cartridge by the SHA-256 of its text and the seed, then each frame as one form holding its rows, <code>(frame 12 (cell "Input" "B5" 1))</code>, the Input sheet's cells that changed and each person's edit that landed; the host's derived writes are never logged, a replay re-deriving them (docs/SPEC.md section 7.6). Paste one here and press Play the replay: the host loads the cartridge again with the replay's seed and plays its frames at the cartridge's rate, a person's edits waiting until it ends, and pauses at its last frame; Run then carries on with the live inputs. Copy the replay puts what the host has recorded since the last load on the clipboard and in this box, a replay played among it, so a replay played and copied is the replay played. The input card's and the sound card's own replays are the loop oracle's runs of them: play the sound card's with the sound on and hear the run again, its ticks, the knob turned to a word that is no wave and back, and a stretch at a third of the speed. Kairos's is the owner's two games: the major prize won, the minor refused on the way, then a fall at the last level.</p>
         <textarea id="eng-replay" rows="10" spellcheck="false" aria-label="a replay to play"></textarea>
+      </details>
+      <details id="eng-keys-box">
+        <summary>The keys</summary>
+        <p>Every act of the page is a command, run from the palette by its name (Ctrl+K, Cmd+K on a Mac, or Ctrl+Shift+`), and the keys that press one besides are this keymap, a text to read and change: a binding a line, and commands of your own, a name of your choosing and the steps it runs in order, a command of the page, a sheet or a row of VLA. Apply the keys applies the box whole, or refuses it whole and says which line and why; applied, it is kept in this browser, and every page of the house opened in it reads it as it loads. Back to the defaults puts the page's own keymap in the box; Record a key writes the next key pressed into the box at the caret, as the keymap spells it.</p>
+        <p class="controls"><button type="button" id="eng-keys-apply" data-command="apply-keys">Apply the keys</button> <button type="button" id="eng-keys-defaults" data-command="default-keys">Back to the defaults</button> <button type="button" id="eng-keys-record" data-command="record-key">Record a key</button></p>
+        <p id="eng-keys-said" class="note"></p>
+        <textarea id="eng-keys" rows="16" spellcheck="false" aria-label="the keymap, a binding a line"></textarea>
+        <h3 class="keys-head">Every command and its keys</h3>
+        <ul id="eng-keys-list" class="keys-list" aria-label="every command, its words and its keys"></ul>
       </details>
       <p id="module-line" class="note"></p>
       <p id="player-about" class="note"></p>
@@ -283,7 +302,7 @@
 </div>
 <header>
   <h1>Alonzo: <em>the bench</em></h1>
-  <p class="lede">The engine page's bench, each a mode of the one page the checks open: <code>?loop=1</code> the host loop's oracle, <code>?oracle=1</code> the render oracle, <code>?viewport=1</code> the viewport over the fixtures, <code>?frames=1</code>, <code>?blit=1</code> and <code>?bench=1</code> the floors' instruments. Opened plainly, the page is the player. Nothing on this page leaves it: it reads nothing from the network and writes nothing anywhere.</p>
+  <p class="lede">The engine page's bench, each a mode of the one page the checks open: <code>?loop=1</code> the host loop's oracle, <code>?oracle=1</code> the render oracle, <code>?viewport=1</code> the viewport over the fixtures, <code>?frames=1</code>, <code>?blit=1</code> and <code>?bench=1</code> the floors' instruments. Opened plainly, the page is the player. Nothing on this page leaves it: it reads nothing from the network and writes nothing anywhere but a person's keys, kept in the browser at their own Apply the keys.</p>
   <p id="about" class="about"></p>
 </header>
 <main>
@@ -539,56 +558,339 @@
   }
   hidpiPanel();
 
-  // ---- the commands and the palette (ENGINE.23): every act of the player a command, run from one prompt ----
+  // ---- the commands, the palette and the keymap (ENGINE.23): every act of the player a command, run from one prompt ----
   // Keyboard-first at the owner's word (ENGINE.22): every act a key, a button its convenience. Every act of the player is
   // a command, its name and its words, and the palette, a one-line prompt over the page, runs any of them by its name,
-  // shows a sheet by its name and writes a row of VLA as a person's edit, as Frazaro's CLI runs what is typed. It opens on
-  // Ctrl+K, which Cmd+K presses on a Mac, the web's key for a command palette, and on Ctrl+Shift+`, Frazaro's CLI key: two
-  // keys Chrome, Edge, Opera and Firefox measured hand to the page first (docs/REARVIEW.md, ENGINE.23). The registry's
-  // names and words are the page's, a game's page vendoring them; player() gives each name its act, and the loop oracle's
-  // palette case holds the rest. keys: the keys that press a command besides the palette, said beside its line.
+  // shows a sheet by its name and writes a row of VLA as a person's edit, as Frazaro's CLI runs what is typed. Its keys
+  // and every other are the keymap's, a text a person reads and rebinds in the drawer, where a person also writes
+  // commands of their own, a mnemonic and a macro of steps (the second slice, the owner's word). The registry's names and
+  // words are the page's, a game's page vendoring them; player() gives each name its act, and the loop oracle's palette
+  // and keys cases hold the rest. hidden: no line of the palette's own; repeats: a held key presses it at each repeat.
   var COMMANDS = [
+    { name: 'palette', words: 'open the command palette, or close it', hidden: true },
     { name: 'pick', words: 'pick a cartridge: the picker opened, Enter loading the one chosen' },
     { name: 'run', words: 'run the loop from the frame it stands at, the Screen given the keys' },
     { name: 'pause', words: 'pause the loop at its frame' },
     { name: 'sound', words: 'turn the sound on, or off' },
-    { name: 'load', words: 'load the cartridge in the drawer\'s box again from frame 0', keys: 'Ctrl+Enter in the cartridge\'s box' },
+    { name: 'load', words: 'load the cartridge in the drawer\'s box again from frame 0' },
     { name: 'full-screen', words: 'enter full screen, or leave it' },
     { name: 'drawer', words: 'open the drawer, or close it' },
     { name: 'sheet', words: 'show a sheet as its tab shows it', arg: 'sheet' },
-    { name: 'next-sheet', words: 'show the next sheet', keys: 'Ctrl+Alt+PageDown; Ctrl+PageDown in full screen' },
-    { name: 'previous-sheet', words: 'show the previous sheet', keys: 'Ctrl+Alt+PageUp; Ctrl+PageUp in full screen' },
+    { name: 'next-sheet', words: 'show the next sheet', repeats: true },
+    { name: 'previous-sheet', words: 'show the previous sheet', repeats: true },
     { name: 'hidden-sheets', words: 'show the hidden sheets\' tabs, or hide them' },
     { name: 'game', words: 'give the game the keys, the Screen\'s place' },
     { name: 'edit', words: 'give the drawer\'s edit row the keys' },
-    { name: 'write', words: 'write the edit row\'s row as a person\'s edit at the next frame', keys: 'Enter in the edit row' },
+    { name: 'write', words: 'write the edit row\'s row as a person\'s edit at the next frame' },
     { name: 'copy-log', words: 'copy the log to the clipboard' },
     { name: 'viewer', words: 'give the drawer\'s sheets the keys' },
     { name: 'source', words: 'give the source\'s box the keys' },
-    { name: 'build', words: 'build the source into the cartridge\'s box, nothing loaded', keys: 'Ctrl+Enter in the source\'s box or a library\'s' },
-    { name: 'apply', words: 'apply the source to the running game, its state kept', keys: 'Ctrl+Shift+Enter in the source\'s box or a library\'s' },
+    { name: 'build', words: 'build the source into the cartridge\'s box, nothing loaded' },
+    { name: 'apply', words: 'apply the source to the running game, its state kept' },
     { name: 'cartridge', words: 'give the cartridge\'s box the keys' },
-    { name: 'apply-cartridge', words: 'apply the cartridge\'s box to the running game as it stands', keys: 'Ctrl+Shift+Enter in the cartridge\'s box' },
+    { name: 'apply-cartridge', words: 'apply the cartridge\'s box to the running game as it stands' },
     { name: 'library', words: 'give the libraries\' picker the keys' },
     { name: 'replay', words: 'give the replay\'s box the keys' },
-    { name: 'play-replay', words: 'play the replay in its box from frame 0', keys: 'Ctrl+Enter in the replay\'s box' },
-    { name: 'copy-replay', words: 'copy the run\'s replay to the clipboard and into its box' }
+    { name: 'play-replay', words: 'play the replay in its box from frame 0' },
+    { name: 'copy-replay', words: 'copy the run\'s replay to the clipboard and into its box' },
+    { name: 'keys', words: 'give the keys\' box the keys' },
+    { name: 'apply-keys', words: 'apply the keys\' box as the page\'s keymap, kept in this browser' },
+    { name: 'default-keys', words: 'put the page\'s own keymap in the keys\' box, to be applied' },
+    { name: 'record-key', words: 'write the next key pressed into the keys\' box, as the keymap spells it' }
   ];
-  // The palette's keys. Ctrl+K and Cmd+K alike (ENGINE.22's rule), the K the key that types k, or on a layout whose keys
-  // type no Latin letter the key in K's place; never with Shift, Edge keeping Ctrl+Shift+K for a duplicated tab though the
-  // page cancels it, nor with Alt, which Windows reports with Ctrl for AltGr. And Ctrl+Shift+`, the Control key alone, a
-  // Mac keeping Cmd+` for its windows and Opera Ctrl+` for its tabs (measured), matched by the key's place under Escape,
-  // which every layout has. A repeat is the palette's too, taken and ignored by the listener.
-  function isPaletteKey(ev) {
-    if (!ev || ev.altKey || ev.isComposing) return false;
-    var key = String(ev.key || '').toLowerCase();
-    if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey) return key === 'k' || (ev.code === 'KeyK' && !/^[a-z0-9]$/.test(key));
-    return !!(ev.ctrlKey && !ev.metaKey && ev.shiftKey && ev.code === 'Backquote');
+  // The page's own keymap, the keys' box's first text. The palette on Ctrl+K, which Cmd+K presses on a Mac, the web's
+  // key for a command palette, and on Ctrl+Shift+`, Frazaro's CLI key, the Control key alone since a Mac keeps Cmd+` for
+  // its windows, matched by the key's place under Escape; never with Shift, Edge keeping Ctrl+Shift+K for a duplicated
+  // tab though the page cancels it, nor Ctrl+` alone, Opera's (measured). The next and previous sheet on Excel for the
+  // web's Ctrl+Alt+PageDown and Ctrl+Alt+PageUp, the page's in a window, and on Excel's Ctrl+PageDown and Ctrl+PageUp,
+  // the page's in full screen. And ENGINE.22's keys of the drawer's boxes, moved in.
+  var KEYMAP_DEFAULTS = [
+    '; The page\'s keys (ENGINE.23), yours to change and apply: a binding a line, (bind "keys" command [argument]',
+    '; [place ...]), and a command of your own, (command "name" "its words" step ...), run from the palette by its name',
+    '; or bound to a key, its steps run in order: a command of the page, (run) or (sheet "Portfolio"), one of yours,',
+    '; or a row of VLA written as a person\'s edit, (write (cell "Screen" "A1" 1)). A key: Ctrl (Cmd on a Mac too),',
+    '; Control (that key alone), Cmd, Alt and Shift, joined by +, then a letter, a digit, a named key (Enter, Escape,',
+    '; Tab, PageDown, F2, Space) or a key by its place in brackets ([Backquote], the key under Escape). A place: anywhere,',
+    '; the default, every place but a box, and a box too for a key held with Ctrl or Cmd; screen; viewer; or a box,',
+    '; edit, source, library, cartridge, replay or keys. The palette keeps a key, the way to every command.',
+    '(bind "Ctrl+K" palette)',
+    '(bind "Control+Shift+[Backquote]" palette)',
+    '(bind "Ctrl+Alt+PageDown" next-sheet)',
+    '(bind "Ctrl+Alt+PageUp" previous-sheet)',
+    '(bind "Ctrl+PageDown" next-sheet)',
+    '(bind "Ctrl+PageUp" previous-sheet)',
+    '(bind "Enter" write edit)',
+    '(bind "Ctrl+Enter" write edit)',
+    '(bind "Ctrl+Enter" build source library)',
+    '(bind "Ctrl+Shift+Enter" apply source library)',
+    '(bind "Ctrl+Enter" load cartridge)',
+    '(bind "Ctrl+Shift+Enter" apply-cartridge cartridge)',
+    '(bind "Ctrl+Enter" play-replay replay)',
+    '(bind "Ctrl+Enter" apply-keys keys)',
+    '; Commands of your own, for example:',
+    '; (command "p" "the Portfolio" (sheet "Portfolio"))',
+    '; (command "again" "the cartridge loaded again and run" (load) (run))',
+    ''
+  ].join('\n');
+  // A key's spelling read: modifiers joined by +, then the key. mod: 'either' for Ctrl, Ctrl or Cmd as ENGINE.22 takes
+  // them; 'control' for the Control key alone; 'meta' for Cmd alone. kind: a letter, which matches the key that types it,
+  // so that a mnemonic follows the person's layout, or on a layout whose keys type no Latin letter the key in its place;
+  // a digit, by its key on the top row or the pad; a named key, as KeyboardEvent.key names it; a code in brackets, the
+  // key's place; or a character. text: the spelling printed back.
+  var KEY_NAMES = { enter: 'Enter', escape: 'Escape', esc: 'Escape', tab: 'Tab', backspace: 'Backspace', delete: 'Delete', insert: 'Insert', home: 'Home', end: 'End',
+                    pageup: 'PageUp', pagedown: 'PageDown', up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', arrowup: 'ArrowUp', arrowdown: 'ArrowDown',
+                    arrowleft: 'ArrowLeft', arrowright: 'ArrowRight', space: 'Space' };
+  function parseKeys(spelling) {
+    var parts = String(spelling).split('+'), key = parts.pop(), k = { mod: '', alt: false, shift: false, kind: '', value: '' };
+    if (key === '' && parts.length && parts[parts.length - 1] === '') { parts.pop(); key = '+'; }
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i].toLowerCase(), m = p === 'ctrl' ? 'either' : p === 'control' ? 'control' : (p === 'cmd' || p === 'meta' || p === 'command') ? 'meta' : '';
+      if (m) { if (k.mod) return { error: 'two of Ctrl, Control and Cmd' }; k.mod = m; }
+      else if (p === 'alt' || p === 'option') k.alt = true;
+      else if (p === 'shift') k.shift = true;
+      else return { error: 'no modifier named ' + parts[i] + ': the modifiers are Ctrl, Control, Cmd, Alt and Shift' };
+    }
+    var fn = /^f([1-9]|1[0-9]|2[0-4])$/i.exec(key), code = /^\[([A-Za-z0-9]+)\]$/.exec(key);
+    if (code) { k.kind = 'code'; k.value = code[1]; }
+    else if (/^[A-Za-z]$/.test(key)) { k.kind = 'letter'; k.value = key.toLowerCase(); }
+    else if (/^[0-9]$/.test(key)) { k.kind = 'digit'; k.value = key; }
+    else if (fn) { k.kind = 'named'; k.value = 'F' + fn[1]; }
+    else if (KEY_NAMES[key.toLowerCase()]) { k.kind = 'named'; k.value = KEY_NAMES[key.toLowerCase()]; }
+    else if (key.length === 1 && key !== ' ') { k.kind = 'char'; k.value = key; }
+    else return { error: 'no key named ' + (key || 'nothing') };
+    var mods = [];
+    if (k.mod) mods.push(k.mod === 'either' ? 'Ctrl' : k.mod === 'control' ? 'Control' : 'Cmd');
+    if (k.alt) mods.push('Alt');
+    if (k.shift) mods.push('Shift');
+    mods.push(k.kind === 'code' ? '[' + k.value + ']' : k.kind === 'letter' ? k.value.toUpperCase() : k.value);
+    k.text = mods.join('+');
+    return k;
   }
-  // How well a text matches a name or words, both in lower case: from its start, from a word's start, inside it, or its
-  // letters in order; 0 for none.
+  // Whether a key event presses a key read by parseKeys: its modifiers exactly, Ctrl or Cmd for Ctrl and never both, and
+  // Shift and Alt as written, so that Ctrl+K is not Edge's Ctrl+Shift+K; then the key.
+  function keyMatches(k, ev) {
+    var ctrl = !!ev.ctrlKey, meta = !!ev.metaKey;
+    if (k.mod === 'either') { if (ctrl === meta) return false; }
+    else if (k.mod === 'control') { if (!ctrl || meta) return false; }
+    else if (k.mod === 'meta') { if (!meta || ctrl) return false; }
+    else if (ctrl || meta) return false;
+    if (!!ev.shiftKey !== k.shift || !!ev.altKey !== k.alt) return false;
+    var key = String(ev.key || ''), low = key.toLowerCase();
+    if (k.kind === 'code') return ev.code === k.value;
+    if (k.kind === 'letter') return low === k.value || (ev.code === 'Key' + k.value.toUpperCase() && !/^[a-z0-9]$/.test(low));
+    if (k.kind === 'digit') return ev.code === 'Digit' + k.value || ev.code === 'Numpad' + k.value || low === k.value;
+    if (k.kind === 'named') return k.value === 'Space' ? key === ' ' : low === k.value.toLowerCase();
+    return key === k.value;
+  }
+  // The places a binding holds in. A box is a place where a key types: there a binding written for anywhere holds only for
+  // a key held with Ctrl or Cmd, or a function key, and never for the box's own editing keys, so typing is the box's.
+  var KEY_PLACES = { anywhere: 1, screen: 1, viewer: 1, edit: 1, source: 1, library: 1, cartridge: 1, replay: 1, keys: 1 };
+  var BOX_PLACES = { edit: 1, source: 1, library: 1, cartridge: 1, replay: 1, keys: 1, box: 1 };
+  var PLACE_WORDS = { screen: 'on the Screen', viewer: 'in the drawer\'s sheets', edit: 'in the edit row', source: 'in the source\'s box', library: 'in a library\'s box',
+                      cartridge: 'in the cartridge\'s box', replay: 'in the replay\'s box', keys: 'in the keys\' box' };
+  function holdsIn(b, place) {
+    if (b.places) return !!b.places[place];
+    if (!BOX_PLACES[place]) return true;
+    var k = b.keys;
+    if (!k.mod && !(k.kind === 'named' && /^F\d+$/.test(k.value))) return false;
+    if (k.mod && !k.alt && /^(a|c|v|x|y|z|arrowleft|arrowright|arrowup|arrowdown|home|end|backspace|delete)$/.test(k.value.toLowerCase())) return false;
+    return true;
+  }
+  // The binding a key event presses in a place, or null; an input method's composing is its own.
+  function keymapFind(map, ev, place) {
+    if (!map || !ev || ev.isComposing) return null;
+    for (var i = 0; i < map.bindings.length; i++) { var b = map.bindings[i]; if (holdsIn(b, place) && keyMatches(b.keys, ev)) return b; }
+    return null;
+  }
+  // A datum the reader read printed back as VLA, a row of a person's command written as their edit.
+  function printForm(d) {
+    if (Array.isArray(d)) return '(' + d.map(printForm).join(' ') + ')';
+    if (typeof d === 'string') return '"' + d.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+    if (d && d.text !== undefined) return d.text;
+    return d && d.sym !== undefined ? d.sym : '';
+  }
+  // A text's top-level forms with the line each begins on, or the line where the text stops being forms: the reader
+  // reads any text, so the keymap's own scan finds an unclosed form, a stray ) and words outside a form.
+  function topForms(text) {
+    var s = String(text), out = [], depth = 0, line = 1, start = -1, startLine = 0, i, c;
+    for (i = 0; i < s.length; i++) {
+      c = s.charAt(i);
+      if (c === '\n') { line++; continue; }
+      if (c === ';') { while (i + 1 < s.length && s.charAt(i + 1) !== '\n') i++; continue; }
+      if (c === '"') { for (i++; i < s.length && s.charAt(i) !== '"'; i++) { if (s.charAt(i) === '\\') i++; else if (s.charAt(i) === '\n') line++; } if (i >= s.length) return { error: 'line ' + line + ': a string that never closes' }; continue; }
+      if (c === '(') { if (depth === 0) { start = i; startLine = line; } depth++; continue; }
+      if (c === ')') { if (depth === 0) return { error: 'line ' + line + ': a ) that closes nothing' }; depth--; if (depth === 0) out.push({ line: startLine, text: s.slice(start, i + 1) }); continue; }
+      if (depth === 0 && !/\s/.test(c)) return { error: 'line ' + line + ': words outside a form, where a keymap holds bind and command lines' };
+    }
+    if (depth > 0) return { error: 'line ' + startLine + ': a form that never closes' };
+    return { forms: out };
+  }
+  // The keymap read: its bindings, the commands of a person's own and the text, or every problem by its line, refused
+  // whole, nothing applied. lenient: a kept keymap read at the load, whose lines naming a command this page lacks, a later
+  // page's, are set aside with a note rather than refusing the rest.
+  function readKeymap(text, commands, lenient) {
+    var top = topForms(text), problems = [], notes = [], bindings = [], customs = {}, order = [], builtin = {}, i;
+    if (top.error) return { ok: false, problems: [top.error], notes: [] };
+    commands.forEach(function (c) { builtin[c.name] = c; });
+    var forms = top.forms.map(function (f) { return { line: f.line, d: (VP.readForms(f.text) || [])[0] }; });
+    function head(d) { return Array.isArray(d) && d[0] && d[0].sym !== undefined ? d[0].sym : null; }
+    function known(name) { return builtin[name] || customs[String(name).toLowerCase()]; }
+    // the commands of a person's own first, so that a binding or a step may name one written below it
+    forms.forEach(function (f) {
+      if (head(f.d) !== 'command') return;
+      var d = f.d, name = d[1], at = 'line ' + f.line + ': ';
+      if (typeof name !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9-]*$/.test(name)) { problems.push(at + 'a command of your own is named by a string of letters, digits and hyphens: (command "p" ...)'); return; }
+      if (builtin[name.toLowerCase()]) { problems.push(at + name + ' names a command of the page; a command of your own takes a name of its own'); return; }
+      if (customs[name.toLowerCase()]) { problems.push(at + 'the command ' + name + ' is written twice'); return; }
+      var words = typeof d[2] === 'string' ? d[2] : null, steps = d.slice(words === null ? 2 : 3);
+      customs[name.toLowerCase()] = { name: name, words: words, rawSteps: steps, line: f.line, steps: [] };
+      order.push(name.toLowerCase());
+    });
+    forms.forEach(function (f) {
+      var d = f.d, h = head(d), at = 'line ' + f.line + ': ';
+      if (h === 'command') {
+        var c = customs[String(d[1]).toLowerCase()];
+        if (!c || c.line !== f.line) return;
+        if (!c.rawSteps.length) { problems.push(at + 'the command ' + c.name + ' has no step'); return; }
+        c.rawSteps.forEach(function (s) {
+          var sh = head(s);
+          if (!sh) { problems.push(at + 'a step of ' + c.name + ' is no form: a step is (run), (sheet "Portfolio") or (write (cell "Screen" "A1" 1))'); return; }
+          if (sh === 'write' && Array.isArray(s[1])) { c.steps.push({ name: 'write', row: printForm(s[1]) }); return; }
+          if (!known(sh)) { if (lenient) notes.push(at + c.name + ' runs ' + sh + ', which this page has no command of: set aside'); else problems.push(at + 'a step of ' + c.name + ' names no command: ' + sh); return; }
+          if (sh === 'sheet') { if (typeof s[1] !== 'string') problems.push(at + 'the step (sheet) of ' + c.name + ' needs a sheet\'s name'); else c.steps.push({ name: 'sheet', arg: s[1] }); return; }
+          if (s.length > 1) { problems.push(at + 'the step (' + sh + ') of ' + c.name + ' takes nothing after its name'); return; }
+          c.steps.push({ name: customs[sh.toLowerCase()] ? customs[sh.toLowerCase()].name : sh });
+        });
+        if (!c.words) c.words = c.steps.map(function (s) { return s.row || (s.arg ? s.name + ' ' + s.arg : s.name); }).join(', then ');
+        return;
+      }
+      if (h !== 'bind') { problems.push(at + (h ? 'no form named ' + h : 'no form') + ': a keymap holds bind and command lines'); return; }
+      if (typeof d[1] !== 'string') { problems.push(at + 'a binding begins with its keys in quotes: (bind "Ctrl+K" palette)'); return; }
+      var k = parseKeys(d[1]);
+      if (k.error) { problems.push(at + '"' + d[1] + '": ' + k.error); return; }
+      if (k.alt && !k.mod && !k.shift && k.kind === 'named' && /^(Tab|F4|Escape|Space)$/.test(k.value)) { problems.push(at + k.text + ' is Windows\' own, which no page is handed'); return; }
+      if (k.alt && k.mod && k.mod !== 'meta' && k.kind === 'named' && k.value === 'Delete') { problems.push(at + k.text + ' is Windows\' own, which no page is handed'); return; }
+      if (k.alt && k.mod && k.mod !== 'meta' && (k.kind === 'letter' || k.kind === 'digit' || k.kind === 'char')) { problems.push(at + k.text + ' is AltGr on Windows, Ctrl with Alt, which types a character there'); return; }
+      var cmd = d[2] && d[2].sym !== undefined ? d[2].sym : null;
+      if (!cmd) { problems.push(at + 'a binding names its command after its keys: (bind "' + d[1] + '" run)'); return; }
+      if (!known(cmd)) { if (lenient) notes.push(at + 'the binding of ' + k.text + ' to ' + cmd + ', which this page has no command of: set aside'); else problems.push(at + k.text + ' names no command: ' + cmd); return; }
+      var b = { keys: k, command: customs[cmd.toLowerCase()] ? customs[cmd.toLowerCase()].name : cmd, custom: !!customs[cmd.toLowerCase()], arg: null, places: null, line: f.line };
+      for (i = 3; i < d.length; i++) {
+        if (typeof d[i] === 'string') { if (cmd !== 'sheet') { problems.push(at + cmd + ' takes nothing after its name'); return; } b.arg = d[i]; continue; }
+        var p = d[i] && d[i].sym;
+        if (!p || !KEY_PLACES[p]) { problems.push(at + 'no place named ' + (p || printForm(d[i])) + ': the places are anywhere, screen, viewer, edit, source, library, cartridge, replay and keys'); return; }
+        if (p !== 'anywhere') { b.places = b.places || {}; b.places[p] = 1; }
+      }
+      if (cmd === 'sheet' && b.arg === null) { problems.push(at + 'sheet needs a sheet\'s name: (bind "' + d[1] + '" sheet "Portfolio")'); return; }
+      bindings.push(b);
+    });
+    // a key bound twice where both hold
+    function placesOf(b) { if (b.places) return Object.keys(b.places); var all = ['page', 'screen', 'viewer']; if (holdsIn(b, 'box')) all = all.concat(Object.keys(BOX_PLACES)); return all; }
+    for (i = 0; i < bindings.length; i++) for (var j = i + 1; j < bindings.length; j++) {
+      if (bindings[i].keys.text !== bindings[j].keys.text) continue;
+      var pi = placesOf(bindings[i]), pj = placesOf(bindings[j]), both = pi.filter(function (p) { return pj.indexOf(p) >= 0; });
+      if (both.length) problems.push('lines ' + bindings[i].line + ' and ' + bindings[j].line + ' both bind ' + bindings[i].keys.text + (both[0] === 'page' ? '' : ' ' + (PLACE_WORDS[both[0]] || 'in a box')));
+    }
+    // a command of a person's own that runs itself, through its own steps or another's
+    order.forEach(function (n) {
+      var seenNow = {}, stack = [n];
+      while (stack.length) {
+        var at2 = stack.pop(), c2 = customs[at2];
+        if (!c2) continue;
+        for (var s = 0; s < c2.steps.length; s++) {
+          var nx = c2.steps[s].name.toLowerCase();
+          if (!customs[nx]) continue;
+          if (nx === n) { problems.push('line ' + customs[n].line + ': the command ' + customs[n].name + ' runs itself'); stack = []; break; }
+          if (!seenNow[nx]) { seenNow[nx] = 1; stack.push(nx); }
+        }
+      }
+    });
+    if (!bindings.some(function (b) { return b.command === 'palette'; })) problems.push('the palette keeps a key: no line binds palette, the way to every command');
+    if (problems.length) return { ok: false, problems: problems, notes: notes };
+    return { ok: true, problems: [], notes: notes, bindings: bindings, customs: customs, order: order, text: String(text) };
+  }
+  // A command of a person's own run: its steps in order, a command of the page by its act, one of the person's by its own
+  // steps, a row of VLA written as a person's edit. act(name, arg, row) runs a step of the page's.
+  function runSteps(map, name, act, depth) {
+    var c = map.customs[String(name).toLowerCase()];
+    if (!c || (depth || 0) > 16) return;
+    for (var i = 0; i < c.steps.length; i++) {
+      var s = c.steps[i];
+      if (map.customs[s.name.toLowerCase()]) runSteps(map, s.name, act, (depth || 0) + 1);
+      else act(s.name, s.arg, s.row);
+    }
+  }
+  // A command's keys in words, each binding with its places: "Ctrl+Enter in the source's box, in a library's box".
+  // notes(b), the list's alone: what it says of a binding, in brackets after it.
+  function commandKeys(map, name, arg, notes) {
+    var out = [];
+    (map ? map.bindings : []).forEach(function (b) {
+      if (b.command !== name || (arg !== undefined && b.arg !== arg)) return;
+      var said = notes ? notes(b) : '';
+      out.push(b.keys.text + (b.places ? ' ' + Object.keys(b.places).map(function (p) { return PLACE_WORDS[p]; }).join(', ') : '') + (b.arg && arg === undefined ? ' (' + b.arg + ')' : '') + (said ? ' [' + said + ']' : ''));
+    });
+    return out.join('; ');
+  }
+  // What keeps a key from the page, said in the list and the binding applied (decision 7): a window's browser keeps
+  // Ctrl with T, N, W or Tab, Shift or not, Ctrl+F4, Ctrl+PageDown and Ctrl+PageUp, handing them to the page in full
+  // screen (Chromium's own list, the last two measured), and a Mac's Cmd with T, N or W; a Mac keeps Cmd+Q and Cmd+Tab
+  // from every page; Cmd alone is the Windows key on Windows, the system's; F11 is the browser's in full screen, Escape
+  // the browser's in a full screen without Keyboard Lock, and Shift+F10 the context menu's.
+  function keptWords(k) {
+    var v = k.value.toLowerCase(), out = [], ctrl = k.mod === 'either' || k.mod === 'control', cmd = k.mod === 'either' || k.mod === 'meta';
+    if (!k.alt && ((ctrl && /^(t|n|w|tab)$/.test(v)) || (k.mod === 'meta' && /^(t|n|w)$/.test(v)) || (ctrl && !k.shift && /^(f4|pagedown|pageup)$/.test(v)))) out.push('the browser\'s in a window, the page\'s in full screen');
+    if (cmd && !k.alt && !k.shift && /^(q|tab)$/.test(v)) out.push('a Mac keeps Cmd+' + (v === 'q' ? 'Q' : 'Tab') + ' from every page');
+    if (k.mod === 'meta') out.push('the Windows key on Windows, the system\'s');
+    if (!k.mod && !k.alt && !k.shift && v === 'f11') out.push('the browser\'s in full screen');
+    if (!k.mod && !k.alt && !k.shift && v === 'escape') out.push('the browser\'s in a full screen without Keyboard Lock');
+    if (!k.mod && !k.alt && k.shift && v === 'f10') out.push('the context menu\'s');
+    return out.join('; ');
+  }
+  // The places on a keyboard a key read by parseKeys may stand at, as KeyboardEvent.code names them: a letter its place
+  // on a Latin layout, a digit on the top row or the pad, a named key its own; a character's place is the layout's.
+  function keyCodes(k) {
+    if (k.kind === 'code') return [k.value];
+    if (k.kind === 'letter') return ['Key' + k.value.toUpperCase()];
+    if (k.kind === 'digit') return ['Digit' + k.value, 'Numpad' + k.value];
+    if (k.kind === 'named') return k.value === 'Enter' ? ['Enter', 'NumpadEnter'] : [k.value];
+    return [];
+  }
+  // The list's words of a binding: what keeps its key from the page, and a game's button it shadows on the Screen
+  // (decision 9), a key held with no Ctrl and no Cmd that holds there, at a place the loaded cartridge's Keys sheet binds.
+  function bindingNotes(b, codes) {
+    var out = [], kept = keptWords(b.keys);
+    if (kept) out.push(kept);
+    if (codes && codes.length && !b.keys.mod && (!b.places || b.places.screen) && keyCodes(b.keys).some(function (c) { return codes.indexOf(c) >= 0; })) out.push('shadows the game\'s button on the Screen');
+    return out.join('; ');
+  }
+  // A key event spelled as the keymap spells a key, for Record a key: the modifiers, then a Latin letter or a digit as
+  // itself, a named key by its name, and any other key by its place, since a character Shift or a layout made moves.
+  function spellKey(ev) {
+    var mods = [], key = String(ev.key || ''), code = String(ev.code || '');
+    if (ev.ctrlKey && ev.metaKey) mods.push('Control+Cmd'); else if (ev.ctrlKey) mods.push('Ctrl'); else if (ev.metaKey) mods.push('Cmd');
+    if (ev.altKey) mods.push('Alt');
+    if (ev.shiftKey) mods.push('Shift');
+    var name = /^[A-Za-z]$/.test(key) ? key.toUpperCase() : /^[0-9]$/.test(key) ? key : key === ' ' ? 'Space' : /^F\d+$/.test(key) ? key : KEY_NAMES[key.toLowerCase()] ? KEY_NAMES[key.toLowerCase()] : code ? '[' + code + ']' : key;
+    return mods.concat([name]).join('+');
+  }
+  // The person's keymap kept in the browser's storage for the page (decision 8, the owner's word): written at Apply the
+  // keys, removed when the page's own are applied, read at the load. Every page from disk shares the store (measured), so
+  // the keymap follows a person across the house's pages. storage: the browser's, or the oracle's double; any refusal of
+  // the store, a private window's, answers as if nothing were kept.
+  function KeyStore(storage, key) { this.s = storage; this.key = key; }
+  KeyStore.prototype.read = function () { try { return this.s ? this.s.getItem(this.key) : null; } catch (e) { return null; } };
+  KeyStore.prototype.keep = function (text, defaults) {
+    try {
+      if (!this.s) return false;
+      if (text === defaults) this.s.removeItem(this.key); else this.s.setItem(this.key, text);
+      return true;
+    } catch (e) { return false; }
+  };
+  // How well a text matches a name or words, both in lower case: the whole of it, from its start, from a word's start,
+  // inside it, or its letters in order; 0 for none.
   function matchScore(q, s) {
     if (!q) return 1;
+    if (s === q) return 5;
     if (s.indexOf(q) === 0) return 4;
     var words = s.split(/[\s-]+/), w, i, j = 0, qs = q.replace(/\s+/g, '');
     for (w = 0; w < words.length; w++) if (words[w].indexOf(q) === 0) return 3;
@@ -599,13 +901,17 @@
   // The palette's lines for a text. A text that begins with ( or ;, as Frazaro's CLI reads one, is a row of VLA, one line
   // that writes it as a person's edit, as the edit row does. Any other text lists the commands and the sheets that match
   // it, every match of a name before every match of words, ties in the registry's order and then the tab order, a hidden
-  // sheet listed for a text typed alone; an empty text lists the lines run last first. sheets: [{ name, state }] in the
-  // tab order; recent: the keys of the lines run last, the latest first.
+  // sheet listed for a text typed alone; an empty text lists the lines run last first. commands: the page's and a person's
+  // own (custom), each with its keys in words; sheets: [{ name, state }] in the tab order; recent: the keys of the lines run
+  // last, the latest first.
   function paletteLines(text, commands, sheets, recent) {
     var t = String(text || ''), q = t.trim().toLowerCase(), all = [], out = [], seen = {};
     var isRow = /^\s*[(;]/.test(t);
     if (isRow) return [{ kind: 'row', key: 'row', name: 'write', label: 'a row', words: 'written as a person\'s edit at the next frame, as the edit row writes it', keys: '' }];
-    commands.forEach(function (c, i) { if (!c.arg) all.push({ kind: 'command', key: 'command:' + c.name, name: c.name, label: c.name, words: c.words, keys: c.keys || '', order: i }); });
+    commands.forEach(function (c, i) {
+      if (c.arg || c.hidden) return;
+      all.push({ kind: c.custom ? 'custom' : 'command', key: (c.custom ? 'custom:' : 'command:') + c.name, name: c.name, label: c.name, words: c.words, keys: c.keys || '', order: i });
+    });
     (sheets || []).forEach(function (s, i) {
       all.push({ kind: 'sheet', key: 'sheet:' + s.name, name: 'sheet', arg: s.name, label: s.name, words: 'show the sheet ' + s.name + (s.state && s.state !== 'visible' ? ', ' + s.state : ''), keys: '', order: commands.length + i, hidden: !!s.state && s.state !== 'visible' });
     });
@@ -624,8 +930,9 @@
   }
   // The palette itself, made in the element it is handed, the player's body or a box of the loop oracle's stage: a one-line
   // prompt, its lines below it, and a note. opts.lines(text) answers the lines for a text and opts.run(line, text) runs one.
-  // listen(target) hears the palette's keys on the target in the capture phase, before the game, the viewport or a box: the
-  // player's document, or the oracle's box. Enter runs the line chosen, the arrows choose, a click runs a line, Escape
+  // listen(target, isKey) hears the palette's keys, isKey(ev) saying which, on the target in the capture phase, before the
+  // game, the viewport or a box: the oracle's box; the player's own keys are its keymap's. Enter runs the line chosen, the
+  // arrows choose, a click runs a line, Escape
   // closes, and Ctrl+Up and Ctrl+Down, Frazaro's CLI's keys, bring back what was run; the focus goes back where it was.
   var paletteCount = 0;
   function Palette(parent, opts) {
@@ -728,10 +1035,10 @@
     this.opts.run(line, text);
     return true;
   };
-  Palette.prototype.listen = function (target) {
+  Palette.prototype.listen = function (target, isKey) {
     var self = this;
     var fn = function (ev) {
-      if (!isPaletteKey(ev)) return;
+      if (!isKey(ev)) return;
       ev.preventDefault(); ev.stopPropagation();
       if (!ev.repeat) self.toggle();
     };
@@ -893,6 +1200,7 @@
       frameEl.className = 'frame-line';
       frameShort.textContent = 'Frame 0';
       frameEl.textContent = 'Frame 0, the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + ': the cartridge as loaded, nothing computed until ' + (e.rate ? 'the first step.' : 'an edit steps it.');
+      if (keymap) sayKeys();   // the list's words of the game's buttons, the cartridge's Keys sheet now read
     });
     function loadCartridge() {
       var r = host.load(cartEl.value, current().file);
@@ -999,26 +1307,8 @@
     }
     document.getElementById('eng-replay-play').addEventListener('click', playReplay);
     document.getElementById('eng-write').addEventListener('click', function () { host.edit(editEl.value); });
-    editEl.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); host.edit(editEl.value); } });
-    // The drawer's keys (ENGINE.22), keyboard-first at the owner's word: every act a key, and a button its convenience.
-    // Ctrl+Enter, or Cmd+Enter, in a box presses its own button: Build in the source's box or a library's, Load in the
-    // cartridge's, Play in the replay's. With Shift it applies the box to the game that runs, its state kept, the source
-    // built first and the cartridge as it stands. Alt is never taken: the views' chords are Alt's, and Windows reports
-    // AltGr as Ctrl with Alt. A held key's repeats and an input method's Enter press nothing, and the focus stays in the box.
-    function boxKey(box, press, apply) {
-      box.addEventListener('keydown', function (ev) {
-        if (ev.key !== 'Enter' || !(ev.ctrlKey || ev.metaKey) || ev.altKey || ev.isComposing) return;
-        var act = ev.shiftKey ? apply : press;
-        if (!act) return;
-        ev.preventDefault();
-        if (!ev.repeat) act();
-      });
-    }
-    var applyKept = function () { applySource(true); };
-    boxKey(srcEl, buildCartridge, applyKept);
-    boxKey(libEl, buildCartridge, applyKept);
-    boxKey(cartEl, loadCartridge, function () { host.apply(cartEl.value); });
-    boxKey(replayEl, function () { playReplay(true); }, null);
+    // The drawer's keys (ENGINE.22), Enter in the edit row and Ctrl+Enter and Ctrl+Shift+Enter in the boxes, are the
+    // keymap's since ENGINE.23's second slice, its defaults, each a binding a person may move.
     // The drawer (ENGINE.14, decision 9), closed at first so the window is the game's: opened, it pushes the
     // Screen aside, which refits, and its sheet, measured again in its box, is viewed through the cells in view.
     drawerBtn.addEventListener('click', function () {
@@ -1088,7 +1378,11 @@
       var vp = sheetsViewport(), box = vp.tabs.querySelector('input[type="checkbox"]');
       if (box) box.click(); else sayBar('This grid has no hidden sheets.');
     }
+    // how: 'key' when a key pressed it, which leaves the focus where it was, as ENGINE.22's keys did; a press of the
+    // palette or a button gives the Screen the keys where the button does.
+    var keysEl = document.getElementById('eng-keys'), keysBox = document.getElementById('eng-keys-box'), keysSaid = document.getElementById('eng-keys-said'), keysList = document.getElementById('eng-keys-list');
     var ACTS = {
+      palette: function () { palette.toggle(); },
       pick: function () { pickEl.focus(); try { if (pickEl.showPicker) pickEl.showPicker(); } catch (e) { /* a browser that shows the list only on a click */ } },
       run: function () { document.getElementById('eng-run').click(); },
       pause: function () { document.getElementById('eng-pause').click(); },
@@ -1107,39 +1401,171 @@
       viewer: function () { openDrawer(); dvp.scroller.focus(); },
       source: function () { give(srcEl, textsEl); },
       build: function () { document.getElementById('eng-build').click(); },
-      apply: function () { document.getElementById('eng-apply').click(); },
+      apply: function (arg, how) { if (how === 'key') applySource(true); else document.getElementById('eng-apply').click(); },
       cartridge: function () { give(cartEl, textsEl); },
       'apply-cartridge': function () { host.apply(cartEl.value); },
       library: function () { openDrawer(); textsEl.open = true; libEl.parentNode.open = true; libPick.focus(); },
       replay: function () { give(replayEl, replayBoxEl); },
-      'play-replay': function () { document.getElementById('eng-replay-play').click(); },
-      'copy-replay': function () { document.getElementById('eng-replay-copy').click(); }
+      'play-replay': function (arg, how) { if (how === 'key') playReplay(true); else document.getElementById('eng-replay-play').click(); },
+      'copy-replay': function () { document.getElementById('eng-replay-copy').click(); },
+      keys: function () { give(keysEl, keysBox); },
+      'apply-keys': function () { applyKeys(); },
+      'default-keys': function () { defaultKeys(); },
+      'record-key': function () { recordKey(); }
     };
     var actless = COMMANDS.filter(function (c) { return !ACTS[c.name]; }).map(function (c) { return c.name; });
     if (actless.length) { statusEl.textContent = 'The commands ' + actless.join(', ') + ' have no act on this page.'; statusEl.className = 'status refused'; }
-    // The palette over the page, its keys heard on the document before the game, the viewport or a box hear them; a row of
-    // VLA written as the edit row writes one, a person's edit at the next frame.
+    // A step of a person's own command: a row of VLA written as a person's edit, or a command of the page pressed as the
+    // palette presses it; and a binding pressed, a command of the person's by its steps.
+    function step(name, arg, row) { if (name === 'write' && row) host.edit(row); else ACTS[name](arg, 'palette'); }
+    function press(b) { if (b.custom) runSteps(keymap, b.command, step); else ACTS[b.command](b.arg, 'key'); }
+    // The keymap: the page's own, or the one a person applied and this browser keeps (decision 8, the owner's word),
+    // read at the load through the same reader, a refused one said and the page's own holding.
+    function browserStore() { try { return window.localStorage; } catch (e) { return null; } }
+    var store = new KeyStore(browserStore(), 'alonzo-keys'), keymap = readKeymap(KEYMAP_DEFAULTS, COMMANDS), keptSaid = '';
+    (function () {
+      var kept = store.read();
+      if (kept === null) return;
+      var r = readKeymap(kept, COMMANDS, true);
+      if (!r.ok) { keptSaid = 'The keymap this browser kept was refused, and the page\'s own keys hold: ' + r.problems.join('; ') + '.'; return; }
+      keymap = r;
+      if (r.notes.length) keptSaid = 'The keymap this browser kept is applied, ' + r.notes.length + ' of its lines set aside: ' + r.notes.join('; ') + '.';
+    })();
+    keysEl.value = keymap.text;
+    // Every command's keys said: the list in the drawer, describe-bindings, with what keeps a key from the page and a
+    // game's button a binding shadows, drawn again at every apply and every load; and each button's title and
+    // aria-keyshortcuts, so that a rebound key moves its words.
+    function gameCodes() {
+      var out = [];
+      (host.keymap || []).forEach(function (row) { row.forEach(function (c) { if (c && out.indexOf(c) < 0) out.push(c); }); });
+      return out;
+    }
+    function ariaKeys(name) {
+      var out = [];
+      keymap.bindings.forEach(function (b) {
+        if (b.command !== name) return;
+        var k = b.keys, key = k.kind === 'code' ? (k.value === 'Backquote' ? '`' : k.value) : k.kind === 'letter' ? k.value.toUpperCase() : k.value;
+        var tail = (k.alt ? 'Alt+' : '') + (k.shift ? 'Shift+' : '') + key;
+        if (k.mod === 'either') out.push('Control+' + tail, 'Meta+' + tail);
+        else out.push((k.mod === 'control' ? 'Control+' : k.mod === 'meta' ? 'Meta+' : '') + tail);
+      });
+      return out.join(' ');
+    }
+    function sayKeys() {
+      while (keysList.firstChild) keysList.removeChild(keysList.firstChild);
+      function item(name, words, keys, mine) {
+        var li = document.createElement('li'), n = document.createElement('span'), k = document.createElement('span');
+        n.className = 'name'; n.textContent = name + (mine ? ' (custom)' : '');
+        k.className = keys ? 'keys' : 'none'; k.textContent = keys || 'the palette, by its name';
+        li.appendChild(n); li.appendChild(document.createTextNode(' ' + words + ': ')); li.appendChild(k);
+        keysList.appendChild(li);
+      }
+      var codes = gameCodes(), notes = function (b) { return bindingNotes(b, codes); };
+      COMMANDS.forEach(function (c) { item(c.name, c.words, commandKeys(keymap, c.name, undefined, notes)); });
+      keymap.order.forEach(function (n) { var c = keymap.customs[n]; item(c.name, c.words, commandKeys(keymap, c.name, undefined, notes), true); });
+      var buttons = document.querySelectorAll('[data-command]');
+      for (var i = 0; i < buttons.length; i++) {
+        var name = buttons[i].getAttribute('data-command'), c = COMMANDS.filter(function (x) { return x.name === name; })[0], keys = commandKeys(keymap, name), aria = ariaKeys(name);
+        if (!c) continue;
+        buttons[i].title = c.words + '; ' + (keys || 'the palette, by its name');
+        if (aria) buttons[i].setAttribute('aria-keyshortcuts', aria); else buttons[i].removeAttribute('aria-keyshortcuts');
+      }
+    }
+    function sayKeysLine(text, refused) { keysSaid.textContent = text; keysSaid.className = refused ? 'note refused' : 'note'; sayBar(text); if (refused) statusEl.className = 'status refused'; }
+    // Apply the keys: the box read whole, refused whole by line and nothing changed, or applied and kept in this browser,
+    // the page's own text forgetting the one kept.
+    function applyKeys() {
+      var r = readKeymap(keysEl.value, COMMANDS);
+      if (!r.ok) { sayKeysLine('The keys were not applied, and nothing changed: ' + r.problems.join('; ') + '.', true); return; }
+      keymap = r;
+      var own = keysEl.value === KEYMAP_DEFAULTS, kept = store.keep(keysEl.value, KEYMAP_DEFAULTS), mine = r.order.length;
+      sayKeys();
+      sayKeysLine('The keys applied: ' + r.bindings.length + ' binding' + (r.bindings.length === 1 ? '' : 's') + (mine ? ' and ' + mine + ' command' + (mine === 1 ? '' : 's') + ' of your own' : '') +
+        (own ? ', the page\'s own, no keymap kept in this browser' : kept ? ', kept in this browser' : ', which this browser will not keep, so a reload brings back the page\'s own') + '.', false);
+    }
+    function defaultKeys() { openDrawer(); keysBox.open = true; keysEl.value = KEYMAP_DEFAULTS; sayKeysLine('The page\'s own keymap is in the box: Apply the keys applies it, and forgets the one kept.', false); }
+    // Record a key: the next key pressed, a modifier alone waiting for its key, written into the box at the caret.
+    var recording = false, recordAt = 0;
+    function recordKey() {
+      openDrawer(); keysBox.open = true;
+      recordAt = typeof keysEl.selectionStart === 'number' ? keysEl.selectionStart : keysEl.value.length;
+      recording = true;
+      sayKeysLine('Press the key to record: it is written into the keys\' box at the caret, as the keymap spells it.', false);
+    }
+    function recordTake(ev) {
+      if (/^(Control|Shift|Alt|Meta|AltGraph|CapsLock|OS)$/.test(ev.key) || ev.isComposing) return;
+      ev.preventDefault(); ev.stopPropagation();
+      recording = false;
+      var spelled = spellKey(ev), v = keysEl.value, at = Math.min(recordAt, v.length);
+      keysEl.value = v.slice(0, at) + spelled + v.slice(at);
+      keysEl.focus();
+      keysEl.selectionStart = keysEl.selectionEnd = at + spelled.length;
+      sayKeysLine('Recorded ' + spelled + '.', false);
+    }
+    // The palette over the page; a row of VLA written as the edit row writes one, a person's edit at the next frame, and a
+    // command of a person's own run by its steps.
     var palette = new Palette(document.body, {
-      lines: function (text) { return paletteLines(text, COMMANDS, sheetsViewport().sheets(), palette.recent); },
-      run: function (line, text) { if (line.kind === 'row') host.edit(text.trim()); else ACTS[line.name](line.arg); }
+      lines: function (text) {
+        var cmds = COMMANDS.map(function (c) { return { name: c.name, words: c.words, arg: c.arg, hidden: c.hidden, keys: commandKeys(keymap, c.name) }; });
+        keymap.order.forEach(function (n) { var c = keymap.customs[n]; cmds.push({ name: c.name, words: c.words, keys: commandKeys(keymap, c.name), custom: true }); });
+        return paletteLines(text, cmds, sheetsViewport().sheets(), palette.recent);
+      },
+      run: function (line, text) {
+        if (line.kind === 'row') host.edit(text.trim());
+        else if (line.kind === 'custom') runSteps(keymap, line.name, step);
+        else ACTS[line.name](line.arg, 'palette');
+      }
     });
-    palette.listen(document);
+    sayKeys();
+    if (keptSaid) sayKeysLine(keptSaid, /refused/.test(keptSaid));
+    // the keys' buttons, the commands' convenience
+    document.getElementById('eng-keys-apply').addEventListener('click', applyKeys);
+    document.getElementById('eng-keys-defaults').addEventListener('click', defaultKeys);
+    document.getElementById('eng-keys-record').addEventListener('click', recordKey);
     // the Commands button, the palette's convenience: pressed while the palette is open, it keeps the prompt's focus, so
     // that its click shuts the palette rather than opening it again
     var paletteBtn = document.getElementById('eng-palette');
     paletteBtn.addEventListener('mousedown', function (ev) { if (palette.isOpen()) ev.preventDefault(); });
     paletteBtn.addEventListener('click', function () { palette.toggle(mode === 'grid' && host.vp ? host.vp.scroller : planeCv); });
-    // The next and the previous sheet: Excel's Ctrl+PageDown and Ctrl+PageUp, the page's in full screen, and Excel for the
-    // web's Ctrl+Alt+PageDown and Ctrl+Alt+PageUp, the page's in a window too, where Chrome, Edge and Opera keep the first
-    // pair for their tabs, unseen by the page (measured; AltGr, Windows' Ctrl with Alt, types nothing with Page Down). And
-    // Escape in full screen, locked to the page: the palette's own while it is open, else the first passes on with a hint,
-    // and a second within three seconds leaves full screen.
+    // The keys, heard on the document in the capture phase before the game, the viewport or a box hear them. Record a key
+    // first; the palette's prompt is its own but for the palette's key; then the keymap's binding in the place that has
+    // the keys, a held key pressing it once and the next and previous sheet at each repeat. Then Tab on the Screen while
+    // a game runs, the game's, its walk out of the page kept from it (the owner's hand test): the palette's key leads out.
+    // And Escape in full screen, locked to the page: the first passes on with a hint, and a second within three seconds
+    // leaves full screen.
     var fullEscape = new FullEscape(3000), hintEl = document.getElementById('full-hint'), hintTimer = 0, hintWords = hintEl.textContent;
     function hideHint() { hintEl.hidden = true; clearTimeout(hintTimer); }
     function showHint(text, ms) { hintEl.textContent = text || hintWords; hintEl.hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(hideHint, ms || fullEscape.windowMs); }
+    function placeOf(el) {
+      if (!el || el === document.body) return 'page';
+      if (el === palette.input) return 'palette';
+      if (el === editEl) return 'edit';
+      if (el === srcEl) return 'source';
+      if (el === libEl) return 'library';
+      if (el === cartEl) return 'cartridge';
+      if (el === replayEl) return 'replay';
+      if (el === keysEl) return 'keys';
+      if (el === planeCv || (host.vp && host.vp.root.contains(el))) return 'screen';
+      if (dvp.root.contains(el)) return 'viewer';
+      return /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) ? 'box' : 'page';
+    }
+    function repeats(name) { return COMMANDS.some(function (c) { return c.name === name && c.repeats; }); }
     document.addEventListener('keydown', function (ev) {
-      if (palette.isOpen() || ev.isComposing) return;
-      if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && (ev.key === 'PageDown' || ev.key === 'PageUp')) { ev.preventDefault(); ev.stopPropagation(); stepSheet(ev.key === 'PageDown' ? 1 : -1); return; }
+      if (recording) { recordTake(ev); return; }
+      if (ev.isComposing) return;
+      var place = placeOf(document.activeElement), b;
+      if (place === 'palette') {
+        b = keymapFind(keymap, ev, 'page');
+        if (b && b.command === 'palette') { ev.preventDefault(); ev.stopPropagation(); if (!ev.repeat) palette.toggle(); }
+        return;
+      }
+      b = keymapFind(keymap, ev, place);
+      if (b) {
+        ev.preventDefault(); ev.stopPropagation();
+        if (!ev.repeat || repeats(b.command)) press(b);
+        return;
+      }
+      if (place === 'screen' && rate > 0 && ev.key === 'Tab' && !ev.ctrlKey && !ev.metaKey && !ev.altKey) { ev.preventDefault(); return; }
       if (ev.key !== 'Escape' || ev.altKey || ev.repeat || !escapeLocked || !document.fullscreenElement) return;
       if (fullEscape.press(performance.now()) === 'hint') { showHint(); return; }
       ev.preventDefault(); ev.stopPropagation(); hideHint(); document.exitFullscreen();
@@ -4776,10 +5202,11 @@
       if (!/^[a-z]+(-[a-z]+)*$/.test(c.name) || !c.words || seen[c.name]) P.push('palette: the command ' + JSON.stringify(c.name) + ' is ill-named, without words or named twice');
       else { seen[c.name] = true; k.commands++; }
     });
-    // the palette's keys, each as a browser reports it
+    // the palette's keys, the keymap's own, each event as a browser reports it
+    var PALETTE_MAP = readKeymap(KEYMAP_DEFAULTS, COMMANDS);
     [[{ ctrlKey: true, key: 'k', code: 'KeyK' }, true, 'Ctrl+K'],
      [{ metaKey: true, key: 'k', code: 'KeyK' }, true, 'Cmd+K'],
-     [{ ctrlKey: true, key: 'л', code: 'KeyK' }, true, 'Ctrl+K on a Cyrillic layout'],
+     [{ ctrlKey: true, key: '\u043b', code: 'KeyK' }, true, 'Ctrl+K on a Cyrillic layout'],
      [{ ctrlKey: true, shiftKey: true, key: '~', code: 'Backquote' }, true, 'Ctrl+Shift+`'],
      [{ ctrlKey: true, shiftKey: true, key: 'K', code: 'KeyK' }, false, 'Ctrl+Shift+K, which Edge keeps,'],
      [{ ctrlKey: true, altKey: true, key: 'k', code: 'KeyK' }, false, 'Ctrl+Alt+K, an AltGr,'],
@@ -4788,7 +5215,8 @@
      [{ ctrlKey: true, key: 't', code: 'KeyK' }, false, 'Ctrl with the key in K\'s place typing t'],
      [{ key: 'k', code: 'KeyK' }, false, 'K alone'],
      [{ ctrlKey: true, key: 'k', code: 'KeyK', isComposing: true }, false, 'Ctrl+K while an input method composes']].forEach(function (x) {
-      if (isPaletteKey(x[0]) === x[1]) k.keyed++; else P.push('palette: ' + x[2] + (x[1] ? ' does not open the palette' : ' opens the palette'));
+      var pk = keymapFind(PALETTE_MAP, x[0], 'page');
+      if (!!(pk && pk.command === 'palette') === x[1]) k.keyed++; else P.push('palette: ' + x[2] + (x[1] ? ' does not open the palette' : ' opens the palette'));
     });
     // the lines: the first for a text, a row for ( and for ;, and an empty text's list
     var SHEETS = [{ name: 'Portfolio', state: 'visible' }, { name: 'Day', state: 'visible' }, { name: 'Dice', state: 'visible' }, { name: 'Screen', state: 'hidden' }, { name: 'Questions', state: 'hidden' }];
@@ -4798,7 +5226,8 @@
       if (got === x[1]) k.lines++; else P.push('palette: the text ' + JSON.stringify(x[0]) + ' gives ' + got + ' first, where ' + x[1] + ' is due');
     });
     var empty = paletteLines('', COMMANDS, SHEETS, ['command:pause', 'sheet:Day']), hiddenListed = empty.filter(function (l) { return l.hidden; }).length;
-    if (empty.length === COMMANDS.length - 1 + 3 && empty[0].key === 'command:pause' && empty[1].key === 'sheet:Day' && !hiddenListed) k.lines++;
+    var listed = COMMANDS.filter(function (c) { return !c.arg && !c.hidden; }).length;
+    if (empty.length === listed + 3 && empty[0].key === 'command:pause' && empty[1].key === 'sheet:Day' && !hiddenListed) k.lines++;
     else P.push('palette: an empty text lists ' + empty.length + ' line(s), ' + (empty[0] ? empty[0].key : 'none') + ' and ' + (empty[1] ? empty[1].key : 'none') + ' first and ' + hiddenListed + ' hidden sheet(s), where every command and the 3 visible sheets are due, the lines run last first');
     // the palette over a box of the stage
     var stage = document.getElementById('stage'), box = document.createElement('div'), before = document.createElement('button'), area = document.createElement('textarea');
@@ -4810,7 +5239,7 @@
       lines: function (t) { return paletteLines(t, COMMANDS, SHEETS, pal.recent); },
       run: function (line, text) { if (line.kind === 'row') rows.push(text.trim()); else ran.push(line.name + (line.arg ? ' ' + line.arg : '')); }
     });
-    pal.listen(box);
+    pal.listen(box, function (ev) { var pb = keymapFind(PALETTE_MAP, ev, ev.target === area ? 'box' : 'page'); return !!pb && pb.command === 'palette'; });
     function key(el, init) {
       var o = { bubbles: true, cancelable: true };
       for (var p in init) if (Object.prototype.hasOwnProperty.call(init, p)) o[p] = init[p];
@@ -4883,6 +5312,115 @@
     }
     return { counters: k, problems: P };
   }
+  // The keymap (ENGINE.23's second slice): the page's own read clean; every refusal of a crafted text, whole and by its
+  // line and words, nothing applied; the command a key presses in each place, a box's typing and editing keys its own;
+  // a command of a person's own run step by step and listed in the palette; the keymap kept, read again and forgotten
+  // through a double of the browser's storage, never the person's own; Record a key's spellings, each read back to the
+  // key it spells; and the list's words, what keeps a key from the page and a game's button a binding shadows on the
+  // Screen. It needs no file, so a game's page runs it, holding the vendored template there.
+  function caseKeys() {
+    var P = [], k = { defaults: 0, refused: 0, places: 0, steps: 0, lines: 0, kept: 0, spelled: 0, said: 0 };
+    var map = readKeymap(KEYMAP_DEFAULTS, COMMANDS);
+    if (map.ok && map.bindings.length === 14 && !map.order.length && map.bindings.some(function (b) { return b.command === 'palette'; })) k.defaults++;
+    else P.push('keys: the page\'s own keymap reads ' + (map.ok ? map.bindings.length + ' binding(s)' : 'refused: ' + map.problems.join('; ')) + ', where 14 bindings, the palette\'s among them, are due');
+    // every refusal whole, by its line and its words
+    var base = KEYMAP_DEFAULTS + '\n', at = base.split('\n').length;
+    var noPalette = KEYMAP_DEFAULTS.replace('(bind "Ctrl+K" palette)\n', '').replace('(bind "Control+Shift+[Backquote]" palette)\n', '');
+    [[base + '(bind "Ctrl+J" nothing-such)', 'line ' + at + ': Ctrl+J names no command: nothing-such'],
+     [base + '(bind "Ctrl+Hyper+J" run)', 'line ' + at + ': "Ctrl+Hyper+J": no modifier named Hyper'],
+     [base + '(bind "Ctrl+Jj" run)', 'line ' + at + ': "Ctrl+Jj": no key named Jj'],
+     [base + '(bind "Alt+Tab" run)', 'line ' + at + ': Alt+Tab is Windows\' own'],
+     [base + '(bind "Ctrl+Alt+K" run)', 'line ' + at + ': Ctrl+Alt+K is AltGr on Windows'],
+     [base + '(bind "Ctrl+J" run)\n(bind "Ctrl+J" pause)', 'lines ' + at + ' and ' + (at + 1) + ' both bind Ctrl+J'],
+     [base + '(bind "Ctrl+Enter" run)', 'both bind Ctrl+Enter in'],
+     [base + '(bind "Ctrl+J" run nowhere)', 'line ' + at + ': no place named nowhere'],
+     [base + '(bind "Ctrl+J" sheet)', 'line ' + at + ': sheet needs a sheet\'s name'],
+     [base + '(bind "Ctrl+J" run "x")', 'line ' + at + ': run takes nothing after its name'],
+     [base + '(command "run" (pause))', 'line ' + at + ': run names a command of the page'],
+     [base + '(command "a" (b))\n(command "b" (a))', 'the command a runs itself'],
+     [base + '(command "a")', 'line ' + at + ': the command a has no step'],
+     [base + '(frobnicate)', 'line ' + at + ': no form named frobnicate'],
+     [base + '(bind "Ctrl+J" run', 'line ' + at + ': a form that never closes'],
+     [base + ')', 'line ' + at + ': a ) that closes nothing'],
+     [base + 'run', 'line ' + at + ': words outside a form'],
+     [noPalette, 'the palette keeps a key']].forEach(function (x) {
+      var r = readKeymap(x[0], COMMANDS), said = r.problems.join('; ');
+      if (!r.ok && !r.bindings && said.indexOf(x[1]) >= 0) k.refused++;
+      else P.push('keys: the text ending ' + JSON.stringify(x[0].slice(-40)) + ' was ' + (r.ok ? 'applied' : 'refused in the words ' + JSON.stringify(said)) + ', where it is refused whole, saying ' + JSON.stringify(x[1]));
+    });
+    // the command a key presses in each place: a person's own lines over the page's
+    var mine = base + '(bind "J" run)\n(bind "Ctrl+Z" pause)\n(bind "F2" drawer)\n(bind "Ctrl+1" sheet "Portfolio")\n(command "p" "the Portfolio" (sheet "Portfolio"))\n' +
+               '(command "pr" (p) (run) (write (cell "Screen" "A1" 1)))\n(bind "Alt+Shift+P" pr)\n';
+    var m = readKeymap(mine, COMMANDS);
+    if (!m.ok) P.push('keys: a person\'s own lines were refused: ' + m.problems.join('; '));
+    else {
+      function press(init, place) { var b = keymapFind(m, init, place); return b ? b.command + (b.arg ? ' ' + b.arg : '') : 'nothing'; }
+      [[{ key: 'j', code: 'KeyJ' }, 'screen', 'run'], [{ key: 'j', code: 'KeyJ' }, 'page', 'run'], [{ key: 'j', code: 'KeyJ' }, 'source', 'nothing'],
+       [{ ctrlKey: true, key: 'z', code: 'KeyZ' }, 'screen', 'pause'], [{ ctrlKey: true, key: 'z', code: 'KeyZ' }, 'source', 'nothing'], [{ key: 'F2', code: 'F2' }, 'source', 'drawer'],
+       [{ ctrlKey: true, key: 'Enter', code: 'Enter' }, 'source', 'build'], [{ ctrlKey: true, key: 'Enter', code: 'Enter' }, 'library', 'build'],
+       [{ ctrlKey: true, key: 'Enter', code: 'Enter' }, 'cartridge', 'load'], [{ ctrlKey: true, key: 'Enter', code: 'Enter' }, 'edit', 'write'],
+       [{ ctrlKey: true, key: 'Enter', code: 'Enter' }, 'replay', 'play-replay'], [{ ctrlKey: true, key: 'Enter', code: 'Enter' }, 'keys', 'apply-keys'],
+       [{ ctrlKey: true, key: 'Enter', code: 'Enter' }, 'screen', 'nothing'], [{ ctrlKey: true, shiftKey: true, key: 'Enter', code: 'Enter' }, 'source', 'apply'],
+       [{ ctrlKey: true, shiftKey: true, key: 'Enter', code: 'Enter' }, 'cartridge', 'apply-cartridge'], [{ key: 'Enter', code: 'Enter' }, 'edit', 'write'],
+       [{ key: 'Enter', code: 'Enter' }, 'source', 'nothing'], [{ ctrlKey: true, key: 'k', code: 'KeyK' }, 'source', 'palette'],
+       [{ ctrlKey: true, altKey: true, key: 'PageDown', code: 'PageDown' }, 'source', 'next-sheet'], [{ metaKey: true, key: 'PageUp', code: 'PageUp' }, 'page', 'previous-sheet'],
+       [{ ctrlKey: true, key: '1', code: 'Digit1' }, 'page', 'sheet Portfolio'], [{ altKey: true, shiftKey: true, key: 'P', code: 'KeyP' }, 'screen', 'pr'],
+       [{ ctrlKey: true, shiftKey: true, key: 'K', code: 'KeyK' }, 'page', 'nothing'], [{ ctrlKey: true, metaKey: true, key: 'k', code: 'KeyK' }, 'page', 'nothing'],
+       [{ key: 'Enter', code: 'Enter', isComposing: true }, 'edit', 'nothing']].forEach(function (x) {
+        var got = press(x[0], x[1]);
+        if (got === x[2]) k.places++; else P.push('keys: ' + JSON.stringify(x[0]) + ' in the place ' + x[1] + ' presses ' + got + ', where ' + x[2] + ' is due');
+      });
+      // a command of a person's own, its steps in order, one of the person's among them, named without case
+      var ran = [];
+      runSteps(m, 'pr', function (name, arg, row) { ran.push(row || (arg ? name + ' ' + arg : name)); });
+      if (ran.join(' | ') === 'sheet Portfolio | run | (cell "Screen" "A1" 1)') k.steps++; else P.push('keys: the command pr ran ' + JSON.stringify(ran) + ', where sheet Portfolio, run and the row are due in order');
+      ran = [];
+      runSteps(m, 'P', function (name, arg) { ran.push(arg ? name + ' ' + arg : name); });
+      if (ran.join(' | ') === 'sheet Portfolio') k.steps++; else P.push('keys: the command P ran ' + JSON.stringify(ran) + ', where p\'s step, sheet Portfolio, is due');
+      if (m.customs.pr.words === 'p, then run, then (cell "Screen" "A1" 1)') k.steps++; else P.push('keys: the command pr says ' + JSON.stringify(m.customs.pr.words) + ', where its steps in words are due');
+      // the palette's lines: a person's own commands among the page's, each with its keys
+      var cmds = COMMANDS.map(function (c) { return { name: c.name, words: c.words, arg: c.arg, hidden: c.hidden, keys: commandKeys(m, c.name) }; });
+      m.order.forEach(function (n) { var c = m.customs[n]; cmds.push({ name: c.name, words: c.words, keys: commandKeys(m, c.name), custom: true }); });
+      var lp = paletteLines('pr', cmds, [], [])[0], lb = paletteLines('build', cmds, [], [])[0], lq = paletteLines('palette', cmds, [], [])[0];
+      if (lp && lp.key === 'custom:pr' && lp.keys === 'Alt+Shift+P') k.lines++; else P.push('keys: the palette\'s first line for "pr" is ' + JSON.stringify(lp) + ', where the command pr with Alt+Shift+P is due');
+      if (lb && lb.keys === 'Ctrl+Enter in the source\'s box, in a library\'s box') k.lines++; else P.push('keys: build\'s line says its keys ' + JSON.stringify(lb && lb.keys) + ', where Ctrl+Enter in the source\'s box, in a library\'s box is due');
+      if (!lq || lq.key !== 'command:palette') k.lines++; else P.push('keys: the palette lists its own command, where it lists none');
+    }
+    // the keymap kept, read again and forgotten, through a double of the browser's storage
+    var shelf = {}, dbl = { getItem: function (n) { return Object.prototype.hasOwnProperty.call(shelf, n) ? shelf[n] : null; }, setItem: function (n, v) { shelf[n] = String(v); }, removeItem: function (n) { delete shelf[n]; } };
+    var store = new KeyStore(dbl, 'the oracle\'s');
+    if (store.keep(mine, KEYMAP_DEFAULTS) && shelf['the oracle\'s'] === mine) k.kept++; else P.push('keys: a person\'s keymap applied was not kept: ' + JSON.stringify(Object.keys(shelf)));
+    var again = readKeymap(store.read(), COMMANDS, true);
+    if (again.ok && m.ok && again.bindings.length === m.bindings.length && again.order.length === 2) k.kept++; else P.push('keys: the keymap kept read again ' + (again.ok ? again.bindings.length + ' binding(s)' : 'refused') + ', where the one applied is due');
+    store.keep(KEYMAP_DEFAULTS, KEYMAP_DEFAULTS);
+    if (store.read() === null) k.kept++; else P.push('keys: the page\'s own keymap applied left a keymap kept, where it forgets it');
+    var later = readKeymap(mine + '(bind "Ctrl+Q" a-later-command)\n', COMMANDS, true), strict = readKeymap(mine + '(bind "Ctrl+Q" a-later-command)\n', COMMANDS);
+    if (later.ok && later.notes.length === 1 && !strict.ok) k.kept++; else P.push('keys: a kept keymap naming a later page\'s command was ' + (later.ok ? 'read with ' + later.notes.length + ' note(s)' : 'refused') + ' and a typed one ' + (strict.ok ? 'applied' : 'refused') + ', where the kept is read with its line set aside and the typed refused');
+    var shut = new KeyStore({ getItem: function () { throw new Error('denied'); }, setItem: function () { throw new Error('denied'); }, removeItem: function () { throw new Error('denied'); } }, 'x');
+    if (shut.read() === null && shut.keep(mine, KEYMAP_DEFAULTS) === false && new KeyStore(null, 'x').read() === null) k.kept++; else P.push('keys: a store that refuses, or none, was not read as nothing kept');
+    // Record a key's spellings, each read back to the key it spells
+    [[{ ctrlKey: true, key: 'k', code: 'KeyK' }, 'Ctrl+K'], [{ metaKey: true, key: 'k', code: 'KeyK' }, 'Cmd+K'], [{ ctrlKey: true, shiftKey: true, key: '~', code: 'Backquote' }, 'Ctrl+Shift+[Backquote]'],
+     [{ key: ' ', code: 'Space' }, 'Space'], [{ ctrlKey: true, altKey: true, key: 'PageDown', code: 'PageDown' }, 'Ctrl+Alt+PageDown'], [{ key: 'F5', code: 'F5' }, 'F5']].forEach(function (x) {
+      var s = spellKey(x[0]), back = parseKeys(s);
+      if (s === x[1] && !back.error && keyMatches(back, x[0])) k.spelled++; else P.push('keys: ' + JSON.stringify(x[0]) + ' is spelled ' + JSON.stringify(s) + ', where ' + x[1] + ', read back to the same key, is due');
+    });
+    // the list's words: what keeps a key from the page, and a game's button a binding shadows on the Screen
+    [['Ctrl+W', 'the browser\'s in a window'], ['Ctrl+Shift+Tab', 'the browser\'s in a window'], ['Ctrl+Shift+PageDown', ''], ['Ctrl+PageUp', 'the browser\'s in a window'],
+     ['Cmd+Q', 'a Mac keeps Cmd+Q'], ['Ctrl+Tab', 'a Mac keeps Cmd+Tab'], ['F11', 'the browser\'s in full screen'], ['Escape', 'without Keyboard Lock'], ['Shift+F10', 'the context menu\'s'],
+     ['Ctrl+K', ''], ['Control+Shift+[Backquote]', ''], ['Cmd+J', 'the Windows key']].forEach(function (x) {
+      var w = keptWords(parseKeys(x[0]));
+      if (x[1] ? w.indexOf(x[1]) >= 0 : w === '') k.said++; else P.push('keys: the list says of ' + x[0] + ' ' + JSON.stringify(w) + ', where ' + (x[1] ? 'it names "' + x[1] + '"' : 'nothing') + ' is due');
+    });
+    var codes = ['KeyZ', 'Numpad2', 'Space', 'ArrowUp'];
+    [['(bind "Z" run)', true], ['(bind "Ctrl+Z" run)', false], ['(bind "Z" run source)', false], ['(bind "Z" run screen)', true], ['(bind "2" run)', true], ['(bind "Space" pause)', true],
+     ['(bind "Shift+Up" pause)', true], ['(bind "J" run)', false]].forEach(function (x) {
+      var r = readKeymap(base + x[0] + '\n', COMMANDS), b = r.ok ? r.bindings[r.bindings.length - 1] : null, said = b ? bindingNotes(b, codes) : 'refused';
+      if (b && (said.indexOf('shadows the game\'s button on the Screen') >= 0) === x[1]) k.said++; else P.push('keys: the list says of ' + x[0] + ' beside a game\'s Z, pad 2, Space and Up ' + JSON.stringify(said) + ', where ' + (x[1] ? 'the game\'s button shadowed' : 'no shadow') + ' is due');
+    });
+    var nk = commandKeys(map, 'next-sheet', undefined, function (b) { return bindingNotes(b, []); });
+    if (nk === 'Ctrl+Alt+PageDown; Ctrl+PageDown [the browser\'s in a window, the page\'s in full screen]') k.said++; else P.push('keys: the list says next-sheet\'s keys ' + JSON.stringify(nk) + ', where Ctrl+PageDown\'s word that a window\'s browser keeps it is due');
+    return { counters: k, problems: P };
+  }
   function loopLine(name, k, problems) {
     var parts = [];
     for (var key in k) if (Object.prototype.hasOwnProperty.call(k, key)) parts.push(key + ' ' + k[key]);
@@ -4898,7 +5436,7 @@
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
-                 ['continue', caseContinue], ['palette', casePalette]];
+                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -4907,7 +5445,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }
