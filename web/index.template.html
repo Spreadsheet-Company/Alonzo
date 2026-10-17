@@ -2196,7 +2196,7 @@
     }
     if (lifeText.split('(rate 30)').length !== 2 || lifeText.split('(spec 2)').length !== 2) P.push('the anchors (rate 30) and (spec 2) are not in the cartridge exactly once');
     expectLoad(host.load(lifeText.replace('(rate 30)', ''), 'life.vla'), 'cart-manifest-invalid');
-    expectLoad(host.load(lifeText.replace('(spec 2)', '(spec 5)'), 'life.vla'), 'cart-spec-unsupported');
+    expectLoad(host.load(lifeText.replace('(spec 2)', '(spec 6)'), 'life.vla'), 'cart-spec-unsupported');
     expectLoad(host.loadBytes(new Uint8Array([0x28, 0xff, 0xfe, 0x29]), 'bad.vla'), 'is not UTF-8');
     var ok = host.load(lifeText, 'life.vla');
     if (!ok.ok) P.push('Life did not load: ' + ok.sentence);
@@ -2399,7 +2399,7 @@
       var D = new Driver({ exports: exports }), out = [];
       function load(text) { return D.call('alonzo_load', [], [text, 'life.vla']); }
       out.push(['a manifest without its rate', load(lifeText.replace('(rate 30)', ''))]);
-      out.push(['a (spec 5)', load(lifeText.replace('(spec 2)', '(spec 5)'))]);
+      out.push(['a (spec 6)', load(lifeText.replace('(spec 2)', '(spec 6)'))]);
       out.push(['bytes that are not UTF-8', D.call('alonzo_load', [], [new Uint8Array([0x28, 0xff, 0xfe, 0x29]), 'bad.vla'])]);
       var L = load(lifeText), m = /^\(cartridge (\d+) /.exec(L.text);
       if (!m) { P.push('Life did not load for the parity: ' + L.id + ' ' + L.text); return out; }
@@ -4496,7 +4496,7 @@
       var C = doubleHost();
       var wrong = [
         ['another cartridge\'s replay', CARTRIDGES.inputcard.replay, 'a replay plays only on the file it was recorded from'],
-        ['a later version\'s replay', text.replace('(spec 3)', '(spec 5)'), 'this host implements versions 1 to 4'],
+        ['a later version\'s replay', text.replace('(spec 3)', '(spec 6)'), 'this host implements versions 1 to 5'],
         ['a derived row', text.replace('(frame 1\n', '(frame 1\n  (derived "State" "B1" 1)\n'), 'holds a derived row'],
         ['frames out of order', text + '(frame 1)\n', 'frames are out of order'],
         ['a row outside a frame', text.replace('(frame 1\n', '(cell "State" "B1" 1)\n(frame 1\n'), 'outside a frame'],
@@ -5556,6 +5556,201 @@
     });
     return { counters: k, problems: P };
   }
+  // ---- ENGINE.25: a cartridge's own commands ----
+  // The commands card, the page's own as the views card is, written here and never a file, at version 5, so that a game's
+  // page runs the case too (ENGINE.16): a hidden Screen; a Desk counting count-up and count-down and every command run; a
+  // Ledger noting the frame note runs at; and a Commands sheet: count-up and count-down holding on the Desk, by KeyU and
+  // KeyD; note holding everywhere, by KeyN, its words naming the frame; and three rows the host cannot take whole, a
+  // formula's name that is no name, a command that holds a text and keys a letter, and a formula naming note again.
+  var COMMANDCARD = { file: 'commandcard.vla',
+                      text: '(cartridge "commandcard"\n  (spec 5)\n  (title "A commands card")\n  (rate 30)\n  (screen grid 20 10)\n  (seed 1))\n' +
+                            '(sheet "Screen" hidden)\n(sheet "Desk" visible)\n(sheet "Ledger" visible)\n(sheet "Commands" visible)\n' +
+                            '(cell "Commands" "A1" "name")\n(cell "Commands" "B1" "words")\n(cell "Commands" "C1" "holds")\n(cell "Commands" "D1" "key")\n' +
+                            '(cell "Commands" "A2" "count-up")\n(cell "Commands" "B2" "add one to the Desk\'s count")\n(formula "Commands" "C2" "=Input!$B$19=\\"Desk\\"")\n(cell "Commands" "D2" "KeyU")\n' +
+                            '(cell "Commands" "A3" "count-down")\n(cell "Commands" "B3" "take one from the Desk\'s count")\n(formula "Commands" "C3" "=Input!$B$19=\\"Desk\\"")\n(cell "Commands" "D3" "KeyD")\n' +
+                            '(cell "Commands" "A4" "note")\n(formula "Commands" "B4" "=\\"write the frame, \\"&Clock!$B$1&\\", in the Ledger\\"")\n(cell "Commands" "D4" "KeyN")\n' +
+                            '(formula "Commands" "A5" "=\\"Buy 1\\"")\n' +
+                            '(cell "Commands" "A6" "jump")\n(cell "Commands" "C6" "maybe")\n(cell "Commands" "D6" "J")\n' +
+                            '(formula "Commands" "A7" "=\\"note\\"")\n' +
+                            '(cell "Desk" "A1" "count")\n(formula "Desk" "B1" "=Desk.last!B1+IF(Input!$B$20=\\"count-up\\",1,0)-IF(Input!$B$20=\\"count-down\\",1,0)")\n' +
+                            '(cell "Desk" "A2" "commands run")\n(formula "Desk" "B2" "=Desk.last!B2+IF(Input!$B$20<>\\"\\",1,0)")\n' +
+                            '(cell "Ledger" "A1" "noted at")\n(formula "Ledger" "B1" "=IF(Input!$B$20=\\"note\\",Clock!$B$1,Ledger.last!B1)")\n' +
+                            '(cell "Screen" "A1" "the Screen")\n' };
+  var COMMANDS_FRAMES = 40;
+  // The commands case over the module. The card over its viewport in a box of the stage, frames 0 to 40, the acts made
+  // before the frames they land at: count-up run before frame 2; count-up and count-down before 4, landing a frame apart;
+  // count-up before 7 and before 8, two frames running; U and its repeat on the Desk before 10, one count; Ctrl+U before 12,
+  // nothing; the person's tab to the Ledger before 14, where from frame 15 count-up holds not, is refused, and its U passes
+  // on, and note runs at 16; the tab back to the Desk before 18; and sixteen count-ups before 21, a seventeenth refused, one
+  // a frame from 21 to 36. At every frame Input!B20 names the command due or is empty, and the Desk, its runs and the Ledger
+  // hold what the commands due make. The rows the host cannot take said once each. The run's replay, version 5's, played on
+  // a fresh host to every frame's cells; a command refused while a replay plays; then rate 0, a command its own step and
+  // the next edit's step seeing B20 empty, replayed; and the card written to version 4, its Commands sheet its own.
+  function caseCommands() {
+    var P = [], k = { module: 0, opened: 0, listed: 0, frames: 0, ran: 0, landed: 0, emptied: 0, apart: 0, twice: 0, repeats: 0, ctrl: 0, holdsNot: 0, refused: 0,
+                      passed: 0, noted: 0, words: 0, waited: 0, dropped: 0, said: 0, replayed: 0, replayFrames: 0, replaySame: 0, during: 0, rate0: 0, rate0Empty: 0,
+                      rate0Replayed: 0, older: 0 };
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm);
+    k.module = bytes.length;
+    commandsRun(bytes, k, P);
+    commandsOlder(bytes, k, P);
+    return { counters: k, problems: P };
+  }
+  function commandsRun(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:' + GRID_BOX.w + 'px;height:' + GRID_BOX.h + 'px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box }), D = new Driver({ exports: exports }), live = {};
+    try {
+      if (!host.attach(exports).ok) { P.push('commands: the host refused the module'); return; }
+      var ld = host.load(COMMANDCARD.text, COMMANDCARD.file);
+      if (!ld.ok) { P.push('commands: the commands card did not load: ' + ld.sentence); return; }
+      var h = ld.handle, vp = host.vp, sc = vp.scroller, pt = viewPoints(vp), t = 1000, runs = 0, r;
+      function vals(sheet, win) { return recordValues(D.call('alonzo_view', [h], ['grid', sheet, win || '']).text); }
+      function key(init) {
+        var o = { bubbles: true, cancelable: true };
+        for (var p in init) if (Object.prototype.hasOwnProperty.call(init, p)) o[p] = init[p];
+        var ev = new KeyboardEvent('keydown', o);
+        sc.dispatchEvent(ev);
+        sc.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, cancelable: true, code: init.code, key: init.key }));
+        return ev;
+      }
+      function listed(cs) { return cs.map(function (c) { return c.name + ' ' + (c.key || '-') + ' ' + c.holds; }).join(', '); }
+      if (vp.sheet() !== 'Desk') { P.push('commands frame 0: the host opened on ' + (vp.sheet() || 'nothing') + ', where the card opens on the Desk'); return; }
+      k.opened = 1;
+      var cs = host.commands();
+      if (listed(cs) === 'count-up KeyU true, count-down KeyD true, note KeyN true, jump - false') k.listed++;
+      else P.push('commands frame 0: the host lists ' + listed(cs) + ', where count-up by KeyU, count-down by KeyD and note by KeyN hold, and jump holds not and has no key');
+      host.start(); host.tick(t);
+      for (var f = 1; f <= COMMANDS_FRAMES; f++) {
+        var at = 'commands frame ' + f;
+        if (f === 2 || f === 7 || f === 8) { r = host.command('count-up'); if (r.ok) k.ran++; else P.push(at + ': count-up was refused: ' + r.sentence); }
+        if (f === 4) { host.command('count-up'); host.command('count-down'); }
+        if (f === 10) {
+          var e1 = key({ code: 'KeyU', key: 'u' }), e2 = key({ code: 'KeyU', key: 'u', repeat: true });
+          if (e1.defaultPrevented && e2.defaultPrevented) k.repeats++; else P.push(at + ': U and its repeat on the Desk were ' + (e1.defaultPrevented ? 'taken' : 'passed on') + ' and ' + (e2.defaultPrevented ? 'taken' : 'passed on') + ', where both are count-up\'s');
+        }
+        if (f === 12) { if (!key({ code: 'KeyU', key: 'u', ctrlKey: true }).defaultPrevented) k.ctrl++; else P.push(at + ': Ctrl+U on the Desk was taken, where it is no command\'s key'); }
+        if (f === 14 || f === 18) { var tb = pt.tab(f === 14 ? 'Ledger' : 'Desk'); if (tb) tb.click(); else P.push(at + ': no tab ' + (f === 14 ? 'Ledger' : 'Desk') + ' in the strip'); }
+        if (f === 16) {
+          r = host.command('count-up');
+          if (!r.ok && /holds not now/.test(r.sentence)) k.refused++; else P.push(at + ': count-up on the Ledger was ' + (r.ok ? 'run' : 'refused in the words ' + JSON.stringify(r.sentence)) + ', where it holds not');
+          if (!key({ code: 'KeyU', key: 'u' }).defaultPrevented) k.passed++; else P.push(at + ': U on the Ledger was taken, where count-up holds not and its key passes on');
+          r = host.command('note'); if (!r.ok) P.push(at + ': note was refused: ' + r.sentence);
+        }
+        if (f === 21) {
+          for (var q = 0; q < 16; q++) host.command('count-up');
+          r = host.command('count-up');
+          if (!r.ok && /16 commands wait/.test(r.sentence)) k.dropped++; else P.push(at + ': a seventeenth command was ' + (r.ok ? 'taken' : 'refused in the words ' + JSON.stringify(r.sentence)) + ', where sixteen wait at most');
+        }
+        t += 1000 / 30; host.tick(t);
+        if (host.counters().frame !== f) { P.push(at + ': after tick ' + f + ' the host is at frame ' + host.counters().frame); break; }
+        var inp = vals('Input', 'A19:B20'), b20 = inp.B20, count = viewsNum(vals('Desk', 'B1').B1), ran = viewsNum(vals('Desk', 'B2').B2), noted = viewsNum(vals('Ledger', 'B1').B1);
+        live[f] = { b20: b20, count: count, ran: ran, noted: noted };
+        // what the frame is due, by the plan
+        var due = f === 2 || f === 4 || f === 7 || f === 8 || f === 10 || (f >= 21 && f <= 36) ? 'count-up' : f === 5 ? 'count-down' : f === 16 ? 'note' : '';
+        var dueCount = f < 2 ? 0 : f < 4 ? 1 : f < 5 ? 2 : f < 7 ? 1 : f < 8 ? 2 : f < 10 ? 3 : f < 21 ? 4 : Math.min(20, f - 16);
+        if (due) runs++;
+        if (inp.A20 !== 'command') P.push(at + ': Input!A20 holds ' + JSON.stringify(inp.A20) + ', where version 5\'s twentieth row is command');
+        if (b20 !== due) P.push(at + ': Input!B20 holds ' + JSON.stringify(b20) + ', where ' + (due ? 'the command ' + due + ' runs' : 'no command runs and it is empty'));
+        else if (due) { k.landed++; if (f >= 21) k.waited++; } else k.emptied++;
+        if (count !== dueCount || ran !== runs || noted !== (f >= 16 ? 16 : 0)) P.push(at + ': the Desk counts ' + count + ' and ' + ran + ' run(s) and the Ledger notes ' + noted + ', where the commands due make ' + dueCount + ', ' + runs + ' and ' + (f >= 16 ? 16 : 0));
+        cs = host.commands();
+        if (f === 15) { if (!cs[0].holds && !cs[1].holds && cs[2].holds) k.holdsNot++; else P.push(at + ': on the Ledger the host lists ' + listed(cs) + ', where count-up and count-down hold not and note holds'); }
+        if (f === 19) { if (cs[0].holds && cs[1].holds) k.holdsNot++; else P.push(at + ': back on the Desk the host lists ' + listed(cs) + ', where count-up and count-down hold again'); }
+        if (f === 20) { if (cs[2].words === 'write the frame, 20, in the Ledger') k.words++; else P.push(at + ': note\'s words are ' + JSON.stringify(cs[2].words) + ', where its formula names the frame, 20'); }
+        if (f === 16) k.noted = noted === 16 ? 1 : 0;
+      }
+      k.frames = host.counters().frame;
+      if (live[4] && live[5] && live[6] && live[4].b20 === 'count-up' && live[5].b20 === 'count-down' && live[6].b20 === '') k.apart = 1;
+      if (live[7] && live[8] && live[7].b20 === 'count-up' && live[8].b20 === 'count-up' && live[8].count === 3) k.twice = 1;
+      // the rows the host cannot take, said once each, the first two at the load and the formulas' after their first value
+      ['Commands!A5 holds "Buy 1", which is no command\'s name', 'Commands!C6 holds "maybe", which is no truth value', 'Commands!D6 holds "J", which is no key\'s code: the key J is KeyJ',
+       'Commands!A7 names note, as A4 does'].forEach(function (w) {
+        var n = host.sentences().filter(function (s) { return s.text.indexOf(w) >= 0; }).length;
+        if (n === 1) k.said++; else P.push('commands: the host said ' + JSON.stringify(w) + ' ' + n + ' time(s), where once is due');
+      });
+      // the run's replay, version 5's, played on a fresh host to every frame's cells
+      var text = host.replayText() || '';
+      if (!/^\(replay "commandcard" \(spec 5\) /.test(text)) P.push('commands: the replay\'s header is ' + text.split('\n')[0] + ', where a version 5 cartridge\'s replay names version 5');
+      else if (text.indexOf('(cell "Input" "B20" "count-up")') < 0) P.push('commands: the replay logs no command, Input!B20');
+      else {
+        var ex2 = HOST.instantiateSync(bytes), M = new HOST({ drive: 'manual', budget: 0, now: frozen }), MD = new Driver({ exports: ex2 }), off = '';
+        try {
+          if (!M.attach(ex2).ok || !M.load(COMMANDCARD.text, COMMANDCARD.file).ok) P.push('commands: a fresh host did not load the commands card');
+          else {
+            M.on('frame', function (e) {
+              var hh = M.counters().handle, L = live[e.frame];
+              function mv(sheet, a) { return recordValues(MD.call('alonzo_view', [hh], ['grid', sheet, a]).text)[a]; }
+              var same = !!L && mv('Input', 'B20') === L.b20 && viewsNum(mv('Desk', 'B1')) === L.count && viewsNum(mv('Desk', 'B2')) === L.ran && viewsNum(mv('Ledger', 'B1')) === L.noted;
+              if (same) k.replaySame++; else if (!off) off = 'frame ' + e.frame;
+            });
+            var pm = M.play(text, true);
+            if (!pm.ok || pm.frames !== COMMANDS_FRAMES) P.push('commands: the replay played on a fresh host stopped at frame ' + pm.frames);
+            else if (off) P.push('commands: the replay played on a fresh host is not the live run at ' + off + ': its command or its counts differ');
+            else { k.replayed = 1; k.replayFrames = pm.frames; }
+          }
+        } finally { M.destroy(); }
+        // a command while a replay plays, at the cartridge's rate
+        var ex3 = HOST.instantiateSync(bytes), Q = new HOST({ drive: 'manual', budget: 0, now: frozen });
+        try {
+          var qp = Q.attach(ex3).ok && Q.load(COMMANDCARD.text, COMMANDCARD.file).ok ? Q.play(text) : { ok: false };
+          var qr = qp.ok ? Q.command('count-up') : null;
+          if (qr && !qr.ok && /a replay is playing/.test(qr.sentence)) k.during = 1;
+          else P.push('commands: a command while a replay plays was ' + (!qr ? 'never asked, the replay not begun' : qr.ok ? 'run' : 'refused in the words ' + JSON.stringify(qr.sentence)) + ', where it is refused as an edit is');
+        } finally { Q.destroy(); }
+      }
+      // rate 0: a command steps the grid once, its name in B20 for that step, and the next edit's step sees it empty
+      host.edit('(cell "Clock" "B2" 0)');
+      t += 1000 / 30; host.tick(t);
+      var f0 = host.counters().frame, c0 = viewsNum(vals('Desk', 'B1').B1);
+      r = host.command('count-up');
+      var f1 = host.counters().frame, b1 = vals('Input', 'B20').B20, c1 = viewsNum(vals('Desk', 'B1').B1);
+      if (r.ok && f1 === f0 + 1 && b1 === 'count-up' && c1 === c0 + 1) k.rate0 = 1;
+      else P.push('commands, rate 0: count-up made frame ' + f0 + ' frame ' + f1 + ', Input!B20 ' + JSON.stringify(b1) + ' and the count ' + c0 + ' then ' + c1 + ', where a command steps once and counts one');
+      host.edit('(cell "Desk" "C1" 5)');
+      var f2 = host.counters().frame, b2 = vals('Input', 'B20').B20, c2 = viewsNum(vals('Desk', 'B1').B1);
+      if (f2 === f1 + 1 && b2 === '' && c2 === c1) k.rate0Empty = 1;
+      else P.push('commands, rate 0: the step of the edit after the command sees Input!B20 ' + JSON.stringify(b2) + ' and counts ' + c2 + ' at frame ' + f2 + ', where it sees it empty and counts ' + c1);
+      var text0 = host.replayText() || '', ex4 = HOST.instantiateSync(bytes), Z = new HOST({ drive: 'manual', budget: 0, now: frozen }), ZD = new Driver({ exports: ex4 });
+      try {
+        var zp = Z.attach(ex4).ok && Z.load(COMMANDCARD.text, COMMANDCARD.file).ok ? Z.play(text0, true) : { ok: false };
+        var zh = Z.counters().handle, zc = zh ? viewsNum(recordValues(ZD.call('alonzo_view', [zh], ['grid', 'Desk', 'B1']).text).B1) : -1;
+        if (zp.ok && zp.frames === f2 && zc === c2) k.rate0Replayed = 1;
+        else P.push('commands, rate 0: the run\'s replay played on a fresh host to frame ' + zp.frames + ' and a count of ' + zc + ', where frame ' + f2 + ' and ' + c2 + ' are due');
+      } finally { Z.destroy(); }
+      var refusals = host.sentences().filter(function (s) { return s.refusal && !/ was not run: /.test(s.text); });
+      if (refusals.length) P.push('commands: the host was refused: ' + refusals[0].text);
+    } finally { host.destroy(); stage.removeChild(box); }
+  }
+  // The commands card written to version 4: its Commands sheet its own, described as no device; no command listed or
+  // run, U on its Desk passed on; no twentieth row; its replay version 4's.
+  function commandsOlder(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:640px;height:300px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box }), D = new Driver({ exports: exports });
+    try {
+      var ld = host.attach(exports).ok ? host.load(COMMANDCARD.text.replace('(spec 5)', '(spec 4)'), COMMANDCARD.file) : { ok: false };
+      if (!ld.ok) { P.push('commands, version 4: the card did not load: ' + ld.sentence); return; }
+      var d = D.call('alonzo_describe', [ld.handle], []).text, r = host.command('count-up');
+      host.start(); host.tick(1000);
+      var ev = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, code: 'KeyU', key: 'u' });
+      host.vp.scroller.dispatchEvent(ev);
+      host.tick(1000 + 1000 / 30);
+      var inp = recordValues(D.call('alonzo_view', [ld.handle], ['grid', 'Input', 'A19:B20']).text);
+      var refusals = host.sentences().filter(function (s) { return s.refusal && !/ was not run: /.test(s.text); });
+      if (refusals.length) P.push('commands, version 4: the host was refused: ' + refusals[0].text);
+      else if (d.indexOf('(device "Commands"') >= 0) P.push('commands, version 4: describe names a Commands device');
+      else if (host.commands().length || r.ok || !/version 5/.test(r.sentence)) P.push('commands, version 4: the host lists ' + host.commands().length + ' command(s) and ' + (r.ok ? 'ran' : 'refused in the words ' + JSON.stringify(r.sentence)) + ' count-up, where a version 4 cartridge has none');
+      else if (ev.defaultPrevented) P.push('commands, version 4: U on the Desk was taken, where no command has a key');
+      else if (inp.A20 !== undefined || inp.B20 !== undefined) P.push('commands, version 4: the Input sheet holds a twentieth row, ' + JSON.stringify(inp.A20) + ' and ' + JSON.stringify(inp.B20));
+      else if (!/^\(replay "commandcard" \(spec 4\) /.test(host.replayText() || '')) P.push('commands, version 4: the replay\'s header is ' + (host.replayText() || '').split('\n')[0] + ', where a version 4 cartridge\'s names version 4');
+      else k.older = 1;
+    } finally { host.destroy(); stage.removeChild(box); }
+  }
   function loopLine(name, k, problems) {
     var parts = [];
     for (var key in k) if (Object.prototype.hasOwnProperty.call(k, key)) parts.push(key + ' ' + k[key]);
@@ -5571,7 +5766,7 @@
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
-                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys]];
+                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys], ['commands', caseCommands]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -5580,7 +5775,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1, commands: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }

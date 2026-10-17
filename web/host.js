@@ -57,6 +57,18 @@
   have been since ENGINE.8's second slice. A cartridge written to 1 to 3
   opens, points and replays as before.
 
+  A cartridge written to version 5 (ENGINE.25) has commands of its own, its
+  Commands sheet's rows, read at the load and after each step: each a name,
+  its words, whether it holds now and its key. command(name) runs one, as a
+  page's palette or a person's binding asks, and commands() lists them; the
+  host takes a command's key on the Screen while the command holds and no
+  Ctrl, Cmd or Alt is held, a repeat taken and running nothing. A command
+  waits for the next frame, one a frame and sixteen at most, and is written
+  into the Input sheet's twentieth row for that frame alone; at rate 0 each
+  steps the grid once, the twentieth row written alone before every step;
+  and while a replay plays, a command is refused, as an edit is. A cartridge
+  written to 1 to 4 has no commands, a sheet of its named Commands its own.
+
   A frame is read by its changes (ENGINE.19), the language's report of the
   cells of a window the last frame changed (docs/SPEC.md section 4.5). The
   frame's own draw of the Screen, or of a sheet in its place, and a page's
@@ -127,7 +139,8 @@
   nodes and the timeline's end, and since ENGINE.19 the records it holds
   with their frames, the device sheets' cells as last read and the Input
   rows last written, and since ENGINE.7 the text of the cartridge the grid
-  was last given. Every value is the module's.
+  was last given, and since ENGINE.25 the commands waiting for their frames.
+  Every value is the module's.
   Every refusal and every event is a sentence, the latest new one in the
   status and the last twenty events in a log, a repeat of an event counted in
   the line it first made rather than pushing the others out (SD-30), and a
@@ -170,8 +183,11 @@
   var HISTORY_LINES = 2000;
   var MAX_SEED = 2147483646;         // the highest seed, so a Park and Miller cell never sticks at 0 (section 3.5)
   var MAX_RATE = 120;                // the highest rate, in frames a second (section 10)
-  var SPEC = 4;                      // the page's version this host implements; a replay's header names its
+  var SPEC = 5;                      // the page's version this host implements; a replay's header names its
                                      // cartridge's, 3 for a cartridge written to 1 to 3 (ENGINE.18, decision 7)
+  var MAX_COMMANDS = 100;            // a Commands sheet's rows 2 to 101 (ENGINE.25; docs/SPEC.md section 3.10)
+  var COMMANDS_WAITING = 16;         // the commands that may wait for their frames, one a frame: a seventeenth is said
+                                     // and dropped (ENGINE.25, decision 3)
   var REPLAY_CAP = 8 * 1048576;      // the replay's text, past which the recorder stops and says so: about an
                                      // hour of a pointer that never rests (ENGINE.3, decision 10)
   // ---- the sound's rules, as ENGINE.4's scoping states them (decisions 1 to 4) ----
@@ -224,6 +240,20 @@
   // A cell's value as one text, to tell whether it changed between two reads: empty for an empty cell, a formula
   // before its first value and the empty text alike (ENGINE.18, the Camera's third row).
   function valueKey(v) { return v === null || v === undefined || v === '' ? '' : (typeof v === 'object' ? 'error ' + v.error : typeof v + ' ' + v); }
+  // A cell's value as a notice shows it: a text in quotes, an error by its name, a number or a truth value as itself.
+  function shownValue(v) { return typeof v === 'string' ? '"' + v + '"' : (v && typeof v === 'object' ? 'an error, ' + v.error : String(v)); }
+  // A cartridge's command's name (ENGINE.25; docs/SPEC.md section 3.10), as a cartridge's own name is spelled: lowercase
+  // letters, digits and hyphens; and a key's code, as a Keys sheet spells one (section 3.4): KeyB, Digit1, Space, F2.
+  var COMMAND_NAME = /^[a-z0-9-]+$/;
+  var KEY_CODE = /^[A-Z][A-Za-z0-9]+$/;
+  // Whether a Commands sheet's holds cell holds (section 3.10): empty, the empty text or a formula before its first value,
+  // true, or a number other than 0, hold; false and 0 hold not; null for a text or an error, which is no truth value.
+  function holdsOf(v) {
+    if (v === undefined || v === null || v === '') return true;
+    if (typeof v === 'boolean') return v;
+    if (typeof v === 'number') return v !== 0;
+    return null;
+  }
   // The region a viewport shows, as the window a sheet is viewed through (ENGINE.14, decision 3): the cells
   // its last draw put in view at its scroll, the frozen rows and columns from 1; never the sheet whole, so a
   // view costs a screen wherever it stands. fresh: a sheet the viewport has not drawn, estimated from A1 at
@@ -627,9 +657,14 @@
     this.shownName = null; this.cameraSheet = null; this.sheetsList = null; this.showWanted = null;
     this.rec = null; this.player = null;   // the replay recorded since the load, and one playing
     this.given = null;   // the text of the cartridge the grid was last given by a continue, null for the bytes loaded (ENGINE.7)
+    // Version 5's commands (ENGINE.25): the Commands sheet as last read, each { name, words, holds, code, row }, and the
+    // codes of the commands that hold now; the commands waiting for their frames, one a frame; the one that runs at the
+    // step in progress; the twentieth row as the host last wrote it at rate 0, null where it does not know; and the
+    // rows of the sheet said once, until they change.
+    this.commandList = []; this.commandKeys = {}; this.waiting = []; this.commandNow = ''; this.commandRow = null; this.badRows = {};
     this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
     this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, inputsKept: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, patches: 0, shows: 0, saves: 0,
-               sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0 };
+               sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0, commands: 0, commandsRefused: 0 };
   };
 
   // The module: its ABI number asked first, then every export the loop calls.
@@ -681,6 +716,7 @@
     if (c.devices.camera) this._readCamera('load');
     if (c.devices.palette) this._readPalette();
     if (c.devices.keys) this._readKeys();
+    if (c.devices.commands) this._readCommands();   // version 5's commands, as loaded (ENGINE.25)
     // The new grid drawn at once, frame 0 with nothing computed (a formula with no value yet reads
     // 0, a value cell its value): a load completes no frame, and without this draw the canvas kept
     // the last run's picture, a grid that no longer exists (the owner's hand test, 2026-10-09).
@@ -883,7 +919,7 @@
       this._issueDerived();
       var row = this.edits.shift();
       if (!this._issueAct(row, true)) { this.inFrame = false; this.progress = null; continue; }
-      this.stepEdit = typeof row === 'string' ? 'the edit ' + row : 'the source applied, ' + row.file;
+      this.stepEdit = typeof row === 'string' ? 'the edit ' + row : row.command !== undefined ? 'the command ' + row.command : 'the source applied, ' + row.file;
       if (!this._continue(win)) return;
     }
   };
@@ -952,6 +988,7 @@
   Host.prototype._issueInputs = function () {
     if (this.player) { this._issuePlayed(); return; }   // a replay's rows in place of the live inputs and edits (section 7.6)
     if (this.cart.rate > 0) {
+      this.commandNow = this._five() && this.waiting.length ? this.waiting.shift() : '';   // the command that runs at this step, one a frame (ENGINE.25)
       var rows = this._inputRows(), lines = rows.split('\n'), last = this.inputsLast, changed = [];
       if (last && last.length !== lines.length) last = null;
       for (var i = 0; i < lines.length; i++) if (!last || last[i] !== lines[i]) changed.push(lines[i]);
@@ -963,11 +1000,37 @@
         else { this.inputsLast = lines; this._recordInputs(rows); }
       }
       this.notches = 0; this.lastKey = null;
+      if (this._five()) { this.commandRow = this.inputsLast ? this.commandNow : null; if (this.commandNow && this.inputsLast) this.c.commands++; }
     }
     while (this.edits.length) this._issueAct(this.edits.shift(), false);
   };
-  // A person's act at a frame's start, in the order acts were made: an edit, one row; or a rebuilt cartridge's rows.
-  Host.prototype._issueAct = function (act, atRateZero) { return typeof act === 'string' ? this._issueEdit(act, atRateZero) : this._issueApplied(act, atRateZero); };
+  // A person's act at a frame's start, in the order acts were made: an edit, one row; a rebuilt cartridge's rows; or a
+  // cartridge's command at rate 0 (ENGINE.25), before whose step, as before every step at rate 0, the twentieth row is
+  // written alone, the command that runs or empty.
+  Host.prototype._issueAct = function (act, atRateZero) {
+    if (atRateZero && this._five()) this._writeCommandRow(act.command !== undefined ? act.command : '');
+    if (act.command !== undefined) return this._issueCommand(act, atRateZero);
+    return typeof act === 'string' ? this._issueEdit(act, atRateZero) : this._issueApplied(act, atRateZero);
+  };
+  // A command's step at rate 0 (ENGINE.25): its name written into the twentieth row before it, the step following; the
+  // row refused, no step. At a rate a command left among the acts, a rate risen from 0, waits for the next frame.
+  Host.prototype._issueCommand = function (act, atRateZero) {
+    if (!atRateZero) { this.waiting.push(act.command); return true; }
+    if (this.commandRow !== act.command) return false;
+    this.c.commands++;
+    return true;
+  };
+  // The twentieth row at rate 0 (ENGINE.25; docs/SPEC.md section 3.10), written alone before every step when it is not
+  // what the host last wrote there: the command that runs at the step, or empty, so that the step after a command's
+  // sees none. Recorded as the Input cell it is; the Input rows last written forgotten, the sheet no longer theirs.
+  Host.prototype._writeCommandRow = function (name) {
+    if (this.commandRow === name) return true;
+    var row = '(cell "Input" "B20" ' + quote(name) + ')', r = this._write(row);
+    if (r.status !== 0) { this.commandRow = null; this._refuse('frame ' + (this.frame + 1) + ': the command row ' + row + ' was refused: ' + words(r, true) + '; no step for it.'); return false; }
+    this.commandRow = name; this.inputsLast = null;
+    this._recordCommandRow(row, name);
+    return true;
+  };
   // A rebuilt cartridge's rows as one write, all or none (ENGINE.7, decisions 7 and 8), in the place of a person's edits.
   // Landed: each row recorded as a person's edit in its frame (decision 9), an Input sheet's row making the next frame's
   // Input rows whole, and the cartridge the base of the next continue (decision 10). Refused: nothing written, the game
@@ -979,6 +1042,7 @@
       for (var i = 0; i < b.rows.length; i++) {
         this._recordEdit(b.rows[i]);
         if (editsInput(b.rows[i])) this.inputsLast = null;
+        if (editsInput(b.rows[i])) this.commandRow = null;   // the twentieth row no longer known (ENGINE.25)
       }
       this.given = b.text;
       this._say('frame ' + (this.frame + 1) + ': applied ' + b.file + ' to the running game: ' + appliedWords(b) + ' written, the frame number and every other cell kept.');
@@ -996,6 +1060,7 @@
       this.c.edits++;
       this._recordEdit(row);   // the replay logs a person's edit that landed, in its frame (section 7.6)
       if (editsInput(row)) this.inputsLast = null;   // the Input sheet a person wrote: the next frame's rows written whole (ENGINE.19)
+      if (editsInput(row)) this.commandRow = null;   // and its twentieth row no longer known (ENGINE.25)
       if (!atRateZero) this._say('frame ' + (this.frame + 1) + ': the edit ' + row + ' was written.');
       return true;
     }
@@ -1025,6 +1090,7 @@
     out.push('(cell "Input" "B16" ' + this.notches + ')');
     out.push('(cell "Input" "B17" ' + quote(k ? k.key : '') + ')', '(cell "Input" "B18" ' + quote(k ? k.code : '') + ')');
     if (this._four()) out.push('(cell "Input" "B19" ' + quote(this.cart.mode === 'grid' ? this._shown() : 'Screen') + ')');
+    if (this._five()) out.push('(cell "Input" "B20" ' + quote(this.commandNow || '') + ')');   // the command that runs at the step (ENGINE.25)
     return out.join('\n');
   };
 
@@ -1039,6 +1105,7 @@
     if (this.cart.mode === 'grid') this._drawGrid(false, true);   // the record through the frame's own Camera (ENGINE.8), a still one not drawn again (ENGINE.17)
     if (this.tabsWaiting.length) this._answerWaiting();   // a tab clicked while the frame was in progress (ENGINE.14)
     if (d.keys) this._readKeys();
+    if (d.commands) this._readCommands();   // after the Keys sheet, whose codes a command's key goes before (ENGINE.25)
     if (d.audio) this._readAudio();
     if (d.file) this._readFile();
     if (d.write) this._readWrite();
@@ -1273,6 +1340,8 @@
   // ---- version 4's views (ENGINE.18): the sheet a grid cartridge opens on, and the sheet the game shows ----
   // Whether the cartridge is written to version 4, whose rows and behaviors are its alone (decision 1).
   Host.prototype._four = function () { return !!this.cart && this.cart.spec >= 4; };
+  // Whether the cartridge is written to version 5, whose Commands sheet and twentieth row are its alone (ENGINE.25).
+  Host.prototype._five = function () { return !!this.cart && this.cart.spec >= 5; };
   // The sheet the host's viewport shows, the Screen while none is shown; without a viewport, the one the host
   // last showed itself, so that a host with no element never views a hidden Screen nobody draws.
   Host.prototype._shown = function () { return (this.vp && this.vp.sheet()) || this.shownName || 'Screen'; };
@@ -1443,6 +1512,70 @@
     }
     this.keymap = km;
   };
+  // The Commands sheet (ENGINE.25; docs/SPEC.md section 3.10), a cartridge's written to version 5, read at the load and
+  // after each step by its changes: each row from 2 a command, in the sheet's order, its name, its words, whether it
+  // holds now and its key's code. A row the host cannot take is said once, until it changes, and is no command or has
+  // no key: a name that is no name or that a row above holds, a holds that is a text or an error, a key that is no
+  // code. A key goes to the first row holding it now, and before a Keys button of the same code; each said once.
+  Host.prototype._readCommands = function () {
+    var cells = this._cells('Commands') || {}, self = this, before = this.badRows, now = {}, list = [], byName = {}, keys = {}, rows = {}, a, m, i;
+    function note(key, text) { now[key] = text; if (before[key] !== text) self._say('frame ' + self.frame + ': ' + text); }
+    for (a in cells) { m = /^([A-D])(\d+)$/.exec(a); if (m && +m[2] >= 2 && +m[2] <= MAX_COMMANDS + 1) rows[m[2]] = true; }
+    var order = Object.keys(rows).map(Number).sort(function (x, y) { return x - y; });
+    for (i = 0; i < order.length; i++) {
+      var r = order[i], name = cells['A' + r], words = cells['B' + r], h = cells['C' + r], key = cells['D' + r];
+      if (name === undefined || name === null || name === '') continue;   // no command, or a formula with no value yet
+      if (typeof name !== 'string' || !COMMAND_NAME.test(name)) { note('A' + r, 'Commands!A' + r + ' holds ' + shownValue(name) + ', which is no command\'s name: a command is named in lowercase letters, digits and hyphens, so the row is no command (docs/SPEC.md section 3.10).'); continue; }
+      if (byName[name]) { note('A' + r, 'Commands!A' + r + ' names ' + name + ', as A' + byName[name].row + ' does, so the row is no command (docs/SPEC.md section 3.10).'); continue; }
+      var holds = holdsOf(h);
+      if (holds === null) { note('C' + r, 'Commands!C' + r + ' holds ' + shownValue(h) + ', which is no truth value, so the command ' + name + ' holds not (docs/SPEC.md section 3.10).'); holds = false; }
+      var code = '';
+      if (typeof key === 'string' && KEY_CODE.test(key)) code = key;
+      else if (key !== undefined && key !== null && key !== '') {
+        var hint = typeof key === 'string' && /^[A-Za-z]$/.test(key) ? ': the key ' + key.toUpperCase() + ' is Key' + key.toUpperCase() : (typeof key === 'string' && /^[0-9]$/.test(key) ? ': the key ' + key + ' is Digit' + key : '');
+        note('D' + r, 'Commands!D' + r + ' holds ' + shownValue(key) + ', which is no key\'s code' + hint + ', so the command ' + name + ' has no key (docs/SPEC.md section 3.10).');
+      }
+      var cmd = { name: name, words: typeof words === 'string' ? words : (typeof words === 'number' || typeof words === 'boolean' ? String(words) : ''), holds: holds, code: code, row: r };
+      byName[name] = cmd; list.push(cmd);
+      if (!code || !holds) continue;
+      if (keys[code]) { note('key-' + code, 'Commands!D' + r + ' gives ' + code + ', as D' + keys[code].row + ' does while both hold, so the command ' + keys[code].name + ' takes it.'); continue; }
+      keys[code] = cmd;
+      for (var b = 0; this.keymap && b < this.keymap.length; b++) for (var p = 0; p < this.keymap[b].length; p++) {
+        if (this.keymap[b][p] === code && now['button-' + code] === undefined) note('button-' + code, 'Commands!D' + r + '\'s ' + code + ' is the Keys sheet\'s ' + PLAYERS[p] + (b + 1) + ' too, so the command ' + name + ' takes it while it holds.');
+      }
+    }
+    this.badRows = now; this.commandList = list; this.commandKeys = keys;
+  };
+  // The cartridge's commands as the Commands sheet last said them (ENGINE.25), in the sheet's order: { name, words,
+  // holds, key }, its key the code or empty; none for a cartridge written to 1 to 4 or without a Commands sheet.
+  Host.prototype.commands = function () {
+    return this.commandList.map(function (x) { return { name: x.name, words: x.words, holds: x.holds, key: x.code }; });
+  };
+  // A cartridge's command run (ENGINE.25; docs/SPEC.md section 3.10), as a page's palette or a person's binding asks, or
+  // its key on the Screen (how 'key'): by its name as the Commands sheet spells it, as the last step left the sheet. It
+  // waits for the next frame, one a frame and sixteen at most, and is written into Input!B20 for that frame alone; at
+  // rate 0 it steps the grid once, as an edit does. Refused, said and counted: no cartridge, one written to 1 to 4, a
+  // name the sheet holds no command of, a command that holds not, a replay playing, or sixteen waiting already.
+  Host.prototype.command = function (name, how) {
+    var n = String(name === undefined || name === null ? '' : name), c = this.cart, cmd = null, i, self = this;
+    function no(why) { self.c.commandsRefused++; return self._fail('The command ' + (n || '(no name)') + ' was not run: ' + why); }
+    if (!this.handle || !c) return no('no cartridge is loaded.');
+    if (!this._five()) return no('the cartridge is written to the page\'s version ' + (c.spec || 1) + ', and a cartridge\'s own commands are version 5\'s (docs/SPEC.md section 3.10).');
+    for (i = 0; i < this.commandList.length; i++) if (this.commandList[i].name === n) { cmd = this.commandList[i]; break; }
+    if (!cmd) return no('the Commands sheet names no such command' + (this.commandList.length ? '; its commands are ' + this.commandList.map(function (x) { return x.name; }).join(', ') : '') + '.');
+    if (!cmd.holds) return no('it holds not now, as Commands!C' + cmd.row + ' says.');
+    if (this.player) return no('a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s acts wait until it ends, so that what plays is the replay alone.');
+    var queued = this.waiting.length + this.edits.filter(function (x) { return x && x.command !== undefined; }).length;
+    if (queued >= COMMANDS_WAITING) return no(COMMANDS_WAITING + ' commands wait for their frames already, one a frame.');
+    if (c.rate === 0) {
+      this.edits.push({ command: cmd.name });
+      if (!this.inFrame) this._editFrames(this._window());
+    } else {
+      this.waiting.push(cmd.name);
+      if (!this.running) this._say('frame ' + this.frame + ': the command ' + cmd.name + ' waits for the next frame, which Run brings: the loop is paused at ' + c.rate + ' frame' + (c.rate === 1 ? '' : 's') + ' a second.');
+    }
+    return { ok: true, name: cmd.name, how: how || 'page' };
+  };
   Host.prototype._readAudio = function () {
     var cells = this._cells('Audio');
     if (!cells) return;
@@ -1471,6 +1604,8 @@
     c.rate = v;
     this.acc = 0;
     if (was === 0) this.lastTs = null;
+    // commands waiting for frames that a rate of 0 brings no more: each its own step among the edits (ENGINE.25)
+    if (v === 0) while (this.waiting.length) this.edits.push({ command: this.waiting.shift() });
     this._say('frame ' + this.frame + ': the Clock\'s rate is now ' + (v === 0 ? '0 (Clock!B2): the loop steps once for each edit, and the Input sheet keeps what it last held.' : v + ' frame' + (v === 1 ? '' : 's') + ' a second (Clock!B2); the loop steps at it.'));
   };
   // The Write sheet's rows become the next frame's derived writes (section 3.9).
@@ -1695,11 +1830,22 @@
     else if (this.cart.rate > 0 && !this.running) this._say('frame ' + this.frame + ': the edit ' + t + ' waits for the next frame, which Run brings: the loop is paused at ' + this.cart.rate + ' frame' + (this.cart.rate === 1 ? '' : 's') + ' a second.');
     return true;
   };
-  Host.prototype.keyDown = function (code, key) {
+  // A key down on the Screen: a command's key (ENGINE.25) runs its command and is no button's and no last key, a repeat
+  // taken and running nothing; any other holds the Keys sheet's buttons it binds and is the frame's last key. ev, the
+  // event, when a listener has one: its Ctrl, Cmd, Alt and repeat.
+  Host.prototype.keyDown = function (code, key, ev) {
     if (!code) return false;
+    var cmd = this._commandKey(code, ev);
+    if (cmd) { if (!(ev && ev.repeat)) this.command(cmd.name, 'key'); return true; }
     this.held[code] = true;
     this.lastKey = { key: key === undefined ? '' : String(key), code: String(code) };
     return this._bound(code);
+  };
+  // The command a key runs on the Screen (ENGINE.25; docs/SPEC.md section 3.10): the first row holding now whose key is
+  // the code, while no Ctrl, Cmd or Alt is held; null for every other key, the game's buttons' or the viewport's.
+  Host.prototype._commandKey = function (code, ev) {
+    if (!this._five() || (ev && (ev.ctrlKey || ev.metaKey || ev.altKey))) return null;
+    return Object.prototype.hasOwnProperty.call(this.commandKeys, code) ? this.commandKeys[code] : null;
   };
   Host.prototype.keyUp = function (code) { delete this.held[code]; };
   Host.prototype.releaseKeys = function () { this.held = Object.create(null); };
@@ -1724,7 +1870,7 @@
   Host.prototype._listenCanvas = function () {
     var self = this, cv = this.canvas;
     if (!cv.hasAttribute('tabindex')) cv.setAttribute('tabindex', '0');
-    this._on(cv, 'keydown', function (ev) { if (self.keyDown(ev.code, ev.key)) ev.preventDefault(); });
+    this._on(cv, 'keydown', function (ev) { if (self.keyDown(ev.code, ev.key, ev)) ev.preventDefault(); });
     this._on(cv, 'keyup', function (ev) { self.keyUp(ev.code); });
     this._on(cv, 'blur', function () { self.releaseKeys(); });
     this._on(cv, 'mousemove', function (ev) { self._pointerFrom(ev); });
@@ -1745,7 +1891,7 @@
   Host.prototype._listenGrid = function () {
     var self = this, root = this.vp.root;
     function playing() { return !!self.cart && self.cart.mode === 'grid' && self.cart.rate > 0; }
-    this._on(root, 'keydown', function (ev) { if (playing() && self.keyDown(ev.code, ev.key)) { ev.preventDefault(); ev.stopPropagation(); } }, true);
+    this._on(root, 'keydown', function (ev) { if (playing() && self.keyDown(ev.code, ev.key, ev)) { ev.preventDefault(); ev.stopPropagation(); } }, true);
     this._on(root, 'keyup', function (ev) { if (playing()) self.keyUp(ev.code); }, true);
     this._on(root, 'focusout', function () { self.releaseKeys(); });
     this._on(root, 'mousemove', function (ev) { if (playing()) self._pointerFromGrid(ev); });
@@ -1827,6 +1973,15 @@
     var f = VP().readForms(row)[0];
     rec.rows.push(spellForm(f));
     if (String(str(f[1])).toLowerCase() === 'input') rec.input = null;   // the Input sheet unknown to the replay: its next rows are logged whole
+  };
+  // The twentieth row written alone at rate 0 (ENGINE.25): logged when it differs from the recorder's record of the
+  // cell, which it then holds, the rest of the record kept.
+  Host.prototype._recordCommandRow = function (row, name) {
+    var rec = this.rec;
+    if (!rec || rec.full) return;
+    var v = quote(name), was = rec.input;
+    if (!was || was.B20 !== v) rec.rows.push(row);
+    if (was) was.B20 = v;
   };
   Host.prototype._recordPlayed = function (rows) {
     var rec = this.rec;
@@ -1943,7 +2098,7 @@
     var n = this.frame + 1, rows = this.player.frames[n];
     if (!rows) return;
     var r = this._write(rows.join('\n'));
-    if (r.status === 0) { this._recordPlayed(rows); this.inputsLast = null; return; }   // the rows last written forgotten with the recorder's record (ENGINE.19)
+    if (r.status === 0) { this._recordPlayed(rows); this.inputsLast = null; this.commandRow = null; return; }   // the rows last written forgotten with the recorder's record (ENGINE.19), the twentieth row too (ENGINE.25)
     this.inFrame = false; this.progress = null; this.player = null; this.stop();
     this._refuse('frame ' + n + ': the replay\'s rows were refused: ' + words(r) + '; the replay stops, and the cartridge stands at frame ' + this.frame + '.');
   };

@@ -70,8 +70,11 @@ fn refused(line: u32, id: &str, slots: &[(&str, &str)]) -> LineRefusal {
 /// directive, so a cartridge written to it loads as a version 2 cartridge. Version 4
 /// adds a row to two layouts, the Input sheet's nineteenth and the Camera's third,
 /// which a cartridge written to it alone has, so that a cartridge written to 1 to 3
-/// loads and describes as it did (`ENGINE.18`, decision 1).
-pub const SPECS: [u32; 4] = [1, 2, 3, 4];
+/// loads and describes as it did (`ENGINE.18`, decision 1). Version 5 adds a device,
+/// the Commands sheet, and the Input sheet's twentieth row, a cartridge's written to
+/// it alone, so that a cartridge written to 1 to 4 loads and describes as it did
+/// (`ENGINE.25`, decision 6).
+pub const SPECS: [u32; 5] = [1, 2, 3, 4, 5];
 /// The highest rate, in frames a second; 0 is a step on every edit.
 pub const MAX_RATE: u32 = 120;
 /// The highest seed, so that a Park and Miller cell never sticks at 0.
@@ -327,10 +330,11 @@ pub enum Device {
     File,
     Camera,
     Write,
+    Commands,
 }
 
 /// The devices, in the order describe lists them.
-pub const DEVICES: [Device; 9] = [
+pub const DEVICES: [Device; 10] = [
     Device::Screen,
     Device::Palette,
     Device::Input,
@@ -340,7 +344,13 @@ pub const DEVICES: [Device; 9] = [
     Device::File,
     Device::Camera,
     Device::Write,
+    Device::Commands,
 ];
+
+/// The most commands a Commands sheet holds, its rows 2 to 101 (`ENGINE.25`;
+/// `docs/SPEC.md` section 3.10).
+pub const MAX_COMMANDS: u32 = 100;
+const COMMANDS_LAYOUT: [Rect; 1] = [(1, 1, MAX_COMMANDS + 1, 4)];
 
 impl Device {
     pub fn name(self) -> &'static str {
@@ -354,6 +364,16 @@ impl Device {
             Device::File => "File",
             Device::Camera => "Camera",
             Device::Write => "Write",
+            Device::Commands => "Commands",
+        }
+    }
+
+    /// The version of the page that made it a device: the Commands sheet version
+    /// 5's (`ENGINE.25`), every other the first's.
+    pub fn since(self) -> u32 {
+        match self {
+            Device::Commands => 5,
+            _ => 1,
         }
     }
 
@@ -374,14 +394,24 @@ impl Device {
             .find(|d| d.name().eq_ignore_ascii_case(name))
     }
 
+    /// The device a sheet's name is in a cartridge written to `spec`: a sheet
+    /// named for a device a later version made is the cartridge's own, so that a
+    /// cartridge written to 1 to 4 may hold a sheet named Commands (`ENGINE.25`).
+    pub fn of_spec(name: &str, spec: u32) -> Option<Device> {
+        Device::of(name).filter(|d| d.since() <= spec)
+    }
+
     /// Where its cells may be, row bands from the top, by the version of the
     /// page the cartridge is written to: from version 4 the Input sheet's
     /// nineteenth row, the sheet shown, and the Camera's third, the sheet the
-    /// game shows (`ENGINE.18`); the Screen's window is the manifest's.
+    /// game shows (`ENGINE.18`); from version 5 the Input sheet's twentieth,
+    /// the command that runs, and the Commands sheet (`ENGINE.25`); the
+    /// Screen's window is the manifest's.
     fn layout(self, spec: u32) -> &'static [Rect] {
         match self {
             Device::Screen => &[],
             Device::Palette => &[(1, 1, 16, 3)],
+            Device::Input if spec >= 5 => &[(1, 1, 10, 5), (11, 1, 20, 2)],
             Device::Input if spec >= 4 => &[(1, 1, 10, 5), (11, 1, 19, 2)],
             Device::Input => &[(1, 1, 10, 5), (11, 1, 18, 2)],
             Device::Keys => &[(1, 1, 10, 5)],
@@ -391,12 +421,14 @@ impl Device {
             Device::Camera if spec >= 4 => &[(1, 1, 3, 2)],
             Device::Camera => &[(1, 1, 2, 2)],
             Device::Write => &[(1, 1, MAX_ROW, 3)],
+            Device::Commands => &COMMANDS_LAYOUT,
         }
     }
 
     /// The cells the host writes, which hold values and never formulas.
     fn host_cells(self, spec: u32) -> &'static [Rect] {
         match self {
+            Device::Input if spec >= 5 => &[(1, 2, 10, 5), (11, 2, 20, 2)],
             Device::Input if spec >= 4 => &[(1, 2, 10, 5), (11, 2, 19, 2)],
             Device::Input => &[(1, 2, 10, 5), (11, 2, 18, 2)],
             Device::Clock => &[(1, 2, 3, 2)],
@@ -409,6 +441,7 @@ impl Device {
     /// the File's first two rows (section 3.9).
     fn derived_blocked(self, spec: u32) -> &'static [Rect] {
         match self {
+            Device::Input if spec >= 5 => &[(1, 1, 20, 5)],
             Device::Input if spec >= 4 => &[(1, 1, 19, 5)],
             Device::Input => &[(1, 1, 18, 5)],
             Device::Clock => &[(1, 1, 3, 2)],
@@ -484,13 +517,14 @@ const VOLATILE: [&str; 4] = ["NOW", "TODAY", "RAND", "RANDBETWEEN"];
 
 /// The device checks of section 4.2 over the rows' grid, before the engine's
 /// own sheets are made: the Screen, every device sheet's layout and its host
-/// cells, the Palette in plane mode, and the volatile functions anywhere.
+/// cells, the Palette in plane mode, the Commands sheet's names from version
+/// 5, and the volatile functions anywhere.
 fn check_devices(draft: &Draft, m: &Manifest, camera: bool) -> Result<(), LineRefusal> {
     let book = &draft.workbook;
     let line =
         |si: usize, row: u32, col: u32| draft.lines.get(&(si, row, col)).copied().unwrap_or(0);
     for (si, sheet) in book.sheets.iter().enumerate() {
-        let Some(device) = Device::of(&sheet.name) else {
+        let Some(device) = Device::of_spec(&sheet.name, m.spec) else {
             continue;
         };
         for (&(row, col), cell) in &sheet.cells {
@@ -533,6 +567,9 @@ fn check_devices(draft: &Draft, m: &Manifest, camera: bool) -> Result<(), LineRe
     }
     if m.mode == Mode::Plane {
         check_palette(draft)?;
+    }
+    if Device::Commands.since() <= m.spec {
+        check_commands(draft)?;
     }
     for (si, sheet) in book.sheets.iter().enumerate() {
         for (&(row, col), cell) in &sheet.cells {
@@ -610,6 +647,52 @@ fn check_palette(draft: &Draft) -> Result<(), LineRefusal> {
     Ok(())
 }
 
+/// The Commands sheet's names (version 5, `ENGINE.25`; section 3.10): every
+/// value of column A from row 2 a command's name, lowercase letters, digits and
+/// hyphens as a cartridge's is, and no name written twice, so that a page lists
+/// each by one name and the Input sheet's twentieth row holds one command. An
+/// empty text is no command; a formula's name is the host's to judge after each
+/// step, since no value is computed at a load; row 1 holds the headers.
+fn check_commands(draft: &Draft) -> Result<(), LineRefusal> {
+    let book = &draft.workbook;
+    let Some(si) = book.find_sheet("Commands") else {
+        return Ok(());
+    };
+    let sheet = &book.sheets[si];
+    let line = |row: u32| draft.lines.get(&(si, row, 1)).copied().unwrap_or(0);
+    let mut seen: Vec<(&str, u32)> = Vec::new();
+    // The cells in row-major order, so that the name written twice is the lower.
+    for (&(row, _), cell) in sheet
+        .cells
+        .iter()
+        .filter(|(&(row, col), _)| col == 1 && row >= 2)
+    {
+        let what = match &cell.content {
+            Content::Text(t) if t.is_empty() => continue,
+            Content::Text(t) if name_ok(t) => match seen.iter().find(|(n, _)| *n == t.as_str()) {
+                Some((_, first)) => {
+                    format!("The Commands sheet's A{row} names {t}, as its A{first} does")
+                }
+                None => {
+                    seen.push((t.as_str(), row));
+                    continue;
+                }
+            },
+            c if is_formula(c) => continue,
+            _ => format!(
+                "The Commands sheet's A{row} holds {}, which is no command's name",
+                held(Some(cell))
+            ),
+        };
+        return Err(refused(
+            line(row),
+            "cart-command-invalid",
+            &[("what", &what)],
+        ));
+    }
+    Ok(())
+}
+
 /// The Input sheet's labels, row by row (section 3.3).
 pub const INPUT_LABELS: [&str; 18] = [
     "up",
@@ -635,6 +718,11 @@ pub const INPUT_LABELS: [&str; 18] = [
 /// The Input sheet's nineteenth label, from version 4: the sheet the host's
 /// viewport shows, its name as the record spells it (`ENGINE.18`, decision 4).
 pub const INPUT_SHEET_LABEL: &str = "sheet";
+
+/// The Input sheet's twentieth label, from version 5: the cartridge's command
+/// that runs at the step, its name as the Commands sheet spells it (`ENGINE.25`,
+/// decision 3).
+pub const INPUT_COMMAND_LABEL: &str = "command";
 
 /// One cell of the engine's own written into the draft, its style kept when
 /// the rows wrote the cell, and counted when it is new.
@@ -745,10 +833,17 @@ fn make_own_sheets(draft: &mut Draft, m: &Manifest, name: &str, size: usize) -> 
     put(draft, file, 3, 1, Content::Text("save".to_string()));
     if draft.workbook.find_sheet("Input").is_none() {
         let input = draft.workbook.ensure_sheet("Input");
-        // Version 4's nineteenth row, the sheet shown, empty until the host's
-        // first write names it, as the key's rows are.
+        // Version 4's nineteenth row, the sheet shown, and version 5's twentieth,
+        // the command that runs, empty until the host's first write names one, as
+        // the key's rows are.
         let sheet_row = (m.spec >= 4).then_some(INPUT_SHEET_LABEL);
-        for (i, label) in INPUT_LABELS.iter().copied().chain(sheet_row).enumerate() {
+        let command_row = (m.spec >= 5).then_some(INPUT_COMMAND_LABEL);
+        let labels = INPUT_LABELS
+            .iter()
+            .copied()
+            .chain(sheet_row)
+            .chain(command_row);
+        for (i, label) in labels.enumerate() {
             let row = i as u32 + 1;
             put(draft, input, row, 1, Content::Text(label.to_string()));
             let last = if row <= 10 { 5 } else { 2 };
@@ -869,8 +964,12 @@ impl Cartridge {
             out.push('\n');
         }
         // A sheet's place is the machine's to say: since vla-lang 0.9.0 the
-        // grid it lends is borrowed mutably, its twins' cells made first.
+        // grid it lends is borrowed mutably, its twins' cells made first. A
+        // device a later version made is a sheet of the cartridge's own here.
         for device in DEVICES {
+            if device.since() > self.manifest.spec {
+                continue;
+            }
             match self.machine.find_sheet(device.name()) {
                 Some(si) if si < self.machine.sheets() => {}
                 _ => continue,
@@ -936,7 +1035,7 @@ impl Cartridge {
         let Some(name) = self.machine.sheet_name(si) else {
             return Ok(());
         };
-        let Some(device) = Device::of(name) else {
+        let Some(device) = Device::of_spec(name, self.manifest.spec) else {
             return Ok(());
         };
         let target = format!("{sheet}!{addr}");
@@ -1218,6 +1317,7 @@ mod tests {
             ("cart-write-derived", vec![("target", "x"), ("cells", "x")]),
             ("cart-source-unexpanded", vec![("form", "x")]),
             ("cart-write-clock", vec![("target", "x"), ("what", "x")]),
+            ("cart-command-invalid", vec![("what", "x")]),
         ];
         assert_eq!(catalog().count(), ids.len(), "every entry is raised");
         for (id, slots) in &ids {
@@ -1299,15 +1399,15 @@ mod tests {
 
     #[test]
     fn a_later_spec_is_refused_before_its_directives() {
-        let text = small(30).replacen("(spec 2)", "(spec 5)\n  (layers 2)", 1);
+        let text = small(30).replacen("(spec 2)", "(spec 6)\n  (layers 2)", 1);
         let r = load(&text).expect_err("a later page is refused");
         assert_eq!(r.refusal.id, "cart-spec-unsupported");
         assert_eq!(r.line, 2, "the spec's own line");
+        assert!(r.refusal.text.contains("(spec 6)"), "{}", r.refusal.text);
         assert!(r.refusal.text.contains("(spec 5)"), "{}", r.refusal.text);
-        assert!(r.refusal.text.contains("(spec 4)"), "{}", r.refusal.text);
-        // Version 3 adds no row and no directive, and version 4's rows are a
-        // (spec 4) cartridge's alone: the earlier pages' and their own load alike.
-        for spec in ["(spec 1)", "(spec 3)", "(spec 4)"] {
+        // Version 3 adds no row and no directive, and version 4's rows and version
+        // 5's sheet and row are their cartridges' alone: every page's loads alike.
+        for spec in ["(spec 1)", "(spec 3)", "(spec 4)", "(spec 5)"] {
             assert_eq!(
                 id_of(load(&small(30).replacen("(spec 2)", spec, 1))),
                 "loaded",
@@ -1391,6 +1491,177 @@ mod tests {
             r.refusal.text.contains("Input!A1:E19"),
             "{}",
             r.refusal.text
+        );
+    }
+
+    /// Version 5's sheet and row (`ENGINE.25`, decision 6): the Commands sheet a
+    /// device, held to `A1:D101` and described after the others, and the Input
+    /// sheet's twentieth row, the command that runs, a (spec 5) cartridge's alone.
+    /// A cartridge written to 1 to 4 may hold a sheet named Commands of its own,
+    /// any cell of it, never described as a device, and is refused the twentieth
+    /// row where version 4 refused it.
+    #[test]
+    fn version_five_s_sheet_and_row_are_a_version_five_cartridge_s_alone() {
+        let four = small(30).replacen("(spec 2)", "(spec 4)", 1);
+        let five = small(30).replacen("(spec 2)", "(spec 5)", 1);
+        let commands = "(cell \"Commands\" \"A1\" \"name\")\n(cell \"Commands\" \"B1\" \"words\")\n\
+                        (cell \"Commands\" \"A2\" \"count-up\")\n(cell \"Commands\" \"B2\" \"add one\")\n\
+                        (formula \"Commands\" \"C2\" \"=Input!$B$19=\\\"Screen\\\"\")\n\
+                        (cell \"Commands\" \"D2\" \"KeyU\")\n";
+        let outside = "(cell \"Commands\" \"E2\" 1)\n";
+        // At 4 a sheet named Commands is the cartridge's own: any cell loads, and
+        // describe names no such device.
+        let mut own = load(&format!("{four}{commands}{outside}"))
+            .expect("a version 4 cartridge's own Commands sheet loads");
+        assert!(
+            !own.describe().contains("(device \"Commands\""),
+            "{}",
+            own.describe()
+        );
+        assert_eq!(own.write("(cell \"Commands\" \"E5\" 1)"), Ok(1));
+        // At 5 it is the device, held to its layout and described after the others.
+        let refused = text_of(load(&format!("{five}{commands}{outside}")));
+        assert!(
+            refused.starts_with("cart-device-cell-outside")
+                && refused.contains("Commands!E2")
+                && refused.contains("Commands!A1:D101"),
+            "{refused}"
+        );
+        let past = text_of(load(&format!(
+            "{five}{commands}(cell \"Commands\" \"A102\" \"too-many\")\n"
+        )));
+        assert!(
+            past.starts_with("cart-device-cell-outside") && past.contains("Commands!A102"),
+            "{past}"
+        );
+        let mut c = load(&format!("{five}{commands}")).expect("a (spec 5) Commands sheet loads");
+        let d = c.describe();
+        assert!(
+            d.contains(
+                "(device \"Screen\" \"A1:L10\" effect)\n(device \"Palette\" \"A1:C16\" effect)\n\
+                 (device \"Input\" \"A1:E20\" input)\n(device \"Clock\" \"A1:B3\" input)\n\
+                 (device \"File\" \"A1:B3\" effect)\n(device \"Commands\" \"A1:D101\" effect)\n(budget "
+            ),
+            "{d}"
+        );
+        // The engine's own Input sheet: twenty rows at 5, nineteen at 4.
+        assert_eq!(
+            cell_text(&c, "Input", "A20"),
+            "(cell \"Input\" \"A20\" \"command\")"
+        );
+        assert_eq!(
+            cell_text(&c, "Input", "B20"),
+            "(cell \"Input\" \"B20\" \"\")"
+        );
+        assert_eq!(
+            cell_text(&c, "Input", "A19"),
+            "(cell \"Input\" \"A19\" \"sheet\")"
+        );
+        let mut old = load(&four).expect("loads");
+        assert!(
+            cell_text(&old, "Input", "A20").is_empty(),
+            "no twentieth row at 4"
+        );
+        assert!(old
+            .describe()
+            .contains("(device \"Input\" \"A1:E19\" input)\n"));
+        // The host's write of a command lands at 5 and is refused at 4; a formula
+        // there and a derived row are refused at 5, a cell the host writes.
+        let command_row = "(cell \"Input\" \"B20\" \"count-up\")";
+        assert_eq!(c.write(command_row).expect("lands"), 1);
+        let r = old
+            .write(command_row)
+            .expect_err("outside version 4's layout");
+        assert_eq!(r.refusal.id, "cart-device-cell-outside");
+        assert!(
+            r.refusal.text.contains("Input!A11:B19"),
+            "{}",
+            r.refusal.text
+        );
+        let r = c
+            .write("(formula \"Input\" \"B20\" \"=1\")")
+            .expect_err("a host cell");
+        assert_eq!(r.refusal.id, "cart-device-cell-formula");
+        assert!(
+            r.refusal.text.contains("Input!B11:B20"),
+            "{}",
+            r.refusal.text
+        );
+        let r = c
+            .write("(derived \"Input\" \"B20\" \"count-up\")")
+            .expect_err("no derived write into the Input sheet");
+        assert_eq!(r.refusal.id, "cart-write-derived");
+        assert!(
+            r.refusal.text.contains("Input!A1:E20"),
+            "{}",
+            r.refusal.text
+        );
+        // The Commands sheet is the cartridge's to write: a person's edit and a
+        // derived write land in its value cells, and a write past its layout is
+        // refused.
+        assert_eq!(
+            c.write("(cell \"Commands\" \"B2\" \"add one to the count\")"),
+            Ok(1)
+        );
+        assert_eq!(c.write("(derived \"Commands\" \"D2\" \"KeyJ\")"), Ok(1));
+        let r = c
+            .write("(cell \"Commands\" \"E5\" 1)")
+            .expect_err("outside the layout");
+        assert_eq!(r.refusal.id, "cart-device-cell-outside");
+    }
+
+    /// The Commands sheet's names (`ENGINE.25`, decision 2): a value of column A
+    /// from row 2 that is no command's name, or a name written twice, is refused
+    /// at load by name, its cells and its line named. The headers in row 1, an
+    /// empty text and a formula's name pass, the formula's being the host's to
+    /// judge after each step; and at version 4 the same sheet is the cartridge's
+    /// own and loads.
+    #[test]
+    fn a_command_s_name_is_refused_at_load() {
+        let five = small(30).replacen("(spec 2)", "(spec 5)", 1);
+        let good = "(cell \"Commands\" \"A1\" \"Name of the command\")\n\
+                    (cell \"Commands\" \"A2\" \"count-up\")\n(cell \"Commands\" \"A3\" \"note-2\")\n\
+                    (cell \"Commands\" \"A4\" \"\")\n(formula \"Commands\" \"A5\" \"=\\\"Not A Name\\\"\")\n";
+        assert_eq!(id_of(load(&format!("{five}{good}"))), "loaded");
+        let lines = five.lines().count() + good.lines().count();
+        for (row, want) in [
+            (
+                "(cell \"Commands\" \"A6\" \"Buy 1\")",
+                "The Commands sheet's A6 holds \"Buy 1\", which is no command's name",
+            ),
+            (
+                "(cell \"Commands\" \"A6\" 5)",
+                "The Commands sheet's A6 holds 5, which is no command's name",
+            ),
+            (
+                "(cell \"Commands\" \"A6\" true)",
+                "The Commands sheet's A6 holds true, which is no command's name",
+            ),
+            (
+                "(cell \"Commands\" \"A6\" \"note-2\")",
+                "The Commands sheet's A6 names note-2, as its A3 does",
+            ),
+        ] {
+            let r = load(&format!("{five}{good}{row}\n")).expect_err(row);
+            assert_eq!(
+                r.refusal.id, "cart-command-invalid",
+                "{row}: {}",
+                r.refusal.text
+            );
+            assert!(
+                r.refusal.text.starts_with(want),
+                "{row}: {}",
+                r.refusal.text
+            );
+            assert_eq!(r.line as usize, lines + 1, "{row}: the refused row's line");
+        }
+        // At version 4 the sheet is the cartridge's own, whatever its names.
+        let four = five.replacen("(spec 5)", "(spec 4)", 1);
+        assert_eq!(
+            id_of(load(&format!(
+                "{four}{good}(cell \"Commands\" \"A6\" \"Buy 1\")\n"
+            ))),
+            "loaded"
         );
     }
 

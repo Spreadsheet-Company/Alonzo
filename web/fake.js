@@ -87,7 +87,12 @@
   var LAYOUT_4 = { input: [[1, 1, 10, 5], [11, 1, 19, 2]], camera: [[1, 1, 3, 2]] };
   var HOST_CELLS_4 = { input: [[1, 2, 10, 5], [11, 2, 19, 2]] };
   var DERIVED_BLOCKED_4 = { input: [[1, 1, 19, 5]] };
-  function byVersion(table, four, c, key) { return (c.spec >= 4 && four[key]) || table[key]; }
+  // Version 5's row (ENGINE.25), a (spec 5) cartridge's alone: the Input sheet's twentieth, the command that runs. The
+  // double's grid holds no Commands sheet, so a (spec 5) cartridge over it has no commands, its twentieth row empty.
+  var LAYOUT_5 = { input: [[1, 1, 10, 5], [11, 1, 20, 2]], camera: [[1, 1, 3, 2]] };
+  var HOST_CELLS_5 = { input: [[1, 2, 10, 5], [11, 2, 20, 2]] };
+  var DERIVED_BLOCKED_5 = { input: [[1, 1, 20, 5]] };
+  function byVersion(table, four, five, c, key) { return (c.spec >= 5 && five[key]) || (c.spec >= 4 && four[key]) || table[key]; }
   var DEVICES = [
     ['Screen', 'effect'], ['Palette', 'effect'], ['Input', 'input'], ['Keys', 'effect'], ['Clock', 'input'],
     ['Audio', 'effect'], ['File', 'effect'], ['Camera', 'effect'], ['Write', 'effect']
@@ -239,7 +244,7 @@
     var m, out = {};
     m = /\(spec\s+([^\s()]+)\s*\)/.exec(bare);
     if (!m) return bad('has no (spec ...) directive');
-    if (m[1] !== '1' && m[1] !== '2' && m[1] !== '3' && m[1] !== '4') return { refusal: { id: 'cart-spec-unsupported', text: 'the cartridge is written to (spec ' + m[1] + '); this engine reads 1, 2, 3 and 4' } };
+    if (m[1] !== '1' && m[1] !== '2' && m[1] !== '3' && m[1] !== '4' && m[1] !== '5') return { refusal: { id: 'cart-spec-unsupported', text: 'the cartridge is written to (spec ' + m[1] + '); this engine reads 1, 2, 3, 4 and 5' } };
     out.spec = +m[1];
     m = /\(title\s+"((?:[^"\\]|\\.)*)"\s*\)/.exec(bare);
     if (!m) return bad('has no (title "...") directive');
@@ -280,6 +285,7 @@
     }
     for (var k = 0; k < POINTER.length; k++) { put('input', 11 + k, 1, POINTER[k]); put('input', 11 + k, 2, k < 6 ? 0 : ''); }
     if (this.spec >= 4) { put('input', 19, 1, 'sheet'); put('input', 19, 2, ''); }   // version 4's nineteenth row (ENGINE.18)
+    if (this.spec >= 5) { put('input', 20, 1, 'command'); put('input', 20, 2, ''); }   // version 5's twentieth (ENGINE.25)
     put('clock', 1, 1, 'frame'); put('clock', 1, 2, 0);
     put('clock', 2, 1, 'rate'); put('clock', 2, 2, m.rate);
     put('clock', 3, 1, 'seed'); put('clock', 3, 2, m.seed === 'host' ? 1 : m.seed);
@@ -451,7 +457,7 @@
       var c = x.c, lines = ['(spec ' + c.spec + ')', '(title ' + quote(c.title) + ')', '(rate ' + c.rate + ')', '(screen ' + c.mode + ' ' + c.w + ' ' + c.h + ')', '(seed ' + c.seed + ')'];
       for (var i = 0; i < DEVICES.length; i++) {
         var key = DEVICES[i][0].toLowerCase(), R = c.extent(key, false);
-        var lay = byVersion(LAYOUT, LAYOUT_4, c, key);
+        var lay = byVersion(LAYOUT, LAYOUT_4, LAYOUT_5, c, key);
         if (key !== 'write' && lay) { var q = lay[lay.length - 1]; R = { top: 1, left: 1, bottom: q[2], right: lay[0][3] }; }
         lines.push('(device ' + quote(DEVICES[i][0]) + ' ' + quote(rangeText(R)) + ' ' + DEVICES[i][1] + ')');
       }
@@ -494,10 +500,10 @@
                                                        : target + ' is a cell of ' + sk.name + ', the previous frame, which is read-only', ln);
           continue;
         }
-        var layout = byVersion(LAYOUT, LAYOUT_4, c, sk.key);
+        var layout = byVersion(LAYOUT, LAYOUT_4, LAYOUT_5, c, sk.key);
         if (layout && !within(R, layout)) return refuse('cart-device-cell-outside', target + ' is outside the layout of the ' + sk.name + ' sheet (docs/SPEC.md section 3)', ln, outLen);
-        if (kind === 'formula' && meets(R, byVersion(HOST_CELLS, HOST_CELLS_4, c, sk.key))) return refuse('cart-device-cell-formula', target + ' is a cell the host writes, which holds values and never formulas', ln, outLen);
-        if (kind === 'derived' && meets(R, byVersion(DERIVED_BLOCKED, DERIVED_BLOCKED_4, c, sk.key))) return refuse('cart-write-derived', 'a derived write into ' + target + ' was refused: it is a cell the host writes', ln, outLen);
+        if (kind === 'formula' && meets(R, byVersion(HOST_CELLS, HOST_CELLS_4, HOST_CELLS_5, c, sk.key))) return refuse('cart-device-cell-formula', target + ' is a cell the host writes, which holds values and never formulas', ln, outLen);
+        if (kind === 'derived' && meets(R, byVersion(DERIVED_BLOCKED, DERIVED_BLOCKED_4, DERIVED_BLOCKED_5, c, sk.key))) return refuse('cart-write-derived', 'a derived write into ' + target + ' was refused: it is a cell the host writes', ln, outLen);
         if (kind === 'cell' && sk.key === 'clock') { var ck = clockRefusal(name, R, m[4].trim()); if (ck) return refuse('cart-write-clock', ck, ln, outLen); }
         if (area(R) > MAX_CELLS) { later('grid-too-many-cells', target + ' would bring the grid past the ' + thousands(MAX_CELLS) + ' cells one grid holds', ln); continue; }
         if (kind === 'derived' && anyCell(R, function (r, cc) { var e = c.content(sk.key, r, cc, false); return !!(e && e.f); })) {
