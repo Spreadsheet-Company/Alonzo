@@ -32,7 +32,9 @@ engine is:
 - the cartridge's manifest, read by the language's own reader and refused
   by name when a directive is missing, doubled, unknown or out of range;
 - the device sheets, Screen, Palette, Input, Keys, Clock, Audio, File,
-  Camera and Write, each held to its layout at load and at every write, a
+  Camera and Write, and since the page's version 5 a cartridge's own
+  Commands, a row a command (`ENGINE.25`), each held to its layout at load
+  and at every write, a
   formula refused where the host writes and a derived write refused where
   the host writes, the volatile functions refused with the Clock named;
 - the engine's own sheets, made at load: the Clock's frame, rate and seed,
@@ -42,14 +44,18 @@ engine is:
 - `describe`, the manifest, the devices and the budget, and since
   `vla-lang` 0.9.2 the machine's census, the plan as rows, a row for each
   shape with its cells, its levels, its runs and the path each of its reads
-  takes, so that what a cartridge costs a frame is read before a frame runs
+  takes, since 0.10.0 a slice of a sheet's numbers (`stride`), a cell's slot
+  or an array among them, and a shape whose cells computed alone keep the
+  walk marked `unlowered`, so that what a cartridge costs a frame is read before a frame runs
   (Frazaro's `KERNEL.30`, laid here; each cartridge's held to a golden in
   `testdata/describe/`, which `ALONZO_BLESS=1 cargo test describe` writes
   again);
-- the engine's own refusals, a catalog of ten in `data/messages.vla`: the
-  ninth a cartridge's source handed to the load, which never expands, and
+- the engine's own refusals, a catalog of eleven in `data/messages.vla`:
+  the ninth a cartridge's source handed to the load, which never expands;
   the tenth a person's write into the Clock, its frame, or a rate or a seed
-  outside its range (`ENGINE.3`).
+  outside its range (`ENGINE.3`); and the eleventh a value in a version 5
+  cartridge's Commands sheet that is no command's name, or a name written
+  twice (`ENGINE.25`).
 
 Beside the engine, the pass (`src/pass.rs`, `docs/SPEC.md` section 7.8): a
 cartridge's source, VLA with template macros and `include`s, expanded by the
@@ -125,7 +131,15 @@ the engine passes through; the host draws a grid's every frame after the
 first from it (`ENGINE.8`'s second slice). Since 0.9.4 it has a fourth,
 `changes`: the values' rows of the cells of a window the last frame changed,
 or `whole` where the language cannot say which (Frazaro's `KERNEL.42`),
-passed through the same way.
+passed through the same way. Since 0.10.0 the language reads a fill's
+cells as slices of numbers, computes a cell alone by its formula compiled
+once and reads a sheet read in the frame being computed as an array, every
+answer the same to the bit (Frazaro's `KERNEL.43`, `KERNEL.44` and
+`KERNEL.31`), so Life, the gun, Sand and Kairos step faster here; a
+format's number code prints its text in the grid record (`KERNEL.47`),
+which the engine passes through as it is; and a cartridge's source may
+write a formula as an expression, `formula-expand`, which the pass expands
+as any other macro (`VLA.4`).
 
 ## The rules that bind every line
 
@@ -151,8 +165,8 @@ loads. Name it and the language it answers in, each pinned exactly:
 
 ```toml
 [dependencies]
-alonzo = "=0.1.5"
-vla-lang = "=0.9.4"
+alonzo = "=0.2.0"
+vla-lang = "=0.10.0"
 ```
 
 A cartridge is rows in the one notation. The engine loads it, steps it and

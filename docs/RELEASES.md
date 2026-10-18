@@ -2,6 +2,57 @@
 
 *Newest first, as Frazaro keeps its `docs/RELEASES.md`. A release's section is written before its tag, never after: `REPO.4` began this file with the first, `0.1.0`. Each section says what the release holds and what it measures, names the items in it by their IDs (`ROADMAP.md` for the open, `REARVIEW.md` for the closed), says what it does not hold, and ends with a short* Known open security items *block that points to `SECURITY.md` rather than copying it.*
 
+## 0.2.0
+
+The keyboard, and a cartridge's own commands, over a faster language. Every act of the player is a named command, run from one palette on Ctrl+K, or by a key a person binds in the drawer, on one sheet if they like (`ENGINE.22` to `ENGINE.24`). A cartridge written to the page's version 5 gives the palette commands of its own, run by their names or their keys, which the game reads in the Input sheet's twentieth row (`ENGINE.25`). The engine crate is pinned to `vla-lang` 0.10.0 exactly, and the page's module is built at opt-level 3, so that a frame in the browser takes a third less time or more, every answer the same to the bit. The page is served at https://spreadsheet-company.github.io/Alonzo/. In a crate's manifest, `alonzo = "=0.2.0"` and, for the types its calls answer, `vla-lang = "=0.10.0"`. It is 0.2.0 and not 0.1.6 because the crate's public items changed, `Device` gaining a tenth variant, `Commands`, and `DEVICES` and `SPECS` growing longer, and because the language it answers in is a new minor version.
+
+### What it holds
+
+- **The drawer's keys.** In the source's box and a library's, Ctrl+Enter builds and Ctrl+Shift+Enter applies the source to the running game. In the cartridge's box Ctrl+Enter loads it and Ctrl+Shift+Enter applies it as it stands, and in the replay's box Ctrl+Enter plays it. Cmd stands for Ctrl on a Mac, and the caret stays where it was (`ENGINE.22`).
+- **The command palette.** Ctrl+K, Cmd+K on a Mac, or Ctrl+Shift+` opens a prompt over the page. It runs any of the player's thirty commands by its name, `run`, `pause`, `drawer`, `full-screen`, shows a sheet by its name, and writes a text that begins with `(` or `;` as a row of VLA, a person's edit. The lines narrow as you type, and Ctrl+Up and Ctrl+Down bring back what was run. Ctrl+Alt+PageDown and Ctrl+Alt+PageUp move between the sheets in a window, and Ctrl+PageDown and Ctrl+PageUp in full screen. Where the browser has Keyboard Lock, Escape is the page's in a full screen it asked for, and a second Escape leaves it. Tab on a running game's Screen is the game's (`ENGINE.23`).
+- **The keymap, a person's to rebind.** The page's keys are a text in the drawer, a binding a line, `(bind "Ctrl+J" pause)`, applied whole or refused whole, every problem said by its line. A person writes commands of their own, a name, its words and the steps it runs, `(command "again" "the cartridge loaded again and run" (load) (run))`, and Record a key writes the next key pressed into the box. The keymap applied is kept in this browser and holds at the next load. Under the box every command is listed with its keys, a person's own and the game's first; the list says what keeps a key from the page and which binding shadows a key the game uses (`ENGINE.23`, `ENGINE.24`).
+- **The keys in their places.** A binding may hold on one sheet, `(bind "P" drawer (on "Portfolio"))`, before a binding of the same key on none, so each tab has keys of its own. The drawer's note names the loaded game's own keys of the moment, player by player, and says when the game reads the last key pressed (`ENGINE.24`).
+- **A cartridge's own commands, the page's version 5.** A cartridge that says `(spec 5)` may hold a Commands sheet, a row a command: its name, its words, whether it holds now, and its key. The palette lists the loaded game's commands while they hold, as `<cartridge>.<command>`. A person binds one like any other command, on one sheet too, or makes it a step of a command of their own, and its own key runs it on the Screen with no Ctrl, Cmd or Alt. A command run reaches the game as its name in `Input!B20` for one frame, sixteen waiting one a frame, and at rate 0 a step a command; the replay records it as a button's press. A cartridge written to versions 1 to 4 loads, describes, opens, points and replays as before (`SPEC.md`, version 5; `ENGINE.25`).
+- **The module built for speed.** The release profile is opt-level 3 where it was `"s"`, the owner's answer to a question `ENGINE.6` held since `CART.1`: the browser's frames and loads about a tenth faster than at `"s"` over the same language, for a module about a fifth larger.
+- **The language at 0.10.0.** A fill's cells are read and folded as slices of numbers, a cell computed alone runs its formula compiled once, and a sheet read in the frame being computed is read as an array (Frazaro's `KERNEL.43`, `KERNEL.44` and `KERNEL.31`). Every answer is the same to the bit, and every committed replay plays to its golden unchanged. A cartridge's source may write a formula as an expression, `(formula-expand (if (> Input!B5 0) (+ A1 1) 0))`, in the pass at the command line and in the page (`VLA.4`). `describe`'s census names the new read paths, `stride`, `slot` and `array`, and marks a shape whose cells computed alone keep the walk, `unlowered`.
+
+### What it measures
+
+The frame floors' twelfth baseline, the instrument's run over `vla-lang` 0.10.0 at opt-level 3 on the owner's machine (headless Chrome 155, every clock's spread within 3.4%, the median of three runs), against the eleventh's over 0.9.4 at `"s"`:
+
+- **In the browser**, Life's frame from 4.3 ms to 2.5, at sixteen times its area from 70.3 to 45.0; the glider gun's idle frame from 0.0375 ms to 0.0242; Sand's from 5.9 ms to 3.9.
+- **Natively**, Life's from 2.9 ms to 2.1, the gun's from 0.0273 ms to 0.0190, Sand's from 3.9 ms to 3.0. All fourteen floors rise.
+- **The profile's share.** Over the same language at `"s"` the browser read Life at 2.7 ms and Sand at 4.4, and the module was 870,490 bytes.
+- **Kairos and Buffet**, by the language's own notes over this engine's cartridges: Kairos 45% faster natively and 47% in the browser, Buffet 30% and 25%.
+- **A load** takes about what it took: the language now compiles each formula once at a load, and the profile pays it back. Life's in the browser is 50.5 ms where 0.1.5's was 49.5, Sand's 157.3 where it was 149.6.
+- **The memory.** The native heap holds about nine bytes more a formula cell, for a previous frame's sheet kept as an array; the browser's memory is unchanged at its pages.
+- **The module** is 1,038,643 bytes, from 766,043.
+
+### The items in it
+
+- **Closed**, each with its line in `REARVIEW.md`'s ledger: `ENGINE.22`, the drawer's keys; `ENGINE.23`, the command palette and the keymap; `ENGINE.24`, the keys in their places; and `ENGINE.25`, a cartridge's own commands.
+- **Closed as superseded**: `ENGINE.6`, the accelerators, each landed in the language or ruled out, its last question, the release profile, answered.
+- **The pin**, `ENGINE.1`'s record: the language at 0.10.0 and the profile at opt-level 3, measured into the floors' twelfth baseline.
+
+### For a game that carries the page
+
+Take the template and the three scripts again, and the module built over `vla-lang` 0.10.0.
+- A module built from the crate takes the building workspace's profile: Alonzo's page is built at opt-level 3 from this release, and a game reaps it by building its own at 3.
+- A game's page runs the loop oracle's `palette`, `keys` and `commands` cases, twelve cases in all.
+- The page writes one thing, a person's keymap, to the browser's storage of its own origin.
+- A game that gives the palette commands of its own writes `(spec 5)` in its manifest and a Commands sheet, and its formulas read the command run in `Input!B20`. The host's `command(name)` runs one and `commands()` lists them, `keyDown(code, key, ev)` takes the key's event, and the counters `commands` and `commandsRefused` count them.
+- A cartridge written to versions 1 to 4 keeps a sheet it names Commands as its own.
+
+### Not in this release
+
+- A number format's code drawn. The language prints the text a number draws under it in the record (`KERNEL.47`), and the viewport counts that row as unknown and draws the value as before.
+- A key kept from the browser where its binding holds not: Ctrl+J bound to a game's command passes on where the command holds not, as an unbound Ctrl+J does, and the browser opens its downloads.
+- A write that empties a cell (Frazaro's `KERNEL.46`), a cartridge loaded from a file (`ENGINE.5`) or an address (`REPO.6`), proof of play (`ENGINE.10`) and auto-fit (`ENGINE.21`).
+
+### Known open security items
+
+**None.** The engine imports nothing and makes no outbound call, ever; the page fetches nothing and writes nothing but a person's keymap to the browser's own storage, and a built page's blocks are held to the repository's files both ways. Both are checked on every push, by `tools/check_host_imports.ps1` and `tools/check_web_offline.ps1`. `SECURITY.md` is the policy and the place to report.
+
 ## 0.1.5
 
 Edit and continue. A rebuilt source is applied to the running game, its frame number and its state kept (`ENGINE.7`): the drawer's Apply the source builds the source and writes the rows it changed into the game at the next frame, as a person's edit the replay records. The engine crate's code is 0.1.4's and still pinned to `vla-lang` 0.9.4 exactly; what changed is the page, served at https://spreadsheet-company.github.io/Alonzo/. In a crate's manifest, `alonzo = "=0.1.5"` and, for the types its calls answer, `vla-lang = "=0.9.4"`.
