@@ -19,4 +19,4 @@
 (readers "Seed" 1)
 (readers "Clock" 1)
 (readers "Screen.last" 1)
-(shape 0 "Screen" "B2" "=IF(Clock!R1C2=1,Seed!RC,IF(OR(SUM(Screen.last!R[-1]C[-1]:R[1]C[1])-Screen.last!RC=3,AND(Screen.last!RC=1,SUM(Screen.last!R[-1]C[-1]:R[1]C[1])-Screen.last!RC=2)),1,0))" (cells 62964) (levels 0 0 1 62964) (runs 1 62964 62964 62964) (alone 0) (reads slot array lookup once start))
+(shape 0 "Screen" "B2" "=IF(Clock!R1C2=1,Seed!RC,IF(OR(SUM(Screen.last!R[-1]C[-1]:R[1]C[1])-Screen.last!RC=3,AND(Screen.last!RC=1,SUM(Screen.last!R[-1]C[-1]:R[1]C[1])-Screen.last!RC=2)),1,0))" (cells 62964) (levels 0 0 1 62964) (runs 1 62964 62964 62964) (alone 0) (reads stride lookup once start))

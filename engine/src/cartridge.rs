@@ -2091,7 +2091,7 @@ mod tests {
              (readers \"Seed\" 1)\n(readers \"Clock\" 1)\n(readers \"Screen.last\" 1)\n\
              (shape 0 \"Screen\" \"B2\" \"=IF(Clock!R1C2=1,Seed!RC,IF(OR(SUM(Screen.last!R[-1]C[-1]:R[1]C[1])\
              -Screen.last!RC=3,AND(Screen.last!RC=1,SUM(Screen.last!R[-1]C[-1]:R[1]C[1])-Screen.last!RC=2)),1,0))\" \
-             (cells 80) (levels 0 0 1 80) (runs 1 80 80 80) (alone 0) (reads slot array lookup once start))\n"
+             (cells 80) (levels 0 0 1 80) (runs 1 80 80 80) (alone 0) (reads stride once start))\n"
         );
         assert_eq!(c.row(4), "(cartridge 4 \"Small\" plane 12 10 30)");
     }
@@ -2116,13 +2116,14 @@ mod tests {
             "(device \"File\" \"A1:B3\" effect)\n",
             "(budget 30 62964 1888920 2000000)\n",
             // The census (KERNEL.30, laid here): one shape, one level, one
-            // run of every cell, its twin read as an array and its Clock
-            // once a run or at the frame's start.
+            // run of every cell, its twin read as slices of its numbers
+            // since vla-lang 0.10.0 (KERNEL.43's stride) and its Clock once a
+            // run or at the frame's start.
             "(plan (shapes 1) (texts 1) (formulas 62964) (levels 1) (runs 1) (lanes 62964) \
              (alone 0) (every-frame 0) (cycles 0))\n",
             "(readers \"Clock\" 2)\n(readers \"Screen.last\" 1)\n",
             " (cells 62964) (levels 0 0 1 62964) (runs 1 62964 62964 62964) (alone 0) \
-             (reads slot array once start))\n",
+             (reads stride once start))\n",
         ] {
             assert!(d.contains(want), "describe holds {want}: {d}");
         }

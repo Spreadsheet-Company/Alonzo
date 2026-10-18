@@ -35,9 +35,15 @@ repository = "https://github.com/Spreadsheet-Company/Alonzo"
 
 [workspace.dependencies]
 # The language crate and nothing else (AD-5), pinned to one version on
-# crates.io: vla-lang 0.9.4 (Frazaro's KERNEL.42, fb64e3a, released as
-# e8911f6, 2026-10-15): a window's changes since a frame, a fourth projection
-# by name and no new export; over 0.9.3 (Frazaro's release commit 17f9f3e,
+# crates.io: vla-lang 0.10.0 (Frazaro's release commit 1cc86c9, tagged
+# v0.10.0, 2026-10-17, 0.9.5 folded into it): a fill's cells read and folded
+# as slices of numbers (KERNEL.43); a cell computed alone running its formula
+# compiled once (KERNEL.44); a sheet read in the frame being computed read as
+# an array (KERNEL.31); a number format's code, whose text the record prints
+# (KERNEL.47); and a formula written as an expression, formula-expand
+# (VLA.4); over 0.9.4 (Frazaro's KERNEL.42, fb64e3a, released as e8911f6,
+# 2026-10-15), a window's changes since a frame, a fourth projection by name
+# and no new export; over 0.9.3 (Frazaro's release commit 17f9f3e,
 # tagged v0.9.3 on 8993a7e, 2026-10-14), a formula written into a running grid in
 # the time its cells take (KERNEL.34); a changed cell checked against the
 # readers kept where it stands (KERNEL.35); a frame's end copying what
@@ -60,16 +66,22 @@ repository = "https://github.com/Spreadsheet-Company/Alonzo"
 # docs/REARVIEW.md, ENGINE.1's second slice, decision 1): a git rev while the
 # language's change is unreleased, and the exact registry pin once it is,
 # 0.8.1 on 2026-10-10, 0.9.0 on 2026-10-11, 0.9.1 and 0.9.2 on 2026-10-12,
-# 0.9.3 on 2026-10-14 and 0.9.4 on 2026-10-15, no git rev between them. An exact version and
-# never a range, a rev and never a branch, since a range and a branch move.
-vla-lang = "=0.9.4"
+# 0.9.3 on 2026-10-14, 0.9.4 on 2026-10-15 and 0.10.0 on 2026-10-17, no git
+# rev between them. An exact version and never a range, a rev and never a
+# branch, since a range and a branch move.
+vla-lang = "=0.10.0"
 
 [profile.release]
-# Small, deterministic, and without an unwinder: a panic aborts, so the wasm
+# Fast, deterministic, and without an unwinder: a panic aborts, so the wasm
 # module imports nothing to unwind with and nothing to print with. Copied
 # from Frazaro's workspace, where it is what keeps the import section empty.
+# opt-level 3 since the pin to vla-lang 0.10.0 (2026-10-17), the owner's
+# answer to the question CART.1's decision 10 left to ENGINE.6, where "s"
+# kept the module small: the browser's frames and loads about a tenth faster
+# for a module about a fifth larger, measured over 0.9.4, over KERNEL.43 and
+# over 0.10.0 (docs/REARVIEW.md, ENGINE.1's record of the pin).
 panic = "abort"
 lto = true
 codegen-units = 1
-opt-level = "s"
+opt-level = 3
 strip = true
