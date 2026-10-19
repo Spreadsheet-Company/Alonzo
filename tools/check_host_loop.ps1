@@ -120,7 +120,10 @@ its rate said to wait for the frame Run brings, then written in it; over the
 engine's module, when the page holds one, the grid card,
 cartridges/gridcard/gridcard.vla, twenty-four frames under a Camera an edit
 moves a column right at frames 10 and 20, two edits seen in their frame, and
-a person's scroll kept through the Camera's move); and since ENGINE.14 tabs
+a person's scroll kept through the Camera's move; since CART.12 its row 16,
+numbers under codes of Excel's, each cell drawn as its text row says and
+pinned by name at frames 1, 4 and 5, codes, the texts from text rows counted,
+coded, and a value under a code read whole among the lone record's); and since ENGINE.14 tabs
 (a tab with no record clicked as a person clicks it, its sheet shown and held
 at the click and after every frame to the record of a window holding every
 cell in view, a scroll with the loop paused viewing the new region at once,
@@ -267,7 +270,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds one hundred and twenty-four mutant pages through tools/build_web.ps1 and runs
+-Control builds one hundred and twenty-seven mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -436,7 +439,12 @@ without the module, each failing the commands case's page half by name: one whos
 game's command that holds not; one whose keymap refuses a game's commands; one that presses a binding of
 a game's command that holds not, its key never passed on; one whose list says nothing of a game's
 command key a person's binding shadows; and one that ranks the page's own commands with a person's own and
-the game's, the page's listed first in the palette and in the list. The real page must pass first.
+the game's, the page's listed first in the palette and in the list. And since CART.12 three more, each
+failing the grid case by name: a viewport that reads no text row, so that the lone record's D1 under the
+code 0.00 draws 1.5 where its text row says 1.50; one that counts a code's format row malformed, which the
+lone record's counts find; and, when the real page holds the module, a host whose record by cell takes no
+text row as a cell's, so that it never lays the grid card's changes on its record, the patches under
+their floor. The real page must pass first.
 
 Since 2026-10-15 each mutant page runs `abi`, which names the page's
 module, and the cases its reason is judged by (?loop=1&cases=), never every
@@ -696,6 +704,13 @@ $paletteFloors = @{ commands = 30; keyed = 11; lines = 10; opened = 1; ran = 1; 
 $commandsFloors = @{ opened = 1; listed = 1; frames = 40; ran = 3; landed = 23; emptied = 17; apart = 1; twice = 1; repeats = 1; ctrl = 1; holdsNot = 2; refused = 1;
                      passed = 1; noted = 1; words = 1; waited = 16; dropped = 1; said = 4; replayed = 1; replayFrames = 40; replaySame = 40; during = 1; rate0 = 1;
                      rate0Empty = 1; rate0Replayed = 1; older = 1 }
+# 2026-10-18, CART.12's viewport slice, a code's text drawn: the twenty-seven cases' counts unchanged but for grid over
+# the module, the grid card's row 16 of codes added, its counts a function of the card: codes 3, the row pinned by name
+# at frames 1, 4 and 5; coded 213, the texts drawn from text rows over the 25 frames, the row's eight constants at the
+# 20 frames before the Camera's second move and seven after it, B16 out of view, and G16 at the 18 frames its value has
+# no look (at frames 4 to 24 by fours its value, 1 to 6, is a look's, General); hashes 193, the 168 before and H16 at
+# all 25 frames, its floor 95, the four constants wider than any default column, H16's 1,234,567.89 the fourth. texts,
+# fills, looks, styles, unvalued and probes grew with the row, each above its floor as it stood.
 # 2026-10-17, ENGINE.25's second slice: the case's page half, pure and so on every page, module or not, its counts a function of
 # its plan: 6 names a page writes a game's command by, held to the cartridge and the command or to none; 4 of the palette's
 # lines, the command that holds with its own key, found by a word after the dot, the one that holds not no line, and one
@@ -723,7 +738,7 @@ $floors = @(
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } },
     @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 1913; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1; fakePatches = 8 };
-                            WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 11000; wraps = 20; fills = 10677; looks = 10311; styles = 40; columns = 326; unvalued = 350; hidden = 20; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 70; values = 24; patches = 20;
+                            WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 11000; wraps = 20; fills = 10677; looks = 10311; styles = 40; columns = 326; unvalued = 350; hidden = 20; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 95; values = 24; patches = 20; codes = 3; coded = 213;
                                             grids = 1; gridFrames = 12; gridEqual = 13; gridValues = 12; gridTexts = 5200; gridCleared = 1 } },
     @{ Case = 'tabs';     Min = @{ fakeFrames = 14; fakeShown = 1; fakeHeld = 8; fakeScrolled = 1; fakeBack = 1; fakeScreen = 9; fakePointer = 1; fakeRouted = 1; fakeKey = 1; fakeStrip = 1; fakeWheel = 4; fakeTexts = 4600 };
                             WithModule = @{ frames = 12; shown = 1; held = 5; back = 1; screen = 8; pointer = 1; routed = 1; strip = 1; wheel = 4; clock = 4; texts = 3400 } },
@@ -1277,7 +1292,10 @@ if ($Control) {
         # a host silent over an edit made while the loop is paused at its rate (the owner's hand test), and a
         # viewport that lays every row at the default height. And AQ, AR and AS (ENGINE.8's second slice), over the
         # double: a host that draws the grid record at every frame, one that draws the values record at frame 0 too,
-        # and a viewport that reads no style row for a cell no row wrote. The grid case must fail each by name.
+        # and a viewport that reads no style row for a cell no row wrote. And DU, DV and DW (CART.12, a code's text
+        # drawn): a viewport that reads no text row, one that counts a code's format row malformed, and a host whose
+        # record by cell takes no text row as a cell's, so that it never lays a window's changes on the grid card's
+        # record. The grid case must fail each by name.
         $gridMutants = @(
             @{ L = 'ac'; Name = 'the value row unread'; File = 'viewport'; Anchor = "    } else if (head === 'value') {"; With = "    } else if (head === 'value-unread') {"
                Want = 'case grid.*fake frame 1: \w+\d+ \("\d+"\) is not drawn' },
@@ -1298,7 +1316,14 @@ if ($Control) {
             @{ L = 'ar'; Name = 'the values record at frame 0'; File = 'host'; Anchor = "    var t0 = this.now(), projection = this.frame > 0 ? 'values' : 'grid';"; With = "    var t0 = this.now(), projection = 'values';"
                Want = 'case grid.*fake frame 0: the host drew the values record of [A-Z]+\d+:[A-Z]+\d+, where the grid record is due' },
             @{ L = 'as'; Name = 'the lone style row unread'; File = 'viewport'; Anchor = '      if (a && !e && n !== null) e = formulaCell(m, a, reach);'; With = '      // the lone style row unread, by the control'
-               Want = 'case grid.*values read whole: C1''s fill, #00AA00 by its style, is not drawn' }
+               Want = 'case grid.*values read whole: C1''s fill, #00AA00 by its style, is not drawn' },
+            @{ L = 'du'; Name = 'the text row unread'; File = 'viewport'; Anchor = "    } else if (head === 'text') {"; With = "    } else if (head === 'text-unread') {"
+               Want = 'case grid.*values read whole: D1 shows "1\.5", and the record says "1\.50"' },
+            @{ L = 'dv'; Name = 'a code''s format malformed'; File = 'viewport'; Anchor = "(num !== 'general' && num !== 'text' && code === null)"; With = "(num !== 'general' && num !== 'text')"
+               Want = 'case grid.*values read whole: the viewport answers D1 as .*"malformed":1.*, where it draws 1\.50 for the value 1\.5 from one text row, every row known' },
+            @{ L = 'dw'; Name = 'a text row no cell''s'; File = 'host'; Module = $true; Anchor = '  var CELL_LINE = /^\((?:cell|value|text|style|sentence|formula|empty) "(?:[^"\\]|\\.)*" "([A-Z]+)([0-9]+)"/;'
+               With = '  var CELL_LINE = /^\((?:cell|value|style|sentence|formula|empty) "(?:[^"\\]|\\.)*" "([A-Z]+)([0-9]+)"/;'
+               Want = 'the case grid at a ratio of 1 counted \d+ patches, below its floor of 20' }
         )
         $gridNotes = New-Object System.Collections.Generic.List[string]
         $gridJudged = New-Object System.Collections.Generic.List[object]
@@ -1825,7 +1850,7 @@ if ($Control) {
         $gameNote = $gameNotes -join '; '
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $gameNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $gameOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and twenty-four' } else { 'sixty-five applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and twenty-seven' } else { 'sixty-seven applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

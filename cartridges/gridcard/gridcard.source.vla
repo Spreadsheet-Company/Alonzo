@@ -18,6 +18,9 @@
 ;     over a style; a sentence row; a hidden row and a hidden column, each holding a
 ;     value that is never drawn; a narrow column and a column whose style fills its
 ;     empty cells; looks on a text, a truth value and an error;
+;   - numbers under codes of Excel's, each drawn as the text the record prints for it
+;     (KERNEL.47, drawn since CART.12), a formula's among them every frame, a text under
+;     a code's text section, a code under a look of General, and a glyph through a look;
 ;   - and below them a stripe that moves a cell a frame, through two looks.
 ; A formula before its first value shows its text, so frame 0 shows the Screen's
 ; formulas as written.
@@ -183,6 +186,41 @@
   (style "B10" 25)                  ; a cell's own style
   (style "C10" 25)                  ; the same, under the look of 5
   (sentence "B11" 11))              ; the program row that wrote the cell
+
+; Row 16: numbers under codes of Excel's (KERNEL.47). The record prints, after a value
+; under a format holding a code, the text the value draws under it, and the viewport
+; draws that text and computes nothing (drawn since CART.12): aligned and matched to a
+; look by the value, too wide for its column as many # as fit.
+(format 27 none "0.00" nowrap)                       ; two decimals
+(format 28 none "#,##0.00" nowrap)                   ; the thousands grouped
+(format 29 none "0.00;(0.00)" nowrap)                ; a negative's own section, drawn without its minus
+(format 30 none "0%" nowrap)                         ; a hundredfold
+(format 31 "E2D8F6" "0;-0;0;\"text: \"@" nowrap)     ; a text's section, the fourth, and a fill
+(format 32 "F7F4FC" "◆" nowrap)                      ; a glyph alone, whatever the number: a look's
+(cells "Screen"                     ; the sheet every entry below writes
+  ("A16" "numbers under codes of Excel's, each drawn as the record's text")
+  ("B16" 1.5)                       ; 1.50
+  ("C16" 2.675)                     ; 2.68, the decimal rounded as Excel rounds it, where the binary's is 2.67
+  ("D16" 1234.5)                    ; 1,234.50
+  ("E16" -3)                        ; (3.00)
+  ("F16" 0.25)                      ; 25%
+  ("H16" 1234567.891)               ; 1,234,567.89, wider than its cell: as many # as fit
+  ("I16" "quanta")                  ; text: quanta, on the left, in its fill
+  ("J16" 3)                         ; under 0.00, and the look of 3, General, in its place: 3, no text row
+  ("K16" 0.125))                    ; the look of 0.125, a glyph's format: ◆
+(formula "Screen" "G16" "=Clock!$B$1/4")   ; a value under 0.00 every frame: 0.25, 0.50, 0.75, then 1 through
+                                           ; the look of 1, General, its text row gone until 1.25
+(on "Screen"                        ; the sheet every row below writes
+  (style "B16" 27)                  ; two decimals
+  (style "C16" 27)
+  (style "D16" 28)                  ; the thousands grouped
+  (style "E16" 29)                  ; a negative's own section
+  (style "F16" 30)                  ; a hundredfold
+  (style "G16" 27)                  ; the formula's
+  (style "H16" 28)                  ; too wide
+  (style "I16" 31)                  ; a text's section
+  (style "J16" 27)                  ; under the look of 3
+  (look 0.125 32))                  ; the glyph's look
 
 ; Rows 17 to 50: a stripe that moves, one fill over the Screen's whole width, a "#" every
 ; eighth cell along a diagonal and a "." elsewhere, each through its look.

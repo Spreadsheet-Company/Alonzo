@@ -249,8 +249,13 @@ value row is a formula known by its value, its text not in the record, and a
 style or sentence row alone a formula with no value yet, drawn empty in its
 style (`KERNEL.37`, read since `ENGINE.8`'s second slice); a `look` row maps a value to the format every cell
 holding it draws with, and a `row` row gives a row its height in points or
-hides it (`docs/SPEC.md` decision 19, read since `ENGINE.8`); an unknown row is
-counted, never refused. What the viewport owns is the state no program sees:
+hides it (`docs/SPEC.md` decision 19, read since `ENGINE.8`); a `format` row's
+number format may be a code of Excel's, `"0.00"`, and a `text` row after a
+cell's value is the text the value draws under the code of the format the
+cell draws with, which the cell shows in the value's place, aligned and
+matched to a look by the value, the value kept for the bar (Frazaro's
+`KERNEL.47`, read since `CART.12`): the viewport keeps a code and never
+applies one; an unknown row is counted, never refused. What the viewport owns is the state no program sees:
 the scroll, the selection, the widths a person dragged, the frozen panes and
 the marks a host asked for. The record is never written.
 
@@ -669,7 +674,7 @@ reads any text of forms into data, the host shim's one reader.
 
 | Method | What it does |
 |---|---|
-| `load(text, options)` | reads a record; its sheet becomes a tab, replacing an earlier record of that sheet; the record's `sheet` rows become the tab strip; returns the counts (`sheet`, `lines`, `cells`, `formulas`, `values`, `styles`, `sentences`, `looks`, `rows`, `unknown`, `malformed`, `window`, `extent`, `readMs`). With `{ keep: true }` (`ENGINE.8`), a later frame of the sheet shown: the record replaces the last with the scroll, the selection, the widths, the frozen panes and the marks kept and no event raised, the tabs remade only when the sheet rows changed; the host draws every frame of a grid cartridge so, a still one excepted (`ENGINE.17`), and the player's sheets viewer its sheet |
+| `load(text, options)` | reads a record; its sheet becomes a tab, replacing an earlier record of that sheet; the record's `sheet` rows become the tab strip; returns the counts (`sheet`, `lines`, `cells`, `formulas`, `values`, `texts`, `styles`, `sentences`, `looks`, `rows`, `unknown`, `malformed`, `window`, `extent`, `readMs`). With `{ keep: true }` (`ENGINE.8`), a later frame of the sheet shown: the record replaces the last with the scroll, the selection, the widths, the frozen panes and the marks kept and no event raised, the tabs remade only when the sheet rows changed; the host draws every frame of a grid cartridge so, a still one excepted (`ENGINE.17`), and the player's sheets viewer its sheet |
 | `patch(text)` | a window's changes laid on the model of their sheet (`ENGINE.19`), the text a view of the projection `changes` answers: each named cell's entry read again from its rows as `load` reads them, a cell put in or an empty one taken out, the model's counts and lines kept as a load of the patched record makes them, the model object, the scroll and the selection kept, and the sheet shown painted again: the named cells alone (`ENGINE.20`), each cell's band of its row with the span its text spills over and the span of a text on its left that spills into it, before the patch and after, painted again by the full paint's own steps under each band's clip, the rest of the canvas kept, wherever the canvas holds the model's full paint, unscrolled and unresized since, and the cells named are no more than a quarter of the cells in view; whole otherwise. Returns the counts as `load` does, with `patched` the cells named and `patchMs`; `false`, and nothing changed, for a whole answer, another window, a sheet it holds no record of, rows that are no cell's of the window, or a model holding a row its reader counted unknown or malformed |
 | `patches()` | the patches laid on its models since it was made: a host notes the count with each record it loads, so that a model a page patched is never taken for the host's (`ENGINE.19`) |
 | `repaints()` | the patches it painted by their cells alone since it was made, the others painted whole (`ENGINE.20`) |
@@ -686,7 +691,7 @@ reads any text of forms into data, the host shim's one reader.
 | `columnWidth(letters, px)` / `columnWidths()` | a column's width in CSS pixels, the host's over the record's; `null` puts the record's back; the overrides |
 | `mark(name, ranges, style)` / `unmark(name)` | a named highlight over ranges the host computed, `style` `{ fill, border }`; `unmark()` with no name clears all |
 | `cellAt(clientX, clientY)` | the cell under a point of the page, or null: over a header, the corner, a scrollbar or the tab strip (the last two since `ENGINE.14`, which the hit test had counted as cells) |
-| `cell(row, col)` | a cell: `{ row, col, address, kind, vkind, text, formula, valued, style, sentence }`, `kind` one of `cell`, `formula`, `empty`; `text` what the cell shows, a formula's value once its value row lands and its text before, `formula` a formula's own text, the bar's, and `valued` whether a formula has its value |
+| `cell(row, col)` | a cell: `{ row, col, address, kind, vkind, text, value, formula, valued, style, sentence }`, `kind` one of `cell`, `formula`, `empty`; `text` what the cell shows, a formula's value once its value row lands and its text before, the text a code draws where the record holds a `text` row (`CART.12`); `value` the value as the record spells it, empty for a formula with none yet; `formula` a formula's own text, the bar's, and `valued` whether a formula has its value |
 | `geometry()` | the last draw's geometry in device pixels: the ratio, the sizes, the row height, the column edges, the frozen bands, the scroll |
 | `draws()` | the draw list: every text, fill, line, header, selection and mark with its position, as the last full paint drew it, each cell a repaint drew since in its place, in the full paint's order (`ENGINE.20`), so that it describes the canvas op for op (the oracle's) |
 | `model()` | the record shown, as read |
@@ -715,10 +720,12 @@ default; a hidden column is skipped; a column's format fills its empty cells.
 A row is 20 px, the headers one row high, the text 13 px `system-ui`. A
 `cell` row shows its value aligned as Excel aligns it under General: a
 number right, a text left, `TRUE`, `FALSE` and an error centered, a date as
-the text inside, right; under a `text` format everything left. A `formula`
+the text inside, right; under a `text` format everything left; under a code,
+the text of its `text` row where the record holds one, aligned by its value
+as under General (`CART.12`). A `formula`
 row shows the formula's text, left, in green. A nowrap text spills into the
 empty cells to its right and stops at the first that holds anything; a
-number never spills, and a number or a date under General whose text is
+number never spills, and a number or a date under General or a code whose text is
 wider than its column draws as many `#` as fit, as Excel fills a cell under
 a fixed number format, never a cut text (`ENGINE.14`); a wrapped text is
 broken at the column's width and the lines that fit the row are drawn, and

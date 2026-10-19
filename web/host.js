@@ -328,8 +328,9 @@
   // which cells changed; then each changed cell's rows as the values record prints them, (empty "<sheet>" "<addr>")
   // for a cell with none, in row-major order.
   var CHANGES_HEAD = /^\(changes "((?:[^"\\]|\\.)*)" "([^"]*)" (\d+) (\d+) (whole|\d+)\)$/;
-  // A cell's row of a values record or of a changes answer, its address the first group and its row the second.
-  var CELL_LINE = /^\((?:cell|value|style|sentence|formula|empty) "(?:[^"\\]|\\.)*" "([A-Z]+)([0-9]+)"/;
+  // A cell's row of a values record or of a changes answer, its address the first group and its row the second; a
+  // text row (KERNEL.47) is a cell's, after its value's.
+  var CELL_LINE = /^\((?:cell|value|text|style|sentence|formula|empty) "(?:[^"\\]|\\.)*" "([A-Z]+)([0-9]+)"/;
   // A record's window row, its sheet and its range.
   var WINDOW_LINE = /^\(window "((?:[^"\\]|\\.)*)" "([^"]*)"\)$/m;
   function unquote(s) { return s.replace(/\\(.)/g, '$1'); }

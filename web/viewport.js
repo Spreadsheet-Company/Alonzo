@@ -14,9 +14,11 @@
   row maps a value to the format every cell holding it draws with, and a
   row row gives a row its height or hides it (docs/SPEC.md decision 19; both read
   since ENGINE.8, when the host began drawing a grid cartridge's Screen
-  every frame); a number or a date too wide for its column shows #s across
-  it and never a cut text (ENGINE.14); and an unknown row is counted, never
-  refused. Since ENGINE.19 a host may lay a window's changes on the model it
+  every frame); a format may hold a code of Excel's, which the viewport keeps
+  and never applies, a text row after a cell's value giving the text the cell
+  shows under it (KERNEL.47, read since CART.12); a number or a date too wide
+  for its column shows #s across it and never a cut text (ENGINE.14); and an
+  unknown row is counted, never refused. Since ENGINE.19 a host may lay a window's changes on the model it
   holds (patch), each named cell's entry read again as a load reads it, the
   model and the view kept; since ENGINE.20 the named cells alone are painted
   again, each with the span its text spills over and a neighbor's text that
@@ -242,10 +244,10 @@
       sheets: [], sheet: '', windowText: '', window: null, extentText: '', extent: null, gridlines: true,
       columns: {}, columnList: [], formats: {}, cells: new Map(), rows: 1, cols: 1,
       looks: {}, rowSettings: {},
-      counts: { forms: 0, cells: 0, formulas: 0, values: 0, styles: 0, sentences: 0, looks: 0, rows: 0, unknown: 0, malformed: 0 },
+      counts: { forms: 0, cells: 0, formulas: 0, values: 0, texts: 0, styles: 0, sentences: 0, looks: 0, rows: 0, unknown: 0, malformed: 0 },
       lines: 0, readMs: 0
     };
-    m.formats[0] = { fill: null, num: 'general', wrap: false };
+    m.formats[0] = { fill: null, num: 'general', code: null, wrap: false };
     var f, reach = { row: 0, col: 0 };
     while ((f = rd.readForm()) !== null) readRow(m, f, reach);
     // The sheet's scope: the window's range, or the cells' reach when the record holds no window row.
@@ -257,7 +259,7 @@
   }
   // The heads of a cell's rows, a bit each: an entry notes the rows read into it (rows), so that a patch takes back
   // exactly what they counted (ENGINE.19).
-  var CELL_ROWS = { cell: 1, formula: 2, value: 4, style: 8, sentence: 16 };
+  var CELL_ROWS = { cell: 1, formula: 2, value: 4, style: 8, sentence: 16, text: 32 };
   // A formula cell the values projection prints by its value or its style alone, never by its text
   // (KERNEL.37): no value yet, no text for the bar; its value row, when one comes, gives it both.
   function formulaCell(m, a, reach) {
@@ -306,9 +308,11 @@
       m.columns[col.index] = col;
       m.columnList.push(col);
     } else if (head === 'format') {
-      var idx = numOf(f[1]), fill = strOf(f[2]), num = symOf(f[3]), wrap = symOf(f[4]);
-      if (idx === null || (fill === null && symOf(f[2]) !== 'none') || (num !== 'general' && num !== 'text') || (wrap !== 'wrap' && wrap !== 'nowrap')) { m.counts.malformed++; return; }
-      m.formats[idx] = { fill: fill === null ? null : '#' + fill, num: num, wrap: wrap === 'wrap' };
+      // the number format general, text, or a code of Excel's in quotes (KERNEL.47, read since CART.12), which the
+      // viewport keeps and never applies: the record prints each cell's text under it in a text row
+      var idx = numOf(f[1]), fill = strOf(f[2]), num = symOf(f[3]), code = strOf(f[3]), wrap = symOf(f[4]);
+      if (idx === null || (fill === null && symOf(f[2]) !== 'none') || (num !== 'general' && num !== 'text' && code === null) || (wrap !== 'wrap' && wrap !== 'nowrap')) { m.counts.malformed++; return; }
+      m.formats[idx] = { fill: fill === null ? null : '#' + fill, num: code === null ? num : 'code', code: code, wrap: wrap === 'wrap' };
     } else if (head === 'cell' || head === 'formula') {
       a = parseA1(strOf(f[2]) || '');
       if (!a) { m.counts.malformed++; return; }
@@ -331,6 +335,16 @@
       var vv = valueOf(f[3]);
       e.text = vv.text; e.vkind = vv.kind; e.valued = true; e.lookKey = lookKeyOf(f[3]); e.rows |= CELL_ROWS.value;
       m.counts.values++;
+    } else if (head === 'text') {
+      // the text a value draws under its format's code (KERNEL.47, drawn since CART.12), after the cell's value row
+      // or its formula's: the cell shows it, aligned and matched to a look by its value, which it keeps as the record
+      // spells it for the bar; a text row for a cell with no value, or a second one, is malformed
+      a = parseA1(strOf(f[2]) || '');
+      e = a ? m.cells.get(cellKey(a.row, a.col)) : null;
+      var drawn = strOf(f[3]);
+      if (!e || !e.valued || drawn === null || (e.rows & CELL_ROWS.text)) { m.counts.malformed++; return; }
+      e.value = e.text; e.text = drawn; e.rows |= CELL_ROWS.text;
+      m.counts.texts++;
     } else if (head === 'look') {
       // the look map (docs/SPEC.md decision 19): every cell whose value is the look's draws with its format in
       // place of its own; of two looks a value matches, the first the record holds
@@ -364,7 +378,7 @@
     for (var head in CELL_ROWS) {
       if (!(e.rows & CELL_ROWS[head])) continue;
       n++;
-      m.counts[head === 'cell' ? 'cells' : head === 'formula' ? 'formulas' : head === 'value' ? 'values' : head === 'style' ? 'styles' : 'sentences']--;
+      m.counts[head === 'cell' ? 'cells' : head === 'formula' ? 'formulas' : head === 'value' ? 'values' : head === 'text' ? 'texts' : head === 'style' ? 'styles' : 'sentences']--;
     }
     m.counts.forms -= n; m.lines -= n;
     m.cells.delete(cellKey(e.row, e.col));
@@ -494,8 +508,9 @@
   // What a number or a date shows when its text, with the padding on both sides, is wider than its
   // column: as many # as fit between the paddings, at least one, as Excel fills a cell under a fixed
   // number format (ENGINE.14; KERNEL.5's decision 7 had clipped it, so a number lost its leading
-  // digits). Never wrapped, never cut, and never respelled: the value is the record's, and the
-  // viewport has no number format to round it by. Null when the text fits, or is no number.
+  // digits). Never wrapped, never cut, and never respelled: the text is the record's, a code's
+  // text row's where it holds one (CART.12), and the viewport applies no number format of its
+  // own. Null when the text fits, or is no number.
   function hashesOf(ctx, cell, fmt, w, pad) {
     if (fmt.num === 'text' || (cell.vkind !== 'number' && cell.vkind !== 'date')) return null;
     if (ctx.measureText(cell.text).width + 2 * pad <= w) return null;
@@ -1121,9 +1136,11 @@
   Viewport.prototype._cellInfo = function (row, col) {
     var model = this._model();
     var cell = model ? model.cells.get(cellKey(row, col)) : null;
-    if (!cell) return { row: row, col: col, address: colName(col) + row, kind: 'empty', text: '', formula: '', valued: false, style: 0, sentence: 0 };
-    // text is what the cell shows; formula is a formula cell's own text, the bar's, beside its value
-    return { row: cell.row, col: cell.col, address: cell.address, kind: cell.kind, vkind: cell.vkind, text: cell.text, formula: cell.formula, valued: cell.valued, style: cell.style, sentence: cell.sentence };
+    if (!cell) return { row: row, col: col, address: colName(col) + row, kind: 'empty', text: '', value: '', formula: '', valued: false, style: 0, sentence: 0 };
+    // text is what the cell shows; value its value as the record spells it, the text a code draws aside (KERNEL.47),
+    // empty for a formula with none yet; formula is a formula cell's own text, the bar's, beside its value
+    var value = cell.value !== undefined ? cell.value : cell.valued ? cell.text : '';
+    return { row: cell.row, col: cell.col, address: cell.address, kind: cell.kind, vkind: cell.vkind, text: cell.text, value: value, formula: cell.formula, valued: cell.valued, style: cell.style, sentence: cell.sentence };
   };
   Viewport.prototype._selectPayload = function () {
     var r = this._selectionRange(), s = this.state.selection;
@@ -1388,7 +1405,7 @@
       // the selection went back to A1 of the record shown: say so
       this._emit('select', this._selectPayload());
     }
-    return { sheet: name, lines: model.lines, cells: model.counts.cells, formulas: model.counts.formulas, values: model.counts.values, styles: model.counts.styles, sentences: model.counts.sentences,
+    return { sheet: name, lines: model.lines, cells: model.counts.cells, formulas: model.counts.formulas, values: model.counts.values, texts: model.counts.texts, styles: model.counts.styles, sentences: model.counts.sentences,
              looks: model.counts.looks, rows: model.counts.rows, unknown: model.counts.unknown, malformed: model.counts.malformed, window: model.windowText, extent: model.extentText, readMs: model.readMs };
   };
   // A window's changes laid on the model of their sheet (ENGINE.19, decision 3): the text a host's view of changes
@@ -1439,7 +1456,7 @@
       for (i = 0; i < groups.length; i++) this._footprint(model, groups[i].row, groups[i].col, spans);
       this._repaint(model, spans);
     } else if (shown) this._draw();
-    return { sheet: name, patched: groups.length, lines: model.lines, cells: model.counts.cells, formulas: model.counts.formulas, values: model.counts.values, styles: model.counts.styles, sentences: model.counts.sentences,
+    return { sheet: name, patched: groups.length, lines: model.lines, cells: model.counts.cells, formulas: model.counts.formulas, values: model.counts.values, texts: model.counts.texts, styles: model.counts.styles, sentences: model.counts.sentences,
              looks: model.counts.looks, rows: model.counts.rows, unknown: model.counts.unknown, malformed: model.counts.malformed, window: model.windowText, extent: model.extentText, patchMs: now() - t0 };
   };
   // The patches this viewport has taken since it was made (ENGINE.19): a host notes the count with each record it

@@ -1789,9 +1789,10 @@
     function status(text, refused) { statusEl.textContent = text; statusEl.className = refused ? 'status refused' : 'status'; }
     function cellWords(c) {
       if (c.kind === 'empty') return 'an empty cell';
-      // a formula with a value shows the value, and keeps its own text for the bar (ENGINE.8)
-      var what = c.kind !== 'formula' ? 'the value ' + c.text : (c.valued ? 'the formula ' + c.formula + ', its value ' + c.text : 'the formula ' + c.text);
-      return what + (c.sentence ? ', written by row ' + c.sentence : '');
+      // a formula with a value shows the value, and keeps its own text for the bar (ENGINE.8); a value under a code
+      // shows the text the record prints for it, and the value is named beside it (KERNEL.47, CART.12)
+      var what = c.kind !== 'formula' ? 'the value ' + c.value : (c.valued ? 'the formula ' + c.formula + ', its value ' + c.value : 'the formula ' + c.text);
+      return what + (c.valued && c.text !== c.value ? ', drawn ' + c.text : '') + (c.sentence ? ', written by row ' + c.sentence : '');
     }
     function newViewport() {
       if (vp) vp.destroy();
@@ -2644,7 +2645,8 @@
   // ---- ENGINE.8: the grid the host draws is the record of the same window, cell for cell ----
   // The oracle's own reading of a grid record and its own layout, never the viewport's: docs/SPEC.md section 3.1
   // and decision 19 as ENGINE.8 reads them, with KERNEL.5's rules of the record. A cell row shows its value
-  // as the record spells it; a formula row its text, until its value row lands and then its value. A cell
+  // as the record spells it; a formula row its text, until its value row lands and then its value; a text row
+  // after either, the text its value draws under its format's code (KERNEL.47, since CART.12). A cell
   // whose value equals a look's draws with the look's format in place of its own: a number by its value, so
   // 0 and -0 are one; a text by its characters; a truth value; an error by its name. An empty cell, and a
   // formula with no value, match no look; the first look the record holds for a value is its look. A row's
@@ -2688,14 +2690,17 @@
       else if (head === 'gridlines') m.gridlines = !!f[2] && f[2].sym === 'on';
       else if (head === 'column') m.columns[VP.colIndex(f[2])] = { width: f[3] && f[3].num !== undefined ? f[3].num : null, hidden: !!f[4] && f[4].sym === 'hidden', style: f[5] && f[5].num !== undefined ? f[5].num : null };
       else if (head === 'row') m.rows[f[2].num] = { height: f[3] && f[3].num !== undefined ? f[3].num : null, hidden: !!f[4] && f[4].sym === 'hidden' };
-      else if (head === 'format') m.formats[f[1].num] = { fill: typeof f[2] === 'string' ? '#' + f[2] : null, num: f[3].sym, wrap: f[4].sym === 'wrap' };
+      else if (head === 'format') m.formats[f[1].num] = { fill: typeof f[2] === 'string' ? '#' + f[2] : null, num: typeof f[3] === 'string' ? 'code' : f[3].sym, wrap: f[4].sym === 'wrap' };
       else if (head === 'look') m.looks.push({ key: gqKey(f[2]), index: f[3].num });
-      else if (head === 'cell' || head === 'formula' || head === 'value' || head === 'style') {
+      else if (head === 'cell' || head === 'formula' || head === 'value' || head === 'text' || head === 'style') {
         a = VP.parseRange(f[2]);
         if (!a) continue;
         var key = a.top + ',' + a.left;
         if (head === 'cell') m.cells[key] = { kind: 'cell', text: gqText(f[3]), vkind: gqKind(f[3]), key: gqKey(f[3]), valued: true, style: 0 };
         else if (head === 'formula') m.cells[key] = { kind: 'formula', text: f[3], vkind: 'formula', key: null, valued: false, style: 0 };
+        // a value's text under its format's code (KERNEL.47, drawn since CART.12): what the cell shows, its kind
+        // and its look its value's
+        else if (head === 'text') { if ((e = m.cells[key]) && e.valued) { e.text = f[3]; e.coded = true; } }
         // the values projection (KERNEL.37): a formula's value row with no formula row before it is its cell,
         // shown by its value; its style row alone, a formula with no value yet, shown empty in its style
         else if (!m.cells[key]) m.cells[key] = head === 'value' ? { kind: 'formula', text: gqText(f[3]), vkind: gqKind(f[3]), key: gqKey(f[3]), valued: true, style: 0 }
@@ -2784,7 +2789,7 @@
         var hashes = gqHashes(cell, fm.f, w, L.pad, measure);   // before the wrap: a number never wraps
         if (hashes !== null) {
           if (left + w <= clip.x || left >= clip.x + clip.w) continue;
-          E.texts[r + ',' + c] = { text: hashes, x: ax, y: top + Math.round(h / 2), align: align, clip: { x: left, y: top, w: w, h: h }, valued: cell.valued, formula: cell.kind === 'formula', hashes: true };
+          E.texts[r + ',' + c] = { text: hashes, x: ax, y: top + Math.round(h / 2), align: align, clip: { x: left, y: top, w: w, h: h }, valued: cell.valued, formula: cell.kind === 'formula', coded: !!cell.coded, hashes: true };
           continue;
         }
         if (fm.f.wrap) {
@@ -2797,7 +2802,7 @@
           for (var cc = c + 1; cc <= L.cols && clipW < textW + 2 * L.pad; cc++) { var e2 = m.cells[r + ',' + cc]; if (e2 && e2.text !== '') break; clipW += L.colW[cc]; }
         }
         if (left + clipW <= clip.x || left >= clip.x + clip.w) continue;
-        E.texts[r + ',' + c] = { text: cell.text, x: ax, y: top + Math.round(h / 2), align: align, clip: { x: left, y: top, w: clipW, h: h }, valued: cell.valued, formula: cell.kind === 'formula' };
+        E.texts[r + ',' + c] = { text: cell.text, x: ax, y: top + Math.round(h / 2), align: align, clip: { x: left, y: top, w: clipW, h: h }, valued: cell.valued, formula: cell.kind === 'formula', coded: !!cell.coded };
       }
     }
     return E;
@@ -2822,7 +2827,7 @@
       else if (got.align !== ex.align) say(name + ' is aligned ' + got.align + ', and the record says ' + ex.align);
       else if (got.clip.x !== ex.clip.x || got.clip.y !== ex.clip.y || got.clip.w !== ex.clip.w || got.clip.h !== ex.clip.h) say(name + ' is clipped to ' + [got.clip.x, got.clip.y, got.clip.w, got.clip.h].join(',') + ', and the record says ' + [ex.clip.x, ex.clip.y, ex.clip.w, ex.clip.h].join(','));
       else if (!!got.valued !== !!ex.valued || (got.kind === 'formula') !== ex.formula) say(name + ' is drawn as ' + (got.kind === 'formula' ? (got.valued ? 'a formula\'s value' : 'a formula before its value') : 'a value') + ', and the record holds ' + (ex.formula ? (ex.valued ? 'a formula with its value' : 'a formula with no value') : 'a value'));
-      else { k.texts++; if (ex.formula && !ex.valued) k.unvalued++; if (ex.hashes) k.hashes = (k.hashes || 0) + 1; }
+      else { k.texts++; if (ex.formula && !ex.valued) k.unvalued++; if (ex.hashes) k.hashes = (k.hashes || 0) + 1; if (ex.coded) k.coded = (k.coded || 0) + 1; }
       delete texts[key];
     }
     for (key in texts) if (Object.prototype.hasOwnProperty.call(texts, key)) say('a text is drawn at ' + gqName(key) + ', ' + JSON.stringify(texts[key].text) + ', where the record holds none');
@@ -2975,7 +2980,7 @@
   function gridOwn() {
     var P = [], kf = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0 };
     var km = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0 };
-    var x = { pointer: 0, key: 0, edited: 0, waits: 0, edits: 0, followed: 0, lone: 0 }, module = 0;
+    var x = { pointer: 0, key: 0, edited: 0, waits: 0, edits: 0, followed: 0, lone: 0, codes: 0 }, module = 0;
     var fake = FAKE.create({}), taken = false;
     function cellCenter(host, r, c) {
       var g = host.vp.geometry(), rect = host.vp.box.getBoundingClientRect();
@@ -3032,11 +3037,29 @@
         before: function (f, host) { if (f === 3) host.vp.select('C5'); },
         after: function (f, host) { if (f === 12) { var sc = host.vp.scrolled(); host.vp.scrollTo(sc.top + 2, sc.left); } },
         offset: function (f) { return f > 12 ? 2 : 0; },
-        check: function (f, at, m, E) {
+        check: function (f, at, m, E, host) {
           if (f === 6) {
             var c2 = E.texts['2,3'], d2 = E.texts['2,4'];
             if (!c2 || c2.text !== '7' || !E.fills['2,3'] || E.fills['2,3'].src !== 'look' || !d2 || d2.text !== '6' || !d2.valued) P.push(at + ': the edits of frame 6, C2 the value 7 through its look and D2 the formula =Clock!$B$1, are not drawn as 7 and 6 in their frame');
             else x.edits = 1;
+          }
+          // row 16, numbers under codes of Excel's (KERNEL.47, CART.12): each cell the text its record's text row
+          // holds, aligned by its value, the bar's value the record's spelling; a code under a look of General and
+          // G16 at frame 4, the value 1, through their looks with no text row; G16 under its code again at frame 5
+          if (f === 1 || f === 4 || f === 5) {
+            var want16 = { 2: ['1.50', 'right'], 3: ['2.68', 'right'], 4: ['1,234.50', 'right'], 5: ['(3.00)', 'right'], 6: ['25%', 'right'], 9: ['text: quanta', 'left'], 10: ['3', 'right'], 11: ['◆', 'right'] };
+            want16[7] = f === 1 ? ['0.25', 'right'] : (f === 4 ? ['1', 'right'] : ['1.25', 'right']);
+            var bad16 = [];
+            for (var c16 in want16) {
+              var t16 = E.texts['16,' + c16], coded16 = c16 !== '10' && !(c16 === '7' && f === 4);
+              if (!t16 || t16.text !== want16[c16][0] || t16.align !== want16[c16][1] || !!t16.coded !== coded16) bad16.push(VP.colName(+c16) + '16 ' + (t16 ? JSON.stringify(t16.text) + ' ' + t16.align + (t16.coded ? ' from a text row' : '') : 'undrawn') + ', not ' + JSON.stringify(want16[c16][0]) + ' ' + want16[c16][1] + (coded16 ? ' from a text row' : ''));
+            }
+            var h16 = E.texts['16,8'], b16 = host.vp.cell(16, 2), i16 = E.fills['16,9'], k16 = E.fills['16,11'];
+            if (!h16 || !h16.hashes || !h16.coded) bad16.push('H16, 1,234,567.89 wider than its column, is not as many # as fit');
+            if (b16.text !== '1.50' || b16.value !== '1.5') bad16.push('the viewport answers B16 as text ' + JSON.stringify(b16.text) + ' and value ' + JSON.stringify(b16.value) + ', not "1.50" and "1.5"');
+            if (!i16 || i16.src !== 'style' || !k16 || k16.src !== 'look') bad16.push('I16\'s fill by its style or K16\'s by its look is not drawn');
+            if (bad16.length) P.push(at + ': row 16, the codes: ' + bad16.join('; '));
+            else x.codes++;
           }
           if (f === 20) x.followed = 1;   // its scroll check held the person's two rows through the Camera's move
         },
@@ -3046,7 +3069,7 @@
     return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeTexts: kf.texts, fakeLooks: kf.looks, fakeUnvalued: kf.unvalued, fakeProbes: kf.probes, fakeKept: kf.kept, fakeCleared: kf.cleared, fakeValues: kf.values,
                          pointer: x.pointer, key: x.key, edited: x.edited, waits: x.waits, lone: x.lone, module: module, frames: km.frames, equal: km.equal, windows: km.windows, texts: km.texts, wraps: km.wraps, fills: km.fills, looks: km.looks, styles: km.styles,
                          columns: km.columns, unvalued: km.unvalued, hidden: km.hidden, probes: km.probes, kept: km.kept, followed: x.followed, edits: x.edits, cleared: km.cleared, hashes: km.hashes || 0, values: km.values,
-                         fakePatches: kf.patches || 0, patches: km.patches || 0, live: st.live, misfrees: st.misfrees }, problems: P };
+                         fakePatches: kf.patches || 0, patches: km.patches || 0, codes: x.codes, coded: km.coded || 0, live: st.live, misfrees: st.misfrees }, problems: P };
   }
   // ENGINE.16's half, a game's page's and Alonzo's alike: every grid cartridge the page holds, by its manifest,
   // on the engine's module, a short run with no edits, frame 0 and GAME_GRID_FRAMES more (frame 0 alone at rate
@@ -3071,25 +3094,29 @@
     return res;
   }
   // A values record read whole (ENGINE.8's second slice, KERNEL.37) by a viewport of its own: a formula known by
-  // its value alone, drawn as a formula's value through its look, its text not in the record; a text value; and
-  // a formula with no value yet, its style row alone, drawn empty in its style's fill. Held to the oracle's own
-  // reading, and each pinned by name, so that the two readers cannot agree on a wrong one. 1, or 0 and a problem.
+  // its value alone, drawn as a formula's value through its look, its text not in the record; a text value; a
+  // formula with no value yet, its style row alone, drawn empty in its style's fill; and since CART.12 a value
+  // under a code, drawn as the text its text row holds (KERNEL.47). Held to the oracle's own reading, and each
+  // pinned by name, so that the two readers cannot agree on a wrong one. 1, or 0 and a problem.
   function gqLone(P) {
     var stage = document.getElementById('stage'), box = document.createElement('div'), at = 'values read whole';
     box.style.cssText = 'width:640px;height:200px;position:relative;background:#fff;';
     stage.appendChild(box);
     var vp = new VP(box), measure = document.createElement('canvas').getContext('2d'), k = { texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0 };
     try {
-      var rec = '(sheet "Lone" visible)\n(window "Lone" "A1:C2")\n(extent "Lone" "A1:C1")\n(gridlines "Lone" on)\n(format 0 none general nowrap)\n(format 1 "AA00AA" general nowrap)\n(format 2 "00AA00" general nowrap)\n' +
-                '(look "Lone" 7 1)\n(value "Lone" "A1" 7)\n(value "Lone" "B1" "x")\n(style "Lone" "C1" 2)\n';
-      vp.load(rec);
-      var m = gqRead(rec), E = gqExpect(m, gqLayout(m, vp.geometry()), measure), a1 = E.texts['1,1'], b1 = E.texts['1,2'], c1 = E.fills['1,3'];
+      var rec = '(sheet "Lone" visible)\n(window "Lone" "A1:D2")\n(extent "Lone" "A1:D1")\n(gridlines "Lone" on)\n(format 0 none general nowrap)\n(format 1 "AA00AA" general nowrap)\n(format 2 "00AA00" general nowrap)\n(format 3 none "0.00" nowrap)\n' +
+                '(look "Lone" 7 1)\n(value "Lone" "A1" 7)\n(value "Lone" "B1" "x")\n(style "Lone" "C1" 2)\n(value "Lone" "D1" 1.5)\n(text "Lone" "D1" "1.50")\n(style "Lone" "D1" 3)\n';
+      var counts = vp.load(rec);
+      var m = gqRead(rec), E = gqExpect(m, gqLayout(m, vp.geometry()), measure), a1 = E.texts['1,1'], b1 = E.texts['1,2'], c1 = E.fills['1,3'], d1 = E.texts['1,4'];
       if (!a1 || a1.text !== '7' || !a1.valued || !a1.formula || !E.fills['1,1'] || E.fills['1,1'].src !== 'look') { P.push(at + ': A1, a formula known by its value 7, is not read as a formula\'s value through the look of 7'); return 0; }
       if (!b1 || b1.text !== 'x' || !b1.valued || !b1.formula) { P.push(at + ': B1, a formula known by its value "x", is not read as a formula\'s value'); return 0; }
       if (!c1 || c1.src !== 'style' || E.texts['1,3']) { P.push(at + ': C1, a formula with no value yet, is not read as an empty cell in its style'); return 0; }
+      // a formula known by its value under a code (KERNEL.47, CART.12): its text row the text drawn, on the right
+      if (!d1 || d1.text !== '1.50' || !d1.coded || !d1.valued || !d1.formula || d1.align !== 'right') { P.push(at + ': D1, a formula known by its value 1.5 under the code 0.00, is not read as the text 1.50 on the right'); return 0; }
       if (!gqCompare(E, vp.draws(), at, P, k)) return 0;
-      var cell = vp.cell(1, 1);
+      var cell = vp.cell(1, 1), d = vp.cell(1, 4);
       if (cell.kind !== 'formula' || !cell.valued || cell.formula !== '' || cell.text !== '7') { P.push(at + ': the viewport answers A1 as ' + JSON.stringify(cell) + ', where it is a formula with the value 7 and no text in the record'); return 0; }
+      if (d.text !== '1.50' || d.value !== '1.5' || d.vkind !== 'number' || counts.texts !== 1 || counts.unknown || counts.malformed) { P.push(at + ': the viewport answers D1 as ' + JSON.stringify(d) + ' and counts ' + JSON.stringify(counts) + ', where it draws 1.50 for the value 1.5 from one text row, every row known'); return 0; }
       return 1;
     } finally { vp.destroy(); stage.removeChild(box); }
   }
