@@ -21,7 +21,7 @@ Frazaro's standing decisions that cross the road are cited by their own numbers 
 | Family | What it holds | Next free |
 |---|---|---|
 | `SPEC` | the specification: the device sheets and the four calls, the page that is the product | `SPEC.5` |
-| `ENGINE` | the loop, the devices, the renderer, the frame path, the floors, the accelerators | `ENGINE.26` |
+| `ENGINE` | the loop, the devices, the renderer, the frame path, the floors, the accelerators | `ENGINE.27` |
 | `KIT` | the kit: the library a cartridge's source includes, its verbs, pictures and modules, template macros neither the pass nor the engine knows by name (since 2026-10-11) | `KIT.5` |
 | `CART` | the cartridges: the benchmark, the games, each a fixture here or a repository of its own | `CART.15` |
 | `REPO` | the repository itself: license, governance, checks, CI, the contributor's path, the counts, the releases | `REPO.7` |

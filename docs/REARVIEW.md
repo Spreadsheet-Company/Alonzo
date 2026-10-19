@@ -37,6 +37,7 @@
 - ✅ **`ENGINE.24` — the keys in their places: the game's own keys said in the drawer, a key a game reads as the last one pressed said in the list, and a person's binding held on one sheet.** *Minted, scoped and built 2026-10-16 at the owner's word, from `ENGINE.23`'s close; owner-tested and closed the same day.* The drawer's note names the loaded game's own keys, player by player as its Keys sheet binds them at the frame, the four arrows as one, and says when the game reads the last key pressed, found in its formulas' references to `Input!B17` and `B18`; the list says a plain binding shadows a key such a game reads; and a binding may hold on one sheet, `(bind "P" drawer (on "Portfolio"))`, on the Screen or in the drawer's sheets while it shows and before a binding of the same key on none, so that each tab has keys of its own, the list weighing the game's keys of the moment. In the page alone: no change to the host, the viewport, the engine or `SPEC.md`. *Oracle, met:* the loop oracle's `keys` case, its `sheets`, `last` and `game` counters, mutants DC to DF; probes of trusted keys over Alonzo's page in Chrome, Edge and Opera and over Buffet's in Chrome; the owner's hand test. *Found:* Kairos binds the kit's ten default keys and reads three. (more: the full entry under THE ITEMS, SCOPED)
 - ✅ **`ENGINE.25` — a cartridge's own commands: a Commands sheet, a row a command, listed in the palette beside the page's own, run by its name or by a key like any other command, and read by the game in the Input sheet's twentieth row, the page's version 5.** *Minted, scoped and approved 2026-10-17 at the owner's word; built in two slices, each owner-tested and committed, and closed the same day.* A `(spec 5)` cartridge declares its commands in its Commands sheet, a row a command, its name, its words, whether it holds now and its key, rows 2 to 101, the names checked at load (`cart-command-invalid`). A command run reaches the game as its name in `Input!B20` for one frame, sixteen waiting one a frame and a step a command at rate 0, recorded in the replay as a button's press is and refused while a replay plays; its own key is taken on the Screen while it holds, with no Ctrl, Cmd or Alt. The page names it `<cartridge>.<command>`: the palette lists the loaded game's commands while they hold; a person binds one in the keymap like any other, on one sheet too, or runs it from a command of their own, a binding holding while its cartridge is loaded and the command holds and passing its key on otherwise; and the list and the drawer's note say its keys, a person's own commands and the game's listed first in the palette and in the list, at the owner's word at the hand test. Version 4 kept whole. *Oracle, met:* the loop oracle's `commands` case, its host half and its page half, on Alonzo's page and a game's, mutants DG to DT; the engine's tests; every describe golden and replay byte for byte; `check_cartridge.ps1`'s forty mutants; probes of trusted keys in Chrome, Edge and Opera; Buffet's page built over the tree; the owner's hand tests. *Found:* the crate's public items, semver-breaking (0.2.0 or 0.1.7, the owner's call at the release); the module 2,254 bytes past the predicted kilobyte; the `sound` case's watchdog under load; a key passed on reaches the browser too. (more: the full entry under THE ITEMS, SCOPED)
 - ✅ **`ENGINE.6` — the accelerators, each behind the reference.** *Opened by `CART.1`'s measurement 2026-10-09, assessed 2026-10-16, superseded and closed 2026-10-17 at the owner's word, its last question, the release profile, answered at the pin to `vla-lang` 0.10.0.* Its three accelerators were each found landed or ruled out: the shared-formula vectorized path is the language's (`KERNEL.20`'s slices, `KERNEL.26` to `KERNEL.28`, `KERNEL.43`, `KERNEL.44` and `KERNEL.31`); dirty regions are stepped in the language (`KERNEL.20`, `KERNEL.35` and `KERNEL.36`, with `KERNEL.45` open there) and drawn here (`ENGINE.17`, `ENGINE.19` and `ENGINE.20`, over `KERNEL.37` and `KERNEL.42`); and HashLife's content-addressed memoization falls under the owner's ruling at `KERNEL.20`'s close, content addressing needing a purity every function declares, finding little on the fixtures and shaped to a game. The question `CART.1`'s decision 10 left it, opt-level `"s"` against 3, is answered 3 at the owner's word ("Why not reap the performance benefits of opt-level 3 now so as to snapshot the actual baseline of the current codebase?"): the browser's frames and loads about a tenth faster for a module 19% larger, measured over 0.9.4, over `KERNEL.43` and over 0.10.0, and the frame floors' twelfth baseline measured at it. *Oracle, met:* each accelerator held to the naive evaluation's answers by the language's own tests, every committed replay here bit for bit over each pin; the twelfth baseline. (more: `ENGINE.1`'s record of the pin to 0.10.0, under THE ITEMS, SCOPED)
+- ✅ **`ENGINE.26` — a column's width a person drags, kept a sheet: the viewport's widths keyed by the sheet and the column, as a spreadsheet keeps them.** *Minted, scoped and built 2026-10-19 at the owner's word, owner-tested and closed the same day.* From Buffet's `PLATE.1` and `POT.11` hand tests, where a drag of column D on one view widened D on every view: `web/viewport.js` kept a dragged width in one map keyed by the column's letters alone. Each sheet now keeps its own widths, found by its name compared without case. Every load keeps them, with or without `keep`, and `clear()` alone forgets them, so a Load does and Apply the source does not; `fresh(name)` lays the named sheet's own. A drag belongs to the sheet it was pressed on: it raises `columnresize` only when it moved, with the event's shape unchanged, and `scroll` when the columns in view change, so the host views what a narrower column brings in at rate 0. `columnWidth` and `columnWidths` take an optional sheet; `AlonzoViewport.version` 3. No change to the host, the engine or `SPEC.md`. *Oracle, met:* the render oracle's `sheets_other` and `sheets_back` (fifteen cases, five mutants), and the loop oracle's twenty-ninth case, `widths`, on both pages, its drags made as a person makes them (one hundred and forty-nine mutant pages, EM to ES among them); the owner's hand test on Buffet's views. Rows, which have no divider at all, are `ENGINE.27`'s. (more: under THE ITEMS, SCOPED)
 
 ## 🧰 THE KIT
 
@@ -7453,3 +7454,127 @@ What landed:
 - *A save of the board, as the records stand, is now 521 MB*, the Field's longer rule 346 MB of it (`ENGINE.5`'s).
 - *The act case after the first hand test's region fix*, the owner's `?blit=1` in fullscreen, read a p95 of 1.3 ms where the sixth baseline read 1.1, its region now the ~120 columns the screen shows; transcribed, not pasted.
 - *The native cascade read 153.6 ms against the fourteenth's 140.7*, re-based with the fixture; the wasm cascade read 181.8 against 187.6.
+
+## `ENGINE.26` — a column's width a person drags, kept a sheet: the viewport's widths keyed by the sheet and the column, as a spreadsheet keeps them
+
+*Minted, scoped and built 2026-10-19 at the owner's word, in one sitting: "Mint, scope and implement ENGINE.26 in Alonzo: a column's width a person drags, kept a sheet." The prompt named what to settle: what `load(text, {keep: true})`, `showSheet`, a Load and Apply the source do with the widths, and whether the `columnresize` event or any width API changes shape, all held in the viewport's oracle and the loop oracle. Each decision below stands as recommended and was built; approving, amending or striking any of them is the owner's call at the hand test. The tree was clean at `640c0a3`, CART.12's close, two commits ahead of `origin`.*
+
+**The finding.**
+- Buffet's `PLATE.1` hand test (2026-10-18) found column D drawn about 24 characters wide on every view shown, the Portfolio's, Trading's and the Ledger's alike, where their records give 3, 12 and 10.
+- `POT.11`'s hand test (2026-10-19) found it again. The owner: "Why does changing the column width on one sheet change the same column on every other sheet? I thought that was already minted and addressed in an Alonzo item where each tab becomes its own independent sheet?"
+- `ENGINE.18` had given each view the widths its own record names, but the width a person drags was still one map for every sheet.
+
+**Substrate, verified.** Read in the code at `640c0a3`.
+- *The map.*
+  - `web/viewport.js` kept a dragged width in `state.widths`, keyed by the column's letters alone (`_mouseMove`).
+  - `columnWidthCss` laid that width over every sheet's record, before the record's own width.
+  - `columnWidth(letters, px)` and `columnWidths()` wrote and read the same map.
+  - A sheet's layout and its bound were already its own, keyed by its name lowercased (`CART.12`'s hand test).
+- *Every load kept the map, and so did `clear()`.*
+  - A load, with or without `keep`, reset the scroll and the selection of a sheet newly shown (`_resetView`) and touched no width.
+  - `clear()` forgot records, layouts and bounds but kept the widths. The host calls it whenever it unloads a grid (`_clear`): at a Load, and at a replay's Play.
+  - So a width dragged on Buffet's Screen held on the next cartridge's Screen, and every grid's Clock took it too.
+- *The host never reads a width.*
+  - `showSheet` estimates a sheet's region from `A1` through `vp.fresh(name)`, which laid the one map. It views again when the region drawn leaves that estimate.
+  - Nothing in `web/host.js` names a width, and the host answers no `columnresize`.
+- *Apply the source carries no width.*
+  - `compareCartridges` refuses any row that is not a cell or formula row, `(column ...)` among them: "a row that is no cell or formula row, which a write cannot carry".
+  - So Apply never moves a record's width and never clears the viewport. Load is the one act that carries a change to a `column` row.
+- *The event.*
+  - `columnresize` already named the sheet shown, `{ sheet, column, width }`.
+  - A press on a divider released without a move raised it with `width` undefined.
+  - A drag raised nothing else. At a rate, the next frame views the columns a narrower column brings into view. At rate 0 nothing viewed them until the next act, so they were drawn empty. A resize of the box, by contrast, has raised `scroll` since `CART.12`'s hand test.
+- *Who calls the API.* The render oracle's `sparse_resized` and `sparse_hashes`, each `columnWidth('A', ...)` on its one sheet. Nothing in the player, Buffet's page or Frazaro, which holds no copy of the file.
+- *The frozen panes and the marks* are one for every sheet too. Nothing in the player sets them; only `?viewport=1`'s panel and the oracles do.
+
+**The decisions.**
+1. **The widths are a sheet's.**
+   - The viewport keeps the widths a person drags, and those a host sets, in one map per sheet: a column's letters to CSS pixels.
+   - A sheet's map is found by its name compared without case, as its layout and its bound are found.
+   - A sheet is drawn at its own widths and never another sheet's.
+   - Each viewport keeps its own maps: the host's and the drawer's viewer alike.
+
+   *Alternatives:* one map keyed `sheet!letters`, which is the same thing in one key; or a person's drag written into the cartridge's `column` row as an edit the replay logs (`AD-6`, `AD-7`). `ENGINE.21` keeps that question open for a fit; a drag was never such an edit.
+2. **Every load keeps the widths; `clear()` alone forgets them.**
+   - *`load(text, { keep: true })`*, a frame of the sheet shown: kept.
+   - *A load without `keep`*, as the Screen's tab makes: kept too, so a person's Screen widths survive a trip to another tab.
+   - *`showSheet`*: the sheet shown at its own widths. The region it is viewed through before it shows, `fresh(name)`, is laid at that sheet's widths and never the sheet shown's, so a Camera's show of a sheet the person narrowed views every column it will draw.
+   - *A Load*, and a replay's Play: every width forgotten, through `clear()`, which also ends a drag in progress. Two reasons:
+     - Load starts the cartridge from its text, and it is the one act that carries a change to a `column` row. A width kept across it would hide the change Load exists to carry.
+     - Another cartridge's sheet of the same name, as every grid's Screen and Clock are, never inherits a width.
+   - *Apply the source*: kept. It writes cell and formula rows into the running grid, refuses a `column` row, and clears nothing.
+
+   *Alternatives:* widths kept across a Load of the same cartridge, matched by its name, which would mask the width the author just changed; or forgotten at every load without `keep`, which would drop the Screen's at its own tab.
+3. **A drag belongs to the sheet it was pressed on.**
+   - Its width is that sheet's, even when another sheet comes to show during it, as a Camera shows one at a rate. Nothing of the sheet shown moves then.
+   - `columnresize` names that sheet and the width left there, at the release, and only when the drag moved.
+   - The event's shape is unchanged, `{ sheet, column, width }`.
+
+   *Alternative:* the drag ended at a show, more lines for a case no person meets twice.
+4. **A drag that changes the columns in view raises `scroll`.**
+   - A narrower column brings into view columns no record named, and a wider one takes columns out, as a resize of the box does.
+   - The host and the drawer's viewer already answer `scroll` with `refreshSheet(vp, true)`, which views only when the region has left the record's window.
+   - So neither the host nor any page changes.
+
+   *Alternative:* the host answering `columnresize`, at the release alone, which every page would have to wire again.
+5. **The API: `columnWidth(letters, px, sheet)` and `columnWidths(sheet)`, the sheet shown by default; `AlonzoViewport.version` 3.**
+   - The two-argument calls keep their meaning on the sheet shown, so the render oracle's calls stand unchanged.
+   - The third argument names any sheet, compared without case, a sheet with no record yet among them.
+   - With no sheet shown and none named, nothing is set.
+   - The version rises because a width set no longer holds on every sheet.
+
+   *Alternatives:* the sheet shown alone, so that a host shows a sheet, raising its events, to set or read its widths; or `columnWidth(sheet, letters, px)`, which breaks every caller.
+6. **No change to the host, the double, the engine or `SPEC.md`.** A person's width is the viewport's own state (`SD-23`), never the page's. The module, `describe` and every replay are untouched.
+7. **The oracles.**
+   - The render oracle's fourteenth and fifteenth cases, `sheets_other` and `sheets_back`, over the fixtures' program, and a fifth mutant, E: the widths one map again.
+   - The loop oracle's twenty-ninth case, `widths`, on both pages. It runs over an inline card written to version 4 at rate 0, with every drag made as a person makes it, and seven mutant pages, EM to ES.
+8. **One commit, at the owner's word; a release is the owner's call.** Buffet takes the change when its pin moves to the release that carries it.
+
+**Not this item, named.**
+- The frozen panes and the marks, still one for every sheet, which nothing in the player sets. An item that gives a person a freeze keys it by sheet, as this one keys the widths.
+- A sheet's scroll and selection. A sheet shown opens at `A1` (`ENGINE.14`, `ENGINE.18`), where a spreadsheet keeps each sheet's.
+- A person's widths kept past the grid, in a save (`ENGINE.5`'s) or in the browser's storage.
+- A row's height dragged.
+- `ENGINE.21`'s fit, which takes the same map: a fit is a width the sheet keeps.
+- Frazaro's copy of the file, which takes this change when the copy is made.
+
+**What landed.**
+
+| File | What changed |
+|---|---|
+| `web/viewport.js` | `widths`, one map a sheet, and `_widthsOf`; `columnWidthCss` and the geometry laying the sheet's own; the drag's sheet, its `moved` flag, its `scroll` and its event; `clear()` forgetting the widths and the drag; `fresh(name)` at the named sheet's widths; `columnWidth(letters, px, sheet)` and `columnWidths(sheet)`; the version 3 |
+| `web/index.template.html` | the render oracle's `others` step and two cases; `gqLayout` and `heldSheetDrawn` taking the widths the oracle's own drags left; the widths card and the case `widths`, on a game's page too; `?viewport=1`'s line naming the sheet resized |
+| `tools/check_render_oracle.ps1` | fifteen cases, two floors, mutant E |
+| `tools/check_host_loop.ps1` | twenty-nine cases, fourteen on a game's page, `widths`'s floors, mutants EM to ES, one hundred and forty-nine pages |
+| `tools/run_checks.ps1` | the two controls' lines |
+| `web/README.md`, `docs/ROADMAP.md`, this record | the record |
+
+Verified (*measurement*, headless Chrome 155 on Windows):
+- `check_render_oracle.ps1`: clean at both ratios, fifteen cases, the thirteen's counts unchanged. `sheets_other` and `sheets_back` draw 7 texts each, with 35 and 36 lines and headers.
+  - Its control: the real page clean and the five mutants failing for their own reasons. E fails at `sheets_other`: "the sheet Output keeps the widths {"B":300}, where its own are {}".
+- `check_host_loop.ps1`: clean at both ratios, twenty-nine cases, the twenty-eight's counts unchanged.
+  - `widths` counts the same at both ratios: opened 1, clicked 1, dragged 4, held 13, kept 1, own 2, rest 1, fresh 1, screen 1, applied 1, pressedOn 1, forgotten 1; 7,859 texts, 98 of them #s.
+  - The game's page, Kairos alone: `loop ok cases=14 dpr=1; 15 of Alonzo's own not on this page`.
+  - A page holding Buffet's cartridge alone, at Buffet's `11f6803`, ran `widths` and `views` clean.
+- Each of EM to ES, run once before the control was written, failed at the line its decision holds. EM, the viewport as it stood, fails at the first frame: "the viewport keeps the Ledger's widths as {"D":321}, where its own are {}".
+- `check_host_loop.ps1 -Control`: the real page and the game's page clean, and all one hundred and forty-nine mutant pages failing for their own reasons, EM to ES among them, in 451.8 s.
+- `check_web_offline.ps1`: clean. `run_checks.ps1`: 13 of 13, in 60.9 s. No Rust changed.
+
+**Found while building.**
+- `web/README.md`'s `load` line said a load with `keep` kept "the scroll, the selection, the widths, the frozen panes and the marks". That read as if a load without `keep` dropped the last three, and none did. The line now says what each load keeps.
+- `run_checks.ps1` still described the render oracle's control as three mutant pages, though `ENGINE.14` had made it four. It now says five.
+- A run of `run_checks.ps1` made beside the loop's control failed the `sound` case alone: "the render had not landed after 45 s of the page's clock". The case renders its audio offline in real time, and two browser-heavy runs at once starve it. Run alone, the suite passed whole.
+
+*Built 2026-10-19.*
+
+*Owner-tested 2026-10-19 in Chrome; the owner reported "Hand tests pass".*
+- The steps covered: Buffet at `11f6803` dragged on the Portfolio, Trading and the Ledger, each keeping its own D; and Load.
+- `?loop=1` in the owner's own Chrome 155 at a ratio of 1.5: `loop ok cases=29 dpr=1.5`. `widths` counted exactly as headless: opened 1, clicked 1, dragged 4, held 13, kept 1, own 2, rest 1, fresh 1, screen 1, applied 1, pressedOn 1, forgotten 1, 7,859 texts and 98 #s. `sound` passed there too (renderMs 18).
+
+*Found at the hand test, the owner's; named, not minted:* "I just realized rows are not resizable at all, so rows will need their own pass."
+- The viewport reads a `row` row's height and hidden state and lays rows by them (since `ENGINE.8`), but its row header has no divider. `_hit` answers a press there as a row to select, and only the column header has a `boundary`.
+- `web/README.md`'s *Not in this version* gives a stale reason for it: "row resizing (the record has no row-height row)". The record has had that row since `ENGINE.8`.
+- `ENGINE.21`'s row half, a double-click on "a row's lower divider", presupposes the divider such a pass would add.
+- The column drag has no key either: `KERNEL.5` built it before the keyboard-first rule. A pass that adds the row drag, a new act, owes keys or palette commands for both, a column's width and a row's height.
+
+*Closed at the owner's word, the same day,* answering "Commit ENGINE.26 now?" with "Commit now": committed at the close, the line moved from the roadmap to the ledger; not pushed. In the same answer the owner had the rows pass minted as `ENGINE.27`, in a commit of its own.

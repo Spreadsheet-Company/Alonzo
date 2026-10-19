@@ -241,7 +241,19 @@ on a host of one step call a tick, the command spill run by its key on the viewp
 at rate 0 and its command released, the run's replay written at the acts' frames
 alone and played on a fresh host to every frame, the card under (settle 3) unsettled
 and said, the directive refused at version 5 and at a rate, and a version 5 card's
-command key taken at rate 0). It
+command key taken at rate 0); and since ENGINE.26 widths (a column's width a person
+drags, kept a sheet: over a card of the page's own written to version 4 at rate 0
+and the engine's module, a Desk and a Ledger each with its own column D and a
+visible Screen, every drag made as a person makes it on a divider in the header;
+a press that moves nothing raising nothing; each drag's width its sheet's alone
+and its event naming that sheet; every sheet drawn cell for cell at the widths
+the oracle's own drags left on it and no other sheet's, at the frame an edit
+steps, at a person's tabs and at a sheet shown as a Camera shows one; a drag
+that brings columns into view at rate 0 viewed at once; the region of a sheet
+not shown estimated at its own widths; the Screen's width kept when its tab
+loads its record without keep; every width kept by the source applied; a drag
+pressed on one sheet while another comes to show the first one's; and every
+width forgotten at a Load). It
 prints one line a case into
 <pre id="loop"> and a last line, 'loop ok cases=N', once the last case has
 answered. This check runs the
@@ -265,10 +277,10 @@ builds a game's page, from a scratch folder holding Kairos alone, its
 cartridge, source, replay, golden and hand and the library its source
 includes, and runs its loop at a ratio of 1: abi, pass, replay with the
 hand, grid over an empty set, empty and, since ENGINE.17, ENGINE.18,
-ENGINE.19, ENGINE.7, ENGINE.23, ENGINE.25 and CART.12, still, views, changes,
-continue, palette, keys, commands and settle must be OK at their own floors, each of
+ENGINE.19, ENGINE.7, ENGINE.23, ENGINE.25, CART.12 and ENGINE.26, still, views, changes,
+continue, palette, keys, commands, settle and widths must be OK at their own floors, each of
 Alonzo's fifteen other cases must say it is not on this page, and the last line must
-count thirteen cases.
+count fourteen cases.
 
 THE BROWSER, as tools/check_render_oracle.ps1 finds and launches it:
 -Browser, else $env:ALONZO_BROWSER, else Google Chrome, Microsoft Edge or
@@ -285,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds one hundred and forty-two mutant pages through tools/build_web.ps1 and runs
+-Control builds one hundred and forty-nine mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -475,7 +487,14 @@ record's window are drawn empty; EI, a viewport whose resize raises no event, so
 grows it shows columns no record named; EJ, a viewport that bounds no sheet, so that the Field lays slack past its
 extent; EK, one whose tab chosen leaves the keys where they were; each of which the grid case's game half must fail
 by name over Superposition's Field, at its load or its moves; and EL, Superposition's hand without the box's rule,
-which the replay case must fail by name at frame 33, where the owner's box on V21 opens. CART.12 moved one anchor of ENGINE.25's, the twentieth row's write at rate 0
+which the replay case must fail by name at frame 33, where the owner's box on V21 opens. And since ENGINE.26 seven more,
+when the real page holds the module, each a viewport the widths case must fail by name: EM, its widths one map for
+every sheet again, a column's letters alone, which leaves the Desk's D on the Ledger at the first frame; EN, one whose
+clear keeps the widths, so that a Load keeps them; EO, one that estimates a sheet's region at the sheet shown's widths;
+EP, one whose drag raises no scroll, so that the columns a narrower column brings into view at rate 0 stay unviewed;
+EQ, one whose drag sets the width of the sheet shown, not the one it was pressed on; ER, one that raises columnresize
+at a press that moved nothing; and ES, one whose load without keep forgets its sheet's widths, so that the Screen's
+tab drops the Screen's. CART.12 moved one anchor of ENGINE.25's, the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
 pass first.
 
@@ -780,6 +799,17 @@ $settleDoubleFloors = @{ fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased
 # each presses, a game's command's while it is live and passing on while not; a person's command running a game's twice;
 # 5 of the list's words beside a game's command key; and 5 of the drawer's notes.
 $commandsPageFloors = @{ named = 6; lines = 4; read = 2; refusals = 4; found = 8; steps = 1; shadow = 5; note = 5; order = 5 }
+# 2026-10-19, ENGINE.26: the twenty-eight cases' counts unchanged, and a twenty-ninth, widths, over the module on both
+# pages, its counts a function of its plan, the same at both ratios under headless Chrome 155 on Windows: the opening
+# on the Desk; a press on a divider that moved nothing raising nothing; 4 drags, each its sheet's own and its event
+# naming that sheet (the Desk's D, the Ledger's, the Screen's B, and one pressed on the Desk while the Ledger came to
+# show); 13 sheets held cell for cell at the oracle's own widths; the frame an edit steps keeping the Desk's; the
+# Ledger's tab and the Desk's each at its own D (2); the Ledger's narrowed D viewed at rate 0 at once; its region
+# estimated at its own widths and shown from the Desk; the Screen's B kept by its tab; every width kept by the source
+# applied; the drag pressed on the Desk; and every width forgotten at a Load. texts 7,859, 2,336 of them formulas at
+# frame 0, and 98 #s of the Desk's narrow D, each floor a margin below, a wider font drawing more #s, never fewer.
+$widthsFloors = @{ opened = 1; clicked = 1; dragged = 4; held = 13; kept = 1; own = 2; rest = 1; fresh = 1; screen = 1; applied = 1; pressedOn = 1; forgotten = 1;
+                   values = 7; texts = 7500; unvalued = 2000; hashes = 90 }
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
@@ -812,15 +842,16 @@ $floors = @(
     @{ Case = 'palette';  Min = $paletteFloors },
     @{ Case = 'keys';     Min = $keysFloors },
     @{ Case = 'commands'; Min = $commandsPageFloors; WithModule = $commandsFloors },
-    @{ Case = 'settle';   Min = $settleDoubleFloors; WithModule = $settleFloors }
+    @{ Case = 'settle';   Min = $settleDoubleFloors; WithModule = $settleFloors },
+    @{ Case = 'widths';   Min = @{}; WithModule = $widthsFloors }
 )
 $zero = @('live', 'misfrees', 'filled', 'alone')
-$expectedCases = 28
+$expectedCases = 29
 # ENGINE.16: a game's page, built on every run from a scratch folder holding Kairos alone, its cartridge, source,
-# replay, golden and hand and the library its source includes. Its loop runs the thirteen cases that need nothing
+# replay, golden and hand and the library its source includes. Its loop runs the fourteen cases that need nothing
 # of Alonzo's own files, over its own blocks, still since ENGINE.17, views since ENGINE.18, changes since
-# ENGINE.19, continue since ENGINE.7, palette and keys since ENGINE.23, commands since ENGINE.25 and settle since CART.12
-# among them, and each of the fifteen others says it is not on the page.
+# ENGINE.19, continue since ENGINE.7, palette and keys since ENGINE.23, commands since ENGINE.25, settle since CART.12
+# and widths since ENGINE.26 among them, and each of the fifteen others says it is not on the page.
 $gameFloors = @(
     @{ Case = 'abi';    Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
     @{ Case = 'pass';   Min = @{}; WithModule = @{ sources = 1; same = 1 } },
@@ -834,10 +865,11 @@ $gameFloors = @(
     @{ Case = 'palette'; Min = $paletteFloors },
     @{ Case = 'keys'; Min = $keysFloors },
     @{ Case = 'commands'; Min = $commandsPageFloors; WithModule = $commandsFloors },
-    @{ Case = 'settle'; Min = $settleDoubleFloors; WithModule = $settleFloors }
+    @{ Case = 'settle'; Min = $settleDoubleFloors; WithModule = $settleFloors },
+    @{ Case = 'widths'; Min = @{}; WithModule = $widthsFloors }
 )
 $gameAbsent = @('rate30', 'rate0', 'yield', 'slice', 'pace', 'memory', 'refusals', 'scale', 'engine', 'parity', 'plane', 'input', 'audio', 'sound', 'tabs')
-$gameCases = 13
+$gameCases = 14
 $gameFiles = @('kairos/kairos.vla', 'kairos/kairos.source.vla', 'kairos/kairos.replay.vla', 'kairos/kairos.golden.vla', 'kairos/kairos.hand.js', 'common.vla')
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
@@ -1941,6 +1973,47 @@ if ($Control) {
             if (-not ($stApplied -and $stFailed -ge 1)) { $settleOk = $false }
         }
         $settleNote = $settleNotes -join '; '
+        # EM to ES (ENGINE.26), when the real page holds the engine's module, the widths card being the module's: viewports,
+        # each failing the widths case by name. Its widths one map for every sheet again, a column's letters alone, as they
+        # were until Buffet's PLATE.1 and POT.11 hand tests; a clear that keeps them, so that a Load does; a sheet's region
+        # estimated at the sheet shown's widths; a drag that raises no scroll, so that at rate 0 the columns it brings into
+        # view stay unviewed; a drag that sets the sheet shown's width, not the one it was pressed on; a press that moved
+        # nothing raising columnresize; and a load without keep forgetting its sheet's widths, as the Screen's tab loads it.
+        $widthsMutants = @(
+            @{ L = 'em'; Name = 'the widths one map'; Anchor = '    return this.widths[key] || (this.widths[key] = {});'; With = "    return this.widths[''] || (this.widths[''] = {});"
+               Want = 'case widths.*widths frame 1: the viewport keeps the Ledger''s widths as \{"D":321\}, where its own are \{\}' },
+            @{ L = 'en'; Name = 'the widths kept by clear'; Anchor = '    this.widths = {}; this.drag = null;'; With = '    this.drag = null;'
+               Want = 'case widths.*widths, a Load: the viewport keeps the Desk''s widths as \{"D":361\}, where its own are \{\}' },
+            @{ L = 'eo'; Name = 'a region estimated at the sheet shown''s widths'; Anchor = '    while (x < w && c < MAX_COLUMNS) { c++; x += columnWidthCss(model, this._widthsOf(name), c, layout); }'
+               With = '    while (x < w && c < MAX_COLUMNS) { c++; x += columnWidthCss(model, this._widthsOf(this.active), c, layout); }'
+               Want = 'case widths.*widths, the Ledger shown from the Desk: the viewport estimates the Ledger''s region as [A-Z]+\d+:[A-Z]+\d+, where its own widths lay' },
+            @{ L = 'ep'; Name = 'a drag unsaid'; Anchor = "      if (now.window !== was) this._emit('scroll', now);"; With = '      // the drag unsaid, by the control'
+               Want = 'case widths.*widths, the Ledger''s D narrowed: the viewport shows Ledger![A-Z]+\d+:[A-Z]+\d+, past the record''s window' },
+            @{ L = 'eq'; Name = 'a drag the sheet shown''s'; Anchor = '      this._widthsOf(drag.sheet)[colName(drag.col)] = w;'; With = '      this._widthsOf(this.active)[colName(drag.col)] = w;'
+               Want = 'case widths.*widths, a drag pressed on the Desk: the drag raised columnresize \{"sheet":"Desk","column":"D","width":321\}, where \{"sheet":"Desk","column":"D","width":361\} is due' },
+            @{ L = 'er'; Name = 'a still press raised'; Anchor = "    if (drag.kind === 'resize' && drag.moved) {"; With = "    if (drag.kind === 'resize') {"
+               Want = 'case widths.*widths, a press on the Desk''s B divider that moved nothing: it raised columnresize' },
+            @{ L = 'es'; Name = 'a load without keep forgetting'; Anchor = '    var tabs = !keep || !this.records[name];'
+               With = "    var tabs = !keep || !this.records[name];`n    if (!keep) this.widths[String(name).toLowerCase()] = {};"
+               Want = 'case widths.*widths, the Screen''s tab again: the viewport keeps the Screen''s widths as \{\}, where its own are \{"B":114\}' }
+        )
+        $widthsNotes = New-Object System.Collections.Generic.List[string]
+        $widthsJudged = New-Object System.Collections.Generic.List[object]
+        $widthsOk = $true
+        foreach ($mu in $widthsMutants) {
+            if ($moduleReal -eq 0) { $widthsNotes.Add(("{0}: not applicable, the real page holding no engine module" -f $mu.Name)); continue }
+            if (([regex]::Matches($vpText, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in web/viewport.js exactly once"; exit 1 }
+            $mutW = $vpText.Replace($mu.Anchor, $mu.With)
+            $wApplied = $mutW -cne $vpText
+            $fileW = Join-Path $tmp ($mu.L + '.viewport.js'); [System.IO.File]::WriteAllText($fileW, $mutW, $utf8)
+            $rW = Invoke-Mutant (New-MutantPage $mu.L $template $hostJs '' '' $fileW) 'widths'
+            $wJudge = Test-Mutant $rW 'widths'
+            $wFailed = @($wJudge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
+            $widthsJudged.Add(@{ Name = $mu.Name; Problems = @($wJudge.Problems) })
+            $widthsNotes.Add(("{0} applied ({1}) and failed by name ({2})" -f $mu.Name, $wApplied, $wFailed))
+            if (-not ($wApplied -and $wFailed -ge 1)) { $widthsOk = $false }
+        }
+        $widthsNote = $widthsNotes -join '; '
         # mutant EH (CART.12's hand test, 2026-10-19; its second, the same day), when the real page holds the engine's
         # module: a host that shows a sheet without reading its columns whole first, so that its viewport lays a column
         # past the window at the default width, and the large board's columns of 21 pixels past the window are drawn
@@ -2024,9 +2097,9 @@ if ($Control) {
             if (-not ($gmApplied -and $gmFailed -ge 1)) { $gameOk = $false }
         }
         $gameNote = $gameNotes -join '; '
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and forty-two' } else { 'seventy-two applicable' }) + ' mutants for its own reason, each proving it applied')
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk) {
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and forty-nine' } else { 'seventy-two applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -2070,6 +2143,7 @@ if ($Control) {
         foreach ($cmj in $commandsJudged) { foreach ($p in @($cmj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $cmj.Name + ': ' + $p) } }
         foreach ($pgj in $pageJudged) { foreach ($p in @($pgj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $pgj.Name + ': ' + $p) } }
         foreach ($stj in $settleJudged) { foreach ($p in @($stj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $stj.Name + ': ' + $p) } }
+        foreach ($wj in $widthsJudged) { foreach ($p in @($wj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $wj.Name + ': ' + $p) } }
         foreach ($p in @($jG0.Problems) | Select-Object -First 3) { Write-Output ('  the game''s page: ' + $p) }
         foreach ($gj in $gameJudged) { foreach ($p in @($gj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $gj.Name + ': ' + $p) } }
         exit 1
@@ -2118,7 +2192,7 @@ try {
 }
 Write-Output ''
 if ($failed.Count -eq 0) {
-    Write-Output "=== CHECK: clean - every case OK at both ratios, every count at or above its floor, and the game's page's thirteen cases OK with Alonzo's fifteen said absent ==="
+    Write-Output "=== CHECK: clean - every case OK at both ratios, every count at or above its floor, and the game's page's fourteen cases OK with Alonzo's fifteen said absent ==="
     exit 0
 }
 Write-Output "=== CHECK: $($failed.Count) problem(s) ==="

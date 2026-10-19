@@ -269,8 +269,9 @@ cell draws with, which the cell shows in the value's place, aligned and
 matched to a look by the value, the value kept for the bar (Frazaro's
 `KERNEL.47`, read since `CART.12`): the viewport keeps a code and never
 applies one; an unknown row is counted, never refused. What the viewport owns is the state no program sees:
-the scroll, the selection, the widths a person dragged, the frozen panes and
-the marks a host asked for. The record is never written.
+the scroll, the selection, the widths a person dragged, each sheet's its own
+as a spreadsheet keeps them (`ENGINE.26`), the frozen panes and the marks a
+host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
@@ -636,7 +637,9 @@ page shows opened plainly and what Pages deploys.
 - `index.html?oracle=1` runs the render oracle and prints one line a case
   into `<pre id="oracle">`, which the check reads under a headless browser;
   since `ENGINE.14` each line counts its #s, and `sparse_hashes` narrows the
-  sparse record's column A until its three-digit numbers draw them.
+  sparse record's column A until its three-digit numbers draw them; since
+  `ENGINE.26`, `sheets_other` and `sheets_back` give other sheets of the
+  fixtures' program widths of their own and hold the Output at its own.
 - `index.html?bench=1` is the floors' instrument, the renderer benchmark of
   `KERNEL.3` over the viewport: the 10,000-line record at the normal window
   (40 rows by 15 columns) and at full screen, 120 steps of three rows and 20
@@ -691,7 +694,8 @@ vp.on('select', function (s) { /* s.text is 'B2:C3'; s.focus.sentence the row th
 ```
 
 `AlonzoViewport` is a global set by the script; `AlonzoViewport.version` is
-2, since `ENGINE.20`'s repaint. The options: `record`, a record's text to
+3, since `ENGINE.26` kept a dragged width for its sheet alone (2 since
+`ENGINE.20`'s repaint). The options: `record`, a record's text to
 load at once; `colors`, any of the defaults below; `showHidden`, whether
 hidden sheets' tabs show at first; `willReadFrequently`, a canvas the CPU
 rasterizes from the first paint, for a page that reads its pixels back
@@ -703,13 +707,13 @@ reads any text of forms into data, the host shim's one reader.
 
 | Method | What it does |
 |---|---|
-| `load(text, options)` | reads a record; its sheet becomes a tab, replacing an earlier record of that sheet; the record's `sheet` rows become the tab strip; returns the counts (`sheet`, `lines`, `cells`, `formulas`, `values`, `texts`, `styles`, `sentences`, `looks`, `rows`, `unknown`, `malformed`, `window`, `extent`, `readMs`). With `{ keep: true }` (`ENGINE.8`), a later frame of the sheet shown: the record replaces the last with the scroll, the selection, the widths, the frozen panes and the marks kept and no event raised, the tabs remade only when the sheet rows changed; the host draws every frame of a grid cartridge so, a still one excepted (`ENGINE.17`), and the player's sheets viewer its sheet |
+| `load(text, options)` | reads a record; its sheet becomes a tab, replacing an earlier record of that sheet; the record's `sheet` rows become the tab strip; returns the counts (`sheet`, `lines`, `cells`, `formulas`, `values`, `texts`, `styles`, `sentences`, `looks`, `rows`, `unknown`, `malformed`, `window`, `extent`, `readMs`). With `{ keep: true }` (`ENGINE.8`), a later frame of the sheet shown: the record replaces the last with the scroll and the selection kept and no event raised, the tabs remade only when the sheet rows changed; the host draws every frame of a grid cartridge so, a still one excepted (`ENGINE.17`), and the player's sheets viewer its sheet. Every load, kept or not, keeps every sheet's widths, which `clear()` alone forgets (`ENGINE.26`), and the frozen panes and the marks |
 | `patch(text)` | a window's changes laid on the model of their sheet (`ENGINE.19`), the text a view of the projection `changes` answers: each named cell's entry read again from its rows as `load` reads them, a cell put in or an empty one taken out, the model's counts and lines kept as a load of the patched record makes them, the model object, the scroll and the selection kept, and the sheet shown painted again: the named cells alone (`ENGINE.20`), each cell's band of its row with the span its text spills over and the span of a text on its left that spills into it, before the patch and after, painted again by the full paint's own steps under each band's clip, the rest of the canvas kept, wherever the canvas holds the model's full paint, unscrolled and unresized since, and the cells named are no more than a quarter of the cells in view; whole otherwise. Returns the counts as `load` does, with `patched` the cells named and `patchMs`; `false`, and nothing changed, for a whole answer, another window, a sheet it holds no record of, rows that are no cell's of the window, or a model holding a row its reader counted unknown or malformed |
 | `patches()` | the patches laid on its models since it was made: a host notes the count with each record it loads, so that a model a page patched is never taken for the host's (`ENGINE.19`) |
 | `repaints()` | the patches it painted by their cells alone since it was made, the others painted whole (`ENGINE.20`) |
-| `clear()` | forgets every record, every layout learned and every bound, and draws the grid empty: the host's grid unloaded (`ENGINE.8`) |
+| `clear()` | forgets every record, every layout learned, every bound and every sheet's widths, ends a drag in progress, and draws the grid empty: the host's grid unloaded (`ENGINE.8`), so that a Load starts every sheet at its cartridge's widths (`ENGINE.26`) |
 | `learn(text)` | reads a record of a sheet for its layout alone (`CART.12`'s hand test): its columns and rows with settings and its extent, inside its window, the cells and the model shown untouched; a column past the window a later record is viewed through is then laid as the sheet sets it and not at the default width. Returns `{ sheet, window, extent, columns }`, or null for a text that is no record of a sheet |
-| `fresh(name)` | the range a sheet shows from `A1` in the box, its columns as its layout lays them and its rows at the default height, inside a bound sheet's extent: the window a host views a sheet through before it shows it |
+| `fresh(name)` | the range a sheet shows from `A1` in the box, its columns as its layout and its own widths lay them, never the sheet shown's (`ENGINE.26`), and its rows at the default height, inside a bound sheet's extent: the window a host views a sheet through before it shows it |
 | `bound(name, on)` | whether a sheet is drawn to its extent and no further, its last row and column the grid's, no slack after them (version 6's `(bound "<sheet>")`): the host says so for each sheet its cartridge bounds |
 | `scrolled()` | the window the scrolled quadrant shows, `{ top, left, bottom, right, window }`: the host follows a Camera's move by it (`ENGINE.8`) |
 | `show(name)` | shows a sheet whose record is loaded (the name compared without case); false when none is |
@@ -720,7 +724,7 @@ reads any text of forms into data, the host shim's one reader.
 | `select(text)` | selects `B2`, `B2:C3`, `C:C`, `2:2`, or the sheet by its name; false for a text that is not a range |
 | `selection()` | the selection: `{ sheet, text, kind, range, focus }`, `kind` one of `cells`, `columns`, `rows`, `sheet`, `focus` the cell as `cell()` gives it |
 | `freeze(rows, cols)` / `frozen()` | freezes the top rows and the left columns; what is frozen |
-| `columnWidth(letters, px)` / `columnWidths()` | a column's width in CSS pixels, the host's over the record's; `null` puts the record's back; the overrides |
+| `columnWidth(letters, px, sheet)` / `columnWidths(sheet)` | a column's width in CSS pixels on a sheet, the host's over the record's, kept for that sheet alone as a person's drag is (`ENGINE.26`): the sheet shown, or the one named, compared without case, a sheet with no record yet among them; `null` puts the record's back; a sheet's widths, a copy. With no sheet shown and none named, nothing is set |
 | `mark(name, ranges, style)` / `unmark(name)` | a named highlight over ranges the host computed, `style` `{ fill, border }`; `unmark()` with no name clears all |
 | `cellAt(clientX, clientY)` | the cell under a point of the page, or null: over a header, the corner, a scrollbar or the tab strip (the last two since `ENGINE.14`, which the hit test had counted as cells) |
 | `cell(row, col)` | a cell: `{ row, col, address, kind, vkind, text, value, formula, valued, style, sentence }`, `kind` one of `cell`, `formula`, `empty`; `text` what the cell shows, a formula's value once its value row lands and its text before, the text a code draws where the record holds a `text` row (`CART.12`); `value` the value as the record spells it, empty for a formula with none yet; `formula` a formula's own text, the bar's, and `valued` whether a formula has its value |
@@ -734,8 +738,8 @@ reads any text of forms into data, the host shim's one reader.
 | Event | When, and what it carries |
 |---|---|
 | `select` | the selection changed by a click, a drag, a key, `select()`, or a sheet shown, which puts it at that sheet's A1: `{ sheet, text, kind, range, focus }` |
-| `scroll` | the window moved, by a scroll or, since `CART.12`'s hand test, a resize of the box, full screen's among them: `{ sheet, top, left, bottom, right, window }`, the rows and columns in view and their range text |
-| `columnresize` | a column's edge was dragged: `{ sheet, column, width }` in CSS pixels |
+| `scroll` | the window moved, by a scroll or, since `CART.12`'s hand test, a resize of the box, full screen's among them, or since `ENGINE.26` a column dragged narrower or wider, which brings columns into view or takes them out: `{ sheet, top, left, bottom, right, window }`, the rows and columns in view and their range text |
+| `columnresize` | a column's edge was dragged and moved, at the release: `{ sheet, column, width }` in CSS pixels, the sheet the drag was pressed on and the width it left there, that sheet's alone, even when another sheet came to show during the drag (`ENGINE.26`); a press on a divider that moves nothing raises nothing |
 | `sheet` | a tab was chosen or a record shown: `{ name, loaded, state }`; `loaded` false asks the host for that sheet's record, which the engine's host answers with `answer(viewport, event)` (`ENGINE.14`) |
 | `cellopen` | a cell was double-clicked or Enter pressed on it: `{ sheet, address, row, col, cell }`; the first game's chrome opens the pane at the sentence here |
 
@@ -869,10 +873,13 @@ viewport, not an Excel clone.
   twentieth row (`ENGINE.25`); and `settle`, an act settled at rate 0 over the
   double and over the page's own settle card, a press over a cell an act, the
   settle stepped and drawn, an act waiting for it and its replay rowless at
-  the settle's frames (`CART.12`). Each of
+  the settle's frames (`CART.12`); and `widths`, the page's own widths card,
+  columns dragged on a divider as a person drags them, each sheet drawn at
+  its own widths and no other sheet's, through the frames, the tabs, a sheet
+  a Camera shows, the source applied and a Load (`ENGINE.26`). Each of
   the fifteen others prints
   `case <name>: not on this page`, being proven in Alonzo's CI, and the
-  last line reads `loop ok cases=13 dpr=1; 15 of Alonzo's own not on this
+  last line reads `loop ok cases=14 dpr=1; 15 of Alonzo's own not on this
   page` at a ratio of 1. A replay with no hand is held to its golden alone, counted `alone`
   and said in a note under the case. Every other mode of the bench is
   Alonzo's own and says so on a game's page; `?frames=1` and `?blit=1` over

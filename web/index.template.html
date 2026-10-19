@@ -1807,7 +1807,7 @@
         status('No record for the sheet ' + e.name + ' in this program: a host would ask the door for one here.', true);
       });
       vp.on('columnresize', function (e) {
-        status('Column ' + e.column + ' resized to ' + e.width + ' px: the host\'s state, the record unchanged.');
+        status('Column ' + e.column + ' of ' + e.sheet + ' resized to ' + e.width + ' px: the viewport\'s state for that sheet alone, the record unchanged.');
       });
       vp.on('cellopen', function (e) {
         status('Open ' + e.address + ': ' + cellWords(e.cell) + '. The first game\'s chrome opens the pane at the sentence here (SD-28).');
@@ -2746,12 +2746,14 @@
   // truth, for a sheet the host read the columns of whole before it showed it (CART.12's hand test): the oracle's own
   // reading of them (gqTruth), which lays a column past the record's window as the sheet sets it, and a sheet the
   // cartridge bounds at its extent (version 6). The slack past the window is a screen's width of columns as they are
-  // laid, as the viewport's is.
-  function gqLayout(m, g, truth) {
+  // laid, as the viewport's is. widths, a sheet's columns a person dragged (ENGINE.26): their letters to the CSS pixels
+  // the oracle's own drags left them at, each over the record's width, and the sheet's alone.
+  function gqLayout(m, g, truth, widths) {
     var dpr = g.dpr, L = { dpr: dpr, W: g.canvasW, H: g.canvasH }, x = 0, c, r;
     L.rowH = Math.round(GQ.row * dpr); L.headH = L.rowH; L.pad = Math.round(GQ.pad * dpr); L.lineH = Math.round(GQ.font * GQ.lineHeight * dpr);
     L.font = Math.round(GQ.font * dpr) + 'px system-ui, "Segoe UI", sans-serif';
     function css(cc) {
+      if (widths && Object.prototype.hasOwnProperty.call(widths, VP.colName(cc))) return widths[VP.colName(cc)];
       var col = m.columns[cc];
       if (!col && truth && m.window && (cc < m.window.left || cc > m.window.right)) col = truth.columns[cc] || null;
       return !col ? GQ.column : (col.hidden ? 0 : (col.width !== null ? gqColumnPixels(col.width) : GQ.column));
@@ -2903,7 +2905,8 @@
     var t = gqRead(r.text);
     return { columns: t.columns, extent: t.extent || null, bound: !!bound };
   }
-  function heldSheetDrawn(host, D, h, f, at, measure, P, k) {
+  // widths: the sheet's columns a person dragged, as the oracle's own drags left them (ENGINE.26), none when not given.
+  function heldSheetDrawn(host, D, h, f, at, measure, P, k, widths) {
     var vp = host.vp, sh = vp.sheet(), model = vp.model(), wt = model ? model.windowText : '';
     if (!model || !wt) { P.push(at + ': the viewport holds no record of ' + (sh || 'any sheet')); return null; }
     var G = D.call('alonzo_view', [h], ['grid', sh, wt]).text, V = D.call('alonzo_view', [h], ['values', sh, wt]).text;
@@ -2925,7 +2928,7 @@
       P.push(at + ': the bound sheet ' + sh + ' lays ' + gb.cols + ' columns and ' + gb.rows + ' rows, where its extent ' + (m.extent ? VP.rangeText(m.extent) + ' is ' + m.extent.right + ' and ' + m.extent.bottom : 'is not in its record') + ': a bound sheet is its extent and no more (version 6)');
       return null;
     }
-    var E = gqExpect(m, gqLayout(m, gb, gqTruth(D, h, sh, host._bounded(sh))), measure);
+    var E = gqExpect(m, gqLayout(m, gb, gqTruth(D, h, sh, host._bounded(sh)), widths), measure);
     if (!gqCompare(E, vp.draws(), at, P, k)) return null;
     if (computed) k.values++;
     return due;
@@ -6278,6 +6281,165 @@
       else P.push('settle, version 5 at rate 0: N on the Desk was ' + (ev.defaultPrevented ? 'taken' : 'passed on') + ', leaving frame ' + h5.counters().frame + ' and the Ledger noting ' + noted + ', where note runs once by its key at rate 0, at frame 1');
     } finally { h5.destroy(); box.parentNode.removeChild(box); }
   }
+  // ---- ENGINE.26: a column's width a person drags, kept a sheet ----
+  // The widths card, the page's own as the views card is, written here and never a file, at version 4 and rate 0, where
+  // every act is a step and no frame views what a drag brings into view: a Desk and a Ledger, each with a column D of its
+  // own, the Desk's 3 characters wide and the Ledger's 30, and a visible Screen; formulas across every column in view on
+  // each, so that a column laid at another sheet's width moves cells the oracle holds, and on the Desk a number too wide
+  // for its D. Buffet's views, the Portfolio's D 3 wide and Trading's 12, are its shape (PLATE.1's and POT.11's hand tests).
+  var WIDTHS = { file: 'widths.vla',
+                 text: '(cartridge "widths"\n  (spec 4)\n  (title "A widths card")\n  (rate 0)\n  (screen grid 12 8)\n  (seed 1))\n' +
+                       '(sheet "Desk" visible)\n(sheet "Ledger" visible)\n(sheet "Screen" visible)\n' +
+                       '(column "Desk" "D" 3 shown none)\n(column "Ledger" "D" 30 shown none)\n' +
+                       '(cell "Desk" "A1" "the desk")\n(cell "Desk" "D1" 1234567)\n(formula "Desk" "A2:AH40" "=ROW()*100+COLUMN()")\n' +
+                       '(cell "Ledger" "A1" "the ledger")\n(cell "Ledger" "D1" "a text the Ledger\'s D holds")\n(formula "Ledger" "A2:AH40" "=ROW()*1000+COLUMN()")\n' +
+                       '(cell "Screen" "A1" "the screen")\n(formula "Screen" "A2:L8" "=ROW()*10+COLUMN()")\n' };
+  // The widths card over the engine's module, its viewport in a box of the stage, each drag made as a person makes it: a
+  // press on a column's right divider in the header, the pointer's travel in two moves, and the release. The oracle keeps
+  // the widths its own drags leave, by sheet, and holds every sheet drawn cell for cell at those and no other sheet's.
+  // Frame 0 opens on the Desk at its record's widths; a press on a divider that moves nothing raises nothing; the Desk's D
+  // dragged 300 pixels wider is the Desk's, its event naming the Desk, and kept by the frame an edit steps; the Ledger's tab
+  // shows the Ledger at its own D; the Ledger's D dragged 200 narrower at rate 0 has the columns it brings into view viewed
+  // at once; the Desk's tab shows the Desk's D, never the Ledger's; the Ledger's region is estimated at its own widths, and
+  // shown from the Desk as a Camera shows a sheet; the Screen's B dragged, and kept when the Screen's tab loads its record
+  // again without keep; the source applied keeps every sheet's; a drag pressed on the Desk while the Ledger comes to show is
+  // the Desk's; and a Load forgets them all.
+  function caseWidths() {
+    var P = [], k = { module: 0, opened: 0, clicked: 0, dragged: 0, held: 0, kept: 0, own: 0, rest: 0, fresh: 0, screen: 0, applied: 0, pressedOn: 0, forgotten: 0,
+                      values: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0 };
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm);
+    k.module = bytes.length;
+    widthsRun(bytes, k, P);
+    return { counters: k, problems: P };
+  }
+  function widthsRun(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:' + GRID_BOX.w + 'px;height:' + GRID_BOX.h + 'px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box });
+    var D = new Driver({ exports: exports }), measure = document.createElement('canvas').getContext('2d');
+    try {
+      if (!host.attach(exports).ok) { P.push('widths: the host refused the module'); return; }
+      var ld = host.load(WIDTHS.text, WIDTHS.file);
+      if (!ld.ok) { P.push('widths: the widths card did not load: ' + ld.sentence); return; }
+      var vp = host.vp, sc = vp.scroller, pt = viewPoints(vp), resized = [], mine = { desk: {}, ledger: {}, screen: {} };
+      vp.on('columnresize', function (e) { resized.push(e); });
+      // a column's right divider in the header of the sheet shown, as the viewport lays it
+      function divider(c) { var g = vp.geometry(), rect = vp.box.getBoundingClientRect(); return { x: rect.left + (g.rhW + g.colX[c + 1] - g.scrollX) / g.dpr, y: rect.top + g.headH / 2 / g.dpr }; }
+      // the width a drag leaves a column at: its width as drawn, the record's CSS pixels at the ratio, and the pointer's
+      // travel, to a whole CSS pixel
+      function after(css, dx) { var dpr = vp.geometry().dpr; return Math.max(0, Math.round(Math.round(css * dpr) / dpr + dx)); }
+      // a drag of a column's divider by dx CSS pixels, as a person drags it; mid, an act between the press and the moves
+      function drag(c, dx, mid) {
+        var p = divider(c);
+        pt.mouse(sc, 'mousemove', p, 0); pt.mouse(sc, 'mousedown', p, 1);
+        if (mid) mid();
+        pt.mouse(sc, 'mousemove', { x: p.x + dx / 2, y: p.y }, 1);
+        pt.mouse(sc, 'mousemove', { x: p.x + dx, y: p.y }, 1);
+        pt.mouse(sc, 'mouseup', { x: p.x + dx, y: p.y }, 0);
+      }
+      // one drag's event and the width it left, the sheet's own, which the oracle then keeps for that sheet
+      function dragged(at, sheet, col, want, n0) {
+        var own = mine[sheet.toLowerCase()], e = resized[n0];
+        own[col] = want;
+        if (resized.length !== n0 + 1) { P.push(at + ': the drag raised ' + (resized.length - n0) + ' columnresize event(s), where one is due'); return false; }
+        if (e.sheet !== sheet || e.column !== col || e.width !== want) { P.push(at + ': the drag raised columnresize ' + JSON.stringify(e) + ', where ' + JSON.stringify({ sheet: sheet, column: col, width: want }) + ' is due'); return false; }
+        k.dragged++;
+        return true;
+      }
+      // every sheet's widths as the viewport keeps them, each the sheet's own
+      function kept(at) {
+        var names = ['Desk', 'Ledger', 'Screen'], ok = true;
+        for (var i = 0; i < names.length; i++) {
+          var got = JSON.stringify(vp.columnWidths(names[i])), want = JSON.stringify(mine[names[i].toLowerCase()]);
+          if (got !== want) { P.push(at + ': the viewport keeps the ' + names[i] + '\'s widths as ' + got + ', where its own are ' + want); ok = false; }
+        }
+        return ok;
+      }
+      // a sheet shown held as a frame's is, drawn cell for cell from the record the host loaded, at the widths the oracle's
+      // own drags left on it and no other sheet's
+      function hold(at, sheet) {
+        if (vp.sheet() !== sheet) { P.push(at + ': the viewport shows ' + (vp.sheet() || 'nothing') + ', where ' + sheet + ' is due'); return false; }
+        var c = host.counters();
+        if (heldSheetDrawn(host, D, c.handle, c.frame, at, measure, P, k, mine[sheet.toLowerCase()]) === null) return false;
+        k.held++;
+        return true;
+      }
+      // the Screen held through its window, the values record after frame 0, at its own widths
+      function holdScreen(at) {
+        if (vp.sheet() !== 'Screen') { P.push(at + ': the viewport shows ' + (vp.sheet() || 'nothing') + ', where the Screen is due'); return false; }
+        var c = host.counters(), due = D.call('alonzo_view', [c.handle], [c.frame > 0 ? 'values' : 'grid', 'Screen', c.window]).text;
+        if (host.record !== due) { P.push(at + ': the host drew a record of the Screen other than the ' + (c.frame > 0 ? 'values' : 'grid') + ' record of ' + c.window); return false; }
+        var m = gqRead(due);
+        if (!gqCompare(gqExpect(m, gqLayout(m, vp.geometry(), null, mine.screen), measure), vp.draws(), at, P, k)) return false;
+        k.held++;
+        return true;
+      }
+      // the region a sheet shows from A1 in this box, as the oracle reads its columns whole and lays them at its own widths
+      function freshOf(sheet) {
+        var t = gqTruth(D, host.counters().handle, sheet, false), own = mine[sheet.toLowerCase()], W = Math.max(1, sc.clientWidth), x = 0, c = 0;
+        while (x < W && c < 16384) {
+          c++;
+          var L = VP.colName(c), col = t ? t.columns[c] : null;
+          x += Object.prototype.hasOwnProperty.call(own, L) ? own[L] : (!col ? GQ.column : (col.hidden ? 0 : (col.width !== null ? gqColumnPixels(col.width) : GQ.column)));
+        }
+        return lqRange(1, 1, Math.max(1, Math.ceil(sc.clientHeight / GQ.row)), Math.max(1, c));
+      }
+      function tab(name) { var b = pt.tab(name); if (!b) { P.push('widths: no tab ' + name + ' in the strip'); return false; } b.click(); return true; }
+      var n0;
+      // frame 0: the Desk, the first visible sheet, at its record's widths
+      if (hold('widths, the opening', 'Desk')) k.opened = 1;
+      // a press on the Desk's B divider and its release, nothing moved: no width set and no event
+      var pb = divider(2);
+      pt.mouse(sc, 'mousemove', pb, 0); pt.mouse(sc, 'mousedown', pb, 1); pt.mouse(sc, 'mouseup', pb, 0);
+      if (resized.length) P.push('widths, a press on the Desk\'s B divider that moved nothing: it raised columnresize ' + JSON.stringify(resized[0]) + ', where nothing was resized');
+      else if (kept('widths, a press on the Desk\'s B divider that moved nothing')) k.clicked = 1;
+      // the Desk's D, 3 characters, dragged 300 pixels wider: the Desk's, and drawn so at frame 0
+      n0 = resized.length; drag(4, 300);
+      if (dragged('widths, the Desk\'s D', 'Desk', 'D', after(gqColumnPixels(3), 300), n0)) hold('widths, the Desk\'s D dragged', 'Desk');
+      // an edit steps frame 1, whose draw loads the Desk's record with keep: its D kept
+      host.edit('(cell "Desk" "A1" "the desk, edited")');
+      if (host.counters().frame !== 1) P.push('widths: the edit stepped the grid to frame ' + host.counters().frame + ', where frame 1 is due');
+      else if (kept('widths frame 1') && hold('widths frame 1', 'Desk')) k.kept = 1;
+      // the person's tab to the Ledger: its D its own, 30 characters, never the Desk's
+      if (tab('Ledger') && kept('widths, the Ledger\'s tab') && hold('widths, the Ledger\'s tab', 'Ledger')) k.own++;
+      // the Ledger's D dragged 200 pixels narrower at rate 0, bringing columns into view no record named: viewed at once
+      n0 = resized.length; drag(4, -200);
+      if (dragged('widths, the Ledger\'s D', 'Ledger', 'D', after(gqColumnPixels(30), -200), n0) && hold('widths, the Ledger\'s D narrowed', 'Ledger')) k.rest = 1;
+      // the person's tab back to the Desk: its D its own, never the Ledger's
+      if (tab('Desk') && kept('widths, the Desk\'s tab') && hold('widths, the Desk\'s tab', 'Desk')) k.own++;
+      // the Ledger's region estimated at its own widths while the Desk shows, then the Ledger shown from the Desk as a
+      // Camera shows a sheet (ENGINE.18)
+      var fr = vp.fresh('Ledger'), want = freshOf('Ledger');
+      if (fr !== want) P.push('widths, the Ledger shown from the Desk: the viewport estimates the Ledger\'s region as ' + fr + ', where its own widths lay ' + want);
+      else if (host.showSheet(vp, 'Ledger') && kept('widths, the Ledger shown from the Desk') && hold('widths, the Ledger shown from the Desk', 'Ledger')) k.fresh = 1;
+      // the Screen's tab, its B dragged 50 pixels wider; the Desk's tab and the Screen's again, which loads the Screen's
+      // record without keep: its B kept
+      if (tab('Screen') && holdScreen('widths, the Screen\'s tab')) {
+        n0 = resized.length; drag(2, 50);
+        if (dragged('widths, the Screen\'s B', 'Screen', 'B', after(GQ.column, 50), n0) && holdScreen('widths, the Screen\'s B dragged') &&
+            tab('Desk') && tab('Screen') && kept('widths, the Screen\'s tab again') && holdScreen('widths, the Screen\'s tab again')) k.screen = 1;
+      }
+      // the source applied, a cell row changed, written at rate 0 as one edit and one step: every sheet's widths kept
+      if (tab('Desk')) {
+        var f0 = host.counters().frame, ap = host.apply(WIDTHS.text.replace('(cell "Desk" "A1" "the desk")', '(cell "Desk" "A1" "the desk, applied")'), WIDTHS.file);
+        if (!ap.ok || host.counters().frame !== f0 + 1) P.push('widths, the source applied: ' + (ap.ok ? 'the grid stands at frame ' + host.counters().frame + ', where ' + (f0 + 1) + ' is due' : 'refused: ' + ap.sentence));
+        else if (kept('widths, the source applied') && hold('widths, the source applied', 'Desk')) k.applied = 1;
+      }
+      // a drag pressed on the Desk's D while the Ledger comes to show, as a Camera shows a sheet at a rate: the Desk's
+      n0 = resized.length; drag(4, 40, function () { host.showSheet(vp, 'Ledger'); });
+      if (dragged('widths, a drag pressed on the Desk', 'Desk', 'D', after(mine.desk.D, 40), n0) && kept('widths, a drag pressed on the Desk') && hold('widths, a drag pressed on the Desk', 'Ledger')) k.pressedOn = 1;
+      // a Load: every sheet's widths forgotten, the card opening on the Desk at its record's widths
+      var again = host.load(WIDTHS.text, WIDTHS.file);
+      mine = { desk: {}, ledger: {}, screen: {} };
+      if (!again.ok) P.push('widths, a Load: the widths card did not load again: ' + again.sentence);
+      else if (kept('widths, a Load') && hold('widths, a Load', 'Desk')) k.forgotten = 1;
+      var refusals = host.sentences().filter(function (sn) { return sn.refusal; });
+      if (refusals.length) P.push('widths: the host was refused: ' + refusals[0].text);
+    } finally { host.destroy(); stage.removeChild(box); }
+  }
   function loopLine(name, k, problems) {
     var parts = [];
     for (var key in k) if (Object.prototype.hasOwnProperty.call(k, key)) parts.push(key + ' ' + k[key]);
@@ -6293,7 +6455,7 @@
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
-                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle]];
+                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -6302,7 +6464,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1, commands: 1, settle: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1, commands: 1, settle: 1, widths: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }
@@ -7080,6 +7242,20 @@
       var st = { widths: {}, frozenRows: 0, frozenCols: 0 };
       if (cs.freeze) { vp.freeze(cs.freeze[0], cs.freeze[1]); st.frozenRows = cs.freeze[0]; st.frozenCols = cs.freeze[1]; }
       if (cs.columnWidth) { vp.columnWidth(cs.columnWidth[0], cs.columnWidth[1]); st.widths[cs.columnWidth[0]] = cs.columnWidth[1]; }
+      // ENGINE.26: other sheets of the program loaded and shown, each given a width of its own, then the case's sheet shown
+      // again, drawn at its own widths alone, which the viewport says it keeps for each sheet
+      if (cs.others) {
+        for (var o = 0; o < cs.others.length; o++) {
+          var ot = cs.others[o], otSheet = vp.load(fixtureText(ot.fixture)).sheet;
+          vp.show(otSheet);
+          vp.columnWidth(ot.columnWidth[0], ot.columnWidth[1]);
+          var otKept = vp.columnWidths(otSheet);
+          if (otKept[ot.columnWidth[0]] !== ot.columnWidth[1]) problems.push('the sheet ' + otSheet + ' keeps the widths ' + JSON.stringify(otKept) + ' after its column ' + ot.columnWidth[0] + ' was set to ' + ot.columnWidth[1]);
+        }
+        vp.show(model.sheet);
+        var ownKept = JSON.stringify(vp.columnWidths()), ownWant = JSON.stringify(st.widths);
+        if (ownKept !== ownWant) problems.push('the sheet ' + model.sheet + ' keeps the widths ' + ownKept + ', where its own are ' + ownWant);
+      }
       if (cs.select) vp.select(cs.select);
       if (cs.mark) vp.mark(cs.mark[0], cs.mark[1], cs.mark[2]);
       if (cs.scrollTo) vp.scrollTo(cs.scrollTo[0], cs.scrollTo[1]);
@@ -7260,7 +7436,11 @@
       { name: 'sparse_resized', fixture: 'sparse_10000', w: normalW, h: normalH, columnWidth: ['A', 200] },
       // ENGINE.14: column A narrowed so that its two-digit numbers fit and its three-digit ones draw #s
       { name: 'sparse_hashes', fixture: 'sparse_10000', w: normalW, h: normalH, columnWidth: ['A', 26], scrollTo: [89, 1] },
-      { name: 'fixture_frazaro_selected', fixture: 'fixture_frazaro', w: 1100, h: 400, select: 'B2:C3', mark: ['precedents', ['B4'], { fill: 'rgba(10, 107, 79, 0.15)', border: '#0a6b4f' }] }
+      { name: 'fixture_frazaro_selected', fixture: 'fixture_frazaro', w: 1100, h: 400, select: 'B2:C3', mark: ['precedents', ['B4'], { fill: 'rgba(10, 107, 79, 0.15)', border: '#0a6b4f' }] },
+      // ENGINE.26: a width set on another sheet of the program never reaches the Output, and the Output's own is kept
+      // while two other sheets are shown and given widths of their own
+      { name: 'sheets_other', fixture: 'fixture_output', w: 1100, h: 400, others: [{ fixture: 'fixture_frazaro', columnWidth: ['B', 300] }] },
+      { name: 'sheets_back', fixture: 'fixture_output', w: 1100, h: 400, columnWidth: ['B', 26], others: [{ fixture: 'fixture_frazaro', columnWidth: ['B', 300] }, { fixture: 'fixture_data', columnWidth: ['B', 90] }] }
     ];
     var ok = 0;
     for (var i = 0; i < cases.length; i++) if (runCase(cases[i], out)) ok++;

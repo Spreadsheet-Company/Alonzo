@@ -26,7 +26,8 @@
   canvas kept.
 
   What the viewport owns is the state no program sees (SD-23): the scroll, the
-  selection, the widths a person dragged, the frozen panes, the marks a host
+  selection, the widths a person dragged, each sheet's its own as a
+  spreadsheet keeps them (ENGINE.26), the frozen panes, the marks a host
   asked for; the record is never written. What it does not do: no fill
   handle, no drag-move, no in-cell editing (web/CALLOSUM.md section 7,
   decision 5); the formula bar, the link to a sentence, the refusal in the
@@ -398,7 +399,8 @@
 
   // ---- (2) the geometry: the layout in device pixels ----
   // env: { dpr, canvasW, canvasH } in device pixels and { clientW, clientH }
-  // in CSS pixels, the scroller's client area. state: the host's state.
+  // in CSS pixels, the scroller's client area, and the widths of the sheet
+  // drawn, its own (ENGINE.26). state: the host's state.
   function Geometry(model, state, env) {
     var dpr = env.dpr;
     this.dpr = dpr;
@@ -450,7 +452,7 @@
       this.sheetRows = rows; this.sheetCols = cols;
       this.rows = rows + Math.ceil(env.clientH / DEFAULT_ROW_PX) + 1;
       var slackW = 0, slack = 0, screenW = env.clientW * dpr;
-      while (slackW < screenW && cols + slack < MAX_COLUMNS) { slack++; slackW += Math.round(columnWidthCss(model, state, cols + slack, layout) * dpr); }
+      while (slackW < screenW && cols + slack < MAX_COLUMNS) { slack++; slackW += Math.round(columnWidthCss(model, env.widths, cols + slack, layout) * dpr); }
       this.cols = Math.min(MAX_COLUMNS, cols + slack + 1);
     }
     this.bounded = !!extent;
@@ -459,7 +461,7 @@
     this.colW = [0]; this.colX = [0, 0];
     var x = 0;
     for (var c = 1; c <= this.cols; c++) {
-      var w = Math.round(columnWidthCss(model, state, c, layout) * dpr);
+      var w = Math.round(columnWidthCss(model, env.widths, c, layout) * dpr);
       this.colW.push(w); x += w; this.colX.push(x);
     }
     this.contentW = x;
@@ -470,13 +472,14 @@
     this.frozenW = this.colX[this.fc + 1];
     this.ox = this.rhW; this.oy = this.headH;
   }
-  // A column's width in CSS pixels: the host's override, else hidden is 0,
+  // A column's width in CSS pixels: the width a person dragged or a host set
+  // on the sheet, from that sheet's own widths (ENGINE.26), else hidden is 0,
   // else the record's width through the rule, else, for a column past the
   // record's window, which the record does not answer for, the width the
   // sheet's records have set, learned (CART.12's hand test), else the default.
-  function columnWidthCss(model, state, c, layout) {
+  function columnWidthCss(model, widths, c, layout) {
     var letters = colName(c);
-    if (Object.prototype.hasOwnProperty.call(state.widths, letters)) return state.widths[letters];
+    if (widths && Object.prototype.hasOwnProperty.call(widths, letters)) return widths[letters];
     var col = model ? model.columns[c] : null;
     if (!col && layout && !inWindowColumn(model, c)) col = layout.columns[c] || null;
     if (col) {
@@ -656,6 +659,7 @@
     this.records = {};         // sheet name -> model
     this.layouts = {};         // a sheet's name, lowercased -> its layout, learned from its records (CART.12's hand test)
     this.bounds = {};          // a sheet's name, lowercased -> true: drawn to its extent and no further (version 6's bound)
+    this.widths = {};          // a sheet's name, lowercased -> its column's letters -> CSS pixels: the widths a person dragged on it or a host set (ENGINE.26)
     this.patchCount = 0;       // the patches laid on its models (ENGINE.19)
     this.repaintCount = 0;     // the patches painted by their cells alone (ENGINE.20)
     // The last full paint (ENGINE.20): the model and the environment it painted, its quadrants as it left them, the cells
@@ -666,7 +670,7 @@
     this.readback = !!options.willReadFrequently;
     this.sheetList = [];       // every sheet row of the latest record, in tab order
     this.active = '';          // the sheet shown
-    this.state = { widths: {}, frozenRows: 0, frozenCols: 0, marks: {}, showHidden: !!options.showHidden,
+    this.state = { frozenRows: 0, frozenCols: 0, marks: {}, showHidden: !!options.showHidden,
                    selection: { kind: 'cells', anchor: { row: 1, col: 1 }, focus: { row: 1, col: 1 } } };
     this.listeners = {};
     this.ops = [];
@@ -729,11 +733,18 @@
   Viewport.prototype._env = function () {
     var key = String(this.active || '').toLowerCase();
     return { dpr: this.dpr, canvasW: this.canvas.width, canvasH: this.canvas.height, clientW: this.scroller.clientWidth, clientH: this.scroller.clientHeight,
-             layout: this.layouts[key] || null, bound: !!this.bounds[key] };
+             layout: this.layouts[key] || null, bound: !!this.bounds[key], widths: this._widthsOf(this.active) };
   };
   Viewport.prototype._layoutOf = function (name) {
     var key = String(name || '').toLowerCase();
     return this.layouts[key] || (this.layouts[key] = { columns: {}, rows: {}, extent: null });
+  };
+  // A sheet's widths (ENGINE.26): the widths a person dragged on it and those a host set, a column's letters to CSS pixels,
+  // the sheet's alone, found by its name compared without case as its layout is, so that one sheet's column D is never
+  // another's (Buffet's PLATE.1 and POT.11 hand tests, where a drag of D on one view widened D on every view).
+  Viewport.prototype._widthsOf = function (name) {
+    var key = String(name || '').toLowerCase();
+    return this.widths[key] || (this.widths[key] = {});
   };
   Viewport.prototype._model = function () { return this.active ? (this.records[this.active] || null) : null; };
 
@@ -1290,7 +1301,7 @@
     var s = this.state.selection;
     if (hit.kind === 'boundary') {
       ev.preventDefault();
-      this.drag = { kind: 'resize', col: hit.col, startX: ev.clientX, startW: this.g.colW[hit.col] / this.g.dpr };
+      this.drag = { kind: 'resize', col: hit.col, startX: ev.clientX, startW: this.g.colW[hit.col] / this.g.dpr, sheet: this.active, moved: false };
       return;
     }
     ev.preventDefault();
@@ -1323,9 +1334,18 @@
       return;
     }
     if (drag.kind === 'resize') {
+      // the width of the sheet the drag was pressed on, its own (ENGINE.26); when another sheet has come to show since
+      // the press, as a Camera shows one at a rate, the drag stays that sheet's and nothing shown moves
       var w = Math.max(0, Math.round(drag.startW + (ev.clientX - drag.startX)));
-      this.state.widths[colName(drag.col)] = w;
+      this._widthsOf(drag.sheet)[colName(drag.col)] = w;
+      drag.moved = true;
+      if (this.active !== drag.sheet) return;
+      var was = this._scrollPayload().window;
       this._draw();
+      // a narrower column brings columns into view, as a box grown does, and a wider one takes them out: the host is told
+      // as it is told of a scroll, so that it views the columns no record named (ENGINE.26; at rate 0 no frame would)
+      var now = this._scrollPayload();
+      if (now.window !== was) this._emit('scroll', now);
       return;
     }
     var hit = this._hit(ev);
@@ -1344,8 +1364,10 @@
     var drag = this.drag;
     if (!drag) return;
     this.drag = null;
-    if (drag.kind === 'resize') {
-      this._emit('columnresize', { sheet: this.active, column: colName(drag.col), width: this.state.widths[colName(drag.col)] });
+    // the sheet the drag was pressed on and the width it left there; a press on a divider that moved nothing raises
+    // nothing, where it raised a width of undefined (ENGINE.26)
+    if (drag.kind === 'resize' && drag.moved) {
+      this._emit('columnresize', { sheet: drag.sheet, column: colName(drag.col), width: this._widthsOf(drag.sheet)[colName(drag.col)] });
     }
   };
   Viewport.prototype._dblClick = function (ev) {
@@ -1453,10 +1475,11 @@
   // A record's text: its sheet becomes a tab, replacing an earlier record of
   // the same sheet; the record's sheet rows are the tab strip. Returns the
   // model's counts. With options.keep (ENGINE.8), a later frame of the sheet
-  // shown: its record replaces the last with the scroll, the selection, the
-  // widths, the frozen panes and the marks kept and no event raised, and the
-  // tabs are remade only when the sheet rows changed. The host draws every
-  // frame of a grid cartridge so, and a page its live sheet.
+  // shown: its record replaces the last with the scroll and the selection
+  // kept and no event raised, and the tabs are remade only when the sheet rows
+  // changed. The host draws every frame of a grid cartridge so, and a page its
+  // live sheet. Every load, kept or not, keeps every sheet's widths, which
+  // clear() alone forgets (ENGINE.26), and the frozen panes and the marks.
   Viewport.prototype.load = function (text, options) {
     var keep = !!(options && options.keep);
     var model = readRecord(String(text || ''));
@@ -1539,10 +1562,13 @@
     return true;
   }
   // Every record forgotten and the grid drawn empty: a host's grid unloaded (ENGINE.8), so that the viewport
-  // shows no picture of a grid the module no longer holds.
+  // shows no picture of a grid the module no longer holds. Every sheet's widths go with it, and a drag in progress
+  // (ENGINE.26): a person's widths are the grid's they were dragged on, and a Load starts from the cartridge's text,
+  // the one act that carries a column row's change, which a width kept across it would hide.
   Viewport.prototype.clear = function () {
     this.records = {}; this.sheetList = []; this.active = '';
     this.layouts = {}; this.bounds = {};
+    this.widths = {}; this.drag = null;
     this._resetView();
     this._renderTabs();
     this._draw();
@@ -1565,12 +1591,13 @@
     for (var k in layout.columns) if (Object.prototype.hasOwnProperty.call(layout.columns, k)) n++;
     return { sheet: name, window: model.windowText, extent: model.extentText, columns: n };
   };
-  // The range a sheet shows from A1 in this box, its columns laid as its layout sets them and its rows at the
-  // default height, within a bound sheet's extent: the window a host views a sheet through before it shows it.
+  // The range a sheet shows from A1 in this box, its columns laid as its layout and its own widths set them (ENGINE.26),
+  // never the sheet shown's, and its rows at the default height, within a bound sheet's extent: the window a host views
+  // a sheet through before it shows it.
   Viewport.prototype.fresh = function (name) {
     var key = String(name || '').toLowerCase(), layout = this.layouts[key] || null, model = this._findSheet(name) ? this.records[this._findSheet(name)] : null;
     var w = Math.max(1, this.scroller.clientWidth), x = 0, c = 0;
-    while (x < w && c < MAX_COLUMNS) { c++; x += columnWidthCss(model, this.state, c, layout); }
+    while (x < w && c < MAX_COLUMNS) { c++; x += columnWidthCss(model, this._widthsOf(name), c, layout); }
     var r = Math.max(1, Math.ceil(this.scroller.clientHeight / DEFAULT_ROW_PX)), ext = this.bounds[key] ? ((model && model.extent) || (layout && layout.extent)) : null;
     if (ext) { c = Math.min(c, ext.right); r = Math.min(r, ext.bottom); }
     return rangeText({ top: 1, left: 1, bottom: r, right: Math.max(1, c) });
@@ -1654,16 +1681,21 @@
     this._draw();
   };
   Viewport.prototype.frozen = function () { return { rows: this.state.frozenRows, cols: this.state.frozenCols }; };
-  // A column's width in CSS pixels, the host's over the record's; null puts the record's back.
-  Viewport.prototype.columnWidth = function (letters, px) {
-    var key = String(letters).toUpperCase();
-    if (px === null || px === undefined) delete this.state.widths[key];
-    else this.state.widths[key] = Math.max(0, Math.round(px));
-    this._draw();
+  // A column's width in CSS pixels on a sheet, the host's over the record's, kept for that sheet alone (ENGINE.26): the
+  // sheet shown, or the one named, compared without case, a sheet with no record yet among them; null puts the
+  // record's back. With no sheet shown and none named there is no sheet to keep it for, and nothing is set.
+  Viewport.prototype.columnWidth = function (letters, px, sheet) {
+    var key = String(letters).toUpperCase(), name = sheet === undefined || sheet === null ? this.active : String(sheet);
+    if (!name) return;
+    var widths = this._widthsOf(name);
+    if (px === null || px === undefined) delete widths[key];
+    else widths[key] = Math.max(0, Math.round(px));
+    if (this.active && this.active.toLowerCase() === name.toLowerCase()) this._draw();
   };
-  Viewport.prototype.columnWidths = function () {
-    var out = {};
-    for (var k in this.state.widths) if (Object.prototype.hasOwnProperty.call(this.state.widths, k)) out[k] = this.state.widths[k];
+  // A sheet's widths, the sheet shown's or the one named: a column's letters to CSS pixels, a copy.
+  Viewport.prototype.columnWidths = function (sheet) {
+    var widths = this._widthsOf(sheet === undefined || sheet === null ? this.active : String(sheet)), out = {};
+    for (var k in widths) if (Object.prototype.hasOwnProperty.call(widths, k)) out[k] = widths[k];
     return out;
   };
   // A named highlight over ranges the host computed: style { fill, border }.
@@ -1743,7 +1775,7 @@
   Viewport.colIndex = colIndex;
   Viewport.RULES = RULES;
   Viewport.DEFAULT_COLORS = DEFAULT_COLORS;
-  Viewport.version = 2;
+  Viewport.version = 3;
 
   global.AlonzoViewport = Viewport;
 })(typeof window !== 'undefined' ? window : this);

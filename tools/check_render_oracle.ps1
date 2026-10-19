@@ -42,8 +42,10 @@ the last visible column's texts, which the oracle must fail as cells not
 drawn; a template whose oracle element is cut, which this check must fail
 for want of the block; and (ENGINE.14) a viewport that draws a number too
 wide for its column cut again, its leading digits lost, which sparse_hashes
-must fail at a three-digit number. Four mutants; the real page must pass
-first.
+must fail at a three-digit number; and (ENGINE.26) a viewport whose widths
+are one map for every sheet again, keyed by a column's letters alone, which
+sheets_other must fail by name, the Output keeping the Frazaro sheet's B.
+Five mutants; the real page must pass first.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A page's dump is read
@@ -83,6 +85,13 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # fitting and its fourteen three-digit ones drawn as #s, at both ratios under
 # headless Chrome 155 on Windows (39 texts); the floor holds a row's margin,
 # and a wider font on another platform draws more #s, never fewer.
+# 2026-10-19, ENGINE.26: fifteen cases, the thirteen's counts unchanged, and
+# two of the fixture program's sheets apart: sheets_other, the Output drawn
+# after the Frazaro sheet's B was set to 300 px, at its own default B; and
+# sheets_back, the Output's B set to 26 px, the Frazaro sheet's and the data
+# sheet's B set to 300 and 90, and the Output shown again at its own 26. Each
+# draws fixture_output's 7 texts, with 35 and 36 lines and headers at both
+# ratios under headless Chrome 155 on Windows, held at fixture_output's floors.
 $scales = @('1', '1.5')
 $floors = @(
     @{ Case = 'fixture_frazaro';          Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 0; Probes = 3; Hashes = 0 },
@@ -97,9 +106,11 @@ $floors = @(
     @{ Case = 'sparse_frozen';            Texts = 38; Fills = 0;  Lines = 100; Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 },
     @{ Case = 'sparse_resized';           Texts = 38; Fills = 0;  Lines = 48;  Headers = 48; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 },
     @{ Case = 'fixture_frazaro_selected'; Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 1; Probes = 3; Hashes = 0 },
-    @{ Case = 'sparse_hashes';            Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 13 }
+    @{ Case = 'sparse_hashes';            Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 13 },
+    @{ Case = 'sheets_other';             Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 },
+    @{ Case = 'sheets_back';              Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0 }
 )
-$expectedCases = 13
+$expectedCases = 15
 
 # The browser: named, from the environment, or found.
 function Find-Browser([string]$named) {
@@ -250,9 +261,20 @@ if ($Control) {
         $rD = Invoke-Oracle $browser $pageD '1'
         $jD = if ($rD.Text -ne '') { Test-Oracle $rD.Text '1' } else { @{ Problems = @($rD.Reason) } }
         $dFailed = @($jD.Problems | Where-Object { $_ -cmatch 'case sparse_hashes.*cell body:\d+,1 shows \d{3}, a number too wide for its column, which draws #+' }).Count
-        Write-Output ("control: the real page has {0} problem(s); the padding mutant applied ({1}) and failed on {2} position(s); the dropped column failed as {3} cell(s) not drawn; the cut element left no block ({4}); the number cut again applied ({5}) and failed sparse_hashes ({6})" -f @($j0.Problems).Count, $aApplied, $aPosition, $bNotDrawn, $cNoBlock, $dApplied, $dFailed)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aPosition -ge 1 -and $bNotDrawn -ge 1 -and $cNoBlock -and $dApplied -and $dFailed -ge 1) {
-            Write-Output 'OK: the check passes the real page and fails each of the four mutants for its own reason, each proving it applied'
+        # mutant E (ENGINE.26): a viewport whose widths are one map for every sheet, a column's letters alone, as they were
+        # until Buffet's hand tests found one view's drag widening every view's column; sheets_other must fail it by name
+        $anchorE = '    return this.widths[key] || (this.widths[key] = {});'
+        if (([regex]::Matches($js, [regex]::Escape($anchorE))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorE' is not in web/viewport.js exactly once"; exit 1 }
+        $mutE = $js.Replace($anchorE, "    return this.widths[''] || (this.widths[''] = {});")
+        $eApplied = $mutE -cne $js
+        $jsE = Join-Path $tmp 'e.js'; [System.IO.File]::WriteAllText($jsE, $mutE, $utf8)
+        $pageE = New-MutantPage 'e' $template $jsE
+        $rE = Invoke-Oracle $browser $pageE '1'
+        $jE = if ($rE.Text -ne '') { Test-Oracle $rE.Text '1' } else { @{ Problems = @($rE.Reason) } }
+        $eFailed = @($jE.Problems | Where-Object { $_ -cmatch 'case sheets_other.*the sheet Output keeps the widths \{"B":300\}, where its own are \{\}' }).Count
+        Write-Output ("control: the real page has {0} problem(s); the padding mutant applied ({1}) and failed on {2} position(s); the dropped column failed as {3} cell(s) not drawn; the cut element left no block ({4}); the number cut again applied ({5}) and failed sparse_hashes ({6}); the widths one map applied ({7}) and failed sheets_other ({8})" -f @($j0.Problems).Count, $aApplied, $aPosition, $bNotDrawn, $cNoBlock, $dApplied, $dFailed, $eApplied, $eFailed)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aPosition -ge 1 -and $bNotDrawn -ge 1 -and $cNoBlock -and $dApplied -and $dFailed -ge 1 -and $eApplied -and $eFailed -ge 1) {
+            Write-Output 'OK: the check passes the real page and fails each of the five mutants for its own reason, each proving it applied'
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -261,6 +283,7 @@ if ($Control) {
         foreach ($p in @($jB.Problems) | Select-Object -First 3) { Write-Output ('  dropped column mutant: ' + $p) }
         Write-Output ('  cut element: ' + $rC.Reason)
         foreach ($p in @($jD.Problems) | Select-Object -First 3) { Write-Output ('  number cut again: ' + $p) }
+        foreach ($p in @($jE.Problems) | Select-Object -First 3) { Write-Output ('  widths one map: ' + $p) }
         exit 1
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
