@@ -90,7 +90,7 @@ foreach ($d in @($FixturesDir, $CartridgesDir)) { if (-not (Test-Path -LiteralPa
 # The page's order (ENGINE.15): its cartridges as the picker offers them after the empty sheet the page
 # opens on, Life first, the benchmark, as the page has always offered them. Held to the cartridge folders
 # both ways, so that a cartridge added without a place here, or a place without its folder, is refused.
-$order = @('life', 'gun', 'testcard', 'inputcard', 'soundcard', 'sand', 'gridcard', 'kairos')
+$order = @('life', 'gun', 'testcard', 'inputcard', 'soundcard', 'sand', 'gridcard', 'kairos', 'superposition')
 # A check's page of a scratch folder names its own (ENGINE.16); one string under -File, split here.
 if ($PageOrder -ne '') { $order = @($PageOrder.Split(',') | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }) }
 

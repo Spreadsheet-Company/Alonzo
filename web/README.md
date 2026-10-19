@@ -53,7 +53,18 @@ an accumulator, a tick's time capped at 250 ms and the backlog at the larger
 of 250 ms and one frame's interval, so a rate under four frames a second
 still steps; a rate that moves starts the backlog again. No interpolation
 and no skipped frame, and the loop is paused while the page is hidden. At rate 0 there is no tick: one step for
-each edit, and no Input. The blit puts the bytes through the palette into
+each edit, and no Input. A cartridge written to version 6 (`docs/SPEC.md`,
+`CART.12`) has a place at rate 0: before an act's step the host writes the sheet
+shown and the cell the act stands on, the selection's for an edit and a command,
+`Input!B19`, `B11` and `B12`, with the press and the command, `B13` to `B15` and
+`B20`; a press of a button over a cell of the sheet shown is an act of its own,
+the viewport selecting the cell. One that says `(settle K)` settles each act: while
+the step's answer ends `settling` the host steps again, no act and the derived
+writes before each, drawing each frame, a person's acts waiting in order; the
+load's act settles too, so the cartridge opens on computed values; an answer
+ending `unsettled`, K settle steps taken, is said. The engine numbers its Clock by
+acts and releases an act's press and command before the first settle step, and the
+host and the recorder hold the release in their records of the Input sheet. The blit puts the bytes through the palette into
 one `ImageData` and draws it at a whole number of device pixels a cell with
 smoothing off; a byte past the palette is magenta.
 
@@ -112,7 +123,9 @@ steps the grid once, the twentieth row written alone before every step. A
 command that holds not, or one asked for while a replay plays, is refused in
 words. A command's key is taken on the Screen while the command holds and no
 Ctrl, Cmd or Alt is held, a held key's repeat taken and running nothing; it is
-the command's alone, holding no button and naming no last key. The replay logs
+the command's alone, holding no button and naming no last key. Since `CART.12`
+it is taken on the grid's viewport at rate 0 too, before the viewport sees it,
+every other key staying the viewport's. The replay logs
 `B20` as every Input cell, and a version 5 cartridge's replay says
 `(spec 5)`. A cartridge written to 1 to 4 has no commands, and a sheet of its
 named Commands is its own.
@@ -149,7 +162,7 @@ sound the frame the grid holds again when it starts.
 | `start()` / `stop()` | the animation-frame loop; the voices sound the frame the grid holds when it starts, and stop with it |
 | `soundOn()` / `soundOff()` / `soundIs()` | the sound, on only after a person's act: `soundOn` makes the audio context at its first call, which a page makes in a press's handler, and sounds the frame the grid holds; `soundOff` silences the voices, stops the oscillators and suspends the context; `soundIs` whether it is on |
 | `tick(ts)` | one animation frame's work at its timestamp, what the loop calls |
-| `edit(row)` | a person's edit, one `cell` or `formula` row, issued after the next frame's inputs; at rate 0 it steps once; while the loop is paused at a rate above 0 it waits for the frame Run brings, and the host says so |
+| `edit(row)` | a person's edit, one `cell` or `formula` row, issued after the next frame's inputs; at rate 0 it steps once, and for a version 6 cartridge stands on the cell the selection stands on when it is made, and waits for a settle going on, then settles (`CART.12`); while the loop is paused at a rate above 0 it waits for the frame Run brings, and the host says so |
 | `keyDown(code, key, ev)` / `keyUp(code)` / `releaseKeys()` | the keys held, by `KeyboardEvent.code`; since `ENGINE.25` a command's key runs its command and holds nothing, `ev` the key's event when a listener has one, its Ctrl, Cmd, Alt and repeat |
 | `command(name)` / `commands()` | a version 5 cartridge's own commands (`ENGINE.25`): `command` runs one by its name, waiting for the next frame, one a frame and sixteen at most, written into `Input!B20` for that frame, at rate 0 a step of its own: `{ ok, name }`, or the refusal's sentence, for a cartridge written to 1 to 4, a name its Commands sheet holds no command of, a command that holds not, a replay playing or sixteen waiting; `commands` lists them as the sheet last said them, `{ name, words, holds, key }` in its order, `key` the code or empty |
 | `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer's place as the window's cell under it, 0 when off the canvas, which the Input rows write as the Screen's own cell through the Camera; in grid mode, at a rate above zero, the viewport's cell under the pointer, 0 off the window's cells, and the wheel's notches with its scroll prevented, while a key the Keys sheet binds is taken before the viewport sees it (`ENGINE.8`). Since `ENGINE.14` the wheel is the game's over a cell of the Camera's window alone, where the pointer is, and scrolls over the tabs, the headers, the corner and the scrollbars; the buttons follow the pointer; while another sheet is shown the pointer is 0 and the wheel scrolls, and a bound key stays the game's. Since `ENGINE.18`, for a cartridge written to version 4, the pointer and its buttons over any cell of another sheet shown are the game's too, that sheet's own cell with no Camera added, and the Input sheet's nineteenth row names the sheet shown; the wheel still scrolls there; a cartridge written to 1 to 3 is as before |
@@ -157,11 +170,11 @@ sound the frame the grid holds again when it starts.
 | `redraw()` | the last complete frame drawn again, nothing stepped: the Camera and the Palette read as they stand, the plane viewed through the window and blitted, or a grid's Screen drawn through the viewport (`ENGINE.8`'s second slice), always, never found still (`ENGINE.17`), no other effect read (the blit's instrument over the engine's module, where a step is the evaluator's); `false` without a cartridge |
 | `viewRecord(sheet, window)` | a sheet's record as the module prints it, for a page to show; `null` while a frame is in progress, or refused, the refusal said once |
 | `answer(viewport, event)` | a viewport's `sheet` event answered (`ENGINE.14`; `KERNEL.5`'s decision 6): a sheet the viewport holds no record of is viewed and shown, one it holds is viewed again at once, and in the host's own viewport the Screen's tab gives the Camera's window back. The host answers its own viewport's tabs itself; a page wires a viewer of its own with `viewer.on('sheet', function (e) { host.answer(viewer, e); })`. A tab clicked while a frame is in progress is answered at the frame's end, and the events the host's own calls raise go unanswered |
-| `showSheet(viewport, name)` | a sheet viewed through the region the viewport shows, from `A1` at the default cell's size for one it has not drawn, loaded and shown, then viewed again at once when the sheet's own widths put more in view: `true`, or `false` when refused. The record is the values record after frame 0 and the grid record at frame 0, as the Screen's is (`ENGINE.18`) |
+| `showSheet(viewport, name)` | a sheet viewed through the region the viewport shows from `A1`, loaded and shown, then viewed again at once when its own widths put more in view: `true`, or `false` when refused. Since `CART.12`'s hand test the sheet's columns are read whole first, its last row viewed across every column, a record of no cell that names every column with a setting and the extent, which the viewport learns (`learn`), so that it lays every column as the sheet sets it, at the load, at a jump of the scroll and when its box grows; and a sheet the cartridge bounds, version 6's `(bound ...)`, is drawn to its extent and no further (`bound`). The record is the values record after frame 0 and the grid record at frame 0, as the Screen's is (`ENGINE.18`) |
 | `refreshSheet(viewport, moved, still)` | the sheet a viewport shows viewed again through the region it shows, its view kept: what the host does at every frame for its own viewport, and a page at its viewer's refresh; `moved` only when the region has left the window the record was viewed through, at a scroll (`viewer.on('scroll', ...)`); `still` (`ENGINE.17`) not loaded again when the record is the one the host last loaded into the viewport and the viewport holds the model it made of it, as a frame does and the player's drawer does. The region and never the sheet whole: a full screen of Sand's Stay is 33 ms natively, its whole record 1.4 s and 34 MB. The record is the values record after frame 0 (`ENGINE.18`), so a still sheet's frame keeps only that view: a sheet of 1,000 formulas views in about 0.35 ms where its grid record took 2. Since `ENGINE.19` a `still` refresh asks the window's changes first: patched in place when they name cells since the record the host holds for that viewport, kept when they name none, viewed whole otherwise, as at a refresh frames apart, the drawer's at a rate above zero |
 | `replayText()` | the replay of the run since the last load, as text, a replay played included; `null` with no cartridge loaded. Its header names the page its rows are written to, the cartridge's version, and 3 for a cartridge written to 1 to 3 (`ENGINE.18`) |
 | `play(text, all)` | a replay checked whole, then the cartridge loaded again with its seed and its frames played through the loop at the cartridge's rate, edits refused until it ends, the loop paused at its last frame: `{ ok, frames }`, or the refusal's sentence with nothing loaded; `all` plays every frame at once, synchronously (the oracle) |
-| `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`), and a grid's frames drawn and still (`draws`, `stills`: a frame whose record of the Screen, or of a sheet shown in its place, is byte for byte the one the host last loaded into the viewport, and whose model it still holds, is neither read nor painted, `ENGINE.17`; a still Screen's `timing` is `{ view, draw: 0, skipped: true }`), and the sheets a version 4 cartridge's Camera showed (`shows`, `ENGINE.18`). Since `ENGINE.19` a frame asks the window's changes before its view, so a still frame views nothing at all, and a frame whose changes name cells since the record the host holds is patched, the held record and the viewport's model laid with them in place: `patches`, each also a draw, its `timing` `{ view, draw, patched }`, `view` the changes' time and `patched` the cells named; and `inputsKept`, the frames whose Input rows all stood as last written, so that none was written; since `ENGINE.7` `applied` and `appliedRefused`, the continues written and those whose write was refused; since `ENGINE.25` `commands` and `commandsRefused`, the commands written into `Input!B20` and those refused; every sentence said, in order |
+| `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`), and a grid's frames drawn and still (`draws`, `stills`: a frame whose record of the Screen, or of a sheet shown in its place, is byte for byte the one the host last loaded into the viewport, and whose model it still holds, is neither read nor painted, `ENGINE.17`; a still Screen's `timing` is `{ view, draw: 0, skipped: true }`), and the sheets a version 4 cartridge's Camera showed (`shows`, `ENGINE.18`). Since `ENGINE.19` a frame asks the window's changes before its view, so a still frame views nothing at all, and a frame whose changes name cells since the record the host holds is patched, the held record and the viewport's model laid with them in place: `patches`, each also a draw, its `timing` `{ view, draw, patched }`, `view` the changes' time and `patched` the cells named; and `inputsKept`, the frames whose Input rows all stood as last written, so that none was written; since `ENGINE.7` `applied` and `appliedRefused`, the continues written and those whose write was refused; since `ENGINE.25` `commands` and `commandsRefused`, the commands written into `Input!B20` and those refused; since `CART.12` `presses`, a version 6 cartridge's presses over a cell taken as acts at rate 0, `settles` and `unsettled`, the acts whose settle ended still and those K stopped, `settleSteps`, the settle steps stepped, and `settling`, whether the last step's answer left the grid settling; every sentence said, in order |
 | `log()` / `logEntries()` | the last twenty events, one line each: a repeat of an event, the same sentence at another frame, is counted in the line it first made (`3 times, frames 7 to 21: ...`) and pushes nothing out; the entries as `{ id, text, key, count, first, last, refusal }` for a page that draws the log in place, `refusal` true for a refusal or a failure, the module's or the host's, which the page paints red |
 | `unload()` / `destroy()` | frees the handle and empties the canvas and the viewport; removes the listeners, and the viewport with them |
 | `vp` | grid mode's viewport (`ENGINE.8`), made at the first grid load over `options.grid` and kept across loads: a grid cartridge's Screen, its record through the Camera's window drawn at frame 0 and after every frame, the grid record at frame 0, its formulas as their texts, and the values record after it, the grid record less its formula rows, so that no formula's text is moved at a frame (`ENGINE.8`'s second slice, Frazaro's `KERNEL.37`), each frame's record replacing the last with the person's scroll and selection kept, scrolled to the window's corner at a load and by the Camera's move after it; a page focuses its `scroller` to give it the keys. Its tabs are answered (`ENGINE.14`): while another sheet is shown, each frame views that sheet alone, through the region in view, and the Screen's tab gives the Camera's window back, scrolled to its corner as at a load. Since `ENGINE.18` a cartridge written to version 4 opens on the sheet its Camera's third row names, else on its first visible sheet, so a Screen it hides is never opened on, and a change of that row shows the sheet it names at the frame's end, the person's tabs winning between its changes; a page that shows the viewport's box only after the load calls `refreshSheet(host.vp)` once it is laid out, as the player does |
@@ -261,7 +274,7 @@ the marks a host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
-test card, the input card, the sound card, Sand, the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), or Kairos, the stacking game (`CART.4`), each with its source, which the drawer's Build expands into the
+test card, the input card, the sound card, Sand, the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), Kairos, the stacking game (`CART.4`), or Superposition, the large board (`CART.12`), each with its source, which the drawer's Build expands into the
 cartridge in the page, the input card, the sound card, Sand and Kairos each with its replay, which Play the replay plays, the
 Audio sheet heard after Sound on, and
 below it the viewport over seven
@@ -555,6 +568,10 @@ page shows opened plainly and what Pages deploys.
   owner's two games (`CART.4`'s second slice), every frame's board and,
   since `ENGINE.16`, its Tally equal to Kairos's hand under the buttons the
   replay's Input rows press, and its end its golden, the Tally's record;
+  and Superposition's, the owner's session at `CART.12`'s hand test,
+  every frame's Tally, the sum of each row of its lattice,
+  equal to Superposition's hand, a frame with no row a settle step after
+  the engine's release, and its end its golden, the Tally's row sums;
   and the sound
   itself (`sound`, `ENGINE.4`'s second slice): the host's own voices over
   the double handed an `OfflineAudioContext`, a sequence of voice states
@@ -608,8 +625,14 @@ page shows opened plainly and what Pages deploys.
   stepped and drawn 120 times as the loop draws it, a day's boundary drawn
   every 30 frames and the frames between still, which its row counts; each
   frame's main-thread cost, printed as the table and the baseline lines for
-  `tools/check_blit_floors.ps1`, which holds the five cases from one run.
-  Run it in Chrome in fullscreen.
+  `tools/check_blit_floors.ps1`, which holds the six cases from one run; and
+  since `CART.12` Superposition's acts (`act`), the large board loaded
+  through the host with the seed 1, then the floors' scripted player's acts,
+  20 to warm and 120 timed, each made by its command on the cell the
+  viewport's selection stands on and timed from before the command to a
+  task queued after the rendering of the frame that drew its settle's end,
+  its bar one display interval at its p95, the page's hand following every
+  act and holding the Tally at the end. Run it in Chrome in fullscreen.
 - `index.html?oracle=1` runs the render oracle and prints one line a case
   into `<pre id="oracle">`, which the check reads under a headless browser;
   since `ENGINE.14` each line counts its #s, and `sparse_hashes` narrows the
@@ -641,7 +664,13 @@ page shows opened plainly and what Pages deploys.
   each held over its whole board and named by its cartridge's SHA-256 over
   LF, which the instrument holds to the native runner's; every row carries
   the module's memory after frame 4, a fresh module a fixture, and the slope
-  is printed after the rows. It runs at the page's load and
+  is printed after the rows. Since `CART.12` Superposition's three rows
+  follow, each over the committed lattice on a fresh module and held to the
+  page's hand, `hand-superposition`: the idle frame in five runs of 1,000
+  steps, an act's latency over the scripted player's 200 acts at 15%, its
+  rows' cells a second taken at the 95th percentile, and the deepest cascade
+  at 8%, the site the hand finds at the end of the largest opening's widest
+  path observed and its settle timed whole. It runs at the page's load and
   synchronously, since `--dump-dom` writes a page at its load:
   `tools/bench_frames.ps1` runs it under headless Chrome, with Chrome's flags
   against backgrounding and its processes opted out of Windows' power
@@ -678,7 +707,10 @@ reads any text of forms into data, the host shim's one reader.
 | `patch(text)` | a window's changes laid on the model of their sheet (`ENGINE.19`), the text a view of the projection `changes` answers: each named cell's entry read again from its rows as `load` reads them, a cell put in or an empty one taken out, the model's counts and lines kept as a load of the patched record makes them, the model object, the scroll and the selection kept, and the sheet shown painted again: the named cells alone (`ENGINE.20`), each cell's band of its row with the span its text spills over and the span of a text on its left that spills into it, before the patch and after, painted again by the full paint's own steps under each band's clip, the rest of the canvas kept, wherever the canvas holds the model's full paint, unscrolled and unresized since, and the cells named are no more than a quarter of the cells in view; whole otherwise. Returns the counts as `load` does, with `patched` the cells named and `patchMs`; `false`, and nothing changed, for a whole answer, another window, a sheet it holds no record of, rows that are no cell's of the window, or a model holding a row its reader counted unknown or malformed |
 | `patches()` | the patches laid on its models since it was made: a host notes the count with each record it loads, so that a model a page patched is never taken for the host's (`ENGINE.19`) |
 | `repaints()` | the patches it painted by their cells alone since it was made, the others painted whole (`ENGINE.20`) |
-| `clear()` | forgets every record and draws the grid empty: the host's grid unloaded (`ENGINE.8`) |
+| `clear()` | forgets every record, every layout learned and every bound, and draws the grid empty: the host's grid unloaded (`ENGINE.8`) |
+| `learn(text)` | reads a record of a sheet for its layout alone (`CART.12`'s hand test): its columns and rows with settings and its extent, inside its window, the cells and the model shown untouched; a column past the window a later record is viewed through is then laid as the sheet sets it and not at the default width. Returns `{ sheet, window, extent, columns }`, or null for a text that is no record of a sheet |
+| `fresh(name)` | the range a sheet shows from `A1` in the box, its columns as its layout lays them and its rows at the default height, inside a bound sheet's extent: the window a host views a sheet through before it shows it |
+| `bound(name, on)` | whether a sheet is drawn to its extent and no further, its last row and column the grid's, no slack after them (version 6's `(bound "<sheet>")`): the host says so for each sheet its cartridge bounds |
 | `scrolled()` | the window the scrolled quadrant shows, `{ top, left, bottom, right, window }`: the host follows a Camera's move by it (`ENGINE.8`) |
 | `show(name)` | shows a sheet whose record is loaded (the name compared without case); false when none is |
 | `sheets()` | every sheet row as `{ name, state, loaded, active }` |
@@ -702,7 +734,7 @@ reads any text of forms into data, the host shim's one reader.
 | Event | When, and what it carries |
 |---|---|
 | `select` | the selection changed by a click, a drag, a key, `select()`, or a sheet shown, which puts it at that sheet's A1: `{ sheet, text, kind, range, focus }` |
-| `scroll` | the window moved: `{ sheet, top, left, bottom, right, window }`, the rows and columns in view and their range text |
+| `scroll` | the window moved, by a scroll or, since `CART.12`'s hand test, a resize of the box, full screen's among them: `{ sheet, top, left, bottom, right, window }`, the rows and columns in view and their range text |
 | `columnresize` | a column's edge was dragged: `{ sheet, column, width }` in CSS pixels |
 | `sheet` | a tab was chosen or a record shown: `{ name, loaded, state }`; `loaded` false asks the host for that sheet's record, which the engine's host answers with `answer(viewport, event)` (`ENGINE.14`) |
 | `cellopen` | a cell was double-clicked or Enter pressed on it: `{ sheet, address, row, col, cell }`; the first game's chrome opens the pane at the sentence here |
@@ -710,7 +742,11 @@ reads any text of forms into data, the host shim's one reader.
 The keyboard, with the grid focused: the arrows move the selection and bring
 it into view, Shift with them extends it, Page Up and Page Down move by a
 screen, Home and End go to the first and the last column of the sheet, Ctrl
-with them to the first and the last cell, Enter raises `cellopen`.
+with them to the first and the last cell, Enter raises `cellopen`. A tab
+chosen, by its click or a key that clicks it, gives the grid the keys, so the
+arrows move the selection on the sheet shown; a box being typed in keeps them
+(`CART.12`'s hand test). A bound sheet's last row and column end the
+selection, the scroll and the hit test: past them there is no cell.
 
 **The rules of the record, as the viewport reads it.** A column's width is
 the record's number, the file's stored width in characters, turned into CSS
@@ -801,9 +837,13 @@ viewport, not an Excel clone.
     host's plane, and or `{ cells }`, `{ "Sheet!A1": value }`, each value a
     number, a text, `true` or `false`, or `null` for an empty cell, held to
     that sheet's record at that frame; a grid game answers cells. An optional
-    `hand.counts()` names counts of its own. Alonzo's two,
-    `cartridges/sand/sand.hand.js` and `cartridges/kairos/kairos.hand.js`,
-    are the examples, Kairos's answering both.
+    `hand.counts()` names counts of its own. Alonzo's three,
+    `cartridges/sand/sand.hand.js`, `cartridges/kairos/kairos.hand.js` and
+    since `CART.12` `cartridges/superposition/superposition.hand.js`, are the
+    examples, Kairos's answering both and Superposition's the Tally's sum of
+    each row of its lattice, a frame with no row a settle step after the
+    engine's release; it also lends the frames and blit instruments its
+    lattice, its scripted player and its deepest deal.
 
   The page opens on the empty sheet whatever it holds and offers its
   cartridges in the picker, each by its manifest's title, its notes in the
@@ -826,10 +866,13 @@ viewport, not an Excel clone.
   keymap kept through a double of the browser's storage (its second slice);
   and `commands`, the page's own command card, a game's commands named,
   listed and bound, and run by name and by key into the Input sheet's
-  twentieth row (`ENGINE.25`). Each of
+  twentieth row (`ENGINE.25`); and `settle`, an act settled at rate 0 over the
+  double and over the page's own settle card, a press over a cell an act, the
+  settle stepped and drawn, an act waiting for it and its replay rowless at
+  the settle's frames (`CART.12`). Each of
   the fifteen others prints
   `case <name>: not on this page`, being proven in Alonzo's CI, and the
-  last line reads `loop ok cases=12 dpr=1; 15 of Alonzo's own not on this
+  last line reads `loop ok cases=13 dpr=1; 15 of Alonzo's own not on this
   page` at a ratio of 1. A replay with no hand is held to its golden alone, counted `alone`
   and said in a note under the case. Every other mode of the bench is
   Alonzo's own and says so on a game's page; `?frames=1` and `?blit=1` over

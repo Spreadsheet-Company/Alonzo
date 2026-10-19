@@ -1,0 +1,94 @@
+; SPDX-License-Identifier: 0BSD
+; The owner's session at CART.12's hand test, recorded 2026-10-19 in the page at rate 0, the cartridge
+; loaded with the seed the page chose, each act stepped to its settle's end: the first observation by a
+; press on L11, a reading of nothing whose cascade opened 22 sites; a press on U16, a reading of one; the
+; command box on U16, which leaves a reading as it stands, and on V21, a box sealed on a reading of nothing;
+; the command collapse on AC21 and AD17, sites in superposition, which it leaves as they stand; the command
+; observe on M17, E34 and J34, two cascades among them, the first reaching the box on V21 at frame 33 and
+; opening it, since nothing has decayed beside nothing; then nine presses, two of them decays observed (AP23
+; and Q46), and at S56 the session's deepest cascade, 30 settle steps opening 288 sites. 18 acts over 118
+; frames in one world, 635 sites observed, two decays and no box at its end; a settle's frames hold no row.
+; Recorded on the cartridge of the first hand test, its lattice at B2, and carried onto this one as Sand's
+; first replay was (CART.2): its header renamed to this cartridge's digest, and each act's place moved a row
+; up and a column left with the lattice, which the second hand test moved to A1, the load's first rows as
+; the host writes them; so every act stands on the site it was made on, in the world it was dealt, the
+; decays' hash keeping each site's world. Under the first hand test's rule the box on V21 stayed sealed
+; inside the opening, the owner's finding at the second. It replaces the stand-in, the floors' scripted
+; player's session (CART.12, decision 7). Its golden is the Tally's row sums at its last frame, each
+; decoding into its row's observations, boxes and decays.
+(replay "superposition" (spec 6) (cartridge "D157A4254B513FFB5B1814FB9F031CB15468BB0165C70A94F6183D0B3B625AE8") (seed 1071231759))
+(frame 1
+  (cell "Input" "B11" 1)
+  (cell "Input" "B12" 1)
+  (cell "Input" "B13" 0)
+  (cell "Input" "B14" 0)
+  (cell "Input" "B15" 0)
+  (cell "Input" "B19" "Field")
+  (cell "Input" "B20" ""))
+(frame 3
+  (cell "Input" "B11" 12)
+  (cell "Input" "B12" 11)
+  (cell "Input" "B13" 1))
+(frame 9
+  (cell "Input" "B11" 21)
+  (cell "Input" "B12" 16)
+  (cell "Input" "B13" 1))
+(frame 12
+  (cell "Input" "B20" "box"))
+(frame 15
+  (cell "Input" "B11" 22)
+  (cell "Input" "B12" 21)
+  (cell "Input" "B20" "box"))
+(frame 18
+  (cell "Input" "B11" 29)
+  (cell "Input" "B20" "collapse"))
+(frame 21
+  (cell "Input" "B11" 30)
+  (cell "Input" "B12" 17)
+  (cell "Input" "B20" "collapse"))
+(frame 24
+  (cell "Input" "B11" 13)
+  (cell "Input" "B20" "observe"))
+(frame 37
+  (cell "Input" "B11" 5)
+  (cell "Input" "B12" 34)
+  (cell "Input" "B20" "observe"))
+(frame 40
+  (cell "Input" "B11" 10)
+  (cell "Input" "B20" "observe"))
+(frame 49
+  (cell "Input" "B11" 28)
+  (cell "Input" "B12" 30)
+  (cell "Input" "B13" 1))
+(frame 52
+  (cell "Input" "B11" 42)
+  (cell "Input" "B12" 28)
+  (cell "Input" "B13" 1))
+(frame 55
+  (cell "Input" "B12" 23)
+  (cell "Input" "B13" 1))
+(frame 58
+  (cell "Input" "B11" 37)
+  (cell "Input" "B12" 24)
+  (cell "Input" "B13" 1))
+(frame 61
+  (cell "Input" "B11" 40)
+  (cell "Input" "B12" 38)
+  (cell "Input" "B13" 1))
+(frame 68
+  (cell "Input" "B11" 30)
+  (cell "Input" "B12" 44)
+  (cell "Input" "B13" 1))
+(frame 71
+  (cell "Input" "B11" 17)
+  (cell "Input" "B12" 46)
+  (cell "Input" "B13" 1))
+(frame 74
+  (cell "Input" "B11" 19)
+  (cell "Input" "B12" 56)
+  (cell "Input" "B13" 1))
+(frame 105
+  (cell "Input" "B11" 33)
+  (cell "Input" "B12" 52)
+  (cell "Input" "B13" 1))
+(frame 118)

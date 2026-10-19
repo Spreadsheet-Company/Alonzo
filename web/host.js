@@ -183,7 +183,7 @@
   var HISTORY_LINES = 2000;
   var MAX_SEED = 2147483646;         // the highest seed, so a Park and Miller cell never sticks at 0 (section 3.5)
   var MAX_RATE = 120;                // the highest rate, in frames a second (section 10)
-  var SPEC = 5;                      // the page's version this host implements; a replay's header names its
+  var SPEC = 6;                      // the page's version this host implements; a replay's header names its
                                      // cartridge's, 3 for a cartridge written to 1 to 3 (ENGINE.18, decision 7)
   var MAX_COMMANDS = 100;            // a Commands sheet's rows 2 to 101 (ENGINE.25; docs/SPEC.md section 3.10)
   var COMMANDS_WAITING = 16;         // the commands that may wait for their frames, one a frame: a seventeenth is said
@@ -263,7 +263,25 @@
     if (!g) return 'A1';
     if (fresh) return rangeOf(1, 1, Math.max(1, Math.ceil(g.clientH / V.RULES.row)), Math.max(1, Math.ceil(g.clientW / V.RULES.column)));
     var s = vp.scrolled(), top = g.frozenRows > 0 ? 1 : s.top, left = g.frozenCols > 0 ? 1 : s.left;
-    return V.rangeText({ top: top, left: left, bottom: Math.max(top, s.bottom), right: Math.max(left, s.right) });
+    var r = { top: top, left: left, bottom: Math.max(top, s.bottom), right: Math.max(left, s.right) };
+    var m = vp.model(), w = m && m.windowText ? V.parseRange(m.windowText) : null;
+    if (w) carried(r, w, g, m, V);
+    if (g.bounded) { r.bottom = Math.min(r.bottom, g.sheetRows); r.right = Math.min(r.right, g.sheetCols); }   // a bound sheet's extent (version 6)
+    return V.rangeText(r);
+  }
+  // Past its record's window a viewport lays a row the record does not name as the sheet's earlier records set it,
+  // else at the default height, so a sheet of rows lower than the default shows more of them than its region held,
+  // each drawn empty until a view names it; the region is carried on past the window at the height of its last row,
+  // so that the next view names what the viewport shows. A column needs no such carrying since CART.12's hand test,
+  // 2026-10-19 (the large board's columns of 21 pixels drawn to CX of a screen of about 120 of them, and a page's jump
+  // drawing columns no record named): the host reads a sheet's columns whole before it shows it (_learn), and the
+  // viewport lays every column as the sheet sets it.
+  function carried(r, w, g, m, V) {
+    if (r.bottom > w.bottom && w.bottom >= r.top) {
+      var st = m.rowSettings ? m.rowSettings[w.bottom] : null;
+      var h = !st ? g.rowH : (st.hidden ? 0 : (st.height === null ? g.rowH : Math.round(Math.round(st.height * V.RULES.point) * g.dpr)));
+      if (h > 0 && h < g.rowH) r.bottom = w.bottom + Math.ceil((r.bottom - w.bottom) * g.rowH / h);
+    }
   }
   // Whether one window lies inside another.
   function within(inner, outer) {
@@ -503,6 +521,17 @@
     for (i = 0; i < write.length; i++) { if (write[i].head === 'formula') formulas++; else values++; cells += cellsOf(write[i].range); }
     return { why: why, rows: write.map(function (v) { return v.text; }), formulas: formulas, values: values, cells: cells };
   }
+  // An act at rate 0, in words, for the frame's sentence: an edit's row, a command, a press of a button on its cell
+  // (version 6, CART.12), the load's first step of a cartridge that settles, or a rebuilt cartridge applied.
+  var PRESS_WORDS = ['', 'left', 'right', 'middle'];
+  function actWords(a) {
+    if (typeof a === 'string') return 'the edit ' + a;
+    if (a.row !== undefined) return 'the edit ' + a.row;
+    if (a.command !== undefined) return 'the command ' + a.command;
+    if (a.press !== undefined) return 'the ' + PRESS_WORDS[a.press] + ' press on ' + a.place.sheet + '!' + VP().colName(a.place.col) + a.place.row;
+    if (a.load) return 'the load';
+    return 'the source applied, ' + a.file;
+  }
   // What a continue writes, in words: its rows by kind, and their cells.
   function appliedWords(b) {
     var parts = [];
@@ -663,9 +692,14 @@
     // step in progress; the twentieth row as the host last wrote it at rate 0, null where it does not know; and the
     // rows of the sheet said once, until they change.
     this.commandList = []; this.commandKeys = {}; this.waiting = []; this.commandNow = ''; this.commandRow = null; this.badRows = {};
+    // Version 6's settle (CART.12): whether the last step's answer left the grid settling, its word, and the act a settle
+    // follows, { what, from }, said when it ends; and an act's rows at rate 0 as the host last knew the Input sheet to hold
+    // them, by address, the engine's release mirrored, null where it does not know.
+    this.settling = false; this.settleWord = ''; this.settleAct = null; this.actKnown = null;
     this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
     this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, inputsKept: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, patches: 0, shows: 0, saves: 0,
-               sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0, commands: 0, commandsRefused: 0 };
+               sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0, commands: 0, commandsRefused: 0,
+               settles: 0, settleSteps: 0, unsettled: 0, presses: 0 };
   };
 
   // The module: its ABI number asked first, then every export the loop calls.
@@ -699,7 +733,7 @@
     if (!f) return this._fail('The module answered the load with ' + r.text.trim() + ', not a cartridge row.');
     this.handle = num(f[1]);
     this.cartBytes = bytes; this.cartFile = name || '';
-    var c = this.cart = { title: str(f[2]), mode: sym(f[3]), w: num(f[4]), h: num(f[5]), rate: num(f[6]), seed: '', spec: 0, devices: {}, budget: null, name: null, digest: null };
+    var c = this.cart = { title: str(f[2]), mode: sym(f[3]), w: num(f[4]), h: num(f[5]), rate: num(f[6]), seed: '', spec: 0, settle: 0, bound: [], devices: {}, budget: null, name: null, digest: null };
     this._describe();
     this.window = rangeOf(1, 1, c.h, c.w);
     this._say('Loaded ' + c.title + ': ' + article(c.w) + ' ' + c.w + ' by ' + c.h + ' ' + c.mode + ' at ' + (c.rate ? c.rate + ' frames a second' : 'rate 0, a step on every edit') + ', seed ' + c.seed + ', on ' + this.version + '.');
@@ -724,6 +758,9 @@
     if (c.mode === 'plane') this._drawPlane();   // frame 0, drawn at the load
     if (c.mode === 'grid') this._open();   // and a grid's, its record as loaded (ENGINE.8), on the sheet it opens on (ENGINE.18)
     this._emit('load', { handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate, window: this.window, scale: this.scale || 0 });
+    // A cartridge that settles opens on computed values (CART.12; docs/SPEC.md section 5): the load's act, frame 1, stepped
+    // with its settle as an act at rate 0 is, at once and on the ticks after; a replay's player steps it itself.
+    if (this._settles() && c.rate === 0 && this.playSeed === undefined) { this.edits.push({ load: true }); this._editFrames(this._window()); }
     return { ok: true, handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate };
   };
   // The host's seed (ENGINE.3, decision 1): a cartridge whose manifest says (seed host) loads with
@@ -753,6 +790,8 @@
       var f = forms[i], head = Array.isArray(f) ? sym(f[0]) : null;
       if (head === 'seed') c.seed = num(f[1]) !== null ? num(f[1]) : sym(f[1]);
       else if (head === 'spec') c.spec = num(f[1]) || 0;   // the page the cartridge is written to: version 4's views its alone (ENGINE.18)
+      else if (head === 'settle') c.settle = num(f[1]) || 0;   // version 6's settle, the most steps an act settles in (CART.12)
+      else if (head === 'bound') { for (var b = 1; b < f.length; b++) if (str(f[b]) !== null) c.bound.push(str(f[b])); }   // version 6's bound sheets (CART.12's hand test)
       else if (head === 'device' && str(f[1])) c.devices[str(f[1]).toLowerCase()] = { range: str(f[2]), direction: sym(f[3]) };
       else if (head === 'budget') c.budget = { rate: num(f[1]), cells: num(f[2]), perSecond: num(f[3]), line: num(f[4]) };
     }
@@ -864,7 +903,7 @@
     if (c.rate === 0) {   // no tick at rate zero: a frame an edit began continues here, and the edits waiting follow it
       win = this._window();
       if (this.inFrame) { if (this._continue(win)) this._editFrames(win); }
-      else if (this.edits.length) this._editFrames(win);   // edits made in the frame that set the rate to 0
+      else if (!this.player && (this.settling || this.edits.length)) this._editFrames(win);   // a settle going on (CART.12), or edits made in the frame that set the rate to 0
       else if (this.player) { this._begin(); if (this.inFrame) this._continue(win); }   // a replay's frame a tick, its edits being its frames
       return;
     }
@@ -912,15 +951,18 @@
     this._issueDerived();   // section 5, step 2: the derived writes, before the inputs
     this._issueInputs();    // step 3: the Input rows, then a person's edits, each its own write
   };
-  // Rate zero: one step for each edit, in the order they were made.
+  // Rate zero: one step for each edit, in the order they were made. A settling cartridge's act is its step and then its
+  // settle's (version 6, CART.12; docs/SPEC.md section 5): while the last step's answer says settling, a settle step,
+  // the derived writes before it and no act, and the acts made meanwhile wait for the settle to end.
   Host.prototype._editFrames = function (win) {
-    while (!this.inFrame && this.edits.length && this.handle) {
+    while (!this.inFrame && this.handle && !this.player && (this.settling || this.edits.length)) {
       this.inFrame = true;
       this.progress = { evaluated: 0, of: this.frameCells };
       this._issueDerived();
+      if (this.settling) { if (!this._continue(win)) return; continue; }
       var row = this.edits.shift();
       if (!this._issueAct(row, true)) { this.inFrame = false; this.progress = null; continue; }
-      this.stepEdit = typeof row === 'string' ? 'the edit ' + row : row.command !== undefined ? 'the command ' + row.command : 'the source applied, ' + row.file;
+      this.stepEdit = actWords(row);
       if (!this._continue(win)) return;
     }
   };
@@ -956,8 +998,27 @@
     this.frameCells = of;
     if (sym(f[4]) === 'yielded') { this.c.yields++; this.progress = { evaluated: evaluated, of: of }; return 'yielded'; }
     this.inFrame = false; this.progress = null;
+    // a settling cartridge's word (version 6, CART.12; docs/SPEC.md section 4.4): settling, the next step a settle step
+    // with no act; unsettled, K settle steps taken and the grid waiting for the next act; none, settled
+    this.settleWord = sym(f[5]) || '';
+    var was = this.settling;
+    this.settling = this.settleWord === 'settling';
+    if (was) this.c.settleSteps++;
+    // the engine releases the act's press and command before the first settle step: the host's own record of the act's
+    // rows, and the recorder's, hold the release, so that the next act writes and logs a press against it
+    if (this.settling && !was) this._released();
     this._complete(num(f[1]));
     return 'done';
+  };
+  // The engine's release mirrored (CART.12): the press's cells 0 and the command's empty, as the host and the recorder
+  // last know the Input sheet to hold them, and the twentieth row so too.
+  Host.prototype._released = function () {
+    var rel = { B13: '0', B14: '0', B15: '0', B20: '""' }, known = this.actKnown, rec = this.rec, a;
+    for (a in rel) {
+      if (known) known[a] = rel[a];
+      if (rec && rec.input && rec.input[a] !== undefined) rec.input[a] = rel[a];
+    }
+    if (this.commandRow !== null) this.commandRow = '';
   };
   Host.prototype._sayProgress = function () {
     var p = this.progress || { evaluated: 0, of: this.frameCells };
@@ -1009,9 +1070,38 @@
   // cartridge's command at rate 0 (ENGINE.25), before whose step, as before every step at rate 0, the twentieth row is
   // written alone, the command that runs or empty.
   Host.prototype._issueAct = function (act, atRateZero) {
-    if (atRateZero && this._five()) this._writeCommandRow(act.command !== undefined ? act.command : '');
+    if (atRateZero && this._sixAtZero()) { if (!this._writeActRows(act)) return false; }
+    else if (atRateZero && this._five()) this._writeCommandRow(act.command !== undefined ? act.command : '');
     if (act.command !== undefined) return this._issueCommand(act, atRateZero);
+    if (act.press !== undefined || act.load) return true;   // a press, or the load's first step: its rows are the act (CART.12)
+    if (act.row !== undefined) return this._issueEdit(act.row, atRateZero);
     return typeof act === 'string' ? this._issueEdit(act, atRateZero) : this._issueApplied(act, atRateZero);
+  };
+  // An act's rows at rate 0 (version 6, CART.12; docs/SPEC.md section 3.3), before its step: the sheet shown and the cell
+  // the act stands on, the press, and the command, as one write of the rows that differ from the Input sheet as the host
+  // last knew it, the engine's release held there; all seven where it knows nothing. Recorded as the Input cells they
+  // are, against the recorder's own record. Refused: said, and no step.
+  Host.prototype._writeActRows = function (act) {
+    var p = act.place || this._place(), press = act.press || 0, cmd = act.command !== undefined ? act.command : '';
+    var want = { B11: String(p.col), B12: String(p.row), B13: press === 1 ? '1' : '0', B14: press === 2 ? '1' : '0', B15: press === 3 ? '1' : '0',
+                 B19: quote(p.sheet), B20: quote(cmd) };
+    var known = this.actKnown, rows = [], all = [], a;
+    for (a in want) {
+      var row = '(cell "Input" "' + a + '" ' + want[a] + ')';
+      all.push(row);
+      if (!known || known[a] !== want[a]) rows.push(row);
+    }
+    if (rows.length) {
+      var r = this._write(rows.join('\n'));
+      if (r.status !== 0) {
+        this.actKnown = null; this.commandRow = null;
+        this._refuse('frame ' + (this.frame + 1) + ': the act\'s rows were refused: ' + words(r, true) + '; no step for ' + actWords(act) + '.');
+        return false;
+      }
+    }
+    this.actKnown = want; this.commandRow = cmd; this.inputsLast = null;
+    this._recordInputs(all.join('\n'));
+    return true;
   };
   // A command's step at rate 0 (ENGINE.25): its name written into the twentieth row before it, the step following; the
   // row refused, no step. At a rate a command left among the acts, a rate risen from 0, waits for the next frame.
@@ -1043,7 +1133,7 @@
       for (var i = 0; i < b.rows.length; i++) {
         this._recordEdit(b.rows[i]);
         if (editsInput(b.rows[i])) this.inputsLast = null;
-        if (editsInput(b.rows[i])) this.commandRow = null;   // the twentieth row no longer known (ENGINE.25)
+        if (editsInput(b.rows[i])) { this.commandRow = null; this.actKnown = null; }   // the twentieth row and the act's rows no longer known (ENGINE.25, CART.12)
       }
       this.given = b.text;
       this._say('frame ' + (this.frame + 1) + ': applied ' + b.file + ' to the running game: ' + appliedWords(b) + ' written, the frame number and every other cell kept.');
@@ -1061,7 +1151,7 @@
       this.c.edits++;
       this._recordEdit(row);   // the replay logs a person's edit that landed, in its frame (section 7.6)
       if (editsInput(row)) this.inputsLast = null;   // the Input sheet a person wrote: the next frame's rows written whole (ENGINE.19)
-      if (editsInput(row)) this.commandRow = null;   // and its twentieth row no longer known (ENGINE.25)
+      if (editsInput(row)) { this.commandRow = null; this.actKnown = null; }   // and its twentieth row and the act's rows no longer known (ENGINE.25, CART.12)
       if (!atRateZero) this._say('frame ' + (this.frame + 1) + ': the edit ' + row + ' was written.');
       return true;
     }
@@ -1112,7 +1202,23 @@
     if (d.write) this._readWrite();
     if (d.clock) this._readClock();
     if (d.audio) this._sound();   // step 6, the sound, after the Clock's rate that times it (ENGINE.4)
-    if (this.stepEdit) { this._say('frame ' + n + ': stepped once for ' + this.stepEdit + '.'); this.stepEdit = null; }
+    // an act's sentence: stepped once for it; for a cartridge that settles (CART.12), said when its settle ends, with the
+    // steps it took after the act's own, or that K stopped it with the grid still moving (SD-30)
+    if (this.stepEdit) {
+      if (this.settling) this.settleAct = { what: this.stepEdit, from: n };
+      else this._say('frame ' + n + ': stepped once for ' + this.stepEdit + '.');
+      this.stepEdit = null;
+    } else if (this.settleAct && !this.settling) {
+      var sa = this.settleAct, steps = n - sa.from;
+      this.settleAct = null;
+      if (this.settleWord === 'unsettled') {
+        this.c.unsettled++;
+        this._say('frame ' + n + ': ' + sa.what + ' did not settle in ' + steps + ' step' + (steps === 1 ? '' : 's') + ' after its own, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5).');
+      } else {
+        this.c.settles++;
+        this._say('frame ' + n + ': ' + sa.what + ' settled in ' + steps + ' step' + (steps === 1 ? '' : 's') + ' after its own.');
+      }
+    }
     var p = this.player;
     this._emit('frame', { frame: n, window: this.window, scale: this.scale || 0, rate: this.cart.rate, replay: p ? p.last : 0 });
     if (p && p === this.player && n >= p.last) this._endReplay(n);
@@ -1343,6 +1449,21 @@
   Host.prototype._four = function () { return !!this.cart && this.cart.spec >= 4; };
   // Whether the cartridge is written to version 5, whose Commands sheet and twentieth row are its alone (ENGINE.25).
   Host.prototype._five = function () { return !!this.cart && this.cart.spec >= 5; };
+  // Whether the cartridge is written to version 6 and stands at rate 0, where an act has a place and a press over a cell
+  // is an act (CART.12); and whether it settles, (settle K), each act then stepped again while the grid moves.
+  Host.prototype._sixAtZero = function () { return !!this.cart && this.cart.spec >= 6 && this.cart.rate === 0; };
+  Host.prototype._settles = function () { return !!this.cart && this.cart.settle > 0; };
+  // The place an act stands on at rate 0 (CART.12; docs/SPEC.md section 3.3, version 6): in grid mode the sheet shown and
+  // the cell the viewport's selection stands on there, the sheet's own; in plane mode the pointer's Screen cell, the
+  // Camera added, as the Input rows write it at a rate, 0 off the canvas.
+  Host.prototype._place = function () {
+    if (this.cart && this.cart.mode === 'grid' && this.vp) {
+      var f = this.vp.selection().focus;
+      return { sheet: this._shown(), col: f ? f.col : 1, row: f ? f.row : 1 };
+    }
+    var pt = this.pointer, cam = this.camera, on = pt.col > 0 && pt.row > 0;
+    return { sheet: 'Screen', col: on ? cam.col + pt.col - 1 : 0, row: on ? cam.row + pt.row - 1 : 0 };
+  };
   // The sheet the host's viewport shows, the Screen while none is shown; without a viewport, the one the host
   // last showed itself, so that a host with no element never views a hidden Screen nobody draws.
   Host.prototype._shown = function () { return (this.vp && this.vp.sheet()) || this.shownName || 'Screen'; };
@@ -1411,12 +1532,30 @@
   // record is the values projection after frame 0 (ENGINE.18, decision 3).
   Host.prototype.showSheet = function (vp, name) {
     if (!vp || !this.m || !this.handle) return false;
-    var win = regionOf(vp, true), t = this._viewDrawn(name, win);
+    this._learn(vp, name);
+    var win = vp.fresh ? vp.fresh(name) : regionOf(vp, true), t = this._viewDrawn(name, win);
     if (t === null) return false;
     this._quiet(function () { vp.load(t, { keep: true }); vp.show(name); });
     this._noteLoad(vp, t);
     if (!within(regionOf(vp, false), win)) this.refreshSheet(vp);
     return true;
+  };
+  // A sheet's layout read before it is shown (CART.12's hand test, 2026-10-19): its last row, which no cell holds,
+  // viewed across every column, a record of its columns with settings and its extent and of no cell, which the
+  // viewport learns, so that it lays every column as the sheet sets it and a jump of the scroll draws the columns it
+  // views; and whether the cartridge's manifest bounds the sheet to its extent (version 6). Refused, said once by the
+  // view, the sheet is shown as before, its columns learned window by window.
+  var LAYOUT_STRIP = 'A1048576:XFD1048576';
+  Host.prototype._learn = function (vp, name) {
+    if (vp.bound) vp.bound(name, this._bounded(name));
+    if (!vp.learn) return;
+    var t = this._viewDrawn(name, LAYOUT_STRIP);
+    if (t !== null) vp.learn(t);
+  };
+  Host.prototype._bounded = function (name) {
+    var b = this.cart && this.cart.bound ? this.cart.bound : [], want = String(name || '').toLowerCase();
+    for (var i = 0; i < b.length; i++) if (b[i].toLowerCase() === want) return true;
+    return false;
   };
   // The sheet a viewport shows, viewed again through the region it shows, its view kept (decision 3): at every
   // frame in the host's own viewport, at a page's refresh in its viewer. moved: only when the region has left
@@ -1569,7 +1708,7 @@
     var queued = this.waiting.length + this.edits.filter(function (x) { return x && x.command !== undefined; }).length;
     if (queued >= COMMANDS_WAITING) return no(COMMANDS_WAITING + ' commands wait for their frames already, one a frame.');
     if (c.rate === 0) {
-      this.edits.push({ command: cmd.name });
+      this.edits.push(this._sixAtZero() ? { command: cmd.name, place: this._place() } : { command: cmd.name });   // its place, version 6's (CART.12)
       if (!this.inFrame) this._editFrames(this._window());
     } else {
       this.waiting.push(cmd.name);
@@ -1823,7 +1962,8 @@
     if (head !== 'cell' && head !== 'formula') { this._refuse('An edit is one cell or formula row, as (cell "Palette" "B1" "#FF8800"); ' + (t || 'an empty line') + ' is not one.'); return false; }
     if (!this.handle) { this._refuse('No cartridge is loaded to edit.'); return false; }
     if (this.player) { this._refuse('The edit ' + t + ' was not written: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s edit waits until it ends, so that what plays is the replay alone.'); return false; }
-    this.edits.push(t);
+    // at rate 0 a version 6 cartridge's edit stands on the cell the selection stands on when it is made (CART.12)
+    this.edits.push(this._sixAtZero() ? { row: t, place: this._place() } : t);
     if (this.cart.rate === 0 && !this.inFrame) this._editFrames(this._window());
     // At a rate above zero the edit is written at the next frame, which a paused loop does not bring until Run:
     // said, so that an edit is never silent (the owner's hand test of ENGINE.8, 2026-10-12: the grid card,
@@ -1888,19 +2028,45 @@
   // and over another sheet, the pointer is 0 and the wheel scrolls. A cartridge written to version 4 has the
   // pointer and its buttons over any cell of another sheet shown too, that sheet's own cell, the wheel still
   // scrolling there (ENGINE.18, decision 4). At rate zero, where the Input sheet is not written, all of them are
-  // the viewport's, to select, scroll and move by.
+  // the viewport's, to select, scroll and move by, but for a holding command's key, taken as at a rate (CART.12,
+  // decision 64), and, for a cartridge written to version 6, a press of a button over a cell, an act (decision 63),
+  // its context menu taken.
   Host.prototype._listenGrid = function () {
     var self = this, root = this.vp.root;
     function playing() { return !!self.cart && self.cart.mode === 'grid' && self.cart.rate > 0; }
-    this._on(root, 'keydown', function (ev) { if (playing() && self.keyDown(ev.code, ev.key, ev)) { ev.preventDefault(); ev.stopPropagation(); } }, true);
+    function still() { return !!self.cart && self.cart.mode === 'grid' && self.cart.rate === 0; }
+    this._on(root, 'keydown', function (ev) {
+      if (playing()) { if (self.keyDown(ev.code, ev.key, ev)) { ev.preventDefault(); ev.stopPropagation(); } return; }
+      var cmd = still() ? self._commandKey(ev.code, ev) : null;
+      if (cmd) { if (!ev.repeat) self.command(cmd.name, 'key'); ev.preventDefault(); ev.stopPropagation(); }
+    }, true);
     this._on(root, 'keyup', function (ev) { if (playing()) self.keyUp(ev.code); }, true);
     this._on(root, 'focusout', function () { self.releaseKeys(); });
     this._on(root, 'mousemove', function (ev) { if (playing()) self._pointerFromGrid(ev); });
     this._on(root, 'mousedown', function (ev) { if (playing()) self._pointerFromGrid(ev); });
+    // a press at rate 0 read before the viewport's own, whose focus may scroll the page under the point (CART.12)
+    this._on(root, 'mousedown', function (ev) { if (still() && self._sixAtZero()) self._pressAct(ev); }, true);
     this._on(root, 'mouseup', function (ev) { if (playing()) self._pointerFromGrid(ev); });
     this._on(root, 'mouseleave', function () { if (playing()) { self.pointerAt(0, 0); self.pointerButtons(0, 0, 0); } });
-    this._on(root, 'contextmenu', function (ev) { if (playing() && self._pointerCellAt(ev)) ev.preventDefault(); });
+    this._on(root, 'contextmenu', function (ev) { if ((playing() || (still() && self._sixAtZero())) && self._pointerCellAt(ev)) ev.preventDefault(); });
     this._on(root, 'wheel', function (ev) { if (!playing() || !self._windowCellAt(ev)) return; self.wheel(ev.deltaY > 0 ? 1 : (ev.deltaY < 0 ? -1 : 0)); ev.preventDefault(); }, { passive: false, capture: true });
+  };
+  // A press of a button over a cell of the sheet shown, an act at rate 0 for a cartridge written to version 6 (CART.12,
+  // decision 63; docs/SPEC.md section 3.3): over the Screen a cell of the Camera's window, the Camera added, and over
+  // another sheet any cell in view, the sheet's own; never over the headers, the corner, the tabs or the scrollbars. The
+  // viewport selects the cell, its own press doing so for the left button, and the press holds for the act's frame,
+  // Input!B13 the left, B14 the right, B15 the middle. While a replay plays it is no act, said once.
+  Host.prototype._pressAct = function (ev) {
+    if (!this.vp || !this.handle || ev.button > 2) return false;
+    var at = this._pointerCellAt(ev);
+    if (!at) return false;
+    if (this.player) { this._sayOnce('press-replay', 'A press over a cell is no act while a replay plays: what plays is the replay alone.', false); return false; }
+    var col = at.sheet ? at.col : this.camera.col + at.col - 1, row = at.sheet ? at.row : this.camera.row + at.row - 1;
+    if (ev.button !== 0) this.vp.select(VP().colName(col) + row);
+    this.c.presses++;
+    this.edits.push({ press: ev.button === 0 ? 1 : ev.button === 2 ? 2 : 3, place: { sheet: this._shown(), col: col, row: row } });
+    if (!this.inFrame) this._editFrames(this._window());
+    return true;
   };
   // The cell of the Camera's window under a point, { col, row } counted from the window's corner, or null: off
   // the window's cells, over a header, a scrollbar or the tabs, or while another sheet shows (ENGINE.14).
@@ -2099,7 +2265,7 @@
     var n = this.frame + 1, rows = this.player.frames[n];
     if (!rows) return;
     var r = this._write(rows.join('\n'));
-    if (r.status === 0) { this._recordPlayed(rows); this.inputsLast = null; this.commandRow = null; return; }   // the rows last written forgotten with the recorder's record (ENGINE.19), the twentieth row too (ENGINE.25)
+    if (r.status === 0) { this._recordPlayed(rows); this.inputsLast = null; this.commandRow = null; this.actKnown = null; return; }   // the rows last written forgotten with the recorder's record (ENGINE.19), the twentieth row too (ENGINE.25), and an act's (CART.12)
     this.inFrame = false; this.progress = null; this.player = null; this.stop();
     this._refuse('frame ' + n + ': the replay\'s rows were refused: ' + words(r) + '; the replay stops, and the cartridge stands at frame ' + this.frame + '.');
   };
@@ -2150,6 +2316,7 @@
     var o = {};
     for (var k in this.c) if (Object.prototype.hasOwnProperty.call(this.c, k)) o[k] = this.c[k];
     o.frame = this.frame; o.handle = this.handle; o.window = this.window; o.scale = this.scale || 0; o.said = this.said;
+    o.settling = this.settling;   // the last step's answer left the grid settling (CART.12)
     return o;
   };
   Host.prototype.sentences = function () { return this.history.slice(); };

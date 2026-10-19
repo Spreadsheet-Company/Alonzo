@@ -18,10 +18,13 @@ WHAT IT HOLDS, for each .vla under cartridges/, with the catalog's ids:
     directive, when given, the header's twin;
   - the manifest form first, (cartridge "name" ...), the name lowercase
     letters, digits and hyphens; every directive present once and in range
-    (cart-manifest-invalid): (spec 1..5), (title "..."), (rate 0..120),
+    (cart-manifest-invalid): (spec 1..6), (title "..."), (rate 0..120),
     (screen plane w h) at most 320 by 200 or (screen grid w h) at most 80 by
     50, (seed 1..2147483646|host); author, license and notes optional and at
-    most once; an unknown directive refused; a (spec n) past 5 refused as
+    most once, and settle (1..65536) too, a (spec 6) cartridge's at (rate 0)
+    alone, and bound ("sheet" ...) too, a (spec 6) cartridge's at any rate,
+    one sheet or more, each named once and held by the rows or the engine's
+    own; an unknown directive refused; a (spec n) past 6 refused as
     cart-spec-unsupported;
   - every row after it one of section 7.3's kinds in its shape (grid-row-
     unknown, grid-row-malformed); a (derived ...) row is the host's and never
@@ -87,21 +90,23 @@ it; a value written wrong is a typo this check can name before any run.
 -Control copies cartridges/ to a scratch folder and proves the check on it,
 a fresh copy for every case: the clean copy passes, and so do Life written
 to (spec 3), Life written to (spec 4) with its Camera's third row, Life written to
-(spec 5) with its Commands sheet, and Life written to (spec 4) with a sheet named
-Commands of its own; forty mutants must each fail for its own reason, each
+(spec 5) with its Commands sheet, Life written to (spec 4) with a sheet named
+Commands of its own, Life written to (spec 6) at rate 0 with (settle 8), and
+Life written to (spec 6) bounding its Screen, (bound "Screen");
+forty-seven mutants must each fail for its own reason, each
 asserting its anchor once and proving it applied before the check is asked.
 Thirteen are of life.vla: a directive dropped, a rate of 121, a screen 321
 wide, a cell written twice, a cell outside the Screen, a Palette index out
 of order, a color that is not #RRGGBB, NOW() in the rule, a sheet named
 Board.last, the header dropped, an unknown row kind, a formula into
 Input!B1, and the file renamed out of its folder's name, which the count
-must catch. Seven are SPEC.3's: a (spec 6) since ENGINE.25 made 5 a page
+must catch. Seven are SPEC.3's: a (spec 7) since CART.12 made 6 a page
 this version reads, a macro left in a cartridge,
 an include before a cartridge's manifest, a source whose cartridge is gone,
 a banner naming a source that is not there, a stray .vla in a cartridge's
 folder, and a second library. Nine are ENGINE.3's, of the input card's
 replay and golden: a digest that is not the cartridge's, a replay named for
-another folder, a (spec 6), a seed of 0, frames out of order, a derived row,
+another folder, a (spec 7), a seed of 0, frames out of order, a derived row,
 a row outside a frame, a golden without its window row, and a golden whose
 replay is gone. Three are ENGINE.4's: the sound card's voice 2 written the
 wave "triangel", and Life given an Audio sheet whose voice 1 has the note
@@ -112,7 +117,11 @@ layout, and a formula into Input!B19 at (spec 4), a cell the host writes.
 Five are ENGINE.25's, version 5's sheet and row held to a (spec 5) cartridge:
 a cell of the Commands sheet outside A1:D101 at (spec 5), an Input sheet's
 twentieth row at (spec 4), a formula into Input!B20 at (spec 5), a command's
-name that is no name, and a command's name written twice.
+name that is no name, and a command's name written twice. Three are CART.12's,
+version 6's directive held to a (spec 6) cartridge at rate 0: (settle 8) at
+(spec 5), (settle 8) at (rate 30), and (settle 0). Four are its hand test's,
+version 6's second directive: (bound "Screen") at (spec 5), a bound naming a
+sheet no row holds, one naming a sheet twice, and one naming none.
 
 SINCE ENGINE.18 (2026-10-15; docs/REARVIEW.md, decision 1): (spec 4) is read,
 for a cartridge and for a replay's header, and version 4's two rows, the
@@ -128,6 +137,15 @@ the engine holds them at load (cart-command-invalid): each value of column A fro
 row 2 lowercase letters, digits and hyphens, and no name written twice. A
 cartridge written to 1 to 4 keeps version 4's layouts, and a sheet of its named
 Commands is its own.
+
+SINCE CART.12 (2026-10-18; docs/REARVIEW.md, decision 66): (spec 6) is read, for
+a cartridge and for a replay's header, and version 6's directive, (settle K), a
+whole number from 1 to 65536, is a (spec 6) cartridge's at (rate 0) alone, as the
+engine reads it; version 6 adds no sheet and no row, its layouts version 5's. Since
+its hand test (2026-10-19), version 6's second directive, (bound "<sheet>" ...),
+the sheets a viewport draws to their extent and no further, is a (spec 6)
+cartridge's at any rate, each sheet a text named once and one the rows hold or
+the engine makes, Clock, File or Input, as the engine reads it at the load.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network; a
 hardcoded, reviewable baseline that pins how many; exit 0 clean, exit 1 with
@@ -222,17 +240,41 @@ if ($Root -eq '') { $Root = $repoRoot }
 # 127 of them written, the last empty, 273 rows, the manifest's seed 1) and
 # kairos.golden.vla (the Tally sheet's record at its end, the window
 # A1:D23); the cartridges' rows unchanged.
-$expectedCartridges = 8
-$expectedSources = 8
+# 2026-10-18, CART.12's fourth slice: Superposition's replay and its golden,
+# cartridges/superposition/superposition.replay.vla (a stand-in for the
+# owner's session, recorded by the page's own host and recorder: 27 acts over
+# 113 frames at rate 0, 28 of them written, a settle's frames holding no row,
+# the host's seed 20261018) and superposition.golden.vla (the Tally sheet's
+# record at its end, the window R1:R513, each row's sum of its sites' codes);
+# the cartridges' rows unchanged.
+# 2026-10-19, CART.12's hand test: Superposition 631 rows, three column rows
+# more, the Observer's A and B and the Constants' A, widths for the labels and
+# for the seed, which the screen had cut to #######; and the owner's own
+# session in place of the stand-in, superposition.replay.vla (18 acts over 118
+# frames in one world, 19 of them written, a settle's frames holding no row,
+# the seed the page chose, 1071231759; recorded on the cartridge before the
+# widths and carried onto this one, its header renamed and its rows as
+# recorded) and superposition.golden.vla (the Tally's record at its end, the
+# window R1:R513); the other eight's rows unchanged.
+# 2026-10-19, CART.12's second hand test: Superposition 636 rows, its lattice
+# moved to A1, no spacer row or column, and bound there by version 6's second
+# directive, (bound "Field"): the Field's widths a column fewer, 512, its rule
+# and the Readings' each four parts, the corner's, the first row's, the first
+# column's and the rest's, and a box beside a reading of nothing opened; the
+# owner's replay carried onto it, each act's place a row up and a column left
+# with the lattice (118 frames, 19 written), and its golden the Tally's record
+# over R1:R512; the other eight's rows unchanged.
+$expectedCartridges = 9
+$expectedSources = 9
 $expectedLibraries = 1
-$expectedReplays = 4
-$expectedGoldens = 4
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 150; 'cartridges/kairos/kairos.vla' = 378 }
+$expectedReplays = 5
+$expectedGoldens = 5
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 177; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---
 $requiredDirectives = @('spec', 'title', 'rate', 'screen', 'seed')
-$optionalDirectives = @('author', 'license', 'notes')
+$optionalDirectives = @('author', 'license', 'notes', 'settle', 'bound')
 $rowKinds = @('sheet', 'cell', 'formula', 'value', 'name', 'column', 'format', 'style', 'gridlines', 'sentence', 'table', 'refers', 'look', 'row')
 function New-Rect([int]$top, [int]$left, [int]$bottom, [int]$right) { return @{ T = $top; L = $left; B = $bottom; R = $right } }
 $layouts = @{
@@ -375,7 +417,7 @@ function Test-Cartridge([string]$path) {
             switch -CaseSensitive ($dn) {
                 'spec' {
                     if ($args1 -ne 1 -or -not (Test-Whole $d.Items[1])) { $problems.Add("line $($d.Line): cart-manifest-invalid: (spec ...) holds one whole number") }
-                    elseif ([int]$d.Items[1].Text -gt 5 -or [int]$d.Items[1].Text -lt 1) { $problems.Add("line $($d.Line): cart-spec-unsupported: (spec $($d.Items[1].Text)); this version reads 1, 2, 3, 4 and 5") }
+                    elseif ([int]$d.Items[1].Text -gt 6 -or [int]$d.Items[1].Text -lt 1) { $problems.Add("line $($d.Line): cart-spec-unsupported: (spec $($d.Items[1].Text)); this version reads 1, 2, 3, 4, 5 and 6") }
                     else { $specN = [int]$d.Items[1].Text }
                 }
                 'title' { if ($args1 -ne 1 -or -not (Test-Kind $d.Items[1] 'string')) { $problems.Add("line $($d.Line): cart-manifest-invalid: (title `"...`") holds one text") } }
@@ -393,6 +435,20 @@ function Test-Cartridge([string]$path) {
                     $ok = ($args1 -eq 1) -and ((Test-Sym $d.Items[1] 'host') -or ((Test-Whole $d.Items[1]) -and [double]$d.Items[1].Text -ge 1 -and [double]$d.Items[1].Text -le 2147483646))
                     if (-not $ok) { $problems.Add("line $($d.Line): cart-manifest-invalid: (seed $(Show-Datum $d.Items[1])); a seed is a whole number from 1 to 2147483646, or host") }
                 }
+                'settle' {
+                    $ok = ($args1 -eq 1) -and (Test-Whole $d.Items[1]) -and [double]$d.Items[1].Text -ge 1 -and [double]$d.Items[1].Text -le 65536
+                    if (-not $ok) { $problems.Add("line $($d.Line): cart-manifest-invalid: (settle $(Show-Datum $d.Items[1])); a settle is the most steps an act settles in, a whole number from 1 to 65536") }
+                }
+                'bound' {
+                    $boundNames = @{}
+                    if ($args1 -lt 1) { $problems.Add("line $($d.Line): cart-manifest-invalid: (bound ...) names one sheet or more, each a text") }
+                    for ($bi = 1; $bi -le $args1; $bi++) {
+                        $bn = $d.Items[$bi]
+                        if (-not (Test-Kind $bn 'string')) { $problems.Add("line $($d.Line): cart-manifest-invalid: (bound ...) names one sheet or more, each a text"); break }
+                        if ($boundNames.ContainsKey($bn.Value.ToLowerInvariant())) { $problems.Add("line $($d.Line): cart-manifest-invalid: (bound ...) names each sheet once"); break }
+                        $boundNames[$bn.Value.ToLowerInvariant()] = $bn.Value
+                    }
+                }
                 'license' {
                     if ($args1 -ne 1 -or -not (Test-Kind $d.Items[1] 'string')) { $problems.Add("line $($d.Line): cart-manifest-invalid: (license `"...`") holds one SPDX identifier") }
                     elseif ($d.Items[1].Value -cne '0BSD') { $problems.Add("line $($d.Line): cart-manifest-invalid: the license directive says $($d.Items[1].Value) and the header 0BSD") }
@@ -401,6 +457,15 @@ function Test-Cartridge([string]$path) {
             }
         }
         foreach ($rd in $requiredDirectives) { if (-not $seen.ContainsKey($rd)) { $problems.Add("line $($man.Line): cart-manifest-invalid: the manifest has no ($rd ...) directive; every directive is given (docs/SPEC.md section 7.2)") } }
+        # version 6's settle (CART.12): a (spec 6) cartridge's alone, at (rate 0) alone
+        if ($seen.ContainsKey('settle')) {
+            $sl = $seen['settle'].Line
+            if ($specN -lt 6) { $problems.Add("line $($sl): cart-manifest-invalid: (settle ...) is a directive of version 6's, where the cartridge says (spec $specN)") }
+            $rd = if ($seen.ContainsKey('rate')) { $seen['rate'] } else { $null }
+            if ($null -ne $rd -and $rd.Items.Count -eq 2 -and (Test-Whole $rd.Items[1]) -and [int]$rd.Items[1].Text -gt 0) { $problems.Add("line $($sl): cart-manifest-invalid: (settle ...) with (rate $($rd.Items[1].Text)): a cartridge settles at (rate 0) alone") }
+        }
+        # version 6's bound (CART.12's hand test): a (spec 6) cartridge's alone, at any rate
+        if ($seen.ContainsKey('bound') -and $specN -lt 6) { $problems.Add("line $($seen['bound'].Line): cart-manifest-invalid: (bound ...) is a directive of version 6's, where the cartridge says (spec $specN)") }
     }
 
     # -- the rows --
@@ -533,6 +598,19 @@ function Test-Cartridge([string]$path) {
             }
         }
     }
+    # -- version 6's bound (CART.12's hand test): each sheet one the rows hold, or one the engine makes at the load --
+    if ($null -ne $man -and $man.Items.Count -ge 2) {
+        for ($k = 2; $k -lt $man.Items.Count; $k++) {
+            $d = $man.Items[$k]
+            if (-not (Test-Kind $d 'list') -or $d.Items.Count -lt 2 -or -not (Test-Sym $d.Items[0] 'bound')) { continue }
+            for ($bi = 1; $bi -lt $d.Items.Count; $bi++) {
+                $bn = $d.Items[$bi]
+                if (-not (Test-Kind $bn 'string')) { continue }
+                $low = $bn.Value.ToLowerInvariant()
+                if (-not $sheetsNamed.ContainsKey($low) -and @('clock', 'file', 'input') -notcontains $low) { $problems.Add("line $($d.Line): cart-manifest-invalid: (bound `"$($bn.Value)`") names a sheet the cartridge does not hold") }
+            }
+        }
+    }
     return @{ Problems = $problems; Rows = $forms.Count - 1; Cells = $cells; Formulas = $formulas }
 }
 
@@ -584,7 +662,7 @@ function Test-Replay([string]$path, [string]$name, [string]$cartridgePath) {
     foreach ($k in @('spec', 'cartridge', 'seed')) { if (-not $given.ContainsKey($k)) { $problems.Add("line $($h.Line): the header has no ($k ...), and a replay's header is $shape") } }
     if ($given.ContainsKey('spec')) {
         $s = $given['spec']
-        if (-not (Test-Whole $s) -or $s.Value -lt 1 -or $s.Value -gt 5) { $problems.Add("line $($h.Line): (spec $(Show-Datum $s)): a replay is written to the page's version 1, 2, 3, 4 or 5") }
+        if (-not (Test-Whole $s) -or $s.Value -lt 1 -or $s.Value -gt 6) { $problems.Add("line $($h.Line): (spec $(Show-Datum $s)): a replay is written to the page's version 1, 2, 3, 4, 5 or 6") }
     }
     if ($given.ContainsKey('cartridge')) {
         $c = $given['cartridge']
@@ -765,7 +843,18 @@ if ($Control) {
             @{ Name = 'a formula into Input!B1'; Append = '(formula "Input" "B1" "=1")'; Want = 'cart-device-cell-formula: Input!B1' },
             @{ Name = 'the file renamed out of its folder''s name'; Rename = 'life.txt'; Want = ("found {0} cartridge(s)" -f ($expectedCartridges - 1)) },
             @{ Name = 'Life written to (spec 3)'; Anchor = '(spec 2)'; With = '(spec 3)'; Want = '' },
-            @{ Name = 'a (spec 6)'; Anchor = '(spec 2)'; With = '(spec 6)'; Want = 'cart-spec-unsupported: (spec 6)' },
+            @{ Name = 'a (spec 7)'; Anchor = '(spec 2)'; With = '(spec 7)'; Want = 'cart-spec-unsupported: (spec 7)' },
+            # CART.12: version 6's directive, (settle K), a (spec 6) cartridge's at (rate 0) alone
+            @{ Name = 'Life written to (spec 6) at rate 0, settling'; Anchor = "(spec 2)`n  (title `"Life`")`n  (rate 30)"; With = "(spec 6)`n  (title `"Life`")`n  (rate 0)`n  (settle 8)"; Want = '' },
+            @{ Name = 'a settle at (spec 5)'; Anchor = "(spec 2)`n  (title `"Life`")`n  (rate 30)"; With = "(spec 5)`n  (title `"Life`")`n  (rate 0)`n  (settle 8)"; Want = '(settle ...) is a directive of version 6''s, where the cartridge says (spec 5)' },
+            @{ Name = 'a settle at a rate'; Anchor = '(spec 2)'; With = '(spec 6) (settle 8)'; Want = '(settle ...) with (rate 30): a cartridge settles at (rate 0) alone' },
+            @{ Name = 'a settle of 0'; Anchor = "(spec 2)`n  (title `"Life`")`n  (rate 30)"; With = "(spec 6)`n  (title `"Life`")`n  (rate 0)`n  (settle 0)"; Want = '(settle 0); a settle is the most steps' },
+            # CART.12's hand test: version 6's second directive, (bound "<sheet>" ...), a (spec 6) cartridge's at any rate
+            @{ Name = 'Life written to (spec 6), its Screen bound'; Anchor = '(spec 2)'; With = "(spec 6)`n  (bound `"Screen`")"; Want = '' },
+            @{ Name = 'a bound at (spec 5)'; Anchor = '(spec 2)'; With = "(spec 5)`n  (bound `"Screen`")"; Want = '(bound ...) is a directive of version 6''s, where the cartridge says (spec 5)' },
+            @{ Name = 'a bound naming a sheet no row holds'; Anchor = '(spec 2)'; With = "(spec 6)`n  (bound `"Board`")"; Want = '(bound "Board") names a sheet the cartridge does not hold' },
+            @{ Name = 'a bound naming a sheet twice'; Anchor = '(spec 2)'; With = "(spec 6)`n  (bound `"Screen`" `"screen`")"; Want = '(bound ...) names each sheet once' },
+            @{ Name = 'a bound naming no sheet'; Anchor = '(spec 2)'; With = "(spec 6)`n  (bound)"; Want = '(bound ...) names one sheet or more, each a text' },
             # ENGINE.18: version 4's rows, the Camera's third and the Input sheet's nineteenth, a (spec 4) cartridge's alone
             @{ Name = 'Life written to (spec 4), its Camera of three rows'; Anchor = '(spec 2)'; With = '(spec 4)'; Append = '(cell "Camera" "B3" "Screen")'; Want = '' },
             @{ Name = 'a Camera''s third row at (spec 2)'; Append = '(cell "Camera" "B3" "Screen")'; Want = 'cart-device-cell-outside: Camera!B3' },
@@ -788,7 +877,7 @@ if ($Control) {
             # ENGINE.3's second slice: the input card's replay and its golden
             @{ Name = 'a replay naming another digest'; File = 'inputcard/inputcard.replay.vla'; Pattern = '\(cartridge "[0-9A-F]{64}"\)'; With = ('(cartridge "' + ('0' * 64) + '")'); Want = 'a replay plays only on the file it was recorded from' },
             @{ Name = 'a replay named for another folder'; File = 'inputcard/inputcard.replay.vla'; Anchor = '(replay "inputcard"'; With = '(replay "life"'; Want = 'the header names life, and the replay stands in the folder of inputcard' },
-            @{ Name = 'a replay of a (spec 6)'; File = 'inputcard/inputcard.replay.vla'; Anchor = '(spec 3)'; With = '(spec 6)'; Want = '(spec 6): a replay is written to the page''s version 1, 2, 3, 4 or 5' },
+            @{ Name = 'a replay of a (spec 7)'; File = 'inputcard/inputcard.replay.vla'; Anchor = '(spec 3)'; With = '(spec 7)'; Want = '(spec 7): a replay is written to the page''s version 1, 2, 3, 4, 5 or 6' },
             @{ Name = 'a replay''s seed of 0'; File = 'inputcard/inputcard.replay.vla'; Pattern = '\(seed \d+\)\)'; With = '(seed 0))'; Want = '(seed 0): a seed is a whole number from 1 to 2147483646' },
             @{ Name = 'a replay''s frames out of order'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 3`n"; With = "(frame 30`n"; Want = 'follows (frame 30 ...), and a replay''s frames ascend from 1' },
             @{ Name = 'a derived row in a replay'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 1`n"; With = "(frame 1`n  (derived `"Tally`" `"B20`" 1)`n"; Want = 'a (derived ...) row: the host''s derived writes are re-derived' },
@@ -848,7 +937,7 @@ if ($Control) {
             else { $ok = $false; $verdicts.Add("$($mu.Name): PASSED but should fail") }
         }
         foreach ($v in $verdicts) { Write-Output ('control: ' + $v) }
-        if ($ok) { Write-Output 'OK: the check passes the clean copy, Life written to (spec 3), Life written to (spec 4) with its Camera''s third row, Life written to (spec 5) with its Commands sheet and Life written to (spec 4) with a sheet named Commands of its own, and fails each of the forty mutants for its own reason, each proving it applied'; exit 0 }
+        if ($ok) { Write-Output 'OK: the check passes the clean copy, Life written to (spec 3), Life written to (spec 4) with its Camera''s third row, Life written to (spec 5) with its Commands sheet, Life written to (spec 4) with a sheet named Commands of its own, Life written to (spec 6) at rate 0, settling, and Life written to (spec 6), its Screen bound, and fails each of the forty-seven mutants for its own reason, each proving it applied'; exit 0 }
         Write-Output 'FAIL: the control did not behave as the header says'
         exit 1
     } finally {

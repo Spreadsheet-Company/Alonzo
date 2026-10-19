@@ -228,7 +228,20 @@ a step a command at rate 0, and the card kept at version 4; and since its second
 slice a page half, pure and on every page, module or not: a game's command named
 <cartridge>.<command>, its palette lines while it holds, the keymap reading it, a
 binding of it pressed while it is live and its key passed on while not, a person's
-command running it, and the list's and the drawer's words of its keys). It
+command running it, and the list's and the drawer's words of its keys); and since
+CART.12 settle (an act settled, version 6: over the double, whose grid never
+settles, the load's, an edit's and a press's acts each taking its K settle steps
+and ending unsettled, said, the Clock counting acts and a press over a cell an act,
+its place written and its press released; over a card of the page's own written to
+version 6 at rate 0 and the engine's module, when the page holds one: the load
+settled on computed values, a press on E2 spilling to the row's ends a cell a frame,
+the Clock standing and the press released before the first settle step, the same
+press written again after the release, an edit made during a settle waiting for it
+on a host of one step call a tick, the command spill run by its key on the viewport
+at rate 0 and its command released, the run's replay written at the acts' frames
+alone and played on a fresh host to every frame, the card under (settle 3) unsettled
+and said, the directive refused at version 5 and at a rate, and a version 5 card's
+command key taken at rate 0). It
 prints one line a case into
 <pre id="loop"> and a last line, 'loop ok cases=N', once the last case has
 answered. This check runs the
@@ -243,17 +256,19 @@ and Kairos's committed replays to their hands, each a block of the page's
 (hand-sand, hand-kairos) registered by its cartridge's name and held to the
 blocks (hands 2), Kairos's Tally held cell by cell at every frame beside its
 board (kairosCells), and no replay held to its golden alone (alone, held at
-zero); and grid runs its game's half over every grid cartridge the page
+zero), and since CART.12 Superposition's, its hand (hand-superposition, hands
+3) answering every frame with the Tally's sum of each row of its lattice, a
+frame with no row a settle step after the engine's release; and grid runs its game's half over every grid cartridge the page
 holds, the grid card here, a short run with no edits (grids, gridFrames,
 gridEqual, gridValues, gridTexts, gridCleared). On every run this check also
 builds a game's page, from a scratch folder holding Kairos alone, its
 cartridge, source, replay, golden and hand and the library its source
 includes, and runs its loop at a ratio of 1: abi, pass, replay with the
 hand, grid over an empty set, empty and, since ENGINE.17, ENGINE.18,
-ENGINE.19, ENGINE.7, ENGINE.23 and ENGINE.25, still, views, changes, continue,
-palette, keys and commands must be OK at their own floors, each of Alonzo's fifteen
-other cases must say it is not on this page, and the last line must count twelve
-cases.
+ENGINE.19, ENGINE.7, ENGINE.23, ENGINE.25 and CART.12, still, views, changes,
+continue, palette, keys, commands and settle must be OK at their own floors, each of
+Alonzo's fifteen other cases must say it is not on this page, and the last line must
+count thirteen cases.
 
 THE BROWSER, as tools/check_render_oracle.ps1 finds and launches it:
 -Browser, else $env:ALONZO_BROWSER, else Google Chrome, Microsoft Edge or
@@ -270,7 +285,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds one hundred and twenty-seven mutant pages through tools/build_web.ps1 and runs
+-Control builds one hundred and forty-two mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -444,7 +459,25 @@ failing the grid case by name: a viewport that reads no text row, so that the lo
 code 0.00 draws 1.5 where its text row says 1.50; one that counts a code's format row malformed, which the
 lone record's counts find; and, when the real page holds the module, a host whose record by cell takes no
 text row as a cell's, so that it never lays the grid card's changes on its record, the patches under
-their floor. The real page must pass first.
+their floor. And since version 6 eight hosts, each failing the settle case by name, five over the double:
+one that never steps a settle, the load left at frame 1 settling; one whose act's place is 0, the press
+over C3 written at 0 and 0; one whose press over a cell is no act; one that never steps the load's act,
+the load left at frame 0; and one that says nothing when K stops a settle; and four when the real page
+holds the module: an act made during a settle cutting into it, the edit landing before the spill's end;
+the engine's release unmirrored, so that a second press on E2 writes no press; a command's key at rate 0
+left to the viewport; and a press read after the viewport's own handler, whose focus scrolls the page
+under the point, the settle card's box below the fold, so that the press on E2 misses its cell. And since CART.12's
+fourth slice one more, when the real page holds the module, EG, a scratch copy of Superposition's hand that keeps the press
+and the command at a settle step, where the engine releases them, so that it opens a box again at the box's settle, which
+the replay case must fail by name; and since its hand tests five more, when the real page holds the module: EH, a
+host that shows a sheet without reading its columns whole first, so that the large board's narrow columns past the
+record's window are drawn empty; EI, a viewport whose resize raises no event, so that a box grown as full screen
+grows it shows columns no record named; EJ, a viewport that bounds no sheet, so that the Field lays slack past its
+extent; EK, one whose tab chosen leaves the keys where they were; each of which the grid case's game half must fail
+by name over Superposition's Field, at its load or its moves; and EL, Superposition's hand without the box's rule,
+which the replay case must fail by name at frame 33, where the owner's box on V21 opens. CART.12 moved one anchor of ENGINE.25's, the twentieth row's write at rate 0
+now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
+pass first.
 
 Since 2026-10-15 each mutant page runs `abi`, which names the page's
 module, and the cases its reason is judged by (?loop=1&cases=), never every
@@ -711,6 +744,35 @@ $commandsFloors = @{ opened = 1; listed = 1; frames = 40; ran = 3; landed = 23; 
 # no look (at frames 4 to 24 by fours its value, 1 to 6, is a look's, General); hashes 193, the 168 before and H16 at
 # all 25 frames, its floor 95, the four constants wider than any default column, H16's 1,234,567.89 the fourth. texts,
 # fills, looks, styles, unvalued and probes grew with the row, each above its floor as it stood.
+# 2026-10-18, CART.12, version 6: the twenty-seven cases' counts unchanged, and a twenty-eighth, settle, on both pages, its
+# counts a function of its plan. Over the double (Min): the load's, an edit's and a press's acts each nine frames under
+# (settle 8), unsettled and said (3) and under (settle 2) three (1), the Clock the acts, the press's place and its release.
+# Over the module: the load settled at frame 2; the press on E2 at frames 3 to 10, the Clock 2 throughout and the press 1
+# then 0; the same press again at 11; the edit made at the press's act landing at 11, after the spill's end at 9; the
+# command by KeyS at 14, released by 16, KeyX passed on; the replay's frames the acts' four and the last, played to all 16;
+# (settle 3) unsettled at frame 6; the directive refused twice; and a version 5 card's N at rate 0.
+$settleFloors = @{ loaded = 1; spilled = 1; clock = 1; released = 1; place = 1; pressed = 1; again = 1; waited = 1; key = 1; passed = 1; commandReleased = 1;
+                   said = 1; replayed = 1; replayFrames = 16; replaySame = 16; rowless = 1; unsettled = 1; refused = 1; fiveKey = 1 }
+$settleDoubleFloors = @{ fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased = 1; fakeUnsettled = 4 }
+# 2026-10-18, CART.12's third slice, Superposition the ninth cartridge: pass's sources and same 9; empty's cartridges,
+# ordered and titled 9; and grid's game half over two grid cartridges, the grid card's 12 frames and Superposition's load
+# settled at frame 2 on the 512 by 512 lattice, its Field shown and drawn from the values record cell for cell (grids 2,
+# gridFrames 14, gridEqual 14, gridValues 13, gridCleared 2); its lattice draws fills and no text in the region shown.
+# Mutant AP's words moved with it: the picker in reverse now offers Superposition second, after the empty sheet.
+# 2026-10-19, CART.12's second hand test: the grid case's game half moves Superposition's Field after its load as a
+# person moves it, the box grown, a page right, the last column, the last row, home and the box back, each held as a
+# frame's sheet is (gridMoves 6, gridValues 13 to 19); its bound, the Field its extent A1:SR512 and no more (gridBound
+# 1); and its tabs, the Observer's clicked and the Field's back each giving the grid the keys (gridFocused 2), and a
+# box being typed in keeping them (gridTyped 1).
+# 2026-10-18, CART.12's fourth slice, Superposition's replay and its hand: replay's hands 3, the block hand-superposition
+# registered and matched beside hand-sand and hand-kairos; replays, golden and round 5; and the stand-in session, 27 acts
+# over 113 frames, every frame held to the hand's Tally, the sum of each of the lattice's 512 rows (superpositionFrames
+# 113, superpositionCells 57,856), its counts the hand's own: 25 acts on the Field (the Observer's Space and the branch
+# act on no site), 2 worlds, 85 settle steps, a frame with no row, and 243 sites out of superposition at its end.
+# 2026-10-19, CART.12's hand test: the owner's session in place of the stand-in (decision 7), 18 acts over 118 frames in
+# one world, every frame held to the hand's Tally (superpositionFrames 118, superpositionCells 60,416), its counts the
+# hand's own: 18 acts on the Field, 1 world, 99 settle steps and 637 sites out of superposition at its end. The acts and
+# the worlds fell with the session, the stand-in's 25 and 2 being what its own session held, no measure of the host.
 # 2026-10-17, ENGINE.25's second slice: the case's page half, pure and so on every page, module or not, its counts a function of
 # its plan: 6 names a page writes a game's command by, held to the cartridge and the command or to none; 4 of the palette's
 # lines, the command that holds with its own key, found by a word after the dot, the one that holds not no line, and one
@@ -732,32 +794,33 @@ $floors = @(
     @{ Case = 'engine';   Min = @{}; WithModule = @{ frames = 11; equal = 2; live1 = 23683; live11 = 14482; chunked = 1; grown = 1; devices = 5; reloaded = 1 } },
     @{ Case = 'parity';   Min = @{}; WithModule = @{ same = 14 } },
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
-    @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 8; same = 8; refused = 1; handle = 1; ranOn = 1 } },
+    @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 9; same = 9; refused = 1; handle = 1; ranOn = 1 } },
     @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 5; players = 2; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 7; rate = 5; refused = 1 } },
-    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 2 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 4; frames = 26; same = 26; golden = 4; round = 4; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30 } },
+    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 3 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 5; frames = 26; same = 26; golden = 5; round = 5; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } },
     @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 1913; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1; fakePatches = 8 };
                             WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 11000; wraps = 20; fills = 10677; looks = 10311; styles = 40; columns = 326; unvalued = 350; hidden = 20; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 95; values = 24; patches = 20; codes = 3; coded = 213;
-                                            grids = 1; gridFrames = 12; gridEqual = 13; gridValues = 12; gridTexts = 5200; gridCleared = 1 } },
+                                            grids = 2; gridFrames = 14; gridEqual = 14; gridValues = 19; gridTexts = 5200; gridCleared = 2; gridMoves = 6; gridBound = 1; gridFocused = 2; gridTyped = 1 } },
     @{ Case = 'tabs';     Min = @{ fakeFrames = 14; fakeShown = 1; fakeHeld = 8; fakeScrolled = 1; fakeBack = 1; fakeScreen = 9; fakePointer = 1; fakeRouted = 1; fakeKey = 1; fakeStrip = 1; fakeWheel = 4; fakeTexts = 4600 };
                             WithModule = @{ frames = 12; shown = 1; held = 5; back = 1; screen = 8; pointer = 1; routed = 1; strip = 1; wheel = 4; clock = 4; texts = 3400 } },
-    @{ Case = 'empty';    Min = @{ cartridges = 8; ordered = 8; titled = 8; libraries = 1; double = 1 }; WithModule = @{ engine = 1 } },
+    @{ Case = 'empty';    Min = @{ cartridges = 9; ordered = 9; titled = 9; libraries = 1; double = 1 }; WithModule = @{ engine = 1 } },
     @{ Case = 'still';    Min = @{}; WithModule = $stillFloors },
     @{ Case = 'views';    Min = @{}; WithModule = $viewsFloors },
     @{ Case = 'changes';  Min = @{ crafted = 7; double = 32 }; WithModule = $changesFloors },
     @{ Case = 'continue'; Min = @{}; WithModule = $continueFloors },
     @{ Case = 'palette';  Min = $paletteFloors },
     @{ Case = 'keys';     Min = $keysFloors },
-    @{ Case = 'commands'; Min = $commandsPageFloors; WithModule = $commandsFloors }
+    @{ Case = 'commands'; Min = $commandsPageFloors; WithModule = $commandsFloors },
+    @{ Case = 'settle';   Min = $settleDoubleFloors; WithModule = $settleFloors }
 )
 $zero = @('live', 'misfrees', 'filled', 'alone')
-$expectedCases = 27
+$expectedCases = 28
 # ENGINE.16: a game's page, built on every run from a scratch folder holding Kairos alone, its cartridge, source,
-# replay, golden and hand and the library its source includes. Its loop runs the twelve cases that need nothing
+# replay, golden and hand and the library its source includes. Its loop runs the thirteen cases that need nothing
 # of Alonzo's own files, over its own blocks, still since ENGINE.17, views since ENGINE.18, changes since
-# ENGINE.19, continue since ENGINE.7, palette and keys since ENGINE.23 and commands since ENGINE.25 among them, and each
-# of the fifteen others says it is not on the page.
+# ENGINE.19, continue since ENGINE.7, palette and keys since ENGINE.23, commands since ENGINE.25 and settle since CART.12
+# among them, and each of the fifteen others says it is not on the page.
 $gameFloors = @(
     @{ Case = 'abi';    Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
     @{ Case = 'pass';   Min = @{}; WithModule = @{ sources = 1; same = 1 } },
@@ -770,10 +833,11 @@ $gameFloors = @(
     @{ Case = 'continue'; Min = @{}; WithModule = $continueFloors },
     @{ Case = 'palette'; Min = $paletteFloors },
     @{ Case = 'keys'; Min = $keysFloors },
-    @{ Case = 'commands'; Min = $commandsPageFloors; WithModule = $commandsFloors }
+    @{ Case = 'commands'; Min = $commandsPageFloors; WithModule = $commandsFloors },
+    @{ Case = 'settle'; Min = $settleDoubleFloors; WithModule = $settleFloors }
 )
 $gameAbsent = @('rate30', 'rate0', 'yield', 'slice', 'pace', 'memory', 'refusals', 'scale', 'engine', 'parity', 'plane', 'input', 'audio', 'sound', 'tabs')
-$gameCases = 12
+$gameCases = 13
 $gameFiles = @('kairos/kairos.vla', 'kairos/kairos.source.vla', 'kairos/kairos.replay.vla', 'kairos/kairos.golden.vla', 'kairos/kairos.hand.js', 'common.vla')
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
@@ -1286,6 +1350,23 @@ if ($Control) {
             $aiNote = "the turn a column early applied ($aiApplied) and failed the replay case ($aiFailed)"
         }
         $aiOk = ($moduleReal -eq 0) -or ($aiApplied -and $aiFailed -ge 1)
+        # mutant EG (CART.12's fourth slice), when the real page holds the engine's module: Superposition's hand keeps the
+        # press and the command at a settle step, where the engine releases them before the first; the committed replay,
+        # the owner's session since CART.12's hand test, seals a box on V21 by the command box at frame 15, so the hand
+        # opens it again at its settle's first step, frame 16, and the replay case must fail it by name at that frame.
+        $egApplied = $false; $egFailed = 0; $egNote = 'the release kept from the hand: not applicable, the real page holding no engine module'
+        if ($moduleReal -gt 0) {
+            $superHandText = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'cartridges/superposition/superposition.hand.js'))
+            $anchorEG = "    if (!rows.length) { input.B13 = { num: 0 }; input.B14 = { num: 0 }; input.B15 = { num: 0 }; input.B20 = ''; this.settles++; }"
+            if (([regex]::Matches($superHandText, [regex]::Escape($anchorEG))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorEG' is not in cartridges/superposition/superposition.hand.js exactly once"; exit 1 }
+            $mutEG = $superHandText.Replace($anchorEG, '    if (!rows.length) { this.settles++; }')
+            $egApplied = $mutEG -cne $superHandText
+            $rEG = Invoke-Mutant (New-MutantPage 'eg' $template $hostJs '' (New-HandCopy 'eg' 'superposition/superposition.hand.js' $mutEG)) 'input,replay'
+            $jEG = Test-Mutant $rEG 'input,replay'
+            $egFailed = @($jEG.Problems | Where-Object { $_ -like "*case replay*superposition's committed replay, played on a fresh host, is not its hand's at frame*" }).Count
+            $egNote = "the release kept from the hand applied ($egApplied) and failed the replay case ($egFailed)"
+        }
+        $egOk = ($moduleReal -eq 0) -or ($egApplied -and $egFailed -ge 1)
         # mutants AC, AD, AE, AF and AH (ENGINE.8), over the double and so with or without the engine's module,
         # and AG when the real page holds it: a viewport that reads no value row, one that matches no look, a host
         # that draws each frame without keeping the view, a host that draws the grid before it reads the Camera,
@@ -1328,6 +1409,18 @@ if ($Control) {
         $gridNotes = New-Object System.Collections.Generic.List[string]
         $gridJudged = New-Object System.Collections.Generic.List[object]
         $gridOk = $true
+        # And EI, EJ and EK (CART.12's second hand test, 2026-10-19), over the engine's module, Superposition's Field moved
+        # as a person moves it: a viewport whose resize raises no event, so that the host never views the region a box
+        # grown shows; one that bounds no sheet, so that the Field lays slack past its extent; and one whose tab chosen
+        # leaves the keys where they were, so that the arrows move nothing on the sheet shown.
+        $gridMutants += @(
+            @{ L = 'ei'; Name = 'a resize unsaid'; File = 'viewport'; Module = $true; Anchor = "    this._onResize = function () { self._resize(); self._draw(); self._emit('scroll', self._scrollPayload()); };"; With = '    this._onResize = function () { self._resize(); self._draw(); };'
+               Want = 'case grid.*superposition frame 0, Field, the box grown: the viewport shows Field![A-Z]+\d+:[A-Z]+\d+, past the record''s window' },
+            @{ L = 'ej'; Name = 'the bound ignored'; File = 'viewport'; Module = $true; Anchor = '    var extent = env.bound ? ((model && model.extent) || (layout && layout.extent) || null) : null;'; With = '    var extent = null;'
+               Want = 'case grid.*superposition frame 0, Field: the bound sheet Field lays \d+ columns and \d+ rows, where its extent A1:SR512 is 512 and 512' },
+            @{ L = 'ek'; Name = 'a tab chosen leaving the keys'; File = 'viewport'; Module = $true; Anchor = "    else this._emit('sheet', { name: name, loaded: false, state: sh ? sh.state : 'visible' });`n    this._focusGrid();"; With = "    else this._emit('sheet', { name: name, loaded: false, state: sh ? sh.state : 'visible' });"
+               Want = 'case grid.*superposition frame 0: the tab \w+ clicked showed \w+ and left the keys with ' }
+        )
         foreach ($mu in $gridMutants) {
             if ($mu.Module -and $moduleReal -eq 0) { $gridNotes.Add(("{0}: not applicable, the real page holding no engine module" -f $mu.Name)); continue }
             $orig = if ($mu.File -eq 'viewport') { $vpText } else { $js }
@@ -1390,7 +1483,7 @@ if ($Control) {
                Want = 'case empty.*the empty sheet on the double steps at a rate of 30, where it waits at 0 for an edit' },
             @{ L = 'ap'; Name = 'the picker in reverse'; Anchor = '    for (var i = 0; i < ORDER.length; i++) out.push({ value: ORDER[i], label: CARTRIDGES[ORDER[i]].title });'
                With = '    for (var i = ORDER.length - 1; i >= 0; i--) out.push({ value: ORDER[i], label: CARTRIDGES[ORDER[i]].title });'
-               Want = 'case empty.*the picker''s entry 2 is kairos, and the page''s cartridge block 1 is life' }
+               Want = 'case empty.*the picker''s entry 2 is superposition, and the page''s cartridge block 1 is life' }
         )
         $emptyNotes = New-Object System.Collections.Generic.List[string]
         $emptyJudged = New-Object System.Collections.Generic.List[object]
@@ -1740,8 +1833,8 @@ if ($Control) {
                Want = 'case commands.*commands frame 12: Ctrl\+U on the Desk was taken' },
             @{ L = 'dn'; Name = 'a command''s key run again at its repeat'; Anchor = '    if (cmd) { if (!(ev && ev.repeat)) this.command(cmd.name, ''key''); return true; }'; With = '    if (cmd) { this.command(cmd.name, ''key''); return true; }'
                Want = 'case commands.*commands frame 11: Input!B20 holds "count-up", where no command runs and it is empty' },
-            @{ L = 'do'; Name = 'the twentieth row left at rate 0'; Anchor = '    if (atRateZero && this._five()) this._writeCommandRow(act.command !== undefined ? act.command : '''');'
-               With = '    if (atRateZero && this._five() && act.command !== undefined) this._writeCommandRow(act.command);'
+            @{ L = 'do'; Name = 'the twentieth row left at rate 0'; Anchor = '    else if (atRateZero && this._five()) this._writeCommandRow(act.command !== undefined ? act.command : '''');'
+               With = '    else if (atRateZero && this._five() && act.command !== undefined) this._writeCommandRow(act.command);'
                Want = 'case commands.*commands, rate 0: the step of the edit after the command sees Input!B20 "count-up"' }
         )
         $commandsNotes = New-Object System.Collections.Generic.List[string]
@@ -1799,6 +1892,89 @@ if ($Control) {
             if (-not ($pgApplied -and $pgFailed -ge 1)) { $pageOk = $false }
         }
         $pageNote = $pageNotes -join '; '
+        # DX to EF (CART.12, version 6), hosts, each failing the settle case by name, five over the double and so with or without
+        # the module: a host that never steps a settle; one whose act's place is 0; one whose press over a cell is no act; one
+        # that never steps the load's act; and one that says nothing when K stops a settle. And four when the real page holds
+        # the module: an act made during a settle cutting into it; the engine's release unmirrored, so that a second press on
+        # one cell writes no press; a command's key at rate 0 left to the viewport; and a press read after the viewport's own
+        # handler, whose focus scrolls the page under the point (found by a trial of the large board, its box below the fold).
+        $settleMutants = @(
+            @{ L = 'dx'; Name = 'a settle never stepped'; Anchor = '    while (!this.inFrame && this.handle && !this.player && (this.settling || this.edits.length)) {'
+               With = '    while (!this.inFrame && this.handle && !this.player && this.edits.length) {'
+               Want = 'case settle.*settle, the double: the load stands at frame 1, settling,' },
+            @{ L = 'dy'; Name = 'an act cutting into a settle'; Module = $true; Anchor = '      if (this.settling) { if (!this._continue(win)) return; continue; }'
+               With = '      if (this.settling && !this.edits.length) { if (!this._continue(win)) return; continue; }'
+               Want = 'case settle.*settle, waiting: the edit made at the press''s act landed at frame \d+ and the spill reached K2 at frame' },
+            @{ L = 'dz'; Name = 'the release unmirrored'; Module = $true; Anchor = '    if (this.settling && !was) this._released();'; With = '    // the release unmirrored, by the control'
+               Want = 'case settle.*a second press on E2 read Input!B13 0 at its act''s frame 11' },
+            @{ L = 'ea'; Name = 'an act''s place at 0'; Anchor = '    var want = { B11: String(p.col), B12: String(p.row),'; With = '    var want = { B11: ''0'', B12: ''0'','
+               Want = 'case settle.*settle, the double: a press over C3 made the act \{"b13":1,"b11":0,"b12":0' },
+            @{ L = 'eb'; Name = 'a press over a cell no act'; Anchor = "    this._on(root, 'mousedown', function (ev) { if (still() && self._sixAtZero()) self._pressAct(ev); }, true);"
+               With = '    // the press at rate 0 no act, by the control'
+               Want = 'case settle.*settle, the double: a press over C3 made the act null' },
+            @{ L = 'ec'; Name = 'a command''s key at rate 0 the viewport''s'; Module = $true; Anchor = '      var cmd = still() ? self._commandKey(ev.code, ev) : null;'; With = '      var cmd = null;'
+               Want = 'case settle.*settle: KeyS at rate 0 was passed on' },
+            @{ L = 'ed'; Name = 'the load''s act unstepped'; Anchor = '    if (this._settles() && c.rate === 0 && this.playSeed === undefined) { this.edits.push({ load: true }); this._editFrames(this._window()); }'
+               With = '    // the load''s act unstepped, by the control'
+               Want = 'case settle.*settle, the double: the load stands at frame 0' },
+            @{ L = 'ef'; Name = 'a press read after the viewport''s own'; Module = $true; Anchor = "    this._on(root, 'mousedown', function (ev) { if (still() && self._sixAtZero()) self._pressAct(ev); }, true);"
+               With = "    this._on(root, 'mousedown', function (ev) { if (still() && self._sixAtZero()) self._pressAct(ev); });"
+               Want = 'case settle.*settle: a press on E2 left frame \d+' },
+            @{ L = 'ee'; Name = 'an unsettled act unsaid'; Anchor = "        this._say('frame ' + n + ': ' + sa.what + ' did not settle in ' + steps + ' step' + (steps === 1 ? '' : 's') + ' after its own, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5).');"
+               With = '        // the unsettled act unsaid, by the control'
+               Want = 'case settle.*settle, the double: the host said "the load did not settle in 8 steps" 0 time' }
+        )
+        $settleNotes = New-Object System.Collections.Generic.List[string]
+        $settleJudged = New-Object System.Collections.Generic.List[object]
+        $settleOk = $true
+        foreach ($mu in $settleMutants) {
+            if ($mu.Module -and $moduleReal -eq 0) { $settleNotes.Add(("{0}: not applicable, the real page holding no engine module" -f $mu.Name)); continue }
+            if (([regex]::Matches($js, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in web/host.js exactly once"; exit 1 }
+            $mutSt = $js.Replace($mu.Anchor, $mu.With)
+            $stApplied = $mutSt -cne $js
+            $fileSt = Join-Path $tmp ($mu.L + '.host.js'); [System.IO.File]::WriteAllText($fileSt, $mutSt, $utf8)
+            $rSt = Invoke-Mutant (New-MutantPage $mu.L $template $fileSt) 'settle'
+            $stJudge = Test-Mutant $rSt 'settle'
+            $stFailed = @($stJudge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
+            $settleJudged.Add(@{ Name = $mu.Name; Problems = @($stJudge.Problems) })
+            $settleNotes.Add(("{0} applied ({1}) and failed by name ({2})" -f $mu.Name, $stApplied, $stFailed))
+            if (-not ($stApplied -and $stFailed -ge 1)) { $settleOk = $false }
+        }
+        $settleNote = $settleNotes -join '; '
+        # mutant EH (CART.12's hand test, 2026-10-19; its second, the same day), when the real page holds the engine's
+        # module: a host that shows a sheet without reading its columns whole first, so that its viewport lays a column
+        # past the window at the default width, and the large board's columns of 21 pixels past the window are drawn
+        # empty, at the load, at a jump of the scroll or when the box grows; the grid case's game half must fail it by
+        # name at Superposition's load or its moves.
+        $ehApplied = $false; $ehFailed = 0; $ehNote = 'the layout never learned: not applicable, the real page holding no engine module'
+        if ($moduleReal -gt 0) {
+            $anchorEH = '    this._learn(vp, name);'
+            if (([regex]::Matches($js, [regex]::Escape($anchorEH))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorEH' is not in web/host.js exactly once"; exit 1 }
+            $mutEH = $js.Replace($anchorEH, '    // the layout never learned, by the control')
+            $ehApplied = $mutEH -cne $js
+            $fileEH = Join-Path $tmp 'eh.host.js'; [System.IO.File]::WriteAllText($fileEH, $mutEH, $utf8)
+            $rEH = Invoke-Mutant (New-MutantPage 'eh' $template $fileEH) 'grid'
+            $jEH = Test-Mutant $rEH 'grid'
+            $ehFailed = @($jEH.Problems | Where-Object { $_ -cmatch "case grid.*superposition frame 0, Field.*: the viewport shows Field![A-Z]+\d+:[A-Z]+\d+, past the record's window" }).Count
+            $ehNote = "the layout never learned applied ($ehApplied) and failed the grid case ($ehFailed)"
+        }
+        $ehOk = ($moduleReal -eq 0) -or ($ehApplied -and $ehFailed -ge 1)
+        # mutant EL (CART.12's second hand test, 2026-10-19), when the real page holds the engine's module: Superposition's
+        # hand without the box's rule, a box beside a reading of nothing kept sealed; the committed replay, the owner's
+        # session, seals a box on V21, itself a reading of nothing, which the cascade observed at M17 reaches at frame 33,
+        # so the replay case must fail it by name at that frame.
+        $elApplied = $false; $elFailed = 0; $elNote = 'the box kept sealed in the hand: not applicable, the real page holding no engine module'
+        if ($moduleReal -gt 0) {
+            $anchorEL = '      } else if (site === BOX) {'
+            if (([regex]::Matches($superHandText, [regex]::Escape($anchorEL))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorEL' is not in cartridges/superposition/superposition.hand.js exactly once"; exit 1 }
+            $mutEL = $superHandText.Replace($anchorEL, '      } else if (false) {')
+            $elApplied = $mutEL -cne $superHandText
+            $rEL = Invoke-Mutant (New-MutantPage 'el' $template $hostJs '' (New-HandCopy 'el' 'superposition/superposition.hand.js' $mutEL)) 'input,replay'
+            $jEL = Test-Mutant $rEL 'input,replay'
+            $elFailed = @($jEL.Problems | Where-Object { $_ -like "*case replay*superposition's committed replay, played on a fresh host, is not its hand's at frame 33*" }).Count
+            $elNote = "the box kept sealed in the hand applied ($elApplied) and failed the replay case at frame 33 ($elFailed)"
+        }
+        $elOk = ($moduleReal -eq 0) -or ($elApplied -and $elFailed -ge 1)
         # mutants AT, AU, AV and AW (ENGINE.16), each a game's page of Kairos alone, which must pass first: its
         # hand a frame late, answering each frame with the frame before it; its hand's Tally counting a stack at
         # the level above its own, which moves no light; its hand's block dropped, so that its replay is held to
@@ -1848,9 +2024,9 @@ if ($Control) {
             if (-not ($gmApplied -and $gmFailed -ge 1)) { $gameOk = $false }
         }
         $gameNote = $gameNotes -join '; '
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $gameNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $gameOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and twenty-seven' } else { 'sixty-seven applicable' }) + ' mutants for its own reason, each proving it applied')
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk) {
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and forty-two' } else { 'seventy-two applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -1893,6 +2069,7 @@ if ($Control) {
         foreach ($kj2 in $keysJudged) { foreach ($p in @($kj2.Problems) | Select-Object -First 3) { Write-Output ('  ' + $kj2.Name + ': ' + $p) } }
         foreach ($cmj in $commandsJudged) { foreach ($p in @($cmj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $cmj.Name + ': ' + $p) } }
         foreach ($pgj in $pageJudged) { foreach ($p in @($pgj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $pgj.Name + ': ' + $p) } }
+        foreach ($stj in $settleJudged) { foreach ($p in @($stj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $stj.Name + ': ' + $p) } }
         foreach ($p in @($jG0.Problems) | Select-Object -First 3) { Write-Output ('  the game''s page: ' + $p) }
         foreach ($gj in $gameJudged) { foreach ($p in @($gj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $gj.Name + ': ' + $p) } }
         exit 1
@@ -1941,7 +2118,7 @@ try {
 }
 Write-Output ''
 if ($failed.Count -eq 0) {
-    Write-Output "=== CHECK: clean - every case OK at both ratios, every count at or above its floor, and the game's page's twelve cases OK with Alonzo's fifteen said absent ==="
+    Write-Output "=== CHECK: clean - every case OK at both ratios, every count at or above its floor, and the game's page's thirteen cases OK with Alonzo's fifteen said absent ==="
     exit 0
 }
 Write-Output "=== CHECK: $($failed.Count) problem(s) ==="

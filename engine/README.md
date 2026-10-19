@@ -41,6 +41,14 @@ engine is:
   the File's name and size, and the Input sheet when a cartridge holds none;
 - the frame number written into the Clock as the first act of every step,
   the only clock there is;
+- since the page's version 6 (`CART.12`), an act settled: a cartridge that
+  says `(settle K)` at rate 0 steps again after each act, with no act, while
+  the last frame changed a formula cell's value or had a write before it,
+  the language's fixed point (`vla-lang`'s `Machine::changed`), at most K
+  steps, the step's answer saying `settling` or `unsettled` until it has
+  settled; its Clock counts acts, and the act's press and command are
+  released before the first settle step, so that a native player steps a
+  settle as the page's host does (`Cartridge::settle`, `step_row`);
 - `describe`, the manifest, the devices and the budget, and since
   `vla-lang` 0.9.2 the machine's census, the plan as rows, a row for each
   shape with its cells, its levels, its runs and the path each of its reads
@@ -279,6 +287,26 @@ opening never reaches: every press, release and material key computed all
 of Sand's 189,017 formula cells, 17 to 26 ms natively, where a stroke's
 frames take 1 to 2 ms. Over `vla-lang` 0.9.2 the session's 1,100 frames step
 in about 1.1 s, where they took 1.6 over 0.9.1.
+
+Since `CART.12` (2026-10-18) the same example plays Superposition, the large
+board, when the cartridge named is that one: the floors' scripted player,
+`src/superposition.rs`'s `Player`, a player who knows the lattice, through
+four worlds at rate 0, two at the cartridge's 15%, one at 9%, the
+percolation threshold's, where one observation opens most of the lattice,
+and one at 15% again. Each act's Input rows are written as the host writes
+them and the act is stepped to its settle's end; its time and frames are
+printed by move, every act's Tally held to the lattice by hand and the
+whole lattice at each world's end:
+
+```text
+cargo run --release --example play -- cartridges/superposition/superposition.vla
+```
+
+Its first session, over `vla-lang` 0.10.1: 470 acts over 2,486 frames, a
+median act of 0.32 ms at 15% and a p95 of 0.39, and the deal at 9% opening
+98,070 sites in 713 frames, 82 ms. The frame floors' runner times the same
+player's 200 acts as a row of its own, `superposition-act`, beside the idle
+frame, `superposition`, and the deepest cascade, `superposition-cascade`.
 
 The same runner climbs a size ladder (`ENGINE.9`): Life's soup and the
 glider gun built again on boards of four and sixteen times the window's

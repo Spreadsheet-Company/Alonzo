@@ -3,10 +3,13 @@ check_frame_floors.ps1 - the engine's first number: the owner's measured
 baseline of Life's frames, the benchmark cartridge's two fixtures over the
 native runner and the engine's module, since CART.2 Sand's, and since
 ENGINE.9 the size ladder's, Life and the gun at four and sixteen times the
-window's area, each row with its memory, held to floors that never go down;
-and on every push where a runner is built, the frames held to a hand-written
-Life or Sand, their allocations and the heap's bytes to ceilings that never
-go up, and each rung of the ladder to the cartridge measured.
+window's area, and since CART.12 Superposition's three, the large board's
+idle frame, an act's latency and its deepest cascade, each row with its
+memory, held to floors that never go down; and on every push where a runner
+is built, the frames held to a hand-written Life, Sand or Superposition,
+their allocations and the heap's bytes to ceilings that never go up, each
+rung of the ladder to the cartridge measured, and the cascade to the deal
+measured.
 
 WHY: CART.1 (docs/ROADMAP.md; docs/REARVIEW.md, its scoping, decisions 4 to 7).
 docs/CHARTER.md section 7 names the engine's measure, cells evaluated a second,
@@ -102,7 +105,22 @@ WHAT IT HOLDS, from the baseline pasted below:
     8): for life and the gun, each rung's frame, load and memory over the
     window's, the exponent against the formula cells, and the gun's idle
     frame at sixteen times the area against the prediction that it costs
-    what it costs on the window.
+    what it costs on the window;
+  - since CART.12 (decision 8, 2026-10-18), Superposition's six rows, three
+    a half, each over the committed lattice of 512 by 512, whose one file
+    $baselineFixtures names: the idle frame, superposition, timed in runs of
+    1,000 as the gun is; an act's latency, superposition-act, the scripted
+    player's 200 acts at 15%, its Frames the acts, its Steps the frames they
+    took, and its cells a second taken at the session's 95th percentile,
+    FrameP95, so that its frames a second, acts here, are one over its p95
+    within 5% (the browser's p95 reads its clock's tenths of a millisecond);
+    and the deepest cascade by time, superposition-cascade, the lattice at
+    8% observed at the end of its largest opening's widest path, its frames a
+    second its Frames over CascadeMs, the act and its settle timed whole,
+    with its Seed, Probability, Deal, Rings and sites Opened. Each half plays
+    the session and finds the deal by its own hand, so the two act rows hold
+    the same Frames and Steps and the two cascade rows the same cascade, or
+    the halves measured other work.
 An empty baseline fails, since a floor with no number is no floor.
 
 WITH A BUILT RUNNER (target/release/examples/frames, or -Runner): its check
@@ -113,8 +131,13 @@ Sand's opening to its grains, every frame after the first keeping each
 material's count; the allocations and reallocations of each fixture's
 second frame after a fresh load, and the heap's high-water bytes over the
 load and the four frames, at most the ceilings below; and each rung's
-digest the baseline's. A count under its ceiling is printed so the ceiling
-can be lowered.
+digest the baseline's. Since CART.12 Superposition's three counted
+instances, each its acts settled and every frame's Tally held to the
+runner's own lattice, the whole lattice at each settle's end: the idle
+row's two idle acts, the second counted; the session's first twelve acts,
+the twelfth counted; and the cascade, counted whole, its deal, rings and
+sites opened the baseline's native cascade row's. A count under its ceiling
+is printed so the ceiling can be lowered.
 SKIPPED without a runner: the ratchets job builds none, and the crate job
 builds it before this check runs.
 
@@ -131,8 +154,11 @@ that moved, frames a second that disagree with cells a second, a frame read
 as 0 ms whose rates are infinite (CART.1, 2026-10-10), a run not
 opted out of the throttling, a run not on the performance cores, a row
 dropped from an entry after it entered the history, a latest entry
-without a row's floor, a row without its memory, a rung's row missing and a
-rung the baseline names no digest for must each fail; the history, read
+without a row's floor, a row without its memory, a rung's row missing, a
+rung the baseline names no digest for, an act row without its p95, an act
+row whose acts a second are not one over its p95, a cascade row without its
+deal, two halves' sessions apart and two halves' cascades apart must each
+fail; the history, read
 from text as the commit's copy is: an entry
 added after the committed ones passes, and so does a history unchanged,
 and an entry pasted over a committed one and a committed entry edited in
@@ -140,7 +166,8 @@ place must each fail; then fake runners: a clean one passes, and one whose
 frame differs, one whose allocations pass the ceiling, one whose heap
 passes its ceiling, one that never holds the gun's facts, one that never
 holds Sand's grains, one that leaves out a fixture, one that leaves out a
-rung and one whose rung is another cartridge must each fail.
+rung, one whose rung is another cartridge, one whose cascade is another
+deal and one that settles no act must each fail.
 
 House style (tools/check_*.ps1): PowerShell 5.1 and pwsh alike, host-free,
 no browser, no network; a hardcoded, reviewable baseline; exit 0 clean,
@@ -357,26 +384,118 @@ $onWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::W
 # life-x16 22,688,409 (45.0), gun 2,599,803,901 (0.0242),
 # gun-x4 10,156,960,038 (0.0250), gun-x16 35,281,089,843 (0.0289),
 # sand 48,516,666 (3.9). Its floors are the history's twelfth entry.
-$baselineDate = '2026-10-17'
-$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 155.0.8059.79 headless | the engine''s module 1,038,643 bytes | vla-lang at 0.10.0 | power throttling opted out: the runner yes, 36 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 38 browser process(es)'
-$baselinePin = '0.10.0'
-$baselineFixtures = @{ 'life' = '60220BAE07BBC3C15F671C7CAAE62B6DD6D14B67B9141150EC0023AFA0FFE0F4'; 'gun' = '64C9A6BA206003F15B73084FE90781BE60E34089D577CE0589DBAF5C737A0725'; 'sand' = 'F872498DEAFBCCB60133501B18E35BEC38A470C4A9AE8064505510D061EAD857' }
+# 2026-10-18, the thirteenth: the instrument's run over vla-lang 0.10.1, Frazaro's
+# KERNEL.48 (a frame's count of the formula cells it changed, on each sheet,
+# and of those it computed, which CART.12's settle reads; a frame costs what
+# it cost, by its notes), with CART.12 built: the page's version 6 and
+# Superposition, the large board, whose three rows enter the history at this
+# entry, the idle frame, an act's latency at the session's 95th percentile and
+# the deepest cascade at 8%, each half held to a lattice by hand. The module
+# carries both (1,042,949 bytes). Run by the session finishing CART.12, at the
+# owner's word to finish it over the new pin, and not by the owner's own hand,
+# as the twelfth was not: the same machine and the same instrument, both
+# halves opted out and on the performance cores, every clock's spread within
+# 4.5%. Six runs were made that day, three after a build and three without,
+# and every one refused itself, on the gun at four or sixteen times the area:
+# natively 0.0227 to 0.0285 ms at sixteen times, in the browser 0.0289 to
+# 0.0398. An A/B of the twelfth baseline's own module and runner, rebuilt
+# byte for byte from 275f1e0, against this pin's, run alternately under the
+# same guards, read the two alike (docs/REARVIEW.md, ENGINE.1's record of the
+# pin to 0.10.1), so the spread is the run's and not the engine's. This is
+# the third run, pasted from target/bench_frames.txt whole but for one floor:
+# its browser half clean, its one refusal the native gun at sixteen times the
+# area, 0.7% under its floor, which its entry lowers by hand to this run's
+# less 10%, the reason written. Its entry raises six floors and enters
+# Superposition's six. Superposition's rows across the six runs: natively
+# the idle frame 0.0043 to 0.0045 ms, an act's p95 0.449 to 0.487 ms, the
+# cascade 136.9 to 141.3 ms; in the browser 0.0052 to 0.0054, 0.6 or 0.7
+# (the page's clock), and 174.4 to 188.8. The heap's seven Memory rows rose by
+# four bytes a sheet, the language's (the ceilings' note below). Its rows:
+# native life 30,929,901 (2.0) cells a second (frame p50, ms), life-x4
+# 25,327,183 (10.0), life-x16 24,711,390 (41.3), gun 3,411,094,087 (0.0185),
+# gun-x16 40,224,334,268 (0.0254), superposition 187,027,969,981 (0.0043),
+# superposition-act 1,755,838,646 (p95 0.4549), superposition-cascade (141.3
+# ms over 777 frames); wasm gun-x16 35,281,089,843 (0.0289), superposition
+# (0.0053), superposition-act (p95 0.7), superposition-cascade (174.4 ms).
+# Its floors are the history's thirteenth entry.
+# 2026-10-19, the fourteenth: the owner's run of the instrument at CART.12's hand
+# test, the same pin, module and fixtures as the thirteenth (vla-lang 0.10.1,
+# 1,042,949 bytes), both halves opted out and on the performance cores, every
+# clock's spread within 3.4%. No row fell under its floor. Pasted from
+# target/bench_frames.txt whole but for one floor: its entry raised the wasm
+# superposition-act floor from 1,020,000,000 to 1,190,000,000, the run's act p95
+# of 0.6 ms less 10%, and the page reads that p95 in tenths of a millisecond,
+# 0.6 or 0.7 from run to run (six runs of the thirteenth's day read 0.7 four
+# times), so a floor from 0.6 would refuse a run that reads 0.7; the floor is
+# kept at the latest, 1,020,000,000, the 0.7's. Its entry raises six other
+# floors: native gun 3,060,000,000 to 3,100,000,000, native sand 58,600,000 to
+# 59,900,000, native superposition-act 1,580,000,000 to 1,590,000,000, native
+# superposition-cascade 3,950,000,000 to 3,960,000,000, wasm gun-x16
+# 31,700,000,000 to 32,600,000,000 and wasm sand 43,600,000 to 44,800,000. Its
+# rows: native life 29,041,096 (2.2) cells a second (frame p50, ms), life-x4
+# 25,236,815 (10.1), life-x16 24,347,797 (41.9), gun 3,448,458,346 (0.0183),
+# gun-x4 12,041,892,483 (0.0211), gun-x16 39,140,091,149 (0.0261), sand
+# 66,606,238 (2.8), superposition 185,544,276,157 (0.0043), superposition-act
+# 1,767,103,982 (p95 0.4520), superposition-cascade 4,409,626,974 (140.7 ms
+# over 777 frames); wasm life 26,235,000 (2.4), life-x4 22,876,036 (11.1),
+# life-x16 22,365,000 (45.6), gun 2,599,803,851 (0.0242), gun-x4 10,156,960,038
+# (0.0250), gun-x16 36,261,119,760 (0.0281), sand 49,793,421 (3.8),
+# superposition 150,703,963,620 (0.0053), superposition-act 1,331,218,280 (p95
+# 0.6), superposition-cascade 3,308,176,904 (187.6 ms). Its floors are the
+# history's fourteenth entry.
+# 2026-10-19, the fifteenth: this session's run of the instrument at CART.12's
+# second hand test, over the board moved to A1 and bound there (superposition.vla
+# D157A425..., 636 rows, 44 shapes, 798,731 formula cells as before) and the
+# module that reads version 6's bound (1,045,898 bytes), the same machine, both
+# halves opted out and on the performance cores. No row fell under its floor; the
+# rows of the fixtures that did not move kept their floors, each slower than the
+# run that set it and above it, but native life-x4, raised 22,700,000 to
+# 22,900,000, and native gun-x16, 36,200,000,000 to 40,400,000,000, its
+# thirteenth's lowering made good. The six Superposition rows measure another
+# file, and three are re-based, each floor this run's less 10%, as the
+# instrument's reason says: native superposition 168,000,000,000 to
+# 158,000,000,000, native superposition-cascade 3,960,000,000 to 3,630,000,000,
+# and wasm superposition-cascade 3,200,000,000 to 3,070,000,000. Native
+# superposition-act rose, 1,590,000,000 to 1,730,000,000. The wasm
+# superposition-act floor is kept at 1,020,000,000 where the entry raised it to
+# 1,190,000,000 from a p95 of 0.6 ms: the page reads that p95 in tenths of a
+# millisecond, 0.6 or 0.7 from run to run, as the fourteenth's note says. Its
+# rows: native superposition 175,806,085,952 cells a second (frame p50 0.0045
+# ms), superposition-act 1,923,725,915 (p50 0.3114, p95 0.4152),
+# superposition-cascade 153.6 ms over 777 frames; wasm superposition
+# 150,703,963,620 (0.0053), superposition-act 1,331,218,280 (p50 0.4, p95 0.6),
+# superposition-cascade 181.8 ms. The cascade is the measured one's: the
+# board's worlds kept, its deal at SO501 where the board at B2 had it at SP502,
+# 775 rings, 209,446 sites. The native cascade read 153.6 ms against the
+# fourteenth's 140.7 while the act's p95 read 0.415 against 0.452: the box's
+# branch adds one comparison to every observed site a frame recomputes, and the
+# run's own noise the rest. Its floors are the history's fifteenth entry.
+$baselineDate = '2026-10-19'
+$baselineEnvironment = 'Intel(R) Core(TM) Ultra 7 265KF, 20 cores | Microsoft Windows 11 Home 10.0.26200 | rustc 1.99.0 (b940084d7 2026-09-28) | chrome 155.0.8059.79 headless | the engine''s module 1,045,898 bytes | vla-lang at 0.10.1 | power throttling opted out: the runner yes, 34 browser process(es) | on the performance cores, 8 of 20 logical processors (efficiency class 1): the runner yes, 34 browser process(es)'
+$baselinePin = '0.10.1'
+$baselineFixtures = @{ 'life' = '60220BAE07BBC3C15F671C7CAAE62B6DD6D14B67B9141150EC0023AFA0FFE0F4'; 'gun' = '64C9A6BA206003F15B73084FE90781BE60E34089D577CE0589DBAF5C737A0725'; 'sand' = 'F872498DEAFBCCB60133501B18E35BEC38A470C4A9AE8064505510D061EAD857'; 'superposition' = 'D157A4254B513FFB5B1814FB9F031CB15468BB0165C70A94F6183D0B3B625AE8' }
 $baselineRungs = @{ 'life-x4' = 'D841A88328E95AABB7603CC97B902447346E9A705E32C01770AE74319A252285'; 'life-x16' = '944AEF5CA1FD41FF9973CB4A31B04C98595A408F7F50E7C6FA50B8E0ADE56613'; 'gun-x4' = '09E2744A4117AE2FBF33369EC3BD0BED5F2A69FA532C09BB86DB6FEA3F05B863'; 'gun-x16' = 'B762A925CD57929507CAB39F93812F36EB1196AA3B8693A7E9E1CC1999A83B59' }
 $baseline = @(
-    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 36.7; Memory = 30045509; FirstFrame = 10.3; FrameP50 = 2.1; FrameMin = 1.5; FrameMax = 3.8; CellsPerSecond = 30658065; FramesPerSecond = 486.914; ClockMs = 0.336; ClockSpread = 1.3; ClockDrift = 0.1 },
-    @{ Runner = 'native'; Fixture = 'life-x4'; Cells = 253924; Frames = 30; Run = 1; Load = 162.8; Memory = 120070177; FirstFrame = 40.9; FrameP50 = 10.4; FrameMin = 7.4; FrameMax = 17.7; CellsPerSecond = 24523176; FramesPerSecond = 96.577; ClockMs = 0.336; ClockSpread = 0.8; ClockDrift = 0.1 },
-    @{ Runner = 'native'; Fixture = 'life-x16'; Cells = 1019844; Frames = 30; Run = 1; Load = 686.6; Memory = 480770513; FirstFrame = 166.0; FrameP50 = 41.2; FrameMin = 33.1; FrameMax = 71.4; CellsPerSecond = 24770720; FramesPerSecond = 24.289; ClockMs = 0.336; ClockSpread = 1.0; ClockDrift = 0.2 },
-    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 640; Run = 64; Load = 34.8; Memory = 29977000; FirstFrame = 9.0; FrameP50 = 0.0190; FrameMin = 0.0118; FrameMax = 0.0266; CellsPerSecond = 3318670784; FramesPerSecond = 52707.433; ClockMs = 0.336; ClockSpread = 1.0; ClockDrift = 0.1 },
-    @{ Runner = 'native'; Fixture = 'gun-x4'; Cells = 253924; Frames = 640; Run = 64; Load = 159.9; Memory = 120001668; FirstFrame = 34.1; FrameP50 = 0.0198; FrameMin = 0.0118; FrameMax = 0.0280; CellsPerSecond = 12835586447; FramesPerSecond = 50548.930; ClockMs = 0.336; ClockSpread = 1.0; ClockDrift = 0.1 },
-    @{ Runner = 'native'; Fixture = 'gun-x16'; Cells = 1019844; Frames = 640; Run = 64; Load = 685.0; Memory = 480702004; FirstFrame = 141.1; FrameP50 = 0.0226; FrameMin = 0.0151; FrameMax = 0.0308; CellsPerSecond = 45071308911; FramesPerSecond = 44194.317; ClockMs = 0.336; ClockSpread = 0.9; ClockDrift = 0.2 },
-    @{ Runner = 'native'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 160.2; Memory = 81320779; FirstFrame = 30.2; FrameP50 = 3.0; FrameMin = 2.8; FrameMax = 13.7; CellsPerSecond = 63576037; FramesPerSecond = 335.999; ClockMs = 0.336; ClockSpread = 0.8; ClockDrift = 0.1 },
-    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 50.5; Memory = 28508160; FirstFrame = 11.8; FrameP50 = 2.5; FrameMin = 1.7; FrameMax = 5.6; CellsPerSecond = 25699592; FramesPerSecond = 408.163; ClockMs = 0.295; ClockSpread = 0.0; ClockDrift = 0.0 },
-    @{ Runner = 'wasm'; Fixture = 'life-x4'; Cells = 253924; Frames = 30; Run = 1; Load = 150.7; Memory = 97583104; FirstFrame = 30.3; FrameP50 = 10.6; FrameMin = 8.7; FrameMax = 17.8; CellsPerSecond = 23955094; FramesPerSecond = 94.340; ClockMs = 0.295; ClockSpread = 3.4; ClockDrift = 0.0 },
-    @{ Runner = 'wasm'; Fixture = 'life-x16'; Cells = 1019844; Frames = 30; Run = 1; Load = 787.7; Memory = 384892928; FirstFrame = 116.5; FrameP50 = 45.0; FrameMin = 36.3; FrameMax = 69.8; CellsPerSecond = 22688409; FramesPerSecond = 22.247; ClockMs = 0.290; ClockSpread = 0.0; ClockDrift = -1.7 },
-    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 640; Run = 128; Load = 31.3; Memory = 28508160; FirstFrame = 7.0; FrameP50 = 0.0242; FrameMin = 0.0148; FrameMax = 0.0336; CellsPerSecond = 2599803901; FramesPerSecond = 41290.323; ClockMs = 0.292; ClockSpread = 1.7; ClockDrift = -0.8 },
-    @{ Runner = 'wasm'; Fixture = 'gun-x4'; Cells = 253924; Frames = 640; Run = 128; Load = 144.5; Memory = 97583104; FirstFrame = 27.6; FrameP50 = 0.0250; FrameMin = 0.0148; FrameMax = 0.0336; CellsPerSecond = 10156960038; FramesPerSecond = 40000.000; ClockMs = 0.292; ClockSpread = 1.7; ClockDrift = -0.8 },
-    @{ Runner = 'wasm'; Fixture = 'gun-x16'; Cells = 1019844; Frames = 640; Run = 128; Load = 781.0; Memory = 384892928; FirstFrame = 112.3; FrameP50 = 0.0289; FrameMin = 0.0195; FrameMax = 0.0414; CellsPerSecond = 35281089843; FramesPerSecond = 34594.595; ClockMs = 0.295; ClockSpread = 3.4; ClockDrift = 0.0 },
-    @{ Runner = 'wasm'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 157.3; Memory = 65077248; FirstFrame = 23.9; FrameP50 = 3.9; FrameMin = 3.7; FrameMax = 15.1; CellsPerSecond = 48516666; FramesPerSecond = 256.410; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 }
+    @{ Runner = 'native'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 34.3; Memory = 30045529; FirstFrame = 10.2; FrameP50 = 2.2; FrameMin = 1.5; FrameMax = 3.6; CellsPerSecond = 28809224; FramesPerSecond = 457.551; ClockMs = 0.336; ClockSpread = 0.7; ClockDrift = -0.3 },
+    @{ Runner = 'native'; Fixture = 'life-x4'; Cells = 253924; Frames = 30; Run = 1; Load = 159.9; Memory = 120070201; FirstFrame = 39.9; FrameP50 = 9.9; FrameMin = 8.2; FrameMax = 17.8; CellsPerSecond = 25523078; FramesPerSecond = 100.515; ClockMs = 0.336; ClockSpread = 0.6; ClockDrift = -0.2 },
+    @{ Runner = 'native'; Fixture = 'life-x16'; Cells = 1019844; Frames = 30; Run = 1; Load = 671.8; Memory = 480770537; FirstFrame = 164.2; FrameP50 = 41.2; FrameMin = 34.8; FrameMax = 73.3; CellsPerSecond = 24723641; FramesPerSecond = 24.243; ClockMs = 0.336; ClockSpread = 0.6; ClockDrift = -0.1 },
+    @{ Runner = 'native'; Fixture = 'gun'; Cells = 62964; Frames = 640; Run = 64; Load = 34.9; Memory = 29977024; FirstFrame = 8.2; FrameP50 = 0.0184; FrameMin = 0.0107; FrameMax = 0.0265; CellsPerSecond = 3427778156; FramesPerSecond = 54440.286; ClockMs = 0.336; ClockSpread = 0.5; ClockDrift = -0.2 },
+    @{ Runner = 'native'; Fixture = 'gun-x4'; Cells = 253924; Frames = 640; Run = 64; Load = 162.6; Memory = 120001696; FirstFrame = 35.4; FrameP50 = 0.0199; FrameMin = 0.0117; FrameMax = 0.0278; CellsPerSecond = 12780571743; FramesPerSecond = 50332.272; ClockMs = 0.336; ClockSpread = 1.3; ClockDrift = -0.1 },
+    @{ Runner = 'native'; Fixture = 'gun-x16'; Cells = 1019844; Frames = 640; Run = 64; Load = 682.2; Memory = 480702032; FirstFrame = 147.5; FrameP50 = 0.0227; FrameMin = 0.0151; FrameMax = 0.0308; CellsPerSecond = 44933234201; FramesPerSecond = 44058.929; ClockMs = 0.335; ClockSpread = 0.6; ClockDrift = -0.3 },
+    @{ Runner = 'native'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 165.2; Memory = 81320827; FirstFrame = 31.5; FrameP50 = 3.0; FrameMin = 2.9; FrameMax = 14.5; CellsPerSecond = 62878838; FramesPerSecond = 332.314; ClockMs = 0.336; ClockSpread = 0.3; ClockDrift = -0.2 },
+    @{ Runner = 'native'; Fixture = 'superposition'; Cells = 798731; Frames = 10000; Run = 1000; Load = 622.2; Memory = 338676723; FirstFrame = 172.6; FrameP50 = 0.0045; FrameMin = 0.0045; FrameMax = 0.0047; CellsPerSecond = 175806085952; FramesPerSecond = 220106.752; ClockMs = 0.336; ClockSpread = 0.5; ClockDrift = -0.3 },
+    @{ Runner = 'native'; Fixture = 'superposition-act'; Cells = 798731; Frames = 200; Run = 1; Steps = 780; Load = 642.1; Memory = 338676723; FirstFrame = 0.8930; FrameP50 = 0.3114; FrameP95 = 0.4152; FrameMin = 0.2464; FrameMax = 0.8930; CellsPerSecond = 1923725915; FramesPerSecond = 2408.478; ClockMs = 0.336; ClockSpread = 0.5; ClockDrift = -0.2 },
+    @{ Runner = 'native'; Fixture = 'superposition-cascade'; Cells = 798731; Frames = 777; Run = 1; Load = 612.9; Memory = 338676723; FirstFrame = 0.3012; FrameP50 = 0.1884; FrameMin = 0.0056; FrameMax = 0.8595; CascadeMs = 153.6; Seed = 1; Probability = 0.08; Deal = 'SO501'; Rings = 775; Opened = 209446; CellsPerSecond = 4040537192; FramesPerSecond = 5058.696; ClockMs = 0.336; ClockSpread = 2.4; ClockDrift = -0.0 },
+    @{ Runner = 'wasm'; Fixture = 'life'; Cells = 62964; Frames = 30; Run = 1; Load = 50.1; Memory = 28508160; FirstFrame = 12.7; FrameP50 = 2.5; FrameMin = 1.8; FrameMax = 5.9; CellsPerSecond = 25699592; FramesPerSecond = 408.163; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 },
+    @{ Runner = 'wasm'; Fixture = 'life-x4'; Cells = 253924; Frames = 30; Run = 1; Load = 155.1; Memory = 97583104; FirstFrame = 30.8; FrameP50 = 11.2; FrameMin = 8.2; FrameMax = 17.7; CellsPerSecond = 22671786; FramesPerSecond = 89.286; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 },
+    @{ Runner = 'wasm'; Fixture = 'life-x16'; Cells = 1019844; Frames = 30; Run = 1; Load = 764.6; Memory = 384892928; FirstFrame = 119.0; FrameP50 = 46.5; FrameMin = 36.5; FrameMax = 71.8; CellsPerSecond = 21932129; FramesPerSecond = 21.505; ClockMs = 0.290; ClockSpread = 1.7; ClockDrift = -1.7 },
+    @{ Runner = 'wasm'; Fixture = 'gun'; Cells = 62964; Frames = 640; Run = 128; Load = 32.4; Memory = 28508160; FirstFrame = 6.9; FrameP50 = 0.0242; FrameMin = 0.0148; FrameMax = 0.0359; CellsPerSecond = 2599803901; FramesPerSecond = 41290.323; ClockMs = 0.292; ClockSpread = 1.7; ClockDrift = -0.8 },
+    @{ Runner = 'wasm'; Fixture = 'gun-x4'; Cells = 253924; Frames = 640; Run = 128; Load = 141.0; Memory = 97583104; FirstFrame = 27.6; FrameP50 = 0.0250; FrameMin = 0.0164; FrameMax = 0.0336; CellsPerSecond = 10156960038; FramesPerSecond = 40000.000; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 },
+    @{ Runner = 'wasm'; Fixture = 'gun-x16'; Cells = 1019844; Frames = 640; Run = 128; Load = 754.7; Memory = 384892928; FirstFrame = 110.1; FrameP50 = 0.0297; FrameMin = 0.0219; FrameMax = 0.0438; CellsPerSecond = 34352639892; FramesPerSecond = 33684.210; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 },
+    @{ Runner = 'wasm'; Fixture = 'sand'; Cells = 189215; Frames = 30; Run = 1; Load = 158.4; Memory = 65077248; FirstFrame = 23.9; FrameP50 = 3.9; FrameMin = 3.7; FrameMax = 14.7; CellsPerSecond = 48516666; FramesPerSecond = 256.410; ClockMs = 0.292; ClockSpread = 1.7; ClockDrift = -0.8 },
+    @{ Runner = 'wasm'; Fixture = 'superposition'; Cells = 798731; Frames = 5000; Run = 1000; Load = 664.4; Memory = 314638336; FirstFrame = 145.3; FrameP50 = 0.0053; FrameMin = 0.0051; FrameMax = 0.0056; CellsPerSecond = 150703963620; FramesPerSecond = 188679.247; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 },
+    @{ Runner = 'wasm'; Fixture = 'superposition-act'; Cells = 798731; Frames = 200; Run = 1; Steps = 780; Load = 624.3; Memory = 314638336; FirstFrame = 15.2; FrameP50 = 0.4000; FrameP95 = 0.6000; FrameMin = 0.3000; FrameMax = 15.2; CellsPerSecond = 1331218280; FramesPerSecond = 1666.667; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 },
+    @{ Runner = 'wasm'; Fixture = 'superposition-cascade'; Cells = 798731; Frames = 777; Run = 1; Load = 652.0; Memory = 316473344; FirstFrame = 0.4000; FrameP50 = 0.2000; FrameMin = 0.0000; FrameMax = 1.0; CascadeMs = 181.8; Seed = 1; Probability = 0.08; Deal = 'SO501'; Rings = 775; Opened = 209446; CellsPerSecond = 3413718301; FramesPerSecond = 4273.927; ClockMs = 0.295; ClockSpread = 1.7; ClockDrift = 0.0 }
 )
 
 # --- the floors, in cells a second, a dated history that never goes down ---
@@ -401,7 +520,10 @@ $floorHistory = @(
     @{ Date = '2026-10-14'; Pin = '0.9.2'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native life-x4' = 16200000; 'native life-x16' = 15900000; 'native gun' = 2190000000; 'native gun-x4' = 8100000000; 'native gun-x16' = 27700000000; 'native sand' = 45500000; 'wasm life' = 14300000; 'wasm life-x4' = 12700000; 'wasm life-x16' = 13000000; 'wasm gun' = 1510000000; 'wasm gun-x4' = 5220000000; 'wasm gun-x16' = 21300000000; 'wasm sand' = 29300000 } },
     @{ Date = '2026-10-14'; Pin = '0.9.3'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native life-x4' = 16200000; 'native life-x16' = 15900000; 'native gun' = 2190000000; 'native gun-x4' = 8460000000; 'native gun-x16' = 30000000000; 'native sand' = 45500000; 'wasm life' = 14300000; 'wasm life-x4' = 12700000; 'wasm life-x16' = 13100000; 'wasm gun' = 1510000000; 'wasm gun-x4' = 5850000000; 'wasm gun-x16' = 21300000000; 'wasm sand' = 29300000 } },
     @{ Date = '2026-10-15'; Pin = '0.9.4'; Reason = ''; Floors = @{ 'native life' = 20500000; 'native life-x4' = 16200000; 'native life-x16' = 16100000; 'native gun' = 2190000000; 'native gun-x4' = 8460000000; 'native gun-x16' = 30000000000; 'native sand' = 45500000; 'wasm life' = 14300000; 'wasm life-x4' = 13100000; 'wasm life-x16' = 13100000; 'wasm gun' = 1510000000; 'wasm gun-x4' = 5850000000; 'wasm gun-x16' = 21300000000; 'wasm sand' = 29300000 } },
-    @{ Date = '2026-10-17'; Pin = '0.10.0'; Reason = ''; Floors = @{ 'native life' = 27500000; 'native life-x4' = 22000000; 'native life-x16' = 22200000; 'native gun' = 2980000000; 'native gun-x4' = 11500000000; 'native gun-x16' = 40500000000; 'native sand' = 57200000; 'wasm life' = 23100000; 'wasm life-x4' = 21500000; 'wasm life-x16' = 20400000; 'wasm gun' = 2330000000; 'wasm gun-x4' = 9140000000; 'wasm gun-x16' = 31700000000; 'wasm sand' = 43600000 } }
+    @{ Date = '2026-10-17'; Pin = '0.10.0'; Reason = ''; Floors = @{ 'native life' = 27500000; 'native life-x4' = 22000000; 'native life-x16' = 22200000; 'native gun' = 2980000000; 'native gun-x4' = 11500000000; 'native gun-x16' = 40500000000; 'native sand' = 57200000; 'wasm life' = 23100000; 'wasm life-x4' = 21500000; 'wasm life-x16' = 20400000; 'wasm gun' = 2330000000; 'wasm gun-x4' = 9140000000; 'wasm gun-x16' = 31700000000; 'wasm sand' = 43600000 } },
+    @{ Date = '2026-10-18'; Pin = '0.10.1'; Reason = 'native gun-x16 lowered: measured under its floor, 40,224,334,268 cells a second against 40,500,000,000, 0.7% under; its frame, the gun''s idle frame over a board of a million formula cells, read 0.0227 to 0.0285 ms natively and 0.0289 to 0.0398 in the browser over this instrument''s six runs of the day, every run refusing one gun row or two, and the twelfth baseline''s own module and runner, rebuilt byte for byte from 275f1e0, run alternately with this pin''s under the same guards, read 0.0227 to 0.0231 natively and 0.0281 to 0.0391 in the browser, where this pin''s read 0.0226 to 0.0231 and 0.0289 to 0.0336: the two engines alike, and a frame of twenty to forty microseconds varying between runs past the floors'' margin (CART.12; docs/REARVIEW.md, ENGINE.1''s record of the pin to 0.10.1); its floor is this run''s less 10%'; Floors = @{ 'native life' = 27800000; 'native life-x4' = 22700000; 'native life-x16' = 22200000; 'native gun' = 3060000000; 'native gun-x4' = 11500000000; 'native gun-x16' = 36200000000; 'native sand' = 58600000; 'native superposition' = 168000000000; 'native superposition-act' = 1580000000; 'native superposition-cascade' = 3950000000; 'wasm life' = 23600000; 'wasm life-x4' = 21500000; 'wasm life-x16' = 20400000; 'wasm gun' = 2330000000; 'wasm gun-x4' = 9430000000; 'wasm gun-x16' = 31700000000; 'wasm sand' = 43600000; 'wasm superposition' = 135000000000; 'wasm superposition-act' = 1020000000; 'wasm superposition-cascade' = 3200000000 } },
+    @{ Date = '2026-10-19'; Pin = '0.10.1'; Reason = ''; Floors = @{ 'native life' = 27800000; 'native life-x4' = 22700000; 'native life-x16' = 22200000; 'native gun' = 3100000000; 'native gun-x4' = 11500000000; 'native gun-x16' = 36200000000; 'native sand' = 59900000; 'native superposition' = 168000000000; 'native superposition-act' = 1590000000; 'native superposition-cascade' = 3960000000; 'wasm life' = 23600000; 'wasm life-x4' = 21500000; 'wasm life-x16' = 20400000; 'wasm gun' = 2330000000; 'wasm gun-x4' = 9430000000; 'wasm gun-x16' = 32600000000; 'wasm sand' = 44800000; 'wasm superposition' = 135000000000; 'wasm superposition-act' = 1020000000; 'wasm superposition-cascade' = 3200000000 } },
+    @{ Date = '2026-10-19'; Pin = '0.10.1'; Reason = 'native superposition re-based: its fixture is another file, D157A425..., where the baseline before it measured 3F430491..., and cells a second count a fixture''s cells (CART.2''s decision 24); its floor is this run''s less 10%; native superposition-cascade re-based: its fixture is another file, D157A425..., where the baseline before it measured 3F430491..., and cells a second count a fixture''s cells (CART.2''s decision 24); its floor is this run''s less 10%; wasm superposition-cascade re-based: its fixture is another file, D157A425..., where the baseline before it measured 3F430491..., and cells a second count a fixture''s cells (CART.2''s decision 24); its floor is this run''s less 10%'; Floors = @{ 'native life' = 27800000; 'native life-x4' = 22900000; 'native life-x16' = 22200000; 'native gun' = 3100000000; 'native gun-x4' = 11500000000; 'native gun-x16' = 40400000000; 'native sand' = 59900000; 'native superposition' = 158000000000; 'native superposition-act' = 1730000000; 'native superposition-cascade' = 3630000000; 'wasm life' = 23600000; 'wasm life-x4' = 21500000; 'wasm life-x16' = 20400000; 'wasm gun' = 2330000000; 'wasm gun-x4' = 9430000000; 'wasm gun-x16' = 32600000000; 'wasm sand' = 44800000; 'wasm superposition' = 135000000000; 'wasm superposition-act' = 1020000000; 'wasm superposition-cascade' = 3070000000 } }
 )
 
 # --- releases of a measured source: a registry release of the language whose
@@ -436,12 +558,21 @@ $sameSource = @{ '0.8.1' = 'f5dc344' }
 # for byte the measured file's; each file's census, its describe golden, is
 # unchanged; and the runner's check mode holds every frame to the Life and
 # the Sand written by hand and every allocation count under its ceiling.
+# 2026-10-19, CART.12's hand test: superposition.vla gained three column rows,
+# the Observer's A and B and the Constants' A, so that the labels and the seed
+# read whole where the screen had cut the seed to #######. A width is a sheet's
+# setting, no cell: no formula reads it, and no timed span views a sheet. Every
+# other row is byte for byte the measured file's; its census, the describe
+# golden, is unchanged; and the runner's check mode holds every frame to the
+# Superposition written by hand, every allocation count and the heap under
+# their ceilings.
 $sameRows = @{
     '7220F8E1FBFF7A3B7F00DE9ECA5754E9A1877A8D1A766A251EB3811D0C937D89' = '90B24FF2E98530FF530C9E573DAC0E2FB4F5968ABE378D0A673C3E9DCA8D70DB'
     '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7' = '0BD138CBE43825F93EA2235F755DE6A46F18CCF7B7DAEC33B6D38D8365E64234'
     '60220BAE07BBC3C15F671C7CAAE62B6DD6D14B67B9141150EC0023AFA0FFE0F4' = '7220F8E1FBFF7A3B7F00DE9ECA5754E9A1877A8D1A766A251EB3811D0C937D89'
     '64C9A6BA206003F15B73084FE90781BE60E34089D577CE0589DBAF5C737A0725' = '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7'
     'F872498DEAFBCCB60133501B18E35BEC38A470C4A9AE8064505510D061EAD857' = '814983F85A9DA90155F0F58C6FE201C8750E588BF202BD54B18763C41DC594C7'
+    '5DB1DC272DA0F55CBECA7B813DC7E255EE39114864D7C01354533B14553D49D2' = '3F430491CFE11A5CA0F5BD7CC16E1B4685576FCFE52C8AC87C19CAAE3B31ED4C'
 }
 
 # --- the allocation ceilings, the second frame after a fresh load, exact ---
@@ -515,23 +646,63 @@ $sameRows = @{
 # notes nine bytes a cell (Frazaro's KERNEL.43); a sheet read in the frame
 # being computed keeps one too (KERNEL.31); and each formula shape holds its
 # program, compiled once (KERNEL.44).
+# 2026-10-18, the pin moved to vla-lang 0.10.1 (KERNEL.48, a frame's changed
+# cells counted, which CART.12's settle reads): every count the same, and every
+# Memory raised by four bytes a sheet, the same bytes on every run: Life's soup
+# 20 (five sheets), its rungs and the gun 24, the gun's rungs 28, Sand 48
+# (twelve sheets). The reason is the language's: since 0.10.1 a frame keeps
+# its count of the formula cells it changed on each sheet, a 32-bit count a
+# sheet (Machine::changed_on). And CART.12's three counted instances of
+# Superposition, the lattice of 512 by 512 (798,731 formula cells), each its
+# load settled first: the idle row's second idle act, its two frames, 22
+# allocations and 5 reallocations; the session's twelfth act, 560 and 37 over
+# its frames; and the cascade at 8%, 777 frames, 4,146 and 63, about five a
+# frame. The engine's work alone: a first build counted the runner's own list
+# of an act's step times too, 1 allocation more an act and the cascade's 8
+# reallocations. Their heap's high-water mark is the same 336,414,302 bytes, 421 a grid
+# cell, reached at the load's first frame, which computes every cell, and
+# never by an act. The same integers on every run.
+# 2026-10-19, CART.12's hand test: Superposition's three Memory ceilings
+# raised by 256 bytes, to 336,414,558, the same bytes on every run, and every
+# count of allocations the same. The reason is the cartridge's: the hand test
+# widened the Observer's A and B and the Constants' A, three column rows, and a
+# sheet holds its columns' widths, a constant whatever the lattice's size.
+# 2026-10-19, CART.12's second hand test: the board moved to A1, each of its
+# Field and Readings four fills where it was one, a box's rule reading the
+# Readings of its eight neighbors, and the bound read. The three Memory
+# ceilings raised by 2,262,165 bytes, to 338,676,723, 0.7%, the same bytes on
+# every run; a board built with the same fills and without the eight Readings
+# references holds the same peak within 0.1 MB, so the bytes are the split's,
+# the language's own per-cell cost of a fill's parts. The cascade's counted act
+# 28 allocations more, 4,174, its frames reading more shapes; the idle and the
+# session's counts the same, 22 and 560.
 $allocationCeilings = [ordered]@{
-    'life'     = @{ Allocs = 80; Reallocs = 5; Memory = 30045509 }
-    'life-x4'  = @{ Allocs = 82; Reallocs = 5; Memory = 120070177 }
-    'life-x16' = @{ Allocs = 82; Reallocs = 5; Memory = 480770513 }
-    'gun'      = @{ Allocs = 80; Reallocs = 5; Memory = 29977000 }
-    'gun-x4'   = @{ Allocs = 82; Reallocs = 5; Memory = 120001668 }
-    'gun-x16'  = @{ Allocs = 82; Reallocs = 5; Memory = 480702004 }
-    'sand'     = @{ Allocs = 507; Reallocs = 5; Memory = 81320779 }
+    'life'     = @{ Allocs = 80; Reallocs = 5; Memory = 30045529 }
+    'life-x4'  = @{ Allocs = 82; Reallocs = 5; Memory = 120070201 }
+    'life-x16' = @{ Allocs = 82; Reallocs = 5; Memory = 480770537 }
+    'gun'      = @{ Allocs = 80; Reallocs = 5; Memory = 29977024 }
+    'gun-x4'   = @{ Allocs = 82; Reallocs = 5; Memory = 120001696 }
+    'gun-x16'  = @{ Allocs = 82; Reallocs = 5; Memory = 480702032 }
+    'sand'     = @{ Allocs = 507; Reallocs = 5; Memory = 81320827 }
+    'superposition'         = @{ Allocs = 22; Reallocs = 5; Memory = 338676723 }
+    'superposition-act'     = @{ Allocs = 560; Reallocs = 37; Memory = 338676723 }
+    'superposition-cascade' = @{ Allocs = 4174; Reallocs = 63; Memory = 338676723 }
 }
 
 # --- the rules ---
 $requiredRows = @('native life', 'native gun', 'native sand', 'wasm life', 'wasm gun', 'wasm sand',
                   'native life-x4', 'native life-x16', 'native gun-x4', 'native gun-x16',
-                  'wasm life-x4', 'wasm life-x16', 'wasm gun-x4', 'wasm gun-x16')
+                  'wasm life-x4', 'wasm life-x16', 'wasm gun-x4', 'wasm gun-x16',
+                  'native superposition', 'native superposition-act', 'native superposition-cascade',
+                  'wasm superposition', 'wasm superposition-act', 'wasm superposition-cascade')
+# Superposition's rows (CART.12): the act rows' and the cascade rows' own fields, which each half's row carries
+# and the two halves hold alike.
+$actFields = @('Frames', 'Steps')
+$cascadeFields = @('Frames', 'Seed', 'Probability', 'Deal', 'Rings', 'Opened')
+$p95Tolerance = 0.05
 # The size ladder's rungs (ENGINE.9), each named in $baselineRungs by its cartridge's SHA-256 over LF.
 $ladderRungs = @('life-x4', 'life-x16', 'gun-x4', 'gun-x16')
-$fixtureFiles = [ordered]@{ 'life' = 'cartridges/life/life.vla'; 'gun' = 'cartridges/gun/gun.vla'; 'sand' = 'cartridges/sand/sand.vla' }
+$fixtureFiles = [ordered]@{ 'life' = 'cartridges/life/life.vla'; 'gun' = 'cartridges/gun/gun.vla'; 'sand' = 'cartridges/sand/sand.vla'; 'superposition' = 'cartridges/superposition/superposition.vla' }
 $minFrames = 30
 $clockMax = 10.0
 $unitsTolerance = 0.005
@@ -655,6 +826,24 @@ function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin,
         if (-not $r.ContainsKey('Memory') -or -not [double]::TryParse([string]$r.Memory, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$memory) -or $memory -le 0 -or $memory -ne [math]::Floor($memory)) {
             $problems.Add("the row $key names no memory: since ENGINE.9 each row carries its Memory, the heap's high-water bytes natively and the module's memory in the browser, a whole number above 0, so paste the block tools/bench_frames.ps1 prints")
         }
+        # Superposition's act rows (CART.12): cells a second at the session's 95th percentile, so its frames a
+        # second, acts, one over its p95; its cascade rows: frames a second its frames over the cascade's time.
+        if ([string]$r.Fixture -eq 'superposition-act') {
+            $p95 = 0.0
+            if (-not $r.ContainsKey('FrameP95') -or -not [double]::TryParse([string]$r.FrameP95, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$p95) -or $p95 -le 0) {
+                $problems.Add("the row $key names no FrameP95: an act's latency is held at the session's 95th percentile (CART.12, decision 8), so paste the block tools/bench_frames.ps1 prints")
+            } elseif ([math]::Abs($fps * $p95 / 1000.0 - 1.0) -gt $p95Tolerance) {
+                $problems.Add(("the row {0}: {1} acts a second is not one over its 95th percentile of {2} ms: its cells a second are taken at the p95" -f $key, $fps, $p95))
+            }
+            if (-not $r.ContainsKey('Steps') -or [int]$r.Steps -lt [int]$r.Frames) { $problems.Add("the row $key names no Steps, the frames its acts took, at least one an act") }
+        }
+        if ([string]$r.Fixture -eq 'superposition-cascade') {
+            $missing = @($cascadeFields | Where-Object { -not $r.ContainsKey($_) -or ([string]$r[$_]).Trim() -eq '' })
+            $cascadeMs = 0.0
+            if (-not $r.ContainsKey('CascadeMs') -or -not [double]::TryParse([string]$r.CascadeMs, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$cascadeMs) -or $cascadeMs -le 0) { $missing += 'CascadeMs' }
+            if ($missing.Count -gt 0) { $problems.Add(("the row {0} names no {1}: the deepest cascade carries its time, its seed, probability, deal, rings and sites opened (CART.12, decision 8)" -f $key, ($missing -join ', '))) }
+            elseif ([math]::Abs($fps - [double]$r.Frames / ($cascadeMs / 1000.0)) -gt $unitsTolerance * $fps) { $problems.Add(("the row {0}: {1} frames a second is not its {2} frames over {3} ms" -f $key, $fps, $r.Frames, $cascadeMs)) }
+        }
         $floorText = 'no floor'
         if ($null -ne $latest -and $null -ne $latest.Floors -and $latest.Floors.ContainsKey($key)) {
             $floor = [double]$latest.Floors[$key]
@@ -667,6 +856,15 @@ function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin,
         $toRate = if ($fps -ge $barFrames) { '{0:N1} times over' -f ($fps / $barFrames) } else { '{0:N1} times short' -f ($barFrames / $fps) }
         $lines.Add(("  {0}: {1} cells a second, {2:N3} frames a second, frame p50 {3} ms; {4}; {5:N1}% of the line of {6}, {7}; the rate of {8} frames a second, {9}; the clock's spread {10}%, drift {11}%" -f
             $key, (Format-Count $cps), $fps, $r.FrameP50, $floorText, (100.0 * $cps / $barCells), (Format-Count $barCells), $toLine, $barFrames, $toRate, $r.ClockSpread, $r.ClockDrift))
+    }
+    # Each half plays Superposition's session and finds its cascade's deal by its own hand (CART.12): the halves
+    # measured the same work only when their act rows and their cascade rows agree.
+    foreach ($pair in @(@('superposition-act', $actFields, 'session'), @('superposition-cascade', $cascadeFields, 'cascade'))) {
+        $n = $byKey['native ' + $pair[0]]; $w = $byKey['wasm ' + $pair[0]]
+        if ($null -eq $n -or $null -eq $w) { continue }
+        $apart = @($pair[1] | Where-Object { ([string]$n[$_]) -ne ([string]$w[$_]) })
+        if ($apart.Count -gt 0) { $problems.Add(("the two halves' {0} rows are not the same {1}: {2}" -f $pair[0], $pair[2], (@($apart | ForEach-Object { "$_ $($n[$_]) natively and $($w[$_]) in the browser" }) -join '; '))) }
+        else { $lines.Add(("  {0}: the same {1} in both halves, {2}" -f $pair[0], $pair[2], (@($pair[1] | ForEach-Object { "$_ $($n[$_])" }) -join ', '))) }
     }
     foreach ($line in @(Get-Slope $byKey)) { $lines.Add($line) }
     return @{ Problems = $problems; Lines = $lines }
@@ -730,7 +928,7 @@ function Invoke-Runner([string]$runner, $paths) {
 
 # The dynamic judgment: the runner's check mode over the fixtures, and since ENGINE.9 the rungs of
 # the size ladder their sources climb, each rung's digest held to the baseline's where it names one.
-function Test-Runner([string]$runner, $paths, $ceilings, $rungs = @{}) {
+function Test-Runner([string]$runner, $paths, $ceilings, $rungs = @{}, $cascade = $null) {
     $problems = New-Object System.Collections.Generic.List[string]
     $lines = New-Object System.Collections.Generic.List[string]
     $run = Invoke-Runner $runner $paths
@@ -741,12 +939,19 @@ function Test-Runner([string]$runner, $paths, $ceilings, $rungs = @{}) {
     $want = @($ceilings.Keys).Count
     if ($run.Text -notmatch ('\(frames-check-done ' + $want + '\)')) { $problems.Add("the runner's check did not finish the $want fixtures: " + $run.Text) }
     foreach ($name in @($ceilings.Keys)) {
-        $m = [regex]::Match($run.Text, '\(frames-check "' + [regex]::Escape($name) + '" \(frames (\d+)\) \(equal (\d+)\) \(cells (\d+)\) \(allocs (\d+)\) \(reallocs (\d+)\) \(memory (\d+)\)(?: \(digest "([0-9A-F]{64})"\))?(?: \(facts (\d+)\))?(?: \(conserved (\d+)\))?\)')
+        $m = [regex]::Match($run.Text, '\(frames-check "' + [regex]::Escape($name) + '" \(frames (\d+)\) \(equal (\d+)\) \(cells (\d+)\) \(allocs (\d+)\) \(reallocs (\d+)\) \(memory (\d+)\)(?: \(digest "([0-9A-F]{64})"\))?(?: \(facts (\d+)\))?(?: \(conserved (\d+)\))?(?: \(settled (\d+)\))?(?: \(deal "([A-Z]+\d+)"\) \(rings (\d+)\) \(opened (\d+)\))?\)')
         if (-not $m.Success) { $problems.Add("the runner's check printed no row for the fixture $name"); continue }
         $frames = [int]$m.Groups[1].Value; $equal = [int]$m.Groups[2].Value; $cells = [double]$m.Groups[3].Value
         $allocs = [long]$m.Groups[4].Value; $reallocs = [long]$m.Groups[5].Value; $memory = [long]$m.Groups[6].Value
-        $by = if ($name -eq 'sand') { 'Sand' } else { 'Life' }
+        $by = if ($name -eq 'sand') { 'Sand' } elseif ($name -like 'superposition*') { 'Superposition' } else { 'Life' }
         if ($frames -lt 2 -or $equal -ne $frames) { $problems.Add("$name`: $equal of $frames frames equal to the hand-written $by") }
+        if ($name -like 'superposition*' -and -not $m.Groups[10].Success) { $problems.Add("$name`: the runner settled no act of the counted instance, which settles every act (CART.12)") }
+        if ($name -eq 'superposition-cascade') {
+            if (-not $m.Groups[11].Success) { $problems.Add("superposition-cascade: the runner named no deal, rings or sites opened for the cascade") }
+            elseif ($null -ne $cascade -and ($m.Groups[11].Value -ne [string]$cascade.Deal -or $m.Groups[12].Value -ne [string]$cascade.Rings -or $m.Groups[13].Value -ne [string]$cascade.Opened)) {
+                $problems.Add(("superposition-cascade: the cascade is not the baseline's: the deal at {0}, {1} rings and {2} sites opened, the baseline's at {3}, {4} and {5}; the cartridge, the hand or the language moved, so measure again" -f $m.Groups[11].Value, $m.Groups[12].Value, $m.Groups[13].Value, $cascade.Deal, $cascade.Rings, $cascade.Opened))
+            }
+        }
         if (($name -eq 'gun' -or $name -like 'gun-x*') -and -not $m.Groups[8].Success) { $problems.Add("$name`: the runner did not hold the gun to its published facts") }
         if ($name -eq 'sand' -and (-not $m.Groups[9].Success -or [int]$m.Groups[9].Value -ne $frames - 1)) { $problems.Add("sand: the runner did not hold the opening to its grains, each material's count kept in every frame after the first") }
         $c = $ceilings[$name]
@@ -764,7 +969,10 @@ function Test-Runner([string]$runner, $paths, $ceilings, $rungs = @{}) {
             }
         }
         $facts = if ($m.Groups[8].Success) { ', the gun''s facts held ' + $m.Groups[8].Value + ' periods' } elseif ($m.Groups[9].Success) { ', every grain kept in ' + $m.Groups[9].Value + ' frames' } else { '' }
-        $lines.Add(("  {0}: {1} of {2} frames equal to the hand-written {3}{4}; the second frame {5} allocations ({6:N4} a cell) and {7} reallocations; the heap {8} bytes ({9:N1} a cell){10}" -f $name, $equal, $frames, $by, $facts, (Format-Count $allocs), ($allocs / [math]::Max(1, $cells)), (Format-Count $reallocs), (Format-Count $memory), ($memory / [math]::Max(1, $cells)), $note))
+        if ($m.Groups[10].Success) { $facts += ', ' + $m.Groups[10].Value + ' acts settled' }
+        if ($m.Groups[11].Success) { $facts += (', the deal at {0}, {1} rings, {2} sites opened' -f $m.Groups[11].Value, $m.Groups[12].Value, (Format-Count $m.Groups[13].Value)) }
+        $counted = if ($name -like 'superposition*') { 'the counted act' } else { 'the second frame' }
+        $lines.Add(("  {0}: {1} of {2} frames equal to the hand-written {3}{4}; {11} {5} allocations ({6:N4} a cell) and {7} reallocations; the heap {8} bytes ({9:N1} a cell){10}" -f $name, $equal, $frames, $by, $facts, (Format-Count $allocs), ($allocs / [math]::Max(1, $cells)), (Format-Count $reallocs), (Format-Count $memory), ($memory / [math]::Max(1, $cells)), $note, $counted))
     }
     return @{ Problems = $problems; Lines = $lines }
 }
@@ -800,10 +1008,11 @@ function Test-HistoryKept($committed, $working) {
 if ($Control) {
     $ok = $true
     $verdicts = New-Object System.Collections.Generic.List[string]
-    $digests = @{ 'life' = ('A' * 64); 'gun' = ('B' * 64); 'sand' = ('D' * 64) }
+    $digests = @{ 'life' = ('A' * 64); 'gun' = ('B' * 64); 'sand' = ('D' * 64); 'superposition' = ('E' * 64) }
     # the size ladder's rungs, each by its cartridge's digest (ENGINE.9)
     $controlRungs = @{ 'life-x4' = ('1' * 64); 'life-x16' = ('2' * 64); 'gun-x4' = ('3' * 64); 'gun-x16' = ('4' * 64) }
     $ladderKeys = @($requiredRows | Where-Object { $_ -like '*-x*' })
+    $controlCascade = @{ Deal = 'SP502'; Rings = 775; Opened = 209446 }
     function Row([string]$runner, [string]$fixture, [double]$cps, [int]$cells = 62964, [double]$memory = 30000000) {
         $ms = $cells / $cps * 1000
         return @{ Runner = $runner; Fixture = $fixture; Cells = $cells; Frames = 30; Load = 160.0; Memory = $memory; FirstFrame = 200.0; FrameP50 = $(if ($ms -ge 1) { [math]::Round($ms, 1) } else { [math]::Round($ms, 4) }); FrameMin = 270.0; FrameMax = 290.0;
@@ -811,12 +1020,22 @@ if ($Control) {
     }
     # the size ladder's rows for one half: life and the gun at four and sixteen times the window's area
     function Ladder([string]$runner) { return @((Row $runner 'life-x4' 220000 253924 117000000), (Row $runner 'life-x16' 215000 1019844 469000000), (Row $runner 'gun-x4' 210000 253924 117000000), (Row $runner 'gun-x16' 205000 1019844 469000000)) }
-    # native life, native gun, native sand, wasm life, wasm gun, wasm sand, then the ladder's eight
-    function Clean { return @((Row 'native' 'life' 225000), (Row 'native' 'gun' 214000), (Row 'native' 'sand' 10600000 126449), (Row 'wasm' 'life' 233000), (Row 'wasm' 'gun' 223000), (Row 'wasm' 'sand' 7700000 126449)) + @(Ladder 'native') + @(Ladder 'wasm') }
-    # an entry's floors: Life's four, Sand's two when given, and with Sand's the ladder's eight
+    # Superposition's three rows for one half (CART.12): the idle frame, the session's act at its p95, the cascade
+    function Lattice([string]$runner) {
+        $idle = Row $runner 'superposition' 150000000000 798731 336000000; $idle.Frames = 10000; $idle.Run = 1000
+        $act = Row $runner 'superposition-act' 1700000000 798731 336000000; $act.Frames = 200; $act.Steps = 780; $act.FrameP95 = [math]::Round(1000 / $act.FramesPerSecond, 4)
+        $cascade = Row $runner 'superposition-cascade' 4500000000 798731 336000000; $cascade.Frames = 777; $cascade.CascadeMs = [math]::Round(777 / $cascade.FramesPerSecond * 1000, 1)
+        $cascade.FramesPerSecond = [math]::Round(777 / ($cascade.CascadeMs / 1000), 3); $cascade.CellsPerSecond = $cascade.FramesPerSecond * 798731
+        foreach ($k in @('Seed', 'Probability', 'Deal', 'Rings', 'Opened')) { $cascade[$k] = @{ Seed = 1; Probability = 0.08; Deal = 'SP502'; Rings = 775; Opened = 209446 }[$k] }
+        return @($idle, $act, $cascade)
+    }
+    # native life, native gun, native sand, wasm life, wasm gun, wasm sand, then the ladder's eight, then Superposition's six
+    function Clean { return @((Row 'native' 'life' 225000), (Row 'native' 'gun' 214000), (Row 'native' 'sand' 10600000 126449), (Row 'wasm' 'life' 233000), (Row 'wasm' 'gun' 223000), (Row 'wasm' 'sand' 7700000 126449)) + @(Ladder 'native') + @(Ladder 'wasm') + @(Lattice 'native') + @(Lattice 'wasm') }
+    # an entry's floors: Life's four, Sand's two when given, and with Sand's the ladder's eight and Superposition's six
+    $latticeFloors = @{ 'superposition' = 100000000000; 'superposition-act' = 1500000000; 'superposition-cascade' = 4000000000 }
     function Floors([double]$a, [double]$b, [double]$c, [double]$d, [double]$e = -1, [double]$f = -1) {
         $fl = @{ 'native life' = $a; 'native gun' = $b; 'wasm life' = $c; 'wasm gun' = $d }
-        if ($e -ge 0) { $fl['native sand'] = $e; foreach ($k in $ladderKeys) { $fl[$k] = 200000 } }
+        if ($e -ge 0) { $fl['native sand'] = $e; foreach ($k in $ladderKeys) { $fl[$k] = 200000 }; foreach ($k in $latticeFloors.Keys) { $fl['native ' + $k] = $latticeFloors[$k]; $fl['wasm ' + $k] = $latticeFloors[$k] } }
         if ($f -ge 0) { $fl['wasm sand'] = $f }
         return $fl
     }
@@ -875,9 +1094,21 @@ if ($Control) {
     $noMemory = Clean; $noMemory[9].Remove('Memory')
     Expect 'a row without its memory' (Judge $noMemory $history 'abc1234' $digests) 'names no memory'
     $clean = @(Clean)
-    Expect 'a rung''s row missing' (Judge @($clean[0..($clean.Count - 2)]) $history 'abc1234' $digests) 'wasm gun-x16 is missing'
+    Expect 'a rung''s row missing' (Judge @($clean | Where-Object { -not ($_.Runner -eq 'wasm' -and $_.Fixture -eq 'gun-x16') }) $history 'abc1234' $digests) 'wasm gun-x16 is missing'
     $fewerRungs = @{ 'life-x4' = ('1' * 64); 'life-x16' = ('2' * 64); 'gun-x4' = ('3' * 64) }
     Expect 'a rung the baseline names no digest for' (Judge (Clean) $history 'abc1234' $digests $controlEnvironment @{} @{} $fewerRungs) 'no SHA-256 for the rung gun-x16'
+    # Superposition (CART.12): an act row's p95, a cascade row's deal, and the halves alike.
+    function Find($rows, [string]$runner, [string]$fixture) { return @($rows | Where-Object { $_.Runner -eq $runner -and $_.Fixture -eq $fixture })[0] }
+    $noP95 = Clean; (Find $noP95 'native' 'superposition-act').Remove('FrameP95')
+    Expect 'an act row without its p95' (Judge $noP95 $history 'abc1234' $digests) 'names no FrameP95'
+    $offP95 = Clean; $r95 = Find $offP95 'wasm' 'superposition-act'; $r95.FrameP95 = [math]::Round($r95.FrameP95 * 1.2, 4)
+    Expect 'an act row whose acts a second are not one over its p95' (Judge $offP95 $history 'abc1234' $digests) 'is not one over its 95th percentile'
+    $noDeal = Clean; (Find $noDeal 'native' 'superposition-cascade').Remove('Deal')
+    Expect 'a cascade row without its deal' (Judge $noDeal $history 'abc1234' $digests) 'names no Deal'
+    $sessions = Clean; (Find $sessions 'wasm' 'superposition-act').Steps = 781
+    Expect 'two halves'' sessions apart' (Judge $sessions $history 'abc1234' $digests) 'not the same session'
+    $cascades = Clean; (Find $cascades 'wasm' 'superposition-cascade').Deal = 'B2'
+    Expect 'two halves'' cascades apart' (Judge $cascades $history 'abc1234' $digests) 'not the same cascade'
 
     # The history, read from text as the commit's copy of this file is read.
     $entryA = "@{ Date = '2026-10-09'; Pin = 'abc1234'; Reason = ''; Floors = @{ 'native life' = 202000; 'wasm life' = 209000 } }"
@@ -913,16 +1144,19 @@ if ($Control) {
         $gunX4 = CheckRow 'gun-x4' ' (facts 24)' 253924
         $gunX16 = CheckRow 'gun-x16' ' (facts 24)' 1019844
         $sandRow = CheckRow 'sand' ' (conserved 3)' 189215
+        $latticeRows = @((CheckRow 'superposition' ' (settled 3)' 798731), (CheckRow 'superposition-act' ' (settled 13)' 798731), (CheckRow 'superposition-cascade' ' (settled 2) (deal "SP502") (rings 775) (opened 209446)' 798731))
         $fakes = @(
-            @{ Name = 'a clean runner'; Lines = (Done @($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow)); Exit = 0; Want = '' },
+            @{ Name = 'a clean runner'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + $latticeRows)); Exit = 0; Want = '' },
             @{ Name = 'a runner whose frame differs'; Lines = @('(frames-differ "life" (frame 3) (cell "B5") (engine 1) (reference 0))'); Exit = 1; Want = 'check failed' },
-            @{ Name = 'a runner allocating more'; Lines = (Done @((CheckRow 'life' '' 62964 1), $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow)); Exit = 0; Want = 'rose to' },
-            @{ Name = 'a runner whose heap passes its ceiling'; Lines = (Done @($lifeRow, $lifeX4, (CheckRow 'life-x16' '' 1019844 0 1), $gunRow, $gunX4, $gunX16, $sandRow)); Exit = 0; Want = 'high-water mark over a load and four frames rose to' },
-            @{ Name = 'a runner without the gun''s facts'; Lines = (Done @($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16.Replace(' (facts 24)', ''), $sandRow)); Exit = 0; Want = 'published facts' },
-            @{ Name = 'a runner without Sand''s grains'; Lines = (Done @($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow.Replace(' (conserved 3)', ''))); Exit = 0; Want = 'to its grains' },
-            @{ Name = 'a runner leaving out a fixture'; Lines = (Done @($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16)); Exit = 0; Want = 'no row for the fixture sand' },
-            @{ Name = 'a runner leaving out a rung'; Lines = (Done @($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $sandRow)); Exit = 0; Want = 'no row for the fixture gun-x16' },
-            @{ Name = 'a runner whose rung is another cartridge'; Lines = (Done @($lifeRow, $lifeX4, $lifeX16, $gunRow, (CheckRow 'gun-x4' ' (facts 24)' 253924 0 0 ('9' * 64)), $gunX16, $sandRow)); Exit = 0; Want = 'is not the cartridge measured' }
+            @{ Name = 'a runner allocating more'; Lines = (Done (@((CheckRow 'life' '' 62964 1), $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + $latticeRows)); Exit = 0; Want = 'rose to' },
+            @{ Name = 'a runner whose heap passes its ceiling'; Lines = (Done (@($lifeRow, $lifeX4, (CheckRow 'life-x16' '' 1019844 0 1), $gunRow, $gunX4, $gunX16, $sandRow) + $latticeRows)); Exit = 0; Want = 'high-water mark over a load and four frames rose to' },
+            @{ Name = 'a runner without the gun''s facts'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16.Replace(' (facts 24)', ''), $sandRow) + $latticeRows)); Exit = 0; Want = 'published facts' },
+            @{ Name = 'a runner without Sand''s grains'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow.Replace(' (conserved 3)', '')) + $latticeRows)); Exit = 0; Want = 'to its grains' },
+            @{ Name = 'a runner leaving out a fixture'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16) + $latticeRows)); Exit = 0; Want = 'no row for the fixture sand' },
+            @{ Name = 'a runner leaving out a rung'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $sandRow) + $latticeRows)); Exit = 0; Want = 'no row for the fixture gun-x16' },
+            @{ Name = 'a runner whose rung is another cartridge'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, (CheckRow 'gun-x4' ' (facts 24)' 253924 0 0 ('9' * 64)), $gunX16, $sandRow) + $latticeRows)); Exit = 0; Want = 'is not the cartridge measured' },
+            @{ Name = 'a runner whose cascade is another deal'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + @($latticeRows[0], $latticeRows[1], $latticeRows[2].Replace('(deal "SP502")', '(deal "B2")')))); Exit = 0; Want = 'the cascade is not the baseline''s' },
+            @{ Name = 'a runner that settles no act'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + @($latticeRows[0].Replace(' (settled 3)', ''), $latticeRows[1], $latticeRows[2]))); Exit = 0; Want = 'settled no act' }
         )
         $i = 0
         foreach ($f in $fakes) {
@@ -930,21 +1164,21 @@ if ($Control) {
             $path = Join-Path $tmp ("fake$i.ps1")
             $body = (@($f.Lines | ForEach-Object { "Write-Output '" + ($_ -replace "'", "''") + "'" }) -join "`r`n") + "`r`nexit " + $f.Exit + "`r`n"
             [System.IO.File]::WriteAllText($path, $body, (New-Object System.Text.UTF8Encoding($false)))
-            Expect $f.Name (Test-Runner $path @('life.vla', 'gun.vla', 'sand.vla') $allocationCeilings $controlRungs) $f.Want
+            Expect $f.Name (Test-Runner $path @('life.vla', 'gun.vla', 'sand.vla', 'superposition.vla') $allocationCeilings $controlRungs $controlCascade) $f.Want
         }
     } finally {
         Remove-Item -Recurse -Force -LiteralPath $tmp -ErrorAction SilentlyContinue
     }
     foreach ($v in $verdicts) { Write-Output ('control: ' + $v) }
     if ($ok) {
-        Write-Output ("OK: control: the judgment passes the clean table, a reasoned lowering, a row entering the history, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows, and fails twenty mutants of the table; the history passes an entry added and a history unchanged, and fails an entry pasted over and one edited in place; over nine fake runners it passes the clean one and fails eight, each for its own reason")
+        Write-Output ("OK: control: the judgment passes the clean table, a reasoned lowering, a row entering the history, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows, and fails twenty-five mutants of the table; the history passes an entry added and a history unchanged, and fails an entry pasted over and one edited in place; over eleven fake runners it passes the clean one and fails ten, each for its own reason")
         exit 0
     }
     Write-Output 'FAIL: control: the judgment did not behave as the header says'
     exit 1
 }
 
-Write-Output '=== THE FRAME FLOORS: LIFE''S, THE SIZE LADDER''S AND SAND''S CELLS A SECOND, NATIVELY AND IN THE BROWSER, HELD TO FLOORS THAT NEVER GO DOWN (CART.1, CART.2, ENGINE.9) ==='
+Write-Output '=== THE FRAME FLOORS: LIFE''S, THE SIZE LADDER''S, SAND''S AND SUPERPOSITION''S CELLS A SECOND, NATIVELY AND IN THE BROWSER, HELD TO FLOORS THAT NEVER GO DOWN (CART.1, CART.2, ENGINE.9, CART.12) ==='
 $problems = New-Object System.Collections.Generic.List[string]
 $currentDigests = @{}
 foreach ($name in $fixtureFiles.Keys) {
@@ -985,13 +1219,14 @@ if ($Runner -eq '') {
 } else {
     Write-Output ("  the runner: {0}, built {1}, in its check mode" -f $Runner, (Get-Item -LiteralPath $Runner).LastWriteTime.ToString('yyyy-MM-dd HH:mm'))
     $paths = @($fixtureFiles.Values | ForEach-Object { Join-Path $Root $_ })
-    $dyn = Test-Runner $Runner $paths $allocationCeilings $baselineRungs
+    $measuredCascade = @($baseline | Where-Object { $_.Runner -eq 'native' -and $_.Fixture -eq 'superposition-cascade' })
+    $dyn = Test-Runner $Runner $paths $allocationCeilings $baselineRungs $(if ($measuredCascade.Count -eq 1) { $measuredCascade[0] } else { $null })
     $dyn.Lines | ForEach-Object { Write-Output $_ }
     foreach ($p in $dyn.Problems) { $problems.Add($p) }
 }
 Write-Output ''
 if ($problems.Count -eq 0) {
-    Write-Output '=== CHECK: clean - the fourteen rows at or above their floors, the pin, the fixtures and the rungs the measured ones, and, with a runner, every frame equal and every count under its ceiling ==='
+    Write-Output '=== CHECK: clean - the twenty rows at or above their floors, the pin, the fixtures and the rungs the measured ones, and, with a runner, every frame equal, every count under its ceiling and the cascade the measured one ==='
     exit 0
 }
 Write-Output "=== CHECK: $($problems.Count) problem(s) ==="

@@ -203,11 +203,12 @@
   // A person's value into the Clock's column B, as the engine judges it (ENGINE.3): the frame is
   // refused, the rate is a whole number from 0 to 120 and the seed one from 1 to 2147483646, each
   // spelled in digits alone, a range judged cell by cell from the frame. The words are the double's.
-  function clockRefusal(name, R, raw) {
+  function clockRefusal(name, R, raw, settles) {
     if (R.left > 2 || R.right < 2) return '';
     var n = /^\d{1,12}$/.test(raw) ? Number(raw) : -1;
     for (var r = Math.max(1, R.top); r <= Math.min(3, R.bottom); r++) {
       if (r === 1) return name + '!B1 is the frame, which the engine writes at every step';
+      if (r === 2 && settles && n > 0) return name + '!B2 holds the rate, and the cartridge settles at rate 0 alone, where an act steps the grid (CART.12)';
       if (r === 2 && !(n >= 0 && n <= 120)) return name + '!B2 takes a rate from 0 to 120, and ' + raw + ' is none';
       if (r === 3 && !(n >= 1 && n <= 2147483646)) return name + '!B3 takes a seed from 1 to 2147483646, and ' + raw + ' is none';
     }
@@ -244,7 +245,7 @@
     var m, out = {};
     m = /\(spec\s+([^\s()]+)\s*\)/.exec(bare);
     if (!m) return bad('has no (spec ...) directive');
-    if (m[1] !== '1' && m[1] !== '2' && m[1] !== '3' && m[1] !== '4' && m[1] !== '5') return { refusal: { id: 'cart-spec-unsupported', text: 'the cartridge is written to (spec ' + m[1] + '); this engine reads 1, 2, 3, 4 and 5' } };
+    if (m[1] !== '1' && m[1] !== '2' && m[1] !== '3' && m[1] !== '4' && m[1] !== '5' && m[1] !== '6') return { refusal: { id: 'cart-spec-unsupported', text: 'the cartridge is written to (spec ' + m[1] + '); this engine reads 1, 2, 3, 4, 5 and 6' } };
     out.spec = +m[1];
     m = /\(title\s+"((?:[^"\\]|\\.)*)"\s*\)/.exec(bare);
     if (!m) return bad('has no (title "...") directive');
@@ -264,6 +265,15 @@
     if (m[1] === 'host') out.seed = 'host';
     else if (/^\d+$/.test(m[1]) && +m[1] >= 1 && +m[1] <= 2147483646) out.seed = +m[1];
     else return bad('has (seed ' + m[1] + '); a seed is a whole number from 1 to 2147483646, or host');
+    // version 6's settle (CART.12), optional: a (spec 6) cartridge's alone, at rate 0 alone, K from 1 to 65536
+    m = /\(settle\s+([^\s()]+)\s*\)/.exec(bare);
+    out.settle = 0;
+    if (m) {
+      if (!/^\d+$/.test(m[1]) || +m[1] < 1 || +m[1] > 65536) return bad('has (settle ' + m[1] + '); a settle is the most steps an act settles in, a whole number from 1 to 65536');
+      if (out.spec < 6) return bad('has (settle ' + m[1] + '), a directive of version 6\'s, where the cartridge says (spec ' + out.spec + ')');
+      if (out.rate > 0) return bad('has (settle ' + m[1] + ') with (rate ' + out.rate + '): a cartridge settles at (rate 0) alone');
+      out.settle = +m[1];
+    }
     return out;
   }
 
@@ -271,6 +281,9 @@
   function Cart(handle, name, size, m) {
     this.handle = handle; this.name = name; this.size = size;
     this.spec = m.spec; this.title = m.title; this.rate = m.rate; this.mode = m.mode; this.w = m.w; this.h = m.h; this.seed = m.seed;
+    // version 6's settle (CART.12), as engine/src/cartridge.rs keeps it: K, the acts the Clock counts, the last done frame's
+    // word and the settle steps since the act
+    this.settle = m.settle || 0; this.acts = 0; this.settleWord = ''; this.settleSteps = 0;
     this.frame = 0;          // the last complete frame
     this.progress = null;    // { evaluated, of } while a frame is in progress
     this.cells = {};         // sheet key -> Map(address -> { v } or { f, v }); the Screen's map holds what overrides its formulas
@@ -324,10 +337,37 @@
     for (var k in this.cells) if (Object.prototype.hasOwnProperty.call(this.cells, k)) this.twins[k] = new Map(this.cells[k]);
     this.twinFrame = this.frame;
   };
+  // A step's beginning for a cartridge that settles (version 6, CART.12; docs/SPEC.md section 5), as the engine begins one:
+  // after a settling answer a settle step, the act's press and command released before the first; any other an act's,
+  // the Clock numbered with the acts.
+  Cart.prototype.beginSettle = function () {
+    if (this.settleWord === 'settling') {
+      if (this.settleSteps === 0) this.release();
+      this.settleSteps++;
+    } else {
+      this.acts++; this.settleSteps = 0;
+      this.cells.clock.set('B1', { v: this.acts });
+    }
+  };
+  // The release: each of the press's cells holding other than 0 written 0, and the command's other than empty written empty.
+  Cart.prototype.release = function () {
+    var inp = this.cells.input, self = this;
+    [['B13', 13, 0], ['B14', 14, 0], ['B15', 15, 0], ['B20', 20, '']].forEach(function (x) {
+      var e = inp.get(x[0]);
+      if (e && !e.f && e.v !== x[2]) { inp.set(x[0], { v: x[2] }); self.written.push({ key: 'input', r: x[1], c: 2 }); }
+    });
+  };
+  // A done frame's word. The double's grid never settles, honestly: its Screen's formulas change at every frame (byteAt)
+  // and its Write sheet lands State!B1 before every one, so every act takes its K settle steps, settling while fewer have
+  // followed it and unsettled at the Kth, as the engine answers a grid that never stops moving.
+  Cart.prototype.endSettle = function () {
+    this.settleWord = this.settleSteps < this.settle ? 'settling' : 'unsettled';
+    return this.settleWord;
+  };
   // What a step does when a frame completes: the clock, the history, the Write sheet, the save cell, the twins.
   Cart.prototype.complete = function (n) {
     this.frame = n;
-    this.cells.clock.set('B1', { v: n });
+    this.cells.clock.set('B1', { v: this.settle ? this.acts : n });   // a settling cartridge's Clock counts acts (CART.12)
     var st = this.cells.state, h = st.get('B2');
     if (h && h.f) {
       var inputs = 0;
@@ -455,6 +495,7 @@
       var x = cartOf(handle, outLen);
       if (x.rec) return x.rec;
       var c = x.c, lines = ['(spec ' + c.spec + ')', '(title ' + quote(c.title) + ')', '(rate ' + c.rate + ')', '(screen ' + c.mode + ' ' + c.w + ' ' + c.h + ')', '(seed ' + c.seed + ')'];
+      if (c.settle) lines.push('(settle ' + c.settle + ')');   // version 6's directive (CART.12)
       for (var i = 0; i < DEVICES.length; i++) {
         var key = DEVICES[i][0].toLowerCase(), R = c.extent(key, false);
         var lay = byVersion(LAYOUT, LAYOUT_4, LAYOUT_5, c, key);
@@ -504,7 +545,7 @@
         if (layout && !within(R, layout)) return refuse('cart-device-cell-outside', target + ' is outside the layout of the ' + sk.name + ' sheet (docs/SPEC.md section 3)', ln, outLen);
         if (kind === 'formula' && meets(R, byVersion(HOST_CELLS, HOST_CELLS_4, HOST_CELLS_5, c, sk.key))) return refuse('cart-device-cell-formula', target + ' is a cell the host writes, which holds values and never formulas', ln, outLen);
         if (kind === 'derived' && meets(R, byVersion(DERIVED_BLOCKED, DERIVED_BLOCKED_4, DERIVED_BLOCKED_5, c, sk.key))) return refuse('cart-write-derived', 'a derived write into ' + target + ' was refused: it is a cell the host writes', ln, outLen);
-        if (kind === 'cell' && sk.key === 'clock') { var ck = clockRefusal(name, R, m[4].trim()); if (ck) return refuse('cart-write-clock', ck, ln, outLen); }
+        if (kind === 'cell' && sk.key === 'clock') { var ck = clockRefusal(name, R, m[4].trim(), c.settle > 0); if (ck) return refuse('cart-write-clock', ck, ln, outLen); }
         if (area(R) > MAX_CELLS) { later('grid-too-many-cells', target + ' would bring the grid past the ' + thousands(MAX_CELLS) + ' cells one grid holds', ln); continue; }
         if (kind === 'derived' && anyCell(R, function (r, cc) { var e = c.content(sk.key, r, cc, false); return !!(e && e.f); })) {
           later('grid-write-derived', 'a derived write into ' + target + ' was refused: it is a formula cell: the step computes values and never formulas, and a derived write replaces none', ln);
@@ -537,7 +578,10 @@
       var x = cartOf(handle, outLen);
       if (x.rec) return x.rec;
       var c = x.c, n = c.frame + 1;
-      if (!c.progress) { c.progress = { evaluated: 0, of: c.w * c.h }; c.cells.clock.set('B1', { v: n }); }
+      if (!c.progress) {
+        c.progress = { evaluated: 0, of: c.w * c.h };
+        if (c.settle) c.beginSettle(); else c.cells.clock.set('B1', { v: n });
+      }
       var rest = c.progress.of - c.progress.evaluated;
       budget = budget >>> 0;
       c.progress.evaluated += budget === 0 ? rest : Math.min(budget, rest);
@@ -545,7 +589,8 @@
       if (p.evaluated < p.of) return record(0, 0, '', '(step ' + n + ' ' + p.evaluated + ' ' + p.of + ' yielded)', outLen);
       c.progress = null;
       c.complete(n);
-      return record(0, 0, '', '(step ' + n + ' ' + p.evaluated + ' ' + p.of + ' done)', outLen);
+      var word = c.settle ? c.endSettle() : '';   // a done frame's settle word (CART.12)
+      return record(0, 0, '', '(step ' + n + ' ' + p.evaluated + ' ' + p.of + ' done' + (word ? ' ' + word : '') + ')', outLen);
     }
     function alonzo_view(handle, projPtr, projLen, sheetPtr, sheetLen, winPtr, winLen, outLen) {
       st.calls.view++;

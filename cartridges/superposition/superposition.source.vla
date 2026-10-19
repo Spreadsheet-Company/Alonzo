@@ -1,0 +1,316 @@
+; SPDX-License-Identifier: 0BSD
+; superposition.source.vla - Superposition, a lattice of 512 by 512 sites at rate zero
+; (CART.12): the engine's large board, a mine-clearing game whose every square is safe
+; and dangerous at once until it is observed. The pass expands this file into
+; superposition.vla beside it, the rows the engine loads (docs/SPEC.md section 7.8): edit
+; this one, then expand it again with
+;   cargo run --release --example expand
+;
+; How to play. The Field is a lattice of 262,144 sites, each in superposition, safe and
+; decayed at once, until you look. Move with the arrows, Page Up and Page Down, Home and
+; End, and the mouse; then:
+;   observe (Space, or a click): the site collapses. A decayed site is counted, and the
+;     experiment goes on; a safe one shows its reading, the decays among its eight
+;     neighbors, and a reading of nothing opens every site around it, a ring a frame.
+;     The first observation of a world is never a decay.
+;   box (B, or the right button): seal a site you believe has decayed, or open the box.
+;     A box beside a reading of nothing opens, since nothing has decayed beside nothing.
+;   collapse (C, or the middle button): a reading whose boxes equal it observes every
+;     site around it; a wrong box observes a decay.
+;   branch (N): another world, its lattice dealt again from its number.
+; The Observer sheet keeps the experiment's counts: the sites observed, the boxes, the
+; decays observed and the sites still in superposition. Constants!B1 holds the decay
+; probability, 0.15, which anyone may edit; at 0.09 one opening spans the lattice.
+; Clock!B3 is the seed: everyone who types the same seed observes the same worlds.
+;
+; The words are quantum mechanics', and the game is a mine-clearing game's: a mine is a
+; decay, a flag a box, a chord a collapse, a new game a branch to another world.
+;
+; How it settles. The cartridge says (settle 4096): after an act the engine steps the
+; lattice again, with no act, until a frame changes nothing (docs/SPEC.md section 5,
+; version 6), so a cascade an observation starts finishes inside that observation, the
+; host drawing it a ring a frame. The deepest cascade measured on this lattice, at the
+; percolation threshold near 9%, took 1,315 frames; 4,096 stands three times over it.
+;
+; What a rule costs (docs/SPEC.md section 2), and how this source keeps it:
+;   - The lattice is numbers that count, never texts: a site in superposition is 0, an
+;     observed one 10,000 plus its reading, a box 10,000,000 and an observed decay
+;     10,000,000,000. A text comparison costs the language five times a number's
+;     (CART.12's scoping, Found 1), and a row's sum of these codes decodes exactly into
+;     its observations, its boxes and its decays.
+;   - An act reaches one row of the lattice: the Probe sheet holds, for each row, the
+;     column, the kind and the serial of the last act on it, and a site reads its own
+;     row's three cells, so that an observation computes a row's 512 sites and never the
+;     lattice's 262,144. A term every site read through $ would compute them all.
+;   - The decays are computed once, from the seed, the world and the probability; the
+;     readings once, from the decays; and the Field reads both, so that an act computes
+;     neither.
+;   - The Tally sums a row in blocks of 32 sites, so that a cascade's ring reaches a
+;     block and a row's sum of its blocks, never 512 sites again.
+
+(cartridge "superposition"
+  (spec 6)                          ; the version of docs/SPEC.md this cartridge is written to: (settle K) and (bound ...) are version 6's
+  (title "Superposition")           ; what the host shows
+  (rate 0)                          ; an act steps the lattice; nothing else does
+  (screen grid 80 50)               ; the Screen, hidden: the Camera shows the Field in its place
+  (seed host)                       ; the host's seed, a new lattice each load; a seed typed into Clock!B3 brings a world back
+  (settle 4096)                     ; an act's settle, at most 4,096 steps
+  (bound "Field")                   ; the Field drawn to its extent and no further: the lattice is the grid
+  (author "Spreadsheet Company")    ; who wrote it
+  (license "0BSD")                  ; the header's twin: copy this file to start a game of your own
+  (notes "Superposition: every site of the lattice is safe and decayed at once until you observe it. Space observes the site the selection stands on, B boxes it, C collapses a reading whose boxes equal it, N branches to another world. A decay observed is counted, and the experiment goes on."))
+
+; The library whose macros this source calls: sheets, labels and headers; on, cells and
+; formulas, each naming a sheet once over a run of its rows; and camera.
+(include "../common.vla")
+
+; ---- the lattice's side: this source's one parameter --------------------------------
+; The lattice is n by n sites from A1 to the sheet's nth row and column, every cell of the
+; Field a site and the Field bound there, n a multiple of 32, the Tally's block. Each layer
+; is its first row's and first column's formulas and the rest's, so that no reference reads
+; past the sheet's first row or column. A macro that hands n on, as
+; Life's board-size hands its width and height on (ENGINE.9): a door that defines it again
+; builds this source on another lattice, as the engine's tests build it at 64.
+(defmacro (lattice-side then & args)
+  "the lattice's side, 512 sites, handed on: (then 512 args...)"
+  (quasiquote ((unquote then) 512 (unquote-splicing args))))
+
+; ---- the sheets, in tab order --------------------------------------------------------
+; The Field, the Observer and the Constants a person sees; the rest hidden, each a
+; layer of the rule: the Decays, the Readings, the Probe, the First observation and its
+; rows, the Lab's two counters, the Tally, the Screen, the Camera and the Commands.
+(sheets "Field" "Observer" "Constants")
+(sheet "Decays" hidden)
+(sheet "Readings" hidden)
+(sheet "Probe" hidden)
+(sheet "First" hidden)
+(sheet "FirstRow" hidden)
+(sheet "Lab" hidden)
+(sheet "Tally" hidden)
+(sheet "Screen" hidden)
+(sheet "Camera" hidden)
+(sheet "Commands" hidden)
+
+; ---- the Camera: the Field shown in the Screen's place (docs/SPEC.md section 3.8) --------
+(camera 1 1)
+(cells "Camera" ("A3" "sheet") ("B3" "Field"))
+
+; ---- the commands (docs/SPEC.md section 3.10), each a key on the viewport at rate 0 ----
+; Empty holds hold always. An act stands on the cell the selection stands on, and an act
+; on a sheet other than the Field touches nothing (the Probe's test of Input!B19).
+(headers "Commands" "A1" "name" "words" "holds" "key")
+(cells "Commands"
+  ("A2" "observe")  ("B2" "observe the site the selection stands on: it collapses, safe or decayed; a reading its boxes equal collapses its neighbors") ("D2" "Space")
+  ("A3" "box")      ("B3" "seal the site in a box, or open the box: a box marks a site you believe has decayed") ("D3" "KeyB")
+  ("A4" "collapse") ("B4" "collapse a reading whose boxes equal it: every site around it is observed") ("D4" "KeyC")
+  ("A5" "branch")   ("B5" "branch to another world: a new lattice, dealt from the world's number") ("D5" "KeyN"))
+
+; ---- the Constants: the decay probability, the assumption anyone edits ---------------
+(labels "Constants" "A1" "decay probability")
+(cells "Constants" ("B1" 0.15))
+
+; ---- the Lab: the act's serial and the world ----------------------------------------
+; An act is a press over a site of the Field, or a command of the three that touch it,
+; standing on the Field (Input!B19); its serial counts the acts. The world counts the
+; branches: every branch has its own lattice, its number in the decays' hash.
+(labels "Lab" "A1" "acts" "world")
+(formulas "Lab"
+  ("B1" "=Lab.last!B1+IF(AND(OR(Input!$B$13=1,Input!$B$14=1,Input!$B$15=1,Input!$B$20=\"observe\",Input!$B$20=\"box\",Input!$B$20=\"collapse\"),Input!$B$19=\"Field\"),1,0)")
+  ("B2" "=Lab.last!B2+IF(Input!$B$20=\"branch\",1,0)"))
+
+; ---- the layers, each one formula over the lattice -----------------------------------
+(defmacro (layers n)
+  "every row whose range or whose arithmetic is the lattice's side's: the Probe, the First, the Decays, the Readings, the Field, the Tally and the Field's widths"
+  (quasiquote
+    (begin
+      (probe (unquote n))
+      (first-observation (unquote n))
+      (decays (unquote n))
+      (readings (unquote n))
+      (field (unquote n))
+      (tally (unquote n))
+      (widths "Field" 1 (unquote n) 3))))
+
+; The lattice's range, A1 to its last site; a column of it from row 1; and its three parts
+; past the corner, A1: the rest of the first row, the rest of the first column, and the
+; sites inside them, each of whose eight neighbors is a cell of the sheet.
+(defmacro (lattice-range n)
+  "A1 to the lattice's last site"
+  (&expand "A1:" (address-expand n n)))
+(defmacro (rows-range letters n)
+  "a column's rows 1 to n"
+  (&expand letters "1:" letters n))
+(defmacro (top-range n)
+  "the first row past the corner, B1 to the row's last site"
+  (&expand "B1:" (address-expand 1 n)))
+(defmacro (left-range n)
+  "the first column past the corner, A2 to the column's last site"
+  (&expand "A2:" (address-expand n 1)))
+(defmacro (inner-range n)
+  "B2 to the lattice's last site"
+  (&expand "B2:" (address-expand n n)))
+
+; The Probe: a row's last act, sticky, three cells a row: B its column, C its kind (1 an
+; observation, 2 a box, 3 a collapse), D its serial. Only the row the act stands on
+; changes, so that an act reaches one row of the Field.
+(defmacro (probe n)
+  "the Probe's three columns over the lattice's rows"
+  (formulas "Probe"
+    ((rows-range "B" n) "=IF(AND(OR(Input!$B$13=1,Input!$B$14=1,Input!$B$15=1,Input!$B$20=\"observe\",Input!$B$20=\"box\",Input!$B$20=\"collapse\"),Input!$B$19=\"Field\",Input!$B$12=ROW()),Input!$B$11,Probe.last!B1)")
+    ((rows-range "C" n) "=IF(AND(OR(Input!$B$13=1,Input!$B$14=1,Input!$B$15=1,Input!$B$20=\"observe\",Input!$B$20=\"box\",Input!$B$20=\"collapse\"),Input!$B$19=\"Field\",Input!$B$12=ROW()),IF(OR(Input!$B$14=1,Input!$B$20=\"box\"),2,IF(OR(Input!$B$15=1,Input!$B$20=\"collapse\"),3,1)),Probe.last!C1)")
+    ((rows-range "D" n) "=IF(AND(OR(Input!$B$13=1,Input!$B$14=1,Input!$B$15=1,Input!$B$20=\"observe\",Input!$B$20=\"box\",Input!$B$20=\"collapse\"),Input!$B$19=\"Field\",Input!$B$12=ROW()),Lab!$B$1,Probe.last!D1)")))
+
+; The First observation of a world: its row and its column, 0 until it is made, and back
+; to 0 at a branch. FirstRow holds, on the three rows around it, its column, and 0 on
+; every other row, so that the first observation's 3 by 3 is cleared of decays by three
+; rows of the Decays, 1,536 sites, and never the lattice.
+(defmacro (first-observation n)
+  "the First observation and its three rows"
+  (labels "First" "A1" "row" "column")
+  (formulas "First"
+    ("B1" (&expand "=IF(Lab!$B$2<>Lab.last!$B$2,0,IF(First.last!B1>0,First.last!B1,IF(AND(OR(Input!$B$13=1,Input!$B$20=\"observe\"),Input!$B$19=\"Field\",Input!$B$12>=1,Input!$B$12<=" n ",Input!$B$11>=1,Input!$B$11<=" n "),Input!$B$12,0)))"))
+    ("B2" (&expand "=IF(Lab!$B$2<>Lab.last!$B$2,0,IF(First.last!B2>0,First.last!B2,IF(AND(OR(Input!$B$13=1,Input!$B$20=\"observe\"),Input!$B$19=\"Field\",Input!$B$12>=1,Input!$B$12<=" n ",Input!$B$11>=1,Input!$B$11<=" n "),Input!$B$11,0)))")))
+  (formulas "FirstRow"
+    ((rows-range "B" n) "=IF(ABS(ROW()-First!$B$1)<=1,First!$B$2,0)")))
+
+; The Decays: 1 where a site has decayed. Life's soup hash (cartridges/life) over the seed,
+; the site's row and column and the world, under the probability: two linear forms reduced
+; modulo the prime 67108859 and multiplied, h, and a decay where h squared, modulo the
+; prime, falls under the probability's share of it. Every product stays under 2^53. The
+; First observation's 3 by 3 holds no decay. The forms' constants, 3,440,100 and 3,213,021,
+; are 12,345 and 54,321 with a row's and a column's multipliers added, so that each site
+; keeps the world it was dealt when the lattice stood a row and a column further in, at B2.
+(defmacro (decays n)
+  "the Decays over the lattice"
+  (formulas "Decays"
+    ((lattice-range n) "=IF(AND(FirstRow!$B1>0,ABS(COLUMN()-FirstRow!$B1)<=1),0,IF(MOD(MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+Lab!$B$2*7919+3440100,67108859)*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+Lab!$B$2*104729+3213021,67108859),67108859)*MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+Lab!$B$2*7919+3440100,67108859)*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+Lab!$B$2*104729+3213021,67108859),67108859),67108859)<Constants!$B$1*67108859,1,0))")))
+
+; The Readings, each site's face: a decay's code, or 10,000 plus the decays of its 3 by 3,
+; the part of it on the sheet: the corner's 2 by 2, the first row's and the first column's
+; 3 by 2, and the 3 by 3 inside, whose cells past the lattice's last row and column hold
+; nothing.
+(defmacro (reading-rule here block)
+  "a site's reading, the site's decay or the decays of its block"
+  (&expand "=IF(Decays!" here "=1,10000000000,10000+SUM(Decays!" block "))"))
+(defmacro (readings n)
+  "the Readings over the lattice, the corner's, the first row's, the first column's and the inner sites'"
+  (formulas "Readings"
+    ("A1" (reading-rule "A1" "A1:B2"))
+    ((top-range n) (reading-rule "B1" "A1:C2"))
+    ((left-range n) (reading-rule "A2" "A1:B3"))
+    ((inner-range n) (reading-rule "B2" "A1:C3"))))
+
+; The Field, every site one formula of its own last value, its eight neighbors' last
+; values, its reading and its row's Probe:
+;   - at a branch, every site back to superposition, 0;
+;   - an act on the site this frame (its row's serial moved and its column is the site's):
+;     a box toggles 0 and 10,000,000; an observation takes the reading; a collapse, or an
+;     observation of a reading, turns a reading whose boxes around it equal it to 10,000
+;     for one frame, so that its neighbors open as a nothing's do;
+;   - else a site in superposition takes its reading when a neighbor holds 10,000, a
+;     reading of nothing, so that an opening spreads a ring a frame; a box takes its reading
+;     when a neighbor is a reading of nothing indeed, 10,000 on the Field and on the
+;     Readings both, since nothing has decayed beside nothing, and never beside a collapse,
+;     whose reading trusts its boxes; and a 10,000 takes its reading again, which is itself
+;     for a nothing and the number back for a collapse.
+; The rule is written once, for a site and its eight neighbors, and given four times: the
+; corner's, the first row's, the first column's and the inner sites'. A neighbor off the
+; sheet is the site itself, which never counts: a reading collapsing is no box, a site in
+; superposition no reading of nothing, and a box no reading of nothing.
+(defmacro (field-rule here row a b c d e f g h)
+  "the Field's rule for the site here, its Probe's row, and its eight neighbors a to h"
+  (&expand "=IF(Lab!$B$2<>Lab.last!$B$2,0,IF(AND(Probe!$D" row "<>Probe.last!$D" row ",Probe!$B" row "=COLUMN()),IF(Probe!$C" row "=2,IF(Field.last!" here "=0,10000000,IF(Field.last!" here "=10000000,0,Field.last!" here ")),IF(Field.last!" here "=0,IF(Probe!$C" row "=1,Readings!" here ",0),IF(AND(Field.last!" here ">=10001,Field.last!" here "<=10008),IF((Field.last!" a "=10000000)+(Field.last!" b "=10000000)+(Field.last!" c "=10000000)+(Field.last!" d "=10000000)+(Field.last!" e "=10000000)+(Field.last!" f "=10000000)+(Field.last!" g "=10000000)+(Field.last!" h "=10000000)=Field.last!" here "-10000,10000,Field.last!" here "),Field.last!" here "))),IF(Field.last!" here "=0,IF(OR(Field.last!" a "=10000,Field.last!" b "=10000,Field.last!" c "=10000,Field.last!" d "=10000,Field.last!" e "=10000,Field.last!" f "=10000,Field.last!" g "=10000,Field.last!" h "=10000),Readings!" here ",0),IF(Field.last!" here "=10000000,IF(OR(Field.last!" a "+Readings!" a "=20000,Field.last!" b "+Readings!" b "=20000,Field.last!" c "+Readings!" c "=20000,Field.last!" d "+Readings!" d "=20000,Field.last!" e "+Readings!" e "=20000,Field.last!" f "+Readings!" f "=20000,Field.last!" g "+Readings!" g "=20000,Field.last!" h "+Readings!" h "=20000),Readings!" here ",10000000),IF(Field.last!" here "=10000,Readings!" here ",Field.last!" here ")))))"))
+(defmacro (field n)
+  "the Field over the lattice: the corner's rule, the first row's, the first column's and the inner sites'"
+  (formulas "Field"
+    ("A1" (field-rule "A1" 1 "A1" "A1" "A1" "A1" "B1" "A1" "A2" "B2"))
+    ((top-range n) (field-rule "B1" 1 "B1" "B1" "B1" "A1" "C1" "A2" "B2" "C2"))
+    ((left-range n) (field-rule "A2" 2 "A2" "A1" "B1" "A2" "B2" "A2" "A3" "B3"))
+    ((inner-range n) (field-rule "B2" 2 "A1" "B1" "C1" "A2" "C2" "A3" "B3" "C3"))))
+
+; The Tally: each row of the lattice in blocks of 32 sites, a block's sum in each of the
+; columns from B, then the row's sum of its blocks, and the row's sum decoded into its
+; observations, its boxes and its decays; the Observer sums the decoded columns. A row's
+; observed sites hold 10,000 and their readings, at most 512 and 4,096, under 10,000,000;
+; its boxes 10,000,000 each, under 10,000,000,000; its decays 10,000,000,000 each.
+(defmacro (tally n)
+  "the Tally's blocks, its rows' sums and their decoding"
+  (quasiquote
+    (begin
+      (tally-blocks (unquote n) 1 (unquote (quotient-expand n 32)))
+      (tally-sums (unquote n) (unquote (+expand (quotient-expand n 32) 2))))))
+
+(defmacro (tally-blocks n block blocks)
+  "a column of block sums a block, from the block given to the last"
+  (quote-if (>expand block blocks)
+    (begin)
+    (begin
+      (formula "Tally" (rows-range (column-letters-expand (+expand block 1)) n)
+        (&expand "=SUM(Field!" (column-letters-expand (+expand 1 (*expand 32 (-expand block 1)))) "1:" (column-letters-expand (*expand 32 block)) "1)"))
+      (quasiquote (tally-blocks (unquote n) (unquote (+expand block 1)) (unquote blocks))))))
+
+(defmacro (tally-sums n at)
+  "a row's sum of its blocks in the column at, then its observations, boxes and decays in the three after"
+  (formulas "Tally"
+    ((rows-range (column-letters-expand at) n) (&expand "=SUM(B1:" (column-letters-expand (-expand at 1)) "1)"))
+    ((rows-range (column-letters-expand (+expand at 1)) n) (&expand "=INT(MOD(" (column-letters-expand at) "1,10000000)/10000)"))
+    ((rows-range (column-letters-expand (+expand at 2)) n) (&expand "=INT(MOD(" (column-letters-expand at) "1,10000000000)/10000000)"))
+    ((rows-range (column-letters-expand (+expand at 3)) n) (&expand "=INT(" (column-letters-expand at) "1/10000000000)"))))
+
+; A column row for each column from one to another, each the width given: the lattice's
+; sites three characters wide, 21 pixels, so that a full screen shows about 120 by 67.
+(defmacro (widths sheet from last width)
+  "a column row a column, from the column given to the last"
+  (quote-if (>expand from last)
+    (begin)
+    (begin
+      (column sheet (column-letters-expand from) width shown none)
+      (quasiquote (widths (unquote sheet) (unquote (+expand from 1)) (unquote last) (unquote width))))))
+
+(lattice-side layers)
+
+; ---- the Observer: the experiment's counts -------------------------------------------
+(defmacro (observer n)
+  "the Observer's counts, read from the Tally's decoded columns"
+  (labels "Observer" "A1" "Superposition")
+  (labels "Observer" "A3" "world" "sites observed" "boxes sealed" "decays observed" "sites in superposition" "decay probability" "seed")
+  (labels "Observer" "A11" "Every site is safe and decayed at once until you observe it."
+          "Space observes, B boxes, C collapses, N branches to another world." "A decay observed is counted, and the experiment goes on.")
+  (formulas "Observer"
+    ("B3" "=Lab!$B$2+1")
+    ("B4" (&expand "=SUM(Tally!" (column-letters-expand (+expand (quotient-expand n 32) 3)) "1:" (column-letters-expand (+expand (quotient-expand n 32) 3)) n ")"))
+    ("B5" (&expand "=SUM(Tally!" (column-letters-expand (+expand (quotient-expand n 32) 4)) "1:" (column-letters-expand (+expand (quotient-expand n 32) 4)) n ")"))
+    ("B6" (&expand "=SUM(Tally!" (column-letters-expand (+expand (quotient-expand n 32) 5)) "1:" (column-letters-expand (+expand (quotient-expand n 32) 5)) n ")"))
+    ("B7" (&expand "=" (*expand n n) "-B4-B5-B6"))
+    ("B8" "=Constants!$B$1")
+    ("B9" "=Clock!$B$3")))
+
+(lattice-side observer)
+
+; ---- the look: Lovelace Lavender ------------------------------------------------------
+; A site in superposition deep lavender, #6B4FC8, and nothing drawn; an observed site pale,
+; its reading's fill deepening with the count, a nothing drawing nothing; a box the logo's
+; lavender with a sealed box, and an observed decay a warm red with the sign of radiation.
+; Each value draws through a look (docs/SPEC.md section 7.3) whose format holds a code of
+; Excel's (KERNEL.47): ;;; draws nothing, a quoted text draws itself.
+(format 1 "6B4FC8" ";;;" nowrap)       ; 0, a site in superposition
+(format 2 "FFFFFF" ";;;" nowrap)       ; 10,000, a reading of nothing
+(format 3 "F7F4FC" "\"1\"" nowrap)     ; 10,001 to 10,008, a reading
+(format 4 "EFE9FA" "\"2\"" nowrap)
+(format 5 "E6DEF7" "\"3\"" nowrap)
+(format 6 "DDD2F4" "\"4\"" nowrap)
+(format 7 "D4C6F1" "\"5\"" nowrap)
+(format 8 "CBBAEE" "\"6\"" nowrap)
+(format 9 "C2AEEB" "\"7\"" nowrap)
+(format 10 "B9A3E7" "\"8\"" nowrap)
+(format 11 "A080E0" "\"▣\"" nowrap)    ; 10,000,000, a box
+(format 12 "FFD5D5" "\"☢\"" nowrap)    ; 10,000,000,000, a decay observed
+(on "Field"
+  (look 0 1) (look 10000 2) (look 10001 3) (look 10002 4) (look 10003 5) (look 10004 6)
+  (look 10005 7) (look 10006 8) (look 10007 9) (look 10008 10) (look 10000000 11) (look 10000000000 12)
+  (gridlines on))
+
+; The Observer's and the Constants' columns wide enough for their labels and for the seed, a number of up
+; to ten digits that a person reads off to share a world (CART.12's hand test).
+(on "Observer" (column "A" 24 shown none) (column "B" 14 shown none))
+(on "Constants" (column "A" 20 shown none))

@@ -9,6 +9,7 @@
 //! cargo run --release --example frames                  # the three fixtures and the ladder's four rungs, 31 frames each, the baseline rows
 //! cargo run --release --example frames -- --check       # 4 frames each: the frames, the allocations and the memory held
 //! cargo run --release --example frames -- --frames 61 cartridges/gun/gun.vla
+//! cargo run --release --example frames -- cartridges/superposition/superposition.vla
 //! ```
 //!
 //! **The reference.** Life computed every cell every generation, the honest
@@ -104,6 +105,30 @@
 //! counts only there: counting while timing costs a frame about a tenth
 //! (measured in `CART.1`'s scoping).
 //!
+//! **Superposition** (`CART.12`, decision 8, 2026-10-18). The large board,
+//! a lattice of 512 by 512 at rate 0 that settles after every act (version
+//! 6), measures one edit into a huge model, and is held to the hand-written
+//! lattice the engine's tests hold it to, `engine/src/superposition.rs`,
+//! included here by its path, with its scripted player and its deepest deal.
+//! Its fixture gives three rows, each over the committed cartridge with the
+//! seed 1 written as the host writes a `(seed host)` cartridge's: the idle
+//! frame, `superposition`, ten runs of 1,000 steps with nothing written after
+//! the load's settle, each run one span, as the gun's are; an act's latency,
+//! `superposition-act`, two hundred acts the scripted player draws at the
+//! cartridge's 15%, each timed from before its Input rows, written as the
+//! host writes them, to its settle's last step, the row's cells a second
+//! taken at the session's 95th percentile and the Tally held to the hand
+//! after every act; and the deepest cascade by time, `superposition-cascade`,
+//! the lattice at 8% with the same seed, its world dealt by the hand and the
+//! site at an end of its largest opening's widest path observed, the act and
+//! its settle timed whole, its frames the deal's rings and two or three. Each
+//! row's memory and, in the check, its allocations are a counted instance's:
+//! the idle row's two idle acts, the session's first twelve acts and the
+//! cascade, every frame's Tally held to the hand and the whole lattice at
+//! each settle's end, the hand's own work never counted. The check prints the
+//! cascade's deal, rings and sites opened, which `tools/check_frame_floors.ps1`
+//! holds to the baseline's.
+//!
 //! The runner is an example and not a member of the workspace, so the lock
 //! holds no third package and the engine still depends on the language crate
 //! alone (`AD-5`); its allocator is its own and ships in nothing.
@@ -116,8 +141,9 @@ use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Instant;
 
-use alonzo::cartridge::{Cartridge, Manifest, Seed};
+use alonzo::cartridge::{Cartridge, Manifest, Seed, Settle};
 use alonzo::pass::{expand_with, folder_of, includes};
+use vla_lang::calc::{Computed, Value, Values};
 use vla_lang::machine::{Step, Viewed, CELLS};
 use vla_lang::reader::read_forms;
 use vla_lang::sheet::parse_a1_range;
@@ -136,6 +162,13 @@ mod ladder;
 // SHA-256, the engine's tests' own, which names each rung's cartridge.
 #[path = "../src/sha256.rs"]
 mod sha256;
+
+// The hand-written lattice, the engine's tests' own file (CART.12): the rule,
+// the scripted player and the deepest deal.
+#[path = "../src/superposition.rs"]
+#[allow(dead_code)]
+mod superposition;
+use superposition::{Inputs, Lattice, Move, Player};
 
 // ---- the allocator: the system's, counted when asked ----------------------
 
@@ -622,6 +655,8 @@ fn fixtures_of(path: &Path) -> Result<Vec<Fixture>, String> {
 /// What one fixture's timed run measured.
 struct Run {
     name: String,
+    /// The fixture it ran, by its place among the fixtures.
+    fixture: usize,
     cells: usize,
     load_ms: f64,
     times: Vec<f64>,
@@ -637,6 +672,8 @@ struct Run {
     alone: Option<(f64, usize)>,
     /// The counted instance's measure, the memory among it (`ENGINE.9`).
     counts: Option<Counts>,
+    /// A Superposition row's own measure (`CART.12`).
+    sp: Option<SpRow>,
 }
 
 impl Run {
@@ -836,7 +873,7 @@ fn measure(fx: &Fixture, wants: &[Vec<u8>]) -> Result<Counts, String> {
 /// frames, back to back, the last frame held to the reference after them,
 /// and every frame stepped is held on a second instance stepped untimed
 /// (2026-10-12; the runs' length and their order since `ENGINE.9`).
-fn run(fx: &Fixture, frames: usize, probe: &mut Probe) -> Result<Run, String> {
+fn run(fx: &Fixture, fi: usize, frames: usize, probe: &mut Probe) -> Result<Run, String> {
     let first = first_plane(fx)?;
     let facts = if fx.manifest.name == "gun" {
         Some(gun_facts(&first, fx.board).map_err(|e| format!("{}: {e}", fx.name))?)
@@ -858,6 +895,7 @@ fn run(fx: &Fixture, frames: usize, probe: &mut Probe) -> Result<Run, String> {
     }
     let mut r = Run {
         name: fx.name.clone(),
+        fixture: fi,
         cells: cart.machine().formulas().0,
         load_ms,
         times: Vec::with_capacity(frames),
@@ -867,6 +905,7 @@ fn run(fx: &Fixture, frames: usize, probe: &mut Probe) -> Result<Run, String> {
         run: 1,
         alone: None,
         counts: None,
+        sp: None,
     };
     // The clock before the fixture's first frame, and after its steady frames
     // below; never between two frames, where it slowed the frame after it.
@@ -941,6 +980,800 @@ fn run(fx: &Fixture, frames: usize, probe: &mut Probe) -> Result<Run, String> {
     r.run = RUN_FRAMES;
     r.alone = Some((alone, f - 1));
     Ok(r)
+}
+
+// ---- Superposition, the large board (CART.12, decision 8) -------------------
+
+/// The lattice's side, the committed cartridge's, and the seed every
+/// Superposition row writes into `Clock!B3` before the load's act, as the
+/// host writes a `(seed host)` cartridge's.
+const SP_SIDE: u32 = 512;
+const SP_SEED: u64 = 1;
+/// The probability the cartridge holds in `Constants!B1`.
+const SP_PROBABILITY: f64 = 0.15;
+/// The idle frame: `RUNS` runs of this many frames with nothing written,
+/// back to back (decision 8: runs of 1,000).
+const SP_RUN: usize = 1_000;
+/// The scripted session: its acts, and the player's seed.
+const SP_ACTS: usize = 200;
+const SP_PLAYER: u64 = 1;
+/// The cascade: the probability of the deepest cascade by time the scoping
+/// measured, 8%, written beside the seed.
+const SP_CASCADE: f64 = 0.08;
+/// The check's session, the first acts of the timed one, and its idle acts.
+const SP_CHECK_ACTS: usize = 12;
+const SP_CHECK_IDLE: usize = 2;
+
+fn is_superposition(fx: &Fixture) -> bool {
+    fx.manifest.name == "superposition"
+}
+
+/// The hand's work, the player's draw and a hold run uncounted: the bytes
+/// and the allocations counted are the engine's alone.
+fn quiet<T>(f: impl FnOnce() -> T) -> T {
+    let (sizing, counting) = (
+        SIZING.swap(false, Ordering::Relaxed),
+        COUNTING.swap(false, Ordering::Relaxed),
+    );
+    let out = f();
+    SIZING.store(sizing, Ordering::Relaxed);
+    COUNTING.store(counting, Ordering::Relaxed);
+    out
+}
+
+/// Superposition loaded, its seed written, and a probability beside it where
+/// the row writes one: the cartridge and the load's time.
+fn sp_load(fx: &Fixture, probability: Option<f64>) -> Result<(Cartridge, f64), String> {
+    let t = Instant::now();
+    let mut c = load(&fx.text, &fx.from)?;
+    let load_ms = t.elapsed().as_secs_f64() * 1e3;
+    let mut rows = format!("(cell \"Clock\" \"B3\" {SP_SEED})");
+    if let Some(p) = probability {
+        rows.push_str(&format!("\n(cell \"Constants\" \"B1\" {p})"));
+    }
+    c.write(&rows)
+        .map_err(|e| format!("{}: the seed was refused: {}", fx.name, e.refusal.text))?;
+    Ok((c, load_ms))
+}
+
+/// The Input rows an act writes at rate 0, as the host writes them
+/// (`docs/SPEC.md` section 3.3, version 6): the rows that differ from those
+/// last written, all seven at the first act, the engine's release of the
+/// press and the command, before the act's first settle step, held there.
+struct ActRows {
+    known: Option<[String; 7]>,
+}
+
+impl ActRows {
+    const AT: [&'static str; 7] = ["B11", "B12", "B13", "B14", "B15", "B19", "B20"];
+
+    fn new() -> ActRows {
+        ActRows { known: None }
+    }
+
+    fn rows(&mut self, i: &Inputs) -> String {
+        let want = [
+            i.column.to_string(),
+            i.row.to_string(),
+            u8::from(i.left).to_string(),
+            u8::from(i.right).to_string(),
+            u8::from(i.middle).to_string(),
+            format!("\"{}\"", i.sheet),
+            format!("\"{}\"", i.command),
+        ];
+        let out: Vec<String> = (0..7)
+            .filter(|&k| {
+                self.known
+                    .as_ref()
+                    .map_or(true, |known| known[k] != want[k])
+            })
+            .map(|k| format!("(cell \"Input\" \"{}\" {})", ActRows::AT[k], want[k]))
+            .collect();
+        let mut kept = want;
+        for k in [2, 3, 4] {
+            kept[k] = "0".to_string();
+        }
+        kept[6] = "\"\"".to_string();
+        self.known = Some(kept);
+        out.join("\n")
+    }
+}
+
+/// A cell's computed number, NaN for a value that is no number.
+fn sp_number(c: &Cartridge, sheet: usize, row: u32, col: u32) -> f64 {
+    match c.machine().computed((sheet, row, col)) {
+        Some(Computed::Value(Value::Number(n))) => *n,
+        Some(Computed::Value(Value::Empty)) | None => 0.0,
+        _ => f64::NAN,
+    }
+}
+
+/// The lattice held to the hand: each row's sum on the Tally, and with
+/// `whole` every site of the Field.
+fn sp_hold(c: &Cartridge, hand: &Lattice, whole: bool, at: &str) -> Result<(), String> {
+    let n = hand.n;
+    let sheet = |name: &str| {
+        c.machine()
+            .find_sheet(name)
+            .ok_or_else(|| format!("superposition: no {name} sheet"))
+    };
+    let (field, tally) = (sheet("Field")?, sheet("Tally")?);
+    let sums = n / 32 + 2;
+    for r in 1..=n {
+        let (got, want) = (sp_number(c, tally, r, sums), hand.row_sum(r));
+        if got != want as f64 {
+            return Err(format!(
+                "(frames-differ \"superposition\" ({at}) (cell \"Tally!{}{r}\") (engine {got}) (reference {want}))",
+                ladder::letters(sums as usize)
+            ));
+        }
+        if !whole {
+            continue;
+        }
+        for col in 1..=n {
+            let (got, want) = (sp_number(c, field, r, col), hand.site(r, col));
+            if got != want as f64 {
+                return Err(format!(
+                    "(frames-differ \"superposition\" ({at}) (cell \"Field!{}{r}\") (engine {got}) (reference {want}))",
+                    ladder::letters(col as usize)
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// What one act through the engine measured.
+struct Played {
+    /// From before its rows to after its settle's last step.
+    ms: f64,
+    /// Each step's time, the act's first.
+    steps: Vec<f64>,
+    /// The allocations and reallocations its write and its steps made, when
+    /// counted.
+    allocs: u64,
+    reallocs: u64,
+}
+
+/// One act and its settle through the engine (version 6, `docs/SPEC.md`
+/// section 5): its rows written, then a step with no budget until the engine
+/// says the grid settled, refused where it did not settle inside its K. The
+/// hand follows, the act's rows at its frame and the released rows after;
+/// with `held` each frame's Tally is held to it, and the whole lattice at the
+/// settle's end, else the hand follows after the last step and nothing is
+/// held. With `counted` the act's own write and steps are counted.
+fn sp_play(
+    c: &mut Cartridge,
+    hand: &mut Lattice,
+    i: &Inputs,
+    rows: &str,
+    name: &str,
+    held: bool,
+    counted: bool,
+) -> Result<Played, String> {
+    let mut steps = Vec::new();
+    if counted {
+        ALLOCS.store(0, Ordering::Relaxed);
+        REALLOCS.store(0, Ordering::Relaxed);
+    }
+    let count = |on: bool| COUNTING.store(on && counted, Ordering::Relaxed);
+    let mut now = i.clone();
+    let t = Instant::now();
+    count(true);
+    if !rows.is_empty() {
+        c.write(rows).map_err(|e| {
+            count(false);
+            format!("{name}: the act's rows were refused: {}", e.refusal.text)
+        })?;
+    }
+    loop {
+        let s0 = Instant::now();
+        let s = c.step(0);
+        let took = s0.elapsed().as_secs_f64() * 1e3;
+        count(false);
+        steps.push(took);
+        if !s.done {
+            return Err(format!("{name}: the step answered {}", s.row()));
+        }
+        if held {
+            quiet(|| {
+                hand.frame(&now);
+                now = now.released();
+                sp_hold(c, hand, false, &format!("frame {}", s.frame))
+            })?;
+        }
+        match c.settle() {
+            Settle::Settled => break,
+            Settle::Settling => count(true),
+            Settle::Unsettled => {
+                return Err(format!(
+                    "{name}: the grid did not settle inside its K, at frame {}",
+                    s.frame
+                ))
+            }
+        }
+    }
+    let ms = t.elapsed().as_secs_f64() * 1e3;
+    if held {
+        quiet(|| sp_hold(c, hand, true, "the settle's end"))?;
+    } else {
+        quiet(|| {
+            for _ in 0..steps.len() {
+                hand.frame(&now);
+                now = now.released();
+            }
+        });
+    }
+    Ok(Played {
+        ms,
+        steps,
+        allocs: ALLOCS.load(Ordering::Relaxed),
+        reallocs: REALLOCS.load(Ordering::Relaxed),
+    })
+}
+
+/// The nearest rank's quantile of sorted times.
+fn rank(sorted: &[f64], q: f64) -> f64 {
+    let n = sorted.len();
+    sorted[((q * n as f64).ceil() as usize).clamp(1, n) - 1]
+}
+
+fn sorted(v: &[f64]) -> Vec<f64> {
+    let mut s = v.to_vec();
+    s.sort_by(f64::total_cmp);
+    s
+}
+
+/// The deepest deal of the cascade's world, its place on the Field.
+fn sp_deal_inputs(deal: &superposition::Deal) -> Inputs {
+    Inputs {
+        column: deal.column,
+        row: deal.row,
+        sheet: "Field".to_string(),
+        command: "observe".to_string(),
+        ..Inputs::default()
+    }
+}
+
+/// What a Superposition row measured beside a frame's times (CART.12).
+enum SpRow {
+    /// The idle frame: the load's settle, its frames and its time.
+    Idle { settle: usize, settle_ms: f64 },
+    /// The session: each act's time, the frames stepped, and the times by
+    /// move.
+    Act {
+        acts: Vec<f64>,
+        steps: usize,
+        by: std::collections::BTreeMap<Move, Vec<f64>>,
+    },
+    /// The cascade: its time, its deal and the sites it opened.
+    Cascade {
+        ms: f64,
+        deal: superposition::Deal,
+        opened: usize,
+    },
+}
+
+/// The idle row, `superposition`: the lattice loaded and its load settled,
+/// then `RUNS` runs of `SP_RUN` steps with nothing written, back to back,
+/// each run one span; the lattice held whole after them, every site in
+/// superposition still.
+fn sp_idle(fx: &Fixture, fi: usize, probe: &mut Probe) -> Result<Run, String> {
+    let name = fx.name.clone();
+    let (mut c, load_ms) = sp_load(fx, None)?;
+    let mut hand = Lattice::new(SP_SIDE, SP_SEED, SP_PROBABILITY);
+    let mut clocks: Vec<f64> = (0..SIDE_READINGS).map(|_| probe.read()).collect();
+    let settle = sp_play(
+        &mut c,
+        &mut hand,
+        &Inputs::default(),
+        "",
+        &name,
+        false,
+        false,
+    )?;
+    let (mut f, mut answers) = (settle.steps.len() + 1, Vec::new());
+    let mut times = vec![settle.steps[0]];
+    for _ in 0..RUNS {
+        let ms = span(&mut c, &name, f, SP_RUN, &mut answers)?;
+        f += SP_RUN;
+        times.push(ms / SP_RUN as f64);
+    }
+    clocks.extend((0..SIDE_READINGS).map(|_| probe.read()));
+    sp_hold(&c, &hand, true, "after the idle runs")?;
+    Ok(Run {
+        name,
+        fixture: fi,
+        cells: c.machine().formulas().0,
+        load_ms,
+        times,
+        clocks,
+        facts: None,
+        conserved: None,
+        run: SP_RUN,
+        alone: None,
+        counts: None,
+        sp: Some(SpRow::Idle {
+            settle: settle.steps.len(),
+            settle_ms: settle.ms,
+        }),
+    })
+}
+
+/// The session row, `superposition-act`: `SP_ACTS` acts the scripted player
+/// draws from the lattice as each settle leaves it, each timed from before
+/// its rows to after its settle's last step; every act's Tally held to the
+/// hand, and the whole lattice every fifty acts.
+fn sp_session(fx: &Fixture, fi: usize, probe: &mut Probe) -> Result<Run, String> {
+    let name = format!("{}-act", fx.name);
+    let (mut c, load_ms) = sp_load(fx, None)?;
+    let mut hand = Lattice::new(SP_SIDE, SP_SEED, SP_PROBABILITY);
+    sp_play(
+        &mut c,
+        &mut hand,
+        &Inputs::default(),
+        "",
+        &name,
+        false,
+        false,
+    )?;
+    let (mut player, mut written) = (Player::new(SP_PLAYER), ActRows::new());
+    let mut clocks: Vec<f64> = (0..SIDE_READINGS).map(|_| probe.read()).collect();
+    let (mut acts, mut steps) = (Vec::with_capacity(SP_ACTS), 0);
+    let mut by: std::collections::BTreeMap<Move, Vec<f64>> = std::collections::BTreeMap::new();
+    for k in 1..=SP_ACTS {
+        let (kind, inputs) = player.act(&hand);
+        let rows = written.rows(&inputs);
+        let played = sp_play(&mut c, &mut hand, &inputs, &rows, &name, false, false)?;
+        sp_hold(&c, &hand, k % 50 == 0, &format!("act {k}"))?;
+        acts.push(played.ms);
+        steps += played.steps.len();
+        by.entry(kind).or_default().push(played.ms);
+    }
+    clocks.extend((0..SIDE_READINGS).map(|_| probe.read()));
+    Ok(Run {
+        name,
+        fixture: fi,
+        cells: c.machine().formulas().0,
+        load_ms,
+        times: acts.clone(),
+        clocks,
+        facts: None,
+        conserved: None,
+        run: 1,
+        alone: None,
+        counts: None,
+        sp: Some(SpRow::Act { acts, steps, by }),
+    })
+}
+
+/// The cascade row, `superposition-cascade`: the lattice at 8% with the
+/// same seed, its world dealt by the hand and its deepest deal found, then
+/// that site observed, the act and its settle timed whole and each step
+/// alone; the whole lattice held after it.
+fn sp_cascade(fx: &Fixture, fi: usize, probe: &mut Probe) -> Result<Run, String> {
+    let name = format!("{}-cascade", fx.name);
+    let (mut c, load_ms) = sp_load(fx, Some(SP_CASCADE))?;
+    let mut hand = Lattice::new(SP_SIDE, SP_SEED, SP_CASCADE);
+    sp_play(
+        &mut c,
+        &mut hand,
+        &Inputs::default(),
+        "",
+        &name,
+        false,
+        false,
+    )?;
+    hand.deal();
+    let deal = hand
+        .deepest()
+        .ok_or_else(|| format!("{name}: the world holds no reading of nothing"))?;
+    let inputs = sp_deal_inputs(&deal);
+    let rows = ActRows::new().rows(&inputs);
+    let mut clocks: Vec<f64> = (0..SIDE_READINGS).map(|_| probe.read()).collect();
+    let played = sp_play(&mut c, &mut hand, &inputs, &rows, &name, false, false)?;
+    clocks.extend((0..SIDE_READINGS).map(|_| probe.read()));
+    sp_hold(&c, &hand, true, "the cascade's end")?;
+    sp_rings(&name, &deal, played.steps.len())?;
+    Ok(Run {
+        name,
+        fixture: fi,
+        cells: c.machine().formulas().0,
+        load_ms,
+        times: played.steps.clone(),
+        clocks,
+        facts: None,
+        conserved: None,
+        run: 1,
+        alone: None,
+        counts: None,
+        sp: Some(SpRow::Cascade {
+            ms: played.ms,
+            deal,
+            opened: sp_opened(&hand),
+        }),
+    })
+}
+
+/// A cascade's frames, the deal's rings and two or three: the act's, the far
+/// ring's border where it opens a frame after the ring, and the frame that
+/// proves nothing moved.
+fn sp_rings(name: &str, deal: &superposition::Deal, frames: usize) -> Result<(), String> {
+    if (deal.rings + 2..=deal.rings + 3).contains(&frames) {
+        Ok(())
+    } else {
+        Err(format!(
+            "{name}: the deal at {}{} opens {} rings, and its cascade took {frames} frames",
+            ladder::letters(deal.column as usize),
+            deal.row,
+            deal.rings
+        ))
+    }
+}
+
+/// The sites no longer in superposition.
+fn sp_opened(hand: &Lattice) -> usize {
+    let n = hand.n;
+    (1..=n)
+        .flat_map(|r| (1..=n).map(move |c| (r, c)))
+        .filter(|&(r, c)| hand.site(r, c) != superposition::UNOBSERVED)
+        .count()
+}
+
+/// A Superposition row's counted instance (`--check`, and each timed row's
+/// memory): a fresh lattice loaded and its load settled, then the row's own
+/// work, every frame's Tally held to the hand and the whole lattice at each
+/// settle's end, the heap counted from before the load. The idle row's two
+/// idle acts, the second counted; the session's first `SP_CHECK_ACTS` acts,
+/// the last counted; the cascade, counted whole, its deal and its rings.
+fn sp_measure(
+    fx: &Fixture,
+    which: &str,
+) -> Result<(Counts, Option<(superposition::Deal, usize)>), String> {
+    let name = if which.is_empty() {
+        fx.name.clone()
+    } else {
+        format!("{}-{which}", fx.name)
+    };
+    let probability = if which == "cascade" {
+        SP_CASCADE
+    } else {
+        SP_PROBABILITY
+    };
+    let mut hand = Lattice::new(SP_SIDE, SP_SEED, probability);
+    let mut player = Player::new(SP_PLAYER);
+    let mut written = ActRows::new();
+    let sizing = Sizing::begin();
+    let (mut c, _) = sp_load(fx, (which == "cascade").then_some(SP_CASCADE))?;
+    let settle = sp_play(
+        &mut c,
+        &mut hand,
+        &Inputs::default(),
+        "",
+        &name,
+        true,
+        false,
+    )?;
+    let mut frames = settle.steps.len();
+    let (mut allocs, mut reallocs, mut cascade) = (0, 0, None);
+    match which {
+        "" => {
+            for k in 1..=SP_CHECK_IDLE {
+                let p = sp_play(
+                    &mut c,
+                    &mut hand,
+                    &Inputs::default(),
+                    "",
+                    &name,
+                    true,
+                    k == SP_CHECK_IDLE,
+                )?;
+                frames += p.steps.len();
+                (allocs, reallocs) = (p.allocs, p.reallocs);
+            }
+        }
+        "act" => {
+            for k in 1..=SP_CHECK_ACTS {
+                let (_, inputs) = quiet(|| player.act(&hand));
+                let rows = quiet(|| written.rows(&inputs));
+                let p = sp_play(
+                    &mut c,
+                    &mut hand,
+                    &inputs,
+                    &rows,
+                    &name,
+                    true,
+                    k == SP_CHECK_ACTS,
+                )?;
+                frames += p.steps.len();
+                (allocs, reallocs) = (p.allocs, p.reallocs);
+            }
+        }
+        _ => {
+            let deal = quiet(|| {
+                hand.deal();
+                hand.deepest()
+            })
+            .ok_or_else(|| format!("{name}: the world holds no reading of nothing"))?;
+            let inputs = sp_deal_inputs(&deal);
+            let rows = quiet(|| written.rows(&inputs));
+            let p = sp_play(&mut c, &mut hand, &inputs, &rows, &name, true, true)?;
+            sp_rings(&name, &deal, p.steps.len())?;
+            frames += p.steps.len();
+            (allocs, reallocs) = (p.allocs, p.reallocs);
+            cascade = Some((deal, quiet(|| sp_opened(&hand))));
+        }
+    }
+    let (memory, resident) = (PEAK.load(Ordering::Relaxed), LIVE.load(Ordering::Relaxed));
+    drop(sizing);
+    Ok((
+        Counts {
+            frames,
+            allocs,
+            reallocs,
+            memory,
+            resident,
+            grid: c.machine().loaded().cells,
+            cells: c.machine().formulas().0,
+        },
+        cascade,
+    ))
+}
+
+/// Superposition's three rows, timed, each with its counted instance's
+/// memory.
+fn sp_rows(fx: &Fixture, fi: usize, probe: &mut Probe) -> Result<Vec<Run>, String> {
+    let mut out = Vec::new();
+    for (which, run) in [
+        (
+            "",
+            sp_idle as fn(&Fixture, usize, &mut Probe) -> Result<Run, String>,
+        ),
+        ("act", sp_session),
+        ("cascade", sp_cascade),
+    ] {
+        let mut r = run(fx, fi, probe)?;
+        let (counts, cascade) = sp_measure(fx, which)?;
+        if let (
+            Some((deal, opened)),
+            Some(SpRow::Cascade {
+                deal: d, opened: o, ..
+            }),
+        ) = (cascade, &r.sp)
+        {
+            if deal != *d || opened != *o {
+                return Err(format!(
+                    "{}: the counted instance's cascade, {deal:?} opening {opened}, is not the timed one's, {d:?} opening {o}",
+                    r.name
+                ));
+            }
+        }
+        r.counts = Some(counts);
+        out.push(r);
+    }
+    Ok(out)
+}
+
+/// Superposition's check rows (`--check`): each row's counted instance, its
+/// frames held, its allocations and its memory; the cascade's deal, rings
+/// and sites opened, which the check holds to the baseline's.
+fn sp_check(fx: &Fixture) -> Result<Vec<String>, String> {
+    let mut out = Vec::new();
+    for which in ["", "act", "cascade"] {
+        let (c, cascade) = sp_measure(fx, which)?;
+        let name = if which.is_empty() {
+            fx.name.clone()
+        } else {
+            format!("{}-{which}", fx.name)
+        };
+        let held = match cascade {
+            None => String::new(),
+            Some((deal, opened)) => format!(
+                " (deal \"{}{}\") (rings {}) (opened {opened})",
+                ladder::letters(deal.column as usize),
+                deal.row,
+                deal.rings
+            ),
+        };
+        out.push(format!(
+            "(frames-check \"{name}\" (frames {}) (equal {}) (cells {}) (allocs {}) (reallocs {}) (memory {}) (settled {}){held})",
+            c.frames,
+            c.frames,
+            c.cells,
+            c.allocs,
+            c.reallocs,
+            c.memory,
+            match which {
+                "" => 1 + SP_CHECK_IDLE,
+                "act" => 1 + SP_CHECK_ACTS,
+                _ => 2,
+            }
+        ));
+    }
+    Ok(out)
+}
+
+/// A Superposition row's lines, in place of a fixture's frames.
+fn sp_lines(r: &Run) -> Vec<String> {
+    let Some(sp) = &r.sp else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    let memory = r.counts.as_ref().map_or(String::new(), |c| {
+        format!(
+            "; the memory, the heap's high-water mark over a load and {} frames of its counted instance, {} bytes, {:.1} a grid cell, and {} held after them",
+            c.frames,
+            thousands(c.memory),
+            c.memory as f64 / c.grid.max(1) as f64,
+            thousands(c.resident)
+        )
+    });
+    match sp {
+        SpRow::Idle { settle, settle_ms } => {
+            let steady = r.steady();
+            let (med, (lo, hi)) = (median(&steady), range(&steady));
+            out.push(format!(
+                "{}: load {:.1} ms; {} formula cells; the load's act and its settle {settle} frames, {:.1} ms, the first {} ms; frames {} to {} in {} runs of {}, nothing written, each run one span: a frame's median {} ms (min {}, max {}), {} cells a second, {:.3} frames a second",
+                r.name,
+                r.load_ms,
+                thousands(r.cells as u64),
+                settle_ms,
+                ms(r.times[0]),
+                settle + 1,
+                settle + RUNS * SP_RUN,
+                RUNS,
+                SP_RUN,
+                ms(med),
+                ms(lo),
+                ms(hi),
+                thousands((r.cells as f64 / (med / 1e3)).round() as u64),
+                1e3 / med
+            ));
+            out.push(format!(
+                "  the lattice of {SP_SIDE} by {SP_SIDE}, seed {SP_SEED}, every site in superposition, held whole to the hand-written Superposition after the runs{memory}"
+            ));
+        }
+        SpRow::Act { acts, steps, by } => {
+            let s = sorted(acts);
+            let p95 = rank(&s, 0.95);
+            out.push(format!(
+                "{}: load {:.1} ms; {} formula cells; the scripted session, {} acts at {:.0}% over {steps} frames, each act from before its rows to its settle's end: p50 {} ms, p95 {} ms (min {}, max {}), the deal {} ms; {} cells a second at the p95, {:.3} acts a second",
+                r.name,
+                r.load_ms,
+                thousands(r.cells as u64),
+                acts.len(),
+                SP_PROBABILITY * 100.0,
+                ms(rank(&s, 0.5)),
+                ms(p95),
+                ms(s[0]),
+                ms(s[s.len() - 1]),
+                ms(acts[0]),
+                thousands((r.cells as f64 / (p95 / 1e3)).round() as u64),
+                1e3 / p95
+            ));
+            let moves: Vec<String> = Move::ALL
+                .iter()
+                .filter_map(|m| {
+                    let v = sorted(by.get(m)?);
+                    Some(format!(
+                        "{} {}, p50 {} ms, max {}",
+                        m.words(),
+                        v.len(),
+                        ms(rank(&v, 0.5)),
+                        ms(v[v.len() - 1])
+                    ))
+                })
+                .collect();
+            out.push(format!("  by move: {}", moves.join("; ")));
+            out.push(format!(
+                "  the lattice of {SP_SIDE} by {SP_SIDE}, seed {SP_SEED}, the player's seed {SP_PLAYER}; every act's Tally held to the hand-written Superposition, and the whole lattice every 50 acts{memory}"
+            ));
+        }
+        SpRow::Cascade {
+            ms: total,
+            deal,
+            opened,
+        } => {
+            let frames = r.times.len();
+            let s = sorted(&r.times);
+            out.push(format!(
+                "{}: load {:.1} ms; {} formula cells; the lattice at {:.0}%, seed {SP_SEED}, its deepest deal at {}{}, the largest opening's {} readings of nothing, {} rings: observed, {frames} frames in {:.1} ms, {} sites opened; a frame's median {} ms (min {}, max {}); {} cells a second, {:.3} frames a second",
+                r.name,
+                r.load_ms,
+                thousands(r.cells as u64),
+                SP_CASCADE * 100.0,
+                ladder::letters(deal.column as usize),
+                deal.row,
+                thousands(deal.zeros as u64),
+                deal.rings,
+                total,
+                thousands(*opened as u64),
+                ms(rank(&s, 0.5)),
+                ms(s[0]),
+                ms(s[s.len() - 1]),
+                thousands((r.cells as f64 * frames as f64 / (total / 1e3)).round() as u64),
+                frames as f64 / (total / 1e3)
+            ));
+            out.push(format!(
+                "  the whole lattice held to the hand-written Superposition after the cascade{memory}"
+            ));
+        }
+    }
+    out
+}
+
+/// A Superposition row's baseline line.
+fn sp_row(r: &Run, start_clock: f64) -> Option<String> {
+    let sp = r.sp.as_ref()?;
+    let memory = r.counts.as_ref().map_or(0, |c| c.memory);
+    let clock = format!(
+        "ClockMs = {:.3}; ClockSpread = {:.1}; ClockDrift = {:.1}",
+        median(&r.clocks),
+        r.spread(),
+        drift(median(&r.clocks), start_clock)
+    );
+    Some(match sp {
+        SpRow::Idle { .. } => {
+            let steady = r.steady();
+            let (med, (lo, hi)) = (median(&steady), range(&steady));
+            format!(
+                "@{{ Runner = 'native'; Fixture = '{}'; Cells = {}; Frames = {}; Run = {}; Load = {:.1}; Memory = {memory}; FirstFrame = {}; FrameP50 = {}; FrameMin = {}; FrameMax = {}; CellsPerSecond = {}; FramesPerSecond = {:.3}; {clock} }}",
+                r.name,
+                r.cells,
+                steady.len() * r.run,
+                r.run,
+                r.load_ms,
+                ms(r.times[0]),
+                ms(med),
+                ms(lo),
+                ms(hi),
+                (r.cells as f64 / (med / 1e3)).round() as u64,
+                1e3 / med
+            )
+        }
+        SpRow::Act { acts, steps, .. } => {
+            let s = sorted(acts);
+            let p95 = rank(&s, 0.95);
+            format!(
+                "@{{ Runner = 'native'; Fixture = '{}'; Cells = {}; Frames = {}; Run = 1; Steps = {steps}; Load = {:.1}; Memory = {memory}; FirstFrame = {}; FrameP50 = {}; FrameP95 = {}; FrameMin = {}; FrameMax = {}; CellsPerSecond = {}; FramesPerSecond = {:.3}; {clock} }}",
+                r.name,
+                r.cells,
+                acts.len(),
+                r.load_ms,
+                ms(acts[0]),
+                ms(rank(&s, 0.5)),
+                ms(p95),
+                ms(s[0]),
+                ms(s[s.len() - 1]),
+                (r.cells as f64 / (p95 / 1e3)).round() as u64,
+                1e3 / p95
+            )
+        }
+        SpRow::Cascade {
+            ms: total,
+            deal,
+            opened,
+        } => {
+            let frames = r.times.len();
+            let s = sorted(&r.times);
+            format!(
+                "@{{ Runner = 'native'; Fixture = '{}'; Cells = {}; Frames = {frames}; Run = 1; Load = {:.1}; Memory = {memory}; FirstFrame = {}; FrameP50 = {}; FrameMin = {}; FrameMax = {}; CascadeMs = {:.1}; Seed = {SP_SEED}; Probability = {SP_CASCADE}; Deal = '{}{}'; Rings = {}; Opened = {opened}; CellsPerSecond = {}; FramesPerSecond = {:.3}; {clock} }}",
+                r.name,
+                r.cells,
+                r.load_ms,
+                ms(r.times[0]),
+                ms(rank(&s, 0.5)),
+                ms(s[0]),
+                ms(s[s.len() - 1]),
+                total,
+                ladder::letters(deal.column as usize),
+                deal.row,
+                deal.rings,
+                (r.cells as f64 * frames as f64 / (total / 1e3)).round() as u64,
+                frames as f64 / (total / 1e3)
+            )
+        }
+    })
 }
 
 // ---- the slope (ENGINE.9, decision 8) ---------------------------------------
@@ -1044,7 +1877,7 @@ fn slope(runs: &[Run]) -> Vec<String> {
 
 fn default_cartridges() -> Vec<PathBuf> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
-    ["life", "gun", "sand"]
+    ["life", "gun", "sand", "superposition"]
         .iter()
         .map(|n| root.join("cartridges").join(n).join(format!("{n}.vla")))
         .collect()
@@ -1119,8 +1952,26 @@ fn main() -> ExitCode {
     }
 
     if check {
-        // The check's rows, one a fixture, read by tools/check_frame_floors.ps1.
+        // The check's rows, one a fixture and Superposition's three, read by
+        // tools/check_frame_floors.ps1.
+        let mut printed = 0;
         for fx in &fixtures {
+            if is_superposition(fx) {
+                match sp_check(fx) {
+                    Ok(rows) => {
+                        for row in &rows {
+                            println!("{row}");
+                        }
+                        printed += rows.len();
+                    }
+                    Err(e) => {
+                        println!("{e}");
+                        eprintln!("frames: FAILED, {e}");
+                        return ExitCode::FAILURE;
+                    }
+                }
+                continue;
+            }
             let measured = planes(fx, CHECK_FRAMES).and_then(|wants| {
                 let facts = if fx.manifest.name == "gun" {
                     Some(gun_facts(&wants[0], fx.board).map_err(|e| format!("{}: {e}", fx.name))?)
@@ -1152,8 +2003,9 @@ fn main() -> ExitCode {
                 "(frames-check \"{}\" (frames {}) (equal {}) (cells {}) (allocs {}) (reallocs {}) (memory {}){digest}{held})",
                 fx.name, c.frames, c.frames, c.cells, c.allocs, c.reallocs, c.memory
             );
+            printed += 1;
         }
-        println!("(frames-check-done {})", fixtures.len());
+        println!("(frames-check-done {printed})");
         return ExitCode::SUCCESS;
     }
 
@@ -1164,14 +2016,18 @@ fn main() -> ExitCode {
     let readings: Vec<f64> = (0..START_READINGS).map(|_| probe.read()).collect();
     let start_clock = median(&readings);
     let mut runs = Vec::new();
-    for fx in &fixtures {
-        let measured = run(fx, frames, &mut probe).and_then(|mut r| {
-            let wants = planes(fx, CHECK_FRAMES)?;
-            r.counts = Some(measure(fx, &wants)?);
-            Ok(r)
-        });
+    for (fi, fx) in fixtures.iter().enumerate() {
+        let measured = if is_superposition(fx) {
+            sp_rows(fx, fi, &mut probe)
+        } else {
+            run(fx, fi, frames, &mut probe).and_then(|mut r| {
+                let wants = planes(fx, CHECK_FRAMES)?;
+                r.counts = Some(measure(fx, &wants)?);
+                Ok(vec![r])
+            })
+        };
         match measured {
-            Ok(r) => runs.push(r),
+            Ok(r) => runs.extend(r),
             Err(e) => {
                 println!("{e}");
                 eprintln!("frames: FAILED, {e}");
@@ -1181,13 +2037,14 @@ fn main() -> ExitCode {
     }
 
     println!(
-        "frames: the native runner, {} on {}, {} cartridge(s), {frames} frames each, every frame equal to the hand-written Life or Sand",
+        "frames: the native runner, {} on {}, {} row(s), {frames} frames each, every frame equal to the hand-written Life or Sand, and Superposition's rows held to the hand-written lattice",
         std::env::consts::ARCH,
         std::env::consts::OS,
         runs.len()
     );
     let mut steady_all = true;
-    for (r, fx) in runs.iter().zip(&fixtures) {
+    for r in &runs {
+        let fx = &fixtures[r.fixture];
         let steady = r.steady();
         let med = median(&steady);
         let (lo, hi) = range(&steady);
@@ -1196,6 +2053,10 @@ fn main() -> ExitCode {
         let spread = r.spread();
         let drift = drift(clock, start_clock);
         let by = if r.name == "sand" { "Sand" } else { "Life" };
+        let said = sp_lines(r);
+        for line in &said {
+            println!("{line}");
+        }
         let which = match r.alone {
             None => format!("frames 2 to {}: median", r.times.len()),
             Some((_, stepped)) => format!(
@@ -1205,7 +2066,8 @@ fn main() -> ExitCode {
                 r.run
             ),
         };
-        println!(
+        if said.is_empty() {
+            println!(
             "{}: load {:.1} ms; {} formula cells; frame 1 {} ms; {which} {} ms (min {}, max {}), {} cells a second, {:.3} frames a second",
             r.name,
             r.load_ms,
@@ -1217,13 +2079,14 @@ fn main() -> ExitCode {
             thousands((r.cells as f64 / (med / 1e3)).round() as u64),
             1e3 / med
         );
+        }
         if let Some((alone, stepped)) = r.alone {
             println!(
                 "  frames 2 to {frames} alone read a median of {} ms, under {RUN_MS} ms, so the steady frames were timed in runs past them, back to back; the last frame held to the hand-written {by} after them, and every frame from 1 to {stepped} on a second instance stepped untimed",
                 ms(alone)
             );
         }
-        if let Some(c) = &r.counts {
+        if let (Some(c), true) = (&r.counts, said.is_empty()) {
             let board = match &fx.rung {
                 None => format!("the window's board, {} by {}", fx.board.w, fx.board.h),
                 Some((times, digest)) => format!(
@@ -1284,6 +2147,10 @@ fn main() -> ExitCode {
     }
     println!("the baseline rows, for tools/check_frame_floors.ps1:");
     for r in &runs {
+        if let Some(row) = sp_row(r, start_clock) {
+            println!("    {row}");
+            continue;
+        }
         let steady = r.steady();
         let med = median(&steady);
         let (lo, hi) = range(&steady);

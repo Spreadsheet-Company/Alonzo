@@ -49,6 +49,7 @@
 - ✅ **`CART.2` — Sand, the first game.** *Scoped 2026-10-11, built in three slices and a playtest pass, owner-tested and closed 2026-10-12; slice 1 committed `11a61c1` and pushed, slice 3 `7c95ca3`, the pass `47a8f12`, its fixes `f8dda50` and `0651ec5` beside `ENGINE.1`'s `99257bb`, and slice 2 at the close. Its fourth slice, the game's repository, moved at the close to `REPO.5`, at the owner's word.* A falling-sand toy on the 320 by 200 Screen, written as a source over the library: three sheets, `Stay`, `Side` and the Screen, each one fill over the interior, a scan two hundred rows deep in which the receiving cell chooses by a fixed priority; sand, water, wall and empty painted with the mouse through a Gate of rows, the wheel sizing the brush; water that never settles; Life's soup raining from the top third as its opening; and a Tally of every row. Seven rules of what a formula costs, each measured, went into `SPEC.md` §2, and `KERNEL.28`, asked of Frazaro, shipped in `vla-lang` 0.9.1, the pin since. The playtest pass played the toy as a person plays it (`engine/examples/play.rs`) and found three things: a click computed every cell, fixed by the row gate; a rate of 60 presented forty frames a second until the host put its tick on the frame's grid (`ENGINE.1`); and the first two seconds ran at half speed until the opening rained from the top third, the floors re-based on it with the rise named the workload's. Its three asks of the language, the plan's edges once a shape, a held column read once a run and merged patterns, were relayed to Frazaro. *Oracle, met:* every frame of every Sand test, of the session and of the replay held to two sands written by hand, Rust's and the page's; the replay, the owner's painting session on the finished toy, 2,085 frames with water painted and the right button erasing, played to the Tally's golden natively and in the page; the floors' Sand rows natively and in the browser, the seventh baseline the owner's; `check_host_loop.ps1` at seventeen cases, its control twenty-eight mutant pages; `cargo test` 30; `run_checks.ps1` at 12 checks and 12 verifiers, `ALL GREEN`; the owner's hand tests. *Found:* the language marks a changed cell's readers through every reference, whether or not its branch is taken; a press that flips a part every `$` holds computes every cell; ticks 16.6 and 16.7 ms apart alias at a rate of 60; a synchronous page flushes its canvas every ~132 draws; a double quote cuts an argument passed through `powershell -File`. *Scoped:* 2026-10-11, sixteen decisions, all approved; slice 3's ten, 17 to 26, on 2026-10-12. Predicted `~weeks`; cost two days. (more: the full entry under THE ITEMS, SCOPED)
 - ✅ **`CART.4` — Kairos, the stacking game.** *Filed 2026-10-08 and scoped that day, scoped again 2026-10-12, built in two slices, owner-tested and closed 2026-10-12; slice 1 committed `bbc7655`, slice 2 at the close.* The cabinet of 2004 in the kit's words, under the owner's name for it, Kairos, the opportune moment, and in Lovelace Lavender. Fifteen levels of seven columns lie on their side on a plane, a light a cell, told apart by a checker of the Palette's darker twins. A row slides a column every period of its level; a press stops it where the person saw it; the lights not over a light fall, and a complete miss ends the game; at level 11 b takes the minor prize and a goes on; level 15 wins the major, and WIN flashes. The State sheet's thirty-one cells keep a row as the two ends of a run; the Write sheet writes the tower one range a stop; the Levels sheet holds every level's period, width and window, honest, so the cabinet's rigging is an edit anyone can read; one word of the source and its window stand the cabinet up. The kit gained `every`, `since`, `looks`, `camera` and `put`, and the input card and the grid card were rewritten over them to their bytes. *Oracle, met:* every frame of every Kairos test and of the replay held to the game written by hand twice, in Rust and in the page: a bot's four games over 4,500 frames, every row of the first bouncing off both ends; the rigged window from both sides; a press in a move's frame; the upright build as the transpose. The replay, the owner's two games of 3,469 frames, the major prize won and then a fall at level 15, played to the Tally's golden natively and in the page. The describe golden; `check_host_loop.ps1` at eighteen cases, its control thirty-five mutant pages, AI the page's Kairos turning a column early; `cargo test` 37; `run_checks.ps1` at 12 checks and 12 verifiers, `ALL GREEN`; nine mutants of slice 1 and three of slice 2's native hold caught; the owner's hand tests. *Found:* on the grid every light shows its value's digit, since a format holds no font color; a fill cannot transpose, so an Orientation cell could only turn the picture and never enlarge the window the host fits; the tests as first written let a rule turning a column early pass, caught only by the command line and the describe golden, until every row traveled both ends. *Scoped:* 2026-10-08, and again 2026-10-12, fifteen decisions, all approved with two amendments, the name and the palette. Predicted `~days`; cost a day. (more: the full entry under THE ITEMS, SCOPED)
 - ✅ **`CART.11` — Buffet, the idle game, founded as a repository of its own.** *Filed 2026-10-13 from the sitting of `docs/ALGEBRA.md` §12 and named by the owner the same day, its design reference written beside it in `cartridges/buffet/`; founded 2026-10-14 at the owner's word as `../Buffet`, a repository beside this one, under AGPL-3.0-or-later for the game, CC-BY-SA-4.0 for what the diner reads, a commercial license offered beside the public terms and a trademark policy from the first day, so that a fork stays open and must take another name; the design reference and the roadmap, `OMAKASE.md`, moved with it and the folder removed here; the line left `ROADMAP.md` at the founding, as `CHARTER.md` §6 has it for the games after the first.* The engine's interest in it: the first game new and native to Alonzo, consuming `alonzo` from crates.io at `REPO.4`'s release and never a git pin, its asks of the engine returning here under their own IDs; the design-folder tolerance of `62e5dd5` stays, harmless, for the next game's notes.
+- ✅ **`CART.12` — the large board: *Superposition*, a mine-clearing game on a lattice of 512 by 512 at rate zero, each act settled to the language's fixed point, and the floors' first instrument of one edit into a huge model.** *Filed 2026-10-13 from `docs/ALGEBRA.md` §12; scoped and approved 2026-10-18 and named by the owner, built in four slices that day over Frazaro's `KERNEL.48` and the pin to `vla-lang` 0.10.1; owner-tested twice and closed 2026-10-19; slice 2 committed `16295b5`, the rest at the close.* The page's version 6: `(settle K)`, an act stepped again until a frame changes nothing, the Clock counting acts and the press released before the first settle step; an act's place and a press at rate 0; and, at the second hand test, `(bound "<sheet>")`, a sheet drawn to its extent and no further. The cartridge: three layers of 262,144 formula cells, the Decays dealt from the seed and the world, the Readings and the Field, from `A1` and bound there; an act reaching one row through the Probe, a cascade a ring a frame, a box opened beside a reading of nothing; quantum words, Lovelace Lavender. Its hand twice, in Rust and in the page, the floors' scripted player and the deepest deal. The floors' three rows a half: the idle frame, 4.5 microseconds natively; an act to its settle's end, a p95 of 0.42 ms natively and 0.6 in the browser; the deepest cascade at 8%, 777 frames in 154 ms; and the blit's act case, a p95 of 1.1 ms in the owner's fullscreen. The page, from the hand tests: a sheet's columns read whole before it is shown, a resize told as a scroll, the slack a screen's width of columns, a tab giving the grid the keys; the owner's session the replay, carried onto the board at `A1`. *Found:* the memory, about 400 bytes a formula cell and the load 0.68 s, the language's per-cell structures, a Frazaro prompt given in chat; a save as the records stand, 521 MB, `ENGINE.5`'s. *Scoped:* 2026-10-18, twelve decisions, all approved with the owner's name for the game; the page's version 6 its decisions 57 to 66, and 67, the bound, at the second hand test. (more: the full entry under THE ITEMS, SCOPED)
 
 # THE SITTINGS
 
@@ -846,6 +847,61 @@ Found:
 - *A number format's code is not drawn.* The language prints its text in the record (`KERNEL.47`). The viewport counts the `text` row as unknown and draws the value as before, so a cartridge that writes a code shows the number unformatted. Buffet's dollars, texts of two decimals today, wait on it. Named, not minted.
 - *A game's module takes its own workspace's profile.* A game that builds the module from the crate, as Buffet's page does, builds it at its own `[profile.release]`. Buffet's stays wherever its workspace sets it until it moves to 3 itself.
 - *The instrument's runs.* Sand's native clock spread past 10% once while the owner's browser, editor and chat ran beside it. The first run at 3 after a build read the gun's rungs in the browser up to 20% under the three back-to-back runs that followed, so a run right after a build is the noisier one.
+
+*The pin at `vla-lang` 0.10.1, 2026-10-18, at the owner's word: "Frazaro/vla-lang 0.10.1 (which includes KERNEL.48, as requested) is published and live on GItHub and crates.io, so the changed formula count can now be used in Alonzo. Proceed with finishing CART.12 with the new 0.10.1 pin".*
+
+The release is Frazaro's `KERNEL.48`, `f10e532`, released as `0d87447` and tagged `v0.10.1` on `f123c23`, the commit the package's `.cargo_vcs_info.json` names.
+- `KERNEL.48`: after a frame completes, `Machine::changed` counts the formula cells whose values' bits the frame changed, `Machine::changed_on` how many of them stand on a sheet, and `Machine::reached` how many the frame computed. A frame that changed nothing with no write before it is a fixed point. `CART.12`'s settle reads `changed` (version 6, `SPEC.md` §5).
+- `CART.12`'s first slice was written against a copy of `KERNEL.48` from a Frazaro session's worktree, the registry's 0.10.0 with that worktree's `src/machine/mod.rs` laid over it. The released `src/machine/mod.rs` is that file byte for byte (SHA-256 `81ebeea4…`). The crate's sources differ from the copy only in its manifest, its README and `tests/laws.rs`.
+- By the release's notes a frame costs what it cost. The language's runtime additions are a count raised per changed cell and per computed cell, read in constant time.
+
+What moved:
+- `Cargo.toml`'s pin and its comment, and the lock: the checksum `568c1fd6…`, still two packages.
+- `check_engine_deps.ps1`'s baseline and its header.
+- `check_frame_floors.ps1`: the thirteenth baseline (below), every Memory ceiling raised by four bytes a sheet, and `CART.12`'s six rows, three counted instances and their ceilings.
+- The nine describe goldens are unchanged byte for byte: `KERNEL.48` adds no census row. So is every committed replay's golden.
+
+The oracle, on the day (*measurement*):
+- `cargo test`: 54 tests of the library and the doc test. `cargo clippy --workspace --all-targets -- -D warnings` and `cargo fmt --check` are clean.
+- The module: 1,042,949 bytes, 4,306 more than 0.2.0's 1,038,643, `KERNEL.48`'s and `CART.12`'s together. It imports nothing and exports the twelve names. Built over the copy it was 1,044,245 bytes: the module's panic locations name the language's files by their paths, and the scratch copy's path was longer than the registry's.
+- The runner's check mode: every frame equal and every allocation count the same. Every heap's high-water mark is four bytes a sheet higher on every run: Life's soup 20 bytes (five sheets), its rungs and the gun 24, the gun's rungs 28, Sand 48 (twelve sheets). That is the language's count of changed cells for each sheet, a 32-bit count a sheet.
+
+*The floors' thirteenth baseline,* `tools/bench_frames.ps1` over 0.10.1 with `CART.12` built. It was run by the session finishing `CART.12`, as the twelfth was run by the session preparing 0.2.0, and not by the owner's own hand. Six runs were made, three after a build and three without. Every one refused itself on a gun row, its frame under its floor:
+- natively, the gun at sixteen times the area read 0.0227 to 0.0285 ms;
+- in the browser it read 0.0289 to 0.0398 ms, and at four times the area once 0.0289.
+
+*The A/B.* The twelfth baseline's own module and runner were rebuilt byte for byte from `275f1e0` (1,038,643 bytes, the twelfth's). They were run alternately with this pin's under the instrument's guards, opted out of the throttling and on the performance cores, three pairs:
+
+| the gun at sixteen times the area | `275f1e0` over 0.10.0 | this pin |
+|---|---|---|
+| natively | 0.0228, 0.0231, 0.0227 ms | 0.0229, 0.0226, 0.0231 ms |
+| in the browser | 0.0391, 0.0313, 0.0281 ms | 0.0289, 0.0320, 0.0336 ms |
+
+The two engines are alike. A frame of twenty to forty microseconds over a board of a million formula cells varies between runs past the floors' margin, and the twelfth's browser reading, 0.0289, sits at the fast end of the same module's spread today.
+
+The block pasted is the third run's, its browser half clean. Its one refusal was the native gun at sixteen times the area: 40,224,334,268 cells a second against its floor of 40,500,000,000, 0.7% under. Its entry lowers that floor by hand to this run's less 10%, 36,200,000,000, the reason written in the entry. Every other value is as the instrument printed it (*measurement*):
+
+| row | frame p50, the twelfth's | cells a second | floor, from the twelfth's |
+|---|---|---|---|
+| native life | 2.0 ms, 2.1 | 30,929,901 | 27,800,000, from 27,500,000 |
+| native life-x4 | 10.0 ms, 10.4 | 25,327,183 | 22,700,000, from 22,000,000 |
+| native life-x16 | 41.3 ms, 41.2 | 24,711,390 | 22,200,000, kept |
+| native gun | 0.0185 ms, 0.0190 | 3,411,094,087 | 3,060,000,000, from 2,980,000,000 |
+| native gun-x4 | 0.0209 ms, 0.0198 | 12,177,240,268 | 11,500,000,000, kept |
+| native gun-x16 | 0.0254 ms, 0.0226 | 40,224,334,268 | 36,200,000,000, from 40,500,000,000, lowered with its reason |
+| native sand | 2.9 ms, 3.0 | 65,189,230 | 58,600,000, from 57,200,000 |
+| wasm life | 2.4 ms, 2.5 | 26,235,000 | 23,600,000, from 23,100,000 |
+| wasm life-x4 | 10.9 ms, 10.6 | 23,295,780 | 21,500,000, kept |
+| wasm life-x16 | 48.0 ms, 45.0 | 21,246,750 | 20,400,000, kept |
+| wasm gun | 0.0242 ms, 0.0242 | 2,599,803,851 | 2,330,000,000, kept |
+| wasm gun-x4 | 0.0242 ms, 0.0250 | 10,484,603,992 | 9,430,000,000, from 9,140,000,000 |
+| wasm gun-x16 | 0.0289 ms, 0.0289 | 35,281,089,843 | 31,700,000,000, kept |
+| wasm sand | 4.1 ms, 3.9 | 46,150,000 | 43,600,000, kept |
+
+`CART.12`'s six rows enter the history at this entry; their record is that item's (its fourth slice's entry). `check_frame_floors.ps1` is clean, and its control passes.
+
+Found:
+- *The gun's idle frame on the largest rung is the floors' noisiest row.* Six runs and an A/B on one day spread it 25% natively and 41% in the browser, on either module alike. The floors' margin of 10% was set on frames of about 100 ms (`CART.1`). A run of a frame this small refuses itself more often than not. Weighing the margin for idle frames, or more runs of them, is the instrument's question and not this pin's. Named, not minted.
 
 ## `ENGINE.2` — the frame path: the plane held to the record of the same window
 
@@ -6811,3 +6867,589 @@ Verified (*measurement*):
 - Buffet's page at `b82793c`, built over the tree again: `loop ok cases=12 dpr=1`, and its palette as before.
 
 *The owner's hand test of the amendments, 2026-10-17,* every step, the keys' box shown after `default-keys`, its caret below the two commands of the person's own, applied: "Tests pass; commit." *Closed at the owner's word, the same day:* slice 2 committed at the close, the line moved from the roadmap to the ledger; not pushed.
+
+## `CART.12` — the large board: a mine-clearing game at 512 by 512 at rate zero, its cascade settled inside an edit, and the floors' first instrument of one edit into a huge model
+
+*Scoped 2026-10-18 at the owner's word, ahead of `CART.9` and `CART.10` in the order note of 2026-10-13, for the owner's reason: it is the one instrument for a spreadsheet's commonest demand, one edit into a huge model answered within a frame, and nothing measures that today. Life and Sand change everywhere and the gun idles; the recalculation floors' edits each reach most of their formulas; no floor measures one click into about 800,000 mostly clean cells, its sparse propagation, or a cascade. The gap assessment of 2026-10-18 put this measurement on the path to Frazaro as an industry-grade spreadsheet. The scoping wrote its predictions down first (below, 06:10, before any number), then measured a prototype: the board's rows written by a generator, stepped through the engine's own `Cartridge` from a scratch crate over this tree by its path, over a scratch copy of `vla-lang` 0.10.0 that counts a frame's changed and computed cells and times a frame's three parts. The board was held, every cell, to a mine-clearing game written by hand: after every act at 64 and 128 squares a side, and twelve times a session at 512. The module's half in Chrome was held to the native run's tallies after every act. Two of the owner's messages during the scoping shaped decision 1: a question, what `vla-lang` would need to report a frame's changed cells, answered with a prompt the owner relayed to a Frazaro session, which minted and scoped `KERNEL.48` the same morning; and that scoping's exact rule, relayed back. Nothing in this tree changed before this entry; Frazaro's and Buffet's trees were read and never written.*
+
+**Substrate, verified.** Read on the day, by file and never by assumption.
+
+- *The pre-flight.* This tree clean at `275f1e0`, level with `origin/main`; `vla-lang` pinned `=0.10.0`; the twelfth frame-floors baseline (2026-10-17) its latest. Frazaro clean at `1cc86c9`, the 0.10.0 release, when read; sessions on `KERNEL.8` and `KERNEL.48` in its tree since.
+- *An act at rate zero* (`SPEC.md` §5, decision 20). The host steps once after each write made on a person's act; the Input sheet is not written, but for a `(spec 5)` cartridge's twentieth row, a command's step. In grid mode at rate zero the pointer, its buttons, the wheel and every key are the viewport's (`ENGINE.8`, decision 7; `web/host.js`, `_listenGrid`, its `playing()` true only above rate zero). So an act at rate zero reaches the grid only as a row a person types, in the drawer's edit row or the palette, or as a command, which carries no place (§12 names "a command with an argument" as not in version 5). And a grid cartridge's own command keys, which §3.10 says the host takes "on ... the grid's viewport", are not taken at rate zero: the grid's listener hands a key to `keyDown` only while `playing()`.
+- *The language's step* (`vla-lang` 0.10.0, `machine/mod.rs`, `calc/reach.rs`, `calc/eval.rs`, `intrinsics.rs`).
+  - A frame computes the readers of the twin cells the last frame's end changed and of the cells written since. A part every `$` holds is computed once at the frame's start when it reads value cells or twins, and a change of its bits computes its whole shape.
+  - The step walks the order in runs and finds the marked cells by a bitset (`next_marked`), so an idle frame still walks the order's bitset.
+  - `Step.evaluated` counts the order's positions passed, computed or not: `of` at every done frame. The field `changed` holds the formula cells whose values the frame changed, bit for bit, reserved to the order's length (`fit`), so it never overflows; `snapshot` clears it at the frame's end, and nothing public reports it. That is `KERNEL.48`'s ask.
+  - A text comparison folds both texts into new strings (`eval::compare` calls `intrinsics::fold`, which collects a `String`).
+  - The library is fourteen functions: `IF`, `AND`, `OR`, `NOT`, `SUM`, `MIN`, `MAX`, `ABS`, `INT`, `MOD`, `ROW`, `COLUMN`, `CHOOSE` and `SIN`. The brief's twenty-one count frazaro-core's seven beside them (`IFS`, `AVERAGE`, `ROUND`, `SUMIF`, `COUNTIF`, `ISNUMBER`, `ISBLANK`), which `AD-1` keeps from a cartridge. The board below uses eight of the fourteen and no lookup.
+- *The record* (`view.rs`, `machine/load.rs`; `web/viewport.js`, `readRow`).
+  - A `value` row takes one cell, so a grid at rate zero shows its formulas' texts until its first step (§3.1).
+  - A number's `text` row is printed under the code of its look's format where the look's format holds one (`KERNEL.47`). The viewport reads a `format` row only when its number format is `general` or `text`, and counts a `text` row unknown, so a code is not yet drawn (§4.5's note of 2026-10-17).
+  - A `column` row names one column.
+- *The hands* (`ENGINE.16`). A hand answers each replay frame with `{ plane }` or `{ cells }`, and the replay case views each named sheet's grid record over the range its cells span.
+- *The floors* (`tools/check_frame_floors.ps1`, the twelfth baseline). Life at sixteen times the area, 1,019,844 formula cells: loaded in 686.6 ms natively and 787.7 in the browser; its first frame 166.0 and 116.5; its memory 480.8 MB and 384.9 MB, 471 and 377 bytes a formula cell. The gun's idle frame: 0.0190 ms at the window and 0.0226 at sixteen times it natively, 0.0242 and 0.0289 in the browser.
+- *The machine.* The owner's: an Intel Core Ultra 7 265KF under Windows 11 Home 10.0.26200, rustc 1.99.0, Chrome 155.0.8059.79 headless, the engine's module built from `275f1e0` (1,038,643 bytes, the twelfth baseline's own). Every timing ran opted out of Windows' power throttling and on the performance cores: the runner by its own process, and Chrome by every process of its own profile, found by its command line, never the owner's running Chrome.
+
+**The board, as prototyped.** A board of *n* by *n* squares at `B2` to the cell before the sheet's last row and column (`B2:SS513` at 512), its border empty, on three layers of one fill each, with small sheets beside them.
+
+- *`Mines`*, the assumptions: Life's soup hash over the seed (`Clock!$B$3`), the square's row and column, and the game's number (`State!$B$2`), a mine where it falls under the density (`Rules!B1`, a value anyone edits; 0.15 by default). The first reveal's 3 by 3 reads as empty through a row gate (`DealRow!$B2`, the deal's column on its three rows and 0 elsewhere), so the first reveal is always an opening and the rest of the layout is the seed's.
+- *`Counts`*, computed once from the layout: `=IF(Mines!B2=1,10000000000,10000+SUM(Mines!A1:C3))`, each square's face.
+- *`Field`*, the board itself, every square one formula of its own last value, its eight neighbors' last values, its face and its row's act. Its values are the counting codes of decision 2: unsounded 0, sounded 10,000 plus the count, a flag 10,000,000, a tripped mine 10,000,000,000.
+  - An unsounded square takes its face when a neighbor's last value is 10,000, a sounded zero, so an opening spreads a ring a frame.
+  - An act on the square: a reveal takes its face, or chords a satisfied number; a flag toggles; a chord on a number whose flags equal its count turns it to 10,000 for one frame, so that its neighbors open as a zero's do, and it takes its face again the frame after.
+- *`Act`*, three columns a row (`B2:D513`), sticky: the column, the kind and the act's serial of the last act on the row. An act on row *r* changes `Act!B` to `D` on that row alone, and only row *r* of the board reads them (`Act!$B2`, row-relative), so an act reaches one row of the board and never the whole: a part every `$` holds over the place, in the board's own formula, made every square compute at every act.
+- *`State`*: the act's serial and the game's number. *`Deal`*: the first reveal's row and column. *`Tally`*: blocks of 32 squares a row summed, a row's sum of its blocks, and the board's sum. With the counting codes a row's sum decodes into its soundings, flags and trips exactly.
+- *The act's place*, as version 6 would write it at rate zero (decision 4): `Input!B11` and `B12` the square, `B13` to `B15` the press, or `B20` the command.
+- At 512 by 512: 797,189 formula cells, 786,432 of them the three layers, in 29 shapes.
+
+**Predictions, written before any number** (*prediction*, 2026-10-18 06:10 PDT, before the prototype ran; inputs the twelfth baseline's rows above; the board then three layers of 262,144 formula cells and about 3,600 small cells, and the settle a frame's step again while the last frame changed a cell).
+
+1. Memory: 360 to 420 MB natively, 290 to 340 MB in the browser.
+2. The load: 450 to 700 ms natively, 550 to 850 in the browser. Its settle: frame 1, every cell, 110 to 170 ms natively and 80 to 130 in the browser; frame 2, every cell again, changing nothing, 25 to 45 and 30 to 50. The board ready to view in 0.6 to 0.9 s natively and 0.7 to 1.1 in the browser.
+3. The idle frame: 10 to 25 µs natively, 15 to 35 in the browser; 1.2 to 1.5 times from 64 by 64 to 512 by 512.
+4. A click revealing a number, no cascade: 0.25 to 0.5 ms natively, 0.35 to 0.7 in the module. Act to record drawn in the browser, over a scripted session at the default density: a p50 of 1 to 2.5 ms and a p95 of 3 to 8 ms. A flag as a click; a chord 0.3 to 0.7 ms natively; the deal 1 to 3 ms with its opening.
+5. The deepest cascade, the dial at 0 and a corner clicked: 511 rings, 513 frames, 100 to 250 ms natively and 150 to 400 in the browser. At the default density the largest opening over a few seeds: 20 to 60 rings, 1 to 10 ms natively.
+6. A new game: 30 to 70 ms natively.
+
+**The measurements.** *Measurement*, 2026-10-18, on the machine above.
+
+*The board recommended,* natively: the counting codes, the tally in blocks, the settle under `KERNEL.48`'s exact rule (decision 1). A scripted session of 200 acts at 15%: a player who knows the board, mostly a safe square on the frontier, with flags, chords, jumps and trips. The whole board was held to the hand twelve times, every row's sum and the board's each time. Two runs:
+
+| what | 512 by 512, natively |
+|---|---|
+| the load | 542 and 558 ms |
+| the load's settle | 2 frames: 183 ms (74 computing, 109 the frame's end making every twin again, `KERNEL.40`'s) and 37.5 |
+| the heap | 338.0 MB at its peak, 319.2 MB held after the settle: 400 bytes a formula cell |
+| the idle frame | p50 6.7 and 8.5 µs (p95 23) |
+| the deal, its opening included | 11 frames, 0.53 and 0.69 ms |
+| a reveal, 134 of them | three frames; p50 0.26 and 0.28 ms, p95 0.48 and 0.54 |
+| every act | p50 0.26 and 0.28 ms, p95 0.46 and 0.54, max 0.72 and 0.77; frames p50 3, max 25 |
+| a new game | 3 frames, 52 ms |
+| the dial at 0, a corner clicked | 513 frames, 89.7 ms: 65.0 computing, 12.5 marking the readers, 10.6 the frames' ends; a frame's p50 0.18 ms |
+
+*The module's half in the browser:* the same session and cascade, their writes and steps exported by the native run and stepped through the module's exports in a scratch page under headless Chrome. Three runs; the page's timer steps in 0.1 ms. In every run each of the 202 acts left the tally the native run's and took the native run's frames.
+
+| what | 512 by 512, in Chrome |
+|---|---|
+| the load | 691 to 697 ms on a fresh module, 481 to 508 on a module that had run |
+| the load's settle | 211 to 218 ms (162 to 169, then 48 to 49); 177 to 180 warm |
+| the module's memory | 239.6 MiB (251,199,488 bytes): 315 bytes a formula cell |
+| a reveal | mean 0.36 ms (p50 0.3, p95 0.6) |
+| every act | p50 0.3 ms, p95 0.6 |
+| the idle frame, runs of 1,000 | 6.4 to 6.7 µs |
+| three device sheets read by their changes, as the host reads them | 12.2 to 12.9 µs |
+| a still region's changes | 4.9 to 5.0 µs |
+| an 84 by 48 region of the board viewed whole, the values record | 1.0 ms, 99,818 characters |
+| a new game | 64.7 to 65.3 ms |
+| the dial at 0 | 513 frames, 108 to 111 ms |
+
+*What the board's spelling costs* (natively at 512 by 512, under the settle rule before `KERNEL.48`'s, so a click took two frames):
+
+| spelling | the board computed whole, 262,147 cells | a click's p50 | the dial at 0 | a new game |
+|---|---|---|---|---|
+| texts as drawn today (unsounded `""`, sounded `" "`, a flag `"▲"`), a row's `SUM` tallied | 118.2 ms, 451 ns a cell | 0.64 ms | 534.9 ms | 165.8 ms |
+| numbers, a row's `SUM` | 21.2 ms, 81 ns a cell | 0.27 | 265.0 | 57.9 |
+| numbers, no tally | 21.1 | 0.28 | 70.4 | 57.8 |
+| the counting codes, the tally in blocks of 32 | 19.9 | 0.26 | 89.5 | 51.4 |
+
+The texts pay for the language's handling of text, among it a comparison that folds both sides into new strings: about 370 ns of a square's 451. A row's `SUM` re-folds its 512 squares at every frame a ring touches the row, and blocks of 32 re-fold 32.
+
+*The board's width* (texts, the earlier rule): a click at 64, 128, 256 and 512 squares a side took 0.108, 0.211, 0.316 and 0.640 ms. The act reaches one row of the board, so a click is a row's work, linear in the width. The idle frame was 1.6, 1.7, 2.4 and 7.3 µs.
+
+*The cascade's worst case* (natively at 512 by 512, the counting codes and the blocks): the largest opening a layout holds, found by hand from its zero squares' 8-connected clusters, and dealt at an end of its widest path, which two breadth-first sweeps find. A deal at a corner is no probe: at 7 to 8.5% two other seeds gave corner openings of four squares. Three seeds a density:
+
+| density | the largest opening's zero squares | frames | steps | squares opened |
+|---|---|---|---|---|
+| 0, the dial | 262,144, a corner clicked | 513 | 89.7 ms | 262,144 |
+| 5% | 164,543 to 165,629 | 612 to 614 | 135 to 141 ms | 241,820 to 242,566 |
+| 7% | 134,447 to 134,994 | 675 to 702 | 138 to 149 ms | 225,067 to 226,041 |
+| 8% | 116,379 to 119,316 | 736 to 804 | 138 to 151 ms | 206,150 to 212,087 |
+| 9% | 83,170 to 92,292 | 1,010 to 1,315 | 122 to 130 ms | 154,972 to 172,184 |
+| 10% | 17,159 to 23,590 | 605 to 760 | 30 to 46 ms | 33,380 to 46,245 |
+| 15% | 351 to 611 | 53 to 110 | 1.8 to 3.1 ms | 765 to 1,359 |
+
+A square is a zero when its 3 by 3 holds no mine, (1 − *d*)⁹ of the squares. That is 0.43 at 9% and 0.39 at 10%, on either side of the site percolation threshold of the 8-connected square lattice. For independent sites that threshold is 0.4073, one less the 4-connected lattice's by their matching (*math exists*), and the zeros, correlated through the squares they share, follow it roughly. So below about 9.5% one opening spans the board, and near the threshold its paths wind longest: 1,315 frames, two and a half times the board's side. The time follows the squares opened: 0.34 µs a square at the dial's 0, and 0.57 to 0.76 at 5 to 9%, where the rings wind and a frame holds fewer squares.
+
+**Against the predictions.**
+- *Memory:* missed low, which was welcome. 338 MB at the heap's peak against 360 to 420, and 251 MB of module against 290 to 340: 400 and 315 bytes a formula cell, against Life's 471 and 377.
+- *The load:* held, 542 to 558 ms natively and 691 to 697 in the browser. The settle's first frame missed high, 183 ms against 110 to 170 natively and 162 to 169 against 80 to 130 in the browser: its end makes every twin again, 109 ms natively (`KERNEL.40`, open in Frazaro). Its second frame held, 37.5 and 48 to 49. The board was ready in 0.77 to 0.78 s natively and 0.90 to 0.92 in the browser, inside the predicted ranges.
+- *The idle frame:* better than predicted, 6.7 to 8.5 µs natively and 6.4 to 6.7 in the browser. The slope missed, about four to five times from 64 to 512 against 1.2 to 1.5: so small a frame is mostly the walk of an 800,000-position bitset.
+- *A click:* held with the counting codes, 0.26 to 0.28 ms natively over three frames and 0.36 in the module; the texts missed at 0.64. The act-to-record latency through the host cannot be measured before version 6 is built. *Derived* from the measured parts: the module's 0.36 ms, the host's reads at three frames of 18 µs, and one frame's patch, 0.6 to 0.8 ms of main thread (`ENGINE.20`), a p50 of about 1.0 to 1.3 ms. The deal was better, 0.53 to 0.69 ms, and a chord held, 0.27 to 0.31.
+- *The deepest cascade:* the dial at 0 took the predicted 513 frames exactly, in 89.7 ms natively and 108 to 111 in the browser, under the ranges. But the dial at 0 is not the deepest. At 9% the cascade ran 1,315 frames, at 7 to 8% for 151 ms: the deepest is the percolation threshold's and not the empty board's, which the prediction missed. At 15% the largest opening took 53 to 110 frames against 20 to 60, in 1.8 to 3.1 ms, inside its range.
+- *A new game:* held with the counting codes, 52 ms; the texts missed at 166.
+
+**The census.** What the board needs, against what stands:
+
+| what the board needs | what stands | what is open |
+|---|---|---|
+| an act's place at rate zero | a command with no place; a row a person types | version 6: the selection's cell and a press as an act (decision 4) |
+| a cascade settled inside an edit | an edit is one step | version 6's `(settle K)` (decision 1), over `KERNEL.48`'s count |
+| a command's own key at rate zero in grid mode | §3.10 says the host takes it; the host does not | the host's grid listener (decision 4) |
+| the board drawn | a sheet shown in the viewport, its region viewed at a scroll (`ENGINE.14`, `ENGINE.18`), patched by its changes (`ENGINE.19`, `ENGINE.20`) | a format's code drawn (decision 10) |
+| a frame's changed cells | the language's private list | `KERNEL.48`, Frazaro's |
+| a reference | Life's, Sand's and Kairos's | a mine-clearing game by hand, in Rust and in JavaScript (decision 7) |
+| the floors | fourteen rows, Life's ladder | the idle frame, an act's latency and the deepest cascade (decision 8) |
+| a replay | the recorder and the two players | a settle's frames, rowless; the owner's session (decision 7) |
+
+**The work.** The page's version 6 with the engine and the host; the viewport's codes; the cartridge, its hands and its floors; the replay. The pin to `KERNEL.48`'s release comes first, in `ENGINE.1`'s record.
+
+| file | what it is | slice; decisions |
+|---|---|---|
+| `Cargo.toml`, `Cargo.lock` | the pin to the `vla-lang` release carrying `KERNEL.48`, with the owner's floors baseline | before 1 |
+| `docs/SPEC.md` | version 6: §3.3, §3.5, §4.2, §4.4, §5, §6, §7.2, §7.6, §8.3, §10, §11 (decisions 57 on), §12, §13; and two corrections, a format's code drawn (§3.1, §4.5) and a command's key at rate zero (§3.10) | 1, 2; 1, 4, 10 |
+| `engine/src/cartridge.rs`, `engine/src/abi.rs`, `engine/data/messages.vla` | `(spec 6)` and `(settle K)` read; the settle's state, the Clock numbered at an act alone, the act's one-frame rows released; the step's answer saying it settles; `describe`; a refusal of a `settle` out of its range | 1; 1, 4 |
+| `web/host.js`, `web/fake.js` | the settle at rate zero, an act waiting for it; the selection's cell and a press as an act at rate zero; a command's own key at rate zero; the replay's settle frames; the double's settle | 1; 1, 4 |
+| `web/viewport.js` | a `format` row whose number format is a code, and a cell's `text` row, read and drawn | 2; 10 |
+| `web/index.template.html` | the loop oracle's `settle` case over a card the page holds, with mutant pages; the render oracle's code case; the hand's block; `?frames=1`'s rows; `?blit=1`'s case | 1 to 4; 1, 4, 7, 8, 10 |
+| `cartridges/fathom/` | the source over the kit, the cartridge, the hand (`fathom.hand.js`), the replay and its golden | 3, 4; 2, 3, 5, 6, 7, 11, 12 |
+| `cartridges/common.vla` | a verb if two cartridges write it alike (a column's width over a range, looks with codes), else nothing | 3; 2 |
+| `engine/src/fathom.rs`, `engine/src/cartridge.rs`'s tests, `engine/testdata/describe/fathom.vla` | the hand in Rust, test-only; the counts held to the layout; the board's frames held; the describe golden | 3; 7 |
+| `engine/examples/frames.rs`, `engine/examples/play.rs` | the floors' three rows; the scripted session | 3; 8 |
+| `tools/check_frame_floors.ps1`, `tools/bench_frames.ps1`, `tools/check_blit_floors.ps1`, `tools/check_host_loop.ps1`, `tools/check_cartridge.ps1`, `tools/check_render_oracle.ps1`, `tools/check_web_offline.ps1` | the rows, the digests, the ceilings, the cases, the mutants and the folder | 1 to 4; 7, 8 |
+| `ROADMAP.md`, `REARVIEW.md`, `CHARTER.md` §7, `README.md`, `engine/README.md`, `web/README.md`, `Delta/CLAUDE.md`, the memory | the line, this record, the numbers, the pages | 1 to 4; 13 |
+
+**The decisions, the owner's.** Each with the sitting's recommendation and the alternatives it declines.
+
+1. **Convergence inside an edit: a manifest line, `(settle K)`, the page's version 6, carried by this item.** At rate zero a person's act steps the grid, and the grid then steps again, with no act, while the last frame changed a formula cell's value or had a write before it, at most *K* steps after the act's. That is `KERNEL.48`'s exact rule: `vla-lang`'s count of the formula cells whose values' bits the last complete frame changed is a fixed point only when no write landed before that frame. So the act's own frame never ends a settle: its end copies the written cells into their twins, and a formula reading them moves a frame later. A click is three frames, the act's, the release's and one that proves nothing moved. The third computes nothing: 2 µs at 16 by 16, and about an idle frame's 7 µs at 512 by 512 (*derived*). What a settle step writes is this version's to decide, and it recommends:
+   - *nothing but two things.* Before the first settle step the engine empties the act's one-frame rows, the press (`Input!B13` to `B15`) and the command (`B20`); the place (`B11`, `B12`) stays. And the Write sheet's derived rows apply before every settle step as before every step, counting as writes, so a cartridge whose Write rows never empty settles for *K* steps and says so.
+   - *The Clock's frame stands still while an act settles.* `Clock!B1` numbers the frames that begin an act, the load's first among them, and a settle step leaves it. So the frame number counts edits, as §5 already says at rate zero, and a time shown or a die thrown off the frame number never holds the count above zero. The engine numbers the Clock itself, a count of its own, where it wrote the machine's frame plus one. The step's answer keeps numbering the machine's frames, as the replay and the window's changes do.
+   - *The count is every formula cell's.* No sheet is left out; `KERNEL.48`'s `changed_on` serves the host's sentence, the sheet that still moves.
+   - *The loop is the host's, the state the engine's.* The step's answer gains a word, `settling`, while the rule holds. The host then steps again inside the tick's slice, drawing each frame as it draws any (a frame whose region did not change is still), and a person's act waits for the settle; the release and the Clock are the engine's, so the native players settle as the page does.
+   - *The load settles too:* frame 1 numbers the Clock, and the settle follows, so a settling cartridge opens on computed values. Measured, two frames, 224 ms natively, where a grid of 262,144 formulas drawn at frame 0 would show their texts (a `value` row takes one cell).
+   - *The replay logs the act once:* a settle's frames hold no row, the last frame of a replay excepted. The player steps every frame, and the engine's state makes each step what it was live.
+   - *K for this cartridge is 4,096*, three times the deepest measured, 1,315 frames at 9%. Past it the grid stops settling, and the host says so in words (`SD-30`).
+
+   The version is one of its own, carried by this item as `ENGINE.18` and `ENGINE.25` carried 4 and 5. `SPEC.4` is the network's next version, behind `REPO.6`'s gate, and its line already sends this question "here or to a version of its own"; it becomes version 7 or later, its ID kept. Version 5 is kept whole. *Depends on* `KERNEL.48`'s release.
+
+   *Alternatives:*
+   - *(a)* K sweeps unrolled in cells. At 512 by 512 the three layers' 786,432 cells leave room under the cap of 1,048,576 for no fourth layer beside the small sheets. A directional sweep, a chain read through the row above, opens only shapes monotone in its direction, and an opening winds around its mines (the widest path measured, 1,315 steps).
+   - *(b)* One ring a frame, at a rate the edit starts. The cartridge would write the Clock's rate, which the engine refuses as a cell the host writes (`cart-write-derived`, `ENGINE.3`). It would need a quiescence of its own computed in cells, and it paces a spreadsheet's answer by a frame rate: the deepest cascade would take 22 s at 60.
+   - *(c′)* The engine settling inside one step call. The replay stays an act a frame, but the window's changes are the last frame's alone, so the host would view the region whole after a settle, and a long cascade would show nothing until it settled, a yield drawing no frame.
+   - *(d)* The rule as first prototyped, step while the last frame changed a cell, with no write test. That stops a frame early wherever a written cell is read through its twin, which `KERNEL.48`'s scoping named.
+2. **The layers and their formulas: `Mines`, `Counts` and the `Field` as above; the first reveal's 3 by 3 cleared through a row gate; the counting codes.**
+   - The layout is Life's hash over the seed, the square and the game's number, under the density dial `Rules!B1`. The counts are computed once from it, the assumptions sheet feeding a computed one.
+   - The first reveal's 3 by 3 is emptied through `DealRow`, the deal's column on its three rows. The deal recomputes three rows of `Mines`, 1,536 cells, in 0.53 to 0.69 ms with its opening, and the daily board stays the seed's for everyone but those nine squares.
+   - The codes make the board's values numbers that count. Unsounded is 0, so an empty twin is unsounded and the first frame needs no test of its own; sounded is 10,000 plus the count; a flag 10⁷; a tripped mine 10¹⁰. A row's sum decodes into its soundings, flags and trips exactly, under 2⁵³ for the board's total. They need decision 10's viewport to draw their glyphs.
+
+   *Alternatives:*
+   - The layout made after the click: the whole `Mines` layer recomputed at the first reveal, about 25 ms (*derived* from the new game's first frame). The daily board would differ by where each person first clicks.
+   - The layout moved, the clicked mine relocated: a search for a free square, `MATCH` or `INDEX`, which the language has neither of.
+   - The states as texts drawn as they are, no viewport change: the board computed whole 5.6 times dearer and a click 2.4 times, while the language compares texts by allocation (Found 1), and no row that counts.
+   - Numbers that do not count (hidden −1, a flag −2): as fast, with a first-frame test, since an empty twin reads 0, and no exact tally.
+3. **Chording, and the cascade's worst case.**
+   - A number whose flags equal its count, chorded by the middle button, by `clear`, or by a primary press on the number, turns to 10,000 for one frame and back. So its unflagged neighbors open as a zero's do, a wrong flag tripping a mine as the genre has it. Chording costs what a click does, 0.27 to 0.31 ms natively, three frames, and a chord that opens a zero cascades from it.
+   - The worst case on 262,144 squares is the table's: 1,315 frames at 9%, 151 ms at 7 to 8%, 89.7 ms at the dial's 0, and at 15% 53 to 110 frames in 1.8 to 3.1 ms.
+   - The floors' cascade row is the deepest by time, a fixed layout at 8% dealt at its widest path's end (decision 8), and K, 4,096, stands three times over the deepest by frames.
+
+   *Alternatives:* the genre's both-buttons chord alone, which no keyboard holds; a chord reaching its neighbors in its own frame, which needs its neighbors to read the center's flags, a 5 by 5 window at every square of the board for an act of one square.
+4. **Keyboard first, the pointer its convenience, and the board a sheet of its own the viewport scrolls.**
+   - The `Field` is a sheet shown, version 4's, and the cartridge opens on it, its Camera's third row naming it. The Screen is hidden, and the manifest's window is the Screen's alone.
+   - The cursor is the viewport's own selection. The arrows, PageUp and PageDown, Home and End, and Ctrl+Home and Ctrl+End move it, held keys repeating; the wheel and the scrollbars scroll the board; and none of them is a step. The host views the region the viewport shows at a scroll that leaves it (`ENGINE.14`), an 84 by 48 region in 1.0 ms. A page of columns has no key of the viewport's yet (Excel's Alt+PageDown and Alt+PageUp), a detail for the build.
+   - The acts are the game's commands, each in the palette and each with a key of its own: `sound` (Space), `buoy` (F), `clear` (D) and `chart`, a new chart (N). At rate zero the host takes a holding command's key on the viewport before the viewport does, as §3.10 already says; every other key stays the viewport's. That is a correction of `ENGINE.25`'s host, not a version.
+   - Version 6 gives an act its place at rate zero. Before an act's step the host writes `Input!B11` and `B12` as the cell the selection stands on in the sheet shown. A press of a button over a cell of that sheet is an act: the viewport selects the cell, the press's row (`B13` left, `B14` right, `B15` middle) holds 1 for the act's frame, and the engine releases it. Over the sheet's cells at rate zero, for a `(spec 6)` cartridge, the context menu is taken and the wheel stays the viewport's.
+
+   *Alternative,* the brief's own framing: the board on the Screen, 80 by 50 through the Camera, and a cursor in cells moved by the game's commands.
+   - Each move would be a step, three frames, about a click's 0.26 ms natively.
+   - Its cursor would be drawn either by codes doubled on the board or by the Camera placing the viewport's selection, a game moving the selection, which §12 names as no version's yet.
+   - A held arrow would move once, since a command's key repeating runs nothing (`ENGINE.25`, decision 52), until a command may repeat, another row of version 6.
+   - Every move of the window would view 4,000 cells whole.
+
+   Its gain is that a move is a palette command and an edit the floors count. The recommendation keeps the spreadsheet's own navigation, the shape the item measures for and the first game's, with the roadmap's "scrolling and selecting on a big sheet" in it. What it gives up: a move is the viewport's key, as every spreadsheet's arrows are, and not a palette command, and the Camera's window goes unused.
+5. **The name and the look: *Fathom*, a working title; a chart of a bay.**
+   - The squares are unsounded water. A sounding is the count of the shoals around a square; a buoy is a flag; running aground is a tripped mine; a chart is a board.
+   - The look is Lovelace Lavender as its primary: unsounded water in the lavender, sounded water a pale ground, a sounding's digit in the default text over a fill that deepens with the count (a format holds no font color), a buoy `▲` and a grounding `✸` each a fill of its own.
+   - The genre's name, Microsoft's, and its look (the gray bevels, the face, the colored digits) are others' and none of them is used (`CHARTER.md` §6's caution). A daily chart is the seed: everyone who types the day's number into `Clock!B3` sounds the same bay.
+
+   *Alternatives:* *Soundings*; *Shoals*. The name is the owner's.
+6. **Where it lives: `cartridges/fathom/`, 0BSD, a fixture of the floors beside Life, the gun and Sand.** A floor's fixture lives beside the check that reads it (`CHARTER.md` §7), and `REPO.5`'s question of the arcade is not this item's. *Alternative:* a repository of its own, as Buffet is, its floors then read across repositories.
+7. **The oracle.**
+   - The hand in Rust, `engine/src/fathom.rs`, test-only and shared with the floors' runner by its path, as Sand's is. Every frame is held at 64 by 64 through a session, and the whole board of 512 by 512 after every act's settle. The scoping's prototype held 12 to 204 boards a session this way.
+   - The counts held to the layout: a law over generated layouts at several sizes and densities, every square's face its 3 by 3's mines.
+   - The hand in JavaScript, `cartridges/fathom/fathom.hand.js` (`ENGINE.16`). It answers the loop oracle's replay case each frame with the `Tally`'s row sums, one view of a column of 512 cells a frame and never the board's 262,144.
+   - A replay, the owner's session at the hand test, kept short, and its golden, the `Tally`'s record at its end, whose rows decode each row's soundings, buoys and groundings exactly.
+   - The loop oracle's `settle` case over a card the page holds, with mutant pages: a settle stepped and drawn, the Clock standing, the release, an act waiting, K reached and said, a replay's rowless frames, the selection's cell and a press as an act at rate zero, and a command's key at rate zero.
+
+   *Alternatives:* the hand answering the board's cells, a grid view of 262,144 formulas a frame; a golden of a window of the board, which misses the rest of it.
+8. **The floors: three rows a half, natively and in the browser, the thirteenth baseline the owner's run.**
+   - *`fathom`*, the idle frame over the board, timed in runs of 1,000 as the gun is timed in runs.
+   - *`fathom-act`*, an act's latency over the scripted session of 200 acts at 15%, its p95 the floor's basis: cells a second at the p95.
+   - *`fathom-cascade`*, the deepest cascade by time, a fixed layout at 8% dealt at its widest path's end, its frames and its time.
+
+   Each row carries its memory and its cartridge's digest, the cascade's a build of the source at its density by the pass's `expand_with`, as the ladder's rungs are built. The act's latency through the host, act to record drawn, joins `?blit=1` as a case of its own, under a bar of one display interval. The checks are `tools/check_frame_floors.ps1` (the rows, the digests, the ceilings, a latency's row) and `tools/check_blit_floors.ps1` (the case and its bars).
+
+   *Alternatives:* the session's mean in place of its p95, steadier under the page's 0.1 ms timer and blind to the slow tail; the dial at 0 as the cascade's fixture, which is not the worst.
+9. **The predictions, held as written,** each against its measurement above; the misses kept as misses, the deepest cascade's above all.
+10. **The viewport draws a number's text under its format's code, inside this item, its first slice after version 6.** A `format` row whose number format is a code is read, and a cell's `text` row drawn in place of its value, aligned as a number. §3.1 already says the viewport draws "the number formats ... the record declares", and §4.5's note says a code is not yet drawn, so this is a correction and no version. Buffet's dollars, texts of two decimals today, are its second client. *Alternatives:* an item of its own, minted first, the gap assessment's order; the texts as drawn, no viewport change, at the fold's price.
+11. **The tally in blocks of 32 squares, a row's sum of its blocks, and the board's.** A row's `SUM` over 512 squares made the deepest cascade 265 ms against 70 with no tally; blocks of 32 cost 89.5. *Alternatives:* a row's `SUM`, until the language folds a range by its changes (Found 2); no tally, and no counts and no compact golden.
+12. **Running aground counts, and the voyage goes on.** A tripped mine shows and is counted in its row's sum, and the chart stays open. So an expedition of hours is not ended by one guess, and no cell broadcasts a loss to every square. *Alternative:* the genre's game over at the first trip, a frame computing every square to freeze the board.
+13. **The slices, the checks and the bookkeeping.**
+    - *Before slice 1:* the pin to `KERNEL.48`'s release, in `ENGINE.1`'s record, with the owner's run of `tools/bench_frames.ps1`.
+    - *Slice 1:* version 6, the engine, the host, the double and the loop oracle's `settle` case.
+    - *Slice 2:* the viewport's codes, with the render oracle.
+    - *Slice 3:* the cartridge, its hands, `cargo test`, the floors' rows, the session example and the owner's run.
+    - *Slice 4:* the replay and its golden, from the owner's session.
+
+    Each slice is a commit at the owner's word, staged by content. The line goes to 🟡 at the approval and leaves for the ledger with slice 4's commit; the playtest pass follows the hand test. The charter is unamended, the Clock still counting an edit a frame as §1 and §5 have it, and §7 gains the board's numbers at the close. *Alternative:* one slice, the version and the board together, a larger hand test.
+
+**Found.** Measured and unminted; the language's are Frazaro's to weigh, the engine's are this item's work above.
+1. *A text comparison makes two strings.* `compare` folds both texts by collecting new `String`s: the board computed whole took 118.2 ms with its states as texts and 21.2 with numbers, 451 against 81 ns a square, and a click 0.64 against 0.27 ms. A fold compared character by character, or exact equality tried first, would spare the allocations.
+2. *A range's aggregate is folded whole at every change in it.* A row's `SUM` over 512 squares made the deepest cascade 265 ms against 70 with no tally (the gap assessment's held `SUM`); blocks of 32 cost 89.5.
+3. *A load's first frame ends by making every twin again* (`KERNEL.40`, open): 109 of the first frame's 183 ms natively at 797,189 formula cells.
+4. *A window's changes are the last frame's alone* (`KERNEL.42`). A host that draws once after a settle of many frames views the region whole; changes since a given frame would patch it.
+5. *An idle frame walks the order's bitset* (`KERNEL.36`'s open question of a frame's cost by a sheet's size): 1.6 µs at 12,741 formula cells and 6.7 to 8.5 at 797,189 natively, a settle's proving frame almost all of it.
+6. *A `value` row takes one cell,* so a grid at rate zero draws its formulas' texts until its first step; settling the load answers it here.
+7. *The engine's own:* a grid cartridge's command keys are not taken at rate zero, and the viewport draws no format's code. Both are this item's work, decisions 4 and 10.
+
+**The catch.** Each met once in the scratch work, or foreseen by reading.
+- A part every `$` holds over the act's place, in the board's own formula, computes every square at every act. The place is read through a row gate.
+- With −1 for unsounded, an empty twin reads 0, so the first frame needs a test of its own; the counting codes make unsounded 0.
+- The act's frame never ends a settle, and a write before a frame keeps the settle going a frame more, so a click is three frames.
+- A settle step that numbered the Clock would be a write at every step: the Clock stands.
+- A deal at a corner probes nothing near the threshold. The worst case is found from the layout.
+- The deepest cascade is the percolation threshold's, not the empty board's, so K is set over the measured, not the derived.
+- A hand that answers the board's cells has the replay case view the board's grid record every frame. It answers the `Tally`'s.
+- The loop check's control plays every committed replay on each of its mutant pages, and this board's load is about 0.7 s a page in the browser. The replay is kept short; a mutant page that ran only its own case would bound the control's time whatever the replays.
+- The page's timer steps in 0.1 ms: an act of 0.3 ms reads coarse, and the idle frame is timed in runs.
+- A `column` row names one column, so the board's 512 widths are 512 rows, a walk the pass makes.
+- A fresh module loads the board in about 690 ms and one that has run in about 490: a floor names which it times.
+- A doubled backslash in a shell here-document collapsed to one in the scratch work, so its sources were written by the editor.
+- The tree is shared: every file this item touches is staged by its content.
+
+**Oracle.** On the owner's machine under Windows PowerShell 5.1, then on both jobs.
+- `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`: the engine's version 6 (the settle's rule, the Clock, the release, K, the step's answer, the load's settle), the hand's sessions, the counts' law, the board's describe golden and the replay played to its golden.
+- `cargo run --release --example expand -- --check`, and the floors' runner's check mode: the board's frames held, its allocations and its memory at their ceilings.
+- `?frames=1` under headless Chrome, the board's rows held to the page's hand.
+- `tools/check_host_loop.ps1` at both ratios: the `settle` case and the replay case with the hand, their mutant pages failing by name. `tools/check_render_oracle.ps1`: a code's text drawn. `tools/check_cartridge.ps1` and `tools/check_web_offline.ps1` with their controls.
+- `tools/run_checks.ps1 -WithExtras`: all green.
+- The owner's hand tests, at each slice: the settle card; the board's codes drawn; a chart sounded by the keys alone and by the pointer, a deep cascade watched spreading, a new chart; the replay played.
+- The owner's run of `tools/bench_frames.ps1`, pasted, the board's rows entering the floors' history.
+
+**Size.** `~weeks`, as filed (*prediction*): slice 1 about two days; slice 2 about a day; slice 3 two to three days; slice 4 half a day; the pin and its baseline beside them.
+
+*Scoped 2026-10-18; the thirteen decisions await the owner.*
+
+*Approved 2026-10-18, the same day, every decision but the name, in the owner's words: "Recommendations approved, excpet I would name the game Superposition (styling the game after quantum mechanics in that a cell is simultaneously safe and dangerous until observed/clicked, leveraging quantum mechanics humor throughout the game in favor of nautical references). Proceed with implementing Superposition as scoped." So decision 5 is amended. The cartridge is* Superposition*, in `cartridges/superposition/`, and its words are quantum mechanics':*
+- *a square not yet looked at is in superposition, safe and dangerous at once;*
+- *observing it collapses it;*
+- *a dangerous square is a decay, an atom that has decayed;*
+- *a square observed safe shows its reading, the decays among its eight neighbors;*
+- *a box seals a square a person believes has decayed;*
+- *collapsing a reading its boxes satisfy observes every square around it;*
+- *observing a decay is counted, and the experiment goes on;*
+- *a new board is another world, its number in the hash, every branch having its own.*
+
+*The commands are `observe`, `box`, `collapse` and `branch`, and the nautical words leave. The roadmap's line went to 🟡 the same hour. One fact changes the order: Frazaro's `KERNEL.48` is scoped and under construction there, not yet released (its API as scoped: `changed`, `changed_on` and `reached`, and its fixed point, a frame that changed nothing with no write before it). So slice 2, the viewport's codes, which needs nothing of it, is built first. Slice 1's engine is written against a scratch copy of the language carrying that API, and is committed at the pin to its release.*
+
+*Slice 2 built 2026-10-18, before slice 1 (the approval's order), the viewport's codes: decision 10.* What it touches, staged by its content apart from slice 1's work in the same files:
+- `web/viewport.js`: a `format` row's number format read as `general`, `text` or a code in quotes, kept as `{ num: 'code', code }` and never applied; a `text` row (`CELL_ROWS` 32, counted `texts`) after a cell's `cell` or `value` row, the cell's text in the value's place, its value kept as `value` for the bar, aligned and matched to a look by the value; one for a cell with no value, or a second, malformed. A patch reads it as a load does, so a window's changes carrying a text row patch, and its counts and lines are taken back as the other rows'. `cell(row, col)` answers `value` beside `text`; `load` and `patch` count `texts`.
+- `web/host.js`: the host's row of a cell takes a `text` row as the cell's, so that it lays a window's changes on a record holding codes.
+- `web/index.template.html`: the grid oracle's own reader reads a code and a text row (`gqRead`), each drawn text from a text row counted (`coded`); the grid card's row 16 pinned by name at frames 1, 4 and 5 (`codes`); the lone record holding a value under a code, its text and its counts pinned; the fixtures' viewport naming a value beside the text it draws.
+- `cartridges/gridcard/`: row 16, numbers under six codes of Excel's, `0.00`, `#,##0.00`, `0.00;(0.00)`, `0%`, a text's section and a glyph alone (`◆`) through a look of 0.125; a formula under `0.00` every frame, whose value is a CGA look's at frames 4 to 24 by fours, its text row gone then and back after; a code under the look of 3, General, no text row; a number too wide drawn as #s. 150 rows to 177. Its describe golden: one shape more (`=Clock!R1C2/4`).
+- `tools/check_host_loop.ps1`: the grid case's floors `codes` 3, `coded` 213 and `hashes` 95; mutants DU, DV and DW, the control from 124 mutant pages to 127.
+- `docs/SPEC.md` §3.1 and §4.5, correction notes; `web/README.md`, the viewport's rules and its API.
+
+*Measured,* natively and in headless Chrome 155 at a ratio of 1 and 1.5. The record (a scratch runner over the expanded card through `Cartridge`): row 16's ten constants print eight text rows, B16 `1.50`, C16 `2.68`, D16 `1,234.50`, E16 `(3.00)`, F16 `25%`, H16 `1,234,567.89`, I16 `text: quanta` and K16 `◆`, and J16 none, its look General; G16's value row and text row in every frame's changes. The loop oracle's grid case over the module: `coded` 213, the plan's count exactly (the eight constants at the 20 frames before the Camera's second move, seven after, B16 out of view, and G16 at the 18 frames its value has no look); `hashes` 193, the 168 before and H16 at every one of the 25 frames; `patches` 20, every frame after the second laid by its changes as before.
+
+*Held.* `cargo test` (the describe golden blessed for the grid card alone, the seven others byte for byte); the loop oracle at both ratios, its 27 cases and the game's page's 12; `check_host_loop.ps1 -Control`, the real page and the game's page clean and each of the 127 mutant pages failing for its own reason, DU (`D1 shows "1.5", and the record says "1.50"`), DV (the lone record's counts naming a malformed row) and DW (the grid case's patches under their floor); `run_checks.ps1 -WithExtras`, 13 checks and 13 controls, ALL GREEN in 600.5 s.
+
+*A catch.* The grid card's first B16 held 1, the CGA's look of 1 a General format, so the record printed no text row for it and the cell drew `1` in blue: a look's format goes before a cell's own, a code's included. B16 holds 1.5. And `grep -c $'\r$'` read every line of an LF file as CRLF under Git Bash: `git ls-files --eol` is the measure of a working copy's line ends.
+
+*Slice 1 built 2026-10-18, version 6, over a copy of Frazaro's `KERNEL.48` (decisions 1 and 4).* `KERNEL.48` was built that morning in a Frazaro session's worktree and not yet committed or released, so this slice is written against a copy of it: `vla-lang` 0.10.0 from the registry with the worktree's `src/machine/mod.rs` laid over it (SHA-256 `81ebeea4…`, taken at 07:20), its `changed`, `changed_on` and `reached` the API the scoping relayed. Every build here passed cargo `--config "patch.crates-io.vla-lang.path=…"` and `Cargo.lock` was restored after; the tree's pin is still `=0.10.0`, so the slice builds only over the copy, and is committed at the pin to `KERNEL.48`'s release, in `ENGINE.1`'s record, and not before.
+- `docs/SPEC.md`: version 6 (§0's history, §3.3 an act's place and a press as an act, §3.5 the Clock counting acts, §3.10 a command's key at rate 0, corrected, §4.2, §4.4 the step's word, §5 the settle, §6, §7.2 `(settle K)`, §7.6, §8.3, §10 the limit, §11 decisions 57 to 66, §12, §13).
+- `engine/src/cartridge.rs`: `SPECS` 1 to 6 and `MAX_SETTLE` 65,536; the manifest's `settle`, a (spec 6) cartridge's at rate 0 alone; `Settle` (`Settled`, `Settling`, `Unsettled`), the cartridge's settle state, `settle()` and `step_row`; the step numbering the Clock by acts, releasing an act's press and command before the first settle step, and judging each done frame by the language's fixed point (`Machine::changed`, a write before the frame); a person's rate above 0 refused for a settling cartridge (`cart-write-clock`); six tests. `engine/src/abi.rs`: `alonzo_step` answers `step_row`. `engine/data/messages.vla`: `cart-spec-unsupported` names (spec 6). `engine/README.md`, the root `README.md`.
+- `web/host.js`: the host at version 6: the step's word read (`settling`, `unsettled`), a settle stepped inside the tick's slice with the derived writes before each and every frame drawn, an act waiting for it; the load's act; an act's rows at rate 0 (`_writeActRows`), the place captured when the act is made; a press over a cell an act (`_pressAct`), read in the capture phase, before the viewport's own handler, and its context menu taken; a command's key on the viewport at rate 0 (version 5's too); the engine's release mirrored into the host's and the recorder's records (`_released`); the act's sentence said when its settle ends, or that K stopped it; `counters()` `presses`, `settles`, `settleSteps`, `unsettled` and `settling`. `web/fake.js`: the double reads (spec 6) and `(settle K)`, numbers its Clock by acts, releases the press and answers `settling` and `unsettled`; its grid never settles, honestly, so each act takes its K steps.
+- `web/index.template.html`: the loop oracle's `settle` case, the twenty-eighth, on both pages; the settle card written in the page, its box in the page's own flow below its fold, outside the stage, which is fixed and never scrolls; three older cases' later page moved from (spec 6) to (spec 7). `tools/check_host_loop.ps1`: the case's floors, 28 cases and the game page's 13, mutants DX to EF, DO re-anchored; 127 mutant pages to 136. `tools/check_cartridge.ps1`: (spec 6) and `(settle K)` read as the engine reads them, a replay of 6; its control's later page at 7 and three mutants and a passing variant more, 43 mutants. `tools/run_checks.ps1`, `web/README.md`.
+
+*Measured.* The engine's module over the copy: 1,044,245 bytes, 5,602 more than 0.2.0's 1,038,643, `KERNEL.48`'s and this slice's together. The settle card, over the module in headless Chrome 155: the load's act and one settle step, frame 2, on computed values; a press on E2, eight frames, the spill a cell a frame to the row's ends and a frame that proved nothing moved, the Clock 2 throughout and the press 1 at its act's frame and 0 after; the same press again three frames; the command by KeyS three; under (settle 3) a press on B2 unsettled at frame 6; the run's replay 16 frames, rows at the acts' four frames and the last, played to all 16. Natively, the engine's tests: the same spill, a settle under a budget of one cell a call the same frames and words as one under none, an act's own frame changing nothing yet settling, and K stopping a longer spill.
+
+*Held.* Over the copy: `cargo test` 49 (six new), `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`; `check_cartridge.ps1` and its control, 43 mutants each failing for its own reason; `check_host_loop.ps1` at both ratios, its 28 cases, and the game's page's 13; its control, the real page and the game's page clean and each of the 136 mutant pages failing for its own reason, DX to EF among them, DO's anchor and AP's words moved; `run_checks.ps1`, 12 of 13 checks, the thirteenth `check_frame_floors.ps1`, whose heap ceilings the runner built over the copy passes by 20 to 48 bytes a fixture, every frame equal: `KERNEL.48`'s own measured cost, four bytes a sheet, which the pin move's record takes.
+
+*Catches.*
+- The release first wrote `Input!B20` empty whatever it held: a write into a cell the sheet does not hold adds a cell, and a cell added has the language compute every cell at the next frame. The release reads the cells first, through `Env::model`, and writes only those holding something other than their rest.
+- The double's grid never settles: its Screen's formulas change at every frame and its Write sheet lands a row before every one. So over the double every act takes its K settle steps and ends `unsettled`, which is version 6's rule for a grid whose writes never stop; its earlier rule of a few moving frames was the double's own invention, dropped.
+- At rate 0 a version 5 card's `Input!B19` is never written, so a command that holds by the sheet shown holds not there; the version 5 key check runs `note`, which holds everywhere.
+- (spec 6) was the "later page" of the engine's test, three page cases and two of `check_cartridge`'s mutants: each moved to (spec 7).
+- A trial of the large board in headless Chrome, its box below the fold, found its first press, of the left button, no act: the viewport's own handler focuses its scroller, the focus scrolls the page under the point, and the host, reading the press's place after it, found no cell. The host reads a press at rate 0 in the capture phase, before the viewport's handler; the settle card stands below the fold too, in the page's own flow (its first place, in the stage, never scrolled, the stage being fixed, and mutant EF passed there), and EF, the press put back after the viewport's, fails the case.
+- `Manifest` gains a public field, `settle`, a break by Cargo's rules: the release that carries version 6 is `alonzo` 0.3.0, the owner's call.
+
+*Slice 3 begun 2026-10-18, the cartridge: Superposition playable on the page, its floors to follow (decisions 2, 3, 5 to 7, 11 and 12).* Built over the same copy of `KERNEL.48` as slice 1.
+- `cartridges/superposition/superposition.source.vla`, 271 lines over the kit, which the pass expands into `superposition.vla`, 628 rows. Its one parameter is the lattice's side, `lattice-side`, 512, which a door defines again as the ladder defines Life's board; every range and every count the side moves is built by the expander's own arithmetic (`address-expand`, `column-letters-expand`, `&expand`), the Field's 512 column widths by a walking macro, `widths`, and the Tally's sixteen blocks by another, `tally-blocks`. Version 6, rate 0, `(seed host)`, `(settle 4096)`. Its sheets: the Field, the Observer and the Constants shown; the Decays, the Readings, the Probe, the First and its rows, the Lab, the Tally, the Screen, the Camera and the Commands hidden. Its commands `observe` (Space), `box` (KeyB), `collapse` (KeyC) and `branch` (KeyN), empty `holds`, a press of the left, right and middle buttons the same three acts; an act on another sheet or off the lattice touches nothing. Its look, Lovelace Lavender through twelve looks whose formats hold codes (KERNEL.47, drawn since slice 2): a site in superposition `6B4FC8` under `;;;`, a reading of nothing white, the eight readings' fills deepening from `F7F4FC` to `B9A3E7`, each drawing its digit, a box `A080E0` drawing ▣, an observed decay `FFD5D5` drawing ☢.
+- `engine/src/superposition.rs`, the hand, test-only and shared by its path: the lattice written as a person writes the game, site by site from the last frame, sharing no formula with the cartridge. `engine/src/lib.rs` names it. `engine/src/cartridge.rs`, three tests: the readings law over lattices of 32 and 64, three probabilities and two seeds, each site's reading its 3 by 3's decays and a first observation's 3 by 3 clear; a session on a lattice of 64 held to the hand at every frame of every act's settle, site by site and row by row, through a first observation's cascade, boxes and a collapse they satisfy, an observation of a reading, wrong boxes and the decay a collapse observes through them, a box opened, a decay observed and counted, acts on another sheet and on the border touching nothing, a branch, and the next world's first observation clear; and the committed lattice of 512, its whole lattice held to the hand after each of six acts' settles. `engine/testdata/describe/superposition.vla`, the describe golden: 798,731 formula cells in 38 shapes, the Field one shape of 262,144 cells in one run.
+- `tools/build_web.ps1`, the page's order, Superposition ninth; `tools/check_cartridge.ps1`, nine cartridges and sources and the row floor 628; `tools/check_host_loop.ps1`, pass's and empty's counts nine, and grid's game half over two grid cartridges, a cartridge that settles held at the frame its load's settle left (the grid case's record now chosen by the host's own frame, which is the loop's frame for every other cartridge); `web/index.template.html`, that choice; the root `README.md` and `web/README.md`.
+
+*Measured.* The engine's tests, natively over the copy: all 52 in 3.4 s, the 512 lattice's six acts among them. The page's grid case: the lattice loaded and its settle stepped at its load, frame 2, its Field drawn from the values record cell for cell over the stage's region, fills and no text, 2 grids, 14 frames. A trial in headless Chrome 155 on real time through the page's own host, every frame drawn as the host draws one, a frozen budget clock so that each act runs to its settle's end at once: the load and its settle 1,105 ms on a fresh module; a first observation, its deal of three rows of the Decays and an opening of 21 sites, 38.6 ms over 6 frames; an observation by Space opening 55 more, 5.6 ms over 9 frames; a box by B 6.9 ms and by the right button 2.3 ms, 3 frames each; a collapse that changed nothing 0.6 ms; a branch, the lattice dealt again, 69.1 ms over 3 frames; X passed to the viewport. The region drawn, `A1:BX43`, 3,150 fills.
+
+*Catches.*
+- A macro's parameter named `column` replaced the head of the `column` row it wrote, the template's substitution being by name, so 512 rows read `(2 "Field" "B" 3 ...)`, which the load refused: the parameter is `from`.
+- `&expand` takes no macro call among its arguments, only the expander's primitives, so the Observer's sums spell their ranges with `column-letters-expand` and `+expand` in place of the source's own `rows-range`.
+- A first draft of the Observer's labels wrote empty texts for its blank rows: each block of labels is its own call.
+- Mutant AP, the picker in reverse, named Kairos as the reversed picker's first cartridge: Superposition is now, and its words say so.
+- The trial of the large board that found slice 1's press read after the viewport's focus is this slice's, run over the page as built.
+
+*To come in this slice:* the floors' three rows, natively and in the browser (`superposition`, the idle frame; `superposition-act`, an act's latency at its p95 over a scripted session; `superposition-cascade`, the deepest cascade by time at 8%), the runner's and the page's instruments, the act-to-draw case of `?blit=1`, the session example and the owner's run of `tools/bench_frames.ps1`, which waits for the pin to `KERNEL.48`'s release, its thirteenth baseline taken over the release's module.
+
+*The pin at `vla-lang` 0.10.1, 2026-10-18, the owner's word: "Frazaro/vla-lang 0.10.1 (which includes KERNEL.48, as requested) is published and live on GItHub and crates.io, so the changed formula count can now be used in Alonzo. Proceed with finishing CART.12 with the new 0.10.1 pin and provide a comprehensive summary of work completed, benchmarks, and a total hand test once CART.12 is fully implemented."* The release's `src/machine/mod.rs` is the copy's byte for byte, so slices 1 to 3 hold over it unchanged. The pin, the thirteenth baseline and the A/B are in `ENGINE.1`'s record of the pin to 0.10.1. The engine's tests, the checks and the controls below ran over the release, with no `--config` patch left.
+
+*Slice 3 finished 2026-10-18: the floors' three rows, the instruments, the session example (decision 8).* What it touches:
+- `engine/src/superposition.rs`: the floors' scripted player, `Player`, and its moves, `Move`, and the deepest deal of a world, `Lattice::deepest`, with `deal` public.
+  - The player, a player who knows the lattice, as the scoping's session played one: the first act of a world observes a site anywhere, the deal. Every later act is drawn:
+    - six in ten, a safe site on the frontier;
+    - three in twenty, a decay there boxed;
+    - one in ten, a reading its boxes satisfy collapsed beside a site in superposition;
+    - one in twenty each, a trip, a jump and a box opened.
+  - Each act is made by its button or its command, half the time each. The draws are MINSTD's, every product under 2^47, so a double holds them and the page's hand plays the same acts.
+  - The deepest deal: the largest cluster of readings of nothing, and the site at an end of its widest path, found by two breadth-first sweeps.
+- `engine/src/cartridge.rs`, two tests:
+  - the scripted session on a lattice of 64, forty acts, every frame held to the hand;
+  - the deepest deal at 8% on a lattice of 64, observed first, its settle the rings and two frames, or three where the far ring's border opens a frame after it.
+- `engine/examples/frames.rs`, Superposition's three rows, over the committed cartridge with the seed 1 written as the host writes a `(seed host)` cartridge's:
+  - `superposition`, the idle frame: ten runs of 1,000 steps after the load's settle, nothing written, each run one span;
+  - `superposition-act`, an act's latency: the player's 200 acts at 15%, each act's Input rows written as the host writes them, the rows that differ, each act timed from before its rows to its settle's last step. Cells a second are taken at the session's 95th percentile. Every act's Tally is held to the hand, and the whole lattice every fifty acts;
+  - `superposition-cascade`, the deepest cascade by time: the lattice at 8% with the same seed, the hand's deepest deal observed by its command, the act and its settle timed whole, the whole lattice held after it.
+  - Each row's memory, and in `--check` its allocations, are a counted instance's. The idle row counts its two idle acts; the session's row its first twelve acts, the twelfth counted; the cascade's row the cascade, counted whole. Every frame's Tally is held, and the whole lattice at each settle's end. The hand's own work is never counted.
+- `engine/examples/play.rs`: a cartridge named superposition is played by the player at rate 0 through four phases, two worlds at 15%, one at 9% and one at 15% again, its times printed by move. Every act's Tally is held, and the whole lattice at each phase's end.
+- `web/index.template.html`:
+  - `?frames=1`'s three rows over the module, held to the page's hand (slice 4's file), the idle runs five of 1,000;
+  - `?blit=1`'s sixth case, `act`. Superposition is loaded through the host in a box of the screen's size with the seed 1. Then 20 acts warm and 120 timed, each by its command on the cell the viewport's selection stands on. Each act is timed from before the command to a task queued after the rendering of the frame that drew its settle's end; a settle longer than the tick's slice goes on at the next animation frame. The Tally is held to the hand at the end.
+- `tools/bench_frames.ps1`: ten rows a half. No block is printed when the halves played another session (Frames, Steps) or another cascade (its frames, seed, probability, deal, rings and sites opened). The three rows name the cartridge's one file.
+- `tools/check_frame_floors.ps1`:
+  - the six rows; an act row's `FrameP95`, its acts a second one over its p95 within 5%, and its `Steps`; a cascade row's `CascadeMs`, `Seed`, `Probability`, `Deal`, `Rings` and `Opened`, its frames a second its frames over its time; and the two halves' sessions and cascades alike;
+  - the runner's three counted rows, their acts settled (`settled`), the cascade's deal, rings and sites opened held to the baseline's native cascade row, and their ceilings;
+  - the control's five table mutants and two fake runners more, twenty-five and eleven.
+- `tools/check_blit_floors.ps1`: the act case, held at its p95 under one display interval, the baseline's own. Its frames are at least two an act, on a full screen's canvas. Its max and its acts drawn late are a cascade's and are not held. Four mutants more, twenty.
+
+*Measured* (the thirteenth baseline's run, on the owner's machine, both halves opted out of the throttling and on the performance cores; the ranges over the day's six runs):
+
+| row | natively | in the browser |
+|---|---|---|
+| the idle frame over 798,731 formula cells | 0.0043 ms (0.0043 to 0.0045) | 0.0053 ms (0.0052 to 0.0054) |
+| an act, the session's p95 | 0.4549 ms (0.449 to 0.487) | 0.7 ms (0.6 or 0.7) |
+| an act, the session's p50 | 0.32 ms | 0.5 ms |
+| the deal, the session's first act | 0.88 ms | 1.4 ms (once 18.3) |
+| the deepest cascade at 8%, SP502 | 141.3 ms over 777 frames (136.9 to 141.3) | 174.4 ms (174.4 to 188.8) |
+| a cascade's frame, p50 | 0.17 ms | 0.2 ms |
+| the load, and its settle | 544 ms; 2 frames, 204 ms | 661 ms; 2 frames, 238 ms |
+| the memory | 336,414,302 bytes, 421 a grid cell | 314,441,728 bytes of module |
+
+- The two halves played the same session, 200 acts over 780 frames, and the same cascade. Its deal is at `SP502`, the largest opening's 118,231 readings of nothing, 775 rings, 777 frames, 209,446 sites opened.
+- The heap's high-water mark is reached at the load's first frame, which computes every cell, and never by an act.
+- The counted acts: an idle act 22 allocations and 5 reallocations, the session's twelfth act 560 and 37, the cascade 4,146 and 63, about five a frame.
+- *Through the host,* the act case on real time in headless Chrome 155, its own profile, on its 800 by 600 screen: 120 acts over 448 frames, p50 1.0 ms, p95 2.5, max 7.1, none later than one and a half intervals. The scoping's prediction was a p50 of 1 to 2.5 ms and a p95 of 3 to 8: its p50 held at the low end and its p95 came in under it. The case's baseline is the owner's run in fullscreen.
+- *The playtest session,* natively: 470 acts over 2,486 frames, 557 ms in its acts, every act's Tally held.
+  - The first world at 15%, 300 acts: median 0.32 ms, p95 0.39, longest 0.83.
+  - The second world, 100 acts: 0.33, 0.75 and 1.15.
+  - At 9%, the deal opened 98,070 sites in 713 frames, 82 ms.
+  - At 15% again, 50 acts: 0.38, 1.04 and 1.18.
+
+*Against the predictions* (the scoping's, written before any number):
+- *The idle frame:* 4.3 µs natively and 5.3 in the browser against 10 to 25 and 15 to 35, better again than the prototype's 6.7 to 8.5. Half its frames are a settle's, a write of the Clock before the other half.
+- *An act:* a p95 of 0.45 ms natively, in the predicted 0.25 to 0.5. In the browser 0.7 against 0.35 to 0.7. Act to record drawn, through the host on a headless screen, p50 1.0 and p95 2.5 against 1 to 2.5 and 3 to 8.
+- *The deepest cascade:* 777 frames at 8% in 141 ms natively, in the scoping's measured 138 to 151; in the browser 174, against the dial at 0's 108 to 111.
+- *The load:* 544 ms and the settle's two frames 204 natively, inside the predicted 450 to 700 and 110 to 170 plus 25 to 45.
+- *The memory:* 336 MB natively against 360 to 420, and 314 MB of module against 290 to 340.
+
+*Catches.*
+- Git Bash's `sed -i` dropped a CRLF file's carriage returns, the source's at a respelling. Every edit since is a script that keeps a file's line ends.
+- The runner's first counted act counted its own list of the act's step times too, pushed before the count stopped: an allocation more an act and the cascade's eight reallocations. The list is pushed after it now, and the ceilings are the engine's alone.
+- The deepest deal's settle is not the rings and three frames in every world: where the far ring's border opens with the ring, it is two. The test takes either, and the runner and the page refuse anything else.
+- The page's timer steps in 0.1 ms, so the browser's act p95 reads 0.6 or 0.7 from run to run. A baseline at 0.6 would refuse the next run at 0.7; the baseline is a run at 0.7.
+- The six runs each refusing one gun row, and the A/B that answered why, in the pin's record.
+- PowerShell keeps a command-mode literal's text: a mutant written `17.0` printed "17.0" where its words said "17". It is written 17.5.
+- A doubled backslash collapsed in a shell here-document twice more; the trap the scoping named. Such scripts are written by the editor.
+- The page's `?frames=1` and `?blit=1` throw where the page holds Superposition and no hand, so a page built without the hand never measures half.
+
+*Slice 4 built 2026-10-18: the replay and its golden, a stand-in for the owner's session (decision 7).*
+- `cartridges/superposition/superposition.hand.js`, the hand in JavaScript, a third beside the module and the Rust one. Its rule, player and deepest deal mirror `engine/src/superposition.rs` line for line. It registers `hands.superposition`, with `SuperpositionHand.Lattice`, `.Player` and `.released` for the floors' instruments.
+  - A replay's frame with rows is an act's. A frame with none is a settle step, before which the engine has released the press and the command. An edit of the probability or the seed is read as the lattice reads it.
+  - Each frame is answered with the Tally's sum of each of the lattice's 512 rows, one view of a column a frame, never the lattice's 262,144 cells.
+- `cartridges/superposition/superposition.replay.vla`, a stand-in, recorded by the page's own host and recorder, the cartridge loaded with the seed 20261018 and each act stepped to its settle's end:
+  - the player (its seed 154) observing by a press, its first deal on C8, and by Space and presses on the frontier, boxing by B;
+  - three decays boxed by right presses, the reading at D2 their boxes satisfy collapsed by a middle press, and a decay observed by a press;
+  - Space on the Observer, which touches nothing;
+  - N, a branch, its deal by Space a cascade of 27 frames, and five acts more.
+  - 27 acts over 113 frames, 28 written, 115 rows; a settle's frames hold no row. The owner's own session at the hand test replaces it, as decision 7 has it.
+- `cartridges/superposition/superposition.golden.vla`: the Tally's record at its end over `R1:R513`, each row's sum of its sites' codes, which decodes into the row's observations, boxes and decays.
+- `engine/src/cartridge.rs`: the committed replay is held to the Rust hand. Every frame's Tally is held, and the whole lattice at every act's frame. The replays played are now five.
+- `tools/check_cartridge.ps1`: five replays and five goldens.
+- `tools/check_host_loop.ps1`: the replay case's floors, and mutant EG, which takes 136 mutant pages to 137.
+  - The floors: hands 3; replays, golden and round 5; superpositionFrames 113, superpositionCells 57,856, superpositionActs 25, superpositionWorlds 2, superpositionSettles 85, superpositionOpened 243.
+  - Mutant EG is a scratch copy of the hand that keeps the press and the command at a settle step, so that it opens a box again at the box's settle. The replay case must fail it by name.
+
+*Held,* over the release:
+- `cargo test`, 54 and the doc test, in 56 s at the debug profile; `cargo fmt --check`; `cargo clippy --workspace --all-targets -- -D warnings`; `cargo run --release --example expand -- --check`.
+- The runner's check mode, every frame equal, every count at its ceiling; and `check_frame_floors.ps1` with its control.
+- `check_host_loop.ps1` at both ratios, its 28 cases and the game's page's 13.
+- `check_cartridge.ps1`, `check_web_offline.ps1` and `check_spdx.ps1`, each with its control.
+- `check_blit_floors.ps1`'s control: twenty mutants each failing for its own reason. The check itself waits for the owner's run of `?blit=1` in fullscreen, whose lines carry the act case. It says, until they are pasted: "the case act is missing from the baseline".
+- `run_checks.ps1 -WithExtras`, in 12 min 29 s: 12 of the 13 checks and all 13 controls; the thirteenth, `check_blit_floors.ps1`, waits as above.
+
+*Found* (unminted, each a line in the summary):
+- The module's bytes depend on where the language's source stands on the building machine, its panic locations naming its files by path. The floors' environment line names the module's size, so a build of the same tree elsewhere names another.
+- The browser's first act of the session once took 18.3 ms where it takes 1.4, a pause of the browser's own at the session's start. The p95 does not see it.
+- The gun's idle frame on the largest rung, the floors' noisiest row, in `ENGINE.1`'s record of the pin.
+
+*Not built as scoped:* the render oracle's code case, the scoping's line for `tools/check_render_oracle.ps1`. The render oracle builds the layout it expects from the record as the viewport's own reader reads it (`VP.readRecord`), so a code read wrong would be expected as it is drawn. Slice 2 held the codes in the loop oracle's grid case instead, through a reader of the oracle's own, `gqRead`. There mutants DU to DW fail a viewport that reads no text row, one that counts a code's format row malformed, and a host that never lays the grid card's changes on its record.
+
+*The owner's hand test, 2026-10-19.* The owner played the board in the page and pasted three runs: `run_checks.ps1 -WithExtras`, `?blit=1` in fullscreen and `tools/bench_frames.ps1`. With them came nine screenshots, a session of the owner's own as its replay, and three findings in the owner's words:
+- "Upon loading, lavender cells stop at column CX, but then scrolling repaints lavender cells all the way out to column SS."
+- "314-336MB seems like a massive amount of memory for such a simple game. This leads me to believe that Frazaro spreadsheet cartridge files will be hundreds of GB each!"
+- A fourth, in a screenshot: the Observer's labels were cut off, and its seed was drawn `#######`.
+
+What landed:
+- *The region carried on past the record's window* (the first finding).
+  - The cause: the host views a sheet shown through the region its viewport lays out. Past the record's window, the viewport lays a column the record does not name at the default width, 64 pixels. So a sheet of narrower columns shows more of them than its view named, and draws the rest empty until a later view names them. At rate 0 a view comes only with a frame or a scroll. The load's few frames named the board's 21-pixel columns to CX, of the 120 or so the screen shows; a scroll named the rest.
+  - `web/host.js`: `regionOf` carries the region on past the window, at the width of the window's last column and the height of its last row (`carried`). The next view then names what the viewport shows. An even sheet needs one view; an uneven one needs the views a frame or a scroll makes.
+  - `web/index.template.html`: the loop oracle's grid case now holds every sheet it draws to its window. A viewport that shows a column or a row past the record's window fails by name: "the viewport shows ..., past the record's window ...". Before this, the case compared only the cells inside the window and passed the bug.
+  - `tools/check_host_loop.ps1`: mutant EH, a host whose region is never carried on. The grid case's game half must fail it by name at Superposition's load. The control's pages go from 137 to 138, and `run_checks.ps1`'s note counts them.
+- *The Observer's widths* (the fourth finding). The source sets the Observer's A to 24 characters and B to 14, and the Constants' A to 20. So the labels and a seed of up to ten digits read whole: a seed is a number a person reads off to share a world.
+  - The cartridge is 631 rows, three more, and `check_cartridge.ps1`'s floor is raised to match.
+  - The describe golden is unchanged: a width is a sheet's setting, no cell.
+  - Its digest moved, `3F430491…` to `5DB1DC27…`. `check_frame_floors.ps1`'s `$sameRows` names the new file as the measured file's rows, with its reason. No formula reads a width, and no timed span views a sheet.
+  - The runner's check mode held every frame to the hand and every count of allocations the same. The heap's high-water mark rose by 256 bytes, the same on every run, to 336,414,558, and the three Memory ceilings were raised by those bytes with their reason: a sheet holds its columns' widths.
+- *The owner's replay in place of the stand-in* (decision 7).
+  - Recorded on the cartridge before the widths. It is carried onto this one as Sand's first replay was, its header renamed to this cartridge's digest and its rows as recorded.
+  - The page's host plays it to its last frame with no refusal, and its recorder records it again byte for byte.
+  - The session, read through the hand:
+    - the first observation, a press on M12: a reading of nothing whose cascade opened 22 sites;
+    - a press on V17, a reading of one;
+    - the command `box` on V17, which leaves a reading as it stands, and on W22, a box sealed;
+    - `collapse` on AD22 and AE18, sites in superposition, which it leaves as they stand;
+    - `observe` on N18, F35 and K35, two cascades among them;
+    - then nine presses, two of them decays observed (AQ24 and R47). The press at T57 opened the session's deepest cascade, 30 settle steps and 288 sites.
+  - In all, 18 acts over 118 frames in one world, 19 frames written, 99 settle steps, and 634 sites observed at its end, besides one box and two decays.
+  - Its golden is the Tally's record at its end over `R1:R513`, written by the page's host.
+  - `engine/src/cartridge.rs` now pins the session's shape exactly: 18 acts, world 0, 19 frames of rows, 99 settle steps, one box and two decays. The stand-in's pin had been loose: more than ten acts, a second world, and more settles than acts.
+  - The loop oracle's replay floors are the session's. The counts are 118 frames and 60,416 cells held, 18 acts, 1 world, 99 settle steps and 637 sites opened. Acts and worlds fell with the session: the stand-in's 25 and 2 measured that session, not the host.
+  - Mutant EG still fails by name: the box at W22, sealed by command at frame 15, is opened again by the mutant hand at frame 16.
+- *The owner's baselines.*
+  - `?blit=1` in fullscreen is `check_blit_floors.ps1`'s sixth baseline, transcribed from the owner's screenshot with no value touched. The act case ran 120 acts over 448 frames: a p50 of 0.8 ms, a p95 of 1.1 and a max of 2.6, against an interval of 16.7. That beat the prediction (a p50 of 1 to 2.5, a p95 of 3 to 8) and the headless run (1.0, 2.5 and 7.1).
+  - The run of `tools/bench_frames.ps1` is `check_frame_floors.ps1`'s fourteenth entry. It raised six floors and refused none. One floor was kept at the latest value, not raised: wasm superposition-act, whose p95 the page reads in tenths of a millisecond, 0.6 or 0.7 from run to run. A floor taken from a 0.6 would refuse a run that reads 0.7, so it stays at the floor from 0.7.
+  - Both were measured before the region was carried on. So the act case's frames drew the board to CX, and each act's frame now views more columns.
+  - `CHARTER.md` §7 carries the owner's numbers.
+- *The memory, measured* (the second finding), under Found below.
+
+*Held,* after the hand test's changes:
+- `cargo fmt --check`.
+- `cargo clippy --workspace --all-targets -- -D warnings`, and the same for `wasm32-unknown-unknown`.
+- `cargo test --release`: 54 and the doc test, the replay test now holding the owner's session.
+- `cargo run --release --example expand -- --check`.
+- The runner's check mode: every frame equal and every count at its ceiling, the heap at 336,414,558 bytes on two runs; `check_frame_floors.ps1` with the runner.
+- `check_host_loop.ps1` at both ratios. Its control fails all 138 mutant pages, each for its own reason: EG on the owner's replay at frame 16, EH at Superposition's load.
+- `check_cartridge.ps1`.
+- `run_checks.ps1 -WithExtras`, in 12 min 28 s: ALL GREEN, 13 checks and 13 controls.
+
+*Found* (unminted, each a line in the summary):
+- *The memory is the language's, and its cost is per cell* (the owner's second finding). It was measured 2026-10-19 by a scratch probe over `vla-lang` 0.10.1: a counting allocator around `Cartridge::load` and the first two frames, the board built by the pass at four sides. A read-only agent then read the language's source, and the sizes of its types were checked with `size_of`.
+  - *The file is not the cost.* The cartridge is 26,356 bytes, 631 rows, for 798,731 formula cells, because a fill is one row whatever its cells. Built at sides 64, 128, 256 and 512, it is 9.5, 11.9, 16.7 and 26.4 KB: it grows with the side, not the area.
+  - *The heap is linear in the cells.*
+    - After the load: 324 bytes a formula cell (345, 329, 325 and 324 at the four sides), 259.0 MB at 512.
+    - After the first frame: 399 bytes (318.5 MB).
+    - At that frame's peak: 421 bytes (336.4 MB). The second frame adds nothing.
+    - In the browser, the module's memory grows to its peak and never shrinks. It stood at 251 MB on the player after the owner's replay, and at 314 MB on `?frames=1`.
+  - *Where it goes,* per formula cell after the first frame:
+    - The sheet's cells, `BTreeMap<(u32, u32), Cell>`: an entry is 72 bytes, about 137 a cell with its nodes (the crate's own figure, in `calc/dense.rs`).
+    - A twin for every sheet, whether any formula reads it or not, holding its values twice:
+      - once more as a B-tree, rebuilt whole at the first frame, about 74 bytes (the first frame's rise);
+      - and as an array of 24-byte `Value`s with `KERNEL.43`'s nine bytes beside them, 33.
+    - The plan's `places`, a hash map of 40-byte entries that restates what the shapes already know: 54.
+    - The values, `Option<Computed>`, 32 bytes a slot.
+    - The order, 16-byte cell ids: 21.
+    - The change lists, sized for every cell up front: 12.
+  - The first frame's transient 18 MB is the twin's B-tree rebuilt through a temporary vector.
+  - The formulas are not the cost: the 798,731 cells are 38 shapes, each compiled once.
+  - *What would shrink it,* in the language:
+    - a fill held as one record, not 262,144 entries;
+    - twins only for sheets a formula reads, held as an f64 and a tag byte;
+    - `places` dropped once the plan is made.
+  - For scale, the lattice's three layers and their twins as plain numbers are about 13 MB, against 318. A Rust engine, Formualizer, reports about 45 bytes a formula, its own claim and not measured here.
+  - Frazaro's to shrink, as `vla-lang` holds the cells; named here, nothing minted.
+- *A save of the board, as the records stand, is 424 MB* (`ENGINE.5`'s, whose line leaves the save's shape to that item).
+  - Every sheet that is not a twin, viewed whole as the engine's test of a save writes one, is 1,860,841 rows: the Field 251 MB, the Decays 139, the Readings 33. Each formula cell's text is written again, against the cartridge's 26 KB.
+  - A save that kept the fills as the cartridge's rows and wrote only the state would add some tens of KB to the cartridge. The state here is the Field's sites out of superposition (637 at the owner's session's end, a row each), the Probe's places and the Lab's counts.
+- *Two of the owner's commands changed nothing, and the board said nothing:* `collapse` on two sites in superposition and `box` on a reading, each as the rules were approved. Whether the board should say so, by a word in the bar or a sound, is the owner's call.
+
+*The owner's second hand test, 2026-10-19.* The owner ran the first hand test's steps.
+- `play` printed its session unchanged: 2,486 frames.
+- `cargo test` passed 54 and the doc test, and `run_checks.ps1 -WithExtras` was ALL GREEN.
+- `?blit=1` in fullscreen gave the act case a p50 of 0.8 ms, a p95 of 1.3 and a max of 2.8 over 448 frames; every other case was under its bar. It was transcribed here and not pasted as a baseline, since this hand test moved the board and the page again.
+
+The owner's findings, in the owner's words:
+- "I see no reason why the first row and column should be blank/white spacer rows, so the lavender rows should be the only cells in the Superposition grid (which also means that there should be no rows/columns beyond the lavender cells)."
+- "...although the lavender cells fill the screen on load, clicking full screen shows a blank column (DM) wwhich fills with lavender cells upon scolling."
+- "...clicking to the right of the scollbar exposes unfilled cells, which are filled in upon the following click in the scrollbar."
+- "...selecting a new tab (either by clicking or Control + (Alt +) Page Up/Down doesn't give the grid the focus, so arrow keys don't move the cell when a new tab is selected. If this needs to be its own item in the roadmap to avoid session creep, feel free to mint that as needed."
+- "Pressing C apparently doesn't do anything, but I could be wrong."
+- "...a boxed cell that is later determined to be the border of a cascade is not unboxed unless manually unboxed..., so a boxed cell should probably(?) be unboxed if it is downstream of a cascade, but I'm willing to be vetoed on that if there's a reason why a box should remain boxed."
+
+The owner also asked for a Frazaro prompt to mint, scope and build the language's memory item, given in chat. It goes abductively toward Formualizer's reported 45 bytes a formula and past it. The owner asked too whether that item would cut the load; the answer is yes, as a co-equal goal of the same item.
+
+What landed:
+- *A sheet's layout read whole* (the second and third findings).
+  - The causes, measured by a probe that moved the Field as a person does:
+    - the viewport's resize drew and told nobody, so a box grown by full screen showed columns no view had named;
+    - the slack past a record's window was a screen's width counted in 64-pixel columns, so a sheet of 21-pixel columns had a third of a screen of slack, and the region was clamped there;
+    - a column past the window was laid at the default width, so after a page's jump the record of the new window moved every column under the scroll: 0 of 38 columns named.
+  - `web/viewport.js`:
+    - a resize, and a change of the ratio, raises `scroll`, as a scroll does;
+    - the columns' slack is a screen's width of them as they are laid;
+    - a sheet's layout is learned from a record its host reads before it shows the sheet (`learn`), and a column past the window is laid as the sheet sets it;
+    - `fresh` gives the range a sheet shows from A1.
+  - `web/host.js`: `showSheet` reads the sheet's columns whole first, its last row viewed across every column, a record of no cell (`_learn`). For the board that is 19.6 KB in 0.4 ms. The column half of the region's carrying is gone; its row half stays.
+  - The layout is learned from that record alone, never window by window: a learning from every record moved the grid card's columns left of its Camera's window from what the record says, which the grid case's own half caught.
+  - The probe, after the fixes: every column named at every move — the box grown, a page right, again, a jump, a page left and home.
+  - `web/index.template.html`: the oracle reads the same columns itself (`gqTruth`) and lays a record by them (`gqLayout`), so it holds the viewport to the engine and never to the viewport's own cache. The grid case's game half moves Superposition's Field as a person does, each step held cell for cell inside its record's window: the box grown, a page right, the last column, the last row, home and the box back.
+- *The board bound to its sites* (the first finding, its second half). Version 6 gains decision 67, `(bound "<sheet>" ...)` (`docs/SPEC.md` §7.2 and §11).
+  - `engine/src/cartridge.rs`:
+    - read at 6 and refused before;
+    - naming no sheet, a sheet twice, or at the load a sheet the cartridge does not hold, each refused by name;
+    - printed by describe;
+    - held by a new test.
+  - `tools/check_cartridge.ps1`: the same rules, with one passing case and four mutants in its control (forty-seven).
+  - `web/host.js`: the host reads the bound from the describe answer and tells the viewport.
+  - `web/viewport.js`: a bound sheet's rows and columns are its extent with no slack, the region is clamped there, and past them the hit test finds no cell.
+  - The oracle holds the Field to `A1:SR512` and its last column and row reached.
+- *The board from A1* (the first finding, its first half). `superposition.source.vla`:
+  - The lattice is `A1:SR512`, with 512 widths and no spacer.
+  - The Field's rule is written once, `field-rule`, for a site and its eight neighbors, and given four times: the corner's, the first row's, the first column's and the inner sites'. A neighbor off the sheet is the site itself, which never counts. The inner sites' text is the rule as it stood, with the box's branch added.
+  - The Readings are written by `reading-rule`, four times the same way.
+  - The Probe, FirstRow and Tally start at row 1.
+  - The Decays start at A1, their hash's constants 3,440,100 and 3,213,021, so that every site keeps the world it was dealt at B2: the deepest deal at 8% is the same cascade, `SO501` where it was `SP502`, 775 rings and 209,446 sites.
+  - 636 rows, 44 shapes, 798,731 formula cells as before.
+  - Both hands, the engine's tests, the runners and the page's instruments moved with it, each test playing the same site in the same world.
+- *A box beside a reading of nothing opens* (the sixth finding, not vetoed). A reading of nothing proves every site around it safe. The genre's convention, a flag kept until its player lifts it, has no weight here, where a decay observed ends nothing.
+  - The test must be a reading of nothing indeed, 10,000 on the Field and on the Readings both. A collapse marks its reading 10,000 for a frame, and opening its boxes would observe the decays it trusts.
+  - The new branch runs for a box alone, so the cascade's hot path is untouched.
+  - The engine's session test now holds a collapse's boxes sealed, and a box sealed beside a reading of nothing opened when that reading is observed, every frame held to the hand.
+- *The tab gives the grid the keys* (the fourth finding). `_focusGrid` runs when a tab is chosen by its click or by a key that clicks it; a box being typed in keeps the keys. The oracle clicks the Observer's tab and the Field's back, each giving the grid the keys, and checks that a textarea typed in keeps them. Not minted: a few lines, found by this item's hand test, folded in as the region's fix was.
+- *C* (the fifth finding). C collapses a reading whose boxes equal it, observing every other site around it, and does nothing on a site in superposition. The owner's two collapses, on AD22 and AE18, were such sites. Answered in chat; no change.
+- *The owner's replay carried onto the board at A1*, as Sand's first replay was carried:
+  - its header renamed to `D157A425…`, each act's place a row up and a column left, and the load's first rows as the host writes them;
+  - every act on the site it was made on, in the world it was dealt;
+  - its one difference is the box: the owner's box on V21, then W22, was itself a reading of nothing, and the cascade observed at M17 reaches it at frame 33 and opens it. That box is the hole the owner saw.
+  - At its end: 635 sites observed, no box and two decays. The engine's pin is now (18, 0, 19, 99, 0, 2); the loop floors' replay counts are unchanged.
+- *The control's five mutants* (`tools/check_host_loop.ps1`, one hundred and forty-two pages). EH is moved to the new mechanism, and each fails by name:
+  - EH, a host that shows a sheet without reading its columns whole;
+  - EI, a viewport whose resize raises no event;
+  - EJ, one that bounds no sheet;
+  - EK, one whose tab chosen leaves the keys where they were;
+  - EL, Superposition's hand without the box's rule, which fails the replay case at frame 33.
+
+*Held,* after the second hand test's changes:
+- `cargo fmt --check`.
+- `cargo clippy --workspace --all-targets -- -D warnings`, and the same for `wasm32-unknown-unknown`.
+- `cargo test --release`: 55 and the doc test.
+- `cargo run --release --example expand -- --check`.
+- The runner's check mode with `check_frame_floors.ps1`: every frame of the three Superposition rows equal to the hand, every count under its ceiling, the cascade the measured one at `SO501`, and the history's fifteen entries.
+- `check_host_loop.ps1` at both ratios, its grid case moving the Field (gridMoves 6, gridBound 1, gridFocused 2, gridTyped 1). Its control fails all one hundred and forty-two mutant pages, each for its own reason.
+- `check_cartridge.ps1`, and its control's forty-seven mutants.
+- `run_checks.ps1 -WithExtras`, in 13 min 19 s: ALL GREEN, 13 checks and 13 controls.
+
+*Found* (unminted, each a line in the summary):
+- *The moved board costs the load.*
+  - `Machine::new` went from 418 to 523 ms natively, best of three. A board built with the same four fills but without the box's eight Readings references builds in 467 ms, so the split costs 49 ms and the references 56.
+  - The heap rose 2.26 MB, 0.7%, the split's alone.
+  - Both are the language's per-cell planning, which the Frazaro item the owner asked for, given in chat, takes on.
+  - A distinct code for a collapse's frame would spare the references, at a cost in the cascade's hot path, where every site in superposition would test two codes.
+- *A save of the board, as the records stand, is now 521 MB*, the Field's longer rule 346 MB of it (`ENGINE.5`'s).
+- *The act case after the first hand test's region fix*, the owner's `?blit=1` in fullscreen, read a p95 of 1.3 ms where the sixth baseline read 1.1, its region now the ~120 columns the screen shows; transcribed, not pasted.
+- *The native cascade read 153.6 ms against the fourteenth's 140.7*, re-based with the fixture; the wasm cascade read 181.8 against 187.6.

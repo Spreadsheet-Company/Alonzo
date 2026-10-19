@@ -56,6 +56,7 @@
 
   // ---- the rules of the record, as decision 8 of the scoping states them ----
   // Pixels are CSS pixels here; the geometry scales them to device pixels.
+  var MAX_COLUMNS = 16384;       // a sheet's columns, A to XFD, as Excel's
   var DEFAULT_COLUMN_PX = 64;    // Excel's default column, 8.43 characters of Calibri 11 at 96 DPI
   var DEFAULT_ROW_PX = 20;       // Excel's default row, 15 points
   var POINT_PX = 96 / 72;        // a row row's height is in points: at 96 dots an inch, 15 points are the default row
@@ -412,30 +413,53 @@
     // device pixels, as a column's width is, or 0 for a hidden row; kept sorted with the running difference
     // from the default above each, so that a row's top is the default arithmetic corrected by the rows with
     // settings above it, and a window a million rows down costs a search of the few rows that have any.
-    var rs = [], heights = {};
+    var rs = [], heights = {}, layout = env.layout || null, self = this;
+    function settle(key, st) {
+      var h = st.hidden ? 0 : (st.height === null ? self.rowH : Math.round(Math.round(st.height * POINT_PX) * dpr));
+      rs.push({ n: +key, h: h });
+      heights[+key] = h;
+    }
     if (model && model.rowSettings) {
       for (var key in model.rowSettings) {
-        if (!Object.prototype.hasOwnProperty.call(model.rowSettings, key)) continue;
-        var st = model.rowSettings[key], h = st.hidden ? 0 : (st.height === null ? this.rowH : Math.round(Math.round(st.height * POINT_PX) * dpr));
-        rs.push({ n: +key, h: h });
-        heights[+key] = h;
+        if (Object.prototype.hasOwnProperty.call(model.rowSettings, key)) settle(key, model.rowSettings[key]);
       }
-      rs.sort(function (p, q) { return p.n - q.n; });
     }
+    // A row past the record's window the record does not answer for: as the sheet's records have set it, learned
+    // (CART.12's hand test), else the default.
+    if (layout) {
+      for (var lk in layout.rows) {
+        if (!Object.prototype.hasOwnProperty.call(layout.rows, lk) || heights[+lk] !== undefined || inWindowRow(model, +lk)) continue;
+        settle(lk, layout.rows[lk]);
+      }
+    }
+    rs.sort(function (p, q) { return p.n - q.n; });
     this.rs = rs; this.heights = heights; this.rsDelta = [0];
     for (var i = 0; i < rs.length; i++) this.rsDelta.push(this.rsDelta[i] + rs[i].h - this.rowH);
     var rows = model ? model.rows : 1, cols = model ? model.cols : 1;
-    // The sheet space is never less than a screen: a screen of slack rows and
-    // columns follows the window, so the scroll reaches past the last cell.
-    this.sheetRows = rows; this.sheetCols = cols;
-    this.rows = rows + Math.ceil(env.clientH / DEFAULT_ROW_PX) + 1;
-    this.cols = cols + Math.ceil(env.clientW / DEFAULT_COLUMN_PX) + 1;
+    // A bound sheet (version 6's (bound "<sheet>"), CART.12's hand test) is its extent and no more: its last row and
+    // column the grid's, no slack after them, so a board's edge is the grid's.
+    var extent = env.bound ? ((model && model.extent) || (layout && layout.extent) || null) : null;
+    if (extent) {
+      this.sheetRows = extent.bottom; this.sheetCols = extent.right;
+      this.rows = extent.bottom; this.cols = extent.right;
+    } else {
+      // The sheet space is never less than a screen: a screen of slack rows and
+      // columns follows the window, so the scroll reaches past the last cell. The
+      // columns' slack is a screen's width of them as the sheet lays them, so that a
+      // sheet of narrow columns has a screen of them too (CART.12's hand test).
+      this.sheetRows = rows; this.sheetCols = cols;
+      this.rows = rows + Math.ceil(env.clientH / DEFAULT_ROW_PX) + 1;
+      var slackW = 0, slack = 0, screenW = env.clientW * dpr;
+      while (slackW < screenW && cols + slack < MAX_COLUMNS) { slack++; slackW += Math.round(columnWidthCss(model, state, cols + slack, layout) * dpr); }
+      this.cols = Math.min(MAX_COLUMNS, cols + slack + 1);
+    }
+    this.bounded = !!extent;
     this.digits = String(this.rows).length;
     this.rhW = Math.round(Math.max(ROW_HEADER_MIN_PX, ROW_HEADER_PAD_PX + ROW_HEADER_DIGIT_PX * this.digits) * dpr);
     this.colW = [0]; this.colX = [0, 0];
     var x = 0;
     for (var c = 1; c <= this.cols; c++) {
-      var w = Math.round(columnWidthCss(model, state, c) * dpr);
+      var w = Math.round(columnWidthCss(model, state, c, layout) * dpr);
       this.colW.push(w); x += w; this.colX.push(x);
     }
     this.contentW = x;
@@ -447,16 +471,40 @@
     this.ox = this.rhW; this.oy = this.headH;
   }
   // A column's width in CSS pixels: the host's override, else hidden is 0,
-  // else the record's width through the rule, else the default.
-  function columnWidthCss(model, state, c) {
+  // else the record's width through the rule, else, for a column past the
+  // record's window, which the record does not answer for, the width the
+  // sheet's records have set, learned (CART.12's hand test), else the default.
+  function columnWidthCss(model, state, c, layout) {
     var letters = colName(c);
     if (Object.prototype.hasOwnProperty.call(state.widths, letters)) return state.widths[letters];
     var col = model ? model.columns[c] : null;
+    if (!col && layout && !inWindowColumn(model, c)) col = layout.columns[c] || null;
     if (col) {
       if (col.hidden) return 0;
       if (col.width !== null) return columnPixels(col.width);
     }
     return DEFAULT_COLUMN_PX;
+  }
+  // Whether a record answers for a column or a row: inside its window, or anywhere for a record with no window,
+  // the whole sheet.
+  function inWindowColumn(model, c) { return !!model && (!model.window || (c >= model.window.left && c <= model.window.right)); }
+  function inWindowRow(model, r) { return !!model && (!model.window || (r >= model.window.top && r <= model.window.bottom)); }
+  // A sheet's layout (CART.12's hand test): the columns and the rows with settings, and the extent, learned from a
+  // record a host reads before it shows the sheet, its columns whole (learn). The record answers for its window, a
+  // column or a row there that it names set and one it does not name set back to the default. So that a column past
+  // the window the sheet shown was viewed through is laid as the sheet sets it and not at the default, and the cells
+  // under the scroll stay where they are when a record of another window is loaded.
+  function learnLayout(layout, model) {
+    var w = model.window, key, c, r;
+    if (w) {
+      for (c = w.left; c <= w.right; c++) { if (model.columns[c]) layout.columns[c] = model.columns[c]; else delete layout.columns[c]; }
+      for (key in layout.rows) if (Object.prototype.hasOwnProperty.call(layout.rows, key) && +key >= w.top && +key <= w.bottom && !model.rowSettings[key]) delete layout.rows[key];
+    } else {
+      for (key in model.columns) if (Object.prototype.hasOwnProperty.call(model.columns, key)) layout.columns[key] = model.columns[key];
+    }
+    for (key in model.rowSettings) if (Object.prototype.hasOwnProperty.call(model.rowSettings, key)) layout.rows[key] = model.rowSettings[key];
+    if (model.extentText === 'none') layout.extent = null;
+    else if (model.extent) layout.extent = model.extent;
   }
   // A row's top in content coordinates, and its height, 0 when hidden.
   Geometry.prototype.rowTop = function (r) {
@@ -606,6 +654,8 @@
     for (var k in DEFAULT_COLORS) if (Object.prototype.hasOwnProperty.call(DEFAULT_COLORS, k)) this.colors[k] = DEFAULT_COLORS[k];
     if (options.colors) for (var k2 in options.colors) if (Object.prototype.hasOwnProperty.call(options.colors, k2)) this.colors[k2] = options.colors[k2];
     this.records = {};         // sheet name -> model
+    this.layouts = {};         // a sheet's name, lowercased -> its layout, learned from its records (CART.12's hand test)
+    this.bounds = {};          // a sheet's name, lowercased -> true: drawn to its extent and no further (version 6's bound)
     this.patchCount = 0;       // the patches laid on its models (ENGINE.19)
     this.repaintCount = 0;     // the patches painted by their cells alone (ENGINE.20)
     // The last full paint (ENGINE.20): the model and the environment it painted, its quadrants as it left them, the cells
@@ -677,7 +727,13 @@
     this.canvas.style.height = h + 'px';
   };
   Viewport.prototype._env = function () {
-    return { dpr: this.dpr, canvasW: this.canvas.width, canvasH: this.canvas.height, clientW: this.scroller.clientWidth, clientH: this.scroller.clientHeight };
+    var key = String(this.active || '').toLowerCase();
+    return { dpr: this.dpr, canvasW: this.canvas.width, canvasH: this.canvas.height, clientW: this.scroller.clientWidth, clientH: this.scroller.clientHeight,
+             layout: this.layouts[key] || null, bound: !!this.bounds[key] };
+  };
+  Viewport.prototype._layoutOf = function (name) {
+    var key = String(name || '').toLowerCase();
+    return this.layouts[key] || (this.layouts[key] = { columns: {}, rows: {}, extent: null });
   };
   Viewport.prototype._model = function () { return this.active ? (this.records[this.active] || null) : null; };
 
@@ -693,7 +749,9 @@
     this._onMouseUp = function (ev) { self._mouseUp(ev); };
     this._onDblClick = function (ev) { self._dblClick(ev); };
     this._onKeyDown = function (ev) { self._keyDown(ev); };
-    this._onResize = function () { self._resize(); self._draw(); };
+    // a resize changes the region shown as a scroll does (CART.12's hand test: full screen showed columns no record
+    // named until a scroll), so the host is told as it is told of a scroll
+    this._onResize = function () { self._resize(); self._draw(); self._emit('scroll', self._scrollPayload()); };
     this.scroller.addEventListener('scroll', this._onScroll);
     this.scroller.addEventListener('mousedown', this._onMouseDown);
     this.scroller.addEventListener('dblclick', this._onDblClick);
@@ -717,7 +775,7 @@
     var mq = global.matchMedia('(resolution: ' + dpr + 'dppx)');
     var onChange = function () {
       if (self.ratioQuery) { try { self.ratioQuery.removeEventListener('change', self.ratioChange); } catch (e) { } }
-      self._resize(); self._draw();
+      self._resize(); self._draw(); self._emit('scroll', self._scrollPayload());
       self._watchRatio();
     };
     this.ratioQuery = mq; this.ratioChange = onChange;
@@ -1203,6 +1261,8 @@
     if (col < 1) col = 1;
     if (row < 1) row = 1;
     if (x < ox && y < oy) return { kind: 'corner' };
+    // past the last column or the last row of the sheet's space, a bound sheet's edge (version 6), there is no cell
+    if ((x >= ox && cx >= g.colX[g.cols + 1]) || (y >= oy && cy >= g.rowTop(g.rows + 1))) return null;
     if (y < oy) {
       // a boundary: within the grip of a column's right edge
       for (var c = Math.max(1, col - 1); c <= col; c++) {
@@ -1362,8 +1422,17 @@
   Viewport.prototype._tabClick = function (name) {
     var sh = null;
     for (var i = 0; i < this.sheetList.length; i++) if (this.sheetList[i].name === name) sh = this.sheetList[i];
-    if (this.records[name]) { this.show(name); return; }
-    this._emit('sheet', { name: name, loaded: false, state: sh ? sh.state : 'visible' });
+    if (this.records[name]) this.show(name);
+    else this._emit('sheet', { name: name, loaded: false, state: sh ? sh.state : 'visible' });
+    this._focusGrid();
+  };
+  // A sheet chosen by its tab, clicked or stepped to by a key, gives the grid the keys, so that the arrows move the
+  // selection on the sheet shown (CART.12's hand test); a box being typed in keeps them.
+  Viewport.prototype._focusGrid = function () {
+    var d = global.document, a = d ? d.activeElement : null;
+    if (a && a !== this.scroller && (a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable ||
+        (a.tagName === 'INPUT' && !/^(button|checkbox|radio|submit|reset|range|color|file|image)$/i.test(a.type || '')))) return;
+    try { this.scroller.focus({ preventScroll: true }); } catch (e) { this.scroller.focus(); }
   };
 
   // ---- the events ----
@@ -1473,6 +1542,7 @@
   // shows no picture of a grid the module no longer holds.
   Viewport.prototype.clear = function () {
     this.records = {}; this.sheetList = []; this.active = '';
+    this.layouts = {}; this.bounds = {};
     this._resetView();
     this._renderTabs();
     this._draw();
@@ -1480,6 +1550,38 @@
   // The window the scrolled quadrant shows, { top, left, bottom, right, window }: a host follows a Camera's
   // move by it (ENGINE.8).
   Viewport.prototype.scrolled = function () { return this._scrollPayload(); };
+  // A record of a sheet read for its layout alone (CART.12's hand test): its columns and rows with settings and its
+  // extent learned as a load learns them, its cells and the model shown untouched. A host reads a sheet's columns
+  // whole so, through a window of every column on a row no cell holds, before it shows the sheet, and the viewport
+  // then lays every column as the sheet sets it. The sheet's name, the window and the columns learned; null for a
+  // text that is no record of a sheet.
+  Viewport.prototype.learn = function (text) {
+    var model = readRecord(String(text || '')), name = model.sheet;
+    if (!name) return null;
+    var layout = this._layoutOf(name);
+    learnLayout(layout, model);
+    if (this.active && this.active.toLowerCase() === name.toLowerCase()) this._draw();
+    var n = 0;
+    for (var k in layout.columns) if (Object.prototype.hasOwnProperty.call(layout.columns, k)) n++;
+    return { sheet: name, window: model.windowText, extent: model.extentText, columns: n };
+  };
+  // The range a sheet shows from A1 in this box, its columns laid as its layout sets them and its rows at the
+  // default height, within a bound sheet's extent: the window a host views a sheet through before it shows it.
+  Viewport.prototype.fresh = function (name) {
+    var key = String(name || '').toLowerCase(), layout = this.layouts[key] || null, model = this._findSheet(name) ? this.records[this._findSheet(name)] : null;
+    var w = Math.max(1, this.scroller.clientWidth), x = 0, c = 0;
+    while (x < w && c < MAX_COLUMNS) { c++; x += columnWidthCss(model, this.state, c, layout); }
+    var r = Math.max(1, Math.ceil(this.scroller.clientHeight / DEFAULT_ROW_PX)), ext = this.bounds[key] ? ((model && model.extent) || (layout && layout.extent)) : null;
+    if (ext) { c = Math.min(c, ext.right); r = Math.min(r, ext.bottom); }
+    return rangeText({ top: 1, left: 1, bottom: r, right: Math.max(1, c) });
+  };
+  // Whether a sheet is drawn to its extent and no further (version 6's (bound "<sheet>"), CART.12's hand test): the
+  // host says so for each sheet its cartridge's manifest bounds.
+  Viewport.prototype.bound = function (name, on) {
+    var key = String(name || '').toLowerCase();
+    if (on) this.bounds[key] = true; else delete this.bounds[key];
+    if (this.active && this.active.toLowerCase() === key) this._draw();
+  };
   Viewport.prototype._sheetListed = function (name) {
     for (var i = 0; i < this.sheetList.length; i++) if (this.sheetList[i].name === name) return true;
     return false;
@@ -1594,7 +1696,7 @@
     var g = this.g;
     if (!g) return null;
     return { dpr: g.dpr, canvasW: g.canvasW, canvasH: g.canvasH, clientW: this.scroller.clientWidth, clientH: this.scroller.clientHeight,
-             rowH: g.rowH, headH: g.headH, rhW: g.rhW, fontPx: g.fontPx, pad: g.pad, lineH: g.lineH, rows: g.rows, cols: g.cols, sheetRows: g.sheetRows, sheetCols: g.sheetCols,
+             rowH: g.rowH, headH: g.headH, rhW: g.rhW, fontPx: g.fontPx, pad: g.pad, lineH: g.lineH, rows: g.rows, cols: g.cols, sheetRows: g.sheetRows, sheetCols: g.sheetCols, bounded: g.bounded,
              colW: g.colW.slice(), colX: g.colX.slice(), frozenRows: g.fr, frozenCols: g.fc, frozenW: g.frozenW, frozenH: g.frozenH,
              scrollX: this.scroll.x, scrollY: this.scroll.y, scrollLeft: this.scroller.scrollLeft, scrollTop: this.scroller.scrollTop };
   };

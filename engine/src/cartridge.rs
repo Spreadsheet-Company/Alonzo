@@ -26,13 +26,25 @@
 //! the step's own write being the frame's only one, and the rate and the
 //! seed are held to their ranges.
 //!
+//! **The step**: the Clock's frame written first when a frame begins, then
+//! the machine's step. Since `CART.12`, a cartridge written to version 6
+//! that says `(settle K)` settles each act at rate 0 (`docs/SPEC.md` section
+//! 5): the engine keeps the settle's state and the host loops on the step's
+//! answer, `settling` until a frame changed no formula cell's value with no
+//! write before it (the language's fixed point, `Machine::changed`, Frazaro's
+//! `KERNEL.48`), at most K settle steps an act. The Clock counts acts and
+//! stands while one settles, and the act's press and command are released
+//! before the first settle step, so that a step after a `settling` answer is
+//! a settle step whoever calls it, the native players and the page's host
+//! alike.
+//!
 //! **The refusals** are the engine's own catalog, `data/messages.vla`, the
 //! `cart` family, read by the language's mechanism; every other id is the
 //! language's.
 
 use std::sync::OnceLock;
 
-use vla_lang::calc::{self, graph::is_formula, library};
+use vla_lang::calc::{self, graph::is_formula, library, Env};
 use vla_lang::form::Form;
 use vla_lang::machine::{read_rows, Draft, LineRefusal, Machine, Step, Viewed};
 use vla_lang::messages::{self, Catalogue, Refusal};
@@ -73,8 +85,15 @@ fn refused(line: u32, id: &str, slots: &[(&str, &str)]) -> LineRefusal {
 /// loads and describes as it did (`ENGINE.18`, decision 1). Version 5 adds a device,
 /// the Commands sheet, and the Input sheet's twentieth row, a cartridge's written to
 /// it alone, so that a cartridge written to 1 to 4 loads and describes as it did
-/// (`ENGINE.25`, decision 6).
-pub const SPECS: [u32; 5] = [1, 2, 3, 4, 5];
+/// (`ENGINE.25`, decision 6). Version 6 adds two directives, `(settle K)`, a
+/// cartridge's written to it alone at rate 0 alone, and `(bound "<sheet>" ...)`, a
+/// cartridge's written to it alone (`CART.12`'s hand test), and no sheet or row, so
+/// that a cartridge written to 1 to 5 loads and describes as it did (`CART.12`,
+/// decision 66).
+pub const SPECS: [u32; 6] = [1, 2, 3, 4, 5, 6];
+/// The most settle steps an act takes, version 6's `(settle K)` (`CART.12`, decision
+/// 57): fifty times the deepest cascade the scoping measured, 1,315 frames.
+pub const MAX_SETTLE: u32 = 65_536;
 /// The highest rate, in frames a second; 0 is a step on every edit.
 pub const MAX_RATE: u32 = 120;
 /// The highest seed, so that a Park and Miller cell never sticks at 0.
@@ -87,7 +106,7 @@ pub const GRID_MAX: (u32, u32) = (80, 50);
 pub const LINE: u64 = 2_000_000;
 
 const REQUIRED: [&str; 5] = ["spec", "title", "rate", "screen", "seed"];
-const OPTIONAL: [&str; 3] = ["author", "license", "notes"];
+const OPTIONAL: [&str; 5] = ["author", "license", "notes", "settle", "bound"];
 
 /// The Screen's mode: a byte a cell through the Palette, or the record.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -123,6 +142,16 @@ pub struct Manifest {
     pub width: u32,
     pub height: u32,
     pub seed: Seed,
+    /// Version 6's `(settle K)`: the most settle steps an act takes, or none
+    /// for a cartridge that steps once an act (`CART.12`; section 5).
+    pub settle: Option<u32>,
+    /// Version 6's `(bound "<sheet>" ...)`: the sheets a viewport draws to their
+    /// extent and no further, a board's last row and column the grid's own
+    /// (`CART.12`'s hand test; section 7.2); empty when the manifest names none.
+    pub bound: Vec<String>,
+    /// The line the bound stands on, for the refusal of a sheet the rows hold
+    /// not, which only the rows can answer.
+    bound_line: u32,
     /// Every directive as the manifest spells it, in its order.
     pub directives: Vec<String>,
 }
@@ -198,6 +227,8 @@ impl Manifest {
         let (mut spec, mut title, mut rate) = (0u32, String::new(), 0u32);
         let (mut mode, mut width, mut height) = (Mode::Plane, 0u32, 0u32);
         let mut seed = Seed::Host;
+        let mut settle: Option<(u32, u32, String)> = None;
+        let mut bound: Option<(Vec<String>, u32, String)> = None;
         for item in directives {
             let text = write_datum(item);
             let (head, args, at) = match item {
@@ -276,6 +307,32 @@ impl Manifest {
                         ))
                     }
                 },
+                "settle" => match args {
+                    [n] if whole(n).is_some_and(|n| (1..=u64::from(MAX_SETTLE)).contains(&n)) => {
+                        settle = Some((whole(n).unwrap_or(1) as u32, at, text.clone()))
+                    }
+                    _ => {
+                        return Err(wrong(
+                            "(settle ...) is the most steps an act settles in, a whole number from 1 to 65536",
+                        ))
+                    }
+                },
+                "bound" => {
+                    let mut names: Vec<String> = Vec::new();
+                    for n in args {
+                        match n {
+                            Form::Str(sheet) if !names.iter().any(|b| b.eq_ignore_ascii_case(sheet)) => {
+                                names.push(sheet.clone())
+                            }
+                            Form::Str(_) => return Err(wrong("(bound ...) names each sheet once")),
+                            _ => return Err(wrong("(bound ...) names one sheet or more, each a text")),
+                        }
+                    }
+                    if names.is_empty() {
+                        return Err(wrong("(bound ...) names one sheet or more, each a text"));
+                    }
+                    bound = Some((names, at, text.clone()));
+                }
                 _ => match args {
                     [Form::Str(_)] => {}
                     _ => return Err(wrong(&format!("({head} ...) holds one text"))),
@@ -288,6 +345,36 @@ impl Manifest {
                 return Err(invalid(line, &format!("has no ({r} ...)")));
             }
         }
+        // Version 6's settle (CART.12): a (spec 6) cartridge's alone, and at
+        // rate 0 alone, where an act steps the grid and no tick does.
+        if let Some((_, at, text)) = &settle {
+            if spec < 6 {
+                return Err(invalid(
+                    *at,
+                    &format!("gives {text}, a directive of version 6's, where the cartridge says (spec {spec})"),
+                ));
+            }
+            if rate > 0 {
+                return Err(invalid(
+                    *at,
+                    &format!("gives {text} with (rate {rate}): a cartridge settles at (rate 0) alone, where an act steps the grid and no tick does"),
+                ));
+            }
+        }
+        // Version 6's bound (CART.12's hand test): a (spec 6) cartridge's alone,
+        // at any rate; its sheets are the rows' to answer, at the load.
+        if let Some((_, at, text)) = &bound {
+            if spec < 6 {
+                return Err(invalid(
+                    *at,
+                    &format!("gives {text}, a directive of version 6's, where the cartridge says (spec {spec})"),
+                ));
+            }
+        }
+        let (bound, bound_line) = match bound {
+            Some((names, at, _)) => (names, at),
+            None => (Vec::new(), 0),
+        };
         Ok(Manifest {
             name,
             spec,
@@ -297,6 +384,9 @@ impl Manifest {
             width,
             height,
             seed,
+            settle: settle.map(|(k, _, _)| k),
+            bound,
+            bound_line,
             directives: written,
         })
     }
@@ -758,14 +848,26 @@ fn whole_in(cell: Option<&Cell>, low: f64, high: f64) -> Option<f64> {
 /// which the host reads after each step and steps at, the teacher of section
 /// 9; the seed is a whole number from 1 to 2147483646, so that a Park and
 /// Miller cell seeded from it never sticks at 0. A formula or a derived row
-/// there is refused before this, as a cell the host writes.
-fn check_clock(line: u32, sheet: &str, range: &A1Range, value: &Form) -> Result<(), LineRefusal> {
+/// there is refused before this, as a cell the host writes. A cartridge that
+/// settles (version 6, `CART.12`) keeps the rate at 0, where an act steps the
+/// grid and no tick does.
+fn check_clock(
+    line: u32,
+    sheet: &str,
+    range: &A1Range,
+    value: &Form,
+    settles: bool,
+) -> Result<(), LineRefusal> {
     if range.left > 2 || range.right < 2 {
         return Ok(());
     }
     for row in range.top.max(1)..=range.bottom.min(3) {
         let what = match (row, whole(value)) {
             (1, _) => "is the Clock's frame, which the engine writes as the first act of every step, so a write there would be undone unseen: the frame is the only clock".to_string(),
+            (2, Some(n)) if n > 0 && settles => format!(
+                "holds the Clock's rate, and the cartridge settles, (settle ...), at rate 0 alone, where an act steps the grid and no tick does, so {} is not one",
+                write_datum(value)
+            ),
             (2, Some(n)) if n <= u64::from(MAX_RATE) => continue,
             (2, _) => format!(
                 "holds the Clock's rate, 0 or a whole number of frames a second from 1 to {MAX_RATE}, and {} is not one",
@@ -862,12 +964,50 @@ fn make_own_sheets(draft: &mut Draft, m: &Manifest, name: &str, size: usize) -> 
 
 // ---- the cartridge ---------------------------------------------------------
 
+/// Where a settling cartridge stands after its last done frame (version 6,
+/// `(settle K)`; `CART.12`, decisions 57 to 60; section 5): the word a done
+/// frame's answer gains, and whether the next step is a settle step.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Settle {
+    /// The grid stands still, or the cartridge does not settle: the next
+    /// step begins an act.
+    Settled,
+    /// The last frame changed a formula cell's value or had a write before
+    /// it, and fewer than K settle steps have followed the act: the next step
+    /// is a settle step, with no act.
+    Settling,
+    /// As settling, but K settle steps have followed the act: the grid stops
+    /// settling and waits for the next act, which the host says.
+    Unsettled,
+}
+
+impl Settle {
+    /// The word a done frame's answer gains, none once the grid has settled.
+    pub fn word(self) -> Option<&'static str> {
+        match self {
+            Settle::Settled => None,
+            Settle::Settling => Some("settling"),
+            Settle::Unsettled => Some("unsettled"),
+        }
+    }
+}
+
 /// A loaded cartridge: the language's machine, with the manifest and the
-/// fact the engine checks the Screen's writes by.
+/// fact the engine checks the Screen's writes by; and, for a cartridge that
+/// settles (version 6), the settle's state: the acts the Clock counts, where
+/// the last done frame left the settle, the settle steps since the act, and
+/// whether a write changed a cell since the last frame began and before the
+/// frame in progress began, the condition of the language's fixed point
+/// (`Machine::changed`, Frazaro's `KERNEL.48`).
 pub struct Cartridge {
     machine: Machine,
     manifest: Manifest,
     camera: bool,
+    acts: u64,
+    settle: Settle,
+    settle_steps: u32,
+    wrote: bool,
+    wrote_before: bool,
 }
 
 impl std::fmt::Debug for Cartridge {
@@ -914,6 +1054,22 @@ impl Cartridge {
         let camera = draft.workbook.find_sheet("Camera").is_some();
         check_devices(&draft, &manifest, camera)?;
         let frame = make_own_sheets(&mut draft, &manifest, name, size);
+        // A bound names sheets the rows hold (version 6, CART.12's hand test).
+        for sheet in &manifest.bound {
+            if draft.workbook.find_sheet(sheet).is_none() {
+                return Err(refused(
+                    manifest.bound_line,
+                    "cart-manifest-invalid",
+                    &[(
+                        "what",
+                        &format!(
+                            "gives (bound {}), a sheet the cartridge does not hold",
+                            quoted(sheet)
+                        ),
+                    )],
+                ));
+            }
+        }
         let mut machine = Machine::new(draft, library::language())?;
         if frame > 0 {
             machine
@@ -924,6 +1080,13 @@ impl Cartridge {
             machine,
             manifest,
             camera,
+            // a save's frame is its acts for a cartridge that settles, whose
+            // Clock counts acts (section 3.5)
+            acts: frame,
+            settle: Settle::Settled,
+            settle_steps: 0,
+            wrote: false,
+            wrote_before: false,
         })
     }
 
@@ -1002,7 +1165,8 @@ impl Cartridge {
     }
 
     /// Rows written, the engine's checks first, then the machine's write,
-    /// all or none: the cells changed.
+    /// all or none: the cells changed. A write that changed a cell is noted
+    /// for the settle's rule (section 5), a write that changed none not.
     pub fn write(&mut self, text: &str) -> Result<usize, LineRefusal> {
         if !self.machine.in_progress() {
             let forms = read_forms(text).map_err(|refusal| LineRefusal { line: 0, refusal })?;
@@ -1010,7 +1174,74 @@ impl Cartridge {
                 self.check_row(form)?;
             }
         }
-        self.machine.write(text)
+        let n = self.machine.write(text)?;
+        if n > 0 {
+            self.wrote = true;
+        }
+        Ok(n)
+    }
+
+    /// A write of the engine's own, the Clock's frame or the settle's
+    /// release, through the machine and never the checks, noted as any write.
+    fn write_own(&mut self, text: &str) {
+        let written = self.machine.write(text);
+        debug_assert!(written.is_ok(), "the engine's own write: {written:?}");
+        if written.is_ok_and(|n| n > 0) {
+            self.wrote = true;
+        }
+    }
+
+    /// The rows an act holds for its own frame alone, released before the
+    /// first settle step (section 5): each of the press's cells, `Input!B13`
+    /// to `B15`, holding other than 0 written 0, and the command's, `B20`,
+    /// holding other than the empty text written empty; the place, `B11`,
+    /// `B12` and `B19`, kept. A cell the sheet does not hold is left alone,
+    /// since a write that adds a cell has the language compute every cell at
+    /// the next frame, and a release that changes nothing is no write.
+    fn release(&mut self) {
+        let Some(si) = self.machine.find_sheet("Input") else {
+            return;
+        };
+        let cells = &Env::model(&self.machine).sheets[si].cells;
+        let rows: Vec<String> = [(13, false), (14, false), (15, false), (20, true)]
+            .into_iter()
+            .filter_map(|(row, text)| {
+                let rest = if text {
+                    Content::Text(String::new())
+                } else {
+                    Content::Number(0.0)
+                };
+                let held = &cells.get(&(row, 2))?.content;
+                (*held != rest).then(|| {
+                    format!(
+                        "(cell \"Input\" \"B{row}\" {})",
+                        if text { "\"\"" } else { "0" }
+                    )
+                })
+            })
+            .collect();
+        if !rows.is_empty() {
+            self.write_own(&rows.join("\n"));
+        }
+    }
+
+    /// Where the settle stands after the last done frame: `Settled` for a
+    /// cartridge that does not settle (version 6, section 5).
+    pub fn settle(&self) -> Settle {
+        self.settle
+    }
+
+    /// The step's answer (section 4.4): the language's row, and, for a
+    /// cartridge that settles, a done frame's word, `settling` or
+    /// `unsettled`, before its close.
+    pub fn step_row(&self, step: &Step) -> String {
+        let row = step.row();
+        match (step.done, self.settle.word()) {
+            (true, Some(word)) if self.manifest.settle.is_some() => {
+                format!("{} {word})", &row[..row.len() - 1])
+            }
+            _ => row,
+        }
     }
 
     /// The engine's checks of one written row, section 4.3 and section 3.9:
@@ -1089,7 +1320,7 @@ impl Cartridge {
             ));
         }
         if head == "cell" && device == Device::Clock {
-            check_clock(l.line, sheet, &range, value)?;
+            check_clock(l.line, sheet, &range, value, self.manifest.settle.is_some())?;
         }
         Ok(())
     }
@@ -1097,18 +1328,49 @@ impl Cartridge {
     /// One step: when no frame is in progress, the next frame's number into
     /// `Clock!B1` first, the step's first act (section 3.5), so a frame that
     /// yields across calls is numbered once; then the machine's step.
+    ///
+    /// A cartridge that settles (version 6, `CART.12`; section 5) numbers
+    /// the Clock at a step that begins an act alone, its count of acts, the
+    /// load's first step among them; a step after a done frame that left the
+    /// grid settling is a settle step, which leaves the Clock and, the first
+    /// after an act, releases the act's press and command. A done frame then
+    /// settles the grid when it changed no formula cell's value and no write
+    /// landed before it (the language's fixed point, `Machine::changed`), and
+    /// else leaves it settling, or unsettled once K settle steps have
+    /// followed the act.
     pub fn step(&mut self, budget: usize) -> Step {
         if !self.machine.in_progress() {
-            let next = self.machine.frame() + 1;
-            let written = self
-                .machine
-                .write(&format!("(cell \"Clock\" \"B1\" {next})"));
-            debug_assert!(
-                written.is_ok(),
-                "the Clock is the engine's own: {written:?}"
-            );
+            match self.manifest.settle {
+                None => {
+                    let next = self.machine.frame() + 1;
+                    self.write_own(&format!("(cell \"Clock\" \"B1\" {next})"));
+                }
+                Some(_) if self.settle == Settle::Settling => {
+                    if self.settle_steps == 0 {
+                        self.release();
+                    }
+                    self.settle_steps += 1;
+                }
+                Some(_) => {
+                    self.acts += 1;
+                    self.settle_steps = 0;
+                    self.write_own(&format!("(cell \"Clock\" \"B1\" {})", self.acts));
+                }
+            }
+            self.wrote_before = std::mem::take(&mut self.wrote);
         }
-        self.machine.step(budget)
+        let step = self.machine.step(budget);
+        if let (true, Some(k)) = (step.done, self.manifest.settle) {
+            let moving = self.wrote_before || self.machine.changed() > 0;
+            self.settle = if !moving {
+                Settle::Settled
+            } else if self.settle_steps < k {
+                Settle::Settling
+            } else {
+                Settle::Unsettled
+            };
+        }
+        step
     }
 
     /// A view, as the machine answers it: the engine adds nothing.
@@ -1399,15 +1661,16 @@ mod tests {
 
     #[test]
     fn a_later_spec_is_refused_before_its_directives() {
-        let text = small(30).replacen("(spec 2)", "(spec 6)\n  (layers 2)", 1);
+        let text = small(30).replacen("(spec 2)", "(spec 7)\n  (layers 2)", 1);
         let r = load(&text).expect_err("a later page is refused");
         assert_eq!(r.refusal.id, "cart-spec-unsupported");
         assert_eq!(r.line, 2, "the spec's own line");
+        assert!(r.refusal.text.contains("(spec 7)"), "{}", r.refusal.text);
         assert!(r.refusal.text.contains("(spec 6)"), "{}", r.refusal.text);
-        assert!(r.refusal.text.contains("(spec 5)"), "{}", r.refusal.text);
-        // Version 3 adds no row and no directive, and version 4's rows and version
-        // 5's sheet and row are their cartridges' alone: every page's loads alike.
-        for spec in ["(spec 1)", "(spec 3)", "(spec 4)", "(spec 5)"] {
+        // Version 3 adds no row and no directive, version 4's rows and version 5's
+        // sheet and row are their cartridges' alone, and version 6's directive is
+        // its own cartridges': every page's loads alike.
+        for spec in ["(spec 1)", "(spec 3)", "(spec 4)", "(spec 5)", "(spec 6)"] {
             assert_eq!(
                 id_of(load(&small(30).replacen("(spec 2)", spec, 1))),
                 "loaded",
@@ -1663,6 +1926,364 @@ mod tests {
             ))),
             "loaded"
         );
+    }
+
+    // ---- CART.12: version 6, an act settled ----
+
+    /// Version 6's settle card (`CART.12`): a grid at rate 0 whose act, a press
+    /// of the left button or the command `spill` standing on a cell of row 2,
+    /// spills a cell a frame both ways along B2:K2 from that cell, the
+    /// language's flood; row 3 reads the Clock, the press and the command.
+    fn settle_card(k: u32) -> String {
+        format!(
+            "(cartridge \"spill\"\n  (spec 6)\n  (title \"Spill\")\n  (rate 0)\n  (screen grid 12 3)\n  (seed 1)\n  (settle {k}))\n\
+             (sheet \"Screen\" visible)\n(sheet \"Seed\" visible)\n(cell \"Seed\" \"A1\" 0)\n\
+             (formula \"Screen\" \"B2:K2\" \"=IF(AND(OR(Input!$B$13=1,Input!$B$20=\\\"spill\\\"),Input!$B$12=ROW(),Input!$B$11=COLUMN()),1,IF(OR(Screen.last!A2=1,Screen.last!C2=1),1,Screen.last!B2))\")\n\
+             (formula \"Screen\" \"A3\" \"=Clock!$B$1\")\n(formula \"Screen\" \"B3\" \"=Input!$B$13\")\n(formula \"Screen\" \"C3\" \"=Input!$B$20\")\n"
+        )
+    }
+
+    /// A cell's value as the record spells it, the last field of its row.
+    fn spelled(c: &Cartridge, sheet: &str, addr: &str) -> String {
+        let row = cell_text(c, sheet, addr);
+        row.trim_end_matches(')')
+            .rsplit(' ')
+            .next()
+            .unwrap_or("")
+            .to_string()
+    }
+
+    /// The spill row, B2:K2, as ten digits.
+    fn spill(c: &Cartridge) -> String {
+        (2..=11u32)
+            .map(|col| spelled(c, "Screen", &address(2, col)))
+            .collect()
+    }
+
+    /// Steps to the end of a frame, whatever the budget; its answer.
+    fn frame(c: &mut Cartridge, budget: usize) -> String {
+        loop {
+            let s = c.step(budget);
+            if s.done {
+                return c.step_row(&s);
+            }
+        }
+    }
+
+    /// Version 6's directive (`CART.12`, decisions 57 and 66): `(settle K)` a
+    /// (spec 6) cartridge's alone, at rate 0 alone, K from 1 to 65536; read
+    /// into the manifest and printed by describe among the directives.
+    #[test]
+    fn version_six_s_settle_is_a_version_six_cartridge_s_at_rate_zero_alone() {
+        let good = settle_card(64);
+        let c = load(&good).expect("a (spec 6) cartridge settling at rate 0 loads");
+        assert_eq!(c.manifest().settle, Some(64));
+        assert!(c.describe().contains("(settle 64)\n"), "{}", c.describe());
+        assert_eq!(c.settle(), Settle::Settled);
+        for (from, to, want) in [
+            ("(settle 64)", "(settle 0)", "where (settle ...)"),
+            ("(settle 64)", "(settle 65537)", "where (settle ...)"),
+            ("(settle 64)", "(settle many)", "where (settle ...)"),
+            ("(settle 64)", "(settle 1 2)", "where (settle ...)"),
+            (
+                "(settle 64)",
+                "(settle 64) (settle 64)",
+                "gives (settle ...) twice",
+            ),
+            (
+                "(spec 6)",
+                "(spec 5)",
+                "a directive of version 6's, where the cartridge says (spec 5)",
+            ),
+            (
+                "(rate 0)",
+                "(rate 30)",
+                "a cartridge settles at (rate 0) alone",
+            ),
+        ] {
+            let text = text_of(load(&good.replacen(from, to, 1)));
+            assert!(
+                text.starts_with("cart-manifest-invalid") && text.contains(want),
+                "{from} -> {to}: {text}"
+            );
+        }
+        assert_eq!(
+            id_of(load(&good.replacen("(settle 64)", "(settle 65536)", 1))),
+            "loaded"
+        );
+        // A (spec 6) cartridge without it steps once an act, as before.
+        let once = load(&good.replacen("\n  (settle 64)", "", 1)).expect("loads");
+        assert_eq!(once.manifest().settle, None);
+        // A settling cartridge keeps its rate at 0: a rate written above it is
+        // refused, 0 written is taken.
+        let mut c = load(&good).expect("loads");
+        let r = c
+            .write("(cell \"Clock\" \"B2\" 30)")
+            .expect_err("a rate above 0");
+        assert_eq!(r.refusal.id, "cart-write-clock");
+        assert!(r.refusal.text.contains("settles"), "{}", r.refusal.text);
+        assert_eq!(c.write("(cell \"Clock\" \"B2\" 0)").expect("0"), 0);
+    }
+
+    /// Version 6's other directive (`CART.12`'s hand test): `(bound "<sheet>"
+    /// ...)` a (spec 6) cartridge's alone, at any rate, naming each sheet once
+    /// and only sheets its rows hold; read into the manifest and printed by
+    /// describe among the directives, for the host to draw each to its extent.
+    #[test]
+    fn version_six_s_bound_names_sheets_a_version_six_cartridge_holds() {
+        let good = settle_card(64).replacen(
+            "(settle 64))",
+            "(settle 64)\n  (bound \"Screen\" \"Seed\"))",
+            1,
+        );
+        let c = load(&good).expect("a (spec 6) cartridge bounding two of its sheets loads");
+        assert_eq!(c.manifest().bound, ["Screen", "Seed"]);
+        assert!(
+            c.describe().contains("(bound \"Screen\" \"Seed\")\n"),
+            "{}",
+            c.describe()
+        );
+        let bare = good.replacen("\n  (settle 64)", "", 1);
+        for (from, to, want) in [
+            (
+                "(bound \"Screen\" \"Seed\")",
+                "(bound)",
+                "where (bound ...) names one sheet or more",
+            ),
+            (
+                "(bound \"Screen\" \"Seed\")",
+                "(bound Screen)",
+                "where (bound ...) names one sheet or more",
+            ),
+            (
+                "(bound \"Screen\" \"Seed\")",
+                "(bound \"Screen\" \"screen\")",
+                "where (bound ...) names each sheet once",
+            ),
+            (
+                "(bound \"Screen\" \"Seed\")",
+                "(bound \"Screen\") (bound \"Seed\")",
+                "gives (bound ...) twice",
+            ),
+            (
+                "(bound \"Screen\" \"Seed\")",
+                "(bound \"Board\")",
+                "gives (bound \"Board\"), a sheet the cartridge does not hold",
+            ),
+            (
+                "(spec 6)",
+                "(spec 5)",
+                "a directive of version 6's, where the cartridge says (spec 5)",
+            ),
+        ] {
+            let text = text_of(load(&bare.replacen(from, to, 1)));
+            assert!(
+                text.starts_with("cart-manifest-invalid") && text.contains(want),
+                "{from} -> {to}: {text}"
+            );
+        }
+        // At any rate, and without a settle.
+        let fast =
+            load(&bare.replacen("(rate 0)", "(rate 30)", 1)).expect("a bound at a rate loads");
+        assert_eq!(fast.manifest().bound, ["Screen", "Seed"]);
+        // A (spec 6) cartridge without it bounds nothing.
+        let none = load(&bare.replacen("\n  (bound \"Screen\" \"Seed\")", "", 1)).expect("loads");
+        assert!(none.manifest().bound.is_empty());
+    }
+
+    /// An act settles (`CART.12`, decisions 57 to 60; section 5): the load's
+    /// first step and its settle, then a press standing on E2 spilled both
+    /// ways along the row a cell a frame, each done frame answering
+    /// `settling` until a frame that changed nothing with no write before it,
+    /// the Clock counting acts, the press released before the first settle
+    /// step, and a step after a `settling` answer a settle step.
+    #[test]
+    fn an_act_settles_to_the_language_s_fixed_point() {
+        let mut c = load(&settle_card(64)).expect("loads");
+        // the load's act, frame 1, every formula's first value, and its proof
+        assert_eq!(frame(&mut c, 0), "(step 1 13 13 done settling)");
+        assert_eq!(frame(&mut c, 0), "(step 2 13 13 done)");
+        assert_eq!(c.settle(), Settle::Settled);
+        assert_eq!(
+            spelled(&c, "Screen", "A3"),
+            "1",
+            "the load is the first act"
+        );
+        assert_eq!(spill(&c), "0000000000");
+        // a press of the left button standing on E2, as the host writes it
+        c.write("(cell \"Input\" \"B11\" 5)\n(cell \"Input\" \"B12\" 2)\n(cell \"Input\" \"B13\" 1)\n(cell \"Input\" \"B19\" \"Screen\")")
+            .expect("the act's rows");
+        let mut rows = Vec::new();
+        let mut spills = Vec::new();
+        let mut presses = Vec::new();
+        loop {
+            rows.push(frame(&mut c, 0));
+            spills.push(spill(&c));
+            presses.push(spelled(&c, "Screen", "B3"));
+            assert_eq!(
+                spelled(&c, "Screen", "A3"),
+                "2",
+                "the Clock counts acts and stands while one settles"
+            );
+            if c.settle() != Settle::Settling {
+                break;
+            }
+        }
+        assert_eq!(c.settle(), Settle::Settled);
+        assert_eq!(
+            spills,
+            [
+                "0001000000",
+                "0011100000",
+                "0111110000",
+                "1111111000",
+                "1111111100",
+                "1111111110",
+                "1111111111",
+                "1111111111"
+            ],
+            "a cell a frame both ways, and a frame that proves nothing moved"
+        );
+        assert_eq!(
+            rows.first().map(String::as_str),
+            Some("(step 3 13 13 done settling)")
+        );
+        assert_eq!(
+            rows.last().map(String::as_str),
+            Some("(step 10 13 13 done)")
+        );
+        assert_eq!(
+            presses,
+            ["1", "0", "0", "0", "0", "0", "0", "0"],
+            "the press holds for the act's frame alone, released before the first settle step"
+        );
+        assert_eq!(spelled(&c, "Input", "B11"), "5", "the place stays");
+        // the next act numbers the Clock again
+        c.write("(cell \"Seed\" \"A1\" 1)").expect("an edit");
+        frame(&mut c, 0);
+        assert_eq!(spelled(&c, "Screen", "A3"), "3");
+    }
+
+    /// A settle stepped under any budget is the same frames (section 6, rule
+    /// 6): the act's frame and every settle step yield across calls, and each
+    /// done frame answers its word once.
+    #[test]
+    fn a_settle_under_a_budget_is_the_same_settle() {
+        let mut whole = load(&settle_card(64)).expect("loads");
+        let mut chunked = load(&settle_card(64)).expect("loads");
+        let act = "(cell \"Input\" \"B11\" 9)\n(cell \"Input\" \"B12\" 2)\n(cell \"Input\" \"B20\" \"spill\")";
+        for c in [&mut whole, &mut chunked] {
+            while c.settle() == Settle::Settling || c.machine().frame() == 0 {
+                frame(c, 0);
+            }
+            c.write(act).expect("a command standing on I2");
+        }
+        loop {
+            let a = frame(&mut whole, 0);
+            let b = frame(&mut chunked, 1);
+            assert_eq!(a, b, "the same frame and the same word");
+            assert_eq!(spill(&whole), spill(&chunked));
+            if whole.settle() != Settle::Settling {
+                break;
+            }
+        }
+        assert_eq!(spill(&whole), "1111111111");
+        assert_eq!(
+            spelled(&whole, "Input", "B20"),
+            "\"\"",
+            "the command released"
+        );
+    }
+
+    /// The act's own frame never ends a settle (`KERNEL.48`'s condition): a
+    /// formula reading a written cell's twin sees the act a frame later, so the
+    /// act's frame changes nothing and the settle goes on; and a write before a
+    /// frame keeps the settle going a frame more.
+    #[test]
+    fn a_write_before_a_frame_keeps_a_settle_going() {
+        let text = "(cartridge \"twin\"\n  (spec 6)\n  (title \"Twin\")\n  (rate 0)\n  (screen grid 4 2)\n  (seed 1)\n  (settle 8))\n\
+                    (sheet \"Screen\" visible)\n(sheet \"Seed\" visible)\n(cell \"Seed\" \"A1\" 0)\n(cell \"Seed\" \"B9\" 0)\n\
+                    (formula \"Screen\" \"A1\" \"=Seed.last!A1\")\n";
+        let mut c = load(text).expect("loads");
+        frame(&mut c, 0);
+        frame(&mut c, 0);
+        assert_eq!(c.settle(), Settle::Settled);
+        c.write("(cell \"Seed\" \"A1\" 7)").expect("an edit");
+        assert_eq!(frame(&mut c, 0), "(step 3 1 1 done settling)");
+        assert_eq!(
+            c.machine().changed(),
+            0,
+            "the act's own frame changed nothing"
+        );
+        assert_eq!(spelled(&c, "Screen", "A1"), "0");
+        assert_eq!(frame(&mut c, 0), "(step 4 1 1 done settling)");
+        assert_eq!(
+            spelled(&c, "Screen", "A1"),
+            "7",
+            "a frame later, through the twin"
+        );
+        // a write before the frame that would have ended the settle
+        c.write("(cell \"Seed\" \"B9\" 1)")
+            .expect("a write nothing reads");
+        assert_eq!(frame(&mut c, 0), "(step 5 1 1 done settling)");
+        assert_eq!(frame(&mut c, 0), "(step 6 1 1 done)");
+        assert_eq!(
+            spelled(&c, "Clock", "B1"),
+            "2",
+            "two acts, the load's and the edit's"
+        );
+    }
+
+    /// K settle steps and no more (`CART.12`, decision 57): a spill longer than
+    /// K answers `unsettled` at the Kth settle step, and the next step is an
+    /// act's, the Clock numbered.
+    #[test]
+    fn a_settle_stops_at_k_unsettled() {
+        let mut c = load(&settle_card(3)).expect("loads");
+        frame(&mut c, 0);
+        frame(&mut c, 0);
+        c.write(
+            "(cell \"Input\" \"B11\" 2)\n(cell \"Input\" \"B12\" 2)\n(cell \"Input\" \"B13\" 1)",
+        )
+        .expect("a press on B2");
+        let rows: Vec<String> = (0..4).map(|_| frame(&mut c, 0)).collect();
+        assert_eq!(
+            rows,
+            [
+                "(step 3 13 13 done settling)",
+                "(step 4 13 13 done settling)",
+                "(step 5 13 13 done settling)",
+                "(step 6 13 13 done unsettled)"
+            ]
+        );
+        assert_eq!(c.settle(), Settle::Unsettled);
+        assert_eq!(spill(&c), "1111000000", "three settle steps' spill");
+        frame(&mut c, 0);
+        assert_eq!(
+            spelled(&c, "Screen", "A3"),
+            "3",
+            "the step after unsettled begins an act"
+        );
+    }
+
+    /// A cartridge that does not settle answers as before, its Clock the frame.
+    #[test]
+    fn a_cartridge_that_does_not_settle_answers_as_before() {
+        let mut c = load(&settle_card(64).replacen("\n  (settle 64)", "", 1)).expect("loads");
+        assert_eq!(frame(&mut c, 0), "(step 1 13 13 done)");
+        c.write(
+            "(cell \"Input\" \"B11\" 5)\n(cell \"Input\" \"B12\" 2)\n(cell \"Input\" \"B13\" 1)",
+        )
+        .expect("a press");
+        assert_eq!(frame(&mut c, 0), "(step 2 13 13 done)");
+        assert_eq!(frame(&mut c, 0), "(step 3 13 13 done)");
+        assert_eq!(spelled(&c, "Screen", "A3"), "3");
+        assert_eq!(
+            spelled(&c, "Input", "B13"),
+            "1",
+            "no release without a settle"
+        );
+        assert_eq!(c.settle(), Settle::Settled);
     }
 
     #[test]
@@ -2214,6 +2835,7 @@ mod tests {
                 "life",
                 "sand",
                 "soundcard",
+                "superposition",
                 "testcard"
             ],
             "the cartridges committed under cartridges/"
@@ -2593,11 +3215,14 @@ mod tests {
             let golden = read(dir.join(format!("{name}.golden.vla")));
             let mut hand = SandHand::default();
             let mut kairos_hand = KairosHand::new();
+            let mut lattice_hand = SuperpositionHand::default();
             let mut held = |c: &Cartridge, frame: u32, rows: &[Form]| {
                 if name == "sand" {
                     hand.holds(c, frame, rows);
                 } else if name == "kairos" {
                     kairos_hand.holds(c, frame, rows);
+                } else if name == "superposition" {
+                    lattice_hand.holds(c, frame, rows);
                 }
             };
             play_to_golden(&name, &cart, &read(replay), &golden, &mut held);
@@ -2614,11 +3239,29 @@ mod tests {
                     "the owner's session: the major prize won, then a fall at the last level"
                 );
             }
+            if name == "superposition" {
+                let lattice = lattice_hand.lattice.as_ref().expect("the replay's lattice");
+                let (mut boxes, mut decays) = (0, 0);
+                for r in 1..=512 {
+                    for col in 1..=512 {
+                        match lattice.site(r, col) {
+                            sp::BOX => boxes += 1,
+                            sp::DECAY => decays += 1,
+                            _ => {}
+                        }
+                    }
+                }
+                assert_eq!(
+                    (lattice.acts, lattice.world, lattice_hand.acts, lattice_hand.settles, boxes, decays),
+                    (18, 0, 19, 99, 0, 2),
+                    "the owner's session: 18 acts in one world, the Input's first rows and each act a frame of rows, 99 settle steps, no box at its end, the one sealed on a reading of nothing opened by the cascade that reached it, and two decays observed"
+                );
+            }
             played.push(name);
         }
         assert_eq!(
             played,
-            ["inputcard", "kairos", "sand", "soundcard"],
+            ["inputcard", "kairos", "sand", "soundcard", "superposition"],
             "the replays committed under cartridges/"
         );
     }
@@ -3907,5 +4550,639 @@ mod tests {
         let run = kairos_session(&built.text, Settings::default(), &[], plans, 800, true);
         assert_eq!(run.ends, [(End::Major, 15), (End::Fell, 6)]);
         kairos_tally_holds(&run.cartridge, &run.game);
+    }
+
+    // ---- CART.12: Superposition, the large board ----
+
+    use crate::superposition::{self as sp, Lattice};
+    use vla_lang::calc::{Computed, Value, Values};
+
+    /// Superposition's committed replay held to the hand at every frame
+    /// (`CART.12`, decision 7): the Input rows as the replay's rows leave
+    /// them, a frame with rows an act's and a frame with none a settle step,
+    /// before which the engine has released the press and the command; an
+    /// edit of the probability read as the lattice reads it. Every frame's
+    /// Tally held to the hand's sums of its rows, and the whole lattice at
+    /// every act's frame.
+    #[derive(Default)]
+    struct SuperpositionHand {
+        lattice: Option<Lattice>,
+        input: sp::Inputs,
+        acts: usize,
+        settles: usize,
+    }
+
+    impl SuperpositionHand {
+        fn holds(&mut self, c: &Cartridge, frame: u32, rows: &[Form]) {
+            let lattice = self.lattice.get_or_insert_with(|| {
+                let seed = value_of(c, "Clock", "B3").parse().expect("the seed");
+                Lattice::new(512, seed, 0.15)
+            });
+            for row in rows {
+                let Form::List(l) = row else { continue };
+                let [Form::Sym(head), Form::Str(sheet), Form::Str(addr), value] =
+                    l.items.as_slice()
+                else {
+                    continue;
+                };
+                if head != "cell" {
+                    continue;
+                }
+                let number = match value {
+                    Form::Sym(n) => n.parse::<f64>().unwrap_or(0.0),
+                    _ => 0.0,
+                };
+                let text = match value {
+                    Form::Str(t) => t.clone(),
+                    _ => String::new(),
+                };
+                match (sheet.as_str(), addr.as_str()) {
+                    ("Input", "B11") => self.input.column = number as u32,
+                    ("Input", "B12") => self.input.row = number as u32,
+                    ("Input", "B13") => self.input.left = number == 1.0,
+                    ("Input", "B14") => self.input.right = number == 1.0,
+                    ("Input", "B15") => self.input.middle = number == 1.0,
+                    ("Input", "B19") => self.input.sheet = text,
+                    ("Input", "B20") => self.input.command = text,
+                    ("Constants", "B1") => lattice.probability = number,
+                    _ => {}
+                }
+            }
+            if rows.is_empty() {
+                self.input = self.input.released();
+                self.settles += 1;
+            } else {
+                self.acts += 1;
+            }
+            lattice.frame(&self.input);
+            if rows.is_empty() {
+                for r in 1..=512 {
+                    let tallied = number_at(c, "Tally", r, 18);
+                    assert!(
+                        tallied == lattice.row_sum(r) as f64,
+                        "superposition's replay, frame {frame}: the Tally sums row {r} to {tallied}, and the hand to {}",
+                        lattice.row_sum(r)
+                    );
+                }
+            } else {
+                lattice_holds(
+                    c,
+                    lattice,
+                    &format!("superposition's replay, frame {frame}"),
+                );
+            }
+        }
+    }
+
+    /// Superposition built by the pass on a lattice of side n, its one
+    /// parameter defined again as the size ladder builds Life (`ENGINE.9`);
+    /// `None` in a package, which holds no `cartridges/`.
+    fn superposition_at(n: u32) -> Option<String> {
+        let source = crate::repository::read("superposition/superposition.source.vla")?;
+        let library = crate::repository::read("common.vla")?;
+        let files = [("cartridges/common.vla".to_string(), library)];
+        let definition = format!(
+            "(defmacro (lattice-side then & args)\r\n  \"the tests' lattice, {n} sites a side\"\r\n  (quasiquote ((unquote then) {n} (unquote-splicing args))))\r\n"
+        );
+        let built = crate::pass::expand_with(
+            &source,
+            "cartridges/superposition/superposition.source.vla",
+            &files,
+            &definition,
+        )
+        .unwrap_or_else(|r| panic!("the lattice of {n}: line {} {}", r.line, r.refusal.text));
+        Some(built.text)
+    }
+
+    /// The cartridge loaded and its seed written, as the host writes a
+    /// `(seed host)` cartridge's before its first step.
+    fn superposition_loaded(text: &str, seed: u64) -> Cartridge {
+        let mut c = Cartridge::load(text, "superposition.vla", text.len()).expect("loads");
+        c.write(&format!("(cell \"Clock\" \"B3\" {seed})"))
+            .expect("the seed");
+        c
+    }
+
+    /// A cell's computed value as a number, read off the machine.
+    fn number_at(c: &Cartridge, sheet: &str, row: u32, col: u32) -> f64 {
+        let si = c.machine().find_sheet(sheet).expect("the sheet");
+        match c.machine().computed((si, row, col)) {
+            Some(Computed::Value(Value::Number(n))) => *n,
+            Some(Computed::Value(Value::Empty)) | None => 0.0,
+            other => panic!("{sheet}!{} holds {other:?}", address(row, col)),
+        }
+    }
+
+    /// An act's Input rows, as the host writes them before its step at rate 0
+    /// (`docs/SPEC.md` section 3.3, version 6).
+    fn act_rows(i: &sp::Inputs) -> String {
+        format!(
+            "(cell \"Input\" \"B11\" {})\n(cell \"Input\" \"B12\" {})\n(cell \"Input\" \"B13\" {})\n(cell \"Input\" \"B14\" {})\n(cell \"Input\" \"B15\" {})\n(cell \"Input\" \"B19\" {})\n(cell \"Input\" \"B20\" {})",
+            i.column,
+            i.row,
+            u8::from(i.left),
+            u8::from(i.right),
+            u8::from(i.middle),
+            quoted(&i.sheet),
+            quoted(&i.command)
+        )
+    }
+
+    /// The lattice held to the hand's, every site and every row's tally.
+    fn lattice_holds(c: &Cartridge, hand: &Lattice, at: &str) {
+        let n = hand.n;
+        for r in 1..=n {
+            for col in 1..=n {
+                let got = number_at(c, "Field", r, col);
+                let want = hand.site(r, col);
+                assert!(
+                    got == want as f64,
+                    "{at}: Field!{} holds {got}, and the hand's {want}",
+                    address(r, col)
+                );
+            }
+            let tallied = number_at(c, "Tally", r, n / 32 + 2);
+            assert!(
+                tallied == hand.row_sum(r) as f64,
+                "{at}: the Tally sums row {r} to {tallied}, and the hand to {}",
+                hand.row_sum(r)
+            );
+        }
+    }
+
+    /// One act and its settle, stepped to the end: the hand framed with the
+    /// act's rows at its frame and the released rows after, the lattice held
+    /// to it at every frame when `every` and at the settle's end else. Its
+    /// frames.
+    fn superposition_act(
+        c: &mut Cartridge,
+        hand: &mut Lattice,
+        i: &sp::Inputs,
+        every: bool,
+    ) -> u32 {
+        c.write(&act_rows(i)).expect("the act's rows");
+        let mut frames = 0;
+        let mut inputs = i.clone();
+        loop {
+            let s = loop {
+                let s = c.step(0);
+                if s.done {
+                    break s;
+                }
+            };
+            hand.frame(&inputs);
+            inputs = i.released();
+            frames += 1;
+            let settling = c.settle() == Settle::Settling;
+            if every || !settling {
+                lattice_holds(c, hand, &format!("frame {}", s.frame));
+            }
+            if !settling {
+                assert_eq!(c.settle(), Settle::Settled, "the act settles inside its K");
+                return frames;
+            }
+        }
+    }
+
+    /// The place of an act, on the Field unless said.
+    fn at(row: u32, column: u32) -> sp::Inputs {
+        sp::Inputs {
+            column,
+            row,
+            sheet: "Field".to_string(),
+            ..sp::Inputs::default()
+        }
+    }
+
+    /// The first site, row by row, the hand says holds.
+    fn find(hand: &Lattice, mut holds: impl FnMut(u32, u32) -> bool) -> (u32, u32) {
+        for r in 1..=hand.n {
+            for c in 1..=hand.n {
+                if holds(r, c) {
+                    return (r, c);
+                }
+            }
+        }
+        panic!("no site of the lattice holds");
+    }
+
+    /// The decays and the readings held to the hand's dealing, the law the
+    /// counts keep (`CART.12`, decision 7): over lattices of 32 and 64, three
+    /// probabilities and two seeds, each site's reading its 3 by 3's decays;
+    /// and after a first observation its 3 by 3 is clear and the rest the same.
+    #[test]
+    fn superposition_s_readings_are_their_decays() {
+        for n in [32u32, 64] {
+            let Some(text) = superposition_at(n) else {
+                return;
+            };
+            for probability in [0.05, 0.15, 0.3] {
+                for seed in [1u64, 2_147_483_646] {
+                    let mut c = superposition_loaded(&text, seed);
+                    c.write(&format!("(cell \"Constants\" \"B1\" {probability})"))
+                        .expect("the probability");
+                    let mut hand = Lattice::new(n, seed, probability);
+                    let (mid, edge) = (n / 2, n);
+                    for (k, i) in [at(1, 1), at(mid, edge)].iter().enumerate() {
+                        let mut i = i.clone();
+                        i.left = k == 1;
+                        superposition_act(&mut c, &mut hand, &i, false);
+                        let mut decays = 0;
+                        for r in 1..=n {
+                            for col in 1..=n {
+                                let d = number_at(&c, "Decays", r, col);
+                                assert_eq!(
+                                    d == 1.0,
+                                    hand.decayed(r, col),
+                                    "{n}, {probability}, {seed}: Decays!{}",
+                                    address(r, col)
+                                );
+                                assert_eq!(
+                                    number_at(&c, "Readings", r, col),
+                                    hand.reading(r, col) as f64,
+                                    "{n}, {probability}, {seed}: Readings!{}",
+                                    address(r, col)
+                                );
+                                decays += u32::from(d == 1.0);
+                            }
+                        }
+                        let share = f64::from(decays) / f64::from(n * n);
+                        assert!(
+                            (share - probability).abs() < 0.05,
+                            "{n}, {probability}, {seed}: {decays} decays, a share of {share}"
+                        );
+                    }
+                    assert_eq!(
+                        hand.first,
+                        (mid, edge),
+                        "the first observation, at the lattice's edge"
+                    );
+                    for r in mid - 1..=mid + 1 {
+                        for col in edge - 1..=edge {
+                            assert!(
+                                !hand.decayed(r, col),
+                                "the first observation's 3 by 3 is clear"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// A session on a lattice of 64 by 64, every frame of every act's settle
+    /// held to the hand, site by site and row by row (`CART.12`, decision 7):
+    /// the load; a first observation in the middle and its cascade; a box on a
+    /// decay beside the opening and a collapse its boxes satisfy, by the
+    /// middle button; an observation of a reading, which collapses it; a box
+    /// on a site that has not decayed and a collapse that observes a decay
+    /// through it; a box taken away again; an observation of a decay, counted;
+    /// commands in place of presses; an act on another sheet and one on the
+    /// border, touching nothing; and a branch to another world, observed
+    /// again, its first observation clear.
+    #[test]
+    fn superposition_s_lattice_is_its_hand_at_every_frame() {
+        let n = 64u32;
+        let Some(text) = superposition_at(n) else {
+            return;
+        };
+        let seed = 20_261_018u64;
+        let mut c = superposition_loaded(&text, seed);
+        let mut hand = Lattice::new(n, seed, 0.15);
+        assert_eq!(
+            superposition_act(&mut c, &mut hand, &at(1, 1), true),
+            2,
+            "the load's act and its proof"
+        );
+        // the first observation, the middle of the lattice: an opening, its cascade a ring a frame
+        let mut first = at(32, 32);
+        first.left = true;
+        let frames = superposition_act(&mut c, &mut hand, &first, true);
+        assert!(
+            frames > 3,
+            "the first observation opens a cascade: {frames} frames"
+        );
+        assert_eq!(
+            hand.site(32, 32),
+            sp::NOTHING,
+            "the first observation is a reading of nothing"
+        );
+        // a reading beside the opening, its unobserved neighbors boxed where they decayed, then collapsed
+        let (r, col) = find(&hand, |r, col| {
+            let s = hand.site(r, col);
+            (sp::NOTHING + 1..=sp::NOTHING + 8).contains(&s)
+                && sp::AROUND.iter().any(|(dr, dc)| {
+                    let (rr, cc) = (i64::from(r) + dr, i64::from(col) + dc);
+                    rr >= 1
+                        && cc >= 1
+                        && rr <= i64::from(n)
+                        && cc <= i64::from(n)
+                        && hand.site(rr as u32, cc as u32) == sp::UNOBSERVED
+                        && !hand.decayed(rr as u32, cc as u32)
+                })
+        });
+        let mut sealed = Vec::new();
+        for (dr, dc) in sp::AROUND {
+            let (rr, cc) = ((i64::from(r) + dr) as u32, (i64::from(col) + dc) as u32);
+            if hand.decayed(rr, cc) && hand.site(rr, cc) == sp::UNOBSERVED {
+                let mut b = at(rr, cc);
+                b.right = true;
+                superposition_act(&mut c, &mut hand, &b, true);
+                assert_eq!(hand.site(rr, cc), sp::BOX);
+                sealed.push((rr, cc));
+            }
+        }
+        let mut collapse = at(r, col);
+        collapse.middle = true;
+        superposition_act(&mut c, &mut hand, &collapse, true);
+        assert!(
+            sp::AROUND.iter().all(|(dr, dc)| hand
+                .site((i64::from(r) + dr) as u32, (i64::from(col) + dc) as u32)
+                != sp::UNOBSERVED),
+            "a collapse its boxes satisfy observes every site around it"
+        );
+        assert!(
+            sealed.iter().all(|&(rr, cc)| hand.site(rr, cc) == sp::BOX),
+            "a collapse's boxes stay sealed: its reading trusts them, and is no reading of nothing"
+        );
+        // an observation of a reading collapses it too, by the command observe
+        let (r2, c2) = find(&hand, |r, col| {
+            (sp::NOTHING + 1..=sp::NOTHING + 8).contains(&hand.site(r, col))
+        });
+        let mut again = at(r2, c2);
+        again.command = "observe".to_string();
+        superposition_act(&mut c, &mut hand, &again, true);
+        // a box on a site that has not decayed, beside a reading, and a collapse that observes a decay through it
+        let (r3, c3) = find(&hand, |r, col| {
+            let s = hand.site(r, col);
+            if !(sp::NOTHING + 1..=sp::NOTHING + 8).contains(&s) {
+                return false;
+            }
+            let around: Vec<(u32, u32)> = sp::AROUND
+                .iter()
+                .map(|(dr, dc)| ((i64::from(r) + dr) as u32, (i64::from(col) + dc) as u32))
+                .collect();
+            let unobserved_safe = around
+                .iter()
+                .filter(|&&(rr, cc)| hand.site(rr, cc) == sp::UNOBSERVED && !hand.decayed(rr, cc))
+                .count();
+            let unobserved_decayed = around
+                .iter()
+                .filter(|&&(rr, cc)| hand.site(rr, cc) == sp::UNOBSERVED && hand.decayed(rr, cc))
+                .count();
+            let boxed = around
+                .iter()
+                .filter(|&&(rr, cc)| hand.site(rr, cc) == sp::BOX)
+                .count();
+            boxed == 0
+                && unobserved_decayed == (s - sp::NOTHING) as usize
+                && unobserved_safe >= (s - sp::NOTHING) as usize
+        });
+        let reading = hand.site(r3, c3) - sp::NOTHING;
+        let wrong: Vec<(u32, u32)> = sp::AROUND
+            .iter()
+            .map(|(dr, dc)| ((i64::from(r3) + dr) as u32, (i64::from(c3) + dc) as u32))
+            .filter(|&(rr, cc)| hand.site(rr, cc) == sp::UNOBSERVED && !hand.decayed(rr, cc))
+            .take(reading as usize)
+            .collect();
+        for &(rr, cc) in &wrong {
+            let mut b = at(rr, cc);
+            b.command = "box".to_string();
+            superposition_act(&mut c, &mut hand, &b, true);
+        }
+        let decays_before = (1..=n).map(|r| hand.row_sum(r) / sp::DECAY).sum::<u64>();
+        let mut wrong_collapse = at(r3, c3);
+        wrong_collapse.command = "collapse".to_string();
+        superposition_act(&mut c, &mut hand, &wrong_collapse, true);
+        let decays_after = (1..=n).map(|r| hand.row_sum(r) / sp::DECAY).sum::<u64>();
+        assert!(
+            decays_after > decays_before,
+            "a wrong box observes a decay: {decays_before} then {decays_after}"
+        );
+        // a box taken away again
+        let (rb, cb) = wrong[0];
+        let mut unbox = at(rb, cb);
+        unbox.right = true;
+        let was = hand.site(rb, cb);
+        superposition_act(&mut c, &mut hand, &unbox, true);
+        assert_eq!(
+            (was, hand.site(rb, cb)),
+            (sp::BOX, sp::UNOBSERVED),
+            "a box opened again"
+        );
+        // a decay observed, counted, and the experiment goes on
+        let (rd, cd) = find(&hand, |r, col| {
+            hand.decayed(r, col) && hand.site(r, col) == sp::UNOBSERVED
+        });
+        let mut decay = at(rd, cd);
+        decay.left = true;
+        superposition_act(&mut c, &mut hand, &decay, true);
+        assert_eq!(hand.site(rd, cd), sp::DECAY);
+        // a box on a safe site beside a reading of nothing still in superposition, then that reading
+        // observed: nothing has decayed beside nothing, and the box opens (CART.12's hand test)
+        let beside_nothing = |hand: &Lattice, r: u32, col: u32| -> Option<(u32, u32)> {
+            sp::AROUND
+                .iter()
+                .map(|(dr, dc)| ((i64::from(r) + dr) as u32, (i64::from(col) + dc) as u32))
+                .find(|&(rr, cc)| {
+                    (1..=n).contains(&rr)
+                        && (1..=n).contains(&cc)
+                        && hand.site(rr, cc) == sp::UNOBSERVED
+                        && hand.reading(rr, cc) == sp::NOTHING
+                })
+        };
+        let (rx, cx) = find(&hand, |r, col| {
+            hand.site(r, col) == sp::UNOBSERVED
+                && !hand.decayed(r, col)
+                && beside_nothing(&hand, r, col).is_some()
+        });
+        let mut seal = at(rx, cx);
+        seal.right = true;
+        superposition_act(&mut c, &mut hand, &seal, true);
+        assert_eq!(hand.site(rx, cx), sp::BOX);
+        let (nr, nc) =
+            beside_nothing(&hand, rx, cx).expect("the reading of nothing beside the box");
+        let mut look = at(nr, nc);
+        look.left = true;
+        superposition_act(&mut c, &mut hand, &look, true);
+        assert_eq!(
+            hand.site(rx, cx),
+            hand.reading(rx, cx),
+            "a box beside a reading of nothing opens: nothing has decayed beside nothing"
+        );
+        // acts that touch nothing: one on another sheet, one past the lattice's last row
+        let mut elsewhere = at(10, 10);
+        elsewhere.sheet = "Observer".to_string();
+        elsewhere.left = true;
+        let before: Vec<u64> = (1..=n).map(|r| hand.row_sum(r)).collect();
+        superposition_act(&mut c, &mut hand, &elsewhere, true);
+        let mut border = at(n + 1, 5);
+        border.left = true;
+        superposition_act(&mut c, &mut hand, &border, true);
+        assert_eq!(
+            (1..=n).map(|r| hand.row_sum(r)).collect::<Vec<_>>(),
+            before,
+            "neither touched the lattice"
+        );
+        assert_eq!(
+            number_at(&c, "Observer", 6, 2),
+            (1..=n).map(|r| hand.row_sum(r) / sp::DECAY).sum::<u64>() as f64,
+            "the Observer counts the decays observed"
+        );
+        // a branch to another world: every site back in superposition, the world dealt again, observed again
+        let mut branch = at(10, 10);
+        branch.command = "branch".to_string();
+        assert_eq!(
+            superposition_act(&mut c, &mut hand, &branch, true),
+            3,
+            "a branch, its release and its proof"
+        );
+        assert_eq!(
+            (hand.world, number_at(&c, "Observer", 3, 2)),
+            (1, 2.0),
+            "the second world"
+        );
+        assert!((1..=n).all(|r| hand.row_sum(r) == 0));
+        let mut first2 = at(19, 39);
+        first2.left = true;
+        superposition_act(&mut c, &mut hand, &first2, true);
+        assert_eq!(hand.first, (19, 39));
+        assert!(
+            hand.site(19, 39) >= sp::NOTHING && hand.site(19, 39) < sp::BOX,
+            "the world's first observation is never a decay"
+        );
+    }
+
+    /// The lattice of 512 by 512 as committed, its whole lattice held to the
+    /// hand after each act's settle (`CART.12`, decision 7): the load, a first
+    /// observation, a box, a collapse, a decay observed and a branch; and the
+    /// plan the floors' rows are built over.
+    #[test]
+    fn superposition_s_large_lattice_is_its_hand_after_every_settle() {
+        let Some(text) = crate::repository::read("superposition/superposition.vla") else {
+            return;
+        };
+        let seed = 7u64;
+        let mut c = superposition_loaded(&text, seed);
+        assert_eq!(c.manifest().settle, Some(4096));
+        assert_eq!(
+            c.machine().formulas().0,
+            798_731,
+            "the formula cells of the lattice's three layers and the small sheets"
+        );
+        let mut hand = Lattice::new(512, seed, 0.15);
+        superposition_act(&mut c, &mut hand, &at(1, 1), false);
+        let mut first = at(256, 256);
+        first.left = true;
+        superposition_act(&mut c, &mut hand, &first, false);
+        let (rd, cd) = find(&hand, |r, col| {
+            hand.decayed(r, col) && hand.site(r, col) == sp::UNOBSERVED
+        });
+        let mut boxed = at(rd, cd);
+        boxed.right = true;
+        superposition_act(&mut c, &mut hand, &boxed, false);
+        let (r2, c2) = find(&hand, |r, col| {
+            (sp::NOTHING + 1..=sp::NOTHING + 8).contains(&hand.site(r, col))
+        });
+        let mut collapse = at(r2, c2);
+        collapse.middle = true;
+        superposition_act(&mut c, &mut hand, &collapse, false);
+        let (rx, cx) = find(&hand, |r, col| {
+            hand.decayed(r, col) && hand.site(r, col) == sp::UNOBSERVED
+        });
+        let mut decay = at(rx, cx);
+        decay.left = true;
+        superposition_act(&mut c, &mut hand, &decay, false);
+        let mut branch = at(2, 2);
+        branch.command = "branch".to_string();
+        superposition_act(&mut c, &mut hand, &branch, false);
+        assert_eq!(
+            number_at(&c, "Observer", 7, 2),
+            262_144.0,
+            "every site back in superposition"
+        );
+    }
+
+    /// The floors' scripted player (`CART.12`, decision 8) on a lattice of 64,
+    /// every frame of every act's settle held to the hand: forty acts drawn
+    /// from the lattice as it stands, the deal first, each made by its button
+    /// or its command, and the session's moves the player's own mix.
+    #[test]
+    fn superposition_s_scripted_session_is_its_hand_at_every_frame() {
+        let n = 64;
+        let Some(text) = superposition_at(n) else {
+            return;
+        };
+        let seed = 5u64;
+        let mut c = superposition_loaded(&text, seed);
+        let mut hand = Lattice::new(n, seed, 0.15);
+        superposition_act(&mut c, &mut hand, &at(1, 1), true);
+        let mut player = sp::Player::new(9);
+        let mut moves = std::collections::BTreeMap::new();
+        let mut commands = 0;
+        for _ in 0..40 {
+            let (kind, inputs) = player.act(&hand);
+            commands += usize::from(!inputs.command.is_empty());
+            *moves.entry(kind).or_insert(0) += 1;
+            superposition_act(&mut c, &mut hand, &inputs, true);
+        }
+        assert_eq!(moves.get(&sp::Move::Deal), Some(&1), "one deal: {moves:?}");
+        for kind in moves.keys() {
+            assert!(
+                sp::Move::ALL.contains(kind),
+                "the session's move {} is one of the player's",
+                kind.words()
+            );
+        }
+        assert!(
+            moves.len() >= 5,
+            "the session plays at least five of the seven moves: {moves:?}"
+        );
+        assert!(
+            (10..=30).contains(&commands),
+            "about half the acts by their command: {commands} of 40"
+        );
+        assert!(
+            number_at(&c, "Observer", 4, 2) > 100.0,
+            "the session observes a good part of the lattice"
+        );
+    }
+
+    /// The deepest deal of a world (`CART.12`, decision 3) on a lattice of 64
+    /// at 8%: the site the hand finds at an end of the largest opening's
+    /// widest path, observed first, opens the opening a ring a frame, its
+    /// settle the rings and two frames, the act's and the one that proves
+    /// nothing moved, or three where the far ring's border opens a frame after
+    /// it.
+    #[test]
+    fn superposition_s_deepest_deal_opens_its_rings() {
+        let n = 64;
+        let Some(text) = superposition_at(n) else {
+            return;
+        };
+        let seed = 1u64;
+        let mut c = superposition_loaded(&text, seed);
+        c.write("(cell \"Constants\" \"B1\" 0.08)")
+            .expect("the probability");
+        let mut hand = Lattice::new(n, seed, 0.08);
+        superposition_act(&mut c, &mut hand, &at(1, 1), false);
+        hand.deal();
+        let deal = hand.deepest().expect("a reading of nothing at 8%");
+        assert!(
+            deal.zeros > 100 && deal.rings > 10,
+            "a deep opening at 8%: {deal:?}"
+        );
+        let mut first = at(deal.row, deal.column);
+        first.command = "observe".to_string();
+        let frames = superposition_act(&mut c, &mut hand, &first, true);
+        assert!(
+            (deal.rings + 2..=deal.rings + 3).contains(&(frames as usize)),
+            "the cascade's frames from {deal:?}: {frames}"
+        );
+        assert_eq!(
+            hand.deepest(),
+            Some(deal),
+            "the deal cleared nothing: the world as dealt"
+        );
     }
 }

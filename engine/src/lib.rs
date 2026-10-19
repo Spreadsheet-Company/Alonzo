@@ -70,6 +70,12 @@ mod sand;
 #[cfg(test)]
 mod kairos;
 
+/// Superposition by hand (`CART.12`), the reference the engine's tests hold
+/// the large board's frames to, compiled for the tests alone; the native
+/// runner and the playtest session include the same file by its path.
+#[cfg(test)]
+mod superposition;
+
 /// SHA-256 in upper-case hex, the digest a replay names its cartridge by,
 /// compiled for the tests alone (`AD-5`); the native runner includes the
 /// same file by its path, to name each rung of the size ladder (`ENGINE.9`).

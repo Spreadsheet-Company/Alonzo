@@ -282,7 +282,7 @@
       <details id="eng-replay-box">
         <summary>The replay</summary>
         <p class="controls"><button type="button" id="eng-replay-play" data-command="play-replay" title="the cartridge loaded again with the replay's seed and its frames played; Ctrl+Enter in the replay's box, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Play the replay</button> <button type="button" id="eng-replay-copy" data-command="copy-replay">Copy the replay</button></p>
-        <p>A replay, <code id="eng-replay-path">none: this cartridge has no replay of its own</code>, is every write a run made between its steps: a header naming the cartridge by the SHA-256 of its text and the seed, then each frame as one form holding its rows, <code>(frame 12 (cell "Input" "B5" 1))</code>, the Input sheet's cells that changed and each person's edit that landed; the host's derived writes are never logged, a replay re-deriving them (docs/SPEC.md section 7.6). Paste one here and press Play the replay: the host loads the cartridge again with the replay's seed and plays its frames at the cartridge's rate, a person's edits waiting until it ends, and pauses at its last frame; Run then carries on with the live inputs. Copy the replay puts what the host has recorded since the last load on the clipboard and in this box, a replay played among it, so a replay played and copied is the replay played. The input card's and the sound card's own replays are the loop oracle's runs of them: play the sound card's with the sound on and hear the run again, its ticks, the knob turned to a word that is no wave and back, and a stretch at a third of the speed. Kairos's is the owner's two games: the major prize won, the minor refused on the way, then a fall at the last level.</p>
+        <p>A replay, <code id="eng-replay-path">none: this cartridge has no replay of its own</code>, is every write a run made between its steps: a header naming the cartridge by the SHA-256 of its text and the seed, then each frame as one form holding its rows, <code>(frame 12 (cell "Input" "B5" 1))</code>, the Input sheet's cells that changed and each person's edit that landed; the host's derived writes are never logged, a replay re-deriving them (docs/SPEC.md section 7.6). Paste one here and press Play the replay: the host loads the cartridge again with the replay's seed and plays its frames at the cartridge's rate, a person's edits waiting until it ends, and pauses at its last frame; Run then carries on with the live inputs. Copy the replay puts what the host has recorded since the last load on the clipboard and in this box, a replay played among it, so a replay played and copied is the replay played. The input card's and the sound card's own replays are the loop oracle's runs of them: play the sound card's with the sound on and hear the run again, its ticks, the knob turned to a word that is no wave and back, and a stretch at a third of the speed. Kairos's is the owner's two games: the major prize won, the minor refused on the way, then a fall at the last level. Superposition's is the owner's session at its hand test: eighteen acts in one world by the pointer and the commands, a box sealed, two decays observed and a cascade of 288 sites among them, each act's settle played as the engine stepped it.</p>
         <textarea id="eng-replay" rows="10" spellcheck="false" aria-label="a replay to play"></textarea>
       </details>
       <details id="eng-keys-box">
@@ -2276,7 +2276,7 @@
     }
     if (lifeText.split('(rate 30)').length !== 2 || lifeText.split('(spec 2)').length !== 2) P.push('the anchors (rate 30) and (spec 2) are not in the cartridge exactly once');
     expectLoad(host.load(lifeText.replace('(rate 30)', ''), 'life.vla'), 'cart-manifest-invalid');
-    expectLoad(host.load(lifeText.replace('(spec 2)', '(spec 6)'), 'life.vla'), 'cart-spec-unsupported');
+    expectLoad(host.load(lifeText.replace('(spec 2)', '(spec 7)'), 'life.vla'), 'cart-spec-unsupported');
     expectLoad(host.loadBytes(new Uint8Array([0x28, 0xff, 0xfe, 0x29]), 'bad.vla'), 'is not UTF-8');
     var ok = host.load(lifeText, 'life.vla');
     if (!ok.ok) P.push('Life did not load: ' + ok.sentence);
@@ -2479,7 +2479,7 @@
       var D = new Driver({ exports: exports }), out = [];
       function load(text) { return D.call('alonzo_load', [], [text, 'life.vla']); }
       out.push(['a manifest without its rate', load(lifeText.replace('(rate 30)', ''))]);
-      out.push(['a (spec 6)', load(lifeText.replace('(spec 2)', '(spec 6)'))]);
+      out.push(['a (spec 7)', load(lifeText.replace('(spec 2)', '(spec 7)'))]);
       out.push(['bytes that are not UTF-8', D.call('alonzo_load', [], [new Uint8Array([0x28, 0xff, 0xfe, 0x29]), 'bad.vla'])]);
       var L = load(lifeText), m = /^\(cartridge (\d+) /.exec(L.text);
       if (!m) { P.push('Life did not load for the parity: ' + L.id + ' ' + L.text); return out; }
@@ -2687,6 +2687,7 @@
       if (!Array.isArray(f) || !f[0] || f[0].sym === undefined) continue;
       var head = f[0].sym, a, e;
       if (head === 'window') m.window = VP.parseRange(f[2]);
+      else if (head === 'extent') m.extent = typeof f[2] === 'string' ? VP.parseRange(f[2]) : null;
       else if (head === 'gridlines') m.gridlines = !!f[2] && f[2].sym === 'on';
       else if (head === 'column') m.columns[VP.colIndex(f[2])] = { width: f[3] && f[3].num !== undefined ? f[3].num : null, hidden: !!f[4] && f[4].sym === 'hidden', style: f[5] && f[5].num !== undefined ? f[5].num : null };
       else if (head === 'row') m.rows[f[2].num] = { height: f[3] && f[3].num !== undefined ? f[3].num : null, hidden: !!f[4] && f[4].sym === 'hidden' };
@@ -2742,18 +2743,31 @@
   }
   // The layout in device pixels from the record and the viewport's size, ratio and scroll, which are the
   // host's state (SD-23): the columns by ECMA-376's rule, the rows by their points, the headers' sizes.
-  function gqLayout(m, g) {
+  // truth, for a sheet the host read the columns of whole before it showed it (CART.12's hand test): the oracle's own
+  // reading of them (gqTruth), which lays a column past the record's window as the sheet sets it, and a sheet the
+  // cartridge bounds at its extent (version 6). The slack past the window is a screen's width of columns as they are
+  // laid, as the viewport's is.
+  function gqLayout(m, g, truth) {
     var dpr = g.dpr, L = { dpr: dpr, W: g.canvasW, H: g.canvasH }, x = 0, c, r;
     L.rowH = Math.round(GQ.row * dpr); L.headH = L.rowH; L.pad = Math.round(GQ.pad * dpr); L.lineH = Math.round(GQ.font * GQ.lineHeight * dpr);
     L.font = Math.round(GQ.font * dpr) + 'px system-ui, "Segoe UI", sans-serif';
-    L.rows = m.window.bottom + Math.ceil(g.clientH / GQ.row) + 1;
-    L.cols = m.window.right + Math.ceil(g.clientW / GQ.column) + 1;
+    function css(cc) {
+      var col = m.columns[cc];
+      if (!col && truth && m.window && (cc < m.window.left || cc > m.window.right)) col = truth.columns[cc] || null;
+      return !col ? GQ.column : (col.hidden ? 0 : (col.width !== null ? gqColumnPixels(col.width) : GQ.column));
+    }
+    var ext = truth && truth.bound ? (m.extent || truth.extent || null) : null;
+    if (ext) { L.rows = ext.bottom; L.cols = ext.right; }
+    else {
+      L.rows = m.window.bottom + Math.ceil(g.clientH / GQ.row) + 1;
+      var slackW = 0, slack = 0;
+      while (slackW < g.clientW * dpr && m.window.right + slack < 16384) { slack++; slackW += Math.round(css(m.window.right + slack) * dpr); }
+      L.cols = Math.min(16384, m.window.right + slack + 1);
+    }
     L.rhW = Math.round(Math.max(GQ.headerMin, GQ.headerPad + GQ.headerDigit * String(L.rows).length) * dpr);
     L.colW = [0]; L.colX = [0, 0];
     for (c = 1; c <= L.cols; c++) {
-      var col = m.columns[c], css = GQ.column;
-      if (col) { if (col.hidden) css = 0; else if (col.width !== null) css = gqColumnPixels(col.width); }
-      var w = Math.round(css * dpr);
+      var w = Math.round(css(c) * dpr);
       L.colW.push(w); x += w; L.colX.push(x);
     }
     L.rowHt = [0]; L.top = [0, 0];
@@ -2881,17 +2895,83 @@
   // through (ENGINE.18): the values record after frame 0 and the grid record at frame 0, the grid record less its
   // formula rows being the values record (KERNEL.37's law), the record the host last loaded into its viewport the
   // one due, and the sheet drawn cell for cell. The due record's text, or null and a problem said.
+  // A sheet's columns whole, read by the oracle itself as the host reads them before it shows the sheet (CART.12's
+  // hand test): the record of its last row across every column; and whether its cartridge bounds it.
+  function gqTruth(D, h, sheet, bound) {
+    var r = D.call('alonzo_view', [h], ['values', sheet, 'A1048576:XFD1048576']);
+    if (r.status !== 0) return null;
+    var t = gqRead(r.text);
+    return { columns: t.columns, extent: t.extent || null, bound: !!bound };
+  }
   function heldSheetDrawn(host, D, h, f, at, measure, P, k) {
     var vp = host.vp, sh = vp.sheet(), model = vp.model(), wt = model ? model.windowText : '';
     if (!model || !wt) { P.push(at + ': the viewport holds no record of ' + (sh || 'any sheet')); return null; }
     var G = D.call('alonzo_view', [h], ['grid', sh, wt]).text, V = D.call('alonzo_view', [h], ['values', sh, wt]).text;
     if (V !== gqLessFormulas(G)) { P.push(at + ': the values record of ' + sh + '!' + wt + ' is not its grid record less its formula rows'); return null; }
-    var due = f > 0 ? V : G, loaded = host._lastLoad(vp).text;
-    if (loaded !== due) { P.push(at + ': the host drew the ' + (loaded === G ? 'grid' : (loaded === V ? 'values' : 'unknown')) + ' record of ' + sh + '!' + wt + ', where the ' + (f > 0 ? 'values' : 'grid') + ' record is due'); return null; }
-    var m = gqRead(due), E = gqExpect(m, gqLayout(m, vp.geometry()), measure);
+    // the host's own frame, which a cartridge that settles moves at its load (CART.12), the loop's frame for any other
+    var computed = host.counters().frame > 0, due = computed ? V : G, loaded = host._lastLoad(vp).text;
+    if (loaded !== due) { P.push(at + ': the host drew the ' + (loaded === G ? 'grid' : (loaded === V ? 'values' : 'unknown')) + ' record of ' + sh + '!' + wt + ', where the ' + (computed ? 'values' : 'grid') + ' record is due'); return null; }
+    // the region the viewport shows inside the record's window (CART.12's hand test, 2026-10-19): a column or a row
+    // past the window is laid at the default size and drawn empty until a record names it, so the large board, its
+    // columns 21 pixels wide, showed columns past the window its record was viewed through
+    var shown = vp.scrolled().window, a = VP.parseRange(shown), b = VP.parseRange(wt);
+    if (!a || !b || a.top < b.top || a.left < b.left || a.bottom > b.bottom || a.right > b.right) {
+      P.push(at + ': the viewport shows ' + sh + '!' + shown + ', past the record\'s window ' + wt + ', its columns or rows past it drawn with no record');
+      return null;
+    }
+    var m = gqRead(due), gb = vp.geometry();
+    // a sheet its cartridge bounds (version 6's (bound ...), CART.12's hand test) is laid as its extent, no more
+    if (host._bounded(sh) && (!m.extent || !gb.bounded || gb.cols !== m.extent.right || gb.rows !== m.extent.bottom)) {
+      P.push(at + ': the bound sheet ' + sh + ' lays ' + gb.cols + ' columns and ' + gb.rows + ' rows, where its extent ' + (m.extent ? VP.rangeText(m.extent) + ' is ' + m.extent.right + ' and ' + m.extent.bottom : 'is not in its record') + ': a bound sheet is its extent and no more (version 6)');
+      return null;
+    }
+    var E = gqExpect(m, gqLayout(m, gb, gqTruth(D, h, sh, host._bounded(sh))), measure);
     if (!gqCompare(E, vp.draws(), at, P, k)) return null;
-    if (f > 0) k.values++;
+    if (computed) k.values++;
     return due;
+  }
+  // A sheet a cartridge shows, moved as a person moves it (CART.12's hand test, 2026-10-19): the box grown as full
+  // screen grows it, a page right as a click in the scrollbar's track jumps, the last column, the last row, home, and
+  // the box back; after each the sheet held as a frame's is, the region it shows inside the window its record was
+  // viewed through and every cell drawn the record's. A sheet its cartridge bounds (version 6's (bound ...)) is its
+  // extent and no more, its last column and row reached and none past them. And a tab chosen gives the grid the keys,
+  // a box being typed in keeping them.
+  function gridMoves(host, D, h, box, measure, P, k, label) {
+    var vp = host.vp, sh = vp.sheet(), sc = vp.scroller, w0 = box.style.width;
+    function held(what) { if (heldSheetDrawn(host, D, h, 0, label + ', ' + sh + ', ' + what, measure, P, k) !== null) k.moves++; }
+    box.style.width = Math.round(GRID_BOX.w * 1.6) + 'px'; vp._onResize(); held('the box grown');
+    sc.scrollLeft += sc.clientWidth; vp._onScroll(); held('a page right');
+    sc.scrollLeft = sc.scrollWidth; vp._onScroll(); held('the last column');
+    var right = vp.scrolled().right;
+    sc.scrollTop = sc.scrollHeight; vp._onScroll(); held('the last row');
+    var bottom = vp.scrolled().bottom;
+    sc.scrollLeft = 0; sc.scrollTop = 0; vp._onScroll(); held('home');
+    box.style.width = w0; vp._onResize(); held('the box back');
+    if (host._bounded(sh)) {
+      var m = vp.model(), g = vp.geometry(), ext = m ? m.extent : null;
+      if (!ext) P.push(label + ': the bound sheet ' + sh + '\'s record names no extent');
+      else if (!g.bounded || g.cols !== ext.right || g.rows !== ext.bottom || g.sheetCols !== ext.right || g.sheetRows !== ext.bottom)
+        P.push(label + ': the bound sheet ' + sh + ' lays ' + g.cols + ' columns and ' + g.rows + ' rows, where its extent ' + m.extentText + ' is ' + ext.right + ' and ' + ext.bottom + ': a bound sheet is its extent and no more (version 6)');
+      else if (right !== ext.right || bottom !== ext.bottom) P.push(label + ': the bound sheet ' + sh + '\'s last column and row scrolled to were ' + VP.colName(right) + ' and ' + bottom + ', where its extent ' + m.extentText + ' ends');
+      else k.bound++;
+    }
+    // a tab chosen, by its click, gives the grid the keys; and a box being typed in keeps them
+    function tab(name) { return vp.tabs.querySelector('button[data-sheet="' + name + '"]'); }
+    function holder() { var a = document.activeElement; return a === sc ? 'the grid' : (a && a.tagName ? a.tagName.toLowerCase() + (a.getAttribute && a.getAttribute('data-sheet') ? ' ' + a.getAttribute('data-sheet') : '') : 'nothing'); }
+    var list = vp.sheets(), other = null;
+    for (var i = 0; i < list.length; i++) if (list[i].state === 'visible' && list[i].name !== sh) { other = list[i].name; break; }
+    if (!other) return;
+    var t = tab(other);
+    t.focus(); t.click();
+    if (document.activeElement === sc && vp.sheet() === other) k.focused++; else P.push(label + ': the tab ' + other + ' clicked showed ' + vp.sheet() + ' and left the keys with ' + holder() + ', where the grid takes them (CART.12\'s hand test)');
+    t = tab(sh); t.focus(); t.click();
+    if (document.activeElement === sc && vp.sheet() === sh) k.focused++; else P.push(label + ': the tab ' + sh + ' clicked back showed ' + vp.sheet() + ' and left the keys with ' + holder() + ', where the grid takes them');
+    var ta = document.createElement('textarea');
+    document.body.appendChild(ta); ta.focus();
+    tab(other).click();
+    if (document.activeElement === ta) k.typed++; else P.push(label + ': the tab ' + other + ' chosen while a box was typed in took the keys to ' + holder() + ', where the box keeps them');
+    ta.parentNode.removeChild(ta);
+    tab(sh).click();
   }
   function gridRun(exports, label, text, file, frames, plan, k, P) {
     var stage = document.getElementById('stage'), box = document.createElement('div');
@@ -2922,6 +3002,7 @@
         if (shownSheet && shownSheet.toLowerCase() !== 'screen') {
           if (heldSheetDrawn(host, D, h, f, at + ', ' + shownSheet, measure, P, k) !== null) k.equal++;
           if (plan.after) plan.after(f, host);
+          if (plan.moves && f === frames) gridMoves(host, D, h, box, measure, P, k, at);
           continue;
         }
         // a cartridge without a Camera sheet (a game's, ENGINE.16) is drawn through A1's window
@@ -2938,9 +3019,9 @@
         // oracle, held here at every frame); at frame 0, nothing computed, the grid record
         var G = D.call('alonzo_view', [h], ['grid', 'Screen', win]).text, V = D.call('alonzo_view', [h], ['values', 'Screen', win]).text;
         if (V !== gqLessFormulas(G)) { P.push(at + ': the values record of ' + win + ' is not its grid record less its formula rows'); continue; }
-        var due = f > 0 ? V : G;
-        if (host.record !== due) { P.push(at + ': the host drew the ' + (host.record === G ? 'grid' : (host.record === V ? 'values' : 'unknown')) + ' record of ' + win + ', where the ' + (f > 0 ? 'values' : 'grid') + ' record is due'); continue; }
-        if (f > 0) k.values++;
+        var computed = host.counters().frame > 0, due = computed ? V : G;   // the host's frame, a settling cartridge's moved at its load (CART.12)
+        if (host.record !== due) { P.push(at + ': the host drew the ' + (host.record === G ? 'grid' : (host.record === V ? 'values' : 'unknown')) + ' record of ' + win + ', where the ' + (computed ? 'values' : 'grid') + ' record is due'); continue; }
+        if (computed) k.values++;
         var m = gqRead(due), L = gqLayout(m, host.vp.geometry()), E = gqExpect(m, L, measure);
         if (!gqCompare(E, host.vp.draws(), at, P, k)) continue;
         k.hidden = Math.max(k.hidden, E.hiddenHeld);
@@ -3073,13 +3154,13 @@
   }
   // ENGINE.16's half, a game's page's and Alonzo's alike: every grid cartridge the page holds, by its manifest,
   // on the engine's module, a short run with no edits, frame 0 and GAME_GRID_FRAMES more (frame 0 alone at rate
-  // zero, where only an edit steps), each frame's drawn window held to the record of that window as gridRun
+  // zero, where only an edit steps, and for a cartridge that settles its load's settle, CART.12), each frame's drawn window held to the record of that window as gridRun
   // holds it, the values record after frame 0, and no refusal said. On Alonzo's own page the grid card, after
   // Alonzo's own half, so that the code a game's page runs is held here on every push.
   var GAME_GRID_FRAMES = 12;
   function caseGrid() {
     var res = OWN ? gridOwn() : { counters: {}, problems: [] }, k = res.counters, P = res.problems;
-    k.grids = 0; k.gridFrames = 0; k.gridEqual = 0; k.gridValues = 0; k.gridTexts = 0; k.gridCleared = 0;
+    k.grids = 0; k.gridFrames = 0; k.gridEqual = 0; k.gridValues = 0; k.gridTexts = 0; k.gridCleared = 0; k.gridMoves = 0; k.gridBound = 0; k.gridFocused = 0; k.gridTyped = 0;
     var wasm = builtModule();
     if (!wasm) return res;
     var bytes = bytesOfBase64(wasm);
@@ -3087,9 +3168,10 @@
     for (var i = 0; i < ORDER.length; i++) {
       var c = CARTRIDGES[ORDER[i]];
       if (c.mode !== 'grid') continue;
-      var g = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0 };
-      gridRun(HOST.instantiateSync(bytes), c.name, c.text, c.file, c.rate > 0 ? GAME_GRID_FRAMES : 0, { strict: true }, g, P);
+      var g = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0, moves: 0, bound: 0, focused: 0, typed: 0 };
+      gridRun(HOST.instantiateSync(bytes), c.name, c.text, c.file, c.rate > 0 ? GAME_GRID_FRAMES : 0, { strict: true, moves: true }, g, P);
       k.grids++; k.gridFrames += g.frames; k.gridEqual += g.equal; k.gridValues += g.values; k.gridTexts += g.texts; k.gridCleared += g.cleared;
+      k.gridMoves += g.moves; k.gridBound += g.bound; k.gridFocused += g.focused; k.gridTyped += g.typed;
     }
     return res;
   }
@@ -4602,7 +4684,7 @@
       var C = doubleHost();
       var wrong = [
         ['another cartridge\'s replay', CARTRIDGES.inputcard.replay, 'a replay plays only on the file it was recorded from'],
-        ['a later version\'s replay', text.replace('(spec 3)', '(spec 6)'), 'this host implements versions 1 to 5'],
+        ['a later version\'s replay', text.replace('(spec 3)', '(spec 7)'), 'this host implements versions 1 to 6'],
         ['a derived row', text.replace('(frame 1\n', '(frame 1\n  (derived "State" "B1" 1)\n'), 'holds a derived row'],
         ['frames out of order', text + '(frame 1)\n', 'frames are out of order'],
         ['a row outside a frame', text.replace('(frame 1\n', '(cell "State" "B1" 1)\n(frame 1\n'), 'outside a frame'],
@@ -5951,6 +6033,251 @@
       else k.older = 1;
     } finally { host.destroy(); stage.removeChild(box); }
   }
+  // ---- CART.12: version 6, an act settled ----
+  // The settle card, the page's own as the commands card is, written here and never a file, at version 6, so that a game's
+  // page runs the case too (ENGINE.16): at rate 0 with (settle 64), a Screen of 12 by 4 whose row 2, B2:K2, spills a cell a
+  // frame both ways from the cell an act stands on, the act a press of the left button there or the command spill, by
+  // KeyS; row 3 reading the Clock, the press and the command; and a Commands sheet holding spill.
+  var SETTLECARD = { file: 'settlecard.vla',
+                     text: '(cartridge "settlecard"\n  (spec 6)\n  (title "A settle card")\n  (rate 0)\n  (screen grid 12 4)\n  (seed 1)\n  (settle 64))\n' +
+                           '(sheet "Screen" visible)\n(sheet "Commands" visible)\n' +
+                           '(cell "Commands" "A1" "name")\n(cell "Commands" "B1" "words")\n(cell "Commands" "C1" "holds")\n(cell "Commands" "D1" "key")\n' +
+                           '(cell "Commands" "A2" "spill")\n(cell "Commands" "B2" "spill from the cell the act stands on")\n(cell "Commands" "D2" "KeyS")\n' +
+                           '(cell "Screen" "A1" "a spill")\n' +
+                           '(formula "Screen" "B2:K2" "=IF(AND(OR(Input!$B$13=1,Input!$B$20=\\"spill\\"),Input!$B$19=\\"Screen\\",Input!$B$12=ROW(),Input!$B$11=COLUMN()),1,IF(OR(Screen.last!A2=1,Screen.last!C2=1),1,Screen.last!B2))")\n' +
+                           '(formula "Screen" "A3" "=Clock!$B$1")\n(formula "Screen" "B3" "=Input!$B$13")\n(formula "Screen" "C3" "=Input!$B$20")\n' };
+  // The spill a press on E2 makes, frame by frame from the act's own: a cell a frame both ways, then a frame proving nothing
+  // moved; and a press on B2 under (settle 3), K stopping it at its third settle step.
+  var SETTLE_SPILL = ['0001000000', '0011100000', '0111110000', '1111111000', '1111111100', '1111111110', '1111111111', '1111111111'];
+  // The settle case (CART.12; docs/SPEC.md section 5, version 6). Over the double, whose grid moves for a declared number
+  // of frames from an act's: the load's act and its settle, an edit's, a press's with its rows and its release, and K
+  // said. Over the module, when the page holds one, the settle card: the load settled on computed values; a press on E2
+  // spilled to the row's ends, frame by frame, the Clock the acts and the press released; a second press on E2 written
+  // again after the release; an edit made while a settle goes on waiting for it; the command spill run by KeyS at rate 0,
+  // KeyX the viewport's; the run's replay, its settle frames rowless, played on a fresh host to every frame's cells; the
+  // card under (settle 3), unsettled and said; the directive refused at version 5 and at a rate; and a version 5 card's
+  // command key taken at rate 0.
+  function caseSettle() {
+    var P = [], k = { fakeLoad: 0, fakeActs: 0, fakePress: 0, fakeReleased: 0, fakeUnsettled: 0,
+                      module: 0, loaded: 0, spilled: 0, clock: 0, released: 0, place: 0, pressed: 0, again: 0, waited: 0, key: 0, passed: 0, commandReleased: 0,
+                      said: 0, replayed: 0, replayFrames: 0, replaySame: 0, rowless: 0, unsettled: 0, refused: 0, fiveKey: 0 };
+    settleDouble(k, P);
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm);
+    k.module = bytes.length;
+    settleRun(bytes, k, P);
+    settleWaits(bytes, k, P);
+    settleShort(bytes, k, P);
+    settleRefused(bytes, k, P);
+    return { counters: k, problems: P };
+  }
+  function settleBox(w, h, parent) {
+    var box = document.createElement('div');
+    box.style.cssText = 'width:' + w + 'px;height:' + h + 'px;position:relative;background:#fff;';
+    (parent || document.getElementById('stage')).appendChild(box);
+    return box;
+  }
+  function settlePress(host, r, c, button) {
+    var p = viewPoints(host.vp).cell(r, c);
+    host.vp.scroller.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, clientX: p.x, clientY: p.y, button: button || 0, buttons: button === 2 ? 2 : 1 }));
+    host.vp.scroller.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, clientX: p.x, clientY: p.y, button: button || 0, buttons: 0 }));
+  }
+  function settleSaid(host, text) { return host.sentences().filter(function (s) { return s.text.indexOf(text) >= 0; }).length; }
+  // Over the double, which reads a manifest and no row: version 6, rate 0, (settle 8), a grid of 20 by 12, written here so
+  // that a game's page holding no Life runs it too. The double's grid never settles,
+  // its Screen's formulas changing at every frame and its Write sheet landing a row before every one, so each act takes
+  // its K settle steps, K + 1 frames, and ends unsettled, said; the Clock counts acts; a press over C3 writes its place and
+  // press, the double releasing the press; and under (settle 2) an act is three frames.
+  function settleDouble(k, P) {
+    var text = '(cartridge "settle6"\n  (spec 6)\n  (title "A settle over the double")\n  (rate 0)\n  (screen grid 20 12)\n  (seed 1)\n  (settle 8))\n';
+    var box = settleBox(640, 300), fake = FAKE.create({}), host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box }), K = 8;
+    try {
+      if (!host.attach(fake.exports).ok) { P.push('settle, the double: the host refused the double'); return; }
+      var ld = host.load(text, 'life6.vla');
+      if (!ld.ok) { P.push('settle, the double: the cartridge did not load: ' + ld.sentence); return; }
+      var h = ld.handle, c = host.counters();
+      function peek(sheet, a) { var e = fake.peek(h, sheet, a); return e ? e.v : undefined; }
+      if (c.frame === K + 1 && !c.settling && c.unsettled === 1 && peek('Clock', 'B1') === 1) k.fakeLoad = 1;
+      else P.push('settle, the double: the load stands at frame ' + c.frame + (c.settling ? ', settling,' : '') + ', ' + c.unsettled + ' unsettled, Clock!B1 ' + peek('Clock', 'B1') + ', where its act and ' + K + ' settle steps leave frame ' + (K + 1) + ', unsettled, one act');
+      host.start(); host.tick(1000);
+      host.edit('(cell "State" "B1" 5)');
+      c = host.counters();
+      if (c.frame === 2 * (K + 1) && !c.settling && c.unsettled === 2 && peek('Clock', 'B1') === 2) k.fakeActs = 1;
+      else P.push('settle, the double: an edit left frame ' + c.frame + ', ' + c.unsettled + ' unsettled and Clock!B1 ' + peek('Clock', 'B1') + ', where its act and its settle leave frame ' + 2 * (K + 1) + ', two unsettled and two acts');
+      var first = null, onFrame = function () { if (first === null) first = { b13: peek('Input', 'B13'), b11: peek('Input', 'B11'), b12: peek('Input', 'B12'), b19: peek('Input', 'B19') }; };
+      host.on('frame', onFrame);
+      settlePress(host, 3, 3);
+      host.off('frame', onFrame);
+      c = host.counters();
+      if (first && first.b13 === 1 && first.b11 === 3 && first.b12 === 3 && first.b19 === 'Screen' && c.presses === 1 && c.frame === 3 * (K + 1)) k.fakePress = 1;
+      else P.push('settle, the double: a press over C3 made the act ' + JSON.stringify(first) + ' and frame ' + c.frame + ', where its place C3 on the Screen and the left button held, an act of ' + (K + 1) + ' frames, are due');
+      if (peek('Input', 'B13') === 0 && peek('Clock', 'B1') === 3) k.fakeReleased = 1;
+      else P.push('settle, the double: after the press\'s settle Input!B13 holds ' + peek('Input', 'B13') + ' and Clock!B1 ' + peek('Clock', 'B1') + ', where the press released and three acts are due');
+      ['the load did not settle in 8 steps', 'the edit (cell "State" "B1" 5) did not settle in 8 steps', 'the left press on Screen!C3 did not settle in 8 steps'].forEach(function (w) {
+        if (settleSaid(host, w) === 1) k.fakeUnsettled++; else P.push('settle, the double: the host said ' + JSON.stringify(w) + ' ' + settleSaid(host, w) + ' time(s), where once is due');
+      });
+    } finally { host.destroy(); box.parentNode.removeChild(box); }
+    var box2 = settleBox(640, 300), fake2 = FAKE.create({}), short = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box2 });
+    try {
+      var l2 = short.attach(fake2.exports).ok ? short.load(text.replace('(settle 8)', '(settle 2)'), 'life6.vla') : { ok: false };
+      var c2 = short.counters();
+      if (l2.ok && c2.frame === 3 && !c2.settling && c2.unsettled === 1 && settleSaid(short, 'the load did not settle in 2 steps after its own, the most its (settle 2) allows') === 1) k.fakeUnsettled++;
+      else P.push('settle, the double: under (settle 2) the load stands at frame ' + c2.frame + ' with ' + c2.unsettled + ' unsettled, where its act and two settle steps leave frame 3, unsettled and said once');
+    } finally { short.destroy(); box2.parentNode.removeChild(box2); }
+  }
+  // Over the module: the settle card on a host with its viewport, frames stepped at once (a frozen clock never spends a
+  // tick's slice), each frame's cells kept for the replay. The box stands in the page's own flow below its fold, and not
+  // in the stage, which is fixed and never scrolls, so that the viewport's focus at the first press scrolls the page under
+  // the point, as a trial of the large board found (the host reads a press before the viewport's own handler for it).
+  function settleRun(bytes, k, P) {
+    var fold = document.createElement('div');
+    fold.style.cssText = 'height:' + (window.innerHeight + 200) + 'px';
+    document.body.appendChild(fold);
+    try { settleRunBelow(bytes, k, P, document.body); } finally { fold.parentNode.removeChild(fold); window.scrollTo(0, 0); }
+  }
+  function settleRunBelow(bytes, k, P, parent) {
+    var box = settleBox(GRID_BOX.w, GRID_BOX.h, parent), exports = HOST.instantiateSync(bytes), D = new Driver({ exports: exports });
+    var host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box }), live = {}, acts = [];
+    function vals(sheet, win) { return recordValues(D.call('alonzo_view', [host.counters().handle], ['grid', sheet, win || '']).text); }
+    function snap() {
+      var s = vals('Screen', 'A2:K3'), row = '';
+      for (var col = 2; col <= 11; col++) row += String(viewsNum(s[VP.colName(col) + '2']));
+      return { spill: row, clock: viewsNum(s.A3), press: viewsNum(s.B3), command: s.C3 };
+    }
+    try {
+      if (!host.attach(exports).ok) { P.push('settle: the host refused the module'); return; }
+      host.on('frame', function (e) { live[e.frame] = snap(); });
+      var ld = host.load(SETTLECARD.text, SETTLECARD.file);
+      if (!ld.ok) { P.push('settle: the settle card did not load: ' + ld.sentence); return; }
+      var c = host.counters(), s = snap();
+      acts.push(1);
+      if (c.frame === 2 && !c.settling && s.clock === 1 && s.spill === '0000000000' && settleSaid(host, 'frame 2: the load settled in 1 step after its own.') === 1) k.loaded = 1;
+      else P.push('settle: the load stands at frame ' + c.frame + (c.settling ? ', settling,' : '') + ' with ' + JSON.stringify(s) + ', where its act and one settle step leave frame 2 on computed values, said');
+      var t = 1000;
+      host.start(); host.tick(t);
+      // a press of the left button on E2: an act, then its settle to the row's ends
+      settlePress(host, 2, 5);
+      acts.push(3);
+      c = host.counters();
+      var spills = [], presses = [], clocks = [];
+      for (var f = 3; f <= 10; f++) { var L = live[f] || {}; spills.push(L.spill); presses.push(L.press); clocks.push(L.clock); }
+      if (c.frame === 10 && !c.settling && spills.join(' ') === SETTLE_SPILL.join(' ')) k.spilled = 1;
+      else P.push('settle: a press on E2 left frame ' + c.frame + (c.settling ? ', settling,' : '') + ' and spilled ' + JSON.stringify(spills) + ' from frame 3, where ' + JSON.stringify(SETTLE_SPILL) + ' to frame 10 is due');
+      if (clocks.every(function (x) { return x === 2; })) k.clock = 1; else P.push('settle: the Clock read ' + JSON.stringify(clocks) + ' at frames 3 to 10, where it counts two acts and stands while one settles');
+      if (presses.join('') === '10000000') k.released = 1; else P.push('settle: Input!B13 read ' + presses.join('') + ' at frames 3 to 10, where the press holds for the act\'s frame alone, released before the first settle step');
+      var inp = vals('Input', 'A11:B20');
+      if (viewsNum(inp.B11) === 5 && viewsNum(inp.B12) === 2 && inp.B19 === 'Screen' && viewsNum(inp.B13) === 0) k.place = 1;
+      else P.push('settle: the press left Input!B11 ' + JSON.stringify(inp.B11) + ', B12 ' + JSON.stringify(inp.B12) + ', B19 ' + JSON.stringify(inp.B19) + ' and B13 ' + JSON.stringify(inp.B13) + ', where its place E2 on the Screen stays and the press is released');
+      if (c.presses === 1 && host.vp.selection().text === 'E2') k.pressed = 1; else P.push('settle: the host counted ' + c.presses + ' press(es) and the selection is ' + host.vp.selection().text + ', where one press selected E2');
+      if (settleSaid(host, 'frame 10: the left press on Screen!E2 settled in 7 steps after its own.') === 1) k.said++; else P.push('settle: the press\'s settle was not said as settled in 7 steps at frame 10');
+      // the same press again: its rows written against the release, the press held at its act's frame
+      settlePress(host, 2, 5);
+      acts.push(11);
+      if (live[11] && live[11].press === 1 && live[12] && live[12].press === 0 && host.counters().frame === 13) k.again = 1;
+      else P.push('settle: a second press on E2 read Input!B13 ' + (live[11] ? live[11].press : '?') + ' at its act\'s frame 11, where the host writes it again after the release, and the settle ends at frame 13, not ' + host.counters().frame);
+      // the command spill by its key on the viewport at rate 0, standing on H2; X is the viewport's
+      host.vp.select('H2');
+      var ev = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, code: 'KeyS', key: 's' });
+      host.vp.scroller.dispatchEvent(ev);
+      acts.push(14);
+      var cmd = live[14] || {}, after = vals('Input', 'B20');
+      if (ev.defaultPrevented && cmd.command === 'spill' && cmd.clock === 4) k.key = 1;
+      else P.push('settle: KeyS at rate 0 was ' + (ev.defaultPrevented ? 'taken' : 'passed on') + ' and frame 14 read the command ' + JSON.stringify(cmd.command) + ' and the Clock ' + cmd.clock + ', where the command spill runs, the fourth act');
+      if (after.B20 === '' && live[15] && live[15].command === '' && host.counters().frame === 16) k.commandReleased = 1;
+      else P.push('settle: after the command Input!B20 holds ' + JSON.stringify(after.B20) + ' and the settle ended at frame ' + host.counters().frame + ', where the command is released before the first settle step and the settle ends at frame 16');
+      var evx = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, code: 'KeyX', key: 'x' });
+      host.vp.scroller.dispatchEvent(evx);
+      if (!evx.defaultPrevented && host.counters().frame === 16) k.passed = 1; else P.push('settle: KeyX, no command\'s key, was taken or stepped the grid at rate 0');
+      // the run's replay, version 6's: rows at the acts' frames alone and the last, played on a fresh host to every frame
+      var text = host.replayText() || '', frames = [], m, re = /^\(frame (\d+)/gm;
+      while ((m = re.exec(text)) !== null) frames.push(+m[1]);
+      var last = host.counters().frame, settleRows = frames.filter(function (n) { return acts.indexOf(n) < 0 && n !== last; });
+      if (!/^\(replay "settlecard" \(spec 6\) /.test(text)) P.push('settle: the replay\'s header is ' + text.split('\n')[0] + ', where a version 6 cartridge\'s replay names version 6');
+      else if (settleRows.length || acts.some(function (n) { return frames.indexOf(n) < 0; })) P.push('settle: the replay writes frames ' + frames.join(', ') + ', where the acts\' frames ' + acts.join(', ') + ' and the last, ' + last + ', alone hold rows');
+      else {
+        k.rowless = 1;
+        var ex2 = HOST.instantiateSync(bytes), M = new HOST({ drive: 'manual', budget: 0, now: frozen }), MD = new Driver({ exports: ex2 }), off = '';
+        try {
+          if (!M.attach(ex2).ok || !M.load(SETTLECARD.text, SETTLECARD.file).ok) P.push('settle: a fresh host did not load the settle card');
+          else {
+            M.on('frame', function (e) {
+              var mh = M.counters().handle, ms = recordValues(MD.call('alonzo_view', [mh], ['grid', 'Screen', 'A2:K3']).text), row = '';
+              for (var col = 2; col <= 11; col++) row += String(viewsNum(ms[VP.colName(col) + '2']));
+              var Lf = live[e.frame];
+              if (Lf && Lf.spill === row && Lf.clock === viewsNum(ms.A3) && Lf.press === viewsNum(ms.B3) && Lf.command === ms.C3) k.replaySame++;
+              else if (!off) off = 'frame ' + e.frame;
+            });
+            var pm = M.play(text, true);
+            if (!pm.ok || pm.frames !== last) P.push('settle: the replay played on a fresh host stopped at frame ' + pm.frames + ', where ' + last + ' is due');
+            else if (off) P.push('settle: the replay played on a fresh host is not the live run at ' + off);
+            else { k.replayed = 1; k.replayFrames = pm.frames; }
+          }
+        } finally { M.destroy(); }
+      }
+      var refusals = host.sentences().filter(function (sn) { return sn.refusal; });
+      if (refusals.length) P.push('settle: the host was refused: ' + refusals[0].text);
+    } finally { host.destroy(); box.parentNode.removeChild(box); }
+  }
+  // An act made while a settle goes on waits for it: a host whose tick makes one step call, a press on E2, and an edit made
+  // at once, which lands at the frame after the settle's last.
+  function settleWaits(bytes, k, P) {
+    var box = settleBox(GRID_BOX.w, GRID_BOX.h), exports = HOST.instantiateSync(bytes), D = new Driver({ exports: exports });
+    var host = new HOST({ drive: 'manual', budget: 0, callsPerTick: 1, now: frozen, grid: box }), landed = -1, spilledAt = -1;
+    try {
+      if (!host.attach(exports).ok || !host.load(SETTLECARD.text, SETTLECARD.file).ok) { P.push('settle, waiting: the settle card did not load'); return; }
+      host.on('frame', function (e) {
+        var s = recordValues(D.call('alonzo_view', [host.counters().handle], ['grid', 'Screen', 'K2:L4']).text);
+        if (landed < 0 && viewsNum(s.L4) === 1) landed = e.frame;
+        if (spilledAt < 0 && viewsNum(s.K2) === 1) spilledAt = e.frame;
+      });
+      var t = 1000;
+      host.start();
+      for (var i = 0; i < 4 && host.counters().frame < 2; i++) { t += 17; host.tick(t); }
+      settlePress(host, 2, 5);
+      host.edit('(cell "Screen" "L4" 1)');
+      for (var j = 0; j < 30 && landed < 0; j++) { t += 17; host.tick(t); }
+      if (spilledAt === 9 && landed === 11) k.waited = 1;
+      else P.push('settle, waiting: the edit made at the press\'s act landed at frame ' + landed + ' and the spill reached K2 at frame ' + spilledAt + ', where the spill ends at 9, its settle at 10, and the edit lands at 11');
+    } finally { host.destroy(); box.parentNode.removeChild(box); }
+  }
+  // K: the settle card under (settle 3), a press on B2, its spill stopped at the third settle step, unsettled and said; the
+  // next act numbering the Clock.
+  function settleShort(bytes, k, P) {
+    var box = settleBox(GRID_BOX.w, GRID_BOX.h), exports = HOST.instantiateSync(bytes), D = new Driver({ exports: exports });
+    var host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box });
+    try {
+      if (!host.attach(exports).ok || !host.load(SETTLECARD.text.replace('(settle 64)', '(settle 3)'), SETTLECARD.file).ok) { P.push('settle, K: the settle card under (settle 3) did not load'); return; }
+      settlePress(host, 2, 2);
+      var c = host.counters(), s = recordValues(D.call('alonzo_view', [c.handle], ['grid', 'Screen', 'B2:K2']).text), row = '';
+      for (var col = 2; col <= 11; col++) row += String(viewsNum(s[VP.colName(col) + '2']));
+      var said = settleSaid(host, 'frame 6: the left press on Screen!B2 did not settle in 3 steps after its own, the most its (settle 3) allows');
+      if (c.frame === 6 && !c.settling && c.unsettled === 1 && row === '1111000000' && said === 1) k.unsettled = 1;
+      else P.push('settle, K: a press on B2 under (settle 3) left frame ' + c.frame + ', ' + c.unsettled + ' unsettled, the spill ' + row + ' and the sentence said ' + said + ' time(s), where frame 6, unsettled, 1111000000 and the sentence once are due');
+    } finally { host.destroy(); box.parentNode.removeChild(box); }
+  }
+  // The directive refused at version 5 and at a rate; and a version 5 card's command key taken at rate 0, the correction
+  // of version 5's host (decision 64).
+  function settleRefused(bytes, k, P) {
+    var exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: frozen });
+    try {
+      if (!host.attach(exports).ok) { P.push('settle, refused: the host refused the module'); return; }
+      var five = host.load(SETTLECARD.text.replace('(spec 6)', '(spec 5)'), SETTLECARD.file), rated = host.load(SETTLECARD.text.replace('(rate 0)', '(rate 30)'), SETTLECARD.file);
+      if (!five.ok && /a directive of version 6's/.test(five.sentence) && !rated.ok && /settles at \(rate 0\) alone/.test(rated.sentence)) k.refused = 1;
+      else P.push('settle, refused: (settle 64) at version 5 was ' + (five.ok ? 'loaded' : 'refused: ' + five.sentence) + ' and at a rate of 30 ' + (rated.ok ? 'loaded' : 'refused: ' + rated.sentence) + ', where each is refused by name');
+    } finally { host.destroy(); }
+    var box = settleBox(640, 300), ex2 = HOST.instantiateSync(bytes), D = new Driver({ exports: ex2 }), h5 = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box });
+    try {
+      var ld = h5.attach(ex2).ok ? h5.load(COMMANDCARD.text.replace('(rate 30)', '(rate 0)'), COMMANDCARD.file) : { ok: false };
+      if (!ld.ok) { P.push('settle, version 5 at rate 0: the commands card did not load: ' + ld.sentence); return; }
+      // note holds everywhere; count-up holds on the Desk by Input!B19, which rate 0 does not write at version 5
+      var ev = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, code: 'KeyN', key: 'n' });
+      h5.vp.scroller.dispatchEvent(ev);
+      var noted = viewsNum(recordValues(D.call('alonzo_view', [ld.handle], ['grid', 'Ledger', 'B1']).text).B1);
+      if (ev.defaultPrevented && h5.counters().frame === 1 && noted === 1) k.fiveKey = 1;
+      else P.push('settle, version 5 at rate 0: N on the Desk was ' + (ev.defaultPrevented ? 'taken' : 'passed on') + ', leaving frame ' + h5.counters().frame + ' and the Ledger noting ' + noted + ', where note runs once by its key at rate 0, at frame 1');
+    } finally { h5.destroy(); box.parentNode.removeChild(box); }
+  }
   function loopLine(name, k, problems) {
     var parts = [];
     for (var key in k) if (Object.prototype.hasOwnProperty.call(k, key)) parts.push(key + ' ' + k[key]);
@@ -5966,7 +6293,7 @@
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
-                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys], ['commands', caseCommands]];
+                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -5975,7 +6302,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1, commands: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1, commands: 1, settle: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }
@@ -6021,12 +6348,14 @@
   // Since ENGINE.17 a fifth, still: the still card's frame path, runFrameSync, each frame stepped and
   // drawn as the loop draws it, in a box of the screen's size, a day's boundary every 30 frames drawn
   // and the frames between found still, which it counts; its blit column the draw, 0 on a still frame.
+  // Since CART.12 a sixth, act: Superposition's acts, each from its command to the rendering of its
+  // settle's last frame (decision 8), the large board's one edit into a huge model as a person sees it.
   function blitInstrument() {
     var SMOKE_B = /[?&]smoke=1(&|$)/.test(QS);
     var FRAMES = SMOKE_B ? 8 : 120, WARM = SMOKE_B ? 2 : 20;
     var statusEl = document.getElementById('bench-status'), outEl = document.getElementById('out'), pre = document.getElementById('blit');
     var runBtn = document.getElementById('run'), fsBtn = document.getElementById('fullscreen'), copyBtn = document.getElementById('copy');
-    document.getElementById('instrument-title').textContent = 'The blit\'s instrument \u00b7 a 320 by 200 plane at the scale that fits the screen, at a scale of 1, and over the engine\'s module, the grid card drawn by the viewport, and the still card\'s frame path';
+    document.getElementById('instrument-title').textContent = 'The blit\'s instrument \u00b7 a 320 by 200 plane at the scale that fits the screen, at a scale of 1, and over the engine\'s module, the grid card drawn by the viewport, the still card\'s frame path, and Superposition\'s acts, each to its settle drawn';
     document.getElementById('instrument-note').textContent = 'The page runs once on opening, not in fullscreen; press Fullscreen to enter it and run again. The fit case is honest only in fullscreen, where the plane fills the screen. Copy takes the table and the baseline lines for tools/check_blit_floors.ps1.';
     var running = false;
     function say(t) { statusEl.textContent = t; }
@@ -6042,6 +6371,47 @@
       for (var i = 0; i < 30; i++) { var ts = await frame(); d.push(ts - prev); prev = ts; }
       return pct(ordered(d), 0.5);
     }
+    // The act case (CART.12, decision 8): Superposition over the engine's module, loaded through the host in a
+    // box of the screen's size with the seed 1 and its load settled, then the floors' scripted player's acts, each
+    // made by its command on the cell the viewport's selection stands on, the selection moved and drawn first, as
+    // a person's move is. An act is timed from before its command to a task queued after the rendering of the frame
+    // that drew its settle's end: the host steps a settle inside a tick's slice, drawing every frame, and a settle
+    // longer than the slice goes on at the next animation frame, as it does live. The page's hand follows every
+    // act's frames, and the Tally the acts left is held to it at the end.
+    async function actRun(host, mod, iv) {
+      var SPH = HANDS.superposition;
+      if (typeof SPH !== 'function' || !SPH.Lattice || !SPH.Player) throw new Error('the page holds no hand-superposition block, whose player the act case plays');
+      var lat = new SPH.Lattice(512, 1, 0.15), player = new SPH.Player(1);
+      var follow = function (inputs, n) { var now = inputs; for (var k = 0; k < n; k++) { lat.frame(now); now = SPH.released(now); } };
+      host.start();
+      while (host.settling || host.inFrame) host.tick(await frame());
+      follow({ column: 0, row: 0, left: false, right: false, middle: false, sheet: '', command: '' }, host.counters().frame);
+      var mains = [], syncs = [], views = [], blits = [], dropped = 0, first = 0, frames = 0;
+      for (var i = 0; i < WARM + FRAMES; i++) {
+        if (i % 20 === 0) say('Running: act, act ' + (i + 1) + ' of ' + (WARM + FRAMES) + '...');
+        var inp = player.act(lat).inputs, cmd = inp.command || (inp.right ? 'box' : (inp.middle ? 'collapse' : 'observe'));
+        host.vp.select(VP.colName(inp.column) + inp.row);
+        await frame();
+        var f0 = host.counters().frame, t0 = performance.now(), r = host.command(cmd), sync = performance.now() - t0;
+        if (!r || r.ok === false) throw new Error('the act case\'s command ' + cmd + ' was not run: ' + (r && r.sentence));
+        while (host.settling || host.inFrame) host.tick(await frame());
+        var afterP = task(), ts = await frame(), after = await afterP, main = after - t0, n = host.counters().frame - f0;
+        follow({ column: inp.column, row: inp.row, left: false, right: false, middle: false, sheet: 'Field', command: cmd }, n);
+        if (i < WARM) continue;
+        if (i === WARM) first = main;
+        frames += n; mains.push(main); syncs.push(sync);
+        if (host.timing) { views.push(host.timing.view); blits.push(host.timing.draw); }
+        if (ts - t0 > 1.5 * iv) dropped++;
+      }
+      var D = new Driver({ exports: mod }), rec = recordValues(D.call('alonzo_view', [host.counters().handle], ['values', 'Tally', 'R1:R512']).text);
+      for (var row = 1; row <= 512; row++) {
+        var got = sndPlain(rec['R' + row]);
+        if ((got === undefined ? 0 : got) !== lat.rowSum(row)) throw new Error('the act case\'s acts left Tally!R' + row + ' at ' + handSpell(got) + ', and the page\'s hand at ' + lat.rowSum(row));
+      }
+      var sm = ordered(mains), p95 = pct(sm, 0.95), cv = host.vp.canvas;
+      return { name: 'act', scale: 0, width: cv.width, height: cv.height, first: first, view: pct(ordered(views), 0.5), blit: pct(ordered(blits), 0.5), sync: pct(ordered(syncs), 0.5),
+               p50: pct(sm, 0.5), p95: p95, max: sm[sm.length - 1], dropped: dropped, n: FRAMES, holds: p95 < iv, stills: null, frames: frames };
+    }
     async function runCase(spec, iv) {
       var stage = document.getElementById('stage'), box = document.createElement('div');
       box.className = 'case';
@@ -6050,7 +6420,7 @@
       cv.style.display = 'block';
       if (!spec.grid) box.appendChild(cv);
       stage.appendChild(box);
-      var host = spec.grid ? new HOST({ drive: 'manual', budget: 0, grid: box }) : new HOST({ drive: 'manual', budget: 0, canvas: cv, box: box, scale: spec.scale || 0 });
+      var host = spec.grid ? new HOST({ drive: 'manual', budget: 0, grid: box, seed: spec.act ? 1 : undefined }) : new HOST({ drive: 'manual', budget: 0, canvas: cv, box: box, scale: spec.scale || 0 });
       try {
         // Over the double, the host's whole frame, whose step computes nothing. Over the engine's
         // module (ENGINE.2), Life stepped once, untimed, to its soup, and then the same frame drawn
@@ -6059,10 +6429,11 @@
         // frame path. The language keeps the Screen's plane from the end of that first frame. The
         // grid case the same over the grid card, its Screen drawn by the viewport from the values view.
         // The still case is the frame path itself over the still card, stepped as the loop steps it.
-        var a = host.attach(spec.engine ? HOST.instantiateSync(bytesOfBase64(builtModule())) : FAKE.create({}).exports);
+        var mod = spec.engine ? HOST.instantiateSync(bytesOfBase64(builtModule())) : FAKE.create({}).exports, a = host.attach(mod);
         if (!a.ok) throw new Error(a.sentence);
-        var ld = spec.still ? host.load(STILL.text, STILL.file) : (spec.grid ? host.load(CARTRIDGES.gridcard.text, 'gridcard.vla') : host.load(lifeText, 'life.vla'));
+        var ld = spec.act ? host.load(CARTRIDGES.superposition.text, 'superposition.vla') : (spec.still ? host.load(STILL.text, STILL.file) : (spec.grid ? host.load(CARTRIDGES.gridcard.text, 'gridcard.vla') : host.load(lifeText, 'life.vla')));
         if (!ld.ok) throw new Error(ld.sentence);
+        if (spec.act) return await actRun(host, mod, iv);
         var once = spec.engine && !spec.still ? function () { host.redraw(); } : function () { host.runFrameSync(); };
         if (spec.engine && !spec.still && !host.runFrameSync()) throw new Error((spec.grid ? 'The grid card\'s' : 'Life\'s') + ' first frame did not complete on the engine\'s module');
         for (var w = 0; w < WARM; w++) once();
@@ -6099,7 +6470,7 @@
       for (var i = 0; i < rs.length; i++) {
         var x = rs[i];
         lines.push("    @{ Case = '" + x.name + "'; Scale = " + x.scale + '; Width = ' + x.width + '; Height = ' + x.height + '; FirstFrame = ' + fmt1(x.first) + '; ViewP50 = ' + fmt1(x.view) + '; BlitP50 = ' + fmt1(x.blit) + '; SyncP50 = ' + fmt1(x.sync) +
-                   '; FrameP50 = ' + fmt1(x.p50) + '; FrameP95 = ' + fmt1(x.p95) + '; Max = ' + fmt1(x.max) + '; Dropped = ' + x.dropped + '; N = ' + x.n + "; Holds = '" + (x.holds ? 'yes' : 'no') + "'" + (x.stills === null ? '' : '; Stills = ' + x.stills) + ' }' + (i < rs.length - 1 ? ',' : ''));
+                   '; FrameP50 = ' + fmt1(x.p50) + '; FrameP95 = ' + fmt1(x.p95) + '; Max = ' + fmt1(x.max) + '; Dropped = ' + x.dropped + '; N = ' + x.n + "; Holds = '" + (x.holds ? 'yes' : 'no') + "'" + (x.stills === null ? '' : '; Stills = ' + x.stills) + (x.frames === undefined ? '' : '; Frames = ' + x.frames) + ' }' + (i < rs.length - 1 ? ',' : ''));
       }
       lines.push(')');
       return lines.join('\n');
@@ -6119,8 +6490,11 @@
         if (withEngine) rs.push(await runCase({ name: 'engine', W: screen.width, H: screen.height, scale: 0, engine: true }, iv));
         if (withEngine) rs.push(await runCase({ name: 'grid', W: screen.width, H: screen.height, engine: true, grid: true }, iv));
         if (withEngine) rs.push(await runCase({ name: 'still', W: screen.width, H: screen.height, engine: true, grid: true, still: true }, iv));
+        var withActs = withEngine && !!CARTRIDGES.superposition && typeof HANDS.superposition === 'function';
+        if (withActs) rs.push(await runCase({ name: 'act', W: screen.width, H: screen.height, engine: true, grid: true, act: true }, iv));
         var env = 'Environment: ' + browser + ' | DPR ' + (window.devicePixelRatio || 1) + ' | screen ' + screen.width + 'x' + screen.height + ' | fullscreen ' + (fullscreen ? 'yes' : 'no') + ' | frame interval ' + fmt1(iv) + ' ms (about ' + (iv > 0 ? Math.round(1000 / iv) : 0) + ' Hz) | the fake module, the Life cartridge, ' + FRAMES + ' frames a case' +
-                  (withEngine ? '; the engine case over the module built into this page, ' + thousands(bytesOfBase64(builtModule()).length) + ' bytes, Life at its first frame redrawn; the grid case, the grid card at its first frame drawn again from the values view; the still case, the still card\'s frame path, a day\'s boundary drawn every 30 frames and the frames between still' : '; no engine module built into this page, so no engine, grid or still case');
+                  (withEngine ? '; the engine case over the module built into this page, ' + thousands(bytesOfBase64(builtModule()).length) + ' bytes, Life at its first frame redrawn; the grid case, the grid card at its first frame drawn again from the values view; the still case, the still card\'s frame path, a day\'s boundary drawn every 30 frames and the frames between still' : '; no engine module built into this page, so no engine, grid or still case') +
+                  (withActs ? '; the act case, Superposition\'s scripted acts, ' + FRAMES + ' after ' + WARM + ', each from its command to its settle\'s end drawn' : '');
         var md = env + '\n\n' + table(rs) + '\n\n' + baseline(rs, iv, env);
         outEl.value = md;
         pre.textContent = (SMOKE_B ? 'smoke ok (a virtual clock: numbers, not a measurement)\n' : 'blit ok\n') + md;
@@ -6181,7 +6555,10 @@
   // so that no fixture's memory holds the pass; each held over its whole board to this page's Life,
   // and named by its SHA-256 over LF, which tools/bench_frames.ps1 holds to the native runner's.
   // Every fixture's row carries the module's memory after its fourth frame, a fresh module a fixture,
-  // its high-water mark, since a module's memory never shrinks.
+  // its high-water mark, since a module's memory never shrinks. Since CART.12 Superposition's three rows
+  // follow the fixtures, the large board at rate 0, its acts settled by the engine (version 6), held to the
+  // page's hand-superposition: the idle frame in runs of 1,000, an act's latency over the scripted
+  // session at its 95th percentile, and the deepest cascade at 8%, as the native runner measures them.
   function framesInstrument() {
     var pre = document.getElementById('frames');
     var nm = /[?&]n=(\d+)(&|$)/.exec(QS), N = nm ? Math.max(2, +nm[1]) : 31;
@@ -6355,6 +6732,165 @@
                 '; CellsPerSecond = ' + Math.round(cells / (med / 1000)) + '; FramesPerSecond = ' + f3(1000 / med) + '; ClockMs = ' + f3(clock) + '; ClockSpread = ' + f1(spread) + '; ClockDrift = ' + f1(drift) + ' }');
       if (fx.digest) rungs.push("    @{ Rung = '" + fx.name + "'; Width = " + fx.w + '; Height = ' + fx.h + "; Digest = '" + fx.digest + "' }");
     }
+    // Superposition (CART.12, decision 8): the large board's three rows, each over the committed lattice of 512 by
+    // 512 on a fresh module, the seed 1 written as the host writes a (seed host) cartridge's, an act's Input rows
+    // written as the host writes them, the rows that differ from those last written, and the lattice held to this
+    // page's hand, the block hand-superposition, as the native runner holds it to the Rust one. The idle frame, five
+    // runs of 1,000 steps with nothing written after the load's settle, each run one span; an act's latency, the
+    // scripted player's 200 acts at 15%, each timed from before its rows to its settle's end, the row's cells a second
+    // taken at the 95th percentile, every act's Tally held and the whole lattice every 50 acts; and the deepest cascade
+    // at 8%, the site the hand finds at an end of the largest opening's widest path observed, the act and its settle
+    // timed whole, the whole lattice held after it. An act's time reads this page's clock of a tenth of a millisecond.
+    var SPH = HANDS.superposition, spCart = CARTRIDGES.superposition;
+    if (spCart && !(typeof SPH === 'function' && SPH.Lattice && SPH.Player)) throw new Error('the page holds Superposition and no hand-superposition block, whose lattice its rows are held to');
+    if (spCart) {
+      var SP_SIDE = 512, SP_SEED = 1, SP_P = 0.15, SP_RUN = 1000, SP_ACTS = 200, SP_PLAYER = 1, SP_CASCADE = 0.08, spTd = new TextDecoder();
+      var spSums = VP.colName(SP_SIDE / 32 + 2), spLast = VP.colName(SP_SIDE) + SP_SIDE;
+      var spModule = function (probability) {
+        var x = HOST.instantiateSync(bytes), m = { x: x, d: new Driver({ exports: x }), out: x.alonzo_alloc(4) };
+        var t0 = performance.now(), ld = m.d.call('alonzo_load', [], [spCart.text, 'superposition.vla']);
+        m.load = performance.now() - t0;
+        if (ld.status !== 0) throw new Error('superposition was refused at its load: ' + ld.text + ' [' + ld.id + ']');
+        m.h = +/^\(cartridge (\d+) /.exec(ld.text)[1];
+        var bm = /\(budget \d+ (\d+) /.exec(m.d.call('alonzo_describe', [m.h], []).text);
+        if (!bm) throw new Error('superposition: the describe holds no budget row');
+        m.cells = +bm[1];
+        var w = m.d.call('alonzo_write', [m.h], ['(cell "Clock" "B3" ' + SP_SEED + ')' + (probability ? '\n(cell "Constants" "B1" ' + probability + ')' : '')]);
+        if (w.status !== 0) throw new Error('superposition: the seed was refused: ' + w.text);
+        return m;
+      };
+      // one step with no budget, its answer read
+      var spStep = function (m) {
+        var p = m.x.alonzo_step(m.h, 0, m.out), len = new DataView(m.x.memory.buffer).getUint32(m.out, true);
+        var row = spTd.decode(new Uint8Array(m.x.memory.buffer, p + 16, len - 16));
+        m.x.alonzo_free(p, len);
+        return row;
+      };
+      // one act and its settle: its rows written, then a step until the answer says no more settling
+      var spAct = function (m, rows) {
+        var steps = [], t0 = performance.now(), row;
+        if (rows) { var w = m.d.call('alonzo_write', [m.h], [rows]); if (w.status !== 0) throw new Error('superposition: an act\'s rows were refused: ' + w.text); }
+        for (;;) {
+          var s0 = performance.now();
+          row = spStep(m);
+          steps.push(performance.now() - s0);
+          if (!/ done(?: settling| unsettled)?\)$/.test(row)) throw new Error('superposition: the step answered ' + row);
+          if (/ unsettled\)$/.test(row)) throw new Error('superposition: the grid did not settle inside its K: ' + row);
+          if (!/ settling\)$/.test(row)) break;
+        }
+        return { ms: performance.now() - t0, steps: steps };
+      };
+      // n steps from frame f0 as one span, nothing viewed or written inside it; then each answer read
+      var spSpan = function (m, f0, n) {
+        var outs = m.x.alonzo_alloc(4 * n), ptrs = new Array(n), t = performance.now();
+        for (var i = 0; i < n; i++) ptrs[i] = m.x.alonzo_step(m.h, 0, outs + 4 * i);
+        var ms = performance.now() - t, dv = new DataView(m.x.memory.buffer);
+        for (var j = 0; j < n; j++) {
+          var len = dv.getUint32(outs + 4 * j, true), row = spTd.decode(new Uint8Array(m.x.memory.buffer, ptrs[j] + 16, len - 16));
+          m.x.alonzo_free(ptrs[j], len);
+          if (row.indexOf('(step ' + (f0 + j) + ' ') !== 0 || !/ done(?: settling)?\)$/.test(row)) throw new Error('superposition: frame ' + (f0 + j) + ' answered ' + row);
+        }
+        m.x.alonzo_free(outs, 4 * n);
+        return ms;
+      };
+      // the Input rows an act writes at rate 0, as the host writes them
+      var SpRows = function () { this.known = null; };
+      SpRows.prototype.rows = function (i) {
+        var at = ['B11', 'B12', 'B13', 'B14', 'B15', 'B19', 'B20'], out = [];
+        var want = [String(i.column), String(i.row), i.left ? '1' : '0', i.right ? '1' : '0', i.middle ? '1' : '0', '"' + i.sheet + '"', '"' + i.command + '"'];
+        for (var k = 0; k < 7; k++) if (!this.known || this.known[k] !== want[k]) out.push('(cell "Input" "' + at[k] + '" ' + want[k] + ')');
+        this.known = want.slice(); this.known[2] = this.known[3] = this.known[4] = '0'; this.known[6] = '""';
+        return out.join('\n');
+      };
+      var spNone = { column: 0, row: 0, left: false, right: false, middle: false, sheet: '', command: '' };
+      var spFollow = function (l, inputs, frames) { var now = inputs; for (var k = 0; k < frames; k++) { l.frame(now); now = SPH.released(now); } };
+      // the lattice held to the hand: each row's sum on the Tally, and with whole every site of the Field
+      var spHold = function (m, l, whole, at) {
+        var v = m.d.call('alonzo_view', [m.h], ['values', 'Tally', spSums + '1:' + spSums + SP_SIDE]);
+        if (v.status !== 0) throw new Error('superposition: the Tally\'s view was refused: ' + v.text);
+        var rec = recordValues(v.text), r, c, got, want;
+        for (r = 1; r <= SP_SIDE; r++) {
+          got = sndPlain(rec[spSums + r]); want = l.rowSum(r);
+          if ((got === undefined ? 0 : got) !== want) throw new Error('superposition, ' + at + ': Tally!' + spSums + r + ' holds ' + handSpell(got) + ', and the page\'s hand ' + want);
+        }
+        if (!whole) return;
+        var fv = m.d.call('alonzo_view', [m.h], ['values', 'Field', 'A1:' + spLast]);
+        if (fv.status !== 0) throw new Error('superposition: the Field\'s view was refused: ' + fv.text);
+        var field = recordValues(fv.text);
+        for (r = 1; r <= SP_SIDE; r++) for (c = 1; c <= SP_SIDE; c++) {
+          got = sndPlain(field[VP.colName(c) + r]); want = l.site(r, c);
+          if ((got === undefined ? 0 : got) !== want) throw new Error('superposition, ' + at + ': Field!' + VP.colName(c) + r + ' holds ' + handSpell(got) + ', and the page\'s hand ' + want);
+        }
+      };
+      var spRank = function (s, q) { var n = s.length; return s[Math.min(n, Math.max(1, Math.ceil(q * n))) - 1]; };
+      var spSorted = function (v) { return v.slice().sort(function (a, b) { return a - b; }); };
+      var spClock = function (clocks, name) {
+        var clock = median(clocks), spread = (Math.max.apply(null, clocks) - Math.min.apply(null, clocks)) / clock * 100, drift = (clock / startClock - 1) * 100;
+        lines.push('  the clock: this page\'s Life ' + f3(clock) + ' ms a generation, read ' + SIDE_READINGS + ' times before the row\'s work and ' + SIDE_READINGS + ' after it, spread ' + f1(spread) + '%, ' + (drift >= 0 ? '+' : '') + f1(drift) + '% from ' + f3(startClock) + ' at the start');
+        if (spread > CLOCK_MOVED_MAX || Math.abs(drift) > CLOCK_MOVED_MAX) { moved = true; lines.push('  the clock moved during ' + name + ', more than ' + CLOCK_MOVED_MAX + '%: power throttling or a thermal limit; these times are not a baseline'); }
+        return 'ClockMs = ' + f3(clock) + '; ClockSpread = ' + f1(spread) + '; ClockDrift = ' + f1(drift);
+      };
+      var spReadings = function () { var c = []; for (var k = 0; k < SIDE_READINGS; k++) c.push(probe()); return c; };
+      // the idle row
+      var mi = spModule(), li = new SPH.Lattice(SP_SIDE, SP_SEED, SP_P), ci = spReadings();
+      var si = spAct(mi, ''), fi0 = si.steps.length + 1, idle = [];
+      spFollow(li, spNone, si.steps.length);
+      for (var ri = 0; ri < RUNS; ri++) idle.push(spSpan(mi, fi0 + ri * SP_RUN, SP_RUN) / SP_RUN);
+      ci = ci.concat(spReadings());
+      spHold(mi, li, true, 'after the idle runs');
+      var imed = median(idle), imem = mi.x.memory.buffer.byteLength;
+      if (!(imed > 0 && isFinite(imed))) throw new Error('superposition: its idle runs read ' + imed + ' ms a frame, which is no time');
+      lines.push('superposition: load ' + f1(mi.load) + ' ms; ' + thousands(mi.cells) + ' formula cells; the load\'s act and its settle ' + si.steps.length + ' frames, ' + f1(si.ms) + ' ms, the first ' + fms(si.steps[0]) + ' ms; frames ' + fi0 + ' to ' + (fi0 + RUNS * SP_RUN - 1) +
+                 ' in ' + RUNS + ' runs of ' + SP_RUN + ', nothing written, each run one span: a frame\'s median ' + fms(imed) + ' ms (min ' + fms(Math.min.apply(null, idle)) + ', max ' + fms(Math.max.apply(null, idle)) + '), ' + thousands(Math.round(mi.cells / (imed / 1000))) + ' cells a second, ' + f3(1000 / imed) + ' frames a second');
+      lines.push('  the lattice of ' + SP_SIDE + ' by ' + SP_SIDE + ', seed ' + SP_SEED + ', every site in superposition, held whole to the page\'s hand after the runs; the module\'s memory after them, a fresh module, ' + thousands(imem) + ' bytes');
+      var iclock = spClock(ci, 'the idle row');
+      rows.push("    @{ Runner = 'wasm'; Fixture = 'superposition'; Cells = " + mi.cells + '; Frames = ' + (RUNS * SP_RUN) + '; Run = ' + SP_RUN + '; Load = ' + f1(mi.load) + '; Memory = ' + imem + '; FirstFrame = ' + fms(si.steps[0]) + '; FrameP50 = ' + fms(imed) + '; FrameMin = ' + fms(Math.min.apply(null, idle)) + '; FrameMax = ' + fms(Math.max.apply(null, idle)) +
+                '; CellsPerSecond = ' + Math.round(mi.cells / (imed / 1000)) + '; FramesPerSecond = ' + f3(1000 / imed) + '; ' + iclock + ' }');
+      mi = li = null;
+      // the session's row
+      var ma = spModule(), la = new SPH.Lattice(SP_SIDE, SP_SEED, SP_P), player = new SPH.Player(SP_PLAYER), written = new SpRows();
+      spFollow(la, spNone, spAct(ma, '').steps.length);
+      var ca = spReadings(), acts = [], asteps = 0, by = {}, order = [];
+      for (var ak = 1; ak <= SP_ACTS; ak++) {
+        var a = player.act(la), played = spAct(ma, written.rows(a.inputs));
+        spFollow(la, a.inputs, played.steps.length);
+        spHold(ma, la, ak % 50 === 0, 'act ' + ak);
+        acts.push(played.ms); asteps += played.steps.length;
+        if (!by[a.move]) { by[a.move] = []; order.push(a.move); }
+        by[a.move].push(played.ms);
+      }
+      ca = ca.concat(spReadings());
+      var as = spSorted(acts), ap95 = spRank(as, 0.95), amem = ma.x.memory.buffer.byteLength;
+      if (!(ap95 > 0 && isFinite(ap95))) throw new Error('superposition-act: its acts\' 95th percentile reads ' + ap95 + ' ms, which is no time');
+      lines.push('superposition-act: load ' + f1(ma.load) + ' ms; ' + thousands(ma.cells) + ' formula cells; the scripted session, ' + SP_ACTS + ' acts at ' + Math.round(SP_P * 100) + '% over ' + asteps + ' frames, each act from before its rows to its settle\'s end: p50 ' + fms(spRank(as, 0.5)) + ' ms, p95 ' + fms(ap95) + ' ms (min ' + fms(as[0]) +
+                 ', max ' + fms(as[as.length - 1]) + '), the deal ' + fms(acts[0]) + ' ms; ' + thousands(Math.round(ma.cells / (ap95 / 1000))) + ' cells a second at the p95, ' + f3(1000 / ap95) + ' acts a second');
+      lines.push('  by move: ' + order.map(function (mv) { var v = spSorted(by[mv]); return mv + ' ' + v.length + ', p50 ' + fms(spRank(v, 0.5)) + ' ms, max ' + fms(v[v.length - 1]); }).join('; '));
+      lines.push('  every act\'s Tally held to the page\'s hand, and the whole lattice every 50 acts; the module\'s memory after the session, a fresh module, ' + thousands(amem) + ' bytes');
+      var aclock = spClock(ca, 'the session');
+      rows.push("    @{ Runner = 'wasm'; Fixture = 'superposition-act'; Cells = " + ma.cells + '; Frames = ' + SP_ACTS + '; Run = 1; Steps = ' + asteps + '; Load = ' + f1(ma.load) + '; Memory = ' + amem + '; FirstFrame = ' + fms(acts[0]) + '; FrameP50 = ' + fms(spRank(as, 0.5)) + '; FrameP95 = ' + fms(ap95) + '; FrameMin = ' + fms(as[0]) +
+                '; FrameMax = ' + fms(as[as.length - 1]) + '; CellsPerSecond = ' + Math.round(ma.cells / (ap95 / 1000)) + '; FramesPerSecond = ' + f3(1000 / ap95) + '; ' + aclock + ' }');
+      ma = la = null;
+      // the cascade's row
+      var mc = spModule(SP_CASCADE), lc = new SPH.Lattice(SP_SIDE, SP_SEED, SP_CASCADE);
+      spFollow(lc, spNone, spAct(mc, '').steps.length);
+      lc.deal();
+      var deal = lc.deepest();
+      if (!deal) throw new Error('superposition-cascade: the world holds no reading of nothing');
+      var dealt = { column: deal.column, row: deal.row, left: false, right: false, middle: false, sheet: 'Field', command: 'observe' }, dealRows = new SpRows().rows(dealt);
+      var cc = spReadings(), cp = spAct(mc, dealRows);
+      cc = cc.concat(spReadings());
+      spFollow(lc, dealt, cp.steps.length);
+      spHold(mc, lc, true, 'the cascade\'s end');
+      var cframes = cp.steps.length, cs = spSorted(cp.steps), cmem = mc.x.memory.buffer.byteLength, dealAt = VP.colName(deal.column) + deal.row;
+      if (cframes < deal.rings + 2 || cframes > deal.rings + 3) throw new Error('superposition-cascade: the deal at ' + dealAt + ' opens ' + deal.rings + ' rings, and its cascade took ' + cframes + ' frames');
+      lines.push('superposition-cascade: load ' + f1(mc.load) + ' ms; ' + thousands(mc.cells) + ' formula cells; the lattice at ' + Math.round(SP_CASCADE * 100) + '%, seed ' + SP_SEED + ', its deepest deal at ' + dealAt + ', the largest opening\'s ' + thousands(deal.zeros) + ' readings of nothing, ' + deal.rings + ' rings: observed, ' + cframes + ' frames in ' + f1(cp.ms) +
+                 ' ms, ' + thousands(lc.opened()) + ' sites opened; a frame\'s median ' + fms(spRank(cs, 0.5)) + ' ms (min ' + fms(cs[0]) + ', max ' + fms(cs[cs.length - 1]) + '); ' + thousands(Math.round(mc.cells * cframes / (cp.ms / 1000))) + ' cells a second, ' + f3(cframes / (cp.ms / 1000)) + ' frames a second');
+      lines.push('  the whole lattice held to the page\'s hand after the cascade; the module\'s memory after it, a fresh module, ' + thousands(cmem) + ' bytes');
+      var cclock = spClock(cc, 'the cascade');
+      rows.push("    @{ Runner = 'wasm'; Fixture = 'superposition-cascade'; Cells = " + mc.cells + '; Frames = ' + cframes + '; Run = 1; Load = ' + f1(mc.load) + '; Memory = ' + cmem + '; FirstFrame = ' + fms(cp.steps[0]) + '; FrameP50 = ' + fms(spRank(cs, 0.5)) + '; FrameMin = ' + fms(cs[0]) + '; FrameMax = ' + fms(cs[cs.length - 1]) +
+                '; CascadeMs = ' + f1(cp.ms) + '; Seed = ' + SP_SEED + '; Probability = ' + SP_CASCADE + "; Deal = '" + dealAt + "'; Rings = " + deal.rings + '; Opened = ' + lc.opened() + '; CellsPerSecond = ' + Math.round(mc.cells * cframes / (cp.ms / 1000)) + '; FramesPerSecond = ' + f3(cframes / (cp.ms / 1000)) + '; ' + cclock + ' }');
+      mc = lc = null;
+    }
     // The size ladder's slope (ENGINE.9, decision 8): each rung over the window's, and the exponent
     // against the formula cells, 1 where a quantity grows as the cells do; and the gun's idle frame at
     // the top rung against the prediction that it costs what it costs on the window.
@@ -6376,7 +6912,8 @@
       }
     }
     var ladderText = slope.length ? '\nthe size ladder (ENGINE.9), in the browser: each rung over the window\'s, and the exponent against the formula cells, 1 where a quantity grows as the cells do\n' + slope.join('\n') : '';
-    var head = 'frames: the engine\'s module, ' + thousands(bytes.length) + ' bytes, under ' + navigator.userAgent + '; ' + fixtures.length + ' cartridges, ' + N + ' frames each or, where a frame reads under ' + RUN_GRAINS + ' steps of this page\'s clock of ' + grainText + ' ms, ' + RUNS + ' runs of ' + RUN_FRAMES + ' past frame ' + N + ', every frame equal to the page\'s Life or Sand';
+    var head = 'frames: the engine\'s module, ' + thousands(bytes.length) + ' bytes, under ' + navigator.userAgent + '; ' + fixtures.length + ' cartridges, ' + N + ' frames each or, where a frame reads under ' + RUN_GRAINS + ' steps of this page\'s clock of ' + grainText + ' ms, ' + RUNS + ' runs of ' + RUN_FRAMES + ' past frame ' + N + ', every frame equal to the page\'s Life or Sand' +
+               (spCart ? '; and Superposition\'s three rows, the idle frame, an act\'s latency and the deepest cascade, held to the page\'s hand' : '');
     pre.textContent = moved
       ? 'frames refused: the clock moved\n' + head + '\n' + lines.join('\n') + ladderText + '\nno baseline rows: run it through tools/bench_frames.ps1, which opts the browser out of Windows\' power throttling'
       : 'frames ok\n' + head + '\n' + lines.join('\n') + ladderText + '\nthe baseline rows, for tools/check_frame_floors.ps1:\n' + rows.join('\n') + '\n' + rungs.join('\n');

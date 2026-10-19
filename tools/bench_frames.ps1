@@ -95,19 +95,39 @@ it was timed in runs is. After the block, the ladder's slope for each half:
 each rung's frame, load and memory over the window's, and the exponent
 against the formula cells, which docs/REARVIEW.md records with the run.
 
+SUPERPOSITION (CART.12, decision 8, 2026-10-18): the large board, a lattice
+of 512 by 512 at rate 0 that settles after every act, one edit into a huge
+model, three rows a half over the committed cartridge, each held to a
+lattice written by hand, the runner's engine/src/superposition.rs and the
+page's cartridges/superposition/superposition.hand.js: the idle frame,
+superposition, runs of 1,000 steps with nothing written, ten natively and
+five in the browser; an act's latency, superposition-act, the scripted
+player's 200 acts at 15%, its cells a second taken at the session's 95th
+percentile, FrameP95, beside the frames the acts took, Steps; and the
+deepest cascade by time, superposition-cascade, the lattice at 8% observed
+at the end of its largest opening's widest path, the act and its settle
+timed whole, CascadeMs, with its seed, probability, deal, rings and sites
+opened. Each half finds its session and its deal by its own hand, so this
+script prints no block when the halves played another session (Frames and
+Steps) or another cascade (its frames, seed, probability, deal, rings and
+sites opened). The three rows name one fixture, the cartridge's file, so a
+re-based row is judged by it. Ten rows a half since then.
+
 WHAT IT DOES:
   1. builds what it measures, unless -NoBuild: the runner (cargo build
      --release --example frames), the engine's module (cargo build --release
      -p alonzo --target wasm32-unknown-unknown) and the page
      (tools/build_web.ps1);
-  2. runs the runner over the three fixtures and reads its seven native
-     rows, the three and the ladder's four, and its four rungs' digests;
-  3. runs web/index.html?frames=1 and reads its seven wasm rows and its
+  2. runs the runner over the four fixtures and reads its ten native rows,
+     the three, the ladder's four and Superposition's three, and its four
+     rungs' digests;
+  3. runs web/index.html?frames=1 and reads its ten wasm rows and its
      rungs' digests, both halves on the performance cores and opted out of
-     the throttling, and holds the two halves' digests equal;
+     the throttling, and holds the two halves' digests equal, and their
+     Superposition sessions and cascades the same;
   4. prints the block: the date, the environment, the pin of vla-lang in
      Cargo.toml, each fixture's SHA-256 over LF bytes, each rung's, the
-     fourteen rows, and the
+     twenty rows, and the
      floor history as the check holds it with this run's entry added last,
      each row's cells a second less the check's margin of 10%, rounded down
      to three figures, or the latest entry's floor for the row where that is
@@ -355,11 +375,12 @@ function Invoke-Step([string]$what, [string]$exe, [string[]]$arguments) {
 $life = Join-Path $repoRoot 'cartridges/life/life.vla'
 $gun = Join-Path $repoRoot 'cartridges/gun/gun.vla'
 $sand = Join-Path $repoRoot 'cartridges/sand/sand.vla'
+$superposition = Join-Path $repoRoot 'cartridges/superposition/superposition.vla'
 $runnerExe = Join-Path $repoRoot ('target/release/examples/frames' + $(if ($onWindows) { '.exe' } else { '' }))
 $wasm = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
 $page = Join-Path $repoRoot 'web/index.html'
 
-Write-Output '=== THE FRAME FLOORS: LIFE, THE SIZE LADDER AND SAND MEASURED NATIVELY AND IN THE BROWSER (CART.1, CART.2, ENGINE.9) ==='
+Write-Output '=== THE FRAME FLOORS: LIFE, THE SIZE LADDER, SAND AND SUPERPOSITION MEASURED NATIVELY AND IN THE BROWSER (CART.1, CART.2, ENGINE.9, CART.12) ==='
 if (-not $NoBuild) {
     $cargo = Find-Cargo
     if ($cargo -eq '') { Write-Output 'FAIL: no cargo on PATH or in ~/.cargo/bin; build the runner and the module, then run with -NoBuild'; exit 1 }
@@ -388,7 +409,7 @@ $coresWord = if ($cores.Mask -ne 0) { ', on the performance cores' } else { '' }
 Write-Output ("  the native runner, {0} frames a fixture, its process opted out of power throttling{1}..." -f $Frames, $coresWord)
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName = $runnerExe
-$psi.Arguments = ('--frames {0} "{1}" "{2}" "{3}"' -f $Frames, $life, $gun, $sand)
+$psi.Arguments = ('--frames {0} "{1}" "{2}" "{3}" "{4}"' -f $Frames, $life, $gun, $sand, $superposition)
 $psi.UseShellExecute = $false
 $psi.RedirectStandardOutput = $true
 $psi.WorkingDirectory = $repoRoot
@@ -399,8 +420,9 @@ $nativePinned = Set-PerformanceCores $proc
 $nativeText = $proc.StandardOutput.ReadToEnd()
 $proc.WaitForExit()
 $nativeRows = @(($nativeText -split "`r?`n") | Where-Object { $_ -match "^\s+@\{ Runner = 'native'" } | ForEach-Object { $_.Trim() })
-# Seven rows a half since ENGINE.9: life, gun and sand, and the size ladder's four rungs.
-$rowsAHalf = 7
+# Ten rows a half since CART.12: life, gun and sand, the size ladder's four rungs (ENGINE.9), and
+# Superposition's three, the idle frame, an act's latency and the deepest cascade.
+$rowsAHalf = 10
 $rungNames = @('life-x4', 'life-x16', 'gun-x4', 'gun-x16')
 if ($nativeRows.Count -ne $rowsAHalf) {
     Write-Output $nativeText
@@ -520,6 +542,24 @@ if ($timeless.Count -gt 0) {
     Write-Output ("FAIL: {0}: a rate that is no finite number above 0 is no floor, so no block is printed. A frame read as 0 ms timed alone; the page this tree builds times a frame quicker than its clock in runs, so build it again (run without -NoBuild)." -f ($timeless -join '; '))
     exit 1
 }
+# Superposition's two halves (CART.12): each plays the scripted session and finds the cascade's deal by its own
+# hand, so the halves measured the same rows only when they played the same acts in the same frames and opened
+# the same cascade.
+$byRow = @{}
+foreach ($r in $rows) { $byRow[(Get-Field $r 'Runner') + ' ' + (Get-Field $r 'Fixture')] = $r }
+$spProblems = @()
+foreach ($pair in @(@('superposition-act', @('Frames', 'Steps')), @('superposition-cascade', @('Frames', 'Seed', 'Probability', 'Deal', 'Rings', 'Opened')))) {
+    $n = $byRow['native ' + $pair[0]]; $w = $byRow['wasm ' + $pair[0]]
+    foreach ($field in $pair[1]) {
+        if ((Get-Field $n $field) -ne (Get-Field $w $field)) { $spProblems += ("{0}'s {1} is {2} natively and {3} in the page" -f $pair[0], $field, (Get-Field $n $field), (Get-Field $w $field)) }
+    }
+}
+if ($spProblems.Count -gt 0) {
+    Write-Output $nativeText.TrimEnd()
+    Write-Output $wasmText.TrimEnd()
+    Write-Output ("FAIL: {0}: the two halves did not play the same Superposition, so no block is printed. Each half's hand plays the scripted session and finds the cascade's deal; build the page again (run without -NoBuild), so that its hand and its cartridge are this tree's." -f ($spProblems -join '; '))
+    exit 1
+}
 # Each row's floor: this run's cells a second less the margin, rounded down to three figures, or the
 # latest entry's floor for the row where that is higher, so that this instrument never lowers a floor
 # (CART.2, 2026-10-11: the fourth baseline's paste lowered Life's two native floors, measured slower
@@ -537,7 +577,12 @@ $measured = Get-BaselineFixtures $checkFile
 $measuredRungs = Get-BaselineRungs $checkFile
 foreach ($rung in $measuredRungs.Keys) { $measured[$rung] = $measuredRungs[$rung] }
 $rebuilt = Get-SameRows $checkFile
-$digestNow = @{ 'life' = (Get-LfDigest $life); 'gun' = (Get-LfDigest $gun); 'sand' = (Get-LfDigest $sand) }
+$digestNow = @{ 'life' = (Get-LfDigest $life); 'gun' = (Get-LfDigest $gun); 'sand' = (Get-LfDigest $sand); 'superposition' = (Get-LfDigest $superposition) }
+# Superposition's three rows name its one file (CART.12).
+foreach ($spRow in @('superposition-act', 'superposition-cascade')) {
+    $digestNow[$spRow] = $digestNow['superposition']
+    if ($measured.ContainsKey('superposition')) { $measured[$spRow] = $measured['superposition'] }
+}
 foreach ($rung in $rungNames) { $digestNow[$rung] = [string]$nativeRungs[$rung] }
 $latest = @{}
 if ($entries.Count -gt 0) {
@@ -584,7 +629,7 @@ $block.Add('# ---- paste from here into tools/check_frame_floors.ps1, over the b
 $block.Add(("`$baselineDate = '{0}'" -f $date))
 $block.Add(("`$baselineEnvironment = '{0}'" -f ($environment -replace "'", "''")))
 $block.Add(("`$baselinePin = '{0}'" -f $pin))
-$block.Add(("`$baselineFixtures = @{{ 'life' = '{0}'; 'gun' = '{1}'; 'sand' = '{2}' }}" -f (Get-LfDigest $life), (Get-LfDigest $gun), (Get-LfDigest $sand)))
+$block.Add(("`$baselineFixtures = @{{ 'life' = '{0}'; 'gun' = '{1}'; 'sand' = '{2}'; 'superposition' = '{3}' }}" -f (Get-LfDigest $life), (Get-LfDigest $gun), (Get-LfDigest $sand), (Get-LfDigest $superposition)))
 $block.Add(('$baselineRungs = @{ ' + (@($rungNames | ForEach-Object { "'{0}' = '{1}'" -f $_, $nativeRungs[$_] }) -join '; ') + ' }'))
 $block.Add('$baseline = @(')
 for ($i = 0; $i -lt $rows.Count; $i++) { $block.Add(('    ' + $rows[$i] + $(if ($i -lt $rows.Count - 1) { ',' } else { '' }))) }

@@ -35,13 +35,16 @@ repository = "https://github.com/Spreadsheet-Company/Alonzo"
 
 [workspace.dependencies]
 # The language crate and nothing else (AD-5), pinned to one version on
-# crates.io: vla-lang 0.10.0 (Frazaro's release commit 1cc86c9, tagged
-# v0.10.0, 2026-10-17, 0.9.5 folded into it): a fill's cells read and folded
-# as slices of numbers (KERNEL.43); a cell computed alone running its formula
-# compiled once (KERNEL.44); a sheet read in the frame being computed read as
-# an array (KERNEL.31); a number format's code, whose text the record prints
-# (KERNEL.47); and a formula written as an expression, formula-expand
-# (VLA.4); over 0.9.4 (Frazaro's KERNEL.42, fb64e3a, released as e8911f6,
+# crates.io: vla-lang 0.10.1 (Frazaro's KERNEL.48, f10e532, released as
+# 0d87447, tagged v0.10.1 on f123c23, 2026-10-18): a frame's count of the
+# formula cells it changed, on each sheet, and of those it computed, which a
+# (spec 6) cartridge's settle reads (CART.12); over 0.10.0 (Frazaro's release
+# commit 1cc86c9, tagged v0.10.0, 2026-10-17, 0.9.5 folded into it), a fill's
+# cells read and folded as slices of numbers (KERNEL.43); a cell computed
+# alone running its formula compiled once (KERNEL.44); a sheet read in the
+# frame being computed read as an array (KERNEL.31); a number format's code,
+# whose text the record prints (KERNEL.47); and a formula written as an
+# expression, formula-expand (VLA.4); over 0.9.4 (Frazaro's KERNEL.42, fb64e3a, released as e8911f6,
 # 2026-10-15), a window's changes since a frame, a fourth projection by name
 # and no new export; over 0.9.3 (Frazaro's release commit 17f9f3e,
 # tagged v0.9.3 on 8993a7e, 2026-10-14), a formula written into a running grid in
@@ -66,10 +69,10 @@ repository = "https://github.com/Spreadsheet-Company/Alonzo"
 # docs/REARVIEW.md, ENGINE.1's second slice, decision 1): a git rev while the
 # language's change is unreleased, and the exact registry pin once it is,
 # 0.8.1 on 2026-10-10, 0.9.0 on 2026-10-11, 0.9.1 and 0.9.2 on 2026-10-12,
-# 0.9.3 on 2026-10-14, 0.9.4 on 2026-10-15 and 0.10.0 on 2026-10-17, no git
-# rev between them. An exact version and never a range, a rev and never a
-# branch, since a range and a branch move.
-vla-lang = "=0.10.0"
+# 0.9.3 on 2026-10-14, 0.9.4 on 2026-10-15, 0.10.0 on 2026-10-17 and 0.10.1
+# on 2026-10-18, no git rev between them. An exact version and never a range,
+# a rev and never a branch, since a range and a branch move.
+vla-lang = "=0.10.1"
 
 [profile.release]
 # Fast, deterministic, and without an unwinder: a panic aborts, so the wasm

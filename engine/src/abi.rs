@@ -246,14 +246,18 @@ pub unsafe extern "C" fn alonzo_write(
 
 /// `step`: the Clock's frame first when a frame begins, then at most
 /// `budget` cells, 0 for no limit, answered `(step <frame> <evaluated> <of>
-/// done|yielded)`.
+/// done|yielded)`; for a cartridge that settles (version 6, `CART.12`), a
+/// done frame's answer ends `settling` or `unsettled` until the grid settles.
 ///
 /// # Safety
 /// `out_len` is writable or null.
 #[no_mangle]
 pub unsafe extern "C" fn alonzo_step(handle: u32, budget: u32, out_len: *mut u32) -> *mut u8 {
     CARTRIDGES.with(|c| match c.borrow_mut().get_mut(handle) {
-        Ok(cart) => answer(cart.step(budget as usize).row().as_bytes(), out_len),
+        Ok(cart) => {
+            let step = cart.step(budget as usize);
+            answer(cart.step_row(&step).as_bytes(), out_len)
+        }
         Err(r) => refused(0, &r, out_len),
     })
 }
