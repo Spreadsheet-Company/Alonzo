@@ -58,7 +58,11 @@ each edit, and no Input. A cartridge written to version 6 (`docs/SPEC.md`,
 shown and the cell the act stands on, the selection's for an edit and a command,
 `Input!B19`, `B11` and `B12`, with the press and the command, `B13` to `B15` and
 `B20`; a press of a button over a cell of the sheet shown is an act of its own,
-the viewport selecting the cell. One that says `(settle K)` settles each act: while
+the viewport selecting the cell, for a cartridge whose formulas read the act's
+place or press, `Input!B11` to `B15`, and for one that reads neither the
+viewport's selection alone, since three frames that move nothing would be all
+it made (`CART.9`'s hand test; a person's formula that reads them makes the
+next press an act). One that says `(settle K)` settles each act: while
 the step's answer ends `settling` the host steps again, no act and the derived
 writes before each, drawing each frame, a person's acts waiting in order; the
 load's act settles too, so the cartridge opens on computed values; an answer
@@ -85,7 +89,11 @@ frames, with frames out of order, or with a seed that is not the manifest's.
 It then loads the cartridge again with the replay's seed and plays the
 frames through the loop at the cartridge's rate, each frame's rows one
 write after the derived writes. A person's edit is refused while it plays,
-and the loop pauses at the last frame. The recorder records what is played,
+and the loop pauses at the last frame. A frame's nineteenth row, the sheet
+the person's viewport showed (version 4), shows that sheet at the frame's end
+as a tab clicked shows it, so that a replay shows what its person saw, the
+Camera's change in the same frame having the last word (`CART.9`'s hand test).
+The recorder records what is played,
 so a replay played and copied is the replay played.
 
 The host continues the running game with a rebuilt cartridge, edit and
@@ -342,7 +350,28 @@ click runs one, Escape closes, Ctrl+Up and Ctrl+Down bring back what was run,
 and the focus goes back where it was. A sheet's name shows that sheet as its
 tab does, in the Screen's place for a grid and in the drawer's sheets for a
 plane; a text that begins with `(` or `;` is a row of VLA, written as a
-person's edit as the edit row writes it. A cartridge picked from the list
+person's edit as the edit row writes it. A cell is edited the same way
+(`CART.9`'s second slice), as a spreadsheet's are: a key typed on a cell of the
+grid opens the palette holding that cell's row, the caret where you type next,
+`=` a formula, `(formula "Bench" "C3" "=")`, a digit, a minus or a point a
+number written bare, `(cell "Bench" "A3" 1)`, since a number in quotes is a
+text, and any other character a text in quotes; Enter, F2 or a double click
+opens what the cell holds, its formula among it. Enter writes the row and moves
+the selection down, Tab moves it right, Shift moves them back, and Escape
+leaves the cell as it was. Delete empties the selection's cells at once, one
+row over its range, and Backspace opens the cell emptied, `(cell "Bench" "A3"
+"")`, the caret between the quotes. The language the page runs writes no empty
+cell yet, so a cell emptied holds the empty text, which a formula reading it as
+a number reads as `#VALUE!`, as Excel reads `=""`: Frazaro's `KERNEL.46` is the
+row that empties a cell. A key the game takes stays the game's: a command's
+key, a key its Keys sheet binds at a rate, and every key where it reads the last
+one pressed. The palette floats away from the cell being edited, at the bottom
+while the selection stands in the top half of the rows in view and at the top
+otherwise; a keymap's line, `(palette "top")` or `(palette "bottom")`, fixes it
+there. The window's own loss of the focus, to another application or a
+screenshot, leaves the palette open with what was typed in it, and the browser
+gives the prompt its focus back when the window has it again; a click elsewhere
+on the page shuts it. A cartridge picked from the list
 `pick` opens gives the game the keys once it loads. Ctrl+Alt+PageDown and
 Ctrl+Alt+PageUp, Excel for the web's keys, move between the sheets in a
 window and in full screen, and Ctrl+PageDown and Ctrl+PageUp, Excel's own, in
@@ -580,7 +609,8 @@ page shows opened plainly and what Pages deploys.
   to Seiyaku's hand, and its end its golden, the Constraints sheet's record;
   and Naught's, a stand-in of switches written in the edit row at
   `CART.9`'s first slice, every frame's 400 gates equal to Naught's hand,
-  and its end its golden, the Bench's record;
+  its end its golden, the Bench's record, and the Bench shown at its first
+  switch's act as its nineteenth row names it;
   and the sound
   itself (`sound`, `ENGINE.4`'s second slice): the host's own voices over
   the double handed an `OfflineAudioContext`, a sequence of voice states
@@ -893,7 +923,9 @@ viewport, not an Excel clone.
   patch repainted by its cells and held pixel for pixel to a full paint
   (`ENGINE.20`); `continue`, the page's own continue card, its source
   rebuilt and applied as it runs (`ENGINE.7`); `palette`, the palette's
-  keys, lines and second Escape over the page's own registry (`ENGINE.23`);
+  keys, lines and second Escape over the page's own registry (`ENGINE.23`),
+  a cell's edit, Delete's and Backspace's rows and the window's own blur
+  (`CART.9`);
   and `keys`, the page's own keymap read, crafted ones refused by line, a
   key's command in each place, a person's own command's steps and the
   keymap kept through a double of the browser's storage (its second slice);
@@ -902,7 +934,8 @@ viewport, not an Excel clone.
   twentieth row (`ENGINE.25`); and `settle`, an act settled at rate 0 over the
   double and over the page's own settle card, a press over a cell an act, the
   settle stepped and drawn, an act waiting for it and its replay rowless at
-  the settle's frames (`CART.12`); and `widths`, the page's own widths card,
+  the settle's frames (`CART.12`), and a press over a cell of a cartridge that
+  reads no act's place or press a selection and no frame (`CART.9`); and `widths`, the page's own widths card,
   columns dragged on a divider as a person drags them, each sheet drawn at
   its own widths and no other sheet's, through the frames, the tabs, a sheet
   a Camera shows, the source applied and a Load (`ENGINE.26`). Each of

@@ -47,8 +47,8 @@ fn main() -> ExitCode {
             return ExitCode::from(1);
         }
     };
-    let (adder, multiplier) = naught::BENCH;
-    let net = Net::bench(adder, multiplier);
+    // the bench a person loads, a row lower than the floors' so that row 1 names its columns
+    let net = Net::shown();
     let lines = Laid::new(&net, Lay::Fill, Switches::Values, Wiring::Now).block();
     let Some(written) = naught::with_block(&source, &lines) else {
         eprintln!(

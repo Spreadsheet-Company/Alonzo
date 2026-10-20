@@ -3203,7 +3203,7 @@ mod tests {
         let read = |p: std::path::PathBuf| {
             std::fs::read_to_string(&p).unwrap_or_else(|e| panic!("{}: {e}", p.display()))
         };
-        let bench = nt::Net::bench(nt::BENCH.0, nt::BENCH.1);
+        let bench = nt::Net::shown();
         let mut played = Vec::new();
         for dir in folders {
             let name = dir
@@ -5899,8 +5899,7 @@ mod tests {
         let Some((text, source)) = naught() else {
             return;
         };
-        let (adder, multiplier) = nt::BENCH;
-        let net = nt::Net::bench(adder, multiplier);
+        let net = nt::Net::shown();
         let laid = nt::Laid::new(&net, nt::Lay::Fill, nt::Switches::Values, nt::Wiring::Now);
         assert_eq!(
             nt::block_of(&source).expect("the source holds a block"),
@@ -5913,7 +5912,28 @@ mod tests {
             "the cartridge is its source's expansion"
         );
         let c = naught_loaded(&text);
-        let formulas = naught_formulas(&c, "A1:BI17");
+        // the bench's own extent, its labels' row above it: A1:BI18 for the bench a person loads
+        let bottom = net
+            .switches
+            .iter()
+            .chain(&laid.cells)
+            .map(|&(r, _)| r)
+            .max();
+        let right = net
+            .switches
+            .iter()
+            .chain(&laid.cells)
+            .map(|&(_, c)| c)
+            .max();
+        let window = format!(
+            "A1:{}",
+            nt::a1(bottom.unwrap_or(1), right.unwrap_or(1), false, false)
+        );
+        assert_eq!(
+            window, "A1:BI18",
+            "the bench a person loads stands in A1:BI18"
+        );
+        let formulas = naught_formulas(&c, &window);
         assert_eq!(
             formulas.len(),
             net.gates.len(),
@@ -6046,8 +6066,7 @@ mod tests {
         let Some((text, _)) = naught() else {
             return;
         };
-        let (adder, multiplier) = nt::BENCH;
-        let net = nt::Net::bench(adder, multiplier);
+        let net = nt::Net::shown();
         let laid = nt::Laid::new(&net, nt::Lay::Fill, nt::Switches::Values, nt::Wiring::Now);
         let n = net.switches.len();
         let mut d = nt::Dice(9);
@@ -6084,7 +6103,7 @@ mod tests {
         let Some((text, _)) = naught() else {
             return;
         };
-        let net = nt::Net::bench(nt::BENCH.0, nt::BENCH.1);
+        let net = nt::Net::shown();
         let laid = nt::Laid::new(&net, nt::Lay::Fill, nt::Switches::Values, nt::Wiring::Now);
         let mut c = naught_loaded(&text);
         assert_eq!(c.manifest().settle, Some(65536));

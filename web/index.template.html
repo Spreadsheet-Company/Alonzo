@@ -211,6 +211,11 @@
      the hint that drops from the top at a first Escape in full screen. */
   .palette { position: fixed; top: 44px; left: 50%; transform: translateX(-50%); width: min(640px, 92vw); z-index: 50; background: #fff; border: 1px solid var(--lavender-deep); border-radius: 6px; box-shadow: 0 8px 28px rgba(29, 29, 27, 0.25); color: #1d1d1b; font: 13px/1.45 system-ui, "Segoe UI", sans-serif; }
   .palette[hidden] { display: none; }
+  /* the palette at the bottom (CART.9's second slice): its prompt last, nearest the edge, its lines above it */
+  .palette.palette-bottom { top: auto; bottom: 44px; display: flex; flex-direction: column-reverse; }
+  .palette.palette-bottom[hidden] { display: none; }
+  .palette.palette-bottom .palette-input { border-bottom: 0; border-top: 1px solid #d9d9d2; border-radius: 0 0 6px 6px; }
+  .palette.palette-bottom .palette-note { border-top: 0; border-bottom: 1px solid #ecece6; }
   .palette-input { display: block; width: 100%; box-sizing: border-box; border: 0; border-bottom: 1px solid #d9d9d2; border-radius: 6px 6px 0 0; padding: 9px 12px; background: var(--lavender-whisper); color: #1d1d1b; font: 14px/1.4 ui-monospace, Consolas, "Cascadia Mono", monospace; outline: none; }
   .palette-lines { list-style: none; margin: 0; padding: 4px 0; max-height: 50vh; overflow: auto; }
   .palette-lines li { display: flex; gap: 10px; align-items: baseline; padding: 4px 12px; cursor: pointer; }
@@ -615,7 +620,9 @@
     '; edit, source, library, cartridge, replay or keys. And a sheet, (on "Portfolio"): the Screen or the drawer\'s',
     '; sheets while that sheet shows, before a binding of the same key on none. The palette keeps a key, the way to',
     '; every command. A game\'s own command is its cartridge\'s name and its own, (bind "B" buffet.buy-1): it holds',
-    '; while that cartridge is loaded and the command holds, its key passing on otherwise (ENGINE.25).',
+    '; while that cartridge is loaded and the command holds, its key passing on otherwise (ENGINE.25). And where the',
+    '; palette opens, (palette "floating"), away from the cell the selection stands on, or (palette "top") or',
+    '; (palette "bottom"); a key typed on a cell opens it holding that cell\'s row (CART.9).',
     '(bind "Ctrl+K" palette)',
     '(bind "Control+Shift+[Backquote]" palette)',
     '(bind "Ctrl+Alt+PageDown" next-sheet)',
@@ -750,7 +757,7 @@
       if (c === '"') { for (i++; i < s.length && s.charAt(i) !== '"'; i++) { if (s.charAt(i) === '\\') i++; else if (s.charAt(i) === '\n') line++; } if (i >= s.length) return { error: 'line ' + line + ': a string that never closes' }; continue; }
       if (c === '(') { if (depth === 0) { start = i; startLine = line; } depth++; continue; }
       if (c === ')') { if (depth === 0) return { error: 'line ' + line + ': a ) that closes nothing' }; depth--; if (depth === 0) out.push({ line: startLine, text: s.slice(start, i + 1) }); continue; }
-      if (depth === 0 && !/\s/.test(c)) return { error: 'line ' + line + ': words outside a form, where a keymap holds bind and command lines' };
+      if (depth === 0 && !/\s/.test(c)) return { error: 'line ' + line + ': words outside a form, where a keymap holds bind, command and palette lines' };
     }
     if (depth > 0) return { error: 'line ' + startLine + ': a form that never closes' };
     return { forms: out };
@@ -759,7 +766,7 @@
   // whole, nothing applied. lenient: a kept keymap read at the load, whose lines naming a command this page lacks, a later
   // page's, are set aside with a note rather than refusing the rest.
   function readKeymap(text, commands, lenient) {
-    var top = topForms(text), problems = [], notes = [], bindings = [], customs = {}, order = [], builtin = {}, i;
+    var top = topForms(text), problems = [], notes = [], bindings = [], customs = {}, order = [], builtin = {}, place = null, i;
     if (top.error) return { ok: false, problems: [top.error], notes: [] };
     commands.forEach(function (c) { builtin[c.name] = c; });
     var forms = top.forms.map(function (f) { return { line: f.line, d: (VP.readForms(f.text) || [])[0] }; });
@@ -795,7 +802,14 @@
         if (!c.words) c.words = c.steps.map(function (s) { return s.row || (s.arg ? s.name + ' ' + s.arg : s.name); }).join(', then ');
         return;
       }
-      if (h !== 'bind') { problems.push(at + (h ? 'no form named ' + h : 'no form') + ': a keymap holds bind and command lines'); return; }
+      // where the palette opens (CART.9's second slice): (palette "floating"), the default, "top" or "bottom"
+      if (h === 'palette') {
+        if (d.length !== 2 || !/^(floating|top|bottom)$/.test(typeof d[1] === 'string' ? d[1] : '')) { problems.push(at + 'the palette opens floating, at the top or at the bottom: (palette "floating"), (palette "top") or (palette "bottom")'); return; }
+        if (place !== null) { problems.push(at + 'where the palette opens is written twice'); return; }
+        place = d[1];
+        return;
+      }
+      if (h !== 'bind') { problems.push(at + (h ? 'no form named ' + h : 'no form') + ': a keymap holds bind, command and palette lines'); return; }
       if (typeof d[1] !== 'string') { problems.push(at + 'a binding begins with its keys in quotes: (bind "Ctrl+K" palette)'); return; }
       var k = parseKeys(d[1]);
       if (k.error) { problems.push(at + '"' + d[1] + '": ' + k.error); return; }
@@ -852,7 +866,7 @@
     });
     if (!bindings.some(function (b) { return b.command === 'palette'; })) problems.push('the palette keeps a key: no line binds palette, the way to every command');
     if (problems.length) return { ok: false, problems: problems, notes: notes };
-    return { ok: true, problems: [], notes: notes, bindings: bindings, customs: customs, order: order, text: String(text) };
+    return { ok: true, problems: [], notes: notes, bindings: bindings, customs: customs, order: order, place: place || 'floating', text: String(text) };
   }
   // A command of a person's own run: its steps in order, a command of the page by its act, one of the person's by its own
   // steps, a row of VLA written as a person's edit. act(name, arg, row) runs a step of the page's.
@@ -1015,6 +1029,50 @@
     for (i = 0; i < s.length && j < qs.length; i++) if (s.charAt(i) === qs.charAt(j)) j++;
     return j === qs.length ? 1 : 0;
   }
+  // A text spelled as VLA reads one, in quotes, its quotes and backslashes escaped.
+  function vlaString(s) { return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; }
+  // The edit a cell opens in the palette (CART.9's second slice; decision 9 as the owner amended it, 2026-10-20): the
+  // cell's row in the prompt, and the caret where the person types next. typed, a character typed on the cell: = opens
+  // a formula, "=" and the caret after it; a digit, a minus or a point a number, written bare, since a number in quotes is
+  // a text (a spreadsheet's rule: what reads as a number is one); any other character a text, in quotes, the caret
+  // before the closing quote. No character, Enter, F2 or a double click, opens what the cell holds: its formula, its
+  // number or truth value bare, its text in quotes, and an empty cell's empty text, the caret between the quotes.
+  // Backspace, typed the empty text, opens the cell emptied, the empty text and the caret between its quotes, as a
+  // spreadsheet's Backspace empties the cell's editor (CART.9's hand test, 2026-10-20).
+  // sheet, the sheet shown; cell, the viewport's cell, { address, kind, vkind, value, formula }. { text, caret }.
+  function cellEditRow(sheet, cell, typed) {
+    var at = vlaString(sheet) + ' ' + vlaString(cell.address) + ' ';
+    function row(head, value, quoted) { var t = '(' + head + ' ' + at + value + ')'; return { text: t, caret: t.length - (quoted ? 2 : 1) }; }
+    if (typed === '') return row('cell', '""', true);
+    if (typed) {
+      if (typed === '=') return row('formula', '"="', true);
+      if (/^[0-9.\-]$/.test(typed)) return row('cell', typed, false);
+      return row('cell', vlaString(typed), true);
+    }
+    if (cell.kind === 'formula') return row('formula', vlaString(cell.formula || '='), true);
+    if (cell.kind === 'empty' || cell.value === '') return row('cell', '""', true);
+    if (cell.vkind === 'number') return row('cell', String(cell.value), false);
+    if (cell.vkind === 'bool') return row('cell', String(cell.value).toUpperCase() === 'TRUE' ? 'true' : 'false', false);
+    return row('cell', vlaString(cell.value), true);
+  }
+  // The row Delete writes over the selection (CART.9's hand test, 2026-10-20): the empty text over the selection's cells,
+  // one row and one edit, the selection kept. The language this page runs writes no empty cell, so a cell emptied holds
+  // the empty text, which a formula reading it as a number reads as #VALUE!, as Excel reads ="" (Frazaro's KERNEL.46 is
+  // the row that empties a cell). null, Delete writing nothing: a selection of whole rows, columns or the sheet, and a
+  // single cell already empty. sel, the viewport's selection, { kind, text, focus }.
+  function cellClearRow(sheet, sel) {
+    if (!sel || sel.kind !== 'cells' || !sel.text) return null;
+    if (sel.text.indexOf(':') < 0 && (!sel.focus || sel.focus.kind === 'empty')) return null;
+    return '(cell ' + vlaString(sheet) + ' ' + vlaString(sel.text) + ' "")';
+  }
+  // Where the palette opens (CART.9's second slice, the owner's word): fixed at the top or at the bottom, or floating,
+  // away from the cell the selection stands on, at the bottom while it stands in the top half of the rows in view and at
+  // the top otherwise. place, the keymap's; row, the selection's row, 0 for none; win, the rows in view, { top, bottom }.
+  function paletteSide(place, row, win) {
+    if (place === 'top' || place === 'bottom') return place;
+    if (!row || !win || !(win.bottom >= win.top)) return 'top';
+    return row - win.top <= (win.bottom - win.top) / 2 ? 'bottom' : 'top';
+  }
   // The palette's lines for a text. A text that begins with ( or ;, as Frazaro's CLI reads one, is a row of VLA, one line
   // that writes it as a person's edit, as the edit row does. Any other text lists the commands and the sheets that match
   // it, every match of a name before every match of words, ties a person's own command first, then a game's, then the
@@ -1057,6 +1115,7 @@
   function Palette(parent, opts) {
     var d = document, self = this;
     this.opts = opts; this.n = ++paletteCount; this.lines = []; this.sel = 0; this.history = []; this.at = -1; this.recent = []; this.before = null; this.handlers = [];
+    this.edit = null;   // a cell's edit opened (CART.9's second slice): after(direction), told where the selection goes once its row is written
     var root = this.root = d.createElement('div');
     root.className = 'palette'; root.hidden = true;
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'the command palette');
@@ -1073,9 +1132,11 @@
     parent.appendChild(root);
     input.addEventListener('input', function () { self.at = -1; self.render(); });
     input.addEventListener('keydown', function (ev) { self._key(ev); });
-    // a click elsewhere shuts it and leaves the focus where the click put it; a press inside it keeps the prompt's focus,
-    // and a press on a line runs that line
-    input.addEventListener('blur', function () { self.close(false); });
+    // a click elsewhere shuts it and leaves the focus where the click put it; the window's own loss of the focus, to
+    // another application or a screenshot, keeps it open with what was typed, the browser giving the prompt its focus
+    // back when the window has it again (CART.9's hand test, 2026-10-20); a press inside it keeps the prompt's focus, and
+    // a press on a line runs that line
+    input.addEventListener('blur', function () { if (self._pageFocused()) self.close(false); });
     root.addEventListener('mousedown', function (ev) {
       if (ev.target === input) return;
       ev.preventDefault();
@@ -1084,18 +1145,44 @@
     });
   }
   Palette.prototype.isOpen = function () { return !this.root.hidden; };
+  // Whether the page still has the window's focus, so that a blur is a click elsewhere and not the window's: opts.focused()
+  // where a page stands in for the window, the oracle's, else the document's own word.
+  Palette.prototype._pageFocused = function () { return this.opts.focused ? !!this.opts.focused() : document.hasFocus(); };
   // back: the element the focus goes back to, the one that had it by default.
   Palette.prototype.open = function (back) {
     if (this.isOpen()) return;
     this.before = back || document.activeElement;
+    this.edit = null;
+    this._place();
     this.root.hidden = false;
     this.input.value = ''; this.at = -1;
     this.render();
     this.input.focus();
   };
+  // A cell's edit (CART.9's second slice): the prompt holding text, the caret at caret, and after(direction) told, once
+  // the row is written, where the selection goes: Enter down, Tab right, and with Shift up and left.
+  Palette.prototype.openWith = function (text, caret, back, after) {
+    if (this.isOpen()) this.close(false);
+    this.before = back || document.activeElement;
+    this.edit = after || null;
+    this._place();
+    this.root.hidden = false;
+    this.input.value = text; this.at = -1;
+    this.render();
+    this.input.focus();
+    var c = Math.max(0, Math.min(text.length, caret));
+    this.input.setSelectionRange(c, c);
+  };
+  // Where it opens, the opts.side() of its page, at the top when there is none.
+  Palette.prototype._place = function () {
+    var side = this.opts.side ? this.opts.side() : 'top';
+    this.root.classList.toggle('palette-bottom', side === 'bottom');
+  };
+  Palette.prototype.side = function () { return this.root.classList.contains('palette-bottom') ? 'bottom' : 'top'; };
   Palette.prototype.close = function (restore) {
     if (!this.isOpen()) return;
     this.root.hidden = true;
+    this.edit = null;
     var b = this.before;
     this.before = null;
     if (restore !== false && b && b.focus && b !== this.input) { try { b.focus(); } catch (e) { /* an element gone */ } }
@@ -1136,11 +1223,17 @@
   Palette.prototype._key = function (ev) {
     if (ev.isComposing) return;
     var k = ev.key, held = ev.ctrlKey || ev.metaKey;
-    if (k === 'Enter') { ev.preventDefault(); this.runLine(this.sel); return; }
+    if (k === 'Enter') { ev.preventDefault(); this._run(ev.shiftKey ? 'up' : 'down'); return; }
     if (k === 'Escape') { ev.preventDefault(); ev.stopPropagation(); this.close(true); return; }
     if ((k === 'ArrowUp' || k === 'ArrowDown') && held) { ev.preventDefault(); this._recall(k === 'ArrowUp' ? 1 : -1); return; }
     if (k === 'ArrowUp' || k === 'ArrowDown') { ev.preventDefault(); this._choose(this.sel + (k === 'ArrowDown' ? 1 : -1)); return; }
-    if (k === 'Tab') ev.preventDefault();   // the keys stay in the palette while it is open
+    if (k === 'Tab') { ev.preventDefault(); if (this.edit) this._run(ev.shiftKey ? 'left' : 'right'); }   // the keys stay in the palette while it is open
+  };
+  // The line chosen run; for a cell's edit whose row was written, the selection moved the way the key goes, Enter down
+  // and Tab right as a spreadsheet moves it (CART.9's second slice).
+  Palette.prototype._run = function (direction) {
+    var after = this.edit, line = this.lines[this.sel];
+    if (this.runLine(this.sel) && after && line && line.kind === 'row') after(direction);
   };
   // A line run: remembered, the palette shut and the focus given back, then the line's act, which may move the focus.
   Palette.prototype.runLine = function (i) {
@@ -1151,8 +1244,7 @@
     if (this.history.length > 50) this.history.length = 50;
     if (line.kind !== 'row') this.recent = [line.key].concat(this.recent.filter(function (r) { return r !== line.key; })).slice(0, 8);
     this.close(true);   // the palette shut before its line runs, the focus given back first
-    this.opts.run(line, text);
-    return true;
+    return this.opts.run(line, text) !== false;   // false: the line ran and was refused, a row its write refused
   };
   Palette.prototype.listen = function (target, isKey) {
     var self = this;
@@ -1243,7 +1335,7 @@
     // having no tabs of its own, its tab strip the picker and its tabs answered by the host as its own viewport's
     // are, every sheet viewed through the cells in view and never whole.
     var dvp = new VP(document.getElementById('eng-grid'));
-    var shownAt = -1, shownTime = -1e9, rate = -1, mode = 'plane', items = {}, viewerSheet = 'Clock', choosing = false;
+    var shownAt = -1, shownTime = -1e9, rate = -1, mode = 'plane', items = {}, viewerSheet = 'Clock', choosing = false, cellOpenHeard = false;
     dvp.on('sheet', function (e) { if (e.loaded && !choosing) viewerSheet = e.name; host.answer(dvp, e); });
     dvp.on('scroll', function () { host.refreshSheet(dvp, true); });
     // The keys go to what shows the Screen: the plane's canvas, or the viewport's scroller.
@@ -1317,6 +1409,8 @@
       // and a sheet a version 4 cartridge opens on viewed again through the region the shown box now holds,
       // the load having viewed it over a box not yet laid out (ENGINE.18); the Screen is the frame's own
       if (mode === 'grid' && host.vp) { host.vp.redraw(); host.refreshSheet(host.vp); }
+      // Enter, F2 or a double click on a cell opens its edit with what it holds (CART.9), heard once the viewport is made
+      if (mode === 'grid' && host.vp && !cellOpenHeard) { cellOpenHeard = true; host.vp.on('cellopen', function () { if (!(rate > 0 && lastKeyRead)) openCellEdit(null); }); }
       frameEl.className = 'frame-line';
       frameShort.textContent = 'Frame 0';
       frameEl.textContent = 'Frame 0, the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + ': the cartridge as loaded, nothing computed until ' + (e.rate ? 'the first step.' : 'an edit steps it.');
@@ -1681,12 +1775,56 @@
         return paletteLines(text, cmds, sheetsViewport().sheets(), palette.recent);
       },
       run: function (line, text) {
-        if (line.kind === 'row') host.edit(text.trim());
+        if (line.kind === 'row') return host.edit(text.trim());
         else if (line.kind === 'custom') runSteps(keymap, line.name, step);
         else if (line.kind === 'game') runGame(line.name, 'palette');
         else ACTS[line.name](line.arg, 'palette');
+      },
+      // where it opens, the keymap's (palette ...): floating, away from the grid's selection, or fixed (CART.9)
+      side: function () {
+        var g = mode === 'grid' && host.vp ? host.vp : null;
+        return paletteSide(keymap.place, g ? g.selection().focus.row : 0, g ? g.scrolled() : null);
       }
     });
+    // A cell's edit (CART.9's second slice, decision 9 as the owner amended it): a key typed on a cell of the grid, or
+    // Enter, F2 or a double click there, opens the palette holding the cell's row, the caret where the person types; Enter
+    // writes it as a person's edit and moves the selection down, and Tab moves it right. typed, the character, the empty
+    // text for Backspace's emptied cell, or null for the cell's own content.
+    function openCellEdit(typed) {
+      var vp = host.vp;
+      if (mode !== 'grid' || !vp || !vp.sheet()) return false;
+      var s = vp.selection(), cell = s.focus;
+      // a formula the viewport knows by its value alone, a frame's values record holding no formula's text: its text
+      // asked of the cell's own record, so that Enter opens the formula itself
+      if (typed === null && cell.kind === 'formula' && !cell.formula) {
+        var rec = host.viewRecord(vp.sheet(), cell.address), forms = rec ? VP.readForms(rec) : [];
+        for (var fi = 0; fi < forms.length; fi++) {
+          var f = forms[fi];
+          if (Array.isArray(f) && f[0] && f[0].sym === 'formula' && f[2] === cell.address && typeof f[3] === 'string') { cell = { address: cell.address, kind: 'formula', formula: f[3] }; break; }
+        }
+      }
+      var e = cellEditRow(vp.sheet(), cell, typed);
+      palette.openWith(e.text, e.caret, vp.scroller, function (direction) {
+        var r = s.focus.row + (direction === 'down' ? 1 : direction === 'up' ? -1 : 0), c = s.focus.col + (direction === 'right' ? 1 : direction === 'left' ? -1 : 0);
+        if (r < 1 || c < 1) return;
+        vp.select(VP.colName(c) + r);
+        var w = vp.scrolled();   // the new cell kept in view, the window moved by the least
+        if (r < w.top || r > w.bottom || c < w.left || c > w.right) vp.scrollTo(r < w.top ? r : r > w.bottom ? w.top + r - w.bottom : w.top, c < w.left ? c : c > w.right ? w.left + c - w.right : w.left);
+      });
+      return true;
+    }
+    // a printable character, alone or with Shift, no Ctrl, Cmd or Alt, while no input method composes
+    function cellEditKey(ev) { return !ev.ctrlKey && !ev.metaKey && !ev.altKey && !ev.isComposing && typeof ev.key === 'string' && ev.key.length === 1 && ev.key >= ' '; }
+    // Delete or Backspace alone, a spreadsheet's two ways to empty a cell (CART.9's hand test, 2026-10-20)
+    function cellClearKey(ev) { return !ev.ctrlKey && !ev.metaKey && !ev.altKey && !ev.shiftKey && (ev.key === 'Delete' || ev.key === 'Backspace'); }
+    // Delete: the selection's cells emptied at once, one edit, the selection kept; nothing for a selection Delete leaves
+    function clearCells() {
+      var vp = host.vp;
+      if (mode !== 'grid' || !vp || !vp.sheet()) return false;
+      var row = cellClearRow(vp.sheet(), vp.selection());
+      if (row) host.edit(row);
+      return true;
+    }
     sayKeys();
     if (keptSaid) sayKeysLine(keptSaid, /refused/.test(keptSaid));
     // the keys' buttons, the commands' convenience
@@ -1734,6 +1872,18 @@
       if (b) {
         ev.preventDefault(); ev.stopPropagation();
         if (!ev.repeat || repeats(b.command)) press(b);
+        return;
+      }
+      // a character typed on a cell of the grid opens that cell's edit in the palette, unless the game takes the key: a
+      // command's, a key its Keys sheet binds at a rate, or any key where it reads the last one pressed (CART.9)
+      if (place === 'screen' && mode === 'grid' && cellEditKey(ev) && !(rate > 0 && lastKeyRead) && !host.takesKey(ev.code, ev.key, ev)) {
+        if (openCellEdit(ev.key)) { ev.preventDefault(); ev.stopPropagation(); }
+        return;
+      }
+      // Delete empties the selection's cells and Backspace opens the cell emptied in the palette, as a spreadsheet's do,
+      // unless the game takes the key (CART.9's hand test)
+      if (place === 'screen' && mode === 'grid' && cellClearKey(ev) && !(rate > 0 && lastKeyRead) && !host.takesKey(ev.code, ev.key, ev)) {
+        if (ev.key === 'Backspace' ? openCellEdit('') : clearCells()) { ev.preventDefault(); ev.stopPropagation(); }
         return;
       }
       if (place === 'screen' && rate > 0 && ev.key === 'Tab' && !ev.ctrlKey && !ev.metaKey && !ev.altKey) { ev.preventDefault(); return; }
@@ -4819,6 +4969,9 @@
           var own = hand.counts() || {};
           for (var ck in own) if (Object.prototype.hasOwnProperty.call(own, ck)) k[tag + ck.charAt(0).toUpperCase() + ck.slice(1)] = own[ck];
         }
+        // the sheets the replay showed as its person showed them, its nineteenth rows (CART.9's hand test): naughtShown,
+        // the Bench at the first switch's act
+        if (hand) k[tag + 'Shown'] = M.counters().playedShown;
         var wm = /^\(window "([^"]+)" "([^"]+)"\)$/m.exec(gBody);
         if (!wm) P.push('the golden of ' + cart.file + ' has no (window ...) row naming its sheet');
         else {
@@ -5508,7 +5661,7 @@
   // dispatched as a browser reports a keyboard's and every line run counted by a stand-in; and Escape in full screen, its
   // rule over a clock of the case's own. It needs no file, so a game's page runs it, holding the vendored template there.
   function casePalette() {
-    var P = [], k = { commands: 0, keyed: 0, lines: 0, opened: 0, ran: 0, chosen: 0, rows: 0, recalled: 0, closed: 0, restored: 0, held: 0, passed: 0, clicked: 0, escapes: 0 };
+    var P = [], k = { commands: 0, keyed: 0, lines: 0, opened: 0, ran: 0, chosen: 0, rows: 0, recalled: 0, closed: 0, restored: 0, held: 0, passed: 0, clicked: 0, escapes: 0, edits: 0, sides: 0, cellEdits: 0, placed: 0, clears: 0, kept: 0 };
     var seen = {};
     COMMANDS.forEach(function (c) {
       if (!/^[a-z]+(-[a-z]+)*$/.test(c.name) || !c.words || seen[c.name]) P.push('palette: the command ' + JSON.stringify(c.name) + ' is ill-named, without words or named twice');
@@ -5612,6 +5765,109 @@
       if (li) li.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }));
       if (ran[ran.length - 1] === 'sound' && !pal.isOpen() && document.activeElement === area) k.clicked++;
       else P.push('palette: a click on the line sound ran ' + JSON.stringify(ran[ran.length - 1]) + ', the palette ' + (pal.isOpen() ? 'open' : 'shut') + ' and the focus on ' + focused() + ', where sound runs and the box\'s text has the focus');
+      // A cell's edit (CART.9's second slice): the row a key typed on a cell opens, or Enter, F2 or a double click with
+      // what the cell holds, each with its caret; where the palette opens; and the edit's own keys, Enter writing its row
+      // and moving the selection down, Tab right, Shift back, Escape nothing.
+      var C2 = { address: 'C2', kind: 'formula', vkind: 'number', value: '0', formula: '=MOD(A2+B2,2)' };
+      [[null, '=', '(formula "Bench" "A2" "=")', 24], [null, '1', '(cell "Bench" "A2" 1)', 20], [null, '-', '(cell "Bench" "A2" -)', 20],
+       [null, 'x', '(cell "Bench" "A2" "x")', 21], [null, '"', '(cell "Bench" "A2" "\\"")', 22], [null, ' ', '(cell "Bench" "A2" " ")', 21],
+       [C2, null, '(formula "Bench" "C2" "=MOD(A2+B2,2)")', 36], [{ address: 'C2', kind: 'formula', vkind: 'formula', value: '', formula: '' }, null, '(formula "Bench" "C2" "=")', 24],
+       [{ address: 'A2', kind: 'cell', vkind: 'number', value: '1' }, null, '(cell "Bench" "A2" 1)', 20], [{ address: 'A2', kind: 'cell', vkind: 'bool', value: 'TRUE' }, null, '(cell "Bench" "A2" true)', 23],
+       [{ address: 'A2', kind: 'cell', vkind: 'text', value: 'say "hi"' }, null, '(cell "Bench" "A2" "say \\"hi\\"")', 30], [{ address: 'A2', kind: 'empty', value: '' }, null, '(cell "Bench" "A2" "")', 20]].forEach(function (x) {
+        var e = cellEditRow('Bench', x[0] || { address: 'A2', kind: 'empty', value: '' }, x[1]);
+        if (e.text === x[2] && e.caret === x[3]) k.edits++;
+        else P.push('palette: the edit of ' + (x[1] === null ? 'the cell ' + JSON.stringify(x[0]) : JSON.stringify(x[1]) + ' typed') + ' is ' + JSON.stringify(e.text) + ' and places the caret at ' + e.caret + ', where ' + JSON.stringify(x[2]) + ' at ' + x[3] + ' is due');
+      });
+      // Delete and Backspace (CART.9's hand test): Backspace opens the cell emptied, the caret between the quotes, and
+      // Delete's row empties the selection's cells, one row over its range, and writes nothing for a selection of whole
+      // columns or a single empty cell
+      var bs = cellEditRow('Bench', C2, '');
+      if (bs.text === '(cell "Bench" "C2" "")' && bs.caret === 20) k.clears++;
+      else P.push('palette: Backspace on the gate C2 opens ' + JSON.stringify(bs.text) + ', the caret at ' + bs.caret + ', where the cell emptied, "(cell \\"Bench\\" \\"C2\\" \\"\\")" at 20, is due');
+      [[{ kind: 'cells', text: 'A2', focus: { kind: 'cell' } }, '(cell "Bench" "A2" "")'], [{ kind: 'cells', text: 'C2', focus: { kind: 'formula' } }, '(cell "Bench" "C2" "")'],
+       [{ kind: 'cells', text: 'A2:B3', focus: { kind: 'empty' } }, '(cell "Bench" "A2:B3" "")'], [{ kind: 'cells', text: 'H2', focus: { kind: 'empty' } }, null],
+       [{ kind: 'columns', text: 'C:C', focus: { kind: 'formula' } }, null]].forEach(function (x) {
+        var got = cellClearRow('Bench', x[0]);
+        if (got === x[1]) k.clears++; else P.push('palette: Delete over the selection ' + JSON.stringify(x[0]) + ' writes ' + JSON.stringify(got) + ', where ' + JSON.stringify(x[1]) + ' is due');
+      });
+      [['top', 30, { top: 1, bottom: 40 }, 'top'], ['bottom', 1, { top: 1, bottom: 40 }, 'bottom'], ['floating', 5, { top: 1, bottom: 40 }, 'bottom'],
+       ['floating', 35, { top: 1, bottom: 40 }, 'top'], ['floating', 21, { top: 1, bottom: 41 }, 'bottom'], ['floating', 0, null, 'top']].forEach(function (x) {
+        var got = paletteSide(x[0], x[1], x[2]);
+        if (got === x[3]) k.sides++; else P.push('palette: the palette ' + x[0] + ' over row ' + x[1] + ' of ' + JSON.stringify(x[2]) + ' opens at ' + got + ', where ' + x[3] + ' is due');
+      });
+      var sideNow = 'bottom', rows2 = [], ran2 = [], moved = [];
+      var pal2 = new Palette(box, {
+        lines: function (t) { return paletteLines(t, COMMANDS, SHEETS, []); },
+        run: function (line, text) { if (line.kind !== 'row') { ran2.push(line.name); return true; } rows2.push(text.trim()); return text.indexOf('refused') < 0; },
+        side: function () { return sideNow; }
+      });
+      try {
+        before.focus();
+        var e1 = cellEditRow('Bench', { address: 'A2', kind: 'empty', value: '' }, '1');
+        pal2.openWith(e1.text, e1.caret, before, function (d) { moved.push(d); });
+        if (pal2.isOpen() && pal2.input.value === e1.text && pal2.input.selectionStart === e1.caret && pal2.side() === 'bottom' && document.activeElement === pal2.input) k.cellEdits++;
+        else P.push('palette: a cell\'s edit opened ' + (pal2.isOpen() ? 'with ' + JSON.stringify(pal2.input.value) + ', its caret at ' + pal2.input.selectionStart + ', at the ' + pal2.side() : 'nothing') + ', where the row, its caret at ' + e1.caret + ', at the bottom and the focus in the prompt are due');
+        key(pal2.input, { key: 'Enter', code: 'Enter' });
+        if (rows2.join('|') === e1.text && moved.join(',') === 'down' && !pal2.isOpen() && document.activeElement === before) k.cellEdits++;
+        else P.push('palette: a cell\'s edit written by Enter wrote ' + JSON.stringify(rows2) + ' and moved the selection ' + JSON.stringify(moved) + ', where its row once and down once are due, the palette shut and the focus given back');
+        sideNow = 'top';
+        [[{ key: 'Tab', code: 'Tab' }, 'right'], [{ key: 'Enter', code: 'Enter', shiftKey: true }, 'up'], [{ key: 'Tab', code: 'Tab', shiftKey: true }, 'left']].forEach(function (x) {
+          moved = [];
+          pal2.openWith(e1.text, e1.caret, before, function (d) { moved.push(d); });
+          var placed = pal2.side();
+          key(pal2.input, x[0]);
+          if (moved.join(',') === x[1] && placed === 'top') k.cellEdits++; else P.push('palette: a cell\'s edit written by ' + (x[0].shiftKey ? 'Shift+' : '') + x[0].key + ' at the ' + placed + ' moved the selection ' + JSON.stringify(moved) + ', where ' + x[1] + ' once at the top is due');
+        });
+        moved = []; var before2 = rows2.length;
+        pal2.openWith('(cell "Bench" "A2" "refused")', 27, before, function (d) { moved.push(d); });
+        key(pal2.input, { key: 'Enter', code: 'Enter' });
+        pal2.openWith(e1.text, e1.caret, before, function (d) { moved.push(d); });
+        key(pal2.input, { key: 'Escape', code: 'Escape' });
+        pal2.openWith(e1.text, e1.caret, before, function (d) { moved.push(d); });
+        pal2.input.value = 'pause'; pal2.input.dispatchEvent(new Event('input', { bubbles: true }));
+        key(pal2.input, { key: 'Enter', code: 'Enter' });
+        if (!moved.length && rows2.length === before2 + 1 && ran2.join(',') === 'pause') k.cellEdits++;
+        else P.push('palette: a refused row, an Escape and a command run from a cell\'s edit moved the selection ' + JSON.stringify(moved) + ' and wrote ' + (rows2.length - before2) + ' row(s), running ' + JSON.stringify(ran2) + ', where nothing moves, the refused row is written once and pause runs');
+        moved = [];
+        pal2.open(before);
+        pal2.input.value = '(cell "Bench" "A3" 1)'; pal2.input.dispatchEvent(new Event('input', { bubbles: true }));
+        key(pal2.input, { key: 'Tab', code: 'Tab' });
+        var tabbed = pal2.isOpen();
+        key(pal2.input, { key: 'Enter', code: 'Enter' });
+        if (tabbed && !moved.length && rows2[rows2.length - 1] === '(cell "Bench" "A3" 1)') k.cellEdits++;
+        else P.push('palette: a row the palette was opened for by its key ' + (tabbed ? '' : 'shut at Tab, and ') + 'moved the selection ' + JSON.stringify(moved) + ', where Tab keeps the prompt and Enter writes the row and moves nothing');
+      } finally {
+        pal2.destroy();
+      }
+      // The window's own loss of the focus (CART.9's hand test, 2026-10-20: Alt+Tab or a screenshot shut the palette and
+      // lost what was typed): a blur while the window has not the focus keeps the palette open with its text, and a
+      // blur while it has it, a click elsewhere, shuts it.
+      var windowHas = false;
+      var pal3 = new Palette(box, { lines: function (t) { return paletteLines(t, COMMANDS, SHEETS, []); }, run: function () { return true; },
+                                    side: function () { return 'top'; }, focused: function () { return windowHas; } });
+      try {
+        before.focus();
+        pal3.openWith('(cell "Bench" "A2" 1)', 20, before, null);
+        pal3.input.value = '(cell "Bench" "A2" 12)';
+        pal3.input.blur();
+        if (pal3.isOpen() && pal3.input.value === '(cell "Bench" "A2" 12)') k.kept++;
+        else P.push('palette: a blur while the window had not the focus left the palette ' + (pal3.isOpen() ? 'open with ' + JSON.stringify(pal3.input.value) : 'shut') + ', where it stays open with what was typed');
+        windowHas = true;
+        pal3.input.focus();
+        before.focus();
+        if (!pal3.isOpen()) k.kept++; else P.push('palette: a blur while the window had the focus, a click elsewhere, left the palette open, where it shuts');
+      } finally {
+        pal3.destroy();
+      }
+      // where the palette opens, the keymap's line
+      [['', 'floating'], ['(palette "bottom")', 'bottom'], ['(palette "top")', 'top']].forEach(function (x) {
+        var m = readKeymap(KEYMAP_DEFAULTS + x[0] + '\n', COMMANDS);
+        if (m.ok && m.place === x[1]) k.placed++; else P.push('palette: the keymap with ' + JSON.stringify(x[0] || 'no palette line') + ' reads ' + (m.ok ? 'the palette ' + m.place : 'refused: ' + m.problems.join('; ')) + ', where ' + x[1] + ' is due');
+      });
+      [['(palette "sideways")', 'the palette opens floating, at the top or at the bottom'], ['(palette "top")\n(palette "bottom")', 'where the palette opens is written twice']].forEach(function (x) {
+        var m = readKeymap(KEYMAP_DEFAULTS + x[0] + '\n', COMMANDS);
+        if (!m.ok && m.problems.some(function (p) { return p.indexOf(x[1]) >= 0; })) k.placed++; else P.push('palette: the keymap with ' + JSON.stringify(x[0]) + ' was ' + (m.ok ? 'read' : 'refused: ' + m.problems.join('; ')) + ', where ' + JSON.stringify(x[1]) + ' refuses it');
+      });
       // Escape in full screen over the case's own clock: the first a hint, a second within three seconds leaves
       var fe = new FullEscape(3000);
       [[0, 'hint'], [1000, 'leave'], [5000, 'hint'], [9000, 'hint'], [10500, 'leave']].forEach(function (x) {
@@ -6103,7 +6359,7 @@
   function caseSettle() {
     var P = [], k = { fakeLoad: 0, fakeActs: 0, fakePress: 0, fakeReleased: 0, fakeUnsettled: 0,
                       module: 0, loaded: 0, spilled: 0, clock: 0, released: 0, place: 0, pressed: 0, again: 0, waited: 0, key: 0, passed: 0, commandReleased: 0,
-                      said: 0, replayed: 0, replayFrames: 0, replaySame: 0, rowless: 0, unsettled: 0, refused: 0, fiveKey: 0 };
+                      said: 0, replayed: 0, replayFrames: 0, replaySame: 0, rowless: 0, unsettled: 0, refused: 0, fiveKey: 0, unread: 0 };
     settleDouble(k, P);
     var wasm = builtModule();
     if (!wasm) return { counters: k, problems: P };
@@ -6133,7 +6389,9 @@
   // its K settle steps, K + 1 frames, and ends unsettled, said; the Clock counts acts; a press over C3 writes its place and
   // press, the double releasing the press; and under (settle 2) an act is three frames.
   function settleDouble(k, P) {
-    var text = '(cartridge "settle6"\n  (spec 6)\n  (title "A settle over the double")\n  (rate 0)\n  (screen grid 20 12)\n  (seed 1)\n  (settle 8))\n';
+    // its one row, which the double never reads, reads the press, so that the host takes a press as an act (CART.9)
+    var text = '(cartridge "settle6"\n  (spec 6)\n  (title "A settle over the double")\n  (rate 0)\n  (screen grid 20 12)\n  (seed 1)\n  (settle 8))\n' +
+               '(formula "Screen" "A1" "=Input!B13")\n';
     var box = settleBox(640, 300), fake = FAKE.create({}), host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box }), K = 8;
     try {
       if (!host.attach(fake.exports).ok) { P.push('settle, the double: the host refused the double'); return; }
@@ -6168,6 +6426,25 @@
       if (l2.ok && c2.frame === 3 && !c2.settling && c2.unsettled === 1 && settleSaid(short, 'the load did not settle in 2 steps after its own, the most its (settle 2) allows') === 1) k.fakeUnsettled++;
       else P.push('settle, the double: under (settle 2) the load stands at frame ' + c2.frame + ' with ' + c2.unsettled + ' unsettled, where its act and two settle steps leave frame 3, unsettled and said once');
     } finally { short.destroy(); box2.parentNode.removeChild(box2); }
+    // A cartridge whose rows read neither an act's place nor its press (CART.9's hand test): a press over a cell is the
+    // viewport's selection alone, no act and no frame; a person's formula that reads the press makes the next one an act.
+    var box3 = settleBox(640, 300), fake3 = FAKE.create({}), blind = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box3 });
+    try {
+      var l3 = blind.attach(fake3.exports).ok ? blind.load(text.slice(0, text.indexOf('(formula')), 'life6.vla') : { ok: false };
+      var c3 = l3.ok ? blind.counters() : { frame: -1, presses: -1 };
+      var was3 = c3.frame;
+      if (l3.ok) settlePress(blind, 3, 3);
+      c3 = blind.counters();
+      var at3 = blind.vp ? blind.vp.selection().text : '';
+      if (l3.ok && c3.presses === 0 && c3.frame === was3 && at3 === 'C3') k.unread++;
+      else P.push('settle, the double: a press over C3 of a cartridge reading no act\'s place or press made ' + c3.presses + ' press(es) and frame ' + c3.frame + ' from ' + was3 + ', the selection at ' + at3 + ', where no act, no frame and the selection at C3 are due');
+      if (l3.ok) { blind.start(); blind.tick(1000); blind.edit('(formula "State" "B2" "=Input!B13")'); }
+      var was4 = blind.counters().frame;
+      if (l3.ok) settlePress(blind, 4, 4);
+      c3 = blind.counters();
+      if (l3.ok && c3.presses === 1 && c3.frame === was4 + K + 1) k.unread++;
+      else P.push('settle, the double: after a person\'s formula reading Input!B13 a press over D4 made ' + c3.presses + ' press(es) and frame ' + c3.frame + ' from ' + was4 + ', where an act of ' + (K + 1) + ' frames is due');
+    } finally { blind.destroy(); box3.parentNode.removeChild(box3); }
   }
   // Over the module: the settle card on a host with its viewport, frames stepped at once (a frozen clock never spends a
   // tick's slice), each frame's cells kept for the replay. The box stands in the page's own flow below its fold, and not

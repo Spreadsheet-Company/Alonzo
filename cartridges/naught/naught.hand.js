@@ -17,6 +17,8 @@
   var BLOCK_END = '; ---- the bench\'s end ----';
   var SHEET = 'Bench', WIDTH = '3', RUN = 4, SHUFFLE_SEED = 20261020;
   var BENCH = [16, 8], FLOORS = [4096, 64];
+  // the bench a person loads stands from row 2, row 1 naming its columns; the floors' from row 1 (BENCH_TOP in Rust)
+  var BENCH_TOP = 2;
   var STIMULUS = '=MOD(INT(MOD(MOD(ROW()*40503+COLUMN()*9973+Clock!$B$1*65519,65521)*MOD(ROW()*40503+COLUMN()*9973+Clock!$B$1*65519,65521),65521)/256),2)';
 
   // ---- the gates: a kind's macro, its inputs, its value and its formula ----
@@ -34,7 +36,7 @@
   function gt(k) { return { t: 'gate', k: k }; }
 
   // ---- the netlist ----
-  function Net() { this.switches = []; this.buses = []; this.gates = []; this.home = []; this.circuits = []; }
+  function Net(top) { this.switches = []; this.buses = []; this.gates = []; this.home = []; this.circuits = []; this.top = top || 1; this.labels = []; }
   Net.prototype.switch_ = function (at, bus) { this.switches.push(at); this.buses.push(bus); return sw(this.switches.length - 1); };
   Net.prototype.put = function (kind, a, b, at) { this.gates.push({ kind: kind, a: a, b: b }); this.home.push(at); return gt(this.gates.length - 1); };
   Net.prototype.non = function (a, at) { return a.t === 'zero' ? ONE : a.t === 'one' ? ZERO : this.put('non', a, ZERO, at); };
@@ -57,20 +59,26 @@
     if (b.t === 'one') return this.non(a, at);
     return this.put('aut', a, b, at);
   };
-  // The bench: an adder of `adder` bits from A1 and a multiplier of `multiplier` bits from I1, either left out at 0.
-  Net.bench = function (adder, multiplier) {
-    var net = new Net();
+  // The bench: an adder of `adder` bits from A1 and a multiplier of `multiplier` bits from I1, either left out at 0; from
+  // row `top`, 1 where none is given, and from row 2 on the row above naming its columns (Net::bench_from in Rust).
+  Net.bench = function (adder, multiplier, top) {
+    var net = new Net(top);
     if (adder > 0) net.adder(adder, 1);
     if (multiplier > 0) net.multiplier(multiplier, 9);
     return net;
   };
+  // The bench a person loads (Net::shown).
+  Net.shown = function () { return Net.bench(BENCH[0], BENCH[1], BENCH_TOP); };
+  // A text naming a column, written where the bench starts below row 1.
+  Net.prototype.label = function (at, word) { if (this.top > 1) this.labels.push({ at: at, word: word }); };
   Net.prototype.adder = function (n, c0) {
-    var a = [], b = [], i;
-    for (i = 0; i < n; i++) a.push(this.switch_([i + 2, c0], [false, false]));
-    for (i = 0; i < n; i++) b.push(this.switch_([i + 2, c0 + 1], [false, false]));
-    var carry = this.switch_([1, c0 + 5], [false, false]), c = carry, sum = [];
+    var a = [], b = [], i, top = this.top, self = this;
+    for (i = 0; i < n; i++) a.push(this.switch_([top + 1 + i, c0], [false, false]));
+    for (i = 0; i < n; i++) b.push(this.switch_([top + 1 + i, c0 + 1], [false, false]));
+    var carry = this.switch_([top, c0 + 5], [false, false]), c = carry, sum = [];
+    ['a', 'b', 'AUT', 'ET', 'ET', 'VEL', 'AUT'].forEach(function (word, k) { self.label([Math.max(top - 1, 0), c0 + k], word); });
     for (i = 0; i < n; i++) {
-      var r = i + 2;
+      var r = top + 1 + i;
       var x = this.aut(a[i], b[i], [r, c0 + 2]);
       var g = this.et(a[i], b[i], [r, c0 + 3]);
       var p = this.et(x, c, [r, c0 + 4]);
@@ -82,10 +90,12 @@
     this.circuits.push({ kind: 'adder', bits: n, a: a.map(function (s) { return s.k; }), b: b.map(function (s) { return s.k; }), carry: carry.k, out: sum });
   };
   Net.prototype.multiplier = function (n, m0) {
-    var r0 = 3, cpp = m0 + 1, w = n + 1;
+    var top = this.top, r0 = top + 2, cpp = m0 + 1, w = n + 1, above = Math.max(top - 1, 0), self = this;
     var cx = cpp + w, cg = cpp + 2 * w, cp = cpp + 3 * w, cc = cpp + 4 * w, cs = cpp + 5 * w;
     var a = [], b = [], i, j;
-    for (j = 0; j < n; j++) a.push(this.switch_([1, cpp + j], [true, false]));
+    for (j = 0; j < n; j++) a.push(this.switch_([top, cpp + j], [true, false]));
+    [[[above, cpp], 'a'], [[top + 1, m0], 'b'], [[top + 1, cpp], 'ET'], [[above, cx], 'AUT'], [[above, cg], 'ET'], [[above, cp], 'ET'],
+     [[above, cc], 'VEL'], [[above, cs], 'AUT']].forEach(function (x) { self.label(x[0], x[1]); });
     for (i = 0; i < n; i++) b.push(this.switch_([r0 + i, m0], [false, true]));
     var pp = [];
     for (i = 0; i < n; i++) { pp.push([]); for (j = 0; j < n; j++) pp[i].push(this.et(a[j], b[i], [r0 + i, cpp + j])); }
@@ -233,6 +243,8 @@
     this.net.switches.concat(this.cells).forEach(function (c) { if (!cols[c[1]]) { cols[c[1]] = true; list.push(c[1]); } });
     list.sort(function (x, y) { return x - y; });
     for (i = 0; i < list.length; i++) lines.push('(column "' + SHEET + '" "' + letters(list[i]) + '" ' + WIDTH + ' shown none)');
+    var labels = this.net.labels.slice().sort(function (x, y) { return x.at[0] - y.at[0] || x.at[1] - y.at[1]; });
+    for (i = 0; i < labels.length; i++) lines.push('(cell "' + SHEET + '" "' + a1(labels[i].at[0], labels[i].at[1], false, false) + '" "' + labels[i].word + '")');
     if (this.switches === 'values') { var vr = rectangles(this.net.switches); for (i = 0; i < vr.length; i++) lines.push('(cell "' + SHEET + '" "' + rangeText(vr[i]) + '" 0)'); }
     var rows = this.rows();
     for (i = 0; i < rows.length; i++) {
@@ -259,14 +271,28 @@
     return modulo(Math.floor(v / 256), 2);
   }
 
-  // The floors' source (decision 6): the source with its block's lines replaced and the manifest's (settle K) line taken
-  // out, since a cartridge that settles numbers the Clock by acts and the floors' switches read it as the frame; null
-  // where it holds no block.
+  // The floors' source (decision 6): the source with its block's lines replaced, the manifest's (settle K) line taken
+  // out, and the lesson's lines with it, each sheet the lesson makes named no more in the manifest's (bound ...), since
+  // a cartridge that settles numbers the Clock by acts and the floors' switches read it as the frame, and the lesson is
+  // the bench's words to a person; null where it holds no block.
+  var LESSON_BEGIN = '; ---- the lesson beside the bench: the floors build their benches without it ----';
+  var LESSON_END = '; ---- the lesson\'s end ----';
   function floorsSource(source, lines) {
     var built = withBlock(source, lines);
     if (built === null) return null;
-    var eol = built.indexOf('\r\n') >= 0 ? '\r\n' : '\n', all = built.split(eol);
-    for (var i = 0; i < all.length; i++) if (/^\s*\(settle /.test(all[i])) { all.splice(i, 1); break; }
+    var eol = built.indexOf('\r\n') >= 0 ? '\r\n' : '\n', all = built.split(eol), i;
+    for (i = 0; i < all.length; i++) if (/^\s*\(settle /.test(all[i])) { all.splice(i, 1); break; }
+    var b = all.indexOf(LESSON_BEGIN), e = all.indexOf(LESSON_END);
+    if (b >= 0 && e > b) {
+      var sheets = [];
+      for (i = b; i <= e; i++) { var m = /^\(sheet "([^"]*)"/.exec(all[i]); if (m) sheets.push(' "' + m[1] + '"'); }
+      all.splice(b, e - b + 1);
+      for (i = 0; i < all.length; i++) {
+        if (!/^\s*\(bound /.test(all[i])) continue;
+        for (var s = 0; s < sheets.length; s++) all[i] = all[i].replace(sheets[s], '');
+        break;
+      }
+    }
     return all.join(eol);
   }
   // The block's lines as a source holds them, between its two lines; null where it holds none.
@@ -283,7 +309,7 @@
   function NaughtHand() {
     var el = typeof document !== 'undefined' ? document.getElementById('source-naught') : null;
     if (!el) throw new Error('the page holds no source-naught block, whose bench the hand lays');
-    this.net = Net.bench(BENCH[0], BENCH[1]);
+    this.net = Net.shown();
     this.laid = new Laid(this.net, 'fill', 'values', 'now');
     var held = blockOf(el.textContent), mine = this.laid.block();
     if (!held) throw new Error('the source-naught block holds no bench between its two lines');

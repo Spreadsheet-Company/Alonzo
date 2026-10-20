@@ -8,23 +8,27 @@
 ;   cargo run --release --example naught
 ; and never by hand.
 ;
-; The bench. A 16-bit ripple adder stands from A1, a bit a row from row 2: its switches a
-; and b in columns A and B, its carry-in at F1, its five gates a bit in C to G, the sum's
-; bits in G and the carry out of its last bit in F17. An 8 by 8 multiplier stands from I1:
-; its switches a along row 1 from J1 and b down column I from I3, its partial products in
-; J3:Q10, and each of its other roles a block of nine columns to their right, a row of
+; The bench. Row 1 names its columns, the switches' letters and the gates' Latin names. A
+; 16-bit ripple adder stands from A1, a bit a row from row 3: its switches a and b in
+; columns A and B, its carry-in at F2, its five gates a bit in C to G, the sum's bits in G
+; and the carry out of its last bit in F18. An 8 by 8 multiplier stands from I1: its
+; switches a along row 2 from J2 and b down column I from I4, its partial products in
+; J4:Q11, and each of its other roles a block of nine columns to their right, a row of
 ; carry-save adders a row and its last row the ripple that ends the product. Every cell
-; holds 0 or 1, and a 1 is drawn in Lovelace Lavender. Write a switch in the drawer's
-; edit row,
-;   (cell "Bench" "A2" 1)
-; and every gate the switch reaches computes in the edit's frame.
+; holds 0 or 1, and a 1 is drawn in Lovelace Lavender. Select a switch and type 1 or 0,
+; then Enter: the palette opens holding the switch's row,
+;   (cell "Bench" "A3" 1)
+; Enter writes it, and every gate the switch reaches computes in the act's frame. The
+; Lesson, the sheet a load shows first, says the rest to whoever loads it.
 ;
 ; The gates, in Latin, each arithmetic over 0 and 1 and each a macro below:
 ;   NON, not: 1 less its input.            ET, and: the product of its two.
 ;   VEL, or: the greater of its two.       AUT, either but not both: their sum's parity.
 ;   NON-ET, not both: Sheffer's stroke.    NEC, neither: Peirce's arrow.
 ; Latin is said to keep two ors, vel the inclusive and aut the exclusive. The Stanford
-; Encyclopedia of Philosophy calls that a myth; the bench keeps both anyway.
+; Encyclopedia of Philosophy's entry of 2016, Ray Jennings and Andrew Hartline's, called
+; that a myth in its section 7, and its revision of 2024 says that aut has inclusive uses;
+; the bench keeps both anyway.
 ;
 ; How it settles. The cartridge says (settle 65536): after an act the engine steps the bench
 ; again, with no act, until a frame changes nothing (docs/SPEC.md section 5, version 6). At
@@ -47,15 +51,15 @@
   (screen grid 80 50)               ; no Screen: the host shows the Bench, the first visible sheet
   (seed 1)                          ; nothing on the bench is drawn from it
   (settle 65536)                    ; an act's settle, at most 65,536 steps: at full rate, one
-  (bound "Bench")                   ; the bench drawn to its extent and no further
+  (bound "Lesson" "Bench")          ; the lesson and the bench, each drawn to its extent and no further
   (author "Spreadsheet Company")    ; who wrote it
   (license "0BSD")                  ; the header's twin: copy this file to start a bench of your own
-  (notes "Naught: Vel et Aut, a bench of logic gates in Latin: NON, ET, VEL, AUT, NON-ET and NEC. A 16-bit ripple adder from A1 and an 8 by 8 multiplier from I1, every gate a formula of the cells it reads, every 1 in lavender. Write a switch in the edit row, (cell \"Bench\" \"A2\" 1), and every gate it reaches computes."))
+  (notes "Naught: Vel et Aut, a bench of logic gates in Latin: NON, ET, VEL, AUT, NON-ET and NEC. A 16-bit ripple adder from A1 and an 8 by 8 multiplier from I1, every gate a formula of the cells it reads, every 1 in lavender. Select a switch and type 1 or 0, then Enter, (cell \"Bench\" \"A3\" 1), and every gate it reaches computes; the Lesson says the rest."))
 
 ; ---- the gates, each a cell or a fill of one formula -----------------------------------
 ; A gate is written by its Latin name, its cell or its range, then each of its inputs as
-; the range's first cell reads it: (aut "C2:C17" "A2" "B2") is the parity of a and b on
-; every row from 2 to 17. A gate's value is 0 or 1, a number, so a bus is a sum of its
+; the range's first cell reads it: (aut "C3:C18" "A3" "B3") is the parity of a and b on
+; every row from 3 to 18. A gate's value is 0 or 1, a number, so a bus is a sum of its
 ; bits and a look draws each value.
 
 (defmacro (non at x)
@@ -81,6 +85,31 @@
 (defmacro (nec at x y)
   "NEC, neither, Peirce's arrow: 1 less the greater of its inputs"
   (formula "Bench" at (&expand "=1-MAX(" x "," y ")")))
+
+; ---- the lesson beside the bench: the floors build their benches without it ----
+; What the bench teaches, on a sheet of its own, the first a load shows, bound to its extent: a line a row in a
+; column wide enough to hold it. Its own sheet keeps the Bench's cells numbers alone, which the language reads as
+; arrays.
+(sheet "Lesson" visible)
+(column "Lesson" "A" 140 shown none)
+(cell "Lesson" "A1" "Naught: Vel et Aut")
+(cell "Lesson" "A2" "A bench of logic gates. Every gate is a formula of the cells it reads; every 1 is lit. The bench is the next sheet, Bench:")
+(cell "Lesson" "A3" "its tab, or Ctrl+Alt+PageDown (Ctrl+PageDown in full screen); Ctrl+Alt+PageUp comes back here. Its row 1 names every column.")
+(cell "Lesson" "A5" "To write a switch, select it and type 1 or 0, then Enter: the palette opens with its row, and Enter writes it.")
+(cell "Lesson" "A6" "Enter writes and moves down, Tab moves right; Enter or F2 on a cell opens its row as it stands, Escape leaves it.")
+(cell "Lesson" "A7" "Ctrl+K opens the palette for any row of your own: (cell \"Bench\" \"A3\" 1), or a gate, (formula \"Bench\" \"H3\" \"=1-A3\").")
+(cell "Lesson" "A8" "Delete empties a cell, Backspace opens it emptied: an empty text is no number, so the gates it feeds say #VALUE!. Ex nihilo nihil fit.")
+(cell "Lesson" "A10" "The adder, from A1: a in A3:A18 and b in B3:B18, low bit first, its carry-in F2; its sum G3:G18, its carry out F18.")
+(cell "Lesson" "A11" "Each bit adds three: C = AUT(a,b), D = ET(a,b), E = ET(C,carry), F = VEL(D,E) the carry on, G = AUT(C,carry) the sum.")
+(cell "Lesson" "A12" "The multiplier, from I1: a in J2:Q2 and b in I4:I11, low bit first; its partial products ET(a,b) in J4:Q11, summed in rows.")
+(cell "Lesson" "A13" "Its product, low bit first: J4, S5, BC6:BC11, S12, BD12:BI12 and AZ12.")
+(cell "Lesson" "A15" "The gates, in Latin: NON, not, 1-a. ET, and, a*b. VEL, or, MAX(a,b). AUT, either but not both, MOD(a+b,2).")
+(cell "Lesson" "A16" "NON-ET, not both, 1-a*b, Sheffer's stroke. NEC, neither, 1-MAX(a,b), Peirce's arrow. Either alone builds every other gate.")
+(cell "Lesson" "A18" "Try it: a all ones, A3:A18, then the carry-in F2 to 1. 65,535 + 1 carries through all sixteen bits to 65,536 in one act.")
+(cell "Lesson" "A19" "Then the multiplier's a and b all ones, J2:Q2 and I4:I11: 255 x 255 = 65,025.")
+(cell "Lesson" "A21" "Tertium non datur: a cell holds 0 or 1, and no third, Delete aside. Latin is said to keep two ors, vel and aut; the Stanford")
+(cell "Lesson" "A22" "Encyclopedia of Philosophy called that a myth in 2016: aut has inclusive uses too. The bench keeps both anyway.")
+; ---- the lesson's end ----
 
 ; ---- the sheet, and its look --------------------------------------------------------------
 (sheet "Bench" visible)
@@ -140,36 +169,51 @@
 (column "Bench" "BG" 3 shown none)
 (column "Bench" "BH" 3 shown none)
 (column "Bench" "BI" 3 shown none)
-(cell "Bench" "F1" 0)
-(cell "Bench" "J1:Q1" 0)
-(cell "Bench" "A2:B17" 0)
-(cell "Bench" "I3:I10" 0)
-(aut "C2:C17" "A2" "B2")
-(et "D2:D17" "A2" "B2")
-(et "E2:E17" "C2" "F1")
-(vel "F2:F17" "D2" "E2")
-(aut "G2:G17" "C2" "F1")
-(et "J3:Q10" "J$1" "$I3")
-(aut "S4:Y4" "J4" "K3")
-(et "AB4:AH4" "J4" "K3")
-(aut "S5:X5" "J5" "T4")
-(aut "Y5:Y10" "P5" "Q4")
-(et "AB5:AG5" "J5" "T4")
-(et "AH5:AH10" "P5" "Q4")
-(et "AK5:AQ5" "S5" "AB4")
-(vel "AT5:AZ10" "AB5" "AK5")
-(aut "BC5:BI5" "S5" "AB4")
-(aut "S6:X10" "J6" "BD5")
-(et "AB6:AG10" "J6" "BD5")
-(et "AK6:AQ10" "S6" "AT5")
-(aut "BC6:BI10" "S6" "AT5")
-(aut "S11:X11" "BD10" "AT10")
-(aut "Y11" "Q10" "AZ10")
-(et "AB11:AG11" "BD10" "AT10")
-(et "AH11" "Q10" "AZ10")
-(et "AL11" "T11" "AB11")
-(et "AM11:AQ11" "U11" "AU11")
-(vel "AU11:AZ11" "AC11" "AL11")
-(aut "BD11" "T11" "AB11")
-(aut "BE11:BI11" "U11" "AU11")
+(cell "Bench" "A1" "a")
+(cell "Bench" "B1" "b")
+(cell "Bench" "C1" "AUT")
+(cell "Bench" "D1" "ET")
+(cell "Bench" "E1" "ET")
+(cell "Bench" "F1" "VEL")
+(cell "Bench" "G1" "AUT")
+(cell "Bench" "J1" "a")
+(cell "Bench" "S1" "AUT")
+(cell "Bench" "AB1" "ET")
+(cell "Bench" "AK1" "ET")
+(cell "Bench" "AT1" "VEL")
+(cell "Bench" "BC1" "AUT")
+(cell "Bench" "I3" "b")
+(cell "Bench" "J3" "ET")
+(cell "Bench" "F2" 0)
+(cell "Bench" "J2:Q2" 0)
+(cell "Bench" "A3:B18" 0)
+(cell "Bench" "I4:I11" 0)
+(aut "C3:C18" "A3" "B3")
+(et "D3:D18" "A3" "B3")
+(et "E3:E18" "C3" "F2")
+(vel "F3:F18" "D3" "E3")
+(aut "G3:G18" "C3" "F2")
+(et "J4:Q11" "J$2" "$I4")
+(aut "S5:Y5" "J5" "K4")
+(et "AB5:AH5" "J5" "K4")
+(aut "S6:X6" "J6" "T5")
+(aut "Y6:Y11" "P6" "Q5")
+(et "AB6:AG6" "J6" "T5")
+(et "AH6:AH11" "P6" "Q5")
+(et "AK6:AQ6" "S6" "AB5")
+(vel "AT6:AZ11" "AB6" "AK6")
+(aut "BC6:BI6" "S6" "AB5")
+(aut "S7:X11" "J7" "BD6")
+(et "AB7:AG11" "J7" "BD6")
+(et "AK7:AQ11" "S7" "AT6")
+(aut "BC7:BI11" "S7" "AT6")
+(aut "S12:X12" "BD11" "AT11")
+(aut "Y12" "Q11" "AZ11")
+(et "AB12:AG12" "BD11" "AT11")
+(et "AH12" "Q11" "AZ11")
+(et "AL12" "T12" "AB12")
+(et "AM12:AQ12" "U12" "AU12")
+(vel "AU12:AZ12" "AC12" "AL12")
+(aut "BD12" "T12" "AB12")
+(aut "BE12:BI12" "U12" "AU12")
 ; ---- the bench's end ----

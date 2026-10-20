@@ -355,6 +355,29 @@
   // Whether a person's edit, one cell or formula row, writes the Input sheet, its name compared without case as the
   // recorder compares it (ENGINE.19, decision 5).
   function editsInput(row) { var f = VP().readForms(row)[0]; return Array.isArray(f) && String(str(f[1])).toLowerCase() === 'input'; }
+  // Whether rows' formulas read the Input sheet's column B, or its twin's, at any row from top to bottom: a reference
+  // in a formula's text, a cell or a range, whose rows meet them, a whole column's among them. The page asks it of
+  // rows 17 and 18, the last key (ENGINE.24), and the host of rows 11 to 15, an act's place and press (CART.9's hand
+  // test).
+  var INPUT_REF = /(^|[^A-Za-z0-9_.'!])'?input(?:\.last)?'?!(\$?[A-Za-z]{1,3})(\$?\d+)?(?::(\$?[A-Za-z]{1,3})(\$?\d+)?)?/gi;
+  function readsInputRows(text, top, bottom) {
+    var forms = VP().readForms(String(text)), f, j, m;
+    function col(s) { s = s.replace(/\$/g, '').toUpperCase(); var n = 0; for (var i = 0; i < s.length; i++) n = n * 26 + s.charCodeAt(i) - 64; return n; }
+    function row(s) { return s ? +s.replace(/\$/g, '') : null; }
+    for (f = 0; f < forms.length; f++) {
+      if (!Array.isArray(forms[f])) continue;
+      for (j = 1; j < forms[f].length; j++) {
+        var t = forms[f][j];
+        if (typeof t !== 'string' || t.charAt(0) !== '=') continue;
+        INPUT_REF.lastIndex = 0;
+        while ((m = INPUT_REF.exec(t))) {
+          var c1 = col(m[2]), r1 = row(m[3]), c2 = m[4] ? col(m[4]) : c1, r2 = m[4] ? row(m[5]) : r1, whole = r1 === null || r2 === null;
+          if (Math.min(c1, c2) <= 2 && Math.max(c1, c2) >= 2 && (whole || (Math.min(r1, r2) <= bottom && Math.max(r1, r2) >= top))) return true;
+        }
+      }
+    }
+    return false;
+  }
   function readChanges(text) {
     var nl = text.indexOf('\n'), m = CHANGES_HEAD.exec(nl < 0 ? text : text.slice(0, nl));
     if (!m) return null;
@@ -696,10 +719,13 @@
     // follows, { what, from }, said when it ends; and an act's rows at rate 0 as the host last knew the Input sheet to hold
     // them, by address, the engine's release mirrored, null where it does not know.
     this.settling = false; this.settleWord = ''; this.settleAct = null; this.actKnown = null;
+    // whether the cartridge reads an act's place or press, Input!B11 to B15, so that a press over a cell is an act;
+    // null until asked, after a load or a continue (CART.9's hand test)
+    this.actRead = null;
     this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
     this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, inputsKept: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, patches: 0, shows: 0, saves: 0,
                sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0, commands: 0, commandsRefused: 0,
-               settles: 0, settleSteps: 0, unsettled: 0, presses: 0 };
+               settles: 0, settleSteps: 0, unsettled: 0, presses: 0, playedShown: 0 };
   };
 
   // The module: its ABI number asked first, then every export the loop calls.
@@ -1135,7 +1161,7 @@
         if (editsInput(b.rows[i])) this.inputsLast = null;
         if (editsInput(b.rows[i])) { this.commandRow = null; this.actKnown = null; }   // the twentieth row and the act's rows no longer known (ENGINE.25, CART.12)
       }
-      this.given = b.text;
+      this.given = b.text; this.actRead = null;   // the rebuilt rows read again for an act's place and press
       this._say('frame ' + (this.frame + 1) + ': applied ' + b.file + ' to the running game: ' + appliedWords(b) + ' written, the frame number and every other cell kept.');
       return true;
     }
@@ -1150,6 +1176,7 @@
     if (r.status === 0) {
       this.c.edits++;
       this._recordEdit(row);   // the replay logs a person's edit that landed, in its frame (section 7.6)
+      if (readsInputRows(row, 11, 15)) this.actRead = true;   // a person's formula reading an act's place or press: a press is an act from here (CART.9)
       if (editsInput(row)) this.inputsLast = null;   // the Input sheet a person wrote: the next frame's rows written whole (ENGINE.19)
       if (editsInput(row)) { this.commandRow = null; this.actKnown = null; }   // and its twentieth row and the act's rows no longer known (ENGINE.25, CART.12)
       if (!atRateZero) this._say('frame ' + (this.frame + 1) + ': the edit ' + row + ' was written.');
@@ -2000,6 +2027,13 @@
     var m = /^Numpad([0-9])$/.exec(String(code || ''));
     return m && String(key) === m[1] ? 'Digit' + m[1] : null;
   }
+  // Whether a key on the grid is the game's (CART.9's second slice): a holding command's key at any rate, and at a rate
+  // above zero a key the Keys sheet binds. A page asks before it takes a key typed on a cell for an edit of its own.
+  Host.prototype.takesKey = function (code, key, ev) {
+    if (!this.cart || !code) return false;
+    if (this._commandKey(code, ev, key)) return true;
+    return this.cart.rate > 0 && this._bound(code);
+  };
   Host.prototype.keyUp = function (code) { delete this.held[code]; };
   Host.prototype.releaseKeys = function () { this.held = Object.create(null); };
   Host.prototype._bound = function (code) {
@@ -2056,11 +2090,12 @@
     this._on(root, 'focusout', function () { self.releaseKeys(); });
     this._on(root, 'mousemove', function (ev) { if (playing()) self._pointerFromGrid(ev); });
     this._on(root, 'mousedown', function (ev) { if (playing()) self._pointerFromGrid(ev); });
-    // a press at rate 0 read before the viewport's own, whose focus may scroll the page under the point (CART.12)
-    this._on(root, 'mousedown', function (ev) { if (still() && self._sixAtZero()) self._pressAct(ev); }, true);
+    // a press at rate 0 read before the viewport's own, whose focus may scroll the page under the point (CART.12), an act
+    // for a cartridge that reads an act's place or press, and the viewport's alone, a selection, for one that does not
+    this._on(root, 'mousedown', function (ev) { if (still() && self._pressActs()) self._pressAct(ev); }, true);
     this._on(root, 'mouseup', function (ev) { if (playing()) self._pointerFromGrid(ev); });
     this._on(root, 'mouseleave', function () { if (playing()) { self.pointerAt(0, 0); self.pointerButtons(0, 0, 0); } });
-    this._on(root, 'contextmenu', function (ev) { if ((playing() || (still() && self._sixAtZero())) && self._pointerCellAt(ev)) ev.preventDefault(); });
+    this._on(root, 'contextmenu', function (ev) { if ((playing() || (still() && self._pressActs())) && self._pointerCellAt(ev)) ev.preventDefault(); });
     this._on(root, 'wheel', function (ev) { if (!playing() || !self._windowCellAt(ev)) return; self.wheel(ev.deltaY > 0 ? 1 : (ev.deltaY < 0 ? -1 : 0)); ev.preventDefault(); }, { passive: false, capture: true });
   };
   // A press of a button over a cell of the sheet shown, an act at rate 0 for a cartridge written to version 6 (CART.12,
@@ -2068,6 +2103,15 @@
   // another sheet any cell in view, the sheet's own; never over the headers, the corner, the tabs or the scrollbars. The
   // viewport selects the cell, its own press doing so for the left button, and the press holds for the act's frame,
   // Input!B13 the left, B14 the right, B15 the middle. While a replay plays it is no act, said once.
+  // A press is an act only for a cartridge whose formulas read an act's place or press, Input!B11 to B15, its rows as
+  // given or a person's formula since (CART.9's hand test, 2026-10-20, docs/SPEC.md section 3.3): for one that reads
+  // neither, a press would be three frames that move nothing, its own, its release's and the proof's, and it is the
+  // viewport's selection alone, as at version 5.
+  Host.prototype._pressActs = function () {
+    if (!this._sixAtZero()) return false;
+    if (this.actRead === null) { try { this.actRead = readsInputRows(this._given(), 11, 15); } catch (e) { this.actRead = true; } }
+    return this.actRead;
+  };
   Host.prototype._pressAct = function (ev) {
     if (!this.vp || !this.handle || ev.button > 2) return false;
     var at = this._pointerCellAt(ev);
@@ -2277,9 +2321,27 @@
     var n = this.frame + 1, rows = this.player.frames[n];
     if (!rows) return;
     var r = this._write(rows.join('\n'));
-    if (r.status === 0) { this._recordPlayed(rows); this.inputsLast = null; this.commandRow = null; this.actKnown = null; return; }   // the rows last written forgotten with the recorder's record (ENGINE.19), the twentieth row too (ENGINE.25), and an act's (CART.12)
+    if (r.status === 0) {
+      this._recordPlayed(rows); this.inputsLast = null; this.commandRow = null; this.actKnown = null;   // the rows last written forgotten with the recorder's record (ENGINE.19), the twentieth row too (ENGINE.25), and an act's (CART.12)
+      this._playedShown(rows);
+      return;
+    }
     this.inFrame = false; this.progress = null; this.player = null; this.stop();
     this._refuse('frame ' + n + ': the replay\'s rows were refused: ' + words(r) + '; the replay stops, and the cartridge stands at frame ' + this.frame + '.');
+  };
+  // A replay's nineteenth row (version 4), the sheet its person's viewport showed when they acted: shown at the frame's
+  // end, as a tab clicked is shown, when it is not the sheet shown, so that a replay shows what its person saw (CART.9's
+  // hand test, 2026-10-20: Naught's replay played on the Lesson while its acts wrote the Bench). The Camera's change in
+  // the same frame, read after the step, has the last word, as it had when the person played.
+  Host.prototype._playedShown = function (rows) {
+    if (!this._four() || this.cart.mode !== 'grid') return;
+    for (var i = rows.length - 1; i >= 0; i--) {
+      var f = VP().readForms(String(rows[i]))[0];
+      if (!Array.isArray(f) || sym(f[0]) !== 'cell' || String(str(f[1])).toLowerCase() !== 'input' || str(f[2]) !== 'B19') continue;
+      var name = this._sheetNamed(str(f[3]));
+      if (name !== null && name !== this._shown()) { this.showWanted = name; this.c.playedShown++; }
+      return;
+    }
   };
   Host.prototype._endReplay = function (n) {
     this.player = null; this.stop();

@@ -1413,6 +1413,7 @@
       case 'Home': if (ev.ctrlKey) { row = 1; col = 1; } else { col = 1; } break;
       case 'End': if (ev.ctrlKey) { row = g.sheetRows; col = g.sheetCols; } else { col = g.sheetCols; } break;
       case 'Enter': open = true; break;
+      case 'F2': open = true; break;   // a spreadsheet's key to edit a cell, opened as Enter opens it (CART.9's second slice)
       default: handled = false;
     }
     if (!handled) return;

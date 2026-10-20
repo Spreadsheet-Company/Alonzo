@@ -16,7 +16,7 @@
 //! **The gates** are arithmetic over 0 and 1, named in Latin (decision 2):
 //! NON `=1-a`, ET `=a*b`, VEL `=MAX(a,b)`, AUT `=MOD(a+b,2)`, NON-ET (NAND,
 //! Sheffer's stroke) `=1-a*b` and NEC (NOR, Peirce's arrow) `=1-MAX(a,b)`.
-//! The source writes each by a macro of its own, `(aut "C2:C17" "A2" "B2")`,
+//! The source writes each by a macro of its own, `(aut "C3:C18" "A3" "B3")`,
 //! a cell or a fill and its inputs as the first cell reads them.
 //!
 //! **The circuits** (decision 1): an n-bit ripple-carry adder of five gates a
@@ -28,7 +28,12 @@
 //! the adder from `A1`, a bit a row, its switches in columns A and B and its
 //! carry-in at `F1`; and the multiplier from `I1`, its b-bus down column I
 //! and its a-bus along row 1, read through mixed references, each of its
-//! roles a block of n + 1 columns and a carry-save row a row.
+//! roles a block of n + 1 columns and a carry-save row a row. The bench a
+//! person loads stands a row lower, from row [`BENCH_TOP`], its carry-in at
+//! `F2` and its a-bus along row 2, so that row 1 names its columns: `a`, `b`
+//! and each gate's Latin name over the adder's, the multiplier's a-bus and
+//! each block's role, its b-bus and partial products in row 3 (the owner's
+//! word at the second slice's hand test).
 //!
 //! **The placements** (decision 5): by fill, each role a rectangle of one
 //! R1C1 text, written as one gate form; and shuffled, the same gates
@@ -37,8 +42,9 @@
 //! hold one text, so that every gate is its own shape. The census the
 //! language prints of either is the one [`Laid::census`] counts here.
 //!
-//! **The settle.** The committed bench settles, `(settle 65536)`, so that
-//! the page opens it on its values; the floors' fixtures leave it out
+//! **The settle and the lesson.** The committed bench settles, `(settle
+//! 65536)`, so that the page opens it on its values, and teaches itself on a
+//! sheet of its own, the Lesson; the floors' fixtures leave both out
 //! ([`floors_source`]), their switches reading the Clock as the frame.
 
 use std::collections::HashMap;
@@ -53,6 +59,12 @@ pub const SHEET: &str = "Bench";
 
 /// The committed bench: a 16-bit adder and an 8 by 8 multiplier.
 pub const BENCH: (usize, usize) = (16, 8);
+
+/// The committed bench's top row (CART.9's hand test of the second slice, the
+/// owner's word): row 1 above it names its columns, the gates in Latin. The
+/// floors' benches stand from row 1, unnamed, so that their fixtures stay the
+/// bytes both runs measured.
+pub const BENCH_TOP: u32 = 2;
 
 /// The floors' two fixtures (decision 6): a 4,096-bit adder and a 64 by 64
 /// multiplier, laid by fill and shuffled.
@@ -184,7 +196,8 @@ pub enum Circuit {
 /// The bench's netlist: its switches, each a cell and the mixed reference a
 /// gate laid by fill reads it through, `(row held, column held)`; its gates,
 /// in an order that puts every gate after what it reads, each with its cell
-/// when laid by fill; and its circuits.
+/// when laid by fill; its circuits; the row its circuits start from; and the
+/// texts that name its columns, each a cell, where a row above them is free.
 #[derive(Clone, Debug, Default)]
 pub struct Net {
     pub switches: Vec<(u32, u32)>,
@@ -192,13 +205,33 @@ pub struct Net {
     pub gates: Vec<Gate>,
     pub home: Vec<(u32, u32)>,
     pub circuits: Vec<Circuit>,
+    pub top: u32,
+    pub labels: Vec<((u32, u32), &'static str)>,
 }
 
 impl Net {
     /// The bench: an adder of `adder` bits from `A1` and a multiplier of
     /// `multiplier` bits from `I1`, either left out at 0.
     pub fn bench(adder: usize, multiplier: usize) -> Net {
-        let mut net = Net::default();
+        Net::bench_from(adder, multiplier, 1)
+    }
+
+    /// The bench a person loads (CART.9's hand test of the second slice): the
+    /// committed bench from row [`BENCH_TOP`], the row above it naming its
+    /// columns.
+    pub fn shown() -> Net {
+        Net::bench_from(BENCH.0, BENCH.1, BENCH_TOP)
+    }
+
+    /// The bench from row `top`: its carry-in and its a-bus in that row, its
+    /// bits below it; from row 2 on, the gates' Latin names and the switches'
+    /// letters in the row above, and the multiplier's b-bus and partial
+    /// products named in the row between its a-bus and them.
+    pub fn bench_from(adder: usize, multiplier: usize, top: u32) -> Net {
+        let mut net = Net {
+            top,
+            ..Net::default()
+        };
         if adder > 0 {
             net.adder(adder, 1);
         }
@@ -206,6 +239,13 @@ impl Net {
             net.multiplier(multiplier, 9);
         }
         net
+    }
+
+    /// A text naming a column, written where the bench starts below row 1.
+    fn label(&mut self, at: (u32, u32), word: &'static str) {
+        if self.top > 1 {
+            self.labels.push((at, word));
+        }
     }
 
     fn switch(&mut self, at: (u32, u32), bus: (bool, bool)) -> Node {
@@ -253,16 +293,24 @@ impl Net {
     }
 
     /// An n-bit ripple-carry adder whose switches stand in column `c0` and the
-    /// next, a bit a row from row 2, its carry-in at row 1 of its carry's
-    /// column, and its five roles in the five columns after the switches.
+    /// next, a bit a row from the row below the top, its carry-in at the top
+    /// row of its carry's column, and its five roles in the five columns after
+    /// the switches, each named above.
     fn adder(&mut self, n: usize, c0: u32) {
+        let top = self.top;
         let a: Vec<Node> = (0..n)
-            .map(|i| self.switch((i as u32 + 2, c0), (false, false)))
+            .map(|i| self.switch((top + 1 + i as u32, c0), (false, false)))
             .collect();
         let b: Vec<Node> = (0..n)
-            .map(|i| self.switch((i as u32 + 2, c0 + 1), (false, false)))
+            .map(|i| self.switch((top + 1 + i as u32, c0 + 1), (false, false)))
             .collect();
-        let carry = self.switch((1, c0 + 5), (false, false));
+        let carry = self.switch((top, c0 + 5), (false, false));
+        for (k, word) in ["a", "b", "AUT", "ET", "ET", "VEL", "AUT"]
+            .into_iter()
+            .enumerate()
+        {
+            self.label((top.saturating_sub(1), c0 + k as u32), word);
+        }
         let index = |s: &[Node]| -> Vec<u32> {
             s.iter()
                 .map(|n| match n {
@@ -278,7 +326,7 @@ impl Net {
         let mut c = carry;
         let mut sum = Vec::with_capacity(n + 1);
         for i in 0..n {
-            let r = i as u32 + 2;
+            let r = top + 1 + i as u32;
             let x = self.aut(a[i], b[i], (r, c0 + 2));
             let g = self.et(a[i], b[i], (r, c0 + 3));
             let p = self.et(x, c, (r, c0 + 4));
@@ -298,17 +346,32 @@ impl Net {
     }
 
     /// An n by n array multiplier from column `m0`: its b-bus down that
-    /// column from row 3, its a-bus along row 1 over its partial products,
-    /// each of its roles a block of n + 1 columns, a carry-save row a row,
-    /// and the ripple the blocks' last row.
+    /// column from two rows below the top, its a-bus along the top row over
+    /// its partial products, each of its roles a block of n + 1 columns, a
+    /// carry-save row a row, and the ripple the blocks' last row; each bus
+    /// and block named above it.
     fn multiplier(&mut self, n: usize, m0: u32) {
-        let r0 = 3u32;
+        let top = self.top;
+        let r0 = top + 2;
         let cpp = m0 + 1;
         let w = n as u32 + 1;
         let (cx, cg, cp, cc, cs) = (cpp + w, cpp + 2 * w, cpp + 3 * w, cpp + 4 * w, cpp + 5 * w);
         let a: Vec<Node> = (0..n)
-            .map(|j| self.switch((1, cpp + j as u32), (true, false)))
+            .map(|j| self.switch((top, cpp + j as u32), (true, false)))
             .collect();
+        let above = top.saturating_sub(1);
+        for (at, word) in [
+            ((above, cpp), "a"),
+            ((top + 1, m0), "b"),
+            ((top + 1, cpp), "ET"),
+            ((above, cx), "AUT"),
+            ((above, cg), "ET"),
+            ((above, cp), "ET"),
+            ((above, cc), "VEL"),
+            ((above, cs), "AUT"),
+        ] {
+            self.label(at, word);
+        }
         let b: Vec<Node> = (0..n)
             .map(|i| self.switch((r0 + i as u32, m0), (false, true)))
             .collect();
@@ -903,6 +966,14 @@ impl<'n> Laid<'n> {
                 letters(c)
             ));
         }
+        let mut labels = self.net.labels.clone();
+        labels.sort_unstable();
+        for ((r, c), word) in labels {
+            lines.push(format!(
+                "(cell \"{SHEET}\" \"{}\" \"{word}\")",
+                a1(r, c, false, false)
+            ));
+        }
         if self.switches == Switches::Values {
             for rect in rectangles(self.net.switches.clone()) {
                 lines.push(format!("(cell \"{SHEET}\" \"{}\" 0)", range_text(rect)));
@@ -1105,20 +1176,49 @@ pub fn with_block(source: &str, lines: &[String]) -> Option<String> {
     Some(out.join(eol))
 }
 
+/// The lesson the bench teaches beside it (`CART.9`'s second slice), the
+/// lines between these two, which the floors leave out.
+pub const LESSON_BEGIN: &str =
+    "; ---- the lesson beside the bench: the floors build their benches without it ----";
+pub const LESSON_END: &str = "; ---- the lesson's end ----";
+
 /// The floors' source (decision 6): the source with its block's lines
-/// replaced by `lines` and the manifest's `(settle K)` line taken out. A
-/// cartridge that settles numbers the Clock by acts, and the floors step
-/// frames, their switches reading the Clock as the frame. `None` where the
-/// source holds no block.
+/// replaced by `lines`, the manifest's `(settle K)` line taken out, and the
+/// lesson's lines with it, each sheet the lesson makes named no more in the
+/// manifest's `(bound ...)`. A cartridge that settles numbers the Clock by
+/// acts, and the floors step frames, their switches reading the Clock as
+/// the frame; and the lesson is the bench's words to a person, of which the
+/// floors measure nothing. `None` where the source holds no block.
 pub fn floors_source(source: &str, lines: &[String]) -> Option<String> {
     let built = with_block(source, lines)?;
     let eol = if built.contains("\r\n") { "\r\n" } else { "\n" };
-    let mut all: Vec<&str> = built.split(eol).collect();
+    let mut all: Vec<String> = built.split(eol).map(str::to_string).collect();
     if let Some(i) = all
         .iter()
         .position(|l| l.trim_start().starts_with("(settle "))
     {
         all.remove(i);
+    }
+    let begin = all.iter().position(|l| l == LESSON_BEGIN);
+    let end = all.iter().position(|l| l == LESSON_END);
+    if let (Some(b), Some(e)) = (begin, end) {
+        if e > b {
+            let sheets: Vec<String> = all[b..=e]
+                .iter()
+                .filter_map(|l| l.strip_prefix("(sheet \""))
+                .filter_map(|l| l.split_once('"'))
+                .map(|(name, _)| format!(" \"{name}\""))
+                .collect();
+            all.drain(b..=e);
+            if let Some(bound) = all
+                .iter_mut()
+                .find(|l| l.trim_start().starts_with("(bound "))
+            {
+                for name in &sheets {
+                    *bound = bound.replacen(name.as_str(), "", 1);
+                }
+            }
+        }
     }
     Some(all.join(eol))
 }
@@ -1197,20 +1297,57 @@ mod tests {
         assert_eq!((bench.gates.len(), bench.depth()), (400, 33));
     }
 
+    /// The bench a person loads stands a row lower than the floors' (the
+    /// second slice's hand test), the same gates and depth, and row 1 above it
+    /// names its columns; a bench from row 1, the floors' among them, names
+    /// none, so that its block is the bytes it was.
+    #[test]
+    fn the_shown_bench_names_its_columns_a_row_above_it() {
+        let shown = Net::shown();
+        assert_eq!((shown.gates.len(), shown.depth()), (400, 33));
+        let named: Vec<String> = shown
+            .labels
+            .iter()
+            .map(|&((r, c), w)| format!("{}={w}", a1(r, c, false, false)))
+            .collect();
+        assert_eq!(
+            named.join(" "),
+            "A1=a B1=b C1=AUT D1=ET E1=ET F1=VEL G1=AUT J1=a I3=b J3=ET S1=AUT AB1=ET AK1=ET AT1=VEL BC1=AUT"
+        );
+        let at = |k: usize| a1(shown.switches[k].0, shown.switches[k].1, false, false);
+        let Circuit::Adder { a, carry, .. } = &shown.circuits[0] else {
+            panic!("the adder first")
+        };
+        let Circuit::Multiplier { a: ma, b: mb, .. } = &shown.circuits[1] else {
+            panic!("the multiplier second")
+        };
+        assert_eq!(
+            [
+                at(a[0] as usize),
+                at(*carry as usize),
+                at(ma[0] as usize),
+                at(mb[0] as usize)
+            ],
+            ["A3", "F2", "J2", "I4"].map(String::from)
+        );
+        assert!(Net::bench(BENCH.0, BENCH.1).labels.is_empty());
+        assert!(Net::bench(FLOORS.0, FLOORS.1).labels.is_empty());
+    }
+
     #[test]
     fn the_floors_source_replaces_the_block_and_leaves_out_the_settle() {
         let source = format!(
-            "(cartridge \"t\"\r\n  (rate 0)\r\n  (settle 9)   ; a note\r\n  (seed 1))\r\n{BLOCK_BEGIN}\r\nold\r\n{BLOCK_END}\r\n"
+            "(cartridge \"t\"\r\n  (rate 0)\r\n  (settle 9)   ; a note\r\n  (bound \"Lesson\" \"S\")\r\n  (seed 1))\r\n{LESSON_BEGIN}\r\n(sheet \"Lesson\" visible)\r\n(cell \"Lesson\" \"A9\" \"a word\")\r\n{LESSON_END}\r\n{BLOCK_BEGIN}\r\nold\r\n{BLOCK_END}\r\n"
         );
         let lines = vec!["new".to_string()];
         let want = format!(
-            "(cartridge \"t\"\r\n  (rate 0)\r\n  (seed 1))\r\n{BLOCK_BEGIN}\r\nnew\r\n{BLOCK_END}\r\n"
+            "(cartridge \"t\"\r\n  (rate 0)\r\n  (bound \"S\")\r\n  (seed 1))\r\n{BLOCK_BEGIN}\r\nnew\r\n{BLOCK_END}\r\n"
         );
         assert_eq!(floors_source(&source, &lines), Some(want));
         assert_eq!(
-            with_block(&source, &lines).map(|s| s.contains("(settle 9)")),
+            with_block(&source, &lines).map(|s| s.contains("(settle 9)") && s.contains("a word")),
             Some(true),
-            "the cartridge's own source keeps it"
+            "the cartridge's own source keeps both"
         );
         assert_eq!(floors_source("no block", &lines), None);
     }

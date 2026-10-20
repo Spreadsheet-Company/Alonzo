@@ -8415,3 +8415,122 @@ The multipliers' shuffles had one coincidence among them, so their S stands for 
 
 *Found.*
 - *A cartridge at rate 0 that does not settle opens on its formulas.* The page draws a grid's frame 0 as loaded, and a formula with no value by its text. The specification does not say that a cartridge meant to open on its values at rate 0 must settle. The page's to weigh; Naught settles.
+
+*The owner's word at the hand test, 2026-10-20, and slice 2.* Three notes came with the hand test's screenshots.
+- *The first frame calculated at load*, as Excel's F9 or Ctrl+Alt+F9 at open: "If the two-frames-per-act fix is your solution in other words, then we're already in agreement." The settle above is that. The load's act computes every cell before the first draw, and each act's second frame is the engine's proof that nothing moved.
+- *Teaching itself*: "Either a Tutorial sheet should be opened upon load, with comprehensive instructions, or controls should be indicated next to the game grid." The owner played the bench without a lesson, and so sent no session to replace the stand-in.
+- *A cell edited from the grid*: a formula-allowed character typed on a cell opens the command palette holding the `(cell ...)` or `(formula ...)` row of that cell, the caret between the quotes, and Enter sends the edit, "as they would in any other spreadsheet applications, but through the universal command palette (CLI) instead of a dedicated formula bar". The palette floats, at the bottom or the top by where the cell stands, or is fixed at either by the person's choice.
+
+The last two are decision 9's door as the owner amended it, with the bench's words to a person beside it. They are built as slice 2, slice 1 standing as its hand test left it; its files were kept aside as they stood, so that each slice is a commit of its own.
+
+*Slice 2 built 2026-10-20, authoring and the lesson (decision 9 as amended).* What it touches:
+- `web/index.template.html`:
+  - `cellEditRow`, the row a cell opens, with its caret: `=` a formula, `"="`; a digit, a minus or a point a number, bare, since a number in quotes is a text and a gate reading a text computes nothing it should; any other character a text in quotes. No character, Enter, F2 or a double click, opens what the cell holds: its formula, its number or truth value bare, its text in quotes, an empty cell's empty text.
+  - `paletteSide`: fixed at the top or the bottom, or floating, at the bottom while the selection stands in the top half of the rows in view and at the top otherwise.
+  - The palette: `openWith(text, caret, back, after)`, its place asked of the page at every opening, and Enter writing a cell's row and moving the selection down, Tab right, Shift back, Escape, a refused row and a command run in its place moving nothing.
+  - The player: a printable key typed on a cell opens its edit, unless the game takes the key, a command's key, a key its Keys sheet binds at a rate, or any key where it reads the last key; Enter, F2 and a double click open the cell's own content, a formula known by its value alone asked of the cell's own record for its text.
+  - The keymap's third line, `(palette "floating")`, `(palette "top")` or `(palette "bottom")`, floating where none is written; its words in the keymap's head.
+  - The loop oracle's palette case: 12 rows a cell opens, 6 places, 7 of a cell's edit in the palette, and 5 of the keymap's line.
+- `web/host.js`: `takesKey`, whether a key on the grid is the game's. `web/viewport.js`: F2 opens a cell, as Enter does.
+- `cartridges/naught/`: the Lesson, a sheet of its own, the first a load shows, bound to its extent with the Bench, `(bound "Lesson" "Bench")`, its column A 140 characters wide: what the bench is, how to write a switch and a gate, Enter, Tab and F2, the adder's and the multiplier's switches and outputs, each bit's five gates, the six gates in Latin with their formulas, two things to try, and *tertium non datur*. The source's words on writing a switch follow it.
+  - The stand-in, written again: the load's act with the Lesson shown, the Bench's tab before the first switch, its act's rows naming it; its cartridge `5CDADAA0…`, its 78 frames, and its golden the same bytes.
+  - The Lesson's last line, dated. The scoping's source, the Stanford Encyclopedia's entry of 2016, Ray Jennings and Andrew Hartline's, calls the two ors a myth in its section 7, "The Myth of *Vel* and *Aut*". Its revision of 2024, read 2026-10-20 before the Lesson was written into a game, drops the word and says that *aut*, "often taken as a paradigmatic example of exclusive disjunction", "has been shown to have inclusive uses". The Lesson says the encyclopedia *called* it a myth in 2016, and that *aut* has inclusive uses too; the source's head names the edition.
+- `engine/src/naught.rs` and its twin: the lesson's two marker lines, and `floors_source` leaving out the lesson and each sheet it makes from the manifest's bound, so that the floors' two fixtures stay the bytes both runs measured, `29ECDEB1…` and `F6E482FF…`.
+- `tools/check_host_loop.ps1`: the palette case's floors; mutant CM's anchor moved with Enter's line; three mutants, FA, a caret past the closing quote, FB, Enter moving no selection, and FC, the floating palette at the top over a cell in the top half; and the grid case's `gridTexts` floor, which falls with the cartridge from 8,709 to 5,762, since Naught opens on the Lesson's 112 texts where the Bench drew 3,059. `tools/check_cartridge.ps1`: the row floor 104. `tools/run_checks.ps1`'s words.
+- `web/README.md`, the record, the roadmap, the memory.
+
+*Why the lesson is a sheet of its own.* Its rows were first written below the bench, on the Bench, and the language then planned every gate of the Bench differently. The census read `(reads lookup)`, and `(calls "MAX")` for VEL, where it read `(reads stride)`, `(reads slot)` and `(reads array)`. The cause, measured at the hand test below, is the rows' reach, not their text: they stretched the Bench from row 17 to row 39. On its own sheet the Bench's census is slice 1's, row for row, and the owner asked for a sheet opened at the load in any case.
+
+*Held,* over `vla-lang` 0.10.1:
+- `cargo fmt --check`; `cargo clippy --workspace --all-targets -- -D warnings`; `cargo test --workspace` at opt-level 3 with `ALONZO_REQUIRE_CARTRIDGES=1`, 73 and the doc test.
+- `cargo run --release --example expand -- --check`, eleven `same`; the runner's check mode, the same two digests and heaps; the page's writer under Node, its floors' source byte for byte the Rust's.
+- `check_cartridge.ps1`, eleven cartridges, Naught's 104 rows; `check_spdx.ps1` over a temporary index holding the new files.
+- `check_host_loop.ps1` at both ratios and on the game's page, in 31 seconds:
+  - the palette case at its new counts, 12, 6, 7 and 5;
+  - Naught's replay at all 78 frames, 31,200 cells, 38 switches written and 208 gates lit;
+  - the grid case's `gridTexts` 5,896 and 5,910 over its floor;
+  - and Naught alone on a game's page of its own: its replay at all 78 frames, and the grid case's game half over the Lesson, loaded, settled, moved and bound.
+- `check_host_loop.ps1 -Control`, 8 minutes: the real page and the game's page pass, and each of the one hundred and fifty-nine mutant pages fails for its own reason, FA, FB and FC by name.
+- A smoke test of the player's wiring in headless Chrome, over Naught as the page plays it, its keys sent to the page's own listeners:
+  - the load at Frame 2, the Lesson shown, and a key typed there opening the Lesson's own row, `(cell "Lesson" "A1" "q")`;
+  - Ctrl+Alt+PageDown to the Bench; `1` typed on A2, the palette at the bottom holding `(cell "Bench" "A2" 1)`, the caret at 20; Enter writing it, Frame 4, the focus back on the grid;
+  - F2 on A3, `(cell "Bench" "A3" 0)`; Escape; Enter on C2, `(formula "Bench" "C2" "=MOD(A2+B2,2)")`, its text asked of the cell's record; `=` on C2, `(formula "Bench" "C2" "=")`;
+  - at C17, the bench's last row, the palette at the top; Tab writing and moving right, Frame 6; F2 on D17, `(formula "Bench" "D17" "=A17*B17")`; and Ctrl+K, the palette empty at the top.
+- `run_checks.ps1`: 12 of the 13 checks. The thirteenth, `check_frame_floors.ps1`, fails on Naught's ten problems of the baseline alone, as before. Its 7,879 seconds are the machine's Modern Standby, 10:52 to 13:03 in the system's log, entered while it ran; it took 11 seconds in the runs before.
+
+*Found.*
+- *A sheet stretched past four slots a cell takes every formula on it off the arrays* (above; first written here as a text's doing, corrected at the hand test below, where the probes are). Documented design in Frazaro's language (`calc/dense.rs`, `SLOTS_A_CELL`, `KERNEL.20`), and so no defect; slice 3's levels, their words beside the board, meet it.
+- *An unbound sheet a cartridge opens on, moved to its last column, shows a column and a row past the record its host viewed.* The grid case's game half found it over the Lesson before the Lesson was bound: the viewport showed `Lesson!CD1:DR33`, where the record was viewed through `CD1:DQ33`. No cartridge before this one opened on an unbound sheet other than the Screen. The page's to weigh.
+
+*Catches.*
+- The lesson's rows, first below the bench, met the larger test benches' cells: two tests failed at the pass before the census showed the rest.
+- Enter on a gate first opened `"="`: a frame's values record holds no formula's text, so the page asks the cell's own record.
+- The palette case's twelve carets, first counted by hand, were counted again by the page's own function under Node.
+
+*The owner's hand test of slice 2, 2026-10-20.* Three screenshots and seven notes.
+- The screenshots: Naught opening on its Lesson at frame 2, the load settled in one step after its own; a press on `Bench!H7` settled in two steps after its own, frame 5, then `1` typed on A2, the palette at the bottom holding `(cell "Bench" "A2" 1)`; and A2, C2 and G2 lit at frame 16, F2 on A3 opening `(cell "Bench" "A3" 0)`.
+- The notes:
+  1. The palette shut when the window lost the focus, to Alt+Tab or a screenshot, what was typed lost and the keys not back on the grid.
+  2. "Why does each click in the grid count as three frames? That seems like unnecessary computation of unchanged game state."
+  3. Delete and Backspace on a cell should clear it.
+  4. A row of the gates' names above the bench.
+  5. A question: how a cartridge marks the sheets whose keys are its commands and those whose keys open a cell's edit. It is answered in the reply: a command's holds column, a formula of `Input!B19` holding it on a sheet, as Buffet's Trading's do, and no directive names a sheet's mode.
+  6. The replay selected the Lesson, and its switches played unseen.
+  7. Their run of `tools/bench_frames.ps1`, refused for `wasm gun-x16` alone, to run again at my discretion.
+
+*What the hand test moved, before the commit.*
+- *The palette and the window's focus* (`web/index.template.html`). A blur of the prompt shuts the palette only while the page has the window's focus (`_pageFocused`, `document.hasFocus()`), so Alt+Tab or a screenshot leaves it open with what was typed, and the browser gives the prompt its focus back on the window's return; a click elsewhere on the page shuts it as before.
+- *A press read* (`web/host.js`; `docs/SPEC.md` §3.3, §5 and decision 63, version 6 unreleased and amended in place, for the owner's approval with the commits). A press over a cell at rate 0 is an act only for a cartridge whose formulas read an act's place or press, `Input!B11` to `B15`: `readsInputRows`, which the page's `readsLastKey` now asks of rows 17 and 18, read at the load and after a continue, and a person's formula reading them makes the next press an act. For one that reads neither, Naught's bench, a press is the viewport's selection, where it was three frames that move nothing: the act's, its release's and the proof's. Superposition and Seiyaku read all five, and their presses are acts as before.
+- *Delete and Backspace* (`web/index.template.html`). Delete empties the selection's cells at once, one row over its range, `(cell "Bench" "A3:B4" "")`, the selection kept; Backspace opens the cell emptied in the palette, `(cell "Bench" "A3" "")`, the caret between the quotes. Both stay the game's where the game takes the key, Seiyaku's Backspace among them. The language the page runs writes no empty cell: a `cell` row writes a number, a text, a truth value or an error, and the row that empties a cell is Frazaro's `KERNEL.46`, minted and not built. So a cell emptied holds the empty text, and a probe over the bench found what that costs: a switch holding it makes every gate it reaches `#VALUE!`, as Excel computes `="" + 1`, where a cell Excel's Delete empties reads as 0. The Lesson says so: *ex nihilo nihil fit*.
+- *A replay shows its person's sheets* (`web/host.js`; `docs/SPEC.md` §7.6, noted). A frame's nineteenth row, the sheet the person showed, shows that sheet at the frame's end as a tab clicked does, when it is not the sheet shown, the Camera's change in the same frame having the last word. Naught's stand-in shows the Bench at its first switch's act.
+- *The bench a row lower under its gates' names* (`engine/src/naught.rs` and its twin). `Net::bench_from(adder, multiplier, top)`, the bench from row `top`; `BENCH_TOP` 2 and `Net::shown()`, the bench a person loads; and from row 2 on the row above names each column in the block itself, `a`, `b`, `AUT`, `ET`, `ET`, `VEL` and `AUT` over the adder, `a` over the multiplier's a-bus and each block's role, and `b` and `ET` in row 3 over its b-bus and partial products. The carry-in is F2, the switches A3:B18, J2:Q2 and I4:I11. The floors' benches stand from row 1 as before, unnamed, their blocks byte for byte the bytes they were: the twins' eight row-1 outputs, the floors' two among them, compared with slice 2's, and every one of seventeen outputs the same from both twins, five of them from a lower row. The describe golden is the same plan a row lower, every shape's reads unchanged, and a test pins the names and the cells.
+  - The Lesson written again for the cells and a line added for Delete and Backspace; its last line, *tertium non datur*, now "Delete aside".
+  - The manifest's notes, which the picker shows, name typing on a cell and A3. The floors' fixtures carry the notes, and their digests moved to `4DD37928…` and `A6F8498C…`, their heaps 23,358,979 and 135,862,777 bytes, the notes' 78 characters more; the bench measured them again below.
+  - The stand-in written again, its switches named by the netlist, so that it follows the bench: 39 acts over 78 frames as before, its cartridge `4BA6F534…`, its golden the Bench's record over A1:BI18.
+  - `tools/check_cartridge.ps1`: the row floor 120, the Lesson's 19 rows and the bench's 15 names.
+- *The census probes* (the corrected Found above). Texts on the Bench, its plan's 29 lines compared: six labels in row 1 or in row 18, none moved; sixteen in row 1's empty columns, none; twelve texts down to row 30, none; fourteen down to row 32, 28 lines; one number at H31, 28; one text at CZ1, none; at DD1, 28. A store holds four slots a cell (`SLOTS_A_CELL`, KERNEL.20's rule): the Bench's 449 cells hold 1,796, and its extent A1:BI17 is 1,037; a cell at H31 makes 61 by 31, 1,891 slots for 450 cells' 1,800, and at DD1 108 by 17, 1,836; at CZ1, 104 by 17, 1,768, within. The lesson's first draft stretched it to row 39.
+- `tools/check_host_loop.ps1`: the palette case's `clears` 6 and `kept` 2; the settle case's `unread` 2, a double whose rows read no act's place or press, its press a selection and no frame, and after a person's formula reading `Input!B13` an act; the replay case's `naughtShown` 1; the double's settle card given a row reading the press, which the double never reads; mutants EB and EF's anchor moved with the press's line; and five mutants, the control one hundred and sixty-four pages:
+  - FD, Backspace opening what the cell holds;
+  - FE, Delete's row over the selection's first cell alone;
+  - FF, the window's own blur shutting the palette;
+  - FG, a press an act whatever the cartridge reads;
+  - FH, a replay's nineteenth row never shown, over the module.
+- `web/README.md`, `README.md`, the spec, the roadmap, the map, the memory.
+
+*Held,* over `vla-lang` 0.10.1:
+- `cargo fmt --check`; `cargo clippy --workspace --all-targets -- -D warnings`; `cargo test --workspace` at opt-level 3 with `ALONZO_REQUIRE_CARTRIDGES=1`, 74 and the doc test.
+- `cargo run --release --example expand -- --check`, eleven `same`; `cargo run --release --example naught -- --check`, `same`; the runner's check mode, the two new digests.
+- `check_cartridge.ps1`; `check_host_loop.ps1` at both ratios and on the game's page, every case clean, Naught's replay at all 78 frames with `naughtShown` 1.
+- `check_host_loop.ps1 -Control`, 9 minutes: the real page and the game's page pass, and each of the one hundred and sixty-four mutant pages fails for its own reason, FD to FH among them, and EB and EF over the press's line as it now reads.
+- The twins' writers compared byte for byte, seventeen outputs: the eight from row 1 the bytes slice 2 left, the floors' two blocks and their sources among them, and five from a lower row.
+- A smoke test of the player's wiring in headless Chrome over the final page:
+  - the Lesson at frame 2; `1` on A3 and Enter, frame 4, the focus back on the grid; F2 on A4, `(cell "Bench" "A4" 0)`;
+  - Backspace on A3, `(cell "Bench" "A3" "")`, the caret at 20, and Escape, nothing written; Delete on A3, frame 6, the empty text written; `0` and Enter, frame 8;
+  - C3's formula opened by Enter and its `=`; C18 at the top; Tab writing H18, frame 10; F2 on D18, `(formula "Bench" "D18" "=A18*B18")`; Ctrl+K;
+  - and a press over a cell, which selected C3 and left frame 10 standing.
+- `run_checks.ps1 -WithExtras`: ALL GREEN, the 13 checks and the 13 controls, `check_frame_floors.ps1` clean on the pasted baseline. Its 35 minutes hold a second Modern Standby, 15:27 to 15:43 in the system's log, inside the loop's control, which passed across it.
+
+*Measured.* `tools/bench_frames.ps1` again, this session's six runs of the day after the build's and the owner's three, the machine otherwise idle:
+
+| run | the floors' fixtures | refused |
+|---|---|---|
+| 2 and 4 | before the notes moved them | `wasm gun-x16` |
+| 3 | the same | no row printed: its clock moved 12.3% |
+| 5 | `4DD37928…` and `A6F8498C…` | `native gun`, `native superposition-act`, `wasm gun-x16` |
+| 6 | the same | `native superposition-act` |
+| 7 | the same | `native superposition-act`, `wasm gun-x16`, `wasm superposition-cascade` |
+
+- `wasm gun-x16` read 28.4, 30.4, 28.4, 34.4 and 28.4 billion cells a second against the floor of 32.6 billion that a run of 36.2 set on 2026-10-19. With the build's 31.8 and the owner's 30.4 and 31.1, it was under its floor in seven of the day's eight measured runs, inside the band the 2026-10-18 entry measured for its frame in the browser.
+- Run 6 is the baseline pasted, its one refusal lowered by hand with its reason in the entry, `native superposition-act` from 1,730,000,000 to 1,470,000,000, for the owner's word with the commits; Naught's four rows enter the history with it, and the heaps' two ceilings rise by the notes' bytes. `check_frame_floors.ps1` and its control clean.
+- Run 6's Naught rows, natively and in the browser: `naught-f` loads in 32.2 and 30.6 ms, its steady frame 4.5 and 6.4 ms, its idle frame 0.0146 and 0.0182 ms, a switch's cone 0.52 and 1.2 ms; `naught-s` loads in 479.8 and 366.8 ms, 20.7 and 24.2 ms, 0.0438 and 0.0725 ms, 2.9 and 4.5 ms. The premium: natively the load 14.9 times, the memory 5.8, the first frame 2.2, the steady frame 4.6, the idle frame 3.0 and a switch's cone 5.5; in the browser 12.0, 5.1, 3.1, 3.8, 4.0 and 3.8.
+
+*Found.*
+- *An emptied cell is the empty text until the language empties one.* Frazaro's `KERNEL.46`, minted, is the row; when a release holds it, Delete writes it, and the Lesson's line on Delete changes with it.
+- *Nothing else for an item.* A press read and a replay's sheet shown are version 6's amendments in place, for the owner's approval with the commits.
+
+*Catches.*
+- A here-document turned a JavaScript `'\n'` into a line break again, in a scratch script; the editor wrote it.
+- My first stroke at the slice's hand test rewrote three notes of `tools/check_cartridge.ps1` where it meant one: a replacement of the line `# unchanged.` met CART.2's and CART.14's notes too. Restored to HEAD's words, in the tree and in slice 1's kept files.
+- A note of the manifest moved the floors' digests: the floors keep the manifest but its settle, so a word in the picker's notes is a fixture's byte.
+
+*Committed 2026-10-20 at the owner's word*, their floors check clean on their machine and every other check passing there but the loop's `sound` case, which starved there and passed alone here: slice 1 from its kept files, its baseline left to the second commit, and slice 2 from the tree, with the frame floors' baseline, `native superposition-act`'s lowering and its reason, and version 6's amendments in place, carried by the word to commit, which came after the reply that flagged both. Not pushed.
