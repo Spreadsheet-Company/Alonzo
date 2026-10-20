@@ -1,0 +1,175 @@
+; SPDX-License-Identifier: 0BSD
+; naught.source.vla - Naught: Vel et Aut (CART.9), a bench of logic gates: the engine's
+; first irregular graph, every gate a formula of the cells it reads. The pass expands this
+; file into naught.vla beside it, the rows the engine loads (docs/SPEC.md section 7.8):
+; edit this one, then expand it again with
+;   cargo run --release --example expand
+; Its bench, the block near its end, is written by
+;   cargo run --release --example naught
+; and never by hand.
+;
+; The bench. A 16-bit ripple adder stands from A1, a bit a row from row 2: its switches a
+; and b in columns A and B, its carry-in at F1, its five gates a bit in C to G, the sum's
+; bits in G and the carry out of its last bit in F17. An 8 by 8 multiplier stands from I1:
+; its switches a along row 1 from J1 and b down column I from I3, its partial products in
+; J3:Q10, and each of its other roles a block of nine columns to their right, a row of
+; carry-save adders a row and its last row the ripple that ends the product. Every cell
+; holds 0 or 1, and a 1 is drawn in Lovelace Lavender. Write a switch in the drawer's
+; edit row,
+;   (cell "Bench" "A2" 1)
+; and every gate the switch reaches computes in the edit's frame.
+;
+; The gates, in Latin, each arithmetic over 0 and 1 and each a macro below:
+;   NON, not: 1 less its input.            ET, and: the product of its two.
+;   VEL, or: the greater of its two.       AUT, either but not both: their sum's parity.
+;   NON-ET, not both: Sheffer's stroke.    NEC, neither: Peirce's arrow.
+; Latin is said to keep two ors, vel the inclusive and aut the exclusive. The Stanford
+; Encyclopedia of Philosophy calls that a myth; the bench keeps both anyway.
+;
+; How it settles. The cartridge says (settle 65536): after an act the engine steps the bench
+; again, with no act, until a frame changes nothing (docs/SPEC.md section 5, version 6). At
+; full rate every gate a switch reaches computes in the act's own frame, so an act is two
+; frames, its own and one that proves nothing moved; the load settles too, so the bench
+; opens on its values. The frame floors build their benches without it: a settle numbers
+; the Clock by acts, and their switches read the Clock as the frame.
+;
+; What it measures (docs/REARVIEW.md, CART.9's scoping). A gate reads cells anywhere, so
+; the bench is a graph of formulas, its depth the adder's carry rippling through every
+; bit. The frame floors build the same bench larger, a 4,096-bit adder and a 64 by 64
+; multiplier, twice: laid by fill, each role one shape, and shuffled among the same cells,
+; every gate its own shape. What the second costs over the first is the regularity
+; premium.
+
+(cartridge "naught"
+  (spec 6)                          ; the version of docs/SPEC.md this cartridge is written to: (settle K) and (bound ...)
+  (title "Naught: Vel et Aut")      ; what the host shows: the gates' own words
+  (rate 0)                          ; an act, an edit or a press, steps the bench; nothing else does
+  (screen grid 80 50)               ; no Screen: the host shows the Bench, the first visible sheet
+  (seed 1)                          ; nothing on the bench is drawn from it
+  (settle 65536)                    ; an act's settle, at most 65,536 steps: at full rate, one
+  (bound "Bench")                   ; the bench drawn to its extent and no further
+  (author "Spreadsheet Company")    ; who wrote it
+  (license "0BSD")                  ; the header's twin: copy this file to start a bench of your own
+  (notes "Naught: Vel et Aut, a bench of logic gates in Latin: NON, ET, VEL, AUT, NON-ET and NEC. A 16-bit ripple adder from A1 and an 8 by 8 multiplier from I1, every gate a formula of the cells it reads, every 1 in lavender. Write a switch in the edit row, (cell \"Bench\" \"A2\" 1), and every gate it reaches computes."))
+
+; ---- the gates, each a cell or a fill of one formula -----------------------------------
+; A gate is written by its Latin name, its cell or its range, then each of its inputs as
+; the range's first cell reads it: (aut "C2:C17" "A2" "B2") is the parity of a and b on
+; every row from 2 to 17. A gate's value is 0 or 1, a number, so a bus is a sum of its
+; bits and a look draws each value.
+
+(defmacro (non at x)
+  "NON, not: 1 less its input"
+  (formula "Bench" at (&expand "=1-" x)))
+
+(defmacro (et at x y)
+  "ET, and: the product of its two inputs"
+  (formula "Bench" at (&expand "=" x "*" y)))
+
+(defmacro (vel at x y)
+  "VEL, or: the greater of its two inputs"
+  (formula "Bench" at (&expand "=MAX(" x "," y ")")))
+
+(defmacro (aut at x y)
+  "AUT, either but not both: the parity of its inputs' sum"
+  (formula "Bench" at (&expand "=MOD(" x "+" y ",2)")))
+
+(defmacro (non-et at x y)
+  "NON-ET, not both, Sheffer's stroke: 1 less the product of its inputs"
+  (formula "Bench" at (&expand "=1-" x "*" y)))
+
+(defmacro (nec at x y)
+  "NEC, neither, Peirce's arrow: 1 less the greater of its inputs"
+  (formula "Bench" at (&expand "=1-MAX(" x "," y ")")))
+
+; ---- the sheet, and its look --------------------------------------------------------------
+(sheet "Bench" visible)
+(format 1 "E2D8F6" general nowrap)  ; a 1, the lavender family's focus
+(look "Bench" 1 1)
+
+; ---- the bench, written by cargo run --release --example naught: edit the generator, never these lines ----
+; a 16-bit ripple adder from A1 and an 8 by 8 multiplier from I1: 400 gates laid by fill, their switches values
+(column "Bench" "A" 3 shown none)
+(column "Bench" "B" 3 shown none)
+(column "Bench" "C" 3 shown none)
+(column "Bench" "D" 3 shown none)
+(column "Bench" "E" 3 shown none)
+(column "Bench" "F" 3 shown none)
+(column "Bench" "G" 3 shown none)
+(column "Bench" "I" 3 shown none)
+(column "Bench" "J" 3 shown none)
+(column "Bench" "K" 3 shown none)
+(column "Bench" "L" 3 shown none)
+(column "Bench" "M" 3 shown none)
+(column "Bench" "N" 3 shown none)
+(column "Bench" "O" 3 shown none)
+(column "Bench" "P" 3 shown none)
+(column "Bench" "Q" 3 shown none)
+(column "Bench" "S" 3 shown none)
+(column "Bench" "T" 3 shown none)
+(column "Bench" "U" 3 shown none)
+(column "Bench" "V" 3 shown none)
+(column "Bench" "W" 3 shown none)
+(column "Bench" "X" 3 shown none)
+(column "Bench" "Y" 3 shown none)
+(column "Bench" "AB" 3 shown none)
+(column "Bench" "AC" 3 shown none)
+(column "Bench" "AD" 3 shown none)
+(column "Bench" "AE" 3 shown none)
+(column "Bench" "AF" 3 shown none)
+(column "Bench" "AG" 3 shown none)
+(column "Bench" "AH" 3 shown none)
+(column "Bench" "AK" 3 shown none)
+(column "Bench" "AL" 3 shown none)
+(column "Bench" "AM" 3 shown none)
+(column "Bench" "AN" 3 shown none)
+(column "Bench" "AO" 3 shown none)
+(column "Bench" "AP" 3 shown none)
+(column "Bench" "AQ" 3 shown none)
+(column "Bench" "AT" 3 shown none)
+(column "Bench" "AU" 3 shown none)
+(column "Bench" "AV" 3 shown none)
+(column "Bench" "AW" 3 shown none)
+(column "Bench" "AX" 3 shown none)
+(column "Bench" "AY" 3 shown none)
+(column "Bench" "AZ" 3 shown none)
+(column "Bench" "BC" 3 shown none)
+(column "Bench" "BD" 3 shown none)
+(column "Bench" "BE" 3 shown none)
+(column "Bench" "BF" 3 shown none)
+(column "Bench" "BG" 3 shown none)
+(column "Bench" "BH" 3 shown none)
+(column "Bench" "BI" 3 shown none)
+(cell "Bench" "F1" 0)
+(cell "Bench" "J1:Q1" 0)
+(cell "Bench" "A2:B17" 0)
+(cell "Bench" "I3:I10" 0)
+(aut "C2:C17" "A2" "B2")
+(et "D2:D17" "A2" "B2")
+(et "E2:E17" "C2" "F1")
+(vel "F2:F17" "D2" "E2")
+(aut "G2:G17" "C2" "F1")
+(et "J3:Q10" "J$1" "$I3")
+(aut "S4:Y4" "J4" "K3")
+(et "AB4:AH4" "J4" "K3")
+(aut "S5:X5" "J5" "T4")
+(aut "Y5:Y10" "P5" "Q4")
+(et "AB5:AG5" "J5" "T4")
+(et "AH5:AH10" "P5" "Q4")
+(et "AK5:AQ5" "S5" "AB4")
+(vel "AT5:AZ10" "AB5" "AK5")
+(aut "BC5:BI5" "S5" "AB4")
+(aut "S6:X10" "J6" "BD5")
+(et "AB6:AG10" "J6" "BD5")
+(et "AK6:AQ10" "S6" "AT5")
+(aut "BC6:BI10" "S6" "AT5")
+(aut "S11:X11" "BD10" "AT10")
+(aut "Y11" "Q10" "AZ10")
+(et "AB11:AG11" "BD10" "AT10")
+(et "AH11" "Q10" "AZ10")
+(et "AL11" "T11" "AB11")
+(et "AM11:AQ11" "U11" "AU11")
+(vel "AU11:AZ11" "AC11" "AL11")
+(aut "BD11" "T11" "AB11")
+(aut "BE11:BI11" "U11" "AU11")
+; ---- the bench's end ----

@@ -121,6 +121,17 @@ WHAT IT HOLDS, from the baseline pasted below:
     the session and finds the deal by its own hand, so the two act rows hold
     the same Frames and Steps and the two cascade rows the same cascade, or
     the halves measured other work.
+  - since CART.9 (decision 6, 2026-10-20), naught's four rows, two a half:
+    the regularity premium, the same netlist, a 4,096-bit adder and a 64 by
+    64 multiplier, 44,544 gates, laid by fill, naught-f, each role one shape,
+    and shuffled among the same cells, naught-s, every gate its own shape,
+    both built by the pass from cartridges/naught/naught.source.vla and each
+    named in $baselineRungs by its cartridge's SHA-256 over LF, as a rung of
+    the ladder is. A row's steady frame is frames 2 to 31, every switch a
+    hash of the frame; it carries its idle frame, IdleP50, a switch's cone,
+    ConeP50, and its census, the Shapes and the Levels the language plans,
+    which the two halves hold alike; and the premium, each shuffled number
+    over the filled, is printed for each half and never gated.
 An empty baseline fails, since a floor with no number is no floor.
 
 WITH A BUILT RUNNER (target/release/examples/frames, or -Runner): its check
@@ -136,8 +147,11 @@ instances, each its acts settled and every frame's Tally held to the
 runner's own lattice, the whole lattice at each settle's end: the idle
 row's two idle acts, the second counted; the session's first twelve acts,
 the twelfth counted; and the cascade, counted whole, its deal, rings and
-sites opened the baseline's native cascade row's. A count under its ceiling
-is printed so the ceiling can be lowered.
+sites opened the baseline's native cascade row's. Since CART.9 naught's two
+fixtures, every gate held to the netlist by hand at each of four frames,
+each one's digest the baseline's rung and its census, its shapes and
+levels, the baseline's row's. A count under its ceiling is printed so the
+ceiling can be lowered.
 SKIPPED without a runner: the ratchets job builds none, and the crate job
 builds it before this check runs.
 
@@ -157,8 +171,9 @@ dropped from an entry after it entered the history, a latest entry
 without a row's floor, a row without its memory, a rung's row missing, a
 rung the baseline names no digest for, an act row without its p95, an act
 row whose acts a second are not one over its p95, a cascade row without its
-deal, two halves' sessions apart and two halves' cascades apart must each
-fail; the history, read
+deal, two halves' sessions apart, two halves' cascades apart, a naught row
+without its idle frame, two halves' census apart and a naught rung the
+baseline names no digest for must each fail; the history, read
 from text as the commit's copy is: an entry
 added after the committed ones passes, and so does a history unchanged,
 and an entry pasted over a committed one and a committed entry edited in
@@ -167,7 +182,8 @@ frame differs, one whose allocations pass the ceiling, one whose heap
 passes its ceiling, one that never holds the gun's facts, one that never
 holds Sand's grains, one that leaves out a fixture, one that leaves out a
 rung, one whose rung is another cartridge, one whose cascade is another
-deal and one that settles no act must each fail.
+deal, one that settles no act, one whose census is another and one that
+prints no census must each fail.
 
 House style (tools/check_*.ps1): PowerShell 5.1 and pwsh alike, host-free,
 no browser, no network; a hardcoded, reviewable baseline; exit 0 clean,
@@ -676,6 +692,13 @@ $sameRows = @{
 # the language's own per-cell cost of a fill's parts. The cascade's counted act
 # 28 allocations more, 4,174, its frames reading more shapes; the idle and the
 # session's counts the same, 22 and 560.
+# 2026-10-20, CART.9's first slice: naught's two fixtures, the bench of a
+# 4,096-bit adder and a 64 by 64 multiplier, 52,865 formula cells with the
+# switches' stimulus, by the session's run of the runner's check mode: the
+# second frame 22 allocations and 5 reallocations in both; the heap's
+# high-water mark 23,358,901 bytes laid by fill, 441.9 a formula cell, and
+# 135,862,660 shuffled, 2,570.0 a formula cell, 5.8 times: the regularity
+# premium's memory, every gate its own shape.
 $allocationCeilings = [ordered]@{
     'life'     = @{ Allocs = 80; Reallocs = 5; Memory = 30045529 }
     'life-x4'  = @{ Allocs = 82; Reallocs = 5; Memory = 120070201 }
@@ -687,6 +710,8 @@ $allocationCeilings = [ordered]@{
     'superposition'         = @{ Allocs = 22; Reallocs = 5; Memory = 338676723 }
     'superposition-act'     = @{ Allocs = 560; Reallocs = 37; Memory = 338676723 }
     'superposition-cascade' = @{ Allocs = 4174; Reallocs = 63; Memory = 338676723 }
+    'naught-f'              = @{ Allocs = 22; Reallocs = 5; Memory = 23358901 }
+    'naught-s'              = @{ Allocs = 22; Reallocs = 5; Memory = 135862660 }
 }
 
 # --- the rules ---
@@ -694,14 +719,22 @@ $requiredRows = @('native life', 'native gun', 'native sand', 'wasm life', 'wasm
                   'native life-x4', 'native life-x16', 'native gun-x4', 'native gun-x16',
                   'wasm life-x4', 'wasm life-x16', 'wasm gun-x4', 'wasm gun-x16',
                   'native superposition', 'native superposition-act', 'native superposition-cascade',
-                  'wasm superposition', 'wasm superposition-act', 'wasm superposition-cascade')
+                  'wasm superposition', 'wasm superposition-act', 'wasm superposition-cascade',
+                  'native naught-f', 'native naught-s', 'wasm naught-f', 'wasm naught-s')
 # Superposition's rows (CART.12): the act rows' and the cascade rows' own fields, which each half's row carries
 # and the two halves hold alike.
 $actFields = @('Frames', 'Steps')
 $cascadeFields = @('Frames', 'Seed', 'Probability', 'Deal', 'Rings', 'Opened')
 $p95Tolerance = 0.05
+# Naught's rows (CART.9): each carries its idle frame, a switch's cone and its census, which the two
+# halves hold alike.
+$naughtFields = @('IdleP50', 'ConeP50', 'Shapes', 'Levels')
+$censusFields = @('Shapes', 'Levels')
 # The size ladder's rungs (ENGINE.9), each named in $baselineRungs by its cartridge's SHA-256 over LF.
 $ladderRungs = @('life-x4', 'life-x16', 'gun-x4', 'gun-x16')
+# The cartridges the pass builds for the floors, each named by its digest: the ladder's rungs and since
+# CART.9 naught's two placements of one bench, built from its source by the runner and by the page.
+$builtRungs = @($ladderRungs + @('naught-f', 'naught-s'))
 $fixtureFiles = [ordered]@{ 'life' = 'cartridges/life/life.vla'; 'gun' = 'cartridges/gun/gun.vla'; 'sand' = 'cartridges/sand/sand.vla'; 'superposition' = 'cartridges/superposition/superposition.vla' }
 $minFrames = 30
 $clockMax = 10.0
@@ -761,9 +794,9 @@ function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin,
     }
     # Each rung of the size ladder named by the cartridge the pass built for it (ENGINE.9), which the
     # runner's check mode holds where a runner is built.
-    foreach ($rung in $ladderRungs) {
+    foreach ($rung in $builtRungs) {
         if ($null -eq $rungs -or -not $rungs.ContainsKey($rung) -or [string]$rungs[$rung] -notmatch '^[0-9A-F]{64}$') {
-            $problems.Add("the baseline names no SHA-256 for the rung $rung of the size ladder: paste the block tools/bench_frames.ps1 prints, whose `$baselineRungs line names each rung's cartridge (ENGINE.9)")
+            $problems.Add("the baseline names no SHA-256 for the rung $rung`: paste the block tools/bench_frames.ps1 prints, whose `$baselineRungs line names each rung's cartridge, the size ladder's (ENGINE.9) and naught's (CART.9)")
         }
     }
 
@@ -844,6 +877,11 @@ function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin,
             if ($missing.Count -gt 0) { $problems.Add(("the row {0} names no {1}: the deepest cascade carries its time, its seed, probability, deal, rings and sites opened (CART.12, decision 8)" -f $key, ($missing -join ', '))) }
             elseif ([math]::Abs($fps - [double]$r.Frames / ($cascadeMs / 1000.0)) -gt $unitsTolerance * $fps) { $problems.Add(("the row {0}: {1} frames a second is not its {2} frames over {3} ms" -f $key, $fps, $r.Frames, $cascadeMs)) }
         }
+        # Naught's rows (CART.9): the idle frame, a switch's cone and the census, each a number above 0.
+        if ([string]$r.Fixture -like 'naught-*') {
+            $missing = @($naughtFields | Where-Object { $v = 0.0; -not $r.ContainsKey($_) -or -not [double]::TryParse([string]$r[$_], [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$v) -or $v -le 0 })
+            if ($missing.Count -gt 0) { $problems.Add(("the row {0} names no {1}: a naught row carries its idle frame, a switch's cone and its census, the shapes and the levels (CART.9, decision 6)" -f $key, ($missing -join ', '))) }
+        }
         $floorText = 'no floor'
         if ($null -ne $latest -and $null -ne $latest.Floors -and $latest.Floors.ContainsKey($key)) {
             $floor = [double]$latest.Floors[$key]
@@ -866,8 +904,33 @@ function Test-Baseline($rows, [string]$date, [string]$environment, [string]$pin,
         if ($apart.Count -gt 0) { $problems.Add(("the two halves' {0} rows are not the same {1}: {2}" -f $pair[0], $pair[2], (@($apart | ForEach-Object { "$_ $($n[$_]) natively and $($w[$_]) in the browser" }) -join '; '))) }
         else { $lines.Add(("  {0}: the same {1} in both halves, {2}" -f $pair[0], $pair[2], (@($pair[1] | ForEach-Object { "$_ $($n[$_])" }) -join ', '))) }
     }
+    # Each half lays naught's bench by the same generator (CART.9): the halves measured the same
+    # cartridges only when their rows print the same census.
+    foreach ($fixture in @('naught-f', 'naught-s')) {
+        $n = $byKey['native ' + $fixture]; $w = $byKey['wasm ' + $fixture]
+        if ($null -eq $n -or $null -eq $w) { continue }
+        $apart = @($censusFields | Where-Object { ([string]$n[$_]) -ne ([string]$w[$_]) })
+        if ($apart.Count -gt 0) { $problems.Add(("the two halves' {0} rows are not the same census: {1}" -f $fixture, (@($apart | ForEach-Object { "$_ $($n[$_]) natively and $($w[$_]) in the browser" }) -join '; '))) }
+        else { $lines.Add(("  {0}: the same census in both halves, {1} shapes in {2} levels" -f $fixture, $n.Shapes, $n.Levels)) }
+    }
     foreach ($line in @(Get-Slope $byKey)) { $lines.Add($line) }
+    foreach ($line in @(Get-Premium $byKey)) { $lines.Add($line) }
     return @{ Problems = $problems; Lines = $lines }
+}
+
+# The regularity premium read off a baseline's rows (CART.9, decision 6): for each half, naught-s's
+# load, memory, first frame, steady frame, idle frame and cone over naught-f's. Printed, never gated:
+# the floors hold each row.
+function Get-Premium($byKey) {
+    $out = New-Object System.Collections.Generic.List[string]
+    foreach ($half in @('native', 'wasm')) {
+        $f = $byKey["$half naught-f"]; $s = $byKey["$half naught-s"]
+        if ($null -eq $f -or $null -eq $s) { continue }
+        $over = @(foreach ($k in @('Load', 'Memory', 'FirstFrame', 'FrameP50', 'IdleP50', 'ConeP50')) { $a = [double]$f[$k]; $b = [double]$s[$k]; if ($a -gt 0) { '{0:N1}' -f ($b / $a) } else { 'n/a' } })
+        $out.Add(('  the regularity premium, {0}: naught-s over naught-f, the load {1} times, the memory {2}, the first frame {3}, the steady frame {4}, the idle frame {5}, a switch''s cone {6}; {7} shapes against {8}' -f
+            $half, $over[0], $over[1], $over[2], $over[3], $over[4], $over[5], $s.Shapes, $f.Shapes))
+    }
+    return $out.ToArray()
 }
 
 # The size ladder's slope read off a baseline's rows (ENGINE.9, decision 8): for each half, life's
@@ -928,7 +991,7 @@ function Invoke-Runner([string]$runner, $paths) {
 
 # The dynamic judgment: the runner's check mode over the fixtures, and since ENGINE.9 the rungs of
 # the size ladder their sources climb, each rung's digest held to the baseline's where it names one.
-function Test-Runner([string]$runner, $paths, $ceilings, $rungs = @{}, $cascade = $null) {
+function Test-Runner([string]$runner, $paths, $ceilings, $rungs = @{}, $cascade = $null, $census = @{}) {
     $problems = New-Object System.Collections.Generic.List[string]
     $lines = New-Object System.Collections.Generic.List[string]
     $run = Invoke-Runner $runner $paths
@@ -939,17 +1002,23 @@ function Test-Runner([string]$runner, $paths, $ceilings, $rungs = @{}, $cascade 
     $want = @($ceilings.Keys).Count
     if ($run.Text -notmatch ('\(frames-check-done ' + $want + '\)')) { $problems.Add("the runner's check did not finish the $want fixtures: " + $run.Text) }
     foreach ($name in @($ceilings.Keys)) {
-        $m = [regex]::Match($run.Text, '\(frames-check "' + [regex]::Escape($name) + '" \(frames (\d+)\) \(equal (\d+)\) \(cells (\d+)\) \(allocs (\d+)\) \(reallocs (\d+)\) \(memory (\d+)\)(?: \(digest "([0-9A-F]{64})"\))?(?: \(facts (\d+)\))?(?: \(conserved (\d+)\))?(?: \(settled (\d+)\))?(?: \(deal "([A-Z]+\d+)"\) \(rings (\d+)\) \(opened (\d+)\))?\)')
+        $m = [regex]::Match($run.Text, '\(frames-check "' + [regex]::Escape($name) + '" \(frames (\d+)\) \(equal (\d+)\) \(cells (\d+)\) \(allocs (\d+)\) \(reallocs (\d+)\) \(memory (\d+)\)(?: \(digest "([0-9A-F]{64})"\))?(?: \(facts (\d+)\))?(?: \(conserved (\d+)\))?(?: \(settled (\d+)\))?(?: \(deal "([A-Z]+\d+)"\) \(rings (\d+)\) \(opened (\d+)\))?(?: \(shapes (\d+)\) \(levels (\d+)\) \(alone (\d+)\))?\)')
         if (-not $m.Success) { $problems.Add("the runner's check printed no row for the fixture $name"); continue }
         $frames = [int]$m.Groups[1].Value; $equal = [int]$m.Groups[2].Value; $cells = [double]$m.Groups[3].Value
         $allocs = [long]$m.Groups[4].Value; $reallocs = [long]$m.Groups[5].Value; $memory = [long]$m.Groups[6].Value
-        $by = if ($name -eq 'sand') { 'Sand' } elseif ($name -like 'superposition*') { 'Superposition' } else { 'Life' }
+        $by = if ($name -eq 'sand') { 'Sand' } elseif ($name -like 'superposition*') { 'Superposition' } elseif ($name -like 'naught-*') { 'netlist' } else { 'Life' }
         if ($frames -lt 2 -or $equal -ne $frames) { $problems.Add("$name`: $equal of $frames frames equal to the hand-written $by") }
         if ($name -like 'superposition*' -and -not $m.Groups[10].Success) { $problems.Add("$name`: the runner settled no act of the counted instance, which settles every act (CART.12)") }
         if ($name -eq 'superposition-cascade') {
             if (-not $m.Groups[11].Success) { $problems.Add("superposition-cascade: the runner named no deal, rings or sites opened for the cascade") }
             elseif ($null -ne $cascade -and ($m.Groups[11].Value -ne [string]$cascade.Deal -or $m.Groups[12].Value -ne [string]$cascade.Rings -or $m.Groups[13].Value -ne [string]$cascade.Opened)) {
                 $problems.Add(("superposition-cascade: the cascade is not the baseline's: the deal at {0}, {1} rings and {2} sites opened, the baseline's at {3}, {4} and {5}; the cartridge, the hand or the language moved, so measure again" -f $m.Groups[11].Value, $m.Groups[12].Value, $m.Groups[13].Value, $cascade.Deal, $cascade.Rings, $cascade.Opened))
+            }
+        }
+        if ($name -like 'naught-*') {
+            if (-not $m.Groups[14].Success) { $problems.Add("$name`: the runner printed no census for the fixture, its shapes, levels and cells alone (CART.9)") }
+            elseif ($null -ne $census -and $census.ContainsKey($name) -and ([string]$census[$name].Shapes -ne $m.Groups[14].Value -or [string]$census[$name].Levels -ne $m.Groups[15].Value)) {
+                $problems.Add(("{0}: the census is not the baseline's: {1} shapes in {2} levels, the baseline's {3} in {4}; the language, the source or the generator moved, so measure again" -f $name, $m.Groups[14].Value, $m.Groups[15].Value, $census[$name].Shapes, $census[$name].Levels))
             }
         }
         if (($name -eq 'gun' -or $name -like 'gun-x*') -and -not $m.Groups[8].Success) { $problems.Add("$name`: the runner did not hold the gun to its published facts") }
@@ -962,7 +1031,7 @@ function Test-Runner([string]$runner, $paths, $ceilings, $rungs = @{}, $cascade 
         elseif ($reallocs -lt [long]$c.Reallocs) { $note += (", reallocations under the ceiling of {0}: lower it in this file" -f (Format-Count $c.Reallocs)) }
         if ($memory -gt [long]$c.Memory) { $problems.Add(("{0}: the heap's high-water mark over a load and four frames rose to {1} bytes, above the ceiling of {2}: a change made the grid hold more (ENGINE.9)" -f $name, (Format-Count $memory), (Format-Count $c.Memory))) }
         elseif ($memory -lt [long]$c.Memory) { $note += (", the heap under its ceiling of {0} bytes: lower it in this file" -f (Format-Count $c.Memory)) }
-        if ($ladderRungs -contains $name) {
+        if ($builtRungs -contains $name) {
             if (-not $m.Groups[7].Success) { $problems.Add("$name`: the runner printed no digest for the rung, the cartridge the pass built for it") }
             elseif ($null -ne $rungs -and $rungs.ContainsKey($name) -and [string]$rungs[$name] -ne $m.Groups[7].Value) {
                 $problems.Add(("{0}: the rung is not the cartridge measured: the pass built one whose SHA-256 over LF is {1}, the baseline's {2}; a source, the library or the ladder's definition moved, so measure again" -f $name, $m.Groups[7].Value, $rungs[$name]))
@@ -971,6 +1040,7 @@ function Test-Runner([string]$runner, $paths, $ceilings, $rungs = @{}, $cascade 
         $facts = if ($m.Groups[8].Success) { ', the gun''s facts held ' + $m.Groups[8].Value + ' periods' } elseif ($m.Groups[9].Success) { ', every grain kept in ' + $m.Groups[9].Value + ' frames' } else { '' }
         if ($m.Groups[10].Success) { $facts += ', ' + $m.Groups[10].Value + ' acts settled' }
         if ($m.Groups[11].Success) { $facts += (', the deal at {0}, {1} rings, {2} sites opened' -f $m.Groups[11].Value, $m.Groups[12].Value, (Format-Count $m.Groups[13].Value)) }
+        if ($m.Groups[14].Success) { $facts += (', {0} shapes in {1} levels, {2} cells alone' -f (Format-Count $m.Groups[14].Value), (Format-Count $m.Groups[15].Value), (Format-Count $m.Groups[16].Value)) }
         $counted = if ($name -like 'superposition*') { 'the counted act' } else { 'the second frame' }
         $lines.Add(("  {0}: {1} of {2} frames equal to the hand-written {3}{4}; {11} {5} allocations ({6:N4} a cell) and {7} reallocations; the heap {8} bytes ({9:N1} a cell){10}" -f $name, $equal, $frames, $by, $facts, (Format-Count $allocs), ($allocs / [math]::Max(1, $cells)), (Format-Count $reallocs), (Format-Count $memory), ($memory / [math]::Max(1, $cells)), $note, $counted))
     }
@@ -1010,7 +1080,8 @@ if ($Control) {
     $verdicts = New-Object System.Collections.Generic.List[string]
     $digests = @{ 'life' = ('A' * 64); 'gun' = ('B' * 64); 'sand' = ('D' * 64); 'superposition' = ('E' * 64) }
     # the size ladder's rungs, each by its cartridge's digest (ENGINE.9)
-    $controlRungs = @{ 'life-x4' = ('1' * 64); 'life-x16' = ('2' * 64); 'gun-x4' = ('3' * 64); 'gun-x16' = ('4' * 64) }
+    $controlRungs = @{ 'life-x4' = ('1' * 64); 'life-x16' = ('2' * 64); 'gun-x4' = ('3' * 64); 'gun-x16' = ('4' * 64); 'naught-f' = ('5' * 64); 'naught-s' = ('6' * 64) }
+    $controlCensus = @{ 'naught-f' = @{ Shapes = 32; Levels = 8194 }; 'naught-s' = @{ Shapes = 44548; Levels = 8194 } }
     $ladderKeys = @($requiredRows | Where-Object { $_ -like '*-x*' })
     $controlCascade = @{ Deal = 'SP502'; Rings = 775; Opened = 209446 }
     function Row([string]$runner, [string]$fixture, [double]$cps, [int]$cells = 62964, [double]$memory = 30000000) {
@@ -1029,10 +1100,16 @@ if ($Control) {
         foreach ($k in @('Seed', 'Probability', 'Deal', 'Rings', 'Opened')) { $cascade[$k] = @{ Seed = 1; Probability = 0.08; Deal = 'SP502'; Rings = 775; Opened = 209446 }[$k] }
         return @($idle, $act, $cascade)
     }
+    # naught's two rows for one half (CART.9): by fill and shuffled, each with its idle frame, cone and census
+    function Bench([string]$runner) {
+        $f = Row $runner 'naught-f' 11000000 52865 23400000; $f.IdleP50 = 0.0145; $f.ConeP50 = 0.54; $f.Shapes = 32; $f.Levels = 8194
+        $s = Row $runner 'naught-s' 2700000 52865 135900000; $s.IdleP50 = 0.0445; $s.ConeP50 = 2.4; $s.Shapes = 44548; $s.Levels = 8194
+        return @($f, $s)
+    }
     # native life, native gun, native sand, wasm life, wasm gun, wasm sand, then the ladder's eight, then Superposition's six
-    function Clean { return @((Row 'native' 'life' 225000), (Row 'native' 'gun' 214000), (Row 'native' 'sand' 10600000 126449), (Row 'wasm' 'life' 233000), (Row 'wasm' 'gun' 223000), (Row 'wasm' 'sand' 7700000 126449)) + @(Ladder 'native') + @(Ladder 'wasm') + @(Lattice 'native') + @(Lattice 'wasm') }
+    function Clean { return @((Row 'native' 'life' 225000), (Row 'native' 'gun' 214000), (Row 'native' 'sand' 10600000 126449), (Row 'wasm' 'life' 233000), (Row 'wasm' 'gun' 223000), (Row 'wasm' 'sand' 7700000 126449)) + @(Ladder 'native') + @(Ladder 'wasm') + @(Lattice 'native') + @(Lattice 'wasm') + @(Bench 'native') + @(Bench 'wasm') }
     # an entry's floors: Life's four, Sand's two when given, and with Sand's the ladder's eight and Superposition's six
-    $latticeFloors = @{ 'superposition' = 100000000000; 'superposition-act' = 1500000000; 'superposition-cascade' = 4000000000 }
+    $latticeFloors = @{ 'superposition' = 100000000000; 'superposition-act' = 1500000000; 'superposition-cascade' = 4000000000; 'naught-f' = 9000000; 'naught-s' = 2000000 }
     function Floors([double]$a, [double]$b, [double]$c, [double]$d, [double]$e = -1, [double]$f = -1) {
         $fl = @{ 'native life' = $a; 'native gun' = $b; 'wasm life' = $c; 'wasm gun' = $d }
         if ($e -ge 0) { $fl['native sand'] = $e; foreach ($k in $ladderKeys) { $fl[$k] = 200000 }; foreach ($k in $latticeFloors.Keys) { $fl['native ' + $k] = $latticeFloors[$k]; $fl['wasm ' + $k] = $latticeFloors[$k] } }
@@ -1109,6 +1186,13 @@ if ($Control) {
     Expect 'two halves'' sessions apart' (Judge $sessions $history 'abc1234' $digests) 'not the same session'
     $cascades = Clean; (Find $cascades 'wasm' 'superposition-cascade').Deal = 'B2'
     Expect 'two halves'' cascades apart' (Judge $cascades $history 'abc1234' $digests) 'not the same cascade'
+    # naught (CART.9): a row's own fields, the halves' census alike, and each placement's digest.
+    $noIdle = Clean; (Find $noIdle 'native' 'naught-s').Remove('IdleP50')
+    Expect 'a naught row without its idle frame' (Judge $noIdle $history 'abc1234' $digests) 'names no IdleP50'
+    $censusApart = Clean; (Find $censusApart 'wasm' 'naught-s').Shapes = 44547
+    Expect 'two halves'' census apart' (Judge $censusApart $history 'abc1234' $digests) 'not the same census'
+    $fewerBuilt = @{}; foreach ($k in $controlRungs.Keys) { if ($k -ne 'naught-s') { $fewerBuilt[$k] = $controlRungs[$k] } }
+    Expect 'a naught rung the baseline names no digest for' (Judge (Clean) $history 'abc1234' $digests $controlEnvironment @{} @{} $fewerBuilt) 'no SHA-256 for the rung naught-s'
 
     # The history, read from text as the commit's copy of this file is read.
     $entryA = "@{ Date = '2026-10-09'; Pin = 'abc1234'; Reason = ''; Floors = @{ 'native life' = 202000; 'wasm life' = 209000 } }"
@@ -1145,18 +1229,21 @@ if ($Control) {
         $gunX16 = CheckRow 'gun-x16' ' (facts 24)' 1019844
         $sandRow = CheckRow 'sand' ' (conserved 3)' 189215
         $latticeRows = @((CheckRow 'superposition' ' (settled 3)' 798731), (CheckRow 'superposition-act' ' (settled 13)' 798731), (CheckRow 'superposition-cascade' ' (settled 2) (deal "SP502") (rings 775) (opened 209446)' 798731))
+        $naughtRows = @((CheckRow 'naught-f' ' (shapes 32) (levels 8194) (alone 12785)' 52865), (CheckRow 'naught-s' ' (shapes 44548) (levels 8194) (alone 44545)' 52865))
         $fakes = @(
-            @{ Name = 'a clean runner'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + $latticeRows)); Exit = 0; Want = '' },
+            @{ Name = 'a clean runner'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + $latticeRows + $naughtRows)); Exit = 0; Want = '' },
             @{ Name = 'a runner whose frame differs'; Lines = @('(frames-differ "life" (frame 3) (cell "B5") (engine 1) (reference 0))'); Exit = 1; Want = 'check failed' },
-            @{ Name = 'a runner allocating more'; Lines = (Done (@((CheckRow 'life' '' 62964 1), $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + $latticeRows)); Exit = 0; Want = 'rose to' },
-            @{ Name = 'a runner whose heap passes its ceiling'; Lines = (Done (@($lifeRow, $lifeX4, (CheckRow 'life-x16' '' 1019844 0 1), $gunRow, $gunX4, $gunX16, $sandRow) + $latticeRows)); Exit = 0; Want = 'high-water mark over a load and four frames rose to' },
-            @{ Name = 'a runner without the gun''s facts'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16.Replace(' (facts 24)', ''), $sandRow) + $latticeRows)); Exit = 0; Want = 'published facts' },
-            @{ Name = 'a runner without Sand''s grains'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow.Replace(' (conserved 3)', '')) + $latticeRows)); Exit = 0; Want = 'to its grains' },
-            @{ Name = 'a runner leaving out a fixture'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16) + $latticeRows)); Exit = 0; Want = 'no row for the fixture sand' },
-            @{ Name = 'a runner leaving out a rung'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $sandRow) + $latticeRows)); Exit = 0; Want = 'no row for the fixture gun-x16' },
-            @{ Name = 'a runner whose rung is another cartridge'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, (CheckRow 'gun-x4' ' (facts 24)' 253924 0 0 ('9' * 64)), $gunX16, $sandRow) + $latticeRows)); Exit = 0; Want = 'is not the cartridge measured' },
-            @{ Name = 'a runner whose cascade is another deal'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + @($latticeRows[0], $latticeRows[1], $latticeRows[2].Replace('(deal "SP502")', '(deal "B2")')))); Exit = 0; Want = 'the cascade is not the baseline''s' },
-            @{ Name = 'a runner that settles no act'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + @($latticeRows[0].Replace(' (settled 3)', ''), $latticeRows[1], $latticeRows[2]))); Exit = 0; Want = 'settled no act' }
+            @{ Name = 'a runner allocating more'; Lines = (Done (@((CheckRow 'life' '' 62964 1), $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + $latticeRows + $naughtRows)); Exit = 0; Want = 'rose to' },
+            @{ Name = 'a runner whose heap passes its ceiling'; Lines = (Done (@($lifeRow, $lifeX4, (CheckRow 'life-x16' '' 1019844 0 1), $gunRow, $gunX4, $gunX16, $sandRow) + $latticeRows + $naughtRows)); Exit = 0; Want = 'high-water mark over a load and four frames rose to' },
+            @{ Name = 'a runner without the gun''s facts'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16.Replace(' (facts 24)', ''), $sandRow) + $latticeRows + $naughtRows)); Exit = 0; Want = 'published facts' },
+            @{ Name = 'a runner without Sand''s grains'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow.Replace(' (conserved 3)', '')) + $latticeRows + $naughtRows)); Exit = 0; Want = 'to its grains' },
+            @{ Name = 'a runner leaving out a fixture'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16) + $latticeRows + $naughtRows)); Exit = 0; Want = 'no row for the fixture sand' },
+            @{ Name = 'a runner leaving out a rung'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $sandRow) + $latticeRows + $naughtRows)); Exit = 0; Want = 'no row for the fixture gun-x16' },
+            @{ Name = 'a runner whose rung is another cartridge'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, (CheckRow 'gun-x4' ' (facts 24)' 253924 0 0 ('9' * 64)), $gunX16, $sandRow) + $latticeRows + $naughtRows)); Exit = 0; Want = 'is not the cartridge measured' },
+            @{ Name = 'a runner whose cascade is another deal'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + @($latticeRows[0], $latticeRows[1], $latticeRows[2].Replace('(deal "SP502")', '(deal "B2")')) + $naughtRows)); Exit = 0; Want = 'the cascade is not the baseline''s' },
+            @{ Name = 'a runner that settles no act'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + @($latticeRows[0].Replace(' (settled 3)', ''), $latticeRows[1], $latticeRows[2]) + $naughtRows)); Exit = 0; Want = 'settled no act' },
+            @{ Name = 'a runner whose census is another'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + $latticeRows + @($naughtRows[0], $naughtRows[1].Replace('(shapes 44548)', '(shapes 44547)')))); Exit = 0; Want = 'the census is not the baseline''s' },
+            @{ Name = 'a runner that prints no census'; Lines = (Done (@($lifeRow, $lifeX4, $lifeX16, $gunRow, $gunX4, $gunX16, $sandRow) + $latticeRows + @($naughtRows[0].Replace(' (shapes 32) (levels 8194) (alone 12785)', ''), $naughtRows[1]))); Exit = 0; Want = 'printed no census' }
         )
         $i = 0
         foreach ($f in $fakes) {
@@ -1164,21 +1251,21 @@ if ($Control) {
             $path = Join-Path $tmp ("fake$i.ps1")
             $body = (@($f.Lines | ForEach-Object { "Write-Output '" + ($_ -replace "'", "''") + "'" }) -join "`r`n") + "`r`nexit " + $f.Exit + "`r`n"
             [System.IO.File]::WriteAllText($path, $body, (New-Object System.Text.UTF8Encoding($false)))
-            Expect $f.Name (Test-Runner $path @('life.vla', 'gun.vla', 'sand.vla', 'superposition.vla') $allocationCeilings $controlRungs $controlCascade) $f.Want
+            Expect $f.Name (Test-Runner $path @('life.vla', 'gun.vla', 'sand.vla', 'superposition.vla', 'naught.vla') $allocationCeilings $controlRungs $controlCascade $controlCensus) $f.Want
         }
     } finally {
         Remove-Item -Recurse -Force -LiteralPath $tmp -ErrorAction SilentlyContinue
     }
     foreach ($v in $verdicts) { Write-Output ('control: ' + $v) }
     if ($ok) {
-        Write-Output ("OK: control: the judgment passes the clean table, a reasoned lowering, a row entering the history, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows, and fails twenty-five mutants of the table; the history passes an entry added and a history unchanged, and fails an entry pasted over and one edited in place; over eleven fake runners it passes the clean one and fails ten, each for its own reason")
+        Write-Output ("OK: control: the judgment passes the clean table, a reasoned lowering, a row entering the history, a machine of one kind of core, a release of the measured source and a fixture rebuilt with the measured rows, and fails twenty-eight mutants of the table; the history passes an entry added and a history unchanged, and fails an entry pasted over and one edited in place; over thirteen fake runners it passes the clean one and fails twelve, each for its own reason")
         exit 0
     }
     Write-Output 'FAIL: control: the judgment did not behave as the header says'
     exit 1
 }
 
-Write-Output '=== THE FRAME FLOORS: LIFE''S, THE SIZE LADDER''S, SAND''S AND SUPERPOSITION''S CELLS A SECOND, NATIVELY AND IN THE BROWSER, HELD TO FLOORS THAT NEVER GO DOWN (CART.1, CART.2, ENGINE.9, CART.12) ==='
+Write-Output '=== THE FRAME FLOORS: LIFE''S, THE SIZE LADDER''S, SAND''S, SUPERPOSITION''S AND NAUGHT''S CELLS A SECOND, NATIVELY AND IN THE BROWSER, HELD TO FLOORS THAT NEVER GO DOWN (CART.1, CART.2, ENGINE.9, CART.12, CART.9) ==='
 $problems = New-Object System.Collections.Generic.List[string]
 $currentDigests = @{}
 foreach ($name in $fixtureFiles.Keys) {
@@ -1218,15 +1305,19 @@ if ($Runner -eq '') {
     $problems.Add("the runner $Runner does not exist")
 } else {
     Write-Output ("  the runner: {0}, built {1}, in its check mode" -f $Runner, (Get-Item -LiteralPath $Runner).LastWriteTime.ToString('yyyy-MM-dd HH:mm'))
-    $paths = @($fixtureFiles.Values | ForEach-Object { Join-Path $Root $_ })
+    # naught's committed bench beside the fixtures: the runner builds its two placements from the
+    # source beside it (CART.9), which its rungs' digests name.
+    $paths = @($fixtureFiles.Values | ForEach-Object { Join-Path $Root $_ }) + @(Join-Path $Root 'cartridges/naught/naught.vla')
     $measuredCascade = @($baseline | Where-Object { $_.Runner -eq 'native' -and $_.Fixture -eq 'superposition-cascade' })
-    $dyn = Test-Runner $Runner $paths $allocationCeilings $baselineRungs $(if ($measuredCascade.Count -eq 1) { $measuredCascade[0] } else { $null })
+    $measuredCensus = @{}
+    foreach ($r in @($baseline | Where-Object { $_.Runner -eq 'native' -and ([string]$_.Fixture) -like 'naught-*' })) { $measuredCensus[[string]$r.Fixture] = $r }
+    $dyn = Test-Runner $Runner $paths $allocationCeilings $baselineRungs $(if ($measuredCascade.Count -eq 1) { $measuredCascade[0] } else { $null }) $measuredCensus
     $dyn.Lines | ForEach-Object { Write-Output $_ }
     foreach ($p in $dyn.Problems) { $problems.Add($p) }
 }
 Write-Output ''
 if ($problems.Count -eq 0) {
-    Write-Output '=== CHECK: clean - the twenty rows at or above their floors, the pin, the fixtures and the rungs the measured ones, and, with a runner, every frame equal, every count under its ceiling and the cascade the measured one ==='
+    Write-Output '=== CHECK: clean - the twenty-four rows at or above their floors, the pin, the fixtures and the rungs the measured ones, and, with a runner, every frame equal, every count under its ceiling and the cascade the measured one ==='
     exit 0
 }
 Write-Output "=== CHECK: $($problems.Count) problem(s) ==="

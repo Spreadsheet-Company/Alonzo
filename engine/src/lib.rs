@@ -83,6 +83,14 @@ mod superposition;
 #[cfg(test)]
 mod seiyaku;
 
+/// Naught: Vel et Aut by hand (`CART.9`), the netlists the bench's block and
+/// the floors' two fixtures are written from, laid by fill and shuffled,
+/// their census counted and their gates evaluated by hand, compiled for the
+/// tests alone; the block's writer and the native runner include the same
+/// file by its path.
+#[cfg(test)]
+mod naught;
+
 /// SHA-256 in upper-case hex, the digest a replay names its cartridge by,
 /// compiled for the tests alone (`AD-5`); the native runner includes the
 /// same file by its path, to name each rung of the size ladder (`ENGINE.9`).

@@ -277,7 +277,7 @@ host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
-test card, the input card, the sound card, Sand, the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), Kairos, the stacking game (`CART.4`), Superposition, the large board (`CART.12`), or Seiyaku, the number-placement puzzle (`CART.14`), each with its source, which the drawer's Build expands into the
+test card, the input card, the sound card, Sand, the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), Kairos, the stacking game (`CART.4`), Superposition, the large board (`CART.12`), Seiyaku, the number-placement puzzle (`CART.14`), or Naught: *Vel et Aut*, the bench of logic gates (`CART.9`), each with its source, which the drawer's Build expands into the
 cartridge in the page, the input card, the sound card, Sand and Kairos each with its replay, which Play the replay plays, the
 Audio sheet heard after Sound on, and
 below it the viewport over seven
@@ -578,6 +578,9 @@ page shows opened plainly and what Pages deploys.
   and Seiyaku's, the owner's session at `CART.14`'s hand test, every
   frame's Board, its 81 variables' codes and marks, equal
   to Seiyaku's hand, and its end its golden, the Constraints sheet's record;
+  and Naught's, a stand-in of switches written in the edit row at
+  `CART.9`'s first slice, every frame's 400 gates equal to Naught's hand,
+  and its end its golden, the Bench's record;
   and the sound
   itself (`sound`, `ENGINE.4`'s second slice): the host's own voices over
   the double handed an `OfflineAudioContext`, a sequence of voice states
@@ -678,8 +681,18 @@ page shows opened plainly and what Pages deploys.
   steps, an act's latency over the scripted player's 200 acts at 15%, its
   rows' cells a second taken at the 95th percentile, and the deepest cascade
   at 8%, the site the hand finds at the end of the largest opening's widest
-  path observed and its settle timed whole. It runs at the page's load and
-  synchronously, since `--dump-dom` writes a page at its load:
+  path observed and its settle timed whole. Since `CART.9` Naught's two rows
+  follow, the regularity premium: the bench of a 4,096-bit adder and a 64 by
+  64 multiplier, its block written by the page's hand, `hand-naught`, its
+  settle left out, and the source built by the module's pass, laid by fill
+  and shuffled with every gate
+  its own shape, each named by its digest as a rung is; each times the load,
+  frames 1 to 31 under a stimulus that flips about half the switches a frame,
+  the idle frame in five runs of 1,000 once the switches are values, and a
+  multiplier's switch flipped 101 times, every gate held to the hand, its
+  census read off the describe, and the premium printed after the slope. It
+  runs at the page's load and synchronously, since `--dump-dom` writes a page
+  at its load:
   `tools/bench_frames.ps1` runs it under headless Chrome, with Chrome's flags
   against backgrounding and its processes opted out of Windows' power
   throttling, which slows a background process by about 40% three seconds
@@ -848,16 +861,22 @@ viewport, not an Excel clone.
     host's plane, and or `{ cells }`, `{ "Sheet!A1": value }`, each value a
     number, a text, `true` or `false`, or `null` for an empty cell, held to
     that sheet's record at that frame; a grid game answers cells. An optional
-    `hand.counts()` names counts of its own. Alonzo's four,
+    `hand.counts()` names counts of its own. Alonzo's five,
     `cartridges/sand/sand.hand.js`, `cartridges/kairos/kairos.hand.js`,
-    since `CART.12` `cartridges/superposition/superposition.hand.js` and
-    since `CART.14` `cartridges/seiyaku/seiyaku.hand.js`, are the
+    since `CART.12` `cartridges/superposition/superposition.hand.js`,
+    since `CART.14` `cartridges/seiyaku/seiyaku.hand.js` and since
+    `CART.9` `cartridges/naught/naught.hand.js`, are the
     examples, Kairos's answering both and Superposition's the Tally's sum of
     each row of its lattice, a frame with no row a settle step after the
     engine's release; it also lends the frames and blit instruments its
     lattice, its scripted player and its deepest deal. Seiyaku's answers
     the Board's 81 variables, each a code or its marks' text, and reads its
     book from the page's own text of the source, the block `source-seiyaku`.
+    Naught's answers every gate of the bench, and is the twin of the Rust
+    generator, `engine/src/naught.rs`: made, it lays the bench and holds
+    its block to the block `source-naught` line for line, and it writes
+    the frames instrument its two fixtures, the bench laid by fill and
+    shuffled, byte for byte the native runner's.
 
   The page opens on the empty sheet whatever it holds and offers its
   cartridges in the picker, each by its manifest's title, its notes in the

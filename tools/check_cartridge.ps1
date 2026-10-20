@@ -277,12 +277,19 @@ if ($Root -eq '') { $Root = $repoRoot }
 # place of the stand-in (35 acts over 104 frames), carried onto the cartridge
 # as its notes left it, no cell it writes or reads moved, and its golden the
 # Constraints sheet's record at its end; the other nine's rows unchanged.
-$expectedCartridges = 10
-$expectedSources = 10
+# 2026-10-20, CART.9's first slice: Naught, the eleventh cartridge, 86 rows,
+# its bench a 16-bit adder and an 8 by 8 multiplier, 400 gates, its block
+# written into its source by engine/examples/naught.rs; its replay, a stand-in
+# the owner's session replaces (38 switches written over 78 frames, each act and
+# its settle two), and its golden, the Bench's record at its end over A1:BI17;
+# the other ten's rows unchanged. Its (settle 65536), added at the slice's hand
+# test, is a directive of the manifest and no row.
+$expectedCartridges = 11
+$expectedSources = 11
 $expectedLibraries = 1
-$expectedReplays = 6
-$expectedGoldens = 6
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 177; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4263 }
+$expectedReplays = 7
+$expectedGoldens = 7
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 177; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4263; 'cartridges/naught/naught.vla' = 86 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

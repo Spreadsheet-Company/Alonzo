@@ -7093,6 +7093,148 @@
                 '; CascadeMs = ' + f1(cp.ms) + '; Seed = ' + SP_SEED + '; Probability = ' + SP_CASCADE + "; Deal = '" + dealAt + "'; Rings = " + deal.rings + '; Opened = ' + lc.opened() + '; CellsPerSecond = ' + Math.round(mc.cells * cframes / (cp.ms / 1000)) + '; FramesPerSecond = ' + f3(cframes / (cp.ms / 1000)) + '; ' + cclock + ' }');
       mc = lc = null;
     }
+    // Naught (CART.9, decision 6): the regularity premium, two rows. The bench of a 4,096-bit adder and a 64 by 64
+    // multiplier, 44,544 gates, laid twice in the same cells: by fill, naught-f, each role one shape, and shuffled,
+    // naught-s, every gate its own shape. Each is built here by the module's pass from the source the page holds, its
+    // block written by this page's hand, the block hand-naught, and its settle left out (floorsSource, a settle numbering
+    // the Clock by acts), as the native runner writes it by the Rust one, the same bytes; and each is named by its
+    // cartridge's SHA-256 over LF as a rung of the ladder is. A row: the load, and
+    // the module's memory after frame 4, a fresh module; frames 1 to N, every switch a hash of the frame, each timed
+    // alone; then the switches written as values, the idle frame in five runs of 1,000 frames, each run one span (the
+    // native runner's are ten of 64, its clock finer than this page's), and a switch's cone, 101 flips of a multiplier's
+    // switch drawn from the dice, each frame timed alone and its write not. Every gate is held to the page's hand at
+    // every frame but inside the idle runs, and after them. The census, the shapes and the levels, is the describe's
+    // plan row, which the native runner holds to the Rust hand's count and tools/bench_frames.ps1 holds the halves to.
+    var NTH = HANDS.naught, ntCart = CARTRIDGES.naught, ntPremium = '';
+    if (ntCart && !(typeof NTH === 'function' && NTH.Net && NTH.Laid && NTH.floorsSource)) throw new Error('the page holds naught and no hand-naught block, whose writer lays its bench and whose netlist holds it');
+    if (ntCart) {
+      var NT_RUN = 1000, NT_FLIPS = 101, NT_SEED = 9, ntTd = new TextDecoder(), ntRows = {};
+      var ntNet = NTH.Net.bench(NTH.FLOORS[0], NTH.FLOORS[1]), ntBoxes = [null, null];
+      // the two rectangles every switch and gate stands in: the adder's, left of column I, and the multiplier's from it
+      var ntCells = ntNet.switches.concat(ntNet.home);
+      for (var nc = 0; nc < ntCells.length; nc++) {
+        var nr = ntCells[nc][0], ncol = ntCells[nc][1], nb = ntCells[nc][1] < 9 ? 0 : 1, box = ntBoxes[nb];
+        if (!box) ntBoxes[nb] = { top: nr, left: ncol, bottom: nr, right: ncol };
+        else { box.top = Math.min(box.top, nr); box.left = Math.min(box.left, ncol); box.bottom = Math.max(box.bottom, nr); box.right = Math.max(box.right, ncol); }
+      }
+      ntBoxes = ntBoxes.map(function (b) { return VP.rangeText(b); });
+      var ntRank = function (s, q) { var n = s.length; return s[Math.min(n, Math.max(1, Math.ceil(q * n))) - 1]; };
+      // one step with no budget, its answer read and freed
+      var ntStep = function (m) {
+        var p = m.x.alonzo_step(m.h, 0, m.out), len = new DataView(m.x.memory.buffer).getUint32(m.out, true);
+        var row = ntTd.decode(new Uint8Array(m.x.memory.buffer, p + 16, len - 16));
+        m.x.alonzo_free(p, len);
+        return row;
+      };
+      // n steps from frame f0 as one span, nothing viewed or written inside it; then each answer read
+      var ntSpan = function (m, name, f0, n) {
+        var outs = m.x.alonzo_alloc(4 * n), ptrs = new Array(n), t = performance.now();
+        for (var i = 0; i < n; i++) ptrs[i] = m.x.alonzo_step(m.h, 0, outs + 4 * i);
+        var ms = performance.now() - t, dv = new DataView(m.x.memory.buffer);
+        for (var j = 0; j < n; j++) {
+          var len = dv.getUint32(outs + 4 * j, true), row = ntTd.decode(new Uint8Array(m.x.memory.buffer, ptrs[j] + 16, len - 16));
+          m.x.alonzo_free(ptrs[j], len);
+          if (row.indexOf('(step ' + (f0 + j) + ' ') !== 0 || !/ done\)$/.test(row)) throw new Error(name + ': frame ' + (f0 + j) + ' answered ' + row);
+        }
+        m.x.alonzo_free(outs, 4 * n);
+        return ms;
+      };
+      var ntStimulus = function (frame) { return ntNet.switches.map(function (s) { return NTH.stimulus(s[0], s[1], frame); }); };
+      var ntWrite = function (m, name, rows, what) {
+        var w = m.d.call('alonzo_write', [m.h], [rows]);
+        if (w.status !== 0) throw new Error(name + ': ' + what + ' were refused: ' + w.text + ' [' + w.id + ']');
+      };
+      // every gate's cell held to the page's hand at the switches given, and the circuits to integer + and x
+      var ntHold = function (m, laid, switches, at) {
+        var gates = ntNet.evaluate(switches), recs = [];
+        for (var bi = 0; bi < ntBoxes.length; bi++) {
+          var v = m.d.call('alonzo_view', [m.h], ['values', NTH.SHEET, ntBoxes[bi]]);
+          if (v.status !== 0) throw new Error(at + ': the Bench\'s view was refused: ' + v.text);
+          recs.push(recordValues(v.text));
+        }
+        for (var k = 0; k < laid.cells.length; k++) {
+          var cell = NTH.a1(laid.cells[k][0], laid.cells[k][1], false, false), got = sndPlain(recs[laid.cells[k][1] < 9 ? 0 : 1][cell]);
+          if (got !== gates[k]) throw new Error(at + ': Bench!' + cell + ' holds ' + handSpell(got) + ', and the page\'s hand ' + gates[k]);
+        }
+        var wrong = ntNet.check(switches, gates);
+        if (wrong) throw new Error(at + ': ' + wrong);
+      };
+      var ntPasser = new Driver({ exports: HOST.instantiateSync(bytes) });
+      for (var nl = 0; nl < 2; nl++) {
+        var ntName = nl ? 'naught-s' : 'naught-f', laid = new NTH.Laid(ntNet, nl ? 'shuffled' : 'fill', 'stimulus', 'now');
+        var built = NTH.floorsSource(ntCart.source, laid.block());
+        if (built === null) throw new Error(ntName + ': the source the page holds has no block for the bench');
+        var ntx = ntPasser.call('alonzo_expand', [], [built, ntCart.sourcePath, packed.join('\u0000')]);
+        if (ntx.status !== 0) throw new Error(ntName + ': the pass refused the floors\' bench at line ' + ntx.line + ': ' + ntx.text + ' [' + ntx.id + ']');
+        var ntText = ntx.text, ntDigest = HOST.sha256(ntText.replace(/\r\n/g, '\n'));
+        built = ntx = null;
+        var nx = HOST.instantiateSync(bytes), m = { x: nx, d: new Driver({ exports: nx }), out: nx.alonzo_alloc(4) };
+        var nt0 = performance.now(), nld = m.d.call('alonzo_load', [], [ntText, ntName + '.vla']), nload = performance.now() - nt0;
+        if (nld.status !== 0) throw new Error(ntName + ' was refused at its load: ' + nld.text + ' [' + nld.id + ']');
+        m.h = +/^\(cartridge (\d+) /.exec(nld.text)[1];
+        var described = m.d.call('alonzo_describe', [m.h], []).text;
+        var nbm = /\(budget \d+ (\d+) /.exec(described), npm = /^\(plan \(shapes (\d+)\) \(texts \d+\) \(formulas \d+\) \(levels (\d+)\) \(runs \d+\) \(lanes \d+\) \(alone (\d+)\)/m.exec(described);
+        if (!nbm || !npm) throw new Error(ntName + ': the describe holds no budget row or no plan row');
+        var ncells = +nbm[1], nshapes = +npm[1], nlevels = +npm[2], nalone = +npm[3];
+        described = null;
+        var nclocks = [], ntimes = [], nfirst = 0, nmemory = 0, nf;
+        for (var nc1 = 0; nc1 < SIDE_READINGS; nc1++) nclocks.push(probe());
+        for (nf = 1; nf <= N; nf++) {
+          var ns0 = performance.now(), nrow = ntStep(m), nms = performance.now() - ns0;
+          if (nrow.indexOf('(step ' + nf + ' ') !== 0 || !/ done\)$/.test(nrow)) throw new Error(ntName + ': frame ' + nf + ' answered ' + nrow);
+          ntHold(m, laid, ntStimulus(nf), ntName + ' frame ' + nf);
+          if (nf === 1) nfirst = nms; else ntimes.push(nms);
+          if (nf === MEMORY_FRAME) nmemory = nx.memory.buffer.byteLength;
+        }
+        // the switches written as values in two untimed edits, every rectangle of them 0, then the ones a vector drawn
+        // from the dice sets 1, a value over a value; the frame after them stepped
+        var nd = new NTH.Dice(NT_SEED);
+        ntWrite(m, ntName, NTH.rectangles(ntNet.switches).map(function (r) { return '(cell "' + NTH.SHEET + '" "' + NTH.a1(r[0], r[1], false, false) + ':' + NTH.a1(r[2], r[3], false, false) + '" 0)'; }).join('\n'), 'the switches\' values');
+        var nvalues = ntNet.switches.map(function () { return nd.next() >>> 31; }), nones = [];
+        for (var nv = 0; nv < nvalues.length; nv++) if (nvalues[nv] === 1) nones.push('(cell "' + NTH.SHEET + '" "' + NTH.a1(ntNet.switches[nv][0], ntNet.switches[nv][1], false, false) + '" 1)');
+        if (nones.length) ntWrite(m, ntName, nones.join('\n'), 'the switches\' values');
+        var nvrow = ntStep(m);
+        if (!/ done\)$/.test(nvrow)) throw new Error(ntName + ': the frame after the switches\' values answered ' + nvrow);
+        ntHold(m, laid, nvalues, ntName + ', the switches written');
+        var nidle = [], nfi = N + 2;
+        for (var nri = 0; nri < RUNS; nri++) { nidle.push(ntSpan(m, ntName, nfi, NT_RUN) / NT_RUN); nfi += NT_RUN; }
+        ntHold(m, laid, nvalues, ntName + ', after the idle runs');
+        // a switch's cone: a multiplier's switch drawn from the dice and flipped, its frame timed alone
+        var ntoggles = ntNet.circuits[1].a.concat(ntNet.circuits[1].b), ncone = [];
+        for (var nci = 0; nci < NT_FLIPS; nci++) {
+          var nk = ntoggles[nd.below(ntoggles.length)];
+          nvalues[nk] ^= 1;
+          ntWrite(m, ntName, '(cell "' + NTH.SHEET + '" "' + NTH.a1(ntNet.switches[nk][0], ntNet.switches[nk][1], false, false) + '" ' + nvalues[nk] + ')', 'a switch');
+          var nc0 = performance.now(), ncr = ntStep(m), ncms = performance.now() - nc0;
+          if (!/ done\)$/.test(ncr)) throw new Error(ntName + ': the cone\'s step answered ' + ncr);
+          ntHold(m, laid, nvalues, ntName + ', flip ' + nci);
+          ncone.push(ncms);
+        }
+        for (var nc2 = 0; nc2 < SIDE_READINGS; nc2++) nclocks.push(probe());
+        var nmed = median(ntimes), nlo = Math.min.apply(null, ntimes), nhi = Math.max.apply(null, ntimes), nimed = median(nidle);
+        var ncs = ncone.slice().sort(function (a, b) { return a - b; }), ncp50 = ntRank(ncs, 0.5);
+        if (!(nmed > 0 && isFinite(nmed))) throw new Error(ntName + ': its steady frames read ' + nmed + ' ms, which is no time, and no row is printed');
+        var nclock = median(nclocks), nspread = (Math.max.apply(null, nclocks) - Math.min.apply(null, nclocks)) / nclock * 100, ndrift = (nclock / startClock - 1) * 100;
+        lines.push(ntName + ': load ' + f1(nload) + ' ms; ' + thousands(ncells) + ' formula cells, ' + thousands(ntNet.gates.length) + ' gates, ' + thousands(nshapes) + ' shapes in ' + thousands(nlevels) + ' levels, ' + thousands(nalone) + ' cells alone; frame 1 ' + fms(nfirst) + ' ms; frames 2 to ' + N +
+                   ', every switch a hash of the frame: a frame\'s median ' + fms(nmed) + ' ms (min ' + fms(nlo) + ', max ' + fms(nhi) + '), ' + thousands(Math.round(ncells / (nmed / 1000))) + ' cells a second, ' + f3(1000 / nmed) + ' frames a second');
+        lines.push('  the switches then written as values: the idle frame\'s median ' + fms(nimed) + ' ms over ' + RUNS + ' runs of ' + NT_RUN + ', each run one span; a multiplier\'s switch flipped ' + NT_FLIPS + ' times, its frame\'s median ' + fms(ncp50) + ' ms (p95 ' + fms(ntRank(ncs, 0.95)) + ', max ' + fms(ncs[ncs.length - 1]) + '), the write untimed');
+        lines.push('  the bench of a ' + NTH.FLOORS[0] + '-bit adder and a ' + NTH.FLOORS[1] + ' by ' + NTH.FLOORS[1] + ' multiplier, ' + (nl ? 'shuffled, every gate its own shape' : 'laid by fill') + ', built here by the pass from ' + ntCart.sourcePath + ' and its block by the page\'s hand, the cartridge\'s SHA-256 over LF ' + ntDigest +
+                   '; every gate held to the page\'s hand at every frame but inside the idle runs, and the outputs to integer + and x; the module\'s memory after frame ' + MEMORY_FRAME + ', a fresh module, ' + thousands(nmemory) + ' bytes');
+        lines.push('  the clock: this page\'s Life ' + f3(nclock) + ' ms a generation, read ' + SIDE_READINGS + ' times before frame 1 and ' + SIDE_READINGS + ' after the flips, spread ' + f1(nspread) + '%, ' + (ndrift >= 0 ? '+' : '') + f1(ndrift) + '% from ' + f3(startClock) + ' at the start');
+        if (nspread > CLOCK_MOVED_MAX || Math.abs(ndrift) > CLOCK_MOVED_MAX) { moved = true; lines.push('  the clock moved during ' + ntName + ', more than ' + CLOCK_MOVED_MAX + '%: power throttling or a thermal limit; these times are not a baseline'); }
+        rows.push("    @{ Runner = 'wasm'; Fixture = '" + ntName + "'; Cells = " + ncells + '; Frames = ' + ntimes.length + '; Run = 1; Load = ' + f1(nload) + '; Memory = ' + nmemory + '; FirstFrame = ' + fms(nfirst) + '; FrameP50 = ' + fms(nmed) + '; FrameMin = ' + fms(nlo) + '; FrameMax = ' + fms(nhi) +
+                  '; IdleP50 = ' + fms(nimed) + '; ConeP50 = ' + fms(ncp50) + '; Shapes = ' + nshapes + '; Levels = ' + nlevels + '; CellsPerSecond = ' + Math.round(ncells / (nmed / 1000)) + '; FramesPerSecond = ' + f3(1000 / nmed) + '; ClockMs = ' + f3(nclock) + '; ClockSpread = ' + f1(nspread) + '; ClockDrift = ' + f1(ndrift) + ' }');
+        rungs.push("    @{ Rung = '" + ntName + "'; Width = " + NTH.FLOORS[0] + '; Height = ' + NTH.FLOORS[1] + "; Digest = '" + ntDigest + "' }");
+        ntRows[ntName] = { load: nload, memory: nmemory, first: nfirst, frame: nmed, idle: nimed, cone: ncp50, shapes: nshapes };
+        nx.alonzo_free(m.out, 4);
+        m = nx = ntText = null;
+      }
+      ntPasser = null;
+      // the premium, each of the shuffled bench's numbers over the filled one's, printed and never gated
+      var NF = ntRows['naught-f'], NS = ntRows['naught-s'];
+      ntPremium = '\nthe regularity premium (CART.9), in the browser: the shuffled bench\'s numbers over the filled one\'s, printed and never gated\n  naught-s over naught-f, the same ' + thousands(ntNet.gates.length) + ' gates in the same cells: the load ' + (NS.load / NF.load).toFixed(1) + ' times, the memory ' + (NS.memory / NF.memory).toFixed(1) +
+                  ', the first frame ' + (NS.first / NF.first).toFixed(1) + ', the steady frame ' + (NS.frame / NF.frame).toFixed(1) + ', the idle frame ' + (NS.idle / NF.idle).toFixed(1) + ', a switch\'s cone ' + (NS.cone / NF.cone).toFixed(1) + '; ' + thousands(NS.shapes) + ' shapes against ' + thousands(NF.shapes);
+    }
     // The size ladder's slope (ENGINE.9, decision 8): each rung over the window's, and the exponent
     // against the formula cells, 1 where a quantity grows as the cells do; and the gun's idle frame at
     // the top rung against the prediction that it costs what it costs on the window.
@@ -7115,10 +7257,11 @@
     }
     var ladderText = slope.length ? '\nthe size ladder (ENGINE.9), in the browser: each rung over the window\'s, and the exponent against the formula cells, 1 where a quantity grows as the cells do\n' + slope.join('\n') : '';
     var head = 'frames: the engine\'s module, ' + thousands(bytes.length) + ' bytes, under ' + navigator.userAgent + '; ' + fixtures.length + ' cartridges, ' + N + ' frames each or, where a frame reads under ' + RUN_GRAINS + ' steps of this page\'s clock of ' + grainText + ' ms, ' + RUNS + ' runs of ' + RUN_FRAMES + ' past frame ' + N + ', every frame equal to the page\'s Life or Sand' +
-               (spCart ? '; and Superposition\'s three rows, the idle frame, an act\'s latency and the deepest cascade, held to the page\'s hand' : '');
+               (spCart ? '; and Superposition\'s three rows, the idle frame, an act\'s latency and the deepest cascade, held to the page\'s hand' : '') +
+               (ntCart ? '; and naught\'s two rows, the bench of gates laid by fill and shuffled, held to the page\'s hand' : '');
     pre.textContent = moved
-      ? 'frames refused: the clock moved\n' + head + '\n' + lines.join('\n') + ladderText + '\nno baseline rows: run it through tools/bench_frames.ps1, which opts the browser out of Windows\' power throttling'
-      : 'frames ok\n' + head + '\n' + lines.join('\n') + ladderText + '\nthe baseline rows, for tools/check_frame_floors.ps1:\n' + rows.join('\n') + '\n' + rungs.join('\n');
+      ? 'frames refused: the clock moved\n' + head + '\n' + lines.join('\n') + ladderText + ntPremium + '\nno baseline rows: run it through tools/bench_frames.ps1, which opts the browser out of Windows\' power throttling'
+      : 'frames ok\n' + head + '\n' + lines.join('\n') + ladderText + ntPremium + '\nthe baseline rows, for tools/check_frame_floors.ps1:\n' + rows.join('\n') + '\n' + rungs.join('\n');
   }
   if (MODE === 'frames') {
     try { framesInstrument(); } catch (e) { document.getElementById('frames').textContent = 'frames failed: ' + (e && e.message ? e.message : e); }

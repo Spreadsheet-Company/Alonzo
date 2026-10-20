@@ -7992,3 +7992,426 @@ The Board's value at a variable is a code, 100 times its kind, 10 times its box'
   - `KERNEL.8`'s lookups serve both (the approval's facts above), so they wait for its release and the pin, an item of their own at the owner's word.
 - *The look's second half:* the digits twice the marks' size, borders for the boxes and alignment for the digits are `ENGINE.28`'s, which names Seiyaku among its consumers, after `KERNEL.50`'s release and the pin.
 - *Found at the second hand test:* the engine's own Clock sheet draws a seed of nine digits as #s in its default column (the screenshot of the palette over it), as a cartridge's own seed column did at `CART.12`'s hand test; the Clock is the engine's, so its width is the engine's to set.
+
+## `CART.9` — *Naught: Vel et Aut*: a bench of logic gates, the engine's first irregular graph, its regularity premium measured, and the first cartridge whose formulas a person writes into the live grid
+
+*Scoped 2026-10-20 at the owner's word, the measuring track's next cartridge after `CART.12` and `CART.14`. Filed 2026-10-13 as circuits, a working title; named by the owner the day of this entry, *Naught: Vel et Aut*: *naught* the NOT and the zero, *et* Latin's and, *vel* and *aut* its two ors, the inclusive and the exclusive, so the title is the gate set. The owner's note during the scoping: Latin wordplay is encouraged, and classical logic jokes beside the modern gates' tutoring moments (decision 12). The scoping read the roadmap's line, `docs/ALGEBRA.md` §12.1 and §12.2, `SPEC.md` version 6, `CART.12`'s and `CART.14`'s entries, `ENGINE.9`'s record, the engine's tests, references and floors' runner, and `vla-lang` 0.10.1's plan, step, reach, write and census. It wrote its predictions down, then ran a probe in scratch, measured below: a generator of netlists, each laid twice and passed, loaded, counted and stepped through the engine's own `Cartridge`, every value held to the netlist evaluated by hand; and a scratch copy of the language with a counter around each phase of a frame, which found where the shuffled grid's frames go. Nothing in this tree changed but the roadmap line's title and this entry; Frazaro's and Buffet's trees were read and never written.*
+
+**Substrate, verified.** Read on the day, by file.
+
+- *The pre-flight.* `HEAD` at `8ed1ea7`, `CART.14`'s close, six ahead of `origin` and unpushed; the tree clean; `vla-lang` pinned `=0.10.1`.
+- *A shape* (`calc/shape.rs`). A fill, or the plain formulas of one R1C1 text (`KERNEL.34`). So a gate whose inputs stand at offsets no other gate's do is a shape of its own, and two far-apart gates whose offsets happen to agree are one.
+- *The order and its runs.* By level, then shape, then cell. A run is at least `RUN`, four cells of one shape at one level on one sheet reading none of one another, evaluated at once. Every other cell is evaluated alone, by its shape's parse lowered once to a program (`KERNEL.44`), and a run's few, under `SHORT`, sixteen, likewise.
+- *The step* (`machine/mod.rs`: `step`, `begin`, `snapshot`).
+  - A run finds its marked cells by a bitset, a word for 64 positions (`next_marked`). A stretch of cells alone is walked a position at a time, each asked whether the frame wants it.
+  - A frame's start loops over every shape, and its end clears a byte a shape and a bit a position.
+  - So a frame costs at least its cells alone and its shapes, whatever it computes.
+- *The reach* (`calc/reach.rs`). No reader is kept a cell; a shape's references are kept as patterns. A sheet of 16 readers or more files them by the rows or the columns of their footprints, a footprint being what a reference reads over the offsets its shape's cells stand at (`KERNEL.35`). A footprint wider than 64 bands (`WIDE`) is filed nowhere and checked against every changed cell of the sheet. A defined name is never followed, so its readers compute every frame.
+- *A write* (`Machine::write`, `settle`).
+  - A formula written places the changed cells again and plans the whole grid again as a load does (`Shapes::plan`: edges, components, order, runs, arrays, reach), then marks the next frame to compute every cell.
+  - Every write, a value's too, computes each written sheet's extent again by walking all its cells (`Sheet::extent`), though in 0.10.1 a write never empties a cell.
+- *The expander.* A chain of 5,000 links; a top-level form a chain of its own. The Latin names are free, and so are `and`, `or` and `not`. `&expand` joins texts, and `formula-expand` writes an expression as a formula (`VLA.4`).
+- *The language's fourteen functions.* No XOR among them, so XOR is `MOD(a+b,2)` or `a<>b`; `AND`, `OR` and `NOT` answer truth values. A program's call answering a truth value is guarded and left to the evaluator's walk (`calc/program.rs`).
+- *`AD-7`.* A formula enters the grid by `load` or by a `write` made on a person's act. The Write sheet carries values alone, and a command writes no formula (`SPEC.md` §3.9, §3.10).
+- *The page.* The edit row and the palette write any row as a person's edit (`ENGINE.22`, `ENGINE.23`). The viewport has no in-cell editing (`Frazaro/web/CALLOSUM.md` §7, decision 5: the formula bar is the first game's chrome).
+- *Version 6.* `(settle K)`, K at most 65,536; `(bound "<sheet>")`.
+- *The floors.* A row a fixture and a half, `Load`, `Memory`, `FirstFrame`, `FrameP50` and the rest (`tools/check_frame_floors.ps1`). The ladder's rungs are built by the pass from a committed source with a door's definitions, each named by its digest (`ENGINE.9`).
+- *The cap.* 1,048,576 cells a grid.
+
+**The probe, as built.** A scratch crate over the engine at `8ed1ea7` by its path and `vla-lang` 0.10.1 from the registry, built with the workspace's release profile, its process opted out of Windows' power throttling and on the eight performance cores, its allocator counting the heap's live bytes and their high-water from before each load.
+
+- *Two circuits*, built gate by gate, a gate with a constant input folded into a wire or a NON:
+  - `add-n`, an n-bit ripple-carry adder of five gates a bit, `x = AUT(a,b)`, `g = ET(a,b)`, `p = ET(x,c)`, `c' = VEL(g,p)`, `s = AUT(x,c)`, its carry-in a switch: 5n gates, 2n + 1 levels;
+  - `mul-n`, an n by n array multiplier: n² partial products, n − 1 rows of carry-save adders, a ripple of n bits. The first row's and the last column's cells fold into half adders, about 6n² gates, 4n levels.
+- *Two placements of the same gates in the same cells* (decision 5):
+  - *F*, by fill: each role a rectangle of one R1C1 text. The adder a bit a row, its five roles in columns C to G, the switches in A and B, the carry-in at F1. The multiplier's a-bus along row 1 and b-bus down column A read through mixed references, each role a block of n + 1 columns, a carry-save row a row, the ripple the blocks' last.
+  - *S*, shuffled: the gates permuted among F's own cells by a fixed seed. Then, as *U*, every gate whose R1C1 text another holds trades cells with one drawn at random until no two hold one text.
+- *Its source* (decision 3): the manifest, the cartridge's own gate macros and one gate form a rectangle or a cell, expanded by `alonzo::pass::expand`.
+- *Two variants of the switches*: *board*, values a person writes; *bench*, each switch a hash of the frame, `=MOD(INT(MOD(u*u,65521)/256),2)` with `u = MOD(ROW()*40503+COLUMN()*9973+Clock!$B$1*65519,65521)`, so about half flip each frame. And *twin*, every gate reading its inputs' twins, the teacher's rate.
+- *The hand*: the netlist evaluated in the order its gates were made, at full rate and a gate delay a frame, the stimulus computed by the language's own `MOD`. The outputs are held to integer + and × over 64-bit limbs.
+  - Every gate held at the first frame, after every switch written, at every 25th flip, at every fifth bench frame, after the deepest cone, the rewrites and the additions, and every frame of the twins.
+  - Every output held at every measured frame.
+  - Every instance held.
+- *Measured.*
+  - The pass; the load; the heap held after the first frame and its peak over the load and that frame; the first frame; `describe`'s census.
+  - Every switch written as one write, and its frame; 101 idle frames.
+  - 101 flips of one switch drawn at random, the write and the frame apart. The deepest cone: the adder's carry-in under a all ones and b zero, or the multiplier's a0 under all ones.
+  - A gate's formula written again with its inputs commuted and put back, three rounds, the write and the frame after it apart. A gate added in an empty cell, three.
+  - The bench's 31 steady frames. The twins' 31 flips, each stepped until a frame changed nothing, and their deepest ripple.
+
+**Predictions, written before any number** (*prediction*, 2026-10-20 02:35 PDT, nine minutes before the probe first ran; inputs: Superposition's and Life's costs, `KERNEL.49`'s phases, `KERNEL.34`'s rule, and the reading above).
+
+1. *The census:* F's adder 5 shapes, 2 runs, 3n alone, 2n + 1 levels; S's, shapes and alone the gates; F's multiplier 15 to 30 shapes, all but its ripple in runs.
+2. *The pass:* S at 3 to 10 µs a gate form; `add-65536` S 1 to 3.5 s. The S cartridge about 42 bytes a gate, `mul-256`'s 16 to 18 MB, past `SPEC.md` §10's 16 MiB.
+3. *The load:* F 0.6 to 1.0 µs a formula cell, S 6 to 15, a premium of 8 to 20 times.
+4. *Memory:* F 400 to 550 bytes a formula cell held, S 1.5 to 2.5 KB, a premium of 3 to 6 times; the peak 1.0 to 1.2 times held by fill, 1.3 to 2 shuffled.
+5. *The first frame:* a premium of 1.2 to 1.6 times.
+6. *The steady frame:* F `add-65536` 25 to 45 ms, S 40 to 65; F `mul-256` 15 to 30, S 45 to 75. A premium of 1.3 to 1.7 times for the adder, 2 to 4 for the multiplier.
+7. *A switch's cone and the idle frame:* the walk's cost, about 1 to 3 ns a position: F `add-65536` 0.15 to 0.4 ms, S 0.5 to 1; `mul-256` F 10 to 40 µs, S 0.6 to 1.2 ms. A premium of 2 to 3 times for the adder, 30 to 60 for the multiplier.
+8. *The deepest cone:* F `add-65536` 20 to 40 ms, S 25 to 50.
+9. *A gate placed*, the write and the frame after it: F `add-65536` 0.2 to 0.4 s, S 0.6 to 1.5; `add-1024` F 3 to 6 ms, S 10 to 25; `mul-64` F 15 to 30, S 50 to 100. A value write 6 to 20 µs.
+10. *The teacher's rate* at `add-4096`: F 2 to 6 µs a frame, S 25 to 60; the deepest ripple, 8,192 frames, F 20 to 50 ms, S 0.2 to 0.5 s.
+11. *The gate set:* nine NANDs a bit 1.6 to 2 times five gates a bit; the boolean functions 1.0 to 1.4 times the arithmetic.
+12. *`describe`* of S at `add-65536`: 30 to 50 MB in 1 to 4 s.
+
+**The measurements.** *Measurement*, 2026-10-20, natively, on the machine of `CART.12`'s entry; times in milliseconds where no unit is named. Every instance's every held value agreed with the hand.
+
+*The premium proper, by fill (F) and with every gate its own shape (U),* the board variant but the steady frame, the bench's:
+
+| | `add-1024` | `add-4096` | `add-16384` | `add-65536` | `mul-32` | `mul-64` | `mul-128` | `mul-256` |
+|---|---|---|---|---|---|---|---|---|
+| gates; levels | 5,120; 2,049 | 20,480; 8,193 | 81,920; 32,769 | 327,680; 131,073 | 5,888; 124 | 24,064; 252 | 97,280; 508 | 391,168; 1,020 |
+| the load, F / U | 2.7 / 46.5 | 9.8 / 211.5 | 57.0 / 883.7 | 291.6 / 3,656 | 2.3 / 49.8 | 9.3 / 209.9 | 50.2 / 962.0 | 215.0 / 4,352 |
+| bytes a formula held, F / U | 505 / 2,729 | 493 / 2,731 | 490 / 2,735 | 489 / 2,740 | 431 / 2,523 | 409 / 2,499 | 402 / 2,451 | 399 / 2,454 |
+| the first frame | 0.85 / 1.51 | 2.76 / 7.86 | 15.6 / 46.3 | 70.5 / 267.3 | 0.60 / 1.20 | 2.16 / 7.30 | 13.0 / 48.0 | 50.6 / 237.6 |
+| the steady frame, p50 | 0.344 / 0.711 | 1.41 / 5.91 | 5.83 / 42.2 | 32.1 / 278.7 | 0.251 / 0.491 | 0.925 / 3.68 | 5.76 / 39.4 | 23.4 / 197.7 |
+| the idle frame, µs | 3.1 / 5.6 | 8.7 / 19.0 | 34.0 / 80.9 | 137.7 / 352.3 | 3.6 / 6.3 | 7.3 / 22.2 | 12.4 / 98.5 | 25.6 / 434.0 |
+| a switch's cone, µs (cells reached) | 4.1 / 8.4 (7) | 11.6 / 27.9 (7) | 39.2 / 98.7 (8) | 192.8 / 461.0 (7) | 72.8 / 126.2 (944) | 316 / 1,073 (3,965) | 1,584 / 9,008 (12,883) | 6,767 / 52,323 (51,054) |
+| the deepest cone | 0.25 / 0.70 | 1.07 / 5.05 | 4.54 / 56.1 | 18.4 / 345.5 | 0.06 / 0.50 | 0.17 / 4.35 | 0.82 / 33.9 | 3.87 / 166.7 |
+| a gate rewritten: the write + the frame | 0.93 + 0.09 / 9.4 + 0.8 | 4.3 + 0.4 / 51.2 + 6.3 | 20.2 + 1.6 / 233 + 37 | 123 + 6.5 / 982 + 196 | 0.79 + 0.06 / 8.6 + 1.0 | 3.4 + 0.2 / 52.2 + 6.2 | 19.8 + 0.8 / 256 + 36 | 126 + 3.3 / 1,198 + 172 |
+| **premium**: load, memory, steady, idle, cone, a gate | 17, 5.4, 2.1, 1.8, 2.0, 10 | 22, 5.5, 4.2, 2.2, 2.4, 12 | 16, 5.6, 7.2, 2.4, 2.5, 12 | 13, 5.6, 8.7, 2.6, 2.4, 9 | 22, 5.8, 2.0, 1.8, 1.7, 11 | 23, 6.1, 4.0, 3.0, 3.4, 17 | 19, 6.1, 6.8, 7.9, 5.7, 14 | 20, 6.1, 8.4, 17, 7.7, 11 |
+
+The multipliers' shuffles had one coincidence among them, so their S stands for U. The census held every derived count: by fill, the adder (shapes 5) (runs 2) (lanes 2n) (alone 3n) (levels 2n + 1), the multiplier (shapes 23) (texts 20) and (levels) its depth; with every gate its own shape, (shapes) and (alone) the gates.
+
+*The rest:*
+
+- *The pass and the text.* By fill a few dozen forms in 0.1 ms. Shuffled, 2.5 to 2.7 µs a gate form: 0.89 s for `add-65536`'s 327,683 forms and 0.99 to 1.06 s for `mul-256`'s. The shuffled cartridge is 42 to 48 bytes a gate: 15.8 MB at `add-65536` and 17.6 MB at `mul-256`, past 16 MiB. Its `describe` prints a row a shape: 46 MB in 1.19 s and 53 MB in 1.46 s.
+- *The peak* over the load and the first frame: 1.24 to 1.30 times the held by fill, 1.13 to 1.17 shuffled.
+- *A gate added* in an empty cell: the write as a rewrite's, the frame after it computing every cell (F `add-65536` 131 + 62, U 983 + 270).
+- *A value write*, one switch: 9.9 µs into a sheet of 7,169 cells, 47 into 28,673, 299 into 114,689 and 4,959 into 458,753 by fill; the same shuffled. The extent's walk (Found 2).
+- *The coincidences.* The shuffle without the trades left 2.5 to 2.6% of the adder's gates coincident in its narrow region, as shapes of two or more far-apart cells, and none of the multiplier's in its wide one:
+
+  | the adder, shuffled | 1,024 | 4,096 | 16,384 | 65,536 |
+  |---|---|---|---|---|
+  | shapes of the gates | 4,986 of 5,120 | 19,955 of 20,480 | 79,840 of 81,920 | 319,537 of 327,680 |
+  | the steady frame, coincident / unique | 2.98 / 0.71 | 56.5 / 5.9 | 1,067 / 42.2 | 25,833 / 278.7 |
+  | the deepest cone, coincident / unique | 3.11 / 0.70 | 59.7 / 5.05 | 1,048 / 56.1 | 23,681 / 345.5 |
+
+- *Where a frame goes* (the counters, the time-stamp counter at 3.878 ticks a nanosecond). Each column is a cell alone's evaluation and a changed cell's marking of its readers, the steady frame of the adder at 16,384 bits:
+  - by fill, 72 ns and 51 ns;
+  - with every gate its own shape, 785 ns and 420 ns;
+  - with the coincidences, 12,194 ns and 20,429 ns, the marking 982 ms of the frame's 1,017.
+
+  `mul-128`: by fill a run's cell about 80 ns and a marking 100; its own shape, 696 and 410. Both shuffled costs grow with the size (`add-1024`'s own shapes, 171 and 103). The idle frame is the walk, about 0.75 ns a position alone, and the start's loop, about 0.3 ns a shape.
+- *The teacher's rate*, every gate reading its inputs' twins:
+  - `add-4096`: a flip settles in 5 frames at the median; the deepest ripple, 8,194 frames, in 17.1 ms by fill (2.1 µs a frame) and 256.7 ms shuffled (31 µs), the natural shuffle's, its coincidences and all.
+  - `mul-64`: a flip in 111 frames at the median, 2.9 ms by fill (26.8 µs a frame) and 14.0 ms shuffled (145 µs).
+- *The gate set.* Nine NON-ETs a bit (`nand-add-4096` by fill) against five gates a bit: the gates 1.8 times, the load 1.3 to 1.6, the steady frame 1.8, a gate placed 1.5. The boolean functions against the arithmetic, the steady frame: by fill 1.08 times (`mul-64`) and 1.54 (`add-4096`); shuffled 1.12 and 3.7, the last a cell alone left to the evaluator's walk wherever `AND` or `OR` answers a truth value.
+
+**Against the predictions.**
+
+- *Held:* the census, but the shuffle's coincidences, which the prediction called near certain not to happen; the load by fill (0.4 to 0.9 µs a cell, `add-65536` 292 ms); memory by fill (399 to 505 bytes); the steady frame by fill (`add-65536` 32 ms, `mul-256` 23); the adder's cone by fill (4.1 µs, 193 µs); the teacher's rate a frame (2.1 µs, 31); the shuffled load at 8.5 to 11 µs a cell; the cartridge's bytes, 16 MiB passed at `mul-256`; `describe` (46 MB in 1.2 s); the NAND adder.
+- *Better:* the pass, 2.5 to 2.7 µs a form against 3 to 10; a gate placed by fill, 1 ms at `add-1024` against 3 to 6 and 3.5 at `mul-64` against 15 to 30, since the frame after the write keeps the bits of every cell it computes again (`KERNEL.43`).
+- *Missed high:*
+  - shuffled memory, 2.45 to 2.75 KB a formula against 1.5 to 2.5, so the memory premium is 5.4 to 6.1 against 3 to 6;
+  - the load premium 13 to 23 against 8 to 20;
+  - the first frame's premium 1.8 to 4.7 against 1.2 to 1.6;
+  - the steady frame's premium 2.1 to 8.7 against 1.3 to 4. It grows with the size, the per-shape data, about 2.2 KB a shape, outgrowing the caches: no prediction named that;
+  - a value write into a big sheet, 5 ms against 6 to 20 µs: the extent's walk, which no prediction knew.
+- *Missed by reading the wrong circuit:* a multiplier's switch reaches an eighth of the multiplier, 51,054 cells at 256, so its cone is milliseconds and not the 10 to 40 µs predicted for a handful of cells. The idle frame carries what the prediction meant: 25.6 µs by fill and 434 shuffled at `mul-256`, 17 times.
+- *Missed by orders of magnitude:* the natural shuffle's adder, quadratic, 25.8 s a frame at 65,536 bits against 40 to 65 ms predicted, every coincident shape's references checked at every changed cell (Found 1).
+
+**The census.** What Naught needs, against what stands:
+
+| what Naught needs | what stands | what is open |
+|---|---|---|
+| a netlist in a source, its macro the source's own | the pass, a top-level form a chain of its own | the gate macros and the block's writer (decisions 3 and 4) |
+| the same gates by fill and with every gate its own shape | shapes by R1C1 (`KERNEL.34`) | the placements and the trades (decision 5) |
+| a netlist inside a frame, thousands deep | the plan by levels, runs, a program for a cell alone | measured linear by fill and by unique shapes; quadratic where far-apart cells share a shape (Found 1) |
+| the premium held | the floors' rows, the census (`KERNEL.30`) | two fixtures a half, the census pinned (decision 6) |
+| a hand | Life's, Sand's, Superposition's, Seiyaku's | a netlist evaluator in Rust and in the page (decision 4) |
+| sequential parts | the twins | a register a cell of its own last value (decision 8) |
+| a gate placed on a person's act | the edit row, the palette, `AD-7` | a formula typed at the selection (decision 9) |
+| the teacher's ripple | `(settle K)`, at most 65,536 | its count a cell; its sight a page question (decision 8) |
+| stars | nothing reads the census | counted by formulas (decision 11) |
+
+**The work**, by slice; slice 2's and slice 3's files are named at their starts.
+
+| file | what it is | slice; decisions |
+|---|---|---|
+| `cartridges/naught/naught.source.vla`, `naught.vla` | the manifest, the gate macros, the bench: a 16-bit adder and an 8 by 8 multiplier by fill, the netlist's block | 1; 1 to 3, 13 |
+| `engine/src/naught.rs`; `engine/src/lib.rs` | the netlist, the builders, the placements and trades, the block's writer, the hand, the limbs, the census expected; test-only | 1; 4, 5, 14 |
+| `engine/examples/naught.rs` | the block written into the source, `--check` | 1; 3 |
+| `engine/src/cartridge.rs`'s tests, `engine/testdata/describe/naught.vla` | the bench's session, the circuits at several sizes, the census, the teacher's rate, `AD-7`; the describe golden | 1; 14 |
+| `cartridges/naught/naught.hand.js` | the hand and the writer in the page, byte for byte the Rust's | 1; 4 |
+| `engine/examples/frames.rs`, `web/index.template.html`, `tools/bench_frames.ps1`, `tools/check_frame_floors.ps1` | the two fixtures, six numbers a row, the census pinned, the premium printed; `?frames=1`'s half | 1; 6 |
+| `tools/build_web.ps1`, `tools/check_cartridge.ps1`, `tools/check_host_loop.ps1`, `tools/check_web_offline.ps1`, `tools/check_spdx.ps1` | the page's order, the folder and its counts, the pass case, the hand's block | 1; 13 |
+| `ROADMAP.md`, `REARVIEW.md`, `CHARTER.md` §7, `README.md`, `engine/README.md`, `Delta/CLAUDE.md`, the memory | the line, this record, the numbers, the map | 1 to 3; 15 |
+
+**The decisions, the owner's.** Each with the recommendation and the alternatives it declines.
+
+1. **The first slice: the instrument, a bench of two circuits laid twice, and no game.**
+   - The cartridge `naught`: its source states the gates as the cartridge's own macros and holds a netlist's block, written by an example. The bench is a 16-bit ripple adder and an 8 by 8 multiplier laid by fill, about 415 gates. Its switches are values a person writes in the edit row, its lamps the outputs; `(spec 6)`, rate 0, `(bound "Bench")`.
+   - The floors' two fixtures, built from the same source at decision 6's size, by fill and shuffled.
+   - The tests of decision 14. No commands, no levels, no authoring.
+   - *Alternatives:* the game first, whose levels of a few hundred gates no floor needs; no committed cartridge, the instrument wholly generated, so that the page has no bench to load and the describe golden no fixture.
+2. **The gate set and its formulas: arithmetic over 0 and 1, six gates named in Latin.**
+   - NON `=1-a`, ET `=a*b`, VEL `=MAX(a,b)`, AUT `=MOD(a+b,2)`, NON-ET (NAND, Sheffer's stroke) `=1-a*b`, NEC (NOR, Peirce's arrow) `=1-MAX(a,b)`.
+   - A gate's value is 0 or 1, a number in every lane and register; a bus is a `SUM` of bits times powers of two; a look a value.
+   - The instrument's circuits use ET, VEL and AUT. The game (slice 3) opens on NON-ET alone, nand2tetris's road, and each gate a person builds from it is proven by a test, then given as a cell of its own formula.
+   - *Alternatives:*
+     - the boolean functions, `AND`, `OR`, `NOT` and `a<>b`: truth values, words a person reads, measured up to 3.7 times dearer shuffled; and an error at the teacher's first frame, whose twins are empty, since `AND` and `OR` of no truth value are `#VALUE!` (the library's `All` and `Some_`, read);
+     - `ABS(a-b)` for AUT: the same class, `MOD` kept for parity's `MOD(a+b+c,2)`.
+3. **The netlist's source form: the cartridge's own gate macros, a gate a form, a fill where a role repeats, written into a block of the source by an example.**
+   - `(aut "C2:C17" "A2" "B2")`: the target a cell or a range, then each input as the target's first cell reads it. Each is a top-level form, its own chain, so the expander's 5,000 links never bound a netlist; the macro writes one `formula` row by `&expand`.
+   - The block stands between two markers and is written by `cargo run --release --example naught [-- --check]`, as Seiyaku's book; a level of slice 3 writes its own netlist by hand with the same macros.
+   - The macros stay the source's own until a second cartridge writes a netlist (the kit's ratchet).
+   - Measured: 2.5 to 2.7 µs a gate form.
+   - *Alternatives:*
+     - *(a)* formula rows written by the example: no macro, and a source unreadable as logic;
+     - *(b)* one netlist form walking a list: the chain stops it at a few thousand gates;
+     - *(c)* structural macros, an HDL of full adders recursing on bits: elegant by fill, but a shuffle needs a permutation that expand-time arithmetic writes badly, an affine one keeping the offsets equal and the shapes shared;
+     - *(d)* wires as defined names: the reach never follows a name, so every reader would compute every frame.
+4. **The generator and the hand: `engine/src/naught.rs`, test-only and included by path; `cartridges/naught/naught.hand.js` its twin in the page, writing the same blocks byte for byte.**
+   - The netlist, its constants folded; the builders, an n-bit ripple adder and an n by n array multiplier; the placements (decision 5); the block's writer; the hand at full rate and a gate delay a frame; integer + and × over limbs; and the census the generator expects.
+   - The page's `?frames=1` builds the floors' fixtures through the hand's writer and the module's pass. The instrument holds both halves to one digest a fixture, so two generators agreeing byte for byte is itself an oracle.
+   - *Alternatives:* the shuffled cartridge in a file the page embeds, megabytes in every page; the page's floors by fill alone, the premium's wasm half unmeasured.
+5. **The placements: by fill, and shuffled with every gate its own shape; held equal: the netlist, the cells occupied, the switches and the depth.**
+   - By fill, each role a rectangle of one R1C1 text, one gate form.
+   - Shuffled, the same gates permuted among the same cells by a fixed seed, then every coincidence traded away until no two gates hold one text. Its shapes are then exactly the gates, and the census pins the generator's own count.
+   - *Alternatives:*
+     - the natural shuffle, whose floors would measure Found 1 and not the premium;
+     - a random netlist, which has no integer oracle and is not the same gates;
+     - a wider region for the shuffle, the extent no longer held equal.
+6. **The regularity premium in the floors: two fixtures, `naught-f` and `naught-s`; the bench at a 4,096-bit adder and a 64 by 64 multiplier, 44,544 gates; six numbers a row; the census pinned; the premium printed.**
+   - Each half times each fixture:
+     - the load, the memory (`ENGINE.9`'s high-water), the first frame;
+     - the steady frame, frames 2 to 31 under the stimulus;
+     - then, the switches written as values in one untimed edit, the idle frame and a switch's cone, the frame after a flip drawn from the seed, each at its median.
+   - The check mode, on every push: four frames each held to the hand; the allocations and the heap's high-water held to exact ceilings; each fixture's digest; and the census exactly the generator's, the plan row and, by fill, every shape row.
+   - The runner and the instrument print the premium beside the rows, each shuffled number over the filled, as the ladder prints its slope. No gate is put on a ratio; each row has its own floor.
+   - The size: the shuffled fixture loads in about 0.42 s and holds about 120 MB natively (*derived*), in the page's comfort. The adder keeps the depth, 8,194 levels with the stimulus, and the multiplier the runs.
+   - *Alternatives:*
+     - *(a)* a census column alone, with no time held;
+     - *(b)* four fixtures, each circuit apart: eight rows for one finding;
+     - *(c)* larger: past 150,000 gates the shuffled bench is 400 MB;
+     - *(d)* the ratio held to a floor, where a language fix that speeds the fill moves the ratio the wrong way.
+7. **The gate count against the cap, and the ladder's levels.**
+   - The cap is no bound on the game. A level is tens to thousands of gates. A 16-bit toy CPU in the style of nand2tetris's Hack is about 2,000 to 15,000 cells (*derived*): an ALU of about 400 gates, its registers cells of their own last values, a RAM of 16 words, a ROM sheet of values read through a one-hot `SUM`.
+   - It bounds the instrument, but memory binds first. By fill, 400 to 500 bytes a formula cell, a million gates in about 500 MB; with every gate its own shape, 2.4 to 2.8 KB, about 150,000 gates in 400 MB.
+   - The ladder, slice 3's levels: NON-ET alone (NON, ET, VEL and AUT built from it), a half adder, a full adder, an n-bit adder, a register, a counter, an ALU, and the toy CPU with its ROM sheet.
+   - *Alternative:* a raise of the cap asked of Frazaro, which nothing here needs.
+8. **The two rates: full rate the game's; the teacher's rate a wiring through the twins, whose settle counts gate delays.**
+   - *Full rate*, the game's and the instrument's: each gate reads its inputs in the frame, the netlist a DAG computed inside one frame. At rate 0 an act's frame computes its cone and its settle adds two frames (`CART.12`'s three).
+   - *Sequential parts:* a register is a cell of its own last value, `=IF(Lab!$B$3=1,D2,Bench.last!E2)`. Every frame is then a clock cycle, the twin Lustre's `pre`. Under `(settle K)` an act runs cycles until the state stops changing: a toy CPU runs to its halt inside an act, and a counter never settles, said unsettled at K (the halting problem, bounded by K).
+   - *A loop at full rate* is a cycle, and the write that closes it is refused by name (`calc-cycle`, naming the cells): the Liar refused.
+   - *The teacher's rate:* each gate reads its inputs' twins, a gate delay a frame, and a loop is legal; a latch holds, and the Liar blinks until K.
+     - At rate 0 the settle runs the ripple inside the act: the adder's deepest at 4,096 bits, 8,194 frames, in 17 ms by fill. So a person sees the settled board and a count, never the ripple itself.
+     - The count is the critical path, held in a cell: a counter of the frames in which the board moved (slice 3).
+   - K: `(settle 65536)` for the game, the cap.
+   - *Alternatives:*
+     - *(a)* the game at a rate above 0: the ripple watched at R gate delays a second, a toy CPU at R instructions a second, every frame logged;
+     - *(b)* two cartridges from one source by the pass's door, the teacher's at a rate;
+     - *(c)* a paced settle, the host drawing a settle step a tick: the page's question, Found 8.
+9. **Authoring (slice 2): a gate placed is a formula a person writes; its door the palette, a formula typed at the selection; its cost measured, the re-plan the language's.**
+   - `AD-7`: the person's act writes the formula, and the cartridge composes none.
+   - The door: the palette (Ctrl+K) takes `=...` as a formula at the selection of the sheet shown and writes the `(formula ...)` row as the edit row does. It is the page's, carried by this slice with its loop oracle's case. The edit row takes the whole row, as today. A gate removed is a value written over it, the empty text, a re-plan as a placement is.
+   - Measured, a gate rewritten or added into the bench by fill: 0.9 ms at 5,120 gates, 4.3 at 20,480, 20 at 81,920, 125 at 327,680. The frame after it costs a tenth of a first frame. Shuffled, ten to seventeen times that. A game's level costs under 1 ms; at an instrument's size the re-plan is the language's (Found 5).
+   - *Alternatives:*
+     - *(a)* the edit row alone;
+     - *(b)* in-cell editing in the viewport, which `CALLOSUM.md` §7's decision 5 leaves to the first game's chrome;
+     - *(c)* a place command whose formula the cartridge's cells compose: the program writing code, refused by `AD-7` and the `GENSYM` veto.
+10. **The board (slice 3): one sheet, `Bench`, from `A1` and bound there; switches left, lamps right, the gates between; every act a key first.**
+    - Each switch is a cell of its own last value and the act, as Superposition's Field and Seiyaku's Entries are. Space toggles the one the selection stands on, and a click on one toggles it (version 6's place and press). An act writes the Input sheet and never the Bench (Found 2).
+    - The lamps are cells reading the outputs a level names. A level's specification stands beside the board, its truth table or its words ("add two 4-bit numbers"), with its budget.
+    - The commands: T test, N and P the next and the previous level, R reset, each with its key.
+11. **Test and stars (slice 3), computed by formulas.**
+    - Test runs one input vector a settle step. A counter drives the switches through every vector, the outputs are compared with the specification's, and the first failure stops the count where the board shows it. Exhaustive to 16 input bits within K; beyond, a suite hashed from the seed.
+    - The stars: the gates, each a cell of the bench that holds something (`=Bench!C2<>""`), counted by a layer and a `SUM`; and the critical path, the teacher's counter. The census is their oracle in the tests.
+    - *Alternatives:* stars read from the census by the host, neither a cell nor replayed; the census as a device sheet, `AD-6`'s reflection and a version of the page (Found 8).
+12. **The look and the words (slice 3).**
+    - Lovelace Lavender: a lamp lit and a switch on in `#A080E0`, a gate at 1 in `#E2D8F6`, at 0 white, the bound board on the headers' gray.
+    - The words: the connectives in Latin beside English, NON, ET, VEL, AUT, NON-ET and NEC, and classical logic at the tutoring moments, as the owner's note asks:
+      - the Liar at a loop;
+      - *tertium non datur* at a lamp;
+      - Chrysippus's dog at VEL and AUT;
+      - De Morgan at NON-ET;
+      - Ockham's razor at the budget, in words found in none of Ockham's extant works (John Punch's commentary of 1639 has their nearest form);
+      - *Calculemus* at T, and *quod erat demonstrandum* at a pass;
+      - and the title's own: that Latin keeps two ors, *vel* the inclusive and *aut* the exclusive, is Copi's textbook's claim, and the Stanford Encyclopedia calls it a myth. The game keeps both anyway.
+13. **Where it lives: `cartridges/naught/`, 0BSD; the manifest's name `naught`, its title "Naught: Vel et Aut".** The name is the owner's; the folder and the manifest name are lowercase, as a name must be. *Alternative:* `vel-et-aut`.
+14. **The oracle.**
+    - The hand in Rust, held by `cargo test`:
+      - every frame of the bench's session of switch edits, every gate;
+      - adders and multipliers at several sizes, by fill and shuffled, equal to integer + and × over a generated suite, and exhaustively for a 4-bit adder and a 4 by 4 multiplier;
+      - the census exactly the generator's at each;
+      - the teacher's rate held frame by frame to the hand's delay, its deepest ripple's frames counted;
+      - the formula cells equal before and after every step (`AD-7`).
+    - The block's bytes the example's; the bench's describe golden.
+    - The floors' rows and the check mode (decision 6), the page's half through the JS hand.
+    - Slice 2: a session of gates written into the live bench, every frame held to the hand after each write, and a loop's write refused by name. Slice 3: the owner's session, the replay, played natively and in the page to its golden and held to the JS hand (`ENGINE.16`).
+    - *Alternative:* a golden of the lamps alone, which says less than every gate held.
+15. **The slices, the checks and the bookkeeping.**
+    - *Slice 1, the instrument:* decisions 1 to 7 and 14's tests and floors; the owner's run of `tools/bench_frames.ps1` pasted.
+    - *Slice 2, authoring:* decision 9.
+    - *Slice 3, the game:* decisions 8's counter, 10 to 12, scoped finely at its start in this entry.
+    - Each slice is a commit at the owner's word, staged by its content, the tree shared. The line goes to 🟡 at the approval and leaves for the ledger at slice 3's close.
+    - *Alternatives:* the item closed after slice 2, the game an item of its own (the owner's call at slice 2's close); one slice.
+
+**Found.** Unminted; the language's are Frazaro's to weigh.
+
+1. *Coincident shapes go quadratic.* Plain formulas of one R1C1 text are one shape wherever they stand (`KERNEL.34`). The reach files a reference whose footprint spans more than 64 bands as wide, checked against every changed cell of its sheet (`KERNEL.35`). So a shape of two far-apart cells costs every change on the sheet a check.
+   - The natural shuffle of the adder, 2.5% of its gates coincident, spent 98% of its frame marking readers: 20 µs a changed cell at 16,384 bits against 0.42 µs with the coincidences traded away. Its frame was 1.07 s there and 25.8 s at 65,536 bits, against 42 and 279 ms.
+   - A workbook that copies one relative formula into scattered places meets the same.
+2. *A write walks every cell of each sheet it writes.* `Sheet::extent` runs after every write, though in 0.10.1 a write never empties a cell, so the extent only grows: one value written into a sheet of 458,753 cells costs 5 ms, and 10 µs into 7,169.
+3. *A frame walks every cell alone and touches every shape*, so an idle frame costs both. The shuffled multiplier at 256 bits idles in 434 µs, against 25.6 by fill.
+4. *A shape costs about 2.2 KB, and its cells' work is cold.* A cell of its own shape takes 0.4 µs to evaluate and 0.4 µs to mark its readers at 16,384 bits, against 0.02 and 0.05 for a fill's, and both grow with the size. That is the regularity premium's mechanism.
+   - The irregular grid's analog of a fill would be a shape by structure: one program for every cell of one operator structure, each cell's operands its own.
+   - `KERNEL.49`'s plan by fills leaves such a grid to its per-cell fallback, so this is the orthogonal case its scoping asked for.
+5. *A formula write re-plans the grid* (`KERNEL.34`): a gate placed into the bench by fill of 327,680 gates costs 0.13 s, shuffled about 1.2 s. A game's level is untouched; a spreadsheet's model meets it.
+6. *An irregular bench program* beside Frazaro's five, column, chain, sums, life and lookups: a netlist, whose census is nothing like theirs. Frazaro's to mint.
+7. *A call answering a truth value leaves a cell alone to the walk* (`KERNEL.44`'s guard): the boolean gates cost 3.7 times the arithmetic in the shuffled multiplier. Noted, not asked.
+8. *The page's:* watching the teacher's ripple at rate 0 needs a paced settle, a question for a version of the page; the census as a device sheet would let a cartridge read its own shapes and levels. Neither is needed by decisions 8 and 11.
+
+**The catch.** Foreseen by reading, or met in the probe.
+
+- A coincidence of R1C1 texts makes two far-apart gates one shape. The shuffle trades every one away, and the census pins the count.
+- A value write costs its sheet's size (Found 2): the floors time the frame and not the write, and the game's acts write the Input sheet alone.
+- The JS writer must write the Rust's bytes, its draws and its trades in the same order, or the two halves measure different rows.
+- The shuffled fixture's text is megabytes: built in memory by both halves and never committed. Its `describe` prints a row a shape, so the check reads its plan row alone.
+- The teacher's rate with the boolean functions errs at its first frame; the arithmetic does not.
+- A NON appears in the instrument's netlists only where a gate meets a constant 1, which neither circuit holds.
+- A multiplier's switch reaches an eighth of the multiplier, so the cone row draws its switches from the seed and the floors hold that draw.
+- The tree is shared: every file this item touches is staged by its content.
+
+**Oracle.** On the owner's machine under Windows PowerShell 5.1, then on both jobs.
+
+- `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings` and `cargo test --workspace`, decision 14's.
+- `cargo run --release --example expand -- --check` and `cargo run --release --example naught -- --check`.
+- The floors' runner's check mode, the census pinned; the owner's run of `tools/bench_frames.ps1`, pasted.
+- `tools/check_host_loop.ps1` at both ratios, `tools/check_cartridge.ps1`, `tools/check_web_offline.ps1`, `tools/check_spdx.ps1`; `tools/run_checks.ps1 -WithExtras`.
+- The owner's hand test at each slice.
+
+**Size.** `~weeks`, as filed (*prediction*): slice 1 three to four days, the two generators and the floors' two halves the most of it; slice 2 one to two days; slice 3 three to five.
+
+**Sources.**
+
+- Jennings, R. and Hartline, A., "Disjunction", *The Stanford Encyclopedia of Philosophy* (Spring 2016 edition), §7, "The Myth of *Vel* and *Aut*", read 2026-10-20; it quotes Copi, *Introduction to Logic* (1971), on *vel* as the inclusive or. https://plato.stanford.edu/archives/spr2016/entries/disjunction/
+- Elkind, L. D. C. and Zach, R., "The Genealogy of ∨", *The Review of Symbolic Logic* (2023): the symbol traced to Whitehead and Russell's work before *Principia*, and not to *vel*'s initial or to Peano.
+- "Sheffer stroke", Wikipedia, read 2026-10-20: Peirce found NAND and NOR complete, his *ampheck*, more than thirty years before Sheffer, and never published it; Sheffer, H. M., "A set of five independent postulates for Boolean algebras, with application to logical constants", *Transactions of the American Mathematical Society* (1913); NOR as Peirce's arrow. https://en.wikipedia.org/wiki/Sheffer_stroke
+- "Occam's razor", Wikipedia, read 2026-10-20: the razor's familiar Latin is in none of Ockham's extant works; John Punch's commentary on Scotus (1639) has *non sunt multiplicanda entia sine necessitate*. https://en.wikipedia.org/wiki/Occam%27s_razor
+- Nisan, N. and Schocken, S., *The Elements of Computing Systems* (MIT Press, 2005; second edition 2021): every gate from NAND, up to the Hack computer.
+
+*Approved 2026-10-20 by the owner, all fifteen decisions as recommended, the folder and the manifest's name `naught` confirmed; the line went to 🟡 and slice 1, the instrument, began the same day. Two prompts were given in chat at the approval, at the owner's word: a new Frazaro session to mint and scope one `KERNEL` item for Found 1 to 3, the coincident shapes, the write's extent walk and the frame's walk of every cell alone; and an addendum for `KERNEL.49`'s session, Found 4, the irregular grid its plan by fills leaves to its fallback, with the overlap of Found 1 and its decision 7 named.*
+
+*Slice 1 built 2026-10-20, the instrument (decisions 1 to 7 and 14's tests and floors).* What it touches:
+- `cartridges/naught/naught.source.vla`, the manifest, the six gate macros and the bench's block. The pass expands it into `naught.vla`, 86 rows, 449 cells written, 400 of them formula cells in 28 shapes over 33 levels.
+  - Version 6, rate 0, `(seed 1)`, `(bound "Bench")`; the Bench its one sheet, every column three characters, and a 1 drawn in the lavender family's focus, `E2D8F6`, by a look.
+  - The macros `non`, `et`, `vel`, `aut`, `non-et` and `nec`, each writing one `formula` row by `&expand`: a cell or a fill, and its inputs as the first cell reads them.
+  - The bench, a 16-bit ripple adder from A1 and an 8 by 8 array multiplier from I1, 400 gates and 49 switches as values, written into its block by the example.
+- `engine/src/naught.rs`, test-only and shared by its path: the netlist, its constants folded; the two builders; the placements, by fill and shuffled, and the shuffle's trades; the block written and read; the hand at full rate and a gate delay a frame; integer + and × over limbs; the census each placement plans, its plan row and every shape row; the stimulus by hand; Mulberry32. Five unit tests of its own. `engine/src/lib.rs` names it.
+- `engine/examples/naught.rs`: the bench written into the source's block, `-- --check` comparing it.
+- `engine/src/cartridge.rs`, seven tests and the replay's hand:
+  - the committed block the example's, the cartridge its source's expansion, and every gate's formula the generator's text, no other cell a formula;
+  - the six gates' truth tables in the engine, NON-ET and NEC among them, which neither circuit holds;
+  - the bench through 122 vectors, sixty drawn, sixty single flips and the deepest ripple: every gate held to the hand at every frame, every output to integer + and ×, and the formula cells unchanged by every step (`AD-7`);
+  - the circuits at six sizes, laid by fill and shuffled, over every vector of their switches where those are few (a 4-bit adder, a 4 by 4 multiplier, 1 and 1 by 1, 2 and 3 by 3) and forty drawn where they are many;
+  - the census exactly the generator's at three sizes, both placements, both kinds of switch and both wirings, the plan row and every shape row, its levels the netlist's depth;
+  - the stimulus, every switch held to the hash at each of twelve frames, both placements, about half of them flipping a frame;
+  - the teacher's rate, every frame of every settle held to the hand's gate delay and its changed cells counted, the 16-bit adder's deepest ripple settling in 34 frames, 2n + 2;
+  - `NaughtHand`, the committed replay held to the hand at every frame, its shape pinned: 39 frames, 38 switches written, 208 gates lit at its end.
+- `engine/testdata/describe/naught.vla`, the describe golden.
+- `cartridges/naught/naught.hand.js`, the netlist, the placements and the writer in JavaScript, the Rust's line for line, Mulberry32 by `Math.imul`; and the hand. Made for the replay case, it lays the bench and holds its block to the page's own block `source-naught`, line for line, then answers each frame with every gate's value, the circuits held to integer + and × by `BigInt`.
+- `cartridges/naught/naught.replay.vla`, a stand-in, and `naught.golden.vla`, the Bench's record at its end over `A1:BI17`. The stand-in is written by the engine's own steps, in a scratch crate over this tree by its path, in the form the host's recorder writes: the load's act at A1 on the Bench, then a switch a frame, as the edit row writes one.
+  - The adder's a set to all ones, a bit a frame; then its carry-in, the deepest ripple, 65,535 + 1 carried through sixteen bits in its one frame, 48 cells changed.
+  - The multiplier's a set to 1 and its b to all ones, 1 × 255, then the rest of its a, 255 × 255 = 65,025.
+  - The adder's b low bit on and its a low bit off; the multiplier's a low bit and b high bit off, 254 × 127 = 32,258; and the carry-in off.
+  - 39 frames, every gate held to the hand at each, natively and in the page. The owner's session replaces it at the hand test.
+- `engine/examples/frames.rs`, `tools/bench_frames.ps1`, `tools/check_frame_floors.ps1` and `web/index.template.html`'s `?frames=1`: the two fixtures, `naught-f` and `naught-s`.
+  - Each is built from the committed source with the generator's block, and both halves are held to one digest a fixture.
+  - Each row has six numbers beside the rates: the load, the memory, the first frame, the steady frame, the idle frame and a switch's cone. It also has the census, the shapes and the levels.
+  - The check mode holds the allocation and heap ceilings, and the halves' census is held alike.
+  - The runner, the page and the instrument print the premium; no gate is put on it.
+- `tools/build_web.ps1`, the page's order, Naught eleventh.
+- `tools/check_cartridge.ps1`: eleven cartridges and sources, seven replays and goldens, the row floor 86.
+- `tools/check_host_loop.ps1`:
+  - the pass's and the empty case's counts eleven, and mutant AP's words;
+  - the replay's hands 5, and replays, golden and round 7, with Naught's counts;
+  - the grid's game half over four grid cartridges;
+  - mutant EZ, Naught's hand reading *aut* as *vel*, the inclusive or for the exclusive, which the replay case must fail at frame 18, where the carry-in first gives an AUT two 1s.
+- `tools/run_checks.ps1`'s notes.
+- `README.md`, `engine/README.md`, `web/README.md`, `docs/CHARTER.md` §7, `Delta/CLAUDE.md`, the memory.
+
+*What the build added to the plan.*
+- *A stand-in replay in this slice.* The scoping put the replay in slice 3. But the page holds every hand to a replay: `ENGINE.16`'s `handsHeld` says a hand without one holds nothing. So the slice carries a stand-in, as Seiyaku's first slice did. Holding it is the hand's first use, and it holds the JavaScript writer to the Rust one on every push, at the bench's size: the hand refuses to be made where its block is not the source's.
+- *The page's idle runs* are five of 1,000 frames, against the native runner's ten of 64. The page's clock reads a tenth of a millisecond, and an idle frame by fill reads 0.0175 ms there.
+- *Tests the plan did not name:* the six gates' truth tables in the engine, the stimulus by hand, the floors' netlist's size and depth, and every formula's text. Each holds code that the examples and the runner use, so that the crate's test build leaves nothing of `naught.rs` unused.
+
+*Measured.* The build's run of `tools/bench_frames.ps1` on the owner's machine, 2026-10-20, both halves opted out of the throttling and on the performance cores. It is not a baseline: two rows of other fixtures, `wasm gun-x16` and `wasm superposition-cascade`, read under their floors that run, and the baseline is the owner's.
+
+| row | natively | in the browser |
+|---|---|---|
+| `naught-f`, the load and the memory | 32.4 ms, 23.4 MB | 31.8 ms, 21.4 MB |
+| its first frame and steady frame | 10.7 and 4.9 ms | 8.5 and 6.5 ms |
+| its idle frame and a switch's cone | 0.0147 and 0.57 ms | 0.0175 and 1.2 ms |
+| `naught-s`, the load and the memory | 473.1 ms, 135.9 MB | 374.7 ms, 109.5 MB |
+| its first frame and steady frame | 21.9 and 24.1 ms | 22.9 and 24.0 ms |
+| its idle frame and a switch's cone | 0.0536 and 2.7 ms | 0.0727 and 4.4 ms |
+| the premium: the load, the memory, the first, the steady, the idle, the cone | 14.6, 5.8, 2.0, 4.9, 3.6, 4.7 | 11.8, 5.1, 2.7, 3.7, 4.2, 3.7 |
+
+- Both halves built the same two cartridges, `29ECDEB1…` and `F6E482FF…`, and planned the same census: 32 shapes and 44,548, in 8,194 levels.
+- The page's writer under Node, before the page ran: eight placements written byte for byte the Rust's, the shuffled floors' block of 1.2 MB among them in 131 ms.
+- The check mode: 22 allocations and 5 reallocations in the second frame of either. The heap is 23,358,901 bytes by fill, 441.9 a formula cell, and 135,862,660 shuffled, 2,570.0 a cell.
+
+*Against the scoping's numbers.*
+- *The premium natively*, against the probe's ranges over the circuits apart at eight sizes: the load's 14.6, inside 13 to 23; the memory's 5.8, inside 5.4 to 6.1; the first frame's 2.0, inside 1.8 to 4.7; the steady frame's 4.9, inside 2.1 to 8.7; the idle frame's 3.6, inside 1.8 to 17; and the cone's 4.7, inside 1.7 to 7.7.
+- *The browser's premium* was not predicted. It is smaller for the load and the steady frame, 11.8 and 3.7, and larger for the idle frame, 4.2.
+- *The size* (decision 6, derived): the shuffled fixture loading in about 0.42 s and holding about 120 MB natively. It loads in 0.47 s and holds 136 MB natively, and 0.37 s and 110 MB in the browser.
+
+*Held,* over `vla-lang` 0.10.1:
+- `cargo fmt --check`; `cargo clippy --workspace --all-targets -- -D warnings`; `cargo test --workspace` at opt-level 3 with `ALONZO_REQUIRE_CARTRIDGES=1`, 71 and the doc test.
+- `cargo run --release --example expand -- --check`, eleven `same`; `cargo run --release --example naught -- --check`, `same`; `cargo run --release --example seiyaku -- --check`, `same`.
+- The runner's check mode, Naught's two rows at their ceilings and with their digests. `check_frame_floors.ps1` fails until the owner's block is pasted, on Naught's four rows, its two digests and its floors alone.
+- `check_cartridge.ps1`; `check_spdx.ps1` over a temporary index holding the new files, 42 cartridge headers; `check_web_offline.ps1`, the five hands.
+- `check_host_loop.ps1` at both ratios and on the game's page:
+  - Naught's replay held at all 39 frames, 15,600 cells, 38 switches written and 208 gates lit, and recorded again byte for byte;
+  - the grid case's game half over the Bench, loaded, moved and shown whole;
+  - and Naught alone on a game's page of its own, its four cases clean.
+- `run_checks.ps1 -WithExtras`, 18 minutes: 12 of the 13 checks and all 13 controls, the loop's control failing every one of its one hundred and fifty-six mutant pages for its own reason, EZ among them. The thirteenth check, `check_frame_floors.ps1`, waits for the owner's baseline, as above.
+
+*Found:* nothing new for an item. The scoping's eight stand.
+
+*Catches.*
+- A here-document halved a backslash again, in a scratch script's pattern; the editor wrote it again.
+- Two edit scripts wrote in Python's text mode, which on Windows ends every line CRLF. `engine/examples/frames.rs` and `engine/src/naught.rs` stood CRLF in the working copy until git's warning named them; both are LF again, and every edit script since names its line ending.
+- The crate's test build left seven items of `naught.rs` unused, which the examples use: the floors' size, the stimulus, the depth and a gate's formula text. A test now holds each, and a constant nothing used, the look's color, left the file.
+- Clippy's `type_complexity` on the census's shapes, met with a type alias.
+- The grid case's `gridTexts` floor rises by the Bench's own 3,059 texts. They were counted on a game's page of Naught alone, since Seiyaku's share moves with the host's seed: 5,650 + 3,059 = 8,709.
+
+*The owner's hand test of slice 1, 2026-10-20.* On the owner's machine:
+- `cargo fmt --check` and `cargo clippy` clean; `cargo test`, 71 and the doc test; the examples' checks, the bench `same` and eleven cartridges `same`.
+- `tools/bench_frames.ps1`. Both halves built the same two fixtures and planned the same census, and printed the premium:
+  - natively, the load 15.0 times, the memory 5.8, the first frame 2.1, the steady frame 4.2, the idle frame 3.2 and a switch's cone 4.5;
+  - in the browser, 10.9, 5.1, 3.0, 3.5, 4.0 and 3.3.
+- The run is not a baseline: three rows of other fixtures read under their floors.
+  - `native life`, 27,139,070 cells a second against 27,800,000, 2.4% under;
+  - `native gun-x16`, 0.2% under;
+  - `wasm gun-x16`, 30.4 billion against 32.6, 6.9% under.
+  - The build's run had refused `wasm gun-x16` too, at 31.8 billion, and `wasm superposition-cascade`.
+- The page, in seven screenshots:
+  - Naught in the picker;
+  - a press on W14, then the switches A2, F1, J1 and I3 written in the edit row, each lighting the gates the hand predicts: 1 + 0 = 1, then 1 + 0 + 1 = 2, then J3, the product's low bit;
+  - and the stand-in played to its end, 65,535 down the sum's column and 254 × 127 on the multiplier.
+- One defect, in the first screenshot. The bench opened on its formulas' texts, `=MOD(C2+F1,2)` and the narrow columns' `=N` and `=A`, until the press computed it.
+  - A cartridge at rate 0 that does not settle opens at frame 0 with nothing computed, and the grid draws a formula with no value by its text.
+  - The hand test's step 6 had said every cell 0 and white.
+
+*What the hand test moved, before the commit.*
+- *The bench settles*, `(settle 65536)`, decision 8's K, so that the page opens it on its values, as Superposition and Seiyaku open. The load is its act and one settle step, and every act two frames, its own and one that proves nothing moved. The source says so in a paragraph of its own, "How it settles".
+- *The floors' fixtures leave the settle out*: `floors_source` in `engine/src/naught.rs` and `floorsSource` in the hand. A cartridge that settles numbers the Clock by acts, and the floors' switches read the Clock as the frame. The pass keeps no comment, so the fixtures are the bytes both runs measured, `29ECDEB1…` and `F6E482FF…` as before.
+- *The stand-in*, written again over the settling bench: the same 39 acts over 78 frames, a settle's frame holding no row, and its golden the same bytes. `NaughtHand` pins 78 frames, 38 switches written and 208 gates lit; mutant EZ fails at frame 35, the carry-in's act.
+- *Two tests.* The committed bench opens on its values and an act is two frames, the Clock counting acts; and the floors' source replaces the block and leaves out the settle.
+- `tools/check_host_loop.ps1`: the replay's `naughtFrames` 78 and `naughtCells` 31,200; the grid's game half `gridFrames` 18 and `gridValues` 33, the Bench's load and its settle among them.
+- `tools/check_cartridge.ps1`'s note; the row floor stays 86, a directive being no row.
+
+*Held* after it, over `vla-lang` 0.10.1:
+- `cargo fmt --check`; `cargo clippy --workspace --all-targets -- -D warnings`; `cargo test --workspace` at opt-level 3 with `ALONZO_REQUIRE_CARTRIDGES=1`, 73 and the doc test.
+- The examples' checks, the bench and eleven cartridges `same`.
+- The runner's check mode: Naught's two rows at their ceilings, with the same two digests.
+- The page's floors' source under Node, byte for byte the Rust's for both placements, beside the ten blocks held before.
+- `check_cartridge.ps1`: eleven cartridges, the stand-in 78 frames.
+- `check_host_loop.ps1` at both ratios and on the game's page; Naught alone on a game's page of its own, the replay held at all 78 frames and recorded again byte for byte, and the grid case's load settled in two frames.
+- `run_checks.ps1 -WithExtras`, 17 minutes: 12 of the 13 checks and all 13 controls, the loop's control failing every one of its one hundred and fifty-six mutant pages for its own reason, EZ at frame 35 among them. The thirteenth check, `check_frame_floors.ps1`, waits for a clean baseline: Naught's four rows, its two digests and its floors alone.
+
+*Found.*
+- *A cartridge at rate 0 that does not settle opens on its formulas.* The page draws a grid's frame 0 as loaded, and a formula with no value by its text. The specification does not say that a cartridge meant to open on its values at rate 0 must settle. The page's to weigh; Naught settles.

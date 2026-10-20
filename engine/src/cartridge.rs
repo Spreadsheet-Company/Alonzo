@@ -2833,6 +2833,7 @@ mod tests {
                 "inputcard",
                 "kairos",
                 "life",
+                "naught",
                 "sand",
                 "seiyaku",
                 "soundcard",
@@ -3186,7 +3187,8 @@ mod tests {
     /// (CART.2's second slice), as the page's replay case holds it to the
     /// page's; Kairos's holds its board, State, voices and Tally to the game
     /// by hand at every frame (CART.4's second slice), and the page's its
-    /// board to the page's game.
+    /// board to the page's game; Naught's every gate of its bench to the
+    /// netlist by hand (`CART.9`).
     #[test]
     fn every_committed_replay_plays_to_its_golden() {
         let Some(root) = crate::repository::cartridges() else {
@@ -3201,6 +3203,7 @@ mod tests {
         let read = |p: std::path::PathBuf| {
             std::fs::read_to_string(&p).unwrap_or_else(|e| panic!("{}: {e}", p.display()))
         };
+        let bench = nt::Net::bench(nt::BENCH.0, nt::BENCH.1);
         let mut played = Vec::new();
         for dir in folders {
             let name = dir
@@ -3218,6 +3221,7 @@ mod tests {
             let mut kairos_hand = KairosHand::new();
             let mut lattice_hand = SuperpositionHand::default();
             let mut puzzle_hand = SeiyakuHand::default();
+            let mut bench_hand = NaughtHand::new(&bench);
             let mut held = |c: &Cartridge, frame: u32, rows: &[Form]| {
                 if name == "sand" {
                     hand.holds(c, frame, rows);
@@ -3227,6 +3231,8 @@ mod tests {
                     lattice_hand.holds(c, frame, rows);
                 } else if name == "seiyaku" {
                     puzzle_hand.holds(c, frame, rows);
+                } else if name == "naught" {
+                    bench_hand.holds(c, frame, rows);
                 }
             };
             play_to_golden(&name, &cart, &read(replay), &golden, &mut held);
@@ -3273,6 +3279,13 @@ mod tests {
                     "the owner's session satisfies no instance; the scripted session of seiyaku_s_board_is_its_hand_at_every_frame holds one"
                 );
             }
+            if name == "naught" {
+                assert_eq!(
+                    (bench_hand.frames, bench_hand.edits, bench_hand.lit),
+                    (78, 38, 208),
+                    "the stand-in session: the load's act and 38 switches written, each act and its settle two frames, 208 gates lit at its end"
+                );
+            }
             played.push(name);
         }
         assert_eq!(
@@ -3280,6 +3293,7 @@ mod tests {
             [
                 "inputcard",
                 "kairos",
+                "naught",
                 "sand",
                 "seiyaku",
                 "soundcard",
@@ -5741,5 +5755,625 @@ mod tests {
         let (r4, c4) = free(&hand)[0];
         seiyaku_act(&mut c, &mut hand, &on_board(r4, c4, "retract"));
         assert!(!hand.satisfied, "a retraction unsatisfies it");
+    }
+
+    // ---- CART.9: Naught, the bench of gates ----
+
+    use crate::naught as nt;
+
+    /// Naught's cartridge and its source, read from the repository at run
+    /// time.
+    fn naught() -> Option<(String, String)> {
+        Some((
+            crate::repository::read("naught/naught.vla")?,
+            crate::repository::read("naught/naught.source.vla")?,
+        ))
+    }
+
+    /// The cartridge of a laid netlist: the committed source, its block the
+    /// netlist's, expanded by the pass, as the floors build their fixtures.
+    fn naught_built(source: &str, laid: &nt::Laid) -> String {
+        let s = nt::with_block(source, &laid.block()).expect("the source holds a block");
+        crate::pass::expand(&s, "cartridges/naught/naught.source.vla", &[])
+            .unwrap_or_else(|r| panic!("the pass: line {}: {}", r.line, r.refusal.text))
+            .text
+    }
+
+    /// The floors' cartridge of a laid netlist: the same, the source's settle
+    /// left out (`nt::floors_source`), as the floors build their fixtures.
+    fn naught_floors(source: &str, laid: &nt::Laid) -> String {
+        let s = nt::floors_source(source, &laid.block()).expect("the source holds a block");
+        crate::pass::expand(&s, "cartridges/naught/naught.source.vla", &[])
+            .unwrap_or_else(|r| panic!("the pass: line {}: {}", r.line, r.refusal.text))
+            .text
+    }
+
+    fn naught_loaded(text: &str) -> Cartridge {
+        Cartridge::load(text, "naught.vla", text.len())
+            .unwrap_or_else(|r| panic!("loads: line {}: {}", r.line, r.refusal.text))
+    }
+
+    /// Every gate's cell held to the hand's value.
+    fn naught_holds(c: &Cartridge, laid: &nt::Laid, gates: &[u8], at: &str) {
+        let si = c.machine().find_sheet(nt::SHEET).expect("the Bench");
+        for (k, &(r, col)) in laid.cells.iter().enumerate() {
+            let cell = nt::a1(r, col, false, false);
+            let got = match c.machine().computed((si, r, col)) {
+                Some(Computed::Value(Value::Number(x))) => *x,
+                other => panic!("{at}: the gate {k} at {cell} holds {other:?}"),
+            };
+            assert!(
+                got == f64::from(gates[k]),
+                "{at}: the gate {k} at {cell} holds {got}, the hand {}",
+                gates[k]
+            );
+        }
+    }
+
+    /// The rows that write each switch whose value `want` changes, as a
+    /// person's edit writes a value, `now` following them.
+    fn naught_switches(net: &nt::Net, now: &mut [u8], want: &[u8]) -> String {
+        let mut rows = Vec::new();
+        for (k, (v, &w)) in now.iter_mut().zip(want).enumerate() {
+            if *v != w {
+                *v = w;
+                let (r, col) = net.switches[k];
+                rows.push(format!(
+                    "(cell \"{}\" \"{}\" {w})",
+                    nt::SHEET,
+                    nt::a1(r, col, false, false)
+                ));
+            }
+        }
+        rows.join("\n")
+    }
+
+    /// Every vector of `n` switches.
+    fn naught_every_vector(n: usize) -> Vec<Vec<u8>> {
+        (0u32..(1 << n))
+            .map(|v| (0..n).map(|i| ((v >> i) & 1) as u8).collect())
+            .collect()
+    }
+
+    /// `count` vectors of `n` switches drawn from the dice.
+    fn naught_drawn(n: usize, count: usize, d: &mut nt::Dice) -> Vec<Vec<u8>> {
+        (0..count)
+            .map(|_| (0..n).map(|_| (d.next() >> 31) as u8).collect())
+            .collect()
+    }
+
+    /// A laid netlist driven through `vectors`, each written as a person's
+    /// edit of the switches it changes and stepped: every gate held to the
+    /// hand at every frame, every circuit's outputs to integer + and ×, and
+    /// the formula cells the same after every step (`AD-7`).
+    fn naught_drive(text: &str, laid: &nt::Laid, vectors: &[Vec<u8>], name: &str) {
+        let net = laid.net;
+        let mut c = naught_loaded(text);
+        let before = formulas(&mut c);
+        let mut now = vec![0u8; net.switches.len()];
+        assert!(c.step(0).done);
+        naught_holds(
+            &c,
+            laid,
+            &net.evaluate(&now),
+            &format!("{name}, the first frame"),
+        );
+        for (i, v) in vectors.iter().enumerate() {
+            let rows = naught_switches(net, &mut now, v);
+            if !rows.is_empty() {
+                c.write(&rows).expect("the switches written");
+            }
+            assert!(c.step(0).done);
+            let gates = net.evaluate(&now);
+            naught_holds(&c, laid, &gates, &format!("{name}, vector {i}"));
+            net.check(&now, &gates)
+                .unwrap_or_else(|e| panic!("{name}, vector {i}: {e}"));
+        }
+        assert_eq!(
+            formulas(&mut c),
+            before,
+            "{name}: no step wrote a formula (AD-7)"
+        );
+    }
+
+    /// Each formula of a sheet's record over a window, by its cell.
+    fn naught_formulas(c: &Cartridge, window: &str) -> std::collections::HashMap<String, String> {
+        let Ok(Viewed::Text(record)) = c.view("grid", nt::SHEET, Some(window)) else {
+            panic!("the Bench's record over {window}");
+        };
+        let head = format!("(formula \"{}\" \"", nt::SHEET);
+        record
+            .lines()
+            .filter_map(|l| l.strip_prefix(head.as_str()))
+            .filter_map(|l| l.strip_suffix("\")"))
+            .filter_map(|l| l.split_once("\" \""))
+            .map(|(cell, text)| (cell.to_string(), text.to_string()))
+            .collect()
+    }
+
+    /// The committed source's block is the example's, the cartridge the
+    /// pass's expansion of the source (`CART.9`, decision 3), and every
+    /// gate's formula the generator's text and no other cell a formula.
+    #[test]
+    fn naught_s_bench_is_the_generator_s_block() {
+        let Some((text, source)) = naught() else {
+            return;
+        };
+        let (adder, multiplier) = nt::BENCH;
+        let net = nt::Net::bench(adder, multiplier);
+        let laid = nt::Laid::new(&net, nt::Lay::Fill, nt::Switches::Values, nt::Wiring::Now);
+        assert_eq!(
+            nt::block_of(&source).expect("the source holds a block"),
+            laid.block(),
+            "the source's block is the example's: cargo run --release --example naught"
+        );
+        assert_eq!(
+            text.replace("\r\n", "\n"),
+            naught_built(&source, &laid).replace("\r\n", "\n"),
+            "the cartridge is its source's expansion"
+        );
+        let c = naught_loaded(&text);
+        let formulas = naught_formulas(&c, "A1:BI17");
+        assert_eq!(
+            formulas.len(),
+            net.gates.len(),
+            "a formula a gate, and no other"
+        );
+        for (k, &(r, col)) in laid.cells.iter().enumerate() {
+            let cell = nt::a1(r, col, false, false);
+            assert_eq!(
+                formulas.get(&cell),
+                Some(&laid.formula(k)),
+                "the gate {k} at {cell}"
+            );
+        }
+    }
+
+    /// The six gates as the source's macros write them (decision 2), NON-ET
+    /// and NEC among them, which neither circuit holds: each a fill down the
+    /// four rows of a truth table, its inputs a and b in columns A and B,
+    /// every value the hand's and every formula the generator's text.
+    #[test]
+    fn naught_s_six_gates_are_their_truth_tables() {
+        let Some((_, source)) = naught() else {
+            return;
+        };
+        let pairs = [(0u8, 0u8), (0, 1), (1, 0), (1, 1)];
+        let mut lines = Vec::new();
+        for (i, (a, b)) in pairs.iter().enumerate() {
+            lines.push(format!("(cell \"{}\" \"A{}\" {a})", nt::SHEET, i + 1));
+            lines.push(format!("(cell \"{}\" \"B{}\" {b})", nt::SHEET, i + 1));
+        }
+        for (j, kind) in nt::Kind::ALL.iter().enumerate() {
+            let col = nt::letters(3 + j as u32);
+            let inputs = if kind.arity() == 1 {
+                "\"A1\""
+            } else {
+                "\"A1\" \"B1\""
+            };
+            lines.push(format!("({} \"{col}1:{col}4\" {inputs})", kind.word()));
+        }
+        let built = nt::with_block(&source, &lines).expect("the source holds a block");
+        let text = crate::pass::expand(&built, "cartridges/naught/naught.source.vla", &[])
+            .unwrap_or_else(|r| panic!("the pass: line {}: {}", r.line, r.refusal.text))
+            .text;
+        let mut c = naught_loaded(&text);
+        assert!(c.step(0).done);
+        let formulas = naught_formulas(&c, "A1:H4");
+        let si = c.machine().find_sheet(nt::SHEET).expect("the Bench");
+        for (j, kind) in nt::Kind::ALL.iter().enumerate() {
+            let col = 3 + j as u32;
+            for (i, &(a, b)) in pairs.iter().enumerate() {
+                let r = i as u32 + 1;
+                let cell = nt::a1(r, col, false, false);
+                let want = kind.apply(a, if kind.arity() == 1 { 0 } else { b });
+                match c.machine().computed((si, r, col)) {
+                    Some(Computed::Value(Value::Number(x))) => assert!(
+                        *x == f64::from(want),
+                        "{} of {a} and {b} at {cell} is {x}, the hand {want}",
+                        kind.word()
+                    ),
+                    other => panic!("{} at {cell} holds {other:?}", kind.word()),
+                }
+                assert_eq!(
+                    formulas.get(&cell),
+                    Some(&kind.formula(&format!("A{r}"), &format!("B{r}"))),
+                    "{}'s formula at {cell}",
+                    kind.word()
+                );
+            }
+        }
+    }
+
+    /// The stimulus by hand (decision 6): every switch a hash of the frame,
+    /// held at every frame to `stimulus`, and every gate to the netlist, laid
+    /// by fill and shuffled, as the floors' runner holds its two fixtures,
+    /// built as it builds them, the settle left out.
+    #[test]
+    fn naught_s_stimulus_is_its_hand_s() {
+        let Some((_, source)) = naught() else {
+            return;
+        };
+        let net = nt::Net::bench(nt::BENCH.0, nt::BENCH.1);
+        for lay in [nt::Lay::Fill, nt::Lay::Shuffled] {
+            let laid = nt::Laid::new(&net, lay, nt::Switches::Stimulus, nt::Wiring::Now);
+            let mut c = naught_loaded(&naught_floors(&source, &laid));
+            let si = c.machine().find_sheet(nt::SHEET).expect("the Bench");
+            let mut last: Vec<u8> = Vec::new();
+            for frame in 1..=12u64 {
+                assert!(c.step(0).done);
+                let switches: Vec<u8> = net
+                    .switches
+                    .iter()
+                    .map(|&(r, col)| nt::stimulus(r, col, frame))
+                    .collect();
+                for (k, &(r, col)) in net.switches.iter().enumerate() {
+                    match c.machine().computed((si, r, col)) {
+                        Some(Computed::Value(Value::Number(x))) => assert!(
+                            *x == f64::from(switches[k]),
+                            "{lay:?}, frame {frame}: the switch at {} is {x}, the hand {}",
+                            nt::a1(r, col, false, false),
+                            switches[k]
+                        ),
+                        other => panic!("{lay:?}, frame {frame}: a switch holds {other:?}"),
+                    }
+                }
+                naught_holds(
+                    &c,
+                    &laid,
+                    &net.evaluate(&switches),
+                    &format!("{lay:?}, frame {frame}"),
+                );
+                if !last.is_empty() {
+                    let flipped = switches.iter().zip(&last).filter(|(x, y)| x != y).count();
+                    assert!(
+                        flipped * 4 > switches.len() && flipped * 4 < 3 * switches.len(),
+                        "{lay:?}, frame {frame}: {flipped} of {} switches flipped, where about half do",
+                        switches.len()
+                    );
+                }
+                last = switches;
+            }
+        }
+    }
+
+    /// The bench a person loads, a 16-bit adder and an 8 by 8 multiplier:
+    /// sixty frames of every switch drawn again, sixty of one switch flipped,
+    /// and the deepest ripple, the adder's carry-in flipped under a all ones
+    /// and b none, every gate held to the hand at every frame.
+    #[test]
+    fn naught_s_bench_is_its_hand_at_every_frame() {
+        let Some((text, _)) = naught() else {
+            return;
+        };
+        let (adder, multiplier) = nt::BENCH;
+        let net = nt::Net::bench(adder, multiplier);
+        let laid = nt::Laid::new(&net, nt::Lay::Fill, nt::Switches::Values, nt::Wiring::Now);
+        let n = net.switches.len();
+        let mut d = nt::Dice(9);
+        let mut vectors = naught_drawn(n, 60, &mut d);
+        let mut v = vectors[59].clone();
+        for _ in 0..60 {
+            let k = d.below(n);
+            v[k] ^= 1;
+            vectors.push(v.clone());
+        }
+        let nt::Circuit::Adder { a, b, carry, .. } = &net.circuits[0] else {
+            panic!("the bench's first circuit is its adder");
+        };
+        let mut deep = v.clone();
+        for &k in a {
+            deep[k as usize] = 1;
+        }
+        for &k in b {
+            deep[k as usize] = 0;
+        }
+        deep[*carry as usize] = 0;
+        vectors.push(deep.clone());
+        deep[*carry as usize] = 1;
+        vectors.push(deep);
+        naught_drive(&text, &laid, &vectors, "the bench");
+    }
+
+    /// The committed bench settles (slice 1's hand test): the load's act
+    /// computes every gate in its own frame and one settle step finds nothing
+    /// moved, so the page opens the bench on its values; and an act, a switch
+    /// written, is two frames the same way, the Clock counting acts.
+    #[test]
+    fn naught_s_bench_opens_on_its_values_and_an_act_is_two_frames() {
+        let Some((text, _)) = naught() else {
+            return;
+        };
+        let net = nt::Net::bench(nt::BENCH.0, nt::BENCH.1);
+        let laid = nt::Laid::new(&net, nt::Lay::Fill, nt::Switches::Values, nt::Wiring::Now);
+        let mut c = naught_loaded(&text);
+        assert_eq!(c.manifest().settle, Some(65536));
+        let mut switches = vec![0u8; net.switches.len()];
+        for act in 0..3usize {
+            if act > 0 {
+                let k = act * 7;
+                switches[k] = 1;
+                let (r, col) = net.switches[k];
+                let row = format!(
+                    "(cell \"{}\" \"{}\" 1)",
+                    nt::SHEET,
+                    nt::a1(r, col, false, false)
+                );
+                c.write(&row).expect("a switch written");
+            }
+            assert!(c.step(0).done);
+            assert_eq!(
+                c.settle(),
+                Settle::Settling,
+                "act {act}: its own frame moved the bench"
+            );
+            naught_holds(&c, &laid, &net.evaluate(&switches), &format!("act {act}"));
+            assert!(c.step(0).done);
+            assert_eq!(
+                c.settle(),
+                Settle::Settled,
+                "act {act}: one settle step found nothing moved"
+            );
+            assert_eq!(c.machine().changed(), 0, "act {act}: the settle step");
+            assert_eq!(
+                value_of(&c, "Clock", "B1"),
+                (act + 1).to_string(),
+                "the Clock counts acts"
+            );
+        }
+    }
+
+    /// The circuits equal integer + and × over every vector of their
+    /// switches where those are few, and a drawn suite where they are many,
+    /// laid by fill and shuffled with every gate its own shape (decisions 5
+    /// and 14).
+    #[test]
+    fn naught_s_circuits_are_plus_and_times_laid_by_fill_and_shuffled() {
+        let Some((_, source)) = naught() else {
+            return;
+        };
+        let mut d = nt::Dice(17);
+        for (adder, multiplier, every) in [
+            (4, 0, true),
+            (0, 4, true),
+            (1, 1, true),
+            (2, 3, true),
+            (7, 5, false),
+            (64, 16, false),
+        ] {
+            let net = nt::Net::bench(adder, multiplier);
+            let vectors = if every {
+                naught_every_vector(net.switches.len())
+            } else {
+                naught_drawn(net.switches.len(), 40, &mut d)
+            };
+            for lay in [nt::Lay::Fill, nt::Lay::Shuffled] {
+                let laid = nt::Laid::new(&net, lay, nt::Switches::Values, nt::Wiring::Now);
+                let text = naught_built(&source, &laid);
+                naught_drive(
+                    &text,
+                    &laid,
+                    &vectors,
+                    &format!("the {adder}-bit adder and the {multiplier} by {multiplier} multiplier, {lay:?}"),
+                );
+            }
+        }
+    }
+
+    /// The census `describe` prints is the generator's own count (decision
+    /// 6): the plan row, and every shape row's cells, levels, runs and cells
+    /// alone, by its first cell; by fill and shuffled, the switches values
+    /// or a hash of the frame, every gate reading its inputs in the frame or
+    /// in the last.
+    #[test]
+    fn naught_s_census_is_the_generator_s() {
+        let Some((_, source)) = naught() else {
+            return;
+        };
+        for (adder, multiplier) in [(16, 8), (64, 16), (5, 3)] {
+            let net = nt::Net::bench(adder, multiplier);
+            for lay in [nt::Lay::Fill, nt::Lay::Shuffled] {
+                for switches in [nt::Switches::Values, nt::Switches::Stimulus] {
+                    for wiring in [nt::Wiring::Now, nt::Wiring::Last] {
+                        let laid = nt::Laid::new(&net, lay, switches, wiring);
+                        let c = naught_loaded(&naught_built(&source, &laid));
+                        let described = c.describe();
+                        let at = format!(
+                            "the {adder}-bit adder and the {multiplier} by {multiplier} multiplier, {lay:?}, {switches:?}, {wiring:?}"
+                        );
+                        let plan = described
+                            .lines()
+                            .find(|l| l.starts_with("(plan "))
+                            .expect("a plan row");
+                        assert_eq!(plan, laid.census().row(), "{at}: the plan row");
+                        if wiring == nt::Wiring::Now {
+                            assert_eq!(
+                                laid.census().levels,
+                                net.depth() + usize::from(switches == nt::Switches::Stimulus),
+                                "{at}: the levels, the netlist's depth and the stimulus's own"
+                            );
+                        }
+                        let rows: Vec<(&str, &str)> = described
+                            .lines()
+                            .filter(|l| l.starts_with("(shape "))
+                            .map(|l| {
+                                let first = l.split('"').nth(3).expect("a shape's first cell");
+                                let facts = &l[l.find(" (cells ").expect("a shape's cells") + 1..];
+                                (first, facts)
+                            })
+                            .collect();
+                        let want = laid.shapes();
+                        assert_eq!(rows.len(), want.len(), "{at}: the shape rows");
+                        for (s, (first, facts)) in want.iter().zip(&rows) {
+                            assert_eq!(
+                                *first,
+                                nt::a1(s.first.0, s.first.1, false, false),
+                                "{at}: a shape's first cell"
+                            );
+                            assert!(
+                                facts.starts_with(&s.row()),
+                                "{at}: the shape at {first} prints {facts}, the generator counts {}",
+                                s.row()
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// The teacher's rate (decision 8): every gate reading its inputs'
+    /// twins, so that each frame is one gate delay of the frame before. Every
+    /// frame of every settle held to the hand's delay, the cells changed the
+    /// gates the delay changed, until a frame changes nothing; and the
+    /// adder's deepest ripple, its carry-in flipped under a all ones and b
+    /// none, settles in 2n + 2 frames, the critical path counted in frames.
+    #[test]
+    fn naught_s_teacher_s_rate_is_its_hand_s_gate_delay() {
+        let Some((_, source)) = naught() else {
+            return;
+        };
+        for (adder, multiplier) in [(16, 0), (0, 4), (16, 8)] {
+            let net = nt::Net::bench(adder, multiplier);
+            for lay in [nt::Lay::Fill, nt::Lay::Shuffled] {
+                let laid = nt::Laid::new(&net, lay, nt::Switches::Values, nt::Wiring::Last);
+                let mut c = naught_loaded(&naught_built(&source, &laid));
+                let at = format!("the {adder}-bit adder and the {multiplier} by {multiplier} multiplier, {lay:?}");
+                let mut now = vec![0u8; net.switches.len()];
+                let mut seen = now.clone();
+                let mut last = vec![0u8; net.gates.len()];
+                let settle = |c: &mut Cartridge,
+                              now: &[u8],
+                              seen: &mut Vec<u8>,
+                              last: &mut Vec<u8>,
+                              what: &str|
+                 -> usize {
+                    let mut frames = 0;
+                    loop {
+                        assert!(c.step(0).done);
+                        frames += 1;
+                        let next = net.delay(seen, last);
+                        naught_holds(c, &laid, &next, &format!("{at}, {what}, frame {frames}"));
+                        let moved = next.iter().zip(last.iter()).filter(|(x, y)| x != y).count();
+                        // A first value counts as a change (KERNEL.48): the load's first frame gives
+                        // every gate one.
+                        let counted = if what == "the load" && frames == 1 {
+                            net.gates.len()
+                        } else {
+                            moved
+                        };
+                        assert_eq!(
+                            c.machine().changed(),
+                            counted,
+                            "{at}, {what}, frame {frames}: the cells changed"
+                        );
+                        *last = next;
+                        *seen = now.to_vec();
+                        if moved == 0 && frames > 1 {
+                            return frames;
+                        }
+                        assert!(frames < 10_000, "{at}, {what}: the bench never settles");
+                    }
+                };
+                settle(&mut c, &now, &mut seen, &mut last, "the load");
+                let mut d = nt::Dice(23);
+                for (i, v) in naught_drawn(net.switches.len(), 12, &mut d)
+                    .iter()
+                    .enumerate()
+                {
+                    let rows = naught_switches(&net, &mut now, v);
+                    if !rows.is_empty() {
+                        c.write(&rows).expect("the switches written");
+                    }
+                    settle(&mut c, &now, &mut seen, &mut last, &format!("vector {i}"));
+                    net.check(&now, &last)
+                        .unwrap_or_else(|e| panic!("{at}, vector {i}, settled: {e}"));
+                }
+                if let Some(nt::Circuit::Adder {
+                    a, b, carry, bits, ..
+                }) = net.circuits.first()
+                {
+                    let mut deep = now.clone();
+                    for &k in a {
+                        deep[k as usize] = 1;
+                    }
+                    for &k in b {
+                        deep[k as usize] = 0;
+                    }
+                    deep[*carry as usize] = 0;
+                    let rows = naught_switches(&net, &mut now, &deep);
+                    if !rows.is_empty() {
+                        c.write(&rows).expect("the switches written");
+                    }
+                    settle(&mut c, &now, &mut seen, &mut last, "the ripple's setting");
+                    deep[*carry as usize] = 1;
+                    let rows = naught_switches(&net, &mut now, &deep);
+                    c.write(&rows).expect("the carry-in written");
+                    let frames = settle(&mut c, &now, &mut seen, &mut last, "the deepest ripple");
+                    assert_eq!(frames, 2 * bits + 2, "{at}: the deepest ripple's frames");
+                    net.check(&now, &last)
+                        .unwrap_or_else(|e| panic!("{at}, the deepest ripple: {e}"));
+                }
+            }
+        }
+    }
+
+    /// Naught's committed replay held to the hand at every frame (`CART.9`,
+    /// decision 14): the Bench's switches as the replay's rows leave them,
+    /// each 0 or 1, every gate the netlist's value at full rate, and the
+    /// circuits integer + and ×.
+    struct NaughtHand<'n> {
+        laid: nt::Laid<'n>,
+        switches: Vec<u8>,
+        frames: usize,
+        edits: usize,
+        lit: usize,
+    }
+
+    impl<'n> NaughtHand<'n> {
+        fn new(net: &'n nt::Net) -> NaughtHand<'n> {
+            NaughtHand {
+                laid: nt::Laid::new(net, nt::Lay::Fill, nt::Switches::Values, nt::Wiring::Now),
+                switches: vec![0; net.switches.len()],
+                frames: 0,
+                edits: 0,
+                lit: 0,
+            }
+        }
+
+        fn holds(&mut self, c: &Cartridge, frame: u32, rows: &[Form]) {
+            let net = self.laid.net;
+            let at = format!("naught's replay, frame {frame}");
+            for row in rows {
+                let Form::List(l) = row else { continue };
+                let [Form::Sym(head), Form::Str(sheet), Form::Str(addr), value] =
+                    l.items.as_slice()
+                else {
+                    continue;
+                };
+                if head != "cell" || sheet != nt::SHEET {
+                    continue;
+                }
+                let k = net
+                    .switches
+                    .iter()
+                    .position(|&(r, col)| nt::a1(r, col, false, false) == *addr)
+                    .unwrap_or_else(|| panic!("{at}: {addr} is no switch of the bench"));
+                self.switches[k] = match value {
+                    Form::Sym(n) if n == "0" => 0,
+                    Form::Sym(n) if n == "1" => 1,
+                    other => panic!(
+                        "{at}: the switch {addr} is written {other:?}, where the hand holds 0 or 1"
+                    ),
+                };
+                self.edits += 1;
+            }
+            let gates = net.evaluate(&self.switches);
+            naught_holds(c, &self.laid, &gates, &at);
+            net.check(&self.switches, &gates)
+                .unwrap_or_else(|e| panic!("{at}: {e}"));
+            self.frames += 1;
+            self.lit = gates.iter().filter(|&&g| g == 1).count();
+        }
     }
 }

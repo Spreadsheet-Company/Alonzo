@@ -1,0 +1,98 @@
+; SPDX-License-Identifier: 0BSD
+; A stand-in for the owner's session (CART.9, decision 14; its first slice), written by the engine's own steps in the
+; form the host's recorder writes, so that the page's hand of the bench, the block hand-naught, holds a replay. The
+; load's act, the selection at A1 on the Bench; then thirty-eight switches written one an act, each a row of the
+; drawer's edit row. The adder's a set to all ones, a bit an act, then its carry-in: the deepest ripple, 65,535 + 1
+; carried through all sixteen bits to 65,536. The multiplier's a set to 1 and its b to all ones, 1 x 255, then the
+; rest of its a, 255 x 255 = 65,025. Then the adder's b low bit on, 65,537, and its a low bit off, 65,536; the
+; multiplier's a low bit off, 254 x 255 = 64,770, and its b high bit off, 254 x 127 = 32,258; and the carry-in off,
+; 65,534 + 1 = 65,535. The bench settles: each act is its own frame and one that proves nothing moved, a settle's
+; frame holding no row, so 39 acts are 78 frames, every gate held to the hand at each. Its golden is the Bench's
+; record at its end.
+; The owner's session replaces it at the hand test.
+(replay "naught" (spec 6) (cartridge "0FEA502C34B6CF1A7EE4ECF9F1B609300068C5A1B06FB57648DBF590B77BC02A") (seed 1))
+(frame 1
+  (cell "Input" "B11" 1)
+  (cell "Input" "B12" 1)
+  (cell "Input" "B13" 0)
+  (cell "Input" "B14" 0)
+  (cell "Input" "B15" 0)
+  (cell "Input" "B19" "Bench")
+  (cell "Input" "B20" ""))
+(frame 3
+  (cell "Bench" "A2" 1))
+(frame 5
+  (cell "Bench" "A3" 1))
+(frame 7
+  (cell "Bench" "A4" 1))
+(frame 9
+  (cell "Bench" "A5" 1))
+(frame 11
+  (cell "Bench" "A6" 1))
+(frame 13
+  (cell "Bench" "A7" 1))
+(frame 15
+  (cell "Bench" "A8" 1))
+(frame 17
+  (cell "Bench" "A9" 1))
+(frame 19
+  (cell "Bench" "A10" 1))
+(frame 21
+  (cell "Bench" "A11" 1))
+(frame 23
+  (cell "Bench" "A12" 1))
+(frame 25
+  (cell "Bench" "A13" 1))
+(frame 27
+  (cell "Bench" "A14" 1))
+(frame 29
+  (cell "Bench" "A15" 1))
+(frame 31
+  (cell "Bench" "A16" 1))
+(frame 33
+  (cell "Bench" "A17" 1))
+(frame 35
+  (cell "Bench" "F1" 1))
+(frame 37
+  (cell "Bench" "J1" 1))
+(frame 39
+  (cell "Bench" "I3" 1))
+(frame 41
+  (cell "Bench" "I4" 1))
+(frame 43
+  (cell "Bench" "I5" 1))
+(frame 45
+  (cell "Bench" "I6" 1))
+(frame 47
+  (cell "Bench" "I7" 1))
+(frame 49
+  (cell "Bench" "I8" 1))
+(frame 51
+  (cell "Bench" "I9" 1))
+(frame 53
+  (cell "Bench" "I10" 1))
+(frame 55
+  (cell "Bench" "K1" 1))
+(frame 57
+  (cell "Bench" "L1" 1))
+(frame 59
+  (cell "Bench" "M1" 1))
+(frame 61
+  (cell "Bench" "N1" 1))
+(frame 63
+  (cell "Bench" "O1" 1))
+(frame 65
+  (cell "Bench" "P1" 1))
+(frame 67
+  (cell "Bench" "Q1" 1))
+(frame 69
+  (cell "Bench" "B2" 1))
+(frame 71
+  (cell "Bench" "A2" 0))
+(frame 73
+  (cell "Bench" "J1" 0))
+(frame 75
+  (cell "Bench" "I10" 0))
+(frame 77
+  (cell "Bench" "F1" 0))
+(frame 78)

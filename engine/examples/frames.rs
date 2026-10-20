@@ -129,6 +129,23 @@
 //! cascade's deal, rings and sites opened, which `tools/check_frame_floors.ps1`
 //! holds to the baseline's.
 //!
+//! **Naught** (`CART.9`, decision 6, 2026-10-20). The bench of gates measures
+//! the regularity premium: the same netlist, a 4,096-bit ripple adder and a
+//! 64 by 64 array multiplier, 44,544 gates, laid twice in the same cells, by
+//! fill, `naught-f`, each role one shape, and shuffled, `naught-s`, every gate
+//! its own shape. Both are built by the pass from `naught.source.vla` with its
+//! block written by `engine/src/naught.rs`, included here by its path, every
+//! switch a hash of the frame, and each is named by its cartridge's SHA-256
+//! over LF. Each row times the load, the first frame and frames 2 to 31, then
+//! writes the switches as values and times the idle frame in runs of 64 and a
+//! multiplier's switch flipped 101 times, each frame alone and its write not;
+//! every gate is held to the netlist evaluated by hand at every frame but
+//! inside the idle runs, and every circuit's outputs to integer + and ×. Each
+//! row prints its census, held to the generator's own count, and the runner
+//! prints the shuffled numbers over the filled ones, the premium, never gated.
+//! The committed bench, a 16-bit adder and an 8 by 8 multiplier, is the page's
+//! and no fixture.
+//!
 //! The runner is an example and not a member of the workspace, so the lock
 //! holds no third package and the engine still depends on the language crate
 //! alone (`AD-5`); its allocator is its own and ships in nothing.
@@ -169,6 +186,12 @@ mod sha256;
 #[allow(dead_code)]
 mod superposition;
 use superposition::{Inputs, Lattice, Move, Player};
+
+// Naught's netlists by hand, the engine's tests' own file (CART.9): the
+// bench's two placements, the census they print and every gate by hand.
+#[path = "../src/naught.rs"]
+#[allow(dead_code)]
+mod naught;
 
 // ---- the allocator: the system's, counted when asked ----------------------
 
@@ -560,8 +583,11 @@ struct Fixture {
     manifest: Manifest,
     board: Board,
     /// A rung's multiple of the window's area, and its cartridge's SHA-256
-    /// over LF.
+    /// over LF; a naught fixture's, 0 and its digest.
     rung: Option<(usize, String)>,
+    /// A naught fixture's placement and its gates' cells (`CART.9`), its
+    /// board the adder's bits and the multiplier's.
+    naught: Option<(naught::Lay, Vec<(u32, u32)>)>,
 }
 
 /// A cartridge's manifest read as the load reads it, so that a fixture is
@@ -610,6 +636,9 @@ fn fixtures_of(path: &Path) -> Result<Vec<Fixture>, String> {
     let text = std::fs::read_to_string(path)
         .map_err(|e| format!("{}: cannot be read: {e}", path.display()))?;
     let manifest = manifest_of(&text, path)?;
+    if manifest.name == "naught" {
+        return naught_fixtures(path);
+    }
     let name = manifest.name.clone();
     let mut out = vec![Fixture {
         name: name.clone(),
@@ -618,6 +647,7 @@ fn fixtures_of(path: &Path) -> Result<Vec<Fixture>, String> {
         manifest,
         board: WINDOW,
         rung: None,
+        naught: None,
     }];
     let Some(stem) = path.file_stem().map(|s| s.to_string_lossy().to_string()) else {
         return Ok(out);
@@ -647,6 +677,7 @@ fn fixtures_of(path: &Path) -> Result<Vec<Fixture>, String> {
             manifest,
             board: Board { w, h },
             rung: Some((times, digest)),
+            naught: None,
         });
     }
     Ok(out)
@@ -674,6 +705,8 @@ struct Run {
     counts: Option<Counts>,
     /// A Superposition row's own measure (`CART.12`).
     sp: Option<SpRow>,
+    /// A naught row's own measure (`CART.9`).
+    nt: Option<NtRow>,
 }
 
 impl Run {
@@ -906,6 +939,7 @@ fn run(fx: &Fixture, fi: usize, frames: usize, probe: &mut Probe) -> Result<Run,
         alone: None,
         counts: None,
         sp: None,
+        nt: None,
     };
     // The clock before the fixture's first frame, and after its steady frames
     // below; never between two frames, where it slowed the frame after it.
@@ -1297,6 +1331,7 @@ fn sp_idle(fx: &Fixture, fi: usize, probe: &mut Probe) -> Result<Run, String> {
             settle: settle.steps.len(),
             settle_ms: settle.ms,
         }),
+        nt: None,
     })
 }
 
@@ -1344,6 +1379,7 @@ fn sp_session(fx: &Fixture, fi: usize, probe: &mut Probe) -> Result<Run, String>
         alone: None,
         counts: None,
         sp: Some(SpRow::Act { acts, steps, by }),
+        nt: None,
     })
 }
 
@@ -1392,6 +1428,7 @@ fn sp_cascade(fx: &Fixture, fi: usize, probe: &mut Probe) -> Result<Run, String>
             deal,
             opened: sp_opened(&hand),
         }),
+        nt: None,
     })
 }
 
@@ -1776,6 +1813,474 @@ fn sp_row(r: &Run, start_clock: f64) -> Option<String> {
     })
 }
 
+// ---- Naught, the bench of gates (CART.9, decision 6) -----------------------
+
+/// The idle frame: `RUNS` runs of this many frames with nothing written,
+/// back to back, as the gun's are.
+const NT_RUN: usize = 64;
+/// A switch's cone: this many flips of a multiplier's switch drawn from the
+/// dice, each frame timed alone.
+const NT_FLIPS: usize = 101;
+/// The dice the cone's switches and the switches' values are drawn from.
+const NT_SEED: u32 = 9;
+
+fn is_naught(fx: &Fixture) -> bool {
+    fx.naught.is_some()
+}
+
+/// Naught's two fixtures, built from the source beside its cartridge at the
+/// floors' size, a 4,096-bit adder and a 64 by 64 multiplier, every switch a
+/// hash of the frame: laid by fill, `naught-f`, and shuffled with every gate
+/// its own shape, `naught-s`, each named by its cartridge's SHA-256 over LF.
+/// The committed bench is the page's, and no fixture; the fixtures leave out
+/// its settle (`naught::floors_source`), their switches reading the Clock as
+/// the frame.
+fn naught_fixtures(path: &Path) -> Result<Vec<Fixture>, String> {
+    let source_path = path.with_file_name("naught.source.vla");
+    let source = std::fs::read_to_string(&source_path)
+        .map_err(|e| format!("{}: cannot be read: {e}", source_path.display()))?;
+    let key = source_path.to_string_lossy().replace('\\', "/");
+    let (adder, multiplier) = naught::FLOORS;
+    let net = naught::Net::bench(adder, multiplier);
+    let mut out = Vec::new();
+    for (lay, suffix) in [(naught::Lay::Fill, "f"), (naught::Lay::Shuffled, "s")] {
+        let laid = naught::Laid::new(&net, lay, naught::Switches::Stimulus, naught::Wiring::Now);
+        let built = naught::floors_source(&source, &laid.block())
+            .ok_or_else(|| format!("{key}: holds no block for the bench"))?;
+        let e = expand_with(&built, &key, &gather(&key, &built), "").map_err(|r| {
+            format!(
+                "{key}: the pass refused the floors' bench at line {}: {}",
+                r.line, r.refusal.text
+            )
+        })?;
+        let digest = sha256::sha256_hex(e.text.replace("\r\n", "\n").as_bytes());
+        let manifest = manifest_of(&e.text, &source_path)?;
+        out.push(Fixture {
+            name: format!("naught-{suffix}"),
+            text: e.text,
+            from: source_path.clone(),
+            manifest,
+            board: Board {
+                w: adder,
+                h: multiplier,
+            },
+            rung: Some((0, digest)),
+            naught: Some((lay, laid.cells.clone())),
+        });
+    }
+    Ok(out)
+}
+
+/// A fixture's netlist, as its cells lay it.
+fn nt_net(fx: &Fixture) -> naught::Net {
+    naught::Net::bench(fx.board.w, fx.board.h)
+}
+
+fn nt_laid<'n>(fx: &Fixture, net: &'n naught::Net) -> naught::Laid<'n> {
+    let (lay, cells) = fx.naught.clone().expect("a naught fixture");
+    naught::Laid {
+        net,
+        cells,
+        lay,
+        switches: naught::Switches::Stimulus,
+        wiring: naught::Wiring::Now,
+    }
+}
+
+/// The switches' values at a frame under the stimulus, by hand.
+fn nt_stimulus(net: &naught::Net, frame: u64) -> Vec<u8> {
+    net.switches
+        .iter()
+        .map(|&(r, c)| naught::stimulus(r, c, frame))
+        .collect()
+}
+
+/// Every gate's cell held to the hand at the switches given, and every
+/// circuit's outputs to integer + and ×.
+fn nt_hold(c: &Cartridge, laid: &naught::Laid, switches: &[u8], at: &str) -> Result<(), String> {
+    let net = laid.net;
+    let gates = net.evaluate(switches);
+    let si = c
+        .machine()
+        .find_sheet(naught::SHEET)
+        .ok_or_else(|| format!("{at}: no Bench"))?;
+    for (k, &(r, col)) in laid.cells.iter().enumerate() {
+        let got = match c.machine().computed((si, r, col)) {
+            Some(Computed::Value(Value::Number(x))) => *x,
+            _ => f64::NAN,
+        };
+        if got != f64::from(gates[k]) {
+            return Err(format!(
+                "(frames-differ \"{at}\" (cell \"{}\") (engine {got}) (hand {}))",
+                naught::a1(r, col, false, false),
+                gates[k]
+            ));
+        }
+    }
+    net.check(switches, &gates)
+        .map_err(|e| format!("{at}: {e}"))
+}
+
+/// The census `describe` prints of a fixture, held to the generator's own
+/// count: its plan row's numbers.
+fn nt_census(c: &Cartridge, laid: &naught::Laid, name: &str) -> Result<naught::Census, String> {
+    let want = laid.census();
+    let described = c.describe();
+    let plan = described
+        .lines()
+        .find(|l| l.starts_with("(plan "))
+        .unwrap_or("(plan)");
+    if plan != want.row() {
+        return Err(format!(
+            "{name}: the census is not the generator's: {plan}, where it counts {}",
+            want.row()
+        ));
+    }
+    Ok(want)
+}
+
+/// The switches written as values in two untimed edits: every rectangle of
+/// them 0, then the ones a vector drawn from the dice sets 1, a value over a
+/// value; the frame after them stepped. The switches' values, as written.
+fn nt_values(
+    c: &mut Cartridge,
+    net: &naught::Net,
+    name: &str,
+    d: &mut naught::Dice,
+) -> Result<Vec<u8>, String> {
+    let zero: Vec<String> = naught::rectangles(net.switches.clone())
+        .into_iter()
+        .map(|(t, l, b, r)| {
+            format!(
+                "(cell \"{}\" \"{}:{}\" 0)",
+                naught::SHEET,
+                naught::a1(t, l, false, false),
+                naught::a1(b, r, false, false)
+            )
+        })
+        .collect();
+    c.write(&zero.join("\n")).map_err(|e| {
+        format!(
+            "{name}: the switches' values were refused: {}",
+            e.refusal.text
+        )
+    })?;
+    let values: Vec<u8> = net
+        .switches
+        .iter()
+        .map(|_| (d.next() >> 31) as u8)
+        .collect();
+    let ones: Vec<String> = net
+        .switches
+        .iter()
+        .zip(&values)
+        .filter(|(_, v)| **v == 1)
+        .map(|(&(r, col), _)| {
+            format!(
+                "(cell \"{}\" \"{}\" 1)",
+                naught::SHEET,
+                naught::a1(r, col, false, false)
+            )
+        })
+        .collect();
+    if !ones.is_empty() {
+        c.write(&ones.join("\n")).map_err(|e| {
+            format!(
+                "{name}: the switches' values were refused: {}",
+                e.refusal.text
+            )
+        })?;
+    }
+    if !c.step(0).done {
+        return Err(format!(
+            "{name}: the frame after the switches' values did not finish"
+        ));
+    }
+    Ok(values)
+}
+
+/// A fixture's row, timed: the load; the first frame; frames 2 to `frames`,
+/// every switch a hash of the frame, each timed alone; then the switches
+/// written as values, the idle frame in `RUNS` runs of `NT_RUN` frames, each
+/// run one span, and a switch's cone, `NT_FLIPS` flips of a multiplier's
+/// switch, each frame timed alone and its write not. Every gate held to the
+/// hand at every frame but inside the idle runs, held after them.
+fn nt_run(fx: &Fixture, fi: usize, frames: usize, probe: &mut Probe) -> Result<Run, String> {
+    let net = nt_net(fx);
+    let laid = nt_laid(fx, &net);
+    let start = Instant::now();
+    let mut c = load(&fx.text, &fx.from)?;
+    let load_ms = start.elapsed().as_secs_f64() * 1e3;
+    let census = nt_census(&c, &laid, &fx.name)?;
+    // The formula cells the steady frames compute, the stimulus's among them,
+    // counted before the switches become values.
+    let cells = c.machine().formulas().0;
+    let mut clocks: Vec<f64> = (0..SIDE_READINGS).map(|_| probe.read()).collect();
+    let mut times = Vec::with_capacity(frames);
+    for f in 1..=frames {
+        let t = Instant::now();
+        let s = c.step(0);
+        let ms = t.elapsed().as_secs_f64() * 1e3;
+        if s.frame != f as u64 || !s.done {
+            return Err(format!("{}: the step answered {}", fx.name, s.row()));
+        }
+        nt_hold(
+            &c,
+            &laid,
+            &nt_stimulus(&net, f as u64),
+            &format!("{} frame {f}", fx.name),
+        )?;
+        times.push(ms);
+    }
+    let mut d = naught::Dice(NT_SEED);
+    let mut switches = nt_values(&mut c, &net, &fx.name, &mut d)?;
+    nt_hold(
+        &c,
+        &laid,
+        &switches,
+        &format!("{}, the switches written", fx.name),
+    )?;
+    let (mut idle, mut answers) = (Vec::with_capacity(RUNS), Vec::new());
+    let mut f = frames + 2;
+    for _ in 0..RUNS {
+        let ms = span(&mut c, &fx.name, f, NT_RUN, &mut answers)?;
+        f += NT_RUN;
+        idle.push(ms / NT_RUN as f64);
+    }
+    nt_hold(
+        &c,
+        &laid,
+        &switches,
+        &format!("{}, after the idle runs", fx.name),
+    )?;
+    let toggles: Vec<u32> = match net.circuits.get(1) {
+        Some(naught::Circuit::Multiplier { a, b, .. }) => a.iter().chain(b).copied().collect(),
+        _ => return Err(format!("{}: the bench holds no multiplier", fx.name)),
+    };
+    let mut cone = Vec::with_capacity(NT_FLIPS);
+    for i in 0..NT_FLIPS {
+        let k = toggles[d.below(toggles.len())] as usize;
+        switches[k] ^= 1;
+        let (r, col) = net.switches[k];
+        c.write(&format!(
+            "(cell \"{}\" \"{}\" {})",
+            naught::SHEET,
+            naught::a1(r, col, false, false),
+            switches[k]
+        ))
+        .map_err(|e| format!("{}: a switch was refused: {}", fx.name, e.refusal.text))?;
+        let t = Instant::now();
+        let s = c.step(0);
+        let ms = t.elapsed().as_secs_f64() * 1e3;
+        if !s.done {
+            return Err(format!("{}: the cone's step answered {}", fx.name, s.row()));
+        }
+        nt_hold(&c, &laid, &switches, &format!("{}, flip {i}", fx.name))?;
+        cone.push(ms);
+    }
+    clocks.extend((0..SIDE_READINGS).map(|_| probe.read()));
+    Ok(Run {
+        name: fx.name.clone(),
+        fixture: fi,
+        cells,
+        load_ms,
+        times,
+        clocks,
+        facts: None,
+        conserved: None,
+        run: 1,
+        alone: None,
+        counts: None,
+        sp: None,
+        nt: Some(NtRow {
+            lay: laid.lay,
+            gates: net.gates.len(),
+            census,
+            idle,
+            cone,
+        }),
+    })
+}
+
+/// A fixture's counted instance: loaded and stepped `CHECK_FRAMES` frames
+/// under the stimulus, every gate held to the hand at each, the second
+/// frame's allocations counted and the heap's bytes from before the load.
+fn nt_measure(fx: &Fixture) -> Result<(Counts, naught::Census), String> {
+    let net = nt_net(fx);
+    let laid = nt_laid(fx, &net);
+    let wants: Vec<Vec<u8>> = (1..=CHECK_FRAMES as u64)
+        .map(|f| nt_stimulus(&net, f))
+        .collect();
+    let sizing = Sizing::begin();
+    let mut c = load(&fx.text, &fx.from)?;
+    let (mut allocs, mut reallocs) = (0, 0);
+    for (i, want) in wants.iter().enumerate() {
+        let f = i + 1;
+        let counted = f == 2;
+        if counted {
+            ALLOCS.store(0, Ordering::Relaxed);
+            REALLOCS.store(0, Ordering::Relaxed);
+            COUNTING.store(true, Ordering::Relaxed);
+        }
+        let s = c.step(0);
+        if counted {
+            COUNTING.store(false, Ordering::Relaxed);
+            allocs = ALLOCS.load(Ordering::Relaxed);
+            reallocs = REALLOCS.load(Ordering::Relaxed);
+        }
+        if s.frame != f as u64 || !s.done {
+            return Err(format!("{}: the step answered {}", fx.name, s.row()));
+        }
+        quiet(|| nt_hold(&c, &laid, want, &format!("{} frame {f}", fx.name)))?;
+    }
+    let (memory, resident) = (PEAK.load(Ordering::Relaxed), LIVE.load(Ordering::Relaxed));
+    drop(sizing);
+    let census = nt_census(&c, &laid, &fx.name)?;
+    Ok((
+        Counts {
+            frames: wants.len(),
+            allocs,
+            reallocs,
+            memory,
+            resident,
+            grid: c.machine().loaded().cells,
+            cells: c.machine().formulas().0,
+        },
+        census,
+    ))
+}
+
+/// A fixture's check row (`--check`): its counted instance, its digest and
+/// its census, which the check holds to the baseline's.
+fn nt_check(fx: &Fixture) -> Result<String, String> {
+    let (c, census) = nt_measure(fx)?;
+    let digest = fx.rung.as_ref().map(|(_, d)| d.as_str()).unwrap_or("");
+    Ok(format!(
+        "(frames-check \"{}\" (frames {}) (equal {}) (cells {}) (allocs {}) (reallocs {}) (memory {}) (digest \"{digest}\") (shapes {}) (levels {}) (alone {}))",
+        fx.name, c.frames, c.frames, c.cells, c.allocs, c.reallocs, c.memory, census.shapes, census.levels, census.alone
+    ))
+}
+
+/// A naught row's lines, in place of a fixture's frames.
+fn nt_lines(r: &Run, fx: &Fixture) -> Vec<String> {
+    let Some(nt) = &r.nt else {
+        return Vec::new();
+    };
+    let steady = r.steady();
+    let (med, (lo, hi)) = (median(&steady), range(&steady));
+    let cone = sorted(&nt.cone);
+    let memory = r.counts.as_ref().map_or(String::new(), |c| {
+        format!(
+            "; the memory, the heap's high-water mark over a load and {} frames of its counted instance, {} bytes, {:.1} a formula cell, and {} held after them",
+            c.frames,
+            thousands(c.memory),
+            c.memory as f64 / c.cells.max(1) as f64,
+            thousands(c.resident)
+        )
+    });
+    let digest = fx.rung.as_ref().map(|(_, d)| d.as_str()).unwrap_or("");
+    vec![
+        format!(
+            "{}: load {:.1} ms; {} formula cells, {} gates, {} shapes in {} levels, {} cells alone; frame 1 {} ms; frames 2 to {}, every switch a hash of the frame: a frame's median {} ms (min {}, max {}), {} cells a second, {:.3} frames a second",
+            r.name,
+            r.load_ms,
+            thousands(r.cells as u64),
+            thousands(nt.gates as u64),
+            thousands(nt.census.shapes as u64),
+            thousands(nt.census.levels as u64),
+            thousands(nt.census.alone as u64),
+            ms(r.times[0]),
+            r.times.len(),
+            ms(med),
+            ms(lo),
+            ms(hi),
+            thousands((r.cells as f64 / (med / 1e3)).round() as u64),
+            1e3 / med
+        ),
+        format!(
+            "  the switches then written as values: the idle frame's median {} ms over {RUNS} runs of {NT_RUN}, each run one span; a multiplier's switch flipped {} times, its frame's median {} ms (p95 {}, max {}), the write untimed",
+            ms(median(&nt.idle)),
+            nt.cone.len(),
+            ms(rank(&cone, 0.5)),
+            ms(rank(&cone, 0.95)),
+            ms(cone[cone.len() - 1])
+        ),
+        format!(
+            "  the bench of a {}-bit adder and a {} by {} multiplier, {}, built by the pass from {}, the cartridge's SHA-256 over LF {digest}; every gate held to the hand at every frame but inside the idle runs, and the outputs to integer + and ×{memory}",
+            fx.board.w,
+            fx.board.h,
+            fx.board.h,
+            match nt.lay {
+                naught::Lay::Fill => "laid by fill",
+                naught::Lay::Shuffled => "shuffled, every gate its own shape",
+            },
+            fx.from.display()
+        ),
+    ]
+}
+
+/// A naught row's baseline line.
+fn nt_row(r: &Run, start_clock: f64) -> Option<String> {
+    let nt = r.nt.as_ref()?;
+    let steady = r.steady();
+    let (med, (lo, hi)) = (median(&steady), range(&steady));
+    let cone = sorted(&nt.cone);
+    Some(format!(
+        "@{{ Runner = 'native'; Fixture = '{}'; Cells = {}; Frames = {}; Run = 1; Load = {:.1}; Memory = {}; FirstFrame = {}; FrameP50 = {}; FrameMin = {}; FrameMax = {}; IdleP50 = {}; ConeP50 = {}; Shapes = {}; Levels = {}; CellsPerSecond = {}; FramesPerSecond = {:.3}; ClockMs = {:.3}; ClockSpread = {:.1}; ClockDrift = {:.1} }}",
+        r.name,
+        r.cells,
+        steady.len(),
+        r.load_ms,
+        r.counts.as_ref().map_or(0, |c| c.memory),
+        ms(r.times[0]),
+        ms(med),
+        ms(lo),
+        ms(hi),
+        ms(median(&nt.idle)),
+        ms(rank(&cone, 0.5)),
+        nt.census.shapes,
+        nt.census.levels,
+        (r.cells as f64 / (med / 1e3)).round() as u64,
+        1e3 / med,
+        median(&r.clocks),
+        r.spread(),
+        drift(median(&r.clocks), start_clock)
+    ))
+}
+
+/// The regularity premium read off the two rows (decision 6): each of the
+/// shuffled fixture's numbers over the filled one's, printed and never gated.
+fn premium(runs: &[Run]) -> Option<String> {
+    let f = runs.iter().find(|r| r.name == "naught-f")?;
+    let s = runs.iter().find(|r| r.name == "naught-s")?;
+    let (nf, ns) = (f.nt.as_ref()?, s.nt.as_ref()?);
+    let memory = |r: &Run| r.counts.as_ref().map_or(0.0, |c| c.memory as f64);
+    let cone = |n: &NtRow| rank(&sorted(&n.cone), 0.5);
+    Some(format!(
+        "  naught-s over naught-f, the same {} gates in the same cells: the load {:.1} times, the memory {:.1}, the first frame {:.1}, the steady frame {:.1}, the idle frame {:.1}, a switch's cone {:.1}; {} shapes against {}",
+        thousands(nf.gates as u64),
+        s.load_ms / f.load_ms,
+        memory(s) / memory(f),
+        s.times[0] / f.times[0],
+        median(&s.steady()) / median(&f.steady()),
+        median(&ns.idle) / median(&nf.idle),
+        cone(ns) / cone(nf),
+        thousands(ns.census.shapes as u64),
+        thousands(nf.census.shapes as u64)
+    ))
+}
+
+/// A naught row's own measure (`CART.9`).
+struct NtRow {
+    lay: naught::Lay,
+    gates: usize,
+    census: naught::Census,
+    /// The idle runs, a frame's milliseconds each.
+    idle: Vec<f64>,
+    /// Each flip's frame, in milliseconds.
+    cone: Vec<f64>,
+}
+
 // ---- the slope (ENGINE.9, decision 8) ---------------------------------------
 
 /// How a quantity grows against the formula cells over the ladder, from the
@@ -1877,7 +2382,7 @@ fn slope(runs: &[Run]) -> Vec<String> {
 
 fn default_cartridges() -> Vec<PathBuf> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
-    ["life", "gun", "sand", "superposition"]
+    ["life", "gun", "sand", "superposition", "naught"]
         .iter()
         .map(|n| root.join("cartridges").join(n).join(format!("{n}.vla")))
         .collect()
@@ -1956,6 +2461,20 @@ fn main() -> ExitCode {
         // tools/check_frame_floors.ps1.
         let mut printed = 0;
         for fx in &fixtures {
+            if is_naught(fx) {
+                match nt_check(fx) {
+                    Ok(row) => {
+                        println!("{row}");
+                        printed += 1;
+                    }
+                    Err(e) => {
+                        println!("{e}");
+                        eprintln!("frames: FAILED, {e}");
+                        return ExitCode::FAILURE;
+                    }
+                }
+                continue;
+            }
             if is_superposition(fx) {
                 match sp_check(fx) {
                     Ok(rows) => {
@@ -2019,6 +2538,11 @@ fn main() -> ExitCode {
     for (fi, fx) in fixtures.iter().enumerate() {
         let measured = if is_superposition(fx) {
             sp_rows(fx, fi, &mut probe)
+        } else if is_naught(fx) {
+            nt_run(fx, fi, frames, &mut probe).and_then(|mut r| {
+                r.counts = Some(nt_measure(fx)?.0);
+                Ok(vec![r])
+            })
         } else {
             run(fx, fi, frames, &mut probe).and_then(|mut r| {
                 let wants = planes(fx, CHECK_FRAMES)?;
@@ -2037,7 +2561,7 @@ fn main() -> ExitCode {
     }
 
     println!(
-        "frames: the native runner, {} on {}, {} row(s), {frames} frames each, every frame equal to the hand-written Life or Sand, and Superposition's rows held to the hand-written lattice",
+        "frames: the native runner, {} on {}, {} row(s), {frames} frames each, every frame equal to the hand-written Life or Sand, Superposition's rows held to the hand-written lattice, and naught's to its netlist by hand",
         std::env::consts::ARCH,
         std::env::consts::OS,
         runs.len()
@@ -2053,7 +2577,8 @@ fn main() -> ExitCode {
         let spread = r.spread();
         let drift = drift(clock, start_clock);
         let by = if r.name == "sand" { "Sand" } else { "Life" };
-        let said = sp_lines(r);
+        let mut said = sp_lines(r);
+        said.extend(nt_lines(r, fx));
         for line in &said {
             println!("{line}");
         }
@@ -2141,6 +2666,10 @@ fn main() -> ExitCode {
             println!("{line}");
         }
     }
+    if let Some(line) = premium(&runs) {
+        println!("the regularity premium (CART.9), natively: the shuffled bench's numbers over the filled one's, printed and never gated");
+        println!("{line}");
+    }
     if !steady_all {
         println!("no baseline rows: run again with the process in the foreground, or through tools/bench_frames.ps1, which opts it out of Windows' power throttling");
         return ExitCode::from(3);
@@ -2148,6 +2677,10 @@ fn main() -> ExitCode {
     println!("the baseline rows, for tools/check_frame_floors.ps1:");
     for r in &runs {
         if let Some(row) = sp_row(r, start_clock) {
+            println!("    {row}");
+            continue;
+        }
+        if let Some(row) = nt_row(r, start_clock) {
             println!("    {row}");
             continue;
         }

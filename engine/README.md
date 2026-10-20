@@ -119,13 +119,36 @@ cargo run --release --example seiyaku              # the book written into the s
 cargo run --release --example seiyaku -- --check   # the same, compared and written nowhere
 ```
 
+Naught: *Vel et Aut*, `cartridges/naught/`, the bench of logic gates
+(`CART.9`), is held to a netlist written by hand, `src/naught.rs`, compiled for
+the tests alone, which builds the bench's two circuits, a ripple-carry adder
+and an array multiplier, lays them by fill or shuffles them among the same
+cells until every gate is its own shape, writes the block of the source that
+states them, and counts the census the language plans of each. A test holds
+the committed bench to the block and its every formula to the generator's
+text; another holds the six gates to their truth tables; another the bench's
+settle, which opens it on its values, an act two frames; another drives the
+circuits laid both ways, every gate held to the hand at every frame and
+every output to integer + and ×, exhaustively at four bits; another holds
+`describe`'s census to the hand's count, shape by shape; another the
+stimulus the floors drive the switches with, over the bench as the floors
+build it, its settle left out; and another the teacher's rate,
+every gate reading the last frame, a gate delay a frame, its deepest ripple
+counted. The block is written into the source by an example of its own,
+which includes the same file by its path, as the floors' runner does:
+
+```text
+cargo run --release --example naught              # the bench written into the source's block
+cargo run --release --example naught -- --check   # the same, compared and written nowhere
+```
+
 Its tests hold the two projections of a window to one another: the plane of
 a window is the view record of the same window, byte for value, the record
 read with the language's own reader, every frame of the repository's test
 card, a cartridge holding every kind of value a Screen cell can under a
 Camera that pans a column a frame, and Life at its corners (`ENGINE.2`).
 And one plays every committed replay, the input card's, Kairos's, Sand's, the
-sound card's, Superposition's and Seiyaku's, as `docs/SPEC.md` section 7.6 plays one, the derived writes the
+sound card's, Superposition's, Seiyaku's and Naught's, as `docs/SPEC.md` section 7.6 plays one, the derived writes the
 Write sheet leaves before each frame's rows, to the golden beside it, byte
 for byte, so the host's player and the engine alone end in the same sheet
 (`ENGINE.3`, made general over every folder holding a replay by `ENGINE.4`).
@@ -360,6 +383,24 @@ bytes a formula cell more, the room the language's frame end now keeps for
 every cell a frame may change (Frazaro's `KERNEL.36`). The gun's idle frame
 at sixteen times the area costs 1.08 times the window's natively, inside
 the floors' margin, and 1.18 times in the browser.
+
+Since `CART.9` (2026-10-20) the runner measures the regularity premium, what a
+grid pays when its formulas share no shape. Naught's bench is built at a
+4,096-bit adder and a 64 by 64 multiplier, 44,544 gates and 8,321 switches,
+every switch a hash of the frame, twice from the committed source with the
+generator's block: laid by fill, `naught-f`, 32 shapes, and shuffled among
+the same cells until every gate is its own shape, `naught-s`, 44,548. Each
+row times the load, the first frame, the steady frame, the idle frame once
+the switches are written as values, and a multiplier's switch flipped, its
+cone; every gate is held to the netlist by hand at every frame, the census to
+the generator's count, and the runner prints each shuffled number over the
+filled one's, never gated. The page's `?frames=1` builds the same two
+fixtures through the hand's twin in JavaScript, byte for byte, so the two
+halves are held to one digest a fixture. The build's run (2026-10-20, the
+floors' baseline being the owner's): the shuffled bench costs 14.6 times the
+filled one's load natively and 11.8 in the browser, 5.8 and 5.1 times its
+memory, 4.9 and 3.7 times its steady frame of 4.9 and 6.5 ms, 3.6 and 4.2
+times its idle frame and 4.7 and 3.7 times a switch's cone.
 
 ## Where it comes from
 

@@ -113,21 +113,36 @@ Steps) or another cascade (its frames, seed, probability, deal, rings and
 sites opened). The three rows name one fixture, the cartridge's file, so a
 re-based row is judged by it. Ten rows a half since then.
 
+NAUGHT (CART.9, decision 6, 2026-10-20): the bench of gates, the regularity
+premium. The same netlist, a 4,096-bit ripple adder and a 64 by 64 array
+multiplier, 44,544 gates, laid twice in the same cells: by fill, naught-f,
+each role one shape, and shuffled, naught-s, every gate its own shape. Each
+half builds both from cartridges/naught/naught.source.vla, its block written
+by the netlist's generator, the runner's engine/src/naught.rs and the page's
+cartridges/naught/naught.hand.js, which write the same bytes; each is named
+by its cartridge's SHA-256 over LF as a rung of the ladder is, so this script
+prints no block when the halves built other cartridges, or printed another
+census, Shapes and Levels. A row's steady frame is frames 2 to 31, every
+switch a hash of the frame; its IdleP50 the idle frame after the switches
+are written as values, in runs; its ConeP50 a multiplier's switch flipped,
+its frame alone. After the block, the premium for each half, the shuffled
+numbers over the filled. Twelve rows a half since then.
+
 WHAT IT DOES:
   1. builds what it measures, unless -NoBuild: the runner (cargo build
      --release --example frames), the engine's module (cargo build --release
      -p alonzo --target wasm32-unknown-unknown) and the page
      (tools/build_web.ps1);
-  2. runs the runner over the four fixtures and reads its ten native rows,
-     the three, the ladder's four and Superposition's three, and its four
-     rungs' digests;
-  3. runs web/index.html?frames=1 and reads its ten wasm rows and its
+  2. runs the runner over the five fixtures and reads its twelve native
+     rows, the three, the ladder's four, Superposition's three and naught's
+     two, and its six rungs' digests, the ladder's four and naught's two;
+  3. runs web/index.html?frames=1 and reads its twelve wasm rows and its
      rungs' digests, both halves on the performance cores and opted out of
      the throttling, and holds the two halves' digests equal, and their
-     Superposition sessions and cascades the same;
+     Superposition sessions and cascades the same, and naught's census;
   4. prints the block: the date, the environment, the pin of vla-lang in
      Cargo.toml, each fixture's SHA-256 over LF bytes, each rung's, the
-     twenty rows, and the
+     twenty-four rows, and the
      floor history as the check holds it with this run's entry added last,
      each row's cells a second less the check's margin of 10%, rounded down
      to three figures, or the latest entry's floor for the row where that is
@@ -337,17 +352,18 @@ function Get-BaselineRungs([string]$path) {
     if (-not (Test-Path -LiteralPath $path)) { return $rungs }
     foreach ($line in [System.IO.File]::ReadAllLines($path)) {
         if ($line -match '^\$baselineRungs = @\{') {
-            foreach ($m in [regex]::Matches($line, "'([a-z]+-x\d+)' = '([0-9A-F]{64})'")) { $rungs[$m.Groups[1].Value] = $m.Groups[2].Value }
+            foreach ($m in [regex]::Matches($line, "'([a-z]+-(?:x\d+|[fs]))' = '([0-9A-F]{64})'")) { $rungs[$m.Groups[1].Value] = $m.Groups[2].Value }
             break
         }
     }
     return $rungs
 }
 # A half's rungs as its text prints them, @{ Rung = 'life-x4'; ...; Digest = '...' }:
-# each rung's name to its cartridge's SHA-256 over LF.
+# each rung's name to its cartridge's SHA-256 over LF; since CART.9 naught's two
+# placements too, naught-f and naught-s, their Width and Height the bench's sizes.
 function Get-Rungs([string]$text) {
     $rungs = [ordered]@{}
-    foreach ($m in [regex]::Matches($text, "(?m)^\s+@\{ Rung = '([a-z]+-x\d+)'; Width = \d+; Height = \d+; Digest = '([0-9A-F]{64})' \}")) { $rungs[$m.Groups[1].Value] = $m.Groups[2].Value }
+    foreach ($m in [regex]::Matches($text, "(?m)^\s+@\{ Rung = '([a-z]+-(?:x\d+|[fs]))'; Width = \d+; Height = \d+; Digest = '([0-9A-F]{64})' \}")) { $rungs[$m.Groups[1].Value] = $m.Groups[2].Value }
     return $rungs
 }
 function Get-SameRows([string]$path) {
@@ -376,11 +392,12 @@ $life = Join-Path $repoRoot 'cartridges/life/life.vla'
 $gun = Join-Path $repoRoot 'cartridges/gun/gun.vla'
 $sand = Join-Path $repoRoot 'cartridges/sand/sand.vla'
 $superposition = Join-Path $repoRoot 'cartridges/superposition/superposition.vla'
+$naught = Join-Path $repoRoot 'cartridges/naught/naught.vla'
 $runnerExe = Join-Path $repoRoot ('target/release/examples/frames' + $(if ($onWindows) { '.exe' } else { '' }))
 $wasm = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
 $page = Join-Path $repoRoot 'web/index.html'
 
-Write-Output '=== THE FRAME FLOORS: LIFE, THE SIZE LADDER, SAND AND SUPERPOSITION MEASURED NATIVELY AND IN THE BROWSER (CART.1, CART.2, ENGINE.9, CART.12) ==='
+Write-Output '=== THE FRAME FLOORS: LIFE, THE SIZE LADDER, SAND, SUPERPOSITION AND NAUGHT MEASURED NATIVELY AND IN THE BROWSER (CART.1, CART.2, ENGINE.9, CART.12, CART.9) ==='
 if (-not $NoBuild) {
     $cargo = Find-Cargo
     if ($cargo -eq '') { Write-Output 'FAIL: no cargo on PATH or in ~/.cargo/bin; build the runner and the module, then run with -NoBuild'; exit 1 }
@@ -409,7 +426,7 @@ $coresWord = if ($cores.Mask -ne 0) { ', on the performance cores' } else { '' }
 Write-Output ("  the native runner, {0} frames a fixture, its process opted out of power throttling{1}..." -f $Frames, $coresWord)
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName = $runnerExe
-$psi.Arguments = ('--frames {0} "{1}" "{2}" "{3}" "{4}"' -f $Frames, $life, $gun, $sand, $superposition)
+$psi.Arguments = ('--frames {0} "{1}" "{2}" "{3}" "{4}" "{5}"' -f $Frames, $life, $gun, $sand, $superposition, $naught)
 $psi.UseShellExecute = $false
 $psi.RedirectStandardOutput = $true
 $psi.WorkingDirectory = $repoRoot
@@ -420,10 +437,11 @@ $nativePinned = Set-PerformanceCores $proc
 $nativeText = $proc.StandardOutput.ReadToEnd()
 $proc.WaitForExit()
 $nativeRows = @(($nativeText -split "`r?`n") | Where-Object { $_ -match "^\s+@\{ Runner = 'native'" } | ForEach-Object { $_.Trim() })
-# Ten rows a half since CART.12: life, gun and sand, the size ladder's four rungs (ENGINE.9), and
-# Superposition's three, the idle frame, an act's latency and the deepest cascade.
-$rowsAHalf = 10
-$rungNames = @('life-x4', 'life-x16', 'gun-x4', 'gun-x16')
+# Twelve rows a half since CART.9: life, gun and sand, the size ladder's four rungs (ENGINE.9),
+# Superposition's three, the idle frame, an act's latency and the deepest cascade (CART.12), and
+# naught's two, the bench laid by fill and shuffled, each named by its digest as a rung is.
+$rowsAHalf = 12
+$rungNames = @('life-x4', 'life-x16', 'gun-x4', 'gun-x16', 'naught-f', 'naught-s')
 if ($nativeRows.Count -ne $rowsAHalf) {
     Write-Output $nativeText
     Write-Output ("FAIL: the runner printed {0} row(s), not {1} (exit {2}); its words are above" -f $nativeRows.Count, $rowsAHalf, $proc.ExitCode)
@@ -554,10 +572,18 @@ foreach ($pair in @(@('superposition-act', @('Frames', 'Steps')), @('superpositi
         if ((Get-Field $n $field) -ne (Get-Field $w $field)) { $spProblems += ("{0}'s {1} is {2} natively and {3} in the page" -f $pair[0], $field, (Get-Field $n $field), (Get-Field $w $field)) }
     }
 }
+# naught's two halves (CART.9): each lays the bench by its own generator, so the halves measured the same
+# cartridges only when they print the same census; their digests are held above.
+foreach ($fixture in @('naught-f', 'naught-s')) {
+    $n = $byRow['native ' + $fixture]; $w = $byRow['wasm ' + $fixture]
+    foreach ($field in @('Shapes', 'Levels')) {
+        if ((Get-Field $n $field) -ne (Get-Field $w $field)) { $spProblems += ("{0}'s {1} is {2} natively and {3} in the page" -f $fixture, $field, (Get-Field $n $field), (Get-Field $w $field)) }
+    }
+}
 if ($spProblems.Count -gt 0) {
     Write-Output $nativeText.TrimEnd()
     Write-Output $wasmText.TrimEnd()
-    Write-Output ("FAIL: {0}: the two halves did not play the same Superposition, so no block is printed. Each half's hand plays the scripted session and finds the cascade's deal; build the page again (run without -NoBuild), so that its hand and its cartridge are this tree's." -f ($spProblems -join '; '))
+    Write-Output ("FAIL: {0}: the two halves did not play the same Superposition or lay the same naught, so no block is printed. Each half's hand plays the scripted session, finds the cascade's deal and lays the bench; build the page again (run without -NoBuild), so that its hands and its cartridges are this tree's." -f ($spProblems -join '; '))
     exit 1
 }
 # Each row's floor: this run's cells a second less the margin, rounded down to three figures, or the
@@ -675,6 +701,15 @@ foreach ($half in @('native', 'wasm')) {
             Write-Output ('  {0} gun: at {1:N0} times the window''s cells its idle frame costs {2:N2} times the window''s: {3}' -f $half, ($cells[2] / $cells[0]), $ratio, $(if ($ratio -le 1.0 + $margin) { 'the prediction, the window''s cost, held within the floors'' margin of 10%' } else { 'the prediction, the window''s cost, missed by {0:N0}%, past the floors'' margin of 10%' -f (($ratio - 1.0) * 100.0) }))
         }
     }
+}
+# The regularity premium (CART.9, decision 6), both halves, read off the rows: naught-s's numbers over
+# naught-f's; for docs/REARVIEW.md, never gated.
+Write-Output 'The regularity premium (CART.9): the shuffled bench''s numbers over the filled one''s:'
+foreach ($half in @('native', 'wasm')) {
+    $f = $byKey["$half naught-f"]; $s = $byKey["$half naught-s"]
+    if ($null -eq $f -or $null -eq $s) { continue }
+    $over = @(foreach ($k in @('Load', 'Memory', 'FirstFrame', 'FrameP50', 'IdleP50', 'ConeP50')) { $a = [double](Get-Field $f $k); $b = [double](Get-Field $s $k); if ($a -gt 0) { '{0:N1}' -f ($b / $a) } else { 'n/a' } })
+    Write-Output ('  {0}: the load {1} times, the memory {2}, the first frame {3}, the steady frame {4}, the idle frame {5}, a switch''s cone {6}; {7} shapes against {8}' -f $half, $over[0], $over[1], $over[2], $over[3], $over[4], $over[5], (Get-Field $s 'Shapes'), (Get-Field $f 'Shapes'))
 }
 Write-Output ''
 if ($kept.Count -gt 0) { Write-Output ("Kept: {0}, measured slower than the run that set the latest floor and still above it, so the entry keeps that floor." -f ($kept -join ', ')) }
