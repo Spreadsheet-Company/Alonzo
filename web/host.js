@@ -1976,18 +1976,30 @@
   // event, when a listener has one: its Ctrl, Cmd, Alt and repeat.
   Host.prototype.keyDown = function (code, key, ev) {
     if (!code) return false;
-    var cmd = this._commandKey(code, ev);
+    var cmd = this._commandKey(code, ev, key);
     if (cmd) { if (!(ev && ev.repeat)) this.command(cmd.name, 'key'); return true; }
     this.held[code] = true;
     this.lastKey = { key: key === undefined ? '' : String(key), code: String(code) };
     return this._bound(code);
   };
   // The command a key runs on the Screen (ENGINE.25; docs/SPEC.md section 3.10): the first row holding now whose key is
-  // the code, while no Ctrl, Cmd or Alt is held; null for every other key, the game's buttons' or the viewport's.
-  Host.prototype._commandKey = function (code, ev) {
+  // the code, while no Ctrl, Cmd or Alt is held; null for every other key, the game's buttons' or the viewport's. A digit
+  // of the keypad, Num Lock on so that its key is the digit, runs the command of the digit row's key when no row holding
+  // names the keypad's own, as a spreadsheet takes the keypad's digits for the row's and the page's keymap does (CART.14's
+  // hand test, 2026-10-19); Num Lock off, its arrows, Home and End stay the viewport's. key, the event's KeyboardEvent.key
+  // where a caller has no event.
+  Host.prototype._commandKey = function (code, ev, key) {
     if (!this._five() || (ev && (ev.ctrlKey || ev.metaKey || ev.altKey))) return null;
-    return Object.prototype.hasOwnProperty.call(this.commandKeys, code) ? this.commandKeys[code] : null;
+    if (Object.prototype.hasOwnProperty.call(this.commandKeys, code)) return this.commandKeys[code];
+    var row = keypadDigit(code, key !== undefined ? key : (ev ? ev.key : undefined));
+    return row && Object.prototype.hasOwnProperty.call(this.commandKeys, row) ? this.commandKeys[row] : null;
   };
+  // The digit row's key a keypad's digit stands for, Digit7 for Numpad7, while Num Lock is on so that its key is the
+  // digit; null for any other key.
+  function keypadDigit(code, key) {
+    var m = /^Numpad([0-9])$/.exec(String(code || ''));
+    return m && String(key) === m[1] ? 'Digit' + m[1] : null;
+  }
   Host.prototype.keyUp = function (code) { delete this.held[code]; };
   Host.prototype.releaseKeys = function () { this.held = Object.create(null); };
   Host.prototype._bound = function (code) {

@@ -2834,6 +2834,7 @@ mod tests {
                 "kairos",
                 "life",
                 "sand",
+                "seiyaku",
                 "soundcard",
                 "superposition",
                 "testcard"
@@ -3216,6 +3217,7 @@ mod tests {
             let mut hand = SandHand::default();
             let mut kairos_hand = KairosHand::new();
             let mut lattice_hand = SuperpositionHand::default();
+            let mut puzzle_hand = SeiyakuHand::default();
             let mut held = |c: &Cartridge, frame: u32, rows: &[Form]| {
                 if name == "sand" {
                     hand.holds(c, frame, rows);
@@ -3223,6 +3225,8 @@ mod tests {
                     kairos_hand.holds(c, frame, rows);
                 } else if name == "superposition" {
                     lattice_hand.holds(c, frame, rows);
+                } else if name == "seiyaku" {
+                    puzzle_hand.holds(c, frame, rows);
                 }
             };
             play_to_golden(&name, &cart, &read(replay), &golden, &mut held);
@@ -3257,11 +3261,30 @@ mod tests {
                     "the owner's session: 18 acts in one world, the Input's first rows and each act a frame of rows, 99 settle steps, no box at its end, the one sealed on a reading of nothing opened by the cascade that reached it, and two decays observed"
                 );
             }
+            if name == "seiyaku" {
+                let board = puzzle_hand.board.as_ref().expect("the replay's board");
+                assert_eq!(
+                    (board.clock, board.instances, puzzle_hand.settles, board.restarts, board.filled() - board.given_count(), board.satisfied),
+                    (35, 1, 69, 1, 0, false),
+                    "the owner's session at the first slice's hand test: 35 acts begun, the load's among them, one instance after the first, 69 settle steps, and every assignment and mark retracted once, at its end"
+                );
+                assert!(
+                    !puzzle_hand.satisfied_once,
+                    "the owner's session satisfies no instance; the scripted session of seiyaku_s_board_is_its_hand_at_every_frame holds one"
+                );
+            }
             played.push(name);
         }
         assert_eq!(
             played,
-            ["inputcard", "kairos", "sand", "soundcard", "superposition"],
+            [
+                "inputcard",
+                "kairos",
+                "sand",
+                "seiyaku",
+                "soundcard",
+                "superposition"
+            ],
             "the replays committed under cartridges/"
         );
     }
@@ -5184,5 +5207,539 @@ mod tests {
             Some(deal),
             "the deal cleared nothing: the world as dealt"
         );
+    }
+
+    // ---- CART.14: Seiyaku, the number-placement puzzle ----
+
+    use crate::seiyaku::{self as sy, Seiyaku, Shown};
+
+    /// Seiyaku's cartridge and its source, `None` in a package, which holds no
+    /// `cartridges/`.
+    fn seiyaku() -> Option<(String, String)> {
+        Some((
+            crate::repository::read("seiyaku/seiyaku.vla")?,
+            crate::repository::read("seiyaku/seiyaku.source.vla")?,
+        ))
+    }
+
+    /// The cartridge loaded and its seed written, as the host writes a
+    /// `(seed host)` cartridge's before its first step.
+    fn seiyaku_loaded(text: &str, seed: u64) -> Cartridge {
+        let mut c = Cartridge::load(text, "seiyaku.vla", text.len()).expect("loads");
+        c.write(&format!("(cell \"Clock\" \"B3\" {seed})"))
+            .expect("the seed");
+        c
+    }
+
+    /// A cell's computed value, a number or a text, read off the machine.
+    fn shown_at(c: &Cartridge, sheet: &str, row: u32, col: u32) -> Shown {
+        let si = c.machine().find_sheet(sheet).expect("the sheet");
+        match c.machine().computed((si, row, col)) {
+            Some(Computed::Value(Value::Number(n))) => Shown::Number(*n),
+            Some(Computed::Value(Value::Text(t))) => Shown::Text(t.clone()),
+            Some(Computed::Value(Value::Empty)) | None => Shown::Number(0.0),
+            other => panic!("{sheet}!{} holds {other:?}", address(row, col)),
+        }
+    }
+
+    /// The board held to the hand's: every variable's code or marks, the
+    /// givens, the Lab's counts and the Constraints sheet's every value.
+    fn seiyaku_holds(c: &Cartridge, hand: &Seiyaku, at: &str) {
+        let n = |v: f64| Shown::Number(v);
+        let t = |s: &str| Shown::Text(s.to_string());
+        let mut want: Vec<(&str, u32, u32, Shown)> = Vec::new();
+        for r in 1..=9 {
+            for col in 1..=9 {
+                let k = ((r - 1) * 9 + col - 1) as usize;
+                want.push(("Board", r, col, hand.shown(r, col)));
+                want.push(("Givens", r, col, n(f64::from(hand.givens[k]))));
+                want.push(("Marks", r, col, n(f64::from(hand.marks[k]))));
+            }
+        }
+        let deal = hand.deal.as_ref().expect("a frame dealt");
+        let lab = [
+            hand.acts as f64,
+            hand.instances as f64,
+            hand.restarts as f64,
+            f64::from(hand.next_grade),
+            f64::from(hand.grade),
+        ];
+        for (k, v) in lab.iter().enumerate() {
+            want.push(("Lab", k as u32 + 1, 2, n(*v)));
+        }
+        want.push(("Lab", 11, 2, n(f64::from(u8::from(hand.satisfied)))));
+        want.push(("Lab", 12, 2, n(hand.satisfied_acts as f64)));
+        let filled = hand.filled() as f64;
+        let givens = hand.given_count() as f64;
+        let violated = hand.violated.iter().filter(|&&v| v).count() as f64;
+        let constraints = [
+            (4, n(hand.instances as f64 + 1.0)),
+            (5, n(f64::from(hand.grade))),
+            (6, n(deal.puzzle as f64)),
+            (7, n(hand.seed as f64)),
+            (8, n(f64::from(hand.next_grade))),
+            (10, n(givens)),
+            (11, n(filled - givens)),
+            (12, n(81.0 - filled)),
+            (13, n(violated)),
+            (14, n(hand.violated_constraints() as f64)),
+            (15, n(f64::from(hand.marks_kept()))),
+            (16, n(hand.acts as f64)),
+            (17, t(&hand.satisfied_words())),
+            (
+                18,
+                t(if hand.satisfied {
+                    "No search was performed by the cartridge."
+                } else {
+                    ""
+                }),
+            ),
+        ];
+        for (row, v) in constraints {
+            want.push(("Constraints", row, 2, v));
+        }
+        want.push((
+            "Constraints",
+            5,
+            3,
+            t(sy::GRADES[usize::from(hand.grade) - 1]),
+        ));
+        want.push((
+            "Constraints",
+            8,
+            3,
+            t(sy::GRADES[usize::from(hand.next_grade) - 1]),
+        ));
+        for v in 1..=9u8 {
+            let placed = hand.grid.iter().filter(|&&x| x == v).count() as f64;
+            want.push(("Constraints", 19 + u32::from(v), 2, n(placed)));
+        }
+        let units = [&hand.row_counts, &hand.col_counts, &hand.box_counts];
+        for (u, counts) in units.iter().enumerate() {
+            for (j, unit) in counts.iter().enumerate() {
+                let row = 31 + 9 * u as u32 + j as u32;
+                let state = Seiyaku::state(unit);
+                let assigned: u32 = unit.iter().map(|&x| u32::from(x)).sum();
+                want.push(("Constraints", row, 2, n(f64::from(assigned))));
+                want.push(("Constraints", row, 3, t(state)));
+                want.push((
+                    "Constraints",
+                    row,
+                    4,
+                    n(f64::from(u8::from(state == "violated"))),
+                ));
+            }
+        }
+        for (sheet, row, col, w) in want {
+            let got = shown_at(c, sheet, row, col);
+            assert!(
+                got == w,
+                "{at}: {sheet}!{} holds {got:?}, and the hand's {w:?}",
+                address(row, col)
+            );
+        }
+    }
+
+    /// One act and its settle, stepped to the end: the hand framed with the
+    /// act's rows at its frame and the released rows after, the board held to
+    /// it at every frame. Its frames.
+    fn seiyaku_act(c: &mut Cartridge, hand: &mut Seiyaku, i: &sy::Inputs) -> u32 {
+        let rows = format!(
+            "(cell \"Input\" \"B11\" {})\n(cell \"Input\" \"B12\" {})\n(cell \"Input\" \"B13\" {})\n(cell \"Input\" \"B14\" {})\n(cell \"Input\" \"B15\" {})\n(cell \"Input\" \"B19\" {})\n(cell \"Input\" \"B20\" {})",
+            i.column,
+            i.row,
+            u8::from(i.left),
+            u8::from(i.right),
+            u8::from(i.middle),
+            quoted(&i.sheet),
+            quoted(&i.command)
+        );
+        c.write(&rows).expect("the act's rows");
+        let mut frames = 0;
+        let mut inputs = i.clone();
+        let mut begins = true;
+        loop {
+            let s = loop {
+                let s = c.step(0);
+                if s.done {
+                    break s;
+                }
+            };
+            hand.frame(&inputs, begins);
+            inputs = i.released();
+            begins = false;
+            frames += 1;
+            seiyaku_holds(c, hand, &format!("frame {}", s.frame));
+            if c.settle() != Settle::Settling {
+                assert_eq!(c.settle(), Settle::Settled, "the act settles inside its K");
+                return frames;
+            }
+        }
+    }
+
+    /// Seiyaku's committed replay held to the hand at every frame (`CART.14`,
+    /// decision 14): the Input rows as the replay's rows leave them, a frame
+    /// with rows an act's and a frame with none a settle step, before which
+    /// the engine has released the press and the command; an edit of the seed
+    /// read as the board reads it. Every frame's board, givens, marks, Lab and
+    /// Constraints held to the hand's.
+    #[derive(Default)]
+    struct SeiyakuHand {
+        board: Option<Seiyaku>,
+        input: sy::Inputs,
+        settles: usize,
+        satisfied_once: bool,
+    }
+
+    impl SeiyakuHand {
+        fn holds(&mut self, c: &Cartridge, frame: u32, rows: &[Form]) {
+            let board = self.board.get_or_insert_with(|| {
+                let seed = value_of(c, "Clock", "B3").parse().expect("the seed");
+                let source =
+                    crate::repository::read("seiyaku/seiyaku.source.vla").expect("the source");
+                Seiyaku::new(sy::book_of(&source), seed)
+            });
+            for row in rows {
+                let Form::List(l) = row else { continue };
+                let [Form::Sym(head), Form::Str(sheet), Form::Str(addr), value] =
+                    l.items.as_slice()
+                else {
+                    continue;
+                };
+                if head != "cell" {
+                    continue;
+                }
+                let number = match value {
+                    Form::Sym(n) => n.parse::<f64>().unwrap_or(0.0),
+                    _ => 0.0,
+                };
+                let text = match value {
+                    Form::Str(t) => t.clone(),
+                    _ => String::new(),
+                };
+                match (sheet.as_str(), addr.as_str()) {
+                    ("Input", "B11") => self.input.column = number as u32,
+                    ("Input", "B12") => self.input.row = number as u32,
+                    ("Input", "B13") => self.input.left = number == 1.0,
+                    ("Input", "B14") => self.input.right = number == 1.0,
+                    ("Input", "B15") => self.input.middle = number == 1.0,
+                    ("Input", "B19") => self.input.sheet = text,
+                    ("Input", "B20") => self.input.command = text,
+                    ("Clock", "B3") => board.seed = number as u64,
+                    _ => {}
+                }
+            }
+            if rows.is_empty() {
+                self.input = self.input.released();
+                self.settles += 1;
+            }
+            board.frame(&self.input, !rows.is_empty());
+            self.satisfied_once |= board.satisfied;
+            seiyaku_holds(c, board, &format!("seiyaku's replay, frame {frame}"));
+        }
+    }
+
+    /// An act on a variable of the Board by a command, or by a press when the
+    /// command is empty.
+    fn on_board(row: u32, column: u32, command: &str) -> sy::Inputs {
+        sy::Inputs {
+            column,
+            row,
+            left: command.is_empty(),
+            sheet: "Board".to_string(),
+            command: command.to_string(),
+            ..sy::Inputs::default()
+        }
+    }
+
+    /// The book (`CART.14`, decisions 7 and 8): 128 puzzles, 32 a grade in
+    /// the grades' order, each with one solution by both solvers and graded
+    /// as its block says, and the block the generator's own bytes, written
+    /// again from its seed.
+    #[test]
+    fn seiyaku_s_book_holds_one_solution_a_puzzle_by_both_solvers() {
+        let Some((_, source)) = seiyaku() else {
+            return;
+        };
+        let book = sy::book_of(&source);
+        assert_eq!(book.len(), 4 * sy::PER_GRADE, "the book's puzzles");
+        for (k, p) in book.iter().enumerate() {
+            let block = (k / sy::PER_GRADE) as u8 + 1;
+            assert_eq!(
+                sy::count_by_bits(p, 2),
+                1,
+                "puzzle {}: one solution by bits",
+                k + 1
+            );
+            assert_eq!(
+                sy::count_by_cover(p, 2),
+                1,
+                "puzzle {}: one solution by cover",
+                k + 1
+            );
+            assert_eq!(
+                sy::grade(p),
+                block,
+                "puzzle {} stands in the block of grade {block}",
+                k + 1
+            );
+            let solution = sy::solve(p).expect("a solution");
+            assert!(
+                p.iter()
+                    .zip(solution.iter())
+                    .all(|(&g, &s)| g == 0 || g == s),
+                "puzzle {}: its solution keeps its givens",
+                k + 1
+            );
+        }
+        let written = sy::write_book(sy::BOOK_SEED, sy::PER_GRADE);
+        assert_eq!(
+            sy::with_book(&source, &written).as_deref(),
+            Some(source.as_str()),
+            "the book's block is the generator's, written again from its seed: cargo run --release --example seiyaku writes it"
+        );
+    }
+
+    /// The two solvers held to each other where a puzzle has many solutions or
+    /// none: givens taken from the book's puzzles until the counts reach their
+    /// limit, a contradiction, and the empty board.
+    #[test]
+    fn seiyaku_s_two_solvers_count_alike() {
+        let mut draw = sy::Generator::new(7);
+        for _ in 0..12 {
+            let solution = draw.full();
+            let mut g = solution;
+            for (k, v) in g.iter_mut().enumerate() {
+                if k % 3 != 0 {
+                    *v = 0;
+                }
+            }
+            let (bits, cover) = (sy::count_by_bits(&g, 40), sy::count_by_cover(&g, 40));
+            assert_eq!(
+                bits,
+                cover,
+                "{}: {bits} by bits, {cover} by cover",
+                sy::spell(&g)
+            );
+            let full = sy::solve(&g).expect("a solution");
+            assert_eq!(
+                sy::count_by_bits(&full, 2),
+                1,
+                "a full grid is its own one solution"
+            );
+        }
+        let mut twice = [0u8; 81];
+        twice[0] = 5;
+        twice[8] = 5;
+        assert_eq!(
+            (sy::count_by_bits(&twice, 2), sy::count_by_cover(&twice, 2)),
+            (0, 0)
+        );
+        let empty = [0u8; 81];
+        assert_eq!(
+            (
+                sy::count_by_bits(&empty, 30),
+                sy::count_by_cover(&empty, 30)
+            ),
+            (30, 30)
+        );
+    }
+
+    /// Every instance a symmetry of its puzzle (`CART.14`, decision 9): over
+    /// seeds, instances and grades, the rows a permutation keeping the bands,
+    /// the columns one keeping the stacks, the values relabeled one to one,
+    /// and the instance's one solution and its grade its puzzle's.
+    #[test]
+    fn seiyaku_s_instances_keep_their_puzzles_solution_and_grade() {
+        let Some((_, source)) = seiyaku() else {
+            return;
+        };
+        let book = sy::book_of(&source);
+        let mut transposed = 0;
+        for seed in [1u64, 20_261_019, 2_147_483_646] {
+            for instance in 0..6u64 {
+                for grade in 1..=4u8 {
+                    let d = sy::deal(seed, instance, grade);
+                    let block = (d.puzzle - 1) / sy::PER_GRADE + 1;
+                    assert_eq!(block, usize::from(grade), "{d:?}: the grade's block");
+                    for perm in [d.sigma, d.tau] {
+                        let mut seen = [false; 10];
+                        for (k, &s) in perm.iter().enumerate() {
+                            assert!((1..=9).contains(&s) && !seen[s], "{d:?}: a permutation");
+                            seen[s] = true;
+                            assert_eq!(
+                                (s - 1) / 3,
+                                perm[3 * (k / 3)].saturating_sub(1) / 3,
+                                "{d:?}: a band kept whole"
+                            );
+                        }
+                    }
+                    let mut seen = [false; 10];
+                    for v in 1..=9 {
+                        let p = usize::from(d.pi[v]);
+                        assert!((1..=9).contains(&p) && !seen[p], "{d:?}: a relabeling");
+                        seen[p] = true;
+                    }
+                    transposed += usize::from(d.transposed);
+                    let g = d.givens(&book);
+                    assert_eq!(sy::count_by_bits(&g, 2), 1, "{d:?}: one solution");
+                    assert_eq!(sy::grade(&g), grade, "{d:?}: its puzzle's grade");
+                }
+            }
+        }
+        assert!(
+            (12..=60).contains(&transposed),
+            "some instances transposed and some not: {transposed} of 72"
+        );
+    }
+
+    /// A session held to the hand at every frame (`CART.14`, decision 14):
+    /// the load and its settle; a value assigned, one that repeats a given in
+    /// its row, violating both, and its retraction; marks kept and struck, on a
+    /// given and on an assigned variable touching nothing; a press; an act on
+    /// the Constraints sheet, touching nothing; the domains filled; the grade
+    /// moved; every assignment retracted; a new instance at the grade moved to;
+    /// that instance satisfied value by value, the board turned; and one
+    /// retraction after it.
+    #[test]
+    fn seiyaku_s_board_is_its_hand_at_every_frame() {
+        let Some((text, source)) = seiyaku() else {
+            return;
+        };
+        let seed = 20_261_019u64;
+        let mut c = seiyaku_loaded(&text, seed);
+        let mut hand = Seiyaku::new(sy::book_of(&source), seed);
+        let mut load = on_board(1, 1, "");
+        load.left = false;
+        assert_eq!(
+            seiyaku_act(&mut c, &mut hand, &load),
+            2,
+            "the load's act and its proof"
+        );
+        assert_eq!(hand.grade, 2, "the first instance's grade");
+        let solution = sy::solve(&hand.givens).expect("the instance's solution");
+        let free = |hand: &Seiyaku| -> Vec<(u32, u32)> {
+            (0..81u32)
+                .filter(|&k| hand.givens[k as usize] == 0)
+                .map(|k| (k / 9 + 1, k % 9 + 1))
+                .collect()
+        };
+        let (r, col) = free(&hand)[0];
+        let right = solution[((r - 1) * 9 + col - 1) as usize];
+        assert_eq!(
+            seiyaku_act(
+                &mut c,
+                &mut hand,
+                &on_board(r, col, &format!("assign-{right}"))
+            ),
+            3,
+            "an act's three frames"
+        );
+        // a value its row's given holds: both violated
+        let row_given = (1..=9u32)
+            .map(|cc| hand.givens[((r - 1) * 9 + cc - 1) as usize])
+            .find(|&v| v > 0)
+            .expect("a given in the row");
+        seiyaku_act(
+            &mut c,
+            &mut hand,
+            &on_board(r, col, &format!("assign-{row_given}")),
+        );
+        assert!(
+            hand.violated[((r - 1) * 9 + col - 1) as usize],
+            "the repeated value violates its row"
+        );
+        assert!(hand.violated_constraints() >= 1);
+        seiyaku_act(&mut c, &mut hand, &on_board(r, col, "retract"));
+        // marks: kept, struck, and nothing on a given or an assigned variable
+        let (r2, c2) = free(&hand)[1];
+        for cmd in ["domain-1", "domain-5", "domain-9", "domain-5"] {
+            seiyaku_act(&mut c, &mut hand, &on_board(r2, c2, cmd));
+        }
+        assert_eq!(
+            hand.marks[((r2 - 1) * 9 + c2 - 1) as usize],
+            1 + 256,
+            "1 and 9 kept, 5 struck"
+        );
+        let given_at = (0..81u32)
+            .find(|&k| hand.givens[k as usize] > 0)
+            .expect("a given");
+        seiyaku_act(
+            &mut c,
+            &mut hand,
+            &on_board(given_at / 9 + 1, given_at % 9 + 1, "domain-3"),
+        );
+        seiyaku_act(
+            &mut c,
+            &mut hand,
+            &on_board(given_at / 9 + 1, given_at % 9 + 1, "assign-3"),
+        );
+        let (r3, c3) = free(&hand)[2];
+        let v3 = solution[((r3 - 1) * 9 + c3 - 1) as usize];
+        seiyaku_act(
+            &mut c,
+            &mut hand,
+            &on_board(r3, c3, &format!("assign-{v3}")),
+        );
+        seiyaku_act(&mut c, &mut hand, &on_board(r3, c3, "domain-2"));
+        assert_eq!(
+            hand.marks[((r3 - 1) * 9 + c3 - 1) as usize],
+            0,
+            "no mark on an assigned variable"
+        );
+        seiyaku_act(&mut c, &mut hand, &on_board(r2, c2, "retract"));
+        assert_eq!(
+            hand.marks[((r2 - 1) * 9 + c2 - 1) as usize],
+            0,
+            "a retraction strikes an unassigned variable's marks"
+        );
+        // a press, and an act on the Constraints sheet
+        seiyaku_act(&mut c, &mut hand, &on_board(5, 5, ""));
+        let mut elsewhere = on_board(5, 5, "assign-4");
+        elsewhere.sheet = "Constraints".to_string();
+        let before = hand.entries;
+        seiyaku_act(&mut c, &mut hand, &elsewhere);
+        assert_eq!(
+            hand.entries, before,
+            "an act on another sheet touches no variable"
+        );
+        // the domains filled with the candidates, every unassigned variable's
+        seiyaku_act(&mut c, &mut hand, &on_board(1, 1, "domains"));
+        assert!(hand.marks_kept() > 0, "the domains filled");
+        for k in 0..81 {
+            if hand.grid[k] == 0 {
+                assert_eq!(
+                    hand.marks[k], hand.candidates[k],
+                    "an unassigned variable's domain, its candidates"
+                );
+            }
+        }
+        // the grade moved twice, every assignment retracted, a new instance
+        seiyaku_act(&mut c, &mut hand, &on_board(1, 1, "grade"));
+        seiyaku_act(&mut c, &mut hand, &on_board(1, 1, "grade"));
+        assert_eq!((hand.next_grade, hand.grade), (4, 2));
+        seiyaku_act(&mut c, &mut hand, &on_board(1, 1, "retract-all"));
+        assert_eq!(
+            (hand.filled(), hand.marks_kept()),
+            (hand.given_count(), 0),
+            "every assignment and mark retracted"
+        );
+        seiyaku_act(&mut c, &mut hand, &on_board(1, 1, "instance"));
+        assert_eq!(
+            (hand.instances, hand.grade),
+            (1, 4),
+            "the second instance, at grade 4"
+        );
+        // the instance satisfied, a value at a time
+        let solution = sy::solve(&hand.givens).expect("the second instance's solution");
+        for (r, col) in free(&hand) {
+            let v = solution[((r - 1) * 9 + col - 1) as usize];
+            seiyaku_act(&mut c, &mut hand, &on_board(r, col, &format!("assign-{v}")));
+        }
+        assert!(hand.satisfied, "the instance satisfied");
+        assert_eq!(hand.satisfied_acts, (81 - hand.given_count()) as u64);
+        let (r4, c4) = free(&hand)[0];
+        seiyaku_act(&mut c, &mut hand, &on_board(r4, c4, "retract"));
+        assert!(!hand.satisfied, "a retraction unsatisfies it");
     }
 }

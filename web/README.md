@@ -125,7 +125,9 @@ words. A command's key is taken on the Screen while the command holds and no
 Ctrl, Cmd or Alt is held, a held key's repeat taken and running nothing; it is
 the command's alone, holding no button and naming no last key. Since `CART.12`
 it is taken on the grid's viewport at rate 0 too, before the viewport sees it,
-every other key staying the viewport's. The replay logs
+every other key staying the viewport's. Since `CART.14`'s hand test a digit of
+the keypad, Num Lock on, runs the command of the digit row's key, `Numpad7`
+the one of `Digit7`, unless a command names the keypad's own. The replay logs
 `B20` as every Input cell, and a version 5 cartridge's replay says
 `(spec 5)`. A cartridge written to 1 to 4 has no commands, and a sheet of its
 named Commands is its own.
@@ -275,7 +277,7 @@ host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
-test card, the input card, the sound card, Sand, the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), Kairos, the stacking game (`CART.4`), or Superposition, the large board (`CART.12`), each with its source, which the drawer's Build expands into the
+test card, the input card, the sound card, Sand, the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), Kairos, the stacking game (`CART.4`), Superposition, the large board (`CART.12`), or Seiyaku, the number-placement puzzle (`CART.14`), each with its source, which the drawer's Build expands into the
 cartridge in the page, the input card, the sound card, Sand and Kairos each with its replay, which Play the replay plays, the
 Audio sheet heard after Sound on, and
 below it the viewport over seven
@@ -573,6 +575,9 @@ page shows opened plainly and what Pages deploys.
   every frame's Tally, the sum of each row of its lattice,
   equal to Superposition's hand, a frame with no row a settle step after
   the engine's release, and its end its golden, the Tally's row sums;
+  and Seiyaku's, the owner's session at `CART.14`'s hand test, every
+  frame's Board, its 81 variables' codes and marks, equal
+  to Seiyaku's hand, and its end its golden, the Constraints sheet's record;
   and the sound
   itself (`sound`, `ENGINE.4`'s second slice): the host's own voices over
   the double handed an `OfflineAudioContext`, a sequence of voice states
@@ -714,7 +719,7 @@ reads any text of forms into data, the host shim's one reader.
 | `clear()` | forgets every record, every layout learned, every bound and every sheet's widths, ends a drag in progress, and draws the grid empty: the host's grid unloaded (`ENGINE.8`), so that a Load starts every sheet at its cartridge's widths (`ENGINE.26`) |
 | `learn(text)` | reads a record of a sheet for its layout alone (`CART.12`'s hand test): its columns and rows with settings and its extent, inside its window, the cells and the model shown untouched; a column past the window a later record is viewed through is then laid as the sheet sets it and not at the default width. Returns `{ sheet, window, extent, columns }`, or null for a text that is no record of a sheet |
 | `fresh(name)` | the range a sheet shows from `A1` in the box, its columns as its layout and its own widths lay them, never the sheet shown's (`ENGINE.26`), and its rows at the default height, inside a bound sheet's extent: the window a host views a sheet through before it shows it |
-| `bound(name, on)` | whether a sheet is drawn to its extent and no further, its last row and column the grid's, no slack after them (version 6's `(bound "<sheet>")`): the host says so for each sheet its cartridge bounds |
+| `bound(name, on)` | whether a sheet is drawn to its extent and no further, its last row and column the grid's, no slack after them, on a canvas in the headers' gray (version 6's `(bound "<sheet>")`): the host says so for each sheet its cartridge bounds |
 | `scrolled()` | the window the scrolled quadrant shows, `{ top, left, bottom, right, window }`: the host follows a Camera's move by it (`ENGINE.8`) |
 | `show(name)` | shows a sheet whose record is loaded (the name compared without case); false when none is |
 | `sheets()` | every sheet row as `{ name, state, loaded, active }` |
@@ -728,7 +733,7 @@ reads any text of forms into data, the host shim's one reader.
 | `mark(name, ranges, style)` / `unmark(name)` | a named highlight over ranges the host computed, `style` `{ fill, border }`; `unmark()` with no name clears all |
 | `cellAt(clientX, clientY)` | the cell under a point of the page, or null: over a header, the corner, a scrollbar or the tab strip (the last two since `ENGINE.14`, which the hit test had counted as cells) |
 | `cell(row, col)` | a cell: `{ row, col, address, kind, vkind, text, value, formula, valued, style, sentence }`, `kind` one of `cell`, `formula`, `empty`; `text` what the cell shows, a formula's value once its value row lands and its text before, the text a code draws where the record holds a `text` row (`CART.12`); `value` the value as the record spells it, empty for a formula with none yet; `formula` a formula's own text, the bar's, and `valued` whether a formula has its value |
-| `geometry()` | the last draw's geometry in device pixels: the ratio, the sizes, the row height, the column edges, the frozen bands, the scroll |
+| `geometry()` | the last draw's geometry in device pixels: the ratio, the sizes, the row height, the column edges, the content's width and height, the frozen bands, the scroll |
 | `draws()` | the draw list: every text, fill, line, header, selection and mark with its position, as the last full paint drew it, each cell a repaint drew since in its place, in the full paint's order (`ENGINE.20`), so that it describes the canvas op for op (the oracle's) |
 | `model()` | the record shown, as read |
 | `redraw()` | sizes the canvas to the box again and draws |
@@ -750,7 +755,9 @@ with them to the first and the last cell, Enter raises `cellopen`. A tab
 chosen, by its click or a key that clicks it, gives the grid the keys, so the
 arrows move the selection on the sheet shown; a box being typed in keeps them
 (`CART.12`'s hand test). A bound sheet's last row and column end the
-selection, the scroll and the hit test: past them there is no cell.
+selection, the scroll and the hit test: past them there is no cell, and the
+sheet stands on a canvas in the headers' gray, no gridline and no header
+drawn past its edge (`CART.14`'s hand test).
 
 **The rules of the record, as the viewport reads it.** A column's width is
 the record's number, the file's stored width in characters, turned into CSS
@@ -841,13 +848,16 @@ viewport, not an Excel clone.
     host's plane, and or `{ cells }`, `{ "Sheet!A1": value }`, each value a
     number, a text, `true` or `false`, or `null` for an empty cell, held to
     that sheet's record at that frame; a grid game answers cells. An optional
-    `hand.counts()` names counts of its own. Alonzo's three,
-    `cartridges/sand/sand.hand.js`, `cartridges/kairos/kairos.hand.js` and
-    since `CART.12` `cartridges/superposition/superposition.hand.js`, are the
+    `hand.counts()` names counts of its own. Alonzo's four,
+    `cartridges/sand/sand.hand.js`, `cartridges/kairos/kairos.hand.js`,
+    since `CART.12` `cartridges/superposition/superposition.hand.js` and
+    since `CART.14` `cartridges/seiyaku/seiyaku.hand.js`, are the
     examples, Kairos's answering both and Superposition's the Tally's sum of
     each row of its lattice, a frame with no row a settle step after the
     engine's release; it also lends the frames and blit instruments its
-    lattice, its scripted player and its deepest deal.
+    lattice, its scripted player and its deepest deal. Seiyaku's answers
+    the Board's 81 variables, each a code or its marks' text, and reads its
+    book from the page's own text of the source, the block `source-seiyaku`.
 
   The page opens on the empty sheet whatever it holds and offers its
   cartridges in the picker, each by its manifest's title, its notes in the

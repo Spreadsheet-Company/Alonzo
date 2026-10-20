@@ -51,6 +51,7 @@
 - ✅ **`CART.4` — Kairos, the stacking game.** *Filed 2026-10-08 and scoped that day, scoped again 2026-10-12, built in two slices, owner-tested and closed 2026-10-12; slice 1 committed `bbc7655`, slice 2 at the close.* The cabinet of 2004 in the kit's words, under the owner's name for it, Kairos, the opportune moment, and in Lovelace Lavender. Fifteen levels of seven columns lie on their side on a plane, a light a cell, told apart by a checker of the Palette's darker twins. A row slides a column every period of its level; a press stops it where the person saw it; the lights not over a light fall, and a complete miss ends the game; at level 11 b takes the minor prize and a goes on; level 15 wins the major, and WIN flashes. The State sheet's thirty-one cells keep a row as the two ends of a run; the Write sheet writes the tower one range a stop; the Levels sheet holds every level's period, width and window, honest, so the cabinet's rigging is an edit anyone can read; one word of the source and its window stand the cabinet up. The kit gained `every`, `since`, `looks`, `camera` and `put`, and the input card and the grid card were rewritten over them to their bytes. *Oracle, met:* every frame of every Kairos test and of the replay held to the game written by hand twice, in Rust and in the page: a bot's four games over 4,500 frames, every row of the first bouncing off both ends; the rigged window from both sides; a press in a move's frame; the upright build as the transpose. The replay, the owner's two games of 3,469 frames, the major prize won and then a fall at level 15, played to the Tally's golden natively and in the page. The describe golden; `check_host_loop.ps1` at eighteen cases, its control thirty-five mutant pages, AI the page's Kairos turning a column early; `cargo test` 37; `run_checks.ps1` at 12 checks and 12 verifiers, `ALL GREEN`; nine mutants of slice 1 and three of slice 2's native hold caught; the owner's hand tests. *Found:* on the grid every light shows its value's digit, since a format holds no font color; a fill cannot transpose, so an Orientation cell could only turn the picture and never enlarge the window the host fits; the tests as first written let a rule turning a column early pass, caught only by the command line and the describe golden, until every row traveled both ends. *Scoped:* 2026-10-08, and again 2026-10-12, fifteen decisions, all approved with two amendments, the name and the palette. Predicted `~days`; cost a day. (more: the full entry under THE ITEMS, SCOPED)
 - ✅ **`CART.11` — Buffet, the idle game, founded as a repository of its own.** *Filed 2026-10-13 from the sitting of `docs/ALGEBRA.md` §12 and named by the owner the same day, its design reference written beside it in `cartridges/buffet/`; founded 2026-10-14 at the owner's word as `../Buffet`, a repository beside this one, under AGPL-3.0-or-later for the game, CC-BY-SA-4.0 for what the diner reads, a commercial license offered beside the public terms and a trademark policy from the first day, so that a fork stays open and must take another name; the design reference and the roadmap, `OMAKASE.md`, moved with it and the folder removed here; the line left `ROADMAP.md` at the founding, as `CHARTER.md` §6 has it for the games after the first.* The engine's interest in it: the first game new and native to Alonzo, consuming `alonzo` from crates.io at `REPO.4`'s release and never a git pin, its asks of the engine returning here under their own IDs; the design-folder tolerance of `62e5dd5` stays, harmless, for the next game's notes.
 - ✅ **`CART.12` — the large board: *Superposition*, a mine-clearing game on a lattice of 512 by 512 at rate zero, each act settled to the language's fixed point, and the floors' first instrument of one edit into a huge model.** *Filed 2026-10-13 from `docs/ALGEBRA.md` §12; scoped and approved 2026-10-18 and named by the owner, built in four slices that day over Frazaro's `KERNEL.48` and the pin to `vla-lang` 0.10.1; owner-tested twice and closed 2026-10-19; slice 2 committed `16295b5`, the rest at the close.* The page's version 6: `(settle K)`, an act stepped again until a frame changes nothing, the Clock counting acts and the press released before the first settle step; an act's place and a press at rate 0; and, at the second hand test, `(bound "<sheet>")`, a sheet drawn to its extent and no further. The cartridge: three layers of 262,144 formula cells, the Decays dealt from the seed and the world, the Readings and the Field, from `A1` and bound there; an act reaching one row through the Probe, a cascade a ring a frame, a box opened beside a reading of nothing; quantum words, Lovelace Lavender. Its hand twice, in Rust and in the page, the floors' scripted player and the deepest deal. The floors' three rows a half: the idle frame, 4.5 microseconds natively; an act to its settle's end, a p95 of 0.42 ms natively and 0.6 in the browser; the deepest cascade at 8%, 777 frames in 154 ms; and the blit's act case, a p95 of 1.1 ms in the owner's fullscreen. The page, from the hand tests: a sheet's columns read whole before it is shown, a resize told as a scroll, the slack a screen's width of columns, a tab giving the grid the keys; the owner's session the replay, carried onto the board at `A1`. *Found:* the memory, about 400 bytes a formula cell and the load 0.68 s, the language's per-cell structures, a Frazaro prompt given in chat; a save as the records stand, 521 MB, `ENGINE.5`'s. *Scoped:* 2026-10-18, twelve decisions, all approved with the owner's name for the game; the page's version 6 its decisions 57 to 66, and 67, the bound, at the second hand test. (more: the full entry under THE ITEMS, SCOPED)
+- ✅ **`CART.14` — Seiyaku (制約), the owner's number-placement puzzle at rate zero: eighty-one variables and twenty-seven constraints counted as sums over planes, a book of 128 puzzles held by two solvers, and every instance a symmetry of one.** *Filed 2026-10-13 at the owner's word as Sudoku; retitled, scoped and approved 2026-10-19; its first slice, the checker, built that day, owner-tested twice, reworked at the first test for the owner's five notes, and closed as built 2026-10-20 at the owner's word, its technique ladder and its dial left; committed at the close, after `ENGINE.28`'s mint.* The cartridge: the Board, 9 by 9 from `A1` and bound there, each variable 88 pixels square and a formula of its own last value and the act; 23 commands at the selection, 1 to 9 the row's or the keypad's, the marks on Q W E, A S D and Z X C in their places, F the domains, R, N and G; the constraints as SUMs over nine planes of ones and zeros; givens in Unicode's bold digits, violations red and the satisfied board Lovelace Lavender; the keys listed beside it; and the Constraints sheet. Its book, 128 puzzles in four grades written into its source by `engine/examples/seiyaku.rs`, each with one solution by backtracking over bits and by exact cover; its hand twice, in Rust and in the page; the owner's session its replay. The page: a bound sheet on a canvas of the headers' gray, no gridline past its edge (§7.2), and a keypad's digit, Num Lock on, running the digit row's command (§3.10). *Found:* a format is a fill, a number format and a wrap, so `ENGINE.28` was minted, a text's size added at the hand test, and a `KERNEL.50` prompt given; a wrapped text drawn from its cell's top, and gridlines over fills; the engine's own sheets shown as tabs and its Clock's seed drawn as #s; the keypad's rule not the Keys buttons' nor its Enter's. *Scoped:* 2026-10-19, fifteen decisions, all approved; slices 2 and 3 scoped and left. (more: the full entry under THE ITEMS, SCOPED)
 
 # THE SITTINGS
 
@@ -7578,3 +7579,416 @@ Verified (*measurement*, headless Chrome 155 on Windows):
 - The column drag has no key either: `KERNEL.5` built it before the keyboard-first rule. A pass that adds the row drag, a new act, owes keys or palette commands for both, a column's width and a row's height.
 
 *Closed at the owner's word, the same day,* answering "Commit ENGINE.26 now?" with "Commit now": committed at the close, the line moved from the roadmap to the ledger; not pushed. In the same answer the owner had the rows pass minted as `ENGINE.27`, in a commit of its own.
+
+## `CART.14` — Seiyaku (制約): the owner's number-placement puzzle, its constraints counted as range aggregates over overlapping units, its book written here, and every instance a symmetry of a puzzle in it
+
+*Scoped 2026-10-19 at the owner's word, the day `CART.12` closed (`16295b5`, `640c0a3`, not pushed). The item was filed 2026-10-13 as Sudoku, "because sudoku is awesome", and retitled the same day as this entry: Seiyaku, 制約, Japanese for "constraints", since the genre's rules are free and its name and look are another's (`CHARTER.md` §6's caution, as for the falling-block game; the exhibit is below). The scoping read `ROADMAP.md`'s line, `docs/ALGEBRA.md` §11 and §12, `SPEC.md` version 6, `CART.12`'s entry and Superposition's source, hands and tests. It ran two probes in scratch, measured below: the board's look drawn through `HEAD`'s `web/viewport.js` in headless Chrome, and a generator with a solution counter and the roadmap's three techniques in a scratch crate. Nothing in this tree changed but the roadmap line's title and this entry; Frazaro's and Buffet's trees were read and never written.*
+
+**Substrate, verified.** Read on the day, by file.
+
+- *The pre-flight.* `HEAD` at `640c0a3`, `CART.12`'s close, `vla-lang` pinned `=0.10.1`. The tree is shared with `ENGINE.26`'s session, whose `web/viewport.js`, `web/index.template.html`, `web/README.md`, `tools/check_host_loop.ps1`, `tools/check_render_oracle.ps1`, `tools/run_checks.ps1`, `ROADMAP.md` and `REARVIEW.md` hunks stand uncommitted beside this entry.
+- *The language* (`vla-lang` 0.10.1, `calc/library.rs`; the engine registers `library::language()`).
+  - Fourteen functions: `IF`, `AND`, `OR`, `NOT`, `SUM`, `MIN`, `MAX`, `ABS`, `INT`, `MOD`, `ROW`, `COLUMN`, `CHOOSE` and `SIN`. The brief that opened this session was wrong twice: `CHOOSE` is the language's, computed across a run since `KERNEL.28`; and `SUMIF` and `COUNTIF` are `frazaro-core`'s, which `AD-1` keeps from a cartridge. `INDEX`, `MATCH` and `SQRT` are absent.
+  - The operators: the arithmetic, `^`, `&` and the comparisons (`calc/formula.rs`). A range where one value is wanted is not computed (`calc/eval.rs`), so there is no array formula. A count of a value over a unit is therefore a `SUM` over cells holding 1 or 0, and a pick among nine is `CHOOSE`.
+- *An act at rate 0* (`SPEC.md` §3.3, §3.10, version 6). The act's rows are the place, `B11`, `B12` and `B19`, the press, `B13` to `B15`, and the command, `B20` (`web/host.js`, `_writeActRows`). A command's key is taken on the viewport before the viewport sees it, unless Ctrl, Cmd or Alt is held. Shift is not refused, so Shift+1 runs the command of 1 (`_commandKey`). A command's key is one `KeyboardEvent.code` and spells no modifier (decision 52). A person's keymap spells Shift and binds a game's command, `(bind "Shift+1" seiyaku.domain-1)`, and a digit there matches both rows of digits (`web/index.template.html`, the keymap). The page binds no bare letter or digit, so the board's keys are free.
+- *The record's look* (`sheet.rs`, `view.rs`, `numfmt.rs`, `machine/load.rs`).
+  - A Style is a fill, a number format and a wrap. It holds no font, weight, color, border or alignment.
+  - A code's color bracket is refused; any character outside ASCII is a literal; a section of literals alone draws its literals, as Superposition's `"1"` does.
+  - A look maps a value to a format in place of the cell's own. Without one, the cell's own style draws it; a column's format draws an empty cell alone (`viewport.js`, `formatOf`).
+  - A `style` row names one cell, after that cell's own row (`written_cell`). A grid holds 65,536 formats.
+- *The viewport* (`HEAD`'s `web/viewport.js`).
+  - The text is 13 px `system-ui` in one color.
+  - A number aligns right, a text left, a truth value or an error centered.
+  - A wrapped text breaks at its spaces, its lines drawn from the cell's top at 1.2 font sizes a line. A number never wraps, and one wider than its column draws as #s.
+  - A column of *w* characters is ⌊7*w* + 0.49⌋ px; a row's height is in points at 96 dots an inch.
+  - The selection is a lavender wash with a `6B4FC8` border.
+- *The folder rule* (`tools/check_cartridge.ps1`, `Test-Tree`). A `.vla` in a cartridge's folder that is no cartridge, source, replay or golden is refused. A library is a file of `cartridges/` itself, and the page embeds each as a `library-` block (`tools/build_web.ps1`). So a book in a file of its own beside the source is refused, and the page's pass would not hold it.
+- *The kit.* `picture` with its `hex` legend writes a string as a row of cells, 1 to 9 their digits and a dot no cell (`cartridges/common.vla`), so an 81-character puzzle is one row of a sheet as written.
+- *The name* (*exhibit*, the sources below). The puzzle was most likely Howard Garns's, first published by Dell Magazines in 1979 as Number Place. Nikoli introduced it in Japan in April 1984 and named it; Nikoli claims trademark rights to the name in Japan, where other publishers call the puzzle Number Place.
+
+**The two probes, measured.** *Measurement*, 2026-10-19, on the owner's machine.
+
+1. *The look*, in the installed Chrome headless at a ratio of 1, through `HEAD`'s viewport: two mock boards drawn from records written by hand. Their solved grid is a pattern, `((3r + ⌊r/3⌋ + c) mod 9) + 1`, so no published puzzle was used.
+   - In the viewport's font, a digit is 7.01 px, a figure space (U+2007) 7.01, a space 3.56, a middle dot 2.82, `1 2 3` 28.15 and `1 2 3 4` 38.71. A mathematical bold digit (U+1D7CF to U+1D7D7), drawn by a fallback font, is 8.00.
+   - A column of 6 characters is 42 px, 34 inside its paddings. That fits three digits and two spaces and never four, so nine marks, a figure space for each one struck, wrap into three lines in their places: every one of the 29 marked cells drew three. A row of 36 points, 48 px, holds the three lines.
+   - A digit and two figure spaces after it, right-aligned, stand at the cell's center within about a pixel.
+   - The boxes drawn by alternating fills read at `E8E0F7` against white. The whisper, `F7F4FC`, the first mock's, did not read.
+   - The givens told apart by fill alone compete with the boxes' fills. Told apart by the bold glyph, with the fills saying only the box and a violation, they read at a glance.
+   - The pictures are `probe.png` and `probe2.png` in the session's scratchpad, beside their pages.
+2. *The generator*, a scratch crate in release mode, natively. The process was not opted out of the throttling, each run being under two seconds. Each puzzle was a full grid by backtracking with the digits in a drawn order, then givens dug in a drawn order, each kept out while the solutions counted to two stayed one. It was then graded by the three techniques of the roadmap's line, the simplest that progresses at each step: 1 naked singles alone, 2 hidden singles too, 3 pointing pairs too, 4 beyond the three. Every puzzle's count was one.
+
+   | 2,000 puzzles | dug in pairs under a half turn | dug one at a time |
+   |---|---|---|
+   | in all | 0.94 s | 1.54 s |
+   | a full grid / the dig / a count to two / the grade | 0.008 / 0.40 / 0.017 / 0.048 ms | 0.008 / 0.64 / 0.054 / 0.065 ms |
+   | grade 1 | 157, 7.8%, givens 25 to 32, mean 28.4 | 24, 1.2%, 23 to 26, 24.5 |
+   | grade 2 | 1,182, 59.1%, 23 to 33, 27.5 | 759, 38.0%, 21 to 28, 24.4 |
+   | grade 3 | 119, 6.0%, 24 to 32, 27.2 | 204, 10.2%, 22 to 27, 24.2 |
+   | grade 4 | 542, 27.1%, 22 to 32, 27.3 | 1,013, 50.6%, 21 to 29, 24.4 |
+
+**The design, as recommended.** `(spec 6)`, rate 0, `(seed host)`, `(settle 16)`, `(bound "Board")`. The Camera's third row names the Board, and the Screen is hidden. Shown: the `Board`, a variable a cell from `A1` to `I9`, and the `Constraints` sheet. Hidden, each a layer of the rule:
+- the `Book`, a puzzle a row;
+- the `Deal`: the instance's puzzle, its keys and their ranks, the permutations;
+- the `Givens`, the puzzle transformed;
+- the `Entries` and the `Marks`, the person's state, each variable a formula of its own last value and the act, as Superposition's Field is;
+- the `Grid`, the value at each variable, given or assigned;
+- the `Planes`, nine planes of ones and zeros;
+- the `Units`, each row's, column's and box's count of each value;
+- the `Candidates` and their marks;
+- the `Violations`;
+- the `Lab`: the act's value, the instances dealt, the restarts, the grade.
+
+The Board's value at a variable is a code, 100 times its kind, 10 times its box's parity, and its value. The kinds are a given, an assignment, each violated, and each satisfied. An unassigned variable holds its marks' text instead, in its own style.
+
+**Predictions, written before any cell of the cartridge.** *Prediction*, 2026-10-19, after the two probes; the inputs are the design above and Superposition's measured costs.
+1. *The cartridge:* 4,000 to 4,400 rows, 100 to 150 KB. Of them, 3,500 to 3,600 are the book's givens (*derived*: 128 puzzles at a mean of 27.6); 2,400 to 2,900 formula cells in 40 to 70 shapes, the planes and the candidates 1,458 of them.
+2. *The load:* 15 to 40 ms natively and 20 to 60 in the browser. Its settle is two frames under 2 ms, so the board opens on values.
+3. *An act* (an assignment, a mark, a retraction): three frames, the act's, the release's and one that proves nothing moved, at 20 to 100 µs natively and under 0.2 ms in the browser. `domains` and a new instance: three frames, 0.1 to 1 ms. The idle frame: 1 to 3 µs.
+4. *The book:* 128 puzzles written by the example in under one second natively, about 540 dug for the scarcest grade's 32 (*derived* from grade 3's 6.0%). Both solvers' counts over the book together under 50 ms in `cargo test`.
+5. *The pass* over the source and its book: 0.1 to 0.3 s natively.
+6. *The page* grows by the cartridge, the source and the hand, 130 to 180 KB.
+
+**The census.** What Seiyaku needs, against what stands:
+
+| what it needs | what stands | what is open |
+|---|---|---|
+| an act at a variable, by a key | version 6's place, a command's key at rate 0 | nothing |
+| the board computed when it opens | `(settle K)` | nothing |
+| the board the grid's edge | `(bound "<sheet>")` | nothing |
+| a digit centered, a given heavier | a code's text drawn (`KERNEL.47`, `CART.12`); no alignment or weight in a Style | figure spaces and bold glyphs (decision 6) |
+| nine marks in their places | a wrapped text, broken at its spaces | nothing (measured) |
+| the boxes drawn | no border in a Style | fills by box (decision 6; Found 1) |
+| a tint and a wrap on a variable holding text | a `style` row a cell | 81 rows, a walk |
+| a count of a value over a unit | no `COUNTIF` (`AD-1`), no array formula | planes of ones and zeros under `SUM` (decision 5) |
+| a pick among nine | `CHOOSE` | nothing |
+| a modifier on a command's key | not spelled (decision 52) | a person's keymap alone (decision 4) |
+| puzzles, each with one solution | none | the generator, two solvers and the grader, Rust, test-only (decision 7) |
+| a hand | Sand's, Kairos's, Superposition's | Seiyaku's, Rust and JavaScript |
+| a step back | none at rate 0; the replay is the history | not this item (Found 5) |
+
+**The work**, by slice; slice 2's and slice 3's files are named at their starts.
+
+| file | what it is | slice; decisions |
+|---|---|---|
+| `cartridges/seiyaku/seiyaku.source.vla` | the source over the kit; the book a block the example writes | 1; 2 to 6, 8 to 12 |
+| `cartridges/seiyaku/seiyaku.vla` | the pass's output | 1 |
+| `cartridges/seiyaku/seiyaku.hand.js` | the hand in JavaScript, `hand-seiyaku` | 1; 14 |
+| `cartridges/seiyaku/seiyaku.replay.vla`, `seiyaku.golden.vla` | a stand-in, then the owner's session; the Constraints sheet's record at its end | 1; 14 |
+| `engine/src/seiyaku.rs`, `engine/src/lib.rs` | test-only: the hand, the transforms, two solvers, the grader, the generator | 1; 7, 9, 14 |
+| `engine/examples/seiyaku.rs` | the book's writer, `-- --check` | 1; 7, 8 |
+| `engine/src/cartridge.rs`, `engine/testdata/describe/seiyaku.vla` | the tests; the describe golden | 1; 14 |
+| `tools/build_web.ps1`, `tools/check_cartridge.ps1`, `tools/check_host_loop.ps1` | the page's order; the counts, the row floor, the replay's; the pass, empty and replay cases' counts, a mutant hand, mutant AP's words | 1; 14 |
+| `README.md`, `engine/README.md`, `web/README.md`, `Delta/CLAUDE.md`, the memory | the rows and the map | 1 |
+| `docs/ROADMAP.md`, `docs/REARVIEW.md` | the line; this record | each |
+
+**The decisions, the owner's.** Each with the recommendation and the alternatives it declines.
+
+1. **The first slice: the checker, playable, with its book.** The board, the givens and the assignments drawn apart, the violations lit, values assigned and retracted by the game's commands at the selection, the marks, satisfied detected, the Constraints sheet, the book with its generator and two solvers, and a replay. The technique ladder is slice 2, the dial slice 3.
+   *Alternatives:* the ladder first, hints with no board to give them on; the book alone first, a slice the owner could test by `cargo test` alone.
+2. **The board: one sheet, `Board`, 9 by 9 from `A1` and bound there, a variable a cell; the person's state on hidden sheets, each variable a formula of its own last value and the act.**
+   - The cartridge settles, `(settle 16)`. An act is three frames: the act's, the one after the engine's release, and one that proves nothing moved. 16 stands eight times over that act's two settle steps; slice 2 raises it for its propagation.
+   - The load settles too, so the board opens on values (`CART.12`'s Found 6).
+   - A variable reads the act's place through parts every `$` holds, so every variable computes at every act: 81, and 2,401 at the dial's N = 7, need no row gate.
+   - *Alternatives:*
+     - the assignments as values written by the Write sheet, a frame late, a derived write an act;
+     - a person's own edit of a variable, which replaces its formula with a value and takes the cell from the game (an edit stays the person's, `AD-6`, and the board's notes say so);
+     - the board on the Screen through the Camera with a cursor of the game's own, declined by `CART.12`'s decision 4 for the same reasons: a step a move, and a held arrow moving once.
+3. **The acts: the game's commands, each with a key, at the variable the selection stands on.** The arrows, Page Up and Page Down, and Home and End stay the viewport's, as every spreadsheet's do.
+
+   | command | key | what it does |
+   |---|---|---|
+   | `assign-1` to `assign-9` | `Digit1` to `Digit9` | assigns the value to the variable, unless the instance fixes it |
+   | `retract` | `Backspace` | retracts the assignment; on an unassigned variable, strikes every mark |
+   | `domain-1` to `domain-9` | `KeyQ` `KeyW` `KeyE` / `KeyA` `KeyS` `KeyD` / `KeyZ` `KeyX` `KeyC` | marks the value in the variable's domain, or strikes it (decision 4) |
+   | `domains` | `KeyF` | fills every unassigned variable's marks with the values its constraints still allow |
+   | `retract-all` | `KeyR` | retracts every assignment and strikes every mark of the instance |
+   | `instance` | `KeyN` | a new instance, at the grade the Constraints sheet names |
+   | `grade` | `KeyG` | moves the next instance's grade, 1 to 4 and round |
+
+   - An act on a given, past the board or on another sheet touches nothing. `domains`, `retract-all`, `instance` and `grade` act from any sheet.
+   - A press over a variable selects it and is an act that changes nothing (version 6). The palette runs every command by its name, the pointer's way to every act.
+   - `instance` discards the instance in play, as Superposition's branch discards its world. The replay keeps it.
+   - The numeric pad's digits and Delete are a person's keymap's to add; a digit there matches both rows.
+   - *Alternatives:* Delete or `Digit0` as `retract` (a laptop Mac has no Delete key, its key so marked sending `Backspace`); an assignment of the value already held taken as a retraction.
+4. **The marks: each variable's domain as the person keeps it, nine bits in one number, each value toggled by its own key, drawn as a 3 by 3 of digits in the cell.**
+   - The nine keys are a block whose places are the marks' places: Q the top left, 1; S the center, 5; C the bottom right, 9. A code is a key's place, so the block is the same on every layout.
+   - The marks are drawn as the person keeps them and never filtered by the constraints. A mark the board already rules out stays until it is struck, and `domains` writes the constraints' own candidates in one act.
+   - *Alternatives:*
+     - *(a)* a mode, one key turning the digits into marks. One key fewer to learn, but no cell of the board can show the mode except by tinting every unassigned variable, and a digit typed in the wrong mode is the slip a mode invites.
+     - *(b)* the sheet shown as the mode, a Marks sheet beside the Board, where each sheet keeps a selection of its own, so the place is lost at each switch.
+     - *(c)* Shift with the digits. The Commands sheet cannot spell a modifier (decision 52), the host runs Shift+1 as 1, and at rate 0 the act's rows carry no key. It would amend version 6 while it is unreleased: a key's spelling, and the host's `_commandKey`, in files `ENGINE.26`'s session holds today. A person's keymap binds Shift+1 to `seiyaku.domain-1` already.
+     - *(d)* marks filtered by the constraints, a mark no longer a candidate not drawn: slice 2's to offer, as a setting anyone edits.
+5. **The constraints counted as range aggregates.**
+   - Nine planes of ones and zeros, plane *v* 1 where the value is *v*.
+   - A unit's count of each value is a `SUM` over a plane's row, column or box.
+   - A variable is violated where its value counts twice in one of its three units.
+   - A value is a candidate where it counts in none of them.
+   - This is the roadmap's yield, the `sums` bench's overlapping ranges, each variable read by three units of nine. The planes are 729 cells, the units' counts 243, the candidates 729 and the violations 81; a variable reads its units' counts through `CHOOSE` over the nine values.
+   - *Alternatives:* each variable compared with its twenty peers, 1,620 comparisons and no range; `COUNTIF` over the units, `frazaro-core`'s, which `AD-1` keeps from a cartridge.
+6. **The look: Lovelace Lavender. The fills say the box and a violation, the glyph says a given, and a variable is 6 characters by 36 points**, 42 by 48 px, measured to hold nine marks in three lines.
+   - The boxes: 1, 3, 5, 7 and 9 `E8E0F7`, the others white, since a Style holds no border.
+   - A given in Unicode's mathematical bold digits, 𝟏 to 𝟗; an assignment in plain digits. Each draws through a look's code, two figure spaces after the digit, which centers it, a number aligning right.
+   - A violated variable `FFD5D5`, given or assigned: Superposition's decay red.
+   - Satisfied: the whole board in Lovelace Lavender, `A080E0` and `B9A3E7` by box.
+   - The marks: the digits kept, and a figure space for each one struck.
+   - No fill takes the deep `6B4FC8`, the selection's border.
+   - 108 looks, each a format: six kinds, two parities and nine values. A variable holding text has its own style, a fill by its box and a wrap: 81 `style` rows, a walk.
+   - *The risk:* the bold digits are drawn by a fallback font. A machine without one draws a box for each given, and the fallback is (a), a line of the source.
+   - *Alternatives:*
+     - *(a)* the givens on a deeper fill in plain digits, the second probe's right board, where every fill says two things, the box and the given;
+     - *(b)* digits aligned right, as a number is, the first probe's left board;
+     - *(c)* spacer columns and rows, the boxes' borders, on which the selection stops: two keys to cross a box;
+     - *(d)* a border asked of the language, a Style's border as Excel's own, Frazaro's to mint (Found 1).
+7. **Where the puzzles come from: a generator written here, deterministic, with two solvers and the grader, in `engine/src/seiyaku.rs`, test-only and shared by its path; an example, `cargo run --release --example seiyaku [-- --check]`, writes the book.**
+   - The generator takes the probe's road: a full grid by backtracking, then givens dug in pairs under a half turn, each pair kept out while the solution stays one. Its arithmetic is integers alone and its seed fixed, so the book's bytes are the same on every machine.
+   - The two solvers are written by hand: backtracking over bits, and exact cover (Knuth's Algorithm X, *math exists*). `cargo test` counts every puzzle of the book by both, each exactly one; holds each puzzle's grade to the grader; and writes the book again and compares it.
+   - *Alternatives:* one solver, where two hold each other; a generator in cells, search being what no frame holds; any copied book, never, since a book's selection is not free (`docs/ALGEBRA.md` §11.5).
+8. **The book: 128 puzzles, 32 a grade, each line a puzzle's 81 characters with a dot for an empty cell. They stand in a block of the source between two marker comments, which the example writes; the kit's `picture` writes each as a row of the hidden `Book`.**
+   - The grade is the hardest of the three techniques a puzzle needs, or 4 beyond them. The book is ordered by grade, so the grade is the block a puzzle stands in.
+   - It is about 3,530 givens (*derived*).
+   - *Alternatives:*
+     - *(a)* a file of its own beside the source: the folder rule refuses it and the page does not embed it, so both would change with it, the page in the files the peer holds;
+     - *(b)* a library at `cartridges/` itself, a game's data in the kit's place;
+     - *(c)* nine numbers a puzzle, each a row's digits, unpacked by formulas: 1,152 value cells where the picture writes 3,530, but a book no person reads in the puzzle's own notation;
+     - *(d)* more or fewer puzzles, the cartridge about 25 bytes a given.
+9. **Every instance a transform of its puzzle, by the seed and the instance's number: the bands permuted, the rows within each band, the stacks, the columns within each stack, a transposition, and the values relabeled.**
+   - Each permutation is the ranks of keys hashed from the seed and the instance's number, Life's hash as Superposition's Decays use it. So a permutation is a fill of comparisons and no lookup.
+   - Every transform is a symmetry of the rules, so the instance keeps its puzzle's one solution and its grade. That is 2 × 6⁸ × 9! = 1,218,998,108,160 transforms a puzzle (*derived*), at most 1.6 × 10¹⁴ instances from the book, against 5,472,730,538 essentially different grids (*exhibit*).
+   - The puzzle is its grade's block's, the one the hash names. A seed typed into `Clock!B3` brings its instances back, everyone who types the day's number playing the same.
+   - *Alternatives:* the book as written, a person seeing a grade's 32 again in order; no transposition, half the variety; the puzzle a person chooses by its number.
+10. **The Constraints sheet, shown second.**
+    - The instance's number, its grade and its puzzle in the book; the seed; the next instance's grade, which G moves.
+    - The givens, the assignments and the unassigned; the violations; the marks kept; each value's count, 1 to 9.
+    - Satisfied, and the acts it took.
+    - A row for each of the twenty-seven constraints, rows 1 to 9, columns 1 to 9 and boxes 1 to 9: its assigned count and its state, open, violated or satisfied.
+    - *Alternatives:* the counts alone, the brief's sheet of counts; the counts on the board's own sheet past its bound, where the selection would step onto them.
+11. **Satisfied: every variable assigned and no constraint violated.** With one solution, that is the solution, and no solution is stored.
+    *Alternative:* the solution kept on a hidden sheet, which any person may show (`AD-6`), the answer a tab away.
+12. **The words: constraint programming's, the name's own.**
+    - A cell is a variable and a digit a value; a given is a value the instance fixes; an entry is an assignment, `assign`, and an erasure a retraction, `retract`.
+    - The pencil marks are the variable's domain, `domain` and `domains`; a conflict is a violated constraint, and solved is satisfied.
+    - A puzzle is an instance, `instance`; in slice 2 a hint is the next inference propagation finds, `propagate`.
+    - The title is `Seiyaku 制約`, the kanji beside the romanization, since *seiyaku* alone is also 製薬, the making of medicines, and 誓約, an oath.
+    - The humor is the owner's to amend: the notes open "Eighty-one variables, twenty-seven constraints, one solution, proven before you began", and a satisfied instance says "no search was performed by the cartridge".
+    - *Alternatives:* logic's words (a premise, an assertion, a contradiction, Q.E.D.); the genre's plain words; Japanese words.
+13. **Where it lives: `cartridges/seiyaku/`, 0BSD, in this repository, as Superposition does.** `REPO.5`'s question of the arcade is not this item's. *Alternative:* a repository of its own.
+14. **The oracle.**
+    - The hand in Rust, `engine/src/seiyaku.rs`, written as a person keeps the puzzle, sharing no formula with the cartridge: the transforms, the state, the codes and the Constraints sheet's counts.
+    - Held by `cargo test`:
+      - the book: two solvers, one solution each; the grades; the bytes the example's;
+      - the transforms' law: over seeds and instances, the cartridge's givens are the hand's transform of its puzzle, and each instance counts one solution;
+      - a scripted session held to the hand at every frame, through assignments, retractions, marks, a violation made and retracted, `domains`, an instance satisfied, `instance`, `grade`, `retract-all`, and acts on a given, past the board and on another sheet touching nothing;
+      - the describe golden; and the replay played to its golden.
+    - The hand in JavaScript, `seiyaku.hand.js` (`ENGINE.16`), answering each replay frame with the Board's 81 values; a mutant hand, one that lets an assignment replace a given, failing the replay case by name.
+    - The replay, a stand-in recorded through the page's host and then the owner's session at the hand test; its golden the Constraints sheet's record at its end.
+    - *Alternative:* a golden of the Board, which says less of a session than the twenty-seven constraints and the counts do.
+15. **The slices, the checks and the bookkeeping.**
+    - *Slice 1, the checker:* decisions 1 to 14.
+    - *Slice 2, the technique ladder:*
+      - the three techniques in cells, `propagate` lighting the variables that force the next inference and saying it on the Constraints sheet, the explanation being the cone of the answer (`docs/ALGEBRA.md` §11.4);
+      - propagation to a fixed point by the settle, a round a frame, K raised over the book's deepest;
+      - the book exam: the count of the book's puzzles the ladder solves without a guess, held as a floor that never goes down. *Predicted:* 96 of 128, the book's first three grades, by construction.
+      - Its decisions are scoped at its start, in this entry: the hint's look, the techniques' order, a wiped-out domain lit or not, and decision 4's (d).
+    - *Slice 3, the dial:*
+      - N, the box's side, a parameter of the source as Superposition's side is: 2 for 4 by 4, 4 for 16 by 16 and 5 for 25 by 25, each with a book its generator writes;
+      - N = 7, the scale knob, built by the pass's `expand_with` and measured, a floors row only if it measures what no row does;
+      - its decisions at its start.
+    - Each slice is a commit at the owner's word, staged by its content, the tree shared. The line goes to 🟡 at the approval and leaves for the ledger at slice 3's close. No floors row in slices 1 and 2: 81 variables are no load.
+    - *Alternatives:* the item closed after slice 2, the dial then an item of its own, unminted (the owner's call at slice 2's close); one slice.
+
+**Found.** Unminted; the language's are Frazaro's to weigh.
+1. *A Style is a fill, a number format and a wrap, and nothing else.* With no border, the boxes are fills; with no weight, a given's weight is its glyph; with no alignment, a digit is centered by spaces. Each is Excel's own, a cell's border, font and alignment, so each is the language's and the writer's to add when a game asks, a border first.
+2. *A `style` row names one cell*, so a sheet tinted by blocks is a row a cell, 81 here, where `cell` and `formula` rows take ranges.
+3. *A command's key spells no modifier* (decision 52), and at rate 0 the act's rows carry no key, so a cartridge cannot tell Shift+1 from 1; Shift with a digit is a person's keymap's alone.
+4. *The bold digits are Unicode's Mathematical Alphanumeric Symbols*, drawn by a fallback font, 8.00 px against a digit's 7.01. A machine without such a font draws a box (decision 6's risk).
+5. *No step back at rate 0.* The replay is the history, and a seek is `ENGINE.13`'s. `retract` undoes a variable at a time.
+
+**The catch.** Foreseen by reading, or met in the probes.
+- The command's value is read once, in a cell of the `Lab`, and every variable reads that cell: a frame then makes the commands' text comparisons once, not 81 times (`SPEC.md` §2's rule 3, a cell that holds still).
+- The marks' text is built by `&` and never compared, a text comparison folding both sides (`CART.12`'s Found 1).
+- A shell here-document halved the probe's `\\` into a lone surrogate, the trap the brief names. The editor writes a typed backslash-u escape as the character itself (the memory's trap). So the source holds the figure space and the bold digits as characters, written by the editor or a script run with Python.
+- The folder rule refuses a book beside the source (decision 8).
+- Mutant AP, the picker in reverse, names the last cartridge in the page's order: its words move with a tenth.
+- The tree is shared: `tools/check_host_loop.ps1`, `web/README.md` and the template carry `ENGINE.26`'s uncommitted hunks today, and every file this item touches is staged by its content.
+
+**Oracle.** On the owner's machine under Windows PowerShell 5.1, then on both jobs.
+- `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings` and `cargo test --workspace`, decision 14's.
+- `cargo run --release --example expand -- --check` and `cargo run --release --example seiyaku -- --check`.
+- `tools/check_host_loop.ps1` at both ratios, the pass, empty and replay cases with the hand, its control failing the mutant hand by name; `tools/check_cartridge.ps1`, `tools/check_web_offline.ps1` and `tools/check_spdx.ps1` with their controls; `tools/run_checks.ps1 -WithExtras`.
+- The owner's hand test at each slice.
+
+**Size.** `~weeks`, as filed (*prediction*): slice 1 two to three days, slice 2 about two, slice 3 two to three.
+
+**Sources.**
+- "Sudoku", Wikipedia, read 2026-10-19 (Garns and Dell's Number Place, 1979; Nikoli and Maki Kaji, *Monthly Nikolist*, April 1984; Nikoli's claim to the name in Japan, and Number Place there; 6,670,903,752,021,072,936,960 grids and 5,472,730,538 essentially different, after Felgenhauer and Jarvis 2005 and Russell and Jarvis 2006). https://en.wikipedia.org/wiki/Sudoku
+- Knuth, D. E., "Dancing Links", *Millennial Perspectives in Computer Science*, 2000 (Algorithm X, exact cover).
+- The Unicode Standard, Mathematical Alphanumeric Symbols, U+1D7CE to U+1D7FF (the mathematical bold digits, U+1D7CE to U+1D7D7); the figure space, U+2007, a digit's width.
+
+*Scoped 2026-10-19; the fifteen decisions await the owner.*
+
+*Approved 2026-10-19, the same day, every decision as recommended, in the owner's words: "Design recommendations approved, but it sounds like there may be some necessary pre-work/foundational items to address in Frazaro/vla-lang/Alonzo before proceeding?" The line went to 🟡 the same hour. The owner asked two questions with it: whether `SUMIF`, `COUNTIF` or array formulas in a cartridge would help before the build, and whether Alonzo should mint an item for borders, a font's weight and color, and alignment, Seiyaku being a consumer as Buffet already is. Both were answered in chat the same hour. The facts read for the answer, Frazaro's and Buffet's trees read and never written:*
+- *The criteria and the lookups are already the language's.* `KERNEL.8`'s first slice, committed in Frazaro as `e437b60` after `vla-lang` 0.10.1 and unreleased, registers `INDEX`, `MATCH`, `XMATCH`, `VLOOKUP`, `HLOOKUP`, `LOOKUP`, `XLOOKUP`, `IFERROR`, `IFNA`, `ISERROR`, `ISNA`, `COUNTIF` and `SUMIF` in `vla-lang`'s own `language()`, where a cartridge reaches them (`AD-1`). Its second slice, implicit intersection, is built and awaits the owner's hand test; spills went to an item of their own at its scoping. So the four functions are a release and this tree's pin move away, and no item is wanted.
+  - `INDEX` would replace the deal's two long `CHOOSE` formulas, 128 and 81 arguments, with one lookup into the book.
+  - `COUNTIF` could stand in for the nine planes. A plane's unit sum is counted once and read by the unit's nine variables, where a `COUNTIF` at each variable searches its units again, which `KERNEL.8`'s index answers cheaply.
+  - Neither changes a cost at 81 variables. Both are slice 2's or slice 3's to adopt at the pin, measured; at the dial's N = 7 the counts built both ways would measure `KERNEL.8`'s index over overlapping ranges.
+- *A format's appearance is the language's first, then the painter's.*
+  - A Style is `vla-lang`'s (`sheet.rs`) and the record's `format` row, and the viewport paints the record and nothing of its own (`SD-32`). A border the record does not carry cannot be drawn, so no item of Alonzo's alone can add one.
+  - `frazaro-core`'s writer writes one font, Calibri 11, one empty border and wrap as its only alignment (`core/src/sheet/ooxml.rs`), and its reader keeps a fill, a number format and a wrap.
+  - Frazaro's sentence `Make cell A1 bold.` is refused by the writer today (`KERNEL.16`).
+  - Buffet's ledger asks for a format's text color (`OMAKASE.md`'s table of asks; `SPIKE.md`, `FRONT.2`'s scoping and `GUARD.1`'s buttons, "lavender background and white text"), and its route is the one `KERNEL.47` took: the language's item in Frazaro, then the painter's here, each repository minting its own.
+  - `KERNEL.49`, minted and under construction in Frazaro, rewrites the cell storage and the record's files that such an item would change (`sheet.rs`, `machine/load.rs`, `view.rs`).
+  - `KERNEL.50` is Frazaro's next free ID. Here `ENGINE.27` was minted the same afternoon by `ENGINE.26`'s session, for a row's height a person drags (`5c43486`), so `ENGINE.28` is the next free.
+  - Seiyaku hands such an item a design question: a look's format replaces a cell's whole format today, and Seiyaku's box borders, set once a variable, under looks that change with its value, want a look that sets some properties and keeps the rest, as Excel's conditional formatting does.
+- *The answer given*, the owner's to take:
+  - nothing blocks slice 1, whose workarounds are measured;
+  - the appearance item minted as two, Frazaro's `KERNEL.50` for the language and the writer, after or beside `KERNEL.49`, and Alonzo's `ENGINE.28` for the painter after the pin;
+  - Seiyaku's look moved onto them at the slice after that pin: a few format rows of the source and a replay carried to the new digest.
+
+*The build waits for the owner's word on that order.*
+
+*The owner's word, the same hour: "Mint ENGINE.28 (to be later scoped and implemented after a new vla-lang version is released), provide a starting prompt for a Frazaro session to mint, scope, and implement KERNEL.50, then proceed with CART.14's slice 1." `ENGINE.28` was minted in `ROADMAP.md`, a format's appearance drawn, its family's next free `ENGINE.29`; the prompt was given in chat; and slice 1 was built.*
+
+*Slice 1 built 2026-10-19, the checker (decisions 1 to 14).* What it touches:
+- `cartridges/seiyaku/seiyaku.source.vla`, the source over the kit. The pass expands it into `seiyaku.vla`, 4,222 rows, 6,507 cells written, 2,833 of them formula cells in 157 shapes, the book's 3,521 givens among the cells.
+  - Version 6, rate 0, `(seed host)`, `(settle 16)`, `(bound "Board")`; the Camera shows the Board, the Screen hidden.
+  - Its sheets: the Board and the Constraints shown; the Book, the Deal, the Givens, the Entries, the Marks, the Grid, the Planes, the Units, the Candidates, the Violations, the Lab, the Screen, the Camera and the Commands hidden.
+  - Its 23 commands with their keys, as decision 3 lists them, every one holding always.
+  - Its walks, each a macro the pass runs: the Deal's ranks of three, the Book's 128 rows of a column joined into one `CHOOSE` and the Deal's 81 into another, handed on as the kit's walks hand a text on; the nine planes, the units' counts, the 81 boxes' counts, the nine violation boxes, the nine candidate planes; the Board's 81 styles, its widths and heights; and the 108 looks, six kinds by two parities by nine values, each a format of its fill and its glyph.
+  - The book, a block between two marker comments, the kit's `picture` with its `hex` legend writing a puzzle a row of the Book.
+- `engine/src/seiyaku.rs`, test-only and shared by its path: the solvers by bits and by exact cover, the grader, the generator, the book's block written and read, the transforms, and the board by hand (`Seiyaku`), its frame from the Input rows, its codes and marks' texts and its Constraints sheet's values. `engine/src/lib.rs` names it.
+- `engine/examples/seiyaku.rs`: the book written into the source's block, `-- --check` comparing it.
+- `engine/src/cartridge.rs`, four tests and the replay's hand:
+  - the book: 128 puzzles, 32 a grade in order, each one solution by both solvers and graded as its block says, each solution keeping its givens, and the block the generator's bytes, written again from its seed;
+  - the two solvers counting alike, twelve grids a third given up to 40 solutions, two givens in a row none, and the empty board to its limit;
+  - the instances: over three seeds, six instances and four grades, the rows a permutation keeping the bands, the columns one keeping the stacks, the values relabeled one to one, some transposed and some not, each with its puzzle's one solution and grade;
+  - a session held to the hand at every frame, the Board's 81 variables, the givens, the marks, the Lab's counts and the Constraints sheet's every value: the load and its proof, two frames; an act's three; a value its row's given holds, both violated, and retracted; marks kept, struck and refused on a given and on an assigned variable; a retraction striking an unassigned variable's marks; a press; an act on the Constraints sheet touching nothing; the domains filled, each its candidates; the grade moved twice; every assignment retracted; a second instance at grade 4; that instance satisfied a value at a time; and a retraction unsatisfying it;
+  - `SeiyakuHand`, the committed replay held to the hand at every frame, its shape pinned.
+- `engine/testdata/describe/seiyaku.vla`, the describe golden.
+- `cartridges/seiyaku/seiyaku.hand.js`, the hand in JavaScript, its book read from the page's own block `source-seiyaku`, answering each replay frame with the Board's 81 variables.
+- `cartridges/seiyaku/seiyaku.replay.vla`, a stand-in, and `seiyaku.golden.vla`, the Constraints sheet's record at its end over `A1:D57`. The stand-in is written by the engine's own steps, in a scratch crate over this tree by its path, in the form the host's recorder writes: the cartridge loaded with the seed 20261019; a press on B1; `assign-4` there, the value its row's given holds, violating both; retracted; on D1 the marks 1, 5 and 9 kept and the 5 struck; the domains filled; the next grade moved to 3 and a new instance dealt, of 28 givens, then satisfied a value at a time, 53 assignments, so that the replay ends on the satisfied board. 64 acts over 191 frames, every frame held to the hand. The page's replay case records it again byte for byte (its `round`), which is what makes it a host's recording. The owner's session replaces it at the hand test.
+- `tools/build_web.ps1`, the page's order, Seiyaku tenth; `tools/check_cartridge.ps1`, ten cartridges and sources, six replays and goldens, the row floor 4,222; `tools/check_host_loop.ps1`, the pass's and the empty case's counts ten, the replay's hands 4 and replays, golden and round 6 with Seiyaku's counts, the grid's game half over three grid cartridges, mutant AP's words, and mutant ET, Seiyaku's hand that never lights a violated given; `tools/run_checks.ps1`'s notes.
+- `README.md`, `engine/README.md`, `web/README.md`, `Delta/CLAUDE.md`, the memory.
+
+*The Constraints sheet re-laid at the build.* Drawn through the real host in headless Chrome, the seed, 20261019, drew as #s in a column of eight characters, Superposition's catch at `CART.12`'s hand test, and the counts of each value ran along a row under columns of three widths. Column B is twelve characters, so a seed of ten digits reads whole; the values' counts stand a value a row, rows 19 to 28, and the twenty-seven constraints from row 30.
+
+*Measured.* On the owner's machine, natively, release, the engine alone (each act's write and steps, the hand outside the clock), four runs of the stand-in's session; not opted out of the throttling, each run under a second.
+- The load, the cartridge's text into a machine: 10.67 to 11.49 ms.
+- The load's act and its settle: two frames, 0.70 to 0.80 ms.
+- An act, 63 of them: p50 0.064 to 0.067 ms, p95 0.077 to 0.085 ms, the longest 0.29 ms, the new instance's deal.
+- The book written by the example: 128 puzzles in 220 to 226 ms.
+- The page's pass over the source, the module's, the command line's bytes (the loop oracle's `pass`, its `same` 10).
+- The page, 3,616,967 characters, its blocks ten cartridges, ten sources, six replays with six goldens and four hands.
+
+*Against the predictions* (the scoping's, written before any cell):
+- *The cartridge:* 4,222 rows, inside 4,000 to 4,400; 123 KB, inside 100 to 150; 3,521 givens, inside 3,500 to 3,600; 2,833 formula cells, inside 2,400 to 2,900. The shapes missed: 157 against 40 to 70, the 81 boxes' counts and the per-column constraints each a shape of one cell.
+- *The load:* 11 ms natively against 15 to 40, under; its settle two frames under 1 ms, as predicted. Not measured in the browser this slice.
+- *An act:* three frames; a p50 of 64 µs inside 20 to 100, a p95 of 77 to 85 µs inside it too. A new instance 0.29 ms, inside 0.1 to 1.
+- *The book:* 0.22 s, under one second.
+
+*Held,* over `vla-lang` 0.10.1:
+- `cargo test --release -p alonzo`: 59 and the doc test; `cargo fmt --check`; `cargo clippy --workspace --all-targets -- -D warnings`, and the same for `wasm32-unknown-unknown`.
+- `cargo run --release --example expand -- --check` and `cargo run --release --example seiyaku -- --check`.
+- A mutant of the hand, a satisfied given drawn as kind 7, failed the session test by name at frame 216, `Board!C1 holds Number(507.0), and the hand's Number(707.0)`.
+- `check_cartridge.ps1` and its control's 47 mutants; `check_spdx.ps1` over a temporary index holding the new files, 37 cartridge headers; `check_web_offline.ps1`, the four hands.
+- `check_host_loop.ps1` at both ratios and the game's page: Seiyaku's replay held at all 191 frames, 15,471 cells, 64 acts, two instances, 127 settle steps and one instance satisfied, and recorded again byte for byte; the grid case's game half over Seiyaku's Board, loaded, settled and moved; its control, the real page and every one of one hundred and fifty mutant pages failing for its own reason, ET among them.
+- `run_checks.ps1 -WithExtras`: 12 of the 13 checks and all 13 controls. The thirteenth, `check_host_loop.ps1`, counted 5,680 `gridTexts` at a ratio of 1.5 under a floor of mine, 5,700, taken from one run (the catch below); at 5,650 it ran clean twice at both ratios, and the whole gate again over the final tree, the stand-in ending satisfied: ALL GREEN, 13 checks and 13 controls.
+
+*Found* (unminted, each a line in the summary):
+- *A bound sheet smaller than its box:* the column lines run on below its last row into the box's empty part (the board drawn through the real host); the viewport's, `ENGINE.28`'s or a line of its own.
+- *The engine-made device sheets show as tabs* beside a cartridge's own, Clock, File and Input, as on Superposition; a cartridge cannot hide a sheet the engine makes without making it.
+- *The loop oracle's grid case loads a `(seed host)` cartridge at a random seed,* so a count drawn from its instance moves from run to run; a case that wrote such a cartridge's seed would make it a fixed fixture, the oracle's (`ENGINE`'s).
+
+*Catches.*
+- A shell here-document halved a backslash twice more, once into a lone surrogate and once into an edit that never applied; every edit script since is written by the editor and run by Python.
+- `Option::is_none_or` is newer than the crate's minimum Rust, 1.75; `map_or(true, ...)` stands in.
+- A loop that indexes by its range trips clippy's `needless_range_loop`, which CI denies.
+- The recorder's own timing first included the hand's frame and its holding of 81 cells; the engine is timed alone.
+- The grid case counts a settling cartridge's load as two frames and one held, Superposition's too: `gridEqual` one under `gridFrames` a cartridge, no fault.
+- A floor taken from one run: the grid case loads Seiyaku at the host's seed, a new instance each run, so its `gridTexts` read 5,680 to 5,715 over four runs, each of the second grade's 24 to 32 givens drawn seven times. The floor is 5,650, under the least such an instance draws.
+
+*The owner's hand test of slice 1, 2026-10-19.* On the owner's machine: the tests, 59 and the doc test; the example's check, `same`; the module and the page built; the Board, the Constraints sheet, a value assigned and a repeated one lit red, marks and the domains filled, the palette's 23 commands, and the stand-in played to its satisfied board, seen in seven screenshots; and `run_checks.ps1 -WithExtras` ALL GREEN, 13 checks and 13 controls. The owner's session, copied from the drawer, and four notes:
+1. "The grid should be twice as large;"
+2. "Assigned digits should be twice as large as marks to more easily distinguish between the two;"
+3. "Non-grid space (i.e., no rows or columns, like the empty space after row 9 and column I) should be filled in with the same gray background which row and column headers use so that the white grid pops against a gray canvas;"
+4. "Controls should be listed beside the game grid so players can see what each button does;"
+5. After the session, a fifth: "keypad numbers don't register as assigned digits (they should, since they're every super-spreadsheeter's favorite method of numeric entry)".
+
+*What the notes moved,* in slice 1 before its commit:
+- *Note 1, the Board twice as large.*
+  - Each variable is 12.57 characters by 66 points, 88 pixels square, against 42 by 48 before: 2.1 times across and 1.83 times down. Square, so the marks spread to their places.
+  - The marks' text is laid again for the wider cell. A line holds three marks, a figure space before them and three between each two, ten digits wide; a line of one figure space stands between two lines. The viewport's wrap breaks at a plain space alone, and a line, a space and a figure space are wider than the cell, so it breaks after each: five lines, the marks on the first, the third and the fifth.
+  - Measured in headless Chrome at 13 pixels: a digit and a figure space are 7.01 pixels each, a space 3.56. A line of marks is 70 pixels in the 80 between the paddings, and the same arithmetic holds at the ratios 1.25, 1.5 and 2.
+  - The viewport draws a wrapped text from the cell's top, so the marks' first line is 8 pixels from the top and the block ends 8 above the bottom.
+  - A given's or an assignment's glyph is now centered by five figure spaces after it, where it had two.
+- *Note 2, the digits twice the marks' size: not in this slice.*
+  - A format has no font size: `vla-lang`'s Style holds none, and the viewport draws every text at 13 pixels. A lone mark 5 draws as an assigned 5 does, four pixels higher.
+  - `ENGINE.28`'s line is amended to name a text's size.
+  - `KERNEL.50`'s prompt had named a font's size among what stays out, so the owner was given an addendum for it in chat.
+  - Until then the givens stay bold, the assignments and the marks plain.
+- *Note 3, the canvas.* The viewport, `web/viewport.js`:
+  - A bound sheet's canvas is the headers' gray (`colors.header`, #f3f3ee) past its last column and its last row.
+  - Its cells in view lay the background over the canvas before their fills.
+  - Its gridlines end at its edges, and so do the headers' two edges, at its last column and its last row.
+  - A sheet not bound draws as before, its lines the quadrant's own segments.
+  - `geometry()` gives the content's width and height, which the hold reads. `docs/SPEC.md` §7.2 gains a sentence, and `web/README.md` two.
+  - The grid case's game half holds it: a bound sheet whose whole extent is a few screens or less is shown in a box grown to hold it, and five pixels past its edge read the headers' gray. They lie past its last column, in its first row and at the column headers' edge, and below its last row, at its first column's line, in the row headers' band and at their edge (gridCanvas 5 at both ratios).
+  - Four mutants fail the grid case by name: EU, the canvas the background; EV, the gridlines across the canvas; EW and EX, each header's edge run on.
+  - This closes slice 1's first Found item, the column lines running on below the last row.
+- *Note 4, the keys beside the Board.*
+  - K1:L9, a key a row: 1 to 9; Backspace; the marks' keys, Q W E, A S D, Z X C, drawn as the marks are, in five lines, each key in its mark's place; F; R; N; G; the arrows; Ctrl+K.
+  - Their words stand in L, constraint programming's. Their fill is the canvas's gray (formats 111 and 112), and J is a gutter of the same gray, by its column's format.
+  - The extent is A1:L9 now. The place's formula was already 0 past column I, so a command on a key's cell touches nothing.
+  - 41 rows more, 4,263.
+- *Note 5, the keypad's digits, the host's.*
+  - A command's key is a `KeyboardEvent.code` (§3.10), and the keypad's 1 is `Numpad1`, never `Digit1`, so it ran no command. The page's own keymap (`ENGINE.23`) already reads a digit binding from the row and the keypad both.
+  - `web/host.js`, `_commandKey`: a digit of the keypad, while Num Lock is on so that its key is the digit, runs the command of the digit row's key, unless a command holding names the keypad's own code.
+  - Num Lock off, the keypad's arrows, Home and End stay the viewport's, as in Excel; the page's keymap matches the keypad by its code alone (Found).
+  - Every cartridge's commands take it, Buffet's keys 1 to 4 when its pin moves. The Input sheet's last key keeps the keypad's own code, and a Keys button bound to a digit is held by that key alone.
+  - `docs/SPEC.md` §3.10 gains a sentence (amended, no version moved), and `web/README.md` one.
+  - Held by the commands case: the card's eighth row, seven, on `Digit7`; the keypad's 7 before frame 38, Num Lock on, taken and running seven, and before 39, Num Lock off, passing on (keypad 2; landed 24 and emptied 16, the frame seven runs moved from the one to the other). Mutant EY, the keypad's digits running nothing, fails it by name at frame 38.
+  - Seiyaku says so: its manifest's notes, its source's how-to-play, and L1 beside the Board, "row or keypad".
+- *The owner's session, the committed replay in place of the stand-in* (decision 14).
+  - Its header's digest moved to the cartridge the notes left, 01E6F665…, no cell it writes or reads having moved.
+  - A scratch runner played it natively, every frame equal to the hand, on the cartridge it was recorded on and on this one. Its golden, the Constraints sheet's record at its end, is byte for byte the same on both.
+  - 35 acts over 104 frames, at the seed 700619202:
+    - the next grade moved three times, to 1, and an instance dealt, the book's sixteenth puzzle, of 26 givens;
+    - the domains filled five times between ten values assigned, each variable chosen by a click, none violating, at most 196 marks kept;
+    - then every assignment and mark retracted.
+  - The native test's pin fell with it: 35 acts, one instance after the first, 69 settle steps, one retraction of everything, nothing assigned, nothing satisfied.
+  - So did the page's floors: seiyakuFrames 104, seiyakuCells 8,424, seiyakuActs 35, seiyakuSettles 69. The satisfied floor is gone, the session satisfying none; the engine's scripted session holds a violation and a satisfied instance natively.
+  - Mutant ET moved from a violated given, which the session never lights, to the hand's candidates blind to the box, which the session's first domains read at frame 15.
+
+*Drawn,* through the real host and viewport over the built module in headless Chrome, at the seed 20261019:
+- the Board with every domain filled and a repeated value lit;
+- the Board with a few marks, a lone mark 5 beside an assigned 5;
+- the canvas's gray past column L and below row 9;
+- the keys in K:L, the marks' keys in their places.
+
+*Held,* over `vla-lang` 0.10.1:
+- `cargo test --release -p alonzo`: 59 and the doc test, the replay test playing the owner's session to its golden with every frame held to the hand.
+- `cargo fmt --check`, and `cargo clippy` with `-D warnings` for the host and for `wasm32-unknown-unknown`.
+- `cargo run --release --example expand -- --check` and `cargo run --release --example seiyaku -- --check`.
+- `check_host_loop.ps1` at both ratios and the game's page: Seiyaku's replay, the owner's session, held at all 104 frames, 8,424 cells, 35 acts, two instances and 69 settle steps, and recorded again byte for byte. The grid case's game half reads gridCanvas 5, and gridTexts 5,783 to 5,810 over two runs, above the floor of 5,650. The commands case reads keypad 2, landed 24 and emptied 16.
+- `run_checks.ps1 -WithExtras` over the final tree: ALL GREEN, 13 checks and 13 controls, the loop's control failing all one hundred and fifty-five mutant pages for their own reasons, EU to EY among them, in 491.9 s, and the cartridges' control in 333.3 s.
+
+*Found* (unminted):
+- *The canvas is held for a bound sheet a few screens large.* A box grown over Superposition's Field, 10,752 pixels wide, would be a canvas past what the browser allows, so the Field's edge is held by its moves alone.
+- *A wrapped text is drawn from the cell's top, never centered.* A row taller than its lines leaves the space below them. `ENGINE.28`'s vertical alignment would center it.
+- *Gridlines are drawn over fills.* The boxes' tint shows each cell's lines, where Excel's fill hides a cell's gridlines. Borders (`ENGINE.28`) would draw the boxes, and the Board could then turn its gridlines off.
+- *The frozen separators still cross a bound sheet's canvas.* No cartridge freezes panes; only the bench's freeze does.
+- *The page's keymap takes the keypad's digit by its code, Num Lock or not,* so a person's binding of 1 runs at the keypad's End with Num Lock off; the host's rule asks for the digit as the key.
+- *A Keys button bound to a digit row's key is held by that key alone,* and the keypad's Enter runs no command bound to Enter, which the page's keymap reads as Enter; each would carry the same rule in a line, unasked.
+
+*Catches.*
+- ET would have let the owner's session pass. The session lights no violation, so a hand that never lights a violated given would play it clean. Playing the session natively before committing it showed this, and ET moved to the candidates.
+- KERNEL.50's prompt had named a font's size as staying out, before the owner's note asked for one.
+- The first run of the keypad's hold failed, at frame 39: it read the keypad's Home, Num Lock off, as passed on only when nothing prevented its default, but the viewport takes Home itself. It is held by Input!B20 instead, empty at 39.
+
+*The owner's second hand test and the close, 2026-10-20.* On the owner's machine: the tests, 59 and the doc test; the example's check, `same`; the module and the page built; four screenshots, the Board on its canvas with its keys beside it, an instance satisfied in 80 acts and the board Lovelace Lavender, the Constraints sheet, and the palette over the Clock sheet with every hidden sheet shown; and `run_checks.ps1 -WithExtras` ALL GREEN, 13 checks and 13 controls. The owner's word: "Tests pass; KERNEL.8 is going to take a while, and it's currently blocking KERNEL.49/50, so I suppose we can mark CART.14 done as-is for now until those items are finished and new language/engine version releases can be pinned."
+- *Closed as built:* slice 1, the checker, decisions 1 to 14, with the rework for the five notes of the first hand test.
+- *Left, unminted, their scoping kept above (decision 15):*
+  - slice 2, the technique ladder: the three techniques in cells, `propagate`, propagation by the settle, and the book exam;
+  - slice 3, the dial: N a parameter of the source, 4 by 4 to 25 by 25 each with its book, and N = 7 the scale knob.
+  - `KERNEL.8`'s lookups serve both (the approval's facts above), so they wait for its release and the pin, an item of their own at the owner's word.
+- *The look's second half:* the digits twice the marks' size, borders for the boxes and alignment for the digits are `ENGINE.28`'s, which names Seiyaku among its consumers, after `KERNEL.50`'s release and the pin.
+- *Found at the second hand test:* the engine's own Clock sheet draws a seed of nine digits as #s in its default column (the screenshot of the palette over it), as a cartridge's own seed column did at `CART.12`'s hand test; the Clock is the engine's, so its width is the engine's to set.

@@ -102,13 +102,30 @@ frames, holds its board, State, voices and Tally to the game by hand at
 every frame, under the buttons the replay's Input rows press (`CART.4`'s
 second slice).
 
+Seiyaku, `cartridges/seiyaku/`, the number-placement puzzle (`CART.14`), is
+held to a board written by hand, `src/seiyaku.rs`, compiled for the tests
+alone, which also holds two solvers written apart, backtracking over bits and
+exact cover, the grader of three techniques and the generator of its book. A
+test counts every puzzle of the book by both solvers, one solution each,
+holds each to its grade and writes the book again from its seed; another
+holds the solvers to each other; another holds every instance to a symmetry
+of its puzzle, its one solution and its grade kept; and a session holds the
+Board, the givens, the marks, the Lab and the Constraints sheet to the hand at
+every frame. The book is written into the source by an example of its own,
+which includes the same file by its path:
+
+```text
+cargo run --release --example seiyaku              # the book written into the source's block
+cargo run --release --example seiyaku -- --check   # the same, compared and written nowhere
+```
+
 Its tests hold the two projections of a window to one another: the plane of
 a window is the view record of the same window, byte for value, the record
 read with the language's own reader, every frame of the repository's test
 card, a cartridge holding every kind of value a Screen cell can under a
 Camera that pans a column a frame, and Life at its corners (`ENGINE.2`).
-And one plays every committed replay, the input card's, Kairos's, Sand's and
-the sound card's, as `docs/SPEC.md` section 7.6 plays one, the derived writes the
+And one plays every committed replay, the input card's, Kairos's, Sand's, the
+sound card's, Superposition's and Seiyaku's, as `docs/SPEC.md` section 7.6 plays one, the derived writes the
 Write sheet leaves before each frame's rows, to the golden beside it, byte
 for byte, so the host's player and the engine alone end in the same sheet
 (`ENGINE.3`, made general over every folder holding a replay by `ENGINE.4`).

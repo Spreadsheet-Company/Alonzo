@@ -805,7 +805,9 @@
     this.quads = []; this.over = null;   // the quadrants this paint leaves, and no repaint over it yet (ENGINE.20)
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = this.colors.background;
+    // A bound sheet stands on a canvas in the headers' gray, past its last column and its last row, where there is no
+    // row and no column (CART.14's hand test, 2026-10-19); its cells lay the background over it (_paintQuadrant).
+    ctx.fillStyle = g.bounded ? this.colors.header : this.colors.background;
     ctx.fillRect(0, 0, W, H);
     ctx.font = g.font;
     ctx.textBaseline = 'middle';
@@ -861,7 +863,16 @@
     if (part) { rowStart = rowEnd = part.row; colStart = part.left; colEnd = part.right; }
     else this.quads.push(q = { index: this.quads.length, name: name, clip: clip, r1: r1, r2: r2, c1: c1, c2: c2, sx: sx, sy: sy, rowStart: rowStart, rowEnd: rowEnd, colStart: colStart, colEnd: colEnd });
     var r, c, cell, x, y, w;
+    // the rectangle of the cells in view: a bound sheet's lines end at its edges (CART.14's hand test), any other's
+    // cross the quadrant
+    var cellsX = ox + g.colX[colStart] - sx, cellsY = oy + g.rowTop(rowStart) - sy;
+    var cellsR = ox + g.colX[colEnd + 1] - sx, cellsB = oy + g.rowTop(rowEnd + 1) - sy;
     p.clipped(clip, function () {
+      // a bound sheet's cells in view, the background laid over its canvas; a repaint has cleared its own rectangle
+      if (g.bounded && !part) {
+        p.ctx.fillStyle = colors.background;
+        p.ctx.fillRect(cellsX, cellsY, cellsR - cellsX, cellsB - cellsY);
+      }
       if (q) q.fills = p.ops.length;
       // the fills: a look's, a styled cell's, or a styled column's for its empty cells
       if (model) {
@@ -881,17 +892,18 @@
       if (q) q.lines = p.ops.length;
       // the gridlines, at an integer plus a half so that each is one device pixel; a hidden row draws none
       if (!model || model.gridlines) {
-        var segs = [];
+        var segs = [], top = clip.y, bottom = clip.y + clip.h, left = clip.x, right = clip.x + clip.w;
+        if (g.bounded) { top = Math.max(top, cellsY); bottom = Math.min(bottom, cellsB); left = Math.max(left, cellsX); right = Math.min(right, cellsR); }
         for (c = colStart; c <= colEnd; c++) {
           if (g.colW[c] === 0) continue;
           x = ox + g.colX[c + 1] - sx - 0.5;
-          segs.push([x, clip.y, x, clip.y + clip.h]);
+          segs.push([x, top, x, bottom]);
         }
         for (r = rowStart; r <= rowEnd; r++) {
           rh = g.rowHeight(r);
           if (rh === 0) continue;
           y = oy + g.rowTop(r) + rh - sy - 0.5;
-          segs.push([clip.x, y, clip.x + clip.w, y]);
+          segs.push([left, y, right, y]);
         }
         p.lines(segs, colors.gridline, 'grid-' + name);
       }
@@ -1037,7 +1049,10 @@
           p.text(colName(c), x + Math.round(w / 2), Math.round(headH / 2), 'center', colors.headerText, { x: x, y: 0, w: w, h: headH }, { op: 'header-text', kind: 'column', index: c });
           segs.push([x + w - 0.5, 0, x + w - 0.5, headH]);
         }
-        segs.push([clip.x, headH - 0.5, clip.x + clip.w, headH - 0.5]);
+        // the headers' edge, a bound sheet's ending at its last column (CART.14's hand test)
+        var end = clip.x + clip.w;
+        if (g.bounded) end = Math.min(end, ox + g.colX[cEnd + 1] - scroll);
+        segs.push([clip.x, headH - 0.5, end, headH - 0.5]);
         p.lines(segs, colors.gridline, 'header-column');
       });
     }
@@ -1056,7 +1071,10 @@
           p.text(String(r), g.rhW - g.pad, y + Math.round(rh / 2), 'right', colors.headerText, { x: 0, y: y, w: g.rhW, h: rh }, { op: 'header-text', kind: 'row', index: r });
           segs.push([0, y + rh - 0.5, g.rhW, y + rh - 0.5]);
         }
-        segs.push([g.rhW - 0.5, clip.y, g.rhW - 0.5, clip.y + clip.h]);
+        // the headers' edge, a bound sheet's ending at its last row (CART.14's hand test)
+        var end = clip.y + clip.h;
+        if (g.bounded) end = Math.min(end, oy + g.rowTop(rEnd + 1) - scroll);
+        segs.push([g.rhW - 0.5, clip.y, g.rhW - 0.5, end]);
         p.lines(segs, colors.gridline, 'header-row');
       });
     }
@@ -1729,7 +1747,7 @@
     if (!g) return null;
     return { dpr: g.dpr, canvasW: g.canvasW, canvasH: g.canvasH, clientW: this.scroller.clientWidth, clientH: this.scroller.clientHeight,
              rowH: g.rowH, headH: g.headH, rhW: g.rhW, fontPx: g.fontPx, pad: g.pad, lineH: g.lineH, rows: g.rows, cols: g.cols, sheetRows: g.sheetRows, sheetCols: g.sheetCols, bounded: g.bounded,
-             colW: g.colW.slice(), colX: g.colX.slice(), frozenRows: g.fr, frozenCols: g.fc, frozenW: g.frozenW, frozenH: g.frozenH,
+             colW: g.colW.slice(), colX: g.colX.slice(), contentW: g.contentW, contentH: g.contentH, frozenRows: g.fr, frozenCols: g.fc, frozenW: g.frozenW, frozenH: g.frozenH,
              scrollX: this.scroll.x, scrollY: this.scroll.y, scrollLeft: this.scroller.scrollLeft, scrollTop: this.scroller.scrollTop };
   };
   // The draw list (ENGINE.20, decision 3): the last full paint's, each cell a repaint drew since in its place, in the

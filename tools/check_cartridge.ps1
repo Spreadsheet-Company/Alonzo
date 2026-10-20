@@ -264,12 +264,25 @@ if ($Root -eq '') { $Root = $repoRoot }
 # owner's replay carried onto it, each act's place a row up and a column left
 # with the lattice (118 frames, 19 written), and its golden the Tally's record
 # over R1:R512; the other eight's rows unchanged.
-$expectedCartridges = 9
-$expectedSources = 9
+# 2026-10-19, CART.14's first slice: Seiyaku, the tenth cartridge, 4,222 rows,
+# 3,521 of them its book's givens, a puzzle a row of the hidden Book, written
+# into its source by engine/examples/seiyaku.rs; its replay, a stand-in the
+# owner's session replaces (64 acts over 191 frames), and its golden, the
+# Constraints sheet's record at its end over A1:D57; the other nine's rows
+# unchanged.
+# 2026-10-19, CART.14's hand test: Seiyaku 4,263 rows, its variables twice as
+# large, 12.57 characters by 66 points, its marks laid in five lines, and the
+# keys beside the Board, K1:L9 on the canvas's gray, J a gutter (41 rows: 18
+# cells, 18 styles, 2 formats and 3 columns); the owner's session its replay in
+# place of the stand-in (35 acts over 104 frames), carried onto the cartridge
+# as its notes left it, no cell it writes or reads moved, and its golden the
+# Constraints sheet's record at its end; the other nine's rows unchanged.
+$expectedCartridges = 10
+$expectedSources = 10
 $expectedLibraries = 1
-$expectedReplays = 5
-$expectedGoldens = 5
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 177; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636 }
+$expectedReplays = 6
+$expectedGoldens = 6
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 177; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4263 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

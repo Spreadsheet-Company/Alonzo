@@ -76,6 +76,13 @@ mod kairos;
 #[cfg(test)]
 mod superposition;
 
+/// Seiyaku by hand (`CART.14`), the reference the engine's tests hold the
+/// puzzle's frames to, with the two solvers, the grader and the generator
+/// that write and hold its book, compiled for the tests alone; the book's
+/// writer includes the same file by its path.
+#[cfg(test)]
+mod seiyaku;
+
 /// SHA-256 in upper-case hex, the digest a replay names its cartridge by,
 /// compiled for the tests alone (`AD-5`); the native runner includes the
 /// same file by its path, to name each rung of the size ladder (`ENGINE.9`).

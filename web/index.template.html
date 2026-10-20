@@ -2957,6 +2957,7 @@
         P.push(label + ': the bound sheet ' + sh + ' lays ' + g.cols + ' columns and ' + g.rows + ' rows, where its extent ' + m.extentText + ' is ' + ext.right + ' and ' + ext.bottom + ': a bound sheet is its extent and no more (version 6)');
       else if (right !== ext.right || bottom !== ext.bottom) P.push(label + ': the bound sheet ' + sh + '\'s last column and row scrolled to were ' + VP.colName(right) + ' and ' + bottom + ', where its extent ' + m.extentText + ' ends');
       else k.bound++;
+      gqCanvas(vp, box, label + ', ' + sh, P, k);
     }
     // a tab chosen, by its click, gives the grid the keys; and a box being typed in keeps them
     function tab(name) { return vp.tabs.querySelector('button[data-sheet="' + name + '"]'); }
@@ -2975,6 +2976,34 @@
     if (document.activeElement === ta) k.typed++; else P.push(label + ': the tab ' + other + ' chosen while a box was typed in took the keys to ' + holder() + ', where the box keeps them');
     ta.parentNode.removeChild(ta);
     tab(sh).click();
+  }
+  // A bound sheet stands on the canvas (CART.14's hand test, 2026-10-19): the box grown to hold the sheet's whole
+  // extent, where that is a few screens or less, a pixel past its last column and pixels below its last row read the
+  // headers' gray, in the row's band and the headers' bands, and where a column's line and the headers' edges would
+  // run on, so that no row, column, gridline or header is drawn past the sheet's; the box put back after.
+  function gqCanvas(vp, box, at, P, k) {
+    var g = vp.geometry(), w0 = box.style.width, h0 = box.style.height;
+    var needW = Math.ceil((g.rhW + g.contentW) / g.dpr) + 60, needH = Math.ceil((g.headH + g.contentH) / g.dpr) + 120;
+    if (needW > 4000 || needH > 4000) return;
+    box.style.width = needW + 'px'; box.style.height = needH + 'px'; vp._onResize();
+    g = vp.geometry();
+    var ctx = vp.canvas.getContext('2d'), want = hexOf(vp.colors.header);
+    var right = g.rhW + g.colX[g.cols + 1] - g.scrollX, bottom = g.headH + g.contentH - g.scrollY;
+    var probes = [
+      ['past its last column, in its first row', right + 2, g.headH + 2],
+      ['past its last column, where the column headers\' edge would run on', right + 2, g.headH - 1],
+      ['below its last row, where its first column\'s line would run on', g.rhW + g.colX[2] - 1 - g.scrollX, bottom + 3],
+      ['below its last row, in the row headers\' band', Math.floor(g.rhW / 2), bottom + 3],
+      ['below its last row, where the row headers\' edge would run on', g.rhW - 1, bottom + 3]
+    ];
+    for (var i = 0; i < probes.length; i++) {
+      var pr = probes[i], x = pr[1], y = pr[2];
+      if (x < 0 || y < 0 || x >= g.canvasW || y >= g.canvasH) { P.push(at + ': the box grown to hold the bound sheet shows no pixel ' + pr[0]); continue; }
+      var d = ctx.getImageData(x, y, 1, 1).data;
+      if (d[0] !== want[0] || d[1] !== want[1] || d[2] !== want[2]) P.push(at + ': the pixel ' + pr[0] + ', at ' + x + ',' + y + ', reads ' + [d[0], d[1], d[2]].join(',') + ', where a bound sheet stands on the canvas, the headers\' gray ' + want.join(','));
+      else k.canvas++;
+    }
+    box.style.width = w0; box.style.height = h0; vp._onResize();
   }
   function gridRun(exports, label, text, file, frames, plan, k, P) {
     var stage = document.getElementById('stage'), box = document.createElement('div');
@@ -3163,7 +3192,7 @@
   var GAME_GRID_FRAMES = 12;
   function caseGrid() {
     var res = OWN ? gridOwn() : { counters: {}, problems: [] }, k = res.counters, P = res.problems;
-    k.grids = 0; k.gridFrames = 0; k.gridEqual = 0; k.gridValues = 0; k.gridTexts = 0; k.gridCleared = 0; k.gridMoves = 0; k.gridBound = 0; k.gridFocused = 0; k.gridTyped = 0;
+    k.grids = 0; k.gridFrames = 0; k.gridEqual = 0; k.gridValues = 0; k.gridTexts = 0; k.gridCleared = 0; k.gridMoves = 0; k.gridBound = 0; k.gridCanvas = 0; k.gridFocused = 0; k.gridTyped = 0;
     var wasm = builtModule();
     if (!wasm) return res;
     var bytes = bytesOfBase64(wasm);
@@ -3171,10 +3200,10 @@
     for (var i = 0; i < ORDER.length; i++) {
       var c = CARTRIDGES[ORDER[i]];
       if (c.mode !== 'grid') continue;
-      var g = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0, moves: 0, bound: 0, focused: 0, typed: 0 };
+      var g = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0, moves: 0, bound: 0, canvas: 0, focused: 0, typed: 0 };
       gridRun(HOST.instantiateSync(bytes), c.name, c.text, c.file, c.rate > 0 ? GAME_GRID_FRAMES : 0, { strict: true, moves: true }, g, P);
       k.grids++; k.gridFrames += g.frames; k.gridEqual += g.equal; k.gridValues += g.values; k.gridTexts += g.texts; k.gridCleared += g.cleared;
-      k.gridMoves += g.moves; k.gridBound += g.bound; k.gridFocused += g.focused; k.gridTyped += g.typed;
+      k.gridMoves += g.moves; k.gridBound += g.bound; k.gridCanvas += g.canvas; k.gridFocused += g.focused; k.gridTyped += g.typed;
     }
     return res;
   }
@@ -5763,6 +5792,7 @@
                             '(formula "Commands" "A5" "=\\"Buy 1\\"")\n' +
                             '(cell "Commands" "A6" "jump")\n(cell "Commands" "C6" "maybe")\n(cell "Commands" "D6" "J")\n' +
                             '(formula "Commands" "A7" "=\\"note\\"")\n' +
+                            '(cell "Commands" "A8" "seven")\n(cell "Commands" "B8" "run by the 7 of the digit row or the keypad")\n(cell "Commands" "D8" "Digit7")\n' +
                             '(cell "Desk" "A1" "count")\n(formula "Desk" "B1" "=Desk.last!B1+IF(Input!$B$20=\\"count-up\\",1,0)-IF(Input!$B$20=\\"count-down\\",1,0)")\n' +
                             '(cell "Desk" "A2" "commands run")\n(formula "Desk" "B2" "=Desk.last!B2+IF(Input!$B$20<>\\"\\",1,0)")\n' +
                             '(cell "Ledger" "A1" "noted at")\n(formula "Ledger" "B1" "=IF(Input!$B$20=\\"note\\",Clock!$B$1,Ledger.last!B1)")\n' +
@@ -5773,7 +5803,9 @@
   // count-up before 7 and before 8, two frames running; U and its repeat on the Desk before 10, one count; Ctrl+U before 12,
   // nothing; the person's tab to the Ledger before 14, where from frame 15 count-up holds not, is refused, and its U passes
   // on, and note runs at 16; the tab back to the Desk before 18; and sixteen count-ups before 21, a seventeenth refused, one
-  // a frame from 21 to 36. At every frame Input!B20 names the command due or is empty, and the Desk, its runs and the Ledger
+  // a frame from 21 to 36; and since CART.14's hand test the keypad's 7 before 38, Num Lock on, running seven, whose key is
+  // the digit row's 7, and before 39, Num Lock off, its key Home, passing on. At every frame Input!B20 names the command
+  // due or is empty, and the Desk, its runs and the Ledger
   // hold what the commands due make. The rows the host cannot take said once each. The run's replay, version 5's, played on
   // a fresh host to every frame's cells; a command refused while a replay plays; then rate 0, a command its own step and
   // the next edit's step seeing B20 empty, replayed; and the card written to version 4, its Commands sheet its own.
@@ -5781,7 +5813,7 @@
     var P = [], k = { named: 0, lines: 0, read: 0, refusals: 0, found: 0, steps: 0, shadow: 0, note: 0, order: 0,
                       module: 0, opened: 0, listed: 0, frames: 0, ran: 0, landed: 0, emptied: 0, apart: 0, twice: 0, repeats: 0, ctrl: 0, holdsNot: 0, refused: 0,
                       passed: 0, noted: 0, words: 0, waited: 0, dropped: 0, said: 0, replayed: 0, replayFrames: 0, replaySame: 0, during: 0, rate0: 0, rate0Empty: 0,
-                      rate0Replayed: 0, older: 0 };
+                      rate0Replayed: 0, older: 0, keypad: 0 };
     commandsPage(k, P);
     var wasm = builtModule();
     if (!wasm) return { counters: k, problems: P };
@@ -5906,8 +5938,8 @@
       if (vp.sheet() !== 'Desk') { P.push('commands frame 0: the host opened on ' + (vp.sheet() || 'nothing') + ', where the card opens on the Desk'); return; }
       k.opened = 1;
       var cs = host.commands();
-      if (listed(cs) === 'count-up KeyU true, count-down KeyD true, note KeyN true, jump - false') k.listed++;
-      else P.push('commands frame 0: the host lists ' + listed(cs) + ', where count-up by KeyU, count-down by KeyD and note by KeyN hold, and jump holds not and has no key');
+      if (listed(cs) === 'count-up KeyU true, count-down KeyD true, note KeyN true, jump - false, seven Digit7 true') k.listed++;
+      else P.push('commands frame 0: the host lists ' + listed(cs) + ', where count-up by KeyU, count-down by KeyD, note by KeyN and seven by Digit7 hold, and jump holds not and has no key');
       host.start(); host.tick(t);
       for (var f = 1; f <= COMMANDS_FRAMES; f++) {
         var at = 'commands frame ' + f;
@@ -5930,12 +5962,20 @@
           r = host.command('count-up');
           if (!r.ok && /16 commands wait/.test(r.sentence)) k.dropped++; else P.push(at + ': a seventeenth command was ' + (r.ok ? 'taken' : 'refused in the words ' + JSON.stringify(r.sentence)) + ', where sixteen wait at most');
         }
+        // the keypad's 7, Num Lock on, its key the digit, taken for the digit row's command; Num Lock off, its key Home, which
+        // runs no command and goes on to the viewport, whose Home takes it
+        var pad = f === 38 || f === 39 ? key({ code: 'Numpad7', key: f === 38 ? '7' : 'Home' }) : null;
         t += 1000 / 30; host.tick(t);
         if (host.counters().frame !== f) { P.push(at + ': after tick ' + f + ' the host is at frame ' + host.counters().frame); break; }
         var inp = vals('Input', 'A19:B20'), b20 = inp.B20, count = viewsNum(vals('Desk', 'B1').B1), ran = viewsNum(vals('Desk', 'B2').B2), noted = viewsNum(vals('Ledger', 'B1').B1);
         live[f] = { b20: b20, count: count, ran: ran, noted: noted };
+        if (f === 38) {
+          if (pad.defaultPrevented && b20 === 'seven') k.keypad++;
+          else P.push(at + ': the keypad\'s 7 with Num Lock on was ' + (pad.defaultPrevented ? 'taken' : 'passed on') + ' and Input!B20 holds ' + JSON.stringify(b20) + ', where the command seven, whose key is the digit row\'s 7, takes it');
+        }
+        if (f === 39) { if (b20 === '') k.keypad++; else P.push(at + ': the keypad\'s 7 with Num Lock off ran ' + JSON.stringify(b20) + ', where its key is Home, no command\'s'); }
         // what the frame is due, by the plan
-        var due = f === 2 || f === 4 || f === 7 || f === 8 || f === 10 || (f >= 21 && f <= 36) ? 'count-up' : f === 5 ? 'count-down' : f === 16 ? 'note' : '';
+        var due = f === 2 || f === 4 || f === 7 || f === 8 || f === 10 || (f >= 21 && f <= 36) ? 'count-up' : f === 5 ? 'count-down' : f === 16 ? 'note' : f === 38 ? 'seven' : '';
         var dueCount = f < 2 ? 0 : f < 4 ? 1 : f < 5 ? 2 : f < 7 ? 1 : f < 8 ? 2 : f < 10 ? 3 : f < 21 ? 4 : Math.min(20, f - 16);
         if (due) runs++;
         if (inp.A20 !== 'command') P.push(at + ': Input!A20 holds ' + JSON.stringify(inp.A20) + ', where version 5\'s twentieth row is command');
