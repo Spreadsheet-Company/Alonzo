@@ -76,6 +76,12 @@ pub const SHUFFLE_SEED: u32 = 20_261_020;
 /// A column's width in characters: a digit and its paddings.
 pub const WIDTH: &str = "3";
 
+/// A named adder's column's width (the second slice's hand test): a gate's
+/// Latin name of three capitals beside another name cut at three, `AU` and
+/// `VEI` on the owner's screen, so the adder's seven columns are four wide
+/// where row 1 names them; the multiplier's names run on into empty cells.
+pub const NAMED_WIDTH: &str = "4";
+
 /// A switch as a hash of the frame, so that about half the switches flip at
 /// every frame (the floors' steady frame); [`stimulus`] computes it by hand.
 pub const STIMULUS: &str = "=MOD(INT(MOD(MOD(ROW()*40503+COLUMN()*9973+Clock!$B$1*65519,65521)*MOD(ROW()*40503+COLUMN()*9973+Clock!$B$1*65519,65521),65521)/256),2)";
@@ -207,6 +213,7 @@ pub struct Net {
     pub circuits: Vec<Circuit>,
     pub top: u32,
     pub labels: Vec<((u32, u32), &'static str)>,
+    pub wide: Vec<u32>,
 }
 
 impl Net {
@@ -310,6 +317,9 @@ impl Net {
             .enumerate()
         {
             self.label((top.saturating_sub(1), c0 + k as u32), word);
+            if top > 1 {
+                self.wide.push(c0 + k as u32);
+            }
         }
         let index = |s: &[Node]| -> Vec<u32> {
             s.iter()
@@ -961,8 +971,13 @@ impl<'n> Laid<'n> {
         columns.sort_unstable();
         columns.dedup();
         for c in columns {
+            let width = if self.net.wide.contains(&c) {
+                NAMED_WIDTH
+            } else {
+                WIDTH
+            };
             lines.push(format!(
-                "(column \"{SHEET}\" \"{}\" {WIDTH} shown none)",
+                "(column \"{SHEET}\" \"{}\" {width} shown none)",
                 letters(c)
             ));
         }
@@ -1332,6 +1347,9 @@ mod tests {
         );
         assert!(Net::bench(BENCH.0, BENCH.1).labels.is_empty());
         assert!(Net::bench(FLOORS.0, FLOORS.1).labels.is_empty());
+        // the named adder's seven columns four wide, so that AUT and VEL read whole beside the next name
+        assert_eq!(shown.wide, (1..=7).collect::<Vec<u32>>());
+        assert!(Net::bench(FLOORS.0, FLOORS.1).wide.is_empty());
     }
 
     #[test]

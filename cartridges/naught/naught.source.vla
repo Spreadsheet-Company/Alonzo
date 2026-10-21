@@ -118,13 +118,13 @@
 
 ; ---- the bench, written by cargo run --release --example naught: edit the generator, never these lines ----
 ; a 16-bit ripple adder from A1 and an 8 by 8 multiplier from I1: 400 gates laid by fill, their switches values
-(column "Bench" "A" 3 shown none)
-(column "Bench" "B" 3 shown none)
-(column "Bench" "C" 3 shown none)
-(column "Bench" "D" 3 shown none)
-(column "Bench" "E" 3 shown none)
-(column "Bench" "F" 3 shown none)
-(column "Bench" "G" 3 shown none)
+(column "Bench" "A" 4 shown none)
+(column "Bench" "B" 4 shown none)
+(column "Bench" "C" 4 shown none)
+(column "Bench" "D" 4 shown none)
+(column "Bench" "E" 4 shown none)
+(column "Bench" "F" 4 shown none)
+(column "Bench" "G" 4 shown none)
 (column "Bench" "I" 3 shown none)
 (column "Bench" "J" 3 shown none)
 (column "Bench" "K" 3 shown none)

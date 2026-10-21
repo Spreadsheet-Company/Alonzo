@@ -16,6 +16,8 @@
   var BLOCK_BEGIN = '; ---- the bench, written by cargo run --release --example naught: edit the generator, never these lines ----';
   var BLOCK_END = '; ---- the bench\'s end ----';
   var SHEET = 'Bench', WIDTH = '3', RUN = 4, SHUFFLE_SEED = 20261020;
+  // the named adder's columns four wide, its names of three capitals whole (NAMED_WIDTH in Rust)
+  var NAMED_WIDTH = '4';
   var BENCH = [16, 8], FLOORS = [4096, 64];
   // the bench a person loads stands from row 2, row 1 naming its columns; the floors' from row 1 (BENCH_TOP in Rust)
   var BENCH_TOP = 2;
@@ -36,7 +38,7 @@
   function gt(k) { return { t: 'gate', k: k }; }
 
   // ---- the netlist ----
-  function Net(top) { this.switches = []; this.buses = []; this.gates = []; this.home = []; this.circuits = []; this.top = top || 1; this.labels = []; }
+  function Net(top) { this.switches = []; this.buses = []; this.gates = []; this.home = []; this.circuits = []; this.top = top || 1; this.labels = []; this.wide = []; }
   Net.prototype.switch_ = function (at, bus) { this.switches.push(at); this.buses.push(bus); return sw(this.switches.length - 1); };
   Net.prototype.put = function (kind, a, b, at) { this.gates.push({ kind: kind, a: a, b: b }); this.home.push(at); return gt(this.gates.length - 1); };
   Net.prototype.non = function (a, at) { return a.t === 'zero' ? ONE : a.t === 'one' ? ZERO : this.put('non', a, ZERO, at); };
@@ -76,7 +78,7 @@
     for (i = 0; i < n; i++) a.push(this.switch_([top + 1 + i, c0], [false, false]));
     for (i = 0; i < n; i++) b.push(this.switch_([top + 1 + i, c0 + 1], [false, false]));
     var carry = this.switch_([top, c0 + 5], [false, false]), c = carry, sum = [];
-    ['a', 'b', 'AUT', 'ET', 'ET', 'VEL', 'AUT'].forEach(function (word, k) { self.label([Math.max(top - 1, 0), c0 + k], word); });
+    ['a', 'b', 'AUT', 'ET', 'ET', 'VEL', 'AUT'].forEach(function (word, k) { self.label([Math.max(top - 1, 0), c0 + k], word); if (top > 1) self.wide.push(c0 + k); });
     for (i = 0; i < n; i++) {
       var r = top + 1 + i;
       var x = this.aut(a[i], b[i], [r, c0 + 2]);
@@ -242,7 +244,7 @@
     var cols = {}, list = [];
     this.net.switches.concat(this.cells).forEach(function (c) { if (!cols[c[1]]) { cols[c[1]] = true; list.push(c[1]); } });
     list.sort(function (x, y) { return x - y; });
-    for (i = 0; i < list.length; i++) lines.push('(column "' + SHEET + '" "' + letters(list[i]) + '" ' + WIDTH + ' shown none)');
+    for (i = 0; i < list.length; i++) lines.push('(column "' + SHEET + '" "' + letters(list[i]) + '" ' + (this.net.wide.indexOf(list[i]) >= 0 ? NAMED_WIDTH : WIDTH) + ' shown none)');
     var labels = this.net.labels.slice().sort(function (x, y) { return x.at[0] - y.at[0] || x.at[1] - y.at[1]; });
     for (i = 0; i < labels.length; i++) lines.push('(cell "' + SHEET + '" "' + a1(labels[i].at[0], labels[i].at[1], false, false) + '" "' + labels[i].word + '")');
     if (this.switches === 'values') { var vr = rectangles(this.net.switches); for (i = 0; i < vr.length; i++) lines.push('(cell "' + SHEET + '" "' + rangeText(vr[i]) + '" 0)'); }
