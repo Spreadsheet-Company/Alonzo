@@ -8536,3 +8536,129 @@ The last two are decision 9's door as the owner amended it, with the bench's wor
 *Committed 2026-10-20 at the owner's word*, their floors check clean on their machine and every other check passing there but the loop's `sound` case, which starved there and passed alone here: slice 1 from its kept files, its baseline left to the second commit, and slice 2 from the tree, with the frame floors' baseline, `native superposition-act`'s lowering and its reason, and version 6's amendments in place, carried by the word to commit, which came after the reply that flagged both. Not pushed.
 
 *After the commits, 2026-10-20: the gates' names cut.* The owner's screenshot of the Bench showed C1's AUT cut to AU and F1's VEL to VEI: three capitals overrun a column three digits wide, and the next cell's name stops the text there, where G1's AUT and the multiplier's names run on into empty cells. The adder's seven columns are four wide where row 1 names them (`NAMED_WIDTH`, `Net::wide`, both twins); the floors' benches carry no names and stay three wide, their blocks and sources the bytes they were (the twins' seventeen outputs the same, the row-1 eight and the floors' two sources unmoved). A headless screenshot of the page shows the row whole. The stand-in written again, its cartridge `29690166…`, its golden the same rows but the widths; 74 tests and the doc test, `check_cartridge.ps1` and `check_host_loop.ps1` clean. Uncommitted, at the owner's word.
+
+*Slice 3's fine scoping, the game, 2026-10-20, at the owner's word to proceed after the commits.* Decision 15 left slice 3 to be scoped finely at its start: decision 8's counter and decisions 10 to 12, with decision 7's ladder. What the two slices since have built moves four of them, and the probe below measures the test. The decisions continue the item's numbering, each with the recommendation and the alternatives it declines.
+
+*What moved since the scoping.*
+- `AD-7` meets decision 10's one board. A level changed on one sheet cannot clear the gates a person wrote for the last level: the step writes values and never formulas, and a formula leaves the grid only by a person's write. Slice 2's Delete empties cells, but a level then lost is lost.
+- A person types on any cell now (slice 2). A switch the cartridge composes as a formula is a cell a person can type over, and only Load gives it back.
+- A press is an act only where the cartridge reads the act's rows (slice 2's hand test). The game's switches read them, so a click on a switch is an act again.
+- The floors' fixtures carry every byte of the source outside the bench's block, the settle and the lesson, the manifest's notes among them (slice 2's hand test). So the game's rows stand in a block the floors' source leaves out.
+
+*The probe: the test's counter.* A level of n switches whose lamp is the parity a chain of AUT gates computes, beside its specification, `=MOD(SUM(A3:An),2)`. A counter in a Lab of its own drives the switches through every input vector, one vector a settle step. The switches read the vector's bits while it runs. The mismatch of the lamp and the specification is read through the twins, so that no cell reads itself in the frame. The act `test` starts it, and the settle ends when the counter stops.
+
+| inputs | vectors | settle steps | natively | the end |
+|---|---|---|---|---|
+| 1 | 2 | 3 | under 0.1 ms | passed, settled |
+| 8 | 256 | 257 | 0.8 ms | passed, settled |
+| 15 | 32,768 | 32,769 | 144 ms | passed, settled |
+| 16 | 65,536 | 65,536, K | 237 ms | passed at the last step, unsettled one short |
+| 8, the fourth gate VEL for AUT | 256 | 11 | 0.1 ms | failed at vector 9, settled |
+
+Vector 9 is the first whose low three bits' parity and fourth bit are both 1, where VEL and AUT differ. The board shows it as the test left it.
+
+16. **The levels: a sheet each, between the Lesson and the Bench; N and P show the next and the previous by the Camera's third row.**
+    - A sheet keeps a level's gates, so a person comes back to the work. The tabs read the Lesson, the levels by Roman numeral and gate, then the Bench, the instrument, a sandbox.
+    - The Camera names the level the Lab's level counter points at, and the person's tabs win between its changes (version 4, decision 5).
+    - The game's sheets, rows and the Camera stand in a block the floors' source leaves out, as the lesson's does, so their fixtures stay the bytes measured.
+    - *Alternatives:*
+      - *(a)* decision 10's one board, its switches and lamps moving with the level and a person's gates emptied by Delete at each one;
+      - *(b)* a cartridge a level.
+17. **A level's board: switches in column A from row 3, the gates' room C to J, the outputs a person writes in J, the lamps in L, the specification and the budget beside them; bound to its extent.**
+    - A switch is a formula of its own last value, the act and the test:
+      `=IF(Lab!running, the vector's bit, IF(an act on this cell, its new value, its last))`.
+      Space toggles the switch the selection stands on, 1 and 0 set it, and a click toggles it (version 6's place and press).
+    - A lamp reads its output, `=J3`, lit in the lamps' lavender (decision 12).
+    - The specification:
+      - gates of one and two inputs, a truth table of values;
+      - the adders, a formula of the switches, their bits times their powers summed.
+    - The words, at most a few texts, stay inside four slots a cell (`SLOTS_A_CELL`).
+    - *Alternative:* the lamps as the outputs themselves, which the lamps' look then could not tell from a gate's.
+18. **Test, T: every input vector, a vector a settle step, the first failure standing on the board; exhaustive to 15 input bits.** The probe's mechanism.
+    - Fifteen bits settle inside `(settle 65536)`. Past them, a suite of 32,767 vectors hashed from the seed. Decision 11 said sixteen; the probe moved it by one.
+    - The levels of this slice need at most nine bits, 512 vectors. In the page each settle step is a frame drawn, so a test plays as a sweep of the switches, the frames counted in the bar.
+    - The verdict stands in the level's words: a pass, or the failing vector and the lamp that differs.
+    - *Alternatives:*
+      - two vectors a step, the board laid twice;
+      - a test across two acts, its counter continuing.
+19. **The stars: a pass; the gates within the budget; the known least.**
+    - The gates are counted by a layer on a hidden sheet, `=IF(Level!C3="",0,1)` a cell of the room, and a `SUM`. An emptied gate, Delete's empty text, counts none.
+    - Decision 11's second star, the critical path by the teacher's counter, needs gates that read their inputs' twins, and a person's gates read their inputs in the frame. The depth stays the tests' (the census), and a star for it waits for the census as a device sheet (Found 8).
+    - ★ passed, ★★ within the budget, ★★★ at the least known. With the gates proven before given, those are:
+
+      | level | least known |
+      |---|---|
+      | NON from NON-ET | 1 |
+      | ET | 2 |
+      | VEL | 3 |
+      | AUT | 4 |
+      | the half adder | 2 |
+      | the full adder | 5 |
+      | the 4-bit adder | 20 |
+
+    - *Alternatives:*
+      - the depth at the teacher's rate, a person's gates written against the twins;
+      - the host reading the census for a star, not replayed.
+20. **NON-ET alone, kept by the words and the stars and not by a check; each gate proven, then given.**
+    - nand2tetris's road (decision 2): level I gives NON-ET alone and asks for NON. Each level after may use the gates proven before it, NON's `=1-a`, ET's `=a*b`, VEL's `=MAX(a,b)` and AUT's `=MOD(a+b,2)`, and its words say which.
+    - No formula reads which formula another cell holds, so no cell can refuse a gate outside the set. A person who writes VEL into level III's ET passes, and the words and the budget say what was meant.
+    - *Alternatives:*
+      - the host holding the census's texts to the level's set, not replayed;
+      - a command writing a NON-ET at the selection, its inputs chosen by keys.
+21. **The ladder of this slice: nine levels, combinational; the clocked rung a fourth slice.**
+    - I NON, II ET, III VEL, IV AUT, each from NON-ET and what came before;
+    - V the multiplexer and VI the demultiplexer, nand2tetris's next and the ALU's parts;
+    - VII the half adder, VIII the full adder, IX a 4-bit ripple adder (nine bits, 512 vectors).
+    - Decision 7's register, counter, ALU and toy CPU need decision 8's clock and the ROM sheet: a slice 4 of the same item, scoped at its start.
+    - *Alternatives:*
+      - decision 7's ladder whole in this slice, weeks;
+      - the four gates alone, no adder.
+22. **The commands: T test, N and P the level, R reset, Space toggle, 1 and 0 set; held on the levels' sheets alone, by `SPEC.5`, built first.**
+    - A typed 1 or 0 on a level sets the switch the selection stands on and is nothing on any other cell there. A gate is a formula, and `=` opens it. Elsewhere a key is the page's or a cell's edit, as slice 2 has it.
+    - *Measured in the host's code:* a `holds` formula cannot scope a key to a sheet at rate 0. The host reads the Commands sheet at the load and after each frame (`web/host.js`, `_readCommands`). It writes `Input!B19`, the sheet shown, with an act's rows alone. A tab clicked to a level is no act, so the holds stay those of the sheet the last act stood on, and T on a level just clicked to would open a cell's edit. Buffet's Trading holds by `B19` at a rate, where the row is written every frame.
+    - So `SPEC.5` comes first: its game mode names the levels' sheets, and the host holds their commands to the sheet it shows, its own knowledge and no formula's.
+    - *Alternatives:*
+      - commands holding everywhere, as Seiyaku's do: T, N, P, R, Space, 1 and 0 then the game's on the Lesson and the Bench too, where slice 2 types into cells, unless the Bench's switches become the game's as well;
+      - a tab clicked at rate 0 made an act, which writes `B19` and steps two frames for nothing;
+      - switches typed as values, which a test cannot drive and Load alone restores.
+23. **A switch or a lamp a person writes over is lost until Load; the level's words say so.** `AD-7`: a formula enters by the load or a person's write, so R, which writes values, cannot restore one.
+    - *Alternatives:*
+      - the switches and lamps on a sheet `SPEC.5`'s read mode protects, the room beside them on another;
+      - a range locked, a question for `SPEC.5`.
+24. **The words and the look: decision 12 placed level by level.**
+    - Each level's title, its gate in Latin and English, its specification, its budget and one line of classical logic:
+      - I, Sheffer's stroke, which Peirce found first in 1880;
+      - II, De Morgan at NON-ET;
+      - III, Chrysippus's dog at VEL;
+      - IV, the two ors, *vel* and *aut*, and the myth the 2016 encyclopedia called them;
+      - V and VI, a choice made by a wire;
+      - VII and VIII, *Calculemus* at T;
+      - IX, a carry rippling;
+      - *tertium non datur* at a lamp, and *quod erat demonstrandum* at a pass;
+      - Ockham's razor at the budget, in words found in none of Ockham's extant works;
+      - the Liar at a loop, the write refused by `calc-cycle`.
+    - The look:
+      - a lamp lit and a switch on in `#A080E0`, a gate at 1 in `#E2D8F6`, at 0 white;
+      - each board on the headers' gray;
+      - the Bench's names four wide since the commits.
+25. **The Lesson leads into the levels.** Its lines name the levels, T, N, P, R, Space, 1 and 0, the stars, and the Bench as the sandbox after them.
+26. **The oracle: the hand evaluates a person's gates; the owner's session is the replay.**
+    - Rust's hand and the page's gain an evaluator of the gates' arithmetic: cells, numbers, + − *, `MAX`, `MOD` and `INT`, enough for the six gates and any formula of them. A formula outside it refuses the hand by name.
+    - The tests:
+      - each level's switches, lamps, specification and test by hand;
+      - each level solved at its least known and tested to a pass;
+      - a wrong gate failing at its first vector;
+      - the stars counted;
+      - N, P and R;
+      - the floors' fixtures the bytes they were.
+    - The loop oracle's replay case, over the owner's session played through the levels, every frame held to the page's hand; mutant pages for the test's stop, the stars' count and a level's switch.
+    - *Alternative:* the hand reading the engine's values, which proves nothing.
+27. **The files.**
+    - `cartridges/naught/`: the levels' block, the Lab, the Camera, the Commands sheet, the count's sheet, the Lesson's lines, and the owner's session with its golden.
+    - `engine/src/naught.rs` and the hand: the levels' boards and their solutions, the evaluator, and `floors_source` leaving out every block it is told to.
+    - `engine/src/cartridge.rs`: the tests.
+    - `tools/check_host_loop.ps1` and `check_cartridge.ps1`: the floors and the mutants.
+    - The docs.
+28. **Size and order:** three to five days, as filed, after `SPEC.5`, which decision 22 needs; slice 4, the clocked rung, after it.
+
+*Approved 2026-10-20 at the owner's word*, decisions 16 to 28 as recommended: "Recommendations approved; proceed." With them the order: `SPEC.5` scoped and built first, its middle mode named *work* at the owner's word (worksheets beside the game's sheets), then this slice.
