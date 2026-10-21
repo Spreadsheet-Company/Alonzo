@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds one hundred and seventy-six mutant pages through tools/build_web.ps1 and runs
+-Control builds one hundred and eighty-one mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -505,7 +505,8 @@ And since its hand test's fifth note one more, when the real page holds the modu
 run no command, so that the keypad's 7, Num Lock on, passes on where the commands case's card runs seven, the command
 of the digit row's 7, which the commands case must fail by name at frame 38. And since CART.9 one more, when the real
 page holds the module: EZ, naught's hand that reads aut as vel, the inclusive or for the exclusive, which the replay
-case must fail by name at frame 35, where the stand-in's carry-in first meets a 1 at an AUT already holding one.
+case must fail by name at frame 731, where the stand-in's carry-in first meets a 1 at an AUT already holding one
+(frame 35 until the third slice's hand test put the owner's session and the levels before the bench).
 And since its second slice three more, needing no module, each a template the palette case must fail by name: FA,
 a cell's edit whose caret stands past the closing quote; FB, Enter writing a cell's edit and moving no selection;
 and FC, the floating palette at the top over a cell in the top half of the rows in view.
@@ -521,7 +522,12 @@ game's where a game sheet is named, and FT, a game sheet's keys forgotten; and t
 module, FR, a command's key run on every sheet at rate 0, so that M runs mark on the work sheet, and FS, every key the
 game's at a rate, so that x on the work sheet is the frame's last key. And since its hand test two more templates,
 needing no module: FU, Enter on a read-only sheet left to the viewport, which opens a refused edit, and FV, Tab left
-to the browser, which walks the focus out of the grid.
+to the browser, which walks the focus out of the grid. And since CART.9's third slice five more, when the real page
+holds the module: FW, a host whose press is an act on every sheet, which the modes case must fail by name on Notes, a
+work sheet, where a press is the viewport's selection alone; and FX, FY, FZ and GA, naught's hand, which the replay
+case must fail by name at frames 34, 80, 780 and 15: a test that runs on past a wrong input, the stars counted
+against the budget alone, the due under test read from the switches as they stand, so that a switch written over is
+tested where it stands, and a click that toggles no switch.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -797,8 +803,8 @@ $paletteFloors = @{ commands = 33; keyed = 11; lines = 10; opened = 1; ran = 1; 
 # rate, M and x on the work sheet and on a game sheet (2); 5 of the engine's refusals; and on Alonzo's page Naught's
 # Lesson read and its Bench worked (2), which a game's page, holding no Naught, counts 0.
 $modesPageFloors = @{ acts = 34; words = 10; places = 5; fakeRead = 2; fakeModes = 6; fakeEdits = 5; fakeSaid = 2; fakeUnnamed = 3; fakePlane = 1; fakeOlder = 3 }
-$modesFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; keyRefused = 1; rate = 2; refusals = 5; naught = 2 }
-$modesGameFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; keyRefused = 1; rate = 2; refusals = 5 }
+$modesFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; presses = 5; keyRefused = 1; rate = 2; refusals = 5; naught = 2 }
+$modesGameFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; presses = 5; keyRefused = 1; rate = 2; refusals = 5 }
 # 2026-10-17, ENGINE.25: the twenty-six cases' counts unchanged, and a twenty-seventh, commands, over the module on both
 # pages, its counts a function of its plan: the card opened on the Desk, its four commands listed at the load; 40 frames,
 # 3 commands run alone, Input!B20 naming the command due at 23 frames and empty at 17; two commands a frame apart and one
@@ -896,6 +902,15 @@ $settleDoubleFloors = @{ fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased
 # SPEC.5, 2026-10-20: mutants FI to FT, each the modes case's, three templates, five hosts over the double and two over
 # the module, take it to one hundred and seventy-four; and its hand test's FU and FV, Enter and Tab, to one hundred and
 # seventy-six.
+# CART.9's third slice, 2026-10-20: the game's levels. The replay's stand-in plays the levels after the bench, 71 acts
+# over 706 frames, every frame held to the hand's game besides its bench (naughtFrames 784, naughtCells 842,800: the
+# bench's 400 gates and the game's 675 cells a frame), 49 rows a person wrote (naughtWritten) and seven levels passed
+# at its end (naughtPassed), its person showing ten sheets (naughtShown 10). At its hand test, 2026-10-21, the owner's
+# session is the replay's first 45 frames, I and II played, and the stand-in follows it: the levels III to IX, the
+# bench's 38 switches and I's switch written over, 782 frames (naughtFrames 782, naughtCells 840,650), 48 rows a
+# person wrote and eight levels passed at its end, II's pass the owner's (naughtPassed 8). The modes case presses C3 on each of its
+# card's five sheets, an act on the two game sheets alone (presses 5, on both pages). Mutant FW, the modes case's, and
+# FX, FY, FZ and GA, the replay case's, take it to one hundred and eighty-one.
 # 2026-10-17, ENGINE.25's second slice: the case's page half, pure and so on every page, module or not, its counts a function of
 # its plan: 6 names a page writes a game's command by, held to the cartridge and the command or to none; 4 of the palette's
 # lines, the command that holds with its own key, found by a word after the dot, the one that holds not no line, and one
@@ -930,7 +945,7 @@ $floors = @(
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
     @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 11; same = 11; refused = 1; handle = 1; ranOn = 1 } },
     @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 5; players = 2; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 7; rate = 5; refused = 1 } },
-    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 5 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 7; frames = 26; same = 26; golden = 7; round = 7; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637; seiyakuFrames = 104; seiyakuCells = 8424; seiyakuActs = 35; seiyakuInstances = 2; seiyakuSettles = 69; naughtFrames = 78; naughtCells = 31200; naughtEdits = 38; naughtLit = 208; naughtShown = 1 } },
+    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 5 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 7; frames = 26; same = 26; golden = 7; round = 7; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637; seiyakuFrames = 104; seiyakuCells = 8424; seiyakuActs = 35; seiyakuInstances = 2; seiyakuSettles = 69; naughtFrames = 782; naughtCells = 840650; naughtEdits = 38; naughtLit = 208; naughtWritten = 48; naughtPassed = 8; naughtShown = 10 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } },
     @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 1913; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1; fakePatches = 8 };
@@ -2102,8 +2117,9 @@ if ($Control) {
                With = '        // the unsettled act unsaid, by the control'
                Want = 'case settle.*settle, the double: the host said "the load did not settle in 8 steps" 0 time' },
             # FG (CART.9's hand test of the second slice): a press an act whatever the cartridge reads, three frames that move
-            # nothing on a cartridge that reads neither an act's place nor its press.
-            @{ L = 'fg'; Name = 'a press an act whatever is read'; Anchor = '    return this.actRead;'; With = '    return true;'
+            # nothing on a cartridge that reads neither an act's place nor its press; its anchor since the third slice the line
+            # that also asks whether the sheet's keys are the game's, which the mutant keeps.
+            @{ L = 'fg'; Name = 'a press an act whatever is read'; Anchor = '    return this.actRead && this.gameKeysHere();'; With = '    return this.gameKeysHere();'
                Want = 'case settle.*settle, the double: a press over C3 of a cartridge reading no act''s place or press made 1 press' }
         )
         $settleNotes = New-Object System.Collections.Generic.List[string]
@@ -2130,7 +2146,8 @@ if ($Control) {
         # person's row into a read sheet written; FP, a sheet named by none the game's where a game sheet is named; and FT,
         # a game sheet's keys forgotten. And hosts when the real page holds the module: FR, a command's key run on every
         # sheet at rate 0; and FS, every key the game's at a rate. And the hand test's templates, needing no module: FU,
-        # Enter on a read-only sheet left to the viewport; and FV, Tab left to the browser.
+        # Enter on a read-only sheet left to the viewport; and FV, Tab left to the browser. And CART.9's third slice's host
+        # over the module: FW, a press an act on every sheet, a work sheet's and a read sheet's too.
         $modesMutants = @(
             @{ L = 'fi'; Name = 'a key on a read sheet an edit'; Template = $true; Anchor = "    if (!at.editsHere) return 'read';"
                With = '    // a read sheet written by a key, by the control'
@@ -2167,7 +2184,10 @@ if ($Control) {
                Want = 'case modes.*modes: M on Notes was taken' },
             @{ L = 'fs'; Name = 'every key the game''s at a rate'; Module = $true; Anchor = '    if (!code || !this.gameKeysHere()) return false;   // a work or a read sheet''s keys are not the game''s (SPEC.5)'
                With = '    if (!code) return false;'
-               Want = 'case modes.*modes, at a rate: on Notes M was passed on and x left the last key "x"' }
+               Want = 'case modes.*modes, at a rate: on Notes M was passed on and x left the last key "x"' },
+            @{ L = 'fw'; Name = 'a press an act on every sheet'; Module = $true; Anchor = '    return this.actRead && this.gameKeysHere();'
+               With = '    return this.actRead;'
+               Want = 'case modes.*modes: a press over C3 on Notes was an act' }
         )
         $modesNotes = New-Object System.Collections.Generic.List[string]
         $modesJudged = New-Object System.Collections.Generic.List[object]
@@ -2286,7 +2306,7 @@ if ($Control) {
         }
         $etOk = ($moduleReal -eq 0) -or ($etApplied -and $etFailed -ge 1)
         # mutant EZ (CART.9's first slice), when the real page holds the engine's module: naught's hand that reads aut as
-        # vel, the inclusive or for the exclusive; the stand-in's carry-in, written at frame 35 under a all ones, first
+        # vel, the inclusive or for the exclusive; the stand-in's carry-in, written at frame 731 under a all ones, first
         # gives an AUT two 1s, the low bit's sum, so the replay case must fail it by name at that frame.
         $ezApplied = $false; $ezFailed = 0; $ezNote = 'aut read as vel in the hand: not applicable, the real page holding no engine module'
         if ($moduleReal -gt 0) {
@@ -2297,8 +2317,8 @@ if ($Control) {
             $ezApplied = $mutEZ -cne $naughtHandText
             $rEZ = Invoke-Mutant (New-MutantPage 'ez' $template $hostJs '' (New-HandCopy 'ez' 'naught/naught.hand.js' $mutEZ)) 'input,replay'
             $jEZ = Test-Mutant $rEZ 'input,replay'
-            $ezFailed = @($jEZ.Problems | Where-Object { $_ -like "*case replay*naught's committed replay, played on a fresh host, is not its hand's at frame 35:*" }).Count
-            $ezNote = "aut read as vel in the hand applied ($ezApplied) and failed the replay case at frame 35 ($ezFailed)"
+            $ezFailed = @($jEZ.Problems | Where-Object { $_ -like "*case replay*naught's committed replay, played on a fresh host, is not its hand's at frame 731:*" }).Count
+            $ezNote = "aut read as vel in the hand applied ($ezApplied) and failed the replay case at frame 731 ($ezFailed)"
         }
         $ezOk = ($moduleReal -eq 0) -or ($ezApplied -and $ezFailed -ge 1)
         # mutant FH (CART.9's hand test of the second slice), when the real page holds the engine's module: a host that plays a
@@ -2313,10 +2333,48 @@ if ($Control) {
             $fileFH = Join-Path $tmp 'fh.host.js'; [System.IO.File]::WriteAllText($fileFH, $mutFH, $utf8)
             $rFH = Invoke-Mutant (New-MutantPage 'fh' $template $fileFH) 'input,replay'
             $jFH = Test-Mutant $rFH 'input,replay'
-            $fhFailed = @($jFH.Problems | Where-Object { $_ -like '*the case replay at a ratio of 1 counted 0 naughtShown, below its floor of 1*' }).Count
+            $fhFailed = @($jFH.Problems | Where-Object { $_ -like '*the case replay at a ratio of 1 counted 0 naughtShown, below its floor of 10*' }).Count
             $fhNote = "the replay's sheet unshown applied ($fhApplied) and failed the replay case's naughtShown ($fhFailed)"
         }
         $fhOk = ($moduleReal -eq 0) -or ($fhApplied -and $fhFailed -ge 1)
+        # mutants FX, FY, FZ and GA (CART.9's third slice), when the real page holds the engine's module: naught's hand, each
+        # failing the replay case by name at the frame of the replay where it first leaves the engine. FX, a test that runs
+        # on past a wrong input, at the owner's VEL for ET on II, frame 34; FY, the stars counted against the budget alone,
+        # at IV's pass with four gates, two stars, frame 80; FZ, the due under test read from the switches as they stand, at
+        # I's switch written over, frame 780; and GA, a click that toggles no switch, at the owner's first click, frame 15.
+        $naughtMutants = @(
+            @{ L = 'fx'; Name = 'a test past a wrong input'; Frame = 34
+               Anchor = "        return when(and([equal(l8, 1), less(l6, arith('-', l7, 1))]), function () { return 1; }, function () { return 0; });"
+               With = "        return when(and([true, less(l6, arith('-', l7, 1))]), function () { return 1; }, function () { return 0; });" },
+            @{ L = 'fy'; Name = 'the stars against the budget alone'; Frame = 80
+               Anchor = '        return when(lessEqual(e, g), function () {'
+               With = '        return when(lessEqual(e, f), function () {' },
+            @{ L = 'fz'; Name = 'the due under test read from the switches'; Frame = 780
+               Anchor = '    return standing.map(function (v, s) { return settled(when(equal(here, 1), function () { return bit(b6, s); }, function () { return v; })); });'
+               With = '    return standing.map(function (v) { return settled(v); });' },
+            @{ L = 'ga'; Name = 'a click that toggles nothing'; Frame = 15
+               Anchor = "            if (is('toggle') || i.press) return arith('-', 1, lastS);"
+               With = "            if (is('toggle')) return arith('-', 1, lastS);" }
+        )
+        $naughtNotes = New-Object System.Collections.Generic.List[string]
+        $naughtJudged = New-Object System.Collections.Generic.List[object]
+        $naughtOk = $true
+        if ($moduleReal -eq 0) { $naughtNotes.Add('naught''s hand at the levels: not applicable, the real page holding no engine module') }
+        else {
+            $naughtHandNow = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'cartridges/naught/naught.hand.js'))
+            foreach ($mu in $naughtMutants) {
+                if (([regex]::Matches($naughtHandNow, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in cartridges/naught/naught.hand.js exactly once"; exit 1 }
+                $mutNt = $naughtHandNow.Replace($mu.Anchor, $mu.With)
+                $ntApplied = $mutNt -cne $naughtHandNow
+                $rNt = Invoke-Mutant (New-MutantPage $mu.L $template $hostJs '' (New-HandCopy $mu.L 'naught/naught.hand.js' $mutNt)) 'input,replay'
+                $jNt = Test-Mutant $rNt 'input,replay'
+                $ntFailed = @($jNt.Problems | Where-Object { $_ -like ("*case replay*naught's committed replay, played on a fresh host, is not its hand's at frame " + $mu.Frame + ':*') }).Count
+                $naughtJudged.Add(@{ Name = $mu.Name; Problems = @($jNt.Problems) })
+                $naughtNotes.Add(("{0} applied ({1}) and failed the replay case at frame {2} ({3})" -f $mu.Name, $ntApplied, $mu.Frame, $ntFailed))
+                if (-not ($ntApplied -and $ntFailed -ge 1)) { $naughtOk = $false }
+            }
+        }
+        $naughtNote = $naughtNotes -join '; '
         # mutants AT, AU, AV and AW (ENGINE.16), each a game's page of Kairos alone, which must pass first: its
         # hand a frame late, answering each frame with the frame before it; its hand's Tally counting a stack at
         # the level above its own, which moves no light; its hand's block dropped, so that its replay is held to
@@ -2366,9 +2424,9 @@ if ($Control) {
             if (-not ($gmApplied -and $gmFailed -ge 1)) { $gameOk = $false }
         }
         $gameNote = $gameNotes -join '; '
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ezOk -and $fhOk -and $modesOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and seventy-six' } else { 'eighty-nine applicable' }) + ' mutants for its own reason, each proving it applied')
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and eighty-one' } else { 'eighty-nine applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -2414,6 +2472,7 @@ if ($Control) {
         foreach ($stj in $settleJudged) { foreach ($p in @($stj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $stj.Name + ': ' + $p) } }
         foreach ($wj in $widthsJudged) { foreach ($p in @($wj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $wj.Name + ': ' + $p) } }
         foreach ($mj in $modesJudged) { foreach ($p in @($mj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $mj.Name + ': ' + $p) } }
+        foreach ($nj in $naughtJudged) { foreach ($p in @($nj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $nj.Name + ': ' + $p) } }
         foreach ($p in @($jG0.Problems) | Select-Object -First 3) { Write-Output ('  the game''s page: ' + $p) }
         foreach ($gj in $gameJudged) { foreach ($p in @($gj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $gj.Name + ': ' + $p) } }
         exit 1

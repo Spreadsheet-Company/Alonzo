@@ -21,6 +21,13 @@
 ; Enter writes it, and every gate the switch reaches computes in the act's frame. The
 ; Lesson, the sheet a load shows first, says the rest to whoever loads it.
 ;
+; The game. Nine levels stand between the Lesson and the Bench, a sheet each, from NON
+; built of NON-ET alone to a 4-bit ripple adder (CART.9's third slice): a level's switches,
+; the room for a person's gates, its outputs, its lamps, the output due, and its words; T
+; tests every input of it, an input a settle step, and its gates are counted against a
+; budget and the least known. Their keys are the game's, and the Bench's are a person's
+; (docs/SPEC.md section 7.2, version 6's (game ...) and (work ...)).
+;
 ; The gates, in Latin, each arithmetic over 0 and 1 and each a macro below:
 ;   NON, not: 1 less its input.            ET, and: the product of its two.
 ;   VEL, or: the greater of its two.       AUT, either but not both: their sum's parity.
@@ -45,15 +52,16 @@
 ; premium.
 
 (cartridge "naught"
-  (spec 6)                          ; the version of docs/SPEC.md this cartridge is written to: (settle K), (bound ...), (read ...) and (work ...)
+  (spec 6)                          ; the version of docs/SPEC.md this cartridge is written to: (settle K), (bound ...), (game ...), (read ...) and (work ...)
   (title "Naught: Vel et Aut")      ; what the host shows: the gates' own words
   (rate 0)                          ; an act, an edit or a press, steps the bench; nothing else does
   (screen grid 80 50)               ; no Screen: the host shows the Lesson, the first visible sheet
   (seed 1)                          ; nothing on the bench is drawn from it
   (settle 65536)                    ; an act's settle, at most 65,536 steps: at full rate, one
-  (bound "Lesson" "Bench")          ; the lesson and the bench, each drawn to its extent and no further
+  (bound "Lesson" "I NON" "II ET" "III VEL" "IV AUT" "V ELIGE" "VI DISTRIBUE" "VII SEMIS" "VIII SUMMA" "IX QUATTUOR" "Bench")  ; the lesson, the levels and the bench, each drawn to its extent and no further
   (read "Lesson")                   ; the lesson, read-only: no key or row of a person's writes it
   (work "Bench")                    ; the bench, a person's to work: every key typed there is a cell's
+  (game "I NON" "II ET" "III VEL" "IV AUT" "V ELIGE" "VI DISTRIBUE" "VII SEMIS" "VIII SUMMA" "IX QUATTUOR")  ; the levels: their keys are the game's, T, N, P, R, Space, 1 and 0
   (author "Spreadsheet Company")    ; who wrote it
   (license "0BSD")                  ; the header's twin: copy this file to start a bench of your own
   (notes "Naught: Vel et Aut, a bench of logic gates in Latin: NON, ET, VEL, AUT, NON-ET and NEC. A 16-bit ripple adder from A1 and an 8 by 8 multiplier from I1, every gate a formula of the cells it reads, every 1 in lavender. Select a switch and type 1 or 0, then Enter, (cell \"Bench\" \"A3\" 1), and every gate it reaches computes; the Lesson says the rest."))
@@ -89,29 +97,385 @@
   (formula "Bench" at (&expand "=1-MAX(" x "," y ")")))
 
 ; ---- the lesson beside the bench: the floors build their benches without it ----
-; What the bench teaches, on a sheet of its own, the first a load shows, bound to its extent: a line a row in a
-; column wide enough to hold it. Its own sheet keeps the Bench's cells numbers alone, which the language reads as
+; What the game teaches, on a sheet of its own, the first a load shows, bound to its extent and read-only: a line a row
+; in a column wide enough to hold it. Its own sheet keeps the Bench's cells numbers alone, which the language reads as
 ; arrays.
 (sheet "Lesson" visible)
 (column "Lesson" "A" 140 shown none)
 (cell "Lesson" "A1" "Naught: Vel et Aut")
-(cell "Lesson" "A2" "A bench of logic gates. Every gate is a formula of the cells it reads; every 1 is lit. The bench is the next sheet, Bench:")
-(cell "Lesson" "A3" "its tab, or Ctrl+Alt+PageDown (Ctrl+PageDown in full screen); Ctrl+Alt+PageUp comes back here. Its row 1 names every column.")
-(cell "Lesson" "A5" "To write a switch, select it and type 1 or 0, then Enter: the palette opens with its row, and Enter writes it.")
-(cell "Lesson" "A6" "Enter writes and moves down, Tab moves right; Enter or F2 on a cell opens its row as it stands, Escape leaves it.")
-(cell "Lesson" "A7" "Ctrl+K opens the palette for any row of your own: (cell \"Bench\" \"A3\" 1), or a gate, (formula \"Bench\" \"H3\" \"=1-A3\").")
-(cell "Lesson" "A8" "Delete empties a cell, Backspace opens it emptied: an empty text is no number, so the gates it feeds say #VALUE!. Ex nihilo nihil fit.")
-(cell "Lesson" "A10" "The adder, from A1: a in A3:A18 and b in B3:B18, low bit first, its carry-in F2; its sum G3:G18, its carry out F18.")
-(cell "Lesson" "A11" "Each bit adds three: C = AUT(a,b), D = ET(a,b), E = ET(C,carry), F = VEL(D,E) the carry on, G = AUT(C,carry) the sum.")
-(cell "Lesson" "A12" "The multiplier, from I1: a in J2:Q2 and b in I4:I11, low bit first; its partial products ET(a,b) in J4:Q11, summed in rows.")
-(cell "Lesson" "A13" "Its product, low bit first: J4, S5, BC6:BC11, S12, BD12:BI12 and AZ12.")
-(cell "Lesson" "A15" "The gates, in Latin: NON, not, 1-a. ET, and, a*b. VEL, or, MAX(a,b). AUT, either but not both, MOD(a+b,2).")
-(cell "Lesson" "A16" "NON-ET, not both, 1-a*b, Sheffer's stroke. NEC, neither, 1-MAX(a,b), Peirce's arrow. Either alone builds every other gate.")
-(cell "Lesson" "A18" "Try it: a all ones, A3:A18, then the carry-in F2 to 1. 65,535 + 1 carries through all sixteen bits to 65,536 in one act.")
-(cell "Lesson" "A19" "Then the multiplier's a and b all ones, J2:Q2 and I4:I11: 255 x 255 = 65,025.")
-(cell "Lesson" "A21" "Tertium non datur: a cell holds 0 or 1, and no third, Delete aside. Latin is said to keep two ors, vel and aut; the Stanford")
-(cell "Lesson" "A22" "Encyclopedia of Philosophy called that a myth in 2016: aut has inclusive uses too. The bench keeps both anyway.")
+(cell "Lesson" "A2" "Logic gates in Latin, and nine levels that build them from one: NON, ET, VEL and AUT, a choice, a send, two sums and four bits.")
+(cell "Lesson" "A3" "The levels are the sheets after this one: a tab, or Ctrl+Alt+PageDown (Ctrl+PageDown in full screen), and Ctrl+Alt+PageUp back.")
+(cell "Lesson" "A5" "On a level, Space toggles the switch the selection stands on, 1 and 0 set it, a click toggles it. A lamp is lit where its output is 1.")
+(cell "Lesson" "A6" "Write the gates in the room, C to I, and the outputs in J: type = on a cell, and the palette opens its formula. Enter writes it.")
+(cell "Lesson" "A7" "Enter on a cell opens its formula as it stands, F2 too, and Escape leaves it. Delete empties a cell; Tab moves right.")
+(cell "Lesson" "A8" "T tests every input, an input a frame, and stops at the first a lamp gets wrong, the board standing on it. R sets the switches to 0.")
+(cell "Lesson" "A9" "N and P show the next and the previous level. A pass is a star; within the budget, two; at the least known, three.")
+(cell "Lesson" "A11" "The gates, in Latin: NON, not, =1-a. ET, and, =a*b. VEL, or, =MAX(a,b). AUT, either but not both, =MOD(a+b,2).")
+(cell "Lesson" "A12" "NON-ET, not both, =1-a*b, Sheffer's stroke. NEC, neither, =1-MAX(a,b), Peirce's arrow. Either alone builds every other gate.")
+(cell "Lesson" "A13" "Level I gives NON-ET alone; each level after, the gates proven before it. Nothing checks which you write: the words and the stars say.")
+(cell "Lesson" "A15" "After the levels, the Bench, a sandbox where every key types: a 16-bit adder from A1 and an 8 by 8 multiplier from I1.")
+(cell "Lesson" "A16" "The adder: a in A3:A18 and b in B3:B18, low bit first, its carry-in F2; its sum G3:G18, its carry out F18.")
+(cell "Lesson" "A17" "Each bit adds three: C = AUT(a,b), D = ET(a,b), E = ET(C,carry), F = VEL(D,E) the carry on, G = AUT(C,carry) the sum.")
+(cell "Lesson" "A18" "The multiplier: a in J2:Q2 and b in I4:I11, low bit first; its partial products ET(a,b) in J4:Q11, summed in rows.")
+(cell "Lesson" "A19" "Its product, low bit first: J4, S5, BC6:BC11, S12, BD12:BI12 and AZ12.")
+(cell "Lesson" "A20" "Try it: a all ones, A3:A18, then the carry-in F2 to 1: 65,535 + 1 ripples through all sixteen bits in one act. 255 x 255 = 65,025.")
+(cell "Lesson" "A21" "Delete empties a cell, Backspace opens it emptied: an empty text is no number, so the gates it feeds say #VALUE!. Ex nihilo nihil fit.")
+(cell "Lesson" "A23" "Tertium non datur: a cell holds 0 or 1, and no third, Delete aside. Latin is said to keep two ors, vel and aut; the Stanford")
+(cell "Lesson" "A24" "Encyclopedia of Philosophy called that a myth in 2016: aut has inclusive uses too. Naught keeps both anyway.")
 ; ---- the lesson's end ----
+
+; ---- the levels: the game, between the lesson and the bench; the floors build their benches without them ----
+; A level a sheet (CART.9's third slice, decisions 16 to 28), bound to its extent: its title in row 1 and its heads in
+; row 2; its switches in column A from row 3, each named beside it in B; the room for its gates, C to I, and its outputs
+; in J, each named in K, which a person writes as formulas, = opening a cell's edit; a lamp a row in L, lit while its
+; output is 1; the output due in M, the specification's at the switches standing; and its words in N, its reckoning
+; and its test's verdict in N8 and N9. Its keys are the game's, the manifest's (game ...): Space toggles the switch the
+; selection stands on, 1 and 0 set it, and a click toggles it; T tests every input; R sets the switches to 0; N and P
+; show the next and the previous level. The Lab keeps the test and each level's reckoning, the Count counts its gates,
+; the Camera shows the level N and P move to, and the Commands sheet holds the keys.
+(include "../common.vla")
+
+(format 2 "A080E0" general nowrap)  ; a lamp lit, the lamps' lavender
+
+(defmacro (level-sheet sheet)
+  "a level's sheet: its columns, a 1 lit in the gates' lavender and a lamp lit in the lamps'"
+  (column sheet "A" 4 shown none)
+  (column sheet "B" 3 shown none)
+  (column sheet "C" 4 shown none)
+  (column sheet "D" 4 shown none)
+  (column sheet "E" 4 shown none)
+  (column sheet "F" 4 shown none)
+  (column sheet "G" 4 shown none)
+  (column sheet "H" 4 shown none)
+  (column sheet "I" 4 shown none)
+  (column sheet "J" 4 shown none)
+  (column sheet "K" 6 shown none)
+  (column sheet "L" 5 shown none)
+  (column sheet "M" 4 shown none)
+  (column sheet "N" 128 shown none)
+  (look sheet 1 1)
+  (look sheet "●" 2))
+
+(defmacro (level-heads sheet title)
+  "a level's title in A1, over the empty row to its right, and its columns' heads in row 2"
+  (cell sheet "A1" title)
+  (cell sheet "A2" "in")
+  (cell sheet "C2" "the room")
+  (cell sheet "J2" "out")
+  (cell sheet "L2" "lamp")
+  (cell sheet "M2" "due"))
+
+(defmacro (level-switches sheet row range)
+  "a level's switches, each its own last value: 0 at R on its level; while T runs its level, the bit of the input's number
+   that the switch's row names; and otherwise Space, 1, 0 or a click on it. row, the level's row of the Lab"
+  (formula sheet range
+    (&expand "=IF(AND(Input!$B$20=\"reset\",Input!$B$19=\"" sheet "\"),0,"
+             "IF(Lab!$N$" row "=1,MOD(INT(Lab!$B$6/CHOOSE(ROW()-2,1,2,4,8,16,32,64,128,256)),2),"
+             "IF(AND(Input!$B$19=\"" sheet "\",Input!$B$11=1,Input!$B$12=ROW()),"
+             "IF(Input!$B$20=\"one\",1,IF(Input!$B$20=\"zero\",0,IF(OR(Input!$B$20=\"toggle\",Input!$B$13=1),1-'" sheet ".last'!A3,'" sheet ".last'!A3))),"
+             "'" sheet ".last'!A3)))")))
+
+(defmacro (level-lamps sheet range)
+  "a level's lamps, a dot lit in the lamps' lavender while the output to its left is 1, and a ring otherwise"
+  (formula sheet range "=IF(J3=1,\"●\",\"○\")"))
+
+(defmacro (level-reckoning sheet row inputs budget least)
+  "a level's reckoning in N8, its gates against its budget and the least known with its stars, and its test's verdict
+   in N9, counting the inputs while T runs. row, the level's row of the Lab"
+  (formula sheet "N8" (&expand "=\"Gates \"&Lab!E" row "&\"; the budget " budget ", the least known " least ": \"&Lab!H" row))
+  (formula sheet "N9"
+    (&expand "=IF(Lab!N" row "=1,\"Calculemus: input \"&(Lab!$B$6+1)&\" of " inputs "\","
+             "IF(Lab!B" row "=1,\"Quod erat demonstrandum: every one of its " inputs " inputs passes.\","
+             "IF(Lab!B" row "=2,\"The test stops at input \"&(Lab!C" row "+1)&\" of " inputs ", standing on the board: a lamp differs from its due.\","
+             "\"T tests every input, an input a frame. Calculemus!\")))")))
+
+(defmacro (level-keys sheet at)
+  "the keys of a level, said where it has room; and below its verdict, in N10, what a write over the cartridge's own cells
+   costs (decision 23): a formula enters by the load or a person's write, and R writes values"
+  (cell sheet at "Space toggles the switch the selection stands on, 1 and 0 set it, a click toggles it; T tests, R resets, N and P move.")
+  (cell sheet "N10" "A switch or a lamp written over is lost until Load, which loads every level afresh: R writes values, never a formula."))
+
+; ---- I NON: not, from NON-ET alone ----
+(sheet "I NON" visible)
+(level-sheet "I NON")
+(level-heads "I NON" "I NON: not, from NON-ET alone")
+(cells "I NON" ("B3" "a") ("K3" "y"))
+(level-switches "I NON" 11 "A3")
+(level-lamps "I NON" "L3")
+(formulas "I NON" ("M3" "=Lab!I11"))
+(cells "I NON"
+  ("N1" "NON, not: the lamp lit where a is 0, and dark where a is 1.")
+  ("N2" "Given NON-ET alone, not both, =1-x*y. Write y in J3, with any gates before it in the room, C to I.")
+  ("N3" "A gate's two inputs may be one cell read twice.")
+  ("N4" "NON-ET alone builds every gate: Peirce found it about 1880 and never published it, and Sheffer did, in 1913.")
+  ("N5" "Tertium non datur: a lamp is lit or it is dark, and there is no third.")
+  ("N6" "Ockham's razor, in words found in none of Ockham's extant works: entities are not to be multiplied beyond necessity."))
+(level-keys "I NON" "N7")
+(level-reckoning "I NON" 11 2 2 1)
+
+; ---- II ET: and, from NON-ET and NON ----
+(sheet "II ET" visible)
+(level-sheet "II ET")
+(level-heads "II ET" "II ET: and, from NON-ET and NON")
+(cells "II ET" ("B3" "a") ("B4" "b") ("K3" "y"))
+(level-switches "II ET" 12 "A3:A4")
+(level-lamps "II ET" "L3")
+(formulas "II ET" ("M3" "=Lab!I12"))
+(cells "II ET"
+  ("N1" "ET, and: the lamp lit where a and b are both 1.")
+  ("N2" "Given NON-ET, =1-x*y, and NON, proven at I, =1-x. Write y in J3.")
+  ("N3" "De Morgan, 1847: not both is the one not or the other not, NON-ET(a,b) = VEL(NON a, NON b). Turn it around."))
+(level-keys "II ET" "N7")
+(level-reckoning "II ET" 12 4 3 2)
+
+; ---- III VEL: or, the inclusive ----
+(sheet "III VEL" visible)
+(level-sheet "III VEL")
+(level-heads "III VEL" "III VEL: or, the inclusive")
+(cells "III VEL" ("B3" "a") ("B4" "b") ("K3" "y"))
+(level-switches "III VEL" 13 "A3:A4")
+(level-lamps "III VEL" "L3")
+(formulas "III VEL" ("M3" "=Lab!I13"))
+(cells "III VEL"
+  ("N1" "VEL, or: the lamp lit where a or b is 1, or both.")
+  ("N2" "Given NON-ET, =1-x*y; NON, =1-x; and ET, proven at II, =x*y. Write y in J3.")
+  ("N3" "Chrysippus's dog, at a fork of three roads, sniffs two, finds no scent, and takes the third unsniffed.")
+  ("N4" "It reasoned in VEL: this road or that or the other, not this, not that, so the other."))
+(level-keys "III VEL" "N7")
+(level-reckoning "III VEL" 13 4 4 3)
+
+; ---- IV AUT: either, but not both ----
+(sheet "IV AUT" visible)
+(level-sheet "IV AUT")
+(level-heads "IV AUT" "IV AUT: either, but not both")
+(cells "IV AUT" ("B3" "a") ("B4" "b") ("K3" "y"))
+(level-switches "IV AUT" 14 "A3:A4")
+(level-lamps "IV AUT" "L3")
+(formulas "IV AUT" ("M3" "=Lab!I14"))
+(cells "IV AUT"
+  ("N1" "AUT, either but not both: the lamp lit where exactly one of a and b is 1.")
+  ("N2" "Given NON-ET, NON, ET, and VEL, proven at III, =MAX(x,y). Write y in J3.")
+  ("N3" "Latin is said to keep two ors, vel the inclusive and aut the exclusive; the Stanford Encyclopedia called that a myth in 2016.")
+  ("N4" "Aut has inclusive uses too. Here it is exclusive anyway, and VEL and NON-ET together nearly say it."))
+(level-keys "IV AUT" "N7")
+(level-reckoning "IV AUT" 14 4 5 3)
+
+; ---- V ELIGE: choose, a multiplexer ----
+(sheet "V ELIGE" visible)
+(level-sheet "V ELIGE")
+(level-heads "V ELIGE" "V ELIGE: choose, a multiplexer")
+(cells "V ELIGE" ("B3" "a") ("B4" "b") ("B5" "s") ("K3" "y"))
+(level-switches "V ELIGE" 15 "A3:A5")
+(level-lamps "V ELIGE" "L3")
+(formulas "V ELIGE" ("M3" "=Lab!I15"))
+(cells "V ELIGE"
+  ("N1" "ELIGE, choose: y is a where s is 0, and b where s is 1.")
+  ("N2" "Given every gate proven, NON, ET, VEL and AUT, beside NON-ET. Write y in J3.")
+  ("N3" "A choice made by a wire: s decides which input the lamp follows, and nothing else."))
+(level-keys "V ELIGE" "N7")
+(level-reckoning "V ELIGE" 15 8 5 3)
+
+; ---- VI DISTRIBUE: send, a demultiplexer ----
+(sheet "VI DISTRIBUE" visible)
+(level-sheet "VI DISTRIBUE")
+(level-heads "VI DISTRIBUE" "VI DISTRIBUE: send, a demultiplexer")
+(cells "VI DISTRIBUE" ("B3" "x") ("B4" "s") ("K3" "to 0") ("K4" "to 1"))
+(level-switches "VI DISTRIBUE" 16 "A3:A4")
+(level-lamps "VI DISTRIBUE" "L3:L4")
+(formulas "VI DISTRIBUE" ("M3" "=Lab!I16") ("M4" "=Lab!J16"))
+(cells "VI DISTRIBUE"
+  ("N1" "DISTRIBUE, send: x goes to J3 where s is 0, and to J4 where s is 1, the other output 0.")
+  ("N2" "Given every gate proven. Write J3 and J4.")
+  ("N3" "The wire chooses again: where, now, and not which."))
+(level-keys "VI DISTRIBUE" "N7")
+(level-reckoning "VI DISTRIBUE" 16 4 4 2)
+
+; ---- VII SEMIS: the half, a half adder ----
+(sheet "VII SEMIS" visible)
+(level-sheet "VII SEMIS")
+(level-heads "VII SEMIS" "VII SEMIS: the half, a half adder")
+(cells "VII SEMIS" ("B3" "a") ("B4" "b") ("K3" "sum") ("K4" "carry"))
+(level-switches "VII SEMIS" 17 "A3:A4")
+(level-lamps "VII SEMIS" "L3:L4")
+(formulas "VII SEMIS" ("M3" "=Lab!I17") ("M4" "=Lab!J17"))
+(cells "VII SEMIS"
+  ("N1" "SEMIS, the half: a + b in two bits, the sum in J3 and the carry in J4; 1 + 1 is the sum 0 and the carry 1.")
+  ("N2" "Given every gate proven.")
+  ("N3" "Calculemus, said Leibniz: let us calculate, and a dispute is settled. Here a sum is two gates."))
+(level-keys "VII SEMIS" "N7")
+(level-reckoning "VII SEMIS" 17 4 3 2)
+
+; ---- VIII SUMMA: the whole sum, a full adder ----
+(sheet "VIII SUMMA" visible)
+(level-sheet "VIII SUMMA")
+(level-heads "VIII SUMMA" "VIII SUMMA: the whole sum, a full adder")
+(cells "VIII SUMMA" ("B3" "a") ("B4" "b") ("B5" "c") ("K3" "sum") ("K4" "carry"))
+(level-switches "VIII SUMMA" 18 "A3:A5")
+(level-lamps "VIII SUMMA" "L3:L4")
+(formulas "VIII SUMMA" ("M3" "=Lab!I18") ("M4" "=Lab!J18"))
+(cells "VIII SUMMA"
+  ("N1" "SUMMA, the whole sum: a + b + c in two bits, the sum in J3 and the carry in J4, c the carry coming in.")
+  ("N2" "Given every gate proven, and the half adder's idea.")
+  ("N3" "Calculemus: two halves and an or make a whole, and the carry moves on."))
+(level-keys "VIII SUMMA" "N7")
+(level-reckoning "VIII SUMMA" 18 8 6 5)
+
+; ---- IX QUATTUOR: four bits, a ripple adder ----
+(sheet "IX QUATTUOR" visible)
+(level-sheet "IX QUATTUOR")
+(level-heads "IX QUATTUOR" "IX QUATTUOR: four bits, a ripple adder")
+(cells "IX QUATTUOR"
+  ("B3" "a0") ("B4" "a1") ("B5" "a2") ("B6" "a3") ("B7" "b0") ("B8" "b1") ("B9" "b2") ("B10" "b3") ("B11" "c")
+  ("K3" "s0") ("K4" "s1") ("K5" "s2") ("K6" "s3") ("K7" "carry"))
+(level-switches "IX QUATTUOR" 19 "A3:A11")
+(level-lamps "IX QUATTUOR" "L3:L7")
+(formulas "IX QUATTUOR" ("M3" "=Lab!I19") ("M4" "=Lab!J19") ("M5" "=Lab!K19") ("M6" "=Lab!L19") ("M7" "=Lab!M19"))
+(cells "IX QUATTUOR"
+  ("N1" "QUATTUOR, four: a in A3:A6, plus b in A7:A10, plus the carry c in A11, low bit first; the sum in J3:J6, its carry in J7.")
+  ("N2" "Given every gate proven, and the whole sum's idea four times over.")
+  ("N3" "The carry ripples from bit to bit: 15 + 1 runs it through all four. T tries all 512 inputs, an input a frame.")
+  ("N4" "The Liar: a gate that reads itself says this sentence is false, and the language refuses its write, naming its cells."))
+(level-keys "IX QUATTUOR" "N7")
+(level-reckoning "IX QUATTUOR" 19 512 21 20)
+
+; ---- the Lab: the level N and P show, the test, and each level's reckoning ----
+; B1 the level the act stands on, 1 to 9, or 0 off the levels; B2 the level N and P move to, from the level shown, and
+; B3 its sheet for the Camera at their act alone, the empty text between, so that a person's tabs win; B4 the level
+; under test and B5 whether its test runs; B6 the input shown, its number, whose bits the switches take while the test
+; runs, and B7 the inputs there are; B8 whether every output is due at this frame. T begins a test at input 0, and it
+; goes on a settle step an input while every lamp is due, standing at the first input that fails or at the last.
+(sheet "Lab" hidden)
+(labels "Lab" "A1" "shown" "level" "camera" "testing" "running" "input" "inputs" "due")
+(formulas "Lab"
+  ("B1" "=(Input!$B$19=\"I NON\")*1+(Input!$B$19=\"II ET\")*2+(Input!$B$19=\"III VEL\")*3+(Input!$B$19=\"IV AUT\")*4+(Input!$B$19=\"V ELIGE\")*5+(Input!$B$19=\"VI DISTRIBUE\")*6+(Input!$B$19=\"VII SEMIS\")*7+(Input!$B$19=\"VIII SUMMA\")*8+(Input!$B$19=\"IX QUATTUOR\")*9")
+  ("B2" "=IF(AND(Input!$B$20=\"next\",B1>0),MIN(9,B1+1),IF(AND(Input!$B$20=\"previous\",B1>0),MAX(1,B1-1),MAX(1,Lab.last!B2)))")
+  ("B3" "=IF(OR(Input!$B$20=\"next\",Input!$B$20=\"previous\"),CHOOSE(B2,\"I NON\",\"II ET\",\"III VEL\",\"IV AUT\",\"V ELIGE\",\"VI DISTRIBUE\",\"VII SEMIS\",\"VIII SUMMA\",\"IX QUATTUOR\"),\"\")")
+  ("B4" "=IF(Input!$B$20=\"test\",B1,Lab.last!B4)")
+  ("B5" "=IF(Input!$B$20=\"test\",IF(B1>0,1,0),IF(Input!$B$20=\"reset\",0,IF(Lab.last!B5=1,IF(AND(Lab.last!B8=1,Lab.last!B6<Lab.last!B7-1),1,0),0)))")
+  ("B6" "=IF(Input!$B$20=\"test\",0,IF(AND(Lab.last!B5=1,B5=1),Lab.last!B6+1,Lab.last!B6))")
+  ("B7" "=CHOOSE(MAX(1,B4),2,4,4,4,8,4,4,8,512)")
+  ("B8" "=CHOOSE(MAX(1,B4),D11,D12,D13,D14,D15,D16,D17,D18,D19)"))
+; Rows 11 to 19, a level a row: B the last test's result, 0 none, 1 passed and 2 failed, R on the level forgetting it; C
+; the input it stopped at; D whether every output is due now; E its gates, the Count's; F its budget and G the least
+; known; H its stars; I to M its outputs due, the specification's at its inputs as its test reads them, rows 21 on; N
+; whether its test runs; and O, IX's, the sum a + b + c.
+(labels "Lab" "A11" "I NON" "II ET" "III VEL" "IV AUT" "V ELIGE" "VI DISTRIBUE" "VII SEMIS" "VIII SUMMA" "IX QUATTUOR")
+(headers "Lab" "B10" "result" "stopped at" "due" "gates" "budget" "least" "stars" "due 0" "due 1" "due 2" "due 3" "due 4" "testing" "sum")
+
+(defmacro (lab-level r k budget least)
+  "a level's row of the Lab, r its row and k its number: its result, the input its test stopped at, its budget, its least
+   known, its stars, and whether its test runs. A result and its input change only while the level is under test, so an
+   error a person's gate gives the test, #VALUE! where a gate reads a text, stays with that level until T or R"
+  (formula "Lab" (&expand "B" r)
+    (&expand "=IF(AND(Input!$B$20=\"reset\",$B$1=" k "),0,IF(OR(Lab.last!$B$4<>" k ",$B$4<>" k "),Lab.last!B" r ",IF(AND(Lab.last!$B$5=1,$B$5=0),IF(Lab.last!$B$8=1,1,2),Lab.last!B" r ")))"))
+  (formula "Lab" (&expand "C" r)
+    (&expand "=IF(OR(Lab.last!$B$4<>" k ",$B$4<>" k "),Lab.last!C" r ",IF(AND(Lab.last!$B$5=1,$B$5=0),Lab.last!$B$6,Lab.last!C" r "))"))
+  (cell "Lab" (&expand "F" r) budget)
+  (cell "Lab" (&expand "G" r) least)
+  (formula "Lab" (&expand "H" r)
+    (&expand "=IF(B" r "=1,IF(E" r "<=G" r ",\"★★★\",IF(E" r "<=F" r ",\"★★☆\",\"★☆☆\")),\"☆☆☆\")"))
+  (formula "Lab" (&expand "N" r) (&expand "=IF($B$4=" k ",$B$5,0)")))
+
+(defmacro (lab-inputs sheet row range)
+  "a level's inputs as its test reads them, down its column of the Lab from row 21: while T runs the level, the bits of
+   the input's number, which its switches take; and otherwise its switches as they stand. A switch a person wrote over
+   stands still (decision 23), so the due under test is the specification at the input, never at a switch that does not
+   move. row, the level's row of the Lab"
+  (formula "Lab" range
+    (&expand "=IF($N$" row "=1,MOD(INT($B$6/CHOOSE(ROW()-20,1,2,4,8,16,32,64,128,256)),2),'" sheet "'!A3)")))
+
+(lab-level 11 1 2 1)
+(lab-level 12 2 3 2)
+(lab-level 13 3 4 3)
+(lab-level 14 4 5 3)
+(lab-level 15 5 5 3)
+(lab-level 16 6 4 2)
+(lab-level 17 7 3 2)
+(lab-level 18 8 6 5)
+(lab-level 19 9 21 20)
+; Rows 21 on, a level a column, B for I to J for IX: its inputs as its test reads them, input 0 in row 21
+(labels "Lab" "A21" "input 0" "input 1" "input 2" "input 3" "input 4" "input 5" "input 6" "input 7" "input 8")
+(headers "Lab" "B20" "I NON" "II ET" "III VEL" "IV AUT" "V ELIGE" "VI DISTRIBUE" "VII SEMIS" "VIII SUMMA" "IX QUATTUOR")
+(lab-inputs "I NON" 11 "B21")
+(lab-inputs "II ET" 12 "C21:C22")
+(lab-inputs "III VEL" 13 "D21:D22")
+(lab-inputs "IV AUT" 14 "E21:E22")
+(lab-inputs "V ELIGE" 15 "F21:F23")
+(lab-inputs "VI DISTRIBUE" 16 "G21:G22")
+(lab-inputs "VII SEMIS" 17 "H21:H22")
+(lab-inputs "VIII SUMMA" 18 "I21:I23")
+(lab-inputs "IX QUATTUOR" 19 "J21:J29")
+; each level's specification at its inputs as its test reads them, and whether every output is due
+(formulas "Lab"
+  ("I11" "=1-B21")
+  ("D11" "=IF('I NON'!J3=I11,1,0)")
+  ("I12" "=C21*C22")
+  ("D12" "=IF('II ET'!J3=I12,1,0)")
+  ("I13" "=MAX(D21,D22)")
+  ("D13" "=IF('III VEL'!J3=I13,1,0)")
+  ("I14" "=MOD(E21+E22,2)")
+  ("D14" "=IF('IV AUT'!J3=I14,1,0)")
+  ("I15" "=IF(F23=1,F22,F21)")
+  ("D15" "=IF('V ELIGE'!J3=I15,1,0)")
+  ("I16" "=G21*(1-G22)")
+  ("J16" "=G21*G22")
+  ("D16" "=IF(AND('VI DISTRIBUE'!J3=I16,'VI DISTRIBUE'!J4=J16),1,0)")
+  ("I17" "=MOD(H21+H22,2)")
+  ("J17" "=INT((H21+H22)/2)")
+  ("D17" "=IF(AND('VII SEMIS'!J3=I17,'VII SEMIS'!J4=J17),1,0)")
+  ("I18" "=MOD(I21+I22+I23,2)")
+  ("J18" "=INT((I21+I22+I23)/2)")
+  ("D18" "=IF(AND('VIII SUMMA'!J3=I18,'VIII SUMMA'!J4=J18),1,0)")
+  ("O19" "=J21+2*J22+4*J23+8*J24+J25+2*J26+4*J27+8*J28+J29")
+  ("I19" "=MOD(O19,2)")
+  ("J19" "=MOD(INT(O19/2),2)")
+  ("K19" "=MOD(INT(O19/4),2)")
+  ("L19" "=MOD(INT(O19/8),2)")
+  ("M19" "=INT(O19/16)")
+  ("D19" "=IF(AND('IX QUATTUOR'!J3=I19,'IX QUATTUOR'!J4=J19,'IX QUATTUOR'!J5=K19,'IX QUATTUOR'!J6=L19,'IX QUATTUOR'!J7=M19),1,0)"))
+; each level's gates: every cell of its room and its outputs that holds anything, counted on the Count sheet
+(formulas "Lab"
+  ("E11" "=SUM(Count!C3:J6)")
+  ("E12" "=SUM(Count!C23:J26)")
+  ("E13" "=SUM(Count!C43:J46)")
+  ("E14" "=SUM(Count!C63:J66)")
+  ("E15" "=SUM(Count!C83:J86)")
+  ("E16" "=SUM(Count!C103:J106)")
+  ("E17" "=SUM(Count!C123:J126)")
+  ("E18" "=SUM(Count!C143:J146)")
+  ("E19" "=SUM(Count!C163:J171)"))
+
+; ---- the Count: a level's room and outputs, a 1 for every cell that holds anything ----
+(sheet "Count" hidden)
+(formulas "Count"
+  ("C3:J6" "=IF('I NON'!C3=\"\",0,1)")
+  ("C23:J26" "=IF('II ET'!C3=\"\",0,1)")
+  ("C43:J46" "=IF('III VEL'!C3=\"\",0,1)")
+  ("C63:J66" "=IF('IV AUT'!C3=\"\",0,1)")
+  ("C83:J86" "=IF('V ELIGE'!C3=\"\",0,1)")
+  ("C103:J106" "=IF('VI DISTRIBUE'!C3=\"\",0,1)")
+  ("C123:J126" "=IF('VII SEMIS'!C3=\"\",0,1)")
+  ("C143:J146" "=IF('VIII SUMMA'!C3=\"\",0,1)")
+  ("C163:J171" "=IF('IX QUATTUOR'!C3=\"\",0,1)"))
+
+; ---- the Camera: the level N and P move to (docs/SPEC.md section 3.8, version 4's third row) ----
+(sheet "Camera" hidden)
+(camera 1 1)
+(cell "Camera" "A3" "sheet")
+(formula "Camera" "B3" "=Lab!B3")
+
+; ---- the commands (docs/SPEC.md section 3.10): each holds always, and the manifest's (game ...) holds them on the levels ----
+(sheet "Commands" hidden)
+(headers "Commands" "A1" "name" "words" "holds" "key")
+(cells "Commands"
+  ("A2" "test")     ("B2" "test the level shown: every input, an input a frame, stopping at the first that fails") ("D2" "KeyT")
+  ("A3" "next")     ("B3" "show the next level")                                                                   ("D3" "KeyN")
+  ("A4" "previous") ("B4" "show the previous level")                                                               ("D4" "KeyP")
+  ("A5" "reset")    ("B5" "set the level's switches to 0, and forget its test")                                    ("D5" "KeyR")
+  ("A6" "toggle")   ("B6" "toggle the switch the selection stands on")                                             ("D6" "Space")
+  ("A7" "one")      ("B7" "set the switch the selection stands on to 1")                                           ("D7" "Digit1")
+  ("A8" "zero")     ("B8" "set the switch the selection stands on to 0")                                           ("D8" "Digit0"))
+; ---- the levels' end ----
 
 ; ---- the sheet, and its look --------------------------------------------------------------
 (sheet "Bench" visible)

@@ -2144,10 +2144,13 @@
   // given or a person's formula since (CART.9's hand test, 2026-10-20, docs/SPEC.md section 3.3): for one that reads
   // neither, a press would be three frames that move nothing, its own, its release's and the proof's, and it is the
   // viewport's selection alone, as at version 5.
+  // And since CART.9's third slice a press is an act only on a sheet whose keys are the game's (SPEC.5's sheets): on any
+  // other it is the viewport's selection alone, as a key typed there is a person's, so that a click on Naught's Bench or
+  // Lesson steps no frame where its levels read the act's place.
   Host.prototype._pressActs = function () {
     if (!this._sixAtZero()) return false;
     if (this.actRead === null) { try { this.actRead = readsInputRows(this._given(), 11, 15); } catch (e) { this.actRead = true; } }
-    return this.actRead;
+    return this.actRead && this.gameKeysHere();
   };
   Host.prototype._pressAct = function (ev) {
     if (!this.vp || !this.handle || ev.button > 2) return false;

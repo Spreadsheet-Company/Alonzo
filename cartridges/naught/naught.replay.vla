@@ -1,15 +1,20 @@
 ; SPDX-License-Identifier: 0BSD
-; A stand-in for the owner's session (CART.9, decision 14), written by the engine's own steps in the form the host's
-; recorder writes, so that the page's hand of the bench, the block hand-naught, holds a replay. The load's act, the
-; Lesson shown; then the Bench's tab, the selection at A1, and thirty-eight switches written one an act, each the row
-; a person's edit writes, typed on its cell or in the drawer's edit row. The adder's a set to all ones, a bit an act,
-; then its carry-in: the deepest ripple, 65,535 + 1 carried through all sixteen bits to 65,536. The multiplier's a set
-; to 1 and its b to all ones, 1 x 255, then the rest of its a, 255 x 255 = 65,025. Then the adder's b low bit on,
-; 65,537, and its a low bit off, 65,536; the multiplier's a low bit off, 254 x 255 = 64,770, and its b high bit off,
-; 254 x 127 = 32,258; and the carry-in off, 65,534 + 1 = 65,535. The bench settles: each act is its own frame and one
-; that proves nothing moved, a settle's frame holding no row, so 39 acts are 78 frames, every gate held to the hand at
-; each. Its golden is the Bench's record at its end. The owner's session replaces it at the hand test.
-(replay "naught" (spec 6) (cartridge "4014FD2672C2996330C40A30F483DB50AC1E019A86DFF84FE197C415A30B0482") (seed 1))
+; The owner's session at CART.9's third hand test, 2026-10-21, and a stand-in after it (decisions 14 and 26), so that
+; the page's hand, the block hand-naught, holds a replay of the game and of the bench. Frames 1 to 45 are the owner's,
+; as the owner's page recorded them: the load's act on the Lesson; on I NON the switch toggled by Space twice, set by
+; 1 and 0, clicked twice, NON written from NON-ET and passed, and N; on II ET, VEL written where ET is due and the test
+; stopping at input 2, then ET by NON of NON-ET, passed at its least known. Then a stand-in written by the engine's own
+; steps in the form the host's recorder writes, each act's Input rows those that differ from the ones last logged, the
+; engine releasing a press and a command after each: the levels III to IX of the engine's scripted session, III's
+; input emptied by Delete and #VALUE! met by the test, R, and a pass; IV's AUT with a number written as a text, two
+; stars; V and VI at their least known; VII with a gate idle, one star; VIII at its least known; and IX's four whole
+; sums, a carry rippling, its 512 inputs in 514 frames. Then the bench's 38 switches, each written in the drawer's edit
+; row, its tab chosen at the first: the adder's a to all ones and its carry-in, 65,535 + 1 rippling through all sixteen
+; bits; the multiplier's 255 x 255 = 65,025; and the low bits turned back, 254 x 127 = 32,258. And last, I's switch
+; written over, which the test no longer drives, so that it stops at input 1. Every frame of the bench and of the game
+; is held to the hand: the gates, the boards, the words, the Lab and the Camera's sheet. Its golden is the Bench's
+; record at its end.
+(replay "naught" (spec 6) (cartridge "B022294B626A5451E5732C91D205FC706F2DA7F568AF22A34CE64A191799AC53") (seed 1))
 (frame 1
   (cell "Input" "B11" 1)
   (cell "Input" "B12" 1)
@@ -19,80 +24,311 @@
   (cell "Input" "B19" "Lesson")
   (cell "Input" "B20" ""))
 (frame 3
+  (cell "Input" "B12" 3)
+  (cell "Input" "B19" "I NON")
+  (cell "Input" "B20" "toggle"))
+(frame 6
+  (cell "Input" "B20" "toggle"))
+(frame 9
+  (cell "Input" "B20" "one"))
+(frame 12
+  (cell "Input" "B20" "zero"))
+(frame 15
+  (cell "Input" "B13" 1))
+(frame 18
+  (cell "Input" "B13" 1))
+(frame 21
+  (cell "Input" "B11" 10)
+  (formula "I NON" "J3" "=1-A3*A3"))
+(frame 23
+  (cell "Input" "B12" 4)
+  (cell "Input" "B20" "test"))
+(frame 27
+  (cell "Input" "B20" "next"))
+(frame 30
+  (cell "Input" "B12" 3)
+  (cell "Input" "B19" "II ET")
+  (formula "II ET" "J3" "=MAX(A3,A4)"))
+(frame 32
+  (cell "Input" "B12" 4)
+  (cell "Input" "B20" "test"))
+(frame 36
+  (cell "Input" "B11" 3)
+  (cell "Input" "B12" 3)
+  (formula "II ET" "C3" "=1-A3*A4"))
+(frame 38
+  (cell "Input" "B11" 10)
+  (formula "II ET" "J3" "=1-C3"))
+(frame 40
+  (cell "Input" "B12" 4)
+  (cell "Input" "B20" "test"))
+(frame 46
+  (cell "Input" "B11" 3)
+  (cell "Input" "B12" 3)
+  (cell "Input" "B19" "III VEL")
+  (formula "III VEL" "C3" "=1-A3"))
+(frame 48
+  (cell "Input" "B12" 4)
+  (formula "III VEL" "C4" "=1-A4"))
+(frame 50
+  (cell "Input" "B11" 10)
+  (cell "Input" "B12" 3)
+  (formula "III VEL" "J3" "=1-C3*C4"))
+(frame 52
+  (cell "Input" "B11" 3)
+  (cell "Input" "B12" 4)
+  (cell "III VEL" "C4:C5" ""))
+(frame 54
+  (cell "Input" "B11" 1)
+  (cell "Input" "B12" 3)
+  (cell "Input" "B20" "test"))
+(frame 57
+  (cell "Input" "B20" "reset"))
+(frame 60
+  (cell "Input" "B11" 3)
+  (cell "Input" "B12" 4)
+  (formula "III VEL" "C4" "=1-A4"))
+(frame 62
+  (cell "Input" "B11" 1)
+  (cell "Input" "B12" 3)
+  (cell "Input" "B20" "test"))
+(frame 68
+  (cell "Input" "B11" 4)
+  (cell "Input" "B12" 5)
+  (cell "Input" "B19" "IV AUT")
+  (cell "IV AUT" "D5" "1"))
+(frame 70
+  (cell "Input" "B11" 3)
+  (cell "Input" "B12" 3)
+  (formula "IV AUT" "C3" "=MAX(A3,A4)*D5"))
+(frame 72
+  (cell "Input" "B12" 4)
+  (formula "IV AUT" "C4" "=1-A3*A4"))
+(frame 74
+  (cell "Input" "B11" 10)
+  (cell "Input" "B12" 3)
+  (formula "IV AUT" "J3" "=C3*C4"))
+(frame 76
+  (cell "Input" "B11" 1)
+  (cell "Input" "B20" "test"))
+(frame 82
+  (cell "Input" "B11" 3)
+  (cell "Input" "B19" "V ELIGE")
+  (formula "V ELIGE" "C3" "=MOD(A3+A4,2)"))
+(frame 84
+  (cell "Input" "B12" 4)
+  (formula "V ELIGE" "C4" "=A5*C3"))
+(frame 86
+  (cell "Input" "B11" 10)
+  (cell "Input" "B12" 3)
+  (formula "V ELIGE" "J3" "=MOD(A3+C4,2)"))
+(frame 88
+  (cell "Input" "B11" 1)
+  (cell "Input" "B12" 5)
+  (cell "Input" "B20" "test"))
+(frame 98
+  (cell "Input" "B11" 10)
+  (cell "Input" "B12" 4)
+  (cell "Input" "B19" "VI DISTRIBUE")
+  (formula "VI DISTRIBUE" "J4" "=A3*A4"))
+(frame 100
+  (cell "Input" "B12" 3)
+  (formula "VI DISTRIBUE" "J3" "=MOD(A3+J4,2)"))
+(frame 102
+  (cell "Input" "B11" 1)
+  (cell "Input" "B20" "test"))
+(frame 108
+  (cell "Input" "B11" 10)
+  (cell "Input" "B19" "VII SEMIS")
+  (formula "VII SEMIS" "J3" "=MOD(A3+A4,2)"))
+(frame 110
+  (cell "Input" "B12" 4)
+  (formula "VII SEMIS" "J4" "=A3*A4"))
+(frame 112
+  (cell "Input" "B11" 5)
+  (cell "Input" "B12" 6)
+  (formula "VII SEMIS" "E6" "=-A3+INT(A4/2)"))
+(frame 114
+  (cell "Input" "B11" 6)
+  (formula "VII SEMIS" "F6" "=MIN(A3:A4)"))
+(frame 116
+  (cell "Input" "B11" 1)
+  (cell "Input" "B12" 3)
+  (cell "Input" "B20" "test"))
+(frame 122
+  (cell "Input" "B11" 3)
+  (cell "Input" "B19" "VIII SUMMA")
+  (formula "VIII SUMMA" "C3" "=MOD(A3+A4,2)"))
+(frame 124
+  (cell "Input" "B11" 10)
+  (formula "VIII SUMMA" "J3" "=MOD(C3+A5,2)"))
+(frame 126
+  (cell "Input" "B11" 3)
+  (cell "Input" "B12" 4)
+  (formula "VIII SUMMA" "C4" "=A3*A4"))
+(frame 128
+  (cell "Input" "B12" 5)
+  (formula "VIII SUMMA" "C5" "=C3*A5"))
+(frame 130
+  (cell "Input" "B11" 10)
+  (cell "Input" "B12" 4)
+  (formula "VIII SUMMA" "J4" "=MAX(C4,C5)"))
+(frame 132
+  (cell "Input" "B11" 1)
+  (cell "Input" "B12" 3)
+  (cell "Input" "B20" "test"))
+(frame 142
+  (cell "Input" "B11" 3)
+  (cell "Input" "B19" "IX QUATTUOR")
+  (formula "IX QUATTUOR" "C3" "=MOD(A3+A7,2)"))
+(frame 144
+  (cell "Input" "B11" 4)
+  (formula "IX QUATTUOR" "D3" "=A3*A7"))
+(frame 146
+  (cell "Input" "B11" 5)
+  (formula "IX QUATTUOR" "E3" "=C3*A11"))
+(frame 148
+  (cell "Input" "B11" 10)
+  (formula "IX QUATTUOR" "J3" "=MOD(C3+A11,2)"))
+(frame 150
+  (cell "Input" "B11" 6)
+  (formula "IX QUATTUOR" "F3" "=MAX(D3,E3)"))
+(frame 152
+  (cell "Input" "B11" 3)
+  (cell "Input" "B12" 4)
+  (formula "IX QUATTUOR" "C4" "=MOD(A4+A8,2)"))
+(frame 154
+  (cell "Input" "B11" 4)
+  (formula "IX QUATTUOR" "D4" "=A4*A8"))
+(frame 156
+  (cell "Input" "B11" 5)
+  (formula "IX QUATTUOR" "E4" "=C4*F3"))
+(frame 158
+  (cell "Input" "B11" 10)
+  (formula "IX QUATTUOR" "J4" "=MOD(C4+F3,2)"))
+(frame 160
+  (cell "Input" "B11" 6)
+  (formula "IX QUATTUOR" "F4" "=MAX(D4,E4)"))
+(frame 162
+  (cell "Input" "B11" 3)
+  (cell "Input" "B12" 5)
+  (formula "IX QUATTUOR" "C5" "=MOD(A5+A9,2)"))
+(frame 164
+  (cell "Input" "B11" 4)
+  (formula "IX QUATTUOR" "D5" "=A5*A9"))
+(frame 166
+  (cell "Input" "B11" 5)
+  (formula "IX QUATTUOR" "E5" "=C5*F4"))
+(frame 168
+  (cell "Input" "B11" 10)
+  (formula "IX QUATTUOR" "J5" "=MOD(C5+F4,2)"))
+(frame 170
+  (cell "Input" "B11" 6)
+  (formula "IX QUATTUOR" "F5" "=MAX(D5,E5)"))
+(frame 172
+  (cell "Input" "B11" 3)
+  (cell "Input" "B12" 6)
+  (formula "IX QUATTUOR" "C6" "=MOD(A6+A10,2)"))
+(frame 174
+  (cell "Input" "B11" 4)
+  (formula "IX QUATTUOR" "D6" "=A6*A10"))
+(frame 176
+  (cell "Input" "B11" 5)
+  (formula "IX QUATTUOR" "E6" "=C6*F5"))
+(frame 178
+  (cell "Input" "B11" 10)
+  (formula "IX QUATTUOR" "J6" "=MOD(C6+F5,2)"))
+(frame 180
+  (cell "Input" "B12" 7)
+  (formula "IX QUATTUOR" "J7" "=MAX(D6,E6)"))
+(frame 182
+  (cell "Input" "B11" 1)
+  (cell "Input" "B12" 3)
+  (cell "Input" "B20" "test"))
+(frame 696
+  (cell "Input" "B20" "next"))
+(frame 699
   (cell "Input" "B19" "Bench")
   (cell "Bench" "A3" 1))
-(frame 5
+(frame 701
   (cell "Bench" "A4" 1))
-(frame 7
+(frame 703
   (cell "Bench" "A5" 1))
-(frame 9
+(frame 705
   (cell "Bench" "A6" 1))
-(frame 11
+(frame 707
   (cell "Bench" "A7" 1))
-(frame 13
+(frame 709
   (cell "Bench" "A8" 1))
-(frame 15
+(frame 711
   (cell "Bench" "A9" 1))
-(frame 17
+(frame 713
   (cell "Bench" "A10" 1))
-(frame 19
+(frame 715
   (cell "Bench" "A11" 1))
-(frame 21
+(frame 717
   (cell "Bench" "A12" 1))
-(frame 23
+(frame 719
   (cell "Bench" "A13" 1))
-(frame 25
+(frame 721
   (cell "Bench" "A14" 1))
-(frame 27
+(frame 723
   (cell "Bench" "A15" 1))
-(frame 29
+(frame 725
   (cell "Bench" "A16" 1))
-(frame 31
+(frame 727
   (cell "Bench" "A17" 1))
-(frame 33
+(frame 729
   (cell "Bench" "A18" 1))
-(frame 35
+(frame 731
   (cell "Bench" "F2" 1))
-(frame 37
+(frame 733
   (cell "Bench" "J2" 1))
-(frame 39
+(frame 735
   (cell "Bench" "I4" 1))
-(frame 41
+(frame 737
   (cell "Bench" "I5" 1))
-(frame 43
+(frame 739
   (cell "Bench" "I6" 1))
-(frame 45
+(frame 741
   (cell "Bench" "I7" 1))
-(frame 47
+(frame 743
   (cell "Bench" "I8" 1))
-(frame 49
+(frame 745
   (cell "Bench" "I9" 1))
-(frame 51
+(frame 747
   (cell "Bench" "I10" 1))
-(frame 53
+(frame 749
   (cell "Bench" "I11" 1))
-(frame 55
+(frame 751
   (cell "Bench" "K2" 1))
-(frame 57
+(frame 753
   (cell "Bench" "L2" 1))
-(frame 59
+(frame 755
   (cell "Bench" "M2" 1))
-(frame 61
+(frame 757
   (cell "Bench" "N2" 1))
-(frame 63
+(frame 759
   (cell "Bench" "O2" 1))
-(frame 65
+(frame 761
   (cell "Bench" "P2" 1))
-(frame 67
+(frame 763
   (cell "Bench" "Q2" 1))
-(frame 69
+(frame 765
   (cell "Bench" "B3" 1))
-(frame 71
+(frame 767
   (cell "Bench" "A3" 0))
-(frame 73
+(frame 769
   (cell "Bench" "J2" 0))
-(frame 75
+(frame 771
   (cell "Bench" "I11" 0))
-(frame 77
+(frame 773
   (cell "Bench" "F2" 0))
-(frame 78)
+(frame 775
+  (cell "Input" "B19" "I NON")
+  (cell "I NON" "A3" 1))
+(frame 777
+  (cell "Input" "B20" "toggle"))
+(frame 780
+  (cell "Input" "B20" "test"))
+(frame 782)

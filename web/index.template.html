@@ -6870,13 +6870,14 @@
                           '(cell "Commands" "A1" "name")\n(cell "Commands" "B1" "words")\n(cell "Commands" "C1" "holds")\n(cell "Commands" "D1" "key")\n' +
                           '(cell "Commands" "A2" "mark")\n(cell "Commands" "B2" "add one to the Board\'s marks")\n(cell "Commands" "D2" "KeyM")\n' +
                           '(cell "Board" "A1" "marks")\n(formula "Board" "B1" "=Board.last!B1+IF(Input!$B$20=\\"mark\\",1,0)")\n' +
+                          '(cell "Board" "A2" "presses")\n(formula "Board" "B2" "=Board.last!B2+Input!$B$13")\n' +
                           '(cell "Tray" "A1" "the tray")\n(cell "Notes" "A1" "notes")\n(cell "Rules" "A1" "the rules")\n(cell "Other" "A1" "another sheet")\n(cell "Screen" "A1" "the Screen")\n' };
   // each sheet of the card: its tab, the mode the manifest gives it, whether the game's keys hold there and whether a
   // person writes it
   var MODES_SHEETS = [['Board', 'game read', true, false], ['Tray', 'game', true, true], ['Notes', 'work', false, true], ['Rules', 'read', false, false], ['Other', '', false, true]];
   function caseModes() {
     var P = [], k = { acts: 0, words: 0, places: 0, fakeRead: 0, fakeModes: 0, fakeEdits: 0, fakeSaid: 0, fakeUnnamed: 0, fakePlane: 0, fakeOlder: 0,
-                      module: 0, described: 0, opened: 0, takes: 0, pressed: 0, passed: 0, written: 0, refusedRows: 0, keyRefused: 0, rate: 0, refusals: 0, naught: 0 };
+                      module: 0, described: 0, opened: 0, takes: 0, pressed: 0, passed: 0, written: 0, refusedRows: 0, presses: 0, keyRefused: 0, rate: 0, refusals: 0, naught: 0 };
     modesPage(k, P);
     modesDouble(k, P);
     var wasm = builtModule();
@@ -7062,6 +7063,18 @@
         if (!ok && viewsNum(v) === 0) k.refusedRows++; else P.push('modes: the row ' + x[0] + ' was ' + (ok ? 'written' : 'refused') + ' and ' + x[1] + '!' + x[2] + ' holds ' + JSON.stringify(v) + ', where it is refused and the cell untouched');
       });
       if (host.counters().editsRead === 2) k.refusedRows++; else P.push('modes: the host counts ' + host.counters().editsRead + ' row(s) refused as a read sheet\'s, where 2 are due');
+      // a press over a cell, the card reading the press: an act on the game's sheets alone, and on every other the
+      // viewport's selection, no act and no frame (CART.9's third slice)
+      MODES_SHEETS.forEach(function (x) {
+        var tb = pt.tab(x[0]);
+        if (!tb) return;
+        tb.click();
+        var c0 = host.counters();
+        settlePress(host, 3, 3);
+        var c1 = host.counters(), acted = c1.presses === c0.presses + 1 && c1.frame > c0.frame, sel = vp.selection().text;
+        if (acted === x[2] && sel === 'C3') k.presses++;
+        else P.push('modes: a press over C3 on ' + x[0] + ' was ' + (acted ? 'an act' : 'no act') + ', frame ' + c0.frame + ' to ' + c1.frame + ', the selection ' + sel + ', where ' + (x[2] ? 'an act' : 'the selection alone') + ' is due');
+      });
       // a key on the read sheet, the page's refusal by its name: the count and the words
       pt.tab('Rules').click();
       host.readKey();
@@ -7122,8 +7135,13 @@
       var ld = host.load(cartText('naught'), 'naught.vla');
       if (!ld.ok) { P.push('modes, Naught: it did not load: ' + ld.sentence); return; }
       var c = host.cart, sheets = [c.game.join(','), c.work.join(','), c.read.join(',')].join(' | ');
+      var levels = 'I NON,II ET,III VEL,IV AUT,V ELIGE,VI DISTRIBUE,VII SEMIS,VIII SUMMA,IX QUATTUOR';   // the game's levels (CART.9's third slice)
       host.shownName = 'Lesson';
-      if (sheets === ' | Bench | Lesson' && !host.editsHere() && !host.gameKeysHere()) k.naught++; else P.push('modes, Naught: its sheets read ' + JSON.stringify(sheets) + ', the Lesson ' + (host.editsHere() ? 'written' : 'read') + ', where the Bench a work sheet and the Lesson read are due');
+      var lessonRead = !host.editsHere() && !host.gameKeysHere();
+      host.shownName = 'IX QUATTUOR';
+      var levelGame = host.editsHere() && host.gameKeysHere();
+      host.shownName = 'Lesson';
+      if (sheets === levels + ' | Bench | Lesson' && lessonRead && levelGame) k.naught++; else P.push('modes, Naught: its sheets read ' + JSON.stringify(sheets) + ', the Lesson ' + (lessonRead ? 'read' : 'written or the game\'s') + ' and IX ' + (levelGame ? 'the game\'s' : 'not the game\'s') + ', where its nine levels the game\'s, the Bench a work sheet and the Lesson read are due');
       host.start(); host.tick(1000);
       var lesson = host.edit('(cell "Lesson" "A1" "graffiti")');
       host.shownName = 'Bench';

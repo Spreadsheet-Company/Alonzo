@@ -624,10 +624,13 @@ page shows opened plainly and what Pages deploys.
   and Seiyaku's, the owner's session at `CART.14`'s hand test, every
   frame's Board, its 81 variables' codes and marks, equal
   to Seiyaku's hand, and its end its golden, the Constraints sheet's record;
-  and Naught's, a stand-in of switches written in the edit row at
-  `CART.9`'s first slice, every frame's 400 gates equal to Naught's hand,
-  its end its golden, the Bench's record, and the Bench shown at its first
-  switch's act as its nineteenth row names it;
+  and Naught's, the owner's session at `CART.9`'s third hand test, its
+  first two levels played, and a stand-in after it, the other levels, the
+  bench's switches written in the edit row and a switch written over,
+  every frame's 400 gates and its game, each level's board and words, the
+  Lab and the Camera's sheet, equal to Naught's hand, its end its golden,
+  the Bench's record, and each sheet its person showed shown as its
+  nineteenth row names it;
   and the sound
   itself (`sound`, `ENGINE.4`'s second slice): the host's own voices over
   the double handed an `OfflineAudioContext`, a sequence of voice states
@@ -923,7 +926,11 @@ viewport, not an Excel clone.
     generator, `engine/src/naught.rs`: made, it lays the bench and holds
     its block to the block `source-naught` line for line, and it writes
     the frames instrument its two fixtures, the bench laid by fill and
-    shuffled, byte for byte the native runner's.
+    shuffled, byte for byte the native runner's. Since `CART.9`'s third
+    slice it answers the game too: a person's gates evaluated in the gates'
+    arithmetic, each level's board and words, the Lab and the Camera's
+    sheet, the Rust hand's `Game` line for line, its acts the replay's
+    Input rows and the engine's release mirrored after each.
 
   The page opens on the empty sheet whatever it holds and offers its
   cartridges in the picker, each by its manifest's title, its notes in the

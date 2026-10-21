@@ -3371,7 +3371,8 @@ mod tests {
     /// page's; Kairos's holds its board, State, voices and Tally to the game
     /// by hand at every frame (CART.4's second slice), and the page's its
     /// board to the page's game; Naught's every gate of its bench to the
-    /// netlist by hand (`CART.9`).
+    /// netlist by hand, and its levels, boards, words, Lab and Camera's sheet
+    /// to the game by hand (`CART.9`).
     #[test]
     fn every_committed_replay_plays_to_its_golden() {
         let Some(root) = crate::repository::cartridges() else {
@@ -3463,10 +3464,15 @@ mod tests {
                 );
             }
             if name == "naught" {
+                let passed = (11..=19)
+                    .filter(|r| {
+                        bench_hand.game.lab.get(&format!("B{r}")) == Some(&nt::Val::Num(1.0))
+                    })
+                    .count();
                 assert_eq!(
-                    (bench_hand.frames, bench_hand.edits, bench_hand.lit),
-                    (78, 38, 208),
-                    "the stand-in session: the load's act and 38 switches written, each act and its settle two frames, 208 gates lit at its end"
+                    (bench_hand.frames, bench_hand.edits, bench_hand.lit, bench_hand.written, passed),
+                    (782, 38, 208, 48, 8),
+                    "the owner's session at the third slice's hand test, 45 frames through I and II, then the stand-in: the levels III to IX, the bench's 38 switches written, each and its settle two frames, 208 gates lit at its end, and I's switch written over; 48 rows a person wrote, eight levels passed at its end"
                 );
             }
             played.push(name);
@@ -5953,22 +5959,31 @@ mod tests {
         ))
     }
 
-    /// The cartridge of a laid netlist: the committed source, its block the
-    /// netlist's, expanded by the pass, as the floors build their fixtures.
-    fn naught_built(source: &str, laid: &nt::Laid) -> String {
-        let s = nt::with_block(source, &laid.block()).expect("the source holds a block");
-        crate::pass::expand(&s, "cartridges/naught/naught.source.vla", &[])
+    /// A source of Naught's expanded by the pass, the kit beside it, which the
+    /// levels include (`CART.9`'s third slice).
+    fn naught_expanded(s: &str) -> String {
+        let library = crate::repository::read("common.vla").expect("the kit beside the cartridges");
+        let files = [("cartridges/common.vla".to_string(), library)];
+        crate::pass::expand(s, "cartridges/naught/naught.source.vla", &files)
             .unwrap_or_else(|r| panic!("the pass: line {}: {}", r.line, r.refusal.text))
             .text
     }
 
-    /// The floors' cartridge of a laid netlist: the same, the source's settle
-    /// left out (`nt::floors_source`), as the floors build their fixtures.
+    /// The cartridge of a laid netlist: the committed source, its block the
+    /// netlist's and its levels left out (`nt::without_levels`), expanded by
+    /// the pass, the bench alone as the bench's tests read it.
+    fn naught_built(source: &str, laid: &nt::Laid) -> String {
+        let s = nt::with_block(source, &laid.block()).expect("the source holds a block");
+        naught_expanded(&nt::without_levels(&s))
+    }
+
+    /// The floors' cartridge of a laid netlist: the same, the source's settle,
+    /// lesson and levels left out (`nt::floors_source`), as the floors build
+    /// their fixtures.
     fn naught_floors(source: &str, laid: &nt::Laid) -> String {
-        let s = nt::floors_source(source, &laid.block()).expect("the source holds a block");
-        crate::pass::expand(&s, "cartridges/naught/naught.source.vla", &[])
-            .unwrap_or_else(|r| panic!("the pass: line {}: {}", r.line, r.refusal.text))
-            .text
+        naught_expanded(
+            &nt::floors_source(source, &laid.block()).expect("the source holds a block"),
+        )
     }
 
     fn naught_loaded(text: &str) -> Cartridge {
@@ -6091,8 +6106,9 @@ mod tests {
         );
         assert_eq!(
             text.replace("\r\n", "\n"),
-            naught_built(&source, &laid).replace("\r\n", "\n"),
-            "the cartridge is its source's expansion"
+            naught_expanded(&nt::with_block(&source, &laid.block()).expect("a block"))
+                .replace("\r\n", "\n"),
+            "the cartridge is its source's expansion, its levels among it"
         );
         let c = naught_loaded(&text);
         // the bench's own extent, its labels' row above it: A1:BI18 for the bench a person loads
@@ -6157,9 +6173,7 @@ mod tests {
             lines.push(format!("({} \"{col}1:{col}4\" {inputs})", kind.word()));
         }
         let built = nt::with_block(&source, &lines).expect("the source holds a block");
-        let text = crate::pass::expand(&built, "cartridges/naught/naught.source.vla", &[])
-            .unwrap_or_else(|r| panic!("the pass: line {}: {}", r.line, r.refusal.text))
-            .text;
+        let text = naught_expanded(&built);
         let mut c = naught_loaded(&text);
         assert!(c.step(0).done);
         let formulas = naught_formulas(&c, "A1:H4");
@@ -6521,15 +6535,21 @@ mod tests {
     }
 
     /// Naught's committed replay held to the hand at every frame (`CART.9`,
-    /// decision 14): the Bench's switches as the replay's rows leave them,
-    /// each 0 or 1, every gate the netlist's value at full rate, and the
-    /// circuits integer + and ×.
+    /// decisions 14 and 26): the Bench's switches as the replay's rows leave
+    /// them, each 0 or 1, every gate the netlist's value at full rate, and the
+    /// circuits integer + and ×; and the game by hand, its acts the replay's
+    /// Input rows as the recorder logged them, the engine's release of an
+    /// act's press and command mirrored after its frame, and a person's rows
+    /// into the levels.
     struct NaughtHand<'n> {
         laid: nt::Laid<'n>,
         switches: Vec<u8>,
         frames: usize,
         edits: usize,
         lit: usize,
+        game: nt::Game,
+        input: nt::Acted,
+        written: usize,
     }
 
     impl<'n> NaughtHand<'n> {
@@ -6540,6 +6560,9 @@ mod tests {
                 frames: 0,
                 edits: 0,
                 lit: 0,
+                game: nt::Game::new(),
+                input: nt::Acted::default(),
+                written: 0,
             }
         }
 
@@ -6547,13 +6570,52 @@ mod tests {
             let net = self.laid.net;
             let at = format!("naught's replay, frame {frame}");
             for row in rows {
-                let Form::List(l) = row else { continue };
+                let Form::List(l) = row else {
+                    panic!("{at}: the hand models no row {row:?}")
+                };
                 let [Form::Sym(head), Form::Str(sheet), Form::Str(addr), value] =
                     l.items.as_slice()
                 else {
-                    continue;
+                    panic!("{at}: the hand models no row {row:?}")
                 };
+                if head == "cell" && sheet == "Input" {
+                    let number = |v: &Form| match v {
+                        Form::Sym(n) => n
+                            .parse::<u32>()
+                            .unwrap_or_else(|_| panic!("{at}: Input!{addr} {n}")),
+                        other => panic!("{at}: Input!{addr} is written {other:?}"),
+                    };
+                    let text = |v: &Form| match v {
+                        Form::Str(t) => t.clone(),
+                        other => panic!("{at}: Input!{addr} is written {other:?}"),
+                    };
+                    match addr.as_str() {
+                        "B11" => self.input.col = number(value),
+                        "B12" => self.input.row = number(value),
+                        "B13" => self.input.press = number(value) == 1,
+                        "B14" | "B15" => {}
+                        "B19" => self.input.sheet = text(value),
+                        "B20" => self.input.command = text(value),
+                        _ => panic!("{at}: the hand models no Input row {addr}"),
+                    }
+                    continue;
+                }
                 if head != "cell" || sheet != nt::SHEET {
+                    let what = match (head.as_str(), value) {
+                        ("formula", Form::Str(f)) => {
+                            nt::Written::Formula(nt::gex(f).unwrap_or_else(|e| panic!("{at}: {e}")))
+                        }
+                        ("cell", Form::Sym(n)) => nt::Written::Value(nt::Val::Num(
+                            n.parse()
+                                .unwrap_or_else(|_| panic!("{at}: {sheet}!{addr} {n}")),
+                        )),
+                        ("cell", Form::Str(t)) => nt::Written::Value(nt::Val::Text(t.clone())),
+                        _ => panic!("{at}: the hand models no row {row:?}"),
+                    };
+                    self.game
+                        .write(sheet, nt::rect(addr), what)
+                        .unwrap_or_else(|e| panic!("{at}: {e}"));
+                    self.written += 1;
                     continue;
                 }
                 let k = net
@@ -6574,8 +6636,634 @@ mod tests {
             naught_holds(c, &self.laid, &gates, &at);
             net.check(&self.switches, &gates)
                 .unwrap_or_else(|e| panic!("{at}: {e}"));
+            // a frame with rows is an act's, and one with none a settle
+            // step's, before which the engine released the act's press and
+            // command
+            if rows.is_empty() {
+                self.game.frame(None);
+            } else {
+                self.game.frame(Some(&self.input));
+                self.input.press = false;
+                self.input.command.clear();
+            }
+            naught_game_holds(c, &self.game, &at);
             self.frames += 1;
             self.lit = gates.iter().filter(|&&g| g == 1).count();
         }
+    }
+
+    // ---- Naught's levels (CART.9's third slice): the game, each level played as a person plays it ----
+
+    /// A cell's value as the page draws it: a number in its shortest
+    /// spelling, a text as itself, and the empty text for an empty cell.
+    fn naught_cell(c: &Cartridge, sheet: &str, addr: &str) -> String {
+        let (mut col, mut row) = (0u32, 0u32);
+        for ch in addr.chars() {
+            if ch.is_ascii_alphabetic() {
+                col = col * 26 + (ch.to_ascii_uppercase() as u32 - 64);
+            } else {
+                row = row * 10 + ch.to_digit(10).expect("an address");
+            }
+        }
+        let si = c.machine().find_sheet(sheet).expect("the sheet");
+        match c.machine().computed((si, row, col)) {
+            Some(Computed::Value(Value::Number(n))) => format!("{n}"),
+            Some(Computed::Value(Value::Text(t))) => t.clone(),
+            Some(Computed::Value(Value::Empty)) | None => String::new(),
+            other => format!("{other:?}"),
+        }
+    }
+
+    /// The frames of an act and its settle, the host's loop at rate 0: steps
+    /// until a frame is done, and again while the grid settles.
+    fn naught_settled(c: &mut Cartridge) -> u32 {
+        let mut frames = 0;
+        loop {
+            while !c.step(0).done {}
+            frames += 1;
+            if c.settle() != Settle::Settling {
+                assert_eq!(c.settle(), Settle::Settled, "the act settles inside its K");
+                return frames;
+            }
+            assert!(frames < 70_000, "the act never settles");
+        }
+    }
+
+    /// A person's act on a sheet, as the host makes one at rate 0 for a
+    /// version 6 cartridge: the Input rows of its place, its press and its
+    /// command, then its frame and its settle; the frames it took.
+    fn naught_act(
+        c: &mut Cartridge,
+        sheet: &str,
+        at: (u32, u32),
+        press: bool,
+        command: &str,
+    ) -> u32 {
+        let rows = format!(
+            "(cell \"Input\" \"B11\" {})\n(cell \"Input\" \"B12\" {})\n(cell \"Input\" \"B13\" {})\n(cell \"Input\" \"B19\" {})\n(cell \"Input\" \"B20\" {})",
+            at.0,
+            at.1,
+            u8::from(press),
+            quoted(sheet),
+            quoted(command)
+        );
+        c.write(&rows).expect("the act's rows");
+        naught_settled(c)
+    }
+
+    /// A person's row, a gate or an output written as the palette writes it,
+    /// an act of its own.
+    fn naught_wrote(c: &mut Cartridge, sheet: &str, addr: &str, formula: &str) -> u32 {
+        c.write(&format!(
+            "(formula {} {} {})",
+            quoted(sheet),
+            quoted(addr),
+            quoted(formula)
+        ))
+        .unwrap_or_else(|e| panic!("{sheet}!{addr} {formula}: {e:?}"));
+        naught_settled(c)
+    }
+
+    /// Naught as a person loads it, its load's act settled; `None` without
+    /// the repository's cartridges.
+    fn naught_game() -> Option<Cartridge> {
+        let (text, _) = naught()?;
+        let mut c = naught_loaded(&text);
+        naught_settled(&mut c);
+        Some(c)
+    }
+
+    /// A level's solution: its sheet's name, its row of the Lab, its inputs,
+    /// and its gates, each a cell and its formula.
+    type NaughtSolution = (
+        &'static str,
+        u32,
+        u32,
+        &'static [(&'static str, &'static str)],
+    );
+
+    /// The levels, each with a solution at its least known.
+    const NAUGHT_LEVELS: [NaughtSolution; 9] = [
+        ("I NON", 11, 2, &[("J3", "=1-A3*A3")]),
+        ("II ET", 12, 4, &[("C3", "=1-A3*A4"), ("J3", "=1-C3")]),
+        (
+            "III VEL",
+            13,
+            4,
+            &[("C3", "=1-A3"), ("C4", "=1-A4"), ("J3", "=1-C3*C4")],
+        ),
+        (
+            "IV AUT",
+            14,
+            4,
+            &[("C3", "=MAX(A3,A4)"), ("C4", "=1-A3*A4"), ("J3", "=C3*C4")],
+        ),
+        (
+            "V ELIGE",
+            15,
+            8,
+            &[
+                ("C3", "=MOD(A3+A4,2)"),
+                ("C4", "=A5*C3"),
+                ("J3", "=MOD(A3+C4,2)"),
+            ],
+        ),
+        (
+            "VI DISTRIBUE",
+            16,
+            4,
+            &[("J4", "=A3*A4"), ("J3", "=MOD(A3+J4,2)")],
+        ),
+        (
+            "VII SEMIS",
+            17,
+            4,
+            &[("J3", "=MOD(A3+A4,2)"), ("J4", "=A3*A4")],
+        ),
+        (
+            "VIII SUMMA",
+            18,
+            8,
+            &[
+                ("C3", "=MOD(A3+A4,2)"),
+                ("J3", "=MOD(C3+A5,2)"),
+                ("C4", "=A3*A4"),
+                ("C5", "=C3*A5"),
+                ("J4", "=MAX(C4,C5)"),
+            ],
+        ),
+        (
+            "IX QUATTUOR",
+            19,
+            512,
+            &[
+                ("C3", "=MOD(A3+A7,2)"),
+                ("D3", "=A3*A7"),
+                ("E3", "=C3*A11"),
+                ("F3", "=MAX(D3,E3)"),
+                ("J3", "=MOD(C3+A11,2)"),
+                ("C4", "=MOD(A4+A8,2)"),
+                ("D4", "=A4*A8"),
+                ("E4", "=C4*F3"),
+                ("F4", "=MAX(D4,E4)"),
+                ("J4", "=MOD(C4+F3,2)"),
+                ("C5", "=MOD(A5+A9,2)"),
+                ("D5", "=A5*A9"),
+                ("E5", "=C5*F4"),
+                ("F5", "=MAX(D5,E5)"),
+                ("J5", "=MOD(C5+F4,2)"),
+                ("C6", "=MOD(A6+A10,2)"),
+                ("D6", "=A6*A10"),
+                ("E6", "=C6*F5"),
+                ("J7", "=MAX(D6,E6)"),
+                ("J6", "=MOD(C6+F5,2)"),
+            ],
+        ),
+    ];
+
+    /// Every level solved at its least known and tested by T to a pass:
+    /// every input a frame, the frames the inputs and two, the result 1,
+    /// three stars, and the verdict said. Each test stands on its last input,
+    /// the switches holding its bits.
+    #[test]
+    fn naught_s_levels_pass_their_least_known_solutions() {
+        let Some(mut c) = naught_game() else {
+            return;
+        };
+        let least = [1, 2, 3, 3, 3, 2, 2, 5, 20];
+        for (k, (sheet, row, inputs, gates)) in NAUGHT_LEVELS.iter().enumerate() {
+            for (addr, formula) in gates.iter() {
+                naught_wrote(&mut c, sheet, addr, formula);
+            }
+            let frames = naught_act(&mut c, sheet, (1, 3), false, "test");
+            assert_eq!(
+                frames,
+                inputs + 2,
+                "{sheet}: T's frames, an input a frame, its end and the proof"
+            );
+            let lab = |col: &str| naught_cell(&c, "Lab", &format!("{col}{row}"));
+            assert_eq!(lab("B"), "1", "{sheet}: the test passes");
+            assert_eq!(
+                lab("C"),
+                format!("{}", inputs - 1),
+                "{sheet}: it stops at its last input"
+            );
+            assert_eq!(lab("E"), format!("{}", least[k]), "{sheet}: its gates");
+            assert_eq!(lab("H"), "★★★", "{sheet}: its stars");
+            assert_eq!(
+                naught_cell(&c, sheet, "N9"),
+                format!("Quod erat demonstrandum: every one of its {inputs} inputs passes."),
+                "{sheet}: its verdict"
+            );
+            assert_eq!(
+                naught_cell(&c, sheet, "N8")
+                    .chars()
+                    .rev()
+                    .take(3)
+                    .collect::<String>(),
+                "★★★",
+                "{sheet}: its reckoning"
+            );
+            let switches = inputs.trailing_zeros();
+            for i in 0..switches {
+                assert_eq!(
+                    naught_cell(&c, sheet, &format!("A{}", 3 + i)),
+                    "1",
+                    "{sheet}: its last input's bit {i}"
+                );
+            }
+            assert_eq!(
+                naught_cell(&c, "Lab", "B5"),
+                "0",
+                "{sheet}: the test is over"
+            );
+        }
+    }
+
+    /// A wrong gate fails at the first input it gets wrong, the board standing
+    /// on it: VEL written for ET at II fails at a = 1, b = 0, the second input;
+    /// a fix and T again pass; and the stars count the gates, ★★ within the
+    /// budget and ★ past it.
+    #[test]
+    fn naught_s_test_stops_at_the_first_wrong_input_and_counts_the_gates() {
+        let Some(mut c) = naught_game() else {
+            return;
+        };
+        naught_wrote(&mut c, "II ET", "J3", "=MAX(A3,A4)");
+        let frames = naught_act(&mut c, "II ET", (1, 3), false, "test");
+        assert_eq!(frames, 4, "two inputs, the stop and the proof");
+        assert_eq!(naught_cell(&c, "Lab", "B12"), "2", "the test fails");
+        assert_eq!(
+            naught_cell(&c, "Lab", "C12"),
+            "1",
+            "at the second input, its number 1"
+        );
+        assert_eq!(
+            (
+                naught_cell(&c, "II ET", "A3"),
+                naught_cell(&c, "II ET", "A4")
+            ),
+            ("1".to_string(), "0".to_string()),
+            "the board stands on a = 1, b = 0"
+        );
+        assert_eq!(
+            (
+                naught_cell(&c, "II ET", "J3"),
+                naught_cell(&c, "II ET", "M3")
+            ),
+            ("1".to_string(), "0".to_string()),
+            "the output against its due"
+        );
+        assert_eq!(
+            naught_cell(&c, "II ET", "L3"),
+            "●",
+            "the lamp lit where it should be dark"
+        );
+        assert_eq!(
+            naught_cell(&c, "II ET", "N9"),
+            "The test stops at input 2 of 4, standing on the board: a lamp differs from its due.",
+            "its verdict"
+        );
+        assert_eq!(naught_cell(&c, "Lab", "H12"), "☆☆☆", "no star for a fail");
+        // three gates, the budget's: ET as NON of NON-ET with a wire to J3
+        naught_wrote(&mut c, "II ET", "C3", "=1-A3*A4");
+        naught_wrote(&mut c, "II ET", "C4", "=1-C3");
+        naught_wrote(&mut c, "II ET", "J3", "=C4");
+        naught_act(&mut c, "II ET", (1, 3), false, "test");
+        assert_eq!(
+            (naught_cell(&c, "Lab", "B12"), naught_cell(&c, "Lab", "E12")),
+            ("1".to_string(), "3".to_string()),
+            "a pass at three gates"
+        );
+        assert_eq!(naught_cell(&c, "Lab", "H12"), "★★☆", "within the budget, 3");
+        naught_wrote(&mut c, "II ET", "D3", "=C3");
+        naught_act(&mut c, "II ET", (1, 3), false, "test");
+        assert_eq!(
+            naught_cell(&c, "Lab", "H12"),
+            "★☆☆",
+            "past the budget, a gate idle"
+        );
+    }
+
+    /// The keys of a level: Space toggles the switch the selection stands
+    /// on, 1 and 0 set it, a click toggles it, and nothing else moves; R sets
+    /// the level's switches to 0 and forgets its test; N and P name the next
+    /// and the previous level in the Camera's third row at their act alone.
+    #[test]
+    fn naught_s_level_keys_set_switches_and_move_between_levels() {
+        let Some(mut c) = naught_game() else {
+            return;
+        };
+        let a3 = |c: &Cartridge| naught_cell(c, "V ELIGE", "A3");
+        assert_eq!(
+            naught_act(&mut c, "V ELIGE", (1, 3), false, "toggle"),
+            3,
+            "an act, the step its command is released at, and the proof"
+        );
+        assert_eq!(a3(&c), "1", "Space toggles a on");
+        naught_act(&mut c, "V ELIGE", (1, 3), false, "zero");
+        assert_eq!(a3(&c), "0", "0 sets it");
+        naught_act(&mut c, "V ELIGE", (1, 3), false, "one");
+        assert_eq!(a3(&c), "1", "1 sets it");
+        naught_act(&mut c, "V ELIGE", (1, 3), true, "");
+        assert_eq!(a3(&c), "0", "a click toggles it");
+        naught_act(&mut c, "V ELIGE", (1, 5), false, "toggle");
+        assert_eq!(naught_cell(&c, "V ELIGE", "A5"), "1", "s on");
+        naught_act(&mut c, "V ELIGE", (3, 3), false, "toggle");
+        naught_act(&mut c, "IV AUT", (1, 3), false, "toggle");
+        assert_eq!(
+            (a3(&c), naught_cell(&c, "V ELIGE", "A5")),
+            ("0".to_string(), "1".to_string()),
+            "a key elsewhere moves no switch here"
+        );
+        assert_eq!(
+            naught_cell(&c, "IV AUT", "A3"),
+            "1",
+            "the other level's own switch"
+        );
+        naught_act(&mut c, "V ELIGE", (1, 3), false, "reset");
+        assert_eq!(
+            naught_cell(&c, "V ELIGE", "A5"),
+            "0",
+            "R sets the level's switches to 0"
+        );
+        assert_eq!(naught_cell(&c, "IV AUT", "A3"), "1", "and no other level's");
+        // N and P from the level shown, the Camera naming the sheet at their act and the empty text after
+        c.write("(cell \"Input\" \"B11\" 1)\n(cell \"Input\" \"B12\" 3)\n(cell \"Input\" \"B13\" 0)\n(cell \"Input\" \"B19\" \"V ELIGE\")\n(cell \"Input\" \"B20\" \"next\")")
+            .expect("N's rows");
+        while !c.step(0).done {}
+        assert_eq!(
+            naught_cell(&c, "Camera", "B3"),
+            "VI DISTRIBUE",
+            "N shows the next level at its act"
+        );
+        naught_settled(&mut c);
+        assert_eq!(naught_cell(&c, "Camera", "B3"), "", "and names none after");
+        assert_eq!(naught_cell(&c, "Lab", "B2"), "6", "the level counted");
+        naught_act(&mut c, "I NON", (1, 3), false, "previous");
+        assert_eq!(naught_cell(&c, "Lab", "B2"), "1", "P from I stays at I");
+        naught_act(&mut c, "IX QUATTUOR", (1, 3), false, "next");
+        assert_eq!(naught_cell(&c, "Lab", "B2"), "9", "N from IX stays at IX");
+        // R forgets a level's test
+        naught_wrote(&mut c, "I NON", "J3", "=1-A3*A3");
+        naught_act(&mut c, "I NON", (1, 3), false, "test");
+        assert_eq!(naught_cell(&c, "Lab", "B11"), "1", "passed");
+        naught_act(&mut c, "I NON", (1, 3), false, "reset");
+        assert_eq!(
+            (
+                naught_cell(&c, "Lab", "B11"),
+                naught_cell(&c, "I NON", "A3")
+            ),
+            ("0".to_string(), "0".to_string()),
+            "R forgets it"
+        );
+    }
+
+    /// A sheet's value cells in a window, as its record holds them: each
+    /// `cell` row's value, a text or a number.
+    fn naught_values(
+        c: &Cartridge,
+        sheet: &str,
+        window: &str,
+    ) -> std::collections::HashMap<(u32, u32), nt::Val> {
+        let record = match c.view("grid", sheet, Some(window)) {
+            Ok(Viewed::Text(t)) => t,
+            other => panic!("{sheet}'s record: {other:?}"),
+        };
+        let mut out = std::collections::HashMap::new();
+        for form in read_forms(&record).expect("the record") {
+            let Form::List(l) = form else { continue };
+            if !matches!(l.items.first(), Some(Form::Sym(h)) if h == "cell") {
+                continue;
+            }
+            let (Some(Form::Str(addr)), Some(v)) = (l.items.get(2), l.items.get(3)) else {
+                continue;
+            };
+            let (mut col, mut row) = (0u32, 0u32);
+            for ch in addr.chars() {
+                if ch.is_ascii_alphabetic() {
+                    col = col * 26 + (ch.to_ascii_uppercase() as u32 - 64);
+                } else {
+                    row = row * 10 + ch.to_digit(10).expect("an address");
+                }
+            }
+            let val = match v {
+                Form::Str(t) => nt::Val::Text(t.clone()),
+                Form::Sym(t) if t == "TRUE" => nt::Val::Bool(true),
+                Form::Sym(t) if t == "FALSE" => nt::Val::Bool(false),
+                Form::Sym(t) => nt::Val::Num(
+                    t.parse()
+                        .unwrap_or_else(|_| panic!("{sheet}!{addr} holds {t}")),
+                ),
+                Form::List(_) => panic!("{sheet}!{addr} holds a list"),
+            };
+            out.insert((row, col), val);
+        }
+        out
+    }
+
+    /// A cell's value as the hand spells values: a formula's as the machine
+    /// computed it, and a value cell's as the record holds it.
+    fn naught_val(
+        c: &Cartridge,
+        sheet: &str,
+        row: u32,
+        col: u32,
+        values: &std::collections::HashMap<(u32, u32), nt::Val>,
+    ) -> nt::Val {
+        let si = c.machine().find_sheet(sheet).expect("the sheet");
+        match c.machine().computed((si, row, col)) {
+            Some(Computed::Value(Value::Number(n))) => nt::Val::Num(*n),
+            Some(Computed::Value(Value::Text(t))) => nt::Val::Text(t.clone()),
+            Some(Computed::Value(Value::Bool(b))) => nt::Val::Bool(*b),
+            Some(Computed::Value(Value::Error(k))) => nt::Val::Err(match k {
+                vla_lang::calc::ErrorKind::Value => "#VALUE!",
+                vla_lang::calc::ErrorKind::Div0 => "#DIV/0!",
+                vla_lang::calc::ErrorKind::Num => "#NUM!",
+                vla_lang::calc::ErrorKind::Ref => "#REF!",
+                vla_lang::calc::ErrorKind::Name => "#NAME?",
+                vla_lang::calc::ErrorKind::NA => "#N/A",
+                _ => "#NULL!",
+            }),
+            Some(Computed::Value(Value::Empty)) => nt::Val::Empty,
+            None => values.get(&(row, col)).cloned().unwrap_or(nt::Val::Empty),
+            Some(other) => panic!("{sheet}!{} holds {other:?}", address(row, col)),
+        }
+    }
+
+    /// Every level's board, its words, the Lab and the Camera's sheet held to
+    /// the hand's, at a frame.
+    fn naught_game_holds(c: &Cartridge, hand: &nt::Game, at: &str) {
+        for (k, level) in nt::LEVELS.iter().enumerate() {
+            let last = 2 + level.rows.max(level.inputs);
+            let values = naught_values(c, level.sheet, &format!("A1:N{}", last.max(9)));
+            for row in 3..=last {
+                for col in 1..=13 {
+                    let (got, want) = (
+                        naught_val(c, level.sheet, row, col, &values),
+                        hand.cell(k, row, col),
+                    );
+                    assert!(
+                        got == want,
+                        "{at}: {}!{} is {got:?}, where the hand holds {want:?}",
+                        level.sheet,
+                        address(row, col)
+                    );
+                }
+            }
+            let (reckoning, verdict) = hand.words(k);
+            assert_eq!(
+                naught_val(c, level.sheet, 8, 14, &values),
+                reckoning,
+                "{at}: {}!N8",
+                level.sheet
+            );
+            assert_eq!(
+                naught_val(c, level.sheet, 9, 14, &values),
+                verdict,
+                "{at}: {}!N9",
+                level.sheet
+            );
+        }
+        let values = naught_values(c, "Lab", "A1:O29");
+        let mut lab: Vec<String> = (1..=8).map(|r| format!("B{r}")).collect();
+        for r in 11..=19 {
+            for col in ["B", "C", "D", "E", "F", "G", "H", "N"] {
+                lab.push(format!("{col}{r}"));
+            }
+        }
+        for (k, level) in nt::LEVELS.iter().enumerate() {
+            for o in 0..level.outputs as usize {
+                lab.push(format!("{}{}", ["I", "J", "K", "L", "M"][o], 11 + k));
+            }
+        }
+        lab.push("O19".to_string());
+        for (k, level) in nt::LEVELS.iter().enumerate() {
+            for s in 0..level.inputs {
+                lab.push(format!("{}{}", char::from(b'B' + k as u8), 21 + s));
+            }
+        }
+        for a in &lab {
+            let (col, row) = a.split_at(1);
+            let col = col.as_bytes()[0] as u32 - 64;
+            let got = naught_val(c, "Lab", row.parse().expect("a row"), col, &values);
+            let want = hand.lab.get(a).cloned().unwrap_or(nt::Val::Empty);
+            assert!(
+                got == want,
+                "{at}: Lab!{a} is {got:?}, where the hand holds {want:?}"
+            );
+        }
+        let camera = naught_values(c, "Camera", "A1:B3");
+        assert_eq!(
+            naught_val(c, "Camera", 3, 2, &camera),
+            hand.lab.get("B3").cloned().unwrap_or(nt::Val::Empty),
+            "{at}: the Camera's sheet"
+        );
+    }
+
+    /// One act of the session, as the host makes it at rate 0, its Input rows
+    /// beside a person's row if it writes one; then its frame and its
+    /// settle's, each held to the hand. The frames it took.
+    fn naught_game_act(
+        c: &mut Cartridge,
+        hand: &mut nt::Game,
+        act: &nt::Acted,
+        row: Option<&nt::Edit>,
+        at: &str,
+    ) -> u32 {
+        let mut rows = vec![
+            format!("(cell \"Input\" \"B11\" {})", act.col),
+            format!("(cell \"Input\" \"B12\" {})", act.row),
+            format!("(cell \"Input\" \"B13\" {})", u8::from(act.press)),
+            format!("(cell \"Input\" \"B19\" {})", quoted(&act.sheet)),
+            format!("(cell \"Input\" \"B20\" {})", quoted(&act.command)),
+        ];
+        if let Some(r) = row {
+            rows.push(r.text.clone());
+            hand.write(&r.sheet, r.cells, r.what.clone())
+                .unwrap_or_else(|e| panic!("{at}: {e}"));
+        }
+        c.write(&rows.join("\n"))
+            .unwrap_or_else(|e| panic!("{at}: the act's rows: {e:?}"));
+        let mut frames = 0;
+        loop {
+            while !c.step(0).done {}
+            hand.frame(if frames == 0 { Some(act) } else { None });
+            frames += 1;
+            naught_game_holds(c, hand, &format!("{at}, frame {frames}"));
+            if c.settle() != Settle::Settling {
+                assert_eq!(
+                    c.settle(),
+                    Settle::Settled,
+                    "{at}: the act settles inside its K"
+                );
+                return frames;
+            }
+        }
+    }
+
+    /// Naught's levels played through, every frame of the engine's held to
+    /// the hand's: the boards, a person's gates, the lamps, the due, the
+    /// words, the Lab and the Camera's sheet (decision 26).
+    #[test]
+    fn naught_s_game_is_its_hand_at_every_frame() {
+        let Some((text, _)) = naught() else {
+            return;
+        };
+        let mut c = naught_loaded(&text);
+        let mut hand = nt::Game::new();
+        let load = nt::Acted::default();
+        let mut frames = 0;
+        loop {
+            while !c.step(0).done {}
+            hand.frame(if frames == 0 { Some(&load) } else { None });
+            frames += 1;
+            naught_game_holds(&c, &hand, &format!("the load, frame {frames}"));
+            if c.settle() != Settle::Settling {
+                break;
+            }
+        }
+        let session = nt::session();
+        let mut total = 0;
+        for (i, (act, row)) in session.iter().enumerate() {
+            total += naught_game_act(
+                &mut c,
+                &mut hand,
+                act,
+                row.as_ref(),
+                &format!("act {i} {act:?} {:?}", row.as_ref().map(|r| &r.text)),
+            );
+        }
+        assert_eq!(
+            hand.lab["B11"],
+            nt::Val::Num(2.0),
+            "the switch written over fails I's test"
+        );
+        assert!(
+            total > 512,
+            "the session's {total} frames, IX's test among them"
+        );
+        for (r, want) in [
+            (12, 0.0),
+            (13, 1.0),
+            (14, 1.0),
+            (15, 1.0),
+            (16, 1.0),
+            (17, 1.0),
+            (18, 1.0),
+            (19, 1.0),
+        ] {
+            assert_eq!(hand.lab[&format!("B{r}")], nt::Val::Num(want), "Lab!B{r}");
+        }
+        assert_eq!(
+            hand.lab["H17"],
+            nt::Val::Text("★☆☆".into()),
+            "VII past its budget"
+        );
+        assert_eq!(
+            hand.lab["H19"],
+            nt::Val::Text("★★★".into()),
+            "IX at its least known"
+        );
     }
 }

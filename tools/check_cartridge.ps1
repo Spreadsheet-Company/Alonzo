@@ -301,12 +301,20 @@ if ($Root -eq '') { $Root = $repoRoot }
 # 2026-10-20, CART.9's second slice and its hand test: 120 rows, the Lesson's
 # 19 (its sheet, its column and 17 lines) and the bench's 15 names in its row
 # 1, the bench a row lower; its stand-in written again, its golden over A1:BI18.
+# 2026-10-20, CART.9's third slice: 675 rows, the game's nine levels between the
+# Lesson and the Bench, a sheet each, with the Lab, the Count, the Camera and
+# the Commands, and the Lesson's 20 lines leading into them; its replay the
+# bench and then the levels (71 acts over 706 frames more), its golden the
+# Bench's record at its end as before. At its hand test, 2026-10-21, the
+# owner's session the replay's first 45 frames, I and II played, the stand-in
+# after it, the levels III to IX, the bench and a switch written over, 782
+# frames; its golden the Bench's record at its end still.
 $expectedCartridges = 11
 $expectedSources = 11
 $expectedLibraries = 1
 $expectedReplays = 7
 $expectedGoldens = 7
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 177; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4263; 'cartridges/naught/naught.vla' = 120 }
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 177; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4263; 'cartridges/naught/naught.vla' = 675 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

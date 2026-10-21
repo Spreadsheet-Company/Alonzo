@@ -1197,16 +1197,21 @@ pub const LESSON_BEGIN: &str =
     "; ---- the lesson beside the bench: the floors build their benches without it ----";
 pub const LESSON_END: &str = "; ---- the lesson's end ----";
 
+/// The game's levels (`CART.9`'s third slice), the lines between these two,
+/// which the floors leave out as they leave the lesson.
+pub const LEVELS_BEGIN: &str = "; ---- the levels: the game, between the lesson and the bench; the floors build their benches without them ----";
+pub const LEVELS_END: &str = "; ---- the levels' end ----";
+
 /// The floors' source (decision 6): the source with its block's lines
 /// replaced by `lines`, the manifest's `(settle K)` line taken out, and the
-/// lesson's lines with it, each sheet the lesson makes named no more in the
-/// manifest's `(bound ...)`. A cartridge that settles numbers the Clock by
-/// acts, and the floors step frames, their switches reading the Clock as
-/// the frame; and the lesson is the bench's words to a person, of which the
-/// floors measure nothing. The keyboard's sheets, `(game ...)`, `(work ...)`
-/// and `(read ...)` (`SPEC.5`), go too, a person's keys being nothing the
-/// floors press, so that their benches stay the bytes measured. `None` where
-/// the source holds no block.
+/// lesson's lines and the levels' with it, each sheet they make named no
+/// more in the manifest's `(bound ...)`. A cartridge that settles numbers the
+/// Clock by acts, and the floors step frames, their switches reading the
+/// Clock as the frame; and the lesson and the levels are the game's, of which
+/// the floors measure nothing. The keyboard's sheets, `(game ...)`, `(work
+/// ...)` and `(read ...)` (`SPEC.5`), go too, a person's keys being nothing
+/// the floors press, so that their benches stay the bytes measured. `None`
+/// where the source holds no block.
 pub fn floors_source(source: &str, lines: &[String]) -> Option<String> {
     let built = with_block(source, lines)?;
     let eol = if built.contains("\r\n") { "\r\n" } else { "\n" };
@@ -1223,8 +1228,49 @@ pub fn floors_source(source: &str, lines: &[String]) -> Option<String> {
             .iter()
             .any(|h| t.starts_with(h))
     });
-    let begin = all.iter().position(|l| l == LESSON_BEGIN);
-    let end = all.iter().position(|l| l == LESSON_END);
+    for (first, last) in [(LESSON_BEGIN, LESSON_END), (LEVELS_BEGIN, LEVELS_END)] {
+        let begin = all.iter().position(|l| l == first);
+        let end = all.iter().position(|l| l == last);
+        let (Some(b), Some(e)) = (begin, end) else {
+            continue;
+        };
+        if e <= b {
+            continue;
+        }
+        let sheets: Vec<String> = all[b..=e]
+            .iter()
+            .filter_map(|l| l.strip_prefix("(sheet \""))
+            .filter_map(|l| l.split_once('"'))
+            .map(|(name, _)| format!(" \"{name}\""))
+            .collect();
+        all.drain(b..=e);
+        if let Some(bound) = all
+            .iter_mut()
+            .find(|l| l.trim_start().starts_with("(bound "))
+        {
+            for name in &sheets {
+                *bound = bound.replacen(name.as_str(), "", 1);
+            }
+        }
+    }
+    Some(all.join(eol))
+}
+
+/// The source without its game (`CART.9`'s third slice): the levels' lines
+/// left out, each sheet they make named no more in the manifest's
+/// `(bound ...)`, and the manifest's `(game ...)`, which names them. The
+/// bench's own tests read the bench alone, its census and its frames'
+/// changes the netlist's, as they did before the levels.
+pub fn without_levels(source: &str) -> String {
+    let eol = if source.contains("\r\n") {
+        "\r\n"
+    } else {
+        "\n"
+    };
+    let mut all: Vec<String> = source.split(eol).map(str::to_string).collect();
+    all.retain(|l| !l.trim_start().starts_with("(game \""));
+    let begin = all.iter().position(|l| l == LEVELS_BEGIN);
+    let end = all.iter().position(|l| l == LEVELS_END);
     if let (Some(b), Some(e)) = (begin, end) {
         if e > b {
             let sheets: Vec<String> = all[b..=e]
@@ -1244,7 +1290,7 @@ pub fn floors_source(source: &str, lines: &[String]) -> Option<String> {
             }
         }
     }
-    Some(all.join(eol))
+    all.join(eol)
 }
 
 /// The block's lines as the source holds them; `None` where it holds none.
@@ -1272,6 +1318,1489 @@ pub fn stimulus(row: u32, col: u32, frame: u64) -> u8 {
     let u = modulo(n, 65521.0);
     let v = modulo(u * u, 65521.0);
     modulo((v / 256.0).floor(), 2.0) as u8
+}
+
+// ---- the game by hand (`CART.9`'s third slice, decision 26) -------------------------------
+
+/// A cell's value as the language computes one: a number, a text, a truth
+/// value, an error by its spelling, or nothing.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Val {
+    Num(f64),
+    Text(String),
+    Bool(bool),
+    Err(&'static str),
+    Empty,
+}
+
+/// `#VALUE!`, an operand of the wrong kind.
+pub const VALUE: &str = "#VALUE!";
+
+impl Val {
+    /// The number an operand coerces to: a text that spells one, a truth
+    /// value 1 or 0, nothing 0, and any other text `#VALUE!`.
+    pub fn number(&self) -> Result<f64, &'static str> {
+        match self {
+            Val::Num(n) => Ok(*n),
+            Val::Bool(b) => Ok(if *b { 1.0 } else { 0.0 }),
+            Val::Empty => Ok(0.0),
+            Val::Text(t) => text_number(t).ok_or(VALUE),
+            Val::Err(k) => Err(k),
+        }
+    }
+
+    /// The truth a condition reads: a number not 0, a truth value, nothing
+    /// FALSE, and a text TRUE or FALSE alone.
+    pub fn truth(&self) -> Result<bool, &'static str> {
+        match self {
+            Val::Bool(b) => Ok(*b),
+            Val::Num(n) => Ok(*n != 0.0),
+            Val::Empty => Ok(false),
+            Val::Text(t) => match t.to_ascii_lowercase().as_str() {
+                "true" => Ok(true),
+                "false" => Ok(false),
+                _ => Err(VALUE),
+            },
+            Val::Err(k) => Err(k),
+        }
+    }
+
+    /// The text `&` reads: a number in its General spelling, a whole one
+    /// as its digits.
+    pub fn text(&self) -> Result<String, &'static str> {
+        match self {
+            Val::Text(t) => Ok(t.clone()),
+            Val::Num(n) => Ok(general(*n)),
+            Val::Bool(true) => Ok("TRUE".to_string()),
+            Val::Bool(false) => Ok("FALSE".to_string()),
+            Val::Empty => Ok(String::new()),
+            Val::Err(k) => Err(k),
+        }
+    }
+
+    /// A formula's answer as its cell holds it: nothing settles to 0.
+    pub fn settled(self) -> Val {
+        if self == Val::Empty {
+            Val::Num(0.0)
+        } else {
+            self
+        }
+    }
+}
+
+/// A number's General spelling, for the counts the words hold: its digits
+/// while it is whole and under 10^15.
+pub fn general(n: f64) -> String {
+    if n.fract() == 0.0 && n.abs() < 1e15 {
+        format!("{}", n as i64)
+    } else {
+        format!("{n}")
+    }
+}
+
+/// A text's number as an operand reads it (the language's
+/// `text_to_number`): a sign, digits with one point, an exponent, a
+/// percent; `None` for any other text.
+pub fn text_number(text: &str) -> Option<f64> {
+    let t = text.trim();
+    let (t, percent) = match t.strip_suffix('%') {
+        Some(rest) => (rest.trim_end(), true),
+        None => (t, false),
+    };
+    let b = t.as_bytes();
+    let (mut i, mut digits, mut dot) = (0, 0, false);
+    if i < b.len() && (b[i] == b'+' || b[i] == b'-') {
+        i += 1;
+    }
+    while i < b.len() {
+        match b[i] {
+            b'0'..=b'9' => digits += 1,
+            b'.' if !dot => dot = true,
+            _ => break,
+        }
+        i += 1;
+    }
+    if digits == 0 {
+        return None;
+    }
+    if i < b.len() && (b[i] == b'e' || b[i] == b'E') {
+        let mut j = i + 1;
+        if j < b.len() && (b[j] == b'+' || b[j] == b'-') {
+            j += 1;
+        }
+        let from = j;
+        while j < b.len() && b[j].is_ascii_digit() {
+            j += 1;
+        }
+        if j == from {
+            return None;
+        }
+        i = j;
+    }
+    if i != b.len() {
+        return None;
+    }
+    let v: f64 = t.parse().ok()?;
+    Some(if percent { v / 100.0 } else { v })
+}
+
+/// A result no cell can hold is `#NUM!`; no cell holds -0.
+fn finite(v: f64) -> Val {
+    if v == 0.0 {
+        Val::Num(0.0)
+    } else if v.is_finite() {
+        Val::Num(v)
+    } else {
+        Val::Err("#NUM!")
+    }
+}
+
+/// An arithmetic operator over two values, the left's error first.
+pub fn arith(op: u8, a: &Val, b: &Val) -> Val {
+    let x = match a.number() {
+        Ok(n) => n,
+        Err(k) => return Val::Err(k),
+    };
+    let y = match b.number() {
+        Ok(n) => n,
+        Err(k) => return Val::Err(k),
+    };
+    match op {
+        b'+' => finite(x + y),
+        b'-' => finite(x - y),
+        b'*' => finite(x * y),
+        _ => {
+            if y == 0.0 {
+                Val::Err("#DIV/0!")
+            } else {
+                finite(x / y)
+            }
+        }
+    }
+}
+
+/// How two values compare in Excel's order of kinds: nothing is 0, `""` or
+/// FALSE, whichever the other side is; every number below every text, every
+/// text below every truth value; texts without case.
+pub fn order(a: &Val, b: &Val) -> std::cmp::Ordering {
+    use std::cmp::Ordering;
+    use Val::*;
+    let rank = |v: &Val| match v {
+        Num(_) | Empty => 0,
+        Text(_) => 1,
+        Bool(_) => 2,
+        Err(_) => 3,
+    };
+    match (a, b) {
+        (Empty, Empty) => Ordering::Equal,
+        (Empty, Num(y)) => 0.0f64.partial_cmp(y).unwrap_or(Ordering::Equal),
+        (Num(x), Empty) => x.partial_cmp(&0.0).unwrap_or(Ordering::Equal),
+        (Empty, Text(t)) => {
+            if t.is_empty() {
+                Ordering::Equal
+            } else {
+                Ordering::Less
+            }
+        }
+        (Text(t), Empty) => {
+            if t.is_empty() {
+                Ordering::Equal
+            } else {
+                Ordering::Greater
+            }
+        }
+        (Empty, Bool(y)) => false.cmp(y),
+        (Bool(x), Empty) => x.cmp(&false),
+        (Num(x), Num(y)) => x.partial_cmp(y).unwrap_or(Ordering::Equal),
+        (Text(x), Text(y)) => x.to_lowercase().cmp(&y.to_lowercase()),
+        (Bool(x), Bool(y)) => x.cmp(y),
+        _ => rank(a).cmp(&rank(b)),
+    }
+}
+
+/// `a = b`, a truth value or the first error.
+pub fn equal(a: &Val, b: &Val) -> Val {
+    match (a, b) {
+        (Val::Err(k), _) | (_, Val::Err(k)) => Val::Err(k),
+        _ => Val::Bool(order(a, b) == std::cmp::Ordering::Equal),
+    }
+}
+
+/// `IF(c, then, else)` over a condition's value, the branch taken alone.
+pub fn if_(c: &Val, then: impl FnOnce() -> Val, otherwise: impl FnOnce() -> Val) -> Val {
+    match c.truth() {
+        Ok(true) => then(),
+        Ok(false) => otherwise(),
+        Err(k) => Val::Err(k),
+    }
+}
+
+/// `AND` over values given as conditions, the first error answering.
+pub fn and(items: &[Val]) -> Val {
+    let mut all = true;
+    for v in items {
+        match v.truth() {
+            Ok(b) => all &= b,
+            Err(k) => return Val::Err(k),
+        }
+    }
+    Val::Bool(all)
+}
+
+/// `a < b`, a truth value or the first error.
+pub fn less(a: &Val, b: &Val) -> Val {
+    match (a, b) {
+        (Val::Err(k), _) | (_, Val::Err(k)) => Val::Err(k),
+        _ => Val::Bool(order(a, b) == std::cmp::Ordering::Less),
+    }
+}
+
+/// `a <= b`, a truth value or the first error.
+pub fn less_equal(a: &Val, b: &Val) -> Val {
+    match (a, b) {
+        (Val::Err(k), _) | (_, Val::Err(k)) => Val::Err(k),
+        _ => Val::Bool(order(a, b) != std::cmp::Ordering::Greater),
+    }
+}
+
+/// `OR` over values given as conditions, the first error answering.
+pub fn or(items: &[Val]) -> Val {
+    let mut any = false;
+    for v in items {
+        match v.truth() {
+            Ok(b) => any |= b,
+            Err(k) => return Val::Err(k),
+        }
+    }
+    Val::Bool(any)
+}
+
+/// A person's gate as the hand evaluates it (decision 26): numbers; cells
+/// of its own level, relative or held; `+ - * /` and a sign; parentheses;
+/// and `MAX`, `MIN`, `MOD` and `INT`, enough for the six gates and any
+/// formula of them. Anything else refuses the hand by name.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Gex {
+    Num(f64),
+    Cell(u32, u32),
+    Range(u32, u32, u32, u32),
+    Neg(Box<Gex>),
+    Op(u8, Box<Gex>, Box<Gex>),
+    Call(&'static str, Vec<Gex>),
+}
+
+/// A gate's formula read, `=` first.
+pub fn gex(formula: &str) -> Result<Gex, String> {
+    let text: Vec<char> = formula.trim().chars().collect();
+    if text.first() != Some(&'=') {
+        return Err(format!("{formula} is no formula"));
+    }
+    let mut p = Gp {
+        s: text,
+        i: 1,
+        f: formula,
+    };
+    let e = p.sum()?;
+    p.space();
+    if p.i < p.s.len() {
+        return Err(p.outside());
+    }
+    Ok(e)
+}
+
+struct Gp<'f> {
+    s: Vec<char>,
+    i: usize,
+    f: &'f str,
+}
+
+impl Gp<'_> {
+    fn outside(&self) -> String {
+        format!(
+            "the hand evaluates the gates' arithmetic alone, and {} holds {} at {}",
+            self.f,
+            self.s[self.i..].iter().collect::<String>(),
+            self.i + 1
+        )
+    }
+    fn space(&mut self) {
+        while self.i < self.s.len() && self.s[self.i] == ' ' {
+            self.i += 1;
+        }
+    }
+    fn peek(&mut self) -> Option<char> {
+        self.space();
+        self.s.get(self.i).copied()
+    }
+    fn sum(&mut self) -> Result<Gex, String> {
+        let mut e = self.product()?;
+        while let Some(c @ ('+' | '-')) = self.peek() {
+            self.i += 1;
+            e = Gex::Op(c as u8, Box::new(e), Box::new(self.product()?));
+        }
+        Ok(e)
+    }
+    fn product(&mut self) -> Result<Gex, String> {
+        let mut e = self.unary()?;
+        while let Some(c @ ('*' | '/')) = self.peek() {
+            self.i += 1;
+            e = Gex::Op(c as u8, Box::new(e), Box::new(self.unary()?));
+        }
+        Ok(e)
+    }
+    fn unary(&mut self) -> Result<Gex, String> {
+        match self.peek() {
+            Some('-') => {
+                self.i += 1;
+                Ok(Gex::Neg(Box::new(self.unary()?)))
+            }
+            Some('+') => {
+                self.i += 1;
+                self.unary()
+            }
+            _ => self.primary(),
+        }
+    }
+    fn primary(&mut self) -> Result<Gex, String> {
+        match self.peek() {
+            Some('(') => {
+                self.i += 1;
+                let e = self.sum()?;
+                if self.peek() != Some(')') {
+                    return Err(self.outside());
+                }
+                self.i += 1;
+                Ok(e)
+            }
+            Some(c) if c.is_ascii_digit() || c == '.' => {
+                let from = self.i;
+                while self.i < self.s.len()
+                    && (self.s[self.i].is_ascii_digit() || self.s[self.i] == '.')
+                {
+                    self.i += 1;
+                }
+                let t: String = self.s[from..self.i].iter().collect();
+                t.parse().map(Gex::Num).map_err(|_| self.outside())
+            }
+            Some(c) if c.is_ascii_alphabetic() || c == '$' => {
+                let from = self.i;
+                let word: String = self.s[self.i..]
+                    .iter()
+                    .take_while(|c| c.is_ascii_alphabetic())
+                    .collect();
+                if self.s.get(self.i + word.len()) == Some(&'(') {
+                    let name = match word.to_ascii_uppercase().as_str() {
+                        "MAX" => "MAX",
+                        "MIN" => "MIN",
+                        "MOD" => "MOD",
+                        "INT" => "INT",
+                        _ => return Err(self.outside()),
+                    };
+                    self.i += word.len() + 1;
+                    let mut args = Vec::new();
+                    loop {
+                        args.push(if name == "MAX" || name == "MIN" {
+                            self.argument()?
+                        } else {
+                            self.sum()?
+                        });
+                        match self.peek() {
+                            Some(',') => self.i += 1,
+                            Some(')') => {
+                                self.i += 1;
+                                break;
+                            }
+                            _ => return Err(self.outside()),
+                        }
+                    }
+                    let arity = match name {
+                        "MOD" => args.len() == 2,
+                        "INT" => args.len() == 1,
+                        _ => !args.is_empty(),
+                    };
+                    if !arity {
+                        return Err(self.outside());
+                    }
+                    return Ok(Gex::Call(name, args));
+                }
+                self.i = from;
+                let (r, c) = self.cell().ok_or_else(|| self.outside())?;
+                Ok(Gex::Cell(r, c))
+            }
+            _ => Err(self.outside()),
+        }
+    }
+    /// An argument of MAX or MIN: a cell, a range, or a value.
+    fn argument(&mut self) -> Result<Gex, String> {
+        let from = self.i;
+        self.space();
+        if let Some((r, c)) = self.cell() {
+            if self.s.get(self.i) == Some(&':') {
+                self.i += 1;
+                let (r2, c2) = self.cell().ok_or_else(|| self.outside())?;
+                return Ok(Gex::Range(r.min(r2), c.min(c2), r.max(r2), c.max(c2)));
+            }
+            if matches!(self.peek(), Some(',') | Some(')')) {
+                return Ok(Gex::Cell(r, c));
+            }
+        }
+        self.i = from;
+        self.sum()
+    }
+    /// A cell's address, `$` held or not: its row and column.
+    fn cell(&mut self) -> Option<(u32, u32)> {
+        self.space();
+        let s = &self.s;
+        let mut i = self.i;
+        if s.get(i) == Some(&'$') {
+            i += 1;
+        }
+        let mut col = 0u32;
+        let from = i;
+        while i < s.len() && s[i].is_ascii_alphabetic() {
+            col = col * 26 + (s[i].to_ascii_uppercase() as u32 - 64);
+            i += 1;
+        }
+        if i == from || i - from > 3 {
+            return None;
+        }
+        if s.get(i) == Some(&'$') {
+            i += 1;
+        }
+        let mut row = 0u32;
+        let digits = i;
+        while i < s.len() && s[i].is_ascii_digit() {
+            row = row * 10 + s[i].to_digit(10)?;
+            i += 1;
+        }
+        if i == digits
+            || row == 0
+            || s.get(i)
+                .is_some_and(|c| c.is_ascii_alphanumeric() || *c == '!' || *c == '(')
+        {
+            return None;
+        }
+        self.i = i;
+        Some((row, col))
+    }
+}
+
+impl Gex {
+    /// The cells it reads.
+    pub fn reads(&self, out: &mut Vec<(u32, u32)>) {
+        match self {
+            Gex::Num(_) => {}
+            Gex::Cell(r, c) => out.push((*r, *c)),
+            Gex::Range(r1, c1, r2, c2) => {
+                for r in *r1..=*r2 {
+                    for c in *c1..=*c2 {
+                        out.push((r, c));
+                    }
+                }
+            }
+            Gex::Neg(x) => x.reads(out),
+            Gex::Op(_, x, y) => {
+                x.reads(out);
+                y.reads(out);
+            }
+            Gex::Call(_, args) => args.iter().for_each(|a| a.reads(out)),
+        }
+    }
+
+    /// Its value, the cells it reads answered by `cell`.
+    pub fn eval(&self, cell: &mut dyn FnMut(u32, u32) -> Val) -> Val {
+        match self {
+            Gex::Num(n) => Val::Num(*n),
+            Gex::Cell(r, c) => cell(*r, *c),
+            Gex::Range(..) => Val::Err(VALUE),
+            Gex::Neg(x) => match x.eval(cell).number() {
+                Ok(n) => finite(-n),
+                Err(k) => Val::Err(k),
+            },
+            Gex::Op(op, x, y) => {
+                let a = x.eval(cell);
+                if let Val::Err(k) = a {
+                    return Val::Err(k);
+                }
+                let b = y.eval(cell);
+                if let Val::Err(k) = b {
+                    return Val::Err(k);
+                }
+                arith(*op, &a, &b)
+            }
+            Gex::Call(name, args) => match *name {
+                "MAX" | "MIN" => {
+                    let mut items = Vec::new();
+                    for a in args {
+                        match a {
+                            Gex::Cell(..) | Gex::Range(..) => {
+                                let mut cells = Vec::new();
+                                a.reads(&mut cells);
+                                let mut err = None;
+                                for (r, c) in cells {
+                                    match cell(r, c) {
+                                        Val::Num(n) => items.push(n),
+                                        Val::Err(k) => {
+                                            err.get_or_insert(k);
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                                if let Some(k) = err {
+                                    return Val::Err(k);
+                                }
+                            }
+                            _ => match a.eval(cell).number() {
+                                Ok(n) => items.push(n),
+                                Err(k) => return Val::Err(k),
+                            },
+                        }
+                    }
+                    let folded = if *name == "MAX" {
+                        items
+                            .iter()
+                            .copied()
+                            .fold(None, |m: Option<f64>, x| Some(m.map_or(x, |m| m.max(x))))
+                    } else {
+                        items
+                            .iter()
+                            .copied()
+                            .fold(None, |m: Option<f64>, x| Some(m.map_or(x, |m| m.min(x))))
+                    };
+                    Val::Num(folded.unwrap_or(0.0))
+                }
+                "MOD" => {
+                    let n = match args[0].eval(cell).number() {
+                        Ok(n) => n,
+                        Err(k) => return Val::Err(k),
+                    };
+                    let d = match args[1].eval(cell).number() {
+                        Ok(d) => d,
+                        Err(k) => return Val::Err(k),
+                    };
+                    if d == 0.0 {
+                        Val::Err("#DIV/0!")
+                    } else {
+                        finite(n - d * (n / d).floor())
+                    }
+                }
+                _ => match args[0].eval(cell).number() {
+                    Ok(n) => Val::Num(n.floor()),
+                    Err(k) => Val::Err(k),
+                },
+            },
+        }
+    }
+}
+
+/// A level of the game (decisions 16 to 21): its sheet, its switches and
+/// outputs, its room's rows from row 3, its budget and its least known.
+pub struct Level {
+    pub sheet: &'static str,
+    pub inputs: u32,
+    pub outputs: u32,
+    pub rows: u32,
+    pub budget: u32,
+    pub least: u32,
+}
+
+/// The nine levels in tab order, `I NON` the first.
+pub const LEVELS: [Level; 9] = [
+    Level {
+        sheet: "I NON",
+        inputs: 1,
+        outputs: 1,
+        rows: 4,
+        budget: 2,
+        least: 1,
+    },
+    Level {
+        sheet: "II ET",
+        inputs: 2,
+        outputs: 1,
+        rows: 4,
+        budget: 3,
+        least: 2,
+    },
+    Level {
+        sheet: "III VEL",
+        inputs: 2,
+        outputs: 1,
+        rows: 4,
+        budget: 4,
+        least: 3,
+    },
+    Level {
+        sheet: "IV AUT",
+        inputs: 2,
+        outputs: 1,
+        rows: 4,
+        budget: 5,
+        least: 3,
+    },
+    Level {
+        sheet: "V ELIGE",
+        inputs: 3,
+        outputs: 1,
+        rows: 4,
+        budget: 5,
+        least: 3,
+    },
+    Level {
+        sheet: "VI DISTRIBUE",
+        inputs: 2,
+        outputs: 2,
+        rows: 4,
+        budget: 4,
+        least: 2,
+    },
+    Level {
+        sheet: "VII SEMIS",
+        inputs: 2,
+        outputs: 2,
+        rows: 4,
+        budget: 3,
+        least: 2,
+    },
+    Level {
+        sheet: "VIII SUMMA",
+        inputs: 3,
+        outputs: 2,
+        rows: 4,
+        budget: 6,
+        least: 5,
+    },
+    Level {
+        sheet: "IX QUATTUOR",
+        inputs: 9,
+        outputs: 5,
+        rows: 9,
+        budget: 21,
+        least: 20,
+    },
+];
+
+/// Each level's switches' and outputs' names, its B and K columns.
+pub const NAMES: [(&[&str], &[&str]); 9] = [
+    (&["a"], &["y"]),
+    (&["a", "b"], &["y"]),
+    (&["a", "b"], &["y"]),
+    (&["a", "b"], &["y"]),
+    (&["a", "b", "s"], &["y"]),
+    (&["x", "s"], &["to 0", "to 1"]),
+    (&["a", "b"], &["sum", "carry"]),
+    (&["a", "b", "c"], &["sum", "carry"]),
+    (
+        &["a0", "a1", "a2", "a3", "b0", "b1", "b2", "b3", "c"],
+        &["s0", "s1", "s2", "s3", "carry"],
+    ),
+];
+
+/// The bit of the input's number that input s takes while a test runs,
+/// `MOD(INT(B6/2^s),2)`.
+pub fn bit(b6: &Val, s: usize) -> Val {
+    match b6.number() {
+        Ok(v) => finite(modulo((v / f64::from(1u32 << s)).floor(), 2.0)),
+        Err(e) => Val::Err(e),
+    }
+}
+
+/// A level's inputs as its test reads them, the Lab's column of them from
+/// row 21: while its test runs (`here`, the Lab's N, is 1), the bits of
+/// the input's number; and otherwise its switches as they stand, an empty
+/// one 0.
+pub fn tested(here: &Val, b6: &Val, standing: &[Val]) -> Vec<Val> {
+    standing
+        .iter()
+        .enumerate()
+        .map(|(s, v)| if_(&equal(here, &Val::Num(1.0)), || bit(b6, s), || v.clone()).settled())
+        .collect()
+}
+
+/// Level k's outputs due, as the Lab's formulas compute them from its
+/// inputs as its test reads them (decision 17's specification).
+pub fn due(k: usize, s: &[Val]) -> Vec<Val> {
+    let n = |x: f64| Val::Num(x);
+    let max_of = |xs: &[&Val]| -> Val {
+        let mut items = Vec::new();
+        for v in xs {
+            match v {
+                Val::Num(x) => items.push(*x),
+                Val::Err(e) => return Val::Err(e),
+                _ => {}
+            }
+        }
+        Val::Num(
+            items
+                .iter()
+                .copied()
+                .fold(None, |m: Option<f64>, x| Some(m.map_or(x, |m| m.max(x))))
+                .unwrap_or(0.0),
+        )
+    };
+    let modulo = |v: Val, d: f64| match v.number() {
+        Ok(x) => finite(x - d * (x / d).floor()),
+        Err(e) => Val::Err(e),
+    };
+    let int = |v: Val| match v.number() {
+        Ok(x) => Val::Num(x.floor()),
+        Err(e) => Val::Err(e),
+    };
+    match k {
+        0 => vec![arith(b'-', &n(1.0), &s[0])],
+        1 => vec![arith(b'*', &s[0], &s[1])],
+        2 => vec![max_of(&[&s[0], &s[1]])],
+        3 => vec![modulo(arith(b'+', &s[0], &s[1]), 2.0)],
+        4 => vec![if_(&equal(&s[2], &n(1.0)), || s[1].clone(), || s[0].clone()).settled()],
+        5 => vec![
+            arith(b'*', &s[0], &arith(b'-', &n(1.0), &s[1])),
+            arith(b'*', &s[0], &s[1]),
+        ],
+        6 => {
+            let t = arith(b'+', &s[0], &s[1]);
+            vec![modulo(t.clone(), 2.0), int(arith(b'/', &t, &n(2.0)))]
+        }
+        7 => {
+            let t = arith(b'+', &arith(b'+', &s[0], &s[1]), &s[2]);
+            vec![modulo(t.clone(), 2.0), int(arith(b'/', &t, &n(2.0)))]
+        }
+        _ => {
+            let mut t = s[0].clone();
+            for (i, w) in [(1, 2.0), (2, 4.0), (3, 8.0)] {
+                t = arith(b'+', &t, &arith(b'*', &n(w), &s[i]));
+            }
+            for (i, w) in [(4, 1.0), (5, 2.0), (6, 4.0), (7, 8.0)] {
+                t = arith(
+                    b'+',
+                    &t,
+                    &if w == 1.0 {
+                        s[i].clone()
+                    } else {
+                        arith(b'*', &n(w), &s[i])
+                    },
+                );
+            }
+            t = arith(b'+', &t, &s[8]);
+            vec![
+                modulo(t.clone(), 2.0),
+                modulo(int(arith(b'/', &t, &n(2.0))), 2.0),
+                modulo(int(arith(b'/', &t, &n(4.0))), 2.0),
+                modulo(int(arith(b'/', &t, &n(8.0))), 2.0),
+                int(arith(b'/', &t, &n(16.0))),
+            ]
+        }
+    }
+}
+
+/// What a person wrote into a level's cell, the cartridge's own row gone.
+#[derive(Clone, Debug)]
+pub enum Written {
+    Value(Val),
+    Formula(Gex),
+}
+
+/// An act's Input rows, as the host writes them for a version 6 cartridge
+/// at rate 0: the place, the press and the command.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Acted {
+    pub sheet: String,
+    pub col: u32,
+    pub row: u32,
+    pub press: bool,
+    pub command: String,
+}
+
+/// The game by hand, the levels and the Lab frame by frame, as the
+/// cartridge's formulas compute them, its own arithmetic and no formula of
+/// the cartridge's: what the engine's frames are held to.
+#[derive(Clone, Debug)]
+pub struct Game {
+    /// Each level's cells a person wrote, by row and column.
+    pub written: Vec<HashMap<(u32, u32), Written>>,
+    /// Each level's switches, this frame and the last.
+    pub switches: Vec<Vec<Val>>,
+    pub switches_last: Vec<Vec<Val>>,
+    /// Each level's cells as this frame computes them: the board, A3 to the
+    /// last row of its room, A to M.
+    pub board: Vec<HashMap<(u32, u32), Val>>,
+    /// The Lab, its cells by address, this frame and the last.
+    pub lab: HashMap<String, Val>,
+    pub lab_last: HashMap<String, Val>,
+    /// The Input rows standing.
+    pub input: Acted,
+}
+
+impl Default for Game {
+    fn default() -> Self {
+        Game::new()
+    }
+}
+
+impl Game {
+    pub fn new() -> Game {
+        Game {
+            written: vec![HashMap::new(); 9],
+            switches: LEVELS
+                .iter()
+                .map(|l| vec![Val::Num(0.0); l.inputs as usize])
+                .collect(),
+            switches_last: LEVELS
+                .iter()
+                .map(|l| vec![Val::Empty; l.inputs as usize])
+                .collect(),
+            board: vec![HashMap::new(); 9],
+            lab: HashMap::new(),
+            lab_last: HashMap::new(),
+            input: Acted::default(),
+        }
+    }
+
+    /// A level by its sheet's name, compared without case.
+    pub fn level(sheet: &str) -> Option<usize> {
+        LEVELS
+            .iter()
+            .position(|l| l.sheet.eq_ignore_ascii_case(sheet))
+    }
+
+    /// A person's row into a level: a value or a formula over a cell or a
+    /// range. A row into any other sheet of the game's is refused by the
+    /// hand, which models none.
+    pub fn write(
+        &mut self,
+        sheet: &str,
+        rows: (u32, u32, u32, u32),
+        what: Written,
+    ) -> Result<(), String> {
+        let Some(k) = Game::level(sheet) else {
+            return Err(format!("the hand models no person's row into {sheet}"));
+        };
+        if let Written::Formula(g) = &what {
+            let mut reads = Vec::new();
+            g.reads(&mut reads);
+            if rows.0 != rows.2 || rows.1 != rows.3 {
+                return Err(format!(
+                    "the hand writes a formula into one cell, not {rows:?}"
+                ));
+            }
+            for (r, c) in reads {
+                if r < 3 || c > 13 {
+                    return Err(format!("the hand evaluates a gate's reads of its board alone, not row {r} column {c}"));
+                }
+            }
+        }
+        for r in rows.0..=rows.2 {
+            for c in rows.1..=rows.3 {
+                self.written[k].insert((r, c), what.clone());
+            }
+        }
+        Ok(())
+    }
+
+    fn lab(&self, at: &str) -> Val {
+        self.lab.get(at).cloned().unwrap_or(Val::Empty)
+    }
+    fn last(&self, at: &str) -> Val {
+        self.lab_last.get(at).cloned().unwrap_or(Val::Empty)
+    }
+
+    /// One frame: the act's Input rows, or a settle step's, the press and the
+    /// command released; every level and the Lab computed.
+    pub fn frame(&mut self, act: Option<&Acted>) {
+        match act {
+            Some(a) => self.input = a.clone(),
+            None => {
+                self.input.press = false;
+                self.input.command.clear();
+            }
+        }
+        self.lab_last = std::mem::take(&mut self.lab);
+        self.switches_last = self.switches.clone();
+        let i = self.input.clone();
+        let cmd = Val::Text(i.command.clone());
+        let is = |w: &str| {
+            equal(&cmd, &Val::Text(w.to_string()))
+                .truth()
+                .unwrap_or(false)
+        };
+        let n = |x: f64| Val::Num(x);
+        // B1 the level the act stands on
+        let shown = LEVELS
+            .iter()
+            .position(|l| l.sheet.eq_ignore_ascii_case(&i.sheet))
+            .map_or(0.0, |k| (k + 1) as f64);
+        self.lab.insert("B1".into(), n(shown));
+        // B2 the level N and P move to, B3 the Camera's sheet
+        let last_b2 = match self.last("B2") {
+            Val::Num(x) => x.max(1.0),
+            _ => 1.0,
+        };
+        let b2 = if is("next") && shown > 0.0 {
+            (shown + 1.0).min(9.0)
+        } else if is("previous") && shown > 0.0 {
+            (shown - 1.0).max(1.0)
+        } else {
+            last_b2
+        };
+        self.lab.insert("B2".into(), n(b2));
+        let b3 = if is("next") || is("previous") {
+            Val::Text(LEVELS[b2 as usize - 1].sheet.to_string())
+        } else {
+            Val::Text(String::new())
+        };
+        self.lab.insert("B3".into(), b3);
+        // B4 the level under test, B5 whether it runs, B6 its input, B7 its inputs
+        let b4 = if is("test") {
+            n(shown)
+        } else {
+            self.last("B4").settled()
+        };
+        self.lab.insert("B4".into(), b4.clone());
+        let b5 = if is("test") {
+            n(if shown > 0.0 { 1.0 } else { 0.0 })
+        } else if is("reset") {
+            n(0.0)
+        } else {
+            let (l5, l8, l6, l7) = (
+                self.last("B5"),
+                self.last("B8"),
+                self.last("B6"),
+                self.last("B7"),
+            );
+            if_(
+                &equal(&l5, &n(1.0)),
+                || {
+                    if_(
+                        &and(&[equal(&l8, &n(1.0)), less(&l6, &arith(b'-', &l7, &n(1.0)))]),
+                        || n(1.0),
+                        || n(0.0),
+                    )
+                },
+                || n(0.0),
+            )
+        };
+        self.lab.insert("B5".into(), b5.clone());
+        let b6 = if is("test") {
+            n(0.0)
+        } else {
+            let (l5, l6) = (self.last("B5"), self.last("B6"));
+            if_(
+                &and(&[equal(&l5, &n(1.0)), equal(&b5, &n(1.0))]),
+                || arith(b'+', &l6, &n(1.0)),
+                || l6.clone(),
+            )
+            .settled()
+        };
+        self.lab.insert("B6".into(), b6.clone());
+        let under = match &b4 {
+            Val::Num(x) if *x >= 1.0 => *x as usize,
+            _ => 1,
+        };
+        let b7 = n([2.0, 4.0, 4.0, 4.0, 8.0, 4.0, 4.0, 8.0, 512.0][under - 1]);
+        self.lab.insert("B7".into(), b7);
+        // each level: whether its test runs, its switches, its board, its due and whether every output is due
+        for (k, level) in LEVELS.iter().enumerate() {
+            let r = 11 + k;
+            let here = if_(&equal(&b4, &n((k + 1) as f64)), || b5.clone(), || n(0.0)).settled();
+            self.lab.insert(format!("N{r}"), here.clone());
+            let sheet = level.sheet;
+            let on_level = i.sheet.eq_ignore_ascii_case(sheet);
+            for s in 0..level.inputs as usize {
+                let row = 3 + s as u32;
+                if self.written[k].contains_key(&(row, 1)) {
+                    continue;
+                }
+                let last = self.switches_last[k][s].clone();
+                let v = if is("reset") && on_level {
+                    n(0.0)
+                } else {
+                    if_(
+                        &equal(&here, &n(1.0)),
+                        || bit(&b6, s),
+                        || {
+                            if on_level && i.col == 1 && i.row == row {
+                                if is("one") {
+                                    n(1.0)
+                                } else if is("zero") {
+                                    n(0.0)
+                                } else if is("toggle") || i.press {
+                                    arith(b'-', &n(1.0), &last)
+                                } else {
+                                    last.settled()
+                                }
+                            } else {
+                                last.settled()
+                            }
+                        },
+                    )
+                };
+                self.switches[k][s] = v;
+            }
+            self.compute_board(k, &(here.clone(), b6.clone()));
+            let sw: Vec<Val> = (0..level.inputs).map(|s| self.cell(k, 3 + s, 1)).collect();
+            let inputs = tested(&here, &b6, &sw);
+            for (s, v) in inputs.iter().enumerate() {
+                self.lab.insert(
+                    format!("{}{}", char::from(b'B' + k as u8), 21 + s),
+                    v.clone(),
+                );
+            }
+            let due = due(k, &inputs);
+            let cols = ["I", "J", "K", "L", "M"];
+            let mut equals = Vec::new();
+            for (o, d) in due.iter().enumerate() {
+                self.lab.insert(format!("{}{r}", cols[o]), d.clone());
+                equals.push(equal(&self.cell(k, 3 + o as u32, 10), d));
+            }
+            if k == 8 {
+                let mut t = inputs[0].clone();
+                for (s, w) in [
+                    (1, 2.0),
+                    (2, 4.0),
+                    (3, 8.0),
+                    (4, 1.0),
+                    (5, 2.0),
+                    (6, 4.0),
+                    (7, 8.0),
+                    (8, 1.0),
+                ] {
+                    let v = inputs[s].clone();
+                    t = arith(b'+', &t, &if w == 1.0 { v } else { arith(b'*', &n(w), &v) });
+                }
+                self.lab.insert("O19".into(), t);
+            }
+            let ok = if_(&and(&equals), || n(1.0), || n(0.0));
+            self.lab.insert(format!("D{r}"), ok);
+            // the gates: every cell of its room and its outputs that holds anything
+            let mut gates = Val::Num(0.0);
+            for row in 3..3 + level.rows {
+                for col in 3..=10 {
+                    let v = self.cell(k, row, col);
+                    let one = if_(&equal(&v, &Val::Text(String::new())), || n(0.0), || n(1.0));
+                    gates = match (&gates, &one) {
+                        (Val::Err(e), _) => Val::Err(e),
+                        (_, Val::Err(e)) => Val::Err(e),
+                        (Val::Num(a), Val::Num(b)) => n(a + b),
+                        _ => gates,
+                    };
+                }
+            }
+            self.lab.insert(format!("E{r}"), gates);
+            self.lab.insert(format!("F{r}"), n(level.budget as f64));
+            self.lab.insert(format!("G{r}"), n(level.least as f64));
+        }
+        let b8 = self.lab(&format!("D{}", 10 + under));
+        self.lab.insert("B8".into(), b8);
+        // each level's result and the input its test stopped at, then its stars
+        for k in 0..9 {
+            let r = 11 + k;
+            let kk = n((k + 1) as f64);
+            let (l4, l5, l8, l6) = (
+                self.last("B4"),
+                self.last("B5"),
+                self.last("B8"),
+                self.last("B6"),
+            );
+            let (last_b, last_c) = (
+                self.last(&format!("B{r}")).settled(),
+                self.last(&format!("C{r}")).settled(),
+            );
+            let away = |v: &Val| match equal(v, &kk) {
+                Val::Bool(b) => Val::Bool(!b),
+                other => other,
+            };
+            let result = if is("reset") && shown == (k + 1) as f64 {
+                n(0.0)
+            } else {
+                if_(
+                    &or(&[away(&l4), away(&b4)]),
+                    || last_b.clone(),
+                    || {
+                        if_(
+                            &and(&[equal(&l5, &n(1.0)), equal(&b5, &n(0.0))]),
+                            || if_(&equal(&l8, &n(1.0)), || n(1.0), || n(2.0)),
+                            || last_b.clone(),
+                        )
+                    },
+                )
+            };
+            let stopped = if_(
+                &or(&[away(&l4), away(&b4)]),
+                || last_c.clone(),
+                || {
+                    if_(
+                        &and(&[equal(&l5, &n(1.0)), equal(&b5, &n(0.0))]),
+                        || l6.clone().settled(),
+                        || last_c.clone(),
+                    )
+                },
+            );
+            self.lab.insert(format!("B{r}"), result.clone());
+            self.lab.insert(format!("C{r}"), stopped);
+            let (e, f, g) = (
+                self.lab(&format!("E{r}")),
+                self.lab(&format!("F{r}")),
+                self.lab(&format!("G{r}")),
+            );
+            let stars = if_(
+                &equal(&result, &n(1.0)),
+                || {
+                    if_(
+                        &less_equal(&e, &g),
+                        || Val::Text("★★★".into()),
+                        || {
+                            if_(
+                                &less_equal(&e, &f),
+                                || Val::Text("★★☆".into()),
+                                || Val::Text("★☆☆".into()),
+                            )
+                        },
+                    )
+                },
+                || Val::Text("☆☆☆".into()),
+            );
+            self.lab.insert(format!("H{r}"), stars);
+        }
+    }
+
+    /// A level's cell as this frame computes it.
+    pub fn cell(&self, k: usize, row: u32, col: u32) -> Val {
+        self.board[k]
+            .get(&(row, col))
+            .cloned()
+            .unwrap_or(Val::Empty)
+    }
+
+    /// A level's board this frame: its switches, a person's cells, its lamps
+    /// and its due, each a cell's value; a person's formula evaluated over
+    /// the cells it reads, in their order. `test`, the Lab's N and B6, which
+    /// the due's inputs read.
+    fn compute_board(&mut self, k: usize, test: &(Val, Val)) {
+        let level = &LEVELS[k];
+        let last = 2 + level.rows.max(level.inputs);
+        let mut board: HashMap<(u32, u32), Val> = HashMap::new();
+        let mut doing: Vec<(u32, u32)> = Vec::new();
+        let switches = self.switches[k].clone();
+        let written = self.written[k].clone();
+        // the due, the Lab's, read by M
+        fn value(
+            at: (u32, u32),
+            k: usize,
+            test: &(Val, Val),
+            switches: &[Val],
+            written: &HashMap<(u32, u32), Written>,
+            board: &mut HashMap<(u32, u32), Val>,
+            doing: &mut Vec<(u32, u32)>,
+        ) -> Val {
+            if let Some(v) = board.get(&at) {
+                return v.clone();
+            }
+            if doing.contains(&at) {
+                return Val::Err("#CYCLE");
+            }
+            doing.push(at);
+            let level = &LEVELS[k];
+            let (row, col) = at;
+            let v = match written.get(&at) {
+                Some(Written::Value(v)) => v.clone(),
+                Some(Written::Formula(g)) => {
+                    let mut read =
+                        |r: u32, c: u32| value((r, c), k, test, switches, written, board, doing);
+                    g.eval(&mut read).settled()
+                }
+                None => {
+                    if col == 1 && row >= 3 && row < 3 + level.inputs {
+                        switches[(row - 3) as usize].clone()
+                    } else if col == 12 && row >= 3 && row < 3 + level.outputs {
+                        let j = value((row, 10), k, test, switches, written, board, doing);
+                        if_(
+                            &equal(&j, &Val::Num(1.0)),
+                            || Val::Text("●".into()),
+                            || Val::Text("○".into()),
+                        )
+                    } else if col == 13 && row >= 3 && row < 3 + level.outputs {
+                        let sw: Vec<Val> = (0..level.inputs)
+                            .map(|s| value((3 + s, 1), k, test, switches, written, board, doing))
+                            .collect();
+                        due(k, &tested(&test.0, &test.1, &sw))[(row - 3) as usize].clone()
+                    } else if col == 2 && row >= 3 && row < 3 + level.inputs {
+                        Val::Text(NAMES[k].0[(row - 3) as usize].to_string())
+                    } else if col == 11 && row >= 3 && row < 3 + level.outputs {
+                        Val::Text(NAMES[k].1[(row - 3) as usize].to_string())
+                    } else {
+                        Val::Empty
+                    }
+                }
+            };
+            doing.pop();
+            board.insert(at, v.clone());
+            v
+        }
+        for row in 3..=last {
+            for col in 1..=13 {
+                value(
+                    (row, col),
+                    k,
+                    test,
+                    &switches,
+                    &written,
+                    &mut board,
+                    &mut doing,
+                );
+            }
+        }
+        for &(r, c) in written.keys() {
+            value((r, c), k, test, &switches, &written, &mut board, &mut doing);
+        }
+        // a switch a person wrote over is that cell's value from now on
+        for s in 0..level.inputs as usize {
+            if written.contains_key(&(3 + s as u32, 1)) {
+                self.switches[k][s] = board.get(&(3 + s as u32, 1)).cloned().unwrap_or(Val::Empty);
+            }
+        }
+        self.board[k] = board;
+    }
+
+    /// A level's reckoning and verdict, its N8 and N9, as the words say them.
+    pub fn words(&self, k: usize) -> (Val, Val) {
+        let r = 11 + k;
+        let inputs = [2, 4, 4, 4, 8, 4, 4, 8, 512][k];
+        let level = &LEVELS[k];
+        let reckoning = match (
+            self.lab(&format!("E{r}")).text(),
+            self.lab(&format!("H{r}")).text(),
+        ) {
+            (Ok(e), Ok(h)) => Val::Text(format!(
+                "Gates {e}; the budget {}, the least known {}: {h}",
+                level.budget, level.least
+            )),
+            (Err(k), _) | (_, Err(k)) => Val::Err(k),
+        };
+        let n = |x: f64| Val::Num(x);
+        let verdict = if_(
+            &equal(&self.lab(&format!("N{r}")), &n(1.0)),
+            || match arith(b'+', &self.lab("B6"), &n(1.0)).text() {
+                Ok(t) => Val::Text(format!("Calculemus: input {t} of {inputs}")),
+                Err(k) => Val::Err(k),
+            },
+            || {
+                if_(
+                    &equal(&self.lab(&format!("B{r}")), &n(1.0)),
+                    || {
+                        Val::Text(format!(
+                            "Quod erat demonstrandum: every one of its {inputs} inputs passes."
+                        ))
+                    },
+                    || {
+                        if_(
+                            &equal(&self.lab(&format!("B{r}")), &n(2.0)),
+                            || {
+                                match arith(b'+', &self.lab(&format!("C{r}")), &n(1.0)).text() {
+                                Ok(t) => Val::Text(format!(
+                                    "The test stops at input {t} of {inputs}, standing on the board: a lamp differs from its due."
+                                )),
+                                Err(k) => Val::Err(k),
+                            }
+                            },
+                            || {
+                                Val::Text(
+                                    "T tests every input, an input a frame. Calculemus!"
+                                        .to_string(),
+                                )
+                            },
+                        )
+                    },
+                )
+            },
+        );
+        (reckoning, verdict)
+    }
+}
+
+/// A text as a row spells it, between double quotes, a quote and a
+/// backslash escaped.
+fn quote(text: &str) -> String {
+    format!("\"{}\"", text.replace('\\', "\\\\").replace('"', "\\\""))
+}
+
+/// A cell's place by its address, `C4` row 4 and column 3, a range's by its
+/// first cell.
+pub fn place(address: &str) -> (u32, u32) {
+    let (mut row, mut col) = (0u32, 0u32);
+    for ch in address.split(':').next().unwrap_or("").chars() {
+        if ch.is_ascii_alphabetic() {
+            col = col * 26 + (ch.to_ascii_uppercase() as u32 - 64);
+        } else if let Some(d) = ch.to_digit(10) {
+            row = row * 10 + d;
+        }
+    }
+    (row, col)
+}
+
+/// A cell or a range, `C4:C5`, as its top, left, bottom and right.
+pub fn rect(range: &str) -> (u32, u32, u32, u32) {
+    let (a, b) = range.split_once(':').unwrap_or((range, range));
+    let ((r1, c1), (r2, c2)) = (place(a), place(b));
+    (r1.min(r2), c1.min(c2), r1.max(r2), c1.max(c2))
+}
+
+/// A person's edit in the session: the row it writes, and the hand's
+/// reading of it, its sheet, its cells and what it writes.
+#[derive(Clone, Debug)]
+pub struct Edit {
+    pub text: String,
+    pub sheet: String,
+    pub cells: (u32, u32, u32, u32),
+    pub what: Written,
+}
+
+/// The levels played through (decision 26): the session the stand-in replay
+/// plays after the bench, and the engine's tests hold frame by frame to the
+/// hand. Each act's place and command, and the row it writes, if any.
+pub fn session() -> Vec<(Acted, Option<Edit>)> {
+    let act = |sheet: &str, col: u32, row: u32, press: bool, command: &str| Acted {
+        sheet: sheet.to_string(),
+        col,
+        row,
+        press,
+        command: command.to_string(),
+    };
+    let gate = |sheet: &str, addr: &str, formula: &str| {
+        let (row, col) = place(addr);
+        let text = format!(
+            "(formula {} {} {})",
+            quote(sheet),
+            quote(addr),
+            quote(formula)
+        );
+        let what = Written::Formula(gex(formula).unwrap_or_else(|e| panic!("{e}")));
+        let cells = rect(addr);
+        (
+            act(sheet, col, row, false, ""),
+            Some(Edit {
+                text,
+                sheet: sheet.to_string(),
+                cells,
+                what,
+            }),
+        )
+    };
+    let value = |sheet: &str, addr: &str, v: Val| {
+        let (row, col) = place(addr);
+        let spelled = match &v {
+            Val::Num(x) => general(*x),
+            Val::Text(t) => quote(t),
+            other => panic!("the session writes a number or a text, not {other:?}"),
+        };
+        let text = format!("(cell {} {} {spelled})", quote(sheet), quote(addr));
+        let cells = rect(addr);
+        (
+            act(sheet, col, row, false, ""),
+            Some(Edit {
+                text,
+                sheet: sheet.to_string(),
+                cells,
+                what: Written::Value(v),
+            }),
+        )
+    };
+    let key = |sheet: &str, col: u32, row: u32, command: &str| {
+        (act(sheet, col, row, false, command), None)
+    };
+    let mut s = vec![
+        // I: a switch toggled by Space, by a click and set by 1 and 0; NON from NON-ET, tested
+        key("I NON", 1, 3, "toggle"),
+        (act("I NON", 1, 3, true, ""), None),
+        key("I NON", 1, 3, "one"),
+        key("I NON", 1, 3, "zero"),
+        gate("I NON", "J3", "=1-A3*A3"),
+        key("I NON", 10, 3, "test"),
+        key("I NON", 1, 3, "previous"),
+        key("I NON", 1, 3, "next"),
+        // II: VEL for ET, failing at its second input; then ET by NON of NON-ET with a wire, two stars; R
+        gate("II ET", "J3", "=MAX(A3,A4)"),
+        key("II ET", 1, 3, "test"),
+        gate("II ET", "C3", "=1-A3*A4"),
+        gate("II ET", "C4", "=1-C3"),
+        gate("II ET", "J3", "=C4"),
+        key("II ET", 1, 3, "test"),
+        key("II ET", 1, 3, "reset"),
+        // III: VEL, an input emptied by Delete, #VALUE! met by the test, R, the gate again, a pass
+        gate("III VEL", "C3", "=1-A3"),
+        gate("III VEL", "C4", "=1-A4"),
+        gate("III VEL", "J3", "=1-C3*C4"),
+        value("III VEL", "C4:C5", Val::Text(String::new())),
+        key("III VEL", 1, 3, "test"),
+        key("III VEL", 1, 3, "reset"),
+        gate("III VEL", "C4", "=1-A4"),
+        key("III VEL", 1, 3, "test"),
+        // IV: AUT from VEL and NON-ET, its first gate a number written as a text
+        value("IV AUT", "D5", Val::Text("1".into())),
+        gate("IV AUT", "C3", "=MAX(A3,A4)*D5"),
+        gate("IV AUT", "C4", "=1-A3*A4"),
+        gate("IV AUT", "J3", "=C3*C4"),
+        key("IV AUT", 1, 3, "test"),
+        // V and VI at their least known
+        gate("V ELIGE", "C3", "=MOD(A3+A4,2)"),
+        gate("V ELIGE", "C4", "=A5*C3"),
+        gate("V ELIGE", "J3", "=MOD(A3+C4,2)"),
+        key("V ELIGE", 1, 5, "test"),
+        gate("VI DISTRIBUE", "J4", "=A3*A4"),
+        gate("VI DISTRIBUE", "J3", "=MOD(A3+J4,2)"),
+        key("VI DISTRIBUE", 1, 3, "test"),
+        // VII with a gate idle, one star; VIII at its least known
+        gate("VII SEMIS", "J3", "=MOD(A3+A4,2)"),
+        gate("VII SEMIS", "J4", "=A3*A4"),
+        gate("VII SEMIS", "E6", "=-A3+INT(A4/2)"),
+        gate("VII SEMIS", "F6", "=MIN(A3:A4)"),
+        key("VII SEMIS", 1, 3, "test"),
+        gate("VIII SUMMA", "C3", "=MOD(A3+A4,2)"),
+        gate("VIII SUMMA", "J3", "=MOD(C3+A5,2)"),
+        gate("VIII SUMMA", "C4", "=A3*A4"),
+        gate("VIII SUMMA", "C5", "=C3*A5"),
+        gate("VIII SUMMA", "J4", "=MAX(C4,C5)"),
+        key("VIII SUMMA", 1, 3, "test"),
+    ];
+    // IX: four whole sums, a carry rippling, all 512 inputs
+    for (i, carry) in ["A11", "F3", "F4", "F5"].iter().enumerate() {
+        let r = 3 + i;
+        s.push(gate(
+            "IX QUATTUOR",
+            &format!("C{r}"),
+            &format!("=MOD(A{r}+A{},2)", r + 4),
+        ));
+        s.push(gate(
+            "IX QUATTUOR",
+            &format!("D{r}"),
+            &format!("=A{r}*A{}", r + 4),
+        ));
+        s.push(gate(
+            "IX QUATTUOR",
+            &format!("E{r}"),
+            &format!("=C{r}*{carry}"),
+        ));
+        s.push(gate(
+            "IX QUATTUOR",
+            &format!("J{r}"),
+            &format!("=MOD(C{r}+{carry},2)"),
+        ));
+        s.push(gate(
+            "IX QUATTUOR",
+            if i == 3 {
+                "J7".to_string()
+            } else {
+                format!("F{r}")
+            }
+            .as_str(),
+            &format!("=MAX(D{r},E{r})"),
+        ));
+    }
+    s.push(key("IX QUATTUOR", 1, 3, "test"));
+    s.push(key("IX QUATTUOR", 1, 3, "next"));
+    // a switch a person writes over is a value until Load
+    s.push(value("I NON", "A3", Val::Num(1.0)));
+    s.push(key("I NON", 1, 3, "toggle"));
+    s.push(key("I NON", 1, 3, "test"));
+    s
 }
 
 #[cfg(test)]
@@ -1364,7 +2893,7 @@ mod tests {
     #[test]
     fn the_floors_source_replaces_the_block_and_leaves_out_the_settle_and_the_keyboard_s_sheets() {
         let source = format!(
-            "(cartridge \"t\"\r\n  (rate 0)\r\n  (settle 9)   ; a note\r\n  (bound \"Lesson\" \"S\")\r\n  (read \"Lesson\")   ; a note\r\n  (work \"S\")\r\n  (game \"S\")\r\n  (seed 1))\r\n{LESSON_BEGIN}\r\n(sheet \"Lesson\" visible)\r\n(cell \"Lesson\" \"A9\" \"a word\")\r\n{LESSON_END}\r\n{BLOCK_BEGIN}\r\nold\r\n{BLOCK_END}\r\n"
+            "(cartridge \"t\"\r\n  (rate 0)\r\n  (settle 9)   ; a note\r\n  (bound \"Lesson\" \"I NON\" \"S\")\r\n  (read \"Lesson\")   ; a note\r\n  (work \"S\")\r\n  (game \"S\")\r\n  (seed 1))\r\n{LESSON_BEGIN}\r\n(sheet \"Lesson\" visible)\r\n(cell \"Lesson\" \"A9\" \"a word\")\r\n{LESSON_END}\r\n{LEVELS_BEGIN}\r\n(sheet \"I NON\" visible)\r\n(cell \"I NON\" \"A1\" \"a level\")\r\n(sheet \"Lab\" hidden)\r\n{LEVELS_END}\r\n{BLOCK_BEGIN}\r\nold\r\n{BLOCK_END}\r\n"
         );
         let lines = vec!["new".to_string()];
         let want = format!(
@@ -1374,6 +2903,7 @@ mod tests {
         assert_eq!(
             with_block(&source, &lines).map(|s| s.contains("(settle 9)")
                 && s.contains("a word")
+                && s.contains("a level")
                 && s.contains("(read \"Lesson\")")
                 && s.contains("(work \"S\")")),
             Some(true),
