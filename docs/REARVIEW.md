@@ -15,6 +15,7 @@
 - ✅ **`SPEC.1` — the page: the device sheets and the four calls.** *Drafted, approved, committed and closed 2026-10-08, in a second session beside `REPO.2`; the commits `eed93b0`, `7b633da` and the closing one.* `SPEC.md`, version 1, in the charter's register and marks: the cell as the unit, with two projections, a byte for a game and text for the spreadsheet; the previous frame as a read-only twin sheet `X.last`, so a rule reads it by an ordinary reference and the frame adds no mechanism to the evaluator; the acyclic rule and the step as recalculation with a budget in cells and a snapshot at its end; seven device sheets cell by cell, Screen, Palette, Input, Keys, Clock, Audio and File; the four calls, `load`, `write`, `step`, `view`, with an explicit handle and `abi.rs`'s record, eleven exports and zero imports; the host's loop; seven determinism rules and the replay as the oracle; the cartridge as one file, the manifest with every directive required and the treaty's rows with range fills, so that load is the inverse of view and Frazaro is the compiler; reflection as `AD-6`; the limits stated, the seventeen decisions, what is not in this version, the fan-out, the sources; three appendices, Life as the shape of a cartridge, three formulas every cartridge writes, and the Fragments patch in VLA with its module library, its eurorack reading, the artist's patch notes codified and the golden patch. *Oracle:* the page read by the owner, who approved all seventeen recommendations and adopted `AD-6`, which amended the charter the same hour; the tests the `vla-lang` cut and `ENGINE.2` write from the page are named in §13 and belong to those items. *Scoped:* 2026-10-08, seventeen decisions, all approved. Predicted `~days`; cost one day and three commits. (more: the full entry under THE ITEMS, SCOPED)
 - ✅ **`SPEC.2` — the page, version 2: the grid writes the grid in values, one model with two renderers, rate zero, the Camera, and `AD-7`.** *Minted, scoped, built, approved and closed 2026-10-08, the same evening, at the owner's word; committed with the horizon, `docs/ALGEBRA.md`, in two commits.* `SPEC.md`, version 2, rewritten in place: a Write sheet of value rows the host carries between frames (§3.9), the formula half declined under the `GENSYM` veto's `eval` clause; one model with two renderers, a `look` row mapping a value to a style and a `row` row, both asked of oracle 11 (§1, §3.1, §7.3); `(rate 0)`, a step on every edit (§5); a Camera sheet the host views the window by (§3.8); one write per cell refused at load (§7.3); the limits restated with the compute line as a budget `describe` prints (§10); and `AD-7`, the step computes values and never formulas, held by a test (§2, §6, §9, §13), adopted by the owner at the approval and written into the charter first as its seventh rule, with the frame paragraph, §1's thesis exact at rate zero and §8's pointer to the horizon. *Oracle:* the page read by the owner, who approved all seven recommendations (§11, 18 to 24) in the words "if `AD-7` solidifies the design we've discussed in SPEC and ALGEBRA, then it's adopted"; the five tests §13 names belong to the cut and to `ENGINE.1` and `ENGINE.2`. *Scoped:* 2026-10-08, seven decisions, all approved. Predicted `~days`; cost one evening. (more: the full entry under THE ITEMS, SCOPED)
 - ✅ **`SPEC.3` — the page, version 3: the cartridge's source, and the pass between it and the rows.** *Filed, scoped, built in two slices, owner-tested and closed 2026-10-10; the first slice committed `993cf8e`, the second at the close.* `SPEC.md`, version 3, rewritten in place, the charter amended first (rules 1 and 7, §8, the frame paragraph). A cartridge is written as a source, VLA with its author's template macros and the reference's includes, and the pass expands it into version 2's rows: an act of its own between the source and the load, whose output, the cartridge, is the artifact a person reads, saves and diffs, wherever it runs (the owner's refinement, decision 25). The engine never expands, and refuses a source handed to the load by name, `cart-source-unexpanded`. The pass is one pure function of the engine's crate over `vla-lang`'s own expander, `engine/src/pass.rs`, and knows no macro by name (the owner's guiding principle: macros are the author's, to collapse the boilerplate between thought and rows). It has two doors to the same bytes: the command line, `cargo run --release --example expand`, and the page, the module's twelfth export `alonzo_expand` behind the engine panel's Build, a press of its own before Load. `cartridges/console.vla` is the library the sources include (`palette`, `cga-palette`, `live`; renamed `cartridges/common.vla` 2026-10-10 and given `on`, `cells` and `formulas`); the three cartridges were written as sources and rebuilt with their rows unchanged, the frame floors' digests carried by `$sameRows`; `(spec 3)` is read; and the loader takes no data form, every convenience being a macro (decision 29). *Oracle, met:* `cargo test`'s golden, every cartridge with a source its expansion byte for byte and loading; `check_cartridge.ps1`'s folder rule and its twenty mutants; the loop oracle's eleventh case, the page's pass over every source equal to the command line's bytes, its mutant library failing it; the module at 514,688 bytes with no import and twelve exports, `?frames=1` measured on it alternately with the first slice's and costing nothing measurable; `run_checks.ps1` ALL GREEN, the owner's runs among them. Measured and named for the next version (§12): a template macro reaches a row by arithmetic, and a column or a sheet only by the names its caller writes, so the generality the owner's principle asks for is the language's expand-time object model, a Frazaro item; beside it the picture, the formula dialect and modules. Predicted `~days`; cost one day, the scoping and both slices. (more: the full entry under THE ITEMS, SCOPED)
+- ✅ **`SPEC.5` — the keyboard's sheets declared: a manifest line naming the sheets whose keys are the game's, the sheets a person types into, and the sheets no person writes.** *Minted 2026-10-20 at the owner's word, from `CART.9`'s second hand test; scoped, built, owner-tested, approved and closed the same day; committed at the close, after `ENGINE.29`'s mint.* Version 6, amended in place while unreleased, gains three optional directives, each a `(spec 6)` cartridge's at any rate, naming sheets it holds, once each: `(game "<sheet>" ...)`, the sheets whose keys are the game's, its commands, its Keys at a rate and the last key it reads holding there alone where any is named, a key the game leaves still typing into a cell; `(read "<sheet>" ...)`, the read-only sheets, a person's typed key, Delete, Backspace, F2, a double click and a row of the palette or the edit row refused by the sheet's name, the cartridge's own rows, the derived rows and a replay's still writing them; and `(work "<sheet>" ...)`, what every sheet named by neither already is, a person's to type into, kept at the owner's word to scope a sheet out of the commands of a cartridge that names no game sheet. `game` and `work` are a grid's; a sheet in `work` and in another is refused. At rate 0 no `holds` formula could scope a command's key to a sheet, the host writing `Input!B19` with an act's rows alone, and any sheet was a person's to type over: the manifest says both now, and the host knows the sheet it shows. The engine reads, refuses and prints the three (`engine/src/cartridge.rs`); the host reads them from `describe` and judges a key and a person's row by the sheet shown (`web/host.js`); the page decides a key on the grid by one pure rule, `gridKeyAct`, Enter moving the selection on a read-only sheet and Tab on every sheet a person types into (the owner's hand test), and says each sheet's mode in the palette's note and the drawer's. Naught names its Lesson `read` and its Bench `work`, its floors' source leaving the three out. Riding with it, the palette's place as three commands, `palette-floating`, `palette-top` and `palette-bottom`. `SPEC.md` §3.4, §3.10, §7.2 and decisions 68 to 72. *Oracle, met:* the engine's tests; `check_cartridge.ps1`'s section 7, two copies passing and six of its fifty-three mutants failing; the loop oracle's thirtieth case, `modes`, on both pages, over the page's rule, the double and a card of its own at rate 0 and at a rate, with twelve mutant pages, FI to FV; the owner's hand test. Two items minted at its hand test: `ENGINE.29`, English typed into a cell, and FORMULATEXT and ISFORMULA in `vla-lang`, Frazaro's to mint. (more: under THE ITEMS, SCOPED)
 
 ## 🔧 THE ENGINE
 
@@ -8662,3 +8663,161 @@ Vector 9 is the first whose low three bits' parity and fourth bit are both 1, wh
 28. **Size and order:** three to five days, as filed, after `SPEC.5`, which decision 22 needs; slice 4, the clocked rung, after it.
 
 *Approved 2026-10-20 at the owner's word*, decisions 16 to 28 as recommended: "Recommendations approved; proceed." With them the order: `SPEC.5` scoped and built first, its middle mode named *work* at the owner's word (worksheets beside the game's sheets), then this slice.
+
+## `SPEC.5` — the keyboard's sheets declared: the sheets whose keys are the game's, the sheets a person types into, and the sheets no person writes
+
+*Scoped 2026-10-20 at the owner's word, "Recommendations approved; proceed.", after `CART.9`'s fine scoping of its third slice found it first in the order. The middle mode is named *work* at the owner's word: "I feel like "cells" sheets should be called "work" sheets, which plays against their alternate "game" sheets." Built the same day as the decisions recommend; the decisions await the owner, with the build, at the hand test.*
+
+**The problem.** Since `CART.9`'s second slice the page decides a key on the grid key by key, and a cartridge declares nothing:
+1. the page's own keymap;
+2. a holding command's key (version 5, §3.10);
+3. at a rate above 0, a key the Keys sheet binds, and every key where the cartridge reads the last one pressed (§3.4);
+4. otherwise a character typed on a cell opens that cell's edit, Delete empties the selection, and Backspace opens the cell emptied.
+
+Three things follow, each found in the work:
+- *A reader cannot tell a hotkey sheet from a worksheet.* A command's `holds` formula is the only place a sheet's keys are scoped, and a source shows it there or not at all.
+- *At rate 0 no formula can scope a key to a sheet.* The host reads the Commands sheet at the load and after each frame (`web/host.js`, `_readCommands`), and writes `Input!B19`, the sheet shown, with an act's rows alone. A tab clicked is no act, so a `holds` of `B19` keeps the sheet of the last act. Buffet's Trading is held by `B19` at a rate, where the row is written every frame. Naught's game (`CART.9`, decision 22) needs its keys on its levels alone, at rate 0.
+- *Any sheet is a person's to write.* Typing, Delete and a row of the palette or the edit row write the Lesson as readily as the Bench, and a switch the cartridge composed as a formula is lost to a value typed over it until Load (`AD-7`).
+
+**The precedent.** Version 6's `(bound "<sheet>" ...)`, added at `CART.12`'s hand test while version 6 was unreleased:
+- a manifest directive naming sheets, each once;
+- refused below `(spec 6)`, its sheets checked at the load;
+- printed by `describe` and read from it by the host.
+
+`v0.2.0` holds version 5, so version 6 is still unreleased.
+
+**The decisions, the owner's.** Each with the recommendation and the alternatives it declines.
+
+1. **Three directives naming sheets: `(game "<sheet>" ...)`, `(work "<sheet>" ...)` and `(read "<sheet>" ...)`, beside `(bound ...)`.**
+   - Each names sheets the cartridge holds, once each.
+   - A sheet in `game` and `read` both is a board a person plays and never writes by hand: Seiyaku's Board would be one, Superposition's Field another.
+   - A sheet in `work` and either other is refused by name, a contradiction.
+   - *Alternatives:*
+     - *(a)* `(keys "<sheet>" game)`, a sheet a line, the mint's sketch: long where a game has nine levels;
+     - *(b)* one directive of pairs, `(keys ("Board" game) ("Bench" work))`;
+     - *(c)* the words in the Commands sheet, a column of sheets a command holds on, which says nothing of typing or of writing.
+2. **What each mode does on the grid, the page's:**
+
+   | the sheet shown | the game's keys (its commands, its Keys at a rate, the last key it reads) | a character typed on a cell | Enter, F2, a double click, Delete, Backspace | a row of the palette or the edit row into it |
+   |---|---|---|---|---|
+   | `game` | hold, by their `holds` as before | opens the cell's edit when no game key takes it | as on a worksheet | written |
+   | `game` and `read` | hold | refused by the sheet's name | refused | refused by name |
+   | `work` | never hold, whatever their `holds` | opens the cell's edit | open and empty the cell | written |
+   | `read` | never hold | refused by the sheet's name; the page's keys and the arrows still move | refused | refused by name |
+   | named by none, where the cartridge names a game sheet | never hold | as `work` | as `work` | written |
+   | named by none, where the cartridge names no game sheet | the rule before, unchanged | as before | as before | written |
+
+   So a cartridge that declares its game sheets holds its keys on them alone. That is `CART.9`'s decision 22: Naught's T, N, P, R, Space, 1 and 0 hold on its levels, and the Bench and the Lesson keep typing and reading. A cartridge that declares nothing keeps the rule before key for key, and one that declares work and read sheets alone keeps it on every other sheet.
+   - *Alternatives:* a sheet named by none read as `read`, every sheet then needing a word; or as a game sheet.
+3. **`read` refuses a person's write by name, and nothing else.**
+   - Refused, each said with the sheet named, the log counting the repeats: a typed edit, Delete, Backspace, Enter's and F2's edit, a double click, and a row written by the palette or the edit row.
+   - Still written: the cartridge's own rows, at the load and at a continue (`ENGINE.7`); the Write sheet's derived rows; and a replay's rows.
+   - The engine holds no new rule. Its `write` stays the one door of every writer, and the page's person is the one writer refused.
+   - *Alternatives:*
+     - the engine refusing a write into a read sheet unless it is a derived row or the load, which would need the write to know its writer;
+     - a range locked, Excel's locked cells under a protected sheet, a finer rule asked by `CART.9`'s decision 23 and left to an item of its own.
+4. **Version 6, amended in place.**
+   - Version 6 is unreleased (`v0.2.0` holds version 5), as it was when `(bound ...)` joined it.
+   - The three directives are a `(spec 6)` cartridge's, refused below with version 6's words.
+   - Released with the page's next release.
+   - *Alternative:* version 7, a `(spec 7)` cartridge's, which would ask Naught, Seiyaku and Superposition to say 7 to use them.
+5. **Plane mode.**
+   - A plane cartridge's Screen is a canvas, its keys the game's already, so `game` and `work` name grid sheets and are refused in a plane cartridge.
+   - `read` is any cartridge's, since the drawer's viewer and the palette write a plane cartridge's sheets too.
+   - *Alternative:* all three in plane mode, `game` and `work` meaning nothing there.
+6. **The engine's part: the manifest's three directives read, refused and printed.** `engine/src/cartridge.rs`:
+   - the optional directives;
+   - each parsed as `(bound ...)` is, a sheet once and one or more;
+   - the version, the mode and the contradiction refused by name, each with its line;
+   - the sheets checked at the load, as the bound's;
+   - `describe`'s rows, each directive as the manifest gives it.
+
+   `data/messages.vla` needs no new id: the refusals are `cart-manifest-invalid`'s words, as the bound's are.
+7. **The host's part: the modes read from `describe`, and a key and a row judged by the sheet shown.** `web/host.js`:
+   - `game`, `work` and `read` read as `bound` is;
+   - `_commandKey`, `keyDown` and `takesKey` holding a game key on a game sheet alone where any is named, and never on a work or a read sheet;
+   - `edit` refusing a row into a read sheet with its words.
+
+   The page, `web/index.template.html`: the keydown hook's cell edits, Delete and Backspace by the table; Enter, F2 and a double click opening nothing on a read sheet.
+8. **The page's word: the drawer's note says each sheet's mode, and the palette's note the sheet shown's.**
+   - The drawer's note, after the game's keys: "Of its sheets, Bench is a work sheet, a key typed there writing its cells; and Lesson is read, no person writing it".
+   - The palette's note on the sheet shown: "Bench is a work sheet: every key types into its cells."
+   - *Alternative:* a mark on each game and read tab, a glyph in the tab strip, which every game's page would then draw.
+9. **Naught adopts it now, and the floors' source leaves the three out.**
+   - `(read "Lesson")` and `(work "Bench")` in this item; `(game ...)` for its levels in `CART.9`'s slice 3.
+   - `floors_source`, in both twins, leaves the three directives out, as it leaves out the settle, so that the floors' fixtures stay the bytes measured.
+   - Seiyaku and Superposition are left as they are: their owner's sessions and Superposition's floors name their cartridges' digests, and their commands, holding on every sheet, are harmless where nobody types.
+   - *Alternative:* all three adopt now, Superposition's floors measured again and both sessions carried onto the new cartridges.
+10. **The palette's place as commands, riding with this item's page work.**
+    - The owner's food for thought at `CART.9`'s second hand test: "fixing the position of the palette is not a palette command, though it probably should be".
+    - Three of the page's commands, `palette-floating`, `palette-top` and `palette-bottom`. Each rewrites the keymap's one `(palette ...)` line and applies the keymap, kept in the browser, so that the drawer's box stays the one record.
+    - *Alternative:* in `ENGINE.27`, beside its width and height commands.
+11. **The oracle.**
+    - The engine's tests: the three read, refused by version, by mode, by contradiction and by a sheet twice, and printed; a sheet the rows do not hold refused at the load.
+    - `check_cartridge.ps1`'s section 7, the three's rules, with mutants.
+    - The loop oracle, a case of its own, `modes`, over a card written in the page, its sheets in each mode. On each: a game key pressed, a character typed, Delete, and a row written, each landing or refused as the table says. Mutant pages for each row of the table.
+    - Naught's describe golden moved by its two lines, and the floors' bytes unmoved.
+    - The owner's hand test.
+12. **Size:** two to three days.
+
+*Built 2026-10-20, the same session, as the decisions recommend.* What it touches:
+- `engine/src/cartridge.rs`: `game`, `work` and `read` among the optional directives; each read as the bound is, one sheet or more, a text each, each once without case; refused below `(spec 6)`, `game` and `work` in plane mode, and a sheet in `work` and in `game` or `read`, each by its line and words; the sheets held at the load, the engine's own among them; `describe` printing each as the manifest gives it. The test `version_six_s_keyboard_sheets_name_sheets_a_version_six_grid_holds`.
+- `web/fake.js`: the double reads the three, refuses them below version 6 and prints them; the engine's other checks are the engine's.
+- `web/host.js`:
+  - the three read from `describe`; `sheetMode(name)`, compared without case; `gameKeysHere()`, the table's second column; `editsHere()`, false on a read sheet;
+  - `keyDown`, `_commandKey` and `takesKey` gated by `gameKeysHere`, so that at a rate a key on a work sheet is neither a button nor the last key, and at rate 0 a command's key passes on there;
+  - `edit` refusing a row into a read sheet, "The edit ... was not written: Lesson is a read sheet, named by the manifest's (read ...), and no person writes it; the cartridge's own rows still do", counted `editsRead`; and `readKey()`, a key that would write a read sheet, refused by its name, counted `keysRead`.
+- `web/index.template.html`:
+  - `gridKeyAct(ev, at)`, the table's rule for a key on the grid, pure, its answers `game`, `read`, `edit`, `empty`, `emptied` and `pass`; the keydown hook decides by it, and `openCellEdit` and `clearCells` refuse on a read sheet, so that Enter, F2 and a double click do too;
+  - the palette's note, the sheet shown's mode, `sheetModeWords`; the drawer's, every sheet's, `modesSentence`;
+  - three commands, `palette-floating`, `palette-top` and `palette-bottom`, by `keymapWithPlace`, pure, and `placePalette`, refused while the keys' box holds a keymap not applied, whose edits it would otherwise apply or lose; `applyKeys` taking the words a command says first; the keymap's head naming them;
+  - the loop oracle's thirtieth case, `modes`, on both pages: the table, the words and the place, pure; the double's half; and over the module a card of its own, five sheets, `Board` the game's and read, `Tray` the game's, `Notes` work, `Rules` read and `Other` named by none, M its command's key, at rate 0 and at a rate; the engine's five refusals; and Naught's Lesson and Bench, where the page holds Naught.
+- `cartridges/naught/`: `(read "Lesson")` and `(work "Bench")`; the manifest's comments, the Lesson the first sheet shown; the stand-in's cartridge digest, `4014FD26…`, its rows and golden unchanged.
+- `engine/src/naught.rs` and its twin: `floors_source` leaving the three out, its test given them.
+- `engine/testdata/describe/naught.vla`: the two lines.
+- `tools/check_cartridge.ps1`: the three read, refused and held to the rows; two copies that pass, the grid card written to `(spec 6)` with its Screen the game's and read and its Camera read, and Life's Screen read; and six mutants, the control fifty-three.
+- `tools/check_host_loop.ps1`: the modes case's floors, on both pages, Naught's two on Alonzo's alone; the palette's commands 33; thirty cases and fifteen on a game's page; and ten mutants, the control one hundred and seventy-four: FI, a key on a read sheet an edit; FJ, the last key read on every sheet; FK, the place written beside its line; FM, a work or a read sheet the game's where none is named; FN, a read sheet written by hand; FO, a row into a read sheet written; FP, a sheet named by none the game's where one is; FT, a game sheet's keys forgotten; and over the module FR, a command's key on every sheet at rate 0, and FS, every key the game's at a rate. `tools/run_checks.ps1`'s words.
+- `docs/SPEC.md`: the header; §3.4; §3.10's key amended; §7.2, the three and the table; decisions 68 to 72, the spec's own of the twelve, 1 to 5; §13's oracle. `web/README.md`, `README.md`, the roadmap, this record, the memory.
+
+*What moved from the scoping.* Decision 2's table first said a read sheet's character did nothing; decision 3 refuses it by name, so the table says so, the log counting a held key's repeats under one line. Decision 8's words are the built ones. Decision 11's work is a case of its own, `modes`, where the scoping put it in the keys and palette cases: those cases hold no host, and the table needs the host's answers beside the page's.
+
+*Held,* over `vla-lang` 0.10.1:
+- `cargo fmt --check`; `cargo clippy --workspace --all-targets -- -D warnings`; `cargo test --workspace`, 75 and the doc test.
+- `cargo run --release --example expand -- --check`, eleven `same`; `--example naught -- --check` and `--example seiyaku -- --check`, `same`; the twins under Node, seventeen files byte for byte; the floors' sources moved by two comments alone, which the pass drops.
+- `check_frame_floors.ps1`, with the runner built again: clean, the fixtures and the rungs the measured ones, Naught's heaps 23,358,979 and 135,862,777 bytes, as before.
+- `check_cartridge.ps1`, eleven cartridges; `-Control`, fifty-three mutants each failing for its own reason and the four copies passing.
+- `check_host_loop.ps1` at both ratios and on the game's page, 32 seconds: thirty cases OK, `modes` at its floors, `naught 0` on the game's page; `-Control`: the real page and the game's page pass, and each of the one hundred and seventy-four mutant pages fails for its own reason, FI to FT by name.
+- `run_checks.ps1`: the thirteen checks pass.
+
+*Found.*
+- *A press over a cell is no key, and the modes leave it alone.* A press stays an act on every sheet where the cartridge reads an act's place or press (§3.3), a read sheet's too, since Seiyaku's Board, the game's and read, is played by presses. A cartridge that wants a sheet's presses its own and no other's says so in its formulas, by `Input!B19`, which a press's act writes.
+- *Enter on a read sheet is refused, where Excel's Enter moves the selection.* On a protected sheet Excel's Enter moves down and F2 says the cell is protected; the viewport's Enter opens the cell's edit (`CART.9`'s second slice), so on a read sheet it is refused by name. Moving down instead is the hand test's to weigh.
+- *A sheet named by none, where the cartridge names a game sheet, is a work sheet without saying so in the source.* Decision 2's choice, said in the drawer's note: "any sheet it names by none is as a work sheet".
+
+*Catches.*
+- The page was first built over the module as it stood, before the module was built again: the case's module half saw the engine refuse `(game ...)` as a directive it did not know. The page takes `target/wasm32-unknown-unknown/release/alonzo.wasm` as it stands, so the module is built first; the floors' runner the same, its check mode reading Naught's new lines with an old engine.
+- The double holds its own sheets alone and refuses a row into any other, so its work sheet is its `State`, where the row lands.
+- The heredoc's escapes again, in a patch of the page: the patches were written as files.
+
+*The owner's hand test of SPEC.5, 2026-10-20.* Three screenshots, in the owner's own Chrome: the Lesson refusing the palette's row, "The edit (cell "Lesson" "A1" "graffiti") was not written: Lesson is a read sheet…"; the Bench's palette holding `(cell "Bench" "A3" 1)` under "Bench is a work sheet: every key types into its cells."; and the loop oracle at a ratio of 1.5, `loop ok cases=30`. With them `run_checks.ps1` 13 of 13 on the owner's machine, `check_cartridge.ps1 -Control` its fifty-three mutants, and `check_host_loop.ps1 -Control` its one hundred and seventy-four. And four notes:
+- The two items the answers to the owner's questions named, minted at the owner's word: "Yes, mint those two items: FORMULATEXT and ISFORMULA in vla-lang; English typed into a cell through the palette." The second is `ENGINE.29`. The first lands in `vla-lang`, so it is Frazaro's to mint and this roadmap names it once minted (`AD-2`; an item that waits on Frazaro never re-mints it): its prompt was given in chat for Frazaro's session, `KERNEL.51` the ID next free there today.
+- The owner's question: "technically, what's the difference between a `read` sheet and a `game` sheet which has no hotkeys? Isn't a `read` sheet, then, a special case of a `game` sheet? … I ask whether we need three manifest lines where two perform the very same?" Answered: a game sheet types into its cells the keys the game leaves, as a level of `CART.9`'s third slice must, `=` opening a gate beside T, N, P and R, so a game sheet without keys is a work sheet and never a read-only one; the lines answer two questions, whose keys and whether a person writes, and the one that two would spare is `work`, what a sheet named by none already is once a game sheet is named. Asked, the owner kept all three, and said why: "`work` should be an optional directive, as you suggested that all sheets not listed as either `game` or `read` are implicitly `work`, but still remains an option because it can explicitly scope work sheets out of application-wide shortcuts." As built: the three are optional, and where a cartridge names no game sheet its commands hold on every sheet but those `work` and `read` name. `docs/SPEC.md` §7.2 says it in the owner's words.
+- "Lesson sheet is immune to keystrokes/double-clicking, but maybe Enter and Tab should still navigate down/right one cell as in other spreadsheet tools?" Built: Enter on a read-only sheet moves the selection down and Shift+Enter up. Asked whether Tab should move right on the other grid sheets at rate 0 too, where it walked the focus out of the grid, the owner said every grid sheet: Tab moves right and Shift+Tab left on every sheet whose keys are a person's, at any rate, and stays the game's on its sheets while a game runs (`ENGINE.14`'s hand test). On a sheet a person writes, Enter opens the cell's edit as before.
+- "The palette tip should read "<Sheet> is a read-only sheet." dropping "no person writes it", which is unusual English." Built, with the same words wherever the page says it: the palette's note "Lesson is a read-only sheet."; a key refused, "Lesson is a read-only sheet, named by the manifest's (read ...): a key there writes nothing, and the cartridge's own rows still write it"; a row refused, "… was not written: Lesson is a read-only sheet, named by the manifest's (read ...); the cartridge's own rows still write it"; and the drawer's "…; and Lesson is read-only". `docs/SPEC.md` and the READMEs say read-only too.
+
+*What the hand test moved, before the commit.*
+- `web/index.template.html`: `cellStepKey`, and `gridKeyAct`'s answer `step`, Enter where it opens no edit and Tab on every sheet whose keys are a person's, Tab the game's on its sheets while a game runs, which the keydown hook keeps from walking out of the page as before; `moveSelectionTo`, the cell held inside the rows and columns the sheet lays, a bound sheet's extent among them, as the arrows are held, and kept in view, which a cell's edit written by Enter or Tab now moves by too; `stepSelection`; the words of the modes; the modes case's fourteen more keys, 34, and its words.
+- `web/host.js`: the two refusals' words.
+- `docs/SPEC.md`: §7.2's table, Enter a column of its own; Enter and Tab; every sheet named by neither `game` nor `read` a work sheet, and `(work ...)` the way to scope one out of the application's shortcuts; decisions 69 and 70; the approval.
+- `tools/check_host_loop.ps1`: the modes case's 34; two template mutants, FU, Enter on a read-only sheet left to the viewport, which opens an edit it refuses, and FV, Tab left to the browser, the control one hundred and seventy-six. `tools/run_checks.ps1`'s words.
+- `cartridges/naught/naught.source.vla`: the read line's comment, which the pass drops, so the cartridge's bytes stand.
+- `web/README.md`, `README.md`, the roadmap, the record, the map, the memory.
+
+*Held,* over `vla-lang` 0.10.1:
+- `cargo fmt --check`; `cargo clippy --workspace --all-targets -- -D warnings`; `cargo test --workspace` with `ALONZO_REQUIRE_CARTRIDGES=1`, 75 and the doc test.
+- `cargo run --release --example expand -- --check`, eleven `same`: the read line's comment moves no byte of the cartridge.
+- `check_host_loop.ps1` at both ratios and on the game's page: thirty cases OK, `modes` at its 34 keys. `-Control`: the real page and the game's page pass, and each of the one hundred and seventy-six mutant pages fails for its own reason, FU and FV by name. Its first run stopped at FO's anchor, which named the comment the hand test reworded; the anchor took the new line and the control ran again.
+- A smoke test of the player in headless Chrome, over Naught as the page plays it: Enter on the Lesson taken by the page, no refusal logged; Tab there taken, the focus kept on the grid; on the Bench, Tab twice from A4 and then 1 opening `(cell "Bench" "C4" 1)`, and Shift+Tab and 1 `(cell "Bench" "B4" 1)`; the palette's note, the refusals and the drawer's note in the words above.
+- `run_checks.ps1`: the thirteen checks pass.
+
+*Closed 2026-10-20 at the owner's word*: "Hand tests pass. Choices' recommendations approved; if the following test results pass your expectations, then commit before either proceeding with the next slice (if one exists) or suggesting the best next ROADMAP.md items while KERNEL.8 finishes in the Frazaro session." The hand test's four notes were built before the commit and are held by the oracle; the owner sees them again at `CART.9`'s third slice, whose levels are the first game sheets.

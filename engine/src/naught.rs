@@ -1203,7 +1203,10 @@ pub const LESSON_END: &str = "; ---- the lesson's end ----";
 /// manifest's `(bound ...)`. A cartridge that settles numbers the Clock by
 /// acts, and the floors step frames, their switches reading the Clock as
 /// the frame; and the lesson is the bench's words to a person, of which the
-/// floors measure nothing. `None` where the source holds no block.
+/// floors measure nothing. The keyboard's sheets, `(game ...)`, `(work ...)`
+/// and `(read ...)` (`SPEC.5`), go too, a person's keys being nothing the
+/// floors press, so that their benches stay the bytes measured. `None` where
+/// the source holds no block.
 pub fn floors_source(source: &str, lines: &[String]) -> Option<String> {
     let built = with_block(source, lines)?;
     let eol = if built.contains("\r\n") { "\r\n" } else { "\n" };
@@ -1214,6 +1217,12 @@ pub fn floors_source(source: &str, lines: &[String]) -> Option<String> {
     {
         all.remove(i);
     }
+    all.retain(|l| {
+        let t = l.trim_start();
+        !["(game \"", "(work \"", "(read \""]
+            .iter()
+            .any(|h| t.starts_with(h))
+    });
     let begin = all.iter().position(|l| l == LESSON_BEGIN);
     let end = all.iter().position(|l| l == LESSON_END);
     if let (Some(b), Some(e)) = (begin, end) {
@@ -1353,9 +1362,9 @@ mod tests {
     }
 
     #[test]
-    fn the_floors_source_replaces_the_block_and_leaves_out_the_settle() {
+    fn the_floors_source_replaces_the_block_and_leaves_out_the_settle_and_the_keyboard_s_sheets() {
         let source = format!(
-            "(cartridge \"t\"\r\n  (rate 0)\r\n  (settle 9)   ; a note\r\n  (bound \"Lesson\" \"S\")\r\n  (seed 1))\r\n{LESSON_BEGIN}\r\n(sheet \"Lesson\" visible)\r\n(cell \"Lesson\" \"A9\" \"a word\")\r\n{LESSON_END}\r\n{BLOCK_BEGIN}\r\nold\r\n{BLOCK_END}\r\n"
+            "(cartridge \"t\"\r\n  (rate 0)\r\n  (settle 9)   ; a note\r\n  (bound \"Lesson\" \"S\")\r\n  (read \"Lesson\")   ; a note\r\n  (work \"S\")\r\n  (game \"S\")\r\n  (seed 1))\r\n{LESSON_BEGIN}\r\n(sheet \"Lesson\" visible)\r\n(cell \"Lesson\" \"A9\" \"a word\")\r\n{LESSON_END}\r\n{BLOCK_BEGIN}\r\nold\r\n{BLOCK_END}\r\n"
         );
         let lines = vec!["new".to_string()];
         let want = format!(
@@ -1363,9 +1372,12 @@ mod tests {
         );
         assert_eq!(floors_source(&source, &lines), Some(want));
         assert_eq!(
-            with_block(&source, &lines).map(|s| s.contains("(settle 9)") && s.contains("a word")),
+            with_block(&source, &lines).map(|s| s.contains("(settle 9)")
+                && s.contains("a word")
+                && s.contains("(read \"Lesson\")")
+                && s.contains("(work \"S\")")),
             Some(true),
-            "the cartridge's own source keeps both"
+            "the cartridge's own source keeps them all"
         );
         assert_eq!(floors_source("no block", &lines), None);
     }

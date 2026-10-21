@@ -276,7 +276,8 @@
   // The floors' source (decision 6): the source with its block's lines replaced, the manifest's (settle K) line taken
   // out, and the lesson's lines with it, each sheet the lesson makes named no more in the manifest's (bound ...), since
   // a cartridge that settles numbers the Clock by acts and the floors' switches read it as the frame, and the lesson is
-  // the bench's words to a person; null where it holds no block.
+  // the bench's words to a person; and the keyboard's sheets, (game ...), (work ...) and (read ...) (SPEC.5), a person's
+  // keys being nothing the floors press, so that their benches stay the bytes measured; null where it holds no block.
   var LESSON_BEGIN = '; ---- the lesson beside the bench: the floors build their benches without it ----';
   var LESSON_END = '; ---- the lesson\'s end ----';
   function floorsSource(source, lines) {
@@ -284,6 +285,7 @@
     if (built === null) return null;
     var eol = built.indexOf('\r\n') >= 0 ? '\r\n' : '\n', all = built.split(eol), i;
     for (i = 0; i < all.length; i++) if (/^\s*\(settle /.test(all[i])) { all.splice(i, 1); break; }
+    all = all.filter(function (l) { return !/^\s*\((game|work|read) "/.test(l); });
     var b = all.indexOf(LESSON_BEGIN), e = all.indexOf(LESSON_END);
     if (b >= 0 && e > b) {
       var sheets = [];

@@ -9,7 +9,7 @@
 ; 254 x 127 = 32,258; and the carry-in off, 65,534 + 1 = 65,535. The bench settles: each act is its own frame and one
 ; that proves nothing moved, a settle's frame holding no row, so 39 acts are 78 frames, every gate held to the hand at
 ; each. Its golden is the Bench's record at its end. The owner's session replaces it at the hand test.
-(replay "naught" (spec 6) (cartridge "296901667B27499442D8F03B8D8DE21BBB4F5302301B3CB90D29AA7EF47EE0A8") (seed 1))
+(replay "naught" (spec 6) (cartridge "4014FD2672C2996330C40A30F483DB50AC1E019A86DFF84FE197C415A30B0482") (seed 1))
 (frame 1
   (cell "Input" "B11" 1)
   (cell "Input" "B12" 1)

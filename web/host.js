@@ -725,7 +725,7 @@
     this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
     this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, inputsKept: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, patches: 0, shows: 0, saves: 0,
                sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0, commands: 0, commandsRefused: 0,
-               settles: 0, settleSteps: 0, unsettled: 0, presses: 0, playedShown: 0 };
+               settles: 0, settleSteps: 0, unsettled: 0, presses: 0, playedShown: 0, editsRead: 0, keysRead: 0 };
   };
 
   // The module: its ABI number asked first, then every export the loop calls.
@@ -759,7 +759,7 @@
     if (!f) return this._fail('The module answered the load with ' + r.text.trim() + ', not a cartridge row.');
     this.handle = num(f[1]);
     this.cartBytes = bytes; this.cartFile = name || '';
-    var c = this.cart = { title: str(f[2]), mode: sym(f[3]), w: num(f[4]), h: num(f[5]), rate: num(f[6]), seed: '', spec: 0, settle: 0, bound: [], devices: {}, budget: null, name: null, digest: null };
+    var c = this.cart = { title: str(f[2]), mode: sym(f[3]), w: num(f[4]), h: num(f[5]), rate: num(f[6]), seed: '', spec: 0, settle: 0, bound: [], game: [], work: [], read: [], devices: {}, budget: null, name: null, digest: null };
     this._describe();
     this.window = rangeOf(1, 1, c.h, c.w);
     this._say('Loaded ' + c.title + ': ' + article(c.w) + ' ' + c.w + ' by ' + c.h + ' ' + c.mode + ' at ' + (c.rate ? c.rate + ' frames a second' : 'rate 0, a step on every edit') + ', seed ' + c.seed + ', on ' + this.version + '.');
@@ -818,6 +818,7 @@
       else if (head === 'spec') c.spec = num(f[1]) || 0;   // the page the cartridge is written to: version 4's views its alone (ENGINE.18)
       else if (head === 'settle') c.settle = num(f[1]) || 0;   // version 6's settle, the most steps an act settles in (CART.12)
       else if (head === 'bound') { for (var b = 1; b < f.length; b++) if (str(f[b]) !== null) c.bound.push(str(f[b])); }   // version 6's bound sheets (CART.12's hand test)
+      else if (head === 'game' || head === 'work' || head === 'read') { for (var g = 1; g < f.length; g++) if (str(f[g]) !== null) c[head].push(str(f[g])); }   // version 6's keyboard sheets (SPEC.5)
       else if (head === 'device' && str(f[1])) c.devices[str(f[1]).toLowerCase()] = { range: str(f[2]), direction: sym(f[3]) };
       else if (head === 'budget') c.budget = { rate: num(f[1]), cells: num(f[2]), perSecond: num(f[3]), line: num(f[4]) };
     }
@@ -1988,6 +1989,12 @@
     var head = forms.length === 1 && Array.isArray(forms[0]) ? sym(forms[0][0]) : null;
     if (head !== 'cell' && head !== 'formula') { this._refuse('An edit is one cell or formula row, as (cell "Palette" "B1" "#FF8800"); ' + (t || 'an empty line') + ' is not one.'); return false; }
     if (!this.handle) { this._refuse('No cartridge is loaded to edit.'); return false; }
+    var into = str(forms[0][1]);
+    if (into !== null && this.sheetMode(into).read) {   // a read-only sheet (SPEC.5), its cartridge's rows and the Write sheet's still writing it
+      this.c.editsRead++;
+      this._refuse('The edit ' + t + ' was not written: ' + into + ' is a read-only sheet, named by the manifest\'s (read ...); the cartridge\'s own rows still write it (version 6, docs/SPEC.md section 7.2).');
+      return false;
+    }
     if (this.player) { this._refuse('The edit ' + t + ' was not written: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s edit waits until it ends, so that what plays is the replay alone.'); return false; }
     // at rate 0 a version 6 cartridge's edit stands on the cell the selection stands on when it is made (CART.12)
     this.edits.push(this._sixAtZero() ? { row: t, place: this._place() } : t);
@@ -2002,7 +2009,7 @@
   // taken and running nothing; any other holds the Keys sheet's buttons it binds and is the frame's last key. ev, the
   // event, when a listener has one: its Ctrl, Cmd, Alt and repeat.
   Host.prototype.keyDown = function (code, key, ev) {
-    if (!code) return false;
+    if (!code || !this.gameKeysHere()) return false;   // a work or a read sheet's keys are not the game's (SPEC.5)
     var cmd = this._commandKey(code, ev, key);
     if (cmd) { if (!(ev && ev.repeat)) this.command(cmd.name, 'key'); return true; }
     this.held[code] = true;
@@ -2017,6 +2024,7 @@
   // where a caller has no event.
   Host.prototype._commandKey = function (code, ev, key) {
     if (!this._five() || (ev && (ev.ctrlKey || ev.metaKey || ev.altKey))) return null;
+    if (!this.gameKeysHere()) return null;   // no command's key holds on a work or a read sheet (SPEC.5)
     if (Object.prototype.hasOwnProperty.call(this.commandKeys, code)) return this.commandKeys[code];
     var row = keypadDigit(code, key !== undefined ? key : (ev ? ev.key : undefined));
     return row && Object.prototype.hasOwnProperty.call(this.commandKeys, row) ? this.commandKeys[row] : null;
@@ -2030,9 +2038,38 @@
   // Whether a key on the grid is the game's (CART.9's second slice): a holding command's key at any rate, and at a rate
   // above zero a key the Keys sheet binds. A page asks before it takes a key typed on a cell for an edit of its own.
   Host.prototype.takesKey = function (code, key, ev) {
-    if (!this.cart || !code) return false;
+    if (!this.cart || !code || !this.gameKeysHere()) return false;
     if (this._commandKey(code, ev, key)) return true;
     return this.cart.rate > 0 && this._bound(code);
+  };
+  // The keyboard's sheets (SPEC.5; docs/SPEC.md section 7.2, version 6), what a sheet's mode in the manifest makes of a key
+  // and of a person's row there. sheetMode(name): { game, work, read }, whether the manifest names the sheet so, compared
+  // without case as the model compares names.
+  Host.prototype.sheetMode = function (name) {
+    var c = this.cart, want = String(name || '').toLowerCase();
+    function has(list) { for (var i = 0; list && i < list.length; i++) if (String(list[i]).toLowerCase() === want) return true; return false; }
+    return { game: !!c && has(c.game), work: !!c && has(c.work), read: !!c && has(c.read) };
+  };
+  // Whether the game's keys hold on the sheet shown, its commands, its Keys at a rate and the last key it reads: on a game
+  // sheet; never on a work or a read sheet that is not also the game's; on a sheet named by none, never where the
+  // cartridge names a game sheet, and as today where it names none. A plane's canvas is the game's.
+  Host.prototype.gameKeysHere = function () {
+    var c = this.cart;
+    if (!c || c.mode !== 'grid') return true;
+    var m = this.sheetMode(this._shown());
+    if (m.game) return true;
+    if (m.work || m.read) return false;
+    return !(c.game && c.game.length);
+  };
+  // Whether a person writes the sheet shown by hand, a key typed on a cell, Delete, Backspace, or Enter's and F2's edit:
+  // anywhere but a read-only sheet.
+  Host.prototype.editsHere = function () { return !this.sheetMode(this._shown()).read; };
+  // A person's key that would write a read-only sheet, refused by the sheet's name: a character typed on a cell, Delete,
+  // Backspace, F2 or a double click there, the cells untouched and the log counting the repeats.
+  Host.prototype.readKey = function () {
+    var name = this._shown();
+    this.c.keysRead++;
+    this._refuse(name + ' is a read-only sheet, named by the manifest\'s (read ...): a key there writes nothing, and the cartridge\'s own rows still write it (version 6, docs/SPEC.md section 7.2).');
   };
   Host.prototype.keyUp = function (code) { delete this.held[code]; };
   Host.prototype.releaseKeys = function () { this.held = Object.create(null); };

@@ -277,10 +277,10 @@ builds a game's page, from a scratch folder holding Kairos alone, its
 cartridge, source, replay, golden and hand and the library its source
 includes, and runs its loop at a ratio of 1: abi, pass, replay with the
 hand, grid over an empty set, empty and, since ENGINE.17, ENGINE.18,
-ENGINE.19, ENGINE.7, ENGINE.23, ENGINE.25, CART.12 and ENGINE.26, still, views, changes,
-continue, palette, keys, commands, settle and widths must be OK at their own floors, each of
-Alonzo's fifteen other cases must say it is not on this page, and the last line must
-count fourteen cases.
+ENGINE.19, ENGINE.7, ENGINE.23, ENGINE.25, CART.12, ENGINE.26 and SPEC.5, still, views,
+changes, continue, palette, keys, commands, settle, widths and modes must be OK at their own
+floors, each of Alonzo's fifteen other cases must say it is not on this page, and the last
+line must count fifteen cases.
 
 THE BROWSER, as tools/check_render_oracle.ps1 finds and launches it:
 -Browser, else $env:ALONZO_BROWSER, else Google Chrome, Microsoft Edge or
@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds one hundred and sixty-four mutant pages through tools/build_web.ps1 and runs
+-Control builds one hundred and seventy-six mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -509,6 +509,19 @@ case must fail by name at frame 35, where the stand-in's carry-in first meets a 
 And since its second slice three more, needing no module, each a template the palette case must fail by name: FA,
 a cell's edit whose caret stands past the closing quote; FB, Enter writing a cell's edit and moving no selection;
 and FC, the floating palette at the top over a cell in the top half of the rows in view.
+And since its hand test five more: FD, FE and FF, the palette case's, Backspace's emptied cell forgotten, Delete's
+row over the selection's first cell alone and the window's own blur shutting the palette; FG, the settle case's, a
+press an act whatever the cartridge reads; and FH, when the real page holds the module, the replay case's, a replay
+that never shows the sheet its person showed. And since SPEC.5 ten more, each failing the modes case by name: three
+templates, needing no module, FI, a key on a read sheet opening a cell's edit, FJ, the last key read on every sheet
+at a rate, a work sheet's too, and FK, the palette's place written beside the line it replaces, two lines the keymap
+refuses; five hosts over the double, needing no module, FM, a work or a read sheet the game's where no game sheet is
+named, FN, a read sheet written by hand, FO, a person's row into a read sheet written, FP, a sheet named by none the
+game's where a game sheet is named, and FT, a game sheet's keys forgotten; and two hosts when the real page holds the
+module, FR, a command's key run on every sheet at rate 0, so that M runs mark on the work sheet, and FS, every key the
+game's at a rate, so that x on the work sheet is the frame's last key. And since its hand test two more templates,
+needing no module: FU, Enter on a read-only sheet left to the viewport, which opens a refused edit, and FV, Tab left
+to the browser, which walks the focus out of the grid.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -768,7 +781,24 @@ $keysFloors = @{ defaults = 1; refused = 18; places = 25; steps = 3; lines = 3; 
 # 2026-10-20, CART.9's hand test of the second slice: 6 of Delete and Backspace, Backspace's emptied cell and Delete's row
 # over five selections, two of them none; and 2 of the window's own blur, which keeps the palette and its text, where a
 # click elsewhere shuts it.
-$paletteFloors = @{ commands = 30; keyed = 11; lines = 10; opened = 1; ran = 1; chosen = 1; rows = 1; recalled = 1; closed = 3; restored = 1; held = 1; passed = 1; clicked = 1; escapes = 5; edits = 12; sides = 6; cellEdits = 7; placed = 5; clears = 6; kept = 2 }
+# 2026-10-20, SPEC.5: the palette's commands 33, the three of its place, palette-floating, palette-top and palette-bottom.
+$paletteFloors = @{ commands = 33; keyed = 11; lines = 10; opened = 1; ran = 1; chosen = 1; rows = 1; recalled = 1; closed = 3; restored = 1; held = 1; passed = 1; clicked = 1; escapes = 5; edits = 12; sides = 6; cellEdits = 7; placed = 5; clears = 6; kept = 2 }
+# 2026-10-20, SPEC.5: the twenty-nine cases' counts unchanged but the palette's commands, and a thirtieth, modes, on both
+# pages, its counts a function of its plan. Its page half, pure: 34 keys of SPEC.5's table, each mode's sheet given a
+# game's key, a character, Delete, Backspace and an arrow, and since the hand test Enter and Tab, each moving the
+# selection where it opens no edit, Tab on every sheet whose keys are a person's; 10 of the modes' words, the
+# palette's note and the drawer's;
+# and 5 of the palette's place written into a keymap. Its double half: the three read from the describe and printed (2);
+# 6 sheets' modes, a name compared without case among them; 5 rows, three refused into read sheets, one written into the
+# work sheet, and the count and the frame; 2 refusals said by the sheet's name, a row's and a key's; 3 of a sheet named by
+# none; a plane's read sheet; and the three refused below version 6 (3). Over the module: the engine's describe read and
+# printed (2); the card opened on its Board; 5 sheets by their tabs, M taken as the game's on the two game sheets alone
+# (pressed 2, passed 3); 3 rows written and 2 refused with their count; a key on the read sheet refused; the card at a
+# rate, M and x on the work sheet and on a game sheet (2); 5 of the engine's refusals; and on Alonzo's page Naught's
+# Lesson read and its Bench worked (2), which a game's page, holding no Naught, counts 0.
+$modesPageFloors = @{ acts = 34; words = 10; places = 5; fakeRead = 2; fakeModes = 6; fakeEdits = 5; fakeSaid = 2; fakeUnnamed = 3; fakePlane = 1; fakeOlder = 3 }
+$modesFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; keyRefused = 1; rate = 2; refusals = 5; naught = 2 }
+$modesGameFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; keyRefused = 1; rate = 2; refusals = 5 }
 # 2026-10-17, ENGINE.25: the twenty-six cases' counts unchanged, and a twenty-seventh, commands, over the module on both
 # pages, its counts a function of its plan: the card opened on the Desk, its four commands listed at the load; 40 frames,
 # 3 commands run alone, Input!B20 naming the command due at 23 frames and empty at 17; two commands a frame apart and one
@@ -863,6 +893,9 @@ $settleDoubleFloors = @{ fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased
 # FH, the replay case's over the module, take it to one hundred and sixty-four: Backspace's emptied cell, Delete's row
 # over its range, the window's own blur, a press no act on a cartridge that reads no act's rows, and a replay showing
 # the sheet its person showed (naughtShown, the Bench at the first switch's act).
+# SPEC.5, 2026-10-20: mutants FI to FT, each the modes case's, three templates, five hosts over the double and two over
+# the module, take it to one hundred and seventy-four; and its hand test's FU and FV, Enter and Tab, to one hundred and
+# seventy-six.
 # 2026-10-17, ENGINE.25's second slice: the case's page half, pure and so on every page, module or not, its counts a function of
 # its plan: 6 names a page writes a game's command by, held to the cartridge and the command or to none; 4 of the palette's
 # lines, the command that holds with its own key, found by a word after the dot, the one that holds not no line, and one
@@ -914,15 +947,16 @@ $floors = @(
     @{ Case = 'keys';     Min = $keysFloors },
     @{ Case = 'commands'; Min = $commandsPageFloors; WithModule = $commandsFloors },
     @{ Case = 'settle';   Min = $settleDoubleFloors; WithModule = $settleFloors },
-    @{ Case = 'widths';   Min = @{}; WithModule = $widthsFloors }
+    @{ Case = 'widths';   Min = @{}; WithModule = $widthsFloors },
+    @{ Case = 'modes';    Min = $modesPageFloors; WithModule = $modesFloors }
 )
 $zero = @('live', 'misfrees', 'filled', 'alone')
-$expectedCases = 29
+$expectedCases = 30
 # ENGINE.16: a game's page, built on every run from a scratch folder holding Kairos alone, its cartridge, source,
-# replay, golden and hand and the library its source includes. Its loop runs the fourteen cases that need nothing
+# replay, golden and hand and the library its source includes. Its loop runs the fifteen cases that need nothing
 # of Alonzo's own files, over its own blocks, still since ENGINE.17, views since ENGINE.18, changes since
-# ENGINE.19, continue since ENGINE.7, palette and keys since ENGINE.23, commands since ENGINE.25, settle since CART.12
-# and widths since ENGINE.26 among them, and each of the fifteen others says it is not on the page.
+# ENGINE.19, continue since ENGINE.7, palette and keys since ENGINE.23, commands since ENGINE.25, settle since CART.12,
+# widths since ENGINE.26 and modes since SPEC.5 among them, and each of the fifteen others says it is not on the page.
 $gameFloors = @(
     @{ Case = 'abi';    Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
     @{ Case = 'pass';   Min = @{}; WithModule = @{ sources = 1; same = 1 } },
@@ -937,10 +971,11 @@ $gameFloors = @(
     @{ Case = 'keys'; Min = $keysFloors },
     @{ Case = 'commands'; Min = $commandsPageFloors; WithModule = $commandsFloors },
     @{ Case = 'settle'; Min = $settleDoubleFloors; WithModule = $settleFloors },
-    @{ Case = 'widths'; Min = @{}; WithModule = $widthsFloors }
+    @{ Case = 'widths'; Min = @{}; WithModule = $widthsFloors },
+    @{ Case = 'modes'; Min = $modesPageFloors; WithModule = $modesGameFloors }
 )
 $gameAbsent = @('rate30', 'rate0', 'yield', 'slice', 'pace', 'memory', 'refusals', 'scale', 'engine', 'parity', 'plane', 'input', 'audio', 'sound', 'tabs')
-$gameCases = 14
+$gameCases = 15
 $gameFiles = @('kairos/kairos.vla', 'kairos/kairos.source.vla', 'kairos/kairos.replay.vla', 'kairos/kairos.golden.vla', 'kairos/kairos.hand.js', 'common.vla')
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
@@ -2088,6 +2123,77 @@ if ($Control) {
             if (-not ($stApplied -and $stFailed -ge 1)) { $settleOk = $false }
         }
         $settleNote = $settleNotes -join '; '
+        # FI to FT (SPEC.5), each failing the modes case by name. Templates, needing no module: FI, a key on a read sheet
+        # opening a cell's edit; FJ, the last key read on every sheet at a rate, a work sheet's too; and FK, the palette's
+        # place written beside the line it replaces, two lines the keymap refuses. Hosts over the double, needing no module:
+        # FM, a work or a read sheet the game's where no game sheet is named; FN, a read sheet written by hand; FO, a
+        # person's row into a read sheet written; FP, a sheet named by none the game's where a game sheet is named; and FT,
+        # a game sheet's keys forgotten. And hosts when the real page holds the module: FR, a command's key run on every
+        # sheet at rate 0; and FS, every key the game's at a rate. And the hand test's templates, needing no module: FU,
+        # Enter on a read-only sheet left to the viewport; and FV, Tab left to the browser.
+        $modesMutants = @(
+            @{ L = 'fi'; Name = 'a key on a read sheet an edit'; Template = $true; Anchor = "    if (!at.editsHere) return 'read';"
+               With = '    // a read sheet written by a key, by the control'
+               Want = 'case modes.*modes: on a read sheet, x the page makes edit of the key, where read is due' },
+            @{ L = 'fj'; Name = 'the last key read on every sheet'; Template = $true; Anchor = "    if ((at.rate > 0 && at.lastKeyRead && at.gameHere) || at.takes) return 'game';"
+               With = "    if ((at.rate > 0 && at.lastKeyRead) || at.takes) return 'game';"
+               Want = 'case modes.*modes: on a work sheet at a rate reading the last key, x the page makes game of the key, where edit is due' },
+            @{ L = 'fk'; Name = 'the palette''s place written beside its line'; Template = $true; Anchor = "    var lines = String(text).split('\n').filter(function (l) { return !/^\s*\(palette\s/.test(l); });"
+               With = "    var lines = String(text).split('\n');"
+               Want = 'case modes.*modes, the palette''s place: that keymap moved to the bottom reads .* with 2 line\(s\) of the place' },
+            @{ L = 'fm'; Name = 'a work or a read sheet the game''s'; Anchor = '    if (m.work || m.read) return false;'
+               With = '    // a work or a read sheet the game''s where no game sheet is named, by the control'
+               Want = 'case modes.*modes, the double: under a manifest naming no game sheet, its work sheet the game''s keys hold on State' },
+            @{ L = 'fn'; Name = 'a read sheet written by hand'; Anchor = '  Host.prototype.editsHere = function () { return !this.sheetMode(this._shown()).read; };'
+               With = '  Host.prototype.editsHere = function () { return true; };'
+               Want = 'case modes.*modes, the double: Rules is "read", the game''s keys not holding and a person writing it' },
+            @{ L = 'fo'; Name = 'a person''s row into a read sheet written'; Anchor = '    if (into !== null && this.sheetMode(into).read) {   // a read-only sheet (SPEC.5), its cartridge''s rows and the Write sheet''s still writing it'
+               With = '    if (false) {'
+               Want = 'case modes.*modes, the double: the row \(cell "Rules" "A1" 1\) was written, where it is refused' },
+            @{ L = 'fp'; Name = 'a sheet named by none the game''s'; Anchor = '    return !(c.game && c.game.length);'
+               With = '    return true;'
+               Want = 'case modes.*modes, the double: Other is "", the game''s keys holding' },
+            @{ L = 'ft'; Name = 'a game sheet''s keys forgotten'; Anchor = '    if (m.game) return true;'
+               With = '    // a game sheet''s keys forgotten, by the control'
+               Want = 'case modes.*modes, the double: Tray is "game", the game''s keys not holding' },
+            @{ L = 'fu'; Name = 'Enter on a read-only sheet the viewport''s'; Template = $true; Anchor = "      return at.editsHere ? 'pass' : 'step';"
+               With = "      return 'pass';"
+               Want = 'case modes.*modes: on a read sheet, Enter the page makes pass of the key, where step is due' },
+            @{ L = 'fv'; Name = 'Tab the browser''s'; Template = $true; Anchor = "      if (ev.key === 'Tab') return at.rate > 0 && at.gameHere ? 'game' : 'step';"
+               With = "      if (ev.key === 'Tab') return at.rate > 0 && at.gameHere ? 'game' : 'pass';"
+               Want = 'case modes.*modes: on a work sheet, Tab the page makes pass of the key, where step is due' },
+            @{ L = 'fr'; Name = 'a command''s key on every sheet'; Module = $true; Anchor = '    if (!this.gameKeysHere()) return null;   // no command''s key holds on a work or a read sheet (SPEC.5)'
+               With = '    // a command''s key on every sheet, by the control'
+               Want = 'case modes.*modes: M on Notes was taken' },
+            @{ L = 'fs'; Name = 'every key the game''s at a rate'; Module = $true; Anchor = '    if (!code || !this.gameKeysHere()) return false;   // a work or a read sheet''s keys are not the game''s (SPEC.5)'
+               With = '    if (!code) return false;'
+               Want = 'case modes.*modes, at a rate: on Notes M was passed on and x left the last key "x"' }
+        )
+        $modesNotes = New-Object System.Collections.Generic.List[string]
+        $modesJudged = New-Object System.Collections.Generic.List[object]
+        $modesOk = $true
+        foreach ($mu in $modesMutants) {
+            if ($mu.Module -and $moduleReal -eq 0) { $modesNotes.Add(("{0}: not applicable, the real page holding no engine module" -f $mu.Name)); continue }
+            $source = if ($mu.Template) { $tpl } else { $js }
+            $where = if ($mu.Template) { 'the template' } else { 'web/host.js' }
+            if (([regex]::Matches($source, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in $where exactly once"; exit 1 }
+            $mutMd = $source.Replace($mu.Anchor, $mu.With)
+            $mdApplied = $mutMd -cne $source
+            if ($mu.Template) {
+                $fileMd = Join-Path $tmp ($mu.L + '.template.html'); [System.IO.File]::WriteAllText($fileMd, $mutMd, $utf8)
+                $pageMd = New-MutantPage $mu.L $fileMd $hostJs
+            } else {
+                $fileMd = Join-Path $tmp ($mu.L + '.host.js'); [System.IO.File]::WriteAllText($fileMd, $mutMd, $utf8)
+                $pageMd = New-MutantPage $mu.L $template $fileMd
+            }
+            $rMd = Invoke-Mutant $pageMd 'modes'
+            $mdJudge = Test-Mutant $rMd 'modes'
+            $mdFailed = @($mdJudge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
+            $modesJudged.Add(@{ Name = $mu.Name; Problems = @($mdJudge.Problems) })
+            $modesNotes.Add(("{0} applied ({1}) and failed by name ({2})" -f $mu.Name, $mdApplied, $mdFailed))
+            if (-not ($mdApplied -and $mdFailed -ge 1)) { $modesOk = $false }
+        }
+        $modesNote = $modesNotes -join '; '
         # EM to ES (ENGINE.26), when the real page holds the engine's module, the widths card being the module's: viewports,
         # each failing the widths case by name. Its widths one map for every sheet again, a column's letters alone, as they
         # were until Buffet's PLATE.1 and POT.11 hand tests; a clear that keeps them, so that a Load does; a sheet's region
@@ -2260,9 +2366,9 @@ if ($Control) {
             if (-not ($gmApplied -and $gmFailed -ge 1)) { $gameOk = $false }
         }
         $gameNote = $gameNotes -join '; '
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ezOk -and $fhOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and sixty-four' } else { 'seventy-nine applicable' }) + ' mutants for its own reason, each proving it applied')
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ezOk -and $fhOk -and $modesOk) {
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and seventy-six' } else { 'eighty-nine applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -2307,6 +2413,7 @@ if ($Control) {
         foreach ($pgj in $pageJudged) { foreach ($p in @($pgj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $pgj.Name + ': ' + $p) } }
         foreach ($stj in $settleJudged) { foreach ($p in @($stj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $stj.Name + ': ' + $p) } }
         foreach ($wj in $widthsJudged) { foreach ($p in @($wj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $wj.Name + ': ' + $p) } }
+        foreach ($mj in $modesJudged) { foreach ($p in @($mj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $mj.Name + ': ' + $p) } }
         foreach ($p in @($jG0.Problems) | Select-Object -First 3) { Write-Output ('  the game''s page: ' + $p) }
         foreach ($gj in $gameJudged) { foreach ($p in @($gj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $gj.Name + ': ' + $p) } }
         exit 1
@@ -2355,7 +2462,7 @@ try {
 }
 Write-Output ''
 if ($failed.Count -eq 0) {
-    Write-Output "=== CHECK: clean - every case OK at both ratios, every count at or above its floor, and the game's page's fourteen cases OK with Alonzo's fifteen said absent ==="
+    Write-Output "=== CHECK: clean - every case OK at both ratios, every count at or above its floor, and the game's page's fifteen cases OK with Alonzo's fifteen said absent ==="
     exit 0
 }
 Write-Output "=== CHECK: $($failed.Count) problem(s) ==="

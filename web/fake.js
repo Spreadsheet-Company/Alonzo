@@ -274,6 +274,15 @@
       if (out.rate > 0) return bad('has (settle ' + m[1] + ') with (rate ' + out.rate + '): a cartridge settles at (rate 0) alone');
       out.settle = +m[1];
     }
+    // version 6's keyboard sheets (SPEC.5), optional: a (spec 6) cartridge's alone; the double reads their sheets and
+    // prints each directive as the engine does, the engine's own checks of a sheet once, plane mode and the two
+    // contradictions left to it
+    out.keyed = [];
+    var kre = /\((game|work|read)((?:\s+"(?:[^"\\]|\\.)*")+)\s*\)/g, km;
+    while ((km = kre.exec(bare))) {
+      if (out.spec < 6) return bad('gives (' + km[1] + ' ...), a directive of version 6\'s, where the cartridge says (spec ' + out.spec + ')');
+      out.keyed.push('(' + km[1] + ' ' + km[2].match(/"(?:[^"\\]|\\.)*"/g).join(' ') + ')');
+    }
     return out;
   }
 
@@ -284,6 +293,7 @@
     // version 6's settle (CART.12), as engine/src/cartridge.rs keeps it: K, the acts the Clock counts, the last done frame's
     // word and the settle steps since the act
     this.settle = m.settle || 0; this.acts = 0; this.settleWord = ''; this.settleSteps = 0;
+    this.keyed = m.keyed || [];   // version 6's keyboard sheets as the manifest gives them (SPEC.5)
     this.frame = 0;          // the last complete frame
     this.progress = null;    // { evaluated, of } while a frame is in progress
     this.cells = {};         // sheet key -> Map(address -> { v } or { f, v }); the Screen's map holds what overrides its formulas
@@ -496,6 +506,7 @@
       if (x.rec) return x.rec;
       var c = x.c, lines = ['(spec ' + c.spec + ')', '(title ' + quote(c.title) + ')', '(rate ' + c.rate + ')', '(screen ' + c.mode + ' ' + c.w + ' ' + c.h + ')', '(seed ' + c.seed + ')'];
       if (c.settle) lines.push('(settle ' + c.settle + ')');   // version 6's directive (CART.12)
+      for (var kd = 0; kd < c.keyed.length; kd++) lines.push(c.keyed[kd]);   // and its keyboard sheets (SPEC.5)
       for (var i = 0; i < DEVICES.length; i++) {
         var key = DEVICES[i][0].toLowerCase(), R = c.extent(key, false);
         var lay = byVersion(LAYOUT, LAYOUT_4, LAYOUT_5, c, key);

@@ -365,10 +365,27 @@ cell yet, so a cell emptied holds the empty text, which a formula reading it as
 a number reads as `#VALUE!`, as Excel reads `=""`: Frazaro's `KERNEL.46` is the
 row that empties a cell. A key the game takes stays the game's: a command's
 key, a key its Keys sheet binds at a rate, and every key where it reads the last
-one pressed. The palette floats away from the cell being edited, at the bottom
-while the selection stands in the top half of the rows in view and at the top
-otherwise; a keymap's line, `(palette "top")` or `(palette "bottom")`, fixes it
-there. The window's own loss of the focus, to another application or a
+one pressed. A cartridge of version 6 may say whose each sheet's keys are
+(`SPEC.5`, `docs/SPEC.md` section 7.2): `(game "I NON")` names a sheet whose
+keys are the game's, its commands and its Keys holding on such sheets alone;
+`(read "Lesson")` a read-only sheet, a key typed there, Delete, Backspace, F2
+or a double click, and a row of the palette or the edit row into it, refused
+by the sheet's name, while the cartridge's own rows still write it; and every
+other sheet is a work sheet, a person's to type into. `(work "Bench")` names
+one so, and is optional: where a cartridge names a game sheet, no key is the
+game's on any other; where it names none, its commands hold on every sheet as
+before, and a sheet named `work` is scoped out of them. Enter on a read-only
+sheet moves the selection down, and Tab moves it right on every sheet whose
+keys are a person's, Shift moving each back, as a spreadsheet's do; on a
+sheet a person writes, Enter opens the cell's edit as before. The palette's
+note says the mode of the sheet shown, and the note under the edit row every
+sheet's. The palette floats away from the cell
+being edited, at the bottom while the selection stands in the top half of the
+rows in view and at the top otherwise; a keymap's line, `(palette "top")` or
+`(palette "bottom")`, fixes it there, and the commands `palette-top`,
+`palette-bottom` and `palette-floating` write that line into the keymap
+applied and apply it, kept in this browser, while the keys' box holds no
+keymap left unapplied. The window's own loss of the focus, to another application or a
 screenshot, leaves the palette open with what was typed in it, and the browser
 gives the prompt its focus back when the window has it again; a click elsewhere
 on the page shuts it. A cartridge picked from the list
@@ -938,10 +955,14 @@ viewport, not an Excel clone.
   reads no act's place or press a selection and no frame (`CART.9`); and `widths`, the page's own widths card,
   columns dragged on a divider as a person drags them, each sheet drawn at
   its own widths and no other sheet's, through the frames, the tabs, a sheet
-  a Camera shows, the source applied and a Load (`ENGINE.26`). Each of
+  a Camera shows, the source applied and a Load (`ENGINE.26`); and `modes`,
+  the keyboard's sheets (`SPEC.5`): the page's rule for a key on each mode's
+  sheet, the palette's place, the double's three directives, and the page's
+  own modes card, a game's key, a character and a person's row on each of
+  its sheets, at rate 0 and at a rate. Each of
   the fifteen others prints
   `case <name>: not on this page`, being proven in Alonzo's CI, and the
-  last line reads `loop ok cases=14 dpr=1; 15 of Alonzo's own not on this
+  last line reads `loop ok cases=15 dpr=1; 15 of Alonzo's own not on this
   page` at a ratio of 1. A replay with no hand is held to its golden alone, counted `alone`
   and said in a note under the case. Every other mode of the bench is
   Alonzo's own and says so on a game's page; `?frames=1` and `?blit=1` over

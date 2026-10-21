@@ -601,7 +601,10 @@
     { name: 'keys', words: 'give the keys\' box the keys' },
     { name: 'apply-keys', words: 'apply the keys\' box as the page\'s keymap, kept in this browser' },
     { name: 'default-keys', words: 'put the page\'s own keymap in the keys\' box, to be applied' },
-    { name: 'record-key', words: 'write the next key pressed into the keys\' box, as the keymap spells it' }
+    { name: 'record-key', words: 'write the next key pressed into the keys\' box, as the keymap spells it' },
+    { name: 'palette-floating', words: 'let the palette float, away from the cell the selection stands on: the keymap\'s (palette ...) line taken out, applied and kept in this browser' },
+    { name: 'palette-top', words: 'fix the palette at the top: (palette "top") written into the keymap, applied and kept in this browser' },
+    { name: 'palette-bottom', words: 'fix the palette at the bottom: (palette "bottom") written into the keymap, applied and kept in this browser' }
   ];
   // The page's own keymap, the keys' box's first text. The palette on Ctrl+K, which Cmd+K presses on a Mac, the web's
   // key for a command palette, and on Ctrl+Shift+`, Frazaro's CLI key, the Control key alone since a Mac keeps Cmd+` for
@@ -622,7 +625,8 @@
     '; every command. A game\'s own command is its cartridge\'s name and its own, (bind "B" buffet.buy-1): it holds',
     '; while that cartridge is loaded and the command holds, its key passing on otherwise (ENGINE.25). And where the',
     '; palette opens, (palette "floating"), away from the cell the selection stands on, or (palette "top") or',
-    '; (palette "bottom"); a key typed on a cell opens it holding that cell\'s row (CART.9).',
+    '; (palette "bottom"), the line the commands palette-floating, palette-top and palette-bottom write and apply;',
+    '; a key typed on a cell opens it holding that cell\'s row (CART.9), on a sheet the cartridge lets a person write.',
     '(bind "Ctrl+K" palette)',
     '(bind "Control+Shift+[Backquote]" palette)',
     '(bind "Ctrl+Alt+PageDown" next-sheet)',
@@ -1065,6 +1069,67 @@
     if (sel.text.indexOf(':') < 0 && (!sel.focus || sel.focus.kind === 'empty')) return null;
     return '(cell ' + vlaString(sheet) + ' ' + vlaString(sel.text) + ' "")';
   }
+  // a printable character, alone or with Shift, no Ctrl, Cmd or Alt, while no input method composes
+  function cellEditKey(ev) { return !ev.ctrlKey && !ev.metaKey && !ev.altKey && !ev.isComposing && typeof ev.key === 'string' && ev.key.length === 1 && ev.key >= ' '; }
+  // Delete or Backspace alone, a spreadsheet's two ways to empty a cell (CART.9's hand test, 2026-10-20)
+  function cellClearKey(ev) { return !ev.ctrlKey && !ev.metaKey && !ev.altKey && !ev.shiftKey && (ev.key === 'Delete' || ev.key === 'Backspace'); }
+  // Enter or Tab, alone or with Shift, a spreadsheet's keys that move the selection (SPEC.5's hand test, 2026-10-20)
+  function cellStepKey(ev) { return !ev.ctrlKey && !ev.metaKey && !ev.altKey && !ev.isComposing && (ev.key === 'Enter' || ev.key === 'Tab'); }
+  // What the page makes of a key on the grid's cells that no binding of its keymap took (CART.9's second slice; SPEC.5's
+  // table, docs/SPEC.md section 7.2), pure: 'game', the game's, left to the host, a command's key, a key its Keys sheet
+  // binds at a rate, or any key where it reads the last one pressed, each on a sheet whose keys are the game's, and Tab
+  // on such a sheet while a game runs, kept from walking out of the page (ENGINE.14's hand test); 'read', a key that
+  // would write a read-only sheet, refused by the sheet's name; 'edit', a character opening the cell's edit; 'empty',
+  // Delete emptying the selection; 'emptied', Backspace opening the cell emptied; 'step', Enter on a read-only sheet and
+  // Tab on any, moving the selection down and right as a spreadsheet's do, Shift back (SPEC.5's hand test); and 'pass',
+  // any other key, the viewport's, Enter's among them where a person writes, which opens the cell's edit. ev, the event;
+  // at, the host's answers for the sheet shown: { rate, lastKeyRead, gameHere, editsHere, takes }, takes whether the host
+  // takes the key as the game's.
+  function gridKeyAct(ev, at) {
+    var typed = cellEditKey(ev), clear = cellClearKey(ev), step = cellStepKey(ev);
+    if (!typed && !clear && !step) return 'pass';
+    if ((at.rate > 0 && at.lastKeyRead && at.gameHere) || at.takes) return 'game';
+    if (step) {
+      if (ev.key === 'Tab') return at.rate > 0 && at.gameHere ? 'game' : 'step';
+      return at.editsHere ? 'pass' : 'step';
+    }
+    if (!at.editsHere) return 'read';
+    return typed ? 'edit' : ev.key === 'Backspace' ? 'emptied' : 'empty';
+  }
+  // A keymap's text with the palette's place (SPEC.5's rider, the owner's food for thought at CART.9's second hand test):
+  // every (palette ...) line taken out and, for the top or the bottom, one written at its end; floating writes none, the
+  // keymap's default. A comment that names the line is kept.
+  function keymapWithPlace(text, place) {
+    var lines = String(text).split('\n').filter(function (l) { return !/^\s*\(palette\s/.test(l); });
+    if (place === 'top' || place === 'bottom') {
+      var at = lines.length;
+      while (at > 0 && lines[at - 1].trim() === '') at--;   // before the text's last empty lines, its ending kept
+      lines.splice(at, 0, '(palette "' + place + '")');
+    }
+    return lines.join('\n');
+  }
+  // A sheet's mode in words (SPEC.5), the palette's note while the sheet shows: '' for a sheet the manifest names by none
+  // where it names no game sheet, the keys then as they were. name, the sheet; m, the host's sheetMode; gameNamed, whether
+  // the manifest names a game sheet, a sheet it names by none then as a work sheet.
+  function sheetModeWords(name, m, gameNamed) {
+    if (m.game && m.read) return name + ' is the game\'s and read-only: its keys are the game\'s.';
+    if (m.game) return name + ' is the game\'s: its keys are the game\'s first, and a key it leaves types into a cell.';
+    if (m.work) return name + ' is a work sheet: every key types into its cells.';
+    if (m.read) return name + ' is a read-only sheet.';   // the owner's words at SPEC.5's hand test
+    return gameNamed ? name + ' is a work sheet: every key types into its cells.' : '';
+  }
+  // The cartridge's sheets by mode (SPEC.5), the drawer's words after the game's keys, inside its sentence: '' where the
+  // manifest names none.
+  function modesSentence(c) {
+    if (!c || !((c.game && c.game.length) || (c.work && c.work.length) || (c.read && c.read.length))) return '';
+    var parts = [];
+    if (c.game.length) parts.push(andList(c.game) + (c.game.length === 1 ? ' is' : ' are') + ' the game\'s, its keys holding there alone');
+    if (c.work.length) parts.push(andList(c.work) + (c.work.length === 1 ? ' is a work sheet' : ' are work sheets') + ', a key typed there writing its cells');
+    if (c.read.length) parts.push(andList(c.read) + (c.read.length === 1 ? ' is' : ' are') + ' read-only');
+    if (c.game.length) parts.push('any other sheet is a work sheet');
+    if (parts.length > 1) parts[parts.length - 1] = 'and ' + parts[parts.length - 1];
+    return '. Of its sheets, ' + parts.join('; ');
+  }
   // Where the palette opens (CART.9's second slice, the owner's word): fixed at the top or at the bottom, or floating,
   // away from the cell the selection stands on, at the bottom while it stands in the top half of the rows in view and at
   // the top otherwise. place, the keymap's; row, the selection's row, 0 for none; win, the rows in view, { top, bottom }.
@@ -1202,8 +1267,8 @@
       self.list.appendChild(li);
     });
     this._choose(0);
-    var typed = this.input.value.trim();
-    this.note.textContent = this.lines.length ? 'Enter runs the line chosen, the arrows choose, Escape closes; Ctrl+Up and Ctrl+Down bring back what was run; a text that begins with ( or ; is a row of VLA.' : (typed ? 'No command or sheet is named ' + JSON.stringify(typed) + '.' : '');
+    var typed = this.input.value.trim(), modeSaid = this.opts.modeWords ? this.opts.modeWords() : '';   // the sheet shown's mode (SPEC.5)
+    this.note.textContent = (modeSaid ? modeSaid + ' ' : '') + (this.lines.length ? 'Enter runs the line chosen, the arrows choose, Escape closes; Ctrl+Up and Ctrl+Down bring back what was run; a text that begins with ( or ; is a row of VLA.' : (typed ? 'No command or sheet is named ' + JSON.stringify(typed) + '.' : ''));
   };
   Palette.prototype._choose = function (i) {
     var items = this.list.children;
@@ -1410,7 +1475,7 @@
       // the load having viewed it over a box not yet laid out (ENGINE.18); the Screen is the frame's own
       if (mode === 'grid' && host.vp) { host.vp.redraw(); host.refreshSheet(host.vp); }
       // Enter, F2 or a double click on a cell opens its edit with what it holds (CART.9), heard once the viewport is made
-      if (mode === 'grid' && host.vp && !cellOpenHeard) { cellOpenHeard = true; host.vp.on('cellopen', function () { if (!(rate > 0 && lastKeyRead)) openCellEdit(null); }); }
+      if (mode === 'grid' && host.vp && !cellOpenHeard) { cellOpenHeard = true; host.vp.on('cellopen', function () { if (!(rate > 0 && lastKeyRead && host.gameKeysHere())) openCellEdit(null); }); }
       frameEl.className = 'frame-line';
       frameShort.textContent = 'Frame 0';
       frameEl.textContent = 'Frame 0, the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + ': the cartridge as loaded, nothing computed until ' + (e.rate ? 'the first step.' : 'an edit steps it.');
@@ -1625,7 +1690,10 @@
       keys: function () { give(keysEl, keysBox); },
       'apply-keys': function () { applyKeys(); },
       'default-keys': function () { defaultKeys(); },
-      'record-key': function () { recordKey(); }
+      'record-key': function () { recordKey(); },
+      'palette-floating': function () { placePalette('floating'); },
+      'palette-top': function () { placePalette('top'); },
+      'palette-bottom': function () { placePalette('bottom'); }
     };
     var actless = COMMANDS.filter(function (c) { return !ACTS[c.name]; }).map(function (c) { return c.name; });
     if (actless.length) { statusEl.textContent = 'The commands ' + actless.join(', ') + ' have no act on this page.'; statusEl.className = 'status refused'; }
@@ -1684,7 +1752,7 @@
         try { lastKeyRead = !!host.cart && readsLastKey(host._given()); } catch (e) { lastKeyRead = false; }
       } else if (codes === keysSeen) return;
       keysSeen = codes;
-      gameKeysEl.textContent = gameKeysWords(km, !!(host.cart && host.cart.devices.keys), lastKeyRead, gameCommandKeys());
+      gameKeysEl.textContent = gameKeysWords(km, !!(host.cart && host.cart.devices.keys), lastKeyRead, gameCommandKeys()) + modesSentence(host.cart);   // and its keyboard's sheets (SPEC.5)
       if (keymap) sayKeys();
     }
     // The sheet a place shows, for a binding on a sheet (ENGINE.24): in the Screen's place a grid's sheet shown and a
@@ -1728,15 +1796,24 @@
     }
     function sayKeysLine(text, refused) { keysSaid.textContent = text; keysSaid.className = refused ? 'note refused' : 'note'; sayBar(text); if (refused) statusEl.className = 'status refused'; }
     // Apply the keys: the box read whole, refused whole by line and nothing changed, or applied and kept in this browser,
-    // the page's own text forgetting the one kept.
-    function applyKeys() {
+    // the page's own text forgetting the one kept. lead, the words a command that applies them says first, a text alone
+    // (a click hands it its event).
+    function applyKeys(lead) {
       var r = readKeymap(keysEl.value, COMMANDS);
       if (!r.ok) { sayKeysLine('The keys were not applied, and nothing changed: ' + r.problems.join('; ') + '.', true); return; }
       keymap = r;
       var own = keysEl.value === KEYMAP_DEFAULTS, kept = store.keep(keysEl.value, KEYMAP_DEFAULTS), mine = r.order.length;
       sayKeys();
-      sayKeysLine('The keys applied: ' + r.bindings.length + ' binding' + (r.bindings.length === 1 ? '' : 's') + (mine ? ' and ' + mine + ' command' + (mine === 1 ? '' : 's') + ' of your own' : '') +
+      sayKeysLine((typeof lead === 'string' ? lead + '; the keys applied: ' : 'The keys applied: ') + r.bindings.length + ' binding' + (r.bindings.length === 1 ? '' : 's') + (mine ? ' and ' + mine + ' command' + (mine === 1 ? '' : 's') + ' of your own' : '') +
         (own ? ', the page\'s own, no keymap kept in this browser' : kept ? ', kept in this browser' : ', which this browser will not keep, so a reload brings back the page\'s own') + '.', false);
+    }
+    // The palette's place as a command (SPEC.5's rider, the owner's food for thought at CART.9's second hand test): the
+    // keymap applied with its (palette ...) line rewritten, put in the keys' box and applied, so that the box stays the one
+    // record of it; refused while the box holds a keymap not applied, whose edits it would otherwise apply or lose.
+    function placePalette(place) {
+      if (keysEl.value !== keymap.text) { sayKeysLine('The palette\'s place was not set: the keys\' box holds a keymap not applied, and the place is written into the keymap applied. Apply the keys\' box first, or reload the page to put the keymap applied back in it.', true); return; }
+      keysEl.value = keymapWithPlace(keymap.text, place);
+      applyKeys(place === 'floating' ? 'The palette floats, away from the cell the selection stands on' : 'The palette is fixed at the ' + place);
     }
     // Back to the defaults: the page's own keymap in the box, and the box given the keys as keys gives them, the caret at its
     // end, where a line of a person's own goes (the owner's word at ENGINE.25's hand test).
@@ -1784,6 +1861,12 @@
       side: function () {
         var g = mode === 'grid' && host.vp ? host.vp : null;
         return paletteSide(keymap.place, g ? g.selection().focus.row : 0, g ? g.scrolled() : null);
+      },
+      // the grid's sheet shown, its mode in the manifest said (SPEC.5)
+      modeWords: function () {
+        if (mode !== 'grid' || !host.cart || !host.vp || !host.vp.sheet()) return '';
+        var s = host.vp.sheet();
+        return sheetModeWords(s, host.sheetMode(s), !!host.cart.game.length);
       }
     });
     // A cell's edit (CART.9's second slice, decision 9 as the owner amended it): a key typed on a cell of the grid, or
@@ -1793,6 +1876,7 @@
     function openCellEdit(typed) {
       var vp = host.vp;
       if (mode !== 'grid' || !vp || !vp.sheet()) return false;
+      if (!host.editsHere()) { host.readKey(); return true; }   // a read-only sheet (SPEC.5): the key taken and refused by its name
       var s = vp.selection(), cell = s.focus;
       // a formula the viewport knows by its value alone, a frame's values record holding no formula's text: its text
       // asked of the cell's own record, so that Enter opens the formula itself
@@ -1805,22 +1889,34 @@
       }
       var e = cellEditRow(vp.sheet(), cell, typed);
       palette.openWith(e.text, e.caret, vp.scroller, function (direction) {
-        var r = s.focus.row + (direction === 'down' ? 1 : direction === 'up' ? -1 : 0), c = s.focus.col + (direction === 'right' ? 1 : direction === 'left' ? -1 : 0);
-        if (r < 1 || c < 1) return;
-        vp.select(VP.colName(c) + r);
-        var w = vp.scrolled();   // the new cell kept in view, the window moved by the least
-        if (r < w.top || r > w.bottom || c < w.left || c > w.right) vp.scrollTo(r < w.top ? r : r > w.bottom ? w.top + r - w.bottom : w.top, c < w.left ? c : c > w.right ? w.left + c - w.right : w.left);
+        moveSelectionTo(s.focus.row + (direction === 'down' ? 1 : direction === 'up' ? -1 : 0), s.focus.col + (direction === 'right' ? 1 : direction === 'left' ? -1 : 0));
       });
       return true;
     }
-    // a printable character, alone or with Shift, no Ctrl, Cmd or Alt, while no input method composes
-    function cellEditKey(ev) { return !ev.ctrlKey && !ev.metaKey && !ev.altKey && !ev.isComposing && typeof ev.key === 'string' && ev.key.length === 1 && ev.key >= ' '; }
-    // Delete or Backspace alone, a spreadsheet's two ways to empty a cell (CART.9's hand test, 2026-10-20)
-    function cellClearKey(ev) { return !ev.ctrlKey && !ev.metaKey && !ev.altKey && !ev.shiftKey && (ev.key === 'Delete' || ev.key === 'Backspace'); }
+    // The selection moved to a cell, as Enter and Tab move it: inside the rows and columns the sheet lays, as the arrows
+    // stay, a bound sheet's extent among them, and kept in view, the window moved by the least.
+    function moveSelectionTo(r, c) {
+      var vp = host.vp, g = vp && vp.sheet() ? vp.geometry() : null;
+      if (mode !== 'grid' || !g) return false;
+      r = Math.max(1, Math.min(r, g.rows)); c = Math.max(1, Math.min(c, g.cols));
+      vp.select(VP.colName(c) + r);
+      var w = vp.scrolled();
+      if (r < w.top || r > w.bottom || c < w.left || c > w.right) vp.scrollTo(r < w.top ? r : r > w.bottom ? w.top + r - w.bottom : w.top, c < w.left ? c : c > w.right ? w.left + c - w.right : w.left);
+      return true;
+    }
+    // Enter down and Tab right, Shift back (SPEC.5's hand test, 2026-10-20): Enter where it opens no edit, on a read-only
+    // sheet, and Tab on every sheet whose keys are a person's, as a spreadsheet moves its selection.
+    function stepSelection(ev) {
+      var vp = host.vp;
+      if (mode !== 'grid' || !vp || !vp.sheet()) return false;
+      var f = vp.selection().focus, back = ev.shiftKey ? -1 : 1;
+      return ev.key === 'Tab' ? moveSelectionTo(f.row, f.col + back) : moveSelectionTo(f.row + back, f.col);
+    }
     // Delete: the selection's cells emptied at once, one edit, the selection kept; nothing for a selection Delete leaves
     function clearCells() {
       var vp = host.vp;
       if (mode !== 'grid' || !vp || !vp.sheet()) return false;
+      if (!host.editsHere()) { host.readKey(); return true; }   // as a key typed there (SPEC.5)
       var row = cellClearRow(vp.sheet(), vp.selection());
       if (row) host.edit(row);
       return true;
@@ -1874,18 +1970,17 @@
         if (!ev.repeat || repeats(b.command)) press(b);
         return;
       }
-      // a character typed on a cell of the grid opens that cell's edit in the palette, unless the game takes the key: a
-      // command's, a key its Keys sheet binds at a rate, or any key where it reads the last one pressed (CART.9)
-      if (place === 'screen' && mode === 'grid' && cellEditKey(ev) && !(rate > 0 && lastKeyRead) && !host.takesKey(ev.code, ev.key, ev)) {
-        if (openCellEdit(ev.key)) { ev.preventDefault(); ev.stopPropagation(); }
+      // a character typed on a cell of the grid opens that cell's edit in the palette, Delete empties the selection's cells
+      // and Backspace opens the cell emptied, as a spreadsheet's do, unless the game takes the key (CART.9), and on a read
+      // sheet none writes, refused by the sheet's name (SPEC.5): gridKeyAct's table
+      var act = place === 'screen' && mode === 'grid' ? gridKeyAct(ev, { rate: rate, lastKeyRead: lastKeyRead, gameHere: host.gameKeysHere(), editsHere: host.editsHere(), takes: host.takesKey(ev.code, ev.key, ev) }) : 'pass';
+      if (act === 'read') { host.readKey(); ev.preventDefault(); ev.stopPropagation(); return; }
+      if (act === 'step') { if (stepSelection(ev)) { ev.preventDefault(); ev.stopPropagation(); } return; }
+      if (act === 'edit' || act === 'empty' || act === 'emptied') {
+        if (act === 'edit' ? openCellEdit(ev.key) : act === 'emptied' ? openCellEdit('') : clearCells()) { ev.preventDefault(); ev.stopPropagation(); }
         return;
       }
-      // Delete empties the selection's cells and Backspace opens the cell emptied in the palette, as a spreadsheet's do,
-      // unless the game takes the key (CART.9's hand test)
-      if (place === 'screen' && mode === 'grid' && cellClearKey(ev) && !(rate > 0 && lastKeyRead) && !host.takesKey(ev.code, ev.key, ev)) {
-        if (ev.key === 'Backspace' ? openCellEdit('') : clearCells()) { ev.preventDefault(); ev.stopPropagation(); }
-        return;
-      }
+      // the game's keys go on to the host; Tab, while a game runs, is kept from walking out of the page
       if (place === 'screen' && rate > 0 && ev.key === 'Tab' && !ev.ctrlKey && !ev.metaKey && !ev.altKey) { ev.preventDefault(); return; }
       if (ev.key !== 'Escape' || ev.altKey || ev.repeat || !escapeLocked || !document.fullscreenElement) return;
       if (fullEscape.press(performance.now()) === 'hint') { showHint(); return; }
@@ -6757,6 +6852,285 @@
       if (refusals.length) P.push('widths: the host was refused: ' + refusals[0].text);
     } finally { host.destroy(); stage.removeChild(box); }
   }
+  // The keyboard's sheets (SPEC.5; docs/SPEC.md section 7.2, version 6): what a sheet's mode in the manifest makes of a
+  // key and of a person's row there. The page's half, pure: gridKeyAct over the table, each mode's sheet given a game's
+  // key, a character, Delete, Backspace and an arrow; the palette's and the drawer's words of the modes; and the
+  // palette's place as commands, the keymap's (palette ...) line rewritten (SPEC.5's rider). The double's half, which
+  // reads a manifest and no row: the three read from its describe, each sheet's mode, whether the game's keys hold there
+  // and whether a person writes it, a row into a read sheet refused by its name and one into a work sheet written, a key
+  // there refused, the rule for a sheet named by none, a plane's read sheet, and the three refused below version 6. The
+  // module's half: a card with a command on M over its viewport, each sheet shown by its tab in turn and M pressed there,
+  // its command run on the game's sheets alone; a row into each; the card at a rate, M and x on the work sheet and on a
+  // game sheet; the engine's refusals; and Naught's Lesson read and
+  // its Bench worked, where the page holds Naught. It needs no file of Alonzo's but Naught's, so a game's page runs it.
+  var MODESCARD = { file: 'modescard.vla',
+                    text: '(cartridge "modescard"\n  (spec 6)\n  (title "The keyboard\'s sheets")\n  (rate 0)\n  (screen grid 8 4)\n  (seed 1)\n  (settle 4)\n' +
+                          '  (game "Board" "Tray")\n  (work "Notes")\n  (read "Rules" "Board"))\n' +
+                          '(sheet "Screen" hidden)\n(sheet "Board" visible)\n(sheet "Tray" visible)\n(sheet "Notes" visible)\n(sheet "Rules" visible)\n(sheet "Other" visible)\n(sheet "Commands" hidden)\n' +
+                          '(cell "Commands" "A1" "name")\n(cell "Commands" "B1" "words")\n(cell "Commands" "C1" "holds")\n(cell "Commands" "D1" "key")\n' +
+                          '(cell "Commands" "A2" "mark")\n(cell "Commands" "B2" "add one to the Board\'s marks")\n(cell "Commands" "D2" "KeyM")\n' +
+                          '(cell "Board" "A1" "marks")\n(formula "Board" "B1" "=Board.last!B1+IF(Input!$B$20=\\"mark\\",1,0)")\n' +
+                          '(cell "Tray" "A1" "the tray")\n(cell "Notes" "A1" "notes")\n(cell "Rules" "A1" "the rules")\n(cell "Other" "A1" "another sheet")\n(cell "Screen" "A1" "the Screen")\n' };
+  // each sheet of the card: its tab, the mode the manifest gives it, whether the game's keys hold there and whether a
+  // person writes it
+  var MODES_SHEETS = [['Board', 'game read', true, false], ['Tray', 'game', true, true], ['Notes', 'work', false, true], ['Rules', 'read', false, false], ['Other', '', false, true]];
+  function caseModes() {
+    var P = [], k = { acts: 0, words: 0, places: 0, fakeRead: 0, fakeModes: 0, fakeEdits: 0, fakeSaid: 0, fakeUnnamed: 0, fakePlane: 0, fakeOlder: 0,
+                      module: 0, described: 0, opened: 0, takes: 0, pressed: 0, passed: 0, written: 0, refusedRows: 0, keyRefused: 0, rate: 0, refusals: 0, naught: 0 };
+    modesPage(k, P);
+    modesDouble(k, P);
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm);
+    k.module = bytes.length;
+    modesRun(bytes, k, P);
+    modesRate(bytes, k, P);
+    modesRefused(bytes, k, P);
+    modesNaught(bytes, k, P);
+    return { counters: k, problems: P };
+  }
+  function modeLetters(m) { return [m.game ? 'game' : '', m.work ? 'work' : '', m.read ? 'read' : ''].filter(Boolean).join(' '); }
+  function modesPage(k, P) {
+    var keyM = { key: 'm', code: 'KeyM' }, keyX = { key: 'x', code: 'KeyX' }, del = { key: 'Delete', code: 'Delete' }, bs = { key: 'Backspace', code: 'Backspace' }, down = { key: 'ArrowDown', code: 'ArrowDown' };
+    var enter = { key: 'Enter', code: 'Enter' }, shiftEnter = { key: 'Enter', code: 'Enter', shiftKey: true }, tab = { key: 'Tab', code: 'Tab' }, shiftTab = { key: 'Tab', code: 'Tab', shiftKey: true };
+    var GAME = { gameHere: true, editsHere: true }, GAMEREAD = { gameHere: true, editsHere: false }, WORK = { gameHere: false, editsHere: true }, READ = { gameHere: false, editsHere: false };
+    function at(o, takes, rate) { return { rate: rate || 0, lastKeyRead: !!rate, gameHere: o.gameHere, editsHere: o.editsHere, takes: takes }; }
+    // the table's rows: the host answers takes no on a work or a read sheet that is not the game's, which the module's half holds
+    [['a game sheet, its command\'s M', keyM, at(GAME, true), 'game'], ['a game sheet, x, no key of the game\'s', keyX, at(GAME, false), 'edit'],
+     ['a game sheet, Delete', del, at(GAME, false), 'empty'], ['a game sheet, Backspace', bs, at(GAME, false), 'emptied'],
+     ['a game sheet at a rate reading the last key, x', keyX, at(GAME, false, 30), 'game'],
+     ['a game and read sheet, M', keyM, at(GAMEREAD, true), 'game'], ['a game and read sheet, x', keyX, at(GAMEREAD, false), 'read'],
+     ['a game and read sheet, Delete', del, at(GAMEREAD, false), 'read'], ['a game and read sheet at a rate reading the last key, x', keyX, at(GAMEREAD, false, 30), 'game'],
+     ['a work sheet, M', keyM, at(WORK, false), 'edit'], ['a work sheet, Delete', del, at(WORK, false), 'empty'], ['a work sheet, Backspace', bs, at(WORK, false), 'emptied'],
+     ['a work sheet at a rate reading the last key, x', keyX, at(WORK, false, 30), 'edit'],
+     ['a read sheet, x', keyX, at(READ, false), 'read'], ['a read sheet, Delete', del, at(READ, false), 'read'], ['a read sheet, Backspace', bs, at(READ, false), 'read'],
+     ['a read sheet, the arrow down', down, at(READ, false), 'pass'], ['a read sheet at a rate reading the last key, x', keyX, at(READ, false, 30), 'read'],
+     ['a work sheet, Ctrl+X', { key: 'x', code: 'KeyX', ctrlKey: true }, at(WORK, false), 'pass'], ['a work sheet, Shift+Delete', { key: 'Delete', code: 'Delete', shiftKey: true }, at(WORK, false), 'pass'],
+     // Enter and Tab (SPEC.5's hand test): Enter moving the selection where it opens no edit, Tab on every sheet whose keys
+     // are a person's, and both the game's where it takes them, Tab kept from walking out while a game runs
+     ['a read sheet, Enter', enter, at(READ, false), 'step'], ['a read sheet, Shift+Enter', shiftEnter, at(READ, false), 'step'],
+     ['a read sheet, Tab', tab, at(READ, false), 'step'], ['a read sheet, Shift+Tab', shiftTab, at(READ, false), 'step'],
+     ['a game and read sheet, Enter', enter, at(GAMEREAD, false), 'step'], ['a work sheet, Enter', enter, at(WORK, false), 'pass'],
+     ['a game sheet, Enter', enter, at(GAME, false), 'pass'], ['a work sheet, Tab', tab, at(WORK, false), 'step'],
+     ['a game sheet, Tab', tab, at(GAME, false), 'step'], ['a game sheet while a game runs, Tab', tab, at(GAME, false, 30), 'game'],
+     ['a game sheet at a rate, Tab', tab, { rate: 30, lastKeyRead: false, gameHere: true, editsHere: true, takes: false }, 'game'],
+     ['a work sheet at a rate, Tab', tab, { rate: 30, lastKeyRead: false, gameHere: false, editsHere: true, takes: false }, 'step'],
+     ['a game sheet, Enter the command\'s key', enter, at(GAME, true), 'game'], ['a work sheet, Ctrl+Enter', { key: 'Enter', code: 'Enter', ctrlKey: true }, at(WORK, false), 'pass']].forEach(function (x) {
+      var got = gridKeyAct(x[1], x[2]);
+      if (got === x[3]) k.acts++; else P.push('modes: on ' + x[0] + ' the page makes ' + got + ' of the key, where ' + x[3] + ' is due');
+    });
+    // the palette's note of the sheet shown, and the drawer's of the cartridge's sheets
+    var c = { game: ['I NON', 'II ET'], work: ['Bench'], read: ['Lesson'] };
+    [[sheetModeWords('Board', { game: true, work: false, read: true }, true), 'Board is the game\'s and read-only: its keys are the game\'s.'],
+     [sheetModeWords('I NON', { game: true, work: false, read: false }, true), 'I NON is the game\'s: its keys are the game\'s first, and a key it leaves types into a cell.'],
+     [sheetModeWords('Bench', { game: false, work: true, read: false }, true), 'Bench is a work sheet: every key types into its cells.'],
+     [sheetModeWords('Lesson', { game: false, work: false, read: true }, false), 'Lesson is a read-only sheet.'],
+     [sheetModeWords('Other', { game: false, work: false, read: false }, true), 'Other is a work sheet: every key types into its cells.'],
+     [sheetModeWords('Other', { game: false, work: false, read: false }, false), ''],
+     [modesSentence(c), '. Of its sheets, I NON and II ET are the game\'s, its keys holding there alone; Bench is a work sheet, a key typed there writing its cells; Lesson is read-only; and any other sheet is a work sheet'],
+     [modesSentence({ game: [], work: ['Bench'], read: ['Lesson', 'Notes'] }), '. Of its sheets, Bench is a work sheet, a key typed there writing its cells; and Lesson and Notes are read-only'],
+     [modesSentence({ game: [], work: [], read: [] }), ''], [modesSentence(null), '']].forEach(function (x) {
+      if (x[0] === x[1]) k.words++; else P.push('modes: the page says ' + JSON.stringify(x[0]) + ', where ' + JSON.stringify(x[1]) + ' is due');
+    });
+    // the palette's place, the keymap's one (palette ...) line: written, moved, taken out to the page's own text byte for
+    // byte, nothing written for floating where none stands, and a comment that names the line kept
+    function placeLines(t) { return t.split('\n').filter(function (l) { return /^\s*\(palette\s/.test(l); }); }
+    var top = keymapWithPlace(KEYMAP_DEFAULTS, 'top'), bottom = keymapWithPlace(top, 'bottom'), back = keymapWithPlace(bottom, 'floating');
+    var rt = readKeymap(top, COMMANDS), rb = readKeymap(bottom, COMMANDS), mine = '(bind "Ctrl+K" palette)\n; (palette "top"), a comment\n  (palette "bottom")\n\n';
+    [[rt.ok && rt.place === 'top' && placeLines(top).join() === '(palette "top")', 'the page\'s own keymap fixed at the top reads ' + (rt.ok ? rt.place : rt.problems.join('; ')) + ' with ' + placeLines(top).length + ' line(s) of the place'],
+     [rb.ok && rb.place === 'bottom' && placeLines(bottom).join() === '(palette "bottom")', 'that keymap moved to the bottom reads ' + (rb.ok ? rb.place : rb.problems.join('; ')) + ' with ' + placeLines(bottom).length + ' line(s) of the place'],
+     [back === KEYMAP_DEFAULTS, 'floating again gives a text other than the page\'s own'],
+     [keymapWithPlace(KEYMAP_DEFAULTS, 'floating') === KEYMAP_DEFAULTS, 'floating writes into the page\'s own keymap, where it stands floating already'],
+     [keymapWithPlace(mine, 'top') === '(bind "Ctrl+K" palette)\n; (palette "top"), a comment\n(palette "top")\n\n', 'a keymap of a person\'s own fixed at the top gives ' + JSON.stringify(keymapWithPlace(mine, 'top'))]].forEach(function (x) {
+      if (x[0]) k.places++; else P.push('modes, the palette\'s place: ' + x[1]);
+    });
+    if (!['palette-floating', 'palette-top', 'palette-bottom'].every(function (n) { return COMMANDS.some(function (cm) { return cm.name === n; }); })) P.push('modes: the page\'s commands lack the palette\'s places');
+  }
+  // the double's sheets, whose names it checks for a row alone, which lands on a sheet it holds: its State the work sheet
+  var MODES_DOUBLE = [['Board', 'game read', true, false], ['Tray', 'game', true, true], ['State', 'work', false, true], ['Rules', 'read', false, false], ['Other', '', false, true], ['board', 'game read', true, false]];
+  function modesDouble(k, P) {
+    var text = '(cartridge "keys6"\n  (spec 6)\n  (title "The keyboard\'s sheets over the double")\n  (rate 0)\n  (screen grid 8 4)\n  (seed 1)\n' +
+               '  (game "Board" "Tray")\n  (work "State")\n  (read "Rules" "Board"))\n';
+    function host6(t, file) {
+      var fake = FAKE.create({}), host = new HOST({ drive: 'manual', budget: 0, now: frozen });
+      if (!host.attach(fake.exports).ok) return { host: host, ld: { ok: false, sentence: 'the host refused the double' } };
+      return { host: host, ld: host.load(t, file || 'keys6.vla') };
+    }
+    var a = host6(text), host = a.host;
+    try {
+      if (!a.ld.ok) { P.push('modes, the double: the card did not load: ' + a.ld.sentence); return; }
+      var c = host.cart, read = [c.game.join(','), c.work.join(','), c.read.join(',')].join(' | ');
+      if (read === 'Board,Tray | State | Rules,Board') k.fakeRead++; else P.push('modes, the double: the host read the sheets ' + JSON.stringify(read) + ', where Board,Tray | State | Rules,Board is due');
+      var desc = host.m.call('alonzo_describe', [host.handle]).text;
+      if (desc.indexOf('(game "Board" "Tray")\n(work "State")\n(read "Rules" "Board")\n') >= 0) k.fakeRead++; else P.push('modes, the double: its describe prints ' + JSON.stringify(desc.slice(0, 300)) + ', where the three directives as the manifest gives them are due');
+      MODES_DOUBLE.forEach(function (x) {
+        host.shownName = x[0];
+        var m = modeLetters(host.sheetMode(x[0])), g = host.gameKeysHere(), e = host.editsHere();
+        if (m === x[1] && g === x[2] && e === x[3]) k.fakeModes++;
+        else P.push('modes, the double: ' + x[0] + ' is ' + JSON.stringify(m) + ', the game\'s keys ' + (g ? 'holding' : 'not holding') + ' and a person ' + (e ? 'writing' : 'not writing') + ' it, where ' + JSON.stringify(x[1]) + ', ' + (x[2] ? 'holding' : 'not holding') + ' and ' + (x[3] ? 'writing' : 'not writing') + ' are due');
+      });
+      // a row into a read sheet refused by its name, compared without case, a formula's too; one into a work sheet written
+      host.shownName = 'State'; host.start(); host.tick(1000);
+      var f0 = host.counters().frame;
+      [['(cell "Rules" "A1" 1)', false], ['(cell "rules" "A1" 1)', false], ['(formula "Board" "A1" "=1")', false], ['(cell "State" "B1" 1)', true]].forEach(function (x) {
+        var ok = host.edit(x[0]);
+        if (ok === x[1]) k.fakeEdits++; else P.push('modes, the double: the row ' + x[0] + ' was ' + (ok ? 'written' : 'refused') + ', where it is ' + (x[1] ? 'written' : 'refused'));
+      });
+      var cs = host.counters();
+      if (cs.editsRead === 3 && cs.frame === f0 + 1) k.fakeEdits++; else P.push('modes, the double: the rows left ' + cs.editsRead + ' refused as a read sheet\'s and frame ' + cs.frame + ', where three refused and the work sheet\'s one act, frame ' + (f0 + 1) + ', are due');
+      if (settleSaid(host, 'The edit (cell "Rules" "A1" 1) was not written: Rules is a read-only sheet, named by the manifest\'s (read ...); the cartridge\'s own rows still write it') === 1) k.fakeSaid++;
+      else P.push('modes, the double: the refusal of a row into Rules was said ' + settleSaid(host, 'Rules is a read-only sheet, named by the manifest\'s (read ...)') + ' time(s) in other words, where once in its own is due');
+      host.shownName = 'Rules'; host.readKey(); host.readKey();
+      if (host.counters().keysRead === 2 && settleSaid(host, 'Rules is a read-only sheet, named by the manifest\'s (read ...): a key there writes nothing') === 2) k.fakeSaid++;
+      else P.push('modes, the double: two keys on Rules made ' + host.counters().keysRead + ' refusal(s), where two, each said by the sheet\'s name, are due');
+    } finally { host.destroy(); }
+    // a sheet named by none: as a work sheet where a game sheet is named, and as before where none is
+    [[text.replace('  (game "Board" "Tray")\n', ''), 'Other', true, true, 'a manifest naming no game sheet'],
+     [text.replace('  (game "Board" "Tray")\n', ''), 'State', false, true, 'a manifest naming no game sheet, its work sheet'],
+     [text.replace('  (game "Board" "Tray")\n  (work "State")\n  (read "Rules" "Board"))', ')'), 'Rules', true, true, 'a manifest naming none of the three']].forEach(function (x) {
+      var b = host6(x[0]);
+      try {
+        if (!b.ld.ok) { P.push('modes, the double: ' + x[4] + ' did not load: ' + b.ld.sentence); return; }
+        b.host.shownName = x[1];
+        var g = b.host.gameKeysHere(), e = b.host.editsHere();
+        if (g === x[2] && e === x[3]) k.fakeUnnamed++; else P.push('modes, the double: under ' + x[4] + ' the game\'s keys ' + (g ? 'hold' : 'hold not') + ' on ' + x[1] + ' and a person ' + (e ? 'writes' : 'writes not') + ' it, where ' + (x[2] ? 'they hold' : 'they hold not') + ' and ' + (x[3] ? 'a person writes it' : 'no person writes it'));
+      } finally { b.host.destroy(); }
+    });
+    // a plane's read sheet: its keys the canvas's, the game's, and a person's row into it refused
+    var pl = host6('(cartridge "keys6p"\n  (spec 6)\n  (title "A plane\'s read sheet over the double")\n  (rate 0)\n  (screen plane 8 4)\n  (seed 1)\n  (read "Rules"))\n', 'keys6p.vla');
+    try {
+      if (pl.ld.ok && pl.host.gameKeysHere() && pl.host.edit('(cell "Rules" "A1" 1)') === false && pl.host.counters().editsRead === 1) k.fakePlane++;
+      else P.push('modes, the double: a plane naming a read sheet ' + (pl.ld.ok ? 'kept its keys ' + (pl.host.gameKeysHere() ? 'the game\'s' : 'from the game') + ' and refused ' + pl.host.counters().editsRead + ' row(s) into Rules' : 'did not load: ' + pl.ld.sentence) + ', where its keys are the game\'s and the row is refused');
+    } finally { pl.host.destroy(); }
+    // below version 6 the three are refused
+    ['game', 'work', 'read'].forEach(function (d) {
+      var o = host6('(cartridge "keys5"\n  (spec 5)\n  (title "Version 5")\n  (rate 0)\n  (screen grid 8 4)\n  (seed 1)\n  (' + d + ' "Board"))\n', 'keys5.vla');
+      try {
+        var want = 'gives (' + d + ' ...), a directive of version 6\'s, where the cartridge says (spec 5)';
+        if (!o.ld.ok && o.ld.sentence.indexOf(want) >= 0) k.fakeOlder++; else P.push('modes, the double: a version 5 cartridge giving (' + d + ' ...) was ' + (o.ld.ok ? 'loaded' : 'refused in the words ' + JSON.stringify(o.ld.sentence)) + ', where it is refused, saying ' + JSON.stringify(want));
+      } finally { o.host.destroy(); }
+    });
+  }
+  function modesRun(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:' + GRID_BOX.w + 'px;height:' + GRID_BOX.h + 'px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box }), D = new Driver({ exports: exports });
+    try {
+      if (!host.attach(exports).ok) { P.push('modes: the host refused the module'); return; }
+      var ld = host.load(MODESCARD.text, MODESCARD.file);
+      if (!ld.ok) { P.push('modes: the card did not load: ' + ld.sentence); return; }
+      var h = ld.handle, vp = host.vp, sc = vp.scroller, pt = viewPoints(vp);
+      function value(sheet, a) { return recordValues(D.call('alonzo_view', [h], ['grid', sheet, a]).text)[a]; }
+      function marks() { return viewsNum(value('Board', 'B1')); }
+      function key(init) {
+        var o = { bubbles: true, cancelable: true };
+        for (var p in init) if (Object.prototype.hasOwnProperty.call(init, p)) o[p] = init[p];
+        var ev = new KeyboardEvent('keydown', o);
+        sc.dispatchEvent(ev);
+        sc.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, cancelable: true, code: init.code, key: init.key }));
+        return ev;
+      }
+      var c = host.cart, read = [c.game.join(','), c.work.join(','), c.read.join(',')].join(' | ');
+      if (read === 'Board,Tray | Notes | Rules,Board') k.described++; else P.push('modes: the host read the engine\'s sheets ' + JSON.stringify(read) + ', where Board,Tray | Notes | Rules,Board is due');
+      var desc = D.call('alonzo_describe', [h], []).text;
+      if (/\(game "Board" "Tray"\)\r?\n\(work "Notes"\)\r?\n\(read "Rules" "Board"\)\r?\n/.test(desc)) k.described++; else P.push('modes: the engine\'s describe prints ' + JSON.stringify(desc.slice(0, 400)) + ', where the three directives as the manifest gives them are due');
+      if (vp.sheet() === 'Board') k.opened++; else P.push('modes frame 0: the host opened on ' + (vp.sheet() || 'nothing') + ', where the card opens on the Board, its first visible sheet');
+      host.start(); host.tick(1000);
+      // each sheet by its tab: whether the host takes M as the game's, and M pressed, the command run on a game sheet alone
+      var due = 0;
+      MODES_SHEETS.forEach(function (x) {
+        var tb = pt.tab(x[0]);
+        if (!tb) { P.push('modes: no tab ' + x[0] + ' in the strip'); return; }
+        tb.click();
+        if (vp.sheet() !== x[0]) { P.push('modes: the tab ' + x[0] + ' shows ' + vp.sheet()); return; }
+        var m = modeLetters(host.sheetMode(x[0])), takes = host.takesKey('KeyM', 'm');
+        if (m === x[1] && takes === x[2] && host.gameKeysHere() === x[2] && host.editsHere() === x[3]) k.takes++;
+        else P.push('modes: on ' + x[0] + ' the host reads the mode ' + JSON.stringify(m) + ', takes M ' + takes + ' and writes ' + host.editsHere() + ', where ' + JSON.stringify(x[1]) + ', ' + x[2] + ' and ' + x[3] + ' are due');
+        var f0 = host.counters().frame, ev = key({ code: 'KeyM', key: 'm' }), f1 = host.counters().frame;
+        if (x[2]) due++;
+        if (x[2] ? ev.defaultPrevented && f1 > f0 && marks() === due : !ev.defaultPrevented && f1 === f0 && marks() === due) { if (x[2]) k.pressed++; else k.passed++; }
+        else P.push('modes: M on ' + x[0] + ' was ' + (ev.defaultPrevented ? 'taken' : 'passed on') + ', the frame ' + f0 + ' to ' + f1 + ' and the Board\'s marks ' + marks() + ', where ' + (x[2] ? 'the command mark, an act, ' + due + ' marks' : 'no act, the key the viewport\'s, ' + due + ' marks') + ' are due');
+      });
+      // a person's rows: into the work sheet, the sheet named by none and the game's own written, into a read sheet refused
+      [['(cell "Notes" "B2" 7)', 'Notes', 'B2', 7], ['(cell "Other" "B2" 8)', 'Other', 'B2', 8], ['(cell "Tray" "B2" 9)', 'Tray', 'B2', 9]].forEach(function (x) {
+        var ok = host.edit(x[0]);
+        if (ok && viewsNum(value(x[1], x[2])) === x[3]) k.written++; else P.push('modes: the row ' + x[0] + ' was ' + (ok ? 'written, ' + x[1] + '!' + x[2] + ' holding ' + JSON.stringify(value(x[1], x[2])) : 'refused') + ', where it lands');
+      });
+      [['(cell "Rules" "B2" 7)', 'Rules', 'B2'], ['(formula "board" "C1" "=1")', 'Board', 'C1']].forEach(function (x) {
+        var ok = host.edit(x[0]), v = value(x[1], x[2]);
+        if (!ok && viewsNum(v) === 0) k.refusedRows++; else P.push('modes: the row ' + x[0] + ' was ' + (ok ? 'written' : 'refused') + ' and ' + x[1] + '!' + x[2] + ' holds ' + JSON.stringify(v) + ', where it is refused and the cell untouched');
+      });
+      if (host.counters().editsRead === 2) k.refusedRows++; else P.push('modes: the host counts ' + host.counters().editsRead + ' row(s) refused as a read sheet\'s, where 2 are due');
+      // a key on the read sheet, the page's refusal by its name: the count and the words
+      pt.tab('Rules').click();
+      host.readKey();
+      if (host.counters().keysRead === 1 && settleSaid(host, 'Rules is a read-only sheet, named by the manifest\'s (read ...): a key there writes nothing') === 1) k.keyRefused++;
+      else P.push('modes: a key on Rules made ' + host.counters().keysRead + ' refusal(s), where one by the sheet\'s name is due');
+      var refusals = host.sentences().filter(function (sn) { return sn.refusal && sn.text.indexOf('is a read-only sheet') < 0; });
+      if (refusals.length) P.push('modes: the host was refused: ' + refusals[0].text);
+    } finally { host.destroy(); stage.removeChild(box); }
+  }
+  // The card at a rate of 30, where every key the Screen hears is offered to the game: on the work sheet none is, neither
+  // its command's M nor x, which is no last key; on a game sheet M runs its command and x is the frame's last key.
+  function modesRate(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:' + GRID_BOX.w + 'px;height:' + GRID_BOX.h + 'px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box });
+    try {
+      if (!host.attach(exports).ok) { P.push('modes, at a rate: the host refused the module'); return; }
+      var ld = host.load(MODESCARD.text.replace('(rate 0)', '(rate 30)').replace('  (settle 4)\n', ''), 'modescard30.vla');
+      if (!ld.ok) { P.push('modes, at a rate: the card did not load: ' + ld.sentence); return; }
+      var pt = viewPoints(host.vp);
+      [['Notes', false], ['Tray', true]].forEach(function (x) {
+        var tb = pt.tab(x[0]);
+        if (!tb) { P.push('modes, at a rate: no tab ' + x[0] + ' in the strip'); return; }
+        tb.click();
+        host.lastKey = null;
+        var m = host.keyDown('KeyM', 'm'), typed = host.keyDown('KeyX', 'x'), last = host.lastKey ? host.lastKey.key : null;
+        host.releaseKeys();
+        if (m === x[1] && !typed && last === (x[1] ? 'x' : null)) k.rate++;
+        else P.push('modes, at a rate: on ' + x[0] + ' M was ' + (m ? 'taken' : 'passed on') + ' and x left the last key ' + JSON.stringify(last) + ', where ' + (x[1] ? 'M runs the command and x is the last key' : 'neither is the game\'s and no last key stands'));
+      });
+    } finally { host.destroy(); stage.removeChild(box); }
+  }
+  // The engine's refusals of the three, each by its words through the host's load: below version 6, game in plane mode,
+  // a sheet in work and in game, a sheet named twice in one, and a sheet the cartridge does not hold.
+  function modesRefused(bytes, k, P) {
+    var exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: frozen });
+    try {
+      if (!host.attach(exports).ok) { P.push('modes: the host refused the module'); return; }
+      var t = MODESCARD.text;
+      [[t.replace('(spec 6)', '(spec 5)').replace('  (settle 4)\n', ''), 'gives (game "Board" "Tray"), a directive of version 6\'s, where the cartridge says (spec 5)'],
+       [t.replace('(screen grid 8 4)', '(screen plane 8 4)'), 'gives (game "Board" "Tray") in plane mode: a plane cartridge\'s keys are its canvas\'s'],
+       [t.replace('(work "Notes")', '(work "Notes" "Tray")'), 'names "Tray" in (work "Notes" "Tray") and in (game "Board" "Tray"): a work sheet\'s keys are a person\'s'],
+       [t.replace('(read "Rules" "Board")', '(read "Rules" "rules")'), '(read ...) names each sheet once'],
+       [t.replace('(read "Rules" "Board")', '(read "Rules" "Nowhere")'), 'gives (read "Rules" "Nowhere"), naming "Nowhere", a sheet the cartridge does not hold']].forEach(function (x, i) {
+        var r = host.load(x[0], 'modes' + i + '.vla');
+        if (!r.ok && r.sentence.indexOf(x[1]) >= 0) k.refusals++; else P.push('modes: the engine ' + (r.ok ? 'loaded' : 'refused in the words ' + JSON.stringify(r.sentence)) + ' a card where it refuses, saying ' + JSON.stringify(x[1]));
+      });
+    } finally { host.destroy(); }
+  }
+  // Naught's Lesson read and its Bench worked (SPEC.5's adoption), where the page holds Naught: the Lesson, the sheet it
+  // opens on, refusing a person's row, and the Bench taking one, its switch A3 then 1.
+  function modesNaught(bytes, k, P) {
+    if (!CARTRIDGES.naught) return;
+    var exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: frozen }), D = new Driver({ exports: exports });
+    try {
+      if (!host.attach(exports).ok) { P.push('modes, Naught: the host refused the module'); return; }
+      var ld = host.load(cartText('naught'), 'naught.vla');
+      if (!ld.ok) { P.push('modes, Naught: it did not load: ' + ld.sentence); return; }
+      var c = host.cart, sheets = [c.game.join(','), c.work.join(','), c.read.join(',')].join(' | ');
+      host.shownName = 'Lesson';
+      if (sheets === ' | Bench | Lesson' && !host.editsHere() && !host.gameKeysHere()) k.naught++; else P.push('modes, Naught: its sheets read ' + JSON.stringify(sheets) + ', the Lesson ' + (host.editsHere() ? 'written' : 'read') + ', where the Bench a work sheet and the Lesson read are due');
+      host.start(); host.tick(1000);
+      var lesson = host.edit('(cell "Lesson" "A1" "graffiti")');
+      host.shownName = 'Bench';
+      var bench = host.edit('(cell "Bench" "A3" 1)'), a3 = recordValues(D.call('alonzo_view', [ld.handle], ['grid', 'Bench', 'A3']).text).A3;
+      if (!lesson && bench && viewsNum(a3) === 1) k.naught++; else P.push('modes, Naught: a row into the Lesson was ' + (lesson ? 'written' : 'refused') + ' and one into the Bench ' + (bench ? 'written, A3 holding ' + JSON.stringify(a3) : 'refused') + ', where the Lesson refuses it and the Bench takes it');
+    } finally { host.destroy(); }
+  }
   function loopLine(name, k, problems) {
     var parts = [];
     for (var key in k) if (Object.prototype.hasOwnProperty.call(k, key)) parts.push(key + ' ' + k[key]);
@@ -6772,7 +7146,7 @@
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
-                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths]];
+                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths], ['modes', caseModes]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -6781,7 +7155,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1, commands: 1, settle: 1, widths: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }

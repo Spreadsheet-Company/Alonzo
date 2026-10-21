@@ -8,6 +8,8 @@
   (seed 1)
   (settle 65536)
   (bound "Lesson" "Bench")
+  (read "Lesson")
+  (work "Bench")
   (author "Spreadsheet Company")
   (license "0BSD")
   (notes "Naught: Vel et Aut, a bench of logic gates in Latin: NON, ET, VEL, AUT, NON-ET and NEC. A 16-bit ripple adder from A1 and an 8 by 8 multiplier from I1, every gate a formula of the cells it reads, every 1 in lavender. Select a switch and type 1 or 0, then Enter, (cell \"Bench\" \"A3\" 1), and every gate it reaches computes; the Lesson says the rest."))

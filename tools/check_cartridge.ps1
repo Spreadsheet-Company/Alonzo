@@ -24,8 +24,10 @@ WHAT IT HOLDS, for each .vla under cartridges/, with the catalog's ids:
     most once, and settle (1..65536) too, a (spec 6) cartridge's at (rate 0)
     alone, and bound ("sheet" ...) too, a (spec 6) cartridge's at any rate,
     one sheet or more, each named once and held by the rows or the engine's
-    own; an unknown directive refused; a (spec n) past 6 refused as
-    cart-spec-unsupported;
+    own; and game, work and read ("sheet" ...) too, the keyboard's sheets, a
+    (spec 6) cartridge's, game and work a grid's, each as bound names its
+    sheets, and no sheet in work and in either other; an unknown directive
+    refused; a (spec n) past 6 refused as cart-spec-unsupported;
   - every row after it one of section 7.3's kinds in its shape (grid-row-
     unknown, grid-row-malformed); a (derived ...) row is the host's and never
     a cartridge's;
@@ -92,8 +94,10 @@ a fresh copy for every case: the clean copy passes, and so do Life written
 to (spec 3), Life written to (spec 4) with its Camera's third row, Life written to
 (spec 5) with its Commands sheet, Life written to (spec 4) with a sheet named
 Commands of its own, Life written to (spec 6) at rate 0 with (settle 8), and
-Life written to (spec 6) bounding its Screen, (bound "Screen");
-forty-seven mutants must each fail for its own reason, each
+Life written to (spec 6) bounding its Screen, (bound "Screen"), the grid
+card written to (spec 6), its Screen the game's and read and its Camera read,
+and Life written to (spec 6), its Screen read;
+fifty-three mutants must each fail for its own reason, each
 asserting its anchor once and proving it applied before the check is asked.
 Thirteen are of life.vla: a directive dropped, a rate of 121, a screen 321
 wide, a cell written twice, a cell outside the Screen, a Palette index out
@@ -121,7 +125,10 @@ name that is no name, and a command's name written twice. Three are CART.12's,
 version 6's directive held to a (spec 6) cartridge at rate 0: (settle 8) at
 (spec 5), (settle 8) at (rate 30), and (settle 0). Four are its hand test's,
 version 6's second directive: (bound "Screen") at (spec 5), a bound naming a
-sheet no row holds, one naming a sheet twice, and one naming none.
+sheet no row holds, one naming a sheet twice, and one naming none. Six are
+SPEC.5's, the keyboard's sheets: (game "Screen") at (spec 5), (work "Screen")
+in plane mode, a read sheet no row holds, one named twice, a game directive
+naming none, and the grid card's Screen in game and in work.
 
 SINCE ENGINE.18 (2026-10-15; docs/REARVIEW.md, decision 1): (spec 4) is read,
 for a cartridge and for a replay's header, and version 4's two rows, the
@@ -146,6 +153,13 @@ its hand test (2026-10-19), version 6's second directive, (bound "<sheet>" ...),
 the sheets a viewport draws to their extent and no further, is a (spec 6)
 cartridge's at any rate, each sheet a text named once and one the rows hold or
 the engine makes, Clock, File or Input, as the engine reads it at the load.
+
+SINCE SPEC.5 (2026-10-20; docs/REARVIEW.md, decision 1): version 6's keyboard's
+sheets, (game "<sheet>" ...), (work "<sheet>" ...) and (read "<sheet>" ...),
+the sheets whose keys are the game's, the sheets a person types into and the
+sheets no person writes, are a (spec 6) cartridge's, game and work a grid's
+and read any cartridge's, each naming its sheets as bound names its own, and
+no sheet in work and in game or read, as the engine reads them.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network; a
 hardcoded, reviewable baseline that pins how many; exit 0 clean, exit 1 with
@@ -297,7 +311,7 @@ $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's ow
 
 # --- section 7 and section 3, as data ---
 $requiredDirectives = @('spec', 'title', 'rate', 'screen', 'seed')
-$optionalDirectives = @('author', 'license', 'notes', 'settle', 'bound')
+$optionalDirectives = @('author', 'license', 'notes', 'settle', 'bound', 'game', 'work', 'read')
 $rowKinds = @('sheet', 'cell', 'formula', 'value', 'name', 'column', 'format', 'style', 'gridlines', 'sentence', 'table', 'refers', 'look', 'row')
 function New-Rect([int]$top, [int]$left, [int]$bottom, [int]$right) { return @{ T = $top; L = $left; B = $bottom; R = $right } }
 $layouts = @{
@@ -429,6 +443,7 @@ function Test-Cartridge([string]$path) {
         $name = $man.Items[1].Value
         if ($name -cnotmatch '^[a-z0-9][a-z0-9-]*$') { $problems.Add("line $($man.Line): cart-manifest-invalid: the name `"$name`" is not lowercase letters, digits and hyphens") }
         $seen = @{}
+        $keyed = @{}   # version 6's keyboard's sheets (SPEC.5): game, work and read, each a map of its names
         for ($k = 2; $k -lt $man.Items.Count; $k++) {
             $d = $man.Items[$k]
             if (-not (Test-Kind $d 'list') -or $d.Items.Count -eq 0 -or -not (Test-Kind $d.Items[0] 'symbol')) { $problems.Add("line $($d.Line): cart-manifest-invalid: $(Show-Datum $d) is not a directive"); continue }
@@ -472,6 +487,17 @@ function Test-Cartridge([string]$path) {
                         $boundNames[$bn.Value.ToLowerInvariant()] = $bn.Value
                     }
                 }
+                { $_ -ceq 'game' -or $_ -ceq 'work' -or $_ -ceq 'read' } {
+                    $keyedNames = @{}
+                    if ($args1 -lt 1) { $problems.Add("line $($d.Line): cart-manifest-invalid: ($dn ...) names one sheet or more, each a text") }
+                    for ($ki = 1; $ki -le $args1; $ki++) {
+                        $kn = $d.Items[$ki]
+                        if (-not (Test-Kind $kn 'string')) { $problems.Add("line $($d.Line): cart-manifest-invalid: ($dn ...) names one sheet or more, each a text"); break }
+                        if ($keyedNames.ContainsKey($kn.Value.ToLowerInvariant())) { $problems.Add("line $($d.Line): cart-manifest-invalid: ($dn ...) names each sheet once"); break }
+                        $keyedNames[$kn.Value.ToLowerInvariant()] = $kn.Value
+                    }
+                    $keyed[$dn] = $keyedNames
+                }
                 'license' {
                     if ($args1 -ne 1 -or -not (Test-Kind $d.Items[1] 'string')) { $problems.Add("line $($d.Line): cart-manifest-invalid: (license `"...`") holds one SPDX identifier") }
                     elseif ($d.Items[1].Value -cne '0BSD') { $problems.Add("line $($d.Line): cart-manifest-invalid: the license directive says $($d.Items[1].Value) and the header 0BSD") }
@@ -489,6 +515,21 @@ function Test-Cartridge([string]$path) {
         }
         # version 6's bound (CART.12's hand test): a (spec 6) cartridge's alone, at any rate
         if ($seen.ContainsKey('bound') -and $specN -lt 6) { $problems.Add("line $($seen['bound'].Line): cart-manifest-invalid: (bound ...) is a directive of version 6's, where the cartridge says (spec $specN)") }
+        # version 6's keyboard's sheets (SPEC.5): a (spec 6) cartridge's; game and work a grid's; no work sheet in another
+        foreach ($kd in @('game', 'work', 'read')) {
+            if (-not $seen.ContainsKey($kd)) { continue }
+            $kl = $seen[$kd].Line
+            if ($specN -lt 6) { $problems.Add("line $($kl): cart-manifest-invalid: ($kd ...) is a directive of version 6's, where the cartridge says (spec $specN)") }
+            if ($kd -cne 'read' -and $mode -ceq 'plane') { $problems.Add("line $($kl): cart-manifest-invalid: ($kd ...) in plane mode: a plane cartridge's keys are its canvas's, and (game ...) and (work ...) name a grid's sheets") }
+        }
+        if ($keyed.ContainsKey('work')) {
+            foreach ($other in @('game', 'read')) {
+                if (-not $keyed.ContainsKey($other)) { continue }
+                foreach ($low in @($keyed['work'].Keys)) {
+                    if ($keyed[$other].ContainsKey($low)) { $problems.Add("line $($seen['work'].Line): cart-manifest-invalid: `"$($keyed['work'][$low])`" is named in (work ...) and in ($other ...): a work sheet's keys are a person's, typed into its cells") }
+                }
+            }
+        }
     }
 
     # -- the rows --
@@ -631,6 +672,19 @@ function Test-Cartridge([string]$path) {
                 if (-not (Test-Kind $bn 'string')) { continue }
                 $low = $bn.Value.ToLowerInvariant()
                 if (-not $sheetsNamed.ContainsKey($low) -and @('clock', 'file', 'input') -notcontains $low) { $problems.Add("line $($d.Line): cart-manifest-invalid: (bound `"$($bn.Value)`") names a sheet the cartridge does not hold") }
+            }
+        }
+    }
+    # -- version 6's keyboard's sheets (SPEC.5): each sheet one the rows hold, or one the engine makes, as bound's --
+    if ($null -ne $man -and $man.Items.Count -ge 2) {
+        for ($k = 2; $k -lt $man.Items.Count; $k++) {
+            $d = $man.Items[$k]
+            if (-not (Test-Kind $d 'list') -or $d.Items.Count -lt 2 -or -not ((Test-Sym $d.Items[0] 'game') -or (Test-Sym $d.Items[0] 'work') -or (Test-Sym $d.Items[0] 'read'))) { continue }
+            for ($ki = 1; $ki -lt $d.Items.Count; $ki++) {
+                $kn = $d.Items[$ki]
+                if (-not (Test-Kind $kn 'string')) { continue }
+                $low = $kn.Value.ToLowerInvariant()
+                if (-not $sheetsNamed.ContainsKey($low) -and @('clock', 'file', 'input') -notcontains $low) { $problems.Add("line $($d.Line): cart-manifest-invalid: ($($d.Items[0].Text) `"$($kn.Value)`") names a sheet the cartridge does not hold") }
             }
         }
     }
@@ -878,6 +932,15 @@ if ($Control) {
             @{ Name = 'a bound naming a sheet no row holds'; Anchor = '(spec 2)'; With = "(spec 6)`n  (bound `"Board`")"; Want = '(bound "Board") names a sheet the cartridge does not hold' },
             @{ Name = 'a bound naming a sheet twice'; Anchor = '(spec 2)'; With = "(spec 6)`n  (bound `"Screen`" `"screen`")"; Want = '(bound ...) names each sheet once' },
             @{ Name = 'a bound naming no sheet'; Anchor = '(spec 2)'; With = "(spec 6)`n  (bound)"; Want = '(bound ...) names one sheet or more, each a text' },
+            # SPEC.5: version 6's keyboard's sheets, (game ...), (work ...) and (read ...), game and work a grid's
+            @{ Name = 'the grid card written to (spec 6), its sheets by mode'; File = 'gridcard/gridcard.vla'; Anchor = '(spec 3)'; With = "(spec 6)`n  (game `"Screen`")`n  (read `"Camera`" `"Screen`")"; Want = '' },
+            @{ Name = 'Life written to (spec 6), its Screen read'; Anchor = '(spec 2)'; With = "(spec 6)`n  (read `"Screen`")"; Want = '' },
+            @{ Name = 'a game sheet at (spec 5)'; File = 'gridcard/gridcard.vla'; Anchor = '(spec 3)'; With = "(spec 5)`n  (game `"Screen`")"; Want = '(game ...) is a directive of version 6''s, where the cartridge says (spec 5)' },
+            @{ Name = 'a work sheet in plane mode'; Anchor = '(spec 2)'; With = "(spec 6)`n  (work `"Screen`")"; Want = '(work ...) in plane mode: a plane cartridge''s keys are its canvas''s' },
+            @{ Name = 'a read sheet no row holds'; Anchor = '(spec 2)'; With = "(spec 6)`n  (read `"Board`")"; Want = '(read "Board") names a sheet the cartridge does not hold' },
+            @{ Name = 'a read sheet named twice'; Anchor = '(spec 2)'; With = "(spec 6)`n  (read `"Screen`" `"screen`")"; Want = '(read ...) names each sheet once' },
+            @{ Name = 'a game directive naming none'; File = 'gridcard/gridcard.vla'; Anchor = '(spec 3)'; With = "(spec 6)`n  (game)"; Want = '(game ...) names one sheet or more, each a text' },
+            @{ Name = 'a sheet in game and in work'; File = 'gridcard/gridcard.vla'; Anchor = '(spec 3)'; With = "(spec 6)`n  (game `"Screen`")`n  (work `"screen`")"; Want = '"screen" is named in (work ...) and in (game ...): a work sheet''s keys are a person''s' },
             # ENGINE.18: version 4's rows, the Camera's third and the Input sheet's nineteenth, a (spec 4) cartridge's alone
             @{ Name = 'Life written to (spec 4), its Camera of three rows'; Anchor = '(spec 2)'; With = '(spec 4)'; Append = '(cell "Camera" "B3" "Screen")'; Want = '' },
             @{ Name = 'a Camera''s third row at (spec 2)'; Append = '(cell "Camera" "B3" "Screen")'; Want = 'cart-device-cell-outside: Camera!B3' },
@@ -960,7 +1023,7 @@ if ($Control) {
             else { $ok = $false; $verdicts.Add("$($mu.Name): PASSED but should fail") }
         }
         foreach ($v in $verdicts) { Write-Output ('control: ' + $v) }
-        if ($ok) { Write-Output 'OK: the check passes the clean copy, Life written to (spec 3), Life written to (spec 4) with its Camera''s third row, Life written to (spec 5) with its Commands sheet, Life written to (spec 4) with a sheet named Commands of its own, Life written to (spec 6) at rate 0, settling, and Life written to (spec 6), its Screen bound, and fails each of the forty-seven mutants for its own reason, each proving it applied'; exit 0 }
+        if ($ok) { Write-Output 'OK: the check passes the clean copy, Life written to (spec 3), Life written to (spec 4) with its Camera''s third row, Life written to (spec 5) with its Commands sheet, Life written to (spec 4) with a sheet named Commands of its own, Life written to (spec 6) at rate 0, settling, Life written to (spec 6), its Screen bound, the grid card written to (spec 6), its sheets by mode, and Life written to (spec 6), its Screen read, and fails each of the fifty-three mutants for its own reason, each proving it applied'; exit 0 }
         Write-Output 'FAIL: the control did not behave as the header says'
         exit 1
     } finally {

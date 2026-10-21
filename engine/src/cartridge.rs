@@ -87,7 +87,9 @@ fn refused(line: u32, id: &str, slots: &[(&str, &str)]) -> LineRefusal {
 /// it alone, so that a cartridge written to 1 to 4 loads and describes as it did
 /// (`ENGINE.25`, decision 6). Version 6 adds two directives, `(settle K)`, a
 /// cartridge's written to it alone at rate 0 alone, and `(bound "<sheet>" ...)`, a
-/// cartridge's written to it alone (`CART.12`'s hand test), and no sheet or row, so
+/// cartridge's written to it alone (`CART.12`'s hand test), and, amended in place while
+/// unreleased, the keyboard's sheets, `(game ...)`, `(work ...)` and `(read ...)`
+/// (`SPEC.5`), and no sheet or row, so
 /// that a cartridge written to 1 to 5 loads and describes as it did (`CART.12`,
 /// decision 66).
 pub const SPECS: [u32; 6] = [1, 2, 3, 4, 5, 6];
@@ -106,7 +108,9 @@ pub const GRID_MAX: (u32, u32) = (80, 50);
 pub const LINE: u64 = 2_000_000;
 
 const REQUIRED: [&str; 5] = ["spec", "title", "rate", "screen", "seed"];
-const OPTIONAL: [&str; 5] = ["author", "license", "notes", "settle", "bound"];
+const OPTIONAL: [&str; 8] = [
+    "author", "license", "notes", "settle", "bound", "game", "work", "read",
+];
 
 /// The Screen's mode: a byte a cell through the Palette, or the record.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -152,6 +156,17 @@ pub struct Manifest {
     /// The line the bound stands on, for the refusal of a sheet the rows hold
     /// not, which only the rows can answer.
     bound_line: u32,
+    /// Version 6's keyboard sheets (`SPEC.5`; section 7.2): the sheets whose
+    /// keys are the game's, `(game ...)`; the sheets a person types into,
+    /// `(work ...)`; and the sheets no person writes, `(read ...)`. Each empty
+    /// when the manifest names none. The page judges a key and a person's row
+    /// by them; the engine reads, refuses and prints them.
+    pub game: Vec<String>,
+    pub work: Vec<String>,
+    pub read: Vec<String>,
+    /// Each sheet the three name, with its directive's line and text, for the
+    /// refusal of a sheet the rows hold not.
+    keyed: Vec<(String, u32, String)>,
     /// Every directive as the manifest spells it, in its order.
     pub directives: Vec<String>,
 }
@@ -229,6 +244,8 @@ impl Manifest {
         let mut seed = Seed::Host;
         let mut settle: Option<(u32, u32, String)> = None;
         let mut bound: Option<(Vec<String>, u32, String)> = None;
+        // SPEC.5's three, each its sheets, its line and its text
+        let mut keyed: [Option<(Vec<String>, u32, String)>; 3] = [None, None, None];
         for item in directives {
             let text = write_datum(item);
             let (head, args, at) = match item {
@@ -333,6 +350,29 @@ impl Manifest {
                     }
                     bound = Some((names, at, text.clone()));
                 }
+                "game" | "work" | "read" => {
+                    let mut names: Vec<String> = Vec::new();
+                    for n in args {
+                        match n {
+                            Form::Str(sheet) if !names.iter().any(|b| b.eq_ignore_ascii_case(sheet)) => {
+                                names.push(sheet.clone())
+                            }
+                            Form::Str(_) => return Err(wrong(&format!("({head} ...) names each sheet once"))),
+                            _ => {
+                                return Err(wrong(&format!(
+                                    "({head} ...) names one sheet or more, each a text"
+                                )))
+                            }
+                        }
+                    }
+                    if names.is_empty() {
+                        return Err(wrong(&format!(
+                            "({head} ...) names one sheet or more, each a text"
+                        )));
+                    }
+                    let k = ["game", "work", "read"].iter().position(|h| *h == head).unwrap_or(0);
+                    keyed[k] = Some((names, at, text.clone()));
+                }
                 _ => match args {
                     [Form::Str(_)] => {}
                     _ => return Err(wrong(&format!("({head} ...) holds one text"))),
@@ -375,6 +415,53 @@ impl Manifest {
             Some((names, at, _)) => (names, at),
             None => (Vec::new(), 0),
         };
+        // SPEC.5's three (version 6, amended in place while it was unreleased): a
+        // (spec 6) cartridge's alone; game and work name a grid's sheets, a plane's
+        // keys being its canvas's; and a work sheet, which a person types into,
+        // neither the game's keys' nor one no person writes.
+        if spec < 6 {
+            if let Some((_, at, text)) = keyed.iter().flatten().next() {
+                return Err(invalid(
+                    *at,
+                    &format!("gives {text}, a directive of version 6's, where the cartridge says (spec {spec})"),
+                ));
+            }
+        }
+        if mode == Mode::Plane {
+            if let Some((_, at, text)) = keyed[..2].iter().flatten().next() {
+                return Err(invalid(
+                    *at,
+                    &format!("gives {text} in plane mode: a plane cartridge's keys are its canvas's, and (game ...) and (work ...) name a grid's sheets"),
+                ));
+            }
+        }
+        if let Some((work, at, text)) = &keyed[1] {
+            for (others, _, other) in [&keyed[0], &keyed[2]].into_iter().flatten() {
+                if let Some(both) = work
+                    .iter()
+                    .find(|w| others.iter().any(|o| o.eq_ignore_ascii_case(w)))
+                {
+                    return Err(invalid(
+                        *at,
+                        &format!(
+                            "names {} in {text} and in {other}: a work sheet's keys are a person's, typed into its cells",
+                            quoted(both)
+                        ),
+                    ));
+                }
+            }
+        }
+        let mut keyed_sheets: Vec<(String, u32, String)> = Vec::new();
+        let mut lists: [Vec<String>; 3] = [Vec::new(), Vec::new(), Vec::new()];
+        for (k, d) in keyed.into_iter().enumerate() {
+            if let Some((names, at, text)) = d {
+                for n in &names {
+                    keyed_sheets.push((n.clone(), at, text.clone()));
+                }
+                lists[k] = names;
+            }
+        }
+        let [game, work, read] = lists;
         Ok(Manifest {
             name,
             spec,
@@ -387,6 +474,10 @@ impl Manifest {
             settle: settle.map(|(k, _, _)| k),
             bound,
             bound_line,
+            game,
+            work,
+            read,
+            keyed: keyed_sheets,
             directives: written,
         })
     }
@@ -1054,6 +1145,22 @@ impl Cartridge {
         let camera = draft.workbook.find_sheet("Camera").is_some();
         check_devices(&draft, &manifest, camera)?;
         let frame = make_own_sheets(&mut draft, &manifest, name, size);
+        // The keyboard's sheets name sheets the rows hold (version 6, SPEC.5).
+        for (sheet, at, text) in &manifest.keyed {
+            if draft.workbook.find_sheet(sheet).is_none() {
+                return Err(refused(
+                    *at,
+                    "cart-manifest-invalid",
+                    &[(
+                        "what",
+                        &format!(
+                            "gives {text}, naming {}, a sheet the cartridge does not hold",
+                            quoted(sheet)
+                        ),
+                    )],
+                ));
+            }
+        }
         // A bound names sheets the rows hold (version 6, CART.12's hand test).
         for sheet in &manifest.bound {
             if draft.workbook.find_sheet(sheet).is_none() {
@@ -2089,6 +2196,82 @@ mod tests {
         // A (spec 6) cartridge without it bounds nothing.
         let none = load(&bare.replacen("\n  (bound \"Screen\" \"Seed\")", "", 1)).expect("loads");
         assert!(none.manifest().bound.is_empty());
+    }
+
+    /// Version 6's keyboard sheets (`SPEC.5`): `(game ...)`, `(work ...)` and
+    /// `(read ...)`, a (spec 6) cartridge's alone, each naming sheets its rows
+    /// hold, once each; game and work a grid's; a work sheet in neither of the
+    /// others, and game and read on one sheet a board played and never written
+    /// by hand; read into the manifest and printed by describe, for the page to
+    /// judge a key and a person's row by the sheet it shows.
+    #[test]
+    fn version_six_s_keyboard_sheets_name_sheets_a_version_six_grid_holds() {
+        let good = settle_card(64).replacen(
+            "(settle 64))",
+            "(settle 64)\n  (game \"Screen\")\n  (work \"Seed\"))",
+            1,
+        );
+        let c = load(&good).expect("a (spec 6) grid naming a game sheet and a work sheet loads");
+        assert_eq!(c.manifest().game, ["Screen"]);
+        assert_eq!(c.manifest().work, ["Seed"]);
+        assert!(c.manifest().read.is_empty());
+        let d = c.describe();
+        assert!(
+            d.contains("(game \"Screen\")\n") && d.contains("(work \"Seed\")\n"),
+            "{d}"
+        );
+        let board = load(&good.replacen("(work \"Seed\")", "(read \"Screen\" \"Seed\")", 1))
+            .expect("game and read on one sheet, a board played and never written by hand, loads");
+        assert_eq!(board.manifest().read, ["Screen", "Seed"]);
+        let bare = good.replacen("\n  (settle 64)", "", 1);
+        for (from, to, want) in [
+            ("(game \"Screen\")", "(game)", "where (game ...) names one sheet or more"),
+            ("(work \"Seed\")", "(work Seed)", "where (work ...) names one sheet or more"),
+            ("(work \"Seed\")", "(read \"Seed\" \"seed\")", "where (read ...) names each sheet once"),
+            ("(work \"Seed\")", "(work \"Seed\")\n  (work \"Screen\")", "gives (work ...) twice"),
+            (
+                "(work \"Seed\")",
+                "(work \"screen\")",
+                "names \"screen\" in (work \"screen\") and in (game \"Screen\"): a work sheet's keys are a person's",
+            ),
+            (
+                "(work \"Seed\")",
+                "(work \"Seed\")\n  (read \"Seed\")",
+                "names \"Seed\" in (work \"Seed\") and in (read \"Seed\")",
+            ),
+            (
+                "(work \"Seed\")",
+                "(read \"Board\")",
+                "gives (read \"Board\"), naming \"Board\", a sheet the cartridge does not hold",
+            ),
+            ("(spec 6)", "(spec 5)", "a directive of version 6's, where the cartridge says (spec 5)"),
+        ] {
+            let text = text_of(load(&bare.replacen(from, to, 1)));
+            assert!(
+                text.starts_with("cart-manifest-invalid") && text.contains(want),
+                "{from} -> {to}: {text}"
+            );
+        }
+        // A plane's keys are its canvas's: game and work refused there, read kept.
+        let plane = "(cartridge \"p\"\n  (spec 6)\n  (title \"P\")\n  (rate 0)\n  (screen plane 8 8)\n  (seed 1)\n  (game \"Screen\"))\n";
+        let text = text_of(load(plane));
+        assert!(
+            text.contains(
+                "gives (game \"Screen\") in plane mode: a plane cartridge's keys are its canvas's"
+            ),
+            "{text}"
+        );
+        // At any rate, and without a settle; and a (spec 6) cartridge naming none keeps today's rule.
+        let fast = load(&bare.replacen("(rate 0)", "(rate 30)", 1))
+            .expect("keyboard sheets at a rate load");
+        assert_eq!(fast.manifest().game, ["Screen"]);
+        let none =
+            load(&bare.replacen("\n  (game \"Screen\")\n  (work \"Seed\")", "", 1)).expect("loads");
+        assert!(
+            none.manifest().game.is_empty()
+                && none.manifest().work.is_empty()
+                && none.manifest().read.is_empty()
+        );
     }
 
     /// An act settles (`CART.12`, decisions 57 to 60; section 5): the load's
