@@ -668,7 +668,7 @@
     this.callsPerTick = options.callsPerTick || 0;
     this.listeners = {};
     this.handlers = [];
-    this.entries = new Map(); this.order = []; this.entryId = 0;   // the log: one entry an event, its repeats counted
+    this.entries = new Map(); this.order = []; this.entryId = 0;   // the log: one entry an event of a run, its repeats counted
     this.history = []; this.said = 0; this.status = '';
     this.m = null; this.version = ''; this.handle = 0; this.cart = null;
     this.cartBytes = null; this.cartFile = '';   // the cartridge loaded, as its load was given it: a replay reloads it
@@ -686,8 +686,9 @@
     this._listenPage();
   }
   Host.prototype._reset = function () {
-    // a load's run, counted from 1: a line of the log notes the run it was last said in, so that a load's sentences are the
-    // status line's again where they repeat an earlier run's (the rider of CART.9's third slice)
+    // a load's run, counted from 1: the log's lines are a run's, so that a load begins lines of its own and the log reads
+    // as a timeline across loads, each line's frames one run's, and a load's sentences are the status line's again
+    // (the rider of CART.9's third slice and the owner's word after it)
     this.run = (this.run || 0) + 1;
     this.frame = 0; this.inFrame = false; this.progress = null; this.stepEdit = null;
     this.acc = 0; this.lastTs = null; this.deltas = []; this.interval = DEFAULT_INTERVAL_MS;
@@ -2453,10 +2454,11 @@
 
   // ---- sentences and events ----
   // Every sentence goes into the history; an event goes into the log as well, a new line for a new
-  // event and a count for a repeat; a repeat leaves the status line to the last new event, a repeat
-  // being an event said before in the same load's run: the first of its kind after a load is the
-  // status line's though the log counts it, the line before it belonging to the run the load ended
-  // (the owner's hand test of CART.9's third slice, the bar at frame 74 after a Load). A refusal
+  // event and a count for a repeat; a repeat leaves the status line to the last new event. A repeat
+  // is an event said before in the same load's run: a load begins new lines, so that the log reads
+  // as a timeline across loads, each line's frames one run's, and the first of its kind after a load
+  // is the status line's (the owner's hand test of CART.9's third slice, the bar at frame 74 after a
+  // Load, and the owner's word after it, the log's "2 times, frames 2 to 2"). A refusal
   // or a failure is marked as one, the module's or the host's, so that a page paints it so (the
   // owner's word, 2026-10-09: every refusal one color); a notice of a value coerced is not one.
   Host.prototype._say = function (text, kind, refusal) {
@@ -2466,18 +2468,15 @@
     if (kind !== 'event') { this.status = text; this._emit('status', { text: text, kind: kind, repeat: false, refusal: refusal }); return; }
     this.said++;
     var m = FRAME_PREFIX.exec(text), key = m ? text.slice(m[0].length) : text, frame = m ? +m[1] : null;
-    var e = this.entries.get(key);
+    var slot = this.run + ':' + key, e = this.entries.get(slot);
     if (e) {
       e.count++; e.last = frame;
-      var again = e.run === this.run;
-      e.run = this.run;
-      if (!again) this.status = text;
-      this._emit('status', { text: text, kind: kind, repeat: again, entry: e.id, refusal: refusal });
+      this._emit('status', { text: text, kind: kind, repeat: true, entry: e.id, refusal: refusal });
       return;
     }
-    e = { id: ++this.entryId, key: key, count: 1, first: frame, last: frame, refusal: refusal, run: this.run };
-    this.entries.set(key, e); this.order.push(e);
-    if (this.order.length > LOG_LINES) this.entries.delete(this.order.shift().key);
+    e = { id: ++this.entryId, key: key, slot: slot, count: 1, first: frame, last: frame, refusal: refusal };
+    this.entries.set(slot, e); this.order.push(e);
+    if (this.order.length > LOG_LINES) this.entries.delete(this.order.shift().slot);
     this.status = text;
     this._emit('status', { text: text, kind: kind, repeat: false, entry: e.id, refusal: refusal });
   };

@@ -528,7 +528,8 @@ work sheet, where a press is the viewport's selection alone; and FX, FY, FZ and 
 case must fail by name at frames 34, 80, 780 and 15: a test that runs on past a wrong input, the stars counted
 against the budget alone, the due under test read from the switches as they stand, so that a switch written over is
 tested where it stands, and a click that toggles no switch. And its rider one more, needing no module: GB, a host whose
-status line skips a load's sentences where they repeat an earlier load's, which the settle case must fail by name.
+log counts a load's sentences in an earlier load's lines, so that its status line skips them, which the settle case must
+fail by name.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -914,6 +915,8 @@ $settleDoubleFloors = @{ fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased
 # FX, FY, FZ and GA, the replay case's, take it to one hundred and eighty-one. Its rider, 2026-10-21: the settle case's double
 # loads its card again and holds the status line to the reload's own sentence, the log counting it in its line
 # (fakeReloaded 1); mutant GB, the settle case's, takes it to one hundred and eighty-two, and ninety without the module.
+# And at the owner's word after it the log a line a run, a timeline across loads: the reload's sentence a line of its own
+# after the first load's, each counting 1 (fakeReloaded 1 still), and GB's anchor the line's key.
 # 2026-10-17, ENGINE.25's second slice: the case's page half, pure and so on every page, module or not, its counts a function of
 # its plan: 6 names a page writes a game's command by, held to the cartridge and the command or to none; 4 of the palette's
 # lines, the command that holds with its own key, found by a word after the dot, the one that holds not no line, and one
@@ -2124,9 +2127,9 @@ if ($Control) {
             # that also asks whether the sheet's keys are the game's, which the mutant keeps.
             @{ L = 'fg'; Name = 'a press an act whatever is read'; Anchor = '    return this.actRead && this.gameKeysHere();'; With = '    return this.gameKeysHere();'
                Want = 'case settle.*settle, the double: a press over C3 of a cartridge reading no act''s place or press made 1 press' },
-            # GB (CART.9's third slice, its rider): a status line that skips a load's sentences where they repeat an earlier
-            # load's, so that a Load of the cartridge loaded leaves the bar at the line before it.
-            @{ L = 'gb'; Name = 'a reload''s sentences skipped'; Anchor = '      var again = e.run === this.run;'; With = '      var again = true;'
+            # GB (CART.9's third slice, its rider, and the log a line a run after it): a log whose lines span loads, so that
+            # a load's sentences are counted in an earlier load's lines and the bar skips them, the line before the Load left.
+            @{ L = 'gb'; Name = 'a line across loads'; Anchor = '    var slot = this.run + '':'' + key, e = this.entries.get(slot);'; With = '    var slot = key, e = this.entries.get(slot);'
                Want = 'case settle.*settle, the double: a Load of the cartridge loaded again left the status line at' }
         )
         $settleNotes = New-Object System.Collections.Generic.List[string]

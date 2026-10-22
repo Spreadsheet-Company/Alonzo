@@ -6513,13 +6513,14 @@
       ['the load did not settle in 8 steps', 'the edit (cell "State" "B1" 5) did not settle in 8 steps', 'the left press on Screen!C3 did not settle in 8 steps'].forEach(function (w) {
         if (settleSaid(host, w) === 1) k.fakeUnsettled++; else P.push('settle, the double: the host said ' + JSON.stringify(w) + ' ' + settleSaid(host, w) + ' time(s), where once is due');
       });
-      // a Load of the cartridge loaded again (the rider of CART.9's third slice): its sentences repeat the first load's,
-      // which the log counts in their lines, and the status line says them still, the press's line before it belonging to
-      // the run the Load ended
+      // a Load of the cartridge loaded again (the rider of CART.9's third slice, and the owner's word after it): its
+      // sentences repeat the first load's, and the log begins lines of its own for them, a timeline across loads whose
+      // lines each hold one run's frames; the status line says them, the press's line before it the run's the Load ended
       var reload = host.load(text, 'life6.vla'), loadLine = 'frame ' + (K + 1) + ': the load did not settle in ' + K + ' steps';
       var counted = host.logEntries().filter(function (x) { return x.key.indexOf('the load did not settle in ' + K + ' steps') === 0; });
-      if (reload.ok && host.status.indexOf(loadLine) === 0 && counted.length === 1 && counted[0].count === 2) k.fakeReloaded = 1;
-      else P.push('settle, the double: a Load of the cartridge loaded again left the status line at ' + JSON.stringify(String(host.status).slice(0, 90)) + ' and the log counting its load ' + (counted.length ? counted[0].count : 0) + ' time(s), where the reload\'s own ' + JSON.stringify(loadLine) + ' and a count of 2 are due');
+      var timeline = counted.length === 2 && counted[0].count === 1 && counted[1].count === 1 && counted[0].id < counted[1].id && counted[1].text.indexOf(loadLine) === 0;
+      if (reload.ok && host.status.indexOf(loadLine) === 0 && timeline) k.fakeReloaded = 1;
+      else P.push('settle, the double: a Load of the cartridge loaded again left the status line at ' + JSON.stringify(String(host.status).slice(0, 90)) + ' and the log\'s lines of its load ' + JSON.stringify(counted.map(function (x) { return x.text.slice(0, 60); })) + ', where the reload\'s own ' + JSON.stringify(loadLine) + ' and a line of its own after the first load\'s, each counting 1, are due');
     } finally { host.destroy(); box.parentNode.removeChild(box); }
     var box2 = settleBox(640, 300), fake2 = FAKE.create({}), short = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box2 });
     try {
