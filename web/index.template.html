@@ -6452,7 +6452,7 @@
   // card under (settle 3), unsettled and said; the directive refused at version 5 and at a rate; and a version 5 card's
   // command key taken at rate 0.
   function caseSettle() {
-    var P = [], k = { fakeLoad: 0, fakeActs: 0, fakePress: 0, fakeReleased: 0, fakeUnsettled: 0,
+    var P = [], k = { fakeLoad: 0, fakeActs: 0, fakePress: 0, fakeReleased: 0, fakeUnsettled: 0, fakeReloaded: 0,
                       module: 0, loaded: 0, spilled: 0, clock: 0, released: 0, place: 0, pressed: 0, again: 0, waited: 0, key: 0, passed: 0, commandReleased: 0,
                       said: 0, replayed: 0, replayFrames: 0, replaySame: 0, rowless: 0, unsettled: 0, refused: 0, fiveKey: 0, unread: 0 };
     settleDouble(k, P);
@@ -6513,6 +6513,13 @@
       ['the load did not settle in 8 steps', 'the edit (cell "State" "B1" 5) did not settle in 8 steps', 'the left press on Screen!C3 did not settle in 8 steps'].forEach(function (w) {
         if (settleSaid(host, w) === 1) k.fakeUnsettled++; else P.push('settle, the double: the host said ' + JSON.stringify(w) + ' ' + settleSaid(host, w) + ' time(s), where once is due');
       });
+      // a Load of the cartridge loaded again (the rider of CART.9's third slice): its sentences repeat the first load's,
+      // which the log counts in their lines, and the status line says them still, the press's line before it belonging to
+      // the run the Load ended
+      var reload = host.load(text, 'life6.vla'), loadLine = 'frame ' + (K + 1) + ': the load did not settle in ' + K + ' steps';
+      var counted = host.logEntries().filter(function (x) { return x.key.indexOf('the load did not settle in ' + K + ' steps') === 0; });
+      if (reload.ok && host.status.indexOf(loadLine) === 0 && counted.length === 1 && counted[0].count === 2) k.fakeReloaded = 1;
+      else P.push('settle, the double: a Load of the cartridge loaded again left the status line at ' + JSON.stringify(String(host.status).slice(0, 90)) + ' and the log counting its load ' + (counted.length ? counted[0].count : 0) + ' time(s), where the reload\'s own ' + JSON.stringify(loadLine) + ' and a count of 2 are due');
     } finally { host.destroy(); box.parentNode.removeChild(box); }
     var box2 = settleBox(640, 300), fake2 = FAKE.create({}), short = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box2 });
     try {

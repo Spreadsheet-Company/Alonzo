@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds one hundred and eighty-one mutant pages through tools/build_web.ps1 and runs
+-Control builds one hundred and eighty-two mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -527,7 +527,8 @@ holds the module: FW, a host whose press is an act on every sheet, which the mod
 work sheet, where a press is the viewport's selection alone; and FX, FY, FZ and GA, naught's hand, which the replay
 case must fail by name at frames 34, 80, 780 and 15: a test that runs on past a wrong input, the stars counted
 against the budget alone, the due under test read from the switches as they stand, so that a switch written over is
-tested where it stands, and a click that toggles no switch.
+tested where it stands, and a click that toggles no switch. And its rider one more, needing no module: GB, a host whose
+status line skips a load's sentences where they repeat an earlier load's, which the settle case must fail by name.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -837,7 +838,7 @@ $settleFloors = @{ loaded = 1; spilled = 1; clock = 1; released = 1; place = 1; 
                    said = 1; replayed = 1; replayFrames = 16; replaySame = 16; rowless = 1; unsettled = 1; refused = 1; fiveKey = 1 }
 # 2026-10-20, CART.9's hand test: unread, a press over a cell of a cartridge that reads no act's place or press is the
 # viewport's selection and no act, and after a person's formula reading the press the next press is one.
-$settleDoubleFloors = @{ fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased = 1; fakeUnsettled = 4; unread = 2 }
+$settleDoubleFloors = @{ fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased = 1; fakeUnsettled = 4; fakeReloaded = 1; unread = 2 }
 # 2026-10-18, CART.12's third slice, Superposition the ninth cartridge: pass's sources and same 9; empty's cartridges,
 # ordered and titled 9; and grid's game half over two grid cartridges, the grid card's 12 frames and Superposition's load
 # settled at frame 2 on the 512 by 512 lattice, its Field shown and drawn from the values record cell for cell (grids 2,
@@ -910,7 +911,9 @@ $settleDoubleFloors = @{ fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased
 # bench's 38 switches and I's switch written over, 782 frames (naughtFrames 782, naughtCells 840,650), 48 rows a
 # person wrote and eight levels passed at its end, II's pass the owner's (naughtPassed 8). The modes case presses C3 on each of its
 # card's five sheets, an act on the two game sheets alone (presses 5, on both pages). Mutant FW, the modes case's, and
-# FX, FY, FZ and GA, the replay case's, take it to one hundred and eighty-one.
+# FX, FY, FZ and GA, the replay case's, take it to one hundred and eighty-one. Its rider, 2026-10-21: the settle case's double
+# loads its card again and holds the status line to the reload's own sentence, the log counting it in its line
+# (fakeReloaded 1); mutant GB, the settle case's, takes it to one hundred and eighty-two, and ninety without the module.
 # 2026-10-17, ENGINE.25's second slice: the case's page half, pure and so on every page, module or not, its counts a function of
 # its plan: 6 names a page writes a game's command by, held to the cartridge and the command or to none; 4 of the palette's
 # lines, the command that holds with its own key, found by a word after the dot, the one that holds not no line, and one
@@ -2120,7 +2123,11 @@ if ($Control) {
             # nothing on a cartridge that reads neither an act's place nor its press; its anchor since the third slice the line
             # that also asks whether the sheet's keys are the game's, which the mutant keeps.
             @{ L = 'fg'; Name = 'a press an act whatever is read'; Anchor = '    return this.actRead && this.gameKeysHere();'; With = '    return this.gameKeysHere();'
-               Want = 'case settle.*settle, the double: a press over C3 of a cartridge reading no act''s place or press made 1 press' }
+               Want = 'case settle.*settle, the double: a press over C3 of a cartridge reading no act''s place or press made 1 press' },
+            # GB (CART.9's third slice, its rider): a status line that skips a load's sentences where they repeat an earlier
+            # load's, so that a Load of the cartridge loaded leaves the bar at the line before it.
+            @{ L = 'gb'; Name = 'a reload''s sentences skipped'; Anchor = '      var again = e.run === this.run;'; With = '      var again = true;'
+               Want = 'case settle.*settle, the double: a Load of the cartridge loaded again left the status line at' }
         )
         $settleNotes = New-Object System.Collections.Generic.List[string]
         $settleJudged = New-Object System.Collections.Generic.List[object]
@@ -2426,7 +2433,7 @@ if ($Control) {
         $gameNote = $gameNotes -join '; '
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and eighty-one' } else { 'eighty-nine applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and eighty-two' } else { 'ninety applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

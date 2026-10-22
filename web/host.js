@@ -686,6 +686,9 @@
     this._listenPage();
   }
   Host.prototype._reset = function () {
+    // a load's run, counted from 1: a line of the log notes the run it was last said in, so that a load's sentences are the
+    // status line's again where they repeat an earlier run's (the rider of CART.9's third slice)
+    this.run = (this.run || 0) + 1;
     this.frame = 0; this.inFrame = false; this.progress = null; this.stepEdit = null;
     this.acc = 0; this.lastTs = null; this.deltas = []; this.interval = DEFAULT_INTERVAL_MS;
     this.cellsPerMs = 0; this.frameCells = 0;
@@ -2450,7 +2453,10 @@
 
   // ---- sentences and events ----
   // Every sentence goes into the history; an event goes into the log as well, a new line for a new
-  // event and a count for a repeat; a repeat leaves the status line to the last new event. A refusal
+  // event and a count for a repeat; a repeat leaves the status line to the last new event, a repeat
+  // being an event said before in the same load's run: the first of its kind after a load is the
+  // status line's though the log counts it, the line before it belonging to the run the load ended
+  // (the owner's hand test of CART.9's third slice, the bar at frame 74 after a Load). A refusal
   // or a failure is marked as one, the module's or the host's, so that a page paints it so (the
   // owner's word, 2026-10-09: every refusal one color); a notice of a value coerced is not one.
   Host.prototype._say = function (text, kind, refusal) {
@@ -2463,10 +2469,13 @@
     var e = this.entries.get(key);
     if (e) {
       e.count++; e.last = frame;
-      this._emit('status', { text: text, kind: kind, repeat: true, entry: e.id, refusal: refusal });
+      var again = e.run === this.run;
+      e.run = this.run;
+      if (!again) this.status = text;
+      this._emit('status', { text: text, kind: kind, repeat: again, entry: e.id, refusal: refusal });
       return;
     }
-    e = { id: ++this.entryId, key: key, count: 1, first: frame, last: frame, refusal: refusal };
+    e = { id: ++this.entryId, key: key, count: 1, first: frame, last: frame, refusal: refusal, run: this.run };
     this.entries.set(key, e); this.order.push(e);
     if (this.order.length > LOG_LINES) this.entries.delete(this.order.shift().key);
     this.status = text;
