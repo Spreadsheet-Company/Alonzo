@@ -31,8 +31,9 @@
   (notes "The input card: every cell the host writes before a step, drawn. Press the arrows, Z, X, A, S, Enter and Space for player 1, and I, K, J, L, U, O, Y, P, 9 and 0 for player 2; click, and turn the wheel to pan the card. A lamp is white while its button is held, and moves to another color with each press."))
 
 ; The library whose macros this source calls: sheets; cga-palette, default-keys and keys;
-; button-labels, labels and headers; on and formulas, each naming a sheet once over a run
-; of its rows; the verbs count, hold and dice; and put, the Write sheet's row.
+; button-labels, labels and headers; on and rules, each naming a sheet once over a run of
+; its rows; rule; the verbs count, hold and dice; edge, a press as a test; and put, the
+; Write sheet's row.
 (include "../common.vla")
 
 ; The sheets, in tab order: the Screen, the Panel of lamps it draws, the Tally of counts,
@@ -61,7 +62,7 @@
   (cell "A1" "row")                         ; a label
   (cell "B1" 1)                             ; the window's top row
   (cell "A2" "column")                      ; a label
-  (formula "B2" "=1+MOD(Tally!B16,9)")      ; the window's left column, from the wheel's notches
+  (rule "B2" (+ 1 (mod Tally!B16 9)))       ; the window's left column, from the wheel's notches
   (value "B2" 1))                           ; its value until the first step, a save's spelling, so frame 0 is drawn at column 1
 
 ; ---- the Tally: what the Input sheet held, counted, row for row --------------------
@@ -78,29 +79,30 @@
   "dice"
   "clicked at")
 (on "Tally"                         ; the counts beside them
-  ; A press is written out inside its count, as pressed would write it: a verb's call is
-  ; no piece of another's, and a cell of its own would move this card's bytes, which its
-  ; replay names (common.vla's header).
+  ; A press is counted through the library's edge, the rising edge as a test, inside its
+  ; count: since KIT.5 a verb's piece is an expression, and an expression macro stands in
+  ; it; a verb's call, a row, still does not, and a cell of its own would move this
+  ; card's bytes, which its replay names (common.vla's header).
   (count                            ; the presses of every button of every player:
     "B1:E10"                        ;   a cell a button, as the Input sheet lays them out
-    "IF(AND(Input!B1=1,Input.last!B1=0),1,0)")  ; one in the frame it goes down, its rising edge
+    (if (edge Input!B1) 1 0))       ;   one in the frame it goes down, its rising edge
   (hold                             ; the pointer's last cell on the Screen:
     "B11:B12"                       ;   its column and its row
-    "Input!B11>0"                   ;   while it is on the canvas,
-    "Input!B11")                    ;   where it is; kept while it is off
+    (> Input!B11 0)                 ;   while it is on the canvas,
+    Input!B11)                      ;   where it is; kept while it is off
   (count                            ; the clicks of each mouse button:
     "B13:B15"                       ;   left, right and middle
-    "IF(AND(Input!B13=1,Input.last!B13=0),1,0)")  ; counted the same way
+    (if (edge Input!B13) 1 0))      ;   counted the same way
   (count                            ; the wheel's notches, summed:
     "B16"                           ;   the cell
-    "Input!B16")                    ;   the notches turned this frame
+    Input!B16)                      ;   the notches turned this frame
   (count                            ; the frames a key went down in:
     "B17"                           ;   the cell
-    "IF(Input!B18<>\"\",1,0)")      ;   one when a key's code was written this frame
+    (if (<> Input!B18 "") 1 0))     ;   one when a key's code was written this frame
   (hold                             ; the last key's code:
     "B18"                           ;   the cell
-    "Input!B18<>\"\""               ;   when a key went down,
-    "Input!B18")                    ;   its code; kept otherwise
+    (<> Input!B18 "")               ;   when a key went down,
+    Input!B18)                      ;   its code; kept otherwise
   (dice                             ; the dice: Park and Miller's step from the seed, 1 to 2147483646
     "B19"))                         ;   the cell
 ; the frame of the last left click, written as a value by the Write row below
@@ -115,35 +117,38 @@
   (put                              ; the one write, a left click's frame into the Tally:
     "A2"                            ;   the row of the Write sheet, from its cell in column A
     "Tally"                         ;   the sheet it writes
-    "AND(Input!B13=1,Input.last!B13=0)"   ; when: a left click's rising edge, and in no other frame
-    "\"B20\""                       ;   where: B20, an address in quotes
-    "Clock!B1"))                    ;   what: the frame it came in
+    (edge Input!B13)                ;   when: a left click's rising edge, and in no other frame
+    "B20"                           ;   where: B20, the address as a text
+    Clock!B1))                      ;   what: the frame it came in
 
 ; ---- the Panel: the lamps, the layer under the cursor ------------------------------
 ; The lamps sit in columns I to AM, which the window shows wherever the wheel pans it;
 ; row 1 is a ruler over all 48 columns, ticked every eighth, so that the pan is seen.
-(formulas "Panel"                   ; the sheet every entry below writes
+(rules "Panel"                      ; the sheet every entry below writes
   ; the ruler, row 1
-  ("A1:AV1" "=IF(MOD(COLUMN(),8)=1,7,8)")
+  ("A1:AV1" (if (= (mod (column) 8) 1) 7 8))
   ; the buttons: players 1 to 4 in columns I to L, up to select in rows 3 to 12
-  ("I3:L12" "=IF(Input!B1=1,15,1+MOD(Tally!B1,7))")
+  ("I3:L12" (if (= Input!B1 1) 15 (+ 1 (mod Tally!B1 7))))
   ; the mouse's three buttons while held, and their clicks, counted
-  ("N3:N5" "=IF(Input!B13=1,12,8)")
-  ("O3:O5" "=1+MOD(Tally!B13,7)")
+  ("N3:N5" (if (= Input!B13 1) 12 8))
+  ("O3:O5" (+ 1 (mod Tally!B13 7)))
   ; a key went down this frame, and the keys, counted
-  ("N7" "=IF(Input!$B$18<>\"\",14,0)")
-  ("O7" "=1+MOD(Tally!$B$17,7)")
+  ("N7" (if (<> Input!$B$18 "") 14 0))
+  ("O7" (+ 1 (mod Tally!$B$17 7)))
   ; where the wheel has panned the window, one lamp of nine
-  ("I14:Q14" "=IF(COLUMN()-8=Camera!$B$2,14,8)")
+  ("I14:Q14" (if (= (- (column) 8) Camera!$B$2) 14 8))
   ; the rate, a lamp for every five frames a second
-  ("I18:AF18" "=IF(COLUMN()-8<=Clock!$B$2/5,9,0)")
+  ("I18:AF18" (if (<= (- (column) 8) (/ Clock!$B$2 5)) 9 0))
   ; the frame, the seed and the dice, bit 0 in column I
-  ("I20:X20" "=IF(MOD(INT(Clock!$B$1/2^(COLUMN()-9)),2)=1,11,1)")
-  ("I22:AM22" "=IF(MOD(INT(Clock!$B$3/2^(COLUMN()-9)),2)=1,13,5)")
-  ("I23:AM23" "=IF(MOD(INT(Tally!$B$19/2^(COLUMN()-9)),2)=1,10,2)"))
+  ("I20:X20" (if (= (mod (int (/ Clock!$B$1 (^ 2 (- (column) 9)))) 2) 1) 11 1))
+  ("I22:AM22" (if (= (mod (int (/ Clock!$B$3 (^ 2 (- (column) 9)))) 2) 1) 13 5))
+  ("I23:AM23" (if (= (mod (int (/ Tally!$B$19 (^ 2 (- (column) 9)))) 2) 1) 10 2)))
 
 ; ---- the Screen: the cursor over the Panel ------------------------------------------
 ; One formula over the Screen's 48 columns and 24 rows: the cell under the pointer is
 ; white, or red, green or blue while the left, right or middle button is held; every
 ; other cell is the Panel's.
-(formula "Screen" "A1:AV24" "=IF(AND(ROW()=Input!$B$12,COLUMN()=Input!$B$11),IF(Input!$B$13=1,12,IF(Input!$B$14=1,10,IF(Input!$B$15=1,9,15))),Panel!A1)")
+(rule "Screen" "A1:AV24"
+  (if (and (= (row) Input!$B$12) (= (column) Input!$B$11))       ; the cell under the pointer:
+      (if (= Input!$B$13 1) 12 (if (= Input!$B$14 1) 10 (if (= Input!$B$15 1) 9 15)))   ;   red, green or blue by the button held, else white
+      Panel!A1))                                                 ; every other cell the Panel's

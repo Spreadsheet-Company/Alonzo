@@ -789,42 +789,72 @@ mod tests {
                     r#"(cell "Keys" "B10" "Space")"#,
                 ],
             ),
-            // The verbs: a piece as a string, or an &expand of strings.
+            // The verbs (KIT.5): each piece an expression, a reference bare, a
+            // test or a sum a form, which the formula syntax writes.
             (
-                r#"(first-frame "Screen" "B2:LG199" "Seed!B2" "0")"#,
+                r#"(first-frame "Screen" "B2:LG199" Seed!B2 0)"#,
                 &[r#"(formula "Screen" "B2:LG199" "=IF(Clock!$B$1=1,Seed!B2,0)")"#],
             ),
             (
-                r#"(first-frame "Screen" "C2" (&expand "1+" "2") (&expand "Screen.last!" "C2"))"#,
+                r#"(first-frame "Screen" "C2" (+ 1 2) Screen.last!C2)"#,
                 &[r#"(formula "Screen" "C2" "=IF(Clock!$B$1=1,1+2,Screen.last!C2)")"#],
             ),
             // ENGINE.9's verb: first-frame over a board's interior, its range
             // computed from the board's size: the window's, the smallest
             // board with an interior, and the size ladder's top rung.
             (
-                r#"(interior 320 200 "Screen" "Seed!B2" "0")"#,
+                r#"(interior 320 200 "Screen" Seed!B2 0)"#,
                 &[r#"(formula "Screen" "B2:LG199" "=IF(Clock!$B$1=1,Seed!B2,0)")"#],
             ),
             (
-                r#"(interior 3 3 "Screen" "1" (&expand "Screen.last!" "B2"))"#,
+                r#"(interior 3 3 "Screen" 1 Screen.last!B2)"#,
                 &[r#"(formula "Screen" "B2:B2" "=IF(Clock!$B$1=1,1,Screen.last!B2)")"#],
             ),
             (
-                r#"(interior 1280 800 "Screen" "0" "1")"#,
+                r#"(interior 1280 800 "Screen" 0 1)"#,
                 &[r#"(formula "Screen" "B2:AWE799" "=IF(Clock!$B$1=1,0,1)")"#],
             ),
             (
-                r#"(pressed "Score" "C1:C10" "Input!B1")"#,
+                r#"(pressed "Score" "C1:C10" Input!B1)"#,
                 &[r#"(formula "Score" "C1:C10" "=IF(AND(Input!B1=1,Input.last!B1=0),1,0)")"#],
             ),
             // A $ reference's twin.
             (
-                r#"(pressed "Score" "C11" "Input!$B$13")"#,
+                r#"(pressed "Score" "C11" Input!$B$13)"#,
                 &[r#"(formula "Score" "C11" "=IF(AND(Input!$B$13=1,Input.last!$B$13=0),1,0)")"#],
             ),
             (
-                r#"(count "Tally" "B1:E10" "Input!B1")"#,
+                r#"(count "Tally" "B1:E10" Input!B1)"#,
                 &[r#"(formula "Tally" "B1:E10" "=Tally.last!B1+Input!B1")"#],
+            ),
+            // The rising edge as a test, an expression macro inside a verb's
+            // piece: the input card's count of presses (KIT.5).
+            (
+                r#"(count "Tally" "B1:E10" (if (edge Input!B1) 1 0))"#,
+                &[r#"(formula "Tally" "B1:E10" "=Tally.last!B1+IF(AND(Input!B1=1,Input.last!B1=0),1,0)")"#],
+            ),
+            // A reference's twin as an expression, and a sheet whose name needs
+            // quotes, its twin quoted as Excel quotes it.
+            (
+                r#"(rule "S" "A1" (twin-of Input!$B$5))"#,
+                &[r#"(formula "S" "A1" "=Input.last!$B$5")"#],
+            ),
+            (
+                r#"(hold "I NON" "A3" (= Input!B1 1) 0)"#,
+                &[r#"(formula "I NON" "A3" "=IF(Input!B1=1,0,'I NON.last'!A3)")"#],
+            ),
+            // The plain formula row from an expression, alone and over one
+            // sheet; a text stays a text.
+            (
+                r#"(rule "S" "A1" (mod Clock!$B$1 16))"#,
+                &[r#"(formula "S" "A1" "=MOD(Clock!$B$1,16)")"#],
+            ),
+            (
+                r#"(rules "S" ("A1" (+ 1 2)) ("B1:B2" "x"))"#,
+                &[
+                    r#"(formula "S" "A1" "=1+2")"#,
+                    r#"(formula "S" "B1:B2" "=\"x\"")"#,
+                ],
             ),
             // A range in two-letter columns, and the grid's last cell alone.
             (
@@ -836,7 +866,7 @@ mod tests {
                 &[r#"(formula "Screen" "XFD1048576" "=Screen.last!XFD1048576+1")"#],
             ),
             (
-                r#"(hold "Tally" "B11:B12" "Input!B11>0" "Input!B11")"#,
+                r#"(hold "Tally" "B11:B12" (> Input!B11 0) Input!B11)"#,
                 &[r#"(formula "Tally" "B11:B12" "=IF(Input!B11>0,Input!B11,Tally.last!B11)")"#],
             ),
             (
@@ -848,25 +878,26 @@ mod tests {
             // CART.4's verbs: every over a count, the page's clock divider
             // over the frame with a number for n, and since over a range.
             (
-                r#"(every "State" "B7" "State!B2" "State!B18")"#,
+                r#"(every "State" "B7" State!B2 State!B18)"#,
                 &[r#"(formula "State" "B7" "=IF(MOD(State!B2,State!B18)=0,1,0)")"#],
             ),
             (
-                r#"(every "Patch" "B2" "Clock!B1" 15)"#,
+                r#"(every "Patch" "B2" Clock!B1 15)"#,
                 &[r#"(formula "Patch" "B2" "=IF(MOD(Clock!B1,15)=0,1,0)")"#],
             ),
             (
-                r#"(since "State" "B2" "State!B1<>State.last!B1")"#,
+                r#"(since "State" "B2" (<> State!B1 State.last!B1))"#,
                 &[r#"(formula "State" "B2" "=IF(State!B1<>State.last!B1,0,State.last!B2+1)")"#],
             ),
+            // A defined name in a piece, read as the name it is.
             (
-                r#"(since "Patch" "B8:C8" "beat=1")"#,
+                r#"(since "Patch" "B8:C8" (= beat 1))"#,
                 &[r#"(formula "Patch" "B8:C8" "=IF(beat=1,0,Patch.last!B8+1)")"#],
             ),
             // The Write sheet's row: its target, its address while a test
-            // holds, its value; an address in quotes, or a range's.
+            // holds, its value; an address a text, or a range's.
             (
-                r#"(put "Write" "A2" "Tally" "AND(Input!B13=1,Input.last!B13=0)" "\"B20\"" "Clock!B1")"#,
+                r#"(put "Write" "A2" "Tally" (edge Input!B13) "B20" Clock!B1)"#,
                 &[
                     r#"(cell "Write" "A2" "Tally")"#,
                     r#"(formula "Write" "B2" "=IF(AND(Input!B13=1,Input.last!B13=0),\"B20\",\"\")")"#,
@@ -874,7 +905,7 @@ mod tests {
                 ],
             ),
             (
-                r#"(on "Write" (put "A3" "Tower" "State!B1=4" "\"A1:O7\"" 0))"#,
+                r#"(on "Write" (put "A3" "Tower" (= State!B1 4) "A1:O7" 0))"#,
                 &[
                     r#"(cell "Write" "A3" "Tower")"#,
                     r#"(formula "Write" "B3" "=IF(State!B1=4,\"A1:O7\",\"\")")"#,
@@ -902,7 +933,7 @@ mod tests {
             ),
             // Verbs inside on, the sheet named once.
             (
-                r#"(on "Score" (pressed "C11" "Input!B13") (count "D1:D2" 1))"#,
+                r#"(on "Score" (pressed "C11" Input!B13) (count "D1:D2" 1))"#,
                 &[
                     r#"(formula "Score" "C11" "=IF(AND(Input!B13=1,Input.last!B13=0),1,0)")"#,
                     r#"(formula "Score" "D1:D2" "=Score.last!D1+1")"#,
@@ -987,11 +1018,14 @@ mod tests {
                 .unwrap_or_else(|r| panic!("{call}: {} {}", r.refusal.id, r.refusal.text));
             assert_eq!(got, *want, "{call}");
         }
-        // A verb's call is no piece of another's: the language refuses it at
-        // the caller's line, the include on 1 and the manifest on 2 to 7.
-        let r = rows_of("(count \"Tally\" \"B1\"\n  (pressed \"Tally\" \"B2\" \"Input!B1\"))")
+        // A verb's call is no piece of another's: each verb's row is a
+        // formula-expand of its own, so one inside another is refused by
+        // name (KIT.5), at the caller's line, the include on 1 and the
+        // manifest on 2 to 7; a predicate two verbs share is an expression
+        // macro, edge above, and stands in either.
+        let r = rows_of("(count \"Tally\" \"B1\"\n  (pressed \"Tally\" \"B2\" Input!B1))")
             .expect_err("a verb nested in another");
-        assert_eq!(r.refusal.id, "vla-expand-arg-is-list");
+        assert_eq!(r.refusal.id, "vla-formula-expand-nested");
         assert_eq!(r.line, 8);
 
         // A character no legend holds: the pass judges no row, and the load

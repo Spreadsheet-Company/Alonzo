@@ -35,9 +35,9 @@
   (license "0BSD")                  ; the header's twin
   (notes "The grid card: every kind of value, format and look a grid cell can hold, drawn by the viewport, on a Screen 96 columns wide under a Camera that an edit moves. The sixteen colors are numbers drawn through their looks, a formula's value changes its fill every frame, and a stripe moves below."))
 
-; The library whose macros this source calls: on, cells and formulas, each naming a
-; sheet once over a run of its rows; looks, a look map from a list of fills; and camera,
-; a still Camera.
+; The library whose macros this source calls: on, cells and rules, each naming a sheet
+; once over a run of its rows; rule, a formula row from an expression; looks, a look map
+; from a list of fills; and camera, a still Camera.
 (include "../common.vla")
 
 ; The card's own macro: the CGA's sixteen through the library's look map, the plane's
@@ -140,21 +140,21 @@
   ("H5" 1234567.89)                 ; wider than its cell, clipped and never spilled
   ("I5" 0.5)                        ; a fraction
   ("A6" "a formula of each kind, every frame"))
-(formulas "Screen"                                           ; the sheet every entry below writes
-  ("B6" "=MOD(Clock!$B$1,16)")                               ; a color that cycles: its look, so its fill, changes every frame
-  ("C6" "=Clock!$B$1*16")                                    ; a number past the looks
-  ("D6" "=Clock!$B$1/2")                                     ; a fraction every other frame
-  ("E6" "=0.1*3*10")                                         ; a sum one unit in the last place from 3
-  ("F6" "=1/0")                                              ; an error, through its look
-  ("G6" "=\"x\"")                                            ; a text, through its look
-  ("H6" "=1=1")                                              ; a truth value, through its look
-  ("I6" "=SIN(Clock!$B$1)")                                  ; a sine
-  ("J6" "=-Clock!$B$1")                                      ; a negative
-  ("K6" "=INT(Clock!$B$1/2)")                                ; a whole number, through the looks while under 16
-  ("L6" "=CHOOSE(1+MOD(Clock!$B$1,3),2,\"x\",TRUE)")         ; a value whose kind cycles, each through its look
-  ("M6" "=$A$2")                                             ; a reference to an empty cell, which is 0
-  ("N6" "=Screen.last!N6+1")                                 ; a counter read through its own twin
-  ("O6" "=IF(MOD(Clock!$B$1,2)=0,9,0.5)"))                   ; 9, through its look, and 0.5 by turns
+(rules "Screen"                                              ; the sheet every entry below writes
+  ("B6" (mod Clock!$B$1 16))                                 ; a color that cycles: its look, so its fill, changes every frame
+  ("C6" (* Clock!$B$1 16))                                   ; a number past the looks
+  ("D6" (/ Clock!$B$1 2))                                    ; a fraction every other frame
+  ("E6" (* 0.1 3 10))                                        ; a sum one unit in the last place from 3
+  ("F6" (/ 1 0))                                             ; an error, through its look
+  ("G6" "x")                                                 ; a text, through its look
+  ("H6" (= 1 1))                                             ; a truth value, through its look
+  ("I6" (sin Clock!$B$1))                                    ; a sine
+  ("J6" (- Clock!$B$1))                                      ; a negative
+  ("K6" (int (/ Clock!$B$1 2)))                              ; a whole number, through the looks while under 16
+  ("L6" (choose (+ 1 (mod Clock!$B$1 3)) 2 "x" true))        ; a value whose kind cycles, each through its look
+  ("M6" $A$2)                                                ; a reference to an empty cell, which is 0
+  ("N6" (+ Screen.last!N6 1))                                ; a counter read through its own twin
+  ("O6" (if (= (mod Clock!$B$1 2) 0) 9 0.5)))                ; 9, through its look, and 0.5 by turns
 
 ; Rows 7 to 15: texts, formats, styles, a sentence, the hidden row and column, the looks.
 (cells "Screen"                     ; the sheet every entry below writes
@@ -208,7 +208,7 @@
   ("I16" "quanta")                  ; text: quanta, on the left, in its fill
   ("J16" 3)                         ; under 0.00, and the look of 3, General, in its place: 3, no text row
   ("K16" 0.125))                    ; the look of 0.125, a glyph's format: ◆
-(formula "Screen" "G16" "=Clock!$B$1/4")   ; a value under 0.00 every frame: 0.25, 0.50, 0.75, then 1 through
+(rule "Screen" "G16" (/ Clock!$B$1 4))     ; a value under 0.00 every frame: 0.25, 0.50, 0.75, then 1 through
                                            ; the look of 1, General, its text row gone until 1.25
 (on "Screen"                        ; the sheet every row below writes
   (style "B16" 27)                  ; two decimals
@@ -224,4 +224,4 @@
 
 ; Rows 17 to 50: a stripe that moves, one fill over the Screen's whole width, a "#" every
 ; eighth cell along a diagonal and a "." elsewhere, each through its look.
-(formula "Screen" "A17:CR50" "=IF(MOD(COLUMN()+ROW()+Clock!$B$1,8)=0,\"#\",\".\")")
+(rule "Screen" "A17:CR50" (if (= (mod (+ (column) (row) Clock!$B$1) 8) 0) "#" "."))

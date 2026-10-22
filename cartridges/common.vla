@@ -7,14 +7,19 @@
 ; the patterns two cartridges wrote alike by hand, or one wrote as the page spells it;
 ; since KIT.2 the picture, a string a row of cells and a character a cell; since CART.4,
 ; the stacking game Kairos, the verbs every and since, the look map, a still Camera and
-; the Write sheet's row; and since ENGINE.9 interior, the rule over a board's interior,
-; whose size a source states once, as a parameter a door may give another value.
+; the Write sheet's row; since ENGINE.9 interior, the rule over a board's interior,
+; whose size a source states once, as a parameter a door may give another value; and
+; since KIT.5 the verbs take expressions, the language's formula syntax writing each
+; row's text, so that a formula is composed from forms and named macros and no longer
+; fused from texts.
 ;
 ; The rules each macro here keeps, which are the language's:
 ;   - Template macros only. A parameter is replaced by the form the caller passes; no
 ;     gensym and no eval, every binding named by the caller.
 ;   - A parameter never takes the name of a row it writes: a parameter called name
 ;     would replace the head of a (name ...) row too, and the load would refuse the row.
+;     Nor, since KIT.5, the name of a function a formula calls, row or sum, where the
+;     macro's own body calls it: the parameter would replace that head too.
 ;   - A macro that walks a list recurses in tail position, its own call the last form
 ;     of its begin, so the expander's trampoline keeps the rows flat. A chain stops at
 ;     5,000 links: each application is one, and so is each begin it unwraps. The forms
@@ -28,15 +33,19 @@
 ;     expands. A column is reached by arithmetic too, (address-expand row column) or
 ;     (column-letters-expand column), and a text is split by characters-expand: the
 ;     expand-time primitives vla-lang 0.9.0 added (docs/SPEC.md section 7.8).
-;   - A macro's call is no argument of &expand, nor of any expand-time primitive, which
-;     takes its arguments as data: (&expand "=" (twin ...)) is refused, with the id
-;     vla-expand-arg-is-list. So a macro that finds a text hands it on to the macro
-;     named after it, (first-cell range then args...) becoming (then first args...), and
-;     the verbs compose by reference, one writing a cell that another reads.
-;   - A verb builds its row inside a quasiquote, its pieces spliced in by unquote and
-;     joined when the row itself is expanded, so a piece may be a string or an &expand
-;     of strings. Named inside the verb's own &expand, a parameter bound to an &expand
-;     would be handed over as the list it is, and refused.
+;   - A macro's call is no argument of &expand, nor of symbol, nor of any expand-time
+;     primitive, which takes its arguments as data: (&expand "=" (twin-of ...)) is
+;     refused, with the id vla-expand-arg-is-list. A walk that must end in a primitive
+;     calls it in its base case, where the text it made is an atom: (symbol made).
+;   - A formula is written by the formula syntax (VLA.4, vla-lang 0.10.0): (formula-expand
+;     expression) is the row's text, in Excel's own spelling, a reference bare, Input!B5
+;     or Screen.last!A1:C3, a test (= State!B1 4), a sum (+ a b c), a text "x", a truth
+;     value true. The syntax expands its expression first, so a macro's call stands inside
+;     it, (twin-of Input!B5) for Input.last!B5, and an expand-time primitive computes
+;     there, (ref "Probe" (&expand "$D" row)) for Probe!$D1. A verb's pieces are such
+;     expressions, and a verb inside another verb's piece is refused by name, since each
+;     verb's row is a formula-expand of its own (vla-formula-expand-nested); a predicate
+;     two verbs share is an expression macro, as twin-of is, and stands in either.
 
 ; ---- one sheet, named once ----------------------------------------------------------
 ; A run of rows on one sheet, the sheet named at the top of the run and not on every
@@ -54,7 +63,7 @@
       (quasiquote (cells (unquote sheet) (unquote-splicing (cdr entries)))))))
 
 (defmacro (formulas sheet & entries)
-  "formula cells of one sheet, named once: each entry an address or a range, then its formula"
+  "formula cells of one sheet, named once: each entry an address or a range, then its formula, a text or a formula-expand"
   (quote-if (null? entries)
     (begin)
     (begin
@@ -68,6 +77,24 @@
     (begin
       (cons (car (car forms)) (cons sheet (cdr (car forms))))
       (quasiquote (on (unquote sheet) (unquote-splicing (cdr forms)))))))
+
+; A formula written as an expression (KIT.5): rule is the formula row with the syntax
+; writing its text, (rule "Screen" "A1" (mod Clock!$B$1 16)) the row (formula "Screen"
+; "A1" "=MOD(Clock!$B$1,16)"), and rules is formulas over expressions, one sheet named
+; once. The formula row itself, and formulas, keep a text, for a formula pasted as Excel
+; shows it or one the syntax cannot write.
+
+(defmacro (rule sheet range expression)
+  "one formula row from an expression: the formula syntax writes its text in Excel's spelling"
+  (formula sheet range (formula-expand expression)))
+
+(defmacro (rules sheet & entries)
+  "formula cells of one sheet from expressions, named once: each entry an address or a range, then its expression"
+  (quote-if (null? entries)
+    (begin)
+    (begin
+      (rule sheet (car (car entries)) (car (cdr (car entries))))
+      (quasiquote (rules (unquote sheet) (unquote-splicing (cdr entries)))))))
 
 ; ---- the sheets, and their words ----------------------------------------------------
 ; A cartridge's sheets in tab order, each visible; a sheet hidden is written as its own
@@ -124,9 +151,9 @@
 
 (defmacro (palette-entry index entry)
   "one Palette row: the index in column A, the color in B, the name in C"
-  (cell "Palette" (symbol "\"A" (+expand index 1)) index)
-  (cell "Palette" (symbol "\"B" (+expand index 1)) (car entry))
-  (cell "Palette" (symbol "\"C" (+expand index 1)) (car (cdr entry))))
+  (cell "Palette" (address-expand (+expand index 1) 1) index)
+  (cell "Palette" (address-expand (+expand index 1) 2) (car entry))
+  (cell "Palette" (address-expand (+expand index 1) 3) (car (cdr entry))))
 
 (defmacro (cga-palette)
   "the CGA's sixteen in their own order, docs/SPEC.md section 3.2's table, a palette with a name"
@@ -227,33 +254,37 @@
 ; address, or a range every cell of which takes the value, while a test holds, and
 ; else empty, which writes nothing; in column C the value. After each step the host
 ; issues each row as a derived write before the next frame, so a value lands a frame
-; late. The table's header is the headers macro's.
+; late. The table's header is the headers macro's. The test, the address and the value
+; are expressions: an address that is one cell is a text, "B20", and one computed is
+; a text joined by &, (& State!B30 State!B23).
 
 (defmacro (put sheet at target when address what)
   "a row of the Write sheet, from its cell in column A: the target sheet; =IF(when,address,\"\"); =what"
   (quasiquote (put-from (unquote sheet) (unquote (row-expand at)) (unquote (column-expand at)) (unquote target) (unquote when) (unquote address) (unquote what))))
 
-(defmacro (put-from sheet row column target when address what)
+(defmacro (put-from sheet put-row put-column target when address what)
   "put, its row and column read; its value parameter is what, since value heads a row of the record"
-  (cell sheet (address-expand row column) target)
-  (quasiquote (formula (unquote sheet) (unquote (address-expand row (+expand column 1))) (&expand "=IF(" (unquote when) "," (unquote address) ",\"\")")))
-  (quasiquote (formula (unquote sheet) (unquote (address-expand row (+expand column 2))) (&expand "=" (unquote what)))))
+  (cell sheet (address-expand put-row put-column) target)
+  (formula sheet (address-expand put-row (+expand put-column 1)) (formula-expand (if when address "")))
+  (formula sheet (address-expand put-row (+expand put-column 2)) (formula-expand what)))
 
 ; ---- the verbs: first frame, interior, press, count, hold, dice, every, since ---------
 ; Each verb writes one formula row, one shape filled over a range, which the language
 ; computes as a run (docs/SPEC.md section 2's rules). The sheet comes first, so that on names
 ; it once, then the range, then what the verb means, in the order its formula reads it.
-; Its other arguments are pieces of a formula without the = sign, a reference, a test
-; or an expression, written as the range's first cell reads it; the fill moves them as
-; it moves every relative reference. A piece is a string or an &expand of strings, and
-; never another macro's call: one verb writes a cell that another reads, and so every
-; pattern's value is a cell a person sees. A verb writes a twin as its sheet's name and
-; .last, so it wants a sheet whose name a formula writes bare, without quotes, as every
-; sheet the cartridges name is.
+; Its other arguments are expressions, a reference, a test or a sum, written as the
+; range's first cell reads them; the fill moves them as it moves every relative
+; reference, and the formula syntax writes the row's text (KIT.5). A piece may be a
+; macro's call, since the syntax expands its expression first: a verb's predicates can
+; be named, and every pattern's value is still a cell a person sees, one verb writing a
+; cell that another reads. A verb that reads its own last value writes the twin of its
+; range's first cell, Tally.last!B1 for a fill over Tally!B1:E10, through ref over its
+; sheet's name and .last, so a sheet whose name needs quotes is quoted as Excel quotes
+; it; and pressed writes its button's twin by twin-of, the expression macro below.
 
 (defmacro (first-frame sheet range start rule)
   "the first frame's value, then the rule every later frame: =IF(Clock!$B$1=1,start,rule)"
-  (quasiquote (formula (unquote sheet) (unquote range) (&expand "=IF(Clock!$B$1=1," (unquote start) "," (unquote rule) ")"))))
+  (formula sheet range (formula-expand (if (= Clock!$B$1 1) start rule))))
 
 ; A board's interior (ENGINE.9): first-frame over every cell of a board but its border,
 ; one cell wide, which stays empty and reads as 0. The board's size comes first, its
@@ -267,75 +298,62 @@
   "first-frame over a board width by height cells, less its border: B2 to the cell before its last row and column"
   (quasiquote (first-frame (unquote sheet) (unquote (&expand "B2:" (address-expand (-expand height 1) (-expand width 1)))) (unquote start) (unquote rule))))
 
-(defmacro (pressed sheet range button)
-  "1 in the frame a button goes down and 0 otherwise, its cell 1 this frame and 0 the last, the rising edge (docs/SPEC.md section 3.3): =IF(AND(button=1,its twin=0),1,0)"
-  (twin button pressed-from sheet range button))
+(defmacro (edge button)
+  "a button's rising edge as a test, an expression for any piece: its cell 1 this frame and 0 the last, AND(button=1,its twin=0)"
+  (and (= button 1) (= (twin-of button) 0)))
 
-(defmacro (pressed-from last sheet range button)
-  "pressed, its button's twin found"
-  (quasiquote (formula (unquote sheet) (unquote range) (&expand "=IF(AND(" (unquote button) "=1," (unquote last) "=0),1,0)"))))
+(defmacro (pressed sheet range button)
+  "1 in the frame a button goes down and 0 otherwise, its rising edge (docs/SPEC.md section 3.3): =IF(AND(button=1,its twin=0),1,0)"
+  (formula sheet range (formula-expand (if (edge button) 1 0))))
 
 (defmacro (count sheet range event)
   "each cell its own last value plus an event, a count of the frames it is 1 or a sum of its numbers: =sheet.last!first+event"
-  (first-cell range count-from sheet range event))
-
-(defmacro (count-from first sheet range event)
-  "count, its range's first cell found"
-  (quasiquote (formula (unquote sheet) (unquote range) (&expand "=" (unquote sheet) ".last!" (unquote first) "+" (unquote event)))))
+  (formula sheet range (formula-expand (+ (ref (&expand sheet ".last") (first-of range)) event))))
 
 (defmacro (hold sheet range when new)
   "each cell its own last value until an event replaces it, docs/SPEC.md section 3.9's keep-last: =IF(when,new,sheet.last!first)"
-  (first-cell range hold-from sheet range when new))
-
-(defmacro (hold-from first sheet range when new)
-  "hold, its range's first cell found"
-  (quasiquote (formula (unquote sheet) (unquote range) (&expand "=IF(" (unquote when) "," (unquote new) "," (unquote sheet) ".last!" (unquote first) ")"))))
+  (formula sheet range (formula-expand (if when new (ref (&expand sheet ".last") (first-of range))))))
 
 (defmacro (dice sheet at)
   "Park and Miller's minimal standard in one cell (docs/SPEC.md section 3.5): the seed in the first frame, then the last value times 16807, modulo 2147483647; one cell, since its Clock references are relative and a fill would move them"
-  (quasiquote (formula (unquote sheet) (unquote at) (&expand "=IF(Clock!B1=1,Clock!B3,MOD(" (unquote sheet) ".last!" (unquote at) "*16807,2147483647))"))))
+  (formula sheet at (formula-expand (if (= Clock!B1 1) Clock!B3 (mod (* (ref (&expand sheet ".last") at) 16807) 2147483647)))))
 
-(defmacro (every sheet range count n)
+(defmacro (every sheet range counted n)
   "1 in every nth frame of a count and 0 in the others, the clock divider of docs/SPEC.md section 12 over any count: =IF(MOD(count,n)=0,1,0)"
-  (quasiquote (formula (unquote sheet) (unquote range) (&expand "=IF(MOD(" (unquote count) "," (unquote n) ")=0,1,0)"))))
+  (formula sheet range (formula-expand (if (= (mod counted n) 0) 1 0))))
 
 (defmacro (since sheet range event)
   "the frames since an event, 0 in its frame and one more in each frame after, Appendix C's age: =IF(event,0,sheet.last!first+1)"
-  (first-cell range since-from sheet range event))
+  (formula sheet range (formula-expand (if event 0 (+ (ref (&expand sheet ".last") (first-of range)) 1)))))
 
-(defmacro (since-from first sheet range event)
-  "since, its range's first cell found"
-  (quasiquote (formula (unquote sheet) (unquote range) (&expand "=IF(" (unquote event) ",0," (unquote sheet) ".last!" (unquote first) "+1)"))))
+; The two walks the verbs stand on, each an expression's piece and never a row. No
+; primitive gives a range's first cell or a reference's twin as a text, and a macro's
+; call is no argument of a primitive, so each walks the characters, a character an
+; application, up to the range's colon or the reference's end, and ends in the primitive
+; that makes its text what the expression needs: first-of a text, which ref takes, and
+; twin-of a symbol, a bare reference, made by symbol in the walk's base case.
 
-; A verb that reads its own last value writes the twin of its range's first cell,
-; Tally.last!B1 for a fill over Tally!B1:E10, and pressed writes its button's twin,
-; Input.last!B1 for Input!B1. No primitive gives either text, and a macro's call is no
-; argument of &expand, so each is found by a walk that hands it on: (first-cell range
-; then args...) becomes (then first args...), the macro named then called with the
-; first cell before its own arguments, and twin hands on a reference's twin the same
-; way. An application a character, up to the range's colon or the reference's end.
+(defmacro (first-of range)
+  "a range's first cell as a text, its characters before the colon: B1 for B1:E10, and a cell whole"
+  (first-of-from (characters-expand range) ""))
 
-(defmacro (first-cell range then & args)
-  "a range's first cell, its text before the colon, handed on: (then first args...)"
-  (quasiquote (first-cell-from (unquote (characters-expand range)) "" (unquote then) (unquote-splicing args))))
-
-(defmacro (first-cell-from characters made then & args)
-  "first-cell's walk: the range's characters one at a time, up to its colon or its end"
+(defmacro (first-of-from characters made)
+  "first-of's walk: the range's characters one at a time, up to its colon or its end"
   (quote-if (null? characters)
-    (quasiquote ((unquote then) (unquote made) (unquote-splicing args)))
+    made
     (quote-if (eq? (car characters) ":")
-      (quasiquote ((unquote then) (unquote made) (unquote-splicing args)))
-      (quasiquote (first-cell-from (unquote (cdr characters)) (unquote (&expand made (car characters))) (unquote then) (unquote-splicing args))))))
+      made
+      (first-of-from (cdr characters) (&expand made (car characters))))))
 
-(defmacro (twin reference then & args)
-  "a reference's twin, Input!B1 read as Input.last!B1, handed on: (then twin args...)"
-  (quasiquote (twin-from (unquote (characters-expand reference)) "" (unquote then) (unquote-splicing args))))
+(defmacro (twin-of reference)
+  "a reference's twin as a bare reference, Input!B5 read as Input.last!B5: its ! written .last!, the text made a symbol"
+  (twin-of-from (characters-expand (&expand reference)) ""))
 
-(defmacro (twin-from characters made then & args)
-  "twin's walk: the reference's characters one at a time, its ! written .last!"
+(defmacro (twin-of-from characters made)
+  "twin-of's walk: the reference's characters one at a time, its ! written .last!, and the text a symbol at its end"
   (quote-if (null? characters)
-    (quasiquote ((unquote then) (unquote made) (unquote-splicing args)))
-    (quasiquote (twin-from (unquote (cdr characters)) (unquote (quote-if (eq? (car characters) "!") (&expand made ".last!") (&expand made (car characters)))) (unquote then) (unquote-splicing args)))))
+    (symbol made)
+    (twin-of-from (cdr characters) (quote-if (eq? (car characters) "!") (&expand made ".last!") (&expand made (car characters))))))
 
 ; ---- pictures -----------------------------------------------------------------------
 ; A picture is rows of text: each string one row of cells, down from a top-left cell,

@@ -7,6 +7,8 @@
 ; Every cell of the interior, B2:LG199, is one formula of its eight neighbors in the
 ; previous frame, the twin sheet Screen.last; the border stays empty, which the plane
 ; reads as 0, dead. The format is docs/SPEC.md section 7; the shape is its Appendix A.
+; Since KIT.5 the rule is written as expressions, which the language's formula syntax
+; writes into the formula's text, the same bytes the texts gave.
 
 (cartridge "life"
   (spec 2)                          ; the version of docs/SPEC.md this cartridge is written to
@@ -60,29 +62,34 @@
   "the board, 320 by 200 cells, handed on: (then 320 200 args...)"
   (quasiquote ((unquote then) 320 200 (unquote-splicing args))))
 
+; The soup of the first frame, Clock!B1 = 1, as two macros of expressions. Two linear
+; forms of the seed, ROW() and COLUMN() are reduced modulo the prime P = 2^26 - 5 =
+; 67108859 and multiplied, h = MOD(a*b, P), and a cell is alive when MOD(h*h, P) <
+; 25165822, three eighths of P. Every sum and product stays under 2^53, so the hash is
+; exact in doubles for any seed up to 2147483646. The square is what makes it a soup: h
+; alone is a quadratic in the row and the column, which fixes the fourth cell of every
+; 2x2 block from the other three, and its square does not (measured 2026-10-08 for the
+; seed 1, outside the engine: 23,683 of 62,964 cells alive, a 2x2 chi-square of 17.1 on
+; 15 degrees of freedom against 300.7 without the square).
+(defmacro (linear k1 k2 k3 k4)
+  "one linear form of the seed, the row and the column: Clock!$B$3*k1+ROW()*k2+COLUMN()*k3+k4"
+  (+ (* Clock!$B$3 k1) (* (row) k2) (* (column) k3) k4))
+(defmacro (soup)
+  "the soup's hash h: the two linear forms, each reduced modulo P, multiplied and reduced again"
+  (mod (* (mod (linear 1103515 1597334 1830421 12345) 67108859) (mod (linear 2012345 1209487 1949213 54321) 67108859)) 67108859))
+
 ; The rule, one row over the board's interior, B2:LG199 on this board, which the
 ; library's interior writes through first-frame: the first frame's value, then the rule
 ; every later frame. Every reference is relative but the Clock's, so the row is one
 ; shape over 62,964 cells, the shape KERNEL.20 vectorizes.
-;   The first frame, Clock!B1 = 1, is a soup from the seed. Two linear forms of the seed,
-;   ROW() and COLUMN() are reduced modulo the prime P = 2^26 - 5 = 67108859 and
-;   multiplied, h = MOD(a*b, P), and a cell is alive when MOD(h*h, P) < 25165822, three
-;   eighths of P. Every sum and product stays under 2^53, so the hash is exact in doubles
-;   for any seed up to 2147483646. The square is what makes it a soup: h alone is a
-;   quadratic in the row and the column, which fixes the fourth cell of every 2x2 block
-;   from the other three, and its square does not (measured 2026-10-08 for the seed 1,
-;   outside the engine: 23,683 of 62,964 cells alive, a 2x2 chi-square of 17.1 on 15
-;   degrees of freedom against 300.7 without the square).
+;   The first frame is the soup: alive where h squared, modulo P, is under three
+;   eighths of P.
 ;   Every later frame is Conway's rule over the previous frame: a cell is alive when its
 ;   eight neighbors hold three live cells, or two and it was alive itself.
 (board-size interior                ; the rule, one fill over the board's interior:
   "Screen"                          ;   the sheet it writes; the border stays empty, dead
-  (&expand                          ;   the first frame: the soup, alive where h*h is under three eighths of P
-    "IF(MOD(MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
-    "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)"
-    "*MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
-    "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859),"
-    "67108859)<25165822,1,0)")
-  (&expand                          ;   every later frame: Conway's rule over the previous frame,
-    "IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,"                    ;   alive with three live neighbors,
-    "AND(Screen.last!B2=1,SUM(Screen.last!A1:C3)-Screen.last!B2=2)),1,0)"))  ;   or with two and alive itself
+  (if (< (mod (* (soup) (soup)) 67108859) 25165822) 1 0)    ;   the first frame: the soup, alive where h*h is under three eighths of P
+  (if (or (= (- (sum Screen.last!A1:C3) Screen.last!B2) 3)   ;   every later frame: Conway's rule over the previous frame, alive with three live neighbors,
+          (and (= Screen.last!B2 1)                           ;   or with two and alive itself
+               (= (- (sum Screen.last!A1:C3) Screen.last!B2) 2)))
+      1 0))

@@ -76,7 +76,9 @@
   (notes "A falling-sand toy. Paint with the left button, erase with the right, and turn the wheel to size the brush; press 1 for sand, 3 for water, 2 for wall and 0 for empty. The floor shows what the left button paints. It opens raining sand and water from its top third, Life's first frame as grains."))
 
 ; The library whose macros this source calls: sheets, palette, labels and headers; cells
-; and formulas, each naming a sheet once over a run of its rows; and the verb first-frame.
+; and rules, each naming a sheet once over a run of its rows; rule; and the verb
+; first-frame. Since KIT.5 the rule is written as expressions, the brush's test and the
+; soup's hash named once each, which the formula syntax writes to the same bytes.
 (include "../common.vla")
 
 ; The sheets, in tab order: the Screen the rule draws on, and Stay and Side beside it;
@@ -123,19 +125,22 @@
 ; first on an odd one, and an edit that breaks the alternation lets two grains claim one
 ; cell. The rule reads it through its twin, Parity.last, an index into an array, where
 ; MOD(ROW(),2) at every cell would be a call at every cell (rule 5).
-(formula "Parity" "A1:A200" "=MOD(ROW(),2)")
+(rule "Parity" "A1:A200" (mod (row) 2))
 
 ; ---- the brush, entered only while a button is held -----------------------------------
 (labels "Brush" "A1" "column" "row" "radius" "material")   ; the labels, down column A
-(formulas "Brush"                   ; the only cells that read the pointer (rule 3)
+(defmacro (painting)
+  "the left or the right button held over the Screen: a press, and the pointer on the canvas"
+  (and (> (+ Input!B13 Input!B14) 0) (> Input!B11 0) (> Input!B12 0)))
+(rules "Brush"                      ; the only cells that read the pointer (rule 3)
   ; the pointer's column and row while the left or the right button is held over the
   ; Screen, and -999 otherwise, which no disc reaches
-  ("B1" "=IF(AND(Input!B13+Input!B14>0,Input!B11>0,Input!B12>0),Input!B11,-999)")
-  ("B2" "=IF(AND(Input!B13+Input!B14>0,Input!B11>0,Input!B12>0),Input!B12,-999)")
+  ("B1" (if (painting) Input!B11 -999))
+  ("B2" (if (painting) Input!B12 -999))
   ; the radius: 3 at the start, then the wheel's notches, larger away from the user
-  ("B3" "=IF(Clock!B1<=1,3,MAX(1,MIN(8,Brush.last!B3-Input!B16)))")
+  ("B3" (if (<= Clock!B1 1) 3 (max 1 (min 8 (- Brush.last!B3 Input!B16)))))
   ; the right button paints empty, and the left the material picked
-  ("B4" "=IF(Input!B14=1,0,State!B1)"))
+  ("B4" (if (= Input!B14 1) 0 State!B1)))
 
 ; ---- the Gate: the disc, row by row ----------------------------------------------------
 ; For each row of the interior, the brush's column, the square of the disc's half-width
@@ -143,44 +148,52 @@
 ; inside. A cell of row r is inside the disc when Gate!Br is not negative and
 ; (COLUMN()-Gate!Ar)^2 <= Gate!Br. The rule reads the brush from this sheet alone, so a
 ; press, a release or a key changes only the rows under the disc (rule 4).
-(formulas "Gate"
-  ("A2:A199" "=IF((ROW()-Brush!$B$2)^2<=Brush!$B$3^2,Brush!$B$1,-999)")
-  ("B2:B199" "=IF((ROW()-Brush!$B$2)^2<=Brush!$B$3^2,Brush!$B$3^2-(ROW()-Brush!$B$2)^2,-1)")
-  ("C2:C199" "=IF((ROW()-Brush!$B$2)^2<=Brush!$B$3^2,Brush!$B$4,-1)"))
+(defmacro (under-the-disc)
+  "the row within the disc's radius of the brush's row: (ROW()-row)^2<=radius^2"
+  (<= (^ (- (row) Brush!$B$2) 2) (^ Brush!$B$3 2)))
+(rules "Gate"
+  ("A2:A199" (if (under-the-disc) Brush!$B$1 -999))
+  ("B2:B199" (if (under-the-disc) (- (^ Brush!$B$3 2) (^ (- (row) Brush!$B$2) 2)) -1))
+  ("C2:C199" (if (under-the-disc) Brush!$B$4 -1)))
 
 ; ---- State: the material the left button paints ------------------------------------------
 (labels "State" "A1" "material")
-(formula "State" "B1"
-  (&expand
-    "=IF(Clock!$B$1<=1,2,"                  ; sand at the start
-    "IF(Input!$B$17=\"1\",2,"               ; 1: sand
-    "IF(Input!$B$17=\"2\",1,"               ; 2: wall
-    "IF(Input!$B$17=\"3\",3,"               ; 3: water
-    "IF(Input!$B$17=\"0\",0,"               ; 0: empty
-    "State.last!$B$1)))))"))                ; any other key, or none: kept
+(rule "State" "B1"
+  (if (<= Clock!$B$1 1) 2                   ; sand at the start
+    (if (= Input!$B$17 "1") 2               ; 1: sand
+      (if (= Input!$B$17 "2") 1             ; 2: wall
+        (if (= Input!$B$17 "3") 3           ; 3: water
+          (if (= Input!$B$17 "0") 0         ; 0: empty
+            State.last!$B$1))))))           ; any other key, or none: kept
 
 ; ---- Stay: whether the cell's occupant stays after its row's grains have fallen -------
 ; Written at C2, the fill's first cell: Side!C3 is the cell beneath after its row's water
 ; has moved sideways this frame, and Screen.last!A2:E2 the row's grains as the last frame
 ; left them. An occupant that stays says 1, or 2 when it is water, so that Side, which
 ; moves the water, reads this sheet alone (rule 7).
-(formula "Stay" "C2:LF199"
-  (&expand
-    "=IF(IF(Gate!$B2<0,FALSE,"                                     ; the brush, tested only in its rows (rule 4):
-    "(COLUMN()-Gate!$A2)^2<=Gate!$B2),"                            ;   the cell inside the disc, by its row's gate,
-    "IF(Gate!$C2<>0,IF(Screen.last!C2=3,2,1),0),"                  ;   is occupied when the paint is not empty, 2 over water, whose grain still moves;
-    "IF(Screen.last!C2=1,1,"                                       ; else a wall stays,
-    "IF(AND(Screen.last!C2>=2,Side!C3=1),"                         ; and a grain whose cell beneath is taken
-    "IF(Parity.last!$A2=0,"                                        ; on an even row, right first:
-    "IF(OR(AND(Side!D3=0,Screen.last!D2<2),"                       ;   leaves for its first diagonal, free and none falling into it,
-    "AND(Side!B3=0,Screen.last!B2<2,"                              ;   or else for its second, free and none falling into it,
-    "OR(Screen.last!A2<2,Side!A3=0))),0,"                          ;   when the grain two to the left does not take it first;
-    "IF(Screen.last!C2=3,2,1)),"                                   ;   else stays, 2 for water and 1 for sand.
-    "IF(OR(AND(Side!B3=0,Screen.last!B2<2),"                       ; on an odd row, left first, the same mirrored:
-    "AND(Side!D3=0,Screen.last!D2<2,"
-    "OR(Screen.last!E2<2,Side!E3=0))),0,"
-    "IF(Screen.last!C2=3,2,1))),"
-    "0)))"))                                                       ; an empty cell, or a grain that falls straight, does not stay
+; The brush's test, named once for the three sheets of the scan: the cell inside the
+; disc, by its row's gate, which is tested only in the disc's rows (rule 4).
+(defmacro (inside-the-brush)
+  "the cell inside the disc: its row's gate not negative, and (COLUMN()-column)^2 within it"
+  (if (< Gate!$B2 0) false (<= (^ (- (column) Gate!$A2) 2) Gate!$B2)))
+
+(rule "Stay" "C2:LF199"
+  (if (inside-the-brush)                                           ; the brush, tested only in its rows (rule 4):
+      (if (<> Gate!$C2 0) (if (= Screen.last!C2 3) 2 1) 0)         ;   the cell is occupied when the paint is not empty, 2 over water, whose grain still moves;
+      (if (= Screen.last!C2 1) 1                                   ; else a wall stays,
+        (if (and (>= Screen.last!C2 2) (= Side!C3 1))              ; and a grain whose cell beneath is taken
+          (if (= Parity.last!$A2 0)                                ; on an even row, right first:
+            (if (or (and (= Side!D3 0) (< Screen.last!D2 2))       ;   leaves for its first diagonal, free and none falling into it,
+                    (and (= Side!B3 0) (< Screen.last!B2 2)        ;   or else for its second, free and none falling into it,
+                         (or (< Screen.last!A2 2) (= Side!A3 0)))) ;   when the grain two to the left does not take it first;
+                0
+                (if (= Screen.last!C2 3) 2 1))                     ;   else stays, 2 for water and 1 for sand.
+            (if (or (and (= Side!B3 0) (< Screen.last!B2 2))       ; on an odd row, left first, the same mirrored:
+                    (and (= Side!D3 0) (< Screen.last!D2 2)
+                         (or (< Screen.last!E2 2) (= Side!E3 0))))
+                0
+                (if (= Screen.last!C2 3) 2 1)))
+          0))))                                                    ; an empty cell, or a grain that falls straight, does not stay
 
 ; ---- Side: whether the cell is occupied after its row's water has moved sideways ------
 ; Written at C2: Stay!A2:E2 is the row after its grains have fallen. Water that stays
@@ -189,19 +202,19 @@
 ; cell first. A free cell is taken by the water whose first choice it is, or else by the
 ; water whose second choice it is, when that water's first is not free. The brush
 ; paints this sheet as it paints Stay.
-(formula "Side" "C2:LF199"
-  (&expand
-    "=IF(IF(Gate!$B2<0,FALSE,"                                     ; the brush, as Stay tests it:
-    "(COLUMN()-Gate!$A2)^2<=Gate!$B2),"
-    "IF(Gate!$C2<>0,1,0),"                                         ;   occupied when the paint is not empty;
-    "IF(Stay!C2=2,"                                                ; else water that stays
-    "IF(IF(Parity.last!$A2=0,"                                     ;   on an even row, right first:
-    "OR(Stay!D2=0,AND(Stay!B2=0,Stay!A2<>2)),"                     ;   leaves for a free cell right, or left when the water two to the left does not take it;
-    "OR(Stay!B2=0,AND(Stay!D2=0,Stay!E2<>2))),0,1),"               ;   on an odd row, mirrored; else it stays;
-    "IF(Stay!C2=1,1,"                                              ; a wall or a grain of sand that stays is there;
-    "IF(IF(Parity.last!$A2=0,"                                     ; and a free cell, on an even row,
-    "OR(Stay!B2=2,AND(Stay!D2=2,Stay!E2>0)),"                      ;   takes the water on its left, or the water on its right when that one's right is taken;
-    "OR(Stay!D2=2,AND(Stay!B2=2,Stay!A2>0))),1,0))))"))            ;   on an odd row, mirrored; else it stays free.
+(rule "Side" "C2:LF199"
+  (if (inside-the-brush)                                           ; the brush, as Stay tests it:
+      (if (<> Gate!$C2 0) 1 0)                                     ;   occupied when the paint is not empty;
+      (if (= Stay!C2 2)                                            ; else water that stays
+          (if (if (= Parity.last!$A2 0)                            ;   on an even row, right first:
+                  (or (= Stay!D2 0) (and (= Stay!B2 0) (<> Stay!A2 2)))   ;   leaves for a free cell right, or left when the water two to the left does not take it;
+                  (or (= Stay!B2 0) (and (= Stay!D2 0) (<> Stay!E2 2))))  ;   on an odd row, mirrored; else it stays;
+              0 1)
+          (if (= Stay!C2 1) 1                                      ; a wall or a grain of sand that stays is there;
+            (if (if (= Parity.last!$A2 0)                          ; and a free cell, on an even row,
+                    (or (= Stay!B2 2) (and (= Stay!D2 2) (> Stay!E2 0)))   ;   takes the water on its left, or the water on its right when that one's right is taken;
+                    (or (= Stay!D2 2) (and (= Stay!B2 2) (> Stay!A2 0))))  ;   on an odd row, mirrored; else it stays free.
+                1 0)))))
 
 ; ---- Screen: the material at the frame's end -------------------------------------------
 ; Written at C2: Stay!A2:E2 and Side!A2:E2 are the row after its grains have fallen and
@@ -215,38 +228,39 @@
 ; from the top third, rows 2 to 67: the whole board falling at once made every frame of
 ; its first two seconds take two of a 60 Hz display's ticks, and a third of it takes one
 ; (the playtest pass, 2026-10-12).
+(defmacro (linear k1 k2 k3 k4)
+  "one linear form of the seed, the row and the column: Clock!$B$3*k1+ROW()*k2+COLUMN()*k3+k4"
+  (+ (* Clock!$B$3 k1) (* (row) k2) (* (column) k3) k4))
+(defmacro (soup)
+  "Life's soup hash h: the two linear forms, each reduced modulo P, multiplied and reduced again"
+  (mod (* (mod (linear 1103515 1597334 1830421 12345) 67108859) (mod (linear 2012345 1209487 1949213 54321) 67108859)) 67108859))
+(defmacro (soup-squared-under n)
+  "the soup's square, modulo P, under a threshold: a grain where it is"
+  (< (mod (* (soup) (soup)) 67108859) n))
+
 (first-frame                        ; the material at the frame's end, one fill over the interior:
   "Screen"                          ;   the sheet it writes
   "C2:LF199"                        ;   the interior
-  (&expand                          ;   the first frame:
-    "IF(ROW()>67,0,"                                                         ;   nothing below the top third,
-    "IF(MOD(MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
-    "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)"
-    "*MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
-    "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859),"
-    "67108859)<12582911,2,"                                                 ;   sand where the soup's square is under three sixteenths,
-    "IF(MOD(MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
-    "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859)"
-    "*MOD(MOD(Clock!$B$3*1103515+ROW()*1597334+COLUMN()*1830421+12345,67108859)"
-    "*MOD(Clock!$B$3*2012345+ROW()*1209487+COLUMN()*1949213+54321,67108859),67108859),"
-    "67108859)<25165822,3,0)))")                                            ;   water where it is under three eighths
-  (&expand                          ;   every later frame:
-    "IF(IF(Gate!$B2<0,FALSE,"                                                ; the brush, as Stay tests it:
-    "(COLUMN()-Gate!$A2)^2<=Gate!$B2),"
-    "Gate!$C2,"                                                              ;   the paint
-    "IF(Side!C2=1,IF(Stay!C2>0,Screen.last!C2,3),"                           ; else an occupant that stayed keeps its cell, and water moved in is water;
-    "IF(Screen.last!C1>=2,Screen.last!C1,"                                   ; a free cell takes the grain falling straight,
-    "IF(Parity.last!$A1=0,"                                                  ; and when the row above goes right first,
-    "IF(AND(Screen.last!B1>=2,Side!B2=1),Screen.last!B1,"                    ;   the grain up left, its first choice,
-    "IF(AND(Screen.last!D1>=2,Side!D2=1,"                                    ;   or the grain up right, its second choice,
-    "OR(Side!E2=1,Screen.last!E1>=2)),Screen.last!D1,0)),"                   ;   when its first is not open; else empty;
-    "IF(AND(Screen.last!D1>=2,Side!D2=1),Screen.last!D1,"                    ; and when it goes left first, mirrored
-    "IF(AND(Screen.last!B1>=2,Side!B2=1,"
-    "OR(Side!A2=1,Screen.last!A1>=2)),Screen.last!B1,0))))))"))
+  (if (> (row) 67) 0                ;   the first frame: nothing below the top third,
+    (if (soup-squared-under 12582911) 2                            ;   sand where the soup's square is under three sixteenths,
+      (if (soup-squared-under 25165822) 3 0)))                     ;   water where it is under three eighths
+  (if (inside-the-brush)            ;   every later frame: the brush, as Stay tests it:
+      Gate!$C2                                                               ;   the paint
+      (if (= Side!C2 1) (if (> Stay!C2 0) Screen.last!C2 3)                  ; else an occupant that stayed keeps its cell, and water moved in is water;
+        (if (>= Screen.last!C1 2) Screen.last!C1                             ; a free cell takes the grain falling straight,
+          (if (= Parity.last!$A1 0)                                          ; and when the row above goes right first,
+            (if (and (>= Screen.last!B1 2) (= Side!B2 1)) Screen.last!B1     ;   the grain up left, its first choice,
+              (if (and (>= Screen.last!D1 2) (= Side!D2 1)                   ;   or the grain up right, its second choice,
+                       (or (= Side!E2 1) (>= Screen.last!E1 2)))             ;   when its first is not open; else empty;
+                  Screen.last!D1 0))
+            (if (and (>= Screen.last!D1 2) (= Side!D2 1)) Screen.last!D1     ; and when it goes left first, mirrored
+              (if (and (>= Screen.last!B1 2) (= Side!B2 1)
+                       (or (= Side!A2 1) (>= Screen.last!A1 2)))
+                  Screen.last!B1 0)))))))
 
 ; The floor shows the material the left button paints. No formula reads row 200 of the
 ; Screen, since Stay's and Side's row 200 is what the row above it stands on.
-(formula "Screen" "C200:LF200" "=State!$B$1")
+(rule "Screen" "C200:LF200" State!$B$1)
 
 ; ---- the Tally: each board row counted, from the twins --------------------------------
 ; Column A the sum of the row's codes, column B its occupied cells, read from the last
@@ -254,6 +268,6 @@
 ; walls, and A less B its sand and twice its water. A frame's end is the replay's golden
 ; (decision 12).
 (headers "Tally" "A1" "codes" "occupied")
-(formulas "Tally"
-  ("A2:A199" "=SUM(Screen.last!C2:LF2)")
-  ("B2:B199" "=SUM(Side.last!C2:LF2)"))
+(rules "Tally"
+  ("A2:A199" (sum Screen.last!C2:LF2))
+  ("B2:B199" (sum Side.last!C2:LF2)))

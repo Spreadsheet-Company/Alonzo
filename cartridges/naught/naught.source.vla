@@ -70,31 +70,44 @@
 ; A gate is written by its Latin name, its cell or its range, then each of its inputs as
 ; the range's first cell reads it: (aut "C3:C18" "A3" "B3") is the parity of a and b on
 ; every row from 3 to 18. A gate's value is 0 or 1, a number, so a bus is a sum of its
-; bits and a look draws each value.
+; bits and a look draws each value. Since KIT.5 each gate is an expression the formula
+; syntax writes; an input is the text the generator writes, "A3", made the reference A3 by
+; symbol, so the bench's block below stands as its generator wrote it. A gate writes its
+; row itself, through formula-expand and never the library's rule, since the frame floors
+; build the bench from this source with the lesson, the levels and the include cut out.
 
 (defmacro (non at x)
   "NON, not: 1 less its input"
-  (formula "Bench" at (&expand "=1-" x)))
+  (formula "Bench" at (formula-expand (- 1 (symbol x)))))
 
 (defmacro (et at x y)
   "ET, and: the product of its two inputs"
-  (formula "Bench" at (&expand "=" x "*" y)))
+  (formula "Bench" at (formula-expand (* (symbol x) (symbol y)))))
 
 (defmacro (vel at x y)
   "VEL, or: the greater of its two inputs"
-  (formula "Bench" at (&expand "=MAX(" x "," y ")")))
+  (formula "Bench" at (formula-expand (max (symbol x) (symbol y)))))
 
 (defmacro (aut at x y)
   "AUT, either but not both: the parity of its inputs' sum"
-  (formula "Bench" at (&expand "=MOD(" x "+" y ",2)")))
+  (formula "Bench" at (formula-expand (mod (+ (symbol x) (symbol y)) 2))))
 
 (defmacro (non-et at x y)
   "NON-ET, not both, Sheffer's stroke: 1 less the product of its inputs"
-  (formula "Bench" at (&expand "=1-" x "*" y)))
+  (formula "Bench" at (formula-expand (- 1 (* (symbol x) (symbol y))))))
 
 (defmacro (nec at x y)
   "NEC, neither, Peirce's arrow: 1 less the greater of its inputs"
-  (formula "Bench" at (&expand "=1-MAX(" x "," y ")")))
+  (formula "Bench" at (formula-expand (- 1 (max (symbol x) (symbol y))))))
+
+; A command's test and a level's number, named once for the levels and the Lab.
+(defmacro (a-command word)
+  "the command named by the word, run at this frame: Input!$B$20=\"word\""
+  (= Input!$B$20 word))
+
+(defmacro (shown-as level k)
+  "a level's number where it is the sheet shown, and 0 otherwise: (Input!$B$19=\"level\")*k"
+  (* (= Input!$B$19 level) k))
 
 ; ---- the lesson beside the bench: the floors build their benches without it ----
 ; What the game teaches, on a sheet of its own, the first a load shows, bound to its extent and read-only: a line a row
@@ -165,28 +178,35 @@
   (cell sheet "L2" "lamp")
   (cell sheet "M2" "due"))
 
-(defmacro (level-switches sheet row range)
+(defmacro (level-switches sheet lab-row range)
   "a level's switches, each its own last value: 0 at R on its level; while T runs its level, the bit of the input's number
-   that the switch's row names; and otherwise Space, 1, 0 or a click on it. row, the level's row of the Lab"
-  (formula sheet range
-    (&expand "=IF(AND(Input!$B$20=\"reset\",Input!$B$19=\"" sheet "\"),0,"
-             "IF(Lab!$N$" row "=1,MOD(INT(Lab!$B$6/CHOOSE(ROW()-2,1,2,4,8,16,32,64,128,256)),2),"
-             "IF(AND(Input!$B$19=\"" sheet "\",Input!$B$11=1,Input!$B$12=ROW()),"
-             "IF(Input!$B$20=\"one\",1,IF(Input!$B$20=\"zero\",0,IF(OR(Input!$B$20=\"toggle\",Input!$B$13=1),1-'" sheet ".last'!A3,'" sheet ".last'!A3))),"
-             "'" sheet ".last'!A3)))")))
+   that the switch's row names; and otherwise Space, 1, 0 or a click on it. lab-row, the level's row of the Lab"
+  (rule sheet range
+    (if (and (a-command "reset") (= Input!$B$19 sheet)) 0                                        ; R on the level: 0
+      (if (= (ref "Lab" (&expand "$N$" lab-row)) 1)                                               ; T running the level:
+          (mod (int (/ Lab!$B$6 (choose (- (row) 2) 1 2 4 8 16 32 64 128 256))) 2)                ;   the bit of the input's number its row names
+          (if (and (= Input!$B$19 sheet) (= Input!$B$11 1) (= Input!$B$12 (row)))                 ; an act on the switch:
+              (if (a-command "one") 1                                                             ;   1, 0,
+                (if (a-command "zero") 0
+                  (if (or (a-command "toggle") (= Input!$B$13 1)) (- 1 (ref (&expand sheet ".last") "A3"))   ;   or toggled by Space or a click;
+                      (ref (&expand sheet ".last") "A3"))))
+              (ref (&expand sheet ".last") "A3"))))))                                             ; else as it was
 
 (defmacro (level-lamps sheet range)
   "a level's lamps, a dot lit in the lamps' lavender while the output to its left is 1, and a ring otherwise"
-  (formula sheet range "=IF(J3=1,\"●\",\"○\")"))
+  (rule sheet range (if (= J3 1) "●" "○")))
 
-(defmacro (level-reckoning sheet row inputs budget least)
+(defmacro (level-reckoning sheet lab-row inputs budget least)
   "a level's reckoning in N8, its gates against its budget and the least known with its stars, and its test's verdict
-   in N9, counting the inputs while T runs. row, the level's row of the Lab"
-  (formula sheet "N8" (&expand "=\"Gates \"&Lab!E" row "&\"; the budget " budget ", the least known " least ": \"&Lab!H" row))
+   in N9, counting the inputs while T runs. lab-row, the level's row of the Lab"
+  (rule sheet "N8" (& "Gates " (ref "Lab" (&expand "E" lab-row)) (&expand "; the budget " budget ", the least known " least ": ") (ref "Lab" (&expand "H" lab-row))))
+  ; The verdict stays a text: its sums stand in parentheses, "input "&(Lab!$B$6+1)&" of ", which
+  ; the formula syntax writes without them, the same value in other bytes, and the cartridge's
+  ; bytes are the replay's and the hand's.
   (formula sheet "N9"
-    (&expand "=IF(Lab!N" row "=1,\"Calculemus: input \"&(Lab!$B$6+1)&\" of " inputs "\","
-             "IF(Lab!B" row "=1,\"Quod erat demonstrandum: every one of its " inputs " inputs passes.\","
-             "IF(Lab!B" row "=2,\"The test stops at input \"&(Lab!C" row "+1)&\" of " inputs ", standing on the board: a lamp differs from its due.\","
+    (&expand "=IF(Lab!N" lab-row "=1,\"Calculemus: input \"&(Lab!$B$6+1)&\" of " inputs "\","
+             "IF(Lab!B" lab-row "=1,\"Quod erat demonstrandum: every one of its " inputs " inputs passes.\","
+             "IF(Lab!B" lab-row "=2,\"The test stops at input \"&(Lab!C" lab-row "+1)&\" of " inputs ", standing on the board: a lamp differs from its due.\","
              "\"T tests every input, an input a frame. Calculemus!\")))")))
 
 (defmacro (level-keys sheet at)
@@ -202,7 +222,7 @@
 (cells "I NON" ("B3" "a") ("K3" "y"))
 (level-switches "I NON" 11 "A3")
 (level-lamps "I NON" "L3")
-(formulas "I NON" ("M3" "=Lab!I11"))
+(rules "I NON" ("M3" Lab!I11))
 (cells "I NON"
   ("N1" "NON, not: the lamp lit where a is 0, and dark where a is 1.")
   ("N2" "Given NON-ET alone, not both, =1-x*y. Write y in J3, with any gates before it in the room, C to I.")
@@ -220,7 +240,7 @@
 (cells "II ET" ("B3" "a") ("B4" "b") ("K3" "y"))
 (level-switches "II ET" 12 "A3:A4")
 (level-lamps "II ET" "L3")
-(formulas "II ET" ("M3" "=Lab!I12"))
+(rules "II ET" ("M3" Lab!I12))
 (cells "II ET"
   ("N1" "ET, and: the lamp lit where a and b are both 1.")
   ("N2" "Given NON-ET, =1-x*y, and NON, proven at I, =1-x. Write y in J3.")
@@ -235,7 +255,7 @@
 (cells "III VEL" ("B3" "a") ("B4" "b") ("K3" "y"))
 (level-switches "III VEL" 13 "A3:A4")
 (level-lamps "III VEL" "L3")
-(formulas "III VEL" ("M3" "=Lab!I13"))
+(rules "III VEL" ("M3" Lab!I13))
 (cells "III VEL"
   ("N1" "VEL, or: the lamp lit where a or b is 1, or both.")
   ("N2" "Given NON-ET, =1-x*y; NON, =1-x; and ET, proven at II, =x*y. Write y in J3.")
@@ -251,7 +271,7 @@
 (cells "IV AUT" ("B3" "a") ("B4" "b") ("K3" "y"))
 (level-switches "IV AUT" 14 "A3:A4")
 (level-lamps "IV AUT" "L3")
-(formulas "IV AUT" ("M3" "=Lab!I14"))
+(rules "IV AUT" ("M3" Lab!I14))
 (cells "IV AUT"
   ("N1" "AUT, either but not both: the lamp lit where exactly one of a and b is 1.")
   ("N2" "Given NON-ET, NON, ET, and VEL, proven at III, =MAX(x,y). Write y in J3.")
@@ -267,7 +287,7 @@
 (cells "V ELIGE" ("B3" "a") ("B4" "b") ("B5" "s") ("K3" "y"))
 (level-switches "V ELIGE" 15 "A3:A5")
 (level-lamps "V ELIGE" "L3")
-(formulas "V ELIGE" ("M3" "=Lab!I15"))
+(rules "V ELIGE" ("M3" Lab!I15))
 (cells "V ELIGE"
   ("N1" "ELIGE, choose: y is a where s is 0, and b where s is 1.")
   ("N2" "Given every gate proven, NON, ET, VEL and AUT, beside NON-ET. Write y in J3.")
@@ -282,7 +302,7 @@
 (cells "VI DISTRIBUE" ("B3" "x") ("B4" "s") ("K3" "to 0") ("K4" "to 1"))
 (level-switches "VI DISTRIBUE" 16 "A3:A4")
 (level-lamps "VI DISTRIBUE" "L3:L4")
-(formulas "VI DISTRIBUE" ("M3" "=Lab!I16") ("M4" "=Lab!J16"))
+(rules "VI DISTRIBUE" ("M3" Lab!I16) ("M4" Lab!J16))
 (cells "VI DISTRIBUE"
   ("N1" "DISTRIBUE, send: x goes to J3 where s is 0, and to J4 where s is 1, the other output 0.")
   ("N2" "Given every gate proven. Write J3 and J4.")
@@ -297,7 +317,7 @@
 (cells "VII SEMIS" ("B3" "a") ("B4" "b") ("K3" "sum") ("K4" "carry"))
 (level-switches "VII SEMIS" 17 "A3:A4")
 (level-lamps "VII SEMIS" "L3:L4")
-(formulas "VII SEMIS" ("M3" "=Lab!I17") ("M4" "=Lab!J17"))
+(rules "VII SEMIS" ("M3" Lab!I17) ("M4" Lab!J17))
 (cells "VII SEMIS"
   ("N1" "SEMIS, the half: a + b in two bits, the sum in J3 and the carry in J4; 1 + 1 is the sum 0 and the carry 1.")
   ("N2" "Given every gate proven.")
@@ -312,7 +332,7 @@
 (cells "VIII SUMMA" ("B3" "a") ("B4" "b") ("B5" "c") ("K3" "sum") ("K4" "carry"))
 (level-switches "VIII SUMMA" 18 "A3:A5")
 (level-lamps "VIII SUMMA" "L3:L4")
-(formulas "VIII SUMMA" ("M3" "=Lab!I18") ("M4" "=Lab!J18"))
+(rules "VIII SUMMA" ("M3" Lab!I18) ("M4" Lab!J18))
 (cells "VIII SUMMA"
   ("N1" "SUMMA, the whole sum: a + b + c in two bits, the sum in J3 and the carry in J4, c the carry coming in.")
   ("N2" "Given every gate proven, and the half adder's idea.")
@@ -329,7 +349,7 @@
   ("K3" "s0") ("K4" "s1") ("K5" "s2") ("K6" "s3") ("K7" "carry"))
 (level-switches "IX QUATTUOR" 19 "A3:A11")
 (level-lamps "IX QUATTUOR" "L3:L7")
-(formulas "IX QUATTUOR" ("M3" "=Lab!I19") ("M4" "=Lab!J19") ("M5" "=Lab!K19") ("M6" "=Lab!L19") ("M7" "=Lab!M19"))
+(rules "IX QUATTUOR" ("M3" Lab!I19) ("M4" Lab!J19) ("M5" Lab!K19) ("M6" Lab!L19) ("M7" Lab!M19))
 (cells "IX QUATTUOR"
   ("N1" "QUATTUOR, four: a in A3:A6, plus b in A7:A10, plus the carry c in A11, low bit first; the sum in J3:J6, its carry in J7.")
   ("N2" "Given every gate proven, and the whole sum's idea four times over.")
@@ -346,15 +366,15 @@
 ; goes on a settle step an input while every lamp is due, standing at the first input that fails or at the last.
 (sheet "Lab" hidden)
 (labels "Lab" "A1" "shown" "level" "camera" "testing" "running" "input" "inputs" "due")
-(formulas "Lab"
-  ("B1" "=(Input!$B$19=\"I NON\")*1+(Input!$B$19=\"II ET\")*2+(Input!$B$19=\"III VEL\")*3+(Input!$B$19=\"IV AUT\")*4+(Input!$B$19=\"V ELIGE\")*5+(Input!$B$19=\"VI DISTRIBUE\")*6+(Input!$B$19=\"VII SEMIS\")*7+(Input!$B$19=\"VIII SUMMA\")*8+(Input!$B$19=\"IX QUATTUOR\")*9")
-  ("B2" "=IF(AND(Input!$B$20=\"next\",B1>0),MIN(9,B1+1),IF(AND(Input!$B$20=\"previous\",B1>0),MAX(1,B1-1),MAX(1,Lab.last!B2)))")
-  ("B3" "=IF(OR(Input!$B$20=\"next\",Input!$B$20=\"previous\"),CHOOSE(B2,\"I NON\",\"II ET\",\"III VEL\",\"IV AUT\",\"V ELIGE\",\"VI DISTRIBUE\",\"VII SEMIS\",\"VIII SUMMA\",\"IX QUATTUOR\"),\"\")")
-  ("B4" "=IF(Input!$B$20=\"test\",B1,Lab.last!B4)")
-  ("B5" "=IF(Input!$B$20=\"test\",IF(B1>0,1,0),IF(Input!$B$20=\"reset\",0,IF(Lab.last!B5=1,IF(AND(Lab.last!B8=1,Lab.last!B6<Lab.last!B7-1),1,0),0)))")
-  ("B6" "=IF(Input!$B$20=\"test\",0,IF(AND(Lab.last!B5=1,B5=1),Lab.last!B6+1,Lab.last!B6))")
-  ("B7" "=CHOOSE(MAX(1,B4),2,4,4,4,8,4,4,8,512)")
-  ("B8" "=CHOOSE(MAX(1,B4),D11,D12,D13,D14,D15,D16,D17,D18,D19)"))
+(rules "Lab"
+  ("B1" (+ (shown-as "I NON" 1) (shown-as "II ET" 2) (shown-as "III VEL" 3) (shown-as "IV AUT" 4) (shown-as "V ELIGE" 5) (shown-as "VI DISTRIBUE" 6) (shown-as "VII SEMIS" 7) (shown-as "VIII SUMMA" 8) (shown-as "IX QUATTUOR" 9)))
+  ("B2" (if (and (a-command "next") (> B1 0)) (min 9 (+ B1 1)) (if (and (a-command "previous") (> B1 0)) (max 1 (- B1 1)) (max 1 Lab.last!B2))))
+  ("B3" (if (or (a-command "next") (a-command "previous")) (choose B2 "I NON" "II ET" "III VEL" "IV AUT" "V ELIGE" "VI DISTRIBUE" "VII SEMIS" "VIII SUMMA" "IX QUATTUOR") ""))
+  ("B4" (if (a-command "test") B1 Lab.last!B4))
+  ("B5" (if (a-command "test") (if (> B1 0) 1 0) (if (a-command "reset") 0 (if (= Lab.last!B5 1) (if (and (= Lab.last!B8 1) (< Lab.last!B6 (- Lab.last!B7 1))) 1 0) 0))))
+  ("B6" (if (a-command "test") 0 (if (and (= Lab.last!B5 1) (= B5 1)) (+ Lab.last!B6 1) Lab.last!B6)))
+  ("B7" (choose (max 1 B4) 2 4 4 4 8 4 4 8 512))
+  ("B8" (choose (max 1 B4) D11 D12 D13 D14 D15 D16 D17 D18 D19)))
 ; Rows 11 to 19, a level a row: B the last test's result, 0 none, 1 passed and 2 failed, R on the level forgetting it; C
 ; the input it stopped at; D whether every output is due now; E its gates, the Count's; F its budget and G the least
 ; known; H its stars; I to M its outputs due, the specification's at its inputs as its test reads them, rows 21 on; N
@@ -366,23 +386,27 @@
   "a level's row of the Lab, r its row and k its number: its result, the input its test stopped at, its budget, its least
    known, its stars, and whether its test runs. A result and its input change only while the level is under test, so an
    error a person's gate gives the test, #VALUE! where a gate reads a text, stays with that level until T or R"
-  (formula "Lab" (&expand "B" r)
-    (&expand "=IF(AND(Input!$B$20=\"reset\",$B$1=" k "),0,IF(OR(Lab.last!$B$4<>" k ",$B$4<>" k "),Lab.last!B" r ",IF(AND(Lab.last!$B$5=1,$B$5=0),IF(Lab.last!$B$8=1,1,2),Lab.last!B" r ")))"))
-  (formula "Lab" (&expand "C" r)
-    (&expand "=IF(OR(Lab.last!$B$4<>" k ",$B$4<>" k "),Lab.last!C" r ",IF(AND(Lab.last!$B$5=1,$B$5=0),Lab.last!$B$6,Lab.last!C" r "))"))
+  (rule "Lab" (&expand "B" r)
+    (if (and (a-command "reset") (= $B$1 k)) 0                                                   ; R on the level forgets its test;
+      (if (or (<> Lab.last!$B$4 k) (<> $B$4 k)) (ref "Lab.last" (&expand "B" r))                  ; another level under test: as it was;
+        (if (and (= Lab.last!$B$5 1) (= $B$5 0)) (if (= Lab.last!$B$8 1) 1 2)                   ; the test just ended: passed, or failed,
+            (ref "Lab.last" (&expand "B" r))))))                                                   ; else as it was
+  (rule "Lab" (&expand "C" r)
+    (if (or (<> Lab.last!$B$4 k) (<> $B$4 k)) (ref "Lab.last" (&expand "C" r))
+      (if (and (= Lab.last!$B$5 1) (= $B$5 0)) Lab.last!$B$6 (ref "Lab.last" (&expand "C" r)))))
   (cell "Lab" (&expand "F" r) budget)
   (cell "Lab" (&expand "G" r) least)
-  (formula "Lab" (&expand "H" r)
-    (&expand "=IF(B" r "=1,IF(E" r "<=G" r ",\"★★★\",IF(E" r "<=F" r ",\"★★☆\",\"★☆☆\")),\"☆☆☆\")"))
-  (formula "Lab" (&expand "N" r) (&expand "=IF($B$4=" k ",$B$5,0)")))
+  (rule "Lab" (&expand "H" r)
+    (if (= (symbol "B" r) 1) (if (<= (symbol "E" r) (symbol "G" r)) "★★★" (if (<= (symbol "E" r) (symbol "F" r)) "★★☆" "★☆☆")) "☆☆☆"))
+  (rule "Lab" (&expand "N" r) (if (= $B$4 k) $B$5 0)))
 
-(defmacro (lab-inputs sheet row range)
+(defmacro (lab-inputs sheet lab-row range)
   "a level's inputs as its test reads them, down its column of the Lab from row 21: while T runs the level, the bits of
    the input's number, which its switches take; and otherwise its switches as they stand. A switch a person wrote over
    stands still (decision 23), so the due under test is the specification at the input, never at a switch that does not
-   move. row, the level's row of the Lab"
-  (formula "Lab" range
-    (&expand "=IF($N$" row "=1,MOD(INT($B$6/CHOOSE(ROW()-20,1,2,4,8,16,32,64,128,256)),2),'" sheet "'!A3)")))
+   move. lab-row, the level's row of the Lab"
+  (rule "Lab" range
+    (if (= (symbol "$N$" lab-row) 1) (mod (int (/ $B$6 (choose (- (row) 20) 1 2 4 8 16 32 64 128 256))) 2) (ref sheet "A3"))))
 
 (lab-level 11 1 2 1)
 (lab-level 12 2 3 2)
@@ -406,63 +430,66 @@
 (lab-inputs "VIII SUMMA" 18 "I21:I23")
 (lab-inputs "IX QUATTUOR" 19 "J21:J29")
 ; each level's specification at its inputs as its test reads them, and whether every output is due
-(formulas "Lab"
-  ("I11" "=1-B21")
-  ("D11" "=IF('I NON'!J3=I11,1,0)")
-  ("I12" "=C21*C22")
-  ("D12" "=IF('II ET'!J3=I12,1,0)")
-  ("I13" "=MAX(D21,D22)")
-  ("D13" "=IF('III VEL'!J3=I13,1,0)")
-  ("I14" "=MOD(E21+E22,2)")
-  ("D14" "=IF('IV AUT'!J3=I14,1,0)")
-  ("I15" "=IF(F23=1,F22,F21)")
-  ("D15" "=IF('V ELIGE'!J3=I15,1,0)")
-  ("I16" "=G21*(1-G22)")
-  ("J16" "=G21*G22")
-  ("D16" "=IF(AND('VI DISTRIBUE'!J3=I16,'VI DISTRIBUE'!J4=J16),1,0)")
-  ("I17" "=MOD(H21+H22,2)")
-  ("J17" "=INT((H21+H22)/2)")
-  ("D17" "=IF(AND('VII SEMIS'!J3=I17,'VII SEMIS'!J4=J17),1,0)")
-  ("I18" "=MOD(I21+I22+I23,2)")
-  ("J18" "=INT((I21+I22+I23)/2)")
-  ("D18" "=IF(AND('VIII SUMMA'!J3=I18,'VIII SUMMA'!J4=J18),1,0)")
-  ("O19" "=J21+2*J22+4*J23+8*J24+J25+2*J26+4*J27+8*J28+J29")
-  ("I19" "=MOD(O19,2)")
-  ("J19" "=MOD(INT(O19/2),2)")
-  ("K19" "=MOD(INT(O19/4),2)")
-  ("L19" "=MOD(INT(O19/8),2)")
-  ("M19" "=INT(O19/16)")
-  ("D19" "=IF(AND('IX QUATTUOR'!J3=I19,'IX QUATTUOR'!J4=J19,'IX QUATTUOR'!J5=K19,'IX QUATTUOR'!J6=L19,'IX QUATTUOR'!J7=M19),1,0)"))
+(defmacro (output level cell)
+  "a level's output, a reference into its sheet, whose name needs quotes"
+  (ref level cell))
+(rules "Lab"
+  ("I11" (- 1 B21))
+  ("D11" (if (= (output "I NON" "J3") I11) 1 0))
+  ("I12" (* C21 C22))
+  ("D12" (if (= (output "II ET" "J3") I12) 1 0))
+  ("I13" (max D21 D22))
+  ("D13" (if (= (output "III VEL" "J3") I13) 1 0))
+  ("I14" (mod (+ E21 E22) 2))
+  ("D14" (if (= (output "IV AUT" "J3") I14) 1 0))
+  ("I15" (if (= F23 1) F22 F21))
+  ("D15" (if (= (output "V ELIGE" "J3") I15) 1 0))
+  ("I16" (* G21 (- 1 G22)))
+  ("J16" (* G21 G22))
+  ("D16" (if (and (= (output "VI DISTRIBUE" "J3") I16) (= (output "VI DISTRIBUE" "J4") J16)) 1 0))
+  ("I17" (mod (+ H21 H22) 2))
+  ("J17" (int (/ (+ H21 H22) 2)))
+  ("D17" (if (and (= (output "VII SEMIS" "J3") I17) (= (output "VII SEMIS" "J4") J17)) 1 0))
+  ("I18" (mod (+ I21 I22 I23) 2))
+  ("J18" (int (/ (+ I21 I22 I23) 2)))
+  ("D18" (if (and (= (output "VIII SUMMA" "J3") I18) (= (output "VIII SUMMA" "J4") J18)) 1 0))
+  ("O19" (+ J21 (* 2 J22) (* 4 J23) (* 8 J24) J25 (* 2 J26) (* 4 J27) (* 8 J28) J29))
+  ("I19" (mod O19 2))
+  ("J19" (mod (int (/ O19 2)) 2))
+  ("K19" (mod (int (/ O19 4)) 2))
+  ("L19" (mod (int (/ O19 8)) 2))
+  ("M19" (int (/ O19 16)))
+  ("D19" (if (and (= (output "IX QUATTUOR" "J3") I19) (= (output "IX QUATTUOR" "J4") J19) (= (output "IX QUATTUOR" "J5") K19) (= (output "IX QUATTUOR" "J6") L19) (= (output "IX QUATTUOR" "J7") M19)) 1 0)))
 ; each level's gates: every cell of its room and its outputs that holds anything, counted on the Count sheet
-(formulas "Lab"
-  ("E11" "=SUM(Count!C3:J6)")
-  ("E12" "=SUM(Count!C23:J26)")
-  ("E13" "=SUM(Count!C43:J46)")
-  ("E14" "=SUM(Count!C63:J66)")
-  ("E15" "=SUM(Count!C83:J86)")
-  ("E16" "=SUM(Count!C103:J106)")
-  ("E17" "=SUM(Count!C123:J126)")
-  ("E18" "=SUM(Count!C143:J146)")
-  ("E19" "=SUM(Count!C163:J171)"))
+(rules "Lab"
+  ("E11" (sum Count!C3:J6))
+  ("E12" (sum Count!C23:J26))
+  ("E13" (sum Count!C43:J46))
+  ("E14" (sum Count!C63:J66))
+  ("E15" (sum Count!C83:J86))
+  ("E16" (sum Count!C103:J106))
+  ("E17" (sum Count!C123:J126))
+  ("E18" (sum Count!C143:J146))
+  ("E19" (sum Count!C163:J171)))
 
 ; ---- the Count: a level's room and outputs, a 1 for every cell that holds anything ----
 (sheet "Count" hidden)
-(formulas "Count"
-  ("C3:J6" "=IF('I NON'!C3=\"\",0,1)")
-  ("C23:J26" "=IF('II ET'!C3=\"\",0,1)")
-  ("C43:J46" "=IF('III VEL'!C3=\"\",0,1)")
-  ("C63:J66" "=IF('IV AUT'!C3=\"\",0,1)")
-  ("C83:J86" "=IF('V ELIGE'!C3=\"\",0,1)")
-  ("C103:J106" "=IF('VI DISTRIBUE'!C3=\"\",0,1)")
-  ("C123:J126" "=IF('VII SEMIS'!C3=\"\",0,1)")
-  ("C143:J146" "=IF('VIII SUMMA'!C3=\"\",0,1)")
-  ("C163:J171" "=IF('IX QUATTUOR'!C3=\"\",0,1)"))
+(rules "Count"
+  ("C3:J6" (if (= (output "I NON" "C3") "") 0 1))
+  ("C23:J26" (if (= (output "II ET" "C3") "") 0 1))
+  ("C43:J46" (if (= (output "III VEL" "C3") "") 0 1))
+  ("C63:J66" (if (= (output "IV AUT" "C3") "") 0 1))
+  ("C83:J86" (if (= (output "V ELIGE" "C3") "") 0 1))
+  ("C103:J106" (if (= (output "VI DISTRIBUE" "C3") "") 0 1))
+  ("C123:J126" (if (= (output "VII SEMIS" "C3") "") 0 1))
+  ("C143:J146" (if (= (output "VIII SUMMA" "C3") "") 0 1))
+  ("C163:J171" (if (= (output "IX QUATTUOR" "C3") "") 0 1)))
 
 ; ---- the Camera: the level N and P move to (docs/SPEC.md section 3.8, version 4's third row) ----
 (sheet "Camera" hidden)
 (camera 1 1)
 (cell "Camera" "A3" "sheet")
-(formula "Camera" "B3" "=Lab!B3")
+(rule "Camera" "B3" Lab!B3)
 
 ; ---- the commands (docs/SPEC.md section 3.10): each holds always, and the manifest's (game ...) holds them on the levels ----
 (sheet "Commands" hidden)

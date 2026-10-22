@@ -21,7 +21,8 @@
   (notes "The plane's test card: the sixteen colors as bars, then every kind of value a Screen cell can hold, then formulas that compute each kind, on a Screen 56 columns wide that the Camera pans one column a frame. Anything that is not a whole number from 0 to 15 is magenta, so a wrong value is seen."))
 
 ; The library whose macros this source calls: sheets; cga-palette, a palette with a name;
-; on and cells, each naming a sheet once over a run of its rows; and the verb count.
+; on and cells, each naming a sheet once over a run of its rows; rule, a formula row from
+; an expression; and the verb count.
 (include "../common.vla")
 
 ; The sheets, in tab order: the Screen, the Palette it draws with, the Camera that places it.
@@ -41,7 +42,7 @@
   (cell "A1" "row")                         ; a label
   (cell "B1" 1)                             ; the window's top row
   (cell "A2" "column")                      ; a label
-  (formula "B2" "=1+MOD(Clock!$B$1,21)")    ; the window's left column, a column a frame
+  (rule "B2" (+ 1 (mod Clock!$B$1 21)))     ; the window's left column, a column a frame
   (value "B2" 1))                           ; that column at frame 0
 
 ; Rows 1 to 8: the sixteen colors as bars three columns wide, A to AV.
@@ -100,23 +101,25 @@
 
 ; Rows 13 to 16: formulas, each computing one kind, two cells wide.
 (on "Screen"                                                      ; the sheet every row below writes
-  (formula "A13:B16" "=MOD(Clock!$B$1,16)")                       ; a color that cycles with the frame
-  (formula "C13:D16" "=Clock!$B$1*16")                            ; a byte that passes 255 at frame 16
-  (formula "E13:F16" "=Clock!$B$1/2")                             ; a fraction every other frame
-  (formula "G13:H16" "=0.1*3*10")                                 ; a sum one unit in the last place from 3
-  (formula "I13:J16" "=1/0")                                      ; an error
-  (formula "K13:L16" "=\"x\"")                                    ; a text
-  (formula "M13:N16" "=1=1")                                      ; a truth value
-  (formula "O13:P16" "=SIN(Clock!$B$1)")                          ; a sine
-  (formula "Q13:R16" "=-Clock!$B$1")                              ; a negative
-  (formula "S13:T16" "=INT(Clock!$B$1/2)")                        ; a whole number
-  (formula "U13:V16" "=CHOOSE(1+MOD(Clock!$B$1,3),2,\"x\",TRUE)") ; a value whose kind cycles
-  (formula "W13:X16" "=$A$24")                                    ; a reference to an empty cell, which is 0
+  (rule "A13:B16" (mod Clock!$B$1 16))                            ; a color that cycles with the frame
+  (rule "C13:D16" (* Clock!$B$1 16))                              ; a byte that passes 255 at frame 16
+  (rule "E13:F16" (/ Clock!$B$1 2))                               ; a fraction every other frame
+  (rule "G13:H16" (* 0.1 3 10))                                   ; a sum one unit in the last place from 3
+  (rule "I13:J16" (/ 1 0))                                        ; an error
+  (rule "K13:L16" "x")                                            ; a text
+  (rule "M13:N16" (= 1 1))                                        ; a truth value
+  (rule "O13:P16" (sin Clock!$B$1))                               ; a sine
+  (rule "Q13:R16" (- Clock!$B$1))                                 ; a negative
+  (rule "S13:T16" (int (/ Clock!$B$1 2)))                         ; a whole number
+  (rule "U13:V16" (choose (+ 1 (mod Clock!$B$1 3)) 2 "x" true))   ; a value whose kind cycles
+  (rule "W13:X16" $A$24)                                          ; a reference to an empty cell, which is 0
   (count                                                          ; a counter read through its own twin:
     "Y13:Z16"                                                     ;   the cells it fills
     1)                                                            ;   the event, one more a frame
-  (formula "AA13:AB16" "=IF(MOD(Clock!$B$1,2)=0,9,0.5)"))         ; a cell that is 9 and 0.5 by turns
+  (rule "AA13:AB16" (if (= (mod Clock!$B$1 2) 0) 9 0.5)))        ; a cell that is 9 and 0.5 by turns
 
 ; Rows 18 to 22: a stripe that moves, one formula filled over the Screen's whole width, so
 ; a person sees the frames go by under the pan.
-(formula "Screen" "A18:BD22" "=IF(MOD(COLUMN()+ROW()+Clock!$B$1,8)=0,15,IF(MOD(COLUMN()-ROW()+Clock!$B$1,8)=0,12,0))")
+(rule "Screen" "A18:BD22"
+  (if (= (mod (+ (column) (row) Clock!$B$1) 8) 0) 15             ; a stripe down the diagonal,
+      (if (= (mod (+ (- (column) (row)) Clock!$B$1) 8) 0) 12 0))) ; and a fainter one across it

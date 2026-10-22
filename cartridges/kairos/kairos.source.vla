@@ -56,10 +56,10 @@
   (notes "Kairos: stop each row of lights over the row beneath with Z, Space or a click. Lights not over a light fall; a complete miss ends the game. At level 11, X takes the minor prize and Z goes on; level 15 wins the major. The Levels sheet holds every level's speed and window in the open."))
 
 ; The library whose macros this source calls: sheets, labels and headers; on, cells and
-; formulas, each naming a sheet once over a run of its rows; default-keys; picture;
+; rules, each naming a sheet once over a run of its rows; rule; default-keys; picture;
 ; camera; put, the Write sheet's row; palette-entry and looks-from, a Palette row and the
 ; look map's walk, which this source's colors calls an entry at a time; audio; and the
-; verbs first-frame, pressed, count, hold, every and since.
+; verbs first-frame, pressed, count, hold, every and since, each piece an expression.
 (include "../common.vla")
 
 ; ---- the colors: the Palette and the same as the Screen's looks, from one list ------
@@ -91,13 +91,13 @@
     (begin
       ; the Gate: for each level, a column, the sliding or stopped row's span, its look,
       ; the span that stayed, and the prize marks; -99 or 0 where the level is not live
-      (formulas "Gate"
-        ("A1:O1" "=IF(AND(COLUMN()=State!$B$3,OR(State!$B$1=1,State!$B$1=2,AND(State!$B$1=4,State!$B$25=1,State!$B$29=0))),IF(State!$B$1=1,State!$B$5,State!$B$22),99)")
-        ("A2:O2" "=IF(A1=99,0,A1+State!$B$4-1)")
-        ("A3:O3" "=IF(A1=99,0,IF(State!$B$1=1,2,IF(State!$B$27=1,3,0)))")
-        ("A4:O4" "=IF(AND(COLUMN()=State!$B$3,State!$B$1=2,State!$B$17>0),State!$B$23,99)")
-        ("A5:O5" "=IF(A4=99,0,State!$B$24)")
-        ("A7:O7" "=IF(COLUMN()=Levels!$K$1,IF(AND(State!$B$1=3,State!$B$27=1),5,6),IF(COLUMN()=Levels!$K$2,7,0))"))
+      (rules "Gate"
+        ("A1:O1" (if (and (= (column) State!$B$3) (or (= State!$B$1 1) (= State!$B$1 2) (and (= State!$B$1 4) (= State!$B$25 1) (= State!$B$29 0)))) (if (= State!$B$1 1) State!$B$5 State!$B$22) 99))
+        ("A2:O2" (if (= A1 99) 0 (- (+ A1 State!$B$4) 1)))
+        ("A3:O3" (if (= A1 99) 0 (if (= State!$B$1 1) 2 (if (= State!$B$27 1) 3 0))))
+        ("A4:O4" (if (and (= (column) State!$B$3) (= State!$B$1 2) (> State!$B$17 0)) State!$B$23 99))
+        ("A5:O5" (if (= A4 99) 0 State!$B$24))
+        ("A7:O7" (if (= (column) Levels!$K$1) (if (and (= State!$B$1 3) (= State!$B$27 1)) 5 6) (if (= (column) Levels!$K$2) 7 0))))
       (cell "Gate" "A6:O6" 1)
       ; the Tower: a level a column, its cabinet column a row, values the Write sheet writes
       (cell "Tower" "A1:O7" 0)
@@ -109,41 +109,41 @@
         "#.#.#..#..#..##"
         "##.##..#..#..##"
         "#...#.###.#...#")
-      (formulas "Screen"
+      (rules "Screen"
         ; the board: WIN while it flashes, the span that stayed, the sliding or falling row,
         ; the tower, else the level's mark; the checker's twin on a light whose row and
         ; column sum odd
-        ("A1:O7" (&expand
-          "=IF(State!$B$28=1,Win!A1,IF(State!$B$28=2,0,"
-          "IF(AND(ROW()>=Gate!A$4,ROW()<=Gate!A$5),Gate!A$6,"
-          "IF(AND(ROW()>=Gate!A$1,ROW()<=Gate!A$2),Gate!A$3,"
-          "IF(Tower!A1>0,Tower!A1,Gate!A$7)))))"
-          "+IF(MOD(ROW()+COLUMN(),2)=1,8,0)"))
+        ("A1:O7" (+ (if (= State!$B$28 1) Win!A1
+                      (if (= State!$B$28 2) 0
+                        (if (and (>= (row) Gate!A$4) (<= (row) Gate!A$5)) Gate!A$6
+                          (if (and (>= (row) Gate!A$1) (<= (row) Gate!A$2)) Gate!A$3
+                            (if (> Tower!A1 0) Tower!A1 Gate!A$7)))))
+                    (if (= (mod (+ (row) (column)) 2) 1) 8 0)))
         ; the words beyond the window: the prize levels' names, and what the game says
-        ("A8:O8" "=IF(COLUMN()=Levels!$K$1,\"minor\",IF(COLUMN()=Levels!$K$2,\"major\",\"\"))")
-        ("A9" "=State!B31"))
+        ("A8:O8" (if (= (column) Levels!$K$1) "minor" (if (= (column) Levels!$K$2) "major" "")))
+        ("A9" State!B31))
       (on "Write"
         (put                        ; a stop's run into the Tower, one range:
           "A2"                      ;   the row of the Write sheet
           "Tower"                   ;   the sheet it writes
-          "AND(State!B12=1,State!B17>0)"   ; when: a stop, something stayed
-          "State!B30&State!B23&\":\"&State!B30&State!B24"   ; where: the level's column, from the run's first row to its last
-          "1")                      ;   what: a light that stayed
+          (and (= State!B12 1) (> State!B17 0))   ; when: a stop, something stayed
+          (& State!B30 State!B23 ":" State!B30 State!B24)   ; where: the level's column, from the run's first row to its last
+          1)                        ;   what: a light that stayed
         (put                        ; the tower cleared, once a result has been held:
           "A3"                      ;   the row of the Write sheet
           "Tower"                   ;   the sheet it writes
-          "AND(State!B1=4,State!B2=Levels!$K$4)"   ; when: the result's hold just ended
-          "\"A1:O7\""               ;   where: the whole tower
-          "0")))                    ;   what: no light
+          (and (= State!B1 4) (= State!B2 Levels!$K$4))   ; when: the result's hold just ended
+          "A1:O7"                   ;   where: the whole tower, a text
+          0)))                      ;   what: no light
     (begin
       ; standing up: a level a row from the bottom, the Gate's columns its fields
-      (formulas "Gate"
-        ("A1:A15" "=IF(AND(16-ROW()=State!$B$3,OR(State!$B$1=1,State!$B$1=2,AND(State!$B$1=4,State!$B$25=1,State!$B$29=0))),IF(State!$B$1=1,State!$B$5,State!$B$22),99)")
-        ("B1:B15" "=IF(A1=99,0,A1+State!$B$4-1)")
-        ("C1:C15" "=IF(A1=99,0,IF(State!$B$1=1,2,IF(State!$B$27=1,3,0)))")
-        ("D1:D15" "=IF(AND(16-ROW()=State!$B$3,State!$B$1=2,State!$B$17>0),State!$B$23,99)")
-        ("E1:E15" "=IF(D1=99,0,State!$B$24)")
-        ("G1:G15" "=IF(16-ROW()=Levels!$K$1,IF(AND(State!$B$1=3,State!$B$27=1),5,6),IF(16-ROW()=Levels!$K$2,7,0))"))
+      (rules "Gate"
+        ("A1:A15" (if (and (= (- 16 (row)) State!$B$3) (or (= State!$B$1 1) (= State!$B$1 2) (and (= State!$B$1 4) (= State!$B$25 1) (= State!$B$29 0)))) (if (= State!$B$1 1) State!$B$5 State!$B$22) 99))
+        ("B1:B15" (if (= A1 99) 0 (- (+ A1 State!$B$4) 1)))
+        ("C1:C15" (if (= A1 99) 0 (if (= State!$B$1 1) 2 (if (= State!$B$27 1) 3 0))))
+        ("D1:D15" (if (and (= (- 16 (row)) State!$B$3) (= State!$B$1 2) (> State!$B$17 0)) State!$B$23 99))
+        ("E1:E15" (if (= D1 99) 0 State!$B$24))
+        ("G1:G15" (if (= (- 16 (row)) Levels!$K$1) (if (and (= State!$B$1 3) (= State!$B$27 1)) 5 6) (if (= (- 16 (row)) Levels!$K$2) 7 0))))
       (cell "Gate" "F1:F15" 1)
       (cell "Tower" "A1:G15" 0)
       (picture "Win" "A1" (("#" 4))
@@ -162,28 +162,28 @@
         "#.#..#."
         "#..#.#."
         "#...##.")
-      (formulas "Screen"
-        ("A1:G15" (&expand
-          "=IF(State!$B$28=1,Win!A1,IF(State!$B$28=2,0,"
-          "IF(AND(COLUMN()>=Gate!$D1,COLUMN()<=Gate!$E1),Gate!$F1,"
-          "IF(AND(COLUMN()>=Gate!$A1,COLUMN()<=Gate!$B1),Gate!$C1,"
-          "IF(Tower!A1>0,Tower!A1,Gate!$G1)))))"
-          "+IF(MOD(ROW()+COLUMN(),2)=1,8,0)"))
-        ("H1:H15" "=IF(16-ROW()=Levels!$K$1,\"minor\",IF(16-ROW()=Levels!$K$2,\"major\",\"\"))")
-        ("A17" "=State!B31"))
+      (rules "Screen"
+        ("A1:G15" (+ (if (= State!$B$28 1) Win!A1
+                       (if (= State!$B$28 2) 0
+                         (if (and (>= (column) Gate!$D1) (<= (column) Gate!$E1)) Gate!$F1
+                           (if (and (>= (column) Gate!$A1) (<= (column) Gate!$B1)) Gate!$C1
+                             (if (> Tower!A1 0) Tower!A1 Gate!$G1)))))
+                     (if (= (mod (+ (row) (column)) 2) 1) 8 0)))
+        ("H1:H15" (if (= (- 16 (row)) Levels!$K$1) "minor" (if (= (- 16 (row)) Levels!$K$2) "major" "")))
+        ("A17" State!B31))
       (on "Write"
         (put                        ; a stop's run into the Tower, one range:
           "A2"                      ;   the row of the Write sheet
           "Tower"                   ;   the sheet it writes
-          "AND(State!B12=1,State!B17>0)"   ; when: a stop, something stayed
-          "CHOOSE(State!B23,\"A\",\"B\",\"C\",\"D\",\"E\",\"F\",\"G\")&(16-State!B3)&\":\"&CHOOSE(State!B24,\"A\",\"B\",\"C\",\"D\",\"E\",\"F\",\"G\")&(16-State!B3)"   ; where: the level's row, from the run's first column to its last
-          "1")                      ;   what: a light that stayed
+          (and (= State!B12 1) (> State!B17 0))   ; when: a stop, something stayed
+          (& (choose State!B23 "A" "B" "C" "D" "E" "F" "G") (- 16 State!B3) ":" (choose State!B24 "A" "B" "C" "D" "E" "F" "G") (- 16 State!B3))   ; where: the level's row, from the run's first column to its last
+          1)                        ;   what: a light that stayed
         (put                        ; the tower cleared, once a result has been held:
           "A3"                      ;   the row of the Write sheet
           "Tower"                   ;   the sheet it writes
-          "AND(State!B1=4,State!B2=Levels!$K$4)"   ; when: the result's hold just ended
-          "\"A1:G15\""              ;   where: the whole tower
-          "0")))))                  ;   what: no light
+          (and (= State!B1 4) (= State!B2 Levels!$K$4))   ; when: the result's hold just ended
+          "A1:G15"                  ;   where: the whole tower, a text
+          0)))))                    ;   what: no light
 
 ; The sheets, in tab order: the Screen and the sheets a player reads, then the workings,
 ; then the devices.
@@ -242,10 +242,10 @@
 ; The live level's row, read without a lookup: each cell its row's value when its level is
 ; the State's, and 0 else; the State sums each column.
 (headers "Levels" "F1" "this period" "this width" "this window")
-(formulas "Levels"
-  ("F2:F16" "=IF(A2=State!$B$3,B2,0)")
-  ("G2:G16" "=IF(A2=State!$B$3,C2,0)")
-  ("H2:H16" "=IF(A2=State!$B$3,D2,0)"))
+(rules "Levels"
+  ("F2:F16" (if (= A2 State!$B$3) B2 0))
+  ("G2:G16" (if (= A2 State!$B$3) C2 0))
+  ("H2:H16" (if (= A2 State!$B$3) D2 0)))
 
 ; ---- State: the game in 31 cells ----------------------------------------------------
 ; The phase is 1 sliding, 2 the beat after a stop, 3 the minor prize offered, 4 over. A row
@@ -259,101 +259,106 @@
   ; the phase: a game or a row begins sliding; a stop begins the beat; a beat that ends
   ; with something stayed at the minor prize's level offers it; one that ends with nothing,
   ; or at the major's level, and the minor prize taken, end the game
-  (formula "B1" (&expand
-    "=IF(OR(State!B11=1,State!B14=1),1,"
-    "IF(State!B12=1,2,"
-    "IF(AND(State!B13=1,State!B17>0,State.last!B3=Levels!$K$1),3,"
-    "IF(OR(AND(State!B13=1,State!B17=0),AND(State!B13=1,State.last!B3=Levels!$K$2),AND(State.last!B1=3,State!B10=1)),4,"
-    "State.last!B1))))"))
+  (rule "B1"
+    (if (or (= State!B11 1) (= State!B14 1)) 1                                  ; sliding, at a start or an advance;
+      (if (= State!B12 1) 2                                                     ; the beat, at a stop;
+        (if (and (= State!B13 1) (> State!B17 0) (= State.last!B3 Levels!$K$1)) 3   ; the offer, at a resolve with something stayed at the minor's level;
+          (if (or (and (= State!B13 1) (= State!B17 0))                         ; over, at a resolve with nothing stayed,
+                  (and (= State!B13 1) (= State.last!B3 Levels!$K$2))           ;   or at the major's level,
+                  (and (= State.last!B1 3) (= State!B10 1)))                    ;   or the minor prize taken;
+            4
+            State.last!B1)))))                                                  ; else as it was
   (since                            ; the frames since the phase began:
     "B2"                            ;   the cell
-    "State!B1<>State.last!B1")      ;   0 in the frame the phase changes
+    (<> State!B1 State.last!B1))    ;   0 in the frame the phase changes
   (hold                             ; the level:
     "B3"                            ;   the cell
-    "OR(State!B11=1,State!B14=1)"   ;   when a game or a row begins,
-    "IF(State!B11=1,1,State.last!B3+1)")   ; 1 for a game, one up for a row
+    (or (= State!B11 1) (= State!B14 1))   ; when a game or a row begins,
+    (if (= State!B11 1) 1 (+ State.last!B3 1)))   ; 1 for a game, one up for a row
   (hold                             ; the row's width:
     "B4"                            ;   the cell
-    "OR(State!B11=1,State!B14=1)"   ;   when a game or a row begins,
-    "MIN(State!B17,State!B19)")     ;   what stayed, at most the level's width
+    (or (= State!B11 1) (= State!B14 1))   ; when a game or a row begins,
+    (min State!B17 State!B19))      ;   what stayed, at most the level's width
   (hold                             ; the row's left end:
     "B5"                            ;   the cell
-    "OR(State!B11=1,State!B14=1,State!B15=1)"   ; when a row begins or moves,
-    "IF(State!B15=1,State.last!B5+State!B16,1)")   ; a column on, or 1 at the start
+    (or (= State!B11 1) (= State!B14 1) (= State!B15 1))   ; when a row begins or moves,
+    (if (= State!B15 1) (+ State.last!B5 State!B16) 1))   ; a column on, or 1 at the start
   (hold                             ; the row's direction:
     "B6"                            ;   the cell
-    "OR(State!B11=1,State!B14=1,State!B15=1)"   ; when a row begins or moves,
-    "IF(State!B15=1,State!B16,1)")  ;   the turn's, or right at the start
+    (or (= State!B11 1) (= State!B14 1) (= State!B15 1))   ; when a row begins or moves,
+    (if (= State!B15 1) State!B16 1))   ; the turn's, or right at the start
   (every                            ; the step: 1 in every period's frame of the phase
     "B7"                            ;   the cell
-    "State!B2"                      ;   the count: the frames since the phase began
-    "State!B18")                    ;   n: the level's period
+    State!B2                        ;   the count: the frames since the phase began
+    State!B18)                      ;   n: the level's period
   ; held: the stop's button, a, select or the left mouse button
-  (formula "B8" "=MAX(Input!B5,Input!B10,Input!B13)")
+  (rule "B8" (max Input!B5 Input!B10 Input!B13))
   (pressed                          ; the press, its rising edge:
     "B9"                            ;   the cell
-    "State!B8")                     ;   the button: held
+    State!B8)                       ;   the button: held
   (pressed                          ; take, the minor prize's button:
     "B10"                           ;   the cell
-    "Input!B6")                     ;   the button: b
+    Input!B6)                       ;   the button: b
   (first-frame                      ; start: a game begins
     "B11"                           ;   the cell
-    "1"                             ;   in the first frame
-    "IF(AND(State.last!B1=4,State.last!B29=1,State!B9=1),1,0)")   ; and at a press once a result has been held
+    1                               ;   in the first frame
+    (if (and (= State.last!B1 4) (= State.last!B29 1) (= State!B9 1)) 1 0))   ; and at a press once a result has been held
   ; stop: a press while the row slides
-  (formula "B12" "=IF(AND(State.last!B1=1,State!B9=1),1,0)")
+  (rule "B12" (if (and (= State.last!B1 1) (= State!B9 1)) 1 0))
   ; resolve: the beat after a stop ends
-  (formula "B13" "=IF(AND(State.last!B1=2,State.last!B2>=Levels!$K$3-1),1,0)")
+  (rule "B13" (if (and (= State.last!B1 2) (>= State.last!B2 (- Levels!$K$3 1))) 1 0))
   ; advance: the next row begins, after a beat that kept something below either prize, or
   ; at a press when the minor prize is offered and not taken
-  (formula "B14" (&expand
-    "=IF(OR(AND(State!B13=1,State!B17>0,State.last!B3<>Levels!$K$1,State.last!B3<>Levels!$K$2),"
-    "AND(State.last!B1=3,State!B9=1,State!B10=0)),1,0)"))
+  (rule "B14"
+    (if (or (and (= State!B13 1) (> State!B17 0) (<> State.last!B3 Levels!$K$1) (<> State.last!B3 Levels!$K$2))
+            (and (= State.last!B1 3) (= State!B9 1) (= State!B10 0)))
+      1 0))
   ; moves: the row moves on its step while it slides, never in the frame it began
-  (formula "B15" "=IF(AND(State.last!B1=1,State!B1=1,State!B7=1,State!B2>0),1,0)")
+  (rule "B15" (if (and (= State.last!B1 1) (= State!B1 1) (= State!B7 1) (> State!B2 0)) 1 0))
   ; turn: the direction of the next move, turned at either end of the seven columns
-  (formula "B16" "=IF(OR(AND(State.last!B6=1,State.last!B5+State.last!B4>7),AND(State.last!B6=-1,State.last!B5<2)),-State.last!B6,State.last!B6)")
+  (rule "B16" (if (or (and (= State.last!B6 1) (> (+ State.last!B5 State.last!B4) 7)) (and (= State.last!B6 -1) (< State.last!B5 2))) (- State.last!B6) State.last!B6))
   ; stayed: the run's length, 0 when the run is empty
-  (formula "B17" "=MAX(0,State!B24-State!B23+1)")
+  (rule "B17" (max 0 (+ (- State!B24 State!B23) 1)))
   ; the live level's period, width and window, the Levels' gated columns summed
-  (formula "B18" "=SUM(Levels!F2:F16)")
-  (formula "B19" "=SUM(Levels!G2:G16)")
-  (formula "B20" "=SUM(Levels!H2:H16)")
+  (rule "B18" (sum Levels!F2:F16))
+  (rule "B19" (sum Levels!G2:G16))
+  (rule "B20" (sum Levels!H2:H16))
   ; within: the last frame's place had been held fewer frames than the window
-  (formula "B21" "=IF(MOD(State.last!B2,State.last!B18)<State.last!B20,1,0)")
+  (rule "B21" (if (< (mod State.last!B2 State.last!B18) State.last!B20) 1 0))
   (hold                             ; stopped at: the row's left end at a stop
     "B22"                           ;   the cell
-    "State!B12=1"                   ;   when the row stops,
-    "IF(State!B21=1,State.last!B5,State.last!B5+State!B16)")   ; where it was seen, or a column on after the window
+    (= State!B12 1)                 ;   when the row stops,
+    (if (= State!B21 1) State.last!B5 (+ State.last!B5 State!B16)))   ; where it was seen, or a column on after the window
   (hold                             ; first: the run beneath's first column
     "B23"                           ;   the cell
-    "OR(State!B11=1,State!B12=1)"   ;   when a game begins or the row stops,
-    "IF(State!B11=1,1,MAX(State!B22,State.last!B23))")   ; the floor's 1, or the larger first
+    (or (= State!B11 1) (= State!B12 1))   ; when a game begins or the row stops,
+    (if (= State!B11 1) 1 (max State!B22 State.last!B23)))   ; the floor's 1, or the larger first
   (hold                             ; last: the run beneath's last column
     "B24"                           ;   the cell
-    "OR(State!B11=1,State!B12=1)"   ;   when a game begins or the row stops,
-    "IF(State!B11=1,7,MIN(State!B22+State.last!B4-1,State.last!B24))")   ; the floor's 7, or the smaller last
+    (or (= State!B11 1) (= State!B12 1))   ; when a game begins or the row stops,
+    (if (= State!B11 1) 7 (min (- (+ State!B22 State.last!B4) 1) State.last!B24)))   ; the floor's 7, or the smaller last
   (hold                             ; the result: 0 playing, 1 fell, 2 the minor prize, 3 the major
     "B25"                           ;   the cell
-    "OR(State!B11=1,AND(State!B1=4,State.last!B1<>4))"   ; when a game begins or ends,
-    "IF(State!B11=1,0,IF(State.last!B1=3,2,IF(State!B17=0,1,3)))")   ; how it ended
+    (or (= State!B11 1) (and (= State!B1 4) (<> State.last!B1 4)))   ; when a game begins or ends,
+    (if (= State!B11 1) 0 (if (= State.last!B1 3) 2 (if (= State!B17 0) 1 3))))   ; how it ended
   (count                            ; the games begun:
     "B26"                           ;   the cell
-    "State!B11")                    ;   one at each start
+    State!B11)                      ;   one at each start
   ; blink: on for four frames, off for four, from the phase's start
-  (formula "B27" "=IF(MOD(State!B2,8)<4,1,0)")
+  (rule "B27" (if (< (mod State!B2 8) 4) 1 0))
   ; overlay: WIN shown (1) or dark (2) while the major prize is won, by half seconds
-  (formula "B28" "=IF(AND(State!B1=4,State!B25=3),IF(MOD(State!B2,30)<15,1,2),0)")
+  (rule "B28" (if (and (= State!B1 4) (= State!B25 3)) (if (< (mod State!B2 30) 15) 1 2) 0))
   ; ready: a game's end has been held, and a press plays again
-  (formula "B29" "=IF(AND(State!B1=4,State!B2>=Levels!$K$4),1,0)")
+  (rule "B29" (if (and (= State!B1 4) (>= State!B2 Levels!$K$4)) 1 0))
   ; letter: the level's column on the Screen lying on its side
-  (formula "B30" "=CHOOSE(State!B3,\"A\",\"B\",\"C\",\"D\",\"E\",\"F\",\"G\",\"H\",\"I\",\"J\",\"K\",\"L\",\"M\",\"N\",\"O\")")
+  (rule "B30" (choose State!B3 "A" "B" "C" "D" "E" "F" "G" "H" "I" "J" "K" "L" "M" "N" "O"))
   ; says: the words the Screen shows beyond its window
-  (formula "B31" (&expand
-    "=IF(State!B1=3,\"Level \"&State!B3&\" stacked: the minor prize. Z goes on for the major; X takes the minor.\","
-    "IF(State!B1=4,IF(State!B25=3,\"Fifteen rows: the major prize!\",IF(State!B25=2,\"The minor prize, taken.\",\"The stack fell.\"))"
-    "&IF(State!B29=1,\" Z, Space or a click plays again.\",\"\"),"
-    "\"Level \"&State!B3&\": stop the row with Z, Space or a click.\"))")))
+  (rule "B31"
+    (if (= State!B1 3) (& "Level " State!B3 " stacked: the minor prize. Z goes on for the major; X takes the minor.")
+      (if (= State!B1 4)
+        (& (if (= State!B25 3) "Fifteen rows: the major prize!" (if (= State!B25 2) "The minor prize, taken." "The stack fell."))
+           (if (= State!B29 1) " Z, Space or a click plays again." ""))
+        (& "Level " State!B3 ": stop the row with Z, Space or a click.")))))
 
 ; ---- the board, the Tower, WIN, the Screen and the Write sheet's rows -----------------
 (headers "Write" "A1" "sheet" "address" "value")
@@ -366,15 +371,15 @@
   ("B3" "triangle")                 ; voice 2, the stop
   ("B4" "sawtooth")                 ; voice 3, the fall
   ("B5" "square"))                  ; voice 4, the fanfare and the offer's chime
-(formulas "Audio"
-  ("C2" "=72+State!B3")             ; the tick's note, rising with the level
-  ("D2" "=IF(State!B15=1,0.3,0)")   ; a frame at each move
-  ("C3" "=60+2*State!B3")           ; the stop's note, rising with the level
-  ("D3" "=IF(AND(State!B1=2,State!B2<8,State!B17>0),0.6,0)")   ; eight frames when something stayed
-  ("C4" "=IF(State!B1=4,55-State!B2/2,55)")   ; the fall's note, sliding down
-  ("D4" "=IF(OR(AND(State!B1=2,State!B17=0,State!B2<8),AND(State!B1=4,State!B25=1,State!B2<40)),0.5,0)")   ; a stop where nothing stayed, then the game's fall
-  ("C5" "=CHOOSE(1+MOD(INT(State!B2/8),4),72,76,79,84)")   ; C, E, G and C an octave up, eight frames each
-  ("D5" "=IF(OR(AND(State!B1=4,State!B25=3,State!B2<64),AND(State!B1=3,State!B2<16)),0.5,0)"))   ; the major's fanfare, the offer's chime
+(rules "Audio"
+  ("C2" (+ 72 State!B3))            ; the tick's note, rising with the level
+  ("D2" (if (= State!B15 1) 0.3 0)) ; a frame at each move
+  ("C3" (+ 60 (* 2 State!B3)))      ; the stop's note, rising with the level
+  ("D3" (if (and (= State!B1 2) (< State!B2 8) (> State!B17 0)) 0.6 0))   ; eight frames when something stayed
+  ("C4" (if (= State!B1 4) (- 55 (/ State!B2 2)) 55))   ; the fall's note, sliding down
+  ("D4" (if (or (and (= State!B1 2) (= State!B17 0) (< State!B2 8)) (and (= State!B1 4) (= State!B25 1) (< State!B2 40))) 0.5 0))   ; a stop where nothing stayed, then the game's fall
+  ("C5" (choose (+ 1 (mod (int (/ State!B2 8)) 4)) 72 76 79 84))   ; C, E, G and C an octave up, eight frames each
+  ("D5" (if (or (and (= State!B1 4) (= State!B25 3) (< State!B2 64)) (and (= State!B1 3) (< State!B2 16))) 0.5 0)))   ; the major's fanfare, the offer's chime
 
 ; ---- the Tally: every game, counted; a replay's golden --------------------------------
 ; For each level, the rows that began there, the stops that kept something, and the lights
@@ -385,18 +390,18 @@
 (on "Tally"
   (count                            ; reached: a row began at this level
     "B2:B16"                        ;   a cell a level
-    "IF(AND(OR(State!$B$11=1,State!$B$14=1),State!$B$3=$A2),1,0)")
+    (if (and (or (= State!$B$11 1) (= State!$B$14 1)) (= State!$B$3 $A2)) 1 0))
   (count                            ; stacked: a beat ended with something stayed at this level
     "C2:C16"                        ;   a cell a level
-    "IF(AND(State!$B$13=1,State!$B$17>0,State.last!$B$3=$A2),1,0)")
+    (if (and (= State!$B$13 1) (> State!$B$17 0) (= State.last!$B$3 $A2)) 1 0))
   (count                            ; fell: the lights a stop at this level let fall
     "D2:D16"                        ;   a cell a level
-    "IF(AND(State!$B$12=1,State!$B$3=$A2),State!$B$4-State!$B$17,0)"))
+    (if (and (= State!$B$12 1) (= State!$B$3 $A2)) (- State!$B$4 State!$B$17) 0)))
 (labels "Tally" "A18" "games" "presses" "moves" "minor" "major" "fell")
 (on "Tally"
-  (count "B18" "State!B11")         ; games begun
-  (count "B19" "State!B9")          ; presses
-  (count "B20" "State!B15")         ; moves
-  (count "B21" "IF(AND(State!B25=2,State.last!B25<>2),1,0)")   ; minor prizes taken
-  (count "B22" "IF(AND(State!B25=3,State.last!B25<>3),1,0)")   ; major prizes won
-  (count "B23" "IF(AND(State!B25=1,State.last!B25<>1),1,0)"))  ; games that fell
+  (count "B18" State!B11)           ; games begun
+  (count "B19" State!B9)            ; presses
+  (count "B20" State!B15)           ; moves
+  (count "B21" (if (and (= State!B25 2) (<> State.last!B25 2)) 1 0))   ; minor prizes taken
+  (count "B22" (if (and (= State!B25 3) (<> State.last!B25 3)) 1 0))   ; major prizes won
+  (count "B23" (if (and (= State!B25 1) (<> State.last!B25 1)) 1 0)))  ; games that fell

@@ -86,7 +86,8 @@
 ;   alive itself.
 (board-size interior                ; the rule, one fill over the board's interior:
   "Screen"                          ;   the sheet it writes; the border stays empty, dead
-  "Seed!B2"                         ;   the first frame: the Seed's cell at the same address
-  (&expand                          ;   every later frame: Conway's rule over the previous frame,
-    "IF(OR(SUM(Screen.last!A1:C3)-Screen.last!B2=3,"                    ;   alive with three live neighbors,
-    "AND(Screen.last!B2=1,SUM(Screen.last!A1:C3)-Screen.last!B2=2)),1,0)"))  ;   or with two and alive itself
+  Seed!B2                           ;   the first frame: the Seed's cell at the same address
+  (if (or (= (- (sum Screen.last!A1:C3) Screen.last!B2) 3)   ;   every later frame: Conway's rule over the previous frame, alive with three live neighbors,
+          (and (= Screen.last!B2 1)                           ;   or with two and alive itself
+               (= (- (sum Screen.last!A1:C3) Screen.last!B2) 2)))
+      1 0))

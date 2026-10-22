@@ -63,9 +63,12 @@
   (license "0BSD")                  ; the header's twin: copy this file to start a game of your own
   (notes "Seiyaku 制約: eighty-one variables, twenty-seven constraints, one solution, proven before you began. 1 to 9, the row's or the keypad's, assign a value to the variable the selection stands on and Backspace retracts it; Q W E, A S D and Z X C mark a value in its domain, each key where its mark stands in the cell; F fills every unassigned domain with the values its constraints allow; R retracts every assignment, N deals a new instance and G sets the next instance's grade."))
 
-; The library whose macros this source calls: sheets, labels and headers; cells, formulas
-; and on, each naming a sheet once over a run of its rows; count and first-frame; camera;
-; and picture, which writes the book.
+; The library whose macros this source calls: sheets, labels and headers; cells, rules
+; and on, each naming a sheet once over a run of its rows; rule; count and first-frame;
+; camera; and picture, which writes the book. Since KIT.5 every rule is written as
+; expressions, which the formula syntax writes to the same bytes: a reference computed
+; from a number is a ref into its sheet, or, on the rule's own sheet, a symbol fused from
+; its letters and its row.
 (include "../common.vla")
 
 ; ---- the sheets, in tab order ----------------------------------------------------------
@@ -125,20 +128,26 @@
 ; 2 at the load, and this instance's; the act's value, its mark, a retraction, the domains
 ; filled, and the variable it stands on, 1 to 81 or 0; satisfied, and the acts it took.
 (labels "Lab" "A1" "acts" "instances" "restarts" "next grade" "grade" "assigned" "marked" "retract" "domains" "place" "satisfied" "satisfied in")
-(formulas "Lab"
-  ("B1" "=IF(OR(Lab!B2<>Lab.last!B2,Lab!B3<>Lab.last!B3),0,Lab.last!B1+IF(OR(Input!$B$13=1,Input!$B$14=1,Input!$B$15=1,Input!$B$20<>\"\"),1,0))"))
-(count "Lab" "B2" "IF(Input!$B$20=\"instance\",1,0)")
-(count "Lab" "B3" "IF(Input!$B$20=\"retract-all\",1,0)")
-(first-frame "Lab" "B4" "2" "IF(Input!$B$20=\"grade\",MOD(Lab.last!B4,4)+1,Lab.last!B4)")
-(formulas "Lab"
-  ("B5" "=IF(OR(Clock!$B$1=1,Lab!B2<>Lab.last!B2),Lab!B4,Lab.last!B5)")
-  ("B6" "=(Input!$B$20=\"assign-1\")*1+(Input!$B$20=\"assign-2\")*2+(Input!$B$20=\"assign-3\")*3+(Input!$B$20=\"assign-4\")*4+(Input!$B$20=\"assign-5\")*5+(Input!$B$20=\"assign-6\")*6+(Input!$B$20=\"assign-7\")*7+(Input!$B$20=\"assign-8\")*8+(Input!$B$20=\"assign-9\")*9")
-  ("B7" "=(Input!$B$20=\"domain-1\")*1+(Input!$B$20=\"domain-2\")*2+(Input!$B$20=\"domain-3\")*3+(Input!$B$20=\"domain-4\")*4+(Input!$B$20=\"domain-5\")*5+(Input!$B$20=\"domain-6\")*6+(Input!$B$20=\"domain-7\")*7+(Input!$B$20=\"domain-8\")*8+(Input!$B$20=\"domain-9\")*9")
-  ("B8" "=IF(Input!$B$20=\"retract\",1,0)")
-  ("B9" "=IF(Input!$B$20=\"domains\",1,0)")
-  ("B10" "=IF(AND(Input!$B$19=\"Board\",Input!$B$11>=1,Input!$B$11<=9,Input!$B$12>=1,Input!$B$12<=9),(Input!$B$12-1)*9+Input!$B$11,0)")
-  ("B11" "=IF(AND(SUM(Planes!A1:I81)=81,SUM(Violations!A1:I9)=0),1,0)")
-  ("B12" "=IF(Lab!B11=1,IF(Lab.last!B11=1,Lab.last!B12,Lab!B1),0)"))
+(defmacro (a-command word)
+  "the command named by the word, run at this frame: Input!$B$20=\"word\""
+  (= Input!$B$20 word))
+(defmacro (named-as prefix k)
+  "a command's value when it is the prefix and k, assign-k or domain-k: (Input!$B$20=\"prefix-k\")*k"
+  (* (a-command (&expand prefix k)) k))
+(rules "Lab"
+  ("B1" (if (or (<> Lab!B2 Lab.last!B2) (<> Lab!B3 Lab.last!B3)) 0 (+ Lab.last!B1 (if (or (= Input!$B$13 1) (= Input!$B$14 1) (= Input!$B$15 1) (<> Input!$B$20 "")) 1 0)))))
+(count "Lab" "B2" (if (a-command "instance") 1 0))
+(count "Lab" "B3" (if (a-command "retract-all") 1 0))
+(first-frame "Lab" "B4" 2 (if (a-command "grade") (+ (mod Lab.last!B4 4) 1) Lab.last!B4))
+(rules "Lab"
+  ("B5" (if (or (= Clock!$B$1 1) (<> Lab!B2 Lab.last!B2)) Lab!B4 Lab.last!B5))
+  ("B6" (+ (named-as "assign-" 1) (named-as "assign-" 2) (named-as "assign-" 3) (named-as "assign-" 4) (named-as "assign-" 5) (named-as "assign-" 6) (named-as "assign-" 7) (named-as "assign-" 8) (named-as "assign-" 9)))
+  ("B7" (+ (named-as "domain-" 1) (named-as "domain-" 2) (named-as "domain-" 3) (named-as "domain-" 4) (named-as "domain-" 5) (named-as "domain-" 6) (named-as "domain-" 7) (named-as "domain-" 8) (named-as "domain-" 9)))
+  ("B8" (if (a-command "retract") 1 0))
+  ("B9" (if (a-command "domains") 1 0))
+  ("B10" (if (and (= Input!$B$19 "Board") (>= Input!$B$11 1) (<= Input!$B$11 9) (>= Input!$B$12 1) (<= Input!$B$12 9)) (+ (* (- Input!$B$12 1) 9) Input!$B$11) 0))
+  ("B11" (if (and (= (sum Planes!A1:I81) 81) (= (sum Violations!A1:I9) 0)) 1 0))
+  ("B12" (if (= Lab!B11 1) (if (= Lab.last!B11 1) Lab.last!B12 Lab!B1) 0)))
 
 ; ---- the Deal: the instance's puzzle, and its transform --------------------------------
 ; Rows 10 to 44 hash the seed, the instance and the row: Life's soup hash, two linear forms
@@ -150,19 +159,21 @@
 ; G1:G9 each column's source column; A50:CC50 the puzzle's 81 values.
 (labels "Deal" "A1" "puzzle" "transposed")
 (headers "Deal" "B9" "hash" "key" "rank")
-(formulas "Deal"
-  ("B1" "=32*(Lab!$B$5-1)+1+MOD(B10,32)")
-  ("B2" "=MOD(B44,2)")
-  ("F1:F9" "=3*(CHOOSE(INT((ROW()-1)/3)+1,$D$20,$D$21,$D$22)-1)+D23")
-  ("G1:G9" "=3*(CHOOSE(INT((ROW()-1)/3)+1,$D$32,$D$33,$D$34)-1)+D35")
-  ("B10:B44" "=MOD(MOD(Clock!$B$3*1103515+Lab!$B$2*7919+ROW()*1597334+3440100,67108859)*MOD(Clock!$B$3*2012345+Lab!$B$2*104729+ROW()*1209487+3213021,67108859),67108859)")
-  ("C10:C44" "=B10*64+ROW()")
-  ("D11:D19" "=1+(C$11<C11)+(C$12<C11)+(C$13<C11)+(C$14<C11)+(C$15<C11)+(C$16<C11)+(C$17<C11)+(C$18<C11)+(C$19<C11)"))
+(rules "Deal"
+  ("B1" (+ (* 32 (- Lab!$B$5 1)) 1 (mod B10 32)))
+  ("B2" (mod B44 2))
+  ("F1:F9" (+ (* 3 (- (choose (+ (int (/ (- (row) 1) 3)) 1) $D$20 $D$21 $D$22) 1)) D23))
+  ("G1:G9" (+ (* 3 (- (choose (+ (int (/ (- (row) 1) 3)) 1) $D$32 $D$33 $D$34) 1)) D35))
+  ("B10:B44" (mod (* (mod (+ (* Clock!$B$3 1103515) (* Lab!$B$2 7919) (* (row) 1597334) 3440100) 67108859)
+                   (mod (+ (* Clock!$B$3 2012345) (* Lab!$B$2 104729) (* (row) 1209487) 3213021) 67108859))
+                67108859))
+  ("C10:C44" (+ (* B10 64) (row)))
+  ("D11:D19" (+ 1 (< C$11 C11) (< C$12 C11) (< C$13 C11) (< C$14 C11) (< C$15 C11) (< C$16 C11) (< C$17 C11) (< C$18 C11) (< C$19 C11))))
 
 (defmacro (ranks-of-three first)
   "the ranks of three keys among themselves, from the first's row: a band's, a stack's, or a band's or a stack's three"
-  (formula "Deal" (&expand "D" first ":D" (+expand first 2))
-    (&expand "=1+(C$" first "<C" first ")+(C$" (+expand first 1) "<C" first ")+(C$" (+expand first 2) "<C" first ")")))
+  (rule "Deal" (&expand "D" first ":D" (+expand first 2))
+    (+ 1 (< (symbol "C$" first) (symbol "C" first)) (< (symbol "C$" (+expand first 1)) (symbol "C" first)) (< (symbol "C$" (+expand first 2)) (symbol "C" first)))))
 (ranks-of-three 20)                 ; the bands
 (ranks-of-three 23)                 ; the first band's rows
 (ranks-of-three 26)                 ; the second band's rows
@@ -172,35 +183,41 @@
 (ranks-of-three 38)                 ; the second stack's columns
 (ranks-of-three 41)                 ; the third stack's columns
 
-; The puzzle's 81 values: each column of the Book, as the puzzle's row chooses it. A walk joins
-; the Book's 128 rows of a column into CHOOSE's arguments and hands the text on, since a
-; macro's call is no argument of &expand.
-(defmacro (book-refs k last made then & args)
-  "the Book's column A from row k to row last, joined after made, handed on: (then refs args...)"
-  (quote-if (>expand k last)
-    (quasiquote ((unquote then) (unquote made) (unquote-splicing args)))
-    (quasiquote (book-refs (unquote (+expand k 1)) (unquote last) (unquote (&expand made ",Book!A" k)) (unquote then) (unquote-splicing args)))))
+; The puzzle's 81 values: each column of the Book, as the puzzle's row chooses it. A walk
+; gathers the Book's 128 rows of a column as references, from the last down to the first,
+; each consed before the ones gathered, and hands the list on to the macro that writes the
+; row, which splices it into CHOOSE's arguments, since a macro's call is no argument of a
+; primitive.
+(defmacro (book-refs k made then)
+  "the Book's column A from row k down to row 1, each a reference consed before made, handed on: (then refs)"
+  (quote-if (<expand k 1)
+    (quasiquote ((unquote then) (unquote made)))
+    (quasiquote (book-refs (unquote (-expand k 1)) (unquote (cons (symbol "Book!A" k) made)) (unquote then)))))
 (defmacro (chosen-row refs)
-  "the puzzle's 81 values, a row of the Deal: each column of the Book, the puzzle's row of it"
-  (formula "Deal" "A50:CC50" (&expand "=CHOOSE($B$1" refs ")")))
-(book-refs 1 128 "" chosen-row)
+  "the puzzle's 81 values, a row of the Deal: CHOOSE over the Book's column, by the puzzle's row"
+  (quasiquote (rule "Deal" "A50:CC50" (choose $B$1 (unquote-splicing refs)))))
+(book-refs 127 (Book!A128) chosen-row)
 
 ; ---- the Givens: the puzzle transformed ------------------------------------------------
 ; A11:I19, each variable's value in the puzzle, its source the puzzle's row and column its
 ; own row's and column's sources, swapped when transposed; A1:I9, that value relabeled; and
 ; A21:I29, 1 where the instance fixes a value.
-(defmacro (chosen-refs k made then & args)
-  "the Deal's 81 values from the kth on, joined after made, handed on: (then refs args...)"
-  (quote-if (>expand k 81)
-    (quasiquote ((unquote then) (unquote made) (unquote-splicing args)))
-    (quasiquote (chosen-refs (unquote (+expand k 1)) (unquote (&expand made ",Deal!$" (column-letters-expand k) "$50")) (unquote then) (unquote-splicing args)))))
+(defmacro (chosen-refs k made then)
+  "the Deal's 81 values from the kth down to the first, each a reference consed before made, handed on: (then refs)"
+  (quote-if (<expand k 1)
+    (quasiquote ((unquote then) (unquote made)))
+    (quasiquote (chosen-refs (unquote (-expand k 1)) (unquote (cons (symbol "Deal!$" (column-letters-expand k) "$50") made)) (unquote then)))))
 (defmacro (source-cells refs)
-  "each variable's value in the puzzle, read from the Deal's 81 at its source"
-  (formula "Givens" "A11:I19" (&expand "=CHOOSE(IF(Deal!$B$2=1,(CHOOSE(COLUMN(),Deal!$F$1,Deal!$F$2,Deal!$F$3,Deal!$F$4,Deal!$F$5,Deal!$F$6,Deal!$F$7,Deal!$F$8,Deal!$F$9)-1)*9+Deal!$G1,(Deal!$F1-1)*9+CHOOSE(COLUMN(),Deal!$G$1,Deal!$G$2,Deal!$G$3,Deal!$G$4,Deal!$G$5,Deal!$G$6,Deal!$G$7,Deal!$G$8,Deal!$G$9))" refs ")")))
-(chosen-refs 1 "" source-cells)
-(formulas "Givens"
-  ("A1:I9" "=IF(A11=0,0,CHOOSE(A11,Deal!$D$11,Deal!$D$12,Deal!$D$13,Deal!$D$14,Deal!$D$15,Deal!$D$16,Deal!$D$17,Deal!$D$18,Deal!$D$19))")
-  ("A21:I29" "=IF(A1>0,1,0)"))
+  "each variable's value in the puzzle, read from the Deal's 81 at its source: the row's source times nine and the column's, swapped when transposed"
+  (quasiquote (rule "Givens" "A11:I19"
+    (choose (if (= Deal!$B$2 1)
+                (+ (* (- (choose (column) Deal!$F$1 Deal!$F$2 Deal!$F$3 Deal!$F$4 Deal!$F$5 Deal!$F$6 Deal!$F$7 Deal!$F$8 Deal!$F$9) 1) 9) Deal!$G1)
+                (+ (* (- Deal!$F1 1) 9) (choose (column) Deal!$G$1 Deal!$G$2 Deal!$G$3 Deal!$G$4 Deal!$G$5 Deal!$G$6 Deal!$G$7 Deal!$G$8 Deal!$G$9)))
+            (unquote-splicing refs)))))
+(chosen-refs 80 (Deal!$CC$50) source-cells)
+(rules "Givens"
+  ("A1:I9" (if (= A11 0) 0 (choose A11 Deal!$D$11 Deal!$D$12 Deal!$D$13 Deal!$D$14 Deal!$D$15 Deal!$D$16 Deal!$D$17 Deal!$D$18 Deal!$D$19)))
+  ("A21:I29" (if (> A1 0) 1 0)))
 
 ; ---- the person's state: the assignments and the marks -----------------------------------
 ; Each variable a formula of its own last value and the act (CART.14, decision 2): a new
@@ -208,13 +225,36 @@
 ; a value, retracts, or marks a value, an assigned variable's marks kept and none changed;
 ; domains fills every unassigned variable's marks with its candidates, Candidates!A83:I91.
 ; A mark is a bit: the marks are one number, 1 for the 1, 2 for the 2, 256 for the 9.
-(formulas "Entries"
-  ("A1:I9" "=IF(OR(Lab!$B$2<>Lab.last!$B$2,Lab!$B$3<>Lab.last!$B$3),0,IF(Givens!A1>0,0,IF(Lab!$B$10=(ROW()-1)*9+COLUMN(),IF(Lab!$B$6>0,Lab!$B$6,IF(Lab!$B$8=1,0,Entries.last!A1)),Entries.last!A1)))"))
-(formulas "Marks"
-  ("A1:I9" "=IF(OR(Lab!$B$2<>Lab.last!$B$2,Lab!$B$3<>Lab.last!$B$3),0,IF(Givens!A1>0,0,IF(Lab!$B$9=1,IF(Entries!A1>0,Marks.last!A1,Candidates!A83),IF(Lab!$B$10=(ROW()-1)*9+COLUMN(),IF(AND(Lab!$B$7>0,Entries!A1=0),IF(MOD(INT(Marks.last!A1/2^(Lab!$B$7-1)),2)=1,Marks.last!A1-2^(Lab!$B$7-1),Marks.last!A1+2^(Lab!$B$7-1)),IF(AND(Lab!$B$8=1,Entries.last!A1=0),0,Marks.last!A1)),Marks.last!A1))))")
-  ("A11:I19" "=MOD(A1,2)+MOD(INT(A1/2),2)+MOD(INT(A1/4),2)+MOD(INT(A1/8),2)+MOD(INT(A1/16),2)+MOD(INT(A1/32),2)+MOD(INT(A1/64),2)+MOD(INT(A1/128),2)+MOD(INT(A1/256),2)"))
-(formulas "Grid"
-  ("A1:I9" "=Givens!A1+Entries!A1"))
+(defmacro (a-new-instance)
+  "a new instance or a restart this frame: the instances or the restarts counted moved"
+  (or (<> Lab!$B$2 Lab.last!$B$2) (<> Lab!$B$3 Lab.last!$B$3)))
+(defmacro (this-variable)
+  "the variable this cell is, 1 to 81, as the Lab numbers the act's place"
+  (+ (* (- (row) 1) 9) (column)))
+(defmacro (the-mark)
+  "the bit of the value the act marks: 2 to the value less one"
+  (^ 2 (- Lab!$B$7 1)))
+(defmacro (bit-of cell k)
+  "a bit of a number of marks: the number over k, 2 to the mark's place, whole and modulo 2"
+  (mod (int (/ cell k)) 2))
+(rule "Entries" "A1:I9"
+  (if (a-new-instance) 0                                           ; a new instance or a restart empties it;
+    (if (> Givens!A1 0) 0                                          ; a given is never assigned;
+      (if (= Lab!$B$10 (this-variable))                            ; an act on it
+          (if (> Lab!$B$6 0) Lab!$B$6 (if (= Lab!$B$8 1) 0 Entries.last!A1))   ;   assigns a value, or retracts;
+          Entries.last!A1))))                                      ; else as it was
+(rule "Marks" "A1:I9"
+  (if (a-new-instance) 0                                           ; a new instance or a restart strikes every mark;
+    (if (> Givens!A1 0) 0                                          ; a given is never marked;
+      (if (= Lab!$B$9 1) (if (> Entries!A1 0) Marks.last!A1 Candidates!A83)   ; domains fills an unassigned variable's marks with its candidates;
+        (if (= Lab!$B$10 (this-variable))                          ; an act on it
+            (if (and (> Lab!$B$7 0) (= Entries!A1 0))              ;   marks a value in an unassigned variable, or strikes it,
+                (if (= (mod (int (/ Marks.last!A1 (the-mark))) 2) 1) (- Marks.last!A1 (the-mark)) (+ Marks.last!A1 (the-mark)))
+                (if (and (= Lab!$B$8 1) (= Entries.last!A1 0)) 0 Marks.last!A1))   ;   and a retraction of an unassigned variable strikes every mark;
+            Marks.last!A1)))))                                     ; else as it was
+(rule "Marks" "A11:I19"
+  (+ (mod A1 2) (bit-of A1 2) (bit-of A1 4) (bit-of A1 8) (bit-of A1 16) (bit-of A1 32) (bit-of A1 64) (bit-of A1 128) (bit-of A1 256)))
+(rule "Grid" "A1:I9" (+ Givens!A1 Entries!A1))
 
 ; ---- the constraints counted (CART.14, decision 5) ------------------------------------------
 ; Nine planes of ones and zeros, plane v 1 where the Grid holds v, at rows 9 (v - 1) + 1 to 9 v.
@@ -223,7 +263,7 @@
   (quote-if (>expand v 9)
     (begin)
     (begin
-      (formula "Planes" (&expand "A" (+expand (*expand 9 (-expand v 1)) 1) ":I" (*expand 9 v)) (&expand "=IF(Grid!A1=" v ",1,0)"))
+      (rule "Planes" (&expand "A" (+expand (*expand 9 (-expand v 1)) 1) ":I" (*expand 9 v)) (if (= Grid!A1 v) 1 0))
       (quasiquote (planes (unquote (+expand v 1)))))))
 (planes 1)
 
@@ -235,8 +275,8 @@
   (quote-if (>expand v 9)
     (begin)
     (begin
-      (formula "Units" (&expand (column-letters-expand v) "1:" (column-letters-expand v) "9")
-        (&expand "=SUM(Planes!$A" (+expand (*expand 9 (-expand v 1)) 1) ":$I" (+expand (*expand 9 (-expand v 1)) 1) ")"))
+      (rule "Units" (&expand (column-letters-expand v) "1:" (column-letters-expand v) "9")
+        (sum (ref "Planes" (&expand "$A" (+expand (*expand 9 (-expand v 1)) 1) ":$I" (+expand (*expand 9 (-expand v 1)) 1)))))
       (quasiquote (row-counts (unquote (+expand v 1)))))))
 (row-counts 1)
 (defmacro (col-counts v)
@@ -244,8 +284,8 @@
   (quote-if (>expand v 9)
     (begin)
     (begin
-      (formula "Units" (&expand "A" (+expand 10 v) ":I" (+expand 10 v))
-        (&expand "=SUM(Planes!A" (+expand (*expand 9 (-expand v 1)) 1) ":A" (*expand 9 v) ")"))
+      (rule "Units" (&expand "A" (+expand 10 v) ":I" (+expand 10 v))
+        (sum (ref "Planes" (&expand "A" (+expand (*expand 9 (-expand v 1)) 1) ":A" (*expand 9 v)))))
       (quasiquote (col-counts (unquote (+expand v 1)))))))
 (col-counts 1)
 (defmacro (box-counts b r0 c0 v)
@@ -253,8 +293,8 @@
   (quote-if (>expand v 9)
     (begin)
     (begin
-      (formula "Units" (address-expand (+expand 20 b) v)
-        (&expand "=SUM(Planes!" (address-expand (+expand (*expand 9 (-expand v 1)) r0) c0) ":" (address-expand (+expand (*expand 9 (-expand v 1)) (+expand r0 2)) (+expand c0 2)) ")"))
+      (rule "Units" (address-expand (+expand 20 b) v)
+        (sum (ref "Planes" (&expand (address-expand (+expand (*expand 9 (-expand v 1)) r0) c0) ":" (address-expand (+expand (*expand 9 (-expand v 1)) (+expand r0 2)) (+expand c0 2))))))
       (quasiquote (box-counts (unquote b) (unquote r0) (unquote c0) (unquote (+expand v 1)))))))
 (box-counts 1 1 1 1)                ; box 1, its top left A1
 (box-counts 2 1 4 1)                ; box 2, D1
@@ -269,10 +309,23 @@
 ; A variable is violated where its value counts twice in its row, its column or its box,
 ; each count read through CHOOSE over the nine values. A fill a box, since a box's counts
 ; stand on a row of the Units of their own.
+(defmacro (unit-count letters r)
+  "a cell of the Units, a reference from its column's letters and its row"
+  (ref "Units" (&expand letters r)))
+(defmacro (row-count-of at r)
+  "the count of the variable's value in its row: CHOOSE over the Units' row r, the value the index"
+  (choose (ref "Grid" at) (unit-count "$A" r) (unit-count "$B" r) (unit-count "$C" r) (unit-count "$D" r) (unit-count "$E" r) (unit-count "$F" r) (unit-count "$G" r) (unit-count "$H" r) (unit-count "$I" r)))
+(defmacro (column-count-of at c)
+  "the count of the variable's value in its column: CHOOSE down the Units' column c, rows 11 to 19"
+  (choose (ref "Grid" at) (unit-count c "$11") (unit-count c "$12") (unit-count c "$13") (unit-count c "$14") (unit-count c "$15") (unit-count c "$16") (unit-count c "$17") (unit-count c "$18") (unit-count c "$19")))
+(defmacro (box-count-of at x)
+  "the count of the variable's value in its box: CHOOSE over the Units' row x, the box's own"
+  (choose (ref "Grid" at) (unit-count "$A$" x) (unit-count "$B$" x) (unit-count "$C$" x) (unit-count "$D$" x) (unit-count "$E$" x) (unit-count "$F$" x) (unit-count "$G$" x) (unit-count "$H$" x) (unit-count "$I$" x)))
 (defmacro (violation-box range at r c x)
   "the box over range: its first cell at, that cell's row r and column c, the box's counts on the Units' row x"
-  (formula "Violations" range
-    (&expand "=IF(Grid!" at "=0,0,IF(OR(CHOOSE(Grid!" at ",Units!$A" r ",Units!$B" r ",Units!$C" r ",Units!$D" r ",Units!$E" r ",Units!$F" r ",Units!$G" r ",Units!$H" r ",Units!$I" r ")>1,CHOOSE(Grid!" at ",Units!" c "$11,Units!" c "$12,Units!" c "$13,Units!" c "$14,Units!" c "$15,Units!" c "$16,Units!" c "$17,Units!" c "$18,Units!" c "$19)>1,CHOOSE(Grid!" at ",Units!$A$" x ",Units!$B$" x ",Units!$C$" x ",Units!$D$" x ",Units!$E$" x ",Units!$F$" x ",Units!$G$" x ",Units!$H$" x ",Units!$I$" x ")>1),1,0))")))
+  (rule "Violations" range
+    (if (= (ref "Grid" at) 0) 0
+      (if (or (> (row-count-of at r) 1) (> (column-count-of at c) 1) (> (box-count-of at x) 1)) 1 0))))
 (violation-box "A1:C3" "A1" 1 "A" 21)
 (violation-box "D1:F3" "D1" 1 "D" 22)
 (violation-box "G1:I3" "G1" 1 "G" 23)
@@ -293,13 +346,16 @@
       (begin
         (candidate-plane (unquote (column-letters-expand v)) (unquote (+expand (*expand 9 (-expand v 1)) 1)) (unquote (*expand 9 v)) (unquote (+expand 10 v)))
         (candidate-planes (unquote (+expand v 1)))))))
+(defmacro (box-count-in letter top)
+  "the value's count in the variable's box, the plane's rows from top: CHOOSE over the Units' box rows, 21 to 29, in the value's column letter"
+  (choose (+ (* 3 (int (/ (- (row) top) 3))) (int (/ (- (column) 1) 3)) 1) (unit-count (&expand "$" letter "$") 21) (unit-count (&expand "$" letter "$") 22) (unit-count (&expand "$" letter "$") 23) (unit-count (&expand "$" letter "$") 24) (unit-count (&expand "$" letter "$") 25) (unit-count (&expand "$" letter "$") 26) (unit-count (&expand "$" letter "$") 27) (unit-count (&expand "$" letter "$") 28) (unit-count (&expand "$" letter "$") 29)))
 (defmacro (candidate-plane letter top bottom units-row)
   "a plane of candidates from the row top to the row bottom: the value's counts in the Units' column letter, its columns' on units-row"
-  (formula "Candidates" (&expand "A" top ":I" bottom)
-    (&expand "=IF(AND(Grid!A1=0,Units!$" letter "1=0,Units!A$" units-row "=0,CHOOSE(3*INT((ROW()-" top ")/3)+INT((COLUMN()-1)/3)+1,Units!$" letter "$21,Units!$" letter "$22,Units!$" letter "$23,Units!$" letter "$24,Units!$" letter "$25,Units!$" letter "$26,Units!$" letter "$27,Units!$" letter "$28,Units!$" letter "$29)=0),1,0)")))
+  (rule "Candidates" (&expand "A" top ":I" bottom)
+    (if (and (= Grid!A1 0) (= (unit-count (&expand "$" letter) 1) 0) (= (unit-count "A$" units-row) 0) (= (box-count-in letter top) 0)) 1 0)))
 (candidate-planes 1)
-(formulas "Candidates"
-  ("A83:I91" "=A1+2*A10+4*A19+8*A28+16*A37+32*A46+64*A55+128*A64+256*A73"))
+(rule "Candidates" "A83:I91"
+  (+ A1 (* 2 A10) (* 4 A19) (* 8 A28) (* 16 A37) (* 32 A46) (* 64 A55) (* 128 A64) (* 256 A73)))
 
 ; ---- the Board: what a person sees -------------------------------------------------------
 ; An assigned variable shows a code, 100 times its kind, 10 times its box's parity and its
@@ -309,8 +365,18 @@
 ; variable shows its marks, a digit or a figure space in each of nine places, three figure
 ; spaces between two of a line and a figure space before each, which its own format wraps
 ; into five lines, three of marks and a line of a figure space between two; or nothing.
-(formulas "Board"
-  ("A1:I9" "=IF(Grid!A1>0,IF(Lab!$B$11=1,IF(Givens!A1>0,500,600),IF(Givens!A1>0,IF(Violations!A1=1,300,100),IF(Violations!A1=1,400,200)))+10*MOD(INT((ROW()-1)/3)+INT((COLUMN()-1)/3),2)+Grid!A1,IF(Marks!A1=0,\"\",\" \"&IF(MOD(Marks!A1,2)=1,\"1\",\" \")&\"   \"&IF(MOD(INT(Marks!A1/2),2)=1,\"2\",\" \")&\"   \"&IF(MOD(INT(Marks!A1/4),2)=1,\"3\",\" \")&\"    \"&IF(MOD(INT(Marks!A1/8),2)=1,\"4\",\" \")&\"   \"&IF(MOD(INT(Marks!A1/16),2)=1,\"5\",\" \")&\"   \"&IF(MOD(INT(Marks!A1/32),2)=1,\"6\",\" \")&\"    \"&IF(MOD(INT(Marks!A1/64),2)=1,\"7\",\" \")&\"   \"&IF(MOD(INT(Marks!A1/128),2)=1,\"8\",\" \")&\"   \"&IF(MOD(INT(Marks!A1/256),2)=1,\"9\",\" \")))"))
+(rule "Board" "A1:I9"
+  (if (> Grid!A1 0) (+ (if (= Lab!$B$11 1) (if (> Givens!A1 0) 500 600) (if (> Givens!A1 0) (if (= Violations!A1 1) 300 100) (if (= Violations!A1 1) 400 200))) (* 10 (mod (+ (int (/ (- (row) 1) 3)) (int (/ (- (column) 1) 3))) 2)) Grid!A1)
+    (if (= Marks!A1 0) ""
+      (& " " (if (= (mod Marks!A1 2) 1) "1" " ") "   "
+         (if (= (mod (int (/ Marks!A1 2)) 2) 1) "2" " ") "   "
+         (if (= (mod (int (/ Marks!A1 4)) 2) 1) "3" " ") "    "
+         (if (= (mod (int (/ Marks!A1 8)) 2) 1) "4" " ") "   "
+         (if (= (mod (int (/ Marks!A1 16)) 2) 1) "5" " ") "   "
+         (if (= (mod (int (/ Marks!A1 32)) 2) 1) "6" " ") "    "
+         (if (= (mod (int (/ Marks!A1 64)) 2) 1) "7" " ") "   "
+         (if (= (mod (int (/ Marks!A1 128)) 2) 1) "8" " ") "   "
+         (if (= (mod (int (/ Marks!A1 256)) 2) 1) "9" " ")))))
 
 ; Each variable's own format, its box's tint and a wrap, which draws its marks: the format 1
 ; on the boxes 1, 3, 5, 7 and 9, the format 2 on the others. A style row names one cell.
@@ -412,25 +478,28 @@
   ("A1" "Seiyaku 制約")
   ("A2" "Eighty-one variables, twenty-seven constraints, one solution, proven before you began."))
 (labels "Constraints" "A4" "instance" "grade" "puzzle in the book" "seed" "next instance's grade")
-(formulas "Constraints"
-  ("B4" "=Lab!B2+1")
-  ("B5" "=Lab!B5")
-  ("C5" "=CHOOSE(Lab!B5,\"naked singles\",\"hidden singles\",\"pointing pairs\",\"beyond the three\")")
-  ("B6" "=Deal!B1")
-  ("B7" "=Clock!B3")
-  ("B8" "=Lab!B4")
-  ("C8" "=CHOOSE(Lab!B4,\"naked singles\",\"hidden singles\",\"pointing pairs\",\"beyond the three\")"))
+(defmacro (grade-named grade)
+  "a grade's name: the hardest technique its puzzles need"
+  (choose grade "naked singles" "hidden singles" "pointing pairs" "beyond the three"))
+(rules "Constraints"
+  ("B4" (+ Lab!B2 1))
+  ("B5" Lab!B5)
+  ("C5" (grade-named Lab!B5))
+  ("B6" Deal!B1)
+  ("B7" Clock!B3)
+  ("B8" Lab!B4)
+  ("C8" (grade-named Lab!B4)))
 (labels "Constraints" "A10" "givens" "assignments" "unassigned" "violated variables" "violated constraints" "marks kept" "acts" "satisfied")
-(formulas "Constraints"
-  ("B10" "=SUM(Givens!A21:I29)")
-  ("B11" "=SUM(Planes!A1:I81)-B10")
-  ("B12" "=81-SUM(Planes!A1:I81)")
-  ("B13" "=SUM(Violations!A1:I9)")
-  ("B14" "=SUM(D31:D57)")
-  ("B15" "=SUM(Marks!A11:I19)")
-  ("B16" "=Lab!B1")
-  ("B17" "=IF(Lab!B11=1,\"satisfied, in \"&Lab!B12&\" acts\",\"not yet\")")
-  ("B18" "=IF(Lab!B11=1,\"No search was performed by the cartridge.\",\"\")"))
+(rules "Constraints"
+  ("B10" (sum Givens!A21:I29))
+  ("B11" (- (sum Planes!A1:I81) B10))
+  ("B12" (- 81 (sum Planes!A1:I81)))
+  ("B13" (sum Violations!A1:I9))
+  ("B14" (sum D31:D57))
+  ("B15" (sum Marks!A11:I19))
+  ("B16" Lab!B1)
+  ("B17" (if (= Lab!B11 1) (& "satisfied, in " Lab!B12 " acts") "not yet"))
+  ("B18" (if (= Lab!B11 1) "No search was performed by the cartridge." "")))
 
 ; Each value's count on the board, 9 of each when satisfied, a value a row.
 (headers "Constraints" "A19" "value" "placed")
@@ -440,8 +509,8 @@
   (quote-if (>expand v 9)
     (begin)
     (begin
-      (formula "Constraints" (address-expand (+expand 19 v) 2)
-        (&expand "=SUM(Planes!A" (+expand (*expand 9 (-expand v 1)) 1) ":I" (*expand 9 v) ")"))
+      (rule "Constraints" (address-expand (+expand 19 v) 2)
+        (sum (ref "Planes" (&expand "A" (+expand (*expand 9 (-expand v 1)) 1) ":I" (*expand 9 v)))))
       (quasiquote (placed-counts (unquote (+expand v 1)))))))
 (placed-counts 1)
 
@@ -452,21 +521,24 @@
   "row 1" "row 2" "row 3" "row 4" "row 5" "row 6" "row 7" "row 8" "row 9"
   "column 1" "column 2" "column 3" "column 4" "column 5" "column 6" "column 7" "column 8" "column 9"
   "box 1" "box 2" "box 3" "box 4" "box 5" "box 6" "box 7" "box 8" "box 9")
-(formulas "Constraints"
-  ("B31:B39" "=SUM(Units!$A1:$I1)")
-  ("C31:C39" "=IF(MAX(Units!$A1:$I1)>1,\"violated\",IF(B31=9,\"satisfied\",\"open\"))")
-  ("B49:B57" "=SUM(Units!$A21:$I21)")
-  ("C49:C57" "=IF(MAX(Units!$A21:$I21)>1,\"violated\",IF(B49=9,\"satisfied\",\"open\"))")
-  ("D31:D57" "=IF(C31=\"violated\",1,0)"))
+(defmacro (state-of counts assigned)
+  "a constraint's state from its counts and its variables assigned: violated where a value counts twice, satisfied where nine are assigned and none is violated, open else"
+  (if (> (max counts) 1) "violated" (if (= assigned 9) "satisfied" "open")))
+(rules "Constraints"
+  ("B31:B39" (sum Units!$A1:$I1))
+  ("C31:C39" (state-of Units!$A1:$I1 B31))
+  ("B49:B57" (sum Units!$A21:$I21))
+  ("C49:C57" (state-of Units!$A21:$I21 B49))
+  ("D31:D57" (if (= C31 "violated") 1 0)))
 (defmacro (column-constraints c)
   "the column c's constraint, on the row 39 + c: its count down the Units' column c, rows 11 to 19, then the columns after it"
   (quote-if (>expand c 9)
     (begin)
     (begin
-      (formula "Constraints" (address-expand (+expand 39 c) 2)
-        (&expand "=SUM(Units!" (column-letters-expand c) "11:" (column-letters-expand c) "19)"))
-      (formula "Constraints" (address-expand (+expand 39 c) 3)
-        (&expand "=IF(MAX(Units!" (column-letters-expand c) "11:" (column-letters-expand c) "19)>1,\"violated\",IF(B" (+expand 39 c) "=9,\"satisfied\",\"open\"))"))
+      (rule "Constraints" (address-expand (+expand 39 c) 2)
+        (sum (ref "Units" (&expand (column-letters-expand c) "11:" (column-letters-expand c) "19"))))
+      (rule "Constraints" (address-expand (+expand 39 c) 3)
+        (state-of (ref "Units" (&expand (column-letters-expand c) "11:" (column-letters-expand c) "19")) (symbol "B" (+expand 39 c))))
       (quasiquote (column-constraints (unquote (+expand c 1)))))))
 (column-constraints 1)
 ; Column B twelve characters wide, so that a seed of ten digits, which a person reads off to share an instance, reads
