@@ -43,7 +43,7 @@
 (shape 5 "Observer" "B4" "=SUM(Tally!R[-3]C[17]:R[508]C[17])" (cells 1) (levels 9 9 1 1) (runs 0 0 0 0) (alone 1) (reads array))
 (shape 6 "Observer" "B5" "=SUM(Tally!R[-4]C[18]:R[507]C[18])" (cells 1) (levels 9 9 1 1) (runs 0 0 0 0) (alone 1) (reads array))
 (shape 7 "Observer" "B6" "=SUM(Tally!R[-5]C[19]:R[506]C[19])" (cells 1) (levels 9 9 1 1) (runs 0 0 0 0) (alone 1) (reads array))
-(shape 8 "Observer" "B7" "=262144-R[-3]C-R[-2]C-R[-1]C" (cells 1) (levels 10 10 1 1) (runs 0 0 0 0) (alone 1) (reads lookup))
+(shape 8 "Observer" "B7" "=262144-R[-3]C-R[-2]C-R[-1]C" (cells 1) (levels 10 10 1 1) (runs 0 0 0 0) (alone 1) (reads slot))
 (shape 9 "Observer" "B8" "=Constants!R1C2" (cells 1) (levels 0 0 1 1) (runs 0 0 0 0) (alone 1) (reads once))
 (shape 10 "Observer" "B9" "=Clock!R3C2" (cells 1) (levels 0 0 1 1) (runs 0 0 0 0) (alone 1) (reads once))
 (shape 11 "Decays" "A1" "=IF(AND(FirstRow!RC2>0,ABS(COLUMN()-FirstRow!RC2)<=1),0,IF(MOD(MOD(MOD(Clock!R3C2*1103515+ROW()*1597334+COLUMN()*1830421+Lab!R2C2*7919+3440100,67108859)*MOD(Clock!R3C2*2012345+ROW()*1209487+COLUMN()*1949213+Lab!R2C2*104729+3213021,67108859),67108859)*MOD(MOD(Clock!R3C2*1103515+ROW()*1597334+COLUMN()*1830421+Lab!R2C2*7919+3440100,67108859)*MOD(Clock!R3C2*2012345+ROW()*1209487+COLUMN()*1949213+Lab!R2C2*104729+3213021,67108859),67108859),67108859)<Constants!R1C2*67108859,1,0))" (cells 262144) (levels 3 3 1 262144) (runs 1 262144 262144 262144) (alone 0) (reads slot once start))

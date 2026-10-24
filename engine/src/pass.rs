@@ -831,7 +831,9 @@ mod tests {
             // piece: the input card's count of presses (KIT.5).
             (
                 r#"(count "Tally" "B1:E10" (if (edge Input!B1) 1 0))"#,
-                &[r#"(formula "Tally" "B1:E10" "=Tally.last!B1+IF(AND(Input!B1=1,Input.last!B1=0),1,0)")"#],
+                &[
+                    r#"(formula "Tally" "B1:E10" "=Tally.last!B1+IF(AND(Input!B1=1,Input.last!B1=0),1,0)")"#,
+                ],
             ),
             // A reference's twin as an expression, and a sheet whose name needs
             // quotes, its twin quoted as Excel quotes it.

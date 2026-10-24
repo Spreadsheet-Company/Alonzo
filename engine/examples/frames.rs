@@ -1116,7 +1116,7 @@ impl ActRows {
 /// A cell's computed number, NaN for a value that is no number.
 fn sp_number(c: &Cartridge, sheet: usize, row: u32, col: u32) -> f64 {
     match c.machine().computed((sheet, row, col)) {
-        Some(Computed::Value(Value::Number(n))) => *n,
+        Some(Computed::Value(Value::Number(n))) => n,
         Some(Computed::Value(Value::Empty)) | None => 0.0,
         _ => f64::NAN,
     }
@@ -1906,7 +1906,7 @@ fn nt_hold(c: &Cartridge, laid: &naught::Laid, switches: &[u8], at: &str) -> Res
         .ok_or_else(|| format!("{at}: no Bench"))?;
     for (k, &(r, col)) in laid.cells.iter().enumerate() {
         let got = match c.machine().computed((si, r, col)) {
-            Some(Computed::Value(Value::Number(x))) => *x,
+            Some(Computed::Value(Value::Number(x))) => x,
             _ => f64::NAN,
         };
         if got != f64::from(gates[k]) {

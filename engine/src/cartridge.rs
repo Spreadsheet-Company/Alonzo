@@ -46,11 +46,11 @@ use std::sync::OnceLock;
 
 use vla_lang::calc::{self, graph::is_formula, library, Env};
 use vla_lang::form::Form;
-use vla_lang::machine::{read_rows, Draft, LineRefusal, Machine, Step, Viewed};
+use vla_lang::machine::{read_rows, Draft, Drafted, LineRefusal, Machine, Step, Viewed};
 use vla_lang::messages::{self, Catalogue, Refusal};
 use vla_lang::printer::write_datum;
 use vla_lang::reader::read_forms;
-use vla_lang::sheet::{number_text, parse_a1_range, A1Range, Cell, Content, MAX_ROW};
+use vla_lang::sheet::{number_text, parse_a1_range, A1Range, Content, MAX_ROW};
 
 /// The engine's half of the catalog, embedded at build time: no file is
 /// read when the module runs.
@@ -677,13 +677,13 @@ fn address(row: u32, col: u32) -> String {
 }
 
 /// What a cell holds, as a refusal names it.
-fn held(cell: Option<&Cell>) -> String {
-    match cell.map(|c| &c.content) {
+fn held(cell: Option<Drafted<'_>>) -> String {
+    match cell.map(|c| c.content()) {
         None => "nothing".to_string(),
-        Some(Content::Number(n)) => number_text(*n).unwrap_or_else(|| n.to_string()),
-        Some(Content::Text(t)) => quoted(t),
+        Some(Content::Number(n)) => number_text(n).unwrap_or_else(|| n.to_string()),
+        Some(Content::Text(t)) => quoted(&t),
         Some(Content::Bool(b)) => b.to_string(),
-        Some(Content::Error(e)) => e.clone(),
+        Some(Content::Error(e)) => e,
         Some(_) => "a formula".to_string(),
     }
 }
@@ -701,15 +701,14 @@ const VOLATILE: [&str; 4] = ["NOW", "TODAY", "RAND", "RANDBETWEEN"];
 /// cells, the Palette in plane mode, the Commands sheet's names from version
 /// 5, and the volatile functions anywhere.
 fn check_devices(draft: &Draft, m: &Manifest, camera: bool) -> Result<(), LineRefusal> {
-    let book = &draft.workbook;
-    let line =
-        |si: usize, row: u32, col: u32| draft.lines.get(&(si, row, col)).copied().unwrap_or(0);
-    for (si, sheet) in book.sheets.iter().enumerate() {
-        let Some(device) = Device::of_spec(&sheet.name, m.spec) else {
+    let line = |si: usize, row: u32, col: u32| draft.line(si, row, col).unwrap_or(0);
+    for si in 0..draft.sheets() {
+        let name = draft.sheet_name(si).unwrap_or_default();
+        let Some(device) = Device::of_spec(name, m.spec) else {
             continue;
         };
-        for (&(row, col), cell) in &sheet.cells {
-            let target = format!("{}!{}", sheet.name, address(row, col));
+        for ((row, col), cell) in draft.cells(si) {
+            let target = format!("{}!{}", name, address(row, col));
             if device == Device::Screen {
                 if !camera && (row > m.height || col > m.width) {
                     return Err(refused(
@@ -727,20 +726,18 @@ fn check_devices(draft: &Draft, m: &Manifest, camera: bool) -> Result<(), LineRe
                     "cart-device-cell-outside",
                     &[
                         ("target", &target),
-                        ("sheet", &sheet.name),
-                        ("layout", &spell_all(&sheet.name, device.layout(m.spec))),
+                        ("sheet", name),
+                        ("layout", &spell_all(name, device.layout(m.spec))),
                     ],
                 ));
             }
-            if is_formula(&cell.content)
-                && device.host_cells(m.spec).iter().any(|h| intersects(*h, at))
-            {
+            if cell.is_formula() && device.host_cells(m.spec).iter().any(|h| intersects(*h, at)) {
                 return Err(refused(
                     line(si, row, col),
                     "cart-device-cell-formula",
                     &[
                         ("target", &target),
-                        ("cells", &spell_all(&sheet.name, device.host_cells(m.spec))),
+                        ("cells", &spell_all(name, device.host_cells(m.spec))),
                     ],
                 ));
             }
@@ -752,26 +749,21 @@ fn check_devices(draft: &Draft, m: &Manifest, camera: bool) -> Result<(), LineRe
     if Device::Commands.since() <= m.spec {
         check_commands(draft)?;
     }
-    for (si, sheet) in book.sheets.iter().enumerate() {
-        for (&(row, col), cell) in &sheet.cells {
-            let text = match &cell.content {
-                Content::Formula(t) | Content::DynamicFormula(t) => t,
-                Content::SharedMaster { text, .. } => text,
-                _ => continue,
-            };
-            if let Some(f) = calc::calls(text)
-                .into_iter()
-                .find(|f| VOLATILE.contains(&f.as_str()))
-            {
-                return Err(refused(
-                    line(si, row, col),
-                    "cart-formula-volatile",
-                    &[
-                        ("cell", &format!("{}!{}", sheet.name, address(row, col))),
-                        ("function", &f),
-                    ],
-                ));
-            }
+    // each formula once, a fill's at its first cell, by sheet and place
+    for ((si, row, col), text, at) in draft.formulas() {
+        if let Some(f) = calc::calls(text)
+            .into_iter()
+            .find(|f| VOLATILE.contains(&f.as_str()))
+        {
+            let name = draft.sheet_name(si).unwrap_or_default();
+            return Err(refused(
+                at,
+                "cart-formula-volatile",
+                &[
+                    ("cell", &format!("{}!{}", name, address(row, col))),
+                    ("function", &f),
+                ],
+            ));
         }
     }
     Ok(())
@@ -780,8 +772,7 @@ fn check_devices(draft: &Draft, m: &Manifest, camera: bool) -> Result<(), LineRe
 /// The Palette of a plane cartridge: sixteen rows, the index in order in
 /// column A and a color, or a formula, in column B (section 3.2).
 fn check_palette(draft: &Draft) -> Result<(), LineRefusal> {
-    let book = &draft.workbook;
-    let Some(si) = book.find_sheet("Palette") else {
+    let Some(si) = draft.find_sheet("Palette") else {
         return Err(refused(
             0,
             "cart-palette-invalid",
@@ -791,12 +782,11 @@ fn check_palette(draft: &Draft) -> Result<(), LineRefusal> {
             )],
         ));
     };
-    let sheet = &book.sheets[si];
-    let line = |row: u32, col: u32| draft.lines.get(&(si, row, col)).copied().unwrap_or(0);
+    let line = |row: u32, col: u32| draft.line(si, row, col).unwrap_or(0);
     for row in 1..=16u32 {
         let index = row - 1;
-        let a = sheet.cells.get(&(row, 1));
-        if !matches!(a.map(|c| &c.content), Some(Content::Number(n)) if *n == f64::from(index)) {
+        let a = draft.content(si, row, 1);
+        if !matches!(a.map(|c| c.content()), Some(Content::Number(n)) if n == f64::from(index)) {
             let what = format!(
                 "The Palette's A{row} holds {}, where the index {index} belongs",
                 held(a)
@@ -807,10 +797,10 @@ fn check_palette(draft: &Draft) -> Result<(), LineRefusal> {
                 &[("what", &what)],
             ));
         }
-        let b = sheet.cells.get(&(row, 2));
-        let fine = match b.map(|c| &c.content) {
-            Some(Content::Text(t)) => is_color(t),
-            Some(c) => is_formula(c),
+        let b = draft.content(si, row, 2);
+        let fine = match b.map(|c| c.content()) {
+            Some(Content::Text(t)) => is_color(&t),
+            Some(c) => is_formula(&c),
             None => false,
         };
         if !fine {
@@ -835,27 +825,24 @@ fn check_palette(draft: &Draft) -> Result<(), LineRefusal> {
 /// empty text is no command; a formula's name is the host's to judge after each
 /// step, since no value is computed at a load; row 1 holds the headers.
 fn check_commands(draft: &Draft) -> Result<(), LineRefusal> {
-    let book = &draft.workbook;
-    let Some(si) = book.find_sheet("Commands") else {
+    let Some(si) = draft.find_sheet("Commands") else {
         return Ok(());
     };
-    let sheet = &book.sheets[si];
-    let line = |row: u32| draft.lines.get(&(si, row, 1)).copied().unwrap_or(0);
-    let mut seen: Vec<(&str, u32)> = Vec::new();
+    let line = |row: u32| draft.line(si, row, 1).unwrap_or(0);
+    let mut seen: Vec<(String, u32)> = Vec::new();
     // The cells in row-major order, so that the name written twice is the lower.
-    for (&(row, _), cell) in sheet
-        .cells
-        .iter()
-        .filter(|(&(row, col), _)| col == 1 && row >= 2)
+    for ((row, _), cell) in draft
+        .cells(si)
+        .filter(|&((row, col), _)| col == 1 && row >= 2)
     {
-        let what = match &cell.content {
+        let what = match &cell.content() {
             Content::Text(t) if t.is_empty() => continue,
-            Content::Text(t) if name_ok(t) => match seen.iter().find(|(n, _)| *n == t.as_str()) {
+            Content::Text(t) if name_ok(t) => match seen.iter().find(|(n, _)| n == t) {
                 Some((_, first)) => {
                     format!("The Commands sheet's A{row} names {t}, as its A{first} does")
                 }
                 None => {
-                    seen.push((t.as_str(), row));
+                    seen.push((t.clone(), row));
                     continue;
                 }
             },
@@ -905,28 +892,10 @@ pub const INPUT_SHEET_LABEL: &str = "sheet";
 /// decision 3).
 pub const INPUT_COMMAND_LABEL: &str = "command";
 
-/// One cell of the engine's own written into the draft, its style kept when
-/// the rows wrote the cell, and counted when it is new.
-fn put(draft: &mut Draft, si: usize, row: u32, col: u32, content: Content) {
-    let sheet = &mut draft.workbook.sheets[si];
-    let style = sheet.cells.get(&(row, col)).map(|c| c.style);
-    if style.is_none() {
-        draft.cells += 1;
-    }
-    sheet.set(
-        row,
-        col,
-        Cell {
-            content,
-            style: style.unwrap_or(0),
-        },
-    );
-}
-
 /// A cell's value when it is a whole number within a range.
-fn whole_in(cell: Option<&Cell>, low: f64, high: f64) -> Option<f64> {
-    match cell.map(|c| &c.content) {
-        Some(Content::Number(n)) if n.fract() == 0.0 && *n >= low && *n <= high => Some(*n),
+fn whole_in(cell: Option<Drafted<'_>>, low: f64, high: f64) -> Option<f64> {
+    match cell.map(|c| c.content()) {
+        Some(Content::Number(n)) if n.fract() == 0.0 && n >= low && n <= high => Some(n),
         _ => None,
     }
 }
@@ -982,50 +951,40 @@ fn check_clock(
 
 /// The engine's own sheets made in the draft (section 4.2): the Clock's
 /// three cells, the File's two, and the Input sheet when the cartridge holds
-/// none. Answers a save's frame, the whole number above 0 its rows wrote in
+/// none, each cell the draft's own put, its style kept where the rows wrote
+/// the cell and counted where it is new. Answers a save's frame, the whole number above 0 its rows wrote in
 /// `Clock!B1`, or 0.
 fn make_own_sheets(draft: &mut Draft, m: &Manifest, name: &str, size: usize) -> u64 {
-    let clock = draft.workbook.ensure_sheet("Clock");
-    let saved = whole_in(
-        draft.workbook.sheets[clock].cells.get(&(1, 2)),
-        1.0,
-        9_007_199_254_740_991.0,
-    )
-    .unwrap_or(0.0);
-    let kept_seed = whole_in(
-        draft.workbook.sheets[clock].cells.get(&(3, 2)),
-        1.0,
-        f64::from(MAX_SEED),
-    );
-    put(draft, clock, 1, 1, Content::Text("frame".to_string()));
-    put(draft, clock, 1, 2, Content::Number(saved));
-    put(draft, clock, 2, 1, Content::Text("rate".to_string()));
-    put(draft, clock, 2, 2, Content::Number(f64::from(m.rate)));
-    put(draft, clock, 3, 1, Content::Text("seed".to_string()));
+    let clock = draft.ensure_sheet("Clock");
+    let saved = whole_in(draft.content(clock, 1, 2), 1.0, 9_007_199_254_740_991.0).unwrap_or(0.0);
+    let kept_seed = whole_in(draft.content(clock, 3, 2), 1.0, f64::from(MAX_SEED));
+    draft.put(clock, 1, 1, Content::Text("frame".to_string()));
+    draft.put(clock, 1, 2, Content::Number(saved));
+    draft.put(clock, 2, 1, Content::Text("rate".to_string()));
+    draft.put(clock, 2, 2, Content::Number(f64::from(m.rate)));
+    draft.put(clock, 3, 1, Content::Text("seed".to_string()));
     match (m.seed, kept_seed) {
-        (Seed::Number(n), _) => put(draft, clock, 3, 2, Content::Number(f64::from(n))),
+        (Seed::Number(n), _) => draft.put(clock, 3, 2, Content::Number(f64::from(n))),
         // A save of a cartridge whose host chose the seed keeps the choice;
         // otherwise the seed waits for the host.
-        (Seed::Host, Some(n)) => put(draft, clock, 3, 2, Content::Number(n)),
+        (Seed::Host, Some(n)) => draft.put(clock, 3, 2, Content::Number(n)),
         (Seed::Host, None) => {
-            if draft.workbook.sheets[clock].cells.remove(&(3, 2)).is_some() {
-                draft.cells -= 1;
-            }
+            draft.take(clock, 3, 2);
         }
     }
-    let file = draft.workbook.ensure_sheet("File");
+    let file = draft.ensure_sheet("File");
     let shown = if name.is_empty() {
         "the cartridge"
     } else {
         name
     };
-    put(draft, file, 1, 1, Content::Text("name".to_string()));
-    put(draft, file, 1, 2, Content::Text(shown.to_string()));
-    put(draft, file, 2, 1, Content::Text("size".to_string()));
-    put(draft, file, 2, 2, Content::Number(size as f64));
-    put(draft, file, 3, 1, Content::Text("save".to_string()));
-    if draft.workbook.find_sheet("Input").is_none() {
-        let input = draft.workbook.ensure_sheet("Input");
+    draft.put(file, 1, 1, Content::Text("name".to_string()));
+    draft.put(file, 1, 2, Content::Text(shown.to_string()));
+    draft.put(file, 2, 1, Content::Text("size".to_string()));
+    draft.put(file, 2, 2, Content::Number(size as f64));
+    draft.put(file, 3, 1, Content::Text("save".to_string()));
+    if draft.find_sheet("Input").is_none() {
+        let input = draft.ensure_sheet("Input");
         // Version 4's nineteenth row, the sheet shown, and version 5's twentieth,
         // the command that runs, empty until the host's first write names one, as
         // the key's rows are.
@@ -1038,7 +997,7 @@ fn make_own_sheets(draft: &mut Draft, m: &Manifest, name: &str, size: usize) -> 
             .chain(command_row);
         for (i, label) in labels.enumerate() {
             let row = i as u32 + 1;
-            put(draft, input, row, 1, Content::Text(label.to_string()));
+            draft.put(input, row, 1, Content::Text(label.to_string()));
             let last = if row <= 10 { 5 } else { 2 };
             let fill = if row >= 17 {
                 Content::Text(String::new())
@@ -1046,7 +1005,7 @@ fn make_own_sheets(draft: &mut Draft, m: &Manifest, name: &str, size: usize) -> 
                 Content::Number(0.0)
             };
             for col in 2..=last {
-                put(draft, input, row, col, fill.clone());
+                draft.put(input, row, col, fill.clone());
             }
         }
     }
@@ -1142,12 +1101,12 @@ impl Cartridge {
         }
         let manifest = Manifest::read(first)?;
         let mut draft = read_rows(&forms[1..])?;
-        let camera = draft.workbook.find_sheet("Camera").is_some();
+        let camera = draft.find_sheet("Camera").is_some();
         check_devices(&draft, &manifest, camera)?;
         let frame = make_own_sheets(&mut draft, &manifest, name, size);
         // The keyboard's sheets name sheets the rows hold (version 6, SPEC.5).
         for (sheet, at, text) in &manifest.keyed {
-            if draft.workbook.find_sheet(sheet).is_none() {
+            if draft.find_sheet(sheet).is_none() {
                 return Err(refused(
                     *at,
                     "cart-manifest-invalid",
@@ -1163,7 +1122,7 @@ impl Cartridge {
         }
         // A bound names sheets the rows hold (version 6, CART.12's hand test).
         for sheet in &manifest.bound {
-            if draft.workbook.find_sheet(sheet).is_none() {
+            if draft.find_sheet(sheet).is_none() {
                 return Err(refused(
                     manifest.bound_line,
                     "cart-manifest-invalid",
@@ -1309,17 +1268,17 @@ impl Cartridge {
         let Some(si) = self.machine.find_sheet("Input") else {
             return;
         };
-        let cells = &Env::model(&self.machine).sheets[si].cells;
         let rows: Vec<String> = [(13, false), (14, false), (15, false), (20, true)]
             .into_iter()
             .filter_map(|(row, text)| {
                 let rest = if text {
-                    Content::Text(String::new())
+                    calc::Value::Text(String::new())
                 } else {
-                    Content::Number(0.0)
+                    calc::Value::Number(0.0)
                 };
-                let held = &cells.get(&(row, 2))?.content;
-                (*held != rest).then(|| {
+                // the cell as it stands, a value the host wrote; nothing where the sheet holds none
+                let held = Env::read(&self.machine, (si, row, 2)).ok()?;
+                (held != calc::Value::Empty && held != rest).then(|| {
                     format!(
                         "(cell \"Input\" \"B{row}\" {})",
                         if text { "\"\"" } else { "0" }
@@ -4893,7 +4852,7 @@ mod tests {
     fn number_at(c: &Cartridge, sheet: &str, row: u32, col: u32) -> f64 {
         let si = c.machine().find_sheet(sheet).expect("the sheet");
         match c.machine().computed((si, row, col)) {
-            Some(Computed::Value(Value::Number(n))) => *n,
+            Some(Computed::Value(Value::Number(n))) => n,
             Some(Computed::Value(Value::Empty)) | None => 0.0,
             other => panic!("{sheet}!{} holds {other:?}", address(row, col)),
         }
@@ -5438,7 +5397,7 @@ mod tests {
     fn shown_at(c: &Cartridge, sheet: &str, row: u32, col: u32) -> Shown {
         let si = c.machine().find_sheet(sheet).expect("the sheet");
         match c.machine().computed((si, row, col)) {
-            Some(Computed::Value(Value::Number(n))) => Shown::Number(*n),
+            Some(Computed::Value(Value::Number(n))) => Shown::Number(n),
             Some(Computed::Value(Value::Text(t))) => Shown::Text(t.clone()),
             Some(Computed::Value(Value::Empty)) | None => Shown::Number(0.0),
             other => panic!("{sheet}!{} holds {other:?}", address(row, col)),
@@ -5997,7 +5956,7 @@ mod tests {
         for (k, &(r, col)) in laid.cells.iter().enumerate() {
             let cell = nt::a1(r, col, false, false);
             let got = match c.machine().computed((si, r, col)) {
-                Some(Computed::Value(Value::Number(x))) => *x,
+                Some(Computed::Value(Value::Number(x))) => x,
                 other => panic!("{at}: the gate {k} at {cell} holds {other:?}"),
             };
             assert!(
@@ -6186,7 +6145,7 @@ mod tests {
                 let want = kind.apply(a, if kind.arity() == 1 { 0 } else { b });
                 match c.machine().computed((si, r, col)) {
                     Some(Computed::Value(Value::Number(x))) => assert!(
-                        *x == f64::from(want),
+                        x == f64::from(want),
                         "{} of {a} and {b} at {cell} is {x}, the hand {want}",
                         kind.word()
                     ),
@@ -6227,7 +6186,7 @@ mod tests {
                 for (k, &(r, col)) in net.switches.iter().enumerate() {
                     match c.machine().computed((si, r, col)) {
                         Some(Computed::Value(Value::Number(x))) => assert!(
-                            *x == f64::from(switches[k]),
+                            x == f64::from(switches[k]),
                             "{lay:?}, frame {frame}: the switch at {} is {x}, the hand {}",
                             nt::a1(r, col, false, false),
                             switches[k]
@@ -7073,9 +7032,9 @@ mod tests {
     ) -> nt::Val {
         let si = c.machine().find_sheet(sheet).expect("the sheet");
         match c.machine().computed((si, row, col)) {
-            Some(Computed::Value(Value::Number(n))) => nt::Val::Num(*n),
-            Some(Computed::Value(Value::Text(t))) => nt::Val::Text(t.clone()),
-            Some(Computed::Value(Value::Bool(b))) => nt::Val::Bool(*b),
+            Some(Computed::Value(Value::Number(n))) => nt::Val::Num(n),
+            Some(Computed::Value(Value::Text(t))) => nt::Val::Text(t),
+            Some(Computed::Value(Value::Bool(b))) => nt::Val::Bool(b),
             Some(Computed::Value(Value::Error(k))) => nt::Val::Err(match k {
                 vla_lang::calc::ErrorKind::Value => "#VALUE!",
                 vla_lang::calc::ErrorKind::Div0 => "#DIV/0!",

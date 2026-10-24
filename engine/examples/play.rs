@@ -375,7 +375,7 @@ fn sp_act(
 /// A cell's computed number, NaN where it holds no number.
 fn sp_number(c: &Cartridge, sheet: usize, row: u32, col: u32) -> f64 {
     match c.machine().computed((sheet, row, col)) {
-        Some(Computed::Value(Value::Number(n))) => *n,
+        Some(Computed::Value(Value::Number(n))) => n,
         Some(Computed::Value(Value::Empty)) | None => 0.0,
         _ => f64::NAN,
     }

@@ -16,10 +16,15 @@ own contract), shows in the lock and fails here by name.
 THE PIN, the owner's route of 2026-10-09 (docs/REARVIEW.md, ENGINE.1's second
 slice, decision 1): vla-lang by git at a commit of Frazaro's while the
 language's change is unreleased, and the exact registry pin once it is
-released. Since 2026-10-18 it is "=0.10.1" from crates.io, Frazaro's release
-of KERNEL.48, a frame's changed cells counted (its commit f10e532, released
-as 0d87447, tagged v0.10.1 on f123c23), which CART.12's settle reads; before
-it "=0.10.0" (2026-10-17),
+released. Since 2026-10-23 it is "=0.11.0" from crates.io, Frazaro's release
+of KERNEL.8's library (criteria, lookups, texts, dates, aggregates, arrays
+within a formula), KERNEL.49's grid as written and its draft read by methods,
+KERNEL.50's looks, KERNEL.53's ISFORMULA and FORMULATEXT, KERNEL.54 and
+KERNEL.56 (its release commits 406010b and ab82006, tagged v0.11.0 on
+aa3c630); before it "=0.10.1" (2026-10-18), Frazaro's release of KERNEL.48, a
+frame's changed cells counted (its commit f10e532, released as 0d87447,
+tagged v0.10.1 on f123c23), which CART.12's settle reads; before that
+"=0.10.0" (2026-10-17),
 Frazaro's release of KERNEL.43, KERNEL.44, KERNEL.31, KERNEL.47 and VLA.4 (its
 release commit 1cc86c9, tagged v0.10.0, 0.9.5 folded into it); before that "=0.9.4"
 (2026-10-15), the release of KERNEL.42, a window's changes (fb64e3a, released
@@ -34,8 +39,8 @@ and VLA.3 (its release commit 2eb54b7); before that "=0.8.1" (2026-10-10),
 the release that decision expected as 0.9.0, whose source is KERNEL.25's
 (f5dc344) byte for byte, and before that, git at f5dc344 (CART.1's second
 slice), at KERNEL.24's c0686a9 (ENGINE.2's second slice) and at KERNEL.22's
-6cca2e1. The moves from 0.8.1 to 0.9.0, 0.9.1, 0.9.2, 0.9.3, 0.9.4, 0.10.0 and 0.10.1
-took no git rev between them. The pin is either kind, and
+6cca2e1. The moves from 0.8.1 to 0.9.0, 0.9.1, 0.9.2, 0.9.3, 0.9.4, 0.10.0, 0.10.1
+and 0.11.0 took no git rev between them. The pin is either kind, and
 the baseline below says which: a git pin is a rev, never a branch or a tag,
 since a branch moves, resolved in the lock to the full commit with no
 checksum; a registry pin is one exact version, never a range, since a range
@@ -94,7 +99,9 @@ if ($Root -eq '') { $Root = Split-Path -Parent $PSScriptRoot }
 #     raised together. The git pin before this one, for the day one returns:
 #     '{ git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "f5dc344" }',
 #     'git+https://github.com/Spreadsheet-Company/Frazaro?rev=f5dc344#f5dc344aeae5e3efdad03b6a7dbf7b1783e313fe', ''. ---
-# The registry pins before this one, "=0.10.0", checksum
+# The registry pins before this one, "=0.10.1", checksum
+# 568c1fd639328cb87be9aab675cec2ae222e378c7675720fa4c49c241f65492b (2026-10-18),
+# "=0.10.0", checksum
 # 9697b765524b484786331e05d4191e8368622c2e74efb689f7fa28f0888ea750 (2026-10-17),
 # "=0.9.4", checksum
 # c94867ca8e60b046913d60307ce7626f6c6e043217219ac7be158ae2389c97b8 (2026-10-15),
@@ -108,9 +115,9 @@ if ($Root -eq '') { $Root = Split-Path -Parent $PSScriptRoot }
 # 248b3ecf10365f9acbf2da3a481e53642d90d028ef7155b02e582da480d2d68d (2026-10-11),
 # and "=0.8.1", checksum
 # 3c44ebaf0d769b193a2d31ca0e04abe2332dc743ac50d5c9ef5fb2e0318cd202 (2026-10-10).
-$langSpec = '"=0.10.1"'
+$langSpec = '"=0.11.0"'
 $langSource = 'registry+https://github.com/rust-lang/crates.io-index'
-$langChecksum = '568c1fd639328cb87be9aab675cec2ae222e378c7675720fa4c49c241f65492b'
+$langChecksum = 'a5181874dd21808e447213de2482e40572cb5c63f6b385fa92bc12099c3d6256'
 
 function Get-Lines([string]$path) {
     $text = [System.IO.File]::ReadAllText($path)

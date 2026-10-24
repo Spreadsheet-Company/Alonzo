@@ -907,6 +907,60 @@ The block pasted is the third run's, its browser half clean. Its one refusal was
 Found:
 - *The gun's idle frame on the largest rung is the floors' noisiest row.* Six runs and an A/B on one day spread it 25% natively and 41% in the browser, on either module alike. The floors' margin of 10% was set on frames of about 100 ms (`CART.1`). A run of a frame this small refuses itself more often than not. Weighing the margin for idle frames, or more runs of them, is the instrument's question and not this pin's. Named, not minted.
 
+*The pin at `vla-lang` 0.11.0, 2026-10-23, at the owner's word: "Frazaro/vla-lang 0.11.0 is published on GitHub and crates.io. Pin Alonzo to the new version, then suggest next steps to improve CART.9 with 0.11.0's many new features."*
+
+The release is Frazaro's, its release commits `406010b` and `ab82006`, tagged `v0.11.0` on `aa3c630`, whose one change after them mints roadmap items; the crate's `src/` is the tag's.
+- `KERNEL.8`'s library: the criteria and the `SUMIFS` family, the lookups (`INDEX`, `MATCH`, `XLOOKUP` and the rest), the texts, the dates, the aggregates and `SUBTOTAL`, the database functions, `ISERROR` and `IFERROR`, and arrays inside a formula (`SUMPRODUCT`, `FILTER`, `SORT` and the rest; a formula answering many values, a spill, is not computed yet, `KERNEL.55`).
+- `KERNEL.49`: the grid as written. A draft keeps its records and is read through methods, a formula cell holds 13.5 to 18.6 bytes where it held about 400, and the plan is found over each fill's rectangles; a grid whose fills read one another's cells is planned cell by cell, which the notes measure as Sand's frames 8% slower.
+- `KERNEL.50`, a format's looks, the font, the alignment and the borders; `KERNEL.53`, `ISFORMULA` and `FORMULATEXT`; `KERNEL.54` and `KERNEL.56`.
+- By the notes the day-one functions compute as they did. A number equal to fifteen digits now compares equal, and a text holding a digit that is no number reads as not computed where it read `#VALUE!`; no cartridge here meets either, since every committed replay plays to its golden and every hand holds its frames.
+
+What moved:
+- `Cargo.toml`'s pin and its comment, and the lock: the checksum `a5181874…`, still two packages.
+- `check_engine_deps.ps1`'s baseline and its header.
+- `engine/src/cartridge.rs`, over 0.11.0's draft: `check_devices`, `check_palette` and `check_commands` walk a sheet's cells row by row (`Draft::cells`), ask a cell as written (`Draft::content`) and its row's line (`Draft::line`); the volatile functions are looked for once a formula record (`Draft::formulas`), a fill's at its first cell, where the walk met every cell of the fill; the engine's own cells are the draft's put and take; and the release of an act's press reads the Input sheet through the machine's `Env::read`, `Env::model` gone. The machine answers a computed value owned (`Values::computed`), so the tests and the two examples read a number without a dereference.
+- The describe goldens of six cartridges: a cell alone reading another sheet's single cell is planned as a slot where it was a lookup, `(reads slot)` for `(reads lookup)`, 0.11.0's census by its notes. Naught's, Life's, the gun's, the grid card's and the test card's are unchanged byte for byte, and so is every committed replay's golden.
+- `check_frame_floors.ps1`: the seventeenth baseline (below), and every allocation and heap ceiling lowered to 0.11.0's counts: Life's soup 2,525,819 bytes at its high-water mark where it held 30,045,529, Superposition's 10.8 MB where 338.7, naught's bench 3,382,521 laid by fill and 128,662,774 shuffled; Life's and the gun's second frames 23 allocations where 80 and 82, Sand's 427 where 507, Superposition's act 346 where 560 and its cascade 3,947 where 4,174.
+
+The oracle, on the day (*measurement*):
+- `cargo test`: 79 tests of the library and the doc test. `cargo clippy --all-targets` and `cargo fmt --check` are clean.
+- The module: 1,819,745 bytes, 767,660 more than the 1,052,085 it was, 0.11.0's library. It imports nothing and exports the twelve names; the page is 4,925,033 characters.
+- The runner's check mode: every frame equal, every count and heap under its lowered ceiling, the same on every run.
+- `run_checks.ps1`, 13 of 13; `check_engine_deps.ps1 -Control` and `check_frame_floors.ps1 -Control` pass.
+
+*The floors' seventeenth baseline,* three runs of `tools/bench_frames.ps1` by this session, the machine otherwise quiet (13 to 23% load, no build running), both halves opted out of the throttling and on the performance cores. Each run refused rows the others passed: the first native naught-f, 0.5% under its floor; the second wasm gun-x4; the third wasm gun, gun-x4 and sand. Against the sixteenth, the three runs read native naught-f 10% slower and native sand 6%, the cell-by-cell plan of fills that read one another that the notes name, and the browser's sand 6 to 10%; the gun's idle frames in the browser, twenty to thirty microseconds, 6 to 20%, the spread between runs the 2026-10-18 entry found for such rows. The block pasted is the third's, its entry lowering those four floors by hand, each to the lowest of the three runs less 10%, with its reason, and keeping wasm superposition-act at 1,020,000,000 where the run raised it, the page reading that p95 in tenths of a millisecond (the fifteenth's note). The grid as written lifts the board most: Superposition's idle frame 4.4 times its floor natively and 3.8 in the browser.
+
+| row | frame p50 | cells a second | floor |
+|---|---|---|---|
+| native life | 2.0 ms | 30,876,057 | 27,800,000, kept |
+| native life-x4 | 8.7 ms | 29,353,170 | 26,400,000, from 23,200,000 |
+| native life-x16 | 35.0 ms | 29,128,455 | 26,200,000, from 22,200,000 |
+| native gun | 0.0194 ms | 3,245,044,291 | 3,100,000,000, kept |
+| native gun-x4 | 0.0196 ms | 12,966,159,493 | 11,800,000,000, kept |
+| native gun-x16 | 0.0210 ms | 48,672,644,295 | 43,800,000,000, from 40,400,000,000 |
+| native sand | 3.0 ms | 62,322,755 | 59,900,000, kept |
+| native superposition | 0.0010 ms | 795,390,360,486 | 715,000,000,000, from 163,000,000,000 |
+| native superposition-act | 0.2592 ms | 2,148,859,295 | 1,930,000,000, from 1,470,000,000 |
+| native superposition-cascade | 0.1676 ms | 4,767,719,037 | 4,290,000,000, from 3,690,000,000 |
+| native naught-f | 4.9 ms | 10,681,201 | 9,480,000, from 10,600,000, lowered with its reason |
+| native naught-s | 17.9 ms | 2,948,008 | 2,650,000, from 2,290,000 |
+| wasm life | 2.6 ms | 24,216,923 | 23,600,000, kept |
+| wasm life-x4 | 10.3 ms | 24,652,816 | 22,100,000, from 21,500,000 |
+| wasm life-x16 | 43.0 ms | 23,717,302 | 21,300,000, from 20,400,000 |
+| wasm gun | 0.0305 ms | 2,066,510,782 | 1,850,000,000, from 2,330,000,000, lowered with its reason |
+| wasm gun-x4 | 0.0289 ms | 8,784,398,008 | 7,900,000,000, from 9,430,000,000, lowered with its reason |
+| wasm gun-x16 | 0.0273 ms | 37,297,152,000 | 33,500,000,000, from 32,600,000,000 |
+| wasm sand | 4.3 ms | 44,003,488 | 39,600,000, from 44,800,000, lowered with its reason |
+| wasm superposition | 0.0014 ms | 570,522,152,573 | 513,000,000,000, from 135,000,000,000 |
+| wasm superposition-act | 0.5000 ms | 1,331,218,280 | 1,020,000,000, kept |
+| wasm superposition-cascade | 0.2000 ms | 3,387,630,935 | 3,070,000,000, kept |
+| wasm naught-f | 6.2 ms | 8,526,613 | 7,670,000, from 7,430,000 |
+| wasm naught-s | 22.8 ms | 2,318,640 | 2,080,000, from 1,960,000 |
+
+Found:
+- *The fill-laid bench pays for 0.11.0's plan of fills that read one another.* Native naught-f read 10% slower over three runs, 10,681,201 cells a second against the sixteenth's 11,838,275, where the shuffled bench, every gate its own shape, read 16% faster, 2,948,008 against 2,550,403; the regularity premium narrows natively from 4.6 to 3.6 times, and in the browser from 3.8 to 3.7, the language's to weigh with Sand's 8%.
+- *The page carries 0.11.0's whole library.* The module grew 73%, to 1.8 MB, and the page to 4.9 million characters, every function the language computes in it whether a cartridge calls it or not.
+
 ## `ENGINE.2` — the frame path: the plane held to the record of the same window
 
 *Scoped 2026-10-09, at the owner's word, the day `ENGINE.1` closed: the Screen read out of the module's memory as bytes and blitted whole, held equal to the view record of the same window by a test, the record being the oracle (`CHARTER.md` §3), and the window the Camera's (`SPEC.md` §13's two oracles for this item). The scoping finds the path itself already laid, since `ENGINE.1` had to draw something: the host views the plane, copies the bytes out and blits them through the Palette. What is missing is the oracle, a fixture that reaches every arm of the byte's rule, and the cost the second slice measured, which is the language's. So the scoping is mostly a measurement, made before any claim, and its first finding moves the cost to Frazaro.*
