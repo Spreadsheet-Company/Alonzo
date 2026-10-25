@@ -161,6 +161,14 @@ sheets no person writes, are a (spec 6) cartridge's, game and work a grid's
 and read any cartridge's, each naming its sheets as bound names its own, and
 no sheet in work and in game or read, as the engine reads them.
 
+SINCE REPO.8 (2026-10-24): within one run a cartridge's verdict is kept by
+its path and its bytes, a replay's by its path, its bytes and its
+cartridge's, and a golden's by its path and its bytes, each read from those
+files alone; the control tests its tree again for every mutant, every
+folder rule and count as before, and reads again only the files whose bytes
+the mutant changed. The control went from 520 s to 29 to 32 on the owner's
+machine.
+
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network; a
 hardcoded, reviewable baseline that pins how many; exit 0 clean, exit 1 with
 every problem named.
@@ -836,6 +844,16 @@ function Test-Golden([string]$path) {
     return $result
 }
 
+# ---- a file's verdict kept by its bytes (REPO.8) ----
+# A cartridge's verdict reads its file alone, a replay's its file and its cartridge's, a golden's its file alone; so
+# within one run each is kept by the path and the bytes it was read from and answered again while they are the same,
+# and the control, which tests its tree again for every mutant, reads again only the files a mutant changed.
+$script:Kept = @{}
+function Get-ByteDigest([string]$path) {
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { return [System.BitConverter]::ToString($sha.ComputeHash([System.IO.File]::ReadAllBytes($path))) } finally { $sha.Dispose() }
+}
+
 # ---- every cartridge, source and library of a tree, against the baseline ----
 function Test-Tree([string]$root) {
     $problems = New-Object System.Collections.Generic.List[string]
@@ -876,7 +894,9 @@ function Test-Tree([string]$root) {
     }
     foreach ($c in $cartridges) {
         $rel = $c.Rel
-        $t = Test-Cartridge $c.Path
+        $key = 'cartridge|' + $c.Path + '|' + (Get-ByteDigest $c.Path)
+        if (-not $script:Kept.ContainsKey($key)) { $script:Kept[$key] = Test-Cartridge $c.Path }
+        $t = $script:Kept[$key]
         foreach ($p in $t.Problems) { $problems.Add("${rel}: $p") }
         # A cartridge the pass wrote names a source that is there.
         $second = Get-SecondLine $c.Path
@@ -898,13 +918,17 @@ function Test-Tree([string]$root) {
     foreach ($rp in $replays) {
         $cart = Join-Path (Split-Path -Parent $rp.Path) ($rp.Name + '.vla')
         if (-not (Test-Path -LiteralPath $cart)) { $problems.Add("$($rp.Rel): has no cartridge beside it, $($rp.Name).vla, whose replay it would be"); continue }
-        $t = Test-Replay $rp.Path $rp.Name $cart
+        $key = 'replay|' + $rp.Path + '|' + (Get-ByteDigest $rp.Path) + '|' + (Get-ByteDigest $cart)
+        if (-not $script:Kept.ContainsKey($key)) { $script:Kept[$key] = Test-Replay $rp.Path $rp.Name $cart }
+        $t = $script:Kept[$key]
         foreach ($p in $t.Problems) { $problems.Add("$($rp.Rel): $p") }
         $lines.Add(("  {0}: {1} frame(s) written of {2}, {3} row(s), the seed {4}{5}" -f $rp.Rel, $t.Frames, $t.Last, $t.Rows, $t.Seed, $(if ($t.Problems.Count) { "  FAIL ($($t.Problems.Count))" } else { ", the header naming $($rp.Name).vla by its digest; every rule of section 7.6 holds" })))
     }
     foreach ($g in $goldens) {
         if (-not (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $g.Path) ($g.Name + '.replay.vla')))) { $problems.Add("$($g.Rel): has no replay beside it, $($g.Name).replay.vla, whose end it would hold"); continue }
-        $t = Test-Golden $g.Path
+        $key = 'golden|' + $g.Path + '|' + (Get-ByteDigest $g.Path)
+        if (-not $script:Kept.ContainsKey($key)) { $script:Kept[$key] = Test-Golden $g.Path }
+        $t = $script:Kept[$key]
         foreach ($p in $t.Problems) { $problems.Add("$($g.Rel): $p") }
         $lines.Add(("  {0}: the record of {1}'s window {2}, {3} row(s){4}" -f $g.Rel, $t.Sheet, $t.Window, $t.Rows, $(if ($t.Problems.Count) { "  FAIL ($($t.Problems.Count))" } else { ', its replay beside it' })))
     }

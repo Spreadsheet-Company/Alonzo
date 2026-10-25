@@ -24,7 +24,7 @@ Frazaro's standing decisions that cross the road are cited by their own numbers 
 | `ENGINE` | the loop, the devices, the renderer, the frame path, the floors, the accelerators | `ENGINE.30` |
 | `KIT` | the kit: the library a cartridge's source includes, its verbs, pictures and modules, template macros neither the pass nor the engine knows by name (since 2026-10-11) | `KIT.6` |
 | `CART` | the cartridges: the benchmark, the games, each a fixture here or a repository of its own | `CART.15` |
-| `REPO` | the repository itself: license, governance, checks, CI, the contributor's path, the counts, the releases | `REPO.7` |
+| `REPO` | the repository itself: license, governance, checks, CI, the contributor's path, the counts, the releases | `REPO.10` |
 
 ## The order, and why
 

@@ -4944,6 +4944,21 @@
     for (var n in forms) if (Object.prototype.hasOwnProperty.call(forms, n)) out[n] = forms[n].map(spellOf);
     return out;
   }
+  // A replay's text cut at frame n (REPO.8's upto): its header and its frames to n, and an empty frame n when it holds
+  // none, so that it plays to frame n and no further; null when it ends at or before n.
+  function replayUpTo(text, n) {
+    var lines = String(text).replace(/\r\n/g, '\n').split('\n'), out = [], last = 0, cut = false;
+    for (var i = 0; i < lines.length; i++) {
+      var m = /^\(frame (\d+)/.exec(lines[i]);
+      if (m && +m[1] > n) { cut = true; break; }
+      if (m) last = +m[1];
+      out.push(lines[i]);
+    }
+    if (!cut) return null;
+    while (out.length && out[out.length - 1] === '') out.pop();
+    if (last < n) out.push('(frame ' + n + ')');
+    return out.join('\n') + '\n';
+  }
   // The same rows as the reader reads them, by frame.
   function replayForms(text) {
     var out = {}, forms = VP.readForms(text);
@@ -5135,8 +5150,16 @@
     // a hand held to its golden and its recording alone, and the case says so
     k.replays = 0; k.alone = 0;
     if (OWN) k.cardSame = 0;
+    // ?loop=1&replays=a,b (REPO.8): only the committed replays of the cartridges named play, none for an empty list, so
+    // that a control's mutant page judged by one game's hand plays that game's alone; the real page plays every one
+    var onlyText = /[?&]replays=([^&]*)/.exec(QS), only = onlyText ? decodeURIComponent(onlyText[1]).split(',').filter(function (n) { return n !== ''; }) : null;
+    // ?loop=1&upto=n (REPO.8): each committed replay played to frame n and no further, so that a control's mutant judged
+    // at the frame its game's hand first differs at plays no frame after it; a replay cut so is held to its hand to
+    // that frame, and its end, its golden and its recording, which are the whole replay's, are not held
+    var uptoText = /[?&]upto=(\d+)/.exec(QS), upto = uptoText ? +uptoText[1] : 0;
     for (var cn in CARTRIDGES) {
       if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn) || !CARTRIDGES[cn].replayPath) continue;
+      if (only && only.indexOf(cn) < 0) continue;
       var cart = CARTRIDGES[cn], card = OWN && cn === 'inputcard', sound = OWN && cn === 'soundcard', rBody = afterComments(cart.replay), gBody = afterComments(cart.golden);
       var ex = HOST.instantiateSync(bytes), DS = new Driver({ exports: ex });
       var M = new HOST({ drive: 'manual', budget: 0, now: frozen }), firstOff = 0, soundOff = '', handOff = '';
@@ -5171,7 +5194,8 @@
           k[tag + 'Frames']++;
           if (held.cells) k[tag + 'Cells'] = (k[tag + 'Cells'] || 0) + held.cells;
         });
-        var pm = M.play(cart.replay, true);
+        var cutText = upto ? replayUpTo(rBody, upto) : null;
+        var pm = M.play(cutText || cart.replay, true);
         if (!pm.ok) P.push('the committed replay of ' + cart.file + ' played on a fresh host stopped at frame ' + pm.frames + ': ' + (pm.sentence || M.sentences().slice(-1)[0].text));
         if (firstOff) P.push('frame ' + firstOff + ' of the committed replay, played on a fresh host, draws a window that is not the live run\'s');
         if (soundOff) P.push('the sound card\'s committed replay, played on a fresh host, is not the card by hand at ' + soundOff);
@@ -5184,6 +5208,7 @@
         // the sheets the replay showed as its person showed them, its nineteenth rows (CART.9's hand test): naughtShown,
         // the Bench at the first switch's act
         if (hand) k[tag + 'Shown'] = M.counters().playedShown;
+        if (cutText) { notes.push(cn + '\'s committed replay was played to frame ' + upto + ' alone (upto): its end, its golden and its recording are not held'); continue; }
         var wm = /^\(window "([^"]+)" "([^"]+)"\)$/m.exec(gBody);
         if (!wm) P.push('the golden of ' + cart.file + ' has no (window ...) row naming its sheet');
         else {
@@ -7309,7 +7334,8 @@
     // it is judged by and not every case (2026-10-15, the controls' fix 5); the header names them, and a name that is no
     // case's fails the loop rather than running nothing
     var askedText = (/[?&]cases=([^&]*)/.exec(QS) || [])[1], asked = askedText ? decodeURIComponent(askedText).split(',').filter(function (n) { return n !== ''; }) : null;
-    out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' snap=' + R.snapMs + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + (asked ? 'asked=' + asked.join(',') + '; ' : '') + navigator.userAgent);
+    var replaysAsked = (/[?&]replays=([^&]*)/.exec(QS) || [])[1], uptoAsked = (/[?&]upto=(\d+)/.exec(QS) || [])[1];
+    out.push('loop: host ' + HOST.version + ', rules cap=' + R.capMs + ' first=' + R.firstBudget + ' min=' + R.minBudget + ' snap=' + R.snapMs + ' slice=' + R.sliceFraction + '; fake ' + FAKE.version + ' grow=' + FAKE.RULES.growEvery + '; dpr=' + dpr + '; ' + (asked ? 'asked=' + asked.join(',') + '; ' : '') + (replaysAsked !== undefined ? 'replays=' + decodeURIComponent(replaysAsked) + '; ' : '') + (uptoAsked !== undefined ? 'upto=' + uptoAsked + '; ' : '') + navigator.userAgent);
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],

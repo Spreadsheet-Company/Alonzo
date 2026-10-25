@@ -678,7 +678,14 @@ page shows opened plainly and what Pages deploys.
   those cases alone, in the list's order, and names them in the header; the
   check's control runs each mutant page so, with `abi` and the cases its
   reason is judged by, the `replay` case after `input`, whose live run it
-  copies.
+  copies. `&replays=sand,kairos` plays only those cartridges' committed
+  replays in the `replay` case, and `&replays=` none of them, the double's
+  run, the live run's recording and the digest's vectors kept whole; the
+  header names them (`REPO.8`), and a control's mutant judged by one game's
+  replay plays that game's alone. `&upto=34` plays each committed replay to
+  its frame 34 and no further, held to its hand to there, its end, its
+  golden and its recording not held and a note saying so; a hand's mutant
+  whose verdict names its frame plays to that frame.
 - `index.html?blit=1` is the blit's instrument, the engine's second number:
   a 320 by 200 plane drawn through the host's whole frame over the double
   120 times at the scale that fits the screen and 120 at a scale of 1, and,

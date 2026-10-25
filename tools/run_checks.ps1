@@ -32,6 +32,14 @@ arguments, today the thirteen controls, each proving its check on mutants, and
 says so separately: pretending a control is interchangeable with a plain
 pass/fail scan would hide what each one asserts.
 
+THE PHASES (REPO.8, 2026-10-24). The checks run side by side, each in its own
+process, and then the loop check alone, since its sound case renders in real
+time and a starved processor fails it; with -WithExtras the controls the same
+way after them, the loop control last and alone. A check's verdict and output
+are what they were, its output its standard output and then its standard
+error, and its line prints in the list's order once it and every check before
+it have ended.
+
 Usage:
   powershell -File tools\run_checks.ps1
   powershell -File tools\run_checks.ps1 -Filter spdx         # only matching names
@@ -212,6 +220,11 @@ $selfName = Split-Path -Leaf $PSCommandPath
 # and seventy-six mutant pages, FI to FV, Enter and Tab the hand test's; and
 # check_cartridge.ps1 reads version 6's game, work and read, its control
 # fifty-three mutants.
+# 2026-10-24, REPO.8: 13 still, no check added - the checks run side by side
+# and the loop check alone after them, the controls the same way; the loop
+# check's sound case first and alone, its other runs side by side, and its
+# control in two passes over a pool of browsers; the cartridge control keeps
+# each file's verdict by its bytes.
 $expectedAtLeast = 13
 if ($Floor -gt 0) { $expectedAtLeast = $Floor }
 
@@ -226,7 +239,7 @@ $extras = @(
     @{ Script = 'check_render_oracle.ps1'; Args = @('-Control'); What = 'KERNEL.5, ENGINE.14, ENGINE.26 and ENGINE.28 render oracle: the real page passes, seven mutant pages fail under the browser (SKIPPED without one)' },
     @{ Script = 'check_render_floors.ps1'; Args = @('-Control'); What = 'KERNEL.5 render floors: a clean table passes, seven mutants fail' },
     @{ Script = 'check_cartridge.ps1';     Args = @('-Control'); What = 'ENGINE.1, SPEC.3, ENGINE.3, ENGINE.4, CART.2, ENGINE.8, CART.4, ENGINE.18, ENGINE.25, CART.12, CART.14, CART.9 and SPEC.5 cartridges: a clean scratch copy of eight cartridges, Life written to (spec 3), to (spec 4) with its Camera''s third row, to (spec 5) with its Commands sheet, to (spec 4) with a sheet named Commands of its own, to (spec 6) at rate 0, settling, to (spec 6) with its Screen bound and to (spec 6) with its Screen read, and the grid card to (spec 6) with its sheets by mode, pass, fifty-three mutants fail, version 4''s rows a (spec 4) cartridge''s alone, version 5''s sheet and row a (spec 5) cartridge''s and version 6''s settle a (spec 6) cartridge''s at rate 0 and its bound and its keyboard''s sheets a (spec 6) cartridge''s naming sheets it holds, game and work a grid''s, the cartridge, its source, its replay and golden, and the library told apart, the Audio sheet''s values judged, seven replays and seven goldens' },
-    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1, ENGINE.2, SPEC.3, ENGINE.3, ENGINE.4, CART.2, ENGINE.8, CART.4, ENGINE.14, ENGINE.15, ENGINE.16, ENGINE.17, ENGINE.18, ENGINE.19, ENGINE.20, ENGINE.7, ENGINE.23, ENGINE.24, ENGINE.25, CART.12, ENGINE.26, CART.14, CART.9, SPEC.5 and ENGINE.28 host loop: the real page and a game''s page pass, one hundred and eighty-five mutant pages fail under the browser, ninety-four of them only over the engine''s module, and the time constant''s only by the sound case''s render (SKIPPED without a browser)' },
+    @{ Script = 'check_host_loop.ps1';     Args = @('-Control'); What = 'ENGINE.1, ENGINE.2, SPEC.3, ENGINE.3, ENGINE.4, CART.2, ENGINE.8, CART.4, ENGINE.14, ENGINE.15, ENGINE.16, ENGINE.17, ENGINE.18, ENGINE.19, ENGINE.20, ENGINE.7, ENGINE.23, ENGINE.24, ENGINE.25, CART.12, ENGINE.26, CART.14, CART.9, SPEC.5 and ENGINE.28 host loop: the real page and a game''s page pass, one hundred and ninety mutant pages fail under the browser, ninety-eight of them only over the engine''s module, and the time constant''s only by the sound case''s render (SKIPPED without a browser)' },
     @{ Script = 'check_blit_floors.ps1';   Args = @('-Control'); What = 'ENGINE.1, ENGINE.2, ENGINE.8, ENGINE.17 and CART.12 blit floors: a clean table of six cases passes, twenty mutants fail, four of them the act case''s' },
     @{ Script = 'check_host_exports.ps1';  Args = @('-Control'); What = 'ENGINE.1 and SPEC.3 export reader and judgment: nine modules built in memory, a non-module' },
     @{ Script = 'check_engine_deps.ps1';   Args = @('-Control'); What = 'ENGINE.1 dependencies: a scratch copy of the three files passes, its mutants fail (seven for a git pin, eight for a registry pin); of five baselines, a git one and a registry one pass and three fail' },
@@ -236,30 +249,75 @@ $extras = @(
 
 # --- The shell each check runs under. ---
 $shell = if (Get-Command powershell.exe -ErrorAction SilentlyContinue) { 'powershell.exe' } else { 'pwsh' }
+$onWindows = $env:OS -eq 'Windows_NT'
 
-function Invoke-OneScript {
-    param([string]$Path, [string[]]$Arguments)
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    # $ErrorActionPreference is 'Stop' for this script's own mistakes, but a
-    # CHECK writing to stderr is this script's ordinary business, not an
-    # error in it. In Windows PowerShell 5.1, `2>&1` on a native executable
-    # wraps each stderr line in a NativeCommandError, which under 'Stop'
-    # TERMINATES the runner - so a check that failed loudly would kill the
-    # run instead of being reported as FAIL, and the total would never
-    # print. Found in Frazaro by trying to make its runner go red.
-    $prev = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    try {
-        $out = & $shell -NoProfile -ExecutionPolicy Bypass -File $Path @Arguments 2>&1
-        $code = $LASTEXITCODE
-    } finally {
-        $ErrorActionPreference = $prev
+# --- The phases (REPO.8). ---
+# The checks whose browser renders sound in real time, run after the rest and
+# one at a time: a starved processor fails the sound case.
+$alone = @('check_host_loop.ps1')
+$runDir = Join-Path ([System.IO.Path]::GetTempPath()) ('alonzo_checks_' + [System.IO.Path]::GetRandomFileName())
+
+# One check started in its own process, its standard output and standard
+# error each written to a file of the run's folder. A check writing to stderr
+# is this script's ordinary business, not an error in it: the files take it
+# whole, where `2>&1` on a native executable in Windows PowerShell 5.1 wraps
+# each line in a NativeCommandError that under 'Stop' terminates the runner
+# (found in Frazaro by trying to make its runner go red).
+function Start-OneScript([string]$Path, [string[]]$Arguments) {
+    $base = Join-Path $runDir ([System.IO.Path]::GetRandomFileName())
+    $argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + $Path + '"')) + @($Arguments | ForEach-Object { if ($_ -match '\s') { '"' + $_ + '"' } else { $_ } })
+    $start = @{ FilePath = $shell; ArgumentList = $argList; PassThru = $true; RedirectStandardOutput = ($base + '.out'); RedirectStandardError = ($base + '.err') }
+    if ($onWindows) { $start['NoNewWindow'] = $true }
+    $watch = [System.Diagnostics.Stopwatch]::StartNew()
+    $proc = Start-Process @start
+    if ($onWindows) { $null = $proc.Handle }   # held, so that Windows PowerShell reads its exit code after it exits
+    return @{ Proc = $proc; Base = $base; Watch = $watch }
+}
+# A started check's answer: its exit code, its output's lines read as the
+# console would have decoded them, and its seconds.
+function Complete-OneScript($run) {
+    $run.Proc.WaitForExit()
+    $seconds = $run.Watch.Elapsed.TotalSeconds
+    $lines = New-Object System.Collections.Generic.List[string]
+    foreach ($f in @(($run.Base + '.out'), ($run.Base + '.err'))) {
+        if (-not (Test-Path -LiteralPath $f)) { continue }
+        $text = ([System.IO.File]::ReadAllText($f, [Console]::OutputEncoding) -replace "`r`n", "`n").TrimEnd("`n")
+        if ($text -ne '') { foreach ($l in ($text -split "`n")) { $lines.Add($l) } }
     }
-    $sw.Stop()
-    return [pscustomobject]@{
-        Code    = $code
-        Output  = $out
-        Seconds = $sw.Elapsed.TotalSeconds
+    return [pscustomobject]@{ Code = $run.Proc.ExitCode; Output = $lines.ToArray(); Seconds = $seconds; Missing = $false }
+}
+# A list's checks, each @{ Name; Path; Args; Alone; Missing }: side by side,
+# at most one a logical processor, but those alone, which run after the rest,
+# one at a time; each answered into $script:ListResults by its place and
+# printed by $Print in the list's order once it and every one before it have
+# ended.
+$sideBySide = [Math]::Max(1, [Environment]::ProcessorCount)
+function Invoke-List($items, [scriptblock]$Print) {
+    $script:ListResults = New-Object 'object[]' $items.Count
+    $running = New-Object System.Collections.Generic.List[object]
+    $waiting = New-Object System.Collections.Generic.Queue[int]
+    $last = New-Object System.Collections.Generic.Queue[int]
+    for ($i = 0; $i -lt $items.Count; $i++) {
+        if ($items[$i].Missing) { $script:ListResults[$i] = [pscustomobject]@{ Code = 1; Output = @("not found at $($items[$i].Path)"); Seconds = 0; Missing = $true } }
+        elseif ($items[$i].Alone) { $last.Enqueue($i) }
+        else { $waiting.Enqueue($i) }
+    }
+    $next = 0
+    while ($true) {
+        while ($waiting.Count -gt 0 -and $running.Count -lt $sideBySide) {
+            $i = $waiting.Dequeue()
+            $running.Add(@{ Index = $i; Run = (Start-OneScript $items[$i].Path $items[$i].Args) })
+        }
+        for ($k = $running.Count - 1; $k -ge 0; $k--) {
+            if (-not $running[$k].Run.Proc.HasExited) { continue }
+            $script:ListResults[$running[$k].Index] = Complete-OneScript $running[$k].Run
+            $running.RemoveAt($k)
+        }
+        while ($next -lt $items.Count -and $null -ne $script:ListResults[$next]) { & $Print $items[$next] $script:ListResults[$next]; $next++ }
+        if ($running.Count -gt 0 -or $waiting.Count -gt 0) { Start-Sleep -Milliseconds 50; continue }
+        if ($last.Count -eq 0) { break }
+        $i = $last.Dequeue()
+        $script:ListResults[$i] = Complete-OneScript (Start-OneScript $items[$i].Path $items[$i].Args)
     }
 }
 
@@ -274,42 +332,46 @@ if ($Filter -ne '') {
 Write-Output "=== ALL STATIC CHECKS (each under $shell) ==="
 Write-Output ''
 
+New-Item -ItemType Directory -Path $runDir | Out-Null
 $results = New-Object System.Collections.Generic.List[object]
-foreach ($s in $scripts) {
-    $r = Invoke-OneScript -Path $s.FullName -Arguments @()
-    $results.Add([pscustomobject]@{
-        Name = $s.Name; Code = $r.Code; Output = $r.Output; Seconds = $r.Seconds
-    })
-    $tag = if ($r.Code -eq 0) { 'ok  ' } else { 'FAIL' }
-    '  {0}  {1,-44} {2,6:N1}s' -f $tag, $s.Name, $r.Seconds | Write-Output
+$extraResults = New-Object System.Collections.Generic.List[object]
+try {
+    $items = @($scripts | ForEach-Object { @{ Name = $_.Name; Path = $_.FullName; Args = @(); Alone = ($alone -contains $_.Name); Missing = $false } })
+    Invoke-List $items {
+        param($item, $r)
+        $tag = if ($r.Code -eq 0) { 'ok  ' } else { 'FAIL' }
+        '  {0}  {1,-44} {2,6:N1}s' -f $tag, $item.Name, $r.Seconds | Write-Output
+    }
+    for ($i = 0; $i -lt $items.Count; $i++) {
+        $r = $script:ListResults[$i]
+        $results.Add([pscustomobject]@{ Name = $items[$i].Name; Code = $r.Code; Output = $r.Output; Seconds = $r.Seconds })
+    }
+
+    if ($WithExtras) {
+        Write-Output ''
+        Write-Output '=== THE OTHER VERIFIERS ==='
+        Write-Output ''
+        $extraItems = @($extras | ForEach-Object {
+            $path = Join-Path $toolsDir $_.Script
+            @{ Name = ($_.Script + ' ' + ($_.Args -join ' ')).Trim(); Path = $path; Args = $_.Args; What = $_.What; Alone = ($alone -contains $_.Script); Missing = -not (Test-Path -LiteralPath $path) }
+        })
+        Invoke-List $extraItems {
+            param($item, $r)
+            if ($r.Missing) { '  {0}  {1,-44} {2}' -f 'FAIL', $item.Name, 'NOT FOUND' | Write-Output; return }
+            $tag = if ($r.Code -eq 0) { 'ok  ' } else { 'FAIL' }
+            '  {0}  {1,-44} {2,6:N1}s   {3}' -f $tag, $item.Name, $r.Seconds, $item.What | Write-Output
+        }
+        for ($i = 0; $i -lt $extraItems.Count; $i++) {
+            $r = $script:ListResults[$i]
+            $extraResults.Add([pscustomobject]@{ Name = $extraItems[$i].Name; Code = $r.Code; Output = $r.Output; Seconds = $r.Seconds })
+        }
+    }
+} finally {
+    Remove-Item -Recurse -Force $runDir -ErrorAction SilentlyContinue
 }
 
 $passed = @($results | Where-Object { $_.Code -eq 0 })
 $failed = @($results | Where-Object { $_.Code -ne 0 })
-
-$extraResults = New-Object System.Collections.Generic.List[object]
-if ($WithExtras) {
-    Write-Output ''
-    Write-Output '=== THE OTHER VERIFIERS ==='
-    Write-Output ''
-    foreach ($e in $extras) {
-        $path = Join-Path $toolsDir $e.Script
-        if (-not (Test-Path -LiteralPath $path)) {
-            $extraResults.Add([pscustomobject]@{
-                Name = $e.Script; Code = 1; Output = @("not found at $path"); Seconds = 0
-            })
-            '  {0}  {1,-44} {2}' -f 'FAIL', ($e.Script + ' ' + ($e.Args -join ' ')), 'NOT FOUND' | Write-Output
-            continue
-        }
-        $r = Invoke-OneScript -Path $path -Arguments $e.Args
-        $extraResults.Add([pscustomobject]@{
-            Name = ($e.Script + ' ' + ($e.Args -join ' ')).Trim()
-            Code = $r.Code; Output = $r.Output; Seconds = $r.Seconds
-        })
-        $tag = if ($r.Code -eq 0) { 'ok  ' } else { 'FAIL' }
-        '  {0}  {1,-44} {2,6:N1}s   {3}' -f $tag, ($e.Script + ' ' + ($e.Args -join ' ')).Trim(), $r.Seconds, $e.What | Write-Output
-    }
-}
 
 $extraFailed = @($extraResults | Where-Object { $_.Code -ne 0 })
 

@@ -554,6 +554,33 @@ and the game's page run every case. Every case run alone prints the counts
 it prints among the rest (measured that day), and the control went from 12
 minutes to 3.6 on the owner's machine.
 
+Since REPO.8 (2026-10-24) the browsers run side by side, -Jobs at a time:
+by default half the logical processors, a browser a 0.6 GB of the memory
+free, and at most eight; -Jobs 1 runs them one at a time. A run ends at its
+whole dump, its one </html> written and grown no more, and the browser is
+ended then: on Windows a browser's shutdown beside another instance waited
+on a system service's reply up to 120 s a time, its page long done. The
+check runs the sound case first and alone at the first ratio, since it
+renders in real time and a starved processor fails it; then side by side
+the first ratio's input and replay cases, its other cases, the second
+ratio's every case but the replay and sound cases, which draw nothing and
+map no pointer, and the game's page. The control runs its own code twice: a
+plan pass that builds every mutant page in the background, -Jobs at a time,
+and notes every run, but each run of the sound case, which it makes at
+once, every build ended and nothing beside it; a pool that makes the runs
+side by side, the longest first; and a run pass that judges every mutant as
+before, each run answered from the pool, a run the plan missed made in its
+turn and counted on the control's pool line. The real page's module, which
+decides the mutants that apply, is read at once by abi alone, and the real
+page is judged by the check's own runs at the first ratio. A mutant judged
+by a game's replay plays that game's alone
+(?loop=1&cases=...&replays=<names>, replay:<names> in a mutant's cases): P,
+R and Y none, Q and BK the input card's, each hand's mutant its own game's;
+and a hand's mutant whose verdict names its frame plays it to that frame
+and no further (&upto=<frame>, replay:<names>:<frame>): EL at 33, ET at 15,
+EZ at 743 and Naught's FX to GZ each at its own, where the whole replay ran
+on past a hand gone wrong, GX alone four minutes beside the pool.
+
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A headless run's clock is
 virtual, so nothing here is a timing.
@@ -562,13 +589,29 @@ Usage:  powershell -File tools\check_host_loop.ps1
         powershell -File tools\check_host_loop.ps1 -Browser "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
         powershell -File tools\check_host_loop.ps1 -Page C:\somewhere\index.html
         powershell -File tools\check_host_loop.ps1 -Control
+        powershell -File tools\check_host_loop.ps1 -Control -Jobs 1
 #>
 param(
     [string]$Page = '',
     [string]$Browser = '',
-    [switch]$Control
+    [switch]$Control,
+    # REPO.8: the browsers side by side, by default half the logical processors, a browser a 0.6 GB of the memory free, and
+    # at most eight; 1 is one at a time
+    [int]$Jobs = 0
 )
 $ErrorActionPreference = 'Stop'
+# The memory free in GB, or $null where it cannot be read: a run of the replay case holds up to half a GB, and the owner's
+# machine had 3 to 6 GB of its 32 free beside its other work (REPO.8).
+function Get-FreeGB {
+    try { if ($env:OS -eq 'Windows_NT') { return [double](Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1MB } } catch { }
+    try { $m = [regex]::Match([System.IO.File]::ReadAllText('/proc/meminfo'), 'MemAvailable:\s+(\d+) kB'); if ($m.Success) { return [double]$m.Groups[1].Value / 1MB } } catch { }
+    return $null
+}
+if ($Jobs -le 0) {
+    $Jobs = [Math]::Max(1, [Math]::Min(8, [int][Math]::Floor([Environment]::ProcessorCount / 2)))
+    $freeGB = Get-FreeGB
+    if ($null -ne $freeGB) { $Jobs = [Math]::Max(1, [Math]::Min($Jobs, [int][Math]::Floor($freeGB / 0.6))) }
+}
 $repoRoot = Split-Path -Parent $PSScriptRoot
 if ($Page -eq '') { $Page = Join-Path $repoRoot 'web/index.html' }
 elseif (-not [System.IO.Path]::IsPathRooted($Page)) { $Page = Join-Path $repoRoot $Page }
@@ -1055,41 +1098,216 @@ function Find-Browser([string]$named) {
 }
 function Get-PageUrl([string]$path, [string]$cases = '') {
     $slashed = [System.IO.Path]::GetFullPath($path) -replace '\\', '/'
-    $query = '?loop=1' + $(if ($cases -ne '') { '&cases=' + $cases } else { '' })
+    # a replay case's filter (REPO.8): replay:sand plays sand's committed replay alone, replay: none of them, and
+    # replay:naught:34 naught's to its frame 34 and no further
+    $names = New-Object System.Collections.Generic.List[string]
+    $replays = $null
+    $upto = $null
+    foreach ($c in @($cases -split ',' | Where-Object { $_ -ne '' })) {
+        if ($c -notlike 'replay:*') { $names.Add($c); continue }
+        $names.Add('replay')
+        $parts = $c.Substring(7) -split ':'
+        $replays = $parts[0]
+        if ($parts.Count -gt 1) { $upto = $parts[1] }
+    }
+    $query = '?loop=1' + $(if ($names.Count) { '&cases=' + ($names -join ',') } else { '' }) + $(if ($null -ne $replays) { '&replays=' + $replays } else { '' }) + $(if ($null -ne $upto) { '&upto=' + $upto } else { '' })
     if ($slashed.StartsWith('/')) { return 'file://' + $slashed + $query }
     return 'file:///' + $slashed + $query
 }
-# One headless run: the loop element's text, or '' with the reason. $cases, a comma-separated list, runs those cases
-# alone (a mutant page's, 2026-10-15); empty runs every case.
-function Invoke-Loop([string]$browser, [string]$page, [string]$scale, [string]$cases = '') {
+# The cases a run's list names, each filter left out: abi,input,replay:sand names abi, input and replay.
+function Get-CaseNames([string]$cases) { return @($cases -split ',' | Where-Object { $_ -ne '' } | ForEach-Object { ($_ -split ':')[0] }) }
+# A run's folder removed, its browser's children given a moment to let go of it.
+function Remove-LoopTemp([string]$dir) {
+    for ($i = 0; $i -lt 100 -and (Test-Path -LiteralPath $dir); $i++) {
+        Remove-Item -Recurse -Force $dir -ErrorAction SilentlyContinue
+        if (Test-Path -LiteralPath $dir) { Start-Sleep -Milliseconds 50 }
+    }
+}
+# One headless run started (REPO.8): the browser over the page with its cases, its DOM dumped into a folder of its own,
+# its profile there too, so that runs side by side share nothing. $cases, a comma-separated list, runs those cases alone
+# (a mutant page's, 2026-10-15); empty runs every case.
+function Start-LoopRun([string]$browser, [string]$page, [string]$scale, [string]$cases = '') {
     $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('alonzo_loop_' + [System.IO.Path]::GetRandomFileName())
     New-Item -ItemType Directory -Path $tmp | Out-Null
-    try {
-        $dump = Join-Path $tmp 'dump.html'
-        $err = Join-Path $tmp 'err.txt'
-        $argList = @('--headless=new', '--disable-gpu', '--run-all-compositor-stages-before-draw', '--disable-frame-rate-limit', '--disable-gpu-vsync',
-                     '--virtual-time-budget=60000', ('--force-device-scale-factor=' + $scale), '--window-size=1600,1200', '--no-first-run', '--no-default-browser-check',
-                     ('--user-data-dir="' + (Join-Path $tmp 'profile') + '"'))
-        if (-not $onWindows) { $argList += @('--no-sandbox', '--disable-dev-shm-usage') }
-        $argList += @('--dump-dom', ('"' + (Get-PageUrl $page $cases) + '"'))
-        $start = @{ FilePath = $browser; ArgumentList = $argList; RedirectStandardOutput = $dump; RedirectStandardError = $err; Wait = $true }
-        if ($onWindows) { $start['NoNewWindow'] = $true }
-        Start-Process @start
-        if (-not (Test-Path -LiteralPath $dump)) { return @{ Text = ''; Reason = 'the browser wrote no dump' } }
-        $html = [System.IO.File]::ReadAllText($dump)
-        $m = [regex]::Match($html, '(?s)<pre id="loop"[^>]*>(.*?)</pre>')
-        if (-not $m.Success) { return @{ Text = ''; Reason = ("no loop block in the dump ({0:N0} characters)" -f $html.Length) } }
-        $text = [System.Net.WebUtility]::HtmlDecode($m.Groups[1].Value).Trim()
-        if ($text -eq '') { return @{ Text = ''; Reason = 'the loop block is empty' } }
-        return @{ Text = $text; Reason = '' }
-    } finally {
-        Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
+    $dump = Join-Path $tmp 'dump.html'
+    $err = Join-Path $tmp 'err.txt'
+    $argList = @('--headless=new', '--disable-gpu', '--run-all-compositor-stages-before-draw', '--disable-frame-rate-limit', '--disable-gpu-vsync',
+                 '--virtual-time-budget=60000', ('--force-device-scale-factor=' + $scale), '--window-size=1600,1200', '--no-first-run', '--no-default-browser-check',
+                 ('--user-data-dir="' + (Join-Path $tmp 'profile') + '"'))
+    if (-not $onWindows) { $argList += @('--no-sandbox', '--disable-dev-shm-usage') }
+    $argList += @('--dump-dom', ('"' + (Get-PageUrl $page $cases) + '"'))
+    $start = @{ FilePath = $browser; ArgumentList = $argList; RedirectStandardOutput = $dump; RedirectStandardError = $err; PassThru = $true }
+    if ($onWindows) { $start['NoNewWindow'] = $true }
+    $watch = [System.Diagnostics.Stopwatch]::StartNew()
+    $proc = Start-Process @start
+    return @{ Proc = $proc; Tmp = $tmp; Dump = $dump; Watch = $watch; Size = -1; Seconds = $null }
+}
+# A run ended (REPO.8): its browser exited, or its dump whole, ending in </html> and grown no more since the last look, the
+# browser ended then. A browser writes the whole dump and then shuts down, and beside another instance its shutdown on
+# Windows waited on a system service's reply, up to 120 s a time, its page long done: four of Naught's replays side by
+# side took 145 to 270 s each, and ended at their dumps 26. The dump's one </html> is its last.
+function Test-LoopRunDone($run) {
+    if ($null -ne $run.Seconds) { return $true }
+    if (-not $run.Proc.HasExited) {
+        if (-not (Test-Path -LiteralPath $run.Dump)) { return $false }
+        $fs = $null
+        try {
+            $fs = New-Object System.IO.FileStream($run.Dump, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+            $n = $fs.Length
+            if ($n -lt 16 -or $n -ne $run.Size) { $run.Size = $n; return $false }
+            $k = [int][Math]::Min(64, $n)
+            $buf = New-Object byte[] $k
+            $null = $fs.Seek($n - $k, [System.IO.SeekOrigin]::Begin)
+            $null = $fs.Read($buf, 0, $k)
+            if ([System.Text.Encoding]::UTF8.GetString($buf).TrimEnd() -notlike '*</html>') { return $false }
+        } catch { return $false } finally { if ($fs) { $fs.Dispose() } }
+        try { $run.Proc.Kill() } catch {}
     }
+    $run.Seconds = $run.Watch.Elapsed.TotalSeconds
+    $run.Proc.WaitForExit()
+    return $true
+}
+# A started run's answer: the loop element's text, or '' with the reason, and its seconds. Its browser's children may
+# hold the dump a moment longer, so it is read beside them. -Defer leaves the folder for the caller to sweep once every
+# run has ended.
+function Complete-LoopRun($run, [switch]$Defer) {
+    while (-not (Test-LoopRunDone $run)) { Start-Sleep -Milliseconds 50 }
+    $seconds = $run.Seconds
+    try {
+        if (-not (Test-Path -LiteralPath $run.Dump)) { return @{ Text = ''; Reason = 'the browser wrote no dump'; Seconds = $seconds } }
+        $fs = New-Object System.IO.FileStream($run.Dump, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+        try { $html = (New-Object System.IO.StreamReader($fs, (New-Object System.Text.UTF8Encoding($false)))).ReadToEnd() } finally { $fs.Dispose() }
+        $m = [regex]::Match($html, '(?s)<pre id="loop"[^>]*>(.*?)</pre>')
+        if (-not $m.Success) { return @{ Text = ''; Reason = ("no loop block in the dump ({0:N0} characters)" -f $html.Length); Seconds = $seconds } }
+        $text = [System.Net.WebUtility]::HtmlDecode($m.Groups[1].Value).Trim()
+        if ($text -eq '') { return @{ Text = ''; Reason = 'the loop block is empty'; Seconds = $seconds } }
+        return @{ Text = $text; Reason = ''; Seconds = $seconds }
+    } finally {
+        if (-not $Defer) { Remove-LoopTemp $run.Tmp }
+    }
+}
+# One headless run, started and answered.
+function Invoke-Loop([string]$browser, [string]$page, [string]$scale, [string]$cases = '') {
+    return Complete-LoopRun (Start-LoopRun $browser $page $scale $cases)
+}
+# Runs side by side (REPO.8): each run of $plan, @{ Key; Page; Scale; Cases }, in its order, started while fewer than $jobs
+# run, each answered into $results by its key as its browser exits, their folders swept once every run has ended. $plan
+# is typed an array: in Windows PowerShell 5.1, @($v) over a generic list held by a variable fails to compile ("Argument
+# types do not match").
+function Invoke-LoopPool([object[]]$plan, [int]$jobs, $results) {
+    $queue = New-Object System.Collections.Generic.Queue[object]
+    foreach ($p in @($plan)) { $queue.Enqueue($p) }
+    $running = New-Object System.Collections.Generic.List[object]
+    $folders = New-Object System.Collections.Generic.List[string]
+    while ($queue.Count -gt 0 -or $running.Count -gt 0) {
+        while ($running.Count -lt $jobs -and $queue.Count -gt 0) {
+            $p = $queue.Dequeue()
+            $running.Add(@{ Plan = $p; Run = (Start-LoopRun $script:browser $p.Page $p.Scale $p.Cases) })
+        }
+        Start-Sleep -Milliseconds 25
+        for ($i = $running.Count - 1; $i -ge 0; $i--) {
+            $e = $running[$i]
+            if (-not (Test-LoopRunDone $e.Run)) { continue }
+            $results[$e.Plan.Key] = Complete-LoopRun $e.Run -Defer
+            $folders.Add($e.Run.Tmp)
+            $running.RemoveAt($i)
+        }
+    }
+    foreach ($d in $folders) { Remove-LoopTemp $d }
+}
+# REPO.8's plan, the control's: $script:LoopMode is '' (each page built and run in its turn), 'plan' (each page's build
+# started in the background, at most -Jobs at a time, and each run noted) or 'run' (each run answered from the pool).
+$script:LoopMode = ''
+$script:Planned = New-Object System.Collections.Generic.List[object]
+$script:PlannedKeys = @{}
+$script:Answers = @{}
+$script:Builds = New-Object System.Collections.Generic.List[object]
+$script:BuiltPages = @{}
+$script:Misses = 0
+$script:AloneRuns = 0
+$script:AloneSeconds = 0.0
+$builderShell = if (Get-Command powershell.exe -ErrorAction SilentlyContinue) { 'powershell.exe' } else { 'pwsh' }
+# A page built by tools/build_web.ps1 with $builderArgs: at once in its turn; in the plan pass started in the
+# background, at most -Jobs builds at a time, each page built once; in the run pass already built.
+function Invoke-PageBuild([string]$name, [string[]]$builderArgs, [string]$out, [string]$failure) {
+    if ($script:LoopMode -eq 'run' -and $script:BuiltPages.ContainsKey($out)) { return }
+    if ($script:LoopMode -eq 'plan') {
+        if ($script:BuiltPages.ContainsKey($out)) { throw "the page $name is built twice in the plan, so that one page would answer for two mutants" }
+        while (@($script:Builds | Where-Object { -not $_.Proc.HasExited }).Count -ge $Jobs) { Start-Sleep -Milliseconds 10 }
+        $quoted = @($builderArgs | ForEach-Object { if ($_ -match '[\s"]') { '"' + $_ + '"' } else { $_ } })
+        $start = @{ FilePath = $builderShell; ArgumentList = $quoted; PassThru = $true; RedirectStandardOutput = ($out + '.out.txt'); RedirectStandardError = ($out + '.err.txt') }
+        if ($onWindows) { $start['NoNewWindow'] = $true }
+        $proc = Start-Process @start
+        if ($onWindows) { $null = $proc.Handle }   # held, so that Windows PowerShell reads its exit code after it exits
+        $script:Builds.Add(@{ Proc = $proc; Out = $out; Failure = $failure })
+        $script:BuiltPages[$out] = $true
+        return
+    }
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { $null = & $builderShell @builderArgs 2>&1; $code = $LASTEXITCODE } finally { $ErrorActionPreference = $prev }
+    if ($code -ne 0 -or -not (Test-Path -LiteralPath $out)) { throw $failure }
+    $script:BuiltPages[$out] = $true
+}
+# Every build the plan started, ended with its page written, or the first that failed named as it would have been.
+function Wait-PageBuilds {
+    foreach ($b in $script:Builds) {
+        $b.Proc.WaitForExit()
+        if ($b.Proc.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $b.Out)) { throw $b.Failure }
+    }
+}
+# A run's place in the pool: the replay case's longest games first, Naught's or every game's, then its others, then the
+# grid's, then by the number of cases it runs, so that the pool's last runs are its shortest.
+function Get-RunWeight([string]$cases) {
+    $names = @(Get-CaseNames $cases)
+    $filter = @($cases -split ',' | Where-Object { $_ -like 'replay:*' })
+    $base = 0
+    if ($names.Count -eq 0 -or $names.Count -ge 10) { $base = 100 }
+    elseif ($names -contains 'replay') {
+        $cut = $(if ($filter.Count) { [regex]::Match($filter[0], ':(\d+)$') } else { $null })
+        $long = $filter.Count -eq 0 -or ($filter[0] -like '*naught*' -and -not ($cut.Success -and [int]$cut.Groups[1].Value -lt 200))
+        $base = $(if ($long) { 100 } else { 10 })
+    }
+    elseif ($names -contains 'grid') { $base = 4 }
+    return $base + $names.Count
+}
+# One run of the control's: at once in its turn, or with -Now in the plan pass; noted in the plan pass, its answer a
+# stand-in, since the plan pass judges nothing; answered from the pool in the run pass, or made then and counted as a
+# run the plan missed.
+function Invoke-Planned([string]$page, [string]$scale, [string]$cases, [switch]$Now) {
+    $key = $page + '|' + $scale + '|' + $cases
+    if ($script:LoopMode -eq 'plan' -and -not $Now -and @(Get-CaseNames $cases) -contains 'sound') {
+        # the sound case renders in real time and a starved processor fails it: made now, every build the plan started
+        # ended first and none started meanwhile, where after the pool the machine was still busy with its aftermath
+        Wait-PageBuilds
+        if (-not $script:Answers.ContainsKey($key)) {
+            $w = [System.Diagnostics.Stopwatch]::StartNew()
+            $script:Answers[$key] = Invoke-Loop $browser $page $scale $cases
+            $script:AloneRuns++
+            $script:AloneSeconds += $w.Elapsed.TotalSeconds
+        }
+        return $script:Answers[$key]
+    }
+    if ($script:LoopMode -eq 'plan' -and -not $Now) {
+        if (-not $script:PlannedKeys.ContainsKey($key)) {
+            $script:PlannedKeys[$key] = $true
+            $script:Planned.Add(@{ Key = $key; Page = $page; Scale = $scale; Cases = $cases; Alone = (@(Get-CaseNames $cases) -contains 'sound'); Weight = (Get-RunWeight $cases); Order = $script:Planned.Count })
+        }
+        return @{ Text = ''; Reason = 'planned and not yet run' }
+    }
+    if ($script:LoopMode -eq '') { return Invoke-Loop $browser $page $scale $cases }
+    if (-not $script:Answers.ContainsKey($key)) {
+        if ($script:LoopMode -eq 'run') { $script:Misses++ }
+        $script:Answers[$key] = Invoke-Loop $browser $page $scale $cases
+    }
+    return $script:Answers[$key]
 }
 # A game's page (ENGINE.16) in $dir: a scratch folder holding Kairos alone, its cartridge, source, replay, golden
 # and hand and the library its source includes, built by tools/build_web.ps1 with no fixtures and Kairos its one
 # name. -Hand replaces the hand's text (a mutant's), -NoHand leaves the hand out, -Template names a mutant template.
 function New-GamePage([string]$dir, [string]$name, [string]$Hand = '', [switch]$NoHand, [string]$Template = '') {
+    $out = Join-Path $dir ($name + '.html')
+    if ($script:LoopMode -eq 'run' -and $script:BuiltPages.ContainsKey($out)) { return $out }   # the plan pass built it (REPO.8)
     $carts = Join-Path $dir ($name + '_cartridges')
     $fix = Join-Path $dir ($name + '_fixtures')
     New-Item -ItemType Directory -Path (Join-Path $carts 'kairos') -Force | Out-Null
@@ -1102,14 +1320,9 @@ function New-GamePage([string]$dir, [string]$name, [string]$Hand = '', [switch]$
         }
         Copy-Item -LiteralPath (Join-Path $repoRoot ('cartridges/' + $f)) -Destination $to
     }
-    $out = Join-Path $dir ($name + '.html')
-    $shellG = if (Get-Command powershell.exe -ErrorAction SilentlyContinue) { 'powershell.exe' } else { 'pwsh' }
     $builderArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $PSScriptRoot 'build_web.ps1'), '-CartridgesDir', $carts, '-FixturesDir', $fix, '-PageOrder', 'kairos', '-Out', $out)
     if ($Template -ne '') { $builderArgs += @('-Template', $Template) }
-    $prev = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    try { $null = & $shellG @builderArgs 2>&1; $code = $LASTEXITCODE } finally { $ErrorActionPreference = $prev }
-    if ($code -ne 0 -or -not (Test-Path -LiteralPath $out)) { throw "the builder could not build the game's page $name" }
+    Invoke-PageBuild $name $builderArgs $out "the builder could not build the game's page $name"
     return $out
 }
 # The judgment of one run's text at one scale: the problems, and the case lines to print. A game's page
@@ -1181,7 +1394,6 @@ if ($Control) {
     New-Item -ItemType Directory -Path $tmp | Out-Null
     try {
         $utf8 = New-Object System.Text.UTF8Encoding($false)
-        $shell = if (Get-Command powershell.exe -ErrorAction SilentlyContinue) { 'powershell.exe' } else { 'pwsh' }
         $builder = Join-Path $PSScriptRoot 'build_web.ps1'
         $template = Join-Path $repoRoot 'web/index.template.html'
         $hostJs = Join-Path $repoRoot 'web/host.js'
@@ -1196,23 +1408,37 @@ if ($Control) {
             if ($fakePath -eq '') { $fakePath = $fakeJs }
             if ($cartsPath -eq '') { $cartsPath = Join-Path $repoRoot 'cartridges' }
             if ($viewportPath -eq '') { $viewportPath = $viewportJs }
-            $prev = $ErrorActionPreference
-            $ErrorActionPreference = 'Continue'
-            try { $null = & $shell -NoProfile -ExecutionPolicy Bypass -File $builder -Template $tplPath -HostJs $jsPath -FakeJs $fakePath -CartridgesDir $cartsPath -ViewportJs $viewportPath -Out $out 2>&1; $code = $LASTEXITCODE } finally { $ErrorActionPreference = $prev }
-            if ($code -ne 0 -or -not (Test-Path -LiteralPath $out)) { throw "the builder could not build the mutant page $name" }
+            $builderArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $builder, '-Template', $tplPath, '-HostJs', $jsPath, '-FakeJs', $fakePath, '-CartridgesDir', $cartsPath, '-ViewportJs', $viewportPath, '-Out', $out)
+            Invoke-PageBuild $name $builderArgs $out "the builder could not build the mutant page $name"
             return $out
         }
         # A mutant page runs abi, which names the page's module, and the cases its reason is judged by, not every
-        # case (2026-10-15, fix 5 of the controls' time); the real page and the game's page run every case.
+        # case (2026-10-15, fix 5 of the controls' time); a replay case's filter, replay:<names>, plays those games'
+        # committed replays alone (REPO.8). The real page and the game's page run every case.
         function Get-MutantCases([string]$cases) { return 'abi' + $(if ($cases -ne '') { ',' + $cases } else { '' }) }
-        function Invoke-Mutant([string]$page, [string]$cases) { return Invoke-Loop $browser $page '1' (Get-MutantCases $cases) }
+        function Invoke-Mutant([string]$page, [string]$cases) { return Invoke-Planned $page '1' (Get-MutantCases $cases) }
         function Test-Mutant($run, [string]$cases, [object[]]$table = $floors) {
             if ($run.Text -eq '') { return @{ Problems = @($run.Reason) } }
-            return Test-Loop $run.Text '1' $table $expectedCases @() @((Get-MutantCases $cases) -split ',')
+            return Test-Loop $run.Text '1' $table $expectedCases @() @(Get-CaseNames (Get-MutantCases $cases))
         }
-        # the real page first
-        $r0 = Invoke-Loop $browser $Page '1'
-        $j0 = if ($r0.Text -ne '') { Test-Loop $r0.Text '1' } else { @{ Problems = @($r0.Reason) } }
+        # The pool's line, after the plan and its runs (REPO.8).
+        function Get-PoolNote {
+            $s = $script:PoolStats
+            return ("pool: {0} pages built in the background, at most {1} at a time, and {5} run(s) of the sound case alone, in {2:N1} s ({6:N1} s of the runs alone); {3} runs side by side, the longest first, in {4:N1} s, the longest {8:N1} s ({9}); {7} run(s) the plan missed" -f $s.Builds, $Jobs, $s.BuildSeconds, $s.Pooled, $s.PoolSeconds, $s.Alone, $s.AloneSeconds, $script:Misses, $s.Longest, $s.LongestName)
+        }
+        $realNames = @($floors | ForEach-Object { $_.Case })
+        $realParts = @(, @('abi', 'sound')) + @(, @('abi', 'input', 'replay')) + @(, @($realNames | Where-Object { @('input', 'replay', 'sound') -notcontains $_ }))
+        # The control's code, run twice since REPO.8, a plan pass and a run pass, as its end says.
+        $controlBody = {
+        # the real page first: its module, which decides the mutants that apply, read at once by abi alone; then, as the
+        # check runs them, the sound case alone, the input and replay cases, and every other case (REPO.8)
+        $r0m = Invoke-Planned $Page '1' 'abi' -Now
+        $j0 = @{ Problems = New-Object System.Collections.Generic.List[string] }
+        foreach ($part in $realParts) {
+            $run = Invoke-Planned $Page '1' ($part -join ',')
+            if ($run.Text -eq '') { $j0.Problems.Add($run.Reason); continue }
+            foreach ($p in @((Test-Loop $run.Text '1' $floors $expectedCases @() $part).Problems)) { $j0.Problems.Add($p) }
+        }
         # mutant A: the accumulator's cap raised; the header must say so and the stall must fail
         $anchorA = 'var ACCUMULATOR_CAP_MS = 250;'
         if (([regex]::Matches($js, [regex]::Escape($anchorA))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorA' is not in web/host.js exactly once"; exit 1 }
@@ -1239,7 +1465,7 @@ if ($Control) {
         # mutant D, when the real page holds the engine's module: the reference Life lets a cell
         # survive on three neighbors alone; the engine case must fail by name at frame 11
         $moduleReal = 0
-        if ($r0.Text -ne '') { $am = [regex]::Match($r0.Text, 'case abi: [^\n]*module (\d+)'); if ($am.Success) { $moduleReal = [int]$am.Groups[1].Value } }
+        if ($r0m.Text -ne '') { $am = [regex]::Match($r0m.Text, 'case abi: [^\n]*module (\d+)'); if ($am.Success) { $moduleReal = [int]$am.Groups[1].Value } }
         $dApplied = $false; $dFailed = 0; $dNote = 'not applicable, the real page holding no engine module'
         if ($moduleReal -gt 0) {
             $anchorD = 'next[i] = (others === 3 || (me === 1 && others === 2)) ? 1 : 0;'
@@ -1315,14 +1541,16 @@ if ($Control) {
         $kApplied = $false; $kFailed = 0; $kNote = 'not applicable, the real page holding no engine module'
         if ($moduleReal -gt 0) {
             $cartsK = Join-Path $tmp 'cartridges_k'
-            Copy-Item -Recurse -LiteralPath (Join-Path $repoRoot 'cartridges') -Destination $cartsK
             $libK = Join-Path $cartsK 'common.vla'
-            $lib = [System.IO.File]::ReadAllText($libK)
+            $lib = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'cartridges/common.vla'))
             $anchorK = '(cell "Palette" (address-expand (+expand index 1) 3)'
             if (([regex]::Matches($lib, [regex]::Escape($anchorK))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorK' is not in cartridges/common.vla exactly once"; exit 1 }
             $mutK = $lib.Replace($anchorK, '(cell "Palette" (address-expand (+expand index 1) 4)')
             $kApplied = $mutK -cne $lib
-            [System.IO.File]::WriteAllText($libK, $mutK, $utf8)
+            if (-not (Test-Path -LiteralPath $cartsK)) {   # the plan pass's copy serves the run pass (REPO.8)
+                Copy-Item -Recurse -LiteralPath (Join-Path $repoRoot 'cartridges') -Destination $cartsK
+                [System.IO.File]::WriteAllText($libK, $mutK, $utf8)
+            }
             $rK = Invoke-Mutant (New-MutantPage 'k' $template $hostJs '' $cartsK) 'pass'
             $jK = Test-Mutant $rK 'pass'
             $kFailed = @($jK.Problems | Where-Object { $_ -like "*case pass*the page's pass differs from*the command line's*" }).Count
@@ -1388,24 +1616,24 @@ if ($Control) {
             $mutP = $js.Replace($anchorP, "      // the edit's record cut by the control")
             $pApplied = $mutP -cne $js
             $jsP = Join-Path $tmp 'p.js'; [System.IO.File]::WriteAllText($jsP, $mutP, $utf8)
-            $rP = Invoke-Mutant (New-MutantPage 'p' $template $jsP) 'input,replay'
-            $jP = Test-Mutant $rP 'input,replay'
+            $rP = Invoke-Mutant (New-MutantPage 'p' $template $jsP) 'input,replay:'
+            $jP = Test-Mutant $rP 'input,replay:'
             $pFailed = @($jP.Problems | Where-Object { $_ -like '*case replay*does not log the edit*' }).Count
             $anchorQ = '    this._issueDerived();   // section 5, step 2: the derived writes, before the inputs'
             if (([regex]::Matches($js, [regex]::Escape($anchorQ))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorQ' is not in web/host.js exactly once"; exit 1 }
             $mutQ = $js.Replace($anchorQ, '    if (!this.player) this._issueDerived();   // the derived writes cut from a replay by the control')
             $qApplied = $mutQ -cne $js
             $jsQ = Join-Path $tmp 'q.js'; [System.IO.File]::WriteAllText($jsQ, $mutQ, $utf8)
-            $rQ = Invoke-Mutant (New-MutantPage 'q' $template $jsQ) 'input,replay'
-            $jQ = Test-Mutant $rQ 'input,replay'
+            $rQ = Invoke-Mutant (New-MutantPage 'q' $template $jsQ) 'input,replay:inputcard'
+            $jQ = Test-Mutant $rQ 'input,replay:inputcard'
             $qFailed = @($jQ.Problems | Where-Object { $_ -like '*case replay*that is not its golden*' }).Count
             $anchorR = "    if (String(str(f[1])).toLowerCase() === 'input') rec.input = null;   // the Input sheet unknown to the replay: its next rows are logged whole"
             if (([regex]::Matches($js, [regex]::Escape($anchorR))).Count -ne 1) { Write-Output "FAIL: the Input sheet's record made unknown is not in web/host.js exactly once"; exit 1 }
             $mutR = $js.Replace($anchorR, "    // the Input sheet's record kept across a person's edit of it, by the control")
             $rApplied = $mutR -cne $js
             $jsR = Join-Path $tmp 'r.js'; [System.IO.File]::WriteAllText($jsR, $mutR, $utf8)
-            $rR = Invoke-Mutant (New-MutantPage 'r' $template $jsR) 'input,replay'
-            $jR = Test-Mutant $rR 'input,replay'
+            $rR = Invoke-Mutant (New-MutantPage 'r' $template $jsR) 'input,replay:'
+            $jR = Test-Mutant $rR 'input,replay:'
             $rFailed = @($jR.Problems | Where-Object { $_ -like "*case replay*after a person's edit of the Input sheet*" }).Count
             $pqrNote = "the edit's record cut applied ($pApplied) and failed the replay case ($pFailed); the derived writes cut from a replay applied ($qApplied) and failed it ($qFailed); the Input sheet's record kept applied ($rApplied) and failed it ($rFailed)"
         }
@@ -1470,8 +1698,8 @@ if ($Control) {
         $mutY = $js.Replace($anchorY, '    // the stop said to no one, by the control')
         $yApplied = $mutY -cne $js
         $jsY = Join-Path $tmp 'y.js'; [System.IO.File]::WriteAllText($jsY, $mutY, $utf8)
-        $rY = Invoke-Mutant (New-MutantPage 'y' $template $jsY) 'input,replay'
-        $jY = Test-Mutant $rY 'input,replay'
+        $rY = Invoke-Mutant (New-MutantPage 'y' $template $jsY) 'input,replay:'
+        $jY = Test-Mutant $rY 'input,replay:'
         $yFailed = @($jY.Problems | Where-Object { $_ -cmatch 'case replay.*said the loop stopped 0 time\(s\), where it says so once, at its last frame' }).Count
         $yNote = "the stop said to no one applied ($yApplied) and failed the replay case ($yFailed)"
         $yOk = $yApplied -and $yFailed -ge 1
@@ -1507,6 +1735,7 @@ if ($Control) {
         $kairosHandText = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'cartridges/kairos/kairos.hand.js'))
         function New-HandCopy([string]$name, [string]$file, [string]$text) {
             $carts = Join-Path $tmp ('cartridges_' + $name)
+            if (Test-Path -LiteralPath $carts) { return $carts }   # the plan pass's copy (REPO.8)
             Copy-Item -Recurse -LiteralPath (Join-Path $repoRoot 'cartridges') -Destination $carts
             [System.IO.File]::WriteAllText((Join-Path $carts $file), $text, $utf8)
             return $carts
@@ -1520,8 +1749,8 @@ if ($Control) {
             if (([regex]::Matches($sandHandText, [regex]::Escape($anchorAB))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorAB' is not in cartridges/sand/sand.hand.js exactly once"; exit 1 }
             $mutAB = $sandHandText.Replace($anchorAB, '      return dr * dr + dc * dc < brush.radius * brush.radius ? brush.material : -1;')
             $abApplied = $mutAB -cne $sandHandText
-            $rAB = Invoke-Mutant (New-MutantPage 'ab' $template $hostJs '' (New-HandCopy 'ab' 'sand/sand.hand.js' $mutAB)) 'input,replay'
-            $jAB = Test-Mutant $rAB 'input,replay'
+            $rAB = Invoke-Mutant (New-MutantPage 'ab' $template $hostJs '' (New-HandCopy 'ab' 'sand/sand.hand.js' $mutAB)) 'input,replay:sand'
+            $jAB = Test-Mutant $rAB 'input,replay:sand'
             $abFailed = @($jAB.Problems | Where-Object { $_ -like "*case replay*sand's committed replay, played on a fresh host, is not its hand's at frame*" }).Count
             $abNote = "the brush without its rim applied ($abApplied) and failed the replay case ($abFailed)"
         }
@@ -1536,8 +1765,8 @@ if ($Control) {
             if (([regex]::Matches($kairosHandText, [regex]::Escape($anchorAI))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorAI' is not in cartridges/kairos/kairos.hand.js exactly once"; exit 1 }
             $mutAI = $kairosHandText.Replace($anchorAI, '    var turn = (this.direction === 1 && right >= KAIROS.columns - 1) || (this.direction === -1 && this.left <= 1);')
             $aiApplied = $mutAI -cne $kairosHandText
-            $rAI = Invoke-Mutant (New-MutantPage 'ai' $template $hostJs '' (New-HandCopy 'ai' 'kairos/kairos.hand.js' $mutAI)) 'input,replay'
-            $jAI = Test-Mutant $rAI 'input,replay'
+            $rAI = Invoke-Mutant (New-MutantPage 'ai' $template $hostJs '' (New-HandCopy 'ai' 'kairos/kairos.hand.js' $mutAI)) 'input,replay:kairos'
+            $jAI = Test-Mutant $rAI 'input,replay:kairos'
             $aiFailed = @($jAI.Problems | Where-Object { $_ -like "*case replay*kairos's committed replay, played on a fresh host, is not its hand's at frame*" }).Count
             $aiNote = "the turn a column early applied ($aiApplied) and failed the replay case ($aiFailed)"
         }
@@ -1553,8 +1782,8 @@ if ($Control) {
             if (([regex]::Matches($superHandText, [regex]::Escape($anchorEG))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorEG' is not in cartridges/superposition/superposition.hand.js exactly once"; exit 1 }
             $mutEG = $superHandText.Replace($anchorEG, '    if (!rows.length) { this.settles++; }')
             $egApplied = $mutEG -cne $superHandText
-            $rEG = Invoke-Mutant (New-MutantPage 'eg' $template $hostJs '' (New-HandCopy 'eg' 'superposition/superposition.hand.js' $mutEG)) 'input,replay'
-            $jEG = Test-Mutant $rEG 'input,replay'
+            $rEG = Invoke-Mutant (New-MutantPage 'eg' $template $hostJs '' (New-HandCopy 'eg' 'superposition/superposition.hand.js' $mutEG)) 'input,replay:superposition'
+            $jEG = Test-Mutant $rEG 'input,replay:superposition'
             $egFailed = @($jEG.Problems | Where-Object { $_ -like "*case replay*superposition's committed replay, played on a fresh host, is not its hand's at frame*" }).Count
             $egNote = "the release kept from the hand applied ($egApplied) and failed the replay case ($egFailed)"
         }
@@ -1789,7 +2018,7 @@ if ($Control) {
                Want = 'case views.*views frame 40: the viewport shows Desk, where the Camera shows Ledger' },
             @{ L = 'bj'; Name = 'the Camera''s sheet at every frame'; Anchor = "    if (stage === 'load' || key === was) return;"; With = "    if (stage === 'load' || key === '') return;"
                Want = 'case views.*views frame 41: the host counted 1 show\(s\) of the Camera''s sheet, where its third row holds still' },
-            @{ L = 'bk'; Name = 'the replay at the host''s version'; Cases = 'input,replay'; Anchor = '    var spec = Math.max(3, Math.min(this.cart.spec || 3, SPEC));'; With = '    var spec = SPEC;'
+            @{ L = 'bk'; Name = 'the replay at the host''s version'; Cases = 'input,replay:inputcard'; Anchor = '    var spec = Math.max(3, Math.min(this.cart.spec || 3, SPEC));'; With = '    var spec = SPEC;'
                Want = 'case replay.*the player''s own recording of \w+\.vla''s committed replay is not the replay it played' }
         )
         $viewsNotes = New-Object System.Collections.Generic.List[string]
@@ -2355,8 +2584,8 @@ if ($Control) {
             if (([regex]::Matches($superHandText, [regex]::Escape($anchorEL))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorEL' is not in cartridges/superposition/superposition.hand.js exactly once"; exit 1 }
             $mutEL = $superHandText.Replace($anchorEL, '      } else if (false) {')
             $elApplied = $mutEL -cne $superHandText
-            $rEL = Invoke-Mutant (New-MutantPage 'el' $template $hostJs '' (New-HandCopy 'el' 'superposition/superposition.hand.js' $mutEL)) 'input,replay'
-            $jEL = Test-Mutant $rEL 'input,replay'
+            $rEL = Invoke-Mutant (New-MutantPage 'el' $template $hostJs '' (New-HandCopy 'el' 'superposition/superposition.hand.js' $mutEL)) 'input,replay:superposition:33'
+            $jEL = Test-Mutant $rEL 'input,replay:superposition:33'
             $elFailed = @($jEL.Problems | Where-Object { $_ -like "*case replay*superposition's committed replay, played on a fresh host, is not its hand's at frame 33*" }).Count
             $elNote = "the box kept sealed in the hand applied ($elApplied) and failed the replay case at frame 33 ($elFailed)"
         }
@@ -2371,8 +2600,8 @@ if ($Control) {
             if (([regex]::Matches($seiyakuHandText, [regex]::Escape($anchorET))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorET' is not in cartridges/seiyaku/seiyaku.hand.js exactly once"; exit 1 }
             $mutET = $seiyakuHandText.Replace($anchorET, 'rows[u[0]][w] === 0 && cols[u[1]][w] === 0')
             $etApplied = $mutET -cne $seiyakuHandText
-            $rET = Invoke-Mutant (New-MutantPage 'et' $template $hostJs '' (New-HandCopy 'et' 'seiyaku/seiyaku.hand.js' $mutET)) 'input,replay'
-            $jET = Test-Mutant $rET 'input,replay'
+            $rET = Invoke-Mutant (New-MutantPage 'et' $template $hostJs '' (New-HandCopy 'et' 'seiyaku/seiyaku.hand.js' $mutET)) 'input,replay:seiyaku:15'
+            $jET = Test-Mutant $rET 'input,replay:seiyaku:15'
             $etFailed = @($jET.Problems | Where-Object { $_ -like "*case replay*seiyaku's committed replay, played on a fresh host, is not its hand's at frame 15:*" }).Count
             $etNote = "the candidates blind to the box in the hand applied ($etApplied) and failed the replay case at frame 15 ($etFailed)"
         }
@@ -2387,8 +2616,8 @@ if ($Control) {
             if (([regex]::Matches($naughtHandText, [regex]::Escape($anchorEZ))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorEZ' is not in cartridges/naught/naught.hand.js exactly once"; exit 1 }
             $mutEZ = $naughtHandText.Replace($anchorEZ, 'aut: { arity: 2, apply: function (a, b) { return a | b; }')
             $ezApplied = $mutEZ -cne $naughtHandText
-            $rEZ = Invoke-Mutant (New-MutantPage 'ez' $template $hostJs '' (New-HandCopy 'ez' 'naught/naught.hand.js' $mutEZ)) 'input,replay'
-            $jEZ = Test-Mutant $rEZ 'input,replay'
+            $rEZ = Invoke-Mutant (New-MutantPage 'ez' $template $hostJs '' (New-HandCopy 'ez' 'naught/naught.hand.js' $mutEZ)) 'input,replay:naught:743'
+            $jEZ = Test-Mutant $rEZ 'input,replay:naught:743'
             $ezFailed = @($jEZ.Problems | Where-Object { $_ -like "*case replay*naught's committed replay, played on a fresh host, is not its hand's at frame 743:*" }).Count
             $ezNote = "aut read as vel in the hand applied ($ezApplied) and failed the replay case at frame 743 ($ezFailed)"
         }
@@ -2403,8 +2632,8 @@ if ($Control) {
             $mutFH = $js.Replace($anchorFH, '      // the replay''s sheet unshown, by the control')
             $fhApplied = $mutFH -cne $js
             $fileFH = Join-Path $tmp 'fh.host.js'; [System.IO.File]::WriteAllText($fileFH, $mutFH, $utf8)
-            $rFH = Invoke-Mutant (New-MutantPage 'fh' $template $fileFH) 'input,replay'
-            $jFH = Test-Mutant $rFH 'input,replay'
+            $rFH = Invoke-Mutant (New-MutantPage 'fh' $template $fileFH) 'input,replay:naught'
+            $jFH = Test-Mutant $rFH 'input,replay:naught'
             $fhFailed = @($jFH.Problems | Where-Object { $_ -like '*the case replay at a ratio of 1 counted 0 naughtShown, below its floor of 10*' }).Count
             $fhNote = "the replay's sheet unshown applied ($fhApplied) and failed the replay case's naughtShown ($fhFailed)"
         }
@@ -2454,8 +2683,9 @@ if ($Control) {
                 if (([regex]::Matches($naughtHandNow, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in cartridges/naught/naught.hand.js exactly once"; exit 1 }
                 $mutNt = $naughtHandNow.Replace($mu.Anchor, $mu.With)
                 $ntApplied = $mutNt -cne $naughtHandNow
-                $rNt = Invoke-Mutant (New-MutantPage $mu.L $template $hostJs '' (New-HandCopy $mu.L 'naught/naught.hand.js' $mutNt)) 'input,replay'
-                $jNt = Test-Mutant $rNt 'input,replay'
+                $ntCases = 'input,replay:naught:' + $mu.Frame
+                $rNt = Invoke-Mutant (New-MutantPage $mu.L $template $hostJs '' (New-HandCopy $mu.L 'naught/naught.hand.js' $mutNt)) $ntCases
+                $jNt = Test-Mutant $rNt $ntCases
                 $ntFailed = @($jNt.Problems | Where-Object { $_ -like ("*case replay*naught's committed replay, played on a fresh host, is not its hand's at frame " + $mu.Frame + ':*') }).Count
                 $naughtJudged.Add(@{ Name = $mu.Name; Problems = @($jNt.Problems) })
                 $naughtNotes.Add(("{0} applied ({1}) and failed the replay case at frame {2} ({3})" -f $mu.Name, $ntApplied, $mu.Frame, $ntFailed))
@@ -2471,7 +2701,7 @@ if ($Control) {
         $gameJudged = New-Object System.Collections.Generic.List[object]
         $gameNotes = New-Object System.Collections.Generic.List[string]
         $gameOk = $true
-        $rG0 = Invoke-Loop $browser (New-GamePage $tmp 'g0') '1'
+        $rG0 = Invoke-Planned (New-GamePage $tmp 'g0') '1' ''
         $jG0 = if ($rG0.Text -ne '') { Test-Loop $rG0.Text '1' $gameFloors $gameCases $gameAbsent } else { @{ Problems = @($rG0.Reason) } }
         if (@($jG0.Problems).Count -ne 0) { $gameOk = $false }
         $gameNotes.Add(("the game's page has {0} problem(s)" -f @($jG0.Problems).Count))
@@ -2500,7 +2730,7 @@ if ($Control) {
             elseif ($mu.ContainsKey('Hand')) { $pageGm = New-GamePage $tmp $mu.L -Hand $mu.Hand }
             else { $pageGm = New-GamePage $tmp $mu.L -Template $mu.Template }
             # applied: the hand's text changed, the block absent from the page, or the template changed
-            $gmText = [System.IO.File]::ReadAllText($pageGm)
+            $gmText = if ($script:LoopMode -eq 'plan') { '' } else { [System.IO.File]::ReadAllText($pageGm) }   # the plan pass's build may still run
             if ($mu.NoHand) { $gmApplied = -not $gmText.Contains('<script id="hand-kairos"') }
             elseif ($mu.ContainsKey('Hand')) { $gmApplied = ($mu.Hand -cne $kairosHandText) -and $gmText.Contains('<script id="hand-kairos"') }
             else { $gmApplied = ([System.IO.File]::ReadAllText($mu.Template)) -cne $tpl }
@@ -2512,6 +2742,8 @@ if ($Control) {
             if (-not ($gmApplied -and $gmFailed -ge 1)) { $gameOk = $false }
         }
         $gameNote = $gameNotes -join '; '
+        if ($script:LoopMode -eq 'plan') { return }   # the plan pass judges nothing (REPO.8)
+        if ($script:LoopMode -eq 'run') { Write-Output (Get-PoolNote) }
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
             Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and ninety' } else { 'ninety-two applicable' }) + ' mutants for its own reason, each proving it applied')
@@ -2564,6 +2796,32 @@ if ($Control) {
         foreach ($p in @($jG0.Problems) | Select-Object -First 3) { Write-Output ('  the game''s page: ' + $p) }
         foreach ($gj in $gameJudged) { foreach ($p in @($gj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $gj.Name + ': ' + $p) } }
         exit 1
+        }
+        # REPO.8: -Jobs 1 runs the control's code once, each page built and run in its turn. Otherwise the plan pass
+        # builds every page in the background and notes every run; the pool makes the runs side by side, the longest
+        # first, and then each run of the sound case alone; and the run pass judges every mutant, each run answered
+        # from the pool. The run pass, as the one pass of -Jobs 1, ends the script.
+        if ($Jobs -le 1) { & $controlBody }
+        $watch = [System.Diagnostics.Stopwatch]::StartNew()
+        $script:LoopMode = 'plan'
+        & $controlBody
+        Wait-PageBuilds
+        $script:PoolStats = @{ Builds = $script:Builds.Count; BuildSeconds = $watch.Elapsed.TotalSeconds }
+        $pooled = @($script:Planned | Where-Object { -not $_.Alone } | Sort-Object -Property @{ Expression = { $_.Weight }; Descending = $true }, @{ Expression = { $_.Order }; Descending = $false })
+        $watch.Restart()
+        Invoke-LoopPool $pooled $Jobs $script:Answers
+        $script:PoolStats.Pooled = $pooled.Count
+        $script:PoolStats.PoolSeconds = $watch.Elapsed.TotalSeconds
+        $script:PoolStats.Longest = 0.0
+        $script:PoolStats.LongestName = ''
+        foreach ($p in $pooled) {
+            $a = $script:Answers[$p.Key]
+            if ($a -and $a.Seconds -gt $script:PoolStats.Longest) { $script:PoolStats.Longest = $a.Seconds; $script:PoolStats.LongestName = (Split-Path -Leaf $p.Page) + ', ' + $p.Cases }
+        }
+        $script:PoolStats.Alone = $script:AloneRuns
+        $script:PoolStats.AloneSeconds = $script:AloneSeconds
+        $script:LoopMode = 'run'
+        & $controlBody
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
     }
@@ -2576,40 +2834,56 @@ if ($floors.Count -ne $expectedCases) { Write-Output ("FAIL: the floors table ho
 Write-Output ("  the browser: {0}" -f $browser)
 Write-Output ("  the page: {0}" -f $Page)
 $failed = New-Object System.Collections.Generic.List[string]
-foreach ($scale in $scales) {
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    $r = Invoke-Loop $browser $Page $scale
-    $sw.Stop()
-    if ($r.Text -eq '') { $failed.Add("at a ratio of $scale`: $($r.Reason)"); Write-Output ("  ratio {0}: {1}  FAIL" -f $scale, $r.Reason); continue }
-    $j = Test-Loop $r.Text $scale
-    Write-Output ("  ratio {0} ({1:N1} s): {2}" -f $scale, $sw.Elapsed.TotalSeconds, $j.Header)
-    foreach ($l in $j.Lines) { Write-Output ('  ' + $l) }
-    foreach ($p in $j.Problems) { $failed.Add($p); Write-Output ("    {0}  FAIL" -f $p) }
-}
-# The game's page (ENGINE.16), at a ratio of 1, since it holds no grid cartridge: Kairos alone, its hand a block.
+# REPO.8: the sound case first and alone at the first ratio, since it renders in real time and a starved processor
+# fails it; then side by side, -Jobs at a time, the first ratio's input and replay cases, its other cases, the second
+# ratio's every case but the replay and sound cases, which draw nothing and map no pointer, and the game's page
+# (ENGINE.16), at a ratio of 1 since it holds no grid cartridge: Kairos alone, its hand a block. Each run is judged
+# by the cases it names, and every case runs at the first ratio.
+$names = @($floors | ForEach-Object { $_.Case })
+$runs = @(
+    @{ Key = 'sound'; Label = 'ratio 1, the sound case alone'; Scale = $scales[0]; Cases = @('abi', 'sound') },
+    @{ Key = 'replay'; Label = 'ratio 1, the input and replay cases'; Scale = $scales[0]; Cases = @('abi', 'input', 'replay') },
+    @{ Key = 'rest'; Label = 'ratio 1, the other cases'; Scale = $scales[0]; Cases = @($names | Where-Object { @('input', 'replay', 'sound') -notcontains $_ }) },
+    @{ Key = 'second'; Label = 'ratio 1.5, every case but replay and sound'; Scale = $scales[1]; Cases = @($names | Where-Object { @('replay', 'sound') -notcontains $_ }) }
+)
 $gameTmp = Join-Path ([System.IO.Path]::GetTempPath()) ('alonzo_loop_game_' + [System.IO.Path]::GetRandomFileName())
 New-Item -ItemType Directory -Path $gameTmp | Out-Null
 try {
-    $gamePage = New-GamePage $gameTmp 'game'
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    $r = Invoke-Loop $browser $gamePage '1'
-    $sw.Stop()
-    if ($r.Text -eq '') { $failed.Add("the game's page: $($r.Reason)"); Write-Output ("  the game's page: {0}  FAIL" -f $r.Reason) }
-    else {
-        $j = Test-Loop $r.Text '1' $gameFloors $gameCases $gameAbsent
-        $lastLine = @($r.Text -split "`n")[-1].Trim()
-        Write-Output ("  the game's page, Kairos alone, ratio 1 ({0:N1} s): {1}" -f $sw.Elapsed.TotalSeconds, $lastLine)
+    $gamePage = ''
+    $gameError = ''
+    try { $gamePage = New-GamePage $gameTmp 'game' } catch { $gameError = $_.Exception.Message }
+    $answers = @{}
+    $answers['sound'] = Invoke-Loop $browser $Page $runs[0].Scale ($runs[0].Cases -join ',')
+    $plan = New-Object System.Collections.Generic.List[object]
+    foreach ($run in @($runs | Select-Object -Skip 1)) { $plan.Add(@{ Key = $run.Key; Page = $Page; Scale = $run.Scale; Cases = ($run.Cases -join ',') }) }
+    if ($gamePage -ne '') { $plan.Add(@{ Key = 'game'; Page = $gamePage; Scale = '1'; Cases = '' }) }
+    Invoke-LoopPool $plan $Jobs $answers
+    foreach ($run in $runs) {
+        $r = $answers[$run.Key]
+        if ($r.Text -eq '') { $failed.Add("$($run.Label): $($r.Reason)"); Write-Output ("  {0}: {1}  FAIL" -f $run.Label, $r.Reason); continue }
+        $j = Test-Loop $r.Text $run.Scale $floors $expectedCases @() $run.Cases
+        Write-Output ("  {0} ({1:N1} s): {2}" -f $run.Label, $r.Seconds, $j.Header)
         foreach ($l in $j.Lines) { Write-Output ('  ' + $l) }
-        foreach ($p in $j.Problems) { $failed.Add("the game's page: " + $p); Write-Output ("    {0}  FAIL" -f $p) }
+        foreach ($p in $j.Problems) { $failed.Add($p); Write-Output ("    {0}  FAIL" -f $p) }
     }
-} catch {
-    $failed.Add("the game's page: " + $_.Exception.Message); Write-Output ("  the game's page: {0}  FAIL" -f $_.Exception.Message)
+    if ($gameError -ne '') { $failed.Add("the game's page: " + $gameError); Write-Output ("  the game's page: {0}  FAIL" -f $gameError) }
+    else {
+        $r = $answers['game']
+        if ($r.Text -eq '') { $failed.Add("the game's page: $($r.Reason)"); Write-Output ("  the game's page: {0}  FAIL" -f $r.Reason) }
+        else {
+            $j = Test-Loop $r.Text '1' $gameFloors $gameCases $gameAbsent
+            $lastLine = @($r.Text -split "`n")[-1].Trim()
+            Write-Output ("  the game's page, Kairos alone, ratio 1 ({0:N1} s): {1}" -f $r.Seconds, $lastLine)
+            foreach ($l in $j.Lines) { Write-Output ('  ' + $l) }
+            foreach ($p in $j.Problems) { $failed.Add("the game's page: " + $p); Write-Output ("    {0}  FAIL" -f $p) }
+        }
+    }
 } finally {
     Remove-Item -Recurse -Force $gameTmp -ErrorAction SilentlyContinue
 }
 Write-Output ''
 if ($failed.Count -eq 0) {
-    Write-Output "=== CHECK: clean - every case OK at both ratios, every count at or above its floor, and the game's page's fifteen cases OK with Alonzo's fifteen said absent ==="
+    Write-Output "=== CHECK: clean - every case OK, the replay and sound cases at the first ratio and every other at both, every count at or above its floor, and the game's page's fifteen cases OK with Alonzo's fifteen said absent ==="
     exit 0
 }
 Write-Output "=== CHECK: $($failed.Count) problem(s) ==="
