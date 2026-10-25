@@ -326,6 +326,10 @@
       <optgroup label="the benchmark's program, 10,000 lines">
         <option value="sparse_10000">Output, 20,006 record lines</option>
       </optgroup>
+      <optgroup label="the painter's fixture, vla-lang's testdata/appearance/">
+        <option value="appearance">Look, its looks over cells with groups of their own</option>
+        <option value="appearance_drawn">Look, the looks folded in by the language</option>
+      </optgroup>
     </select></label>
     <label>Freeze rows <input type="number" id="freeze-rows" min="0" value="0"></label>
     <label>columns <input type="number" id="freeze-cols" min="0" value="0"></label>
@@ -346,7 +350,7 @@
       <li><b>sheet</b> rows are the tabs; a hidden or very-hidden sheet shows under the tabs' toggle. A tab without a record asks the host for one: here, the fixture of the same program if there is one.</li>
       <li><b>window</b> is the record's scope, the scroll's extent, never less than a screen; <b>extent</b> is the sheet's used rectangle; <b>gridlines</b> on or off.</li>
       <li><b>column</b> rows give widths in characters, the file's own unit, turned into pixels by ECMA-376's rule (72 is 504 px, 60 is 420 px; a column without a row is 64 px, Excel's default); a hidden column is skipped; a column's format fills its empty cells.</li>
-      <li><b>format</b> rows give a fill, general or text, wrap or nowrap. <b>cell</b> rows show their value as the reader spells it, numbers right, text left, TRUE and FALSE and errors centered; <b>formula</b> rows show the formula's text, in green, until the value row lands (KERNEL.7). A nowrap text spills into empty neighbors to the right; a number never does, and a number too wide for its column draws #s across it, as Excel fills a cell under a fixed number format (ENGINE.14).</li>
+      <li><b>format</b> rows give a fill, general, text or a code of Excel's, wrap or nowrap, and since ENGINE.28 the groups after the wrap: a font's weight, slant, size and color, an alignment and a border. A <b>look</b> draws every cell holding its value with what its format says, the cell's own format for the rest. <b>cell</b> rows show their value as the reader spells it, numbers right, text left, TRUE and FALSE and errors centered; <b>formula</b> rows show the formula's text, in green, until the value row lands (KERNEL.7). A nowrap text spills into empty neighbors to the right; a number never does, and a number too wide for its column draws #s across it, as Excel fills a cell under a fixed number format (ENGINE.14).</li>
       <li><b>style</b> and <b>sentence</b> rows ride on their cell: the sentence's row is in the selection's line below the grid, and in the <code>select</code> event the first game's chrome reads.</li>
     </ul>
   </details>
@@ -503,13 +507,18 @@
     fixture_data: { program: 'fixture', sheet: 'data' },
     into_output: { program: 'into', sheet: 'Output' },
     into_checks: { program: 'into', sheet: 'checks' },
-    sparse_10000: { program: 'sparse', sheet: 'Output' }
+    sparse_10000: { program: 'sparse', sheet: 'Output' },
+    // the painter's fixture (ENGINE.28), vla-lang's testdata/appearance/: a sheet whose looks fall over cells with
+    // groups of their own, and its twin with the looks folded in, each cell's style the format Style::over gives it
+    appearance: { program: 'appearance', sheet: 'Look' },
+    appearance_drawn: { program: 'appearance', sheet: 'Look' }
   };
   // What a program's other sheets load when a tab without a record is clicked.
   var PROGRAMS = {
     fixture: { frazaro: 'fixture_frazaro', output: 'fixture_output', data: 'fixture_data' },
     into: { output: 'into_output', checks: 'into_checks' },
-    sparse: { output: 'sparse_10000' }
+    sparse: { output: 'sparse_10000' },
+    appearance: { look: 'appearance' }
   };
   function fixtureText(name) {
     var el = document.getElementById('fixture-' + name);
@@ -529,7 +538,7 @@
   }
   var engineB64 = builtModule().replace(/\s+/g, '');
   var engineBytes = engineB64 ? engineB64.length / 4 * 3 - (/==$/.test(engineB64) ? 2 : /=$/.test(engineB64) ? 1 : 0) : 0;
-  aboutEl.textContent = 'The host, version ' + HOST.version + (engineBytes ? ', over the engine\'s module built into this page, ' + thousands(engineBytes) + ' bytes, with the fake module, version ' + FAKE.version + ', for its oracle' : ', over the fake module, version ' + FAKE.version + ', no engine module being built into this page') + '; and the viewport, version ' + VP.version + (fixtureText('sparse_10000') ? ', over seven records the door printed: the six view goldens of Frazaro\'s scripts/view/ and the 10,000-line program\'s, ' + thousands(fixtureText('sparse_10000').split('\n').length - 1) + ' lines' : '') + '. Device pixel ratio ' + (window.devicePixelRatio || 1) + '.';
+  aboutEl.textContent = 'The host, version ' + HOST.version + (engineBytes ? ', over the engine\'s module built into this page, ' + thousands(engineBytes) + ' bytes, with the fake module, version ' + FAKE.version + ', for its oracle' : ', over the fake module, version ' + FAKE.version + ', no engine module being built into this page') + '; and the viewport, version ' + VP.version + (fixtureText('sparse_10000') ? ', over nine records the door printed: the six view goldens of Frazaro\'s scripts/view/, the 10,000-line program\'s, ' + thousands(fixtureText('sparse_10000').split('\n').length - 1) + ' lines, and the painter\'s fixture with its drawn twin' : '') + '. Device pixel ratio ' + (window.devicePixelRatio || 1) + '.';
   document.getElementById('player-about').textContent = aboutEl.textContent;
 
   // ---- the HiDPI panel: the same text in a DOM cell and in a canvas cell, drawn as the viewport draws ----
@@ -2896,7 +2905,8 @@
   // 0 and -0 are one; a text by its characters; a truth value; an error by its name. An empty cell, and a
   // formula with no value, match no look; the first look the record holds for a value is its look. A row's
   // height is in points at 96 dots an inch, a hidden row or column 0, and neither draws anything.
-  var GQ = { column: 64, row: 20, point: 96 / 72, font: 13, pad: 4, digit: 7, headerMin: 32, headerPad: 12, headerDigit: 7, lineHeight: 1.2, lookback: 8 };
+  var GQ = { column: 64, row: 20, point: 96 / 72, font: 13, pad: 4, digit: 7, headerMin: 32, headerPad: 12, headerDigit: 7, lineHeight: 1.2, lookback: 8,
+             pointFont: 13 / 11, fit: 20 / 11, ink: '#1d1d1b', formulaInk: '#0a6b4f' };   // ENGINE.28: a point's pixels, a fitted row's, the inks
   var GRID_BOX = { w: 1600, h: 700 };   // the stage's box: the card's tall, hidden and styled rows and columns in view
   function gqText(d) {
     if (typeof d === 'string') return d;
@@ -2925,8 +2935,72 @@
   function gqColumnPixels(width) { return Math.floor(((256 * width + Math.floor(128 / GQ.digit)) / 256) * GQ.digit); }
   function gqName(key) { var p = key.split(','); return VP.colName(+p[1]) + p[0]; }
   function gqLessFormulas(text) { return text.split('\n').filter(function (l) { return l.indexOf('(formula ') !== 0; }).join('\n'); }
+  // The groups after a format row's wrap (ENGINE.28), the oracle's own reading: a font's weight, slant, size in
+  // twentieths of a point and color; an alignment's horizontal and vertical word; a border's four edges. A property
+  // unsaid is null.
+  function gqGroups(f) {
+    var out = { font: null, align: null, border: null };
+    for (var i = 5; i < f.length; i++) {
+      var g = f[i], head = Array.isArray(g) && g[0] && g[0].sym !== undefined ? g[0].sym : null, items = Array.isArray(g) ? g.slice(1) : [];
+      if (head === 'font') {
+        var fo = { bold: null, italic: null, size: null, color: null };
+        items.forEach(function (d) {
+          var w = d && d.sym !== undefined ? d.sym : null;
+          if (w === 'bold' || w === 'not-bold') fo.bold = w === 'bold';
+          else if (w === 'italic' || w === 'not-italic') fo.italic = w === 'italic';
+          else if (d && d.num !== undefined) fo.size = Math.round(d.num * 20);
+          else if (typeof d === 'string') fo.color = '#' + d.toUpperCase();
+        });
+        out.font = fo;
+      } else if (head === 'align') {
+        var al = { h: null, v: null };
+        items.forEach(function (d) { var w = d && d.sym !== undefined ? d.sym : null; if (w === 'top' || w === 'middle' || w === 'bottom') al.v = w; else if (w) al.h = w; });
+        out.align = al;
+      } else if (head === 'border') {
+        var bo = { left: null, right: null, top: null, bottom: null };
+        items.forEach(function (e) { if (Array.isArray(e) && e[0] && e[0].sym !== undefined) bo[e[0].sym] = { line: e[1] && e[1].sym !== undefined ? e[1].sym : null, color: typeof e[2] === 'string' ? '#' + e[2].toUpperCase() : null }; });
+        out.border = bo;
+      }
+    }
+    return out;
+  }
+  // The look's rule (ENGINE.28, decision 2; vla-lang's Style::over), written again here: the look's fill, number
+  // format and wrap; its font, alignment and edges property by property where said, else the cell's own.
+  function gqOver(look, own) {
+    function prop(a, b) { return a !== null && a !== undefined ? a : (b !== null && b !== undefined ? b : null); }
+    var f = { fill: look.fill, num: look.num, wrap: look.wrap, font: null, align: null, border: null };
+    if (look.font || own.font) { var lf = look.font || {}, of = own.font || {}; f.font = { bold: prop(lf.bold, of.bold), italic: prop(lf.italic, of.italic), size: prop(lf.size, of.size), color: prop(lf.color, of.color) }; }
+    if (look.align || own.align) { var la = look.align || {}, oa = own.align || {}; f.align = { h: prop(la.h, oa.h), v: prop(la.v, oa.v) }; }
+    if (look.border || own.border) { var lb = look.border || {}, ob = own.border || {}; f.border = { left: prop(lb.left, ob.left), right: prop(lb.right, ob.right), top: prop(lb.top, ob.top), bottom: prop(lb.bottom, ob.bottom) }; }
+    return f;
+  }
+  // A format's font, as the oracle expects the viewport to set it (ENGINE.28, decision 3): a said size of s points at
+  // round(s × 13/11 × dpr), the default text taken as 11 points; its slant and weight before the pixels.
+  function gqFont(f, dpr) {
+    var fo = f.font;
+    if (!fo) return Math.round(GQ.font * dpr) + 'px system-ui, "Segoe UI", sans-serif';
+    var px = fo.size !== null ? Math.round(fo.size / 20 * GQ.pointFont * dpr) : Math.round(GQ.font * dpr);
+    return (fo.italic ? 'italic ' : '') + (fo.bold ? 'bold ' : '') + px + 'px system-ui, "Segoe UI", sans-serif';
+  }
+  function gqLineH(f, dpr) { var fo = f.font; return fo && fo.size !== null ? Math.round(fo.size / 20 * GQ.pointFont * GQ.lineHeight * dpr) : Math.round(GQ.font * GQ.lineHeight * dpr); }
+  // The lines a wrapped text breaks into at a width, the viewport's rule: at its spaces, a word wider than the width
+  // cut by characters.
+  function gqWrapCount(measure, text, width) {
+    var words = text.split(' '), n = 0, line = '';
+    for (var i = 0; i < words.length; i++) {
+      var w = words[i], trial = line === '' ? w : line + ' ' + w;
+      if (measure.measureText(trial).width <= width || line === '') {
+        if (line === '' && measure.measureText(w).width > width) {
+          var cut = '';
+          for (var k = 0; k < w.length; k++) { if (measure.measureText(cut + w.charAt(k)).width > width && cut !== '') { n++; cut = ''; } cut += w.charAt(k); }
+          line = cut;
+        } else line = trial;
+      } else { n++; line = w; }
+    }
+    return n + 1;
+  }
   function gqRead(text) {
-    var forms = VP.readForms(text), m = { window: null, gridlines: true, columns: {}, rows: {}, formats: { 0: { fill: null, num: 'general', wrap: false } }, looks: [], cells: {} };
+    var forms = VP.readForms(text), m = { window: null, gridlines: true, columns: {}, rows: {}, formats: { 0: { fill: null, num: 'general', wrap: false, font: null, align: null, border: null } }, looks: [], cells: {}, styled: false };
     for (var i = 0; i < forms.length; i++) {
       var f = forms[i];
       if (!Array.isArray(f) || !f[0] || f[0].sym === undefined) continue;
@@ -2936,7 +3010,11 @@
       else if (head === 'gridlines') m.gridlines = !!f[2] && f[2].sym === 'on';
       else if (head === 'column') m.columns[VP.colIndex(f[2])] = { width: f[3] && f[3].num !== undefined ? f[3].num : null, hidden: !!f[4] && f[4].sym === 'hidden', style: f[5] && f[5].num !== undefined ? f[5].num : null };
       else if (head === 'row') m.rows[f[2].num] = { height: f[3] && f[3].num !== undefined ? f[3].num : null, hidden: !!f[4] && f[4].sym === 'hidden' };
-      else if (head === 'format') m.formats[f[1].num] = { fill: typeof f[2] === 'string' ? '#' + f[2] : null, num: typeof f[3] === 'string' ? 'code' : f[3].sym, wrap: f[4].sym === 'wrap' };
+      else if (head === 'format') {
+        var gg = gqGroups(f);
+        m.formats[f[1].num] = { fill: typeof f[2] === 'string' ? '#' + f[2] : null, num: typeof f[3] === 'string' ? 'code' : f[3].sym, wrap: f[4].sym === 'wrap', font: gg.font, align: gg.align, border: gg.border };
+        if (gg.font || gg.align) m.styled = true;
+      }
       else if (head === 'look') m.looks.push({ key: gqKey(f[2]), index: f[3].num });
       else if (head === 'cell' || head === 'formula' || head === 'value' || head === 'text' || head === 'style') {
         a = VP.parseRange(f[2]);
@@ -2959,13 +3037,13 @@
     }
     return m;
   }
-  // A cell's format and where it came from: its value's first look, else its own style, else, for an
-  // empty cell, its column's style, else format 0.
+  // A cell's format and where it came from: its value's first look, what it says over the cell's own since
+  // ENGINE.28 (gqOver), else its own style, else, for an empty cell, its column's style, else format 0.
   function gqFormat(m, cell, c) {
     if (cell && cell.key !== null) {
       for (var i = 0; i < m.looks.length; i++) {
         if (m.looks[i].key !== cell.key) continue;
-        if (m.formats[m.looks[i].index]) return { f: m.formats[m.looks[i].index], src: 'look' };
+        if (m.formats[m.looks[i].index]) return { f: gqOver(m.formats[m.looks[i].index], cell.style !== 0 && m.formats[cell.style] ? m.formats[cell.style] : m.formats[0]), src: 'look' };
         break;
       }
     }
@@ -2974,6 +3052,7 @@
     return { f: m.formats[0], src: 'none' };
   }
   function gqAlign(cell, f) {
+    if (f.align && f.align.h !== null && f.align.h !== 'general') return f.align.h;   // said (ENGINE.28)
     if (f.num === 'text') return 'left';
     if (cell.vkind === 'number' || cell.vkind === 'date') return 'right';
     if (cell.vkind === 'bool' || cell.vkind === 'error') return 'center';
@@ -3017,9 +3096,21 @@
       var w = Math.round(css(c) * dpr);
       L.colW.push(w); x += w; L.colX.push(x);
     }
+    // a row with no set height fitted to the tallest size a style row's format says among its cells, by the default
+    // row's ratio, 20 px to 11 points (ENGINE.28, decision 7), the oracle's own count
+    var fits = {};
+    if (m.styled) {
+      for (var fk in m.cells) {
+        if (!Object.prototype.hasOwnProperty.call(m.cells, fk)) continue;
+        var fe = m.cells[fk], ff = fe.style !== 0 ? m.formats[fe.style] : null;
+        if (!ff || !ff.font || ff.font.size === null) continue;
+        var fpx = Math.round(ff.font.size / 20 * GQ.fit), fr = +fk.split(',')[0];
+        if (fpx > GQ.row && !(fits[fr] >= fpx)) fits[fr] = fpx;
+      }
+    }
     L.rowHt = [0]; L.top = [0, 0];
     for (r = 1; r <= L.rows; r++) {
-      var s = m.rows[r], h = !s ? L.rowH : (s.hidden ? 0 : (s.height === null ? L.rowH : Math.round(Math.round(s.height * GQ.point) * dpr)));
+      var s = m.rows[r], h = !s ? (fits[r] !== undefined ? Math.round(fits[r] * dpr) : L.rowH) : (s.hidden ? 0 : (s.height === null ? L.rowH : Math.round(Math.round(s.height * GQ.point) * dpr)));
       L.rowHt.push(h); L.top.push(L.top[r] + h);
     }
     L.sx = g.scrollX; L.sy = g.scrollY; L.ox = L.rhW; L.oy = L.headH;
@@ -3029,7 +3120,7 @@
   // it sits, how it aligns and where it is clipped, a nowrap text spilling into empty neighbors and one
   // left of the view reaching into it; and the cells the record holds in a hidden row or column, counted.
   function gqExpect(m, L, measure) {
-    var E = { texts: {}, wraps: {}, fills: {}, hiddenHeld: 0 }, ox = L.ox, oy = L.oy, sx = L.sx, sy = L.sy;
+    var E = { texts: {}, wraps: {}, fills: {}, hiddenHeld: 0, font: L.font, lineH: L.lineH }, ox = L.ox, oy = L.oy, sx = L.sx, sy = L.sy;
     var clip = { x: ox, y: oy, w: L.W - ox, h: L.H - oy }, r, c, cell;
     function rowAt(y) { var rr = 1; while (rr < L.rows && L.top[rr + 1] <= y) rr++; return rr; }
     function colAt(xx) { var cc = 1; while (cc <= L.cols && L.colX[cc + 1] <= xx) cc++; return cc; }
@@ -3037,33 +3128,49 @@
     measure.font = L.font;
     for (r = r0; r <= r1; r++) {
       var h = L.rowHt[r], top = oy + L.top[r] - sy;
-      for (c = Math.max(1, c0 - GQ.lookback); c <= c1; c++) {
+      // a text left of the view may spill into it, and, where a format says an alignment, one right of it (ENGINE.28)
+      for (c = Math.max(1, c0 - GQ.lookback); c <= (m.styled ? Math.min(L.cols, c1 + GQ.lookback) : c1); c++) {
         cell = m.cells[r + ',' + c] || null;
         var w = L.colW[c];
-        if (h === 0 || w === 0) { if (cell && c >= c0) E.hiddenHeld++; continue; }
+        if (h === 0 || w === 0) { if (cell && c >= c0 && c <= c1) E.hiddenHeld++; continue; }
         var fm = gqFormat(m, cell, c), left = ox + L.colX[c] - sx;
-        if (c >= c0 && fm.f.fill) E.fills[r + ',' + c] = { x: left, y: top, w: w, h: h, color: fm.f.fill, src: fm.src };
+        if (c >= c0 && c <= c1 && fm.f.fill) E.fills[r + ',' + c] = { x: left, y: top, w: w, h: h, color: fm.f.fill, src: fm.src };
         if (!cell || cell.text === '') continue;
-        var align = gqAlign(cell, fm.f);
-        if (c < c0 && (fm.f.wrap || align !== 'left')) continue;
+        // the text's font and color (ENGINE.28): its format's, a formula before its value in the formula's color; its
+        // horizontal alignment said or by its kind; its vertical place said, else the middle for one line and the top
+        // for a wrapped block; a nowrap text spilling by its alignment, a text aligned right or centered into empty
+        // cells on its left too
+        var align = gqAlign(cell, fm.f), valign = fm.f.align && fm.f.align.v !== null ? fm.f.align.v : null, textual = cell.vkind === 'text';
+        if ((c < c0 || c > c1) && (fm.f.wrap || !(c < c0 ? align === 'left' || (align === 'center' && textual) : (align === 'right' && textual) || (align === 'center' && textual)))) continue;
+        var font = gqFont(fm.f, L.dpr), lineH = gqLineH(fm.f, L.dpr), half = Math.round(lineH / 2);
+        var color = cell.kind === 'formula' && !cell.valued ? GQ.formulaInk : (fm.f.font && fm.f.font.color !== null ? fm.f.font.color : GQ.ink);
+        var styled = !!(fm.f.font || (fm.f.align && fm.f.align.v !== null));   // a text its format dresses: counted as a font held
+        var cy = valign === 'top' ? top + half : (valign === 'bottom' ? top + h - half : top + Math.round(h / 2));
+        measure.font = font;
         var ax = align === 'left' ? left + L.pad : (align === 'right' ? left + w - L.pad : left + Math.round(w / 2));
         var hashes = gqHashes(cell, fm.f, w, L.pad, measure);   // before the wrap: a number never wraps
         if (hashes !== null) {
           if (left + w <= clip.x || left >= clip.x + clip.w) continue;
-          E.texts[r + ',' + c] = { text: hashes, x: ax, y: top + Math.round(h / 2), align: align, clip: { x: left, y: top, w: w, h: h }, valued: cell.valued, formula: cell.kind === 'formula', coded: !!cell.coded, hashes: true };
+          E.texts[r + ',' + c] = { text: hashes, x: left + w - L.pad, y: cy, align: 'right', clip: { x: left, y: top, w: w, h: h }, valued: cell.valued, formula: cell.kind === 'formula', coded: !!cell.coded, hashes: true, font: font, color: color, styled: styled };
           continue;
         }
         if (fm.f.wrap) {
           if (left + w <= clip.x || left >= clip.x + clip.w) continue;
-          E.wraps[r + ',' + c] = { text: cell.text, x: ax, y: top + Math.round(L.lineH / 2), clip: { x: left, y: top, w: w, h: h } };
+          var n = gqWrapCount(measure, cell.text, Math.max(1, w - 2 * L.pad));
+          var ty = valign === 'middle' ? top + Math.round(h / 2) - Math.round((n - 1) * lineH / 2) : (valign === 'bottom' ? top + h - half - (n - 1) * lineH : top + half);
+          E.wraps[r + ',' + c] = { text: cell.text, x: ax, y: ty, clip: { x: left, y: top, w: w, h: h }, font: font, color: color, lines: n, styled: styled };
           continue;
         }
-        var textW = measure.measureText(cell.text).width, clipW = w;
-        if (align === 'left' && textW + 2 * L.pad > w) {
-          for (var cc = c + 1; cc <= L.cols && clipW < textW + 2 * L.pad; cc++) { var e2 = m.cells[r + ',' + cc]; if (e2 && e2.text !== '') break; clipW += L.colW[cc]; }
+        var textW = measure.measureText(cell.text).width, need = textW + 2 * L.pad - w, clipX = left, clipW = w;
+        if (need > 0 && (align === 'left' || (textual && (align === 'right' || align === 'center')))) {
+          var wantR = align === 'left' ? need : (align === 'center' ? Math.ceil(need / 2) : 0), wantL = align === 'right' ? need : (align === 'center' ? Math.ceil(need / 2) : 0), grown = 0, cc;
+          for (cc = c + 1; cc <= L.cols && grown < wantR; cc++) { var e2 = m.cells[r + ',' + cc]; if (e2 && e2.text !== '') break; grown += L.colW[cc]; }
+          clipW += grown; grown = 0;
+          for (cc = c - 1; cc >= 1 && grown < wantL; cc--) { var e3 = m.cells[r + ',' + cc]; if (e3 && e3.text !== '') break; grown += L.colW[cc]; }
+          clipX -= grown; clipW += grown;
         }
-        if (left + clipW <= clip.x || left >= clip.x + clip.w) continue;
-        E.texts[r + ',' + c] = { text: cell.text, x: ax, y: top + Math.round(h / 2), align: align, clip: { x: left, y: top, w: clipW, h: h }, valued: cell.valued, formula: cell.kind === 'formula', coded: !!cell.coded };
+        if (clipX + clipW <= clip.x || clipX >= clip.x + clip.w) continue;
+        E.texts[r + ',' + c] = { text: cell.text, x: ax, y: cy, align: align, clip: { x: clipX, y: top, w: clipW, h: h }, valued: cell.valued, formula: cell.kind === 'formula', coded: !!cell.coded, font: font, color: color, styled: styled };
       }
     }
     return E;
@@ -3088,7 +3195,9 @@
       else if (got.align !== ex.align) say(name + ' is aligned ' + got.align + ', and the record says ' + ex.align);
       else if (got.clip.x !== ex.clip.x || got.clip.y !== ex.clip.y || got.clip.w !== ex.clip.w || got.clip.h !== ex.clip.h) say(name + ' is clipped to ' + [got.clip.x, got.clip.y, got.clip.w, got.clip.h].join(',') + ', and the record says ' + [ex.clip.x, ex.clip.y, ex.clip.w, ex.clip.h].join(','));
       else if (!!got.valued !== !!ex.valued || (got.kind === 'formula') !== ex.formula) say(name + ' is drawn as ' + (got.kind === 'formula' ? (got.valued ? 'a formula\'s value' : 'a formula before its value') : 'a value') + ', and the record holds ' + (ex.formula ? (ex.valued ? 'a formula with its value' : 'a formula with no value') : 'a value'));
-      else { k.texts++; if (ex.formula && !ex.valued) k.unvalued++; if (ex.hashes) k.hashes = (k.hashes || 0) + 1; if (ex.coded) k.coded = (k.coded || 0) + 1; }
+      else if (got.font !== ex.font) say(name + ' is drawn in the font ' + got.font + ', and the record says ' + ex.font);
+      else if (String(got.color).toLowerCase() !== ex.color.toLowerCase()) say(name + ' is drawn in ' + got.color + ', and the record says ' + ex.color);
+      else { k.texts++; if (ex.formula && !ex.valued) k.unvalued++; if (ex.hashes) k.hashes = (k.hashes || 0) + 1; if (ex.coded) k.coded = (k.coded || 0) + 1; if (ex.styled) k.fonts = (k.fonts || 0) + 1; }
       delete texts[key];
     }
     for (key in texts) if (Object.prototype.hasOwnProperty.call(texts, key)) say('a text is drawn at ' + gqName(key) + ', ' + JSON.stringify(texts[key].text) + ', where the record holds none');
@@ -3099,7 +3208,8 @@
       var joined = lines.map(function (l) { return l.text; }).join(' ');
       if (joined.replace(/ /g, '') !== wx.text.replace(/ /g, '')) say('the wrapped ' + gqName(key) + ' shows ' + JSON.stringify(joined) + ', and the record says ' + JSON.stringify(wx.text));
       else if (lines[0].x !== wx.x || lines[0].y !== wx.y || lines[0].clip.w !== wx.clip.w || lines[0].clip.h !== wx.clip.h) say('the wrapped ' + gqName(key) + ' is drawn at ' + lines[0].x + ',' + lines[0].y + ' in ' + lines[0].clip.w + ' by ' + lines[0].clip.h + ', and the record places it at ' + wx.x + ',' + wx.y + ' in ' + wx.clip.w + ' by ' + wx.clip.h);
-      else k.wraps++;
+      else if (lines[0].font !== wx.font || String(lines[0].color).toLowerCase() !== wx.color.toLowerCase()) say('the wrapped ' + gqName(key) + ' is drawn in the font ' + lines[0].font + ' and ' + lines[0].color + ', and the record says ' + wx.font + ' and ' + wx.color);
+      else { k.wraps++; if (wx.styled) k.fonts = (k.fonts || 0) + 1; }
       delete wraps[key];
     }
     for (key in wraps) if (Object.prototype.hasOwnProperty.call(wraps, key)) say('a wrapped text is drawn at ' + gqName(key) + ' where the record holds none');
@@ -3427,7 +3537,7 @@
     return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeTexts: kf.texts, fakeLooks: kf.looks, fakeUnvalued: kf.unvalued, fakeProbes: kf.probes, fakeKept: kf.kept, fakeCleared: kf.cleared, fakeValues: kf.values,
                          pointer: x.pointer, key: x.key, edited: x.edited, waits: x.waits, lone: x.lone, module: module, frames: km.frames, equal: km.equal, windows: km.windows, texts: km.texts, wraps: km.wraps, fills: km.fills, looks: km.looks, styles: km.styles,
                          columns: km.columns, unvalued: km.unvalued, hidden: km.hidden, probes: km.probes, kept: km.kept, followed: x.followed, edits: x.edits, cleared: km.cleared, hashes: km.hashes || 0, values: km.values,
-                         fakePatches: kf.patches || 0, patches: km.patches || 0, codes: x.codes, coded: km.coded || 0, live: st.live, misfrees: st.misfrees }, problems: P };
+                         fakePatches: kf.patches || 0, patches: km.patches || 0, codes: x.codes, coded: km.coded || 0, fakeFonts: kf.fonts || 0, fonts: km.fonts || 0, live: st.live, misfrees: st.misfrees }, problems: P };
   }
   // ENGINE.16's half, a game's page's and Alonzo's alike: every grid cartridge the page holds, by its manifest,
   // on the engine's module, a short run with no edits, frame 0 and GAME_GRID_FRAMES more (frame 0 alone at rate
@@ -4067,6 +4177,11 @@
                         '(cell "Write" "A1" "sheet")\n(cell "Write" "B1" "address")\n(cell "Write" "C1" "value")\n(cell "Write" "A2" "Day")\n(cell "Write" "B2" "B3")\n(formula "Write" "C2" "=Clock!$B$1")\n' +
                         '(formula "File" "B3" "=IF(MOD(Clock!$B$1,25)=0,1,0)")\n' +
                         '(format 1 "F7F4FC" general wrap)\n(format 2 "C8E6C9" general nowrap)\n(look "Screen" "on" 2)\n(row "Screen" 7 45 shown)\n(row "Screen" 9 none hidden)\n' +
+                        // ENGINE.28: a look saying a size, a weight and an ink over a cell, drawn large in its default row and clipped
+                        // by it, on and off (P8); and a centered text spilling into the empty cells on both its sides and shrinking
+                        // back (M8), each a cell a repaint must get right
+                        '(format 3 none general nowrap (font bold 22 "6B4FC8"))\n(look "Screen" "big" 3)\n(format 4 none general nowrap (align center))\n' +
+                        '(formula "Screen" "P8" "=IF(MOD(Clock!$B$1,2)=0,\\"big\\",\\"small\\")")\n(formula "Screen" "M8" "=IF(MOD(Clock!$B$1,3)=0,\\"a centered text much longer than its column\\",\\"mid\\")")\n(style "Screen" "M8" 4)\n' +
                         '(cell "Screen" "A1" "frame")\n(formula "Screen" "B1" "=Clock!$B$1")\n(cell "Screen" "J1" "seventh")\n(formula "Screen" "K1" "=INT(Clock!$B$1/7)")\n' +
                         '(formula "Screen" "M1" "=IF(MOD(Clock!$B$1,3)=0,1234567890123,Clock!$B$1)")\n(formula "Screen" "N1" "=IF(MOD(Clock!$B$1,2)=0,\\"on\\",\\"off\\")")\n' +
                         '(cell "Screen" "J2" "text")\n(formula "Screen" "K2" "=IF(MOD(Clock!$B$1,2)=0,\\"a text much longer than its column\\",\\"short\\")")\n' +
@@ -7949,8 +8064,9 @@
   // The expectations below are computed from the record and the rules of the
   // scoping's decision 8, in this script and never by calling the viewport's
   // layout: the two meet on the draw list. The constants are the oracle's own.
-  var R = { column: 64, row: 20, font: 13, pad: 4, digit: 7, headerMin: 32, headerPad: 12, headerDigit: 7, lineHeight: 1.2 };
-  var GRIDLINE = [217, 217, 210], WHITE = [255, 255, 255];
+  var R = { column: 64, row: 20, font: 13, pad: 4, digit: 7, headerMin: 32, headerPad: 12, headerDigit: 7, lineHeight: 1.2,
+            point: 96 / 72, pointFont: 13 / 11, fit: 20 / 11 };   // ENGINE.28: a row's points, a said size's pixels a point, a fitted row's
+  var GRIDLINE = [217, 217, 210], WHITE = [255, 255, 255], INK = '#1d1d1b', FORMULA_INK = '#0a6b4f';
   var measureCtx = document.createElement('canvas').getContext('2d');
   function columnPixelsRule(width) { return Math.floor(((256 * width + Math.floor(128 / R.digit)) / 256) * R.digit); }
   function colName(c) { var s = ''; while (c > 0) { var r = (c - 1) % 26; s = String.fromCharCode(65 + r) + s; c = (c - 1 - r) / 26; } return s; }
@@ -7968,6 +8084,29 @@
     L.lineH = Math.round(R.font * R.lineHeight * dpr);
     L.rows = model.rows + Math.ceil(env.clientH / R.row) + 1;
     L.cols = model.cols + Math.ceil(env.clientW / R.column) + 1;
+    // the rows' heights (ENGINE.28): a row row's in points at 96 dots an inch, a hidden row 0, and a row with no set
+    // height fitted to the tallest size a style row's format says among its cells, the oracle's own count, by the
+    // default row's ratio, 20 px to 11 points
+    var fits = {};
+    model.cells.forEach(function (e) {
+      var f = e.style !== 0 ? model.formats[e.style] : null;
+      if (!f || !f.font || f.font.size === null) return;
+      var px = Math.round(f.font.size / 20 * R.fit);
+      if (px > R.row && !(fits[e.row] >= px)) fits[e.row] = px;
+    });
+    L.rowHt = [0]; L.top = [0, 0];
+    for (var rr = 1; rr <= L.rows; rr++) {
+      var rs = model.rowSettings[rr], rh = !rs ? (fits[rr] !== undefined ? Math.round(fits[rr] * dpr) : L.rowH) : (rs.hidden ? 0 : (rs.height === null ? L.rowH : Math.round(Math.round(rs.height * R.point) * dpr)));
+      L.rowHt.push(rh); L.top.push(L.top[rr] + rh);
+    }
+    // a format's font and its line, as the viewport sets them (ENGINE.28, decision 3)
+    L.fontOf = function (fmt) {
+      var f = fmt.font;
+      if (!f) return L.font;
+      var px = f.size !== null ? Math.round(f.size / 20 * R.pointFont * dpr) : L.fontPx;
+      return (f.italic ? 'italic ' : '') + (f.bold ? 'bold ' : '') + px + 'px system-ui, "Segoe UI", sans-serif';
+    };
+    L.lineHOf = function (fmt) { var f = fmt.font; return f && f.size !== null ? Math.round(f.size / 20 * R.pointFont * R.lineHeight * dpr) : L.lineH; };
     var digits = String(L.rows).length;
     L.rhW = Math.round(Math.max(R.headerMin, R.headerPad + R.headerDigit * digits) * dpr);
     L.colW = [0]; L.colX = [0, 0];
@@ -7980,18 +8119,51 @@
       L.colW.push(w); x += w; L.colX.push(x);
     }
     L.fr = Math.max(0, Math.min(st.frozenRows, L.rows - 1)); L.fc = Math.max(0, Math.min(st.frozenCols, L.cols - 1));
-    L.frozenH = L.fr * L.rowH; L.frozenW = L.colX[L.fc + 1];
+    L.frozenH = L.top[L.fr + 1]; L.frozenW = L.colX[L.fc + 1];
     L.sx = Math.round(env.scrollLeft * dpr); L.sy = Math.round(env.scrollTop * dpr);
     L.ox = L.rhW; L.oy = L.headH;
     L.W = env.canvasW; L.H = env.canvasH;
     return L;
   }
+  // The look's rule (ENGINE.28, decision 2; vla-lang's Style::over), the oracle's own: the look's fill, number format
+  // and wrap, and its font, alignment and edges property by property where it says one, else the cell's own.
+  function overRule(look, own) {
+    function prop(a, b) { return a !== null && a !== undefined ? a : (b !== null && b !== undefined ? b : null); }
+    var f = { fill: look.fill, num: look.num, code: look.code, wrap: look.wrap, font: null, align: null, border: null };
+    if (look.font || own.font) { var lf = look.font || {}, of = own.font || {}; f.font = { bold: prop(lf.bold, of.bold), italic: prop(lf.italic, of.italic), size: prop(lf.size, of.size), color: prop(lf.color, of.color) }; }
+    if (look.align || own.align) { var la = look.align || {}, oa = own.align || {}; f.align = { h: prop(la.h, oa.h), v: prop(la.v, oa.v) }; }
+    if (look.border || own.border) { var lb = look.border || {}, ob = own.border || {}; f.border = { left: prop(lb.left, ob.left), right: prop(lb.right, ob.right), top: prop(lb.top, ob.top), bottom: prop(lb.bottom, ob.bottom) }; }
+    return f;
+  }
+  // The record's format groups read again by the oracle's own hand (ENGINE.28), over the model the viewport's reader
+  // made, so that a viewport whose reader passes over a group, or misreads one, is told by name and not only by a
+  // floor: each format row's groups as gqGroups reads them, and whether any format says a font, an alignment or a
+  // border.
+  function oracleGroups(model, text) {
+    var forms = VP.readForms(text), styled = false, bordered = false;
+    for (var i = 0; i < forms.length; i++) {
+      var f = forms[i];
+      if (!Array.isArray(f) || !f[0] || f[0].sym !== 'format' || !f[1] || f[1].num === undefined) continue;
+      var g = gqGroups(f), fmt = model.formats[f[1].num];
+      if (!fmt) continue;
+      fmt.font = g.font; fmt.align = g.align; fmt.border = g.border;
+      if (g.font || g.align) styled = true;
+      if (g.border) bordered = true;
+    }
+    model.styled = styled; model.bordered = bordered;
+  }
   function fmtOf(model, cell, c) {
-    if (cell && cell.style !== 0 && model.formats[cell.style]) return model.formats[cell.style];
+    var own = cell && cell.style !== 0 && model.formats[cell.style] ? model.formats[cell.style] : model.formats[0];
+    if (cell && cell.lookKey !== null && Object.prototype.hasOwnProperty.call(model.looks, cell.lookKey)) {
+      var lf = model.formats[model.looks[cell.lookKey]];
+      if (lf) return overRule(lf, own);
+    }
+    if (cell && cell.style !== 0 && model.formats[cell.style]) return own;
     if (!cell) { var col = model.columns[c]; if (col && col.style !== null && model.formats[col.style]) return model.formats[col.style]; }
     return model.formats[0];
   }
   function alignRule(cell, fmt) {
+    if (fmt.align && fmt.align.h !== null && fmt.align.h !== 'general') return fmt.align.h;   // said (ENGINE.28)
     if (fmt.num === 'text') return 'left';
     if (cell.vkind === 'number' || cell.vkind === 'date') return 'right';
     if (cell.vkind === 'bool' || cell.vkind === 'error') return 'center';
@@ -8005,7 +8177,24 @@
     return new Array(Math.max(1, Math.floor((w - 2 * pad) / measureCtx.measureText('#').width)) + 1).join('#');
   }
   function colAt(L, x, c0) { var c = Math.max(1, c0); while (c <= L.cols && L.colX[c + 1] <= x) c++; return c; }
-  function rowAt(L, y, r0) { return Math.max(r0, Math.floor(y / L.rowH) + 1); }
+  // The row a content y falls in, from r0: the last row whose top is at or above y (ENGINE.28: the rows' own heights).
+  function rowAt(L, y, r0) { var r = Math.max(1, r0); while (r < L.rows && L.top[r + 1] <= y) r++; return r; }
+  // The lines a wrapped text breaks into at a width, the viewport's rule written again: at its spaces, a word wider
+  // than the width cut by characters.
+  function wrapCount(text, width) {
+    var words = text.split(' '), n = 0, line = '';
+    for (var i = 0; i < words.length; i++) {
+      var w = words[i], trial = line === '' ? w : line + ' ' + w;
+      if (measureCtx.measureText(trial).width <= width || line === '') {
+        if (line === '' && measureCtx.measureText(w).width > width) {
+          var cut = '';
+          for (var k = 0; k < w.length; k++) { if (measureCtx.measureText(cut + w.charAt(k)).width > width && cut !== '') { n++; cut = ''; } cut += w.charAt(k); }
+          line = cut;
+        } else line = trial;
+      } else { n++; line = w; }
+    }
+    return n + 1;
+  }
   // The expected draws of one quadrant.
   function expectQuadrant(model, L, clip, r1, r2, c1, c2, sx, sy, name, E) {
     if (clip.w <= 0 || clip.h <= 0) return;
@@ -8013,50 +8202,68 @@
     var rowStart = Math.max(r1, rowAt(L, clip.y - oy + sy, r1)), rowEnd = Math.min(r2, rowAt(L, clip.y + clip.h - 1 - oy + sy, r1));
     var colStart = Math.max(c1, colAt(L, clip.x - ox + sx, c1)), colEnd = Math.min(c2, colAt(L, clip.x + clip.w - 1 - ox + sx, c1));
     if (rowStart > rowEnd || colStart > colEnd) return;
-    var r, c, cell, y, left, w;
+    var r, c, cell, y, h, left, w;
     measureCtx.font = L.font;
     for (r = rowStart; r <= rowEnd; r++) {
-      y = oy + (r - 1) * rowH - sy;
+      y = oy + L.top[r] - sy; h = L.rowHt[r];
+      if (h === 0) continue;
       for (c = colStart; c <= colEnd; c++) {
         w = L.colW[c];
         if (w === 0) continue;
         cell = model.cells.get(r + ',' + c) || null;
         var f = fmtOf(model, cell, c);
-        if (f.fill) E.fills.push({ key: name + ':' + r + ',' + c, x: ox + L.colX[c] - sx, y: y, w: w, h: rowH, color: f.fill });
+        if (f.fill) E.fills.push({ key: name + ':' + r + ',' + c, x: ox + L.colX[c] - sx, y: y, w: w, h: h, color: f.fill });
       }
     }
     if (model.gridlines) {
       for (c = colStart; c <= colEnd; c++) { if (L.colW[c] === 0) continue; E.vlines.push(name + ':' + (ox + L.colX[c + 1] - sx - 0.5)); }
-      for (r = rowStart; r <= rowEnd; r++) E.hlines.push(name + ':' + (oy + (r - 1) * rowH + rowH - sy - 0.5));
+      for (r = rowStart; r <= rowEnd; r++) { if (L.rowHt[r] === 0) continue; E.hlines.push(name + ':' + (oy + L.top[r + 1] - sy - 0.5)); }
     }
     for (r = rowStart; r <= rowEnd; r++) {
-      y = oy + (r - 1) * rowH - sy;
-      var from = Math.max(c1, colStart - 8);
-      for (c = from; c <= colEnd; c++) {
+      y = oy + L.top[r] - sy; h = L.rowHt[r];
+      if (h === 0) continue;
+      // a text left of the view may spill into it, and, where a format says an alignment, one right of it (ENGINE.28)
+      var from = Math.max(c1, colStart - 8), to = model.styled ? Math.min(c2, colEnd + 8) : colEnd;
+      for (c = from; c <= to; c++) {
         if (L.colW[c] === 0) continue;
         cell = model.cells.get(r + ',' + c) || null;
         if (!cell || cell.text === '') continue;
-        var fmt = fmtOf(model, cell, c), align = alignRule(cell, fmt);
+        // the text's font and color (ENGINE.28): its format's, a formula before its value in the formula's color; its
+        // horizontal alignment said or by its kind; its vertical place said, else the middle for one line and the top for
+        // a wrapped block; a nowrap text spilling by its alignment, one aligned right or centered into empty cells on its
+        // left too, a value of kind text alone
+        var fmt = fmtOf(model, cell, c), align = alignRule(cell, fmt), valign = fmt.align && fmt.align.v !== null ? fmt.align.v : null, textual = cell.vkind === 'text';
         w = L.colW[c]; left = ox + L.colX[c] - sx;
-        if (c < colStart && (fmt.wrap || align !== 'left')) continue;
+        if ((c < colStart || c > colEnd) && (fmt.wrap || !(c < colStart ? align === 'left' || (align === 'center' && textual) : (align === 'right' && textual) || (align === 'center' && textual)))) continue;
+        var font = L.fontOf(fmt), lineH = L.lineHOf(fmt), half = Math.round(lineH / 2);
+        var color = cell.kind === 'formula' && !cell.valued ? FORMULA_INK : (fmt.font && fmt.font.color !== null ? fmt.font.color : INK);
+        var styled = !!(fmt.font || (fmt.align && fmt.align.v !== null));   // a text its format dresses: counted as a font asserted
+        var cy = valign === 'top' ? y + half : (valign === 'bottom' ? y + h - half : y + Math.round(h / 2));
+        measureCtx.font = font;
         var hashes = hashRule(cell, fmt, w, L.pad);
         if (hashes !== null) {
           if (left + w <= clip.x || left >= clip.x + clip.w) continue;
-          E.texts.push({ key: name + ':' + r + ',' + c, text: hashes, x: left + w - L.pad, y: y + Math.round(rowH / 2), align: align, clip: { x: left, y: y, w: w, h: rowH }, kind: cell.kind, hashes: true });
+          E.texts.push({ key: name + ':' + r + ',' + c, text: hashes, x: left + w - L.pad, y: cy, align: 'right', clip: { x: left, y: y, w: w, h: h }, kind: cell.kind, hashes: true, font: font, color: color, styled: styled });
           continue;
         }
+        var ax = align === 'left' ? left + L.pad : (align === 'right' ? left + w - L.pad : left + Math.round(w / 2));
         if (fmt.wrap) {
           if (left + w <= clip.x || left >= clip.x + clip.w) continue;
-          E.wraps.push({ key: name + ':' + r + ',' + c, text: cell.text, x: align === 'left' ? left + L.pad : (align === 'right' ? left + w - L.pad : left + Math.round(w / 2)), y: y + Math.round(L.lineH / 2), align: align, clip: { x: left, y: y, w: w, h: rowH } });
+          var n = wrapCount(cell.text, Math.max(1, w - 2 * L.pad));
+          var ty = valign === 'middle' ? y + Math.round(h / 2) - Math.round((n - 1) * lineH / 2) : (valign === 'bottom' ? y + h - half - (n - 1) * lineH : y + half);
+          E.wraps.push({ key: name + ':' + r + ',' + c, text: cell.text, x: ax, y: ty, align: align, clip: { x: left, y: y, w: w, h: h }, font: font, color: color, lines: n, styled: styled });
           continue;
         }
-        var textW = measureCtx.measureText(cell.text).width, clipW = w;
-        if (align === 'left' && textW + 2 * L.pad > w) {
-          var cc = c + 1;
-          while (cc <= c2 && clipW < textW + 2 * L.pad) { var e = model.cells.get(r + ',' + cc); if (e && e.text !== '') break; clipW += L.colW[cc]; cc++; }
+        var textW = measureCtx.measureText(cell.text).width, need = textW + 2 * L.pad - w, clipX = left, clipW = w;
+        if (need > 0 && (align === 'left' || (textual && (align === 'right' || align === 'center')))) {
+          var wantR = align === 'left' ? need : (align === 'center' ? Math.ceil(need / 2) : 0), wantL = align === 'right' ? need : (align === 'center' ? Math.ceil(need / 2) : 0), grown = 0, cc;
+          for (cc = c + 1; cc <= c2 && grown < wantR; cc++) { var e = model.cells.get(r + ',' + cc); if (e && e.text !== '') break; grown += L.colW[cc]; }
+          clipW += grown; grown = 0;
+          for (cc = c - 1; cc >= c1 && grown < wantL; cc--) { var e2 = model.cells.get(r + ',' + cc); if (e2 && e2.text !== '') break; grown += L.colW[cc]; }
+          clipX -= grown; clipW += grown;
         }
-        if (left + clipW <= clip.x || left >= clip.x + clip.w) continue;
-        E.texts.push({ key: name + ':' + r + ',' + c, text: cell.text, x: align === 'left' ? left + L.pad : (align === 'right' ? left + w - L.pad : left + Math.round(w / 2)), y: y + Math.round(rowH / 2), align: align, clip: { x: left, y: y, w: clipW, h: rowH }, kind: cell.kind });
+        if (clipX + clipW <= clip.x || clipX >= clip.x + clip.w) continue;
+        E.texts.push({ key: name + ':' + r + ',' + c, text: cell.text, x: ax, y: cy, align: align, clip: { x: clipX, y: y, w: clipW, h: h }, kind: cell.kind, font: font, color: color, styled: styled });
       }
     }
     // the visible headers of the quadrant's rows and columns
@@ -8083,7 +8290,7 @@
     var c1 = q.name === 'body' || q.name === 'frozen-rows' ? L.fc + 1 : 1, c2 = q.name === 'body' || q.name === 'frozen-rows' ? L.cols : L.fc;
     var t = Math.max(top, r1), b = Math.min(bottom, r2), l = Math.max(left, c1), rr = Math.min(right, c2);
     if (t > b || l > rr) return null;
-    return { x: L.ox + L.colX[l] - q.sx, y: L.oy + (t - 1) * L.rowH - q.sy, w: L.colX[rr + 1] - L.colX[l], h: (b - t + 1) * L.rowH, top: t, bottom: b, left: l, right: rr };
+    return { x: L.ox + L.colX[l] - q.sx, y: L.oy + L.top[t] - q.sy, w: L.colX[rr + 1] - L.colX[l], h: L.top[b + 1] - L.top[t], top: t, bottom: b, left: l, right: rr };
   }
 
   function runCase(cs, out) {
@@ -8092,12 +8299,13 @@
     box.className = 'case';
     box.style.cssText = 'width:' + cs.w + 'px;height:' + cs.h + 'px;';
     stage.appendChild(box);
-    var problems = [], counts = { texts: 0, wraps: 0, fills: 0, lines: 0, headers: 0, selection: 0, marks: 0, probes: 0, hashes: 0 };
-    var vp = null;
+    var problems = [], counts = { texts: 0, wraps: 0, fills: 0, lines: 0, headers: 0, selection: 0, marks: 0, probes: 0, hashes: 0, fonts: 0, twin: 0 };
+    var vp = null, twinVp = null, twinBox = null;
     try {
-      vp = new VP(box);
+      vp = new VP(box, { willReadFrequently: !!cs.twin });
       var text = fixtureText(cs.fixture);
       var model = VP.readRecord(text);
+      oracleGroups(model, text);
       vp.load(text);
       var st = { widths: {}, frozenRows: 0, frozenCols: 0 };
       if (cs.freeze) { vp.freeze(cs.freeze[0], cs.freeze[1]); st.frozenRows = cs.freeze[0]; st.frozenCols = cs.freeze[1]; }
@@ -8152,7 +8360,9 @@
         else if (got.align !== ex.align) problems.push('cell ' + ex.key + ' aligned ' + got.align + ', expected ' + ex.align);
         else if (got.clip.x !== ex.clip.x || got.clip.y !== ex.clip.y || got.clip.w !== ex.clip.w || got.clip.h !== ex.clip.h) problems.push('cell ' + ex.key + ' clipped to ' + got.clip.x + ',' + got.clip.y + ' ' + got.clip.w + 'x' + got.clip.h + ', expected ' + ex.clip.x + ',' + ex.clip.y + ' ' + ex.clip.w + 'x' + ex.clip.h);
         else if ((got.kind === 'formula') !== (ex.kind === 'formula')) problems.push('cell ' + ex.key + ' drawn as a ' + got.kind);
-        else { counts.texts++; if (ex.hashes) counts.hashes++; }
+        else if (got.font !== ex.font) problems.push('cell ' + ex.key + ' in the font ' + got.font + ', expected ' + ex.font);
+        else if (String(got.color).toLowerCase() !== ex.color.toLowerCase()) problems.push('cell ' + ex.key + ' in ' + got.color + ', expected ' + ex.color);
+        else { counts.texts++; if (ex.hashes) counts.hashes++; if (ex.styled) counts.fonts++; }
         delete drawn[ex.key];
       }
       for (k in drawn) if (Object.prototype.hasOwnProperty.call(drawn, k)) problems.push('a text drawn at ' + k + ' (' + drawn[k].text + ') that the record does not put there');
@@ -8165,7 +8375,8 @@
         if (!sameText) problems.push('wrapped cell ' + wx.key + ' shows ' + joined + ', the record says ' + wx.text);
         else if (lines[0].x !== wx.x || lines[0].y !== wx.y) problems.push('wrapped cell ' + wx.key + ' at ' + lines[0].x + ',' + lines[0].y + ', expected ' + wx.x + ',' + wx.y);
         else if (lines[0].clip.x !== wx.clip.x || lines[0].clip.w !== wx.clip.w) problems.push('wrapped cell ' + wx.key + ' clipped to ' + lines[0].clip.w + ', expected ' + wx.clip.w);
-        else counts.wraps++;
+        else if (lines[0].font !== wx.font || String(lines[0].color).toLowerCase() !== wx.color.toLowerCase()) problems.push('wrapped cell ' + wx.key + ' in the font ' + lines[0].font + ' and ' + lines[0].color + ', expected ' + wx.font + ' and ' + wx.color);
+        else { counts.wraps++; if (wx.styled) counts.fonts++; }
         delete drawnWraps[wx.key];
       }
       for (k in drawnWraps) if (Object.prototype.hasOwnProperty.call(drawnWraps, k)) problems.push('a wrapped text drawn at ' + k + ' that the record does not put there');
@@ -8262,13 +8473,36 @@
           if (done) break;
         }
       }
+      // (8) the drawn twin (ENGINE.28, decision 15): the record with its looks drawn op for op and pixel for pixel as its
+      // twin, the same window with the looks folded in by the language, each cell's style the format Style::over gives it
+      if (cs.twin) {
+        twinBox = document.createElement('div');
+        twinBox.className = 'case';
+        twinBox.style.cssText = 'width:' + cs.w + 'px;height:' + cs.h + 'px;';
+        stage.appendChild(twinBox);
+        twinVp = new VP(twinBox, { willReadFrequently: true });
+        twinVp.load(fixtureText(cs.twin));
+        var mine = vp.draws(), theirs = twinVp.draws(), opsSame = mine.length === theirs.length, firstOp = -1;
+        for (i = 0; opsSame && i < mine.length; i++) if (JSON.stringify(mine[i]) !== JSON.stringify(theirs[i])) { opsSame = false; firstOp = i; }
+        if (!opsSame) problems.push('the draw list differs from the drawn twin\'s' + (firstOp >= 0 ? ' at op ' + firstOp + ': ' + JSON.stringify(mine[firstOp]) + ' against ' + JSON.stringify(theirs[firstOp]) : ': ' + mine.length + ' ops against ' + theirs.length));
+        else counts.twin++;
+        var pa = vp.canvas.getContext('2d').getImageData(0, 0, vp.canvas.width, vp.canvas.height).data, pb = twinVp.canvas.getContext('2d').getImageData(0, 0, twinVp.canvas.width, twinVp.canvas.height).data, diff = 0, firstPx = -1;
+        if (pa.length !== pb.length) problems.push('the canvas differs in size from the drawn twin\'s');
+        else {
+          for (i = 0; i < pa.length; i++) if (pa[i] !== pb[i]) { if (firstPx < 0) firstPx = i; diff++; }
+          if (diff) problems.push('the canvas differs from the drawn twin\'s in ' + diff + ' byte(s), the first at pixel ' + Math.floor(firstPx / 4 % vp.canvas.width) + ',' + Math.floor(firstPx / 4 / vp.canvas.width));
+          else counts.twin++;
+        }
+      }
     } catch (e) {
       problems.push('error: ' + (e && e.message ? e.message : e));
     } finally {
       if (vp) { try { vp.destroy(); } catch (e2) { } }
+      if (twinVp) { try { twinVp.destroy(); } catch (e3) { } }
       if (box.parentNode) box.parentNode.removeChild(box);
+      if (twinBox && twinBox.parentNode) twinBox.parentNode.removeChild(twinBox);
     }
-    var head = 'case ' + cs.name + ' [' + cs.w + 'x' + cs.h + ' css]: texts ' + counts.texts + ', wrapped ' + counts.wraps + ', fills ' + counts.fills + ', lines ' + counts.lines + ', headers ' + counts.headers + ', selection ' + counts.selection + ', marks ' + counts.marks + ', probes ' + counts.probes + ', hashes ' + counts.hashes + ': ';
+    var head = 'case ' + cs.name + ' [' + cs.w + 'x' + cs.h + ' css]: texts ' + counts.texts + ', wrapped ' + counts.wraps + ', fills ' + counts.fills + ', lines ' + counts.lines + ', headers ' + counts.headers + ', selection ' + counts.selection + ', marks ' + counts.marks + ', probes ' + counts.probes + ', hashes ' + counts.hashes + ', fonts ' + counts.fonts + ', twin ' + counts.twin + ': ';
     if (problems.length === 0) { out.push(head + 'OK'); return true; }
     out.push(head + 'FAIL: ' + problems.slice(0, 6).join('; ') + (problems.length > 6 ? '; and ' + (problems.length - 6) + ' more' : ''));
     return false;
@@ -8300,7 +8534,12 @@
       // ENGINE.26: a width set on another sheet of the program never reaches the Output, and the Output's own is kept
       // while two other sheets are shown and given widths of their own
       { name: 'sheets_other', fixture: 'fixture_output', w: 1100, h: 400, others: [{ fixture: 'fixture_frazaro', columnWidth: ['B', 300] }] },
-      { name: 'sheets_back', fixture: 'fixture_output', w: 1100, h: 400, columnWidth: ['B', 26], others: [{ fixture: 'fixture_frazaro', columnWidth: ['B', 300] }, { fixture: 'fixture_data', columnWidth: ['B', 90] }] }
+      { name: 'sheets_back', fixture: 'fixture_output', w: 1100, h: 400, columnWidth: ['B', 26], others: [{ fixture: 'fixture_frazaro', columnWidth: ['B', 300] }, { fixture: 'fixture_data', columnWidth: ['B', 90] }] },
+      // ENGINE.28: the painter's fixture, its looks over cells with groups of their own, every text in its font and
+      // color at its place, held to the oracle's own look's rule and drawn as its twin with the looks folded in; and the
+      // twin itself, each cell's style the format the language gives it
+      { name: 'appearance', fixture: 'appearance', w: 1100, h: 400, twin: 'appearance_drawn' },
+      { name: 'appearance_drawn', fixture: 'appearance_drawn', w: 1100, h: 400 }
     ];
     var ok = 0;
     for (var i = 0; i < cases.length; i++) if (runCase(cases[i], out)) ok++;

@@ -314,13 +314,28 @@ $expectedSources = 11
 $expectedLibraries = 1
 $expectedReplays = 7
 $expectedGoldens = 7
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 177; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4263; 'cartridges/naught/naught.vla' = 675 }
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 229; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4263; 'cartridges/naught/naught.vla' = 675 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---
 $requiredDirectives = @('spec', 'title', 'rate', 'screen', 'seed')
 $optionalDirectives = @('author', 'license', 'notes', 'settle', 'bound', 'game', 'work', 'read')
 $rowKinds = @('sheet', 'cell', 'formula', 'value', 'name', 'column', 'format', 'style', 'gridlines', 'sentence', 'table', 'refers', 'look', 'row')
+# A format row's groups after its wrap (ENGINE.28, over vla-lang 0.11.0's KERNEL.50): each a list headed font, align
+# or border, each head at most once; what a group holds is the loader's to refuse by name, which the engine's load
+# of every cartridge holds elsewhere in this check.
+function Test-Groups($items) {
+    $seen = @{}
+    for ($gi = 5; $gi -lt $items.Count; $gi++) {
+        $g = $items[$gi]
+        if (-not (Test-Kind $g 'list') -or $g.Items.Count -eq 0 -or -not (Test-Kind $g.Items[0] 'symbol')) { return $false }
+        $head = $g.Items[0].Text
+        if ($head -cne 'font' -and $head -cne 'align' -and $head -cne 'border') { return $false }
+        if ($seen.ContainsKey($head)) { return $false }
+        $seen[$head] = $true
+    }
+    return $true
+}
 function New-Rect([int]$top, [int]$left, [int]$bottom, [int]$right) { return @{ T = $top; L = $left; B = $bottom; R = $right } }
 $layouts = @{
     'palette' = @((New-Rect 1 1 16 3)); 'input' = @((New-Rect 1 1 10 5), (New-Rect 11 1 18 2)); 'keys' = @((New-Rect 1 1 10 5))
@@ -559,7 +574,7 @@ function Test-Cartridge([string]$path) {
             'value' { $it.Count -eq 4 -and (Test-Kind $it[1] 'string') -and (Test-Kind $it[2] 'string') -and (Test-Value $it[3]) }
             'name' { $it.Count -eq 3 -and (Test-Kind $it[1] 'string') -and (Test-Kind $it[2] 'string') }
             'column' { $it.Count -eq 6 -and (Test-Kind $it[1] 'string') -and (Test-Kind $it[2] 'string') }
-            'format' { $it.Count -eq 5 -and (Test-Whole $it[1]) }
+            'format' { $it.Count -ge 5 -and (Test-Whole $it[1]) -and (Test-Groups $it) }
             'style' { $it.Count -eq 4 -and (Test-Kind $it[1] 'string') -and (Test-Kind $it[2] 'string') -and (Test-Whole $it[3]) }
             'gridlines' { $it.Count -eq 3 -and (Test-Kind $it[1] 'string') -and ((Test-Sym $it[2] 'on') -or (Test-Sym $it[2] 'off')) }
             'sentence' { $it.Count -eq 4 -and (Test-Kind $it[1] 'string') -and (Test-Kind $it[2] 'string') -and (Test-Whole $it[3]) }

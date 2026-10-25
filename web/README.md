@@ -278,7 +278,11 @@ cell's value is the text the value draws under the code of the format the
 cell draws with, which the cell shows in the value's place, aligned and
 matched to a look by the value, the value kept for the bar (Frazaro's
 `KERNEL.47`, read since `CART.12`): the viewport keeps a code and never
-applies one; an unknown row is counted, never refused. What the viewport owns is the state no program sees:
+applies one; a `format` row's groups after its wrap, a font, an alignment
+and a border (Frazaro's `KERNEL.50`, read since `ENGINE.28`), are read as
+the loader reads them, a row whose groups say what a format does not take
+counted malformed, and a look draws a cell with what its format says over
+the cell's own, property by property (`Style::over`); an unknown row is counted, never refused. What the viewport owns is the state no program sees:
 the scroll, the selection, the widths a person dragged, each sheet's its own
 as a spreadsheet keeps them (`ENGINE.26`), the frozen panes and the marks a
 host asked for. The record is never written.
@@ -288,9 +292,11 @@ panel, a cartridge running on the host's loop, Life, the glider gun, the
 test card, the input card, the sound card, Sand, the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), Kairos, the stacking game (`CART.4`), Superposition, the large board (`CART.12`), Seiyaku, the number-placement puzzle (`CART.14`), or Naught: *Vel et Aut*, the bench of logic gates (`CART.9`), each with its source, which the drawer's Build expands into the
 cartridge in the page, the input card, the sound card, Sand and Kairos each with its replay, which Play the replay plays, the
 Audio sheet heard after Sound on, and
-below it the viewport over seven
-records the door printed: the six view goldens of Frazaro's `scripts/view/`
-and the record of the 10,000-line program the renderer benchmark measured.
+below it the viewport over nine
+records the door printed: the six view goldens of Frazaro's `scripts/view/`,
+the record of the 10,000-line program the renderer benchmark measured, and
+the painter's fixture with its drawn twin, `vla-lang`'s
+`testdata/appearance/` (`ENGINE.28`).
 It runs from disk and reads nothing from the network.
 
 ## Try it
@@ -628,9 +634,9 @@ page shows opened plainly and what Pages deploys.
   first two levels played, and a stand-in after it, the other levels, the
   bench's switches written in the edit row and a switch written over,
   every frame's 400 gates and its game, each level's board and words, the
-  Lab and the Camera's sheet, equal to Naught's hand, its end its golden,
-  the Bench's record, and each sheet its person showed shown as its
-  nineteenth row names it;
+  Lab, the Gates and the Camera's sheet, equal to Naught's hand, its end
+  its golden, the Bench's record, and each sheet its person showed shown
+  as its nineteenth row names it;
   and the sound
   itself (`sound`, `ENGINE.4`'s second slice): the host's own voices over
   the double handed an `OfflineAudioContext`, a sequence of voice states
@@ -697,7 +703,13 @@ page shows opened plainly and what Pages deploys.
   since `ENGINE.14` each line counts its #s, and `sparse_hashes` narrows the
   sparse record's column A until its three-digit numbers draw them; since
   `ENGINE.26`, `sheets_other` and `sheets_back` give other sheets of the
-  fixtures' program widths of their own and hold the Output at its own.
+  fixtures' program widths of their own and hold the Output at its own;
+  since `ENGINE.28` each line counts its fonts, the texts a format dresses,
+  and its twin, and `appearance` draws the painter's fixture, its looks over
+  cells with groups of their own, every text held in its font, color and
+  place to the oracle's own look's rule and the whole drawn op for op and
+  pixel for pixel as `appearance_drawn`, the same window with the looks
+  folded in by the language.
 - `index.html?bench=1` is the floors' instrument, the renderer benchmark of
   `KERNEL.3` over the viewport: the 10,000-line record at the normal window
   (40 rows by 15 columns) and at full screen, 120 steps of three rows and 20
@@ -827,14 +839,27 @@ the record's number, the file's stored width in characters, turned into CSS
 pixels by ECMA-376's rule with a maximum digit width of 7 (Calibri 11 at 96
 DPI): 72 is 504 px and 60 is 420 px; a column with no row is 64 px, Excel's
 default; a hidden column is skipped; a column's format fills its empty cells.
-A row is 20 px, the headers one row high, the text 13 px `system-ui`. A
+A row is 20 px, the headers one row high, the text 13 px `system-ui`. Since
+`ENGINE.28` a format's font dresses its text: bold, italic, a size of *s*
+points at 13/11 px a point, so that a said 11 is the default's 13 px and 22
+twice it, a wrapped line's height from its own size, and an ink of its own;
+a said alignment places it, left, center or right, top, middle or bottom,
+where unsaid one line sits at the cell's middle and a wrapped block at its
+top; a row with no `row` row is fitted to the tallest size a `style` row's
+format says in it, at 20 px to 11 points, a look's size never moving a
+row; and a look draws a cell with what its format says and the cell's own
+for each property of a font, an alignment or a border it does not say
+(`Style::over`), its fill, number format and wrap replacing the cell's own
+as before. A
 `cell` row shows its value aligned as Excel aligns it under General: a
 number right, a text left, `TRUE`, `FALSE` and an error centered, a date as
 the text inside, right; under a `text` format everything left; under a code,
 the text of its `text` row where the record holds one, aligned by its value
 as under General (`CART.12`). A `formula`
 row shows the formula's text, left, in green. A nowrap text spills into the
-empty cells to its right and stops at the first that holds anything; a
+empty cells to its right and stops at the first that holds anything, and
+since `ENGINE.28` by its alignment, a right-aligned text into the cells on
+its left and a centered one into both, half the overhang each way; a
 number never spills, and a number or a date under General or a code whose text is
 wider than its column draws as many `#` as fit, as Excel fills a cell under
 a fixed number format, never a cut text (`ENGINE.14`); a wrapped text is

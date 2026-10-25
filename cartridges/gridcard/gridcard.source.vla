@@ -222,6 +222,51 @@
   (style "J16" 27)                  ; under the look of 3
   (look 0.125 32))                  ; the glyph's look
 
-; Rows 17 to 50: a stripe that moves, one fill over the Screen's whole width, a "#" every
+; Rows 17 and 18: a format's appearance (ENGINE.28), the groups after a format's wrap, each drawn
+; by the viewport as the record says it: a weight, a slant, a size and an ink; a said alignment on
+; a number and on texts, the three vertical places in a row the 22-point cell fits, a wrapped text
+; centered down its row; a button, white bold centered on the deep lavender (Buffet's); a look
+; that says a weight, a size and an ink over a cell whose own format centers it, which the look
+; keeps (Seiyaku's shape); a number too wide at 22 points, drawn as #s in that size; a centered
+; text spilling into the empty cells on both its sides and one aligned right spilling left.
+(format 33 none general nowrap (font bold))                       ; bold
+(format 34 none general nowrap (font italic))                     ; italic
+(format 35 none general nowrap (font 22))                         ; 22 points, twice the default's size, which fits row 17 to it
+(format 36 none general nowrap (font "6B4FC8"))                   ; an ink, Lovelace Lavender's deep shade
+(format 37 none general nowrap (align left))                      ; a number on the left
+(format 38 none general nowrap (align center))                    ; a text centered, spilling both ways when wider than its cell
+(format 39 none general nowrap (align right))                     ; a text on the right, spilling left when wider
+(format 40 none general nowrap (align general))                   ; general said: by kind, as unsaid
+(format 41 none general nowrap (align top))                       ; the top of the fitted row
+(format 42 none general nowrap (align middle))                    ; its middle
+(format 43 none general nowrap (align bottom))                    ; its bottom
+(format 44 none general wrap (align center middle))               ; a wrapped text centered down its row
+(format 45 "6B4FC8" general nowrap (font bold "FFFFFF") (align center middle))   ; a button: white bold text centered on the deep lavender
+(format 46 none general wrap (align center middle))               ; a variable's own format, centered and wrapped for its marks
+(format 47 none general nowrap (font bold 22 "6B4FC8"))           ; its value's look: a weight, a size and an ink, the alignment the cell's own
+(on "Screen"                        ; the sheet every row below writes
+  (look 77 47))                     ; the look of 77, over N17's own format
+(cells "Screen"                     ; the sheet every entry below writes
+  ("A17" "fonts and alignment: the row fitted to its 22-point cell")
+  ("B17" "bold") ("C17" "italic") ("D17" "big") ("E17" "ink")
+  ("F17" 42)                        ; a number on the left, a value no look meets
+  ("G17" "mid") ("H17" "end")
+  ("I17" "top") ("J17" "middle") ("K17" "bottom")
+  ("L17" "in the middle")           ; two lines, centered down the row
+  ("M17" "[ Buy ]")                 ; the button
+  ("N17" 77)                        ; the look's digit over its cell's own centering
+  ("O17" 1234567)                   ; too wide at 22 points: #s in that size
+  ("A18" "a centered and a right-aligned spill")   ; short enough to stay in A, so that no spill meets it
+  ("D18" "a centered text wider than its cell")
+  ("L18" "right-aligned, spilling left")
+  ("N18" 55))                       ; general said, a value no look meets
+(on "Screen"                        ; the sheet every row below writes
+  (style "B17" 33) (style "C17" 34) (style "D17" 35) (style "E17" 36)
+  (style "F17" 37) (style "G17" 38) (style "H17" 39)
+  (style "I17" 41) (style "J17" 42) (style "K17" 43) (style "L17" 44)
+  (style "M17" 45) (style "N17" 46) (style "O17" 35)
+  (style "D18" 38) (style "L18" 39) (style "N18" 40))
+
+; Rows 19 to 50: a stripe that moves, one fill over the Screen's whole width, a "#" every
 ; eighth cell along a diagonal and a "." elsewhere, each through its look.
-(rule "Screen" "A17:CR50" (if (= (mod (+ (column) (row) Clock!$B$1) 8) 0) "#" "."))
+(rule "Screen" "A19:CR50" (if (= (mod (+ (column) (row) Clock!$B$1) 8) 0) "#" "."))

@@ -23,10 +23,19 @@ print it again when one is named.
 
 ALSO HELD, read off each fixture itself: its line count as a floor that never
 goes down, and oracle 11's fixed order (the sheet rows, one window, one
-extent, one gridlines row, the column rows, the format rows with 0 first and
-ascending, then the cells in row-major order with each cell's style and
-sentence rows), the order check Frazaro's check_view_golden.ps1 reads off a
-golden, copied arm for arm.
+extent, one gridlines row, the column rows, since ENGINE.28 the row rows, the
+format rows with 0 first and ascending, the look rows, then the cells in
+row-major order with each cell's value, text, style and sentence rows), the
+order check Frazaro's check_view_golden.ps1 reads off a golden, copied arm
+for arm.
+
+Since ENGINE.28 (2026-10-24) two more fixtures are the painter's: vla-lang's
+testdata/appearance/appearance.vla, a record whose looks fall over cells
+with font, alignment and border groups of their own, and appearance_drawn.vla,
+the same window with the looks folded in by the language's Style::over, the
+render oracle's witness that the viewport draws the one as the other. Their
+source is the crate's test data, the same bytes in the cargo registry and in
+Frazaro's tree, where -Frazaro compares them.
 
 -Frazaro <tree> compares each copy to that tree's scripts/view/<name>.vla
 (normalized), and -Door <frazaro.exe> with -Frazaro has the door print the
@@ -72,12 +81,21 @@ $fixtures = @(
     @{ Name = 'fixture_data';         Floor = 9;     Sha256 = '3b86d067a767feb5b45bf4657517471a8155940fc7cd74e6e1126e95d703010b'; Source = 'scripts/view/fixture_data.vla' },
     @{ Name = 'into_output';          Floor = 11;    Sha256 = '0fd381bd513f76b1373ca4a8613a8352193741e424ef120872994779b4ae3597'; Source = 'scripts/view/into_output.vla' },
     @{ Name = 'into_checks';          Floor = 9;     Sha256 = 'e6881c6bf063f5251cc94e92d4cb535531142d49cacc4df1e7d6fd81277fd363'; Source = 'scripts/view/into_checks.vla' },
-    @{ Name = 'sparse_10000';         Floor = 20006; Sha256 = '8c9432bd8f57298c2c2db4a3dfa52068f061f51ef6e6f50a34e664bab49a17a7'; Source = ''; Rule = $true }
+    @{ Name = 'sparse_10000';         Floor = 20006; Sha256 = '8c9432bd8f57298c2c2db4a3dfa52068f061f51ef6e6f50a34e664bab49a17a7'; Source = ''; Rule = $true },
+    # 2026-10-24, ENGINE.28: the painter's fixture and its drawn twin, vla-lang 0.11.0's testdata/appearance/
+    # (Frazaro's KERNEL.50, decision 11), the same bytes in the registry's crate and in Frazaro's tree at aa3c630: a
+    # Look sheet whose looks fall over cells with groups of their own, and the same window with the looks folded in
+    # by the language, each cell's style the format Style::over gives it. Written again by
+    # VLA_BLESS=1 cargo test -p vla-lang --test appearance in Frazaro's tree.
+    @{ Name = 'appearance';           Floor = 89;    Sha256 = '382b01e735c4682fcda479a331832cadcf737a1b45ed693b6e11d47e92a298c9'; Source = 'vla-lang/testdata/appearance/appearance.vla' },
+    @{ Name = 'appearance_drawn';     Floor = 84;    Sha256 = '3750c1c88559fda193ca5f1f518963c050ef0ea70784b02984d28dac110b7b18'; Source = 'vla-lang/testdata/appearance/appearance_drawn.vla' }
 )
-$expectedFixtures = 7
+$expectedFixtures = 9
 
-# The forms a view record holds, and the phase each belongs to in the fixed order.
-$phases = @{ 'sheet' = 0; 'window' = 1; 'extent' = 2; 'gridlines' = 3; 'column' = 4; 'format' = 5; 'cell' = 6; 'formula' = 6; 'style' = 6; 'sentence' = 6 }
+# The forms a view record holds, and the phase each belongs to in the fixed order: since ENGINE.28 the row rows after
+# the column rows and the look rows after the format rows, as vla-lang's view.rs prints them, and a value or a text
+# row with its cell's rows (KERNEL.7, KERNEL.47), which the view goldens of KERNEL.5's day never held.
+$phases = @{ 'sheet' = 0; 'window' = 1; 'extent' = 2; 'gridlines' = 3; 'column' = 4; 'row' = 5; 'format' = 6; 'look' = 7; 'cell' = 8; 'formula' = 8; 'value' = 8; 'text' = 8; 'style' = 8; 'sentence' = 8 }
 
 # A text with its line endings normalized to LF.
 function Get-Normalized([string]$text) { return ($text -replace "`r`n", "`n") }
@@ -146,6 +164,8 @@ function Test-Order($lines) {
             'extent' { $seen['extent']++; if ($strings[0] -ne $windowSheet) { $problems.Add("line ${n}: the extent names another sheet than the window: $line") } }
             'gridlines' { $seen['gridlines']++; if ($strings[0] -ne $windowSheet) { $problems.Add("line ${n}: the gridlines row names another sheet than the window: $line") } }
             'column' { if ($strings[0] -ne $windowSheet) { $problems.Add("line ${n}: a column of another sheet than the window: $line") } }
+            'row' { if ($strings[0] -ne $windowSheet) { $problems.Add("line ${n}: a row of another sheet than the window: $line") } }
+            'look' { if ($strings[0] -ne $windowSheet) { $problems.Add("line ${n}: a look of another sheet than the window: $line") } }
             'format' {
                 $m = [regex]::Match($line, '^\(format ([0-9]+) ')
                 $idx = if ($m.Success) { [int]$m.Groups[1].Value } else { -1 }
@@ -160,6 +180,12 @@ function Test-Order($lines) {
                 if ($null -eq $rc) { $problems.Add("line ${n}: not an address: $line") }
                 elseif ($null -ne $lastCell -and ($rc[0] -lt $lastCell[0] -or ($rc[0] -eq $lastCell[0] -and $rc[1] -le $lastCell[1]))) { $problems.Add("line ${n}: a cell out of row-major order: $line") }
                 $lastCell = $rc; $open = $strings[1]; $hadStyle = $false; $hadSentence = $false
+            }
+            'value' {
+                if ($strings[0] -ne $windowSheet -or $strings[1] -ne $open -or $hadStyle -or $hadSentence) { $problems.Add("line ${n}: a value row not right after its formula: $line") }
+            }
+            'text' {
+                if ($strings[0] -ne $windowSheet -or $strings[1] -ne $open -or $hadStyle -or $hadSentence) { $problems.Add("line ${n}: a text row not after its cell's value: $line") }
             }
             'style' {
                 if ($strings[0] -ne $windowSheet -or $strings[1] -ne $open -or $hadStyle -or $hadSentence) { $problems.Add("line ${n}: a style row not right after its cell: $line") }

@@ -699,7 +699,11 @@
       var looks = sk.key === 'screen' && !sk.twin && c.mode === 'grid';
       if (looks) {
         for (var g = 0; g < RULES.gridLooks; g++) lines.push('(format ' + (g + 1) + ' ' + quote(PALETTE[g][0].slice(1)) + ' general nowrap)');
+        // and a seventeenth, every group said (ENGINE.28): white bold text centered on the deep lavender, each edge thin,
+        // on the look of 200, the row that moves a frame (byteAt), so that a game's page holds the painter to it too
+        lines.push('(format ' + (RULES.gridLooks + 1) + ' "6B4FC8" general nowrap (font bold "FFFFFF") (align center middle) (border (left thin) (right thin) (top thin) (bottom thin)))');
         for (var l = 0; l < RULES.gridLooks; l++) lines.push('(look ' + name + ' ' + l + ' ' + (l + 1) + ')');
+        lines.push('(look ' + name + ' 200 ' + (RULES.gridLooks + 1) + ')');
       }
       var map = sk.twin ? c.twins[sk.key] : c.cells[sk.key], addrs = [];
       map.forEach(function (e, addr) { var p = rcOf(addr); if (p && p.r >= R.top && p.r <= R.bottom && p.c >= R.left && p.c <= R.right) addrs.push(p); });
