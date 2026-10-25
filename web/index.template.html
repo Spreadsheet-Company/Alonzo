@@ -1140,12 +1140,14 @@
     return '. Of its sheets, ' + parts.join('; ');
   }
   // Where the palette opens (CART.9's second slice, the owner's word): fixed at the top or at the bottom, or floating,
-  // away from the cell the selection stands on, at the bottom while it stands in the top half of the rows in view and at
-  // the top otherwise. place, the keymap's; row, the selection's row, 0 for none; win, the rows in view, { top, bottom }.
-  function paletteSide(place, row, win) {
+  // away from the cell the selection stands on, at the bottom while the cell's middle stands in the top half of the
+  // window and at the top otherwise: the window's halves since CART.9's short slice, at the owner's word at its hand
+  // test, where they were the rows in view, so that a small board's lowest rows keep the palette below them. place, the
+  // keymap's; box, the cell's box on the page, { top, bottom }, null for none; height, the window's.
+  function paletteSide(place, box, height) {
     if (place === 'top' || place === 'bottom') return place;
-    if (!row || !win || !(win.bottom >= win.top)) return 'top';
-    return row - win.top <= (win.bottom - win.top) / 2 ? 'bottom' : 'top';
+    if (!box || !(height > 0)) return 'top';
+    return (box.top + box.bottom) / 2 <= height / 2 ? 'bottom' : 'top';
   }
   // The palette's lines for a text. A text that begins with ( or ;, as Frazaro's CLI reads one, is a row of VLA, one line
   // that writes it as a person's edit, as the edit row does. Any other text lists the commands and the sheets that match
@@ -1868,8 +1870,8 @@
       },
       // where it opens, the keymap's (palette ...): floating, away from the grid's selection, or fixed (CART.9)
       side: function () {
-        var g = mode === 'grid' && host.vp ? host.vp : null;
-        return paletteSide(keymap.place, g ? g.selection().focus.row : 0, g ? g.scrolled() : null);
+        var g = mode === 'grid' && host.vp ? host.vp : null, f = g ? g.selection().focus : null;
+        return paletteSide(keymap.place, f && f.row ? g.cellBox(f.row, f.col) : null, window.innerHeight);
       },
       // the grid's sheet shown, its mode in the manifest said (SPEC.5)
       modeWords: function () {
@@ -5871,7 +5873,7 @@
   // dispatched as a browser reports a keyboard's and every line run counted by a stand-in; and Escape in full screen, its
   // rule over a clock of the case's own. It needs no file, so a game's page runs it, holding the vendored template there.
   function casePalette() {
-    var P = [], k = { commands: 0, keyed: 0, lines: 0, opened: 0, ran: 0, chosen: 0, rows: 0, recalled: 0, closed: 0, restored: 0, held: 0, passed: 0, clicked: 0, escapes: 0, edits: 0, sides: 0, cellEdits: 0, placed: 0, clears: 0, kept: 0 };
+    var P = [], k = { commands: 0, keyed: 0, lines: 0, opened: 0, ran: 0, chosen: 0, rows: 0, recalled: 0, closed: 0, restored: 0, held: 0, passed: 0, clicked: 0, escapes: 0, edits: 0, sides: 0, boxes: 0, cellEdits: 0, placed: 0, clears: 0, kept: 0 };
     var seen = {};
     COMMANDS.forEach(function (c) {
       if (!/^[a-z]+(-[a-z]+)*$/.test(c.name) || !c.words || seen[c.name]) P.push('palette: the command ' + JSON.stringify(c.name) + ' is ill-named, without words or named twice');
@@ -6000,11 +6002,35 @@
         var got = cellClearRow('Bench', x[0]);
         if (got === x[1]) k.clears++; else P.push('palette: Delete over the selection ' + JSON.stringify(x[0]) + ' writes ' + JSON.stringify(got) + ', where ' + JSON.stringify(x[1]) + ' is due');
       });
-      [['top', 30, { top: 1, bottom: 40 }, 'top'], ['bottom', 1, { top: 1, bottom: 40 }, 'bottom'], ['floating', 5, { top: 1, bottom: 40 }, 'bottom'],
-       ['floating', 35, { top: 1, bottom: 40 }, 'top'], ['floating', 21, { top: 1, bottom: 41 }, 'bottom'], ['floating', 0, null, 'top']].forEach(function (x) {
+      // the palette's side over a cell's box in a window 1,000 pixels tall: a fixed place kept, and floating, below a
+      // cell in the window's top half, the middle at its half among them, and above one in its bottom half; a small
+      // board's lowest row near the top of a tall window keeps it below (CART.9's short slice, the owner's word)
+      [['top', { top: 900, bottom: 920 }, 1000, 'top'], ['bottom', { top: 10, bottom: 30 }, 1000, 'bottom'],
+       ['floating', { top: 100, bottom: 120 }, 1000, 'bottom'], ['floating', { top: 800, bottom: 820 }, 1000, 'top'],
+       ['floating', { top: 490, bottom: 510 }, 1000, 'bottom'], ['floating', { top: 491, bottom: 511 }, 1000, 'top'],
+       ['floating', { top: 230, bottom: 246 }, 1150, 'bottom'], ['floating', null, 1000, 'top']].forEach(function (x) {
         var got = paletteSide(x[0], x[1], x[2]);
-        if (got === x[3]) k.sides++; else P.push('palette: the palette ' + x[0] + ' over row ' + x[1] + ' of ' + JSON.stringify(x[2]) + ' opens at ' + got + ', where ' + x[3] + ' is due');
+        if (got === x[3]) k.sides++; else P.push('palette: the palette ' + x[0] + ' over the cell ' + JSON.stringify(x[1]) + ' in a window ' + x[2] + ' tall opens at ' + got + ', where ' + x[3] + ' is due');
       });
+      // a cell's box on the page, the hit test's inverse (CART.9's short slice): each cell's middle the cell, in the frozen
+      // corner, unscrolled and scrolled, over a viewport of a record of its own
+      var boxEl = document.createElement('div');
+      boxEl.style.cssText = 'width:420px;height:200px;position:relative;background:#fff;';
+      document.getElementById('stage').appendChild(boxEl);
+      var vq = new VP(boxEl);
+      try {
+        vq.load('(sheet "P" visible)\n(window "P" "A1:H60")\n(extent "P" "A1:H60")\n(format 0 none general nowrap)\n(cell "P" "A1" 1)\n');
+        vq.freeze(1, 1);
+        var boxed = function (row, col, at) {
+          var b = vq.cellBox(row, col), hit = b ? vq.cellAt((b.left + b.right) / 2, (b.top + b.bottom) / 2) : null;
+          if (hit && hit.row === row && hit.col === col) k.boxes++;
+          else P.push('palette: the box of ' + VP.colName(col) + row + ' ' + at + ' is ' + JSON.stringify(b) + ', whose middle is ' + (hit ? hit.address : 'no cell'));
+        };
+        boxed(1, 1, 'in the frozen corner');
+        boxed(4, 3, 'unscrolled');
+        vq.scrollTo(30, 1);
+        boxed(31, 2, 'scrolled');
+      } finally { vq.destroy(); boxEl.remove(); }
       var sideNow = 'bottom', rows2 = [], ran2 = [], moved = [];
       var pal2 = new Palette(box, {
         lines: function (t) { return paletteLines(t, COMMANDS, SHEETS, []); },

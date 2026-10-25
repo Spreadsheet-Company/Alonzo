@@ -386,8 +386,9 @@ keys are a person's, Shift moving each back, as a spreadsheet's do; on a
 sheet a person writes, Enter opens the cell's edit as before. The palette's
 note says the mode of the sheet shown, and the note under the edit row every
 sheet's. The palette floats away from the cell
-being edited, at the bottom while the selection stands in the top half of the
-rows in view and at the top otherwise; a keymap's line, `(palette "top")` or
+being edited, at the bottom while the cell stands in the top half of the
+window and at the top otherwise, so that a small board's lowest rows keep it
+below them (`CART.9`'s short slice); a keymap's line, `(palette "top")` or
 `(palette "bottom")`, fixes it there, and the commands `palette-top`,
 `palette-bottom` and `palette-floating` write that line into the keymap
 applied and apply it, kept in this browser, while the keys' box holds no

@@ -1894,7 +1894,8 @@ impl Gex {
 }
 
 /// A level of the game (decisions 16 to 21): its sheet, its switches and
-/// outputs, its room's rows from row 3, its budget and its least known.
+/// outputs, its room's rows from row 3 to the board's last, its budget, its
+/// least known, and the last kind of gate it gives ([`kind`]).
 pub struct Level {
     pub sheet: &'static str,
     pub inputs: u32,
@@ -1902,6 +1903,7 @@ pub struct Level {
     pub rows: u32,
     pub budget: u32,
     pub least: u32,
+    pub gives: u32,
 }
 
 /// The nine levels in tab order, `I NON` the first.
@@ -1910,65 +1912,73 @@ pub const LEVELS: [Level; 9] = [
         sheet: "I NON",
         inputs: 1,
         outputs: 1,
-        rows: 4,
+        rows: 8,
         budget: 2,
         least: 1,
+        gives: 2,
     },
     Level {
         sheet: "II ET",
         inputs: 2,
         outputs: 1,
-        rows: 4,
+        rows: 8,
         budget: 3,
         least: 2,
+        gives: 3,
     },
     Level {
         sheet: "III VEL",
         inputs: 2,
         outputs: 1,
-        rows: 4,
+        rows: 8,
         budget: 4,
         least: 3,
+        gives: 4,
     },
     Level {
         sheet: "IV AUT",
         inputs: 2,
         outputs: 1,
-        rows: 4,
+        rows: 8,
         budget: 5,
         least: 3,
+        gives: 5,
     },
     Level {
         sheet: "V ELIGE",
         inputs: 3,
         outputs: 1,
-        rows: 4,
+        rows: 8,
         budget: 5,
         least: 3,
+        gives: 6,
     },
     Level {
         sheet: "VI DISTRIBUE",
         inputs: 2,
         outputs: 2,
-        rows: 4,
+        rows: 8,
         budget: 4,
         least: 2,
+        gives: 6,
     },
     Level {
         sheet: "VII SEMIS",
         inputs: 2,
         outputs: 2,
-        rows: 4,
+        rows: 8,
         budget: 3,
         least: 2,
+        gives: 6,
     },
     Level {
         sheet: "VIII SUMMA",
         inputs: 3,
         outputs: 2,
-        rows: 4,
+        rows: 8,
         budget: 6,
         least: 5,
+        gives: 6,
     },
     Level {
         sheet: "IX QUATTUOR",
@@ -1977,6 +1987,7 @@ pub const LEVELS: [Level; 9] = [
         rows: 9,
         budget: 21,
         least: 20,
+        gives: 6,
     },
 ];
 
@@ -2092,11 +2103,147 @@ pub fn due(k: usize, s: &[Val]) -> Vec<Val> {
     }
 }
 
-/// What a person wrote into a level's cell, the cartridge's own row gone.
+/// A formula's text as the Gates sheet reads it, `FORMULATEXT` with its
+/// spaces and its `$` gone and upper-cased (the short slice of 2026-10-24).
+pub fn gate_text(formula: &str) -> String {
+    formula
+        .chars()
+        .filter(|&c| c != ' ' && c != '$')
+        .map(|c| c.to_ascii_uppercase())
+        .collect()
+}
+
+/// The inputs a gate of level k may read, the Lab's P, between bars: its
+/// switches, the cells of its room row by row, 0 and 1.
+pub fn inputs_of(k: usize) -> String {
+    let level = &LEVELS[k];
+    let mut out = String::from("|");
+    for s in 0..level.inputs {
+        out.push_str(&format!("A{}|", 3 + s));
+    }
+    for row in 3..3 + level.rows {
+        for col in "CDEFGHIJ".chars() {
+            out.push_str(&format!("{col}{row}|"));
+        }
+    }
+    out.push_str("0|1|");
+    out
+}
+
+/// `MID(f, start, n)` over a text's characters: `None` for an error, a
+/// start before the first or a length below 0.
+fn mid(f: &[char], start: i64, n: i64) -> Option<String> {
+    if start < 1 || n < 0 {
+        return None;
+    }
+    Some(f.iter().skip(start as usize - 1).take(n as usize).collect())
+}
+
+/// `FIND(c, f)`: the place of a text's first `c`, from 1.
+fn find(f: &[char], c: char) -> Option<i64> {
+    f.iter().position(|&x| x == c).map(|i| i as i64 + 1)
+}
+
+/// A room cell's kind by its formula's text as [`gate_text`] reads it, as
+/// the Gates sheet computes it: 0 no formula; a gate of the set, 1 a wire
+/// `=x`, 2 NON-ET `=1-x*y`, 3 NON `=1-x`, 4 ET `=x*y`, 5 VEL `=MAX(x,y)`, 6
+/// AUT `=MOD(x+y,2)`, each input among `inputs`, [`inputs_of`] the level's;
+/// and 9 any other formula.
+pub fn kind(f: &str, inputs: &str) -> u32 {
+    if f.is_empty() {
+        return 0;
+    }
+    let c: Vec<char> = f.chars().collect();
+    let len = c.len() as i64;
+    let among = |x: Option<String>| x.is_some_and(|x| inputs.contains(&format!("|{x}|")));
+    let pair = |x: Option<String>, y: Option<String>| among(x) && among(y);
+    let (star, comma, plus) = (find(&c, '*'), find(&c, ','), find(&c, '+'));
+    if among(mid(&c, 2, 99)) {
+        1
+    } else if f.starts_with("=1-")
+        && star.is_some_and(|p| pair(mid(&c, 4, p - 4), mid(&c, p + 1, 99)))
+    {
+        2
+    } else if f.starts_with("=1-") && among(mid(&c, 4, 99)) {
+        3
+    } else if star.is_some_and(|p| pair(mid(&c, 2, p - 2), mid(&c, p + 1, 99))) {
+        4
+    } else if f.starts_with("=MAX(")
+        && f.ends_with(')')
+        && comma.is_some_and(|p| pair(mid(&c, 6, p - 6), mid(&c, p + 1, len - p - 1)))
+    {
+        5
+    } else if f.starts_with("=MOD(")
+        && f.ends_with(",2)")
+        && plus.is_some_and(|p| pair(mid(&c, 6, p - 6), mid(&c, p + 1, len - p - 3)))
+    {
+        6
+    } else {
+        9
+    }
+}
+
+/// Formulas a person may write and their kinds, at I and at IX (I's inputs
+/// its one switch and its room to row 10, IX's nine and its room to row 11):
+/// the six shapes, written in any case with spaces and `$`, a constant among
+/// the inputs; and the formulas outside the set, a gate of none of its
+/// shapes, a shape holding two gates, and an input that is no switch or room
+/// cell of the level, the due, a name or the Lab among them.
+pub const SHAPES: [(&str, u32, u32); 29] = [
+    ("=1-A3*A3", 2, 2),
+    ("=1-A3", 3, 3),
+    ("=A3*C3", 4, 4),
+    ("=MAX(A3,C3)", 5, 5),
+    ("=MOD(A3+C3,2)", 6, 6),
+    ("=C3", 1, 1),
+    ("=1", 1, 1),
+    ("=mod(a3 + c3, 2)", 6, 6),
+    ("=1-$A$3*C$3", 2, 2),
+    ("=1-A3*0", 2, 2),
+    ("=MAX(A3,J10)", 5, 5),
+    ("=A4", 9, 1),
+    ("=C11", 9, 1),
+    ("=1-MAX(A3,C3)", 9, 9),
+    ("=M3", 9, 9),
+    ("=1-A3*A3*A3", 9, 9),
+    ("=MAX(A3,C3)*1", 9, 9),
+    ("=MOD(A3,2)", 9, 9),
+    ("=K3", 9, 9),
+    ("=1-Lab!B21*A3", 9, 9),
+    ("=--A3", 9, 9),
+    ("=(A3)", 9, 9),
+    ("=-A3+INT(A3/2)", 9, 9),
+    ("=MIN(A3:A3)", 9, 9),
+    ("=MAX(A3,C3,D3)", 9, 9),
+    ("=MOD(A3+C3,3)", 9, 9),
+    ("=A3*TRUE", 9, 9),
+    ("=AC3", 9, 9),
+    ("=1-B3", 9, 9),
+];
+
+/// The address of a room's cell by its place in the room read row by row
+/// from C3, eight cells a row, 1 the first: the Lab's R and S.
+pub fn room_address(i: usize) -> String {
+    format!(
+        "{}{}",
+        &"CDEFGHIJ"[(i - 1) % 8..=(i - 1) % 8],
+        3 + (i - 1) / 8
+    )
+}
+
+/// What a person wrote into a level's cell, the cartridge's own row gone: a
+/// value, or a formula's text as written and the hand's reading of it.
 #[derive(Clone, Debug)]
 pub enum Written {
     Value(Val),
-    Formula(Gex),
+    Formula(String, Gex),
+}
+
+impl Written {
+    /// A person's formula, read by the hand or refused by name.
+    pub fn formula(text: &str) -> Result<Written, String> {
+        Ok(Written::Formula(text.to_string(), gex(text)?))
+    }
 }
 
 /// An act's Input rows, as the host writes them for a version 6 cartridge
@@ -2123,6 +2270,11 @@ pub struct Game {
     /// Each level's cells as this frame computes them: the board, A3 to the
     /// last row of its room, A to M.
     pub board: Vec<HashMap<(u32, u32), Val>>,
+    /// Each level's room as the Gates sheet reads it this frame, row by row
+    /// from C3: each cell's formula's text ([`gate_text`], empty for none)
+    /// and its kind ([`kind`]).
+    pub texts: Vec<Vec<String>>,
+    pub kinds: Vec<Vec<u32>>,
     /// The Lab, its cells by address, this frame and the last.
     pub lab: HashMap<String, Val>,
     pub lab_last: HashMap<String, Val>,
@@ -2149,6 +2301,8 @@ impl Game {
                 .map(|l| vec![Val::Empty; l.inputs as usize])
                 .collect(),
             board: vec![HashMap::new(); 9],
+            texts: vec![Vec::new(); 9],
+            kinds: vec![Vec::new(); 9],
             lab: HashMap::new(),
             lab_last: HashMap::new(),
             input: Acted::default(),
@@ -2174,7 +2328,7 @@ impl Game {
         let Some(k) = Game::level(sheet) else {
             return Err(format!("the hand models no person's row into {sheet}"));
         };
-        if let Written::Formula(g) = &what {
+        if let Written::Formula(_, g) = &what {
             let mut reads = Vec::new();
             g.reads(&mut reads);
             if rows.0 != rows.2 || rows.1 != rows.3 {
@@ -2368,25 +2522,47 @@ impl Game {
                 }
                 self.lab.insert("O19".into(), t);
             }
-            let ok = if_(&and(&equals), || n(1.0), || n(0.0));
+            // an output holding an error is never due
+            let ok = match if_(&and(&equals), || n(1.0), || n(0.0)) {
+                Val::Err(_) => n(0.0),
+                v => v,
+            };
             self.lab.insert(format!("D{r}"), ok);
-            // the gates: every cell of its room and its outputs that holds anything
-            let mut gates = Val::Num(0.0);
+            // the gates: every formula of its room, each read by its text as one of the set or outside it; and the
+            // room's first cell holding an error
+            let inputs = inputs_of(k);
+            let (mut texts, mut kinds, mut error) = (Vec::new(), Vec::new(), None);
             for row in 3..3 + level.rows {
                 for col in 3..=10 {
-                    let v = self.cell(k, row, col);
-                    let one = if_(&equal(&v, &Val::Text(String::new())), || n(0.0), || n(1.0));
-                    gates = match (&gates, &one) {
-                        (Val::Err(e), _) => Val::Err(e),
-                        (_, Val::Err(e)) => Val::Err(e),
-                        (Val::Num(a), Val::Num(b)) => n(a + b),
-                        _ => gates,
+                    let text = match self.written[k].get(&(row, col)) {
+                        Some(Written::Formula(f, _)) => gate_text(f),
+                        _ => String::new(),
                     };
+                    kinds.push(kind(&text, &inputs));
+                    texts.push(text);
+                    if error.is_none() && matches!(self.cell(k, row, col), Val::Err(_)) {
+                        error = Some(texts.len());
+                    }
                 }
             }
-            self.lab.insert(format!("E{r}"), gates);
+            let outside = kinds.iter().filter(|&&q| q > level.gives).count();
+            let first = kinds.iter().position(|&q| q > level.gives);
+            let gates = kinds.iter().filter(|&&q| q > 0).count();
+            self.lab.insert(format!("E{r}"), n(gates as f64));
             self.lab.insert(format!("F{r}"), n(level.budget as f64));
             self.lab.insert(format!("G{r}"), n(level.least as f64));
+            self.lab.insert(format!("P{r}"), Val::Text(inputs));
+            self.lab.insert(format!("Q{r}"), n(outside as f64));
+            self.lab.insert(
+                format!("R{r}"),
+                Val::Text(first.map_or(String::new(), |i| room_address(i + 1))),
+            );
+            self.lab.insert(
+                format!("S{r}"),
+                Val::Text(error.map_or(String::new(), room_address)),
+            );
+            self.texts[k] = texts;
+            self.kinds[k] = kinds;
         }
         let b8 = self.lab(&format!("D{}", 10 + under));
         self.lab.insert("B8".into(), b8);
@@ -2436,22 +2612,42 @@ impl Game {
             );
             self.lab.insert(format!("B{r}"), result.clone());
             self.lab.insert(format!("C{r}"), stopped);
-            let (e, f, g) = (
-                self.lab(&format!("E{r}")),
-                self.lab(&format!("F{r}")),
-                self.lab(&format!("G{r}")),
-            );
+            // its gates and those outside the set when its test last ended, which its stars read
+            let mut at_test_end = |col: &str, now: &str| {
+                let last = self.last(&format!("{col}{r}")).settled();
+                let v = if_(
+                    &or(&[away(&l4), away(&b4)]),
+                    || last.clone(),
+                    || {
+                        if_(
+                            &and(&[equal(&l5, &n(1.0)), equal(&b5, &n(0.0))]),
+                            || self.lab(&format!("{now}{r}")),
+                            || last.clone(),
+                        )
+                    },
+                );
+                self.lab.insert(format!("{col}{r}"), v.clone());
+                v
+            };
+            let (t, u) = (at_test_end("T", "E"), at_test_end("U", "Q"));
+            let (f, g) = (self.lab(&format!("F{r}")), self.lab(&format!("G{r}")));
             let stars = if_(
                 &equal(&result, &n(1.0)),
                 || {
                     if_(
-                        &less_equal(&e, &g),
-                        || Val::Text("★★★".into()),
+                        &less(&n(0.0), &u),
+                        || Val::Text("★☆☆".into()),
                         || {
                             if_(
-                                &less_equal(&e, &f),
-                                || Val::Text("★★☆".into()),
-                                || Val::Text("★☆☆".into()),
+                                &less_equal(&t, &g),
+                                || Val::Text("★★★".into()),
+                                || {
+                                    if_(
+                                        &less_equal(&t, &f),
+                                        || Val::Text("★★☆".into()),
+                                        || Val::Text("★☆☆".into()),
+                                    )
+                                },
                             )
                         },
                     )
@@ -2502,7 +2698,7 @@ impl Game {
             let (row, col) = at;
             let v = match written.get(&at) {
                 Some(Written::Value(v)) => v.clone(),
-                Some(Written::Formula(g)) => {
+                Some(Written::Formula(_, g)) => {
                     let mut read =
                         |r: u32, c: u32| value((r, c), k, test, switches, written, board, doing);
                     g.eval(&mut read).settled()
@@ -2512,11 +2708,14 @@ impl Game {
                         switches[(row - 3) as usize].clone()
                     } else if col == 12 && row >= 3 && row < 3 + level.outputs {
                         let j = value((row, 10), k, test, switches, written, board, doing);
-                        if_(
+                        match if_(
                             &equal(&j, &Val::Num(1.0)),
                             || Val::Text("●".into()),
                             || Val::Text("○".into()),
-                        )
+                        ) {
+                            Val::Err(_) => Val::Text("?".into()),
+                            lamp => lamp,
+                        }
                     } else if col == 13 && row >= 3 && row < 3 + level.outputs {
                         let sw: Vec<Val> = (0..level.inputs)
                             .map(|s| value((3 + s, 1), k, test, switches, written, board, doing))
@@ -2560,53 +2759,80 @@ impl Game {
         self.board[k] = board;
     }
 
-    /// A level's reckoning and verdict, its N8 and N9, as the words say them.
+    /// A level's reckoning and verdict, its N8 and N9, as the words say them:
+    /// its gates, those outside the set and the first of them, and its last
+    /// test's stars; its test, and the room's first cell holding an error.
     pub fn words(&self, k: usize) -> (Val, Val) {
         let r = 11 + k;
         let inputs = [2, 4, 4, 4, 8, 4, 4, 8, 512][k];
         let level = &LEVELS[k];
-        let reckoning = match (
-            self.lab(&format!("E{r}")).text(),
-            self.lab(&format!("H{r}")).text(),
-        ) {
-            (Ok(e), Ok(h)) => Val::Text(format!(
-                "Gates {e}; the budget {}, the least known {}: {h}",
+        let n = |x: f64| Val::Num(x);
+        let lab = |col: &str| self.lab(&format!("{col}{r}"));
+        let outside = if_(
+            &less(&n(0.0), &lab("Q")),
+            || match (lab("Q").text(), lab("R").text()) {
+                (Ok(q), Ok(at)) => {
+                    Val::Text(format!(", {q} outside the set given, the first at {at}"))
+                }
+                (Err(k), _) | (_, Err(k)) => Val::Err(k),
+            },
+            || Val::Text(String::new()),
+        );
+        let reckoning = match (lab("E").text(), outside.text(), lab("H").text()) {
+            (Ok(e), Ok(o), Ok(h)) => Val::Text(format!(
+                "Gates {e}{o}; the budget {}, the least known {}: {h}",
                 level.budget, level.least
             )),
-            (Err(k), _) | (_, Err(k)) => Val::Err(k),
+            (Err(k), _, _) | (_, Err(k), _) | (_, _, Err(k)) => Val::Err(k),
         };
-        let n = |x: f64| Val::Num(x);
+        let error = |tail: &str| match lab("S").text() {
+            Ok(at) => Val::Text(format!(
+                "{at} holds an error: it reads a text, an emptied cell or an error.{tail}"
+            )),
+            Err(k) => Val::Err(k),
+        };
         let verdict = if_(
-            &equal(&self.lab(&format!("N{r}")), &n(1.0)),
+            &equal(&lab("N"), &n(1.0)),
             || match arith(b'+', &self.lab("B6"), &n(1.0)).text() {
                 Ok(t) => Val::Text(format!("Calculemus: input {t} of {inputs}")),
                 Err(k) => Val::Err(k),
             },
             || {
                 if_(
-                    &equal(&self.lab(&format!("B{r}")), &n(1.0)),
+                    &equal(&lab("B"), &n(2.0)),
                     || {
-                        Val::Text(format!(
-                            "Quod erat demonstrandum: every one of its {inputs} inputs passes."
-                        ))
+                        let at = if_(
+                            &equal(&lab("S"), &Val::Text(String::new())),
+                            || Val::Text("a lamp differs from its due.".into()),
+                            || error(""),
+                        );
+                        match (arith(b'+', &lab("C"), &n(1.0)).text(), at.text()) {
+                            (Ok(t), Ok(at)) => Val::Text(format!(
+                                "The test stops at input {t} of {inputs}, standing on the board: {at}"
+                            )),
+                            (Err(k), _) | (_, Err(k)) => Val::Err(k),
+                        }
                     },
                     || {
                         if_(
-                            &equal(&self.lab(&format!("B{r}")), &n(2.0)),
+                            &equal(&lab("S"), &Val::Text(String::new())),
                             || {
-                                match arith(b'+', &self.lab(&format!("C{r}")), &n(1.0)).text() {
-                                Ok(t) => Val::Text(format!(
-                                    "The test stops at input {t} of {inputs}, standing on the board: a lamp differs from its due."
-                                )),
-                                Err(k) => Val::Err(k),
-                            }
-                            },
-                            || {
-                                Val::Text(
-                                    "T tests every input, an input a frame. Calculemus!"
-                                        .to_string(),
+                                if_(
+                                    &equal(&lab("B"), &n(1.0)),
+                                    || {
+                                        Val::Text(format!(
+                                            "Quod erat demonstrandum: every one of its {inputs} inputs passes."
+                                        ))
+                                    },
+                                    || {
+                                        Val::Text(
+                                            "T tests every input, an input a frame. Calculemus!"
+                                                .into(),
+                                        )
+                                    },
                                 )
                             },
+                            || error(" Ex nihilo nihil fit."),
                         )
                     },
                 )
@@ -2672,7 +2898,7 @@ pub fn session() -> Vec<(Acted, Option<Edit>)> {
             quote(addr),
             quote(formula)
         );
-        let what = Written::Formula(gex(formula).unwrap_or_else(|e| panic!("{e}")));
+        let what = Written::formula(formula).unwrap_or_else(|e| panic!("{e}"));
         let cells = rect(addr);
         (
             act(sheet, col, row, false, ""),
@@ -2724,7 +2950,7 @@ pub fn session() -> Vec<(Acted, Option<Edit>)> {
         gate("II ET", "J3", "=C4"),
         key("II ET", 1, 3, "test"),
         key("II ET", 1, 3, "reset"),
-        // III: VEL, an input emptied by Delete, #VALUE! met by the test, R, the gate again, a pass
+        // III: VEL, an input emptied by Delete, the error named before T and where T stops, R, the gate again, a pass
         gate("III VEL", "C3", "=1-A3"),
         gate("III VEL", "C4", "=1-A4"),
         gate("III VEL", "J3", "=1-C3*C4"),
@@ -2733,25 +2959,31 @@ pub fn session() -> Vec<(Acted, Option<Edit>)> {
         key("III VEL", 1, 3, "reset"),
         gate("III VEL", "C4", "=1-A4"),
         key("III VEL", 1, 3, "test"),
-        // IV: AUT from VEL and NON-ET, its first gate a number written as a text
+        // IV: AUT from VEL and NON-ET, its first gate VEL times a number written as a text, outside the set and the
+        // text no gate: a pass, one star
         value("IV AUT", "D5", Val::Text("1".into())),
         gate("IV AUT", "C3", "=MAX(A3,A4)*D5"),
         gate("IV AUT", "C4", "=1-A3*A4"),
         gate("IV AUT", "J3", "=C3*C4"),
         key("IV AUT", 1, 3, "test"),
-        // V and VI at their least known
+        // V at its least known; VI at the textbook's three gates, NON and two ETs, within the budget: two stars
         gate("V ELIGE", "C3", "=MOD(A3+A4,2)"),
         gate("V ELIGE", "C4", "=A5*C3"),
         gate("V ELIGE", "J3", "=MOD(A3+C4,2)"),
         key("V ELIGE", 1, 5, "test"),
+        gate("VI DISTRIBUE", "C3", "=1-A4"),
+        gate("VI DISTRIBUE", "J3", "=A3*C3"),
         gate("VI DISTRIBUE", "J4", "=A3*A4"),
-        gate("VI DISTRIBUE", "J3", "=MOD(A3+J4,2)"),
         key("VI DISTRIBUE", 1, 3, "test"),
-        // VII with a gate idle, one star; VIII at its least known
+        // VII with two gates idle, outside the set, one of them low in the room: one star, which their Delete moves
+        // not until T, three; VIII at its least known
         gate("VII SEMIS", "J3", "=MOD(A3+A4,2)"),
         gate("VII SEMIS", "J4", "=A3*A4"),
         gate("VII SEMIS", "E6", "=-A3+INT(A4/2)"),
-        gate("VII SEMIS", "F6", "=MIN(A3:A4)"),
+        gate("VII SEMIS", "F9", "=MIN(A3:A4)"),
+        key("VII SEMIS", 1, 3, "test"),
+        value("VII SEMIS", "E6", Val::Text(String::new())),
+        value("VII SEMIS", "F9", Val::Text(String::new())),
         key("VII SEMIS", 1, 3, "test"),
         gate("VIII SUMMA", "C3", "=MOD(A3+A4,2)"),
         gate("VIII SUMMA", "J3", "=MOD(C3+A5,2)"),
@@ -2925,6 +3157,35 @@ mod tests {
         let mut home = net.home.clone();
         home.sort();
         assert_eq!(cells, home, "the same cells");
+    }
+
+    #[test]
+    fn the_gates_are_read_by_their_shapes() {
+        for (f, at_i, at_ix) in SHAPES {
+            assert_eq!(kind(&gate_text(f), &inputs_of(0)), at_i, "{f} at I");
+            assert_eq!(kind(&gate_text(f), &inputs_of(8)), at_ix, "{f} at IX");
+        }
+        assert_eq!(kind("", &inputs_of(0)), 0, "no formula");
+        assert_eq!(gate_text("=mod(a3 + $c$3, 2)"), "=MOD(A3+C3,2)");
+        assert!(inputs_of(0).starts_with("|A3|C3|D3|") && inputs_of(0).ends_with("|J10|0|1|"));
+        assert!(inputs_of(8).starts_with("|A3|A4|") && inputs_of(8).ends_with("|J11|0|1|"));
+        assert_eq!(
+            (
+                room_address(1),
+                room_address(8),
+                room_address(9),
+                room_address(72)
+            ),
+            (
+                "C3".to_string(),
+                "J3".to_string(),
+                "C4".to_string(),
+                "J11".to_string()
+            )
+        );
+        // each level gives the gates proven before it: NON at II, ET at III, VEL at IV, AUT from V
+        let gives: Vec<u32> = LEVELS.iter().map(|l| l.gives).collect();
+        assert_eq!(gives, [2, 3, 4, 5, 6, 6, 6, 6, 6]);
     }
 
     #[test]

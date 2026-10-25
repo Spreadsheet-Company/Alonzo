@@ -1942,6 +1942,15 @@
     return this._cellInfo(hit.row, hit.col);
   };
   Viewport.prototype.cell = function (row, col) { return this._cellInfo(row, col); };
+  // A cell's box on the page, the hit test's inverse (CART.9's short slice, the owner's word at its hand test): its left,
+  // top, right and bottom in the page's pixels where the last draw put it, a frozen band's unscrolled; null before a draw.
+  Viewport.prototype.cellBox = function (row, col) {
+    var g = this.g;
+    if (!g) return null;
+    var rect = this.box.getBoundingClientRect(), dpr = g.dpr;
+    var x = g.ox + g.colX[col] - (col > g.fc ? this.scroll.x : 0), y = g.oy + g.rowTop(row) - (row > g.fr ? this.scroll.y : 0);
+    return { left: rect.left + x / dpr, top: rect.top + y / dpr, right: rect.left + (x + g.colW[col]) / dpr, bottom: rect.top + (y + g.rowHeight(row)) / dpr };
+  };
   // The geometry of the last draw: the ratio, the sizes, the scroll, the
   // column edges in device pixels; the environment the oracle needs.
   Viewport.prototype.geometry = function () {

@@ -309,12 +309,17 @@ if ($Root -eq '') { $Root = $repoRoot }
 # owner's session the replay's first 45 frames, I and II played, the stand-in
 # after it, the levels III to IX, the bench and a switch written over, 782
 # frames; its golden the Bench's record at its end still.
+# 2026-10-24, CART.9's short slice: 756 rows, the Count gone for the Gates, a
+# level's room read by its formulas' texts (ISFORMULA, FORMULATEXT), its kinds
+# and six columns more of the Lab, and the Lesson's 21st line; its replay the
+# owner's 45 frames played against the new cartridge, then the stand-in, 794
+# frames; its golden the Bench's record, its sheets' list naming the Gates.
 $expectedCartridges = 11
 $expectedSources = 11
 $expectedLibraries = 1
 $expectedReplays = 7
 $expectedGoldens = 7
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 229; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4263; 'cartridges/naught/naught.vla' = 675 }
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 229; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4263; 'cartridges/naught/naught.vla' = 756 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

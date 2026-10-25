@@ -3430,8 +3430,8 @@ mod tests {
                     .count();
                 assert_eq!(
                     (bench_hand.frames, bench_hand.edits, bench_hand.lit, bench_hand.written, passed),
-                    (782, 38, 208, 48, 8),
-                    "the owner's session at the third slice's hand test, 45 frames through I and II, then the stand-in: the levels III to IX, the bench's 38 switches written, each and its settle two frames, 208 gates lit at its end, and I's switch written over; 48 rows a person wrote, eight levels passed at its end"
+                    (794, 38, 208, 51, 8),
+                    "the owner's session at the third slice's hand test, 45 frames through I and II, then the stand-in: the levels III to IX, the bench's 38 switches written, each and its settle two frames, 208 gates lit at its end, and I's switch written over; 51 rows a person wrote, eight levels passed at its end"
                 );
             }
             played.push(name);
@@ -6562,7 +6562,7 @@ mod tests {
                 if head != "cell" || sheet != nt::SHEET {
                     let what = match (head.as_str(), value) {
                         ("formula", Form::Str(f)) => {
-                            nt::Written::Formula(nt::gex(f).unwrap_or_else(|e| panic!("{at}: {e}")))
+                            nt::Written::formula(f).unwrap_or_else(|e| panic!("{at}: {e}"))
                         }
                         ("cell", Form::Sym(n)) => nt::Written::Value(nt::Val::Num(
                             n.parse()
@@ -6978,6 +6978,167 @@ mod tests {
         );
     }
 
+    /// A level's gates read by their formulas (the short slice of
+    /// 2026-10-24): every shape of the hand's table written into I's room, each
+    /// cell's kind on the Gates sheet the table's and the hand's; its gates
+    /// every formula, those outside the set the 24 past NON-ET, the first of
+    /// them and the first error named in its reckoning and its verdict.
+    #[test]
+    fn naught_s_gates_are_read_by_their_formulas() {
+        let Some(mut c) = naught_game() else {
+            return;
+        };
+        let place = |i: usize| (4 + i as u32 / 6, 5 + i as u32 % 6);
+        for (i, (f, _, _)) in nt::SHAPES.iter().enumerate() {
+            let (row, col) = place(i);
+            naught_wrote(&mut c, "I NON", &address(row, col), f);
+        }
+        for (i, (f, at_i, _)) in nt::SHAPES.iter().enumerate() {
+            let (row, col) = place(i);
+            assert_eq!(
+                naught_cell(&c, "Gates", &address(row, col + 10)),
+                format!("{at_i}"),
+                "{f}, the Gates sheet's kind of I!{}",
+                address(row, col)
+            );
+            assert_eq!(
+                nt::kind(&nt::gate_text(f), &nt::inputs_of(0)),
+                *at_i,
+                "{f}, the hand's kind"
+            );
+            assert_eq!(
+                naught_cell(&c, "Gates", &address(row, col)),
+                nt::gate_text(f),
+                "{f}, the Gates sheet's text"
+            );
+        }
+        let lab = |col: &str| naught_cell(&c, "Lab", &format!("{col}11"));
+        assert_eq!(
+            (lab("E"), lab("Q"), lab("R"), lab("S")),
+            (
+                "29".to_string(),
+                "24".to_string(),
+                "F4".to_string(),
+                "I8".to_string()
+            ),
+            "I's gates, those outside the set, the first of them and the first error"
+        );
+        assert_eq!(lab("P"), nt::inputs_of(0), "I's inputs");
+        assert_eq!(
+            naught_cell(&c, "I NON", "N8"),
+            "Gates 29, 24 outside the set given, the first at F4; the budget 2, the least known 1: ☆☆☆"
+        );
+        assert_eq!(
+            naught_cell(&c, "I NON", "N9"),
+            "I8 holds an error: it reads a text, an emptied cell or an error. Ex nihilo nihil fit."
+        );
+    }
+
+    /// An error named, and a test's stars its own: III's input emptied by
+    /// Delete makes J3 an error, its lamp a question mark and its verdict the
+    /// cell's name, before T and where T stops; VII's idle gates outside the
+    /// set hold its pass to one star, which their Delete moves not until T,
+    /// three; and a value is no gate, nor a formula past the room's last row,
+    /// which a gate reads only from outside the set.
+    #[test]
+    fn naught_s_errors_are_named_and_a_test_s_stars_are_its_own() {
+        let Some(mut c) = naught_game() else {
+            return;
+        };
+        for (addr, f) in [("C3", "=1-A3"), ("C4", "=1-A4"), ("J3", "=1-C3*C4")] {
+            naught_wrote(&mut c, "III VEL", addr, f);
+        }
+        c.write("(cell \"III VEL\" \"C4\" \"\")")
+            .expect("Delete's row");
+        naught_settled(&mut c);
+        assert_eq!(
+            naught_cell(&c, "III VEL", "L3"),
+            "?",
+            "the lamp of an error"
+        );
+        assert_eq!(
+            naught_cell(&c, "III VEL", "N9"),
+            "J3 holds an error: it reads a text, an emptied cell or an error. Ex nihilo nihil fit.",
+            "named before T"
+        );
+        let frames = naught_act(&mut c, "III VEL", (1, 3), false, "test");
+        assert_eq!(frames, 3, "the first input fails, the stop and the proof");
+        assert_eq!(
+            (naught_cell(&c, "Lab", "B13"), naught_cell(&c, "Lab", "C13")),
+            ("2".to_string(), "0".to_string()),
+            "the test fails at its first input"
+        );
+        assert_eq!(
+            naught_cell(&c, "III VEL", "N9"),
+            "The test stops at input 1 of 4, standing on the board: J3 holds an error: it reads a text, an emptied cell or an error."
+        );
+        for (addr, f) in [
+            ("J3", "=MOD(A3+A4,2)"),
+            ("J4", "=A3*A4"),
+            ("E6", "=-A3+INT(A4/2)"),
+            ("F10", "=MIN(A3:A4)"),
+        ] {
+            naught_wrote(&mut c, "VII SEMIS", addr, f);
+        }
+        naught_act(&mut c, "VII SEMIS", (1, 3), false, "test");
+        let vii = |col: &str| naught_cell(&c, "Lab", &format!("{col}17"));
+        assert_eq!(
+            (vii("B"), vii("E"), vii("Q"), vii("R"), vii("H")),
+            (
+                "1".to_string(),
+                "4".to_string(),
+                "2".to_string(),
+                "E6".to_string(),
+                "★☆☆".to_string()
+            ),
+            "a pass with two gates outside the set, one low in the room: one star"
+        );
+        assert_eq!(
+            naught_cell(&c, "VII SEMIS", "N8"),
+            "Gates 4, 2 outside the set given, the first at E6; the budget 3, the least known 2: ★☆☆"
+        );
+        c.write(
+            "(cell \"VII SEMIS\" \"E6\" \"\")
+(cell \"VII SEMIS\" \"F10\" \"\")",
+        )
+        .expect("Delete's rows");
+        naught_settled(&mut c);
+        let vii = |col: &str| naught_cell(&c, "Lab", &format!("{col}17"));
+        assert_eq!(
+            (vii("T"), vii("U"), vii("H")),
+            ("4".to_string(), "2".to_string(), "★☆☆".to_string()),
+            "the stars the last test's"
+        );
+        assert_eq!(
+            naught_cell(&c, "VII SEMIS", "N8"),
+            "Gates 2; the budget 3, the least known 2: ★☆☆"
+        );
+        naught_act(&mut c, "VII SEMIS", (1, 3), false, "test");
+        assert_eq!(naught_cell(&c, "Lab", "H17"), "★★★", "T again, three");
+        c.write(
+            "(cell \"IV AUT\" \"D5\" \"1\")
+(cell \"IV AUT\" \"E5\" 1)",
+        )
+        .expect("two values");
+        naught_settled(&mut c);
+        naught_wrote(&mut c, "IV AUT", "C11", "=1-A3*A4");
+        assert_eq!(
+            naught_cell(&c, "Lab", "E14"),
+            "0",
+            "a value is no gate, nor a formula past the room"
+        );
+        naught_wrote(&mut c, "IV AUT", "J3", "=C11");
+        assert_eq!(
+            (
+                naught_cell(&c, "Lab", "E14"),
+                naught_cell(&c, "Lab", "Q14"),
+                naught_cell(&c, "Lab", "R14")
+            ),
+            ("1".to_string(), "1".to_string(), "J3".to_string()),
+            "a gate reading past the room is outside the set"
+        );
+    }
+
     /// A sheet's value cells in a window, as its record holds them: each
     /// `cell` row's value, a text or a number.
     fn naught_values(
@@ -7084,10 +7245,12 @@ mod tests {
                 level.sheet
             );
         }
-        let values = naught_values(c, "Lab", "A1:O29");
+        let values = naught_values(c, "Lab", "A1:U29");
         let mut lab: Vec<String> = (1..=8).map(|r| format!("B{r}")).collect();
         for r in 11..=19 {
-            for col in ["B", "C", "D", "E", "F", "G", "H", "N"] {
+            for col in [
+                "B", "C", "D", "E", "F", "G", "H", "N", "P", "Q", "R", "S", "T", "U",
+            ] {
                 lab.push(format!("{col}{r}"));
             }
         }
@@ -7118,6 +7281,33 @@ mod tests {
             hand.lab.get("B3").cloned().unwrap_or(nt::Val::Empty),
             "{at}: the Camera's sheet"
         );
+        // the Gates sheet: each room cell's text and its kind, a level's block 20 rows apart from row 3, every one
+        // a formula's value, read from the machine and never from the sheet's record, whose texts are long
+        let gates = std::collections::HashMap::new();
+        for (k, level) in nt::LEVELS.iter().enumerate() {
+            let top = 3 + 20 * k as u32;
+            for (i, (text, kind)) in hand.texts[k].iter().zip(&hand.kinds[k]).enumerate() {
+                let (row, col) = (top + i as u32 / 8, 3 + i as u32 % 8);
+                for (col, want) in [
+                    (col, nt::Val::Text(text.clone())),
+                    (col + 10, nt::Val::Num(f64::from(*kind))),
+                ] {
+                    let got = naught_val(c, "Gates", row, col, &gates);
+                    assert!(
+                        got == want,
+                        "{at}: Gates!{} for {}, is {got:?}, where the hand holds {want:?}",
+                        address(row, col),
+                        level.sheet
+                    );
+                }
+            }
+            assert_eq!(
+                hand.texts[k].len(),
+                8 * level.rows as usize,
+                "{at}: {}'s room",
+                level.sheet
+            );
+        }
     }
 
     /// One act of the session, as the host makes it at rate 0, its Input rows
@@ -7215,9 +7405,19 @@ mod tests {
             assert_eq!(hand.lab[&format!("B{r}")], nt::Val::Num(want), "Lab!B{r}");
         }
         assert_eq!(
-            hand.lab["H17"],
-            nt::Val::Text("★☆☆".into()),
-            "VII past its budget"
+            (hand.lab["H14"].clone(), hand.lab["R14"].clone()),
+            (nt::Val::Text("★☆☆".into()), nt::Val::Text("C3".into())),
+            "IV's gate outside the set holds its pass to one star"
+        );
+        assert_eq!(
+            hand.lab["H16"],
+            nt::Val::Text("★★☆".into()),
+            "VI within its budget, two stars"
+        );
+        assert_eq!(
+            (hand.lab["H17"].clone(), hand.lab["T17"].clone()),
+            (nt::Val::Text("★★★".into()), nt::Val::Num(2.0)),
+            "VII's idle gates deleted and tested again"
         );
         assert_eq!(
             hand.lab["H19"],

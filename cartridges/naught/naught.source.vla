@@ -25,8 +25,9 @@
 ; built of NON-ET alone to a 4-bit ripple adder (CART.9's third slice): a level's switches,
 ; the room for a person's gates, its outputs, its lamps, the output due, and its words; T
 ; tests every input of it, an input a settle step, and its gates are counted against a
-; budget and the least known. Their keys are the game's, and the Bench's are a person's
-; (docs/SPEC.md section 7.2, version 6's (game ...) and (work ...)).
+; budget and the least known, each read by its formula's text: a gate of a shape outside
+; the set the level gives holds a pass to one star. Their keys are the game's, and the
+; Bench's are a person's (docs/SPEC.md section 7.2, version 6's (game ...) and (work ...)).
 ;
 ; The gates, in Latin, each arithmetic over 0 and 1 and each a macro below:
 ;   NON, not: 1 less its input.            ET, and: the product of its two.
@@ -122,10 +123,11 @@
 (cell "Lesson" "A6" "Write the gates in the room, C to I, and the outputs in J: type = on a cell, and the palette opens its formula. Enter writes it.")
 (cell "Lesson" "A7" "Enter on a cell opens its formula as it stands, F2 too, and Escape leaves it. Delete empties a cell; Tab moves right.")
 (cell "Lesson" "A8" "T tests every input, an input a frame, and stops at the first a lamp gets wrong, the board standing on it. R sets the switches to 0.")
-(cell "Lesson" "A9" "N and P show the next and the previous level. A pass is a star; within the budget, two; at the least known, three.")
+(cell "Lesson" "A9" "N and P show the next and the previous level. A pass is a star; within the budget, two; at the least known, three, until the next test.")
 (cell "Lesson" "A11" "The gates, in Latin: NON, not, =1-a. ET, and, =a*b. VEL, or, =MAX(a,b). AUT, either but not both, =MOD(a+b,2).")
 (cell "Lesson" "A12" "NON-ET, not both, =1-a*b, Sheffer's stroke. NEC, neither, =1-MAX(a,b), Peirce's arrow. Either alone builds every other gate.")
-(cell "Lesson" "A13" "Level I gives NON-ET alone; each level after, the gates proven before it. Nothing checks which you write: the words and the stars say.")
+(cell "Lesson" "A13" "Level I gives NON-ET alone; each later level, the gates proven before it, and a wire, =a. Any other shape caps a pass at one star.")
+(cell "Lesson" "A14" "A gate reads the switches, the room's cells, 0 or 1. The reckoning names the first gate outside the set; the verdict, an error's cell.")
 (cell "Lesson" "A15" "After the levels, the Bench, a sandbox where every key types: a 16-bit adder from A1 and an 8 by 8 multiplier from I1.")
 (cell "Lesson" "A16" "The adder: a in A3:A18 and b in B3:B18, low bit first, its carry-in F2; its sum G3:G18, its carry out F18.")
 (cell "Lesson" "A17" "Each bit adds three: C = AUT(a,b), D = ET(a,b), E = ET(C,carry), F = VEL(D,E) the carry on, G = AUT(C,carry) the sum.")
@@ -144,8 +146,9 @@
 ; output is 1; the output due in M, the specification's at the switches standing; and its words in N, its reckoning
 ; and its test's verdict in N8 and N9. Its keys are the game's, the manifest's (game ...): Space toggles the switch the
 ; selection stands on, 1 and 0 set it, and a click toggles it; T tests every input; R sets the switches to 0; N and P
-; show the next and the previous level. The Lab keeps the test and each level's reckoning, the Count counts its gates,
-; the Camera shows the level N and P move to, and the Commands sheet holds the keys.
+; show the next and the previous level. The Lab keeps the test and each level's reckoning, the Gates sheet reads each
+; gate of its room by its formula's text, the Camera shows the level N and P move to, and the Commands sheet holds the
+; keys.
 (include "../common.vla")
 
 (format 2 "A080E0" general nowrap)  ; a lamp lit, the lamps' lavender
@@ -193,21 +196,32 @@
               (ref (&expand sheet ".last") "A3"))))))                                             ; else as it was
 
 (defmacro (level-lamps sheet range)
-  "a level's lamps, a dot lit in the lamps' lavender while the output to its left is 1, and a ring otherwise"
-  (rule sheet range (if (= J3 1) "●" "○")))
+  "a level's lamps, a dot lit in the lamps' lavender while the output to its left is 1, a ring otherwise, and a question
+   mark while it holds an error, which is neither"
+  (rule sheet range (iferror (if (= J3 1) "●" "○") "?")))
 
 (defmacro (level-reckoning sheet lab-row inputs budget least)
-  "a level's reckoning in N8, its gates against its budget and the least known with its stars, and its test's verdict
-   in N9, counting the inputs while T runs. lab-row, the level's row of the Lab"
-  (rule sheet "N8" (& "Gates " (ref "Lab" (&expand "E" lab-row)) (&expand "; the budget " budget ", the least known " least ": ") (ref "Lab" (&expand "H" lab-row))))
-  ; The verdict stays a text: its sums stand in parentheses, "input "&(Lab!$B$6+1)&" of ", which
-  ; the formula syntax writes without them, the same value in other bytes, and the cartridge's
-  ; bytes are the replay's and the hand's.
-  (formula sheet "N9"
-    (&expand "=IF(Lab!N" lab-row "=1,\"Calculemus: input \"&(Lab!$B$6+1)&\" of " inputs "\","
-             "IF(Lab!B" lab-row "=1,\"Quod erat demonstrandum: every one of its " inputs " inputs passes.\","
-             "IF(Lab!B" lab-row "=2,\"The test stops at input \"&(Lab!C" lab-row "+1)&\" of " inputs ", standing on the board: a lamp differs from its due.\","
-             "\"T tests every input, an input a frame. Calculemus!\")))")))
+  "a level's reckoning in N8: its gates, how many stand outside the set it gives and the first of them, its budget and
+   the least known, and its last test's stars; and its test's verdict in N9, counting the inputs while T runs, and
+   naming the room's first cell that holds an error. lab-row, the level's row of the Lab"
+  (rule sheet "N8"
+    (& "Gates " (ref "Lab" (&expand "E" lab-row))
+       (if (> (ref "Lab" (&expand "Q" lab-row)) 0)
+           (& ", " (ref "Lab" (&expand "Q" lab-row)) " outside the set given, the first at " (ref "Lab" (&expand "R" lab-row)))
+           "")
+       (&expand "; the budget " budget ", the least known " least ": ") (ref "Lab" (&expand "H" lab-row))))
+  (rule sheet "N9"
+    (if (= (ref "Lab" (&expand "N" lab-row)) 1) (& "Calculemus: input " (+ Lab!$B$6 1) (&expand " of " inputs))
+      (if (= (ref "Lab" (&expand "B" lab-row)) 2)
+          (& "The test stops at input " (+ (ref "Lab" (&expand "C" lab-row)) 1) (&expand " of " inputs ", standing on the board: ")
+             (if (= (ref "Lab" (&expand "S" lab-row)) "")
+                 "a lamp differs from its due."
+                 (& (ref "Lab" (&expand "S" lab-row)) " holds an error: it reads a text, an emptied cell or an error.")))
+        (if (<> (ref "Lab" (&expand "S" lab-row)) "")
+            (& (ref "Lab" (&expand "S" lab-row)) " holds an error: it reads a text, an emptied cell or an error. Ex nihilo nihil fit.")
+          (if (= (ref "Lab" (&expand "B" lab-row)) 1)
+              (&expand "Quod erat demonstrandum: every one of its " inputs " inputs passes.")
+              "T tests every input, an input a frame. Calculemus!"))))))
 
 (defmacro (level-keys sheet at)
   "the keys of a level, said where it has room; and below its verdict, in N10, what a write over the cartridge's own cells
@@ -376,16 +390,20 @@
   ("B7" (choose (max 1 B4) 2 4 4 4 8 4 4 8 512))
   ("B8" (choose (max 1 B4) D11 D12 D13 D14 D15 D16 D17 D18 D19)))
 ; Rows 11 to 19, a level a row: B the last test's result, 0 none, 1 passed and 2 failed, R on the level forgetting it; C
-; the input it stopped at; D whether every output is due now; E its gates, the Count's; F its budget and G the least
-; known; H its stars; I to M its outputs due, the specification's at its inputs as its test reads them, rows 21 on; N
-; whether its test runs; and O, IX's, the sum a + b + c.
+; the input it stopped at; D whether every output is due now, an error never; E its gates, every formula of its room; F
+; its budget and G the least known; H its stars, its last test's; I to M its outputs due, the specification's at its
+; inputs as its test reads them, rows 21 on; N whether its test runs; O, IX's, the sum a + b + c; P the inputs a gate of
+; it may read, between bars; Q its gates outside the set it gives, R the first of them and S the room's first cell
+; holding an error, each read row by row; and T and U its gates and those outside when its test last ended.
 (labels "Lab" "A11" "I NON" "II ET" "III VEL" "IV AUT" "V ELIGE" "VI DISTRIBUE" "VII SEMIS" "VIII SUMMA" "IX QUATTUOR")
-(headers "Lab" "B10" "result" "stopped at" "due" "gates" "budget" "least" "stars" "due 0" "due 1" "due 2" "due 3" "due 4" "testing" "sum")
+(headers "Lab" "B10" "result" "stopped at" "due" "gates" "budget" "least" "stars" "due 0" "due 1" "due 2" "due 3" "due 4" "testing" "sum"
+  "inputs" "outside" "first outside" "first error" "gates tested" "outside tested")
 
 (defmacro (lab-level r k budget least)
   "a level's row of the Lab, r its row and k its number: its result, the input its test stopped at, its budget, its least
-   known, its stars, and whether its test runs. A result and its input change only while the level is under test, so an
-   error a person's gate gives the test, #VALUE! where a gate reads a text, stays with that level until T or R"
+   known, its gates and those outside the set when its test last ended, its stars, and whether its test runs. A result,
+   its input and its gates change only while the level is under test, so a test's stars are its own: a gate written or
+   emptied after it moves none until T or R"
   (rule "Lab" (&expand "B" r)
     (if (and (a-command "reset") (= $B$1 k)) 0                                                   ; R on the level forgets its test;
       (if (or (<> Lab.last!$B$4 k) (<> $B$4 k)) (ref "Lab.last" (&expand "B" r))                  ; another level under test: as it was;
@@ -396,8 +414,16 @@
       (if (and (= Lab.last!$B$5 1) (= $B$5 0)) Lab.last!$B$6 (ref "Lab.last" (&expand "C" r)))))
   (cell "Lab" (&expand "F" r) budget)
   (cell "Lab" (&expand "G" r) least)
-  (rule "Lab" (&expand "H" r)
-    (if (= (symbol "B" r) 1) (if (<= (symbol "E" r) (symbol "G" r)) "★★★" (if (<= (symbol "E" r) (symbol "F" r)) "★★☆" "★☆☆")) "☆☆☆"))
+  (rule "Lab" (&expand "T" r)
+    (if (or (<> Lab.last!$B$4 k) (<> $B$4 k)) (ref "Lab.last" (&expand "T" r))
+      (if (and (= Lab.last!$B$5 1) (= $B$5 0)) (symbol "E" r) (ref "Lab.last" (&expand "T" r)))))
+  (rule "Lab" (&expand "U" r)
+    (if (or (<> Lab.last!$B$4 k) (<> $B$4 k)) (ref "Lab.last" (&expand "U" r))
+      (if (and (= Lab.last!$B$5 1) (= $B$5 0)) (symbol "Q" r) (ref "Lab.last" (&expand "U" r)))))
+  (rule "Lab" (&expand "H" r)                                                                      ; a gate outside: one star
+    (if (= (symbol "B" r) 1)
+        (if (> (symbol "U" r) 0) "★☆☆" (if (<= (symbol "T" r) (symbol "G" r)) "★★★" (if (<= (symbol "T" r) (symbol "F" r)) "★★☆" "★☆☆")))
+        "☆☆☆"))
   (rule "Lab" (&expand "N" r) (if (= $B$4 k) $B$5 0)))
 
 (defmacro (lab-inputs sheet lab-row range)
@@ -429,61 +455,98 @@
 (lab-inputs "VII SEMIS" 17 "H21:H22")
 (lab-inputs "VIII SUMMA" 18 "I21:I23")
 (lab-inputs "IX QUATTUOR" 19 "J21:J29")
-; each level's specification at its inputs as its test reads them, and whether every output is due
+; each level's specification at its inputs as its test reads them, and whether every output is due, an output holding an
+; error never: the test stops there, and the verdict names the error's cell
 (defmacro (output level cell)
   "a level's output, a reference into its sheet, whose name needs quotes"
   (ref level cell))
 (rules "Lab"
   ("I11" (- 1 B21))
-  ("D11" (if (= (output "I NON" "J3") I11) 1 0))
+  ("D11" (iferror (if (= (output "I NON" "J3") I11) 1 0) 0))
   ("I12" (* C21 C22))
-  ("D12" (if (= (output "II ET" "J3") I12) 1 0))
+  ("D12" (iferror (if (= (output "II ET" "J3") I12) 1 0) 0))
   ("I13" (max D21 D22))
-  ("D13" (if (= (output "III VEL" "J3") I13) 1 0))
+  ("D13" (iferror (if (= (output "III VEL" "J3") I13) 1 0) 0))
   ("I14" (mod (+ E21 E22) 2))
-  ("D14" (if (= (output "IV AUT" "J3") I14) 1 0))
+  ("D14" (iferror (if (= (output "IV AUT" "J3") I14) 1 0) 0))
   ("I15" (if (= F23 1) F22 F21))
-  ("D15" (if (= (output "V ELIGE" "J3") I15) 1 0))
+  ("D15" (iferror (if (= (output "V ELIGE" "J3") I15) 1 0) 0))
   ("I16" (* G21 (- 1 G22)))
   ("J16" (* G21 G22))
-  ("D16" (if (and (= (output "VI DISTRIBUE" "J3") I16) (= (output "VI DISTRIBUE" "J4") J16)) 1 0))
+  ("D16" (iferror (if (and (= (output "VI DISTRIBUE" "J3") I16) (= (output "VI DISTRIBUE" "J4") J16)) 1 0) 0))
   ("I17" (mod (+ H21 H22) 2))
   ("J17" (int (/ (+ H21 H22) 2)))
-  ("D17" (if (and (= (output "VII SEMIS" "J3") I17) (= (output "VII SEMIS" "J4") J17)) 1 0))
+  ("D17" (iferror (if (and (= (output "VII SEMIS" "J3") I17) (= (output "VII SEMIS" "J4") J17)) 1 0) 0))
   ("I18" (mod (+ I21 I22 I23) 2))
   ("J18" (int (/ (+ I21 I22 I23) 2)))
-  ("D18" (if (and (= (output "VIII SUMMA" "J3") I18) (= (output "VIII SUMMA" "J4") J18)) 1 0))
+  ("D18" (iferror (if (and (= (output "VIII SUMMA" "J3") I18) (= (output "VIII SUMMA" "J4") J18)) 1 0) 0))
   ("O19" (+ J21 (* 2 J22) (* 4 J23) (* 8 J24) J25 (* 2 J26) (* 4 J27) (* 8 J28) J29))
   ("I19" (mod O19 2))
   ("J19" (mod (int (/ O19 2)) 2))
   ("K19" (mod (int (/ O19 4)) 2))
   ("L19" (mod (int (/ O19 8)) 2))
   ("M19" (int (/ O19 16)))
-  ("D19" (if (and (= (output "IX QUATTUOR" "J3") I19) (= (output "IX QUATTUOR" "J4") J19) (= (output "IX QUATTUOR" "J5") K19) (= (output "IX QUATTUOR" "J6") L19) (= (output "IX QUATTUOR" "J7") M19)) 1 0)))
-; each level's gates: every cell of its room and its outputs that holds anything, counted on the Count sheet
-(rules "Lab"
-  ("E11" (sum Count!C3:J6))
-  ("E12" (sum Count!C23:J26))
-  ("E13" (sum Count!C43:J46))
-  ("E14" (sum Count!C63:J66))
-  ("E15" (sum Count!C83:J86))
-  ("E16" (sum Count!C103:J106))
-  ("E17" (sum Count!C123:J126))
-  ("E18" (sum Count!C143:J146))
-  ("E19" (sum Count!C163:J171)))
+  ("D19" (iferror (if (and (= (output "IX QUATTUOR" "J3") I19) (= (output "IX QUATTUOR" "J4") J19) (= (output "IX QUATTUOR" "J5") K19) (= (output "IX QUATTUOR" "J6") L19) (= (output "IX QUATTUOR" "J7") M19)) 1 0) 0)))
+; ---- the Gates: each level's room read by its formulas' texts (CART.9's short slice of 2026-10-24) ----
+; A gate is a formula of the room, C3 to J at the board's last row, 10 or IX's 11 (ISFORMULA), so a value is none; and
+; each is read by its text (FORMULATEXT), its spaces and its $ gone and upper-cased, as one of the set a level gives:
+; a wire =x, NON-ET =1-x*y, NON =1-x, ET =x*y, VEL =MAX(x,y) or AUT =MOD(x+y,2), each input a switch of the level, a
+; cell of its room, 0 or 1. Any other formula is outside the set, as a gate the level does not give yet is. A block a
+; level, 20 rows apart from row 3: the texts in C to J, and the kinds ten columns to their right.
+(defmacro (among-inputs x ops)
+  "an input a level's gate may read: its text, between bars, among the level's inputs, ops"
+  (not (iserror (find (& "|" x "|") ops))))
 
-; ---- the Count: a level's room and outputs, a 1 for every cell that holds anything ----
-(sheet "Count" hidden)
-(rules "Count"
-  ("C3:J6" (if (= (output "I NON" "C3") "") 0 1))
-  ("C23:J26" (if (= (output "II ET" "C3") "") 0 1))
-  ("C43:J46" (if (= (output "III VEL" "C3") "") 0 1))
-  ("C63:J66" (if (= (output "IV AUT" "C3") "") 0 1))
-  ("C83:J86" (if (= (output "V ELIGE" "C3") "") 0 1))
-  ("C103:J106" (if (= (output "VI DISTRIBUE" "C3") "") 0 1))
-  ("C123:J126" (if (= (output "VII SEMIS" "C3") "") 0 1))
-  ("C143:J146" (if (= (output "VIII SUMMA" "C3") "") 0 1))
-  ("C163:J171" (if (= (output "IX QUATTUOR" "C3") "") 0 1)))
+(defmacro (gate-kind f ops)
+  "a cell's kind by its formula's text f, spaces and $ gone and upper-cased, ops the level's inputs between bars: 0 no
+   formula; 1 a wire, =x; 2 NON-ET, =1-x*y; 3 NON, =1-x; 4 ET, =x*y; 5 VEL, =MAX(x,y); 6 AUT, =MOD(x+y,2); and 9 any
+   other formula. A shape's inputs found by its marks, so an input holding any other mark is no input"
+  (if (= f "") 0
+    (if (among-inputs (mid f 2 99) ops) 1
+      (if (and (= (left f 3) "=1-") (iferror (and (among-inputs (mid f 4 (- (find "*" f) 4)) ops) (among-inputs (mid f (+ (find "*" f) 1) 99) ops)) false)) 2
+        (if (and (= (left f 3) "=1-") (among-inputs (mid f 4 99) ops)) 3
+          (if (iferror (and (among-inputs (mid f 2 (- (find "*" f) 2)) ops) (among-inputs (mid f (+ (find "*" f) 1) 99) ops)) false) 4
+            (if (and (= (left f 5) "=MAX(") (= (right f 1) ")") (iferror (and (among-inputs (mid f 6 (- (find "," f) 6)) ops) (among-inputs (mid f (+ (find "," f) 1) (- (len f) (find "," f) 1)) ops)) false)) 5
+              (if (and (= (left f 5) "=MOD(") (= (right f 3) ",2)") (iferror (and (among-inputs (mid f 6 (- (find "+" f) 6)) ops) (among-inputs (mid f (+ (find "+" f) 1) (- (len f) (find "+" f) 3)) ops)) false)) 6
+                9))))))))
+
+(defmacro (room-address i)
+  "the address of a room's cell by its place i in the room read row by row from C3, eight cells a row"
+  (& (mid "CDEFGHIJ" (+ (mod (- i 1) 8) 1) 1) (+ 3 (int (/ (- i 1) 8)))))
+
+(defmacro (lab-gates sheet r top rows switches gives)
+  "a level's gates read from their formulas: on the Gates sheet, its block from row top, each room cell's text and its
+   kind; and on its row r of the Lab, its gates, every formula of its room (E), the inputs a gate may read (P), its gates
+   outside the set it gives, kinds past gives (Q), the first of them (R), and the room's first cell holding an error (S).
+   rows, its room's rows from 3; switches, its switches"
+  (rule "Gates" (&expand "C" top ":J" (+expand top (-expand rows 1)))
+    (iferror (upper (substitute (substitute (formulatext (ref sheet "C3")) " " "") "$" "")) ""))
+  (rule "Gates" (&expand "M" top ":T" (+expand top (-expand rows 1)))
+    (gate-kind (symbol "C" top) (symbol "Lab!$P$" r)))
+  (rule "Lab" (&expand "E" r) (sumproduct (- (- (isformula (ref sheet (&expand "C3:J" (+expand rows 2))))))))
+  (rule "Lab" (&expand "P" r)
+    (& "|" (textjoin "|" true (& "A" (sequence switches 1 3)) (& (mid "CDEFGHIJ" (sequence 1 8) 1) (sequence rows 1 3)) "0" "1") "|"))
+  (rule "Lab" (&expand "Q" r) (countif (ref "Gates" (&expand "M" top ":T" (+expand top (-expand rows 1)))) (&expand ">" gives)))
+  (rule "Lab" (&expand "R" r)
+    (iferror (room-address (match true (> (tocol (ref "Gates" (&expand "M" top ":T" (+expand top (-expand rows 1))))) gives) 0)) ""))
+  (rule "Lab" (&expand "S" r)
+    (iferror (room-address (match true (iserror (tocol (ref sheet (&expand "C3:J" (+expand rows 2))))) 0)) "")))
+
+(sheet "Gates" hidden)
+(cells "Gates"
+  ("C1" "each room cell's formula, spaces and $ gone and upper-cased")
+  ("M1" "its kind: 0 none, 1 a wire, 2 NON-ET, 3 NON, 4 ET, 5 VEL, 6 AUT, 9 outside the set")
+  ("A3" "I NON") ("A23" "II ET") ("A43" "III VEL") ("A63" "IV AUT") ("A83" "V ELIGE") ("A103" "VI DISTRIBUE")
+  ("A123" "VII SEMIS") ("A143" "VIII SUMMA") ("A163" "IX QUATTUOR"))
+(lab-gates "I NON" 11 3 8 1 2)
+(lab-gates "II ET" 12 23 8 2 3)
+(lab-gates "III VEL" 13 43 8 2 4)
+(lab-gates "IV AUT" 14 63 8 2 5)
+(lab-gates "V ELIGE" 15 83 8 3 6)
+(lab-gates "VI DISTRIBUE" 16 103 8 2 6)
+(lab-gates "VII SEMIS" 17 123 8 2 6)
+(lab-gates "VIII SUMMA" 18 143 8 3 6)
+(lab-gates "IX QUATTUOR" 19 163 9 9 6)
 
 ; ---- the Camera: the level N and P move to (docs/SPEC.md section 3.8, version 4's third row) ----
 (sheet "Camera" hidden)

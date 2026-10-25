@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds one hundred and eighty-five mutant pages through tools/build_web.ps1 and runs
+-Control builds one hundred and ninety mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -505,11 +505,13 @@ And since its hand test's fifth note one more, when the real page holds the modu
 run no command, so that the keypad's 7, Num Lock on, passes on where the commands case's card runs seven, the command
 of the digit row's 7, which the commands case must fail by name at frame 38. And since CART.9 one more, when the real
 page holds the module: EZ, naught's hand that reads aut as vel, the inclusive or for the exclusive, which the replay
-case must fail by name at frame 731, where the stand-in's carry-in first meets a 1 at an AUT already holding one
-(frame 35 until the third slice's hand test put the owner's session and the levels before the bench).
+case must fail by name at frame 743, where the stand-in's carry-in first meets a 1 at an AUT already holding one
+(frame 35 until the third slice's hand test put the owner's session and the levels before the bench, and 731 until
+its short slice lengthened the levels' stand-in).
 And since its second slice three more, needing no module, each a template the palette case must fail by name: FA,
 a cell's edit whose caret stands past the closing quote; FB, Enter writing a cell's edit and moving no selection;
-and FC, the floating palette at the top over a cell in the top half of the rows in view.
+and FC, the floating palette at the top over a cell in the top half of the rows in view, of the window since
+CART.9's short slice.
 And since its hand test five more: FD, FE and FF, the palette case's, Backspace's emptied cell forgotten, Delete's
 row over the selection's first cell alone and the window's own blur shutting the palette; FG, the settle case's, a
 press an act whatever the cartridge reads; and FH, when the real page holds the module, the replay case's, a replay
@@ -525,11 +527,16 @@ needing no module: FU, Enter on a read-only sheet left to the viewport, which op
 to the browser, which walks the focus out of the grid. And since CART.9's third slice five more, when the real page
 holds the module: FW, a host whose press is an act on every sheet, which the modes case must fail by name on Notes, a
 work sheet, where a press is the viewport's selection alone; and FX, FY, FZ and GA, naught's hand, which the replay
-case must fail by name at frames 34, 80, 780 and 15: a test that runs on past a wrong input, the stars counted
-against the budget alone, the due under test read from the switches as they stand, so that a switch written over is
-tested where it stands, and a click that toggles no switch. And its rider one more, needing no module: GB, a host whose
-log counts a load's sentences in an earlier load's lines, so that its status line skips them, which the settle case must
-fail by name.
+case must fail by name at frames 34, 108, 792 and 15 (80 and 780 for FY and FZ until its short slice): a test that
+runs on past a wrong input, the stars counted against the budget alone, the due under test read from the switches as
+they stand, so that a switch written over is tested where it stands, and a click that toggles no switch. And its rider
+one more, needing no module: GB, a host whose log counts a load's sentences in an earlier load's lines, so that its
+status line skips them, which the settle case must fail by name. And its short slice five more: GV, needing no
+module, a viewport whose cell's box forgets the scroll, which the palette case must fail by name at a cell scrolled
+into view; and four when the real page
+holds the module: GW, GX, GY and GZ, naught's hand, which the replay case must fail by name at frames 52, 30, 52 and
+21: a value read as a gate, every level giving every gate, an output's error due, and a test's stars read from the
+gates as they stand.
 And ENGINE.28's first slice three more: GC, needing no module, a viewport that passes over a format row's groups,
 which the grid case must fail by name at the double's row of 200, drawn right-aligned in the default ink where its
 look says white, bold and centered; and GD and GE, when the real page holds the module, a look that replaces the
@@ -795,7 +802,10 @@ $keysFloors = @{ defaults = 1; refused = 18; places = 25; steps = 3; lines = 3; 
 # over five selections, two of them none; and 2 of the window's own blur, which keeps the palette and its text, where a
 # click elsewhere shuts it.
 # 2026-10-20, SPEC.5: the palette's commands 33, the three of its place, palette-floating, palette-top and palette-bottom.
-$paletteFloors = @{ commands = 33; keyed = 11; lines = 10; opened = 1; ran = 1; chosen = 1; rows = 1; recalled = 1; closed = 3; restored = 1; held = 1; passed = 1; clicked = 1; escapes = 5; edits = 12; sides = 6; cellEdits = 7; placed = 5; clears = 6; kept = 2 }
+# 2026-10-24, CART.9's short slice, the owner's word at its hand test: the floating palette's side by the cell's box in
+# the window's halves, where it was the rows in view, 8 sides; and 3 of a cell's box, the hit test's inverse, its middle
+# the cell in the frozen corner, unscrolled and scrolled.
+$paletteFloors = @{ commands = 33; keyed = 11; lines = 10; opened = 1; ran = 1; chosen = 1; rows = 1; recalled = 1; closed = 3; restored = 1; held = 1; passed = 1; clicked = 1; escapes = 5; edits = 12; sides = 8; boxes = 3; cellEdits = 7; placed = 5; clears = 6; kept = 2 }
 # 2026-10-20, SPEC.5: the twenty-nine cases' counts unchanged but the palette's commands, and a thirtieth, modes, on both
 # pages, its counts a function of its plan. Its page half, pure: 34 keys of SPEC.5's table, each mode's sheet given a
 # game's key, a character, Delete, Backspace and an arrow, and since the hand test Enter and Tab, each moving the
@@ -922,6 +932,15 @@ $settleDoubleFloors = @{ fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased
 # (fakeReloaded 1); mutant GB, the settle case's, takes it to one hundred and eighty-two, and ninety without the module.
 # And at the owner's word after it the log a line a run, a timeline across loads: the reload's sentence a line of its own
 # after the first load's, each counting 1 (fakeReloaded 1 still), and GB's anchor the line's key.
+# CART.9's short slice, 2026-10-24: a level's room read by its formulas, the Gates sheet's texts and kinds held to the
+# hand with the Lab's six columns more, 2,313 cells of the game a frame where it held 675. The owner's 45 frames play
+# against the new cartridge, and the stand-in after them runs ten frames longer, VI at the textbook's three gates and
+# VII's idle gates deleted and tested again: 794 frames (naughtFrames 794, naughtCells 2,154,122, the bench's 400 gates
+# and the game's 2,313 cells a frame), 51 rows a person wrote (naughtWritten 51) and eight levels passed still. EZ, FY
+# and FZ move to frames 743, 108 and 792; and GW, GX, GY and GZ, the replay case's, take it to one hundred and
+# eighty-nine after ENGINE.28's first slice's three, ninety-one without the module still. At its hand test, the owner's
+# word: the floating palette's side by the window's halves, FC anchored on the new rule; and GV, the palette case's,
+# needing no module, a cell's box forgetting the scroll, to one hundred and ninety, and ninety-two without the module.
 # 2026-10-17, ENGINE.25's second slice: the case's page half, pure and so on every page, module or not, its counts a function of
 # its plan: 6 names a page writes a game's command by, held to the cartridge and the command or to none; 4 of the palette's
 # lines, the command that holds with its own key, found by a word after the dot, the one that holds not no line, and one
@@ -956,7 +975,7 @@ $floors = @(
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
     @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 11; same = 11; refused = 1; handle = 1; ranOn = 1 } },
     @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 5; players = 2; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 7; rate = 5; refused = 1 } },
-    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 5 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 7; frames = 26; same = 26; golden = 7; round = 7; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637; seiyakuFrames = 104; seiyakuCells = 8424; seiyakuActs = 35; seiyakuInstances = 2; seiyakuSettles = 69; naughtFrames = 782; naughtCells = 840650; naughtEdits = 38; naughtLit = 208; naughtWritten = 48; naughtPassed = 8; naughtShown = 10 } },
+    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 5 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 7; frames = 26; same = 26; golden = 7; round = 7; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637; seiyakuFrames = 104; seiyakuCells = 8424; seiyakuActs = 35; seiyakuInstances = 2; seiyakuSettles = 69; naughtFrames = 794; naughtCells = 2154122; naughtEdits = 38; naughtLit = 208; naughtWritten = 51; naughtPassed = 8; naughtShown = 10 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } },
     # 2026-10-24, ENGINE.28's first slice: the grid card's rows 17 and 18 are a format's appearance and its stripe starts
@@ -1291,16 +1310,17 @@ if ($Control) {
         $jFailed = @($jJ.Problems | Where-Object { $_ -like "*case plane*fake frame*holds 255 in the host's plane and 0 by the record*" }).Count
         # mutant K, when the real page holds the engine's module: a scratch copy of cartridges/ whose
         # library writes the Palette's names to column D; the page's pass writes rows the command line
-        # did not, and the pass case must fail by name
+        # did not, and the pass case must fail by name. Anchored since CART.9's short slice on the row as
+        # KIT.5 spells it, by address-expand, where it stood on the symbol spelling KIT.5 replaced
         $kApplied = $false; $kFailed = 0; $kNote = 'not applicable, the real page holding no engine module'
         if ($moduleReal -gt 0) {
             $cartsK = Join-Path $tmp 'cartridges_k'
             Copy-Item -Recurse -LiteralPath (Join-Path $repoRoot 'cartridges') -Destination $cartsK
             $libK = Join-Path $cartsK 'common.vla'
             $lib = [System.IO.File]::ReadAllText($libK)
-            $anchorK = '(cell "Palette" (symbol "\"C" (+expand index 1))'
+            $anchorK = '(cell "Palette" (address-expand (+expand index 1) 3)'
             if (([regex]::Matches($lib, [regex]::Escape($anchorK))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorK' is not in cartridges/common.vla exactly once"; exit 1 }
-            $mutK = $lib.Replace($anchorK, '(cell "Palette" (symbol "\"D" (+expand index 1))')
+            $mutK = $lib.Replace($anchorK, '(cell "Palette" (address-expand (+expand index 1) 4)')
             $kApplied = $mutK -cne $lib
             [System.IO.File]::WriteAllText($libK, $mutK, $utf8)
             $rK = Invoke-Mutant (New-MutantPage 'k' $template $hostJs '' $cartsK) 'pass'
@@ -1935,16 +1955,22 @@ if ($Control) {
                Want = 'case palette.*palette: a held Ctrl\+K''s repeat was taken and the palette opened' },
             # FA, FB and FC (CART.9's second slice): a cell's edit whose caret stands past the closing quote; Enter writing a
             # cell's edit and leaving the selection where it was; and the floating palette at the top over a cell in the top
-            # half of the rows in view, over the very cell being edited.
+            # half of the rows in view, the window's since its short slice, over the very cell being edited.
             @{ L = 'fa'; Name = 'the caret past the closing quote'; Anchor = "    function row(head, value, quoted) { var t = '(' + head + ' ' + at + value + ')'; return { text: t, caret: t.length - (quoted ? 2 : 1) }; }"
                With = "    function row(head, value, quoted) { var t = '(' + head + ' ' + at + value + ')'; return { text: t, caret: t.length - 1 }; }"
                Want = 'case palette.*palette: the edit of "x" typed is .* and places the caret at 22, where' },
             @{ L = 'fb'; Name = 'a cell''s edit moving nothing'; Anchor = "    if (this.runLine(this.sel) && after && line && line.kind === 'row') after(direction);"
                With = '    this.runLine(this.sel);'
                Want = 'case palette.*palette: a cell''s edit written by Enter wrote .* and moved the selection \[\]' },
-            @{ L = 'fc'; Name = 'the floating palette over its cell'; Anchor = "    return row - win.top <= (win.bottom - win.top) / 2 ? 'bottom' : 'top';"
+            @{ L = 'fc'; Name = 'the floating palette over its cell'; Anchor = "    return (box.top + box.bottom) / 2 <= height / 2 ? 'bottom' : 'top';"
                With = "    return 'top';"
-               Want = 'case palette.*palette: the palette floating over row 5 of .* opens at top, where bottom is due' },
+               Want = 'case palette.*palette: the palette floating over the cell .* opens at top, where bottom is due' },
+            # GV (CART.9's short slice, the hand test's note): a viewport whose cell's box forgets the scroll, so that the
+            # middle of a cell scrolled into view is another cell's or none
+            @{ L = 'gv'; Name = 'a cell''s box forgetting the scroll'; File = 'viewport'
+               Anchor = '    var x = g.ox + g.colX[col] - (col > g.fc ? this.scroll.x : 0), y = g.oy + g.rowTop(row) - (row > g.fr ? this.scroll.y : 0);'
+               With = '    var x = g.ox + g.colX[col], y = g.oy + g.rowTop(row);'
+               Want = 'case palette.*palette: the box of B31 scrolled is' },
             # FD, FE and FF (CART.9's hand test of the second slice): Backspace opening what the cell holds and not the cell
             # emptied; Delete's row over the selection's first cell alone; and the window's own blur shutting the palette.
             @{ L = 'fd'; Name = 'Backspace''s emptied cell forgotten'; Anchor = '    if (typed === '''') return row(''cell'', ''""'', true);'
@@ -1961,11 +1987,18 @@ if ($Control) {
         $paletteJudged = New-Object System.Collections.Generic.List[object]
         $paletteOk = $true
         foreach ($mu in $paletteMutants) {
-            if (([regex]::Matches($tpl, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in the template exactly once"; exit 1 }
-            $mutP = $tpl.Replace($mu.Anchor, $mu.With)
-            $pApplied = $mutP -cne $tpl
-            $tplP = Join-Path $tmp ($mu.L + '.template.html'); [System.IO.File]::WriteAllText($tplP, $mutP, $utf8)
-            $rP = Invoke-Mutant (New-MutantPage $mu.L $tplP $hostJs) 'palette'
+            $origP = if ($mu.File -eq 'viewport') { $vpText } else { $tpl }
+            if (([regex]::Matches($origP, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in $(if ($mu.File -eq 'viewport') { 'web/viewport.js' } else { 'the template' }) exactly once"; exit 1 }
+            $mutP = $origP.Replace($mu.Anchor, $mu.With)
+            $pApplied = $mutP -cne $origP
+            if ($mu.File -eq 'viewport') {
+                $vpP = Join-Path $tmp ($mu.L + '.viewport.js'); [System.IO.File]::WriteAllText($vpP, $mutP, $utf8)
+                $pageP = New-MutantPage $mu.L $template $hostJs '' '' $vpP
+            } else {
+                $tplP = Join-Path $tmp ($mu.L + '.template.html'); [System.IO.File]::WriteAllText($tplP, $mutP, $utf8)
+                $pageP = New-MutantPage $mu.L $tplP $hostJs
+            }
+            $rP = Invoke-Mutant $pageP 'palette'
             $pJudge = Test-Mutant $rP 'palette'
             $pFailed = @($pJudge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
             $paletteJudged.Add(@{ Name = $mu.Name; Problems = @($pJudge.Problems) })
@@ -2345,7 +2378,7 @@ if ($Control) {
         }
         $etOk = ($moduleReal -eq 0) -or ($etApplied -and $etFailed -ge 1)
         # mutant EZ (CART.9's first slice), when the real page holds the engine's module: naught's hand that reads aut as
-        # vel, the inclusive or for the exclusive; the stand-in's carry-in, written at frame 731 under a all ones, first
+        # vel, the inclusive or for the exclusive; the stand-in's carry-in, written at frame 743 under a all ones, first
         # gives an AUT two 1s, the low bit's sum, so the replay case must fail it by name at that frame.
         $ezApplied = $false; $ezFailed = 0; $ezNote = 'aut read as vel in the hand: not applicable, the real page holding no engine module'
         if ($moduleReal -gt 0) {
@@ -2356,8 +2389,8 @@ if ($Control) {
             $ezApplied = $mutEZ -cne $naughtHandText
             $rEZ = Invoke-Mutant (New-MutantPage 'ez' $template $hostJs '' (New-HandCopy 'ez' 'naught/naught.hand.js' $mutEZ)) 'input,replay'
             $jEZ = Test-Mutant $rEZ 'input,replay'
-            $ezFailed = @($jEZ.Problems | Where-Object { $_ -like "*case replay*naught's committed replay, played on a fresh host, is not its hand's at frame 731:*" }).Count
-            $ezNote = "aut read as vel in the hand applied ($ezApplied) and failed the replay case at frame 731 ($ezFailed)"
+            $ezFailed = @($jEZ.Problems | Where-Object { $_ -like "*case replay*naught's committed replay, played on a fresh host, is not its hand's at frame 743:*" }).Count
+            $ezNote = "aut read as vel in the hand applied ($ezApplied) and failed the replay case at frame 743 ($ezFailed)"
         }
         $ezOk = ($moduleReal -eq 0) -or ($ezApplied -and $ezFailed -ge 1)
         # mutant FH (CART.9's hand test of the second slice), when the real page holds the engine's module: a host that plays a
@@ -2379,21 +2412,37 @@ if ($Control) {
         # mutants FX, FY, FZ and GA (CART.9's third slice), when the real page holds the engine's module: naught's hand, each
         # failing the replay case by name at the frame of the replay where it first leaves the engine. FX, a test that runs
         # on past a wrong input, at the owner's VEL for ET on II, frame 34; FY, the stars counted against the budget alone,
-        # at IV's pass with four gates, two stars, frame 80; FZ, the due under test read from the switches as they stand, at
-        # I's switch written over, frame 780; and GA, a click that toggles no switch, at the owner's first click, frame 15.
+        # at VI's pass with three gates, two stars, frame 108; FZ, the due under test read from the switches as they stand,
+        # at I's switch written over, frame 792; and GA, a click that toggles no switch, at the owner's first click, frame
+        # 15. And GW, GX, GY and GZ (its short slice): GW, a value read as a gate, at III's input emptied by Delete, frame
+        # 52; GX, every level giving every gate, at the owner's VEL on II, which II does not give, frame 30; GY, an output's
+        # error due, at the same Delete, frame 52, the Lab's due an error; and GZ, a test's stars read from the gates as
+        # they stand, at the owner's first gate, frame 21.
         $naughtMutants = @(
             @{ L = 'fx'; Name = 'a test past a wrong input'; Frame = 34
                Anchor = "        return when(and([equal(l8, 1), less(l6, arith('-', l7, 1))]), function () { return 1; }, function () { return 0; });"
                With = "        return when(and([true, less(l6, arith('-', l7, 1))]), function () { return 1; }, function () { return 0; });" },
-            @{ L = 'fy'; Name = 'the stars against the budget alone'; Frame = 80
-               Anchor = '        return when(lessEqual(e, g), function () {'
-               With = '        return when(lessEqual(e, f), function () {' },
-            @{ L = 'fz'; Name = 'the due under test read from the switches'; Frame = 780
+            @{ L = 'fy'; Name = 'the stars against the budget alone'; Frame = 108
+               Anchor = '          return when(lessEqual(t, g), function () {'
+               With = '          return when(lessEqual(t, f), function () {' },
+            @{ L = 'fz'; Name = 'the due under test read from the switches'; Frame = 792
                Anchor = '    return standing.map(function (v, s) { return settled(when(equal(here, 1), function () { return bit(b6, s); }, function () { return v; })); });'
                With = '    return standing.map(function (v) { return settled(v); });' },
             @{ L = 'ga'; Name = 'a click that toggles nothing'; Frame = 15
                Anchor = "            if (is('toggle') || i.press) return arith('-', 1, lastS);"
-               With = "            if (is('toggle')) return arith('-', 1, lastS);" }
+               With = "            if (is('toggle')) return arith('-', 1, lastS);" },
+            @{ L = 'gw'; Name = 'a value read as a gate'; Frame = 52
+               Anchor = "          var gt = w && w.formula ? gateText(w.text) : '';"
+               With = "          var gt = w ? (w.formula ? gateText(w.text) : '=?') : '';" },
+            @{ L = 'gx'; Name = 'every level giving every gate'; Frame = 30
+               Anchor = '        if (kinds[q] > level.gives) { outside++; if (!first) first = q + 1; }'
+               With = '        if (kinds[q] > 6) { outside++; if (!first) first = q + 1; }' },
+            @{ L = 'gy'; Name = 'an output''s error due'; Frame = 52
+               Anchor = "      lab['D' + r] = isErr(ok) ? 0 : ok;"
+               With = "      lab['D' + r] = ok;" },
+            @{ L = 'gz'; Name = 'a test''s stars read from the gates as they stand'; Frame = 21
+               Anchor = '        var last = settled(this.last(col + r));'
+               With = '        var last = lab[now + r];' }
         )
         $naughtNotes = New-Object System.Collections.Generic.List[string]
         $naughtJudged = New-Object System.Collections.Generic.List[object]
@@ -2465,7 +2514,7 @@ if ($Control) {
         $gameNote = $gameNotes -join '; '
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and eighty-five' } else { 'ninety-one applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and ninety' } else { 'ninety-two applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

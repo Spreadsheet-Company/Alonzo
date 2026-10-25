@@ -8803,6 +8803,140 @@ Vector 9 is the first whose low three bits' parity and fourth bit are both 1, wh
 - *Held:* the settle case; `run_checks.ps1`, 13 of 13, every other case of the loop passing as it did; and the smoke test again, the log after Naught's Load read whole: "Loaded Naught: Vel et Aut: …", "The budget: 910 formula cells a step, one step an edit.", "frame 2: the load settled in 1 step after its own.", "frame 5: the command toggle settled in 2 steps after its own.", and the reload's three lines after them, where one line had said "2 times, frames 2 to 2"; and `check_host_loop.ps1 -Control`, 701 seconds, each of the one hundred and eighty-two mutant pages failing for its own reason, GB, a line across loads, by name.
 - *The owner's hand test, 2026-10-21:* two screenshots, the drawer's log after Naught's Load, its nine lines a timeline, the reload's three lines after the first run's; and after Space twice on I NON's A3, "2 times, frames 5 to 8: the command toggle settled in 2 steps after its own.", a line of the new run, the first run's frame 5 line kept. Committed at the owner's word: "Hand test passes; commit before suggesting next steps while KERNEL.49-56 work continues".
 
+*The short slice, 2026-10-24, at the owner's word, after the pin to `vla-lang` 0.11.0 (`ENGINE.1`'s record of it): "Commit the pin, then proceed with implementing improvements #1-3 as a short slice of CART.9 while ENGINE.28 is implemented in another Alonzo session."* The three, suggested after the pin from 0.11.0's library: the gates counted by `ISFORMULA`, so that a value is no gate and a gate holding an error no longer turns the reckoning into `#VALUE!` (slice 3's Found, the third); decision 20's honor system made a check by `FORMULATEXT`, two questions left to the owner, how strict the check is and what an outside gate costs; and an error said in words, by `ISERROR` and `IFERROR`. Built the same day as the decisions below recommend; the decisions await the owner, with the build, at the hand test.
+
+29. **The gates counted by `ISFORMULA` over the room as the board shows it, C3 to J at its last row.**
+    - `=SUMPRODUCT(--ISFORMULA('I NON'!C3:J10))`, to J11 at IX: a value typed into the room is no gate, where IV's text "1" was one, and a gate holding an error is a gate, so the reckoning never says `#VALUE!`. The Count's sheet goes.
+    - The room is the board's, rows 3 to 10 and 11 at IX, where the Count read rows 3 to 6: a gate in rows 7 to 10 was counted by no star (Found, the first, mended here).
+    - *Alternatives:*
+      - the kinds counted (decision 30), the same number a layer later;
+      - every formula of the sheet less the cartridge's own, which a value written over a lamp would game.
+30. **A gate read by its text: one of six shapes, each input a switch of the level, a cell of its room, 0 or 1.**
+    - The Gates sheet, hidden, a block a level 20 rows apart: each room cell's `FORMULATEXT`, its spaces and its `$` gone and upper-cased, and ten columns to its right its kind, by one formula of the text's marks. 0 no formula; 1 a wire `=x`, 2 NON-ET `=1-x*y`, 3 NON `=1-x`, 4 ET `=x*y`, 5 VEL `=MAX(x,y)`, 6 AUT `=MOD(x+y,2)`; 9 any other formula.
+    - An input is found by its shape's marks and stands among the level's inputs, the Lab's P, a text of them between bars, `|A3|C3|D3|…|J10|0|1|`, so an input holding any other mark is no input.
+    - A level gives the gates proven before it, a kind at most: I 2, the wire and NON-ET; II 3, NON; III 4, ET; IV 5, VEL; V to IX 6, AUT. A kind past it is outside the set, as 9 is.
+    - The strictness the suggestion left open: the shape, and not the functions' names. A search for names lets NEC, `=1-MAX(a,b)`, pass from IV on; it counts two gates written in one cell as one; and it leaves the due and the Lab readable. Inputs read from the board alone close slice 3's Found, the second, *a gate may read the due, or the Lab*, for every gate of the room. The Lesson's shapes are the check's.
+    - *Alternatives:*
+      - the functions' names alone;
+      - the references read by a parser in the host, not replayed;
+      - the language's own reference reader called from a formula, which no function is.
+31. **A gate outside the set holds a pass to one star, and the reckoning names how many and the first.**
+    - The cost the suggestion left open: the stars, and not the pass. The test is the specification's, and the circuit passes it; the stars are the puzzle's, and a gate outside the set solves another puzzle: "Gates 4, 2 outside the set given, the first at E6; the budget 3, the least known 2: ★☆☆".
+    - *Alternatives:*
+      - the pass refused, the test failing at input 1 with the gate named, which makes the test the vocabulary's;
+      - the third star alone, which leaves two for a solution that ignored the level's set.
+32. **An error said in words: an output holding one never due, its lamp a question mark, and the verdict naming the room's first cell that holds one.**
+    - The Lab's due now, `=IFERROR(IF(…,1,0),0)`: the test stops at the first input where an output holds an error, as where one differs, and no error reaches the test's state; slice 3's containment stays beside it.
+    - A lamp, `=IFERROR(IF(J3=1,"●","○"),"?")`, neither lit nor dark.
+    - The verdict names the room's first cell, read row by row, holding an error (`MATCH(TRUE,ISERROR(TOCOL(room)),0)`). Before T: "J3 holds an error: it reads a text, an emptied cell or an error. Ex nihilo nihil fit." Where T stops: "The test stops at input 1 of 4, standing on the board: J3 holds an error: it reads a text, an emptied cell or an error." A passed level whose room breaks says the error, its stars the test's.
+    - *Alternatives:*
+      - the error's own spelling, which needs `ERROR.TYPE`, not in 0.11.0 (Found);
+      - the first error by the gates' dependencies, a root and not the first in reading order, which no formula finds without the references.
+33. **A test's stars its own: its gates and those outside counted when it ends.** *What the build added.*
+    - Slice 3's stars read the gates as they stand against the last test's result. So a person who passed and then deleted gates gained stars untested, and kept them on a board the deletion broke.
+    - The Lab's T and U take E and Q when the level's test ends, and the stars read them; the reckoning's count stays the board's. The Lesson's ninth line says it: "…at the least known, three, until the next test."
+    - *Alternative:* a pass forgotten at any write to the room, a signature of its texts compared frame to frame, which forgets a pass the write did not break.
+
+*The short slice built 2026-10-24.* What it touches:
+- `cartridges/naught/naught.source.vla`, the levels' block:
+  - the Count's sheet gone, and the Gates sheet after the Lab;
+  - the macros `among-inputs`, `gate-kind`, `room-address` and `lab-gates`;
+  - the Lab's six columns P to U and their headers, the due's `IFERROR` and the stars;
+  - the lamps;
+  - the reckoning and the verdict, both written by the formula syntax now, `KIT.5`'s exception for the verdict's bytes taken out since the bytes move anyway;
+  - the Lesson's ninth and thirteenth lines and a fourteenth, and the header.
+
+  756 rows where 675.
+- `engine/src/naught.rs`:
+  - `gate_text`, `inputs_of`, `kind`, `room_address`, and `SHAPES`, a table of 29 formulas and their kinds at I and IX;
+  - a level's room to its board's last row, and the kind it gives;
+  - a written formula holding its text;
+  - the game's Gates, the Lab's P to U, the due, the stars, the lamp and the words.
+
+  The scripted session:
+  - III's error named before T and where T stops;
+  - IV's VEL times a text, outside the set, one star;
+  - VI at the textbook's three gates, NON and two ETs, within the budget, two stars;
+  - VII's two idle gates outside the set, one low in the room at F9, deleted after its pass, the stars kept until T, then three.
+- `cartridges/naught/naught.hand.js`: its twin, line for line.
+- `engine/src/cartridge.rs`:
+  - the Lab's window to U, and the Gates sheet held at every frame, read from the machine's values and never from its record, whose kinds' formulas run 1,600 characters each: the session test 155 seconds at opt-level 0, then 11;
+  - `naught_s_gates_are_read_by_their_formulas`, the table written into I's room, each kind the table's and the hand's;
+  - `naught_s_errors_are_named_and_a_test_s_stars_are_its_own`;
+  - the replay test's counts.
+- `cartridges/naught/naught.replay.vla` and its golden: the owner's 45 frames played against the new cartridge, each act in the frames it took then, and the stand-in after them, 794 frames; the golden's list of sheets naming the Gates.
+- `engine/testdata/describe/naught.vla`: 1,804 formula cells where 910, and 224 shapes where 166.
+- `tools/check_cartridge.ps1`: the row floor, 756.
+- `tools/check_host_loop.ps1`:
+  - the replay case's floors: `naughtFrames` 794, `naughtCells` 2,154,122 (the bench's 400 cells and the game's 2,313 a frame), and `naughtWritten` 51;
+  - EZ, FY and FZ at frames 743, 108 and 792, FY anchored on the stars' new line;
+  - four mutants, as Node predicted them against the Rust hand: GW, a value read as a gate, at frame 52; GX, every level giving every gate, 30; GY, an output's error due, 52; and GZ, a test's stars read from the gates as they stand, 21, lettered past ENGINE.28's GC to GE, taken in the same file the same day. One hundred and eighty-six mutant pages over `b8606bc`, one hundred and eighty-nine after `ENGINE.28`'s three;
+  - mutant K re-anchored (Catches).
+- The record, the roadmap, the memory.
+
+*Measured* natively, release, five rounds each:
+
+| | before | after |
+|---|---|---|
+| the load | 5.5 ms | 12.7 ms |
+| a gate's write | 0.82 ms | 2.33 ms |
+| IX's test, 514 frames | 12.9 ms | 35.1 ms |
+| IX's test, a frame | 0.025 ms | 0.068 ms |
+
+The frame after a formula write computes every cell, 1,804 formulas where 910. A page draws a frame in 16.7 ms. The floors are unchanged, since their source leaves the levels out.
+
+*Held*, over `vla-lang` 0.11.0:
+- `cargo test`, 82 and the doc test; `cargo fmt --check` and `cargo clippy --all-targets`, clean.
+- `expand -- --check`, eleven `same`; the bench's block, `same`.
+- The page's hand held to the Rust hand in Node at all 794 frames, 1,836,522 cells of the game.
+- `run_checks.ps1`, 13 of 13: twelve in a copy of the tree holding the commit and this slice's files, since another session's viewport stood uncommitted beside it, and `check_spdx` in the tree. The page's replay case: Naught's 794 frames, 2,154,122 cells.
+- `check_host_loop.ps1 -Control`: 1,254 seconds: the real page and the game's page pass, and each of the one hundred and eighty-six mutant pages fails for its own reason, Naught's hand at the frames Node predicted, EZ 743, FX 34, FY 108, FZ 792, GA 15, GW 52, GX 30, GY 52 and GZ 21, and K by the pass case.
+- `check_cartridge.ps1 -Control`: 652 seconds: the clean copy and its eight versions pass, and each of the fifty-three mutants fails for its own reason.
+- A smoke test in headless Chrome over the page built in the copy: III VEL, its gates written and C4 emptied, each by its row in the palette, then T: its lamp a question mark, its reckoning "Gates 2", the emptied cell no gate, and its verdict "The test stops at input 1 of 4, standing on the board: J3 holds an error: it reads a text, an emptied cell or an error.", whole within the column N; and I NON, NON written at J3, then T: "Gates 1, 1 outside the set given, the first at J3; the budget 2, the least known 1: ★☆☆" over a passing verdict.
+
+*Found.*
+- *A gate in rows 7 to 10 of a room was counted by no star* (slice 3): the Count read C3:J6. Mended by decision 29.
+- *A switch written over by a formula is read by the room as an input.* A gate may read a switch, and the check reads the room's gates alone. A switch that reads its level's due is a cycle the language refuses, since the due reads the switches; but one that reads the Lab's input number, `=Lab!$B$6`, hands the room the whole input as a number, which in-set arithmetic over numbers may spend fewer gates on. Decision 23 lets a switch written over be lost until Load; the Lab's due could also hold each switch to its input under test. The owner's to weigh.
+- *No `ERROR.TYPE`, `ISREF` or `ISNUMBER` in 0.11.0:* the verdict says "an error" and not its kind. Frazaro's to weigh, `KERNEL.8`'s library.
+- *`COLUMN` of a range is an array inside `SUMPRODUCT` alone:* `=SUMPRODUCT(COLUMN(A2:L2))` is 78, and `=MAX(COLUMN(A2:L2))` and `=COUNT(COLUMN(A2:L2))` are 1, where Excel 365 says 12 and 12. So `MIN(IF(ISERROR(range),COLUMN(range)))` answers 1, and the first error is found by `TOCOL` and `MATCH`. Frazaro's to weigh, `KERNEL.8`'s arrays beside `KERNEL.55`'s spills.
+
+*Catches.*
+- The kind's macro wanted one more parenthesis at its first expansion, which the pass refused by its line.
+- The session test parsed the Gates sheet's record every frame, 876 KB of formula text, in 155 seconds; it reads the machine's values since, in 11.
+- Mutant FY's line moved with the stars. With IV's gate outside the set, no pass of the replay stood between the least known and the budget; VI's textbook solution gives it one, at frame 108.
+- `check_host_loop.ps1 -Control` stopped at its first anchor, mutant K's: `KIT.5` (`ea3a3f2`) respelled the kit's Palette row by `address-expand`. Re-anchored on the row as it stands, its mutation the same, the names to column D.
+- The page here was built in a copy of the tree, the commit and this slice's files, since `web/viewport.js` stood uncommitted beside it, `ENGINE.28`'s work.
+
+*The owner's hand test of the short slice, 2026-10-24:* nine screenshots over the page built in the copy:
+- The Lesson's ninth, thirteenth and fourteenth lines read whole.
+- I NON: NON written at J3, then T: "Gates 1, 1 outside the set given, the first at J3; the budget 2, the least known 1: ★☆☆" over a pass. NON-ET in its place, then T: "Gates 1; … ★★★".
+- III VEL: its input emptied, the lamp a question mark and "J3 holds an error: it reads a text, an emptied cell or an error. Ex nihilo nihil fit."; T, "The test stops at input 1 of 4, standing on the board: J3 holds an error: …"; the gate again and T, three stars.
+- VII SEMIS: an idle `=MIN(A3,A4)` at E9, then T: "Gates 3, 1 outside the set given, the first at E9; … ★☆☆". E9 deleted: "Gates 2; … ★☆☆", the stars the test's. T: three.
+- The tenth step, a 1 typed into IV AUT's D5, "does nothing": on a level the key 1 is the game's command `one`, which sets the switch the selection stands on, so it never types into a cell, and D5 is no switch. The step was wrong; a value is no gate is held by the engine's test of the errors and the stars and by the replay's IV, each writing D5 by its row.
+
+*Approved 2026-10-24 at the owner's word*: "Decisions 29-33 approved."
+
+*What the hand test moved: the palette's float.* The owner's word: "the command palette bar currently floats according to where the active cell is on the grid, but for small grids (like those in Naught), the palette floats to the top even though the bottom-most cell is still near the top of the screen. Would it be possible to change the floating logic to switch between top and bottom depending on where the cursor is relative to the top-half and bottom-half of the entire screen/viewport?" Built before the commit:
+- `web/viewport.js`: `cellBox(row, col)`, a cell's box on the page where the last draw put it, the hit test's inverse, a frozen band's unscrolled.
+- `web/index.template.html`: `paletteSide` places the floating palette below the cell while the cell's middle stands in the top half of the window, and above it otherwise, where it read the rows in view. The palette case holds eight sides, a small board's lowest row in a tall window among them (`sides` 8), and three round trips of a cell's box, its middle the cell in the frozen corner, unscrolled and scrolled (`boxes` 3).
+- `tools/check_host_loop.ps1`: the palette case's floors; mutant FC anchored on the new rule; and GV, needing no module, a viewport whose cell's box forgets the scroll, the palette's list taking a viewport's mutant as the grid's does. One hundred and ninety mutant pages, ninety-two without the module.
+- `web/README.md`: the palette's float.
+
+*Held* again, over `c2ecf6b`, `ENGINE.28`'s first slice, committed in its own session while this slice stood uncommitted, in a copy of the tree holding that commit and this slice's hunks alone, `REPO.8`'s uncommitted lines beside them left out:
+- `cargo test`, 82 and the doc test.
+- `run_checks.ps1`, 13 of 13, `check_spdx` in the tree; the palette case, `sides` 8 and `boxes` 3.
+- `check_host_loop.ps1 -Control`: 1,085 seconds: the real page and the game's page pass, and each of the one hundred and ninety mutant pages fails for its own reason, FC and GV by name in the palette case and `ENGINE.28`'s GC, GD and GE in the grid case.
+- `check_cartridge.ps1 -Control`: 865 seconds: the clean copy and its eight versions pass, and each of the fifty-three mutants fails for its own reason.
+- A smoke test in headless Chrome over the copy's page, its window 542 pixels tall: = on VII SEMIS's E9, a small board's ninth row, opens the palette at the bottom, from 357 to 498, where the rows in view sent it to the top; and on the Bench's A18, in the window's bottom half, at the top, from 44 to 167.
+
+*Found at the hand test.*
+- *`ENGINE.28`'s commit carried this slice's passage of `web/README.md`*, the Gates named among the sheets Naught's hand holds, a line ahead of its cartridge; this commit catches the cartridge up.
+- *The mutant letters:* `ENGINE.28` took GC to GE the same day in the same file, so this slice's are GV to GZ. The control's count stands 182, then 185 by `ENGINE.28`'s three, then 190 by this slice's five.
+
+*The owner's hand test of the float, 2026-10-24:* three screenshots over the copy's page: = on VII SEMIS's E9 opens the palette at the bottom, below the board; on the grid card, Ctrl+K over D60, near the window's bottom, opens it at the top, and over AA9, near its top, at the bottom.
+
+*Committed 2026-10-24 at the owner's word*: "Keep the window's halves as the rule, commit, then suggest next steps." Its files staged as `c2ecf6b` and this commit's hunks alone, the texts the controls ran, beside `REPO.8`'s uncommitted lines in four of them. `CART.9` stays open for slice 4, the clocked rung, scoped finely at its start.
+
 ## `SPEC.5` — the keyboard's sheets declared: the sheets whose keys are the game's, the sheets a person types into, and the sheets no person writes
 
 *Scoped 2026-10-20 at the owner's word, "Recommendations approved; proceed.", after `CART.9`'s fine scoping of its third slice found it first in the order. The middle mode is named *work* at the owner's word: "I feel like "cells" sheets should be called "work" sheets, which plays against their alternate "game" sheets." Built the same day as the decisions recommend; the decisions await the owner, with the build, at the hand test.*
