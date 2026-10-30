@@ -63,6 +63,8 @@ jobs:
           & powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_web.ps1
           exit $LASTEXITCODE
       - name: every tools/check_*.ps1 under Windows PowerShell 5.1, and the floor
+        # a step's limit: a job ended by GitHub's own six hours leaves no log of the step it was in
+        timeout-minutes: 45
         shell: pwsh
         run: |
           & powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_checks.ps1
@@ -107,6 +109,8 @@ jobs:
           pwsh -NoProfile -File tools/build_web.ps1
           exit $LASTEXITCODE
       - name: the engine imports exactly its allowlist (AD-5, read off the artifact), the oracle under Chrome, and every check under pwsh
+        # a step's limit: a job ended by GitHub's own six hours leaves no log of the step it was in
+        timeout-minutes: 45
         shell: pwsh
         run: |
           pwsh -NoProfile -File tools/run_checks.ps1

@@ -38,6 +38,8 @@ jobs:
           & powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_web.ps1
           exit $LASTEXITCODE
       - name: every check and every control under Windows PowerShell 5.1
+        # a step's limit: a job ended by GitHub's own six hours leaves no log of the step it was in
+        timeout-minutes: 90
         shell: pwsh
         run: |
           & powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_checks.ps1 -WithExtras
@@ -59,6 +61,8 @@ jobs:
           pwsh -NoProfile -File tools/build_web.ps1
           exit $LASTEXITCODE
       - name: every check and every control under pwsh, over the engine's own module
+        # a step's limit: a job ended by GitHub's own six hours leaves no log of the step it was in
+        timeout-minutes: 90
         shell: pwsh
         run: |
           pwsh -NoProfile -File tools/run_checks.ps1 -WithExtras

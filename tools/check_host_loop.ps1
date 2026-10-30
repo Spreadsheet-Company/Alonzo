@@ -1147,6 +1147,13 @@ function Remove-LoopTemp([string]$dir) {
         if (Test-Path -LiteralPath $dir) { Start-Sleep -Milliseconds 50 }
     }
 }
+# A run's limit (0.3.0's first CI, 2026-10-30): a browser that never writes its whole dump and never exits would hold the
+# check for as long as it was let, and one held controls.yml's Windows job to GitHub's six hours, which left no log, where
+# this machine's same run ends in two minutes. So a run past ten minutes, several times the longest met on the slowest
+# runner, is ended and said by its page and its cases, and a third such stops the check, so that its names reach the log
+# before a step's limit does. A machine asleep past it reads the same, and a run again answers it.
+$script:LoopRunLimit = 600
+$script:LoopRunsOver = New-Object System.Collections.Generic.List[string]
 # One headless run started (REPO.8): the browser over the page with its cases, its DOM dumped into a folder of its own,
 # its profile there too, so that runs side by side share nothing. $cases, a comma-separated list, runs those cases alone
 # (a mutant page's, 2026-10-15); empty runs every case.
@@ -1164,7 +1171,7 @@ function Start-LoopRun([string]$browser, [string]$page, [string]$scale, [string]
     if ($onWindows) { $start['NoNewWindow'] = $true }
     $watch = [System.Diagnostics.Stopwatch]::StartNew()
     $proc = Start-Process @start
-    return @{ Proc = $proc; Tmp = $tmp; Dump = $dump; Watch = $watch; Size = -1; Seconds = $null }
+    return @{ Proc = $proc; Tmp = $tmp; Dump = $dump; Watch = $watch; Size = -1; Seconds = $null; Over = $false; Page = $page; Cases = $cases }
 }
 # A run ended (REPO.8): its browser exited, or its dump whole, ending in </html> and grown no more since the last look, the
 # browser ended then. A browser writes the whole dump and then shuts down, and beside another instance its shutdown on
@@ -1172,7 +1179,11 @@ function Start-LoopRun([string]$browser, [string]$page, [string]$scale, [string]
 # side took 145 to 270 s each, and ended at their dumps 26. The dump's one </html> is its last.
 function Test-LoopRunDone($run) {
     if ($null -ne $run.Seconds) { return $true }
-    if (-not $run.Proc.HasExited) {
+    if (-not $run.Proc.HasExited -and $run.Watch.Elapsed.TotalSeconds -ge $script:LoopRunLimit) {
+        $run.Over = $true
+        try { $run.Proc.Kill() } catch {}
+    }
+    elseif (-not $run.Proc.HasExited) {
         if (-not (Test-Path -LiteralPath $run.Dump)) { return $false }
         $fs = $null
         try {
@@ -1188,7 +1199,7 @@ function Test-LoopRunDone($run) {
         try { $run.Proc.Kill() } catch {}
     }
     $run.Seconds = $run.Watch.Elapsed.TotalSeconds
-    $run.Proc.WaitForExit()
+    $null = $run.Proc.WaitForExit(60000)
     return $true
 }
 # A started run's answer: the loop element's text, or '' with the reason, and its seconds. Its browser's children may
@@ -1198,6 +1209,13 @@ function Complete-LoopRun($run, [switch]$Defer) {
     while (-not (Test-LoopRunDone $run)) { Start-Sleep -Milliseconds 50 }
     $seconds = $run.Seconds
     try {
+        if ($run.Over) {
+            $wrote = $(if (Test-Path -LiteralPath $run.Dump) { (Get-Item -LiteralPath $run.Dump).Length } else { 0 })
+            $over = "the browser over {0} with the cases '{1}' had not ended after {2:N0} s, {3:N0} bytes of its dump written: ended by the run's limit" -f (Split-Path -Leaf $run.Page), $run.Cases, $seconds, $wrote
+            $script:LoopRunsOver.Add($over)
+            if ($script:LoopRunsOver.Count -ge 3) { throw ("three runs ended by the run's limit, so the check stops here: " + ($script:LoopRunsOver -join '; ')) }
+            return @{ Text = ''; Reason = $over; Seconds = $seconds }
+        }
         if (-not (Test-Path -LiteralPath $run.Dump)) { return @{ Text = ''; Reason = 'the browser wrote no dump'; Seconds = $seconds } }
         $fs = New-Object System.IO.FileStream($run.Dump, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
         try { $html = (New-Object System.IO.StreamReader($fs, (New-Object System.Text.UTF8Encoding($false)))).ReadToEnd() } finally { $fs.Dispose() }
@@ -1223,19 +1241,23 @@ function Invoke-LoopPool([object[]]$plan, [int]$jobs, $results) {
     foreach ($p in @($plan)) { $queue.Enqueue($p) }
     $running = New-Object System.Collections.Generic.List[object]
     $folders = New-Object System.Collections.Generic.List[string]
-    while ($queue.Count -gt 0 -or $running.Count -gt 0) {
-        while ($running.Count -lt $jobs -and $queue.Count -gt 0) {
-            $p = $queue.Dequeue()
-            $running.Add(@{ Plan = $p; Run = (Start-LoopRun $script:browser $p.Page $p.Scale $p.Cases) })
+    try {
+        while ($queue.Count -gt 0 -or $running.Count -gt 0) {
+            while ($running.Count -lt $jobs -and $queue.Count -gt 0) {
+                $p = $queue.Dequeue()
+                $running.Add(@{ Plan = $p; Run = (Start-LoopRun $script:browser $p.Page $p.Scale $p.Cases) })
+            }
+            Start-Sleep -Milliseconds 25
+            for ($i = $running.Count - 1; $i -ge 0; $i--) {
+                $e = $running[$i]
+                if (-not (Test-LoopRunDone $e.Run)) { continue }
+                $results[$e.Plan.Key] = Complete-LoopRun $e.Run -Defer
+                $folders.Add($e.Run.Tmp)
+                $running.RemoveAt($i)
+            }
         }
-        Start-Sleep -Milliseconds 25
-        for ($i = $running.Count - 1; $i -ge 0; $i--) {
-            $e = $running[$i]
-            if (-not (Test-LoopRunDone $e.Run)) { continue }
-            $results[$e.Plan.Key] = Complete-LoopRun $e.Run -Defer
-            $folders.Add($e.Run.Tmp)
-            $running.RemoveAt($i)
-        }
+    } finally {
+        foreach ($e in $running) { try { $e.Run.Proc.Kill() } catch {} }
     }
     foreach ($d in $folders) { Remove-LoopTemp $d }
 }
@@ -1418,6 +1440,16 @@ if ($Control) {
     New-Item -ItemType Directory -Path $tmp | Out-Null
     try {
         $utf8 = New-Object System.Text.UTF8Encoding($false)
+        # A run's limit proved: a page that never yields, so that its browser never dumps, ended by it and said by name.
+        $hung = Join-Path $tmp 'hung.html'
+        [System.IO.File]::WriteAllText($hung, '<!doctype html><script>for (;;) {}</script>', $utf8)
+        $limit = $script:LoopRunLimit
+        $script:LoopRunLimit = 5
+        $rH = Invoke-Loop $browser $hung '1' 'never'
+        $script:LoopRunLimit = $limit
+        $script:LoopRunsOver.Clear()
+        if ($rH.Text -ne '' -or $rH.Reason -notlike "*hung.html*'never'*ended by the run's limit" -or $rH.Seconds -gt 60) { Write-Output ("FAIL: a page that never yields was not ended by the run's limit: {0}" -f $rH.Reason); exit 1 }
+        Write-Output ("control: a page that never yields, ended by the run's limit in {0:N1} s" -f $rH.Seconds)
         $builder = Join-Path $PSScriptRoot 'build_web.ps1'
         $template = Join-Path $repoRoot 'web/index.template.html'
         $hostJs = Join-Path $repoRoot 'web/host.js'
