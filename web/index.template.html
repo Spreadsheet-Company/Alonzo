@@ -2910,6 +2910,130 @@
   var GQ = { column: 64, row: 20, point: 96 / 72, font: 13, pad: 4, digit: 7, headerMin: 32, headerPad: 12, headerDigit: 7, lineHeight: 1.2, lookback: 8,
              pointFont: 13 / 11, fit: 20 / 11, ink: '#1d1d1b', formulaInk: '#0a6b4f' };   // ENGINE.28: a point's pixels, a fitted row's, the inks
   var GRID_BOX = { w: 1600, h: 700 };   // the stage's box: the card's tall, hidden and styled rows and columns in view
+  // ---- ENGINE.28's edges, the page's own reading, for both oracles (decisions 8 to 10) ----
+  // The lines as the approval measured Excel's screen, the page's own table, which the viewport's is held to: each line's
+  // strands across an edge, a strand's offset from the gridline's pixel toward the right or lower cell and a pattern's
+  // mask over its period, 1 drawn and 0 a gap, phased on the sheet's coordinate; and its rank, the wider winning a shared
+  // edge, a double over a thick, at one width a solid line over a patterned one, at a tie the right or lower cell's.
+  var EDGE_LINES = {
+    'thin': { rank: 11, strands: [[0, null]] },
+    'medium': { rank: 21, strands: [[-1, null], [0, null]] },
+    'thick': { rank: 31, strands: [[-1, null], [0, null], [1, null]] },
+    'double': { rank: 41, strands: [[-1, null], [1, null]] },
+    'hair': { rank: 10, strands: [[0, '10']] },
+    'dotted': { rank: 10, strands: [[0, '1100']] },
+    'dashed': { rank: 10, strands: [[0, '1110']] },
+    'dash-dot': { rank: 10, strands: [[0, '111111111000111000']] },
+    'dash-dot-dot': { rank: 10, strands: [[0, '111111111000111000111000']] },
+    'medium-dashed': { rank: 20, strands: [[-1, '111111111000'], [0, '111111111000']] },
+    'medium-dash-dot': { rank: 20, strands: [[-1, '111111111000111000'], [0, '111111111000111000']] },
+    'medium-dash-dot-dot': { rank: 20, strands: [[-1, '111111111000111000111000'], [0, '111111111000111000111000']] },
+    'slant-dash-dot': { rank: 20, strands: [[-1, '111111111110111110'], [0, '111111111001111001']] }
+  };
+  var EDGE_INK = '#000000', EDGE_GROUND = '#ffffff';
+  // The edges one quadrant draws, as the viewport must: L the oracle's layout, formatAt(r, c) its own drawn format of a
+  // cell, rows r1..r2 and columns c1..c2 in view, the quadrant's scroll and name, and bound a bound sheet's last row and
+  // column, or null. Each edge's op as the viewport records it, keyed by its boundary: the resolved line, its owner and
+  // side, and its rectangle, from one corner's gridline pixel to the other's and past each by the reach of the lines
+  // across it there; and its pixels to probe, two past its near corner, off its corners and the cells' texts: one drawn
+  // in its color and, where it has gaps on its gridline's pixel, one gap, which shows the fill there or the ground. A
+  // hidden column or row takes no part (the hand test's): a boundary is owned by the shown column or row before it and
+  // resolved against the next one shown, the edge the facing sides of the cells drawn side by side make.
+  function edgesExpected(L, formatAt, r1, r2, c1, c2, sx, sy, name, bound) {
+    var out = [], memo = {}, r, c, b, l, k;
+    function nextC(cc) { var n = cc + 1; while (n < L.colW.length && L.colW[n] === 0) n++; return n; }
+    function prevC(cc) { var n = cc - 1; while (n >= 1 && L.colW[n] === 0) n--; return Math.max(n, 0); }
+    function nextR(rr) { var n = rr + 1; while (n < L.rowHt.length && L.rowHt[n] === 0) n++; return n; }
+    function prevR(rr) { var n = rr - 1; while (n >= 1 && L.rowHt[n] === 0) n--; return Math.max(n, 0); }
+    function side(rr, cc, s) { if (rr < 1 || cc < 1) return null; var f = formatAt(rr, cc); return f && f.border ? f.border[s] : null; }
+    function fillAt(rr, cc) { if (rr < 1 || cc < 1) return null; var f = formatAt(rr, cc); return f ? f.fill : null; }
+    function pick(a, bb) {
+      var la = a && a.line && a.line !== 'none' ? EDGE_LINES[a.line] : null, lb = bb && bb.line && bb.line !== 'none' ? EDGE_LINES[bb.line] : null;
+      if (!la && !lb) return null;
+      if (lb && (!la || lb.rank >= la.rank)) return { line: bb.line, color: bb.color || EDGE_INK, def: lb, near: false };
+      return { line: a.line, color: a.color || EDGE_INK, def: la, near: true };
+    }
+    function V(rr, cc) { var key = 'v' + rr + ',' + cc; if (!Object.prototype.hasOwnProperty.call(memo, key)) memo[key] = pick(side(rr, cc, 'right'), side(rr, nextC(cc), 'left')); return memo[key]; }
+    function H(rr, cc) { var key = 'h' + rr + ',' + cc; if (!Object.prototype.hasOwnProperty.call(memo, key)) memo[key] = pick(side(rr, cc, 'bottom'), side(nextR(rr), cc, 'top')); return memo[key]; }
+    function lo(x) { return x ? x.def.strands[0][0] : 0; }
+    function hi(x) { return x ? x.def.strands[x.def.strands.length - 1][0] : 0; }
+    function on(mask, u, origin) { return mask === null || mask.charAt((((u - origin) % mask.length) + mask.length) % mask.length) === '1'; }
+    var limR = bound ? L.ox + L.colX[bound.cols + 1] - sx : Infinity, limB = bound ? L.oy + L.top[bound.rows + 1] - sy : Infinity;
+    // the places along an edge a probe may read: a horizontal edge's anywhere two past its corners, where no text reaches
+    // its gridline's row; a vertical edge's in the top and bottom three pixels of its row, above and below the glyphs of
+    // a text its cell clips at the gridline
+    function places(vert, base0, base1) {
+      var us = [], u;
+      if (!vert) { for (u = base0 + 2; u <= base1 - 2; u++) us.push(u); return us; }
+      for (u = base0 + 2; u <= Math.min(base0 + 4, base1 - 2); u++) us.push(u);
+      for (u = Math.max(base1 - 4, base0 + 5); u <= base1 - 2; u++) us.push(u);
+      return us;
+    }
+    function samples(x, vert, gp, base0, base1, origin, gap) {
+      var s = [], strands = x.def.strands, zero = null, k, i, u, us = places(vert, base0, base1);
+      for (k = 0; k < strands.length; k++) if (strands[k][0] === 0) zero = strands[k];
+      var first = zero || strands[0];
+      for (i = 0; i < us.length; i++) { u = us[i]; if (on(first[1], u, origin)) { s.push({ x: vert ? gp + first[0] : u, y: vert ? u : gp + first[0], color: x.color, what: 'drawn' }); break; } }
+      if (zero === null || zero[1] !== null) {
+        for (i = 0; i < us.length; i++) { u = us[i]; if (zero === null || !on(zero[1], u, origin)) { s.push({ x: vert ? gp : u, y: vert ? u : gp, color: gap, what: 'a gap' }); break; } }
+      }
+      return s.filter(function (pt) { return pt.x < limR && pt.y < limB; });
+    }
+    // the columns whose right edges are drawn, the one shown before the first shown in view and each shown in view; the
+    // rows whose bottom edges are, the same way
+    var cols = [], rows = [], cFirst = c1, rFirst = r1;
+    while (cFirst <= c2 && L.colW[cFirst] === 0) cFirst++;
+    if (cFirst <= c2) { cols.push(prevC(cFirst)); for (c = cFirst; c <= c2; c++) if (L.colW[c] !== 0) cols.push(c); }
+    while (rFirst <= r2 && L.rowHt[rFirst] === 0) rFirst++;
+    if (rFirst <= r2) { rows.push(prevR(rFirst)); for (r = rFirst; r <= r2; r++) if (L.rowHt[r] !== 0) rows.push(r); }
+    for (r = r1; r <= r2; r++) {
+      if (L.rowHt[r] === 0) continue;
+      var above = prevR(r);
+      for (k = 0; k < cols.length; k++) {
+        b = cols[k];
+        l = V(r, b);
+        if (!l) continue;
+        var nb = nextC(b), gx = L.ox + L.colX[b + 1] - sx - 1, t0 = L.oy + L.top[r] - sy - 1, t1 = L.oy + L.top[r + 1] - sy - 1;
+        var y0 = t0 + Math.min(0, lo(H(above, b)), lo(H(above, nb))), y1 = t1 + Math.max(0, hi(H(r, b)), hi(H(r, nb)));
+        out.push({ key: name + ':v' + r + ',' + b, at: 'v' + r + ',' + b, row: r, col: l.near ? b : nb, side: l.near ? 'right' : 'left', line: l.line, color: l.color,
+                   x: gx + lo(l), y: y0, w: hi(l) - lo(l) + 1, h: y1 - y0 + 1, cells: [[r, b], [r, nb]],
+                   samples: samples(l, true, gx, t0, t1, L.oy - sy, fillAt(r, nb) || fillAt(r, b) || EDGE_GROUND) });
+      }
+    }
+    for (k = 0; k < rows.length; k++) {
+      b = rows[k];
+      var nr = nextR(b);
+      for (c = c1; c <= c2; c++) {
+        if (L.colW[c] === 0) continue;
+        l = H(b, c);
+        if (!l) continue;
+        var left = prevC(c), gy = L.oy + L.top[b + 1] - sy - 1, s0 = L.ox + L.colX[c] - sx - 1, s1 = L.ox + L.colX[c + 1] - sx - 1;
+        var x0 = s0 + Math.min(0, lo(V(b, left)), lo(V(nr, left))), x1 = s1 + Math.max(0, hi(V(b, c)), hi(V(nr, c)));
+        out.push({ key: name + ':h' + b + ',' + c, at: 'h' + b + ',' + c, row: l.near ? b : nr, col: c, side: l.near ? 'bottom' : 'top', line: l.line, color: l.color,
+                   x: x0, y: gy + lo(l), w: x1 - x0 + 1, h: hi(l) - lo(l) + 1, cells: [[b, c], [nr, c]],
+                   samples: samples(l, false, gy, s0, s1, L.ox - sx, fillAt(nr, c) || fillAt(b, c) || EDGE_GROUND) });
+      }
+    }
+    return out;
+  }
+  // A boundary's name in a sentence: the two cells drawn beside it, a hidden column or row between them passed over
+  // where the layout L is given.
+  function edgeName(at, L) {
+    var q = at.slice(1).split(','), a = +q[0], b = +q[1], n;
+    if (at.charAt(0) === 'v') {
+      n = b + 1;
+      if (L) while (n < L.colW.length && L.colW[n] === 0) n++;
+      return 'between ' + VP.colName(b) + a + ' and ' + VP.colName(n) + a;
+    }
+    n = a + 1;
+    if (L) while (n < L.rowHt.length && L.rowHt[n] === 0) n++;
+    return 'between ' + VP.colName(b) + a + ' and ' + VP.colName(b) + n;
+  }
+  // Whether an edge lies beside a range, so that a probe of it would meet the selection's or a mark's paint.
+  function edgeNear(e, rg) {
+    for (var i = 0; i < e.cells.length; i++) { var rr = e.cells[i][0], cc = e.cells[i][1]; if (rr >= rg.top - 1 && rr <= rg.bottom + 1 && cc >= rg.left - 1 && cc <= rg.right + 1) return true; }
+    return false;
+  }
   function gqText(d) {
     if (typeof d === 'string') return d;
     if (d && d.num !== undefined) return d.text;
@@ -3002,7 +3126,7 @@
     return n + 1;
   }
   function gqRead(text) {
-    var forms = VP.readForms(text), m = { window: null, gridlines: true, columns: {}, rows: {}, formats: { 0: { fill: null, num: 'general', wrap: false, font: null, align: null, border: null } }, looks: [], cells: {}, styled: false };
+    var forms = VP.readForms(text), m = { window: null, gridlines: true, columns: {}, rows: {}, formats: { 0: { fill: null, num: 'general', wrap: false, font: null, align: null, border: null } }, looks: [], cells: {}, styled: false, bordered: false };
     for (var i = 0; i < forms.length; i++) {
       var f = forms[i];
       if (!Array.isArray(f) || !f[0] || f[0].sym === undefined) continue;
@@ -3016,6 +3140,7 @@
         var gg = gqGroups(f);
         m.formats[f[1].num] = { fill: typeof f[2] === 'string' ? '#' + f[2] : null, num: typeof f[3] === 'string' ? 'code' : f[3].sym, wrap: f[4].sym === 'wrap', font: gg.font, align: gg.align, border: gg.border };
         if (gg.font || gg.align) m.styled = true;
+        if (gg.border) m.bordered = true;
       }
       else if (head === 'look') m.looks.push({ key: gqKey(f[2]), index: f[3].num });
       else if (head === 'cell' || head === 'formula' || head === 'value' || head === 'text' || head === 'style') {
@@ -3085,7 +3210,7 @@
       return !col ? GQ.column : (col.hidden ? 0 : (col.width !== null ? gqColumnPixels(col.width) : GQ.column));
     }
     var ext = truth && truth.bound ? (m.extent || truth.extent || null) : null;
-    if (ext) { L.rows = ext.bottom; L.cols = ext.right; }
+    if (ext) { L.rows = ext.bottom; L.cols = ext.right; L.bound = true; }
     else {
       L.rows = m.window.bottom + Math.ceil(g.clientH / GQ.row) + 1;
       var slackW = 0, slack = 0;
@@ -3122,7 +3247,7 @@
   // it sits, how it aligns and where it is clipped, a nowrap text spilling into empty neighbors and one
   // left of the view reaching into it; and the cells the record holds in a hidden row or column, counted.
   function gqExpect(m, L, measure) {
-    var E = { texts: {}, wraps: {}, fills: {}, hiddenHeld: 0, font: L.font, lineH: L.lineH }, ox = L.ox, oy = L.oy, sx = L.sx, sy = L.sy;
+    var E = { texts: {}, wraps: {}, fills: {}, edges: [], hiddenHeld: 0, font: L.font, lineH: L.lineH, ox: L.ox, oy: L.oy, gridlines: m.gridlines, layout: L }, ox = L.ox, oy = L.oy, sx = L.sx, sy = L.sy;
     var clip = { x: ox, y: oy, w: L.W - ox, h: L.H - oy }, r, c, cell;
     function rowAt(y) { var rr = 1; while (rr < L.rows && L.top[rr + 1] <= y) rr++; return rr; }
     function colAt(xx) { var cc = 1; while (cc <= L.cols && L.colX[cc + 1] <= xx) cc++; return cc; }
@@ -3136,7 +3261,8 @@
         var w = L.colW[c];
         if (h === 0 || w === 0) { if (cell && c >= c0 && c <= c1) E.hiddenHeld++; continue; }
         var fm = gqFormat(m, cell, c), left = ox + L.colX[c] - sx;
-        if (c >= c0 && c <= c1 && fm.f.fill) E.fills[r + ',' + c] = { x: left, y: top, w: w, h: h, color: fm.f.fill, src: fm.src };
+        // a fill over its four gridlines, the cell's rectangle grown a pixel up and left (ENGINE.28, decision 11)
+        if (c >= c0 && c <= c1 && fm.f.fill) E.fills[r + ',' + c] = { x: left - 1, y: top - 1, w: w + 1, h: h + 1, color: fm.f.fill, src: fm.src };
         if (!cell || cell.text === '') continue;
         // the text's font and color (ENGINE.28): its format's, a formula before its value in the formula's color; its
         // horizontal alignment said or by its kind; its vertical place said, else the middle for one line and the top
@@ -3175,6 +3301,8 @@
         E.texts[r + ',' + c] = { text: cell.text, x: ax, y: cy, align: align, clip: { x: clipX, y: top, w: clipW, h: h }, valued: cell.valued, formula: cell.kind === 'formula', coded: !!cell.coded, font: font, color: color, styled: styled };
       }
     }
+    // the edges, where a format says a border (ENGINE.28, decisions 8 to 10)
+    if (m.bordered) E.edges = edgesExpected(L, function (rr, cc) { return gqFormat(m, m.cells[rr + ',' + cc] || null, cc).f; }, r0, r1, c0, c1, sx, sy, 'body', L.bound ? { rows: L.rows, cols: L.cols } : null);
     return E;
   }
   // The viewport's draw list against the expectation, both ways: every expected text, wrapped text and fill
@@ -3224,20 +3352,56 @@
       delete fills[key];
     }
     for (key in fills) if (Object.prototype.hasOwnProperty.call(fills, key)) say('a fill is drawn at ' + gqName(key) + ' where the record declares none');
+    // the edges (ENGINE.28): each boundary drawn once, as the record's borders resolve it, where they place it
+    var edges = {};
+    for (i = 0; i < ops.length; i++) { op = ops[i]; if (op.op !== 'edge' || op.quadrant !== 'body') continue; if (edges[op.at]) say('the edge ' + edgeName(op.at, E.layout) + ' is drawn twice'); edges[op.at] = op; }
+    for (i = 0; i < E.edges.length; i++) {
+      var ee = E.edges[i], ge = edges[ee.at], en = edgeName(ee.at, E.layout);
+      if (!ge) { say('the edge ' + en + ', ' + ee.line + ' ' + ee.color + ' by ' + gqName(ee.row + ',' + ee.col) + '\'s ' + ee.side + ', is not drawn'); continue; }
+      if (ge.line !== ee.line || String(ge.color).toLowerCase() !== ee.color.toLowerCase() || ge.row !== ee.row || ge.col !== ee.col || ge.side !== ee.side) say('the edge ' + en + ' is drawn ' + ge.line + ' ' + ge.color + ' by ' + gqName(ge.row + ',' + ge.col) + '\'s ' + ge.side + ', and the record resolves it to ' + ee.line + ' ' + ee.color + ' by ' + gqName(ee.row + ',' + ee.col) + '\'s ' + ee.side);
+      else if (ge.x !== ee.x || ge.y !== ee.y || ge.w !== ee.w || ge.h !== ee.h) say('the edge ' + en + ' is at ' + [ge.x, ge.y, ge.w, ge.h].join(',') + ', and the record places it at ' + [ee.x, ee.y, ee.w, ee.h].join(','));
+      else k.edges = (k.edges || 0) + 1;
+      delete edges[ee.at];
+    }
+    for (key in edges) if (Object.prototype.hasOwnProperty.call(edges, key)) say('an edge is drawn ' + edgeName(key, E.layout) + ' where the record declares none');
     return bad === 0;
   }
   // A pixel at a corner of the first visible cell of each kind of fill, a look's, a style's and a column's,
   // off the selection: the canvas holds the fill's color exactly.
   function gqProbes(E, vp, at, P, k) {
-    var ctx = vp.canvas.getContext('2d'), seen = {}, sr = vp.selection().range;
+    var ctx = vp.canvas.getContext('2d'), seen = {}, sr = vp.selection().range, W = vp.canvas.width, H = vp.canvas.height, i, s;
+    function px(x, y) { var d = ctx.getImageData(x, y, 1, 1).data; return [d[0], d[1], d[2]]; }
+    function edgeAt(at2) { for (var j = 0; j < E.edges.length; j++) if (E.edges[j].at === at2) return true; return false; }
     for (var key in E.fills) {
-      var ef = E.fills[key], p = key.split(','), r = +p[0], c = +p[1];
-      if (seen[ef.src] || (r >= sr.top && r <= sr.bottom && c >= sr.left && c <= sr.right)) continue;
-      if (ef.w < 3 || ef.h < 3 || ef.x + 1 < 0 || ef.y + 1 < 0 || ef.x + 1 >= vp.canvas.width || ef.y + 1 >= vp.canvas.height) continue;
+      var ef = E.fills[key], p = key.split(','), r = +p[0], c = +p[1], cx = ef.x + 1, cy = ef.y + 1;
+      if (seen[ef.src] || (r >= sr.top - 1 && r <= sr.bottom + 1 && c >= sr.left - 1 && c <= sr.right + 1)) continue;
+      if (ef.w < 6 || ef.h < 6 || cx - 1 < E.ox || cy - 1 < E.oy || cx + 2 >= W || cy + 2 >= H) continue;
       seen[ef.src] = true;
-      var d = ctx.getImageData(ef.x + 1, ef.y + 1, 1, 1).data, want = hexOf(ef.color);
-      if (d[0] !== want[0] || d[1] !== want[1] || d[2] !== want[2]) P.push(at + ': the pixel inside ' + gqName(key) + ' reads ' + [d[0], d[1], d[2]].join(',') + ', and its fill by its ' + ef.src + ' is ' + want.join(','));
-      else k.probes++;
+      // inside the cell, past any edge's reach; and since ENGINE.28 its gridlines on the left and above, which its fill
+      // covers (decision 11), where no edge lies on them
+      var want = hexOf(ef.color), probes = [[cx + 2, cy + 2, 'inside']];
+      if (E.gridlines && !edgeAt('v' + r + ',' + (c - 1))) probes.push([cx - 1, cy + 2, 'on its left gridline']);
+      if (E.gridlines && !edgeAt('h' + (r - 1) + ',' + c)) probes.push([cx + 2, cy - 1, 'on its top gridline']);
+      for (i = 0; i < probes.length; i++) {
+        var d = px(probes[i][0], probes[i][1]);
+        if (d[0] !== want[0] || d[1] !== want[1] || d[2] !== want[2]) P.push(at + ': the pixel ' + probes[i][2] + ' of ' + gqName(key) + ' reads ' + d.join(',') + ', and its fill by its ' + ef.src + ' is ' + want.join(','));
+        else k.probes++;
+      }
+    }
+    // the edges' pixels (ENGINE.28): the first two edges off the selection, each sample drawn in its color or a gap
+    var probed = 0;
+    for (i = 0; i < E.edges.length && probed < 2; i++) {
+      var ee = E.edges[i];
+      if (edgeNear(ee, sr) || !ee.samples.length) continue;
+      var inView = true;
+      for (s = 0; s < ee.samples.length; s++) if (ee.samples[s].x < E.ox || ee.samples[s].y < E.oy || ee.samples[s].x >= W || ee.samples[s].y >= H) inView = false;
+      if (!inView) continue;
+      probed++;
+      for (s = 0; s < ee.samples.length; s++) {
+        var sp = ee.samples[s], got = px(sp.x, sp.y), wantE = hexOf(sp.color);
+        if (got[0] !== wantE[0] || got[1] !== wantE[1] || got[2] !== wantE[2]) P.push(at + ': the pixel ' + sp.x + ',' + sp.y + ' of the edge ' + edgeName(ee.at, E.layout) + ', ' + sp.what + ', reads ' + got.join(',') + ', and the record says ' + wantE.join(','));
+        else k.probes++;
+      }
     }
   }
   // The host over one module and a grid cartridge, its viewport in a box of the stage, stepped by manual
@@ -3539,7 +3703,8 @@
     return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeTexts: kf.texts, fakeLooks: kf.looks, fakeUnvalued: kf.unvalued, fakeProbes: kf.probes, fakeKept: kf.kept, fakeCleared: kf.cleared, fakeValues: kf.values,
                          pointer: x.pointer, key: x.key, edited: x.edited, waits: x.waits, lone: x.lone, module: module, frames: km.frames, equal: km.equal, windows: km.windows, texts: km.texts, wraps: km.wraps, fills: km.fills, looks: km.looks, styles: km.styles,
                          columns: km.columns, unvalued: km.unvalued, hidden: km.hidden, probes: km.probes, kept: km.kept, followed: x.followed, edits: x.edits, cleared: km.cleared, hashes: km.hashes || 0, values: km.values,
-                         fakePatches: kf.patches || 0, patches: km.patches || 0, codes: x.codes, coded: km.coded || 0, fakeFonts: kf.fonts || 0, fonts: km.fonts || 0, live: st.live, misfrees: st.misfrees }, problems: P };
+                         fakePatches: kf.patches || 0, patches: km.patches || 0, codes: x.codes, coded: km.coded || 0, fakeFonts: kf.fonts || 0, fonts: km.fonts || 0, fakeEdges: kf.edges || 0, edges: km.edges || 0,
+                         live: st.live, misfrees: st.misfrees }, problems: P };
   }
   // ENGINE.16's half, a game's page's and Alonzo's alike: every grid cartridge the page holds, by its manifest,
   // on the engine's module, a short run with no edits, frame 0 and GAME_GRID_FRAMES more (frame 0 alone at rate
@@ -4184,6 +4349,13 @@
                         // back (M8), each a cell a repaint must get right
                         '(format 3 none general nowrap (font bold 22 "6B4FC8"))\n(look "Screen" "big" 3)\n(format 4 none general nowrap (align center))\n' +
                         '(formula "Screen" "P8" "=IF(MOD(Clock!$B$1,2)=0,\\"big\\",\\"small\\")")\n(formula "Screen" "M8" "=IF(MOD(Clock!$B$1,3)=0,\\"a centered text much longer than its column\\",\\"mid\\")")\n(style "Screen" "M8" 4)\n' +
+                        // ENGINE.28's slice 2: S5's four edges thin and, every other frame, thick in the deep lavender by its look,
+                        // beside R5's medium right edge, which its thin left loses to and its thick wins, T5's dashed box, which its
+                        // thin right beats, solid over a pattern, and S6's fill below, covering their gridline; each a boundary a
+                        // repaint of S5 must resolve again and paint as the full paint does
+                        '(format 5 none general nowrap (border (left thin) (right thin) (top thin) (bottom thin)))\n(format 6 none general nowrap (border (left thick "6B4FC8") (right thick "6B4FC8") (top thick "6B4FC8") (bottom thick "6B4FC8")))\n(look "Screen" "thick" 6)\n' +
+                        '(format 7 none general nowrap (border (right medium)))\n(format 8 none general nowrap (border (left dashed) (right dashed) (top dashed) (bottom dashed)))\n(format 9 "E8E0F7" general nowrap)\n' +
+                        '(formula "Screen" "S5" "=IF(MOD(Clock!$B$1,2)=0,\\"thick\\",\\"thin\\")")\n(style "Screen" "S5" 5)\n(cell "Screen" "R5" "r")\n(style "Screen" "R5" 7)\n(cell "Screen" "T5" "t")\n(style "Screen" "T5" 8)\n(cell "Screen" "S6" "fill")\n(style "Screen" "S6" 9)\n' +
                         '(cell "Screen" "A1" "frame")\n(formula "Screen" "B1" "=Clock!$B$1")\n(cell "Screen" "J1" "seventh")\n(formula "Screen" "K1" "=INT(Clock!$B$1/7)")\n' +
                         '(formula "Screen" "M1" "=IF(MOD(Clock!$B$1,3)=0,1234567890123,Clock!$B$1)")\n(formula "Screen" "N1" "=IF(MOD(Clock!$B$1,2)=0,\\"on\\",\\"off\\")")\n' +
                         '(cell "Screen" "J2" "text")\n(formula "Screen" "K2" "=IF(MOD(Clock!$B$1,2)=0,\\"a text much longer than its column\\",\\"short\\")")\n' +
@@ -8264,7 +8436,8 @@
         if (w === 0) continue;
         cell = model.cells.get(r + ',' + c) || null;
         var f = fmtOf(model, cell, c);
-        if (f.fill) E.fills.push({ key: name + ':' + r + ',' + c, x: ox + L.colX[c] - sx, y: y, w: w, h: h, color: f.fill });
+        // a fill over its four gridlines, the cell's rectangle grown a pixel up and left (ENGINE.28, decision 11)
+        if (f.fill) E.fills.push({ key: name + ':' + r + ',' + c, x: ox + L.colX[c] - sx - 1, y: y - 1, w: w + 1, h: h + 1, color: f.fill });
       }
     }
     if (model.gridlines) {
@@ -8318,13 +8491,15 @@
         E.texts.push({ key: name + ':' + r + ',' + c, text: cell.text, x: ax, y: cy, align: align, clip: { x: clipX, y: y, w: clipW, h: h }, kind: cell.kind, font: font, color: color, styled: styled });
       }
     }
+    // the edges, where a format says a border (ENGINE.28, decisions 8 to 10)
+    if (model.bordered) Array.prototype.push.apply(E.edges, edgesExpected(L, function (rr, cc) { return fmtOf(model, model.cells.get(rr + ',' + cc) || null, cc); }, rowStart, rowEnd, colStart, colEnd, sx, sy, name, null));
     // the visible headers of the quadrant's rows and columns
     for (c = colStart; c <= colEnd; c++) if (L.colW[c] !== 0) E.colHeaders[colName(c)] = true;
     for (r = rowStart; r <= rowEnd; r++) E.rowHeaders[String(r)] = true;
     E.visible.push({ name: name, rowStart: rowStart, rowEnd: rowEnd, colStart: colStart, colEnd: colEnd, sx: sx, sy: sy });
   }
   function expectAll(model, L) {
-    var E = { fills: [], vlines: [], hlines: [], texts: [], wraps: [], colHeaders: {}, rowHeaders: {}, visible: [] };
+    var E = { fills: [], edges: [], vlines: [], hlines: [], texts: [], wraps: [], colHeaders: {}, rowHeaders: {}, visible: [] };
     var ox = L.ox, oy = L.oy, fx = ox + L.frozenW, fy = oy + L.frozenH, W = L.W, H = L.H;
     expectQuadrant(model, L, { x: fx, y: fy, w: W - fx, h: H - fy }, L.fr + 1, L.rows, L.fc + 1, L.cols, L.sx, L.sy, 'body', E);
     if (L.fr > 0) expectQuadrant(model, L, { x: fx, y: oy, w: W - fx, h: L.frozenH }, 1, L.fr, L.fc + 1, L.cols, L.sx, 0, 'frozen-rows', E);
@@ -8351,7 +8526,7 @@
     box.className = 'case';
     box.style.cssText = 'width:' + cs.w + 'px;height:' + cs.h + 'px;';
     stage.appendChild(box);
-    var problems = [], counts = { texts: 0, wraps: 0, fills: 0, lines: 0, headers: 0, selection: 0, marks: 0, probes: 0, hashes: 0, fonts: 0, twin: 0 };
+    var problems = [], counts = { texts: 0, wraps: 0, fills: 0, lines: 0, headers: 0, selection: 0, marks: 0, probes: 0, hashes: 0, fonts: 0, twin: 0, edges: 0 };
     var vp = null, twinVp = null, twinBox = null;
     try {
       vp = new VP(box, { willReadFrequently: !!cs.twin });
@@ -8444,6 +8619,20 @@
         delete fills[ef.key];
       }
       for (k in fills) if (Object.prototype.hasOwnProperty.call(fills, k)) problems.push('a fill drawn at ' + k + ' that the record does not declare');
+      // (3b) the edges (ENGINE.28, decisions 8 to 10): each boundary drawn once, its line, color, owner, side and rectangle
+      // as the page's own reading of the borders resolves and places it; and the viewport's lines the page's measured table
+      if (E.edges.length && JSON.stringify(VP.LINES) !== JSON.stringify(EDGE_LINES)) problems.push('the viewport\'s table of lines is not the one measured from Excel\'s screen');
+      var edgeOps = {};
+      for (i = 0; i < ops.length; i++) { op = ops[i]; if (op.op !== 'edge') continue; k = op.quadrant + ':' + op.at; if (edgeOps[k]) problems.push('the edge ' + k + ' drawn twice'); edgeOps[k] = op; }
+      for (i = 0; i < E.edges.length; i++) {
+        var ee = E.edges[i], ge = edgeOps[ee.key];
+        if (!ge) { problems.push('the edge ' + ee.key + ' (' + ee.line + ' ' + ee.color + ', ' + edgeName(ee.at, L) + ') not drawn'); continue; }
+        if (ge.line !== ee.line || String(ge.color).toLowerCase() !== ee.color.toLowerCase() || ge.row !== ee.row || ge.col !== ee.col || ge.side !== ee.side) problems.push('the edge ' + ee.key + ' drawn ' + ge.line + ' ' + ge.color + ' as ' + ge.row + ',' + ge.col + '\'s ' + ge.side + ', expected ' + ee.line + ' ' + ee.color + ' as ' + ee.row + ',' + ee.col + '\'s ' + ee.side);
+        else if (ge.x !== ee.x || ge.y !== ee.y || ge.w !== ee.w || ge.h !== ee.h) problems.push('the edge ' + ee.key + ' at ' + ge.x + ',' + ge.y + ' ' + ge.w + 'x' + ge.h + ', expected ' + ee.x + ',' + ee.y + ' ' + ee.w + 'x' + ee.h);
+        else counts.edges++;
+        delete edgeOps[ee.key];
+      }
+      for (k in edgeOps) if (Object.prototype.hasOwnProperty.call(edgeOps, k)) problems.push('an edge drawn at ' + k + ' that the record does not declare');
       // (4) the gridlines, as sets of coordinates per quadrant
       var vl = {}, hl = {};
       for (i = 0; i < ops.length; i++) {
@@ -8493,8 +8682,8 @@
         var pf = E.fills[i], pk = pf.key.split(':')[1].split(','), pr = +pk[0], pc = +pk[1];
         if (inRange(selRange, pr, pc)) continue;
         if (cs.mark && inRange(VP.parseRange(cs.mark[1][0]), pr, pc)) continue;
-        var cx = pf.x + 1, cy = pf.y + 1;
-        if (cx < 0 || cy < 0 || cx >= L.W || cy >= L.H || pf.w < 3 || pf.h < 3) continue;
+        var cx = pf.x + 3, cy = pf.y + 3;   // inside the cell, past its grown pixel and any edge's reach (ENGINE.28)
+        if (cx < 0 || cy < 0 || cx >= L.W || cy >= L.H || pf.w < 6 || pf.h < 6) continue;
         var px = pixel(cx, cy), want = hexOf(pf.color);
         if (!same(px, want, 0)) problems.push('the pixel inside ' + pf.key + ' is ' + px.join(',') + ', its fill is ' + want.join(','));
         else { counts.probes++; probed++; }
@@ -8523,6 +8712,20 @@
             break;
           }
           if (done) break;
+        }
+      }
+      // (7b) the edges' pixels (ENGINE.28): each edge's samples off the selection and the marks, a drawn pixel its line's
+      // color, a gap on the gridline's pixel the fill there or the ground, so that a pattern's phase, a shared edge's
+      // winner and an edge stroked rather than filled are each told by a pixel
+      for (i = 0; i < E.edges.length; i++) {
+        var pe = E.edges[i];
+        if (edgeNear(pe, selRange) || (cs.mark && edgeNear(pe, VP.parseRange(cs.mark[1][0])))) continue;
+        for (var si = 0; si < pe.samples.length; si++) {
+          var sp = pe.samples[si];
+          if (sp.x < L.ox || sp.y < L.oy || sp.x >= L.W || sp.y >= L.H) continue;
+          var pg = pixel(sp.x, sp.y), pw = hexOf(sp.color);
+          if (!same(pg, pw, 0)) problems.push('the pixel ' + sp.x + ',' + sp.y + ' of the edge ' + pe.key + ', ' + sp.what + ', is ' + pg.join(',') + ', expected ' + pw.join(','));
+          else counts.probes++;
         }
       }
       // (8) the drawn twin (ENGINE.28, decision 15): the record with its looks drawn op for op and pixel for pixel as its
@@ -8554,7 +8757,7 @@
       if (box.parentNode) box.parentNode.removeChild(box);
       if (twinBox && twinBox.parentNode) twinBox.parentNode.removeChild(twinBox);
     }
-    var head = 'case ' + cs.name + ' [' + cs.w + 'x' + cs.h + ' css]: texts ' + counts.texts + ', wrapped ' + counts.wraps + ', fills ' + counts.fills + ', lines ' + counts.lines + ', headers ' + counts.headers + ', selection ' + counts.selection + ', marks ' + counts.marks + ', probes ' + counts.probes + ', hashes ' + counts.hashes + ', fonts ' + counts.fonts + ', twin ' + counts.twin + ': ';
+    var head = 'case ' + cs.name + ' [' + cs.w + 'x' + cs.h + ' css]: texts ' + counts.texts + ', wrapped ' + counts.wraps + ', fills ' + counts.fills + ', lines ' + counts.lines + ', headers ' + counts.headers + ', selection ' + counts.selection + ', marks ' + counts.marks + ', probes ' + counts.probes + ', hashes ' + counts.hashes + ', fonts ' + counts.fonts + ', twin ' + counts.twin + ', edges ' + counts.edges + ': ';
     if (problems.length === 0) { out.push(head + 'OK'); return true; }
     out.push(head + 'FAIL: ' + problems.slice(0, 6).join('; ') + (problems.length > 6 ? '; and ' + (problems.length - 6) + ' more' : ''));
     return false;

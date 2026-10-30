@@ -49,7 +49,12 @@ and (ENGINE.28) a viewport that passes over a format row's groups, which
 appearance must fail at A1 drawn in the default font, and one whose look
 replaces the cell's own format whole, which appearance must fail at C1,
 centered by its own format under its look, and against its drawn twin.
-Seven mutants; the real page must pass first.
+Seven mutants; the real page must pass first. Since ENGINE.28's second slice
+twelve, the appearance case failing each of five more by name: a shared edge
+drawn twice, its loser's op beside its winner's; the fills laid as they were,
+not over their gridlines; an edge stroked rather than filled, its pixels
+blended; a pattern phased on the edge's start and not on the sheet's; and an
+edge cut at its corners, the reach of the lines across it there lost.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A page's dump is read
@@ -105,23 +110,23 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # the format the language gives it. The fifteen earlier cases keep their counts, their fonts and twin at 0.
 $scales = @('1', '1.5')
 $floors = @(
-    @{ Case = 'fixture_frazaro';          Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 0; Probes = 3; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'fixture_output';           Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'fixture_output_b2_c3';     Texts = 4;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'fixture_data';             Texts = 1;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'into_output';              Texts = 2;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'into_checks';              Texts = 1;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'sparse_top';               Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'sparse_middle';            Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'sparse_end';               Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'sparse_frozen';            Texts = 38; Fills = 0;  Lines = 100; Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'sparse_resized';           Texts = 38; Fills = 0;  Lines = 48;  Headers = 48; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'fixture_frazaro_selected'; Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 1; Probes = 3; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'sparse_hashes';            Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 13; Fonts = 0; Twin = 0 },
-    @{ Case = 'sheets_other';             Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'sheets_back';              Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0 },
-    @{ Case = 'appearance';               Texts = 26; Fills = 2;  Lines = 0;   Headers = 33; Selection = 1; Marks = 0; Probes = 4; Hashes = 0;  Fonts = 12; Twin = 2 },
-    @{ Case = 'appearance_drawn';         Texts = 26; Fills = 2;  Lines = 0;   Headers = 33; Selection = 1; Marks = 0; Probes = 4; Hashes = 0;  Fonts = 12; Twin = 0 }
+    @{ Case = 'fixture_frazaro';          Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 0; Probes = 3; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'fixture_output';           Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'fixture_output_b2_c3';     Texts = 4;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'fixture_data';             Texts = 1;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'into_output';              Texts = 2;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'into_checks';              Texts = 1;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'sparse_top';               Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'sparse_middle';            Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'sparse_end';               Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'sparse_frozen';            Texts = 38; Fills = 0;  Lines = 100; Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'sparse_resized';           Texts = 38; Fills = 0;  Lines = 48;  Headers = 48; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'fixture_frazaro_selected'; Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 1; Probes = 3; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'sparse_hashes';            Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 13; Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'sheets_other';             Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'sheets_back';              Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
+    @{ Case = 'appearance';               Texts = 26; Fills = 2;  Lines = 0;   Headers = 33; Selection = 1; Marks = 0; Probes = 80; Hashes = 0;  Fonts = 12; Twin = 2; Edges = 57 },
+    @{ Case = 'appearance_drawn';         Texts = 26; Fills = 2;  Lines = 0;   Headers = 33; Selection = 1; Marks = 0; Probes = 80; Hashes = 0;  Fonts = 12; Twin = 0; Edges = 57 }
 )
 $expectedCases = 17
 
@@ -194,17 +199,17 @@ function Test-Oracle([string]$text, [string]$scale) {
     $cases = @{}
     $caseLines = New-Object System.Collections.Generic.List[string]
     foreach ($l in $lines) {
-        $m = [regex]::Match($l, '^case (\S+) \[[^\]]*\]: texts (\d+), wrapped (\d+), fills (\d+), lines (\d+), headers (\d+), selection (\d+), marks (\d+), probes (\d+), hashes (\d+), fonts (\d+), twin (\d+): (OK|FAIL.*)$')
+        $m = [regex]::Match($l, '^case (\S+) \[[^\]]*\]: texts (\d+), wrapped (\d+), fills (\d+), lines (\d+), headers (\d+), selection (\d+), marks (\d+), probes (\d+), hashes (\d+), fonts (\d+), twin (\d+), edges (\d+): (OK|FAIL.*)$')
         if (-not $m.Success) { continue }
         $name = $m.Groups[1].Value
-        $cases[$name] = @{ Texts = [int]$m.Groups[2].Value + [int]$m.Groups[3].Value; Fills = [int]$m.Groups[4].Value; Lines = [int]$m.Groups[5].Value; Headers = [int]$m.Groups[6].Value; Selection = [int]$m.Groups[7].Value; Marks = [int]$m.Groups[8].Value; Probes = [int]$m.Groups[9].Value; Hashes = [int]$m.Groups[10].Value; Fonts = [int]$m.Groups[11].Value; Twin = [int]$m.Groups[12].Value; Verdict = $m.Groups[13].Value }
+        $cases[$name] = @{ Texts = [int]$m.Groups[2].Value + [int]$m.Groups[3].Value; Fills = [int]$m.Groups[4].Value; Lines = [int]$m.Groups[5].Value; Headers = [int]$m.Groups[6].Value; Selection = [int]$m.Groups[7].Value; Marks = [int]$m.Groups[8].Value; Probes = [int]$m.Groups[9].Value; Hashes = [int]$m.Groups[10].Value; Fonts = [int]$m.Groups[11].Value; Twin = [int]$m.Groups[12].Value; Edges = [int]$m.Groups[13].Value; Verdict = $m.Groups[14].Value }
         $caseLines.Add(("  {0}: {1}" -f $name, ($l -replace '^case \S+ \[[^\]]*\]: ', '')))
     }
     foreach ($f in $floors) {
         $c = $cases[$f.Case]
         if ($null -eq $c) { $problems.Add("the case $($f.Case) was not run"); continue }
         if ($c.Verdict -ne 'OK') { $problems.Add("the case $($f.Case) at a ratio of $scale`: $($c.Verdict)") }
-        foreach ($k in @('Texts', 'Fills', 'Lines', 'Headers', 'Selection', 'Marks', 'Probes', 'Hashes', 'Fonts', 'Twin')) {
+        foreach ($k in @('Texts', 'Fills', 'Lines', 'Headers', 'Selection', 'Marks', 'Probes', 'Hashes', 'Fonts', 'Twin', 'Edges')) {
             if ($c[$k] -lt $f[$k]) { $problems.Add("the case $($f.Case) at a ratio of $scale asserted $($c[$k]) $($k.ToLower()), below its floor of $($f[$k])") }
         }
     }
@@ -300,7 +305,9 @@ if ($Control) {
         $fFailed = @($jF.Problems | Where-Object { $_ -cmatch 'case appearance.*cell body:1,\d in the font 13px .*, expected bold 26px' }).Count
         # mutant G (ENGINE.28): a look's format replacing the cell's own whole, as it did until this item, so that a cell's
         # own alignment and edges fall under its look; appearance must fail it at C1, centered by its own format under the
-        # look of 2, and the twin's draw list must differ
+        # look of 2, and against the twin, its draw list differing; since the second slice the edges lost to the look fill
+        # the six problems a case's line lists, so the twin's own line may be cut, and its count, both holds failed, 0 below
+        # its floor, says the same
         $anchorG = '        if (!model.styled && !model.bordered) return lf;'
         if (([regex]::Matches($js, [regex]::Escape($anchorG))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorG' is not in web/viewport.js exactly once"; exit 1 }
         $mutG = $js.Replace($anchorG, '        if (true) return lf;   // the look whole, by the control')
@@ -310,10 +317,43 @@ if ($Control) {
         $rG = Invoke-Oracle $browser $pageG '1'
         $jG = if ($rG.Text -ne '') { Test-Oracle $rG.Text '1' } else { @{ Problems = @($rG.Reason) } }
         $gFailed = @($jG.Problems | Where-Object { $_ -cmatch 'case appearance.*cell body:1,3 (at \d+,\d+, expected|aligned right, expected center)' }).Count
-        $gTwin = @($jG.Problems | Where-Object { $_ -cmatch 'case appearance.*the draw list differs from the drawn twin' }).Count
+        $gTwin = @($jG.Problems | Where-Object { $_ -cmatch 'case appearance.*the draw list differs from the drawn twin' -or $_ -ceq 'the case appearance at a ratio of 1 asserted 0 twin, below its floor of 2' }).Count
+        # mutants H to L (ENGINE.28's second slice), each the appearance case's by name: a shared edge drawn twice, its
+        # loser's op beside its winner's; the fills laid as they were, inside their cells and not over their gridlines; an
+        # edge stroked rather than filled, its pixels blended; a pattern phased on the edge's start and not the sheet's; and
+        # an edge cut at its corners, the reach of the lines across it there lost
+        $edgeMutants = @(
+            @{ L = 'h'; Name = 'a shared edge drawn twice'; Anchor = "        p.ops.push({ op: 'edge', at: 'v' + r + ',' + b, row: r, col: l.near ? b : nb, side: l.near ? 'right' : 'left', line: l.line, color: l.color,"
+               With = "        p.ops.push({ op: 'edge', at: 'v' + r + ',' + b, row: r, col: l.near ? nb : b, side: l.near ? 'left' : 'right', line: l.line, color: l.color, x: 0, y: 0, w: 0, h: 0, quadrant: name });`n        p.ops.push({ op: 'edge', at: 'v' + r + ',' + b, row: r, col: l.near ? b : nb, side: l.near ? 'right' : 'left', line: l.line, color: l.color,"
+               Want = 'case appearance.*the edge body:v\d+,\d+ drawn twice' },
+            @{ L = 'i'; Name = 'the fills as they were'; Anchor = 'if (fmt.fill) p.fillRect(ox + g.colX[c] - sx - 1, y - 1, w + 1, rh + 1, fmt.fill,'; With = 'if (fmt.fill) p.fillRect(ox + g.colX[c] - sx, y, w, rh, fmt.fill,'
+               Want = 'case appearance.*fill body:1,\d+ at \d+,\d+ \d+x\d+, expected' },
+            @{ L = 'j'; Name = 'an edge stroked'; Anchor = '      if (w > 0 && h > 0) ctx.fillRect(x, y, w, h);'; With = '      if (w > 0 && h > 0) { ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h); }'
+               Want = 'case appearance.*the pixel \d+,\d+ of the edge body:[vh]\d+,\d+, (drawn|a gap), is (?!0,0,0,|255,255,255,)\d+,\d+,\d+, expected' },
+            @{ L = 'k'; Name = 'a pattern phased on its edge'; Anchor = '        var on = u <= u1 && mask.charAt((((u - origin) % n) + n) % n) === want;'; With = '        var on = u <= u1 && mask.charAt((((u - u0) % n) + n) % n) === want;'
+               Want = 'case appearance.*the pixel \d+,\d+ of the edge body:[vh]\d+,\d+, (drawn|a gap), is' },
+            @{ L = 'l'; Name = 'an edge cut at its corners'; Anchor = '        var y0 = t0 + Math.min(0, low(lineH(above, b)), low(lineH(above, nb))), y1 = t1 + Math.max(0, high(lineH(r, b)), high(lineH(r, nb)));'; With = '        var y0 = t0, y1 = t1;'
+               Want = 'case appearance.*the edge body:v\d+,\d+ at \d+,\d+ \d+x\d+, expected' }
+        )
+        $edgeNotes = New-Object System.Collections.Generic.List[string]
+        $edgeJudged = New-Object System.Collections.Generic.List[object]
+        $edgeOk = $true
+        foreach ($mu in $edgeMutants) {
+            if (([regex]::Matches($js, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in web/viewport.js exactly once"; exit 1 }
+            $mutX = $js.Replace($mu.Anchor, $mu.With)
+            $xApplied = $mutX -cne $js
+            $jsX = Join-Path $tmp ($mu.L + '.js'); [System.IO.File]::WriteAllText($jsX, $mutX, $utf8)
+            $rX = Invoke-Oracle $browser (New-MutantPage $mu.L $template $jsX) '1'
+            $jX = if ($rX.Text -ne '') { Test-Oracle $rX.Text '1' } else { @{ Problems = @($rX.Reason) } }
+            $xFailed = @($jX.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
+            $edgeJudged.Add(@{ Name = $mu.Name; Problems = @($jX.Problems) })
+            $edgeNotes.Add(("{0} applied ({1}) and failed by name ({2})" -f $mu.Name, $xApplied, $xFailed))
+            if (-not ($xApplied -and $xFailed -ge 1)) { $edgeOk = $false }
+        }
         Write-Output ("control: the real page has {0} problem(s); the padding mutant applied ({1}) and failed on {2} position(s); the dropped column failed as {3} cell(s) not drawn; the cut element left no block ({4}); the number cut again applied ({5}) and failed sparse_hashes ({6}); the widths one map applied ({7}) and failed sheets_other ({8}); the groups passed over applied ({9}) and failed appearance ({10}); the look whole applied ({11}) and failed appearance at C1 ({12}) and against the twin ({13})" -f @($j0.Problems).Count, $aApplied, $aPosition, $bNotDrawn, $cNoBlock, $dApplied, $dFailed, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $gTwin)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aPosition -ge 1 -and $bNotDrawn -ge 1 -and $cNoBlock -and $dApplied -and $dFailed -ge 1 -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $gTwin -ge 1) {
-            Write-Output 'OK: the check passes the real page and fails each of the seven mutants for its own reason, each proving it applied'
+        Write-Output ('control: ' + ($edgeNotes -join '; '))
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aPosition -ge 1 -and $bNotDrawn -ge 1 -and $cNoBlock -and $dApplied -and $dFailed -ge 1 -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $gTwin -ge 1 -and $edgeOk) {
+            Write-Output 'OK: the check passes the real page and fails each of the twelve mutants for its own reason, each proving it applied'
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -325,6 +365,7 @@ if ($Control) {
         foreach ($p in @($jE.Problems) | Select-Object -First 3) { Write-Output ('  widths one map: ' + $p) }
         foreach ($p in @($jF.Problems) | Select-Object -First 3) { Write-Output ('  groups passed over: ' + $p) }
         foreach ($p in @($jG.Problems) | Select-Object -First 3) { Write-Output ('  the look whole: ' + $p) }
+        foreach ($ej in $edgeJudged) { foreach ($p in @($ej.Problems) | Select-Object -First 3) { Write-Output ('  ' + $ej.Name + ': ' + $p) } }
         exit 1
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue

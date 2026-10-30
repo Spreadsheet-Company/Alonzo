@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds one hundred and ninety mutant pages through tools/build_web.ps1 and runs
+-Control builds one hundred and ninety-three mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -541,7 +541,14 @@ And ENGINE.28's first slice three more: GC, needing no module, a viewport that p
 which the grid case must fail by name at the double's row of 200, drawn right-aligned in the default ink where its
 look says white, bold and centered; and GD and GE, when the real page holds the module, a look that replaces the
 cell's own format whole and no row fitted to its tallest size, which the grid card's N17 and row 17 must fail by
-their places.
+their places. And its second slice two more: GF, needing no module, a shared edge's tie given to the left or upper
+cell, which the grid case must fail by name at a tie, the double's thin boxes on the row of 200 or the grid card's
+red edge against its blue one between L2 and M2; and GG, when the real page holds the module, a repaint whose band
+is not grown over a fill's gridlines and an edge's reach, which the changes case's pixels must fail. And at its hand
+test one more, GH, when the real page holds the module: a hidden neighbor's side taken, the edge resolved against the
+next column or row and not the next shown, which the grid card must fail by name between R2 and T2, beside its
+hidden column S, or I11 and I13, beside its hidden row 12, each drawn by the hidden cell's red side where the record
+resolves it to the shown cell's blue one.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -984,6 +991,9 @@ $settleDoubleFloors = @{ fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased
 # eighty-nine after ENGINE.28's first slice's three, ninety-one without the module still. At its hand test, the owner's
 # word: the floating palette's side by the window's halves, FC anchored on the new rule; and GV, the palette case's,
 # needing no module, a cell's box forgetting the scroll, to one hundred and ninety, and ninety-two without the module.
+# ENGINE.28's second slice, 2026-10-25: GF, a shared edge's tie the left cell's, needing no module, and GG, a repaint's
+# band not grown, to one hundred and ninety-two, and ninety-three without the module. 2026-10-29, at its hand test: GH,
+# a hidden neighbor's side taken, needing the module, to one hundred and ninety-three, still ninety-three without it.
 # 2026-10-17, ENGINE.25's second slice: the case's page half, pure and so on every page, module or not, its counts a function of
 # its plan: 6 names a page writes a game's command by, held to the cartridge and the command or to none; 4 of the palette's
 # lines, the command that holds with its own key, found by a word after the dot, the one that holds not no line, and one
@@ -1029,8 +1039,14 @@ $floors = @(
     # its cartridges, read 5,326 to 5,351 over six runs; its floor 5,250 leaves room for the instance with fewest givens,
     # as CART.14's did. Mutants GC, GD and GE, the grid case's,
     # take the control three mutant pages higher, GC needing no module (one more applicable without it).
-    @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 2080; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1; fakePatches = 8; fakeFonts = 170 };
-                            WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 10300; wraps = 40; fills = 9150; looks = 8650; styles = 80; columns = 326; unvalued = 288; hidden = 17; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 200; values = 24; patches = 20; codes = 3; coded = 213; fonts = 260;
+    # 2026-10-25, ENGINE.28's second slice: edges and fakeEdges count the edges drawn as the record's borders resolve and
+    # place them, the double's thin boxes on the row of 200 (531 over its frames) and the grid card's P18 to W18 (505);
+    # each floor 5% below; the probes rise by two edges' samples a frame and a fill's gridlines, their floors standing.
+    # 2026-10-29, at its hand test: the card's edges moved to row 2, I2 to P2, off the narrow, hidden and styled columns,
+    # with an edge beside the hidden column and one beside the hidden row, 433 over the frames, row 2 leaving the view
+    # where the person's scroll moves it down; edges 410, 5% below.
+    @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 2080; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1; fakePatches = 8; fakeFonts = 170; fakeEdges = 500 };
+                            WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 10300; wraps = 40; fills = 9150; looks = 8650; styles = 80; columns = 326; unvalued = 288; hidden = 17; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 200; values = 24; patches = 20; codes = 3; coded = 213; fonts = 260; edges = 410;
                                             grids = 4; gridFrames = 18; gridEqual = 16; gridValues = 33; gridTexts = 5250; gridCleared = 4; gridMoves = 18; gridBound = 3; gridCanvas = 10; gridFocused = 6; gridTyped = 3 } },
     @{ Case = 'tabs';     Min = @{ fakeFrames = 14; fakeShown = 1; fakeHeld = 8; fakeScrolled = 1; fakeBack = 1; fakeScreen = 9; fakePointer = 1; fakeRouted = 1; fakeKey = 1; fakeStrip = 1; fakeWheel = 4; fakeTexts = 4600 };
                             WithModule = @{ frames = 12; shown = 1; held = 5; back = 1; screen = 8; pointer = 1; routed = 1; strip = 1; wheel = 4; clock = 4; texts = 3100 } },
@@ -1870,7 +1886,13 @@ if ($Control) {
             @{ L = 'gd'; Name = 'the look whole'; File = 'viewport'; Module = $true; Anchor = '        if (!model.styled && !model.bordered) return lf;'; With = '        if (true) return lf;   // the look whole, by the control'
                Want = 'case grid.*engine frame \d+: N17 is drawn at \d+,\d+, and the record places it at \d+,\d+' },
             @{ L = 'ge'; Name = 'no row fitted'; File = 'viewport'; Module = $true; Anchor = '        if (px > DEFAULT_ROW_PX && (fits[e.row] === undefined || px > fits[e.row])) fits[e.row] = px;'; With = '        // no row fitted, by the control'
-               Want = 'case grid.*engine frame \d+: [A-O]17 is drawn at \d+,\d+, and the record places it at \d+,\d+' }
+               Want = 'case grid.*engine frame \d+: [A-O]17 is drawn at \d+,\d+, and the record places it at \d+,\d+' },
+            @{ L = 'gf'; Name = 'a tie the left cell''s'; File = 'viewport'; Anchor = '      if (lb && (!la || lb.rank >= la.rank)) return { line: bb.line, color: bb.color || EDGE_INK, def: lb, near: false };'
+               With = '      if (lb && (!la || lb.rank > la.rank)) return { line: bb.line, color: bb.color || EDGE_INK, def: lb, near: false };   // a tie the left cell''s, by the control'
+               Want = 'case grid.*the edge between \w+\d+ and \w+\d+ is drawn thin #[0-9A-Fa-f]{6} by \w+\d+''s (right|bottom), and the record resolves it to thin #[0-9A-Fa-f]{6} by \w+\d+''s (left|top)' },
+            @{ L = 'gh'; Name = 'a hidden neighbor''s side taken'; File = 'viewport'; Module = $true; Anchor = '  function shownAfter(size, i, last) { var k = i + 1; while (k <= last && size(k) === 0) k++; return k; }'
+               With = '  function shownAfter(size, i, last) { return i + 1; }   // a hidden neighbor''s side taken, by the control'
+               Want = 'case grid.*the edge between (R2 and T2|I11 and I13) is drawn thin #[0-9A-Fa-f]{6} by (S2''s left|I12''s top), and the record resolves it to thin #[0-9A-Fa-f]{6} by (T2''s left|I13''s top)' }
         )
         foreach ($mu in $gridMutants) {
             if ($mu.Module -and $moduleReal -eq 0) { $gridNotes.Add(("{0}: not applicable, the real page holding no engine module" -f $mu.Name)); continue }
@@ -2048,7 +2070,9 @@ if ($Control) {
         # rows whole whenever one changed; one that never keeps them; and, with or without the module, one whose patch
         # leaves an empty row's cell in place, which the crafted patches find. Each must fail the changes case by name.
         # And BV to BZ (ENGINE.20), viewports: a repaint without the span its text spills over, L2 left at frame 2; one
-        # without a neighbor's text spilling into a named cell, O6 left; one that leaves out the selection, M1 under it;
+        # without a neighbor's text spilling into a named cell, O6 left; one that leaves out the selection, M1 under it
+        # (since ENGINE.28's second slice L1 or M1, the card bordered and the band grown two pixels left over L1's pixels
+        # under the selection's border);
         # and, with or without the module, one with no clip, the crafted selection blended twice in A1, and a draw list
         # that keeps the last full paint's ops, which the first crafted patch finds.
         $changesMutants = @(
@@ -2081,9 +2105,11 @@ if ($Control) {
             @{ L = 'bx'; Name = 'a repaint with no clip'; Module = $false; File = 'viewport'; Anchor = '    p.clipped(rect, function () {'; With = '    (function (fn) { fn(); })(function () {'
                Want = 'case changes.*crafted, an empty row: the canvas is not a full paint''s of the record after the patch: \d+ pixel\(s\), the first at \d+,\d+ in A1' },
             @{ L = 'by'; Name = 'a repaint without the selection'; Module = $true; File = 'viewport'; Anchor = '      self._paintRanges(p, model, g, clip, r1, r2, c1, c2, sx, sy, name);'; With = '      if (!part) self._paintRanges(p, model, g, clip, r1, r2, c1, c2, sx, sy, name);'
-               Want = 'case changes.*changes frame 2: the canvas is not a full paint''s of the record in the view''s state: \d+ pixel\(s\), the first at \d+,\d+ in M1' },
+               Want = 'case changes.*changes frame 2: the canvas is not a full paint''s of the record in the view''s state: \d+ pixel\(s\), the first at \d+,\d+ in [LM]1' },
             @{ L = 'bz'; Name = 'a draw list that keeps the old ops'; Module = $false; File = 'viewport'; Anchor = '    if (!this.over) return this.ops.slice();'; With = '    if (true) return this.ops.slice();'
-               Want = 'case changes.*crafted, an empty row: the draw list is not a full paint''s of the record after the patch' }
+               Want = 'case changes.*crafted, an empty row: the draw list is not a full paint''s of the record after the patch' },
+            @{ L = 'gg'; Name = 'a repaint''s band not grown'; Module = $true; File = 'viewport'; Anchor = '    var up = model.bordered ? 2 : (model.filled ? 1 : 0), down = model.bordered ? 1 : 0;'; With = '    var up = 0, down = 0;   // the band not grown, by the control'
+               Want = 'case changes.*the canvas is not a full paint''s of the record in the view''s state' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
@@ -2746,7 +2772,7 @@ if ($Control) {
         if ($script:LoopMode -eq 'run') { Write-Output (Get-PoolNote) }
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and ninety' } else { 'ninety-two applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and ninety-three' } else { 'ninety-three applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

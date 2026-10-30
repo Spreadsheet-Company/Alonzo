@@ -29,7 +29,10 @@
   says over the cell's own property by property (Style::over); a text is
   drawn in its format's weight, slant, size and color, placed by its
   alignment and spilling by it, and a row with no set height is fitted to
-  the tallest own size in it.
+  the tallest own size in it; a format's border draws its four edges as
+  Excel draws its fourteen lines on a screen, a shared edge once, the
+  heavier line winning, and a fill covers the gridlines around its cell, as
+  Excel lays one.
 
   What the viewport owns is the state no program sees (SD-23): the scroll, the
   selection, the widths a person dragged, each sheet's its own as a
@@ -259,6 +262,7 @@
       // that says neither keeps the paths it had; the formats drawn under a look, built once a pair; the rows a cell's
       // own size fits
       styled: false, bordered: false, drawn: new Map(), rowFits: {},
+      filled: false,   // whether any format says a fill, by which a repaint grows its band over a fill's gridlines (decision 11)
       counts: { forms: 0, cells: 0, formulas: 0, values: 0, texts: 0, styles: 0, sentences: 0, looks: 0, rows: 0, unknown: 0, malformed: 0 },
       lines: 0, readMs: 0
     };
@@ -334,6 +338,7 @@
       if (!readGroups(f, fmt)) { m.counts.malformed++; return; }
       if (fmt.font || fmt.align) m.styled = true;
       if (fmt.border) m.bordered = true;
+      if (fmt.fill) m.filled = true;
       m.formats[idx] = fmt;
     } else if (head === 'cell' || head === 'formula') {
       a = parseA1(strOf(f[2]) || '');
@@ -586,6 +591,52 @@
   // line one of Excel's fourteen, none taking no color. A property unsaid is null. A row whose groups say anything
   // else is malformed (decision 1).
   var LINE_NAMES = ['none', 'thin', 'medium', 'thick', 'double', 'hair', 'dotted', 'dashed', 'dash-dot', 'dash-dot-dot', 'medium-dashed', 'medium-dash-dot', 'medium-dash-dot-dot', 'slant-dash-dot'];
+  // The lines as Excel draws them on a screen (ENGINE.28, decision 8, measured at the approval from the owner's
+  // screenshots of Excel 365 at 100% on a display at 150%), in device pixels at every ratio, as a gridline is one at
+  // every ratio: each line its strands across the edge, a strand's offset from the gridline's own pixel toward the right
+  // or lower cell and, for a pattern, its mask over a period of device pixels, 1 drawn and 0 a gap, phased on the
+  // sheet's coordinate and never on the edge's start; slant-dash-dot's gaps lean, the outer strand keeping a gap's
+  // first two pixels and the inner its third. And its rank for a shared edge (decision 9, held by the probe workbook's
+  // pairs): the wider line wins, a double over a thick, at one width a solid line over a patterned one.
+  var LINES = {
+    'thin': { rank: 11, strands: [[0, null]] },
+    'medium': { rank: 21, strands: [[-1, null], [0, null]] },
+    'thick': { rank: 31, strands: [[-1, null], [0, null], [1, null]] },
+    'double': { rank: 41, strands: [[-1, null], [1, null]] },
+    'hair': { rank: 10, strands: [[0, '10']] },
+    'dotted': { rank: 10, strands: [[0, '1100']] },
+    'dashed': { rank: 10, strands: [[0, '1110']] },
+    'dash-dot': { rank: 10, strands: [[0, '111111111000111000']] },
+    'dash-dot-dot': { rank: 10, strands: [[0, '111111111000111000111000']] },
+    'medium-dashed': { rank: 20, strands: [[-1, '111111111000'], [0, '111111111000']] },
+    'medium-dash-dot': { rank: 20, strands: [[-1, '111111111000111000'], [0, '111111111000111000']] },
+    'medium-dash-dot-dot': { rank: 20, strands: [[-1, '111111111000111000111000'], [0, '111111111000111000111000']] },
+    'slant-dash-dot': { rank: 20, strands: [[-1, '111111111110111110'], [0, '111111111001111001']] }
+  };
+  var EDGE_INK = '#000000';   // an edge said with no color: Excel's automatic, black
+  // the lines that leave the gridline's own pixel bare in places, a double's middle and a pattern's gaps, where the edge
+  // pass shows the fill there or the background
+  var BARE = {};
+  // and each line's strands as the passes that draw them, adjacent strands of one mask a band as thick as they are, so
+  // that a medium or a thick edge is one rectangle and a medium pattern's two strands one pass
+  var PASSES = {};
+  Object.keys(LINES).forEach(function (n) {
+    var s = LINES[n].strands, zero = null, passes = [], k, last;
+    for (k = 0; k < s.length; k++) if (s[k][0] === 0) zero = s[k];
+    BARE[n] = zero === null || zero[1] !== null;
+    for (k = 0; k < s.length; k++) {
+      last = passes[passes.length - 1];
+      if (last && last.mask === s[k][1] && last.off + last.thick === s[k][0]) last.thick++;
+      else passes.push({ off: s[k][0], thick: 1, mask: s[k][1] });
+    }
+    PASSES[n] = passes;
+  });
+  // The nearest column or row shown after i, and before it (ENGINE.28's hand test): a hidden column or row, of no width
+  // or height, takes no part in an edge and its cells' own edges are never drawn, so the edge between two cells drawn
+  // side by side is the one their facing sides make, whatever hidden ones lie between them. size(k) is a column's width
+  // or a row's height and last the grid's last; 0 is the sheet's edge before the first.
+  function shownAfter(size, i, last) { var k = i + 1; while (k <= last && size(k) === 0) k++; return k; }
+  function shownBefore(size, i) { var k = i - 1; while (k >= 1 && size(k) === 0) k--; return Math.max(k, 0); }
   function hexColor(d) {
     var s = strOf(d);
     return s !== null && /^[0-9A-Fa-f]{6}$/.test(s) ? '#' + s.toUpperCase() : null;
@@ -1019,7 +1070,7 @@
     var colEnd = Math.min(c2, g.columnAt(clip.x + clip.w - 1 - ox + sx, c1));
     if (rowStart > rowEnd || colStart > colEnd) return;
     var q = null;
-    if (part) { rowStart = rowEnd = part.row; colStart = part.left; colEnd = part.right; }
+    if (part) { rowStart = part.top; rowEnd = part.bottom; colStart = part.left; colEnd = part.right; }
     else this.quads.push(q = { index: this.quads.length, name: name, clip: clip, r1: r1, r2: r2, c1: c1, c2: c2, sx: sx, sy: sy, rowStart: rowStart, rowEnd: rowEnd, colStart: colStart, colEnd: colEnd });
     var r, c, cell, x, y, w;
     // the rectangle of the cells in view: a bound sheet's lines end at its edges (CART.14's hand test), any other's
@@ -1032,24 +1083,9 @@
         p.ctx.fillStyle = colors.background;
         p.ctx.fillRect(cellsX, cellsY, cellsR - cellsX, cellsB - cellsY);
       }
-      if (q) q.fills = p.ops.length;
-      // the fills: a look's, a styled cell's, or a styled column's for its empty cells
-      if (model) {
-        for (r = rowStart; r <= rowEnd; r++) {
-          rh = g.rowHeight(r);
-          if (rh === 0) continue;
-          y = oy + g.rowTop(r) - sy;
-          for (c = colStart; c <= colEnd; c++) {
-            w = g.colW[c];
-            if (w === 0) continue;
-            cell = model.cells.get(cellKey(r, c)) || null;
-            var fmt = formatOf(model, cell, c);
-            if (fmt.fill) p.fillRect(ox + g.colX[c] - sx, y, w, rh, fmt.fill, { op: 'fill', row: r, col: c, quadrant: name });
-          }
-        }
-      }
       if (q) q.lines = p.ops.length;
-      // the gridlines, at an integer plus a half so that each is one device pixel; a hidden row draws none
+      // the gridlines, at an integer plus a half so that each is one device pixel; a hidden row draws none; first since
+      // ENGINE.28, so that a fill covers them (decision 11)
       if (!model || model.gridlines) {
         var segs = [], top = clip.y, bottom = clip.y + clip.h, left = clip.x, right = clip.x + clip.w;
         if (g.bounded) { top = Math.max(top, cellsY); bottom = Math.min(bottom, cellsB); left = Math.max(left, cellsX); right = Math.min(right, cellsR); }
@@ -1066,6 +1102,27 @@
         }
         p.lines(segs, colors.gridline, 'grid-' + name);
       }
+      if (q) q.fills = p.ops.length;
+      // the fills: a look's, a styled cell's, or a styled column's for its empty cells; each from the gridline on its left
+      // to the one on its right and from the one above to the one below, all four covered, as Excel lays a fill
+      // (ENGINE.28, decision 11): the cell's rectangle grown a device pixel up and left
+      if (model) {
+        for (r = rowStart; r <= rowEnd; r++) {
+          rh = g.rowHeight(r);
+          if (rh === 0) continue;
+          y = oy + g.rowTop(r) - sy;
+          for (c = colStart; c <= colEnd; c++) {
+            w = g.colW[c];
+            if (w === 0) continue;
+            cell = model.cells.get(cellKey(r, c)) || null;
+            var fmt = formatOf(model, cell, c);
+            if (fmt.fill) p.fillRect(ox + g.colX[c] - sx - 1, y - 1, w + 1, rh + 1, fmt.fill, { op: 'fill', row: r, col: c, quadrant: name });
+          }
+        }
+      }
+      if (q) q.edges = p.ops.length;
+      // the edges, where a format says a border (ENGINE.28, decisions 8 to 10)
+      if (model && model.bordered) self._paintEdges(p, model, g, rowStart, rowEnd, colStart, colEnd, sx, sy, name);
       if (q) q.texts = p.ops.length;
       // the texts
       if (model) {
@@ -1095,6 +1152,130 @@
     });
   };
 
+  // The edges of the cells of rows r1..r2 and columns c1..c2 (ENGINE.28, decisions 8 to 10): each cell's right and bottom
+  // edge, and the first column's left and the first row's top, each resolved with the cell beside it into one line or
+  // none (decision 9), drawn once, an op on the cell whose side won; the verticals first, then the horizontals, each in
+  // reading order, so that a repaint over a part draws its edges in the full paint's order. An edge lies on its
+  // gridline's pixel g, its strands across it by its line, and runs from one corner's gridline pixel to the other's and
+  // past a corner by the reach of the edges across it there, the measured corners; a pattern is phased on the sheet's
+  // coordinate; the gridline's pixel in a pattern's gap or between a double's lines shows the fill there or the
+  // background, the gridline hidden (decision 10); a bound sheet's edges end at the sheet. Every rectangle is filled,
+  // never stroked, so that each edge is the same device pixels on every rasterizer. A hidden column or row takes no part:
+  // a boundary is owned by the shown column or row before it and resolved against the next one shown, as the cells are
+  // drawn side by side (the hand test's). Each cell's format and each boundary's line is found once a paint, in the
+  // pass's own arrays over the rows and columns from the shown ones before the first to the shown ones after the last,
+  // and the ink is set only when it changes.
+  Viewport.prototype._paintEdges = function (p, model, g, r1, r2, c1, c2, sx, sy, name) {
+    var ox = g.ox, oy = g.oy, ctx = p.ctx, background = this.colors.background, ink = null, r, c, b, l, k;
+    var limR = g.bounded ? ox + g.colX[g.cols + 1] - sx : Infinity, limB = g.bounded ? oy + g.rowTop(g.rows + 1) - sy : Infinity;
+    function colSize(i) { return g.colW[i]; }
+    function rowSize(i) { return g.rowHeight(i); }
+    function nextC(cc) { return shownAfter(colSize, cc, g.cols); }
+    function prevC(cc) { return shownBefore(colSize, cc); }
+    function nextR(rr) { return shownAfter(rowSize, rr, g.rows); }
+    function prevR(rr) { return shownBefore(rowSize, rr); }
+    var rLo = prevR(r1), rHi = nextR(r2), cLo = prevC(c1), cHi = nextC(c2);
+    var span = cHi - cLo + 1, size = (rHi - rLo + 1) * span, fmts = new Array(size), vs = new Array(size), hs = new Array(size);
+    function at(rr, cc) { return (rr - rLo) * span + (cc - cLo); }
+    function fmtAt(rr, cc) {
+      if (rr < 1 || cc < 1) return null;
+      var i = at(rr, cc), f = fmts[i];
+      if (f === undefined) f = fmts[i] = formatOf(model, model.cells.get(cellKey(rr, cc)) || null, cc);
+      return f;
+    }
+    function sideOf(rr, cc, side) { var f = fmtAt(rr, cc); return f && f.border ? f.border[side] : null; }
+    function fillAt(rr, cc) { var f = fmtAt(rr, cc); return f ? f.fill : null; }
+    // the line between two cells, the left or upper one's side a and the right or lower one's b: the higher rank, at a
+    // tie the right or lower cell's; a said none, a line of no width, yields as an unsaid side does
+    function resolve(a, bb) {
+      var la = a && a.line !== 'none' ? LINES[a.line] : null, lb = bb && bb.line !== 'none' ? LINES[bb.line] : null;
+      if (!la && !lb) return null;
+      if (lb && (!la || lb.rank >= la.rank)) return { line: bb.line, color: bb.color || EDGE_INK, def: lb, near: false };
+      return { line: a.line, color: a.color || EDGE_INK, def: la, near: true };
+    }
+    // the vertical line right of column cc in row rr, against the next column shown, and the horizontal line below row
+    // rr in column cc, against the next row shown
+    function lineV(rr, cc) {
+      var i = at(rr, cc), v = vs[i];
+      if (v === undefined) v = vs[i] = resolve(sideOf(rr, cc, 'right'), sideOf(rr, nextC(cc), 'left'));
+      return v;
+    }
+    function lineH(rr, cc) {
+      var i = at(rr, cc), v = hs[i];
+      if (v === undefined) v = hs[i] = resolve(sideOf(rr, cc, 'bottom'), sideOf(nextR(rr), cc, 'top'));
+      return v;
+    }
+    // how far a line reaches across from its gridline's pixel, toward the left or up, and toward the right or down
+    function low(x) { return x ? x.def.strands[0][0] : 0; }
+    function high(x) { return x ? x.def.strands[x.def.strands.length - 1][0] : 0; }
+    // a run along the edge: u0..u1 along it, from across and thick device pixels across it, cut at a bound sheet's edges
+    function run(vert, across, u0, u1, thick) {
+      var x = vert ? across : u0, y = vert ? u0 : across, w = vert ? thick : u1 - u0 + 1, h = vert ? u1 - u0 + 1 : thick;
+      if (x + w > limR) w = limR - x;
+      if (y + h > limB) h = limB - y;
+      if (w > 0 && h > 0) ctx.fillRect(x, y, w, h);
+    }
+    // the runs of a mask's drawn pixels, or of its gaps, along u0..u1, phased on the sheet's coordinate from origin
+    function runs(mask, want, vert, across, u0, u1, origin, thick) {
+      var n = mask.length, start = -1, u;
+      for (u = u0; u <= u1 + 1; u++) {
+        var on = u <= u1 && mask.charAt((((u - origin) % n) + n) % n) === want;
+        if (on && start < 0) start = u;
+        else if (!on && start >= 0) { run(vert, across, start, u - 1, thick); start = -1; }
+      }
+    }
+    function inked(color) { if (color !== ink) { ctx.fillStyle = color; ink = color; } }
+    // one edge: where its line leaves the gridline's pixel bare, the pixel between the corners in the color of the fill
+    // on the right or below, else the one on the left or above (the cells ar, ac and br, bc), else the background, one
+    // run the strand on it then covers but at its gaps; then its strands from end to end, a pass a band of them
+    function draw(x, vert, gp, base0, base1, u0, u1, origin, ar, ac, br, bc) {
+      var passes = PASSES[x.line], k, s;
+      if (BARE[x.line] && base1 - 1 >= base0 + 1) { inked(fillAt(ar, ac) || fillAt(br, bc) || background); run(vert, gp, base0 + 1, base1 - 1, 1); }
+      inked(x.color);
+      for (k = 0; k < passes.length; k++) {
+        s = passes[k];
+        if (s.mask === null) run(vert, gp + s.off, u0, u1, s.thick);
+        else runs(s.mask, '1', vert, gp + s.off, u0, u1, origin, s.thick);
+      }
+    }
+    // the columns whose right edges the pass draws: the one shown before the first shown in view, whose right is that
+    // one's left, then each shown in view; and the rows whose bottom edges it draws, the same way
+    var cols = [], rows = [], cFirst = c1, rFirst = r1;
+    while (cFirst <= c2 && g.colW[cFirst] === 0) cFirst++;
+    if (cFirst <= c2) { cols.push(prevC(cFirst)); for (c = cFirst; c <= c2; c++) if (g.colW[c] !== 0) cols.push(c); }
+    while (rFirst <= r2 && g.rowHeight(rFirst) === 0) rFirst++;
+    if (rFirst <= r2) { rows.push(prevR(rFirst)); for (r = rFirst; r <= r2; r++) if (g.rowHeight(r) !== 0) rows.push(r); }
+    // the verticals: in each row, the first column's left, then every column's right, each against the next shown
+    for (r = r1; r <= r2; r++) {
+      if (g.rowHeight(r) === 0) continue;
+      var above = prevR(r);
+      for (k = 0; k < cols.length; k++) {
+        b = cols[k];
+        l = lineV(r, b);
+        if (!l) continue;
+        var nb = nextC(b), gx = ox + g.colX[b + 1] - sx - 1, t0 = oy + g.rowTop(r) - sy - 1, t1 = oy + g.rowTop(r + 1) - sy - 1;
+        var y0 = t0 + Math.min(0, low(lineH(above, b)), low(lineH(above, nb))), y1 = t1 + Math.max(0, high(lineH(r, b)), high(lineH(r, nb)));
+        draw(l, true, gx, t0, t1, y0, y1, oy - sy, r, nb, r, b);
+        p.ops.push({ op: 'edge', at: 'v' + r + ',' + b, row: r, col: l.near ? b : nb, side: l.near ? 'right' : 'left', line: l.line, color: l.color,
+                     x: gx + low(l), y: y0, w: high(l) - low(l) + 1, h: y1 - y0 + 1, quadrant: name });
+      }
+    }
+    // the horizontals: the first row's top, then every row's bottom, each along the row's columns, against the next shown
+    for (k = 0; k < rows.length; k++) {
+      b = rows[k];
+      var nr = nextR(b);
+      for (c = c1; c <= c2; c++) {
+        if (g.colW[c] === 0) continue;
+        l = lineH(b, c);
+        if (!l) continue;
+        var left = prevC(c), gy = oy + g.rowTop(b + 1) - sy - 1, s0 = ox + g.colX[c] - sx - 1, s1 = ox + g.colX[c + 1] - sx - 1;
+        var x0 = s0 + Math.min(0, low(lineV(b, left)), low(lineV(nr, left))), x1 = s1 + Math.max(0, high(lineV(b, c)), high(lineV(nr, c)));
+        draw(l, false, gy, s0, s1, x0, x1, ox - sx, nr, c, b, c);
+        p.ops.push({ op: 'edge', at: 'h' + b + ',' + c, row: l.near ? b : nr, col: c, side: l.near ? 'bottom' : 'top', line: l.line, color: l.color,
+                     x: x0, y: gy + low(l), w: x1 - x0 + 1, h: high(l) - low(l) + 1, quadrant: name });
+      }
+    }
+  };
   // One cell's text, in its format's font and color (ENGINE.28): aligned as its format says or by its kind, a
   // nowrap text spilling into empty neighbors by its alignment, a wrapped text broken at the column's width and
   // placed by its vertical alignment, a number too wide for its column drawn as #s. cFirst and cLast are the
@@ -1294,10 +1475,13 @@
   Viewport.prototype._footprint = function (model, r, c, spans) {
     var g = this.g, q = this._quadOf(r, c), h = g.rowHeight(r);
     if (!q || h === 0 || r < q.rowStart || r > q.rowEnd) return;
+    // the band grown where a fill or an edge reaches past the cell's rectangle (ENGINE.28, decisions 11 and 12): a fill a
+    // device pixel up and left, over its gridlines; an edge two up and left and one down and right, a thick's reach
+    var up = model.bordered ? 2 : (model.filled ? 1 : 0), down = model.bordered ? 1 : 0;
     var clip = q.clip, top = g.oy + g.rowTop(r) - q.sy, x = g.ox - q.sx, xs = [];
-    var y0 = Math.max(top, clip.y), y1 = Math.min(top + h, clip.y + clip.h);
+    var y0 = Math.max(top - up, clip.y), y1 = Math.min(top + h + down, clip.y + clip.h);
     if (y0 >= y1) return;
-    if (g.colW[c] > 0) xs.push(x + g.colX[c], x + g.colX[c + 1]);
+    if (g.colW[c] > 0) xs.push(x + g.colX[c] - up, x + g.colX[c + 1] + down);
     var own = this._traced(model, g, q, r, c, top);
     if (own) xs.push(own.x, own.x + own.w);
     // the nearest text on its right, where a format says an alignment (ENGINE.28, decision 12): one aligned right or
@@ -1345,41 +1529,67 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.font = g.font; p.font = g.font;
     ctx.textBaseline = 'middle';
+    // where a fill or an edge reaches past a cell (ENGINE.28, decision 12), a rectangle's part is the rows and columns
+    // around it too, whose fills, gridlines, edges and texts reach into it
+    var grown = model.filled || model.bordered;
     for (i = 0; i < rects.length; i++) {
       var R = rects[i], q = R.q, at = p.ops.length;
-      var part = { row: R.row, left: Math.max(q.colStart, g.columnAt(R.x0 - g.ox + q.sx, q.colStart)), right: Math.min(q.colEnd, g.columnAt(R.x1 - 1 - g.ox + q.sx, q.colStart)) };
+      var part = { top: R.row, bottom: R.row, left: Math.max(q.colStart, g.columnAt(R.x0 - g.ox + q.sx, q.colStart)), right: Math.min(q.colEnd, g.columnAt(R.x1 - 1 - g.ox + q.sx, q.colStart)) };
+      if (grown) {
+        part.top = Math.max(q.rowStart, g.rowAt(R.y - g.oy + q.sy, q.rowStart) - 1);
+        part.bottom = Math.min(q.rowEnd, g.rowAt(R.y + R.h - 1 - g.oy + q.sy, q.rowStart) + 1);
+        part.left = Math.max(q.colStart, part.left - 1);
+        part.right = Math.min(q.colEnd, part.right + 1);
+      }
       this._repaintRect(p, model, g, q, { x: R.x0, y: R.y, w: R.x1 - R.x0, h: R.h }, part, seps);
       this._override(model, q, part, p.ops, at);
     }
     this.repaintCount++;
   };
-  // One rectangle of a repaint: under its clip, the canvas cleared to the background, then the quadrant's steps over the
-  // row's columns part.left to part.right, its fills, gridlines and texts, the selection and the marks, then the frozen
+  // One rectangle of a repaint: under its clip, the canvas cleared to the background, a bound sheet's canvas past its
+  // cells to the headers' gray, then the quadrant's steps over the part's rows part.top to part.bottom and columns
+  // part.left to part.right, its gridlines, fills, edges and texts, the selection and the marks, then the frozen
   // separators; never the headers, which no value changes. Every step of the full paint that touches a pixel of the
   // rectangle runs again, in the full paint's order, so the rectangle's pixels are the full paint's.
   Viewport.prototype._repaintRect = function (p, model, g, q, rect, part, seps) {
     var self = this, ctx = p.ctx, colors = this.colors;
     p.clipped(rect, function () {
       ctx.clearRect(rect.x, rect.y, rect.w, rect.h);
-      ctx.fillStyle = colors.background;
+      ctx.fillStyle = g.bounded ? colors.header : colors.background;
       ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+      if (g.bounded) {
+        var sr = Math.min(rect.x + rect.w, g.ox + g.colX[g.cols + 1] - q.sx), sb = Math.min(rect.y + rect.h, g.oy + g.rowTop(g.rows + 1) - q.sy);
+        ctx.fillStyle = colors.background;
+        if (sr > rect.x && sb > rect.y) ctx.fillRect(rect.x, rect.y, sr - rect.x, sb - rect.y);
+      }
       self._paintQuadrant(p, model, g, q.clip, q.r1, q.r2, q.c1, q.c2, q.sx, q.sy, q.name, part);
       if (seps.length) p.lines(seps, colors.frozenLine, 'frozen');
     });
   };
   // A rectangle's ops laid over the last full paint's in the draw list (decision 3), for each cell whose paint the repaint
-  // decided as the full paint decides it: every cell of the row's columns part.left to part.right, its fill and its
-  // texts, drawn or not; the cells left of them it looked back to, a text it drew; and, left of the columns in view,
-  // where the full paint looks back by the same rule, a text it did not draw too.
+  // decided as the full paint decides it: every cell of the part's rows and columns, its fill and its texts, drawn or
+  // not; the cells left of them it looked back to, a text it drew; and, left of the columns in view, where the full
+  // paint looks back by the same rule, a text it did not draw too; and since ENGINE.28 every boundary the part's edge
+  // pass resolved, its edge or none.
   Viewport.prototype._override = function (model, q, part, ops, at) {
-    var over = this.over || (this.over = {}), o = over[q.name] || (over[q.name] = { fills: new Map(), texts: new Map() });
-    var row = part.row, drawn = new Map(), c, key;
-    for (c = part.left; c <= part.right; c++) { key = cellKey(row, c); o.fills.set(key, null); o.texts.set(key, []); }
-    for (c = Math.max(q.c1, part.left - OVERFLOW_LOOKBACK); c < part.left && c < q.colStart; c++) o.texts.set(cellKey(row, c), []);
-    // and right of them, where the full paint looks ahead for a text aligned right or centered (ENGINE.28)
-    if (model.styled) for (c = Math.min(q.c2, part.right + OVERFLOW_LOOKBACK); c > part.right && c > q.colEnd; c--) o.texts.set(cellKey(row, c), []);
+    var over = this.over || (this.over = {}), o = over[q.name] || (over[q.name] = { fills: new Map(), texts: new Map(), edges: new Map() });
+    var drawn = new Map(), r, c, key;
+    for (r = part.top; r <= part.bottom; r++) {
+      for (c = part.left; c <= part.right; c++) { key = cellKey(r, c); o.fills.set(key, null); o.texts.set(key, []); }
+      for (c = Math.max(q.c1, part.left - OVERFLOW_LOOKBACK); c < part.left && c < q.colStart; c++) o.texts.set(cellKey(r, c), []);
+      // and right of them, where the full paint looks ahead for a text aligned right or centered (ENGINE.28)
+      if (model.styled) for (c = Math.min(q.c2, part.right + OVERFLOW_LOOKBACK); c > part.right && c > q.colEnd; c--) o.texts.set(cellKey(r, c), []);
+    }
+    if (model.bordered) {
+      // keyed as the edge pass keys them: a column's right by the column, the first column's left by the one shown
+      // before it, and a row's the same way
+      var g = this.g, cb = shownBefore(function (i) { return g.colW[i]; }, part.left), rb = shownBefore(function (i) { return g.rowHeight(i); }, part.top);
+      for (r = part.top; r <= part.bottom; r++) { o.edges.set('v' + r + ',' + cb, null); for (c = part.left; c <= part.right; c++) o.edges.set('v' + r + ',' + c, null); }
+      for (c = part.left; c <= part.right; c++) { o.edges.set('h' + rb + ',' + c, null); for (r = part.top; r <= part.bottom; r++) o.edges.set('h' + r + ',' + c, null); }
+    }
     for (var i = at; i < ops.length; i++) {
       var op = ops[i];
+      if (op.op === 'edge') { o.edges.set(op.at, op); continue; }
       if (!op.row) continue;
       key = cellKey(op.row, op.col);
       if (op.op === 'fill') o.fills.set(key, op);
@@ -1395,6 +1605,21 @@
     cells.forEach(function (v) { if (v === null) return; if (Array.isArray(v)) { for (var k = 0; k < v.length; k++) list.push(v[k]); } else list.push(v); });
     list.sort(function (a, b) { return a.row - b.row || a.col - b.col || (a.line || 0) - (b.line || 0); });
     for (i = 0; i < list.length; i++) out.push(list[i]);
+  }
+  // The edges' section the same way, by their boundaries (ENGINE.28): the verticals by row, then column, and the
+  // horizontals after them by row, then column, the order the full paint draws them in.
+  function splicedEdges(ops, from, to, edges, out) {
+    var list = [], i;
+    for (i = from; i < to; i++) if (!edges || !edges.has(ops[i].at)) list.push(ops[i]);
+    if (edges) edges.forEach(function (v) { if (v) list.push(v); });
+    list.sort(edgeOrder);
+    for (i = 0; i < list.length; i++) out.push(list[i]);
+  }
+  function edgeOrder(a, b) {
+    var da = a.at.charAt(0) === 'v' ? 0 : 1, db = b.at.charAt(0) === 'v' ? 0 : 1;
+    if (da !== db) return da - db;
+    var pa = a.at.slice(1).split(','), pb = b.at.slice(1).split(',');
+    return (+pa[0] - +pb[0]) || (+pa[1] - +pb[1]);
   }
 
   // ---- the selection ----
@@ -1969,9 +2194,9 @@
     for (i = 0; i < this.quads.length; i++) {
       var q = this.quads[i], o = this.over[q.name];
       if (!o) continue;
-      for (j = at; j < q.fills; j++) out.push(ops[j]);
-      spliced(ops, q.fills, q.lines, o.fills, out);
-      for (j = q.lines; j < q.texts; j++) out.push(ops[j]);
+      for (j = at; j < q.fills; j++) out.push(ops[j]);   // the gridlines, first since ENGINE.28
+      spliced(ops, q.fills, q.edges, o.fills, out);
+      splicedEdges(ops, q.edges, q.texts, o.edges, out);
       spliced(ops, q.texts, q.ranges, o.texts, out);
       at = q.ranges;
     }
@@ -2003,6 +2228,7 @@
   Viewport.colName = colName;
   Viewport.colIndex = colIndex;
   Viewport.RULES = RULES;
+  Viewport.LINES = LINES;   // the lines' table, which the page's oracles hold to their own (ENGINE.28)
   Viewport.DEFAULT_COLORS = DEFAULT_COLORS;
   Viewport.version = 4;
 

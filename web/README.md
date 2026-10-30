@@ -663,7 +663,12 @@ page shows opened plainly and what Pages deploys.
   an edit made while the loop is paused said to wait for the frame Run
   brings; over the engine's module the grid card, twenty-four frames under a
   Camera an edit moves a column right at frames 10 and 20, its numbers too
-  wide for their columns drawn as #s; and the tabs (`tabs`, `ENGINE.14`): a
+  wide for their columns drawn as #s, and since `ENGINE.28` its rows 17
+  and 18 in their fonts and alignments and its row 2 in its edges, an edge
+  beside its hidden column and one beside its hidden row among them, each
+  held by its side, line, color and rectangle to the page's own resolution
+  of the record's borders and two edges a frame by their pixels; and the
+  tabs (`tabs`, `ENGINE.14`): a
   tab with no record clicked as a person clicks it, its sheet shown and held
   at the click and after every frame to the record of a window that holds
   every cell in view, a scroll with the loop paused viewing the new region at
@@ -717,7 +722,11 @@ page shows opened plainly and what Pages deploys.
   cells with groups of their own, every text held in its font, color and
   place to the oracle's own look's rule and the whole drawn op for op and
   pixel for pixel as `appearance_drawn`, the same window with the looks
-  folded in by the language.
+  folded in by the language; and since its second slice each line counts
+  its edges, every edge held by its cell, side, line, color and rectangle
+  to the oracle's own resolution of the record's borders, each shared edge
+  once, and by its pixels, one drawn and one in a gap, and the viewport's
+  table of lines held to the oracle's own.
 - `index.html?bench=1` is the floors' instrument, the renderer benchmark of
   `KERNEL.3` over the viewport: the 10,000-line record at the normal window
   (40 rows by 15 columns) and at full screen, 120 steps of three rows and 20
@@ -782,7 +791,8 @@ vp.on('select', function (s) { /* s.text is 'B2:C3'; s.focus.sentence the row th
 ```
 
 `AlonzoViewport` is a global set by the script; `AlonzoViewport.version` is
-3, since `ENGINE.26` kept a dragged width for its sheet alone (2 since
+4, since `ENGINE.28` read a format's font, alignment and border and drew
+them (3 since `ENGINE.26` kept a dragged width for its sheet alone, 2 since
 `ENGINE.20`'s repaint). The options: `record`, a record's text to
 load at once; `colors`, any of the defaults below; `showHidden`, whether
 hidden sheets' tabs show at first; `willReadFrequently`, a canvas the CPU
@@ -796,7 +806,7 @@ reads any text of forms into data, the host shim's one reader.
 | Method | What it does |
 |---|---|
 | `load(text, options)` | reads a record; its sheet becomes a tab, replacing an earlier record of that sheet; the record's `sheet` rows become the tab strip; returns the counts (`sheet`, `lines`, `cells`, `formulas`, `values`, `texts`, `styles`, `sentences`, `looks`, `rows`, `unknown`, `malformed`, `window`, `extent`, `readMs`). With `{ keep: true }` (`ENGINE.8`), a later frame of the sheet shown: the record replaces the last with the scroll and the selection kept and no event raised, the tabs remade only when the sheet rows changed; the host draws every frame of a grid cartridge so, a still one excepted (`ENGINE.17`), and the player's sheets viewer its sheet. Every load, kept or not, keeps every sheet's widths, which `clear()` alone forgets (`ENGINE.26`), and the frozen panes and the marks |
-| `patch(text)` | a window's changes laid on the model of their sheet (`ENGINE.19`), the text a view of the projection `changes` answers: each named cell's entry read again from its rows as `load` reads them, a cell put in or an empty one taken out, the model's counts and lines kept as a load of the patched record makes them, the model object, the scroll and the selection kept, and the sheet shown painted again: the named cells alone (`ENGINE.20`), each cell's band of its row with the span its text spills over and the span of a text on its left that spills into it, before the patch and after, painted again by the full paint's own steps under each band's clip, the rest of the canvas kept, wherever the canvas holds the model's full paint, unscrolled and unresized since, and the cells named are no more than a quarter of the cells in view; whole otherwise. Returns the counts as `load` does, with `patched` the cells named and `patchMs`; `false`, and nothing changed, for a whole answer, another window, a sheet it holds no record of, rows that are no cell's of the window, or a model holding a row its reader counted unknown or malformed |
+| `patch(text)` | a window's changes laid on the model of their sheet (`ENGINE.19`), the text a view of the projection `changes` answers: each named cell's entry read again from its rows as `load` reads them, a cell put in or an empty one taken out, the model's counts and lines kept as a load of the patched record makes them, the model object, the scroll and the selection kept, and the sheet shown painted again: the named cells alone (`ENGINE.20`), each cell's band of its row with the span its text spills over and the span of a text on its left that spills into it, since `ENGINE.28` where a format says an alignment the span of a text on its right that spills into it too, and where the record says a fill or a border the band grown over a fill's gridlines, a device pixel up and left, and an edge's reach, two up and left and one down and right, the rows and columns beside it painted again with it, before the patch and after, painted again by the full paint's own steps under each band's clip, the rest of the canvas kept, wherever the canvas holds the model's full paint, unscrolled and unresized since, and the cells named are no more than a quarter of the cells in view; whole otherwise. Returns the counts as `load` does, with `patched` the cells named and `patchMs`; `false`, and nothing changed, for a whole answer, another window, a sheet it holds no record of, rows that are no cell's of the window, or a model holding a row its reader counted unknown or malformed |
 | `patches()` | the patches laid on its models since it was made: a host notes the count with each record it loads, so that a model a page patched is never taken for the host's (`ENGINE.19`) |
 | `repaints()` | the patches it painted by their cells alone since it was made, the others painted whole (`ENGINE.20`) |
 | `clear()` | forgets every record, every layout learned, every bound and every sheet's widths, ends a drag in progress, and draws the grid empty: the host's grid unloaded (`ENGINE.8`), so that a Load starts every sheet at its cartridge's widths (`ENGINE.26`) |
@@ -817,7 +827,7 @@ reads any text of forms into data, the host shim's one reader.
 | `cellAt(clientX, clientY)` | the cell under a point of the page, or null: over a header, the corner, a scrollbar or the tab strip (the last two since `ENGINE.14`, which the hit test had counted as cells) |
 | `cell(row, col)` | a cell: `{ row, col, address, kind, vkind, text, value, formula, valued, style, sentence }`, `kind` one of `cell`, `formula`, `empty`; `text` what the cell shows, a formula's value once its value row lands and its text before, the text a code draws where the record holds a `text` row (`CART.12`); `value` the value as the record spells it, empty for a formula with none yet; `formula` a formula's own text, the bar's, and `valued` whether a formula has its value |
 | `geometry()` | the last draw's geometry in device pixels: the ratio, the sizes, the row height, the column edges, the content's width and height, the frozen bands, the scroll |
-| `draws()` | the draw list: every text, fill, line, header, selection and mark with its position, as the last full paint drew it, each cell a repaint drew since in its place, in the full paint's order (`ENGINE.20`), so that it describes the canvas op for op (the oracle's) |
+| `draws()` | the draw list: every text, fill, line, edge (a shared edge once, on the cell whose side won, since `ENGINE.28`), header, selection and mark with its position, as the last full paint drew it, each cell a repaint drew since in its place, in the full paint's order (`ENGINE.20`), so that it describes the canvas op for op (the oracle's) |
 | `model()` | the record shown, as read |
 | `redraw()` | sizes the canvas to the box again and draws |
 | `destroy()` | removes the viewport and its listeners |
@@ -858,7 +868,17 @@ format says in it, at 20 px to 11 points, a look's size never moving a
 row; and a look draws a cell with what its format says and the cell's own
 for each property of a font, an alignment or a border it does not say
 (`Style::over`), its fill, number format and wrap replacing the cell's own
-as before. A
+as before. Since its second slice a format's border draws its four edges as
+Excel draws its fourteen lines on a screen, in device pixels at every
+ratio, each line's strands across its gridline and its pattern phased on
+the sheet (`AlonzoViewport.LINES`); an edge two cells share is drawn once,
+the wider line winning and at a tie the right or lower cell's; it runs from
+gridline to gridline and past a corner by the reach of the lines across it
+there; a pattern's gaps and a double's middle show the fill there or the
+ground; a hidden column or row takes no part, the cells drawn side by side
+meeting by their facing sides and a hidden cell's own edges never drawn;
+and a fill covers the four gridlines around its cell, the gridlines drawn
+first, as Excel lays one. A
 `cell` row shows its value aligned as Excel aligns it under General: a
 number right, a text left, `TRUE`, `FALSE` and an error centered, a date as
 the text inside, right; under a `text` format everything left; under a code,
@@ -877,7 +897,8 @@ an integer of them, every gridline at an integer plus a half, so the image
 is crisp at the machine's ratio, and the backing store is remade when the
 ratio changes. A line in an opaque color is filled as a rectangle one
 device pixel wide, which every rasterizer covers exactly, so that a
-repaint's few lines paint the full paint's pixels (`ENGINE.20`).
+repaint's few lines paint the full paint's pixels (`ENGINE.20`); an edge
+is filled the same way, a band of whole device pixels a run (`ENGINE.28`).
 
 **The colors** are options with defaults: `background` `#ffffff`,
 `gridline` `#d9d9d2`, `header` `#f3f3ee`, `headerText` `#6b6b66`,
@@ -978,7 +999,8 @@ viewport, not an Excel clone.
   `views`, the page's own views card (`ENGINE.18`); and `changes`, the
   page's own changes card, a frame read by its changes (`ENGINE.19`), each
   patch repainted by its cells and held pixel for pixel to a full paint
-  (`ENGINE.20`); `continue`, the page's own continue card, its source
+  (`ENGINE.20`), bordered, filled and looked cells among them (`ENGINE.28`);
+  `continue`, the page's own continue card, its source
   rebuilt and applied as it runs (`ENGINE.7`); `palette`, the palette's
   keys, lines and second Escape over the page's own registry (`ENGINE.23`),
   a cell's edit, Delete's and Backspace's rows and the window's own blur

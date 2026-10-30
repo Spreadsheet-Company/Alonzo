@@ -228,7 +228,16 @@
 ; centered down its row; a button, white bold centered on the deep lavender (Buffet's); a look
 ; that says a weight, a size and an ink over a cell whose own format centers it, which the look
 ; keeps (Seiyaku's shape); a number too wide at 22 points, drawn as #s in that size; a centered
-; text spilling into the empty cells on both its sides and one aligned right spilling left.
+; text spilling into the empty cells on both its sides and one aligned right spilling left. And
+; since its second slice the edges, on row 2, I2 to P2, in view at every frame of the oracle's box:
+; a box of medium edges; a thin box beside it, whose shared edge the medium wins, and a thick one
+; beside that, which wins over the thin; a red thin edge against a blue one, a tie the right cell's
+; blue wins; a double, a dashed and a slanted pattern over row 3's colors below, their gaps the
+; colors'; a box under the look of 77 (Seiyaku's shape, the look's size over the cell's own edges);
+; and a filled cell with edges. Beside the hidden column S, T2's own blue left edge, which S2's red
+; box takes no part in, and beside the hidden row 12, I13's own blue top edge, which I12's red box
+; takes no part in: a hidden cell's edges are never drawn, and the cells drawn side by side meet
+; by their facing sides (the hand test's).
 (format 33 none general nowrap (font bold))                       ; bold
 (format 34 none general nowrap (font italic))                     ; italic
 (format 35 none general nowrap (font 22))                         ; 22 points, twice the default's size, which fits row 17 to it
@@ -244,8 +253,19 @@
 (format 45 "6B4FC8" general nowrap (font bold "FFFFFF") (align center middle))   ; a button: white bold text centered on the deep lavender
 (format 46 none general wrap (align center middle))               ; a variable's own format, centered and wrapped for its marks
 (format 47 none general nowrap (font bold 22 "6B4FC8"))           ; its value's look: a weight, a size and an ink, the alignment the cell's own
+(format 48 none general nowrap (border (left medium) (right medium) (top medium) (bottom medium)))   ; a box of medium edges
+(format 49 none general nowrap (border (left thin) (right thin) (top thin) (bottom thin)))   ; a thin box, whose left the medium beside it wins
+(format 50 none general nowrap (border (left thick) (right thick) (top thick) (bottom thick)))   ; a thick box, whose left wins over the thin
+(format 51 none general nowrap (border (right thin "FF0000") (bottom double)))   ; a red right edge and a double below
+(format 52 none general nowrap (border (left thin "0000FF") (top dashed "00B050") (bottom dashed "00B050")))   ; a blue left edge, the red's tie, and green dashes
+(format 53 none general nowrap (align center middle) (border (left medium "6B4FC8") (right medium "6B4FC8") (top medium "6B4FC8") (bottom medium "6B4FC8")))   ; a lavender box, the look of 77 over it
+(format 54 "E8E0F7" general nowrap (border (left thin) (right thin) (top thin) (bottom thin)))   ; a fill and its edges
+(format 55 none general nowrap (border (right dotted) (bottom slant-dash-dot)))   ; dots on the right, a slanted pattern below
+(format 56 none general nowrap (border (left thin "FF0000") (right thin "FF0000") (top thin "FF0000") (bottom thin "FF0000")))   ; a red box on a hidden cell, never drawn
+(format 57 none general nowrap (border (left thin "0000FF")))      ; a blue left edge beside the hidden column
+(format 58 none general nowrap (border (top thin "0000FF")))       ; a blue top edge beside the hidden row
 (on "Screen"                        ; the sheet every row below writes
-  (look 77 47))                     ; the look of 77, over N17's own format
+  (look 77 47))                     ; the look of 77, over N17's and N2's own formats
 (cells "Screen"                     ; the sheet every entry below writes
   ("A17" "fonts and alignment: the row fitted to its 22-point cell")
   ("B17" "bold") ("C17" "italic") ("D17" "big") ("E17" "ink")
@@ -259,13 +279,24 @@
   ("A18" "a centered and a right-aligned spill")   ; short enough to stay in A, so that no spill meets it
   ("D18" "a centered text wider than its cell")
   ("L18" "right-aligned, spilling left")
-  ("N18" 55))                       ; general said, a value no look meets
+  ("N18" 55)                        ; general said, a value no look meets
+  ("I2" "box") ("J2" "thin") ("K2" "thick") ("L2" "tie") ("M2" "dash")
+  ("N2" 77)                         ; the look's digit over the cell's own lavender box
+  ("O2" "fill") ("P2" "slant")
+  ("S2" "hid")                      ; a red box in the hidden column, never drawn
+  ("T2" "beside a hidden column")   ; its own blue left edge, against R2's unsaid right
+  ("I12" "hid")                     ; a red box in the hidden row, never drawn
+  ("I13" "beside a hidden row"))    ; its own blue top edge, against I11's unsaid bottom
 (on "Screen"                        ; the sheet every row below writes
   (style "B17" 33) (style "C17" 34) (style "D17" 35) (style "E17" 36)
   (style "F17" 37) (style "G17" 38) (style "H17" 39)
   (style "I17" 41) (style "J17" 42) (style "K17" 43) (style "L17" 44)
   (style "M17" 45) (style "N17" 46) (style "O17" 35)
-  (style "D18" 38) (style "L18" 39) (style "N18" 40))
+  (style "D18" 38) (style "L18" 39) (style "N18" 40)
+  (style "I2" 48) (style "J2" 49) (style "K2" 50) (style "L2" 51) (style "M2" 52)
+  (style "N2" 53) (style "O2" 54) (style "P2" 55)
+  (style "S2" 56) (style "T2" 57)
+  (style "I12" 56) (style "I13" 58))
 
 ; Rows 19 to 50: a stripe that moves, one fill over the Screen's whole width, a "#" every
 ; eighth cell along a diagonal and a "." elsewhere, each through its look.
