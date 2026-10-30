@@ -8,33 +8,24 @@ whose devices are sheets, and whose telos is Frazaro, a spreadsheet generator).*
 
 ## What is Alonzo?
 
-A Lisp machine was a computer whose language went all the way down: the
-machine understood the language's data, and the microcode was written to
-it. Alonzo is that idea in the one machine everyone already has, the
-browser, with the honesty the browser imposes. A WebAssembly module sees
-only its own memory and the functions its host hands it, so it cannot draw
-a pixel or hear a key except through one of those, and the stack stops at
-the draw call, which is rented. "All the way down" means down to the draw
-call.
+> Preamble: A Lisp machine was a computer whose language went all the way down:
+> the machine understood the language's data, and the microcode was written to
+> it. Alonzo is that idea in the one machine everyone already has, the
+> browser, with the honesty the browser imposes. A WebAssembly module sees
+> only its own memory and the functions its host hands it, so it cannot draw
+> a pixel or hear a key except through one of those, and the stack stops at
+> the draw call, which is rented. "All the way down" means down to the draw call.
 
-Three things, with three names. **VLA** is the machine: a Lisp whose heap
-is a grid, in its own crate, `vla-lang`, cut out of Frazaro's core.
-**Frazaro** is the set of bridges into and out of it: from English and the
-other phrasebooks to VLA, with a proof per sentence, and from VLA to the
-spreadsheet hosts and back. **Alonzo** is the devices and the clock: a
-Screen, an Audio, an Input, a Clock, a File, a Camera, and a Write sheet
-mapped into VLA's grid, as uxn's Varvara maps its devices into memory, and
-a loop that writes
-the input and clock cells, asks the language to step, reads the Screen
-sheet and the effect cells, and draws. Every input is a cell the engine
-writes. Every effect is a cell it reads. The engine's whole contract is
-four calls into the language: load a cartridge, write cells, step, view.
+Three things, with three names:
 
-A spreadsheet is a member of class game: a sheet of colored cells is a
-framebuffer, a cell that is a formula of its neighbors is a fragment
-shader, and a recalculation is a frame. The thesis in one line: a
-spreadsheet is a game whose frame rate is one, and an engine that can draw
-sixty can draw one.
+- **Alonzo** proper is the runtime (devices + clock): a Screen, an Audio, an Input, a Clock, a File, a Camera, and a Write sheet mapped into VLA's grid, as uxn's Varvara maps its devices into memory, and a loop that writes the input and clock cells, asks the language to step, reads the Screen sheet and the effect cells, and draws. Every input is a cell the engine writes. Every effect is a cell it reads. The engine's whole contract is four calls into the language: load a cartridge, write cells, step, view.
+
+- **VLA** is the machine: a Lisp whose heap is a grid, in its own crate, `vla-lang`, cut out of Frazaro's core.
+
+- **Frazaro** is the set of natural language bridges into and out of it: from English and the other phrasebooks to VLA, with a proof per sentence, and from VLA to the
+spreadsheet hosts and back.
+
+> Thesis: "A spreadsheet is a member of class game." A sheet (of colored cells) is a framebuffer, a cell that is a formula of its neighbors is a fragment shader, and a recalculation is a frame. A spreadsheet is therefore a game whose frame rate is one, and an engine that can draw sixty can draw one.
 
 To a game programmer: Alonzo is a data-oriented entity-component
 system [ECS] where the systems are formulas, the scheduler is the
