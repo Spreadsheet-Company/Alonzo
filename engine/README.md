@@ -49,6 +49,12 @@ engine is:
   settled; its Clock counts acts, and the act's press and command are
   released before the first settle step, so that a native player steps a
   settle as the page's host does (`Cartridge::settle`, `step_row`);
+- since the same version, a sheet bound to its extent, `(bound "<sheet>")`,
+  and the keyboard's sheets (`SPEC.5`): `(game ...)`, the sheets whose keys
+  are the game's, `(read ...)`, the sheets no person writes, and
+  `(work ...)`, the sheets a person types into, each naming the sheets it
+  holds once each, read into the manifest (`Manifest`'s `bound`, `game`,
+  `read` and `work`) for the host that keeps a person's keys to them;
 - `describe`, the manifest, the devices and the budget, and since
   `vla-lang` 0.9.2 the machine's census, the plan as rows, a row for each
   shape with its cells, its levels, its runs and the path each of its reads
@@ -167,13 +173,10 @@ end, so a view is a copy. The host sounds the Audio sheet too (`ENGINE.4`):
 this module holds the sheet's layout and checks it at
 load and at a write, and the host reads the four voices after each step and
 schedules the Web Audio graph's own oscillators and gains from them; the
-module computes no sound. What comes next, in the order `docs/ROADMAP.md` lays
-it: File (`ENGINE.5`); and the
-accelerators, each behind the naive evaluation's frames as its reference
-(`ENGINE.6`), after the naive evaluator's own costs, which the benchmark
-measured first and which are the language's to remove; the first of them
-are gone, the twin's values kept as an array among them (Frazaro's
-`KERNEL.20`). Since `vla-lang` 0.9.3 a view has a third projection,
+module computes no sound. What comes next is `docs/ROADMAP.md`'s, File
+(`ENGINE.5`) among it; the accelerators (`ENGINE.6`) closed at 0.2.0, each
+landed in the language or ruled out, the twin's values kept as an array
+among them (Frazaro's `KERNEL.20`). Since `vla-lang` 0.9.3 a view has a third projection,
 `values`, the record without its formulas, which the language answers and
 the engine passes through; the host draws a grid's every frame after the
 first from it (`ENGINE.8`'s second slice). Since 0.9.4 it has a fourth,
@@ -187,7 +190,15 @@ answer the same to the bit (Frazaro's `KERNEL.43`, `KERNEL.44` and
 format's number code prints its text in the grid record (`KERNEL.47`),
 which the engine passes through as it is; and a cartridge's source may
 write a formula as an expression, `formula-expand`, which the pass expands
-as any other macro (`VLA.4`).
+as any other macro (`VLA.4`). Since 0.11.0 the language holds a grid as
+written, a formula cell in about 14 to 19 bytes where it took about 400
+(Frazaro's `KERNEL.49`); computes the library's second slice, the criteria,
+the lookups, the texts, the dates and the aggregates (`KERNEL.8`), with
+`ISFORMULA` and `FORMULATEXT` (`KERNEL.53`); and prints a format's looks,
+its font, alignment and borders, in the grid record (`KERNEL.50`), which the
+engine passes through and the page draws. Since 0.12.0 a cartridge's source
+may loop and name at expand time, `each`, `assoc-expand`, `define`, `last`
+and their kin (`VLA.5`, `VLA.6` and `VLA.15`).
 
 ## The rules that bind every line
 
@@ -213,8 +224,8 @@ loads. Name it and the language it answers in, each pinned exactly:
 
 ```toml
 [dependencies]
-alonzo = "=0.2.0"
-vla-lang = "=0.10.0"
+alonzo = "=0.3.0"
+vla-lang = "=0.12.0"
 ```
 
 A cartridge is rows in the one notation. The engine loads it, steps it and
@@ -401,6 +412,17 @@ floors' baseline being the owner's): the shuffled bench costs 14.6 times the
 filled one's load natively and 11.8 in the browser, 5.8 and 5.1 times its
 memory, 4.9 and 3.7 times its steady frame of 4.9 and 6.5 ms, 3.6 and 4.2
 times its idle frame and 4.7 and 3.7 times a switch's cone.
+
+Over `vla-lang` 0.12.0, the 0.3.0 release's language, the floors' eighteenth
+baseline (the run of the session that prepared the release, on the same
+machine and the same instrument) read Life's frame at 2.2, 8.8 and 36.5 ms
+natively and 2.8, 10.6 and 44.5 in the browser, the gun's idle frame at
+0.0194 ms natively and 0.0266 in the browser, and Superposition's at a
+microsecond natively and 1.4 in the browser, its act a p95 of 0.42 ms
+natively. Since 0.11.0's grid as written the heap holds about 40 bytes a
+grid cell: Life's soup 2.5 MB natively where 0.10.0's held 30.0, the top
+rung 21.0 MB where it held 480.8, and Superposition's lattice of 798,731
+formula cells 10.8 MB.
 
 ## Where it comes from
 

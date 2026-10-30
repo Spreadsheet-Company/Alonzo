@@ -25,7 +25,7 @@ members = ["engine"]
 # Alonzo's own line, not the corpus's: the engine is not an implementation
 # of the language, so its version is its own, and vla-lang is pinned exactly
 # below.
-version = "0.2.0"
+version = "0.3.0"
 # The same edition and floor as frazaro-core, and so as vla-lang, so that the
 # three crates build under one toolchain.
 edition = "2021"
