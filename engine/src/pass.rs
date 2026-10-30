@@ -702,7 +702,11 @@ mod tests {
     /// five verbs the stacking game brought: `every` over a count and over
     /// the Clock, `since` over a cell and a range, `put` alone and inside
     /// `on`, `looks` and a still `camera`. Since `ENGINE.9`, `interior`,
-    /// the verb the size ladder builds Life and the gun over.
+    /// the verb the size ladder builds Life and the gun over. Since
+    /// `KIT.6`, `within` and `priority`, the expressions a piece may hold:
+    /// a priority's else, a test that is a bare reference, no else
+    /// answering `#N/A` as Excel's `IFS` does, an else alone, and both
+    /// inside a verb's piece.
     #[test]
     fn the_kit_s_verbs_write_the_rows_they_name() {
         let Some(library) = crate::repository::read("common.vla") else {
@@ -890,6 +894,41 @@ mod tests {
             (
                 r#"(since "State" "B2" (<> State!B1 State.last!B1))"#,
                 &[r#"(formula "State" "B2" "=IF(State!B1<>State.last!B1,0,State.last!B2+1)")"#],
+            ),
+            // KIT.6's expressions a piece may hold: within, a test of two
+            // bounds, and priority, the nested IFs of a choice by the first
+            // test that holds.
+            (
+                r#"(rule "S" "A1" (within Input!B11 2 5))"#,
+                &[r#"(formula "S" "A1" "=AND(Input!B11>=2,Input!B11<=5)")"#],
+            ),
+            (
+                r#"(rule "S" "A1" (priority ((= Input!B11 1) "one") ((= Input!B11 2) "two") (else "many")))"#,
+                &[
+                    r#"(formula "S" "A1" "=IF(Input!B11=1,\"one\",IF(Input!B11=2,\"two\",\"many\"))")"#,
+                ],
+            ),
+            // A test that is a bare reference is a test, never the else.
+            (
+                r#"(rule "S" "A1" (priority (Input!B5 1) (else 0)))"#,
+                &[r#"(formula "S" "A1" "=IF(Input!B5,1,0)")"#],
+            ),
+            // No else answers #N/A, as IFS does when no test holds; an else
+            // alone is its value.
+            (
+                r#"(rule "S" "A1" (priority ((> Input!B11 0) 1)))"#,
+                &[r#"(formula "S" "A1" "=IF(Input!B11>0,1,#N/A)")"#],
+            ),
+            (
+                r#"(rule "S" "A1" (priority (else 7)))"#,
+                &[r#"(formula "S" "A1" "=7")"#],
+            ),
+            // Both inside a verb's piece, beside edge.
+            (
+                r#"(hold "S" "B2" (edge Input!B5) (priority ((within Input!B11 1 3) 1) (else 2)))"#,
+                &[
+                    r#"(formula "S" "B2" "=IF(AND(Input!B5=1,Input.last!B5=0),IF(AND(Input!B11>=1,Input!B11<=3),1,2),S.last!B2)")"#,
+                ],
             ),
             // A defined name in a piece, read as the name it is.
             (

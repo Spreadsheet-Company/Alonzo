@@ -61,10 +61,10 @@
   (notes "Superposition: every site of the lattice is safe and decayed at once until you observe it. Space observes the site the selection stands on, B boxes it, C collapses a reading whose boxes equal it, N branches to another world. A decay observed is counted, and the experiment goes on."))
 
 ; The library whose macros this source calls: sheets, labels and headers; on, cells and
-; rules, each naming a sheet once over a run of its rows; rule; the verb count; and
-; camera. Since KIT.5 every rule is written as expressions, the act's test, the hash and
-; the Field's eight neighbors named once each, which the formula syntax writes to the
-; same bytes.
+; rules, each naming a sheet once over a run of its rows; rule; the verb count; camera;
+; and within and priority, the expressions a piece may hold (KIT.6). Since KIT.5 every
+; rule is written as expressions, the act's test, the hash and the Field's eight neighbors
+; named once each, which the formula syntax writes to the same bytes.
 (include "../common.vla")
 
 ; ---- the lattice's side: this source's one parameter --------------------------------
@@ -117,11 +117,13 @@
 ; standing on the Field (Input!B19); its serial counts the acts. The world counts the
 ; branches: every branch has its own lattice, its number in the decays' hash.
 (labels "Lab" "A1" "acts" "world")
+
 ; A touch, named once for the Lab and the Probe: a press of a mouse button, or one of the
 ; three commands that touch a site; an act is a touch while the Field is the sheet shown.
 (defmacro (a-touch)
   "a press of a mouse button, or observe, box or collapse run"
   (or (= Input!$B$13 1) (= Input!$B$14 1) (= Input!$B$15 1) (= Input!$B$20 "observe") (= Input!$B$20 "box") (= Input!$B$20 "collapse")))
+
 (on "Lab"
   (count "B1" (if (and (a-touch) (= Input!$B$19 "Field")) 1 0))   ; the acts, one at each touch on the Field
   (count "B2" (if (= Input!$B$20 "branch") 1 0)))                 ; the worlds, one at each branch
@@ -145,15 +147,19 @@
 (defmacro (lattice-range n)
   "A1 to the lattice's last site"
   (&expand "A1:" (address-expand n n)))
+
 (defmacro (rows-range letters n)
   "a column's rows 1 to n"
   (&expand letters "1:" letters n))
+
 (defmacro (top-range n)
   "the first row past the corner, B1 to the row's last site"
   (&expand "B1:" (address-expand 1 n)))
+
 (defmacro (left-range n)
   "the first column past the corner, A2 to the column's last site"
   (&expand "A2:" (address-expand n 1)))
+
 (defmacro (inner-range n)
   "B2 to the lattice's last site"
   (&expand "B2:" (address-expand n n)))
@@ -164,6 +170,7 @@
 (defmacro (an-act-on-this-row)
   "an act on the Field whose pointer stands on this row"
   (and (a-touch) (= Input!$B$19 "Field") (= Input!$B$12 (row))))
+
 (defmacro (probe n)
   "the Probe's three columns over the lattice's rows"
   (rules "Probe"
@@ -178,6 +185,7 @@
 (defmacro (an-observation-within n)
   "an observation, a click or the command, of a site of the lattice's n by n, the Field shown"
   (and (or (= Input!$B$13 1) (= Input!$B$20 "observe")) (= Input!$B$19 "Field") (>= Input!$B$12 1) (<= Input!$B$12 n) (>= Input!$B$11 1) (<= Input!$B$11 n)))
+
 (defmacro (first-observation n)
   "the First observation and its three rows"
   (labels "First" "A1" "row" "column")
@@ -197,9 +205,11 @@
 (defmacro (linear k1 k2 k3 k4 k5)
   "one linear form of the seed, the row, the column and the world: Clock!$B$3*k1+ROW()*k2+COLUMN()*k3+Lab!$B$2*k4+k5"
   (+ (* Clock!$B$3 k1) (* (row) k2) (* (column) k3) (* Lab!$B$2 k4) k5))
+
 (defmacro (hash)
   "the soup's hash h over the world: the two linear forms, each reduced modulo P, multiplied and reduced again"
   (mod (* (mod (linear 1103515 1597334 1830421 7919 3440100) 67108859) (mod (linear 2012345 1209487 1949213 104729 3213021) 67108859)) 67108859))
+
 (defmacro (decays n)
   "the Decays over the lattice"
   (rules "Decays"
@@ -213,6 +223,7 @@
 (defmacro (reading-rule site block)
   "a site's reading, its decay's code or 10,000 and the decays of its block, each a reference into the Decays"
   (if (= site 1) 10000000000 (+ 10000 (sum block))))
+
 (defmacro (readings n)
   "the Readings over the lattice, the corner's, the first row's, the first column's and the inner sites'"
   (rules "Readings"
@@ -234,52 +245,148 @@
 ;     Readings both, since nothing has decayed beside nothing, and never beside a collapse,
 ;     whose reading trusts its boxes; and a 10,000 takes its reading again, which is itself
 ;     for a nothing and the number back for a collapse.
-; The rule is written once, for a site and its eight neighbors, and given four times: the
-; corner's, the first row's, the first column's and the inner sites'. A neighbor off the
-; sheet is the site itself, which never counts: a reading collapsing is no box, a site in
-; superposition no reading of nothing, and a box no reading of nothing.
+; The rule is written once, for a site and its eight neighbors, and given four times by the
+; site's kind: the corner's, the first row's, the first column's and the inner sites'. The
+; kind is no branch around the rule (KIT.6): it is the one argument of three helpers, the
+; fill's first cell, a cell of its row's Probe, and its eight neighbors as that cell reads
+; them, a neighbor off the sheet being the site itself, which never counts: a reading
+; collapsing is no box, a site in superposition no reading of nothing, and a box no
+; reading of nothing. The eight are handed on to the macro that counts them, since a
+; macro's call is no argument of a primitive; a loop over them is KIT.6's second slice.
+(defmacro (site kind)
+  "the fill's first cell by its kind: the corner's A1, the first row's B1, the first column's A2, the inner sites' B2"
+  (cond
+    ((eq? kind "corner") "A1")
+    ((eq? kind "top") "B1")
+    ((eq? kind "left") "A2")
+    (else "B2")))
+
+(defmacro (probe-cell layer letters kind)
+  "a cell of the Probe, or of its twin, on the site's row: its column's letters with a $, and the row the fill's first cell stands on, 1 on the first row and 2 below it"
+  (ref layer
+    (&expand letters
+      (cond
+        ((eq? kind "left") 2)
+        ((eq? kind "inner") 2)
+        (else 1)))))
+
+(defmacro (neighbors kind then)
+  "the eight neighbors of the fill's first cell, handed on as (then a b c d e f g h), a neighbor off the sheet the site itself"
+  (cond
+    ((eq? kind "corner") (then "A1" "A1" "A1" "A1" "B1" "A1" "A2" "B2"))
+    ((eq? kind "top") (then "B1" "B1" "B1" "A1" "C1" "A2" "B2" "C2"))
+    ((eq? kind "left") (then "A2" "A1" "B1" "A2" "B2" "A2" "A3" "B3"))
+    (else (then "A1" "B1" "C1" "A2" "C2" "A3" "B3" "C3"))))
+
 (defmacro (was at)
   "a site's last value, a reference into the Field's twin from its address"
   (ref "Field.last" at))
+
 (defmacro (reading-of at)
   "a site's reading, a reference into the Readings from its address"
   (ref "Readings" at))
-(defmacro (probe-cell letters probe-row)
-  "a cell of the Probe on the site's row: its column's letters with a $, and the row's number"
-  (ref "Probe" (&expand letters probe-row)))
+
+(defmacro (site-was kind)
+  "the site's own last value"
+  (was (site kind)))
+
+(defmacro (site-reading kind)
+  "the site's own reading"
+  (reading-of (site kind)))
+
+(defmacro (serial kind)
+  "the serial of the last act on the site's row"
+  (probe-cell "Probe" "$D" kind))
+
+(defmacro (serial-was kind)
+  "the same serial, the frame before"
+  (probe-cell "Probe.last" "$D" kind))
+
+(defmacro (act-column kind)
+  "the column of the last act on the site's row"
+  (probe-cell "Probe" "$B" kind))
+
+(defmacro (act-kind kind)
+  "the kind of the last act on the site's row: 1 an observation, 2 a box, 3 a collapse"
+  (probe-cell "Probe" "$C" kind))
+
 (defmacro (boxes-around a b c d e f g h)
   "the boxes among the eight neighbors, counted: a comparison a neighbor, summed"
   (+ (= (was a) 10000000) (= (was b) 10000000) (= (was c) 10000000) (= (was d) 10000000) (= (was e) 10000000) (= (was f) 10000000) (= (was g) 10000000) (= (was h) 10000000)))
+
 (defmacro (a-nothing-around a b c d e f g h)
   "a neighbor that holds a reading of nothing, 10,000"
   (or (= (was a) 10000) (= (was b) 10000) (= (was c) 10000) (= (was d) 10000) (= (was e) 10000) (= (was f) 10000) (= (was g) 10000) (= (was h) 10000)))
+
 (defmacro (a-nothing-indeed-around a b c d e f g h)
   "a neighbor that is a reading of nothing on the Field and on the Readings both, their sum 20,000"
   (or (= (+ (was a) (reading-of a)) 20000) (= (+ (was b) (reading-of b)) 20000) (= (+ (was c) (reading-of c)) 20000) (= (+ (was d) (reading-of d)) 20000) (= (+ (was e) (reading-of e)) 20000) (= (+ (was f) (reading-of f)) 20000) (= (+ (was g) (reading-of g)) 20000) (= (+ (was h) (reading-of h)) 20000)))
-(defmacro (field-rule here probe-row a b c d e f g h)
-  "the Field's rule for the site here, its Probe's row, and its eight neighbors a to h"
-  (if (<> Lab!$B$2 Lab.last!$B$2) 0                                                        ; at a branch, back to superposition;
-    (if (and (<> (probe-cell "$D" probe-row) (ref "Probe.last" (&expand "$D" probe-row)))   ; an act on the site this frame, its row's serial moved
-             (= (probe-cell "$B" probe-row) (column)))                                      ;   and its column the site's:
-      (if (= (probe-cell "$C" probe-row) 2)                                                 ;   a box toggles,
-          (if (= (was here) 0) 10000000 (if (= (was here) 10000000) 0 (was here)))
-          (if (= (was here) 0)                                                              ;   an observation takes the reading,
-              (if (= (probe-cell "$C" probe-row) 1) (reading-of here) 0)
-              (if (and (>= (was here) 10001) (<= (was here) 10008))                         ;   and a reading whose boxes around it equal it
-                  (if (= (boxes-around a b c d e f g h) (- (was here) 10000)) 10000 (was here))   ;   turns to 10,000 for one frame;
-                  (was here))))
-      (if (= (was here) 0)                                                                  ; else a site in superposition takes its reading
-          (if (a-nothing-around a b c d e f g h) (reading-of here) 0)                       ;   when a neighbor holds a reading of nothing;
-          (if (= (was here) 10000000)                                                       ; a box takes its reading
-              (if (a-nothing-indeed-around a b c d e f g h) (reading-of here) 10000000)     ;   when a neighbor is a reading of nothing indeed;
-              (if (= (was here) 10000) (reading-of here) (was here)))))))                   ; and a 10,000 takes its reading again
+
+(defmacro (a-branch)
+  "a branch this frame: the world's count moved"
+  (<> Lab!$B$2 Lab.last!$B$2))
+
+(defmacro (an-act-here kind)
+  "an act on the site this frame: its row's serial moved, and its column is the site's"
+  (and (<> (serial kind) (serial-was kind)) (= (act-column kind) (column))))
+
+(defmacro (a-box-toggled kind)
+  "a box sealed on a site in superposition, opened on a box, and any other site as it was"
+  (priority
+    ((= (site-was kind) 0) 10000000)
+    ((= (site-was kind) 10000000) 0)
+    (else (site-was kind))))
+
+(defmacro (its-boxes-match kind)
+  "the boxes around the site equal its reading"
+  (= (neighbors kind boxes-around) (- (site-was kind) 10000)))
+
+(defmacro (a-reading-collapsed kind)
+  "a reading whose boxes around it equal it turns to 10,000 for one frame, so that its neighbors open as a nothing's do; any other site as it was"
+  (if (within (site-was kind) 10001 10008)
+      (if (its-boxes-match kind) 10000 (site-was kind))
+      (site-was kind)))
+
+(defmacro (an-observation kind)
+  "an observation takes a site in superposition's reading where a collapse leaves it; on a reading, either collapses it where its boxes equal it"
+  (if (= (site-was kind) 0)
+      (if (= (act-kind kind) 1) (site-reading kind) 0)
+      (a-reading-collapsed kind)))
+
+(defmacro (acted-on kind)
+  "the site an act stands on: a box toggled, else an observation or a collapse"
+  (if (= (act-kind kind) 2) (a-box-toggled kind) (an-observation kind)))
+
+(defmacro (a-superposition-opened kind)
+  "a site in superposition takes its reading when a neighbor holds a reading of nothing"
+  (if (neighbors kind a-nothing-around) (site-reading kind) 0))
+
+(defmacro (a-box-opened kind)
+  "a box takes its reading when a neighbor is a reading of nothing indeed"
+  (if (neighbors kind a-nothing-indeed-around) (site-reading kind) 10000000))
+
+(defmacro (untouched kind)
+  "a site no act stands on: in superposition or a box, opened beside a reading of nothing; a 10,000, its reading again; else as it was"
+  (priority
+    ((= (site-was kind) 0) (a-superposition-opened kind))
+    ((= (site-was kind) 10000000) (a-box-opened kind))
+    ((= (site-was kind) 10000) (site-reading kind))
+    (else (site-was kind))))
+
+(defmacro (field-rule kind)
+  "the Field's rule for a site of the kind given: back to superposition at a branch, else the site acted on or untouched"
+  (priority
+    ((a-branch) 0)
+    ((an-act-here kind) (acted-on kind))
+    (else (untouched kind))))
+
 (defmacro (field n)
   "the Field over the lattice: the corner's rule, the first row's, the first column's and the inner sites'"
   (rules "Field"
-    ("A1" (field-rule "A1" 1 "A1" "A1" "A1" "A1" "B1" "A1" "A2" "B2"))
-    ((top-range n) (field-rule "B1" 1 "B1" "B1" "B1" "A1" "C1" "A2" "B2" "C2"))
-    ((left-range n) (field-rule "A2" 2 "A2" "A1" "B1" "A2" "B2" "A2" "A3" "B3"))
-    ((inner-range n) (field-rule "B2" 2 "A1" "B1" "C1" "A2" "C2" "A3" "B3" "C3"))))
+    ("A1" (field-rule "corner"))
+    ((top-range n) (field-rule "top"))
+    ((left-range n) (field-rule "left"))
+    ((inner-range n) (field-rule "inner"))))
 
 ; The Tally: each row of the lattice in blocks of 32 sites, a block's sum in each of the
 ; columns from B, then the row's sum of its blocks, and the row's sum decoded into its

@@ -8,10 +8,11 @@
 ; since KIT.2 the picture, a string a row of cells and a character a cell; since CART.4,
 ; the stacking game Kairos, the verbs every and since, the look map, a still Camera and
 ; the Write sheet's row; since ENGINE.9 interior, the rule over a board's interior,
-; whose size a source states once, as a parameter a door may give another value; and
-; since KIT.5 the verbs take expressions, the language's formula syntax writing each
-; row's text, so that a formula is composed from forms and named macros and no longer
-; fused from texts.
+; whose size a source states once, as a parameter a door may give another value; since
+; KIT.5 the verbs take expressions, the language's formula syntax writing each row's
+; text, so that a formula is composed from forms and named macros and no longer fused
+; from texts; and since KIT.6 within and priority, a test of two bounds and a choice by
+; the first test that holds, so that a choice of five reads as five lines.
 ;
 ; The rules each macro here keeps, which are the language's:
 ;   - Template macros only. A parameter is replaced by the form the caller passes; no
@@ -28,6 +29,10 @@
 ;     hands its list on whole, (cdr characters), costs its length; one that splices its
 ;     rest, (unquote-splicing (cdr ...)), copies the rest at every step, which is for
 ;     dozens of items, never thousands.
+;   - A macro that writes a nest recurses inside the form it writes instead, a level a
+;     step: priority's (if test value (priority rest...)). A form nests at most 64 lists
+;     deep, the language's limit, so a rule's priority holds at most 61 clauses and an
+;     else, as the same IFs written by hand do (measured, KIT.6).
 ;   - An address is joined: (&expand "A" (+expand index 1)) is the text "A1", since
 ;     &expand joins its atoms into one text and +expand adds two numbers as the macro
 ;     expands. A column is reached by arithmetic too, (address-expand row column) or
@@ -325,6 +330,32 @@
 (defmacro (since sheet range event)
   "the frames since an event, 0 in its frame and one more in each frame after, Appendix C's age: =IF(event,0,sheet.last!first+1)"
   (formula sheet range (formula-expand (if event 0 (+ (ref (&expand sheet ".last") (first-of range)) 1)))))
+
+; ---- the expressions a piece may hold: within, priority (KIT.6) -----------------------
+; Each stands inside any piece, as edge does, and writes what a person writes in Excel by
+; hand: within a test of two bounds, both included, and priority a choice by the first
+; test that holds, the nested IFs that Excel's IFS would be, which the language's library
+; does not hold. A priority's clauses are a list, each a test and its value and (else
+; value) the last, so that a choice of five reads as five lines; with no else it answers
+; #N/A, as IFS does when no test holds. A test may be any expression, a bare reference
+; among them, and an else is found by equal?, since eq? refuses a list. A within inside
+; an and is an AND of its own, (and a (within x 1 3)) writing AND(a,AND(x>=1,x<=3)): the
+; same test, and other bytes than one flat AND, which a rewrite that keeps a cartridge's
+; bytes keeps as it was.
+
+(defmacro (within x low high)
+  "x between two bounds, both included, as a test: AND(x>=low,x<=high)"
+  (and (>= x low) (<= x high)))
+
+(defmacro (priority & clauses)
+  "a choice by the first test that holds, as nested IFs: each clause a test and its value, the last (else value); #N/A with no else, as IFS answers"
+  (quote-if (null? clauses)
+    (error "#N/A")
+    (quote-if (equal? (car (car clauses)) else)
+      (car (cdr (car clauses)))
+      (if (car (car clauses))
+          (car (cdr (car clauses)))
+          (quasiquote (priority (unquote-splicing (cdr clauses))))))))
 
 ; The two walks the verbs stand on, each an expression's piece and never a row. No
 ; primitive gives a range's first cell or a reference's twin as a text, and a macro's
