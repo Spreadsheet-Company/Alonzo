@@ -615,6 +615,10 @@ function Get-FreeGB {
     try { $m = [regex]::Match([System.IO.File]::ReadAllText('/proc/meminfo'), 'MemAvailable:\s+(\d+) kB'); if ($m.Success) { return [double]$m.Groups[1].Value / 1MB } } catch { }
     return $null
 }
+# A workflow's width, ALONZO_LOOP_JOBS: on GitHub's Windows runner light mutant pages run beside another browser wrote no
+# dump in ten minutes, where the same pages end here and on Linux, and one at a time they did before the pool (REPO.8's
+# addendum). So its two Windows steps set 1.
+if ($Jobs -le 0 -and $env:ALONZO_LOOP_JOBS) { $Jobs = [int]$env:ALONZO_LOOP_JOBS }
 if ($Jobs -le 0) {
     $Jobs = [Math]::Max(1, [Math]::Min(8, [int][Math]::Floor([Environment]::ProcessorCount / 2)))
     $freeGB = Get-FreeGB
@@ -1171,7 +1175,7 @@ function Start-LoopRun([string]$browser, [string]$page, [string]$scale, [string]
     if ($onWindows) { $start['NoNewWindow'] = $true }
     $watch = [System.Diagnostics.Stopwatch]::StartNew()
     $proc = Start-Process @start
-    return @{ Proc = $proc; Tmp = $tmp; Dump = $dump; Watch = $watch; Size = -1; Seconds = $null; Over = $false; Page = $page; Cases = $cases }
+    return @{ Proc = $proc; Tmp = $tmp; Dump = $dump; Watch = $watch; Size = -1; Seconds = $null; Over = $false; Page = $page; Cases = $cases; Err = $err }
 }
 # A run ended (REPO.8): its browser exited, or its dump whole, ending in </html> and grown no more since the last look, the
 # browser ended then. A browser writes the whole dump and then shuts down, and beside another instance its shutdown on
@@ -1211,7 +1215,10 @@ function Complete-LoopRun($run, [switch]$Defer) {
     try {
         if ($run.Over) {
             $wrote = $(if (Test-Path -LiteralPath $run.Dump) { (Get-Item -LiteralPath $run.Dump).Length } else { 0 })
-            $over = "the browser over {0} with the cases '{1}' had not ended after {2:N0} s, {3:N0} bytes of its dump written: ended by the run's limit" -f (Split-Path -Leaf $run.Page), $run.Cases, $seconds, $wrote
+            $said = ''
+            try { $said = ((Get-Content -LiteralPath $run.Err -Tail 3 -ErrorAction Stop) -join ' | ') } catch { }
+            if ($said.Length -gt 400) { $said = $said.Substring($said.Length - 400) }
+            $over = "the browser over {0} with the cases '{1}' had not ended after {2:N0} s, {3:N0} bytes of its dump written, its stderr '{4}': ended by the run's limit" -f (Split-Path -Leaf $run.Page), $run.Cases, $seconds, $wrote, $said
             $script:LoopRunsOver.Add($over)
             if ($script:LoopRunsOver.Count -ge 3) { throw ("three runs ended by the run's limit, so the check stops here: " + ($script:LoopRunsOver -join '; ')) }
             return @{ Text = ''; Reason = $over; Seconds = $seconds }

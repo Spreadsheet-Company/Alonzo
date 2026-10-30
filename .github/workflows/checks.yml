@@ -65,6 +65,8 @@ jobs:
       - name: every tools/check_*.ps1 under Windows PowerShell 5.1, and the floor
         # a step's limit: a job ended by GitHub's own six hours leaves no log of the step it was in
         timeout-minutes: 45
+        env:
+          ALONZO_LOOP_JOBS: '1'   # browsers side by side hung on this runner (REPO.8's addendum)
         shell: pwsh
         run: |
           & powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_checks.ps1
