@@ -17,8 +17,9 @@
 ; player's session (CART.12, decision 7). Its golden is the Tally's row sums at its last frame, each
 ; decoding into its row's observations, boxes and decays.
 ; Re-stamped 2026-10-29 at ENGINE.28's close, the Field and the Observer the game's and read-only and the
-; Constants a person's, a manifest's directives that move no cell the session writes or reads.
-(replay "superposition" (spec 6) (cartridge "49FA359E94245A4EA9667861735DEFA03FB0EEFBD23B5BE688CD99181F0363E6") (seed 1071231759))
+; Constants a person's, a manifest's directives, and again after it for the sites' grid, an edge on
+; each look's format; none moves a cell the session writes or reads.
+(replay "superposition" (spec 6) (cartridge "E9C11E6A2E90F3E00524D68D65666F54CF415CB743F86C21A6D49DC06BBA9816") (seed 1071231759))
 (frame 1
   (cell "Input" "B11" 1)
   (cell "Input" "B12" 1)

@@ -461,19 +461,27 @@
 ; its reading's fill deepening with the count, a nothing drawing nothing; a box the logo's
 ; lavender with a sealed box, and an observed decay a warm red with the sign of radiation.
 ; Each value draws through a look (docs/SPEC.md section 7.3) whose format holds a code of
-; Excel's (KERNEL.47): ;;; draws nothing, a quoted text draws itself.
-(format 1 "6B4FC8" ";;;" nowrap)       ; 0, a site in superposition
-(format 2 "FFFFFF" ";;;" nowrap)       ; 10,000, a reading of nothing
-(format 3 "F7F4FC" "\"1\"" nowrap)     ; 10,001 to 10,008, a reading
-(format 4 "EFE9FA" "\"2\"" nowrap)
-(format 5 "E6DEF7" "\"3\"" nowrap)
-(format 6 "DDD2F4" "\"4\"" nowrap)
-(format 7 "D4C6F1" "\"5\"" nowrap)
-(format 8 "CBBAEE" "\"6\"" nowrap)
-(format 9 "C2AEEB" "\"7\"" nowrap)
-(format 10 "B9A3E7" "\"8\"" nowrap)
-(format 11 "A080E0" "\"▣\"" nowrap)    ; 10,000,000, a box
-(format 12 "FFD5D5" "\"☢\"" nowrap)    ; 10,000,000,000, a decay observed
+; Excel's (KERNEL.47): ;;; draws nothing, a quoted text draws itself. Each look's format
+; draws the site's right and bottom edges in the gridlines' gray, where its gridlines lay, so
+; that the lattice keeps its grid under the fills, which cover a cell's gridlines as Excel's
+; do since ENGINE.28 (the owner's look, 2026-10-29); every site draws through a look.
+
+(defmacro (site-grid)
+  "a site's right and bottom edges, thin, in the gridlines' gray: the grid its looks keep"
+  (border (right thin "D9D9D2") (bottom thin "D9D9D2")))
+
+(format 1 "6B4FC8" ";;;" nowrap (site-grid))       ; 0, a site in superposition
+(format 2 "FFFFFF" ";;;" nowrap (site-grid))       ; 10,000, a reading of nothing
+(format 3 "F7F4FC" "\"1\"" nowrap (site-grid))     ; 10,001 to 10,008, a reading
+(format 4 "EFE9FA" "\"2\"" nowrap (site-grid))
+(format 5 "E6DEF7" "\"3\"" nowrap (site-grid))
+(format 6 "DDD2F4" "\"4\"" nowrap (site-grid))
+(format 7 "D4C6F1" "\"5\"" nowrap (site-grid))
+(format 8 "CBBAEE" "\"6\"" nowrap (site-grid))
+(format 9 "C2AEEB" "\"7\"" nowrap (site-grid))
+(format 10 "B9A3E7" "\"8\"" nowrap (site-grid))
+(format 11 "A080E0" "\"▣\"" nowrap (site-grid))    ; 10,000,000, a box
+(format 12 "FFD5D5" "\"☢\"" nowrap (site-grid))    ; 10,000,000,000, a decay observed
 (on "Field"
   (look 0 1) (look 10000 2) (look 10001 3) (look 10002 4) (look 10003 5) (look 10004 6)
   (look 10005 7) (look 10006 8) (look 10007 9) (look 10008 10) (look 10000000 11) (look 10000000000 12)

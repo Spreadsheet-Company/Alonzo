@@ -1051,9 +1051,11 @@ $floors = @(
     # Board none; after it 1,471 edges at every run and both ratios, the Board's 1,146, and 327 to 354 texts over eleven
     # runs, the Board's givens, bold, and K3's keys, centered, by the host's instance, 24 to 32 givens in its book.
     # gridEdges 1,450, gridFonts 250, each above the card's alone, the fonts' room for the instance with fewest givens.
+    # After ENGINE.28's close, Superposition's sites edged by their looks: gridEdges 50,929 at ratio 1 and 50,141 at
+    # 1.5, the Field's about 49,000 beside the card's and the Board's; its floor 48,000, under both.
     @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 2080; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1; fakePatches = 8; fakeFonts = 170; fakeEdges = 500 };
                             WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 10300; wraps = 40; fills = 9150; looks = 8650; styles = 80; columns = 326; unvalued = 288; hidden = 17; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 200; values = 24; patches = 20; codes = 3; coded = 213; fonts = 260; edges = 410;
-                                            grids = 4; gridFrames = 18; gridEqual = 16; gridValues = 33; gridTexts = 5250; gridCleared = 4; gridMoves = 18; gridBound = 3; gridCanvas = 10; gridFocused = 6; gridTyped = 3; gridEdges = 1450; gridFonts = 250 } },
+                                            grids = 4; gridFrames = 18; gridEqual = 16; gridValues = 33; gridTexts = 5250; gridCleared = 4; gridMoves = 18; gridBound = 3; gridCanvas = 10; gridFocused = 6; gridTyped = 3; gridEdges = 48000; gridFonts = 250 } },
     @{ Case = 'tabs';     Min = @{ fakeFrames = 14; fakeShown = 1; fakeHeld = 8; fakeScrolled = 1; fakeBack = 1; fakeScreen = 9; fakePointer = 1; fakeRouted = 1; fakeKey = 1; fakeStrip = 1; fakeWheel = 4; fakeTexts = 4600 };
                             WithModule = @{ frames = 12; shown = 1; held = 5; back = 1; screen = 8; pointer = 1; routed = 1; strip = 1; wheel = 4; clock = 4; texts = 3100 } },
     @{ Case = 'empty';    Min = @{ cartridges = 11; ordered = 11; titled = 11; libraries = 1; double = 1 }; WithModule = @{ engine = 1 } },
