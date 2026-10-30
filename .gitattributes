@@ -18,3 +18,4 @@ Cargo.lock text eol=lf
 *.vla text eol=crlf
 *.wasm binary
 *.png binary
+*.vla linguist-language=Lisp
