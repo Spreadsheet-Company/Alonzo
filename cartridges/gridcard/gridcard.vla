@@ -159,7 +159,7 @@
 (style "Screen" "C10" 25)
 (sentence "Screen" "B11" 11)
 (format 27 none "0.00" nowrap)
-(format 28 none "#,##0.00" nowrap)
+(format 28 none "#,##0.0" nowrap)
 (format 29 none "0.00;(0.00)" nowrap)
 (format 30 none "0%" nowrap)
 (format 31 "E2D8F6" "0;-0;0;\"text: \"@" nowrap)

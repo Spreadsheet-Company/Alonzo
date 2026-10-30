@@ -192,7 +192,7 @@
 ; draws that text and computes nothing (drawn since CART.12): aligned and matched to a
 ; look by the value, too wide for its column as many # as fit.
 (format 27 none "0.00" nowrap)                       ; two decimals
-(format 28 none "#,##0.00" nowrap)                   ; the thousands grouped
+(format 28 none "#,##0.0" nowrap)                    ; the thousands grouped, one decimal: 1,234.50 is 58 px in DejaVu Sans, Linux's, past the 56 a column holds
 (format 29 none "0.00;(0.00)" nowrap)                ; a negative's own section, drawn without its minus
 (format 30 none "0%" nowrap)                         ; a hundredfold
 (format 31 "E2D8F6" "0;-0;0;\"text: \"@" nowrap)     ; a text's section, the fourth, and a fill
@@ -201,10 +201,10 @@
   ("A16" "numbers under codes of Excel's, each drawn as the record's text")
   ("B16" 1.5)                       ; 1.50
   ("C16" 2.675)                     ; 2.68, the decimal rounded as Excel rounds it, where the binary's is 2.67
-  ("D16" 1234.5)                    ; 1,234.50
+  ("D16" 1234.5)                    ; 1,234.5
   ("E16" -3)                        ; (3.00)
   ("F16" 0.25)                      ; 25%
-  ("H16" 1234567.891)               ; 1,234,567.89, wider than its cell: as many # as fit
+  ("H16" 1234567.891)               ; 1,234,567.9, wider than its cell: as many # as fit
   ("I16" "quanta")                  ; text: quanta, on the left, in its fill
   ("J16" 3)                         ; under 0.00, and the look of 3, General, in its place: 3, no text row
   ("K16" 0.125))                    ; the look of 0.125, a glyph's format: ◆

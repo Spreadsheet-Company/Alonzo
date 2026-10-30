@@ -3681,7 +3681,7 @@
           // holds, aligned by its value, the bar's value the record's spelling; a code under a look of General and
           // G16 at frame 4, the value 1, through their looks with no text row; G16 under its code again at frame 5
           if (f === 1 || f === 4 || f === 5) {
-            var want16 = { 2: ['1.50', 'right'], 3: ['2.68', 'right'], 4: ['1,234.50', 'right'], 5: ['(3.00)', 'right'], 6: ['25%', 'right'], 9: ['text: quanta', 'left'], 10: ['3', 'right'], 11: ['◆', 'right'] };
+            var want16 = { 2: ['1.50', 'right'], 3: ['2.68', 'right'], 4: ['1,234.5', 'right'], 5: ['(3.00)', 'right'], 6: ['25%', 'right'], 9: ['text: quanta', 'left'], 10: ['3', 'right'], 11: ['◆', 'right'] };
             want16[7] = f === 1 ? ['0.25', 'right'] : (f === 4 ? ['1', 'right'] : ['1.25', 'right']);
             var bad16 = [];
             for (var c16 in want16) {
@@ -3689,7 +3689,7 @@
               if (!t16 || t16.text !== want16[c16][0] || t16.align !== want16[c16][1] || !!t16.coded !== coded16) bad16.push(VP.colName(+c16) + '16 ' + (t16 ? JSON.stringify(t16.text) + ' ' + t16.align + (t16.coded ? ' from a text row' : '') : 'undrawn') + ', not ' + JSON.stringify(want16[c16][0]) + ' ' + want16[c16][1] + (coded16 ? ' from a text row' : ''));
             }
             var h16 = E.texts['16,8'], b16 = host.vp.cell(16, 2), i16 = E.fills['16,9'], k16 = E.fills['16,11'];
-            if (!h16 || !h16.hashes || !h16.coded) bad16.push('H16, 1,234,567.89 wider than its column, is not as many # as fit');
+            if (!h16 || !h16.hashes || !h16.coded) bad16.push('H16, 1,234,567.9 wider than its column, is not as many # as fit');
             if (b16.text !== '1.50' || b16.value !== '1.5') bad16.push('the viewport answers B16 as text ' + JSON.stringify(b16.text) + ' and value ' + JSON.stringify(b16.value) + ', not "1.50" and "1.5"');
             if (!i16 || i16.src !== 'style' || !k16 || k16.src !== 'look') bad16.push('I16\'s fill by its style or K16\'s by its look is not drawn');
             if (bad16.length) P.push(at + ': row 16, the codes: ' + bad16.join('; '));
