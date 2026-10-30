@@ -3715,6 +3715,7 @@
   function caseGrid() {
     var res = OWN ? gridOwn() : { counters: {}, problems: [] }, k = res.counters, P = res.problems;
     k.grids = 0; k.gridFrames = 0; k.gridEqual = 0; k.gridValues = 0; k.gridTexts = 0; k.gridCleared = 0; k.gridMoves = 0; k.gridBound = 0; k.gridCanvas = 0; k.gridFocused = 0; k.gridTyped = 0;
+    k.gridEdges = 0; k.gridFonts = 0;   // ENGINE.28's third slice: the edges and the dressed texts held, Seiyaku's Board's among them
     var wasm = builtModule();
     if (!wasm) return res;
     var bytes = bytesOfBase64(wasm);
@@ -3722,10 +3723,11 @@
     for (var i = 0; i < ORDER.length; i++) {
       var c = CARTRIDGES[ORDER[i]];
       if (c.mode !== 'grid') continue;
-      var g = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0, moves: 0, bound: 0, canvas: 0, focused: 0, typed: 0 };
+      var g = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0, moves: 0, bound: 0, canvas: 0, focused: 0, typed: 0, edges: 0, fonts: 0 };
       gridRun(HOST.instantiateSync(bytes), c.name, c.text, c.file, c.rate > 0 ? GAME_GRID_FRAMES : 0, { strict: true, moves: true }, g, P);
       k.grids++; k.gridFrames += g.frames; k.gridEqual += g.equal; k.gridValues += g.values; k.gridTexts += g.texts; k.gridCleared += g.cleared;
       k.gridMoves += g.moves; k.gridBound += g.bound; k.gridCanvas += g.canvas; k.gridFocused += g.focused; k.gridTyped += g.typed;
+      k.gridEdges += g.edges; k.gridFonts += g.fonts;
     }
     return res;
   }

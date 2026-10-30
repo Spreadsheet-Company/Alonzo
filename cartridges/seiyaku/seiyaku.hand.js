@@ -85,7 +85,8 @@
     var grade = first || dealt ? nextGrade : this.grade;
     var acts = reset ? 0 : this.acts + (act ? 1 : 0);
     var assigned = valueOf(cmd, 'assign-'), marked = valueOf(cmd, 'domain-'), retract = cmd === 'retract', domains = cmd === 'domains';
-    var place = i.sheet === 'Board' && i.column >= 1 && i.column <= 9 && i.row >= 1 && i.row <= 9 ? (i.row - 1) * 9 + i.column : 0;
+    // the Board stands from B2, a margin row and column before it: a place is a variable on B2:J10
+    var place = i.sheet === 'Board' && i.column >= 2 && i.column <= 10 && i.row >= 2 && i.row <= 10 ? (i.row - 2) * 9 + (i.column - 1) : 0;
     var givens = givensOf(deal(this.seed, instances, grade), this.book), entries = [], grid = [];
     for (k = 0; k < 81; k++) {
       var last = this.entries[k];
@@ -118,9 +119,10 @@
     this.satisfied = satisfied; this.givens = givens; this.entries = entries; this.marks = marks; this.grid = grid; this.violated = violated;
   };
   // What the Board shows at row and column from 1: a value's code, 100 times its kind, 10 times its box's parity and
-  // the value; else the marks kept, a digit or a figure space in each of nine places, a line of three a figure space
-  // and the three with three figure spaces between them, and a line of a figure space between two lines, each line a
-  // word the viewport's wrap breaks after (the owner's hand test, 2026-10-19); or nothing.
+  // the value; else the marks kept, a digit or a figure space in each of nine places, a line of three with three
+  // figure spaces between them, and a line of four figure spaces between two lines, too wide to share a line with
+  // marks, each line a word the viewport's wrap breaks after and centers, so that each mark stands in its third of the
+  // cell (the owner's hand tests, 2026-10-19 and ENGINE.28's of 2026-10-29); or nothing.
   Board.prototype.shown = function (row, column) {
     var k = (row - 1) * 9 + (column - 1), v = this.grid[k];
     if (v > 0) {
@@ -129,10 +131,10 @@
     }
     var m = this.marks[k];
     if (m === 0) return '';
-    var lines = [], within = FS + FS + FS;
+    var lines = [], within = FS + FS + FS, between = within + FS;
     function place(d) { return m & (1 << (d - 1)) ? String(d) : FS; }
-    for (var d = 1; d <= 7; d += 3) lines.push(FS + place(d) + within + place(d + 1) + within + place(d + 2));
-    return lines.join(' ' + FS + ' ');
+    for (var d = 1; d <= 7; d += 3) lines.push(place(d) + within + place(d + 1) + within + place(d + 2));
+    return lines.join(' ' + between + ' ');
   };
 
   // A replay of Seiyaku: the Input sheet's cells as the replay's rows leave them, a frame with rows an act's and a
@@ -159,7 +161,7 @@
               sheet: typeof input.B19 === 'string' ? input.B19 : '', command: typeof input.B20 === 'string' ? input.B20 : '' }, rows.length > 0);
     if (b.satisfied) this.satisfiedOnce = true;
     var cells = {};
-    for (var r = 1; r <= 9; r++) for (var c = 1; c <= 9; c++) cells['Board!' + String.fromCharCode(64 + c) + r] = b.shown(r, c);
+    for (var r = 1; r <= 9; r++) for (var c = 1; c <= 9; c++) cells['Board!' + String.fromCharCode(65 + c) + (r + 1)] = b.shown(r, c);   // from B2
     return { cells: cells };
   };
   // The acts begun, the load's among them, the instances, the settle steps, and whether an instance was satisfied:

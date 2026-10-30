@@ -10,7 +10,8 @@
 ;
 ; How to play. The Board is nine rows of nine variables, in nine boxes of three by three.
 ; Each row, each column and each box is a constraint: it holds each value from 1 to 9 once.
-; The instance fixes some values, its givens, drawn in bold. Move with the arrows, Page Up
+; The instance fixes some values, its givens, drawn in black, and a value you assign is drawn
+; in lavender. Move with the arrows, Page Up
 ; and Page Down, Home and End, and the mouse; then, as the keys beside the Board say too:
 ;   1 to 9, on the row of digits or the keypad: assign the value to the variable the
 ;     selection stands on.
@@ -22,7 +23,7 @@
 ;   N: a new instance. G: the next instance's grade, 1 to 4 and round.
 ; A variable whose value repeats in one of its constraints is violated, and drawn red. When
 ; every variable is assigned and no constraint is violated, the instance is satisfied, and
-; the Board turns Lovelace Lavender. The Constraints sheet keeps the counts and each
+; the Board turns Lovelace Lavender, its digits white. The Constraints sheet keeps the counts and each
 ; constraint's state. Clock!B3 is the seed: everyone who types the same seed is dealt the
 ; same instances.
 ;
@@ -52,13 +53,15 @@
 ;   - The marks' text is built by & and never compared.
 
 (cartridge "seiyaku"
-  (spec 6)                          ; the version of docs/SPEC.md this cartridge is written to: an act's place, (settle K) and (bound ...)
+  (spec 6)                          ; the version of docs/SPEC.md this cartridge is written to: an act's place, (settle K), (bound ...), (game ...) and (read ...)
   (title "Seiyaku 制約")            ; what the host shows: the name and its kanji, "constraints"
   (rate 0)                          ; an act steps the board; nothing else does
   (screen grid 9 9)                 ; the Screen, hidden: the Camera shows the Board in its place
   (seed host)                       ; the host's seed, new instances each load; a seed typed into Clock!B3 brings them back
   (settle 16)                       ; an act's settle, at most 16 steps
   (bound "Board")                   ; the Board drawn to its extent and no further
+  (game "Board" "Constraints")      ; the game's keys on both tabs, G where the next grade shows among them
+  (read "Board" "Constraints")      ; read-only: no key or row of a person's writes either, so no cell loses its formula
   (author "Spreadsheet Company")    ; who wrote it
   (license "0BSD")                  ; the header's twin: copy this file to start a game of your own
   (notes "Seiyaku 制約: eighty-one variables, twenty-seven constraints, one solution, proven before you began. 1 to 9, the row's or the keypad's, assign a value to the variable the selection stands on and Backspace retracts it; Q W E, A S D and Z X C mark a value in its domain, each key where its mark stands in the cell; F fills every unassigned domain with the values its constraints allow; R retracts every assignment, N deals a new instance and G sets the next instance's grade."))
@@ -128,12 +131,15 @@
 ; 2 at the load, and this instance's; the act's value, its mark, a retraction, the domains
 ; filled, and the variable it stands on, 1 to 81 or 0; satisfied, and the acts it took.
 (labels "Lab" "A1" "acts" "instances" "restarts" "next grade" "grade" "assigned" "marked" "retract" "domains" "place" "satisfied" "satisfied in")
+
 (defmacro (a-command word)
   "the command named by the word, run at this frame: Input!$B$20=\"word\""
   (= Input!$B$20 word))
+
 (defmacro (named-as prefix k)
   "a command's value when it is the prefix and k, assign-k or domain-k: (Input!$B$20=\"prefix-k\")*k"
   (* (a-command (&expand prefix k)) k))
+
 (rules "Lab"
   ("B1" (if (or (<> Lab!B2 Lab.last!B2) (<> Lab!B3 Lab.last!B3)) 0 (+ Lab.last!B1 (if (or (= Input!$B$13 1) (= Input!$B$14 1) (= Input!$B$15 1) (<> Input!$B$20 "")) 1 0)))))
 (count "Lab" "B2" (if (a-command "instance") 1 0))
@@ -145,7 +151,7 @@
   ("B7" (+ (named-as "domain-" 1) (named-as "domain-" 2) (named-as "domain-" 3) (named-as "domain-" 4) (named-as "domain-" 5) (named-as "domain-" 6) (named-as "domain-" 7) (named-as "domain-" 8) (named-as "domain-" 9)))
   ("B8" (if (a-command "retract") 1 0))
   ("B9" (if (a-command "domains") 1 0))
-  ("B10" (if (and (= Input!$B$19 "Board") (>= Input!$B$11 1) (<= Input!$B$11 9) (>= Input!$B$12 1) (<= Input!$B$12 9)) (+ (* (- Input!$B$12 1) 9) Input!$B$11) 0))
+  ("B10" (if (and (= Input!$B$19 "Board") (>= Input!$B$11 2) (<= Input!$B$11 10) (>= Input!$B$12 2) (<= Input!$B$12 10)) (+ (* (- Input!$B$12 2) 9) (- Input!$B$11 1)) 0))
   ("B11" (if (and (= (sum Planes!A1:I81) 81) (= (sum Violations!A1:I9) 0)) 1 0))
   ("B12" (if (= Lab!B11 1) (if (= Lab.last!B11 1) Lab.last!B12 Lab!B1) 0)))
 
@@ -174,6 +180,7 @@
   "the ranks of three keys among themselves, from the first's row: a band's, a stack's, or a band's or a stack's three"
   (rule "Deal" (&expand "D" first ":D" (+expand first 2))
     (+ 1 (< (symbol "C$" first) (symbol "C" first)) (< (symbol "C$" (+expand first 1)) (symbol "C" first)) (< (symbol "C$" (+expand first 2)) (symbol "C" first)))))
+
 (ranks-of-three 20)                 ; the bands
 (ranks-of-three 23)                 ; the first band's rows
 (ranks-of-three 26)                 ; the second band's rows
@@ -193,9 +200,11 @@
   (quote-if (<expand k 1)
     (quasiquote ((unquote then) (unquote made)))
     (quasiquote (book-refs (unquote (-expand k 1)) (unquote (cons (symbol "Book!A" k) made)) (unquote then)))))
+
 (defmacro (chosen-row refs)
   "the puzzle's 81 values, a row of the Deal: CHOOSE over the Book's column, by the puzzle's row"
   (quasiquote (rule "Deal" "A50:CC50" (choose $B$1 (unquote-splicing refs)))))
+
 (book-refs 127 (Book!A128) chosen-row)
 
 ; ---- the Givens: the puzzle transformed ------------------------------------------------
@@ -207,6 +216,7 @@
   (quote-if (<expand k 1)
     (quasiquote ((unquote then) (unquote made)))
     (quasiquote (chosen-refs (unquote (-expand k 1)) (unquote (cons (symbol "Deal!$" (column-letters-expand k) "$50") made)) (unquote then)))))
+
 (defmacro (source-cells refs)
   "each variable's value in the puzzle, read from the Deal's 81 at its source: the row's source times nine and the column's, swapped when transposed"
   (quasiquote (rule "Givens" "A11:I19"
@@ -214,6 +224,7 @@
                 (+ (* (- (choose (column) Deal!$F$1 Deal!$F$2 Deal!$F$3 Deal!$F$4 Deal!$F$5 Deal!$F$6 Deal!$F$7 Deal!$F$8 Deal!$F$9) 1) 9) Deal!$G1)
                 (+ (* (- Deal!$F1 1) 9) (choose (column) Deal!$G$1 Deal!$G$2 Deal!$G$3 Deal!$G$4 Deal!$G$5 Deal!$G$6 Deal!$G$7 Deal!$G$8 Deal!$G$9)))
             (unquote-splicing refs)))))
+
 (chosen-refs 80 (Deal!$CC$50) source-cells)
 (rules "Givens"
   ("A1:I9" (if (= A11 0) 0 (choose A11 Deal!$D$11 Deal!$D$12 Deal!$D$13 Deal!$D$14 Deal!$D$15 Deal!$D$16 Deal!$D$17 Deal!$D$18 Deal!$D$19)))
@@ -228,15 +239,19 @@
 (defmacro (a-new-instance)
   "a new instance or a restart this frame: the instances or the restarts counted moved"
   (or (<> Lab!$B$2 Lab.last!$B$2) (<> Lab!$B$3 Lab.last!$B$3)))
+
 (defmacro (this-variable)
   "the variable this cell is, 1 to 81, as the Lab numbers the act's place"
   (+ (* (- (row) 1) 9) (column)))
+
 (defmacro (the-mark)
   "the bit of the value the act marks: 2 to the value less one"
   (^ 2 (- Lab!$B$7 1)))
+
 (defmacro (bit-of cell k)
   "a bit of a number of marks: the number over k, 2 to the mark's place, whole and modulo 2"
   (mod (int (/ cell k)) 2))
+
 (rule "Entries" "A1:I9"
   (if (a-new-instance) 0                                           ; a new instance or a restart empties it;
     (if (> Givens!A1 0) 0                                          ; a given is never assigned;
@@ -265,6 +280,7 @@
     (begin
       (rule "Planes" (&expand "A" (+expand (*expand 9 (-expand v 1)) 1) ":I" (*expand 9 v)) (if (= Grid!A1 v) 1 0))
       (quasiquote (planes (unquote (+expand v 1)))))))
+
 (planes 1)
 
 ; The Units: A1:I9 each row's count of each value, a row a row and a value a column;
@@ -278,7 +294,9 @@
       (rule "Units" (&expand (column-letters-expand v) "1:" (column-letters-expand v) "9")
         (sum (ref "Planes" (&expand "$A" (+expand (*expand 9 (-expand v 1)) 1) ":$I" (+expand (*expand 9 (-expand v 1)) 1)))))
       (quasiquote (row-counts (unquote (+expand v 1)))))))
+
 (row-counts 1)
+
 (defmacro (col-counts v)
   "each column's count of the value v, along the row 10 + v, then the values after it"
   (quote-if (>expand v 9)
@@ -287,7 +305,9 @@
       (rule "Units" (&expand "A" (+expand 10 v) ":I" (+expand 10 v))
         (sum (ref "Planes" (&expand "A" (+expand (*expand 9 (-expand v 1)) 1) ":A" (*expand 9 v)))))
       (quasiquote (col-counts (unquote (+expand v 1)))))))
+
 (col-counts 1)
+
 (defmacro (box-counts b r0 c0 v)
   "the box b's count of each value from v, its top left at the row r0 and the column c0 of each plane"
   (quote-if (>expand v 9)
@@ -296,6 +316,7 @@
       (rule "Units" (address-expand (+expand 20 b) v)
         (sum (ref "Planes" (&expand (address-expand (+expand (*expand 9 (-expand v 1)) r0) c0) ":" (address-expand (+expand (*expand 9 (-expand v 1)) (+expand r0 2)) (+expand c0 2))))))
       (quasiquote (box-counts (unquote b) (unquote r0) (unquote c0) (unquote (+expand v 1)))))))
+
 (box-counts 1 1 1 1)                ; box 1, its top left A1
 (box-counts 2 1 4 1)                ; box 2, D1
 (box-counts 3 1 7 1)                ; box 3, G1
@@ -312,20 +333,25 @@
 (defmacro (unit-count letters r)
   "a cell of the Units, a reference from its column's letters and its row"
   (ref "Units" (&expand letters r)))
+
 (defmacro (row-count-of at r)
   "the count of the variable's value in its row: CHOOSE over the Units' row r, the value the index"
   (choose (ref "Grid" at) (unit-count "$A" r) (unit-count "$B" r) (unit-count "$C" r) (unit-count "$D" r) (unit-count "$E" r) (unit-count "$F" r) (unit-count "$G" r) (unit-count "$H" r) (unit-count "$I" r)))
+
 (defmacro (column-count-of at c)
   "the count of the variable's value in its column: CHOOSE down the Units' column c, rows 11 to 19"
   (choose (ref "Grid" at) (unit-count c "$11") (unit-count c "$12") (unit-count c "$13") (unit-count c "$14") (unit-count c "$15") (unit-count c "$16") (unit-count c "$17") (unit-count c "$18") (unit-count c "$19")))
+
 (defmacro (box-count-of at x)
   "the count of the variable's value in its box: CHOOSE over the Units' row x, the box's own"
   (choose (ref "Grid" at) (unit-count "$A$" x) (unit-count "$B$" x) (unit-count "$C$" x) (unit-count "$D$" x) (unit-count "$E$" x) (unit-count "$F$" x) (unit-count "$G$" x) (unit-count "$H$" x) (unit-count "$I$" x)))
+
 (defmacro (violation-box range at r c x)
   "the box over range: its first cell at, that cell's row r and column c, the box's counts on the Units' row x"
   (rule "Violations" range
     (if (= (ref "Grid" at) 0) 0
       (if (or (> (row-count-of at r) 1) (> (column-count-of at c) 1) (> (box-count-of at x) 1)) 1 0))))
+
 (violation-box "A1:C3" "A1" 1 "A" 21)
 (violation-box "D1:F3" "D1" 1 "D" 22)
 (violation-box "G1:I3" "G1" 1 "G" 23)
@@ -346,13 +372,16 @@
       (begin
         (candidate-plane (unquote (column-letters-expand v)) (unquote (+expand (*expand 9 (-expand v 1)) 1)) (unquote (*expand 9 v)) (unquote (+expand 10 v)))
         (candidate-planes (unquote (+expand v 1)))))))
+
 (defmacro (box-count-in letter top)
   "the value's count in the variable's box, the plane's rows from top: CHOOSE over the Units' box rows, 21 to 29, in the value's column letter"
   (choose (+ (* 3 (int (/ (- (row) top) 3))) (int (/ (- (column) 1) 3)) 1) (unit-count (&expand "$" letter "$") 21) (unit-count (&expand "$" letter "$") 22) (unit-count (&expand "$" letter "$") 23) (unit-count (&expand "$" letter "$") 24) (unit-count (&expand "$" letter "$") 25) (unit-count (&expand "$" letter "$") 26) (unit-count (&expand "$" letter "$") 27) (unit-count (&expand "$" letter "$") 28) (unit-count (&expand "$" letter "$") 29)))
+
 (defmacro (candidate-plane letter top bottom units-row)
   "a plane of candidates from the row top to the row bottom: the value's counts in the Units' column letter, its columns' on units-row"
   (rule "Candidates" (&expand "A" top ":I" bottom)
     (if (and (= Grid!A1 0) (= (unit-count (&expand "$" letter) 1) 0) (= (unit-count "A$" units-row) 0) (= (box-count-in letter top) 0)) 1 0)))
+
 (candidate-planes 1)
 (rule "Candidates" "A83:I91"
   (+ A1 (* 2 A10) (* 4 A19) (* 8 A28) (* 16 A37) (* 32 A46) (* 64 A55) (* 128 A64) (* 256 A73)))
@@ -363,124 +392,210 @@
 ; assignment (4), and, once satisfied, a given (5) and an assignment (6); the parity 0 on the
 ; boxes 1, 3, 5, 7 and 9 and 1 on the others. Each code draws through a look. An unassigned
 ; variable shows its marks, a digit or a figure space in each of nine places, three figure
-; spaces between two of a line and a figure space before each, which its own format wraps
-; into five lines, three of marks and a line of a figure space between two; or nothing.
-(rule "Board" "A1:I9"
-  (if (> Grid!A1 0) (+ (if (= Lab!$B$11 1) (if (> Givens!A1 0) 500 600) (if (> Givens!A1 0) (if (= Violations!A1 1) 300 100) (if (= Violations!A1 1) 400 200))) (* 10 (mod (+ (int (/ (- (row) 1) 3)) (int (/ (- (column) 1) 3))) 2)) Grid!A1)
+; spaces between two of a line, which its own format wraps into five lines and centers,
+; three of marks and between two of them a line of four figure spaces, too wide to share a
+; line with marks, so that each mark stands centered in its third of the cell; or nothing.
+; The Board stands from B2, a margin row and column before it in the canvas's gray, so that its
+; frame's top and left draw as its right and bottom do: Excel draws no line of a cell's on
+; row 1's top or column A's left, beside the headers, and the page draws as Excel does (the
+; owner's hand test, 2026-10-29).
+(rule "Board" "B2:J10"
+  (if (> Grid!A1 0) (+ (if (= Lab!$B$11 1) (if (> Givens!A1 0) 500 600) (if (> Givens!A1 0) (if (= Violations!A1 1) 300 100) (if (= Violations!A1 1) 400 200))) (* 10 (mod (+ (int (/ (- (row) 2) 3)) (int (/ (- (column) 2) 3))) 2)) Grid!A1)
     (if (= Marks!A1 0) ""
-      (& " " (if (= (mod Marks!A1 2) 1) "1" " ") "   "
+      (& (if (= (mod Marks!A1 2) 1) "1" " ") "   "
          (if (= (mod (int (/ Marks!A1 2)) 2) 1) "2" " ") "   "
-         (if (= (mod (int (/ Marks!A1 4)) 2) 1) "3" " ") "    "
+         (if (= (mod (int (/ Marks!A1 4)) 2) 1) "3" " ") "      "
          (if (= (mod (int (/ Marks!A1 8)) 2) 1) "4" " ") "   "
          (if (= (mod (int (/ Marks!A1 16)) 2) 1) "5" " ") "   "
-         (if (= (mod (int (/ Marks!A1 32)) 2) 1) "6" " ") "    "
+         (if (= (mod (int (/ Marks!A1 32)) 2) 1) "6" " ") "      "
          (if (= (mod (int (/ Marks!A1 64)) 2) 1) "7" " ") "   "
          (if (= (mod (int (/ Marks!A1 128)) 2) 1) "8" " ") "   "
          (if (= (mod (int (/ Marks!A1 256)) 2) 1) "9" " ")))))
 
-; Each variable's own format, its box's tint and a wrap, which draws its marks: the format 1
-; on the boxes 1, 3, 5, 7 and 9, the format 2 on the others. A style row names one cell.
+; Each variable's own format, one of nine by its place in its box (ENGINE.28): its edges
+; medium where the place lies on its box's bound and thin within, so that the lines tell the
+; boxes, as tints told them until then; its marks wrapped and centered both ways, their five
+; lines in the cell's middle; and no fill. A place counts from 1 at its box's top left to 9 at
+; its bottom right, a column and a row of the box, each 0 to 2; a style row names one cell,
+; since no place is a rectangle.
+(defmacro (box-line at bound)
+  "a side's line: medium where the place lies on its box's bound, thin within"
+  (quote-if (=expand at bound) medium thin))
+
+(defmacro (place-format p column row)
+  "the place p's format, at the column and the row of its box: its four edges, its marks centered"
+  (format p none general wrap (align center middle)
+    (border
+      (left (box-line column 0))
+      (right (box-line column 2))
+      (top (box-line row 0))
+      (bottom (box-line row 2)))))
+
+(place-format 1 0 0) (place-format 2 1 0) (place-format 3 2 0)   ; the box's top row, its top edges medium
+(place-format 4 0 1) (place-format 5 1 1) (place-format 6 2 1)   ; its middle row, thin above and below
+(place-format 7 0 2) (place-format 8 1 2) (place-format 9 2 2)   ; its bottom row, its bottom edges medium
+
+(defmacro (place-at r c)
+  "the place of the variable at the row r and the column c: three a row down its box, one a column across"
+  (+expand 1 (+expand (*expand 3 (mod-expand (-expand r 1) 3)) (mod-expand (-expand c 1) 3))))
+
 (defmacro (board-styles r c)
-  "the variables' own formats, row by row from the row r and the column c"
+  "the variables' own formats by their places, row by row from the row r and the column c"
   (quote-if (>expand r 9)
     (begin)
     (quote-if (>expand c 9)
       (quasiquote (board-styles (unquote (+expand r 1)) 1))
       (begin
-        (style "Board" (address-expand r c) (+expand 1 (mod-expand (+expand (quotient-expand (-expand r 1) 3) (quotient-expand (-expand c 1) 3)) 2)))
+        (style "Board" (address-expand (+expand r 1) (+expand c 1)) (place-at r c))
         (quasiquote (board-styles (unquote r) (unquote (+expand c 1))))))))
+
 (board-styles 1 1)
 
 ; A variable 12.57 characters wide and 66 points tall, 88 pixels square, twice the size it
-; first had (the owner's hand test, 2026-10-19): a line of marks, ten digits wide, fits it,
-; and a line, a space and a figure space do not, so the marks wrap into five lines, the
-; first, third and fifth of them marks, in their places.
+; first had (the owner's hand test, 2026-10-19): a line of marks, nine digits wide, fits it,
+; and a line, a space and four figure spaces do not, so the marks wrap into five lines, the
+; first, third and fifth of them marks, in their places. The columns from B and the rows from
+; 2; every column's empty cells in the canvas's gray, the margin's among them.
 (defmacro (board-columns c)
-  "the Board's columns from the column c, each 12.57 characters wide, 88 pixels"
+  "the Board's columns from its column c, each 12.57 characters wide, 88 pixels, from B"
   (quote-if (>expand c 9)
     (begin)
     (begin
-      (column "Board" (column-letters-expand c) 12.57 shown none)
+      (column "Board" (column-letters-expand (+expand c 1)) 12.57 shown 111)
       (quasiquote (board-columns (unquote (+expand c 1)))))))
+
 (board-columns 1)
+
 (defmacro (board-rows r)
-  "the Board's rows from the row r, each 66 points tall, 88 pixels"
+  "the Board's rows from its row r, each 66 points tall, 88 pixels, from 2"
   (quote-if (>expand r 9)
     (begin)
     (begin
-      (row "Board" r 66 shown)
+      (row "Board" (+expand r 1) 66 shown)
       (quasiquote (board-rows (unquote (+expand r 1)))))))
+
 (board-rows 1)
+(on "Board" (column "A" 1.71 shown 111) (row 1 9 shown))   ; the margin, 12 pixels each way
 
 ; ---- the look: Lovelace Lavender -------------------------------------------------------------
-; A format holds a fill and no font, so the fills say the box and a violation, and the glyph
-; says a given: Unicode's mathematical bold digits for a given, plain digits for an
-; assignment, each followed by five figure spaces, which center a digit that aligns right.
-; The boxes 1, 3, 5, 7 and 9 in a pale lavender, the others white; a violation red, given or
-; assigned, Superposition's red; the satisfied board Lovelace Lavender itself, by box.
-(format 1 "E8E0F7" general wrap)    ; an unassigned variable on the boxes 1, 3, 5, 7 and 9
-(format 2 "FFFFFF" general wrap)    ; an unassigned variable on the others
+; A code draws through its look's format (ENGINE.28): its value's digit alone, plain in every
+; kind, bold at 22 points, twice the marks' size; a given in the host's ink and an assignment
+; in the family's deep lavender; a violation on Superposition's red; and the satisfied board
+; Lovelace Lavender itself, by box, every digit white (the owner's hand test, 2026-10-29). A
+; look says no alignment and no edge, so the cell's own format centers the digit and draws its
+; box's lines. A kind whose fill tells no box gives both parities one format a value, and the
+; satisfied two share theirs, so the 108 codes draw by 54 formats: 10 to 45 the kinds 1 to 4,
+; and 46 to 63 the satisfied board's, by parity.
+(defmacro (when-satisfied kind then else)
+  "then for the satisfied board's kinds, 5 and 6, whose fill tells the box, and else for the others"
+  (quote-if (>expand kind 4) then else))
 
-(defmacro (kind-looks kind fill-even fill-odd glyphs)
-  "a kind's eighteen looks: its nine values on the boxes 1, 3, 5, 7 and 9, then on the others"
-  (quasiquote
-    (begin
-      (value-looks (unquote kind) 0 (unquote fill-even) 1 (unquote glyphs))
-      (value-looks (unquote kind) 1 (unquote fill-odd) 1 (unquote glyphs)))))
-(defmacro (value-looks kind parity tint v glyphs)
-  "a look a value from v: the format 2 + 18 (kind - 1) + 9 parity + v, its tint and its glyph centered; the code 100 kind + 10 parity + v"
-  (quote-if (null? glyphs)
+(defmacro (when-given kind then else)
+  "then for a given's kinds, 1, 3 and 5, and else for an assignment's"
+  (quote-if (=expand (mod-expand kind 2) 1) then else))
+
+(defmacro (code-of kind parity v)
+  "the code a variable shows: 100 times its kind, 10 times its box's parity, and its value"
+  (+expand (*expand 100 kind) (+expand (*expand 10 parity) v)))
+
+(defmacro (digit-format-at kind parity v)
+  "the format a code draws by: its value's of its kind, and once satisfied its value's of its box's parity"
+  (when-satisfied kind
+    (+expand 45 (+expand (*expand 9 parity) v))
+    (+expand 9 (+expand (*expand 9 (-expand kind 1)) v))))
+
+(defmacro (lavender parity)
+  "Lovelace Lavender by box: itself on the boxes 1, 3, 5, 7 and 9, its lighter shade on the others"
+  (quote-if (=expand parity 0) "A080E0" "B9A3E7"))
+
+(defmacro (open-fill kind)
+  "the fill of a code not yet satisfied: none for a given or an assignment, red for a violation"
+  (quote-if (<expand kind 3) none "FFD5D5"))
+
+(defmacro (digit-fill kind parity)
+  "a code's fill: its box's lavender once satisfied, else its own"
+  (when-satisfied kind (lavender parity) (open-fill kind)))
+
+(defmacro (digit-font kind)
+  "a code's font, bold at 22 points: a given in the host's ink, an assignment in the family's deep lavender, and white once satisfied"
+  (when-satisfied kind (font bold 22 "FFFFFF") (when-given kind (font bold 22) (font bold 22 "6B4FC8"))))
+
+(defmacro (digit-code v)
+  "the value's digit alone, a number format's quoted text"
+  (&expand "\"" v "\""))
+
+(defmacro (digit-format kind parity v)
+  "a code's format: its digit, in its kind's font, on its kind's fill"
+  (format (digit-format-at kind parity v) (digit-fill kind parity) (digit-code v) nowrap (digit-font kind)))
+
+(defmacro (digit-look kind parity v)
+  "a code's look, drawn by its format"
+  (look "Board" (code-of kind parity v) (digit-format-at kind parity v)))
+
+(defmacro (looks-with-formats kind parity v)
+  "a kind's looks on one parity's boxes from the value v, each with its format"
+  (quote-if (>expand v 9)
     (begin)
     (begin
-      (format (+expand 2 (+expand (*expand 18 (-expand kind 1)) (+expand (*expand 9 parity) v))) tint (&expand "\"" (car glyphs) "     \"") nowrap)
-      (look "Board" (+expand (*expand 100 kind) (+expand (*expand 10 parity) v)) (+expand 2 (+expand (*expand 18 (-expand kind 1)) (+expand (*expand 9 parity) v))))
-      (quasiquote (value-looks (unquote kind) (unquote parity) (unquote tint) (unquote (+expand v 1)) (unquote (cdr glyphs)))))))
-(kind-looks 1 "E8E0F7" "FFFFFF" ("𝟏" "𝟐" "𝟑" "𝟒" "𝟓" "𝟔" "𝟕" "𝟖" "𝟗"))   ; a given
-(kind-looks 2 "E8E0F7" "FFFFFF" ("1" "2" "3" "4" "5" "6" "7" "8" "9"))   ; an assignment
-(kind-looks 3 "FFD5D5" "FFD5D5" ("𝟏" "𝟐" "𝟑" "𝟒" "𝟓" "𝟔" "𝟕" "𝟖" "𝟗"))   ; a violated given
-(kind-looks 4 "FFD5D5" "FFD5D5" ("1" "2" "3" "4" "5" "6" "7" "8" "9"))   ; a violated assignment
-(kind-looks 5 "A080E0" "B9A3E7" ("𝟏" "𝟐" "𝟑" "𝟒" "𝟓" "𝟔" "𝟕" "𝟖" "𝟗"))   ; a given, satisfied
-(kind-looks 6 "A080E0" "B9A3E7" ("1" "2" "3" "4" "5" "6" "7" "8" "9"))   ; an assignment, satisfied
-(on "Board" (gridlines on))
+      (digit-format kind parity v)
+      (digit-look kind parity v)
+      (quasiquote (looks-with-formats (unquote kind) (unquote parity) (unquote (+expand v 1)))))))
+
+(defmacro (looks-sharing kind parity v)
+  "a kind's looks on one parity's boxes from the value v, drawn by the formats the other parity's wrote"
+  (quote-if (>expand v 9)
+    (begin)
+    (begin
+      (digit-look kind parity v)
+      (quasiquote (looks-sharing (unquote kind) (unquote parity) (unquote (+expand v 1)))))))
+
+(looks-with-formats 1 0 1) (looks-sharing 1 1 1)        ; a given
+(looks-with-formats 2 0 1) (looks-sharing 2 1 1)        ; an assignment
+(looks-with-formats 3 0 1) (looks-sharing 3 1 1)        ; a violated given
+(looks-with-formats 4 0 1) (looks-sharing 4 1 1)        ; a violated assignment
+(looks-with-formats 5 0 1) (looks-with-formats 5 1 1)   ; a given, satisfied, by box
+(looks-sharing 6 0 1) (looks-sharing 6 1 1)             ; an assignment, satisfied, by the given's formats
+(on "Board" (gridlines off))                            ; the edges draw every line of the Board
 
 ; ---- the keys, beside the Board (the owner's hand test, 2026-10-19) ---------------------------
-; What each key does, a key a row beside the variables: K the key, L its words, both on the
+; What each key does, a key a row beside the variables: L the key, M its words, both on the
 ; canvas's gray, the headers' own, which a bound sheet stands on, so that the Board alone is
-; white; J a gutter of the same gray. The marks' keys drawn as the marks are, in five lines,
-; each key in its mark's place.
-(format 111 "F3F3EE" general nowrap)   ; a key or its words
-(format 112 "F3F3EE" general wrap)     ; the marks' keys, wrapped into their places
+; white; K a gutter of the same gray; the keys bold and centered in their column (the owner's
+; hand test, 2026-10-29). The marks' keys drawn as the marks are, in five lines, each key in
+; its mark's place, in fullwidth letters, every letter one width, so that each stands in its
+; third as a digit does (the owner's second look, 2026-10-29).
+(format 111 "F3F3EE" general nowrap)   ; a key's words
+(format 112 "F3F3EE" general wrap (font bold) (align center middle))   ; the marks' keys, wrapped into their places and centered as the marks are
+(format 113 "F3F3EE" general nowrap (font bold) (align center middle))   ; a key, bold and centered in its column
 (cells "Board"
-  ("K1" "1 to 9") ("L1" "assign the value to the variable, row or keypad")
-  ("K2" "Backspace") ("L2" "retract the assignment, or strike the marks")
-  ("K3" " Q   W   E    A   S   D    Z   X   C") ("L3" "mark a value in the domain, at its key's place")
-  ("K4" "F") ("L4" "fill every domain with what its constraints allow")
-  ("K5" "R") ("L5" "retract every assignment and every mark")
-  ("K6" "N") ("L6" "deal a new instance")
-  ("K7" "G") ("L7" "the next instance's grade, 1 to 4 and round")
-  ("K8" "← ↑ → ↓") ("L8" "move the selection, as a click does")
-  ("K9" "Ctrl+K") ("L9" "every command, by its name"))
-(style "Board" "K1" 111) (style "Board" "L1" 111)
-(style "Board" "K2" 111) (style "Board" "L2" 111)
-(style "Board" "K3" 112) (style "Board" "L3" 111)
-(style "Board" "K4" 111) (style "Board" "L4" 111)
-(style "Board" "K5" 111) (style "Board" "L5" 111)
-(style "Board" "K6" 111) (style "Board" "L6" 111)
-(style "Board" "K7" 111) (style "Board" "L7" 111)
-(style "Board" "K8" 111) (style "Board" "L8" 111)
-(style "Board" "K9" 111) (style "Board" "L9" 111)
+  ("L2" "1 to 9") ("M2" "assign the value to the variable, row or keypad")
+  ("L3" "Backspace") ("M3" "retract the assignment, or strike the marks")
+  ("L4" "Ｑ  Ｗ  Ｅ      Ａ  Ｓ  Ｄ      Ｚ  Ｘ  Ｃ") ("M4" "mark a value in the domain, at its key's place")
+  ("L5" "F") ("M5" "fill every domain with what its constraints allow")
+  ("L6" "R") ("M6" "retract every assignment and every mark")
+  ("L7" "N") ("M7" "deal a new instance")
+  ("L8" "G") ("M8" "the next instance's grade, 1 to 4 and round")
+  ("L9" "← ↑ → ↓") ("M9" "move the selection, as a click does")
+  ("L10" "Ctrl+K") ("M10" "every command, by its name"))
+(on "Board"
+  (style "L2:L3" 113)                ; the first two keys
+  (style "L4" 112)                   ; the marks' keys
+  (style "L5:L10" 113)               ; the rest of the keys
+  (style "M2:M10" 111))              ; their words
 ; the gutter's empty cells by its column's format; the keys' column a variable's width, so that
 ; the marks' keys lie as the marks do; the words' column as wide as the longest words
-(on "Board" (column "J" 3 shown 111) (column "K" 12.57 shown none) (column "L" 48 shown none))
+(on "Board" (column "K" 3 shown 111) (column "L" 12.57 shown 111) (column "M" 48 shown 111))
 
 ; ---- the Constraints: the counts, and each constraint's state -----------------------------
 (cells "Constraints"
   ("A1" "Seiyaku 制約")
   ("A2" "Eighty-one variables, twenty-seven constraints, one solution, proven before you began."))
 (labels "Constraints" "A4" "instance" "grade" "puzzle in the book" "seed" "next instance's grade")
+
 (defmacro (grade-named grade)
   "a grade's name: the hardest technique its puzzles need"
   (choose grade "naked singles" "hidden singles" "pointing pairs" "beyond the three"))
+
 (rules "Constraints"
   ("B4" (+ Lab!B2 1))
   ("B5" Lab!B5)
@@ -504,6 +619,7 @@
 ; Each value's count on the board, 9 of each when satisfied, a value a row.
 (headers "Constraints" "A19" "value" "placed")
 (labels "Constraints" "A20" 1 2 3 4 5 6 7 8 9)
+
 (defmacro (placed-counts v)
   "the board's count of the value v, a SUM over its plane, then the values after it"
   (quote-if (>expand v 9)
@@ -512,6 +628,7 @@
       (rule "Constraints" (address-expand (+expand 19 v) 2)
         (sum (ref "Planes" (&expand "A" (+expand (*expand 9 (-expand v 1)) 1) ":I" (*expand 9 v)))))
       (quasiquote (placed-counts (unquote (+expand v 1)))))))
+
 (placed-counts 1)
 
 ; The twenty-seven constraints: each its variables assigned and its state, violated where a
@@ -521,15 +638,18 @@
   "row 1" "row 2" "row 3" "row 4" "row 5" "row 6" "row 7" "row 8" "row 9"
   "column 1" "column 2" "column 3" "column 4" "column 5" "column 6" "column 7" "column 8" "column 9"
   "box 1" "box 2" "box 3" "box 4" "box 5" "box 6" "box 7" "box 8" "box 9")
+
 (defmacro (state-of counts assigned)
   "a constraint's state from its counts and its variables assigned: violated where a value counts twice, satisfied where nine are assigned and none is violated, open else"
   (if (> (max counts) 1) "violated" (if (= assigned 9) "satisfied" "open")))
+
 (rules "Constraints"
   ("B31:B39" (sum Units!$A1:$I1))
   ("C31:C39" (state-of Units!$A1:$I1 B31))
   ("B49:B57" (sum Units!$A21:$I21))
   ("C49:C57" (state-of Units!$A21:$I21 B49))
   ("D31:D57" (if (= C31 "violated") 1 0)))
+
 (defmacro (column-constraints c)
   "the column c's constraint, on the row 39 + c: its count down the Units' column c, rows 11 to 19, then the columns after it"
   (quote-if (>expand c 9)
@@ -540,6 +660,7 @@
       (rule "Constraints" (address-expand (+expand 39 c) 3)
         (state-of (ref "Units" (&expand (column-letters-expand c) "11:" (column-letters-expand c) "19")) (symbol "B" (+expand 39 c))))
       (quasiquote (column-constraints (unquote (+expand c 1)))))))
+
 (column-constraints 1)
 ; Column B twelve characters wide, so that a seed of ten digits, which a person reads off to share an instance, reads
 ; whole (Superposition's catch at CART.12's hand test).

@@ -6,11 +6,14 @@
 ; next instance's grade moved three times, to 1, and an instance dealt; the domains filled five times between ten
 ; values assigned, each variable chosen by a click, none violating a constraint; then every assignment and every
 ; mark retracted. 35 acts over 104 frames; a settle's frames hold no row. Its golden is the Constraints sheet's
-; record at its end.
-(replay "seiyaku" (spec 6) (cartridge "01E6F6654B83773F73543E16DDF49F7DA56CE1FF264251674E1E8D09CBE5940D") (seed 700619202))
+; record at its end. Carried 2026-10-29 at ENGINE.28's third slice: the Board's boxes drawn by their edges, its
+; digits by their fonts and its marks centered in their thirds, the Board a game sheet and read-only, and the
+; Board moved to B2 behind a margin, each act's place a column and a row on so that every act stands on the
+; variable it stood on; its golden stands.
+(replay "seiyaku" (spec 6) (cartridge "3E161C85F0C7290F0834B1E9DC9A85E91EAC27366F80B95C266C325D3A872077") (seed 700619202))
 (frame 1
-  (cell "Input" "B11" 1)
-  (cell "Input" "B12" 1)
+  (cell "Input" "B11" 2)
+  (cell "Input" "B12" 2)
   (cell "Input" "B13" 0)
   (cell "Input" "B14" 0)
   (cell "Input" "B15" 0)
@@ -27,80 +30,80 @@
 (frame 15
   (cell "Input" "B20" "domains"))
 (frame 18
-  (cell "Input" "B11" 6)
-  (cell "Input" "B12" 5)
+  (cell "Input" "B11" 7)
+  (cell "Input" "B12" 6)
   (cell "Input" "B13" 1))
 (frame 21
   (cell "Input" "B20" "assign-2"))
 (frame 24
-  (cell "Input" "B12" 4)
+  (cell "Input" "B12" 5)
   (cell "Input" "B13" 1))
 (frame 27
   (cell "Input" "B20" "assign-1"))
 (frame 30
-  (cell "Input" "B11" 1)
-  (cell "Input" "B12" 6)
+  (cell "Input" "B11" 2)
+  (cell "Input" "B12" 7)
   (cell "Input" "B13" 1))
 (frame 33
   (cell "Input" "B20" "domains"))
 (frame 36
-  (cell "Input" "B11" 5)
+  (cell "Input" "B11" 6)
   (cell "Input" "B13" 1))
 (frame 39
   (cell "Input" "B20" "assign-9"))
 (frame 42
-  (cell "Input" "B11" 2)
-  (cell "Input" "B12" 7)
+  (cell "Input" "B11" 3)
+  (cell "Input" "B12" 8)
   (cell "Input" "B13" 1))
 (frame 45
   (cell "Input" "B20" "assign-8"))
 (frame 48
   (cell "Input" "B20" "domains"))
 (frame 51
-  (cell "Input" "B11" 9)
-  (cell "Input" "B12" 8)
+  (cell "Input" "B11" 10)
+  (cell "Input" "B12" 9)
   (cell "Input" "B13" 1))
 (frame 54
   (cell "Input" "B20" "assign-8"))
 (frame 57
   (cell "Input" "B20" "domains"))
 (frame 60
-  (cell "Input" "B11" 4)
+  (cell "Input" "B11" 5)
   (cell "Input" "B13" 1))
 (frame 63
   (cell "Input" "B20" "assign-2"))
 (frame 66
-  (cell "Input" "B12" 3)
+  (cell "Input" "B12" 4)
   (cell "Input" "B13" 1))
 (frame 69
   (cell "Input" "B20" "assign-6"))
 (frame 72
   (cell "Input" "B20" "domains"))
 (frame 75
-  (cell "Input" "B11" 8)
-  (cell "Input" "B12" 7)
+  (cell "Input" "B11" 9)
+  (cell "Input" "B12" 8)
   (cell "Input" "B13" 1))
 (frame 78
-  (cell "Input" "B11" 9)
-  (cell "Input" "B12" 9)
+  (cell "Input" "B11" 10)
+  (cell "Input" "B12" 10)
   (cell "Input" "B13" 1))
 (frame 81
   (cell "Input" "B20" "assign-6"))
 (frame 84
-  (cell "Input" "B11" 7)
+  (cell "Input" "B11" 8)
   (cell "Input" "B13" 1))
 (frame 87
   (cell "Input" "B20" "assign-9"))
 (frame 90
-  (cell "Input" "B11" 8)
-  (cell "Input" "B12" 7)
+  (cell "Input" "B11" 9)
+  (cell "Input" "B12" 8)
   (cell "Input" "B13" 1))
 (frame 93
   (cell "Input" "B20" "assign-7"))
 (frame 96
   (cell "Input" "B20" "domains"))
 (frame 99
-  (cell "Input" "B12" 1)
+  (cell "Input" "B12" 2)
   (cell "Input" "B13" 1))
 (frame 102
   (cell "Input" "B20" "retract-all"))

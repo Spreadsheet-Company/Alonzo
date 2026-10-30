@@ -807,9 +807,11 @@ impl Seiyaku {
         let marked = value_of(cmd, "domain-");
         let retract = cmd == "retract";
         let domains = cmd == "domains";
-        let place = if i.sheet == "Board" && (1..=9).contains(&i.column) && (1..=9).contains(&i.row)
-        {
-            ((i.row - 1) * 9 + i.column) as usize
+        // the Board stands from B2, a margin row and column before it (the owner's second look at
+        // `ENGINE.28`'s third slice): a place is a variable on B2:J10
+        let on_board = |n: u32| (2..=10).contains(&n);
+        let place = if i.sheet == "Board" && on_board(i.column) && on_board(i.row) {
+            ((i.row - 2) * 9 + i.column - 1) as usize
         } else {
             0
         };
@@ -915,9 +917,11 @@ impl Seiyaku {
     /// times its kind, 10 times its box's parity and the value, the kinds a
     /// given, an assignment, each violated and each satisfied; else the
     /// marks kept, a digit or a figure space in each of nine places, a line
-    /// of three a figure space and the three with three figure spaces between
-    /// them, and a line of a figure space between two lines, each line a word
-    /// the viewport's wrap breaks after (the owner's hand test, 2026-10-19).
+    /// of three with three figure spaces between them, and a line of four
+    /// figure spaces between two lines, too wide to share a line with marks,
+    /// each line a word the viewport's wrap breaks after and centers, so that
+    /// each mark stands in its third of the cell (the owner's hand tests,
+    /// 2026-10-19 and `ENGINE.28`'s of 2026-10-29).
     pub fn shown(&self, row: u32, column: u32) -> Shown {
         let k = ((row - 1) * 9 + (column - 1)) as usize;
         let v = self.grid[k];
@@ -947,18 +951,19 @@ impl Seiyaku {
             }
         };
         let within: String = [fs; 3].iter().collect();
+        let between: String = [fs; 4].iter().collect();
         let lines: Vec<String> = [1u8, 4, 7]
             .iter()
             .map(|&d| {
                 format!(
-                    "{fs}{}{within}{}{within}{}",
+                    "{}{within}{}{within}{}",
                     place(d),
                     place(d + 1),
                     place(d + 2)
                 )
             })
             .collect();
-        Shown::Text(lines.join(&format!(" {fs} ")))
+        Shown::Text(lines.join(&format!(" {between} ")))
     }
 
     /// The givens of the instance.

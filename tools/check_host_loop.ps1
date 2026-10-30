@@ -499,7 +499,8 @@ candidates forget the box, so that a domain filled keeps a value its box holds, 
 name at frame 15, where the owner's session first fills the domains; and since its hand test four more, when the
 real page holds the module, each a viewport the grid case's game half must fail by name over Seiyaku's Board, shown
 whole in a box grown to hold it: EU, one whose bound sheet stands on the background, white past its edge; EV, one
-whose gridlines cross a bound sheet's canvas, its first column's line running on below its last row; EW, one whose
+whose gridlines cross a bound sheet's canvas, its first column's line running on below its last row, over Naught's
+Lesson since ENGINE.28's third slice turned the Board's gridlines off; EW, one whose
 column headers' edge runs on past its last column; and EX, one whose row headers' edge runs on below its last row.
 And since its hand test's fifth note one more, when the real page holds the module: EY, a host whose keypad's digits
 run no command, so that the keypad's 7, Num Lock on, passes on where the commands case's card runs seven, the command
@@ -1045,9 +1046,14 @@ $floors = @(
     # 2026-10-29, at its hand test: the card's edges moved to row 2, I2 to P2, off the narrow, hidden and styled columns,
     # with an edge beside the hidden column and one beside the hidden row, 433 over the frames, row 2 leaving the view
     # where the person's scroll moves it down; edges 410, 5% below.
+    # 2026-10-29, ENGINE.28's third slice: gridEdges and gridFonts count the edges and the dressed texts the game half
+    # holds, so that a comparison of none cannot pass: the card's 325 edges and 156 texts before the slice, Seiyaku's
+    # Board none; after it 1,471 edges at every run and both ratios, the Board's 1,146, and 327 to 354 texts over eleven
+    # runs, the Board's givens, bold, and K3's keys, centered, by the host's instance, 24 to 32 givens in its book.
+    # gridEdges 1,450, gridFonts 250, each above the card's alone, the fonts' room for the instance with fewest givens.
     @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 2080; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1; fakePatches = 8; fakeFonts = 170; fakeEdges = 500 };
                             WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 10300; wraps = 40; fills = 9150; looks = 8650; styles = 80; columns = 326; unvalued = 288; hidden = 17; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 200; values = 24; patches = 20; codes = 3; coded = 213; fonts = 260; edges = 410;
-                                            grids = 4; gridFrames = 18; gridEqual = 16; gridValues = 33; gridTexts = 5250; gridCleared = 4; gridMoves = 18; gridBound = 3; gridCanvas = 10; gridFocused = 6; gridTyped = 3 } },
+                                            grids = 4; gridFrames = 18; gridEqual = 16; gridValues = 33; gridTexts = 5250; gridCleared = 4; gridMoves = 18; gridBound = 3; gridCanvas = 10; gridFocused = 6; gridTyped = 3; gridEdges = 1450; gridFonts = 250 } },
     @{ Case = 'tabs';     Min = @{ fakeFrames = 14; fakeShown = 1; fakeHeld = 8; fakeScrolled = 1; fakeBack = 1; fakeScreen = 9; fakePointer = 1; fakeRouted = 1; fakeKey = 1; fakeStrip = 1; fakeWheel = 4; fakeTexts = 4600 };
                             WithModule = @{ frames = 12; shown = 1; held = 5; back = 1; screen = 8; pointer = 1; routed = 1; strip = 1; wheel = 4; clock = 4; texts = 3100 } },
     @{ Case = 'empty';    Min = @{ cartridges = 11; ordered = 11; titled = 11; libraries = 1; double = 1 }; WithModule = @{ engine = 1 } },
@@ -1862,13 +1868,14 @@ if ($Control) {
         )
         # And EU, EV, EW and EX (CART.14's hand test, 2026-10-19), over the engine's module, Seiyaku's Board shown whole in a
         # box grown to hold it: a viewport whose bound sheet stands on the background, white past its edge; one whose
-        # gridlines cross a bound sheet's canvas; one whose column headers' edge runs on past its last column; and one whose
+        # gridlines cross a bound sheet's canvas, failed over Naught's Lesson since ENGINE.28's third slice, Seiyaku's Board
+        # drawing no gridlines; one whose column headers' edge runs on past its last column; and one whose
         # row headers' edge runs on below its last row.
         $gridMutants += @(
             @{ L = 'eu'; Name = 'the canvas the background'; File = 'viewport'; Module = $true; Anchor = '    ctx.fillStyle = g.bounded ? this.colors.header : this.colors.background;'; With = '    ctx.fillStyle = this.colors.background;'
                Want = 'case grid.*seiyaku frame 0, Board: the pixel past its last column, in its first row, at \d+,\d+, reads 255,255,255, where a bound sheet stands on the canvas' },
             @{ L = 'ev'; Name = 'the gridlines across the canvas'; File = 'viewport'; Module = $true; Anchor = '        if (g.bounded) { top = Math.max(top, cellsY); bottom = Math.min(bottom, cellsB); left = Math.max(left, cellsX); right = Math.min(right, cellsR); }'; With = '        // the lines across the quadrant, by the control'
-               Want = 'case grid.*seiyaku frame 0, Board: the pixel below its last row, where its first column''s line would run on, at \d+,\d+, reads 217,217,210, where a bound sheet stands on the canvas' },
+               Want = 'case grid.*naught frame 0, Lesson: the pixel below its last row, where its first column''s line would run on, at \d+,\d+, reads 217,217,210, where a bound sheet stands on the canvas' },
             @{ L = 'ew'; Name = 'the column headers'' edge run on'; File = 'viewport'; Module = $true; Anchor = '        if (g.bounded) end = Math.min(end, ox + g.colX[cEnd + 1] - scroll);'; With = '        // the column headers'' edge across the band, by the control'
                Want = 'case grid.*seiyaku frame 0, Board: the pixel past its last column, where the column headers'' edge would run on, at \d+,\d+, reads 217,217,210, where a bound sheet stands on the canvas' },
             @{ L = 'ex'; Name = 'the row headers'' edge run on'; File = 'viewport'; Module = $true; Anchor = '        if (g.bounded) end = Math.min(end, oy + g.rowTop(rEnd + 1) - scroll);'; With = '        // the row headers'' edge down the band, by the control'

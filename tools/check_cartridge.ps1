@@ -327,12 +327,21 @@ if ($Root -eq '') { $Root = $repoRoot }
 # formats, cells and styles (slice 2); 2026-10-29, at its hand test, 264, the
 # edges moved off the narrow, hidden and styled columns to row 2, I2 to P2, and
 # an edge beside the hidden column and one beside the hidden row, three formats more.
+# 2026-10-29, ENGINE.28's third slice: Seiyaku 4,205 rows, its boxes drawn by
+# their edges and its digits by their fonts, its gridlines off: nine formats by
+# a variable's place in its box where two tints were, 54 for its 108 looks where
+# 108 were, its keys' three where two were, and the keys' styles four by range
+# where eighteen were (formats 112 to 66, styles 99 to 85); at the owner's two
+# looks its marks centered in their thirds, the Board and the Constraints game
+# sheets and read-only (SPEC.5), and the Board moved to B2 behind a margin column
+# and row, two rows more, so that its frame draws on every side; its replay
+# carried, each act's place a column and a row on, and its golden unchanged.
 $expectedCartridges = 11
 $expectedSources = 11
 $expectedLibraries = 1
 $expectedReplays = 7
 $expectedGoldens = 7
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 264; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4263; 'cartridges/naught/naught.vla' = 756 }
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 264; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4205; 'cartridges/naught/naught.vla' = 756 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

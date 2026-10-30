@@ -993,7 +993,8 @@ viewport, not an Excel clone.
   nothing of Alonzo's own files, over its own blocks: `abi`; `pass`, every
   source to its cartridge; `replay`, every replay to its golden and its
   recording, every frame to its hand; `grid`, every grid cartridge's drawn
-  window held to its record for frame 0 and twelve frames with no edits, a
+  window held to its record for frame 0 and twelve frames with no edits,
+  its edges and its dressed texts counted since `ENGINE.28`'s third slice, a
   version 4 cartridge's sheet shown held as the record of its region
   (`ENGINE.18`); `empty`; `still`, the page's own still card (`ENGINE.17`);
   `views`, the page's own views card (`ENGINE.18`); and `changes`, the

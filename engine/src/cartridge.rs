@@ -5413,7 +5413,8 @@ mod tests {
         for r in 1..=9 {
             for col in 1..=9 {
                 let k = ((r - 1) * 9 + col - 1) as usize;
-                want.push(("Board", r, col, hand.shown(r, col)));
+                // the Board stands from B2, a margin row and column before it
+                want.push(("Board", r + 1, col + 1, hand.shown(r, col)));
                 want.push(("Givens", r, col, n(f64::from(hand.givens[k]))));
                 want.push(("Marks", r, col, n(f64::from(hand.marks[k]))));
             }
@@ -5602,11 +5603,12 @@ mod tests {
     }
 
     /// An act on a variable of the Board by a command, or by a press when the
-    /// command is empty.
+    /// command is empty; the variable's row and column from 1, its cell a row
+    /// and a column on, the Board standing from B2.
     fn on_board(row: u32, column: u32, command: &str) -> sy::Inputs {
         sy::Inputs {
-            column,
-            row,
+            column: column + 1,
+            row: row + 1,
             left: command.is_empty(),
             sheet: "Board".to_string(),
             command: command.to_string(),

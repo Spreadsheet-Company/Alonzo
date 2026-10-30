@@ -610,6 +610,12 @@ $sameSource = @{ '0.8.1' = 'f5dc344' }
 # golden, is unchanged; and the runner's check mode holds every frame to the
 # Superposition written by hand, every allocation count and the heap under
 # their ceilings.
+# 2026-10-29, ENGINE.28's close: superposition.vla's manifest gained its
+# keyboard's sheets, (game "Field" "Observer"), (read "Field" "Observer") and
+# (work "Constants"), the host's rule for a person's keys and rows, which no
+# step reads. Every row is byte for byte the measured file's; its census is
+# unchanged, the describe golden gaining the three directives alone; and the
+# runner's check mode holds every frame to the Superposition written by hand.
 $sameRows = @{
     '7220F8E1FBFF7A3B7F00DE9ECA5754E9A1877A8D1A766A251EB3811D0C937D89' = '90B24FF2E98530FF530C9E573DAC0E2FB4F5968ABE378D0A673C3E9DCA8D70DB'
     '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7' = '0BD138CBE43825F93EA2235F755DE6A46F18CCF7B7DAEC33B6D38D8365E64234'
@@ -617,6 +623,7 @@ $sameRows = @{
     '64C9A6BA206003F15B73084FE90781BE60E34089D577CE0589DBAF5C737A0725' = '5E54AAE0676BBF2B20A3213C73D836F7ED93C68D7D38A5C24D27C45B0ACF8BD7'
     'F872498DEAFBCCB60133501B18E35BEC38A470C4A9AE8064505510D061EAD857' = '814983F85A9DA90155F0F58C6FE201C8750E588BF202BD54B18763C41DC594C7'
     '5DB1DC272DA0F55CBECA7B813DC7E255EE39114864D7C01354533B14553D49D2' = '3F430491CFE11A5CA0F5BD7CC16E1B4685576FCFE52C8AC87C19CAAE3B31ED4C'
+    '49FA359E94245A4EA9667861735DEFA03FB0EEFBD23B5BE688CD99181F0363E6' = 'D157A4254B513FFB5B1814FB9F031CB15468BB0165C70A94F6183D0B3B625AE8'
 }
 
 # --- the allocation ceilings, the second frame after a fresh load, exact ---
@@ -745,6 +752,11 @@ $sameRows = @{
 # and Sand 427 where 507; Superposition's act 346 where 560, its cascade 3,947
 # where 4,174; naught's 22 as before; the reallocations the same. The same
 # integers and bytes on every run.
+# 2026-10-29, ENGINE.28's close: Superposition's manifest names its keyboard's
+# sheets, (game "Field" "Observer"), (read "Field" "Observer") and (work
+# "Constants"), which the cartridge's manifest holds once loaded: its three
+# heaps 1,020 bytes more each, 10,818,546, 10,820,412 and 10,825,366, the
+# counts and the grid's own bytes the same.
 $allocationCeilings = [ordered]@{
     'life'     = @{ Allocs = 23; Reallocs = 5; Memory = 2525819 }
     'life-x4'  = @{ Allocs = 23; Reallocs = 5; Memory = 9477744 }
@@ -753,9 +765,9 @@ $allocationCeilings = [ordered]@{
     'gun-x4'   = @{ Allocs = 23; Reallocs = 5; Memory = 9403462 }
     'gun-x16'  = @{ Allocs = 23; Reallocs = 5; Memory = 20956126 }
     'sand'     = @{ Allocs = 427; Reallocs = 5; Memory = 10182809 }
-    'superposition'         = @{ Allocs = 22; Reallocs = 5; Memory = 10817526 }
-    'superposition-act'     = @{ Allocs = 346; Reallocs = 37; Memory = 10819392 }
-    'superposition-cascade' = @{ Allocs = 3947; Reallocs = 63; Memory = 10824346 }
+    'superposition'         = @{ Allocs = 22; Reallocs = 5; Memory = 10818546 }
+    'superposition-act'     = @{ Allocs = 346; Reallocs = 37; Memory = 10820412 }
+    'superposition-cascade' = @{ Allocs = 3947; Reallocs = 63; Memory = 10825366 }
     'naught-f'              = @{ Allocs = 22; Reallocs = 5; Memory = 3382521 }
     'naught-s'              = @{ Allocs = 22; Reallocs = 5; Memory = 128662774 }
 }

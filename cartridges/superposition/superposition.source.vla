@@ -20,7 +20,9 @@
 ;   branch (N): another world, its lattice dealt again from its number.
 ; The Observer sheet keeps the experiment's counts: the sites observed, the boxes, the
 ; decays observed and the sites still in superposition. Constants!B1 holds the decay
-; probability, 0.15, which anyone may edit; at 0.09 one opening spans the lattice.
+; probability, 0.15, which anyone may edit; at 0.09 one opening spans the lattice. The Field
+; and the Observer are the game's and read-only, a key there a command or refused, so that no
+; Delete empties a site's formula; the Constants is a person's to type into (ENGINE.28).
 ; Clock!B3 is the seed: everyone who types the same seed observes the same worlds.
 ;
 ; The words are quantum mechanics', and the game is a mine-clearing game's: a mine is a
@@ -49,13 +51,16 @@
 ;     block and a row's sum of its blocks, never 512 sites again.
 
 (cartridge "superposition"
-  (spec 6)                          ; the version of docs/SPEC.md this cartridge is written to: (settle K) and (bound ...) are version 6's
+  (spec 6)                          ; the version of docs/SPEC.md this cartridge is written to: (settle K), (bound ...) and the keyboard's sheets are version 6's
   (title "Superposition")           ; what the host shows
   (rate 0)                          ; an act steps the lattice; nothing else does
   (screen grid 80 50)               ; the Screen, hidden: the Camera shows the Field in its place
   (seed host)                       ; the host's seed, a new lattice each load; a seed typed into Clock!B3 brings a world back
   (settle 4096)                     ; an act's settle, at most 4,096 steps
   (bound "Field")                   ; the Field drawn to its extent and no further: the lattice is the grid
+  (game "Field" "Observer")         ; the game's keys on the Field and the Observer, N where the world's counts show among them
+  (read "Field" "Observer")         ; read-only: no key or row of a person's writes either, so no site loses its formula
+  (work "Constants")                ; the decay probability, a person's to type into
   (author "Spreadsheet Company")    ; who wrote it
   (license "0BSD")                  ; the header's twin: copy this file to start a game of your own
   (notes "Superposition: every site of the lattice is safe and decayed at once until you observe it. Space observes the site the selection stands on, B boxes it, C collapses a reading whose boxes equal it, N branches to another world. A decay observed is counted, and the experiment goes on."))

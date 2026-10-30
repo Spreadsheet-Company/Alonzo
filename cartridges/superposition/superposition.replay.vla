@@ -16,7 +16,9 @@
 ; inside the opening, the owner's finding at the second. It replaces the stand-in, the floors' scripted
 ; player's session (CART.12, decision 7). Its golden is the Tally's row sums at its last frame, each
 ; decoding into its row's observations, boxes and decays.
-(replay "superposition" (spec 6) (cartridge "D157A4254B513FFB5B1814FB9F031CB15468BB0165C70A94F6183D0B3B625AE8") (seed 1071231759))
+; Re-stamped 2026-10-29 at ENGINE.28's close, the Field and the Observer the game's and read-only and the
+; Constants a person's, a manifest's directives that move no cell the session writes or reads.
+(replay "superposition" (spec 6) (cartridge "49FA359E94245A4EA9667861735DEFA03FB0EEFBD23B5BE688CD99181F0363E6") (seed 1071231759))
 (frame 1
   (cell "Input" "B11" 1)
   (cell "Input" "B12" 1)
