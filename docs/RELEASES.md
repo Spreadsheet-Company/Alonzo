@@ -32,7 +32,7 @@ The frame floors' eighteenth baseline, the instrument's run over `vla-lang` 0.12
 
 ### The items in it
 
-- **Closed**, each with its line in `REARVIEW.md`'s ledger: `CART.12`, *Superposition* and the page's version 6; `ENGINE.26`, a dragged width kept a sheet; `CART.14`, *Seiyaku*; `SPEC.5`, the keyboard's sheets; `KIT.5`, the kit over the formula syntax; `ENGINE.28`, a format's appearance drawn; and `REPO.8`, the checks in minutes, `run_checks.ps1 -WithExtras` from 28 minutes to under six.
+- **Closed**, each with its line in `REARVIEW.md`'s ledger: `CART.12`, *Superposition* and the page's version 6; `ENGINE.26`, a dragged width kept a sheet; `CART.14`, *Seiyaku*; `SPEC.5`, the keyboard's sheets; `KIT.5`, the kit over the formula syntax; `ENGINE.28`, a format's appearance drawn; `REPO.8`, the checks in minutes, `run_checks.ps1 -WithExtras` from 28 minutes to under six; and `REPO.11`, the palette case's blurs its own, a case that had failed the gate now and then, and on GitHub's Windows runner, when a headless page got the window's focus late.
 - **In progress, shipped as they stand**: `CART.9`, *Naught*, its first three slices and the short slice after them; `KIT.6`, the kit helper-hungry, its first slice.
 - **The pins**, `ENGINE.1`'s records: the language at 0.10.1, 0.11.0 and 0.12.0, each measured into the floors' baseline of its day.
 

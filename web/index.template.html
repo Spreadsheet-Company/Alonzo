@@ -6276,7 +6276,10 @@
       }
       // The window's own loss of the focus (CART.9's hand test, 2026-10-20: Alt+Tab or a screenshot shut the palette and
       // lost what was typed): a blur while the window has not the focus keeps the palette open with its text, and a
-      // blur while it has it, a click elsewhere, shuts it.
+      // blur while it has it, a click elsewhere, shuts it. The case dispatches each blur to the prompt itself, the
+      // window's focus its own stand-in (REPO.11): while its page lacks the window's focus a browser moves the focus and
+      // fires no blur, and a headless page's focus comes late now and then, after this task has begun, so that a blur left
+      // to the browser judged when the page got the focus and not the palette.
       var windowHas = false;
       var pal3 = new Palette(box, { lines: function (t) { return paletteLines(t, COMMANDS, SHEETS, []); }, run: function () { return true; },
                                     side: function () { return 'top'; }, focused: function () { return windowHas; } });
@@ -6284,12 +6287,11 @@
         before.focus();
         pal3.openWith('(cell "Bench" "A2" 1)', 20, before, null);
         pal3.input.value = '(cell "Bench" "A2" 12)';
-        pal3.input.blur();
+        pal3.input.dispatchEvent(new FocusEvent('blur', { relatedTarget: null }));   // the window's own
         if (pal3.isOpen() && pal3.input.value === '(cell "Bench" "A2" 12)') k.kept++;
         else P.push('palette: a blur while the window had not the focus left the palette ' + (pal3.isOpen() ? 'open with ' + JSON.stringify(pal3.input.value) : 'shut') + ', where it stays open with what was typed');
         windowHas = true;
-        pal3.input.focus();
-        before.focus();
+        pal3.input.dispatchEvent(new FocusEvent('blur', { relatedTarget: before }));   // a click on the box's button
         if (!pal3.isOpen()) k.kept++; else P.push('palette: a blur while the window had the focus, a click elsewhere, left the palette open, where it shuts');
       } finally {
         pal3.destroy();

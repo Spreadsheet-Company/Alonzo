@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds one hundred and ninety-three mutant pages through tools/build_web.ps1 and runs
+-Control builds one hundred and ninety-four mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -550,6 +550,9 @@ test one more, GH, when the real page holds the module: a hidden neighbor's side
 next column or row and not the next shown, which the grid card must fail by name between R2 and T2, beside its
 hidden column S, or I11 and I13, beside its hidden row 12, each drawn by the hidden cell's red side where the record
 resolves it to the shown cell's blue one.
+And REPO.11 one more, needing no module: HA, a prompt's blur that never shuts the palette, which the palette case must
+fail by its second verdict's line, a blur while the window has the focus, as FF fails by its first's. The case dispatches
+both blurs itself, since a headless page's window focus comes late now and then and a browser fires no blur without it.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -860,6 +863,8 @@ $keysFloors = @{ defaults = 1; refused = 18; places = 25; steps = 3; lines = 3; 
 # 2026-10-24, CART.9's short slice, the owner's word at its hand test: the floating palette's side by the cell's box in
 # the window's halves, where it was the rows in view, 8 sides; and 3 of a cell's box, the hit test's inverse, its middle
 # the cell in the frozen corner, unscrolled and scrolled.
+# 2026-10-30, REPO.11: every count as it was, the kept's 2 now over two blurs the case dispatches itself, so that a page
+# whose window's focus comes late, which counted 1 and failed here now and then, counts the same as any other.
 $paletteFloors = @{ commands = 33; keyed = 11; lines = 10; opened = 1; ran = 1; chosen = 1; rows = 1; recalled = 1; closed = 3; restored = 1; held = 1; passed = 1; clicked = 1; escapes = 5; edits = 12; sides = 8; boxes = 3; cellEdits = 7; placed = 5; clears = 6; kept = 2 }
 # 2026-10-20, SPEC.5: the twenty-nine cases' counts unchanged but the palette's commands, and a thirtieth, modes, on both
 # pages, its counts a function of its plan. Its page half, pure: 34 keys of SPEC.5's table, each mode's sheet given a
@@ -999,6 +1004,8 @@ $settleDoubleFloors = @{ fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased
 # ENGINE.28's second slice, 2026-10-25: GF, a shared edge's tie the left cell's, needing no module, and GG, a repaint's
 # band not grown, to one hundred and ninety-two, and ninety-three without the module. 2026-10-29, at its hand test: GH,
 # a hidden neighbor's side taken, needing the module, to one hundred and ninety-three, still ninety-three without it.
+# REPO.11, 2026-10-30: HA, the palette case's, needing no module, a blur never shutting the palette, to one hundred and
+# ninety-four, and ninety-four without the module.
 # 2026-10-17, ENGINE.25's second slice: the case's page half, pure and so on every page, module or not, its counts a function of
 # its plan: 6 names a page writes a game's command by, held to the cartridge and the command or to none; 4 of the palette's
 # lines, the command that holds with its own key, found by a word after the dot, the one that holds not no line, and one
@@ -2284,7 +2291,10 @@ if ($Control) {
                Want = 'case palette.*palette: Delete over the selection \{"kind":"cells","text":"A2:B3"' },
             @{ L = 'ff'; Name = 'the window''s blur shutting the palette'; Anchor = "    input.addEventListener('blur', function () { if (self._pageFocused()) self.close(false); });"
                With = "    input.addEventListener('blur', function () { self.close(false); });"
-               Want = 'case palette.*palette: a blur while the window had not the focus left the palette shut' }
+               Want = 'case palette.*palette: a blur while the window had not the focus left the palette shut' },
+            @{ L = 'ha'; Name = 'a blur never shutting the palette'; Anchor = "    input.addEventListener('blur', function () { if (self._pageFocused()) self.close(false); });"
+               With = "    input.addEventListener('blur', function () { });   // a blur never shutting the palette, by the control"
+               Want = 'case palette.*palette: a blur while the window had the focus, a click elsewhere, left the palette open' }
         )
         $paletteNotes = New-Object System.Collections.Generic.List[string]
         $paletteJudged = New-Object System.Collections.Generic.List[object]
@@ -2820,7 +2830,7 @@ if ($Control) {
         if ($script:LoopMode -eq 'run') { Write-Output (Get-PoolNote) }
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and ninety-three' } else { 'ninety-three applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and ninety-four' } else { 'ninety-four applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
