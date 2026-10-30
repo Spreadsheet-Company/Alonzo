@@ -984,6 +984,57 @@ Found:
 - *The fill-laid bench pays for 0.11.0's plan of fills that read one another.* Native naught-f read 10% slower over three runs, 10,681,201 cells a second against the sixteenth's 11,838,275, where the shuffled bench, every gate its own shape, read 16% faster, 2,948,008 against 2,550,403; the regularity premium narrows natively from 4.6 to 3.6 times, and in the browser from 3.8 to 3.7, the language's to weigh with Sand's 8%.
 - *The page carries 0.11.0's whole library.* The module grew 73%, to 1.8 MB, and the page to 4.9 million characters, every function the language computes in it whether a cartridge calls it or not.
 
+*The pin at `vla-lang` 0.12.0, 2026-10-30, at the owner's word: "Frazaro/vla-lang 0.12.0 is live on GitHub and crates.io, so Alonzo can be pinned and perhaps 0.3.0 can be cut and published?", and after the assessment, "Recommendations approved; proceed with releasing 0.3.0."*
+
+The release is Frazaro's, its release commit `30c4522`, tagged `v0.12.0` on `bc6dd77`, whose one change after it notes the determinism wall on Frazaro's roadmap; the crate's `src/` and `data/` are the tag's, file for file.
+- `VLA.5`, `VLA.6` and `VLA.15`, the expander's loops and names: `each`, `each-index` and `assoc-expand`; `define`, `last`, `sheet-expand` and `range-expand`; `list?`, a reference's absolute marks and `first-cell-expand`; each name reserved. And two fixes: a macro whose last form is an atom, a quote, a formula or a primitive keeps the forms before it.
+- Nothing else: against 0.11.0 the crate differs in `expand.rs`, `formula_syntax.rs`, five lines of `refers.rs` and the catalogue's new refusals; the machine, the census, the view and the library are 0.11.0's, file for file.
+
+What moved:
+- `Cargo.toml`'s pin and its comment, and the lock: the checksum `7e83f2f1…`, still two packages.
+- `check_engine_deps.ps1`'s baseline and its header.
+- `check_frame_floors.ps1`: the eighteenth baseline (below). Every heap and allocation is the ceilings' to the byte, Superposition's three the 1,020 bytes over the seventeenth that its manifest's directives added at ENGINE.28's close, so no ceiling moves.
+- No source, golden or replay: the eleven cartridges expand to their bytes, no macro of theirs taking a name 0.12.0 reserves, and every describe golden and replay digest stands.
+
+The oracle, on the day (*measurement*):
+- `cargo test --release`: 82 tests of the library and the doc test, every cartridge required (`ALONZO_REQUIRE_CARTRIDGES=1`); `cargo clippy --all-targets` and `cargo fmt --check` are clean.
+- `expand -- --check`: eleven `same`.
+- The module: 1,866,385 bytes, 46,640 more than the 1,819,745 it was, 0.12.0's expander, which the page's pass carries. It imports nothing and exports the twelve names.
+- `check_engine_deps.ps1 -Control` and `check_frame_floors.ps1 -Control` pass; `run_checks.ps1 -WithExtras`, ALL GREEN in 319 seconds, the thirteen checks and the thirteen verifiers, the loop control 229 of them; the page, 5,130,466 characters.
+
+*The floors' eighteenth baseline,* seven runs of `tools/bench_frames.ps1` by this session, in a copy of the tree at the pin, both halves opted out of the throttling and on the performance cores. The first four refused themselves when their clocks moved, a native frame once stalling 2.4 s and a clock once read at 0.854 ms against 0.335: another session's probes, a burner of ten workers and a pool of headless browsers, held the machine at 96 to 100%, and paused at this session's ask. The three after them ran on the quiet machine, and each refused rows the others passed: native superposition-act in all three, its p95 0.42 to 0.45 ms where the seventeenth read 0.37; wasm life in two; native sand, native naught-s and native gun-x4 in one each, the last 0.07% under. The engine's stepping and the runner are the seventeenth's, every change since in tests, sources and the page, and the language's machine is 0.11.0's file for file, so the spread is the machine's between runs, as the 2026-10-18 and 2026-10-20 entries found for such rows. The block pasted is the third's, its entry lowering those five floors by hand, each to the lowest of the three runs less 10%, with its reason; the runs raised five others, each floor under every run's number, and wasm superposition-act stays at 1,020,000,000 (the fifteenth's note). Every heap and allocation is the ceilings' to the byte.
+
+| row | frame p50 | cells a second | floor |
+|---|---|---|---|
+| native life | 2.2 ms | 28,725,763 | 27,800,000, kept |
+| native life-x4 | 8.8 ms | 28,780,596 | 26,400,000, kept |
+| native life-x16 | 36.5 ms | 27,928,383 | 26,200,000, kept |
+| native gun | 0.0194 ms | 3,243,607,679 | 3,100,000,000, kept |
+| native gun-x4 | 0.0198 ms | 12,837,614,346 | 10,600,000,000, from 11,800,000,000, lowered with its reason |
+| native gun-x16 | 0.0212 ms | 48,105,849,057 | 43,800,000,000, kept |
+| native sand | 3.1 ms | 60,277,791 | 52,300,000, from 59,900,000, lowered with its reason |
+| native superposition | 0.0010 ms | 817,283,331,628 | 735,000,000,000, from 715,000,000,000 |
+| native superposition-act | 0.2889 ms, p95 0.4249 | 1,879,809,367 | 1,590,000,000, from 1,930,000,000, lowered with its reason |
+| native superposition-cascade | 0.1680 ms | 4,620,238,414 | 4,290,000,000, kept |
+| native naught-f | 5.0 ms | 10,579,983 | 9,520,000, from 9,480,000 |
+| native naught-s | 19.3 ms | 2,736,107 | 2,260,000, from 2,650,000, lowered with its reason |
+| wasm life | 2.8 ms | 22,896,000 | 20,200,000, from 23,600,000, lowered with its reason |
+| wasm life-x4 | 10.6 ms | 23,842,629 | 22,100,000, kept |
+| wasm life-x16 | 44.5 ms | 22,917,843 | 21,300,000, kept |
+| wasm gun | 0.0266 ms | 2,370,409,511 | 2,130,000,000, from 1,850,000,000 |
+| wasm gun-x4 | 0.0258 ms | 9,849,173,476 | 8,860,000,000, from 7,900,000,000 |
+| wasm gun-x16 | 0.0289 ms | 35,281,089,275 | 33,500,000,000, kept |
+| wasm sand | 4.2 ms | 45,051,190 | 40,500,000, from 39,600,000 |
+| wasm superposition | 0.0014 ms | 570,522,201,153 | 513,000,000,000, kept |
+| wasm superposition-act | 0.4000 ms, p95 0.7000 | 1,141,044,597 | 1,020,000,000, kept |
+| wasm superposition-cascade | 0.2000 ms | 3,409,966,962 | 3,070,000,000, kept |
+| wasm naught-f | 6.5 ms | 8,133,077 | 7,670,000, kept |
+| wasm naught-s | 23.2 ms | 2,278,664 | 2,080,000, kept |
+
+Found:
+- *The floors' instrument cannot share the machine.* Four runs refused themselves while another session's probes loaded it, and the three on the quiet machine still read the act's p95 15 to 21% above the seventeenth's on the same stepping code: a row under a millisecond spreads between sessions past the floors' margin of 10%, so the five rows lowered tonight are a quiet session's to raise again.
+- *0.12.0's expander costs the page 46,640 bytes* of module, 2.6%, for forms only a source's pass uses; the page carries the pass whole, as it carries the library (the seventeenth's Found).
+
 ## `ENGINE.2` — the frame path: the plane held to the record of the same window
 
 *Scoped 2026-10-09, at the owner's word, the day `ENGINE.1` closed: the Screen read out of the module's memory as bytes and blitted whole, held equal to the view record of the same window by a test, the record being the oracle (`CHARTER.md` §3), and the window the Camera's (`SPEC.md` §13's two oracles for this item). The scoping finds the path itself already laid, since `ENGINE.1` had to draw something: the host views the plane, copies the bytes out and blits them through the Palette. What is missing is the oracle, a fixture that reaches every arm of the byte's rule, and the cost the second slice measured, which is the language's. So the scoping is mostly a measurement, made before any claim, and its first finding moves the cost to Frazaro.*
