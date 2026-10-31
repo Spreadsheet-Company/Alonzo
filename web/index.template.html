@@ -3615,6 +3615,47 @@
   // frame 20. Every frame after the first is drawn from the values projection (the second slice), and a
   // values record written here is read whole by a viewport of its own (gqLone). Alonzo's own half since
   // ENGINE.16, run by caseGrid on Alonzo's page alone.
+  // A sheet keeps its selection and its scroll (the owner's hand test of CART.14.1, 2026-10-30): coming back to a sheet by a
+  // host's show or by its tab finds them where they were left, as a spreadsheet's sheets do, and the select event says so; A1
+  // and the top left the first time; each sheet its own; a frame's record keeps them; and a clear forgets them, a new game.
+  function gridSheetViews(P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div'), n = 0, vp = null, said = [];
+    box.style.cssText = 'width:' + GRID_BOX.w + 'px;height:' + GRID_BOX.h + 'px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    function record(name) { return '(sheet "A" visible)\n(sheet "B" visible)\n(window "' + name + '" "A1:Z400")\n(cell "' + name + '" "A1" 1)\n'; }
+    function held(what, got, due) { if (got === due) n++; else P.push('grid, a sheet\'s view: ' + what + ' reads ' + got + ', where ' + due + ' is due'); }
+    function place() { var s = vp.scrolled(); return s.top + ',' + s.left; }
+    try {
+      vp = new VP(box);
+      vp.load(record('A'));
+      vp.load(record('B'));
+      vp.on('select', function (s) { said.push(s.text); });
+      vp.select('C3');
+      vp.scrollTo(200, 5);
+      var left = place();
+      vp.show('B');
+      held('the first time on B, the selection', vp.selection().text, 'A1');
+      held('the first time on B, the scroll', place(), '1,1');
+      vp.select('D4');
+      said.length = 0;
+      vp.show('A');
+      held('back on A, the selection', vp.selection().text, 'C3');
+      held('back on A, the scroll', place(), left);
+      held('back on A, the select event', said.join(), 'C3');
+      vp.show('B');
+      held('back on B, its own selection', vp.selection().text, 'D4');
+      viewPoints(vp).tab('A').click();
+      held('back on A by its tab, the selection', vp.selection().text, 'C3');
+      vp.load(record('A'), { keep: true });
+      held('after a frame\'s record of A, the selection', vp.selection().text, 'C3');
+      vp.clear();
+      vp.load(record('A'));
+      vp.load(record('B'));
+      vp.show('B');
+      held('after a clear, the selection on B', vp.selection().text, 'A1');
+    } finally { if (vp) vp.destroy(); stage.removeChild(box); }
+    return n;
+  }
   function gridOwn() {
     var P = [], kf = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0 };
     var km = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0 };
@@ -3704,7 +3745,7 @@
         strict: true
       }, km, P);
     }
-    return { counters: { fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeTexts: kf.texts, fakeLooks: kf.looks, fakeUnvalued: kf.unvalued, fakeProbes: kf.probes, fakeKept: kf.kept, fakeCleared: kf.cleared, fakeValues: kf.values,
+    return { counters: { sheetViews: gridSheetViews(P), fakeFrames: kf.frames, fakeEqual: kf.equal, fakeWindows: kf.windows, fakeTexts: kf.texts, fakeLooks: kf.looks, fakeUnvalued: kf.unvalued, fakeProbes: kf.probes, fakeKept: kf.kept, fakeCleared: kf.cleared, fakeValues: kf.values,
                          pointer: x.pointer, key: x.key, edited: x.edited, waits: x.waits, lone: x.lone, module: module, frames: km.frames, equal: km.equal, windows: km.windows, texts: km.texts, wraps: km.wraps, fills: km.fills, looks: km.looks, styles: km.styles,
                          columns: km.columns, unvalued: km.unvalued, hidden: km.hidden, probes: km.probes, kept: km.kept, followed: x.followed, edits: x.edits, cleared: km.cleared, hashes: km.hashes || 0, values: km.values,
                          fakePatches: kf.patches || 0, patches: km.patches || 0, codes: x.codes, coded: km.coded || 0, fakeFonts: kf.fonts || 0, fonts: km.fonts || 0, fakeEdges: kf.edges || 0, edges: km.edges || 0,
@@ -3841,6 +3882,9 @@
         if (f === plan.show) {
           var b = tab(plan.sheet);
           if (!b) { P.push(at + ': no tab ' + plan.sheet + ' in the strip'); break; }
+          // the person left the Screen scrolled away from the Camera's corner, on a cell of their own (CART.14.1's hand test)
+          vp.select('C5');
+          vp.scrollTo(cam0.row + 2, cam0.col + 1);
           b.click();
           if (vp.sheet() !== plan.sheet) { P.push(at + ': the tab ' + plan.sheet + ', clicked, did not show its sheet: the viewport shows ' + (vp.sheet() || 'nothing')); break; }
           shown = plan.sheet; k.shown++;
@@ -3854,6 +3898,7 @@
           var s = vp.scrolled();
           if (vp.sheet() !== 'Screen') P.push(at + ': the Screen\'s tab, clicked, did not show the Screen');
           else if (s.top !== cam0.row || s.left !== cam0.col) P.push(at + ': the Screen\'s tab shows ' + VP.colName(s.left) + s.top + ' at the viewport\'s top left, and the Camera at ' + VP.colName(cam0.col) + cam0.row + ' puts its corner there');
+          else if (vp.selection().text !== 'C5') P.push(at + ': the Screen\'s tab puts the selection at ' + vp.selection().text + ', where the person left it on C5');
           else k.back++;
         }
         // the person's acts before the frame: the pointer and the wheel over the sheet shown, a bound key held;
@@ -7244,7 +7289,7 @@
   var MODES_SHEETS = [['Board', 'game read', true, false], ['Tray', 'game', true, true], ['Notes', 'work', false, true], ['Rules', 'read', false, false], ['Other', '', false, true]];
   function caseModes() {
     var P = [], k = { acts: 0, words: 0, places: 0, fakeRead: 0, fakeModes: 0, fakeEdits: 0, fakeSaid: 0, fakeUnnamed: 0, fakePlane: 0, fakeOlder: 0,
-                      module: 0, described: 0, opened: 0, takes: 0, pressed: 0, passed: 0, written: 0, refusedRows: 0, presses: 0, keyRefused: 0, rate: 0, refusals: 0, naught: 0 };
+                      module: 0, described: 0, opened: 0, takes: 0, pressed: 0, passed: 0, written: 0, refusedRows: 0, presses: 0, keyRefused: 0, rate: 0, refusals: 0, naught: 0, kept: 0 };
     modesPage(k, P);
     modesDouble(k, P);
     var wasm = builtModule();
@@ -7442,6 +7487,12 @@
         if (acted === x[2] && sel === 'C3') k.presses++;
         else P.push('modes: a press over C3 on ' + x[0] + ' was ' + (acted ? 'an act' : 'no act') + ', frame ' + c0.frame + ' to ' + c1.frame + ', the selection ' + sel + ', where ' + (x[2] ? 'an act' : 'the selection alone') + ' is due');
       });
+      // a tab left and come back to, and an act there: it stands on the cell the sheet was left on (CART.14.1's hand test)
+      pt.tab('Notes').click();
+      pt.tab('Tray').click();
+      key({ code: 'KeyM', key: 'm' });
+      var keptAt = vp.selection().text + ' ' + viewsNum(value('Input', 'B11')) + ',' + viewsNum(value('Input', 'B12'));
+      if (keptAt === 'C3 3,3') k.kept++; else P.push('modes: an act on Tray after a tab left and come back to stands on ' + keptAt + ', where C3 and its column and row, 3,3, are due');
       // a key on the read sheet, the page's refusal by its name: the count and the words
       pt.tab('Rules').click();
       host.readKey();

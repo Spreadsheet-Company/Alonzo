@@ -10,7 +10,7 @@
 ; digits by their fonts and its marks centered in their thirds, the Board a game sheet and read-only, and the
 ; Board moved to B2 behind a margin, each act's place a column and a row on so that every act stands on the
 ; variable it stood on; its golden stands.
-(replay "seiyaku" (spec 6) (cartridge "3E161C85F0C7290F0834B1E9DC9A85E91EAC27366F80B95C266C325D3A872077") (seed 700619202))
+(replay "seiyaku" (spec 6) (cartridge "6CB75F42F0FD2DF077067C55AF0991FC356DE6C30EC4198AC1B5E9825D1C8EF5") (seed 700619202))
 (frame 1
   (cell "Input" "B11" 2)
   (cell "Input" "B12" 2)

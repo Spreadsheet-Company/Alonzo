@@ -36,7 +36,8 @@
 
   What the viewport owns is the state no program sees (SD-23): the scroll, the
   selection, the widths a person dragged, each sheet's its own as a
-  spreadsheet keeps them (ENGINE.26), the frozen panes, the marks a host
+  spreadsheet keeps them (ENGINE.26; the scroll and the selection since
+  CART.14.1's hand test), the frozen panes, the marks a host
   asked for; the record is never written. What it does not do: no fill
   handle, no drag-move, no in-cell editing (web/CALLOSUM.md section 7,
   decision 5); the formula bar, the link to a sentence, the refusal in the
@@ -867,6 +868,7 @@
     if (options.colors) for (var k2 in options.colors) if (Object.prototype.hasOwnProperty.call(options.colors, k2)) this.colors[k2] = options.colors[k2];
     this.records = {};         // sheet name -> model
     this.layouts = {};         // a sheet's name, lowercased -> its layout, learned from its records (CART.12's hand test)
+    this.views = {};           // a sheet's name, lowercased -> its selection and its scroll when it was last left (CART.14.1's hand test)
     this.bounds = {};          // a sheet's name, lowercased -> true: drawn to its extent and no further (version 6's bound)
     this.widths = {};          // a sheet's name, lowercased -> its column's letters -> CSS pixels: the widths a person dragged on it or a host set (ENGINE.26)
     this.patchCount = 0;       // the patches laid on its models (ENGINE.19)
@@ -2014,7 +2016,7 @@
     this.records = {}; this.sheetList = []; this.active = '';
     this.layouts = {}; this.bounds = {};
     this.widths = {}; this.drag = null;
-    this._resetView();
+    this.views = {}; this._resetView();
     this._renderTabs();
     this._draw();
   };
@@ -2067,16 +2069,30 @@
     this.lastScroll = { x: -1, y: -1 };
     this.state.selection = { kind: 'cells', anchor: { row: 1, col: 1 }, focus: { row: 1, col: 1 } };
   };
+  // Where a sheet was left and where it is come back to (the owner's hand test of CART.14.1, 2026-10-30): its selection and
+  // its scroll, each sheet's its own as a spreadsheet keeps them, so that a person who looks at another tab comes back to the
+  // cell they were on; A1 and the top left the first time a sheet is shown, and after clear().
+  Viewport.prototype._leaveView = function () {
+    if (this.active) this.views[this.active.toLowerCase()] = { selection: this.state.selection, top: this.scroller.scrollTop, left: this.scroller.scrollLeft };
+  };
+  Viewport.prototype._comeBackView = function () {
+    var kept = this.views[this.active.toLowerCase()] || null;
+    this._resetView();
+    if (kept) this.state.selection = kept.selection;
+    return kept;
+  };
   // Show a sheet whose record is loaded; a name without a record is false.
   Viewport.prototype.show = function (name) {
     var key = this._findSheet(name);
     if (!key) return false;
-    var changed = this.active !== key;
-    if (changed) { this.active = key; this._resetView(); }
+    var changed = this.active !== key, kept = null;
+    if (changed) { this._leaveView(); this.active = key; kept = this._comeBackView(); }
     this._renderTabs();
     this._draw();
+    // the kept scroll after the draw, whose spacer gives this sheet its range
+    if (kept && (kept.top || kept.left)) { this.scroller.scrollTop = kept.top; this.scroller.scrollLeft = kept.left; this._draw(); }
     this._emit('sheet', { name: key, loaded: true, state: this._sheetState(key) });
-    // a sheet shown puts the selection at its A1 (found by the owner's hand test, 2026-10-08:
+    // a sheet shown puts the selection where it was left, or at its A1 (found by the owner's hand test, 2026-10-08:
     // the line under the grid kept the last sheet's selection), so the change is announced
     if (changed) this._emit('select', this._selectPayload());
     return true;

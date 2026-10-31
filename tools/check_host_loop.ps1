@@ -880,8 +880,8 @@ $paletteFloors = @{ commands = 33; keyed = 11; lines = 10; opened = 1; ran = 1; 
 # rate, M and x on the work sheet and on a game sheet (2); 5 of the engine's refusals; and on Alonzo's page Naught's
 # Lesson read and its Bench worked (2), which a game's page, holding no Naught, counts 0.
 $modesPageFloors = @{ acts = 34; words = 10; places = 5; fakeRead = 2; fakeModes = 6; fakeEdits = 5; fakeSaid = 2; fakeUnnamed = 3; fakePlane = 1; fakeOlder = 3 }
-$modesFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; presses = 5; keyRefused = 1; rate = 2; refusals = 5; naught = 2 }
-$modesGameFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; presses = 5; keyRefused = 1; rate = 2; refusals = 5 }
+$modesFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; presses = 5; keyRefused = 1; rate = 2; refusals = 5; naught = 2; kept = 1 }
+$modesGameFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; presses = 5; keyRefused = 1; rate = 2; refusals = 5; kept = 1 }
 # 2026-10-17, ENGINE.25: the twenty-six cases' counts unchanged, and a twenty-seventh, commands, over the module on both
 # pages, its counts a function of its plan: the card opened on the Desk, its four commands listed at the load; 40 frames,
 # 3 commands run alone, Input!B20 naming the command due at 23 frames and empty at 17; two commands a frame apart and one
@@ -1068,7 +1068,7 @@ $floors = @(
     # gridEdges 1,450, gridFonts 250, each above the card's alone, the fonts' room for the instance with fewest givens.
     # After ENGINE.28's close, Superposition's sites edged by their looks: gridEdges 50,929 at ratio 1 and 50,141 at
     # 1.5, the Field's about 49,000 beside the card's and the Board's; its floor 48,000, under both.
-    @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 2080; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1; fakePatches = 8; fakeFonts = 170; fakeEdges = 500 };
+    @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 2080; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1; fakePatches = 8; fakeFonts = 170; fakeEdges = 500; sheetViews = 9 };
                             WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 10300; wraps = 40; fills = 9150; looks = 8650; styles = 80; columns = 326; unvalued = 288; hidden = 17; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 200; values = 24; patches = 20; codes = 3; coded = 213; fonts = 260; edges = 410;
                                             grids = 4; gridFrames = 18; gridEqual = 16; gridValues = 33; gridTexts = 5250; gridCleared = 4; gridMoves = 18; gridBound = 3; gridCanvas = 10; gridFocused = 6; gridTyped = 3; gridEdges = 48000; gridFonts = 250 } },
     @{ Case = 'tabs';     Min = @{ fakeFrames = 14; fakeShown = 1; fakeHeld = 8; fakeScrolled = 1; fakeBack = 1; fakeScreen = 9; fakePointer = 1; fakeRouted = 1; fakeKey = 1; fakeStrip = 1; fakeWheel = 4; fakeTexts = 4600 };
@@ -1953,6 +1953,15 @@ if ($Control) {
                With = '  function shownAfter(size, i, last) { return i + 1; }   // a hidden neighbor''s side taken, by the control'
                Want = 'case grid.*the edge between (R2 and T2|I11 and I13) is drawn thin #[0-9A-Fa-f]{6} by (S2''s left|I12''s top), and the record resolves it to thin #[0-9A-Fa-f]{6} by (T2''s left|I13''s top)' }
         )
+        # CART.14.1's hand test: a sheet keeps its selection and its scroll across a tab, until a clear
+        $gridMutants += @(
+            @{ L = 'kv'; Name = 'a sheet''s selection forgotten'; File = 'viewport'; Anchor = '    if (kept) this.state.selection = kept.selection;'; With = '    // a sheet''s selection forgotten, by the control'
+               Want = 'case grid.*grid, a sheet''s view: back on A, the selection reads A1, where C3 is due' },
+            @{ L = 'kw'; Name = 'a sheet''s scroll forgotten'; File = 'viewport'; Anchor = '    if (kept && (kept.top || kept.left)) {'; With = '    if (false) {'
+               Want = 'case grid.*grid, a sheet''s view: back on A, the scroll reads 1,1, where \d+,\d+ is due' },
+            @{ L = 'kx'; Name = 'a clear keeping the sheets'' views'; File = 'viewport'; Anchor = '    this.views = {}; this._resetView();'; With = '    this._resetView();'
+               Want = 'case grid.*grid, a sheet''s view: after a clear, the selection on B reads D4, where A1 is due' }
+        )
         foreach ($mu in $gridMutants) {
             if ($mu.Module -and $moduleReal -eq 0) { $gridNotes.Add(("{0}: not applicable, the real page holding no engine module" -f $mu.Name)); continue }
             $orig = if ($mu.File -eq 'viewport') { $vpText } else { $js }
@@ -1981,7 +1990,9 @@ if ($Control) {
             @{ L = 'ak'; Name = 'the sheet shown viewed at the click alone'; File = 'host'; Anchor = '    if (!atLoad && this.vp && !isScreen(this.vp.sheet())) { if (this.refreshSheet(this.vp, false, frame)) this.c.draws++; return; }'; With = '    if (!atLoad && this.vp && !isScreen(this.vp.sheet())) return;'
                Want = 'case tabs.*fake frame \d+: B[12] shows "[^"]*", and the record says "[^"]*"' },
             @{ L = 'al'; Name = 'the window not given back'; File = 'host'; Anchor = '    this._quiet(function () { self._drawGrid(true); });'; With = '    this._quiet(function () { self._drawGrid(false); });'
-               Want = 'case tabs.*fake frame 8: the Screen''s tab shows A1 at the viewport''s top left, and the Camera at E1 puts its corner there' },
+               Want = 'case tabs.*fake frame 8: the Screen''s tab shows \w+ at the viewport''s top left, and the Camera at E1 puts its corner there' },
+            @{ L = 'ky'; Name = 'the Screen''s selection not kept'; File = 'host'; Anchor = '    if (kept !== null && this.vp.selection().text !== kept) this.vp.select(kept);'; With = '    // the Screen''s selection not kept, by the control'
+               Want = 'case tabs.*fake frame 8: the Screen''s tab puts the selection at A1, where the person left it on C5' },
             @{ L = 'am'; Name = 'the wheel taken everywhere'; File = 'host'
                Anchor = "    this._on(root, 'wheel', function (ev) { if (!playing() || !self._windowCellAt(ev)) return; self.wheel(ev.deltaY > 0 ? 1 : (ev.deltaY < 0 ? -1 : 0)); ev.preventDefault(); }, { passive: false, capture: true });"
                With = "    this._on(root, 'wheel', function (ev) { if (!playing()) return; self.wheel(ev.deltaY > 0 ? 1 : (ev.deltaY < 0 ? -1 : 0)); ev.preventDefault(); }, { passive: false, capture: true });"

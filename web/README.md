@@ -835,7 +835,7 @@ reads any text of forms into data, the host shim's one reader.
 
 | Event | When, and what it carries |
 |---|---|
-| `select` | the selection changed by a click, a drag, a key, `select()`, or a sheet shown, which puts it at that sheet's A1: `{ sheet, text, kind, range, focus }` |
+| `select` | the selection changed by a click, a drag, a key, `select()`, or a sheet shown, which puts it where that sheet's selection was left, its A1 the first time and after a load (`CART.14.1`'s hand test): `{ sheet, text, kind, range, focus }` |
 | `scroll` | the window moved, by a scroll or, since `CART.12`'s hand test, a resize of the box, full screen's among them, or since `ENGINE.26` a column dragged narrower or wider, which brings columns into view or takes them out: `{ sheet, top, left, bottom, right, window }`, the rows and columns in view and their range text |
 | `columnresize` | a column's edge was dragged and moved, at the release: `{ sheet, column, width }` in CSS pixels, the sheet the drag was pressed on and the width it left there, that sheet's alone, even when another sheet came to show during the drag (`ENGINE.26`); a press on a divider that moves nothing raises nothing |
 | `sheet` | a tab was chosen or a record shown: `{ name, loaded, state }`; `loaded` false asks the host for that sheet's record, which the engine's host answers with `answer(viewport, event)` (`ENGINE.14`) |

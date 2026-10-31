@@ -1470,10 +1470,11 @@
   // The Screen's tab (decision 2): the Screen viewed through the Camera's window as at a load, the view reset
   // and scrolled to the Camera's corner, the Camera followed from there; so a person who scrolled away, or who
   // watched another sheet while the Camera moved, has the game's window back. A click on it while it shows
-  // does the same.
+  // does the same. The selection stays where the person left it, as every sheet keeps it (CART.14.1's hand test).
   Host.prototype._screenTab = function () {
-    var self = this;
+    var self = this, kept = this.vp ? this.vp.selection().text : null;
     this._quiet(function () { self._drawGrid(true); });
+    if (kept !== null && this.vp.selection().text !== kept) this.vp.select(kept);
   };
 
   // ---- version 4's views (ENGINE.18): the sheet a grid cartridge opens on, and the sheet the game shows ----

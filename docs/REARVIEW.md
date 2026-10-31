@@ -8125,6 +8125,7 @@ The Board's value at a variable is a code, 100 times its kind, 10 times its box'
   - slice 2, the technique ladder: the three techniques in cells, `propagate`, propagation by the settle, and the book exam;
   - slice 3, the dial: N a parameter of the source, 4 by 4 to 25 by 25 each with its book, and N = 7 the scale knob.
   - `KERNEL.8`'s lookups serve both (the approval's facts above), so they wait for its release and the pin, an item of their own at the owner's word.
+  - *Minted 2026-10-30 as `CART.14.1`, with the rule on the released language beside them; its scoping is at this file's end.*
 - *The look's second half:* the digits twice the marks' size, borders for the boxes and alignment for the digits are `ENGINE.28`'s, which names Seiyaku among its consumers, after `KERNEL.50`'s release and the pin.
 - *Found at the second hand test:* the engine's own Clock sheet draws a seed of nine digits as #s in its default column (the screenshot of the palette over it), as a cartridge's own seed column did at `CART.12`'s hand test; the Clock is the engine's, so its width is the engine's to set.
 
@@ -9810,3 +9811,189 @@ Six lines and four of the template, thirteen and three of the check, one of the 
 - *What this machine cannot answer.* `pwsh` is not on it, so the `module` job's shell is CI's to hold, and the runner's own verdict on this item comes with the push. The stall of `controls.yml`'s Windows job is `REPO.8`'s addendum and not this item, but these runs bear on it. Over the pages with no module, `run_checks.ps1 -WithExtras` took 2 minutes 13 on all twenty processors and 3 minutes 34 on the four E-cores, and the check and the control at `-Jobs 2` under the mask 9 seconds and 2 minutes 21, with no browser past 9 seconds. Of the 200 runs one browser at a time two stalled, 73.8 and 21.1 seconds where the median was 1.6, the page's own clock normal in both, about seven seconds from its first script, so that the time went outside the page; one of the two lacked the focus and the other did not; and of the 450 runs at two browsers none passed 4.5 seconds. Too few to name; handed to that addendum's reader.
 
 *Closed 2026-10-30 at the owner's word, the gates above having found nothing that changes the fix, and committed at a later word of the owner's: "Commit REPO.11, commit my manual .gitattibutes edits, and mint the key-release gap as a new item." By content, other sessions' hunks left in the tree.*
+
+## `CART.14.1` — Seiyaku's outstanding half: its rule on the released language, the three techniques in cells with a hint and propagation, and the dial
+
+*Minted and scoped 2026-10-30 at the owner's word, once `vla-lang` 0.12.0 and Alonzo 0.3.0 were released: "Rather than minting a whole new CART.* item, couldn't we mint a CART.14.1 sub-item to address the outstanding Seiyaku functionalities?", and "Or a dashed ID (CART.14-1) if dotted IDs break the checker scripts." `CART.14`'s process stands: this scoping, the owner's approval, then slices, each a commit at the owner's word and each hand test the owner's. The pre-flight: `HEAD` `48b8d30`, one ahead of origin, the pin `vla-lang =0.12.0`; in the tree a peer's `tools/check_host_loop.ps1` and `web/index.template.html`, the page's first paint, which this entry neither reads nor writes. Every number below comes from throwaways beside the tree, native at opt-level 3, each table from one run on one machine, so a number compares within its table and not across tables. The tree holds this entry, the roadmap's line and a pointer in `CART.14`'s close, and nothing else.*
+
+**The ID.** `CART.14.1`, dotted. No tool or workflow of Alonzo reads the roadmap or the ledger as data. Frazaro's `check_id_registry` governs Frazaro's documents alone, and its token, `[A-Z]{1,8}\.?\d+(?:\.\d+)*[a-z]?`, takes `CART.14.1` whole and cuts `CART.14-1` at the dash, to `CART.14` (run, both spellings). Frazaro has the dotted precedents, `IN.0.5`, `IN.3.5`, `OPTIMIZE.0.1` and `PROLOG.5.1` to `5.4`; no dashed one exists. `run_checks.ps1` passed ALL GREEN, 13 of 13, with this entry and the roadmap's line in the tree. A sub-item takes no family number, so the table's next free stays `CART.16`, and `CART.14` stays closed.
+
+**Where Seiyaku stands.** Three commits have touched its source: `8ed1ea7` (`CART.14`), `ea3a3f2` (`KIT.5`) and `e22a0ed` (`ENGINE.28`). As it stands: 804 lines, 56,540 bytes; 4,205 rows, 123,940 bytes; 157 shapes, 2,833 formulas, 16 levels; its replay the owner's session, 35 acts over 104 frames.
+
+| What `CART.14`'s close left | Now |
+|---|---|
+| the formula syntax over the rule's text | done, `KIT.5`, the bytes unchanged |
+| digits twice the marks, boxes by their edges, given and entry ink, marks in their thirds, keys bold | done, `ENGINE.28`, the Board moved to `B2:J10` behind a margin |
+| read-only Board and Constraints, the game's keys on both | done, `SPEC.5`'s `(game ...)` and `(read ...)`, written into the manifest at `e22a0ed` |
+| slice 2, the technique ladder, and decision 4 (d), marks filtered | not begun; nothing of it in the tree |
+| slice 3, the dial | not begun; the generator, the solvers, the grader and both hands fixed at 81 variables |
+| the 128- and 81-argument CHOOSEs, the nine-argument picks, the Planes sheet, the recursive walks | still so, and lines 49 to 51 of the source still say the language "holds no COUNTIF for a cartridge", no longer true |
+
+**Predicted, then measured.** The predictions were written before any probe ran and are kept as they were. The exam came as predicted. The scale's costs came about an order of magnitude under what was predicted, and the ladder's memory over it, so slice 3's costs are to be measured at its build, not taken from a prediction.
+
+| | Predicted | Measured |
+|---|---|---|
+| the exam | 96 of 128 | 96: 32, 32, 32 and 0 by grade, in Python and in cells, under two seeds and two forms |
+| rounds to the fixed point | median 8 to 12, deepest 20 to 35 | median 6.5, 9, 13 and 6 by grade, deepest 18 |
+| one inference a frame, the deepest | 55 to 75 | 61 in cells, 63 frames; Python's coarser count 64 |
+| V1: the formulas; the file; the load; an act | 81 fewer; 2 to 4 KB less; 15 to 40% faster; within 10% | 81 fewer; 5.5 KB less; 8.5% faster; within 3% |
+| V2, over V1: the formulas; the shapes; the load; an act; memory | 810 fewer than today; about 45 fewer; 10 to 25% faster; within 20%; 10 to 25% less | 810 fewer; 60 fewer; 8.6% faster; +14% an assignment; 15% less |
+| N = 4: load; an assignment | 5 to 30 ms; 0.2 to 1 ms | 2.6 ms; 0.11 ms |
+| N = 5: load; an assignment | 20 to 100 ms; 0.5 to 3 ms | 3.9 ms; 0.22 ms |
+| N = 7: load; an assignment | 0.1 to 0.6 s; 2 to 15 ms | 8.6 ms; 0.70 ms |
+| `COUNTIF` against the planes | about a third fewer cells; at N = 7 within a factor of 2, direction unknown | 33% fewer at N = 3 and 46% at N = 7; 27% faster at N = 7 |
+| marks' text by an array | worth having at N = 7, not at N = 3 | halves `domains` at N = 7; nothing at N = 3 |
+| the ladder's formulas | 2,300 to 3,000 on planes; 1,300 to 1,400 once the strikes were 9-bit numbers | 1,591 |
+| the ladder's shapes: masks; planes | about 25; about 40 | 54; 190 |
+| an assignment's median: masks; planes | 400 to 1,000 µs; 110 to 160 µs | 248 µs; 151 µs |
+| the load: masks; planes | +20 to 40% | +25%; +42% |
+| memory held: masks; planes | +30 to 50% | +66%; +86% |
+| the slowest propagation: masks; planes | under 60 ms; under 15 ms | 27.5 ms; 18 ms |
+| no value moved while the ladder is not asked | true | true |
+
+**The rule's forms.** The tree's form V0; V1 the deal and the picks by `INDEX`; V2 that and the counts by `COUNTIF`, the Planes sheet gone. Seed 20261019, fifteen runs. V0's expansion is the tree's cartridge, byte for byte. Every frame of a session of every act held to the hand on each form's first run, and every computed sheet hashed equal across the three.
+
+| | Rows | Bytes | Held | Load | Shapes | Formulas | Alone |
+|---|---|---|---|---|---|---|---|
+| V0 | 4,205 | 123,940 | 1,869,632 | 13.72 ms | 157 | 2,833 | 162 |
+| V1 | 4,204 | 118,468 | 1,453,823 | 12.55 ms | 156 | 2,752 | 162 |
+| V2 | 4,090 | 112,244 | 1,229,121 | 11.47 ms | 97 | 2,023 | 72 |
+
+| An act's median, µs | Assign | Retract | Domains | Instance | Retract-all | Mark | Press |
+|---|---|---|---|---|---|---|---|
+| V0 | 78.3 | 94.8 | 250 | 419 | 285 | 55.5 | 53.5 |
+| V1 | 79.3 | 95.8 | 256 | 396 | 287 | 56.2 | 52.8 |
+| V2 | 90.3 | 107.5 | 256 | 443 | 324 | 54.5 | 53.0 |
+
+**The scale.** A generated board at each N: no deal, no look, its counts and its marks' text the only difference between the forms; five runs; a hash of the Board equal between the forms at each N. No obstacle to the dial is one of cost.
+
+| Form | File | Held | Load | Formulas | Shapes | Assign | Domains |
+|---|---|---|---|---|---|---|---|
+| N = 3, planes | 9 KB | 0.7 MB | 2.8 ms | 2,193 | 75 | 62.8 µs | 109.5 µs |
+| N = 3, `COUNTIF` | 5 KB | 0.6 MB | 2.2 ms | 1,464 | 32 | 68.5 µs | 120.7 µs |
+| N = 4, planes | 22 KB | 1.3 MB | 5.2 ms | 10,502 | 140 | 124.2 µs | 662 µs |
+| N = 4, `COUNTIF` | 9 KB | 1.0 MB | 2.6 ms | 6,406 | 46 | 112.6 µs | 639 µs |
+| N = 5, planes | 47 KB | 2.4 MB | 8.9 ms | 36,881 | 237 | 239.7 µs | 2,448 µs |
+| N = 5, `COUNTIF` | 16 KB | 1.7 MB | 3.9 ms | 21,256 | 64 | 219.8 µs | 2,514 µs |
+| N = 5, `COUNTIF`, marks by array | 15 KB | 1.5 MB | 3.4 ms | 21,256 | 64 | 208.5 µs | 1,518 µs |
+| N = 7, planes | 172 KB | 9.9 MB | 27.5 ms | 256,913 | 551 | 947 µs | 19.6 ms |
+| N = 7, `COUNTIF` | 44 KB | 5.7 MB | 8.6 ms | 139,264 | 112 | 695 µs | 19.3 ms |
+| N = 7, `COUNTIF`, marks by array | 42 KB | 5.4 MB | 8.0 ms | 139,264 | 112 | 688 µs | 9.3 ms |
+
+**The ladder, written in cells over V2.** A throwaway of slice 2's rule, so that the decisions below stand on a form that ran; the hands, decision 7's lifetime of a strike, decision 10's lit cell, decision 12's count and decision 13's filter are not in it. SPEC §11's decision 58 is what it rests on: the engine empties the command before the first settle step and keeps the place, so a flag over its twin carries a propagation across the settle's frames.
+- *The mechanism.* A frame's `Ladder` sheet reads the candidates and names one inference. The next frame reads it through the twin and applies it, an assignment by the person's own path, `Lab!B6` the value and `Lab!B10` the place, so the Entries' rule does not change; a strike by the Struck sheet. The Candidates read this frame's Struck, since the Struck reads the inference only through its twin, so no cycle forms and a strike costs no frame of its own.
+- *The sheets.* Struck 81, a 9-bit number a variable; Open 243, each unit's count of each value's open places, laid out as the Units are; Across and Down 243 each, a line's count inside a box; Naked 81 and Hidden 27, the first of each by `MIN` over keys; Forced 81, the place of a hidden single; Points 486, the pointing tests; Ladder 19; Lit 81, the reasons. 1,585 formulas, and six on the Lab, the Board and the Constraints.
+- *The exam.* Every puzzle of the book dealt by name, `P` pressed once: 32, 32 and 32 satisfied, and 0 of grade 4, its fixed points leaving 14 to 52 variables, as the Python ladder leaves them. The same under seeds 20261019 and 7, and in both forms.
+- *`I` alone.* Puzzle 70, grade 3: 61 presses to satisfied, three frames each, the words reading "E2 is 5: the only place left for it in its row." Puzzle 100, grade 4: 24 presses, then "Nothing the three techniques can infer: 34 variables left."
+- *A wrong value, then `P`.* A value the constraints still allowed and the solution does not hold, at four puzzles: a contradiction found and said in 3, 3, 14 and 42 frames, "1 variables have no value left in their domains", "3 values have no place left in a constraint" (the singular is the build's).
+- *Nothing moves unless asked.* A session of every act, the ladder never asked: every frame held to the hand as it stands today, and every shared sheet's values hashed equal to V2's. The only differences are the extents, the Board's now to row 12, and the new formats and looks.
+
+| Over V2 | Formulas | Shapes | Held | Load | Assign | Retract | Instance | Retract-all | `P`, median of the first three grades | `P`, slowest |
+|---|---|---|---|---|---|---|---|---|---|---|
+| V2 | 2,023 | 97 | 1.23 MB | 8.49 ms | 72.4 µs | 88.6 µs | 298 µs | 230 µs | | |
+| masks, each count a `SUMPRODUCT` over the 9-bit candidates | 3,614 | 151 | 2.05 MB | 10.59 ms | 248 µs | 352 µs | 1,367 µs | 1,178 µs | 13.3 ms | 27.5 ms |
+| planes, each count a `SUM` over the one-hot candidates | 3,614 | 287 | 2.28 MB | 12.09 ms | 151 µs | 186 µs | 511 µs | 419 µs | 7.0 ms | 18.0 ms |
+
+**The scoping, its decisions.** Slice 1, the rule, moving no value.
+
+1. **The item's shape.** Three slices in this order, the rule, the ladder, the dial, each a commit at the owner's word; the line 🟡 at the approval and into the ledger under THE CARTRIDGES at the close. The rule goes first so that the ladder is written once, over the form it will keep. *Alternatives:* the dial an item of its own, which `CART.14`'s decision 15 left as the owner's call at slice 2's close, and which stays so; the rule folded into the ladder's slice, declined, since a slice that moves no value is checked by the hand as it stands, and a slice that moves values is not.
+2. **The rule's form: V2.** The deal by `INDEX` (`Deal!A50:CC50` gone, 128- and 81-argument CHOOSEs gone); the picks by `INDEX`; the counts by `COUNTIF` over each row, column and box, one fill a table where the planes needed a walk a value (the Planes sheet, `row-counts`, `col-counts`, `box-counts`, `unit-count`, the count-pick macros, `violation-box`, `box-count-in` and `placed-counts` gone); `Lab!B11` and the Constraints' counts by `COUNTIF`. The source falls from 804 lines to about 713. The price is about 12 µs an assignment, 15%, for 29% fewer formulas, 38% fewer shapes and 34% less memory. The cartridge stops counting by `SUM` over planes, as the ledger's `CART.14` line says it does; that line stays, the record of what was closed. *Alternatives:* V1, which keeps the planes and the sums for that 12 µs; the tree's form, leaving the walks a reader must get past. The marks' text stays by arms at N = 3, since an array form gains nothing there.
+3. **Two steps inside the slice, one commit.** First the source's walks by `each` and `each-index`, the bytes unchanged, held by `expand --check`, the Board's nest by `priority`, which writes the same bytes, so that less is left for `REPO.7` to flag. Then the forms: both hands untouched and every frame held; the replay re-stamped with its golden unchanged; the describe golden blessed again and put back to CRLF; `check_cartridge`'s row floor lowered from 4,205 to 4,090 with its reason; the source's stale words, lines 48 to 53, rewritten. `KIT.10` rewrites the constraints over its verbs later with the bytes unchanged. *Alternative:* the two steps two commits, which the owner may prefer for the review; no number depends on it.
+
+Slice 2, the ladder.
+
+4. **An inference a frame**, where `CART.14`'s decision 15 said a round a frame. One inference is what a hint shows, so the hint and the propagation are one mechanism, and every assignment goes down one path, the person's. The deepest is 63 frames against 18 rounds, and the slowest 18 ms; a person sees neither, since a settle's frames lie inside one tick's slice (SPEC §5). *Alternative:* a round a frame, the first plan: a third of the frames, a second writer into the Entries, and on a board a person has made wrong, two singles naming one variable with two values, for a saving no person can see.
+5. **The commands, in constraint programming's words.** `infer`, key `I`: lights the next inference and says it; pressed again it applies what is lit and lights the next, so `I`, pressed again and again, walks the puzzle. `propagate`, key `P`: runs to the fixed point and says where it stopped. Any other command puts the light out. `P` solves an instance of the first three grades at a press, as `F` fills every domain, a person's own choice; the Constraints sheet's "No search was performed by the cartridge." stays true of it, since propagation is no search. *Alternatives:* decision 13's one `propagate` as the hint alone, the fixed point left to the tests, so that no person sees the ladder finish; `hint` and `solve`, plainer and against the words the game chose. **The words are the owner's.**
+6. **The ladder reads the constraints alone**, the candidates less the strikes, never the person's marks. A mark is the person's note and may be wrong. *Alternative:* marks as a person's knowledge, the ladder narrowing them, which makes a hint wrong wherever a mark is.
+7. **The strikes.** A 9-bit number a variable over its twin, 81 cells where a plane would hold 729. They hold across a person's assignment to an unassigned variable, since an assignment only narrows; a retraction, an overwrite, a restart or a new instance clears them. `F` fills the domains less the strikes. *Alternatives:* cleared by every assignment, what the throwaway does and the simplest rule, which would bring a struck mark back under decision 13's filter at the next digit typed; never shown, `F` ignoring them, which leaves a person's marks disagreeing with the hint's words.
+8. **The open counts: planes.** A cell reads `=SUM(Candidates!$A19:$I19)` and not `=SUMPRODUCT(MOD(INT(Candidates!$A83:$I83/2^(COLUMN()-1)),2))`, and costs about half, 151 µs an assignment against 248, since a flip reaches only its own value's counts where a mask's change reaches all nine values'. The price is 136 more shapes and 0.24 MB; the throwaway's lay-out is a first draft of it, and a plane-shaped lay-out may take many of those shapes back. *Alternative:* masks, 54 shapes and the smaller file, whose array cost grows with the square of the side at the dial.
+9. **The order: the grader's.** Naked, by variable; hidden, rows, then columns, then boxes, by unit and value; pointing, by box and value, a row before a column. The ladder is monotone, so the order moves which hint comes first and never what it solves. *Alternative:* hidden before naked, which a person's eye finds first; the grades say naked is the easier, and `grade` stays the one statement of the order.
+10. **A contradiction stops it, and is said.** A violated constraint, a domain emptied, or a value with no place left in a constraint: the inference is none and the words name which. An emptied domain is lit, a code of its own drawn as `∅` on the violation's red; a value with no place has no one cell, so words alone. All of it only while the ladder is asked, so that a wrong digit is not flagged before a person asks. *Alternatives:* lit always, which spoils the puzzle; words alone, what the throwaway does; an emptied domain alone, missing the throwaway's two of four wrong values found only by a value with no place.
+11. **The hint's look.** Three kinds on the Board's codes: 7 a given lit as a reason and 8 an assignment lit, each its digit's own ink on a pale lavender, `E6DFF7`; 9 the inferred value at its variable, white on Lovelace Lavender. 27 formats and 54 looks, formats 64 to 90. What is lit: for a naked single, the assigned variables that share a constraint with it; for a hidden single, its constraint's assigned variables and every cell holding the value; for a pointing pair, every cell holding the value. An unassigned variable draws text, so it cannot be lit by a code. The cone of the answer is most of the Board, and these are the part of it a person reads it by. *Alternative:* the exact witnesses, one a value excluded, a choice among several with no rule to prefer one. **The look is the owner's eye, at the hand test.**
+12. **The words, and where.** On the Board's row 11 from `B`, spilling over the empty cells to the right on the gray, and on the Constraints sheet as "next inference"; a variable by the address its headers show, "E2 is 5"; a constraint as "its row", "its column" or "its box", since the Constraints sheet's "row 3" is the Board's row 4. The keys panel takes `I`, `P` and decision 13's `M`, rows 11 to 13. The Constraints sheet takes a count of the variables assigned by inference, so that "satisfied, in 3 acts" says how. *Alternative:* the Constraints sheet alone, `CART.14`'s words, where a person playing on the Board does not look.
+13. **Decision 4 (d), marks filtered.** A key, `M`, its state on the Lab, off at the load: a mark no longer a candidate is not drawn, kept beneath, and back on a retraction. The Board's arms read one layer of 81 cells, the marks and the candidates by bit. Keyboard-first decides it: `CART.14` said "a setting anyone edits", and the Lab is hidden with no key to reach it. *Alternatives:* a cell on a shown sheet, which the read-only sheets refuse; always filtered, under which a person's mark is no longer theirs; left out.
+14. **The settle: `(settle 165)`, a bound and not a measurement.** At most 81 assignments; at most 81 pointings, since a box and a value point once until a person acts again, their places then all on that line; and the frames around them. The book's deepest is 63, and K costs nothing once the grid is still. *Alternative:* about 64, the book's deepest, which a board a person has made could run past, and the page then says the grid never settled.
+15. **The book exam: in cells, every puzzle.** A native test dealing each by name, its text's `Deal!B1` rewritten as the Kairos tests rewrite theirs, `P` pressed, (32, 32, 32, 0) held as a floor that never falls and the deepest under K; 2.7 s in the throwaway's release build. *Alternatives:* dealing by `N` until each is seen, about 440 deals; the hand alone, which leaves the cells unexamined.
+16. **The hands and the replay.** Both hands take the ladder, about 150 lines each (predicted), held at every frame of a scripted session with `I`, `P`, strikes and a contradiction. Mutants in `check_host_loop`, each named by the frame it fails at: candidates blind to the strikes, a hidden single read from the wrong unit, a filter that strikes the mark. The replay stands re-stamped until the owner's hand test, whose session, with `I` and `P` in it, takes its place. *Alternative:* the hands untouched and the ladder held by its exam alone, which would leave the hint's frames unheld.
+
+Slice 3, the dial.
+
+17. **Its decisions at its start, as `CART.14` said; its obstacles named now, none of them cost.** Keys: `1` to `9` run out at 16 values, and the marks' 3-by-3 block does not extend, so a modal entry, two commands on one key by their holds, under the limit of 100 commands; N = 7 the knob and no game. Drawing: 88 pixels a cell is 1,408 at 16 by 16 and 2,200 at 25 by 25. A person reaches a size how: a cartridge a size by the pass, or something at run time, which a fixed manifest does not offer. The generator, the solvers, the grader and both hands fixed at `[u8; 81]`. K, by decision 14's bound, 2N⁴ and the frames around it. The marks' array form, from N = 5. The owner may close the item at slice 2 and mint the dial.
+
+Across the slices.
+
+18. **Found, the owner's word to take or leave.** White on `B9A3E7`, the satisfied board's lighter boxes, is 2.22 to 1, under 3 to 1 for large text; white on `A080E0` is 3.15, and white on `8F6FD8` would be 3.87. The owner chose that board at the hand test of 2026-10-29, so nothing moves without the word. A step back at rate 0, `CART.14`'s Found 5, stays out. The engine's Clock sheet drawing a nine-digit seed as #s, `CART.14`'s Found at its second hand test, is the engine's and not this item's.
+
+**The catch.**
+- The marks' strings hold figure spaces, U+2007, that read as plain spaces: an edit that matches them by eye fails, and one that retypes them moves every marks cell.
+- A view's record lists every sheet, format, look and extent, so a hash of it moves when a sheet is added and no value has; hold the values alone. The throwaway's first hash said the forms differ, for that reason.
+- There is no `^expand`: a bit at expansion time is a table or a formula's `2^(v-1)`.
+- The ladder applies what the last frame named, `Ladder.last`, so its first act depends on the load's settle having run.
+- A `.vla` and the docs stay CRLF in the tree; a describe bless writes LF, and beside another session it blesses in an isolated copy.
+
+**What the language and the engine still lack.** *Asked by the owner the same day: "If the language has no COUNTIF, then perhaps CART.14 should wait until the language is ready before proceeding instead of building around the language's gaps? What else does VLA/Alonzo need before Seiyaku can be built properly?"* `COUNTIF` is no gap: `vla-lang` 0.11.0 computes it, and V2 and the ladder above ran on it; only the source's comment still denies it. Each gap below was tried through the pass and the load at the released language, or read at the code that decides it. The test applied: a gap whose filling would change the rows the cartridge writes is filled first where that is cheap, and a gap whose filling leaves the bytes unchanged waits for nothing, since `expand --check` holds the rewrite whenever it comes.
+
+| Gap | Whose, and its size | What Seiyaku does without it | Where it falls |
+|---|---|---|---|
+| A format chosen by a formula, a conditional format (`KERNEL.58`, with the painter's half Alonzo has yet to mint) | Frazaro and Alonzo, `~weeks` | A look matches a cell's own value and nothing else (SPEC §3.1), so the Board holds codes, 207 for an assigned 7, through 108 looks; and an unassigned variable, which draws text, cannot be lit, though those are the cells a hidden single's place and a pointing pair's line are | The hint's light and the Board's codes, a slice of their own after it |
+| A font's family (`KERNEL.58`) | the same | Figure spaces place the marks, and fullwidth letters place their keys | With the above |
+| `BITAND`, `BITOR` and `BITXOR`, refused at the load by name (`calc-function-not-computed`), unminted | Frazaro, `~hours`, in `KERNEL.60`'s shape | About twenty sites of `MOD(INT(x/2^k),2)` in the source, four more in the ladder, and decision 13's filter nine terms where one call would do | Before slice 2; 0.13.0 is unreleased |
+| `ADDRESS` (`KERNEL.60`), refused the same way | Frazaro, `~hours` | The hint's words build "E2" by `MID("BCDEFGHIJ",c,1)` | With the bit functions |
+| A line feed in a wrapped text, unminted | Alonzo, `~hours`: `wrapText` in `web/viewport.js` breaks at spaces alone, where the language computes `CHAR(10)` and the page's reader takes the row | The marks' five lines, a line of four figure spaces between two of marks, held by the font's widths | Before slice 2, whose filter rewrites the same arms |
+| `defexpand` and `let-expand` (`VLA.8`, its first decision the owner's) and `(parameter ...)` (`VLA.11`) | Frazaro, `~weeks` and `~days` | N cannot be named once: `(define side 3)` is refused by `+expand` (`vla-arith-expand-not-number-value`), and `each` refuses a list from a define (`vla-expand-expected-list`) or from a macro (`vla-each-list-a-call`). A dial today means the walks, the hand-on idiom and a later `defmacro`, the things those items retire | The dial waits for both |
+| A step back at rate 0 (`ENGINE.30`) | Alonzo, `~weeks` | `P` assigns into the person's own Entries, so only `R` takes it back, and `R` takes the person's assignments too | Nothing waits; until it lands, decision 5 gains `U`, retracting what inference assigned, from the same cells as decision 12's count |
+
+The bytes unchanged, so nothing waits: `KIT.6`'s `names` and `devices`; `KIT.10`'s verbs, whose oracle is slice 1's rows; `KIT.11`'s `book`; `VLA.10`'s `self`; `VLA.13` and `KIT.7`'s layout; `VLA.14`'s examples; `REPO.7`'s check. Not needed by this game: `LET` and `LAMBDA` (`KERNEL.29`), since the macros inline what they would name; spills (`KERNEL.55`), since a fill is already one shape; the threads and the shape compiler (`KERNEL.62`, `KERNEL.63`), given the scale table; and `ENGINE.31` with `KERNEL.61`, the cone in the viewport, which will explain the ladder's cells for free the day they land.
+
+**The order, recommended.**
+1. Slice 1 now, on 0.12.0. It retires workarounds the language has already made needless, and waiting would only keep them in the tree. The Deal's ranks go too: `=1+COUNTIF($A$1:$A$3,"<"&A1)`, tried, is each key's rank.
+2. `KERNEL.60` and the bit functions into 0.13.0 before its release, at the owner's word, the latter minted; the line feed in Alonzo; the pin moved, its own step.
+3. Slice 2 without the light: the ladder, `I`, `P`, `U`, the words, the exam, the filter over `BITAND`, and no look added.
+4. `KERNEL.58`'s conditional format and family, Alonzo's painter half minted; then a slice for the light, the Board's codes retired, every variable holding its own digit.
+5. The dial after `VLA.8` and `VLA.11`, as `CART.14.2`, minted then. `CART.14.1` closes at step 4.
+
+Taken, this moves decisions 1, 2, 5, 11, 13 and 17 as said here. *Alternatives:* all of slice 2 held for `KERNEL.58`, which keeps the ladder waiting weeks for a look its rule does not read; slice 2 with decision 11 as written, 54 looks and the digits alone lit, which the light's slice would then rewrite; the dial kept in this item, its slice held until the two items land.
+
+*Scoped 2026-10-30. The owner's word the same day: "Provide two starting prompts for new Frazaro sessions to scope and implement KERNEL.58 and KERNEL.60, then proceed with implementing slice 1 of CART.14.1." So the order's first step goes ahead, with decisions 1 to 3 as recommended and the ranks by `COUNTIF`, and `KERNEL.60` and `KERNEL.58` go to Frazaro's sessions. The bit functions and the line feed stay unminted, and the decisions of slice 2 and of the dial stay open, until the owner's word. The line is 🟡.*
+
+**Slice 1, the rule on the released language.** *Built, hand-tested and committed 2026-10-30 at the owner's word. Built and held in an isolated copy of `HEAD` `db054c2`, since a peer had Naught, `engine/src/cartridge.rs` and the checks open in the tree, and only this slice's files were copied back.*
+
+*What landed.*
+- First the source's walks by `each` and its nests by `priority`, every walk that stays and the Entries', the Marks' and the Board's rules, each unit named: eleven of eleven cartridges `same` by `expand --check`, so no byte of the cartridge moved in that step.
+- Then the forms: decision 2's V2, and three more cuts the reading found. The Deal's ranks by `COUNTIF`, `=1+COUNTIF(C$11:C$19,"<"&C11)`, where nine comparisons stood. The Givens' flags `A21:I29` gone, their one reader now a `COUNTIF`, 81 cells fewer. The commands' two sums and the marks' count by a loop inside the formula, and every mark by one macro, so that the first mark reads as the others do.
+- The source's stale words rewritten. Style, by a scan: 46 macros, at most 4 parameters and 7 lines; no recursive walk left, `quasiquote` nowhere in the source.
+
+| | `HEAD` | The slice | |
+|---|---|---|---|
+| Source | 804 lines, 56,540 bytes | 743 lines, 50,517 bytes | about 713 lines predicted, before the units were named |
+| Cartridge | 4,205 rows, 123,940 bytes | 4,089 rows, 112,119 bytes | 4,090 rows predicted, before the Givens' flags went |
+| Shapes; formulas; levels | 157; 2,833; 16 | 96; 1,942; 15 | 39% and 31% fewer |
+| Memory held; peak | 1,869,632; 3,003,866 | 1,193,291; 2,127,677 | 36% and 29% less |
+| Load | 10.97 ms | 8.22 ms | 25% faster |
+| An assignment; a retraction | 62.9 µs; 77.1 µs | 73.0 µs; 88.6 µs | +10 and +12 µs |
+| A deal; retract-all; domains | 287 µs; 206 µs; 202 µs | 319 µs; 233 µs; 202 µs | |
+
+Seed 20261019, 25 runs, the forms taken in turn, native at opt-level 3.
+
+*Held.*
+- Both hands untouched: `seiyaku_s_board_is_its_hand_at_every_frame` and the replay's 104 frames held to the hand; 82 tests and the doc test.
+- `HEAD`'s form and the slice's played side by side in a throwaway through a session of every act: every value of the Board, the Constraints, the Lab, the Givens, the Entries, the Marks, the Grid, the Units, the Violations and the Candidates hashed equal at every frame.
+- `expand --check`, eleven `same` over the final source; the book's example, `same`.
+- The replay's acts unchanged, its header stamped `6CB75F42F0FD`. Its golden moved by 14 rows, the two Planes sheet rows and the Constraints' twelve formula rows, no value among them; the script that respelled them refused any other row. Decision 3 said the golden would stand, which was wrong: the record lists every sheet and the Constraints sheet's formulas.
+- The describe golden blessed in the copy and put back to CRLF, the only one that moved. `check_cartridge`'s row floor lowered from 4,205 to 4,089 with its reason.
+- `run_checks.ps1 -WithExtras` in the copy, its module and runners built: ALL GREEN, 13 of 13 checks and 13 of 13 controls, the loop control in 262 s. A first run in that copy had no module built, so its browser cases ran on the fake double alone and proved nothing of this slice on the engine, and I reported it as a gate; the owner's hand test found it, the page drawing the double in Seiyaku's place. That run's one failure, the loop control's `modes` mutants with other browsers on the machine, did not recur, and its exact cause was not pursued.
+- Looked at on the real page in a headless run: the Board, the domains by `F`, an assignment, a violation, and the owner's replay played to its last frame, the Constraints sheet reading as its golden.
+
+*Found.*
+- Eight lists `(1 2 3 4 5 6 7 8 9)` stand written out in the source, since a `define` cannot hold one for `each` and a macro cannot supply one (both tried), which `VLA.8` retires.
+- A deal costs 32 µs more, about 21 of it the ranks' criterion texts, read at each deal alone. Nothing at rate 0.
+- `docs/RELEASES.md`'s 0.3.0 says "counted as sums over planes", true of what was released; the next release's notes say otherwise.
+- The selection opens on `A1`, the margin, so that a digit or Backspace pressed before a click or an arrow acts on no variable; since `ENGINE.28` moved the Board to `B2`, that cell is no variable. Not changed.
+
+*The owner's hand test, 2026-10-30:* "Hand tests pass." Two notes came with it, the second reworked into the slice.
+- *The selection's border:* "the purple border around the highlighted cell doesn't appear as bold/thick on the black-bordered sides as it does on the inner sides". Read in the canvas's device pixels at ratios 1 and 2, the counts the same at both. The ring is 2 pixels inside the cell's own rectangle, and a cell owns the pixels of its right and bottom lines and not of its left and top ones. So on its right and bottom the ring overwrites the line, thin or medium, and shows 2 purple; on its left and top it stands beside the neighbor's line, which stays, 1 black and 2 purple on a thin line and 2 and 2 on a medium one. `G7`, whose right and bottom are its box's bound, reads thinner on the black sides; `E5`, whose left and top are, reads bolder on them. Found, and not changed: a ring even on all four sides must stand across the lines, which moves `_paintRanges`, a repaint's reach past the cell (`ENGINE.20`) and the render oracle's picture.
+- *The selection lost at a tab:* "whenever the tab changes, the highlighted cell always returns to A1 once the tab is reselected (whether by keyboard or mouse), which is bad UX". Built. Each sheet now keeps its selection and its scroll in the viewport (`_leaveView`, `_comeBackView`) until `clear()`, as `ENGINE.26` keeps its widths, A1 and the top left the first time it shows. A game's Screen still takes the Camera's window back at its tab, and keeps the selection (`_screenTab`). This replaces the reset of the hand test of 2026-10-08, whose point stands: `select` still fires, so the line under the grid names the sheet's own selection.
+  - *Held:* `gridSheetViews`, nine conditions, the floor `sheetViews` 9; the `modes` case's `kept`, an act on the engine standing on `C3` after a tab left and come back to, in the loop oracle's real page and the game's page; the tabs case's person selecting and scrolling away before leaving, the Screen's tab held to the Camera's corner and to the selection; mutants `KV`, `KW`, `KX` and `KY`, each failing by name. Your scenario looked at on the real page, by key and by click. `run_checks.ps1 -WithExtras` in the copy over the final tree: ALL GREEN, 13 of 13 and 13 of 13, the loop control's 197 mutants.
+  - *What the control caught:* my first edit moved a line `ENGINE.26`'s mutant anchors on, so the control stopped early, leaving a browser holding its output, which `run_checks` reported as a file in use; and with the scroll kept, mutant `AL` no longer differed from the fix unless a person had scrolled away, which is why the tabs case now does.
+
+*The rework's own hand test, the same day:* "Hand tests pass; commit before suggesting next steps."

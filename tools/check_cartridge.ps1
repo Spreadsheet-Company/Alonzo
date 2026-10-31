@@ -336,12 +336,18 @@ if ($Root -eq '') { $Root = $repoRoot }
 # sheets and read-only (SPEC.5), and the Board moved to B2 behind a margin column
 # and row, two rows more, so that its frame draws on every side; its replay
 # carried, each act's place a column and a row on, and its golden unchanged.
+# 2026-10-30, CART.14.1's first slice: Seiyaku 4,089 rows, lowered: the rule on the
+# released language, its deal by INDEX and its counts by COUNTIF, where the Units
+# took 99 rows and the Violations nine, 11 and one; the Planes sheet and its nine
+# fills, the Deal's row of 81 values and the Givens' flags gone; the Constraints'
+# placed counts one fill where nine. No value moved; its replay carried, its golden
+# moved by the two Planes sheet rows and the Constraints' twelve formula rows.
 $expectedCartridges = 11
 $expectedSources = 11
 $expectedLibraries = 1
 $expectedReplays = 7
 $expectedGoldens = 7
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 264; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4205; 'cartridges/naught/naught.vla' = 756 }
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 264; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4089; 'cartridges/naught/naught.vla' = 756 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---
