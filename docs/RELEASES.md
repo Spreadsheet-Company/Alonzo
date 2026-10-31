@@ -28,7 +28,7 @@ The frame floors' eighteenth baseline, the instrument's run over `vla-lang` 0.12
 - **The frames** are about 0.2.0's. Natively Life's frame takes 2.2 ms where 2.1, at sixteen times its area 36.5 where 41.2; the glider gun's idle frame 0.0194 ms where 0.0190; Sand's 3.1 ms where 3.0, the language now planning cell by cell a grid whose fills read one another's cells, which its notes measure at 8%. In the browser Life's takes 2.8 ms where 2.5, at sixteen times 44.5 where 45.0; the gun's 0.0266 ms where 0.0242; Sand's 4.2 ms where 3.9. The evening's runs read such rows a few percent apart, and five floors were lowered for it with their reason (`REARVIEW.md`, `ENGINE.1`'s record of the pin to 0.12.0).
 - **The large board.** Superposition's idle frame over 798,731 formula cells takes a microsecond natively and 1.4 in the browser; an act to its settle's end a p95 of 0.42 ms natively and 0.7 in the browser; and the deepest cascade 777 frames in 134 ms natively and 182 in the browser.
 - **The irregular graph.** Naught's bench of 44,544 gates steps in 5.0 ms natively and 6.5 in the browser laid by fill, and in 19.3 and 23.2 ms shuffled until every gate is its own shape, a regularity premium of 3.9 and 3.6 times.
-- **The module** is 1,866,385 bytes, from 1,038,643: 0.11.0's whole library and 0.12.0's expander, every function the language computes in it whether a cartridge calls it or not. The page is 5,130,466 characters, from 3,203,591.
+- **The module** is 1,866,305 bytes, from 1,038,643: 0.11.0's whole library and 0.12.0's expander, every function the language computes in it whether a cartridge calls it or not. The page is 5,130,963 characters, from 3,203,591.
 
 ### The items in it
 
