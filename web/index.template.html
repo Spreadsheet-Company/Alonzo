@@ -168,7 +168,10 @@
   #stage .case { background: #fff; }
   pre.result { display: none; margin: 14px 0; padding: 10px; border: 1px solid #d9d9d2; background: #fff; font: 12.5px/1.4 ui-monospace, Consolas, "Cascadia Mono", monospace; white-space: pre-wrap; word-break: break-word; }
   body.oracle pre#oracle, body.bench pre#bench, body.loop pre#loop, body.blit pre#blit, body.frames pre#frames { display: block; }
-  /* What each mode shows (ENGINE.14): the player opened plainly, and the bench's sections in their own modes. */
+  /* What each mode shows (ENGINE.14): the player opened plainly, and the bench's sections in their own modes. The script
+     that chooses the mode stands after the page's blocks, most of its bytes, so that a page arriving over the network
+     paints before it runs: nothing of any mode shows until it has chosen, or the bench's heading flashes first. */
+  body:not([class]) { visibility: hidden; }
   body:not(.page) .page-only { display: none; }
   body.page > header, body.page > main { display: none; }
   body:not(.viewport) .viewport-only { display: none; }
@@ -185,7 +188,8 @@
   .player-bar .status { flex: 1 1 160px; min-width: 0; min-height: 0; margin: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .player-bar button[aria-pressed="true"], .player-bar button[aria-expanded="true"] { background: var(--lavender); border-color: var(--lavender-deep); }
   .player-body { flex: 1 1 auto; min-height: 0; display: flex; }
-  .player-screen { flex: 1 1 auto; min-width: 0; position: relative; background: #1d1d1b; }
+  /* no color of its own: the plane's box is dark and shown for a plane alone, so that a page opening on a grid never flashes dark */
+  .player-screen { flex: 1 1 auto; min-width: 0; position: relative; }
   /* the plane centered in the Screen's box at the whole number of device pixels a cell that fits it */
   .plane-box { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: #1d1d1b; display: flex; align-items: center; justify-content: center; overflow: hidden; }
   /* hidden while a grid cartridge's viewport shows the Screen: its flex would keep it shown (ENGINE.8's hand test) */
@@ -255,7 +259,7 @@
   </div>
   <div class="player-body">
     <div class="player-screen">
-      <div id="plane-box" class="plane-box"><canvas id="plane" tabindex="0" aria-label="the Screen, drawn as a plane of color indices"></canvas></div>
+      <div id="plane-box" class="plane-box" hidden><canvas id="plane" tabindex="0" aria-label="the Screen, drawn as a plane of color indices"></canvas></div>
       <div id="eng-screen-grid" class="grid screen" hidden aria-label="the Screen, drawn as a grid by the viewport"></div>
     </div>
     <aside id="drawer" class="drawer" hidden aria-label="the drawer">
@@ -3944,7 +3948,20 @@
   // the title its manifest gives; each library held at its block's path; and the empty sheet itself loaded on
   // the double and on the engine's module, a grid of 80 by 50 at rate zero, its Screen holding no cell.
   function caseEmpty() {
-    var P = [], k = { cartridges: 0, ordered: 0, titled: 0, libraries: 0, double: 0, engine: 0, filled: 0 };
+    var P = [], k = { cartridges: 0, ordered: 0, titled: 0, libraries: 0, double: 0, engine: 0, filled: 0, opening: 0 };
+    // What a page paints before its script runs (ENGINE.14's addendum): no mode until the script has chosen it, and no dark
+    // Screen until a plane is shown, each read from the page's own rules and markup with the body's class taken off for a
+    // moment that no paint can see
+    document.body.removeAttribute('class');
+    var unchosen = getComputedStyle(document.body).visibility;
+    document.body.className = MODE;
+    if (unchosen === 'hidden') k.opening++;
+    else P.push('a body with no mode is ' + unchosen + ', so that a page over the network paints the bench\'s heading before its script chooses the player');
+    if (document.getElementById('plane-box').hasAttribute('hidden')) k.opening++;
+    else P.push('the plane\'s box opens shown, so that a page opening on a grid paints it dark first');
+    var screenColor = getComputedStyle(document.querySelector('.player-screen')).backgroundColor;
+    if (screenColor === 'rgba(0, 0, 0, 0)') k.opening++;
+    else P.push('the Screen opens on its own color, ' + screenColor + ', behind a grid that has yet to draw');
     var blocks = blocksOf('cartridge'), entries = pickerEntries();
     k.cartridges = blocks.length;
     if (!entries.length || entries[0].value !== '' || entries[0].label !== EMPTY.title) P.push('the picker opens on ' + (entries.length ? '"' + entries[0].label + '"' : 'nothing') + ', and the page on "' + EMPTY.title + '"');
