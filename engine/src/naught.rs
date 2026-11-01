@@ -1258,9 +1258,9 @@ pub fn floors_source(source: &str, lines: &[String]) -> Option<String> {
 
 /// The source without its game (`CART.9`'s third slice): the levels' lines
 /// left out, each sheet they make named no more in the manifest's
-/// `(bound ...)`, and the manifest's `(game ...)`, which names them. The
-/// bench's own tests read the bench alone, its census and its frames'
-/// changes the netlist's, as they did before the levels.
+/// `(bound ...)` and `(work ...)`, and the manifest's `(game ...)`, which names
+/// them. The bench's own tests read the bench alone, its census and its
+/// frames' changes the netlist's, as they did before the levels.
 pub fn without_levels(source: &str) -> String {
     let eol = if source.contains("\r\n") {
         "\r\n"
@@ -1280,12 +1280,12 @@ pub fn without_levels(source: &str) -> String {
                 .map(|(name, _)| format!(" \"{name}\""))
                 .collect();
             all.drain(b..=e);
-            if let Some(bound) = all
-                .iter_mut()
-                .find(|l| l.trim_start().starts_with("(bound "))
-            {
+            for l in all.iter_mut().filter(|l| {
+                let t = l.trim_start();
+                t.starts_with("(bound ") || t.starts_with("(work ")
+            }) {
                 for name in &sheets {
-                    *bound = bound.replacen(name.as_str(), "", 1);
+                    *l = l.replacen(name.as_str(), "", 1);
                 }
             }
         }
@@ -1694,6 +1694,7 @@ impl Gp<'_> {
                         "MIN" => "MIN",
                         "MOD" => "MOD",
                         "INT" => "INT",
+                        "IF" => "IF",
                         _ => return Err(self.outside()),
                     };
                     self.i += word.len() + 1;
@@ -1716,6 +1717,7 @@ impl Gp<'_> {
                     let arity = match name {
                         "MOD" => args.len() == 2,
                         "INT" => args.len() == 1,
+                        "IF" => args.len() == 3,
                         _ => !args.is_empty(),
                     };
                     if !arity {
@@ -1884,6 +1886,11 @@ impl Gex {
                         finite(n - d * (n / d).floor())
                     }
                 }
+                "IF" => match args[0].eval(cell).truth() {
+                    Ok(true) => args[1].eval(cell),
+                    Ok(false) => args[2].eval(cell),
+                    Err(k) => Val::Err(k),
+                },
                 _ => match args[0].eval(cell).number() {
                     Ok(n) => Val::Num(n.floor()),
                     Err(k) => Val::Err(k),
@@ -1893,106 +1900,88 @@ impl Gex {
     }
 }
 
-/// A level of the game (decisions 16 to 21): its sheet, its switches and
-/// outputs, its room's rows from row 3 to the board's last, its budget, its
-/// least known, and the last kind of gate it gives ([`kind`]).
+/// A level of the game (decisions 16 to 21 and 34 to 46): its sheet, its
+/// switches and the flip-flops below them, its outputs, its room's rows from
+/// row 3 to the board's last, its budget, its least known, the last kind of
+/// gate it gives ([`kind`]), and the inputs its test runs through.
 pub struct Level {
     pub sheet: &'static str,
     pub inputs: u32,
+    pub state: u32,
     pub outputs: u32,
     pub rows: u32,
     pub budget: u32,
     pub least: u32,
     pub gives: u32,
+    pub vectors: u32,
 }
 
-/// The nine levels in tab order, `I NON` the first.
-pub const LEVELS: [Level; 9] = [
+impl Level {
+    /// Its cells of column A: its switches and its flip-flops.
+    pub fn switches(&self) -> u32 {
+        self.inputs + self.state
+    }
+
+    /// The states its flip-flops can hold, the most ticks a run moves them
+    /// before one comes twice (decision 37); 0 for a level with none.
+    pub fn limit(&self) -> u32 {
+        if self.state == 0 {
+            0
+        } else {
+            1 << self.state
+        }
+    }
+}
+
+const fn level(
+    sheet: &'static str,
+    (inputs, state, outputs): (u32, u32, u32),
+    rows: u32,
+    (budget, least): (u32, u32),
+    gives: u32,
+    vectors: u32,
+) -> Level {
     Level {
-        sheet: "I NON",
-        inputs: 1,
-        outputs: 1,
-        rows: 8,
-        budget: 2,
-        least: 1,
-        gives: 2,
-    },
-    Level {
-        sheet: "II ET",
-        inputs: 2,
-        outputs: 1,
-        rows: 8,
-        budget: 3,
-        least: 2,
-        gives: 3,
-    },
-    Level {
-        sheet: "III VEL",
-        inputs: 2,
-        outputs: 1,
-        rows: 8,
-        budget: 4,
-        least: 3,
-        gives: 4,
-    },
-    Level {
-        sheet: "IV AUT",
-        inputs: 2,
-        outputs: 1,
-        rows: 8,
-        budget: 5,
-        least: 3,
-        gives: 5,
-    },
-    Level {
-        sheet: "V ELIGE",
-        inputs: 3,
-        outputs: 1,
-        rows: 8,
-        budget: 5,
-        least: 3,
-        gives: 6,
-    },
-    Level {
-        sheet: "VI DISTRIBUE",
-        inputs: 2,
-        outputs: 2,
-        rows: 8,
-        budget: 4,
-        least: 2,
-        gives: 6,
-    },
-    Level {
-        sheet: "VII SEMIS",
-        inputs: 2,
-        outputs: 2,
-        rows: 8,
-        budget: 3,
-        least: 2,
-        gives: 6,
-    },
-    Level {
-        sheet: "VIII SUMMA",
-        inputs: 3,
-        outputs: 2,
-        rows: 8,
-        budget: 6,
-        least: 5,
-        gives: 6,
-    },
-    Level {
-        sheet: "IX QUATTUOR",
-        inputs: 9,
-        outputs: 5,
-        rows: 9,
-        budget: 21,
-        least: 20,
-        gives: 6,
-    },
+        sheet,
+        inputs,
+        state,
+        outputs,
+        rows,
+        budget,
+        least,
+        gives,
+        vectors,
+    }
+}
+
+/// The fifteen levels in tab order, `I NON` the first.
+pub const LEVELS: [Level; 15] = [
+    level("I NON", (1, 0, 1), 8, (2, 1), 2, 2),
+    level("II ET", (2, 0, 1), 8, (3, 2), 3, 4),
+    level("III VEL", (2, 0, 1), 8, (4, 3), 4, 4),
+    level("IV AUT", (2, 0, 1), 8, (5, 3), 5, 4),
+    level("V ELIGE", (3, 0, 1), 8, (5, 3), 6, 8),
+    level("VI DISTRIBUE", (2, 0, 2), 8, (4, 2), 6, 4),
+    level("VII SEMIS", (2, 0, 2), 8, (3, 2), 6, 4),
+    level("VIII SUMMA", (3, 0, 2), 8, (6, 5), 6, 8),
+    level("IX QUATTUOR", (9, 0, 5), 9, (21, 20), 6, 512),
+    level("X MORA", (1, 1, 1), 8, (2, 1), 7, 4),
+    level("XI TENE", (2, 1, 1), 8, (3, 1), 7, 8),
+    level("XII MEMORIA", (5, 4, 4), 9, (6, 4), 7, 512),
+    level("XIII NUMERA", (2, 4, 4), 8, (13, 11), 7, 64),
+    level("XIV RATIO", (10, 0, 5), 10, (38, 31), 7, 1024),
+    level("XV MACHINA", (7, 12, 12), 19, (60, 46), 7, 2048),
 ];
 
+/// Level XV's place among them: its inputs its word, read from the ROM.
+pub const MACHINA: usize = 14;
+
+/// XV's switches a test counts through, its word and its A; the rest, its p
+/// and its B, it draws by lot (decision 40).
+pub const COUNTED: usize = 11;
+
 /// Each level's switches' and outputs' names, its B and K columns.
-pub const NAMES: [(&[&str], &[&str]); 9] = [
+pub const NAMES: [(&[&str], &[&str]); 15] = [
     (&["a"], &["y"]),
     (&["a", "b"], &["y"]),
     (&["a", "b"], &["y"]),
@@ -2005,7 +1994,55 @@ pub const NAMES: [(&[&str], &[&str]); 9] = [
         &["a0", "a1", "a2", "a3", "b0", "b1", "b2", "b3", "c"],
         &["s0", "s1", "s2", "s3", "carry"],
     ),
+    (&["d", "q"], &["q'"]),
+    (&["load", "d", "q"], &["q'"]),
+    (
+        &["load", "d0", "d1", "d2", "d3", "q0", "q1", "q2", "q3"],
+        &["q0'", "q1'", "q2'", "q3'"],
+    ),
+    (
+        &["reset", "inc", "q0", "q1", "q2", "q3"],
+        &["q0'", "q1'", "q2'", "q3'"],
+    ),
+    (
+        &["a0", "a1", "a2", "a3", "b0", "b1", "b2", "b3", "op0", "op1"],
+        &["y0", "y1", "y2", "y3", "carry"],
+    ),
+    (
+        &[
+            "op0", "op1", "op2", "n0", "n1", "n2", "n3", "a0", "a1", "a2", "a3", "p0", "p1", "p2",
+            "p3", "b0", "b1", "b2", "b3",
+        ],
+        &[
+            "a0'", "a1'", "a2'", "a3'", "p0'", "p1'", "p2'", "p3'", "b0'", "b1'", "b2'", "b3'",
+        ],
+    ),
 ];
+
+/// The words of XV's program, each its op by its place, the ROM's F2:F6.
+pub const ROM_WORDS: [&str; 5] = ["LDI", "ADD", "SWP", "JNZ", "HLT"];
+
+/// The program the ROM opens on: 3 x 5 by repeated addition, B2 down.
+pub const ROM_PROGRAM: [&str; 8] = [
+    "LDI 3", "SWP", "ADD 5", "SWP", "ADD 15", "JNZ 1", "SWP", "HLT",
+];
+
+/// A line of the ROM read as its word's number, its op plus 8 times its n, as
+/// its C column computes it: a word none of the five, or an empty line, is
+/// HLT; what follows the word, from its fifth character, is its n, in four
+/// bits, 0 for none.
+pub fn rom_word(line: &Val) -> f64 {
+    let text = line.text().unwrap_or_default();
+    let chars: Vec<char> = text.chars().collect();
+    let word: String = chars.iter().take(3).collect::<String>().to_uppercase();
+    let op = ROM_WORDS
+        .iter()
+        .position(|w| *w == word)
+        .map_or(4.0, |p| p as f64);
+    let rest: String = chars.iter().skip(4).take(9).collect();
+    let n = text_number(&rest).map_or(0.0, |x| modulo(x.floor(), 16.0));
+    op + 8.0 * n
+}
 
 /// The bit of the input's number that input s takes while a test runs,
 /// `MOD(INT(B6/2^s),2)`.
@@ -2016,91 +2053,274 @@ pub fn bit(b6: &Val, s: usize) -> Val {
     }
 }
 
+/// What level k's switch s takes at the input's number while its test runs:
+/// a bit of the number, or, for XV's p and B, a bit drawn by lot, the bench's
+/// stimulus at the switch's row and column A.
+pub fn test_input(k: usize, s: usize, b6: &Val) -> Val {
+    if k == MACHINA && s >= COUNTED {
+        match b6.number() {
+            Ok(v) => Val::Num(f64::from(stimulus(3 + s as u32, 1, v as u64))),
+            Err(e) => Val::Err(e),
+        }
+    } else {
+        bit(b6, s)
+    }
+}
+
 /// A level's inputs as its test reads them, the Lab's column of them from
-/// row 21: while its test runs (`here`, the Lab's N, is 1), the bits of
-/// the input's number; and otherwise its switches as they stand, an empty
+/// row 31: while its test runs (`here`, the Lab's N, is 1), what
+/// [`test_input`] gives; and otherwise its switches as they stand, an empty
 /// one 0.
-pub fn tested(here: &Val, b6: &Val, standing: &[Val]) -> Vec<Val> {
+pub fn tested(k: usize, here: &Val, b6: &Val, standing: &[Val]) -> Vec<Val> {
     standing
         .iter()
         .enumerate()
-        .map(|(s, v)| if_(&equal(here, &Val::Num(1.0)), || bit(b6, s), || v.clone()).settled())
+        .map(|(s, v)| {
+            if_(
+                &equal(here, &Val::Num(1.0)),
+                || test_input(k, s, b6),
+                || v.clone(),
+            )
+            .settled()
+        })
         .collect()
 }
 
-/// Level k's outputs due, as the Lab's formulas compute them from its
-/// inputs as its test reads them (decision 17's specification).
-pub fn due(k: usize, s: &[Val]) -> Vec<Val> {
-    let n = |x: f64| Val::Num(x);
-    let max_of = |xs: &[&Val]| -> Val {
-        let mut items = Vec::new();
-        for v in xs {
-            match v {
-                Val::Num(x) => items.push(*x),
-                Val::Err(e) => return Val::Err(e),
-                _ => {}
-            }
+/// A sum of inputs, each with its weight, as the Lab's formulas spell one:
+/// the first alone, and a weight of 1 unwritten.
+fn weighted(s: &[Val], terms: &[(usize, f64)]) -> Val {
+    let term = |&(i, w): &(usize, f64)| {
+        if w == 1.0 {
+            s[i].clone()
+        } else {
+            arith(b'*', &Val::Num(w), &s[i])
         }
-        Val::Num(
-            items
-                .iter()
-                .copied()
-                .fold(None, |m: Option<f64>, x| Some(m.map_or(x, |m| m.max(x))))
-                .unwrap_or(0.0),
-        )
     };
-    let modulo = |v: Val, d: f64| match v.number() {
+    let mut t = term(&terms[0]);
+    for x in &terms[1..] {
+        t = arith(b'+', &t, &term(x));
+    }
+    t
+}
+
+/// `MOD(v, d)` over a value.
+fn modulo_of(v: Val, d: f64) -> Val {
+    match v.number() {
         Ok(x) => finite(x - d * (x / d).floor()),
         Err(e) => Val::Err(e),
-    };
-    let int = |v: Val| match v.number() {
+    }
+}
+
+/// `INT(v)` over a value.
+fn int_of(v: Val) -> Val {
+    match v.number() {
         Ok(x) => Val::Num(x.floor()),
         Err(e) => Val::Err(e),
+    }
+}
+
+/// Bit i of a number, `MOD(INT(v/2^i),2)`, the Lab's `a-bit-of`.
+fn a_bit_of(v: &Val, i: usize) -> Val {
+    modulo_of(int_of(arith(b'/', v, &Val::Num(f64::from(1u32 << i)))), 2.0)
+}
+
+/// `MAX` over cells' values: its numbers, an error first.
+fn max_of(xs: &[&Val]) -> Val {
+    let mut items = Vec::new();
+    for v in xs {
+        match v {
+            Val::Num(x) => items.push(*x),
+            Val::Err(e) => return Val::Err(e),
+            _ => {}
+        }
+    }
+    Val::Num(
+        items
+            .iter()
+            .copied()
+            .fold(None, |m: Option<f64>, x| Some(m.map_or(x, |m| m.max(x))))
+            .unwrap_or(0.0),
+    )
+}
+
+/// `CHOOSE(index, items...)`: the item the index names, from 1.
+fn choose(index: Val, items: &[Val]) -> Val {
+    match index.number() {
+        Ok(x) if x >= 1.0 && (x as usize) <= items.len() => items[x as usize - 1].clone(),
+        Ok(_) => Val::Err(VALUE),
+        Err(e) => Val::Err(e),
+    }
+}
+
+/// XV's workings from its inputs as its test reads them, the Lab's P64 to
+/// P72: its op, n, A, p and B; its A next, its p + 1, its p next and its B
+/// next.
+pub fn machina(s: &[Val]) -> [Val; 9] {
+    let n = |x: f64| Val::Num(x);
+    let op = weighted(s, &[(0, 1.0), (1, 2.0), (2, 4.0)]);
+    let word = weighted(s, &[(3, 1.0), (4, 2.0), (5, 4.0), (6, 8.0)]);
+    let a = weighted(s, &[(7, 1.0), (8, 2.0), (9, 4.0), (10, 8.0)]);
+    let p = weighted(s, &[(11, 1.0), (12, 2.0), (13, 4.0), (14, 8.0)]);
+    let b = weighted(s, &[(15, 1.0), (16, 2.0), (17, 4.0), (18, 8.0)]);
+    let index = arith(b'+', &op, &n(1.0));
+    let sum = modulo_of(arith(b'+', &a, &word), 16.0);
+    let a_next = choose(
+        index.clone(),
+        &[
+            word.clone(),
+            sum,
+            b.clone(),
+            a.clone(),
+            a.clone(),
+            a.clone(),
+            a.clone(),
+            a.clone(),
+        ],
+    );
+    let inc = modulo_of(arith(b'+', &p, &n(1.0)), 16.0);
+    let not_zero = match equal(&a, &n(0.0)) {
+        Val::Bool(z) => Val::Bool(!z),
+        other => other,
     };
+    let jump = if_(&not_zero, || word.clone(), || inc.clone()).settled();
+    let p_next = choose(
+        index,
+        &[
+            inc.clone(),
+            inc.clone(),
+            inc.clone(),
+            jump,
+            p.clone(),
+            p.clone(),
+            p.clone(),
+            p.clone(),
+        ],
+    );
+    let b_next = if_(&equal(&op, &n(2.0)), || a.clone(), || b.clone()).settled();
+    [op, word, a, p, b, a_next, inc, p_next, b_next]
+}
+
+/// Level k's outputs due, as the Lab's formulas compute them from its
+/// inputs as its test reads them (decision 17's specification); a clocked
+/// level's its flip-flops' next state.
+pub fn due(k: usize, s: &[Val]) -> Vec<Val> {
+    let n = |x: f64| Val::Num(x);
+    let is_one = |v: &Val| equal(v, &n(1.0));
     match k {
         0 => vec![arith(b'-', &n(1.0), &s[0])],
         1 => vec![arith(b'*', &s[0], &s[1])],
         2 => vec![max_of(&[&s[0], &s[1]])],
-        3 => vec![modulo(arith(b'+', &s[0], &s[1]), 2.0)],
-        4 => vec![if_(&equal(&s[2], &n(1.0)), || s[1].clone(), || s[0].clone()).settled()],
+        3 => vec![modulo_of(arith(b'+', &s[0], &s[1]), 2.0)],
+        4 => vec![if_(&is_one(&s[2]), || s[1].clone(), || s[0].clone()).settled()],
         5 => vec![
             arith(b'*', &s[0], &arith(b'-', &n(1.0), &s[1])),
             arith(b'*', &s[0], &s[1]),
         ],
         6 => {
             let t = arith(b'+', &s[0], &s[1]);
-            vec![modulo(t.clone(), 2.0), int(arith(b'/', &t, &n(2.0)))]
+            vec![modulo_of(t.clone(), 2.0), int_of(arith(b'/', &t, &n(2.0)))]
         }
         7 => {
             let t = arith(b'+', &arith(b'+', &s[0], &s[1]), &s[2]);
-            vec![modulo(t.clone(), 2.0), int(arith(b'/', &t, &n(2.0)))]
+            vec![modulo_of(t.clone(), 2.0), int_of(arith(b'/', &t, &n(2.0)))]
         }
-        _ => {
-            let mut t = s[0].clone();
-            for (i, w) in [(1, 2.0), (2, 4.0), (3, 8.0)] {
-                t = arith(b'+', &t, &arith(b'*', &n(w), &s[i]));
-            }
-            for (i, w) in [(4, 1.0), (5, 2.0), (6, 4.0), (7, 8.0)] {
-                t = arith(
-                    b'+',
-                    &t,
-                    &if w == 1.0 {
-                        s[i].clone()
-                    } else {
-                        arith(b'*', &n(w), &s[i])
-                    },
-                );
-            }
-            t = arith(b'+', &t, &s[8]);
+        8 => {
+            let t = quattuor(s);
             vec![
-                modulo(t.clone(), 2.0),
-                modulo(int(arith(b'/', &t, &n(2.0))), 2.0),
-                modulo(int(arith(b'/', &t, &n(4.0))), 2.0),
-                modulo(int(arith(b'/', &t, &n(8.0))), 2.0),
-                int(arith(b'/', &t, &n(16.0))),
+                a_bit_of(&t, 0),
+                a_bit_of(&t, 1),
+                a_bit_of(&t, 2),
+                a_bit_of(&t, 3),
+                int_of(arith(b'/', &t, &n(16.0))),
             ]
         }
+        9 => vec![s[0].clone()],
+        10 => vec![if_(&is_one(&s[0]), || s[1].clone(), || s[2].clone()).settled()],
+        11 => (0..4)
+            .map(|i| if_(&is_one(&s[0]), || s[1 + i].clone(), || s[5 + i].clone()).settled())
+            .collect(),
+        12 => {
+            let t = numera(s);
+            (0..4)
+                .map(|i| if_(&is_one(&s[0]), || n(0.0), || a_bit_of(&t, i)))
+                .collect()
+        }
+        13 => {
+            let t = ratio(s);
+            let index = arith(
+                b'+',
+                &arith(b'+', &s[8], &arith(b'*', &n(2.0), &s[9])),
+                &n(1.0),
+            );
+            let mut owed: Vec<Val> = (0..4)
+                .map(|i| {
+                    choose(
+                        index.clone(),
+                        &[
+                            arith(b'*', &s[i], &s[4 + i]),
+                            max_of(&[&s[i], &s[4 + i]]),
+                            modulo_of(arith(b'+', &s[i], &s[4 + i]), 2.0),
+                            a_bit_of(&t, i),
+                        ],
+                    )
+                })
+                .collect();
+            owed.push(if_(
+                &and(&[is_one(&s[8]), is_one(&s[9])]),
+                || int_of(arith(b'/', &t, &n(16.0))),
+                || n(0.0),
+            ));
+            owed
+        }
+        _ => {
+            let w = machina(s);
+            let bits = |v: &Val| (0..4).map(|i| a_bit_of(v, i)).collect::<Vec<Val>>();
+            let mut owed = bits(&w[5]);
+            owed.extend(bits(&w[7]));
+            owed.extend(bits(&w[8]));
+            owed
+        }
     }
+}
+
+/// IX's sum of its inputs, the Lab's O19.
+fn quattuor(s: &[Val]) -> Val {
+    weighted(
+        s,
+        &[
+            (0, 1.0),
+            (1, 2.0),
+            (2, 4.0),
+            (3, 8.0),
+            (4, 1.0),
+            (5, 2.0),
+            (6, 4.0),
+            (7, 8.0),
+            (8, 1.0),
+        ],
+    )
+}
+
+/// XIII's count at the next tick, the Lab's O23: its inc and its q.
+fn numera(s: &[Val]) -> Val {
+    weighted(s, &[(1, 1.0), (2, 1.0), (3, 2.0), (4, 4.0), (5, 8.0)])
+}
+
+/// XIV's sum of its a and its b, the Lab's O24.
+fn ratio(s: &[Val]) -> Val {
+    weighted(
+        s,
+        &[
+            (0, 1.0),
+            (1, 2.0),
+            (2, 4.0),
+            (3, 8.0),
+            (4, 1.0),
+            (5, 2.0),
+            (6, 4.0),
+            (7, 8.0),
+        ],
+    )
 }
 
 /// A formula's text as the Gates sheet reads it, `FORMULATEXT` with its
@@ -2114,11 +2334,11 @@ pub fn gate_text(formula: &str) -> String {
 }
 
 /// The inputs a gate of level k may read, the Lab's P, between bars: its
-/// switches, the cells of its room row by row, 0 and 1.
+/// switches and flip-flops, the cells of its room row by row, 0 and 1.
 pub fn inputs_of(k: usize) -> String {
     let level = &LEVELS[k];
     let mut out = String::from("|");
-    for s in 0..level.inputs {
+    for s in 0..level.switches() {
         out.push_str(&format!("A{}|", 3 + s));
     }
     for row in 3..3 + level.rows {
@@ -2139,16 +2359,25 @@ fn mid(f: &[char], start: i64, n: i64) -> Option<String> {
     Some(f.iter().skip(start as usize - 1).take(n as usize).collect())
 }
 
+/// `FIND(c, f, from)`: the place of a text's first `c` at or after `from`,
+/// from 1.
+fn find_from(f: &[char], c: char, from: i64) -> Option<i64> {
+    f.iter()
+        .skip(from as usize - 1)
+        .position(|&x| x == c)
+        .map(|i| i as i64 + from)
+}
+
 /// `FIND(c, f)`: the place of a text's first `c`, from 1.
 fn find(f: &[char], c: char) -> Option<i64> {
-    f.iter().position(|&x| x == c).map(|i| i as i64 + 1)
+    find_from(f, c, 1)
 }
 
 /// A room cell's kind by its formula's text as [`gate_text`] reads it, as
 /// the Gates sheet computes it: 0 no formula; a gate of the set, 1 a wire
 /// `=x`, 2 NON-ET `=1-x*y`, 3 NON `=1-x`, 4 ET `=x*y`, 5 VEL `=MAX(x,y)`, 6
-/// AUT `=MOD(x+y,2)`, each input among `inputs`, [`inputs_of`] the level's;
-/// and 9 any other formula.
+/// AUT `=MOD(x+y,2)`, 7 ELIGE `=IF(s,b,a)`, each input among `inputs`,
+/// [`inputs_of`] the level's; and 9 any other formula.
 pub fn kind(f: &str, inputs: &str) -> u32 {
     if f.is_empty() {
         return 0;
@@ -2158,6 +2387,7 @@ pub fn kind(f: &str, inputs: &str) -> u32 {
     let among = |x: Option<String>| x.is_some_and(|x| inputs.contains(&format!("|{x}|")));
     let pair = |x: Option<String>, y: Option<String>| among(x) && among(y);
     let (star, comma, plus) = (find(&c, '*'), find(&c, ','), find(&c, '+'));
+    let second = comma.and_then(|p| find_from(&c, ',', p + 1));
     if among(mid(&c, 2, 99)) {
         1
     } else if f.starts_with("=1-")
@@ -2178,6 +2408,17 @@ pub fn kind(f: &str, inputs: &str) -> u32 {
         && plus.is_some_and(|p| pair(mid(&c, 6, p - 6), mid(&c, p + 1, len - p - 3)))
     {
         6
+    } else if f.starts_with("=IF(")
+        && f.ends_with(')')
+        && comma.is_some_and(|p| {
+            second.is_some_and(|q| {
+                among(mid(&c, 5, p - 5))
+                    && among(mid(&c, p + 1, q - p - 1))
+                    && among(mid(&c, q + 1, len - q - 1))
+            })
+        })
+    {
+        7
     } else {
         9
     }
@@ -2185,11 +2426,11 @@ pub fn kind(f: &str, inputs: &str) -> u32 {
 
 /// Formulas a person may write and their kinds, at I and at IX (I's inputs
 /// its one switch and its room to row 10, IX's nine and its room to row 11):
-/// the six shapes, written in any case with spaces and `$`, a constant among
+/// the seven shapes, written in any case with spaces and `$`, a constant among
 /// the inputs; and the formulas outside the set, a gate of none of its
 /// shapes, a shape holding two gates, and an input that is no switch or room
 /// cell of the level, the due, a name or the Lab among them.
-pub const SHAPES: [(&str, u32, u32); 29] = [
+pub const SHAPES: [(&str, u32, u32); 35] = [
     ("=1-A3*A3", 2, 2),
     ("=1-A3", 3, 3),
     ("=A3*C3", 4, 4),
@@ -2219,6 +2460,12 @@ pub const SHAPES: [(&str, u32, u32); 29] = [
     ("=A3*TRUE", 9, 9),
     ("=AC3", 9, 9),
     ("=1-B3", 9, 9),
+    ("=IF(A3,C3,0)", 7, 7),
+    ("=if($a$3, c3, 1)", 7, 7),
+    ("=IF(A4,C3,D3)", 9, 7),
+    ("=IF(A3,C3)", 9, 9),
+    ("=IF(A3,C3,D3,E3)", 9, 9),
+    ("=IF(A3=1,C3,D3)", 9, 9),
 ];
 
 /// The address of a room's cell by its place in the room read row by row
@@ -2257,14 +2504,38 @@ pub struct Acted {
     pub command: String,
 }
 
-/// The game by hand, the levels and the Lab frame by frame, as the
+/// A value as `N` reads it, then `IFERROR`'s 0: a number itself, a truth value
+/// 1 or 0, and anything else 0, so that a tick carries no error around the
+/// loop.
+fn as_a_flip_flop_takes(v: &Val) -> Val {
+    match v {
+        Val::Num(x) => Val::Num(*x),
+        Val::Bool(b) => Val::Num(f64::from(u8::from(*b))),
+        _ => Val::Num(0.0),
+    }
+}
+
+/// How many of two lists' values differ, as `SUMPRODUCT(--(x<>y))` counts
+/// them; `None` for an error in either.
+fn differing(x: &[Val], y: &[Val]) -> Option<usize> {
+    let mut count = 0;
+    for (a, b) in x.iter().zip(y) {
+        match equal(a, b) {
+            Val::Bool(same) => count += usize::from(!same),
+            _ => return None,
+        }
+    }
+    Some(count)
+}
+
+/// The game by hand, the levels, the ROM and the Lab frame by frame, as the
 /// cartridge's formulas compute them, its own arithmetic and no formula of
 /// the cartridge's: what the engine's frames are held to.
 #[derive(Clone, Debug)]
 pub struct Game {
     /// Each level's cells a person wrote, by row and column.
     pub written: Vec<HashMap<(u32, u32), Written>>,
-    /// Each level's switches, this frame and the last.
+    /// Each level's cells of column A, this frame and the last.
     pub switches: Vec<Vec<Val>>,
     pub switches_last: Vec<Vec<Val>>,
     /// Each level's cells as this frame computes them: the board, A3 to the
@@ -2278,8 +2549,23 @@ pub struct Game {
     /// The Lab, its cells by address, this frame and the last.
     pub lab: HashMap<String, Val>,
     pub lab_last: HashMap<String, Val>,
+    /// The ROM's program, its B2:B17.
+    pub rom: Vec<Val>,
     /// The Input rows standing.
     pub input: Acted,
+    /// The frames computed.
+    pub frames: u64,
+    /// Each level this frame computed, the others standing as they stood; and
+    /// each whose gates a person's row changed at this frame.
+    pub touched: Vec<bool>,
+    pub fresh: Vec<bool>,
+    /// A person's row into a level since its last frame, and each level an
+    /// act, a test or a clock moved at the last frame.
+    dirty: Vec<bool>,
+    caused: Vec<bool>,
+    /// The Write sheet's row the last frame left, its level, its cell and its
+    /// value, which lands before this frame (decision 47).
+    derived: Option<(usize, (u32, u32), f64)>,
 }
 
 impl Default for Game {
@@ -2291,21 +2577,34 @@ impl Default for Game {
 impl Game {
     pub fn new() -> Game {
         Game {
-            written: vec![HashMap::new(); 9],
+            written: vec![HashMap::new(); LEVELS.len()],
             switches: LEVELS
                 .iter()
-                .map(|l| vec![Val::Num(0.0); l.inputs as usize])
+                .map(|l| vec![Val::Num(0.0); l.switches() as usize])
                 .collect(),
             switches_last: LEVELS
                 .iter()
-                .map(|l| vec![Val::Empty; l.inputs as usize])
+                .map(|l| vec![Val::Empty; l.switches() as usize])
                 .collect(),
-            board: vec![HashMap::new(); 9],
-            texts: vec![Vec::new(); 9],
-            kinds: vec![Vec::new(); 9],
+            board: vec![HashMap::new(); LEVELS.len()],
+            texts: vec![Vec::new(); LEVELS.len()],
+            kinds: vec![Vec::new(); LEVELS.len()],
             lab: HashMap::new(),
             lab_last: HashMap::new(),
+            rom: (0..16)
+                .map(|i| {
+                    ROM_PROGRAM
+                        .get(i)
+                        .map_or(Val::Empty, |t| Val::Text(t.to_string()))
+                })
+                .collect(),
             input: Acted::default(),
+            frames: 0,
+            touched: vec![true; LEVELS.len()],
+            fresh: vec![true; LEVELS.len()],
+            dirty: vec![true; LEVELS.len()],
+            caused: vec![true; LEVELS.len()],
+            derived: None,
         }
     }
 
@@ -2316,15 +2615,31 @@ impl Game {
             .position(|l| l.sheet.eq_ignore_ascii_case(sheet))
     }
 
-    /// A person's row into a level: a value or a formula over a cell or a
-    /// range. A row into any other sheet of the game's is refused by the
-    /// hand, which models none.
+    /// A person's row into a level, a value or a formula over a cell or a
+    /// range, or into the ROM's program, a value. A row into any other sheet
+    /// of the game's, or a formula into the ROM, is refused by the hand, which
+    /// models none.
     pub fn write(
         &mut self,
         sheet: &str,
         rows: (u32, u32, u32, u32),
         what: Written,
     ) -> Result<(), String> {
+        if sheet.eq_ignore_ascii_case("ROM") {
+            let Written::Value(v) = what else {
+                return Err("the hand models no formula in the ROM".to_string());
+            };
+            if rows.1 != 2 || rows.3 != 2 || rows.0 < 2 || rows.2 > 17 {
+                return Err(format!(
+                    "the hand models the ROM's program alone, not {rows:?}"
+                ));
+            }
+            for r in rows.0..=rows.2 {
+                self.rom[r as usize - 2] = v.clone();
+            }
+            self.dirty[MACHINA] = true;
+            return Ok(());
+        }
         let Some(k) = Game::level(sheet) else {
             return Err(format!("the hand models no person's row into {sheet}"));
         };
@@ -2347,6 +2662,7 @@ impl Game {
                 self.written[k].insert((r, c), what.clone());
             }
         }
+        self.dirty[k] = true;
         Ok(())
     }
 
@@ -2356,9 +2672,114 @@ impl Game {
     fn last(&self, at: &str) -> Val {
         self.lab_last.get(at).cloned().unwrap_or(Val::Empty)
     }
+    /// A number of the Lab's clock at the last frame, nothing 0.
+    fn last_number(&self, at: &str) -> f64 {
+        match self.last(at) {
+            Val::Num(x) => x,
+            _ => 0.0,
+        }
+    }
+
+    /// Whether this frame holds every cell, and not only what its acts could
+    /// move (decision 44): one frame in 64, the first among them. The others
+    /// hold each level this frame computed, so that a long test is held at
+    /// its own board at every input and the rest at this rhythm.
+    pub fn whole(&self) -> bool {
+        self.frames % 64 == 1
+    }
+
+    /// The Lab's cells this frame holds: its state and its clock; and each
+    /// level's row where the level was computed; and at a whole frame its
+    /// inputs as tested, its dues and its workings too.
+    pub fn lab_held(&self) -> Vec<String> {
+        let whole = self.whole();
+        let mut at: Vec<String> = (1..=8).map(|r| format!("B{r}")).collect();
+        at.extend((1..=9).map(|r| format!("E{r}")));
+        at.push("H1".to_string());
+        for (k, level) in LEVELS.iter().enumerate() {
+            if !(whole || self.touched[k]) {
+                continue;
+            }
+            let r = 11 + k;
+            for col in "BCDEHKLNPQRSTU".chars() {
+                at.push(format!("{col}{r}"));
+            }
+            if level.state > 0 {
+                at.push(format!("I{r}"));
+                at.push(format!("J{r}"));
+            }
+        }
+        if whole {
+            for (k, level) in LEVELS.iter().enumerate() {
+                let r = 11 + k;
+                at.extend(["F", "G", "M", "W"].map(|col| format!("{col}{r}")));
+                if level.state > 0 {
+                    at.push(format!("V{r}"));
+                }
+            }
+            at.extend(["O19", "O23", "O24"].map(str::to_string));
+            at.extend((64..=72).map(|r| format!("P{r}")));
+            for (k, level) in LEVELS.iter().enumerate() {
+                let col = char::from(b'B' + k as u8);
+                at.extend((0..level.switches()).map(|s| format!("{col}{}", 31 + s)));
+                at.extend((0..level.outputs).map(|o| format!("{col}{}", 51 + o)));
+            }
+        }
+        at
+    }
+
+    /// The Write sheet's row as this frame computes it: its sheet, its address
+    /// and its value (decision 47).
+    pub fn write_row(&self) -> [Val; 3] {
+        let typed = matches!(self.lab("H1"), Val::Num(x) if x == 1.0);
+        let i = &self.input;
+        let text = |t: String| Val::Text(if typed { t } else { String::new() });
+        [
+            text(i.sheet.clone()),
+            text(format!(
+                "{}{}",
+                "CDEFGHIJ"
+                    .chars()
+                    .nth(i.col.saturating_sub(3) as usize)
+                    .unwrap_or('C'),
+                i.row
+            )),
+            Val::Num(if i.command == "one" { 1.0 } else { 0.0 }),
+        ]
+    }
+
+    /// A cell of the ROM's, A to E of its rows 2 to 17, as this frame computes
+    /// it: its line, its text, its word's number, the mark of the line p
+    /// names, and what it says of a word none of the five.
+    pub fn rom_cell(&self, row: u32, col: u32) -> Val {
+        let line = &self.rom[row as usize - 2];
+        match col {
+            1 => Val::Num(f64::from(row - 2)),
+            2 => line.clone(),
+            3 => Val::Num(rom_word(line)),
+            4 => {
+                let here = equal(&Val::Num(f64::from(row - 2)), &self.lab("E7"));
+                if matches!(here, Val::Bool(true)) {
+                    Val::Text("\u{25c4}".into())
+                } else {
+                    Val::Text(String::new())
+                }
+            }
+            _ => {
+                let text = line.text().unwrap_or_default();
+                let word = text.chars().take(3).collect::<String>().to_uppercase();
+                if text.is_empty() || ROM_WORDS.contains(&word.as_str()) {
+                    Val::Text(String::new())
+                } else {
+                    Val::Text("no such word: HLT".into())
+                }
+            }
+        }
+    }
 
     /// One frame: the act's Input rows, or a settle step's, the press and the
-    /// command released; every level and the Lab computed.
+    /// command released; every level an act, a test, a clock or a person's row
+    /// could move computed, and the Lab.
     pub fn frame(&mut self, act: Option<&Acted>) {
         match act {
             Some(a) => self.input = a.clone(),
@@ -2367,8 +2788,13 @@ impl Game {
                 self.input.command.clear();
             }
         }
-        self.lab_last = std::mem::take(&mut self.lab);
-        self.switches_last = self.switches.clone();
+        if let Some((k, at, value)) = self.derived.take() {
+            self.written[k].insert(at, Written::Value(Val::Num(value)));
+            self.dirty[k] = true;
+        }
+        self.lab_last = self.lab.clone();
+        let first = self.frames == 0;
+        self.frames += 1;
         let i = self.input.clone();
         let cmd = Val::Text(i.command.clone());
         let is = |w: &str| {
@@ -2377,6 +2803,7 @@ impl Game {
                 .unwrap_or(false)
         };
         let n = |x: f64| Val::Num(x);
+        let at_one = |v: &Val| matches!(v, Val::Num(x) if *x == 1.0);
         // B1 the level the act stands on
         let shown = LEVELS
             .iter()
@@ -2389,7 +2816,7 @@ impl Game {
             _ => 1.0,
         };
         let b2 = if is("next") && shown > 0.0 {
-            (shown + 1.0).min(9.0)
+            (shown + 1.0).min(LEVELS.len() as f64)
         } else if is("previous") && shown > 0.0 {
             (shown - 1.0).max(1.0)
         } else {
@@ -2449,133 +2876,105 @@ impl Game {
             Val::Num(x) if *x >= 1.0 => *x as usize,
             _ => 1,
         };
-        let b7 = n([2.0, 4.0, 4.0, 4.0, 8.0, 4.0, 4.0, 8.0, 512.0][under - 1]);
-        self.lab.insert("B7".into(), b7);
-        // each level: whether its test runs, its switches, its board, its due and whether every output is due
+        self.lab
+            .insert("B7".into(), n(f64::from(LEVELS[under - 1].vectors)));
+        // the clock: E2 the level last run, E3 whether it runs, E1 the level that ticks, E4 its ticks, E6 its states, E9 how it ended
+        let (l3, l4, l5, l9) = (
+            self.last_number("E3"),
+            self.last_number("E4"),
+            self.last_number("E5"),
+            self.last_number("E9"),
+        );
+        let states = |no: f64| f64::from(LEVELS[no.max(1.0) as usize - 1].limit());
+        let e2 = if is("run") {
+            shown
+        } else {
+            self.last_number("E2")
+        };
+        let e3 = if is("run") {
+            if states(shown) > 0.0 {
+                1.0
+            } else {
+                0.0
+            }
+        } else if l3 != 1.0 || l4 >= self.last_number("E6") || (l4 > 0.0 && l5 == 0.0) {
+            0.0
+        } else {
+            1.0
+        };
+        let e1 = if is("tick") {
+            shown
+        } else if e3 == 1.0 {
+            e2
+        } else {
+            0.0
+        };
+        let e4 = if is("run") {
+            0.0
+        } else if e3 == 1.0 {
+            l4 + 1.0
+        } else {
+            l4
+        };
+        let e9 = if is("run") || is("reset") {
+            0.0
+        } else if l3 == 1.0 && e3 == 0.0 {
+            if l5 > 0.0 {
+                2.0
+            } else {
+                1.0
+            }
+        } else {
+            l9
+        };
+        for (at, v) in [
+            ("E1", e1),
+            ("E2", e2),
+            ("E3", e3),
+            ("E4", e4),
+            ("E6", states(e2)),
+            ("E9", e9),
+        ] {
+            self.lab.insert(at.into(), n(v));
+        }
+        let (l4v, l5v, l8v, l6v) = (
+            self.last("B4"),
+            self.last("B5"),
+            self.last("B8"),
+            self.last("B6"),
+        );
+        // each level: whether its test runs and its clock ticks, and what they, an act or a person's row move
         for (k, level) in LEVELS.iter().enumerate() {
             let r = 11 + k;
-            let here = if_(&equal(&b4, &n((k + 1) as f64)), || b5.clone(), || n(0.0)).settled();
+            let kk = n((k + 1) as f64);
+            let here = if_(&equal(&b4, &kk), || b5.clone(), || n(0.0)).settled();
             self.lab.insert(format!("N{r}"), here.clone());
+            let ticks = e1 == (k + 1) as f64;
             let sheet = level.sheet;
             let on_level = i.sheet.eq_ignore_ascii_case(sheet);
-            for s in 0..level.inputs as usize {
-                let row = 3 + s as u32;
-                if self.written[k].contains_key(&(row, 1)) {
-                    continue;
-                }
-                let last = self.switches_last[k][s].clone();
-                let v = if is("reset") && on_level {
-                    n(0.0)
-                } else {
-                    if_(
-                        &equal(&here, &n(1.0)),
-                        || bit(&b6, s),
-                        || {
-                            if on_level && i.col == 1 && i.row == row {
-                                if is("one") {
-                                    n(1.0)
-                                } else if is("zero") {
-                                    n(0.0)
-                                } else if is("toggle") || i.press {
-                                    arith(b'-', &n(1.0), &last)
-                                } else {
-                                    last.settled()
-                                }
-                            } else {
-                                last.settled()
-                            }
-                        },
-                    )
-                };
-                self.switches[k][s] = v;
+            let was_ticking = at_one(&self.last(&format!("I{r}")));
+            let tests = at_one(&here) || at_one(&self.last(&format!("N{r}")));
+            let caused = first
+                || self.dirty[k]
+                || tests
+                || ticks
+                || was_ticking
+                || (on_level && (!i.command.is_empty() || i.press));
+            // and the frame after, whose twins read what that one moved
+            let touched = caused || self.caused[k];
+            self.caused[k] = caused;
+            let fresh = first || self.dirty[k];
+            if level.state > 0 {
+                self.lab
+                    .insert(format!("I{r}"), n(if ticks { 1.0 } else { 0.0 }));
             }
-            self.compute_board(k, &(here.clone(), b6.clone()));
-            let sw: Vec<Val> = (0..level.inputs).map(|s| self.cell(k, 3 + s, 1)).collect();
-            let inputs = tested(&here, &b6, &sw);
-            for (s, v) in inputs.iter().enumerate() {
-                self.lab.insert(
-                    format!("{}{}", char::from(b'B' + k as u8), 21 + s),
-                    v.clone(),
-                );
+            self.touched[k] = touched;
+            self.fresh[k] = fresh;
+            if !touched {
+                continue;
             }
-            let due = due(k, &inputs);
-            let cols = ["I", "J", "K", "L", "M"];
-            let mut equals = Vec::new();
-            for (o, d) in due.iter().enumerate() {
-                self.lab.insert(format!("{}{r}", cols[o]), d.clone());
-                equals.push(equal(&self.cell(k, 3 + o as u32, 10), d));
-            }
-            if k == 8 {
-                let mut t = inputs[0].clone();
-                for (s, w) in [
-                    (1, 2.0),
-                    (2, 4.0),
-                    (3, 8.0),
-                    (4, 1.0),
-                    (5, 2.0),
-                    (6, 4.0),
-                    (7, 8.0),
-                    (8, 1.0),
-                ] {
-                    let v = inputs[s].clone();
-                    t = arith(b'+', &t, &if w == 1.0 { v } else { arith(b'*', &n(w), &v) });
-                }
-                self.lab.insert("O19".into(), t);
-            }
-            // an output holding an error is never due
-            let ok = match if_(&and(&equals), || n(1.0), || n(0.0)) {
-                Val::Err(_) => n(0.0),
-                v => v,
-            };
-            self.lab.insert(format!("D{r}"), ok);
-            // the gates: every formula of its room, each read by its text as one of the set or outside it; and the
-            // room's first cell holding an error
-            let inputs = inputs_of(k);
-            let (mut texts, mut kinds, mut error) = (Vec::new(), Vec::new(), None);
-            for row in 3..3 + level.rows {
-                for col in 3..=10 {
-                    let text = match self.written[k].get(&(row, col)) {
-                        Some(Written::Formula(f, _)) => gate_text(f),
-                        _ => String::new(),
-                    };
-                    kinds.push(kind(&text, &inputs));
-                    texts.push(text);
-                    if error.is_none() && matches!(self.cell(k, row, col), Val::Err(_)) {
-                        error = Some(texts.len());
-                    }
-                }
-            }
-            let outside = kinds.iter().filter(|&&q| q > level.gives).count();
-            let first = kinds.iter().position(|&q| q > level.gives);
-            let gates = kinds.iter().filter(|&&q| q > 0).count();
-            self.lab.insert(format!("E{r}"), n(gates as f64));
-            self.lab.insert(format!("F{r}"), n(level.budget as f64));
-            self.lab.insert(format!("G{r}"), n(level.least as f64));
-            self.lab.insert(format!("P{r}"), Val::Text(inputs));
-            self.lab.insert(format!("Q{r}"), n(outside as f64));
-            self.lab.insert(
-                format!("R{r}"),
-                Val::Text(first.map_or(String::new(), |i| room_address(i + 1))),
-            );
-            self.lab.insert(
-                format!("S{r}"),
-                Val::Text(error.map_or(String::new(), room_address)),
-            );
-            self.texts[k] = texts;
-            self.kinds[k] = kinds;
-        }
-        let b8 = self.lab(&format!("D{}", 10 + under));
-        self.lab.insert("B8".into(), b8);
-        // each level's result and the input its test stopped at, then its stars
-        for k in 0..9 {
-            let r = 11 + k;
-            let kk = n((k + 1) as f64);
-            let (l4, l5, l8, l6) = (
-                self.last("B4"),
-                self.last("B5"),
-                self.last("B8"),
-                self.last("B6"),
-            );
+            self.switches_last[k] = self.switches[k].clone();
+            // its result and the input its test stopped at
             let (last_b, last_c) = (
                 self.last(&format!("B{r}")).settled(),
                 self.last(&format!("C{r}")).settled(),
@@ -2584,52 +2983,216 @@ impl Game {
                 Val::Bool(b) => Val::Bool(!b),
                 other => other,
             };
+            let gone = or(&[away(&l4v), away(&b4)]);
+            let ended = and(&[equal(&l5v, &n(1.0)), equal(&b5, &n(0.0))]);
             let result = if is("reset") && shown == (k + 1) as f64 {
                 n(0.0)
             } else {
                 if_(
-                    &or(&[away(&l4), away(&b4)]),
+                    &gone,
                     || last_b.clone(),
                     || {
                         if_(
-                            &and(&[equal(&l5, &n(1.0)), equal(&b5, &n(0.0))]),
-                            || if_(&equal(&l8, &n(1.0)), || n(1.0), || n(2.0)),
+                            &ended,
+                            || if_(&equal(&l8v, &n(1.0)), || n(1.0), || n(2.0)),
                             || last_b.clone(),
                         )
                     },
                 )
             };
             let stopped = if_(
-                &or(&[away(&l4), away(&b4)]),
+                &gone,
                 || last_c.clone(),
-                || {
-                    if_(
-                        &and(&[equal(&l5, &n(1.0)), equal(&b5, &n(0.0))]),
-                        || l6.clone().settled(),
-                        || last_c.clone(),
-                    )
-                },
+                || if_(&ended, || l6v.clone().settled(), || last_c.clone()),
             );
             self.lab.insert(format!("B{r}"), result.clone());
             self.lab.insert(format!("C{r}"), stopped);
-            // its gates and those outside the set when its test last ended, which its stars read
-            let mut at_test_end = |col: &str, now: &str| {
+            // its switches and its flip-flops, each its own last value
+            let total = level.switches() as usize;
+            let inputs_n = level.inputs as usize;
+            for s in (0..total).rev() {
+                let row = 3 + s as u32;
+                if k == MACHINA && s < inputs_n {
+                    continue;
+                }
+                if self.written[k].contains_key(&(row, 1)) {
+                    continue;
+                }
+                let last = self.switches_last[k][s].clone();
+                let flip_flop = s >= inputs_n;
+                let v = if (is("reset") || (flip_flop && is("run"))) && on_level {
+                    n(0.0)
+                } else {
+                    if_(
+                        &equal(&here, &n(1.0)),
+                        || test_input(k, s, &b6),
+                        || {
+                            if flip_flop && ticks {
+                                let next = self.board[k]
+                                    .get(&(3 + (s - inputs_n) as u32, 10))
+                                    .cloned()
+                                    .unwrap_or(Val::Empty);
+                                as_a_flip_flop_takes(&next)
+                            } else if on_level && i.col == 1 && i.row == row {
+                                if is("one") {
+                                    n(1.0)
+                                } else if is("zero") {
+                                    n(0.0)
+                                } else if is("toggle") || i.press {
+                                    arith(b'-', &n(1.0), &last)
+                                } else {
+                                    last.clone().settled()
+                                }
+                            } else {
+                                last.clone().settled()
+                            }
+                        },
+                    )
+                };
+                self.switches[k][s] = v;
+            }
+            // XV's word: the ROM's line at p, E7, and its number, E8
+            if k == MACHINA {
+                let sw = &self.switches[k];
+                let p = weighted(sw, &[(11, 1.0), (12, 2.0), (13, 4.0), (14, 8.0)]);
+                let word = match &p {
+                    Val::Num(x) if *x >= 0.0 && *x < 16.0 => rom_word(&self.rom[*x as usize]),
+                    _ => 4.0,
+                };
+                self.lab.insert("E7".into(), p);
+                self.lab.insert("E8".into(), n(word));
+                for s in 0..inputs_n {
+                    let row = 3 + s as u32;
+                    if self.written[k].contains_key(&(row, 1)) {
+                        continue;
+                    }
+                    let last = self.switches_last[k][s].clone().settled();
+                    self.switches[k][s] = if_(
+                        &equal(&here, &n(1.0)),
+                        || test_input(k, s, &b6),
+                        || {
+                            if matches!(result, Val::Num(x) if x == 2.0) && !ticks {
+                                last.clone()
+                            } else {
+                                a_bit_of(&n(word), s)
+                            }
+                        },
+                    );
+                }
+            }
+            self.compute_board(k, &(here.clone(), b6.clone()));
+            let sw: Vec<Val> = (0..level.switches())
+                .map(|s| self.cell(k, 3 + s, 1))
+                .collect();
+            let inputs = tested(k, &here, &b6, &sw);
+            let col = char::from(b'B' + k as u8);
+            for (s, v) in inputs.iter().enumerate() {
+                self.lab.insert(format!("{col}{}", 31 + s), v.clone());
+            }
+            let owed = due(k, &inputs);
+            for (o, d) in owed.iter().enumerate() {
+                self.lab.insert(format!("{col}{}", 51 + o), d.clone());
+            }
+            match k {
+                8 => {
+                    self.lab.insert("O19".into(), quattuor(&inputs));
+                }
+                12 => {
+                    self.lab.insert("O23".into(), numera(&inputs));
+                }
+                13 => {
+                    self.lab.insert("O24".into(), ratio(&inputs));
+                }
+                MACHINA => {
+                    for (j, v) in machina(&inputs).into_iter().enumerate() {
+                        self.lab.insert(format!("P{}", 64 + j), v);
+                    }
+                }
+                _ => {}
+            }
+            // whether every switch stands where its test wants it, and every output is its due, an error never
+            let held = differing(&sw, &inputs) == Some(0);
+            self.lab
+                .insert(format!("K{r}"), n(if held { 1.0 } else { 0.0 }));
+            let outs: Vec<Val> = (0..level.outputs)
+                .map(|o| self.cell(k, 3 + o, 10))
+                .collect();
+            let ok = held && differing(&outs, &owed) == Some(0);
+            self.lab
+                .insert(format!("D{r}"), n(if ok { 1.0 } else { 0.0 }));
+            // its flip-flops moved at this frame, each against its twin
+            if level.state > 0 {
+                let moved = differing(&sw[inputs_n..], &self.switches_last[k][inputs_n..])
+                    .map_or(0.0, |m| m as f64);
+                self.lab.insert(format!("J{r}"), n(moved));
+                self.lab
+                    .insert(format!("V{r}"), n(f64::from(level.limit())));
+            }
+            // the gates: every formula of its room, each read by its text as one of the set or outside it; and the
+            // room's first cell holding an error
+            if fresh {
+                let inputs = inputs_of(k);
+                let (mut texts, mut kinds) = (Vec::new(), Vec::new());
+                for row in 3..3 + level.rows {
+                    for col in 3..=10 {
+                        let text = match self.written[k].get(&(row, col)) {
+                            Some(Written::Formula(f, _)) => gate_text(f),
+                            _ => String::new(),
+                        };
+                        kinds.push(kind(&text, &inputs));
+                        texts.push(text);
+                    }
+                }
+                let outside = kinds.iter().filter(|&&q| q > level.gives).count();
+                let first = kinds.iter().position(|&q| q > level.gives);
+                let gates = kinds.iter().filter(|&&q| q > 0).count();
+                self.lab.insert(format!("E{r}"), n(gates as f64));
+                self.lab.insert(format!("F{r}"), n(f64::from(level.budget)));
+                self.lab.insert(format!("G{r}"), n(f64::from(level.least)));
+                self.lab
+                    .insert(format!("M{r}"), n(f64::from(level.vectors)));
+                self.lab
+                    .insert(format!("W{r}"), n(f64::from(2 + level.rows)));
+                self.lab.insert(format!("P{r}"), Val::Text(inputs));
+                self.lab.insert(format!("Q{r}"), n(outside as f64));
+                self.lab.insert(
+                    format!("R{r}"),
+                    Val::Text(first.map_or(String::new(), |i| room_address(i + 1))),
+                );
+                self.texts[k] = texts;
+                self.kinds[k] = kinds;
+            }
+            let mut error = None;
+            'room: for (place, (row, col)) in (3..3 + level.rows)
+                .flat_map(|row| (3..=10).map(move |col| (row, col)))
+                .enumerate()
+            {
+                if matches!(self.cell(k, row, col), Val::Err(_)) {
+                    error = Some(place + 1);
+                    break 'room;
+                }
+            }
+            self.lab.insert(
+                format!("S{r}"),
+                Val::Text(error.map_or(String::new(), room_address)),
+            );
+            // its gates and those outside the set, and whether its switches held, when its test last ended, which its
+            // stars and its verdict read
+            let last_held = self.last(&format!("K{r}"));
+            let (e, q) = (self.lab(&format!("E{r}")), self.lab(&format!("Q{r}")));
+            let mut at_test_end = |col: &str, now: Val| {
                 let last = self.last(&format!("{col}{r}")).settled();
                 let v = if_(
-                    &or(&[away(&l4), away(&b4)]),
+                    &gone,
                     || last.clone(),
-                    || {
-                        if_(
-                            &and(&[equal(&l5, &n(1.0)), equal(&b5, &n(0.0))]),
-                            || self.lab(&format!("{now}{r}")),
-                            || last.clone(),
-                        )
-                    },
+                    || if_(&ended, || now.clone(), || last.clone()),
                 );
                 self.lab.insert(format!("{col}{r}"), v.clone());
                 v
             };
-            let (t, u) = (at_test_end("T", "E"), at_test_end("U", "Q"));
+            let t = at_test_end("T", e);
+            let u = at_test_end("U", q);
+            at_test_end("L", last_held.settled());
             let (f, g) = (self.lab(&format!("F{r}")), self.lab(&format!("G{r}")));
             let stars = if_(
                 &equal(&result, &n(1.0)),
@@ -2655,7 +3218,31 @@ impl Game {
                 || Val::Text("☆☆☆".into()),
             );
             self.lab.insert(format!("H{r}"), stars);
+            self.dirty[k] = false;
         }
+        let b8 = self.lab(&format!("D{}", 10 + under));
+        self.lab.insert("B8".into(), b8);
+        // 1 or 0 on a cell of the level's room that holds no gate: the Write sheet's row, a frame on (decision 47)
+        let typed = (is("one") || is("zero")) && shown > 0.0 && {
+            let k = shown as usize - 1;
+            (3..=10).contains(&i.col)
+                && (3..3 + LEVELS[k].rows).contains(&i.row)
+                && self.kinds[k][8 * (i.row - 3) as usize + (i.col - 3) as usize] == 0
+        };
+        self.lab
+            .insert("H1".into(), n(if typed { 1.0 } else { 0.0 }));
+        if typed {
+            self.derived = Some((
+                shown as usize - 1,
+                (i.row, i.col),
+                if is("one") { 1.0 } else { 0.0 },
+            ));
+        }
+        let e5 = match self.lab(&format!("J{}", 10 + (e2.max(1.0) as usize))) {
+            Val::Num(x) => x,
+            _ => 0.0,
+        };
+        self.lab.insert("E5".into(), n(e5));
     }
 
     /// A level's cell as this frame computes it.
@@ -2672,7 +3259,8 @@ impl Game {
     /// the due's inputs read.
     fn compute_board(&mut self, k: usize, test: &(Val, Val)) {
         let level = &LEVELS[k];
-        let last = 2 + level.rows.max(level.inputs);
+        let total = level.switches();
+        let last = 2 + level.rows.max(total);
         let mut board: HashMap<(u32, u32), Val> = HashMap::new();
         let mut doing: Vec<(u32, u32)> = Vec::new();
         let switches = self.switches[k].clone();
@@ -2695,6 +3283,7 @@ impl Game {
             }
             doing.push(at);
             let level = &LEVELS[k];
+            let total = level.switches();
             let (row, col) = at;
             let v = match written.get(&at) {
                 Some(Written::Value(v)) => v.clone(),
@@ -2704,7 +3293,7 @@ impl Game {
                     g.eval(&mut read).settled()
                 }
                 None => {
-                    if col == 1 && row >= 3 && row < 3 + level.inputs {
+                    if col == 1 && row >= 3 && row < 3 + total {
                         switches[(row - 3) as usize].clone()
                     } else if col == 12 && row >= 3 && row < 3 + level.outputs {
                         let j = value((row, 10), k, test, switches, written, board, doing);
@@ -2717,11 +3306,11 @@ impl Game {
                             lamp => lamp,
                         }
                     } else if col == 13 && row >= 3 && row < 3 + level.outputs {
-                        let sw: Vec<Val> = (0..level.inputs)
+                        let sw: Vec<Val> = (0..total)
                             .map(|s| value((3 + s, 1), k, test, switches, written, board, doing))
                             .collect();
-                        due(k, &tested(&test.0, &test.1, &sw))[(row - 3) as usize].clone()
-                    } else if col == 2 && row >= 3 && row < 3 + level.inputs {
+                        due(k, &tested(k, &test.0, &test.1, &sw))[(row - 3) as usize].clone()
+                    } else if col == 2 && row >= 3 && row < 3 + total {
                         Val::Text(NAMES[k].0[(row - 3) as usize].to_string())
                     } else if col == 11 && row >= 3 && row < 3 + level.outputs {
                         Val::Text(NAMES[k].1[(row - 3) as usize].to_string())
@@ -2751,7 +3340,7 @@ impl Game {
             value((r, c), k, test, &switches, &written, &mut board, &mut doing);
         }
         // a switch a person wrote over is that cell's value from now on
-        for s in 0..level.inputs as usize {
+        for s in 0..total as usize {
             if written.contains_key(&(3 + s as u32, 1)) {
                 self.switches[k][s] = board.get(&(3 + s as u32, 1)).cloned().unwrap_or(Val::Empty);
             }
@@ -2764,8 +3353,8 @@ impl Game {
     /// test's stars; its test, and the room's first cell holding an error.
     pub fn words(&self, k: usize) -> (Val, Val) {
         let r = 11 + k;
-        let inputs = [2, 4, 4, 4, 8, 4, 4, 8, 512][k];
         let level = &LEVELS[k];
+        let inputs = level.vectors;
         let n = |x: f64| Val::Num(x);
         let lab = |col: &str| self.lab(&format!("{col}{r}"));
         let outside = if_(
@@ -2791,6 +3380,7 @@ impl Game {
             )),
             Err(k) => Val::Err(k),
         };
+        let no_error = equal(&lab("S"), &Val::Text(String::new()));
         let verdict = if_(
             &equal(&lab("N"), &n(1.0)),
             || match arith(b'+', &self.lab("B6"), &n(1.0)).text() {
@@ -2802,8 +3392,16 @@ impl Game {
                     &equal(&lab("B"), &n(2.0)),
                     || {
                         let at = if_(
-                            &equal(&lab("S"), &Val::Text(String::new())),
-                            || Val::Text("a lamp differs from its due.".into()),
+                            &no_error,
+                            || {
+                                if_(
+                                    &equal(&lab("L"), &n(0.0)),
+                                    || {
+                                        Val::Text("a switch written over does not follow the test. Load restores it, and empties every level.".into())
+                                    },
+                                    || Val::Text("a lamp differs from its due.".into()),
+                                )
+                            },
                             || error(""),
                         );
                         match (arith(b'+', &lab("C"), &n(1.0)).text(), at.text()) {
@@ -2815,14 +3413,16 @@ impl Game {
                     },
                     || {
                         if_(
-                            &equal(&lab("S"), &Val::Text(String::new())),
+                            &no_error,
                             || {
                                 if_(
                                     &equal(&lab("B"), &n(1.0)),
                                     || {
-                                        Val::Text(format!(
-                                            "Quod erat demonstrandum: every one of its {inputs} inputs passes."
-                                        ))
+                                        Val::Text(if k == MACHINA {
+                                            "Probatum: all 2,048 pass, every word at every A. Testing, said Dijkstra, shows the presence of bugs, never their absence.".to_string()
+                                        } else {
+                                            format!("Quod erat demonstrandum: every one of its {inputs} inputs passes.")
+                                        })
                                     },
                                     || {
                                         Val::Text(
@@ -2839,6 +3439,38 @@ impl Game {
             },
         );
         (reckoning, verdict)
+    }
+
+    /// A clocked level's clock in words, its N11: its keys; the tick a run
+    /// stands at; where a run came to rest; or that it never rests.
+    pub fn clock_words(&self, k: usize) -> Val {
+        let level = &LEVELS[k];
+        let keys = "C ticks the clock once. G clears the flip-flops and runs the clock until they stand still.";
+        let number = |at: &str| match self.lab(at) {
+            Val::Num(x) => x,
+            _ => 0.0,
+        };
+        if number("E2") != (k + 1) as f64 {
+            return Val::Text(keys.into());
+        }
+        let holding = if level.state == 1 {
+            "1 flip-flop holds".to_string()
+        } else {
+            format!("{} flip-flops hold", level.state)
+        };
+        Val::Text(if number("E3") == 1.0 {
+            format!("Currit, it runs: tick {}", general(number("E4")))
+        } else if number("E9") == 1.0 {
+            format!(
+                "Stat, it stands: its last move at tick {}.",
+                general(number("E4") - 1.0)
+            )
+        } else if number("E9") == 2.0 {
+            let limit = level.limit();
+            format!("In aeternum: {limit} ticks, no rest. {holding} {limit} states, so one came twice: it never halts. A short tape answers Turing.")
+        } else {
+            keys.to_string()
+        })
     }
 }
 
@@ -2966,6 +3598,12 @@ pub fn session() -> Vec<(Acted, Option<Edit>)> {
         gate("IV AUT", "C4", "=1-A3*A4"),
         gate("IV AUT", "J3", "=C3*C4"),
         key("IV AUT", 1, 3, "test"),
+        // and 1 and 0 typed on its room: a value written and written over, and nothing on a gate, on a lamp or past the room
+        key("IV AUT", 6, 6, "one"),
+        key("IV AUT", 6, 6, "zero"),
+        key("IV AUT", 3, 3, "one"),
+        key("IV AUT", 12, 3, "one"),
+        key("IV AUT", 3, 11, "one"),
         // V at its least known; VI at the textbook's three gates, NON and two ETs, within the budget: two stars
         gate("V ELIGE", "C3", "=MOD(A3+A4,2)"),
         gate("V ELIGE", "C4", "=A5*C3"),
@@ -3028,12 +3666,181 @@ pub fn session() -> Vec<(Acted, Option<Edit>)> {
     }
     s.push(key("IX QUATTUOR", 1, 3, "test"));
     s.push(key("IX QUATTUOR", 1, 3, "next"));
+    // X: the flip-flop: a wire to J3 and T, d set and C ticked, q a tick behind; G, at rest; and a gate that toggles q,
+    // which G runs until every state is spent, then the wire again
+    s.push(gate("X MORA", "J3", "=A3"));
+    s.push(key("X MORA", 1, 3, "test"));
+    s.push(key("X MORA", 1, 3, "zero"));
+    s.push(key("X MORA", 1, 3, "tick"));
+    s.push(key("X MORA", 1, 3, "one"));
+    s.push(key("X MORA", 1, 3, "tick"));
+    s.push(key("X MORA", 1, 3, "run"));
+    s.push(gate("X MORA", "J3", "=1-A4"));
+    s.push(key("X MORA", 1, 3, "run"));
+    s.push(gate("X MORA", "J3", "=A3"));
+    s.push(key("X MORA", 1, 3, "test"));
+    // XI: a bit held, ELIGE in one gate; its flip-flop set by hand and its test forgotten by R
+    s.push(gate("XI TENE", "J3", "=IF(A3,A4,A5)"));
+    s.push(key("XI TENE", 1, 3, "test"));
+    s.push(key("XI TENE", 1, 5, "toggle"));
+    s.push(key("XI TENE", 1, 3, "reset"));
+    s.push(key("XI TENE", 1, 3, "test"));
+    // XII: four of them
+    for (r, a, b) in [
+        ("J3", "A4", "A8"),
+        ("J4", "A5", "A9"),
+        ("J5", "A6", "A10"),
+        ("J6", "A7", "A11"),
+    ] {
+        s.push(gate("XII MEMORIA", r, &format!("=IF($A$3,{a},{b})")));
+    }
+    s.push(key("XII MEMORIA", 1, 3, "test"));
+    // XIII: a half adder a bit, a 0 chosen at reset; inc on and G, which never rests
+    for (at, f) in NUMERA_GATES {
+        s.push(gate("XIII NUMERA", at, f));
+    }
+    s.push(key("XIII NUMERA", 1, 3, "test"));
+    s.push(key("XIII NUMERA", 1, 3, "zero"));
+    s.push(key("XIII NUMERA", 1, 4, "one"));
+    s.push(key("XIII NUMERA", 1, 4, "run"));
+    // XIV: the reckoning, all 1,024 inputs
+    for (at, f) in RATIO_GATES {
+        s.push(gate("XIV RATIO", at, f));
+    }
+    s.push(key("XIV RATIO", 1, 3, "test"));
+    // XV: half its gates, T standing on the input that fails, its word as it stood; C and R; then the rest, its 2,048
+    // inputs; G, which runs the ROM's 3 x 5 to its HLT; a line rewritten and a word none of the five, and G again
+    let half = MACHINA_GATES.len() / 2;
+    for (at, f) in &MACHINA_GATES[..half] {
+        s.push(gate("XV MACHINA", at, f));
+    }
+    s.push(key("XV MACHINA", 1, 3, "test"));
+    s.push(key("XV MACHINA", 1, 3, "tick"));
+    s.push(key("XV MACHINA", 1, 3, "reset"));
+    for (at, f) in &MACHINA_GATES[half..] {
+        s.push(gate("XV MACHINA", at, f));
+    }
+    s.push(key("XV MACHINA", 1, 3, "test"));
+    s.push(key("XV MACHINA", 1, 3, "run"));
+    s.push(key("XV MACHINA", 1, 3, "next"));
+    s.push(value("ROM", "B4", Val::Text("add 7".into())));
+    s.push(value("ROM", "B9", Val::Text("FOO".into())));
+    s.push(key("XV MACHINA", 1, 3, "run"));
+    s.push(key("XV MACHINA", 1, 3, "tick"));
     // a switch a person writes over is a value until Load
     s.push(value("I NON", "A3", Val::Num(1.0)));
     s.push(key("I NON", 1, 3, "toggle"));
     s.push(key("I NON", 1, 3, "test"));
     s
 }
+
+/// XIII at its least known: a half adder a bit from inc, and a 0 chosen at
+/// reset.
+pub const NUMERA_GATES: [(&str, &str); 11] = [
+    ("C3", "=MOD(A5+A4,2)"),
+    ("D3", "=A5*A4"),
+    ("C4", "=MOD(A6+D3,2)"),
+    ("D4", "=A6*D3"),
+    ("C5", "=MOD(A7+D4,2)"),
+    ("D5", "=A7*D4"),
+    ("C6", "=MOD(A8+D5,2)"),
+    ("J3", "=IF(A3,0,C3)"),
+    ("J4", "=IF(A3,0,C4)"),
+    ("J5", "=IF(A3,0,C5)"),
+    ("J6", "=IF(A3,0,C6)"),
+];
+
+/// XIV at its least known: bit 0's six gates, each later bit's eight, whose
+/// carry is `=IF(x,c,a*op0)`, a carry chain alive under op0 alone, and J7 the
+/// last carry under op1.
+pub const RATIO_GATES: [(&str, &str); 31] = [
+    ("C3", "=MOD(A3+A7,2)"),
+    ("D3", "=A3*A7"),
+    ("E3", "=MAX(A3,A7)"),
+    ("F3", "=IF(A11,E3,D3)"),
+    ("J3", "=IF(A12,C3,F3)"),
+    ("G3", "=A11*D3"),
+    ("C4", "=MOD(A4+A8,2)"),
+    ("D4", "=A4*A8"),
+    ("E4", "=MAX(A4,A8)"),
+    ("F4", "=IF($A$11,E4,D4)"),
+    ("H4", "=MOD(C4+G3,2)"),
+    ("J4", "=IF($A$12,H4,F4)"),
+    ("I4", "=A4*$A$11"),
+    ("G4", "=IF(C4,G3,I4)"),
+    ("C5", "=MOD(A5+A9,2)"),
+    ("D5", "=A5*A9"),
+    ("E5", "=MAX(A5,A9)"),
+    ("F5", "=IF($A$11,E5,D5)"),
+    ("H5", "=MOD(C5+G4,2)"),
+    ("J5", "=IF($A$12,H5,F5)"),
+    ("I5", "=A5*$A$11"),
+    ("G5", "=IF(C5,G4,I5)"),
+    ("C6", "=MOD(A6+A10,2)"),
+    ("D6", "=A6*A10"),
+    ("E6", "=MAX(A6,A10)"),
+    ("F6", "=IF($A$11,E6,D6)"),
+    ("H6", "=MOD(C6+G5,2)"),
+    ("J6", "=IF($A$12,H6,F6)"),
+    ("I6", "=A6*$A$11"),
+    ("G6", "=IF(C6,G5,I6)"),
+    ("J7", "=G6*A12"),
+];
+
+/// XV at its least known. The word, A3 to A9, op then n; A, A10 to A13; p, A14
+/// to A17; B, A18 to A21. C3 and D3 tell JNZ's op and every op that keeps A; E3
+/// SWP and F3 JNZ; I3 that A is not 0, and C4 the jump. C5 to E8 add A and n,
+/// the carry by ELIGE; F and G choose A's next among the sum, n and B, and J3
+/// to J6 keep A; I4 is 1 but at HLT, and C9 to D11 add it to p, so that HLT's p
+/// is p; J7 to J10 choose the jump's n; and J11 to J14 trade B at SWP.
+pub const MACHINA_GATES: [(&str, &str); 46] = [
+    ("C3", "=A3*A4"),
+    ("D3", "=MAX(A5,C3)"),
+    ("E3", "=IF(D3,0,A4)"),
+    ("F3", "=IF(A5,0,C3)"),
+    ("G3", "=MAX(A10,A11)"),
+    ("H3", "=MAX(A12,A13)"),
+    ("I3", "=MAX(G3,H3)"),
+    ("C4", "=F3*I3"),
+    ("C5", "=MOD(A10+A6,2)"),
+    ("D5", "=A10*A6"),
+    ("C6", "=MOD(A11+A7,2)"),
+    ("D6", "=MOD(C6+D5,2)"),
+    ("E6", "=IF(C6,D5,A11)"),
+    ("C7", "=MOD(A12+A8,2)"),
+    ("D7", "=MOD(C7+E6,2)"),
+    ("E7", "=IF(C7,E6,A12)"),
+    ("C8", "=MOD(A13+A9,2)"),
+    ("D8", "=MOD(C8+E7,2)"),
+    ("F5", "=IF(A3,C5,A6)"),
+    ("F6", "=IF(A3,D6,A7)"),
+    ("F7", "=IF(A3,D7,A8)"),
+    ("F8", "=IF(A3,D8,A9)"),
+    ("G5", "=IF(A4,A18,F5)"),
+    ("G6", "=IF(A4,A19,F6)"),
+    ("G7", "=IF(A4,A20,F7)"),
+    ("G8", "=IF(A4,A21,F8)"),
+    ("J3", "=IF(D3,A10,G5)"),
+    ("J4", "=IF(D3,A11,G6)"),
+    ("J5", "=IF(D3,A12,G7)"),
+    ("J6", "=IF(D3,A13,G8)"),
+    ("I4", "=1-A5"),
+    ("C9", "=MOD(A14+I4,2)"),
+    ("D9", "=A14*I4"),
+    ("C10", "=MOD(A15+D9,2)"),
+    ("D10", "=A15*D9"),
+    ("C11", "=MOD(A16+D10,2)"),
+    ("D11", "=A16*D10"),
+    ("C12", "=MOD(A17+D11,2)"),
+    ("J7", "=IF(C4,A6,C9)"),
+    ("J8", "=IF(C4,A7,C10)"),
+    ("J9", "=IF(C4,A8,C11)"),
+    ("J10", "=IF(C4,A9,C12)"),
+    ("J11", "=IF(E3,A10,A18)"),
+    ("J12", "=IF(E3,A11,A19)"),
+    ("J13", "=IF(E3,A12,A20)"),
+    ("J14", "=IF(E3,A13,A21)"),
+];
 
 #[cfg(test)]
 mod tests {
@@ -3183,9 +3990,126 @@ mod tests {
                 "J11".to_string()
             )
         );
-        // each level gives the gates proven before it: NON at II, ET at III, VEL at IV, AUT from V
+        // each level gives the gates proven before it: NON at II, ET at III, VEL at IV, AUT from V, ELIGE from X
         let gives: Vec<u32> = LEVELS.iter().map(|l| l.gives).collect();
-        assert_eq!(gives, [2, 3, 4, 5, 6, 6, 6, 6, 6]);
+        assert_eq!(gives, [2, 3, 4, 5, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7]);
+    }
+
+    /// A room's gates in their order, over a level's switches: each output of
+    /// J the hand's arithmetic gives, each gate seeing those before it.
+    fn outputs_of(gates: &[(u32, u32, Gex)], switches: &[Val], outputs: u32) -> Vec<Val> {
+        let mut cells: HashMap<(u32, u32), Val> = HashMap::new();
+        for (s, v) in switches.iter().enumerate() {
+            cells.insert((3 + s as u32, 1), v.clone());
+        }
+        for (row, col, g) in gates {
+            let v = g
+                .eval(&mut |r, c| cells.get(&(r, c)).cloned().unwrap_or(Val::Empty))
+                .settled();
+            cells.insert((*row, *col), v);
+        }
+        (0..outputs)
+            .map(|o| cells.get(&(3 + o, 10)).cloned().unwrap_or(Val::Empty))
+            .collect()
+    }
+
+    /// The first input of a level's test its gates get wrong; `None` if they
+    /// pass it.
+    fn first_wrong(k: usize, gates: &[(u32, u32, Gex)]) -> Option<u32> {
+        let level = &LEVELS[k];
+        (0..level.vectors).find(|&v| {
+            let b6 = Val::Num(f64::from(v));
+            let s: Vec<Val> = (0..level.switches() as usize)
+                .map(|i| test_input(k, i, &b6))
+                .collect();
+            outputs_of(gates, &s, level.outputs) != due(k, &s)
+        })
+    }
+
+    /// A gate's formula with its inputs and its shape moved: ET for VEL and VEL
+    /// for ET, VEL for AUT, and ELIGE's two branches traded.
+    fn another_gate(f: &str) -> Option<String> {
+        let inside = |p: &str, q: &str| f.strip_prefix(p).and_then(|x| x.strip_suffix(q));
+        if let Some(x) = inside("=IF(", ")") {
+            let v: Vec<&str> = x.split(',').collect();
+            return Some(format!("=IF({},{},{})", v[0], v[2], v[1]));
+        }
+        if let Some(x) = inside("=MAX(", ")") {
+            let (a, b) = x.split_once(',')?;
+            return Some(format!("={a}*{b}"));
+        }
+        if let Some(x) = inside("=MOD(", ",2)") {
+            let (a, b) = x.split_once('+')?;
+            return Some(format!("=MAX({a},{b})"));
+        }
+        let x = f.strip_prefix('=')?;
+        let (a, b) = x.split_once('*')?;
+        Some(format!("=MAX({a},{b})"))
+    }
+
+    /// The test of each level past 15 bits or with gates enough to err (decision
+    /// 40): every least-known room passes, and no gate of it stuck at 0 or at 1,
+    /// or another gate in its place, passes. So XV's 2,048 inputs of 524,288, its
+    /// p and its B drawn by lot, see each of its gates fail, however they fail.
+    #[test]
+    fn the_tests_catch_every_gate_of_a_least_known_room_gone_wrong() {
+        let read = |gates: &[(&str, &str)]| -> Vec<(u32, u32, Gex)> {
+            gates
+                .iter()
+                .map(|(at, f)| {
+                    let (row, col) = place(at);
+                    (row, col, gex(f).expect("a gate"))
+                })
+                .collect()
+        };
+        for (k, gates) in [
+            (12, &NUMERA_GATES[..]),
+            (13, &RATIO_GATES[..]),
+            (MACHINA, &MACHINA_GATES[..]),
+        ] {
+            let room = read(gates);
+            assert_eq!(first_wrong(k, &room), None, "{}: its room", LEVELS[k].sheet);
+            for (i, (at, f)) in gates.iter().enumerate() {
+                let mut wrongs = vec![Gex::Num(0.0), Gex::Num(1.0)];
+                if let Some(other) = another_gate(f) {
+                    wrongs.push(gex(&other).expect("a gate"));
+                }
+                for wrong in wrongs {
+                    let mut mutated = room.clone();
+                    mutated[i].2 = wrong.clone();
+                    assert!(
+                        first_wrong(k, &mutated).is_some(),
+                        "{}: {at} {f} as {wrong:?} passes its test",
+                        LEVELS[k].sheet
+                    );
+                }
+            }
+        }
+    }
+
+    /// A line of the ROM read as its word's number, and a level's limit.
+    #[test]
+    fn the_rom_reads_its_lines_as_the_cartridge_does() {
+        for (line, word) in [
+            ("LDI 3", 24.0),
+            ("ADD 15", 121.0),
+            ("add 7", 57.0),
+            ("SWP", 2.0),
+            ("JNZ 1", 11.0),
+            ("HLT", 4.0),
+            ("", 4.0),
+            ("FOO", 4.0),
+            ("ADD -1", 121.0),
+            ("ADD x", 1.0),
+            ("LDI 1.5", 8.0),
+        ] {
+            assert_eq!(rom_word(&Val::Text(line.into())), word, "{line:?}");
+        }
+        assert_eq!(rom_word(&Val::Empty), 4.0, "an empty line");
+        assert_eq!(
+            LEVELS.iter().map(Level::limit).collect::<Vec<u32>>(),
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 16, 16, 0, 4096]
+        );
     }
 
     #[test]

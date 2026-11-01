@@ -544,16 +544,39 @@
     for (i = 0; i < write.length; i++) { if (write[i].head === 'formula') formulas++; else values++; cells += cellsOf(write[i].range); }
     return { why: why, rows: write.map(function (v) { return v.text; }), formulas: formulas, values: values, cells: cells };
   }
+  // A command's name in a sentence, in single quotes (the owner's word at CART.9's fourth slice's hand test).
+  function commandWords(name) { return 'command \'' + name + '\''; }
   // An act at rate 0, in words, for the frame's sentence: an edit's row, a command, a press of a button on its cell
   // (version 6, CART.12), the load's first step of a cartridge that settles, or a rebuilt cartridge applied.
   var PRESS_WORDS = ['', 'left', 'right', 'middle'];
   function actWords(a) {
     if (typeof a === 'string') return 'the edit ' + a;
     if (a.row !== undefined) return 'the edit ' + a.row;
-    if (a.command !== undefined) return 'the command ' + a.command;
+    if (a.command !== undefined) return 'the ' + commandWords(a.command);
     if (a.press !== undefined) return 'the ' + PRESS_WORDS[a.press] + ' press on ' + a.place.sheet + '!' + VP().colName(a.place.col) + a.place.row;
     if (a.load) return 'the load';
     return 'the source applied, ' + a.file;
+  }
+  // A count in a sentence: a word below ten, and a number from there.
+  var COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+  function countWords(n) { return n < COUNT_WORDS.length ? COUNT_WORDS[n] : thousands(n); }
+  // What an act's own frame did, in a person's words.
+  function ownFrameWords(a) {
+    if (a.command !== undefined) return 'it ran';
+    if (a.press !== undefined) return 'it landed';
+    if (a.load) return 'it took its first step';
+    return 'it was written';
+  }
+  // A settled act's frames and what each was for (the owner's word at CART.9's fourth slice's hand test, decision 51),
+  // docs/SPEC.md section 5's settle in a person's words: the act's own; the one after a press's or a command's release, or
+  // the one reading what an edit wrote; those while the grid still moved; and the last, which moved nothing and so proves
+  // that nothing will. a, the act; steps, the settle steps after its own, at least one.
+  function settledWords(a, steps) {
+    var released = a.command !== undefined || a.press !== undefined, parts = [ownFrameWords(a)];
+    if (steps >= 2) parts.push(released ? 'it was released' : 'the grid read it');
+    if (steps >= 3) parts.push('the grid moved for ' + countWords(steps - 2) + ' more');
+    parts.push('and a last frame proved nothing moved');
+    return countWords(steps + 1) + ' frames: ' + parts.join(', ');
   }
   // What a continue writes, in words: its rows by kind, and their cells.
   function appliedWords(b) {
@@ -690,7 +713,7 @@
     // as a timeline across loads, each line's frames one run's, and a load's sentences are the status line's again
     // (the rider of CART.9's third slice and the owner's word after it)
     this.run = (this.run || 0) + 1;
-    this.frame = 0; this.inFrame = false; this.progress = null; this.stepEdit = null;
+    this.frame = 0; this.inFrame = false; this.progress = null; this.stepEdit = null; this.stepAct = null;
     this.acc = 0; this.lastTs = null; this.deltas = []; this.interval = DEFAULT_INTERVAL_MS;
     this.cellsPerMs = 0; this.frameCells = 0;
     this.pending = []; this.edits = [];
@@ -729,7 +752,7 @@
     this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
     this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, inputsKept: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, patches: 0, shows: 0, saves: 0,
                sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0, commands: 0, commandsRefused: 0,
-               settles: 0, settleSteps: 0, unsettled: 0, presses: 0, playedShown: 0, editsRead: 0, keysRead: 0 };
+               settles: 0, settleSteps: 0, unsettled: 0, presses: 0, playedShown: 0, editsRead: 0, keysRead: 0, keysStray: 0 };
   };
 
   // The module: its ABI number asked first, then every export the loop calls.
@@ -993,7 +1016,7 @@
       if (this.settling) { if (!this._continue(win)) return; continue; }
       var row = this.edits.shift();
       if (!this._issueAct(row, true)) { this.inFrame = false; this.progress = null; continue; }
-      this.stepEdit = actWords(row);
+      this.stepEdit = actWords(row); this.stepAct = row;
       if (!this._continue(win)) return;
     }
   };
@@ -1234,10 +1257,10 @@
     if (d.write) this._readWrite();
     if (d.clock) this._readClock();
     if (d.audio) this._sound();   // step 6, the sound, after the Clock's rate that times it (ENGINE.4)
-    // an act's sentence: stepped once for it; for a cartridge that settles (CART.12), said when its settle ends, with the
-    // steps it took after the act's own, or that K stopped it with the grid still moving (SD-30)
+    // an act's sentence: stepped once for it; for a cartridge that settles (CART.12), said when its settle ends, with its
+    // frames and what each was for, or that K stopped it with the grid still moving (SD-30)
     if (this.stepEdit) {
-      if (this.settling) this.settleAct = { what: this.stepEdit, from: n };
+      if (this.settling) this.settleAct = { what: this.stepEdit, act: this.stepAct, from: n };
       else this._say('frame ' + n + ': stepped once for ' + this.stepEdit + '.');
       this.stepEdit = null;
     } else if (this.settleAct && !this.settling) {
@@ -1245,10 +1268,10 @@
       this.settleAct = null;
       if (this.settleWord === 'unsettled') {
         this.c.unsettled++;
-        this._say('frame ' + n + ': ' + sa.what + ' did not settle in ' + steps + ' step' + (steps === 1 ? '' : 's') + ' after its own, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5).');
+        this._say('frame ' + n + ': ' + sa.what + ' did not settle in ' + countWords(steps + 1) + ' frames, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5).');
       } else {
         this.c.settles++;
-        this._say('frame ' + n + ': ' + sa.what + ' settled in ' + steps + ' step' + (steps === 1 ? '' : 's') + ' after its own.');
+        this._say('frame ' + n + ': ' + sa.what + ' settled in ' + settledWords(sa.act, steps) + '.');
       }
     }
     var p = this.player;
@@ -1701,20 +1724,20 @@
       if (typeof name !== 'string' || !COMMAND_NAME.test(name)) { note('A' + r, 'Commands!A' + r + ' holds ' + shownValue(name) + ', which is no command\'s name: a command is named in lowercase letters, digits and hyphens, so the row is no command (docs/SPEC.md section 3.10).'); continue; }
       if (byName[name]) { note('A' + r, 'Commands!A' + r + ' names ' + name + ', as A' + byName[name].row + ' does, so the row is no command (docs/SPEC.md section 3.10).'); continue; }
       var holds = holdsOf(h);
-      if (holds === null) { note('C' + r, 'Commands!C' + r + ' holds ' + shownValue(h) + ', which is no truth value, so the command ' + name + ' holds not (docs/SPEC.md section 3.10).'); holds = false; }
+      if (holds === null) { note('C' + r, 'Commands!C' + r + ' holds ' + shownValue(h) + ', which is no truth value, so the ' + commandWords(name) + ' holds not (docs/SPEC.md section 3.10).'); holds = false; }
       var code = '';
       if (typeof key === 'string' && KEY_CODE.test(key)) code = key;
       else if (key !== undefined && key !== null && key !== '') {
         var hint = typeof key === 'string' && /^[A-Za-z]$/.test(key) ? ': the key ' + key.toUpperCase() + ' is Key' + key.toUpperCase() : (typeof key === 'string' && /^[0-9]$/.test(key) ? ': the key ' + key + ' is Digit' + key : '');
-        note('D' + r, 'Commands!D' + r + ' holds ' + shownValue(key) + ', which is no key\'s code' + hint + ', so the command ' + name + ' has no key (docs/SPEC.md section 3.10).');
+        note('D' + r, 'Commands!D' + r + ' holds ' + shownValue(key) + ', which is no key\'s code' + hint + ', so the ' + commandWords(name) + ' has no key (docs/SPEC.md section 3.10).');
       }
       var cmd = { name: name, words: typeof words === 'string' ? words : (typeof words === 'number' || typeof words === 'boolean' ? String(words) : ''), holds: holds, code: code, row: r };
       byName[name] = cmd; list.push(cmd);
       if (!code || !holds) continue;
-      if (keys[code]) { note('key-' + code, 'Commands!D' + r + ' gives ' + code + ', as D' + keys[code].row + ' does while both hold, so the command ' + keys[code].name + ' takes it.'); continue; }
+      if (keys[code]) { note('key-' + code, 'Commands!D' + r + ' gives ' + code + ', as D' + keys[code].row + ' does while both hold, so the ' + commandWords(keys[code].name) + ' takes it.'); continue; }
       keys[code] = cmd;
       for (var b = 0; this.keymap && b < this.keymap.length; b++) for (var p = 0; p < this.keymap[b].length; p++) {
-        if (this.keymap[b][p] === code && now['button-' + code] === undefined) note('button-' + code, 'Commands!D' + r + '\'s ' + code + ' is the Keys sheet\'s ' + PLAYERS[p] + (b + 1) + ' too, so the command ' + name + ' takes it while it holds.');
+        if (this.keymap[b][p] === code && now['button-' + code] === undefined) note('button-' + code, 'Commands!D' + r + '\'s ' + code + ' is the Keys sheet\'s ' + PLAYERS[p] + (b + 1) + ' too, so the ' + commandWords(name) + ' takes it while it holds.');
       }
     }
     this.badRows = now; this.commandList = list; this.commandKeys = keys;
@@ -1731,7 +1754,7 @@
   // name the sheet holds no command of, a command that holds not, a replay playing, or sixteen waiting already.
   Host.prototype.command = function (name, how) {
     var n = String(name === undefined || name === null ? '' : name), c = this.cart, cmd = null, i, self = this;
-    function no(why) { self.c.commandsRefused++; return self._fail('The command ' + (n || '(no name)') + ' was not run: ' + why); }
+    function no(why) { self.c.commandsRefused++; return self._fail('The ' + commandWords(n || '(no name)') + ' was not run: ' + why); }
     if (!this.handle || !c) return no('no cartridge is loaded.');
     if (!this._five()) return no('the cartridge is written to the page\'s version ' + (c.spec || 1) + ', and a cartridge\'s own commands are version 5\'s (docs/SPEC.md section 3.10).');
     for (i = 0; i < this.commandList.length; i++) if (this.commandList[i].name === n) { cmd = this.commandList[i]; break; }
@@ -1745,7 +1768,7 @@
       if (!this.inFrame) this._editFrames(this._window());
     } else {
       this.waiting.push(cmd.name);
-      if (!this.running) this._say('frame ' + this.frame + ': the command ' + cmd.name + ' waits for the next frame, which Run brings: the loop is paused at ' + c.rate + ' frame' + (c.rate === 1 ? '' : 's') + ' a second.');
+      if (!this.running) this._say('frame ' + this.frame + ': the ' + commandWords(cmd.name) + ' waits for the next frame, which Run brings: the loop is paused at ' + c.rate + ' frame' + (c.rate === 1 ? '' : 's') + ' a second.');
     }
     return { ok: true, name: cmd.name, how: how || 'page' };
   };
@@ -2066,15 +2089,28 @@
     if (m.work || m.read) return false;
     return !(c.game && c.game.length);
   };
+  // Whether the manifest names the sheet shown the game's, where a character typed on a cell is the game's key, or =, or
+  // nothing (CART.9's fourth slice, decision 49). A sheet named by none keeps its typing, whoever's keys hold there.
+  Host.prototype.gameSheetHere = function () { return this.sheetMode(this._shown()).game; };
   // Whether a person writes the sheet shown by hand, a key typed on a cell, Delete, Backspace, or Enter's and F2's edit:
   // anywhere but a read-only sheet.
   Host.prototype.editsHere = function () { return !this.sheetMode(this._shown()).read; };
   // A person's key that would write a read-only sheet, refused by the sheet's name: a character typed on a cell, Delete,
-  // Backspace, F2 or a double click there, the cells untouched and the log counting the repeats.
+  // Backspace, F2 or a double click there, the cells untouched and the log counting the repeats. It returns the sentence,
+  // the page's bar showing it at every press.
   Host.prototype.readKey = function () {
-    var name = this._shown();
+    var name = this._shown(), text = name + ' is a read-only sheet, named by the manifest\'s (read ...): a key there writes nothing, and the cartridge\'s own rows still write it (version 6, docs/SPEC.md section 7.2).';
     this.c.keysRead++;
-    this._refuse(name + ' is a read-only sheet, named by the manifest\'s (read ...): a key there writes nothing, and the cartridge\'s own rows still write it (version 6, docs/SPEC.md section 7.2).');
+    this._refuse(text);
+    return text;
+  };
+  // A character on a game sheet a person writes that is neither the game's key nor = (CART.9's fourth slice, decisions 49
+  // and 50), refused by the sheet's name, one sentence for every such key. It returns the sentence, as readKey does.
+  Host.prototype.strayKey = function () {
+    var text = 'That key does nothing on ' + this._shown() + ': it is not one of the game\'s keys. Commands lists them, and = opens a cell\'s formula.';
+    this.c.keysStray++;
+    this._refuse(text);   // the log counts the repeats
+    return text;
   };
   Host.prototype.keyUp = function (code) { delete this.held[code]; };
   Host.prototype.releaseKeys = function () { this.held = Object.create(null); };
@@ -2500,6 +2536,8 @@
   Host.instantiate = function (bytes) { return WebAssembly.instantiate(bytes, {}).then(function (res) { return res.instance.exports; }); };
   Host.instantiateSync = function (bytes) { return new WebAssembly.Instance(new WebAssembly.Module(bytes), {}).exports; };
   Host.RULES = RULES;
+  Host.commandWords = commandWords;
+  Host.settledWords = settledWords;
   Host.EXPORTS = EXPORTS;
   Host.ABI = ABI;
   Host.SPEC = SPEC;

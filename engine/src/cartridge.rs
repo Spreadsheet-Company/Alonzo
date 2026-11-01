@@ -3423,15 +3423,15 @@ mod tests {
                 );
             }
             if name == "naught" {
-                let passed = (11..=19)
+                let passed = (11..=25)
                     .filter(|r| {
                         bench_hand.game.lab.get(&format!("B{r}")) == Some(&nt::Val::Num(1.0))
                     })
                     .count();
                 assert_eq!(
                     (bench_hand.frames, bench_hand.edits, bench_hand.lit, bench_hand.written, passed),
-                    (794, 38, 208, 51, 8),
-                    "the owner's session at the third slice's hand test, 45 frames through I and II, then the stand-in: the levels III to IX, the bench's 38 switches written, each and its settle two frames, 208 gates lit at its end, and I's switch written over; 51 rows a person wrote, eight levels passed at its end"
+                    (4803, 38, 208, 149, 14),
+                    "the owner's session at the third slice's hand test, 45 frames through I and II, then the stand-in: the levels III to XV, its clocks and its ROM among them, the bench's 38 switches written, each and its settle two frames, 208 gates lit at its end, and I's switch written over; 51 rows a person wrote, eight levels passed at its end"
                 );
             }
             played.push(name);
@@ -6647,6 +6647,9 @@ mod tests {
                 return frames;
             }
             assert!(frames < 70_000, "the act never settles");
+            for row in derived_rows(c) {
+                c.write(&row).unwrap_or_else(|e| panic!("{row}: {e:?}"));
+            }
         }
     }
 
@@ -6703,8 +6706,9 @@ mod tests {
         &'static [(&'static str, &'static str)],
     );
 
-    /// The levels, each with a solution at its least known.
-    const NAUGHT_LEVELS: [NaughtSolution; 9] = [
+    /// The levels, each with a solution at its least known; XIII's, XIV's and
+    /// XV's in the hand's tables.
+    const NAUGHT_LEVELS: [NaughtSolution; 15] = [
         ("I NON", 11, 2, &[("J3", "=1-A3*A3")]),
         ("II ET", 12, 4, &[("C3", "=1-A3*A4"), ("J3", "=1-C3")]),
         (
@@ -6780,6 +6784,22 @@ mod tests {
                 ("J6", "=MOD(C6+F5,2)"),
             ],
         ),
+        ("X MORA", 20, 4, &[("J3", "=A3")]),
+        ("XI TENE", 21, 8, &[("J3", "=IF(A3,A4,A5)")]),
+        (
+            "XII MEMORIA",
+            22,
+            512,
+            &[
+                ("J3", "=IF($A$3,A4,A8)"),
+                ("J4", "=IF($A$3,A5,A9)"),
+                ("J5", "=IF($A$3,A6,A10)"),
+                ("J6", "=IF($A$3,A7,A11)"),
+            ],
+        ),
+        ("XIII NUMERA", 23, 64, &nt::NUMERA_GATES),
+        ("XIV RATIO", 24, 1024, &nt::RATIO_GATES),
+        ("XV MACHINA", 25, 2048, &nt::MACHINA_GATES),
     ];
 
     /// Every level solved at its least known and tested by T to a pass:
@@ -6791,8 +6811,8 @@ mod tests {
         let Some(mut c) = naught_game() else {
             return;
         };
-        let least = [1, 2, 3, 3, 3, 2, 2, 5, 20];
         for (k, (sheet, row, inputs, gates)) in NAUGHT_LEVELS.iter().enumerate() {
+            let least = nt::LEVELS[k].least;
             for (addr, formula) in gates.iter() {
                 naught_wrote(&mut c, sheet, addr, formula);
             }
@@ -6809,11 +6829,15 @@ mod tests {
                 format!("{}", inputs - 1),
                 "{sheet}: it stops at its last input"
             );
-            assert_eq!(lab("E"), format!("{}", least[k]), "{sheet}: its gates");
+            assert_eq!(lab("E"), format!("{least}"), "{sheet}: its gates");
             assert_eq!(lab("H"), "★★★", "{sheet}: its stars");
             assert_eq!(
                 naught_cell(&c, sheet, "N9"),
-                format!("Quod erat demonstrandum: every one of its {inputs} inputs passes."),
+                if k == nt::MACHINA {
+                    "Probatum: all 2,048 pass, every word at every A. Testing, said Dijkstra, shows the presence of bugs, never their absence.".to_string()
+                } else {
+                    format!("Quod erat demonstrandum: every one of its {inputs} inputs passes.")
+                },
                 "{sheet}: its verdict"
             );
             assert_eq!(
@@ -6825,7 +6849,12 @@ mod tests {
                 "★★★",
                 "{sheet}: its reckoning"
             );
-            let switches = inputs.trailing_zeros();
+            // XV's word is the ROM's after a pass, and its p and its B drawn by lot
+            let switches = if k == nt::MACHINA {
+                0
+            } else {
+                inputs.trailing_zeros()
+            };
             for i in 0..switches {
                 assert_eq!(
                     naught_cell(&c, sheet, &format!("A{}", 3 + i)),
@@ -6964,7 +6993,9 @@ mod tests {
         naught_act(&mut c, "I NON", (1, 3), false, "previous");
         assert_eq!(naught_cell(&c, "Lab", "B2"), "1", "P from I stays at I");
         naught_act(&mut c, "IX QUATTUOR", (1, 3), false, "next");
-        assert_eq!(naught_cell(&c, "Lab", "B2"), "9", "N from IX stays at IX");
+        assert_eq!(naught_cell(&c, "Lab", "B2"), "10", "N from IX moves to X");
+        naught_act(&mut c, "XV MACHINA", (1, 3), false, "next");
+        assert_eq!(naught_cell(&c, "Lab", "B2"), "15", "N from XV stays at XV");
         // R forgets a level's test
         naught_wrote(&mut c, "I NON", "J3", "=1-A3*A3");
         naught_act(&mut c, "I NON", (1, 3), false, "test");
@@ -6983,7 +7014,7 @@ mod tests {
     /// A level's gates read by their formulas (the short slice of
     /// 2026-10-24): every shape of the hand's table written into I's room, each
     /// cell's kind on the Gates sheet the table's and the hand's; its gates
-    /// every formula, those outside the set the 24 past NON-ET, the first of
+    /// every formula, those outside the set the 30 past NON-ET, the first of
     /// them and the first error named in its reckoning and its verdict.
     #[test]
     fn naught_s_gates_are_read_by_their_formulas() {
@@ -7018,8 +7049,8 @@ mod tests {
         assert_eq!(
             (lab("E"), lab("Q"), lab("R"), lab("S")),
             (
-                "29".to_string(),
-                "24".to_string(),
+                "35".to_string(),
+                "30".to_string(),
                 "F4".to_string(),
                 "I8".to_string()
             ),
@@ -7028,7 +7059,7 @@ mod tests {
         assert_eq!(lab("P"), nt::inputs_of(0), "I's inputs");
         assert_eq!(
             naught_cell(&c, "I NON", "N8"),
-            "Gates 29, 24 outside the set given, the first at F4; the budget 2, the least known 1: ☆☆☆"
+            "Gates 35, 30 outside the set given, the first at F4; the budget 2, the least known 1: ☆☆☆"
         );
         assert_eq!(
             naught_cell(&c, "I NON", "N9"),
@@ -7213,12 +7244,19 @@ mod tests {
         }
     }
 
-    /// Every level's board, its words, the Lab and the Camera's sheet held to
-    /// the hand's, at a frame.
+    /// A level's board, its words, the Lab, the ROM and the Camera's sheet held
+    /// to the hand's, at a frame (decision 44): at a whole frame, one in 64,
+    /// every cell of them; at any other, what the hand computed at this frame,
+    /// each level an act, a test, a clock or a person's row could move, and of
+    /// the Gates sheet each block a person's row changed.
     fn naught_game_holds(c: &Cartridge, hand: &nt::Game, at: &str) {
+        let whole = hand.whole();
         for (k, level) in nt::LEVELS.iter().enumerate() {
-            let last = 2 + level.rows.max(level.inputs);
-            let values = naught_values(c, level.sheet, &format!("A1:N{}", last.max(9)));
+            if !(whole || hand.touched[k]) {
+                continue;
+            }
+            let last = 2 + level.rows.max(level.switches());
+            let values = naught_values(c, level.sheet, &format!("A1:N{}", last.max(11)));
             for row in 3..=last {
                 for col in 1..=13 {
                     let (got, want) = (
@@ -7246,32 +7284,26 @@ mod tests {
                 "{at}: {}!N9",
                 level.sheet
             );
-        }
-        let values = naught_values(c, "Lab", "A1:U29");
-        let mut lab: Vec<String> = (1..=8).map(|r| format!("B{r}")).collect();
-        for r in 11..=19 {
-            for col in [
-                "B", "C", "D", "E", "F", "G", "H", "N", "P", "Q", "R", "S", "T", "U",
-            ] {
-                lab.push(format!("{col}{r}"));
+            if level.state > 0 {
+                assert_eq!(
+                    naught_val(c, level.sheet, 11, 14, &values),
+                    hand.clock_words(k),
+                    "{at}: {}!N11",
+                    level.sheet
+                );
             }
         }
-        for (k, level) in nt::LEVELS.iter().enumerate() {
-            for o in 0..level.outputs as usize {
-                lab.push(format!("{}{}", ["I", "J", "K", "L", "M"][o], 11 + k));
-            }
-        }
-        lab.push("O19".to_string());
-        for (k, level) in nt::LEVELS.iter().enumerate() {
-            for s in 0..level.inputs {
-                lab.push(format!("{}{}", char::from(b'B' + k as u8), 21 + s));
-            }
-        }
-        for a in &lab {
+        let no_values = std::collections::HashMap::new();
+        let lab_values = if whole {
+            naught_values(c, "Lab", "A1:W72")
+        } else {
+            std::collections::HashMap::new()
+        };
+        for a in hand.lab_held() {
             let (col, row) = a.split_at(1);
             let col = col.as_bytes()[0] as u32 - 64;
-            let got = naught_val(c, "Lab", row.parse().expect("a row"), col, &values);
-            let want = hand.lab.get(a).cloned().unwrap_or(nt::Val::Empty);
+            let got = naught_val(c, "Lab", row.parse().expect("a row"), col, &lab_values);
+            let want = hand.lab.get(&a).cloned().unwrap_or(nt::Val::Empty);
             assert!(
                 got == want,
                 "{at}: Lab!{a} is {got:?}, where the hand holds {want:?}"
@@ -7283,10 +7315,38 @@ mod tests {
             hand.lab.get("B3").cloned().unwrap_or(nt::Val::Empty),
             "{at}: the Camera's sheet"
         );
+        let row = hand.write_row();
+        for (col, want) in row.iter().enumerate() {
+            let got = naught_val(c, "Write", 2, col as u32 + 1, &no_values);
+            assert!(
+                got == *want,
+                "{at}: Write!{} is {got:?}, where the hand holds {want:?}",
+                address(2, col as u32 + 1)
+            );
+        }
+        // the ROM, its program, its words' numbers, its mark of p and what it says
+        if whole || hand.touched[nt::MACHINA] {
+            let rom = naught_values(c, "ROM", "A2:E17");
+            for row in 2..=17 {
+                for col in 1..=5 {
+                    let (got, want) = (
+                        naught_val(c, "ROM", row, col, &rom),
+                        hand.rom_cell(row, col),
+                    );
+                    assert!(
+                        got == want,
+                        "{at}: ROM!{} is {got:?}, where the hand holds {want:?}",
+                        address(row, col)
+                    );
+                }
+            }
+        }
         // the Gates sheet: each room cell's text and its kind, a level's block 20 rows apart from row 3, every one
         // a formula's value, read from the machine and never from the sheet's record, whose texts are long
-        let gates = std::collections::HashMap::new();
         for (k, level) in nt::LEVELS.iter().enumerate() {
+            if !(whole || hand.fresh[k]) {
+                continue;
+            }
             let top = 3 + 20 * k as u32;
             for (i, (text, kind)) in hand.texts[k].iter().zip(&hand.kinds[k]).enumerate() {
                 let (row, col) = (top + i as u32 / 8, 3 + i as u32 % 8);
@@ -7294,7 +7354,7 @@ mod tests {
                     (col, nt::Val::Text(text.clone())),
                     (col + 10, nt::Val::Num(f64::from(*kind))),
                 ] {
-                    let got = naught_val(c, "Gates", row, col, &gates);
+                    let got = naught_val(c, "Gates", row, col, &no_values);
                     assert!(
                         got == want,
                         "{at}: Gates!{} for {}, is {got:?}, where the hand holds {want:?}",
@@ -7350,6 +7410,10 @@ mod tests {
                 );
                 return frames;
             }
+            for row in derived_rows(c) {
+                c.write(&row)
+                    .unwrap_or_else(|e| panic!("{at}: {row}: {e:?}"));
+            }
         }
     }
 
@@ -7391,8 +7455,8 @@ mod tests {
             "the switch written over fails I's test"
         );
         assert!(
-            total > 512,
-            "the session's {total} frames, IX's test among them"
+            total > 2048,
+            "the session's {total} frames, XV's test among them"
         );
         for (r, want) in [
             (12, 0.0),
@@ -7403,6 +7467,12 @@ mod tests {
             (17, 1.0),
             (18, 1.0),
             (19, 1.0),
+            (20, 1.0),
+            (21, 1.0),
+            (22, 1.0),
+            (23, 1.0),
+            (24, 1.0),
+            (25, 1.0),
         ] {
             assert_eq!(hand.lab[&format!("B{r}")], nt::Val::Num(want), "Lab!B{r}");
         }
@@ -7425,6 +7495,329 @@ mod tests {
             hand.lab["H19"],
             nt::Val::Text("★★★".into()),
             "IX at its least known"
+        );
+    }
+
+    /// The clock: no flip-flop moves but at a tick, and a tick is an act of
+    /// three frames, each flip-flop taking J as J stood at the frame before; G
+    /// clears the flip-flops and runs until they stand still, X's wire at its
+    /// second tick, or, X's toggle and XIII's counter, until every state is
+    /// spent; and a person's acts are never held by a clock left running.
+    #[test]
+    fn naught_s_clock_ticks_at_an_act_and_a_run_stands_or_never_rests() {
+        let Some(mut c) = naught_game() else {
+            return;
+        };
+        let keys = "C ticks the clock once. G clears the flip-flops and runs the clock until they stand still.";
+        let cell = |c: &Cartridge, at: &str| naught_cell(c, "X MORA", at);
+        naught_wrote(&mut c, "X MORA", "J3", "=A3");
+        assert_eq!(cell(&c, "N11"), keys, "its clock's words before a run");
+        naught_act(&mut c, "X MORA", (1, 3), false, "one");
+        assert_eq!(
+            (cell(&c, "A3"), cell(&c, "A4"), cell(&c, "J3")),
+            ("1".to_string(), "0".to_string(), "1".to_string()),
+            "d is set, its next state beside it, and q holds without a tick"
+        );
+        assert_eq!(
+            naught_act(&mut c, "X MORA", (1, 3), false, "tick"),
+            3,
+            "a tick: its act, the step its command is released at, and the proof"
+        );
+        assert_eq!(cell(&c, "A4"), "1", "at a tick q takes J3");
+        naught_act(&mut c, "X MORA", (1, 3), false, "zero");
+        assert_eq!(cell(&c, "A4"), "1", "and holds as d moves");
+        naught_act(&mut c, "X MORA", (1, 3), false, "tick");
+        assert_eq!(cell(&c, "A4"), "0", "and follows it a tick late");
+        naught_act(&mut c, "X MORA", (1, 4), false, "toggle");
+        assert_eq!(cell(&c, "A4"), "1", "a flip-flop is a switch to the hand");
+        naught_act(&mut c, "IX QUATTUOR", (1, 3), false, "tick");
+        assert_eq!(cell(&c, "A4"), "1", "another level's tick moves none here");
+        // G from nothing: d at 1, q takes it at tick 1 and tick 2 moves nothing
+        naught_act(&mut c, "X MORA", (1, 3), false, "one");
+        assert_eq!(
+            naught_act(&mut c, "X MORA", (1, 3), false, "run"),
+            5,
+            "G, two ticks, the fall and the proof"
+        );
+        assert_eq!(
+            (naught_cell(&c, "Lab", "E4"), naught_cell(&c, "Lab", "E9")),
+            ("2".to_string(), "1".to_string()),
+            "two ticks, and at rest"
+        );
+        assert_eq!(cell(&c, "N11"), "Stat, it stands: its last move at tick 1.");
+        // a toggle has no rest, and one flip-flop two states
+        naught_wrote(&mut c, "X MORA", "J3", "=1-A4");
+        naught_act(&mut c, "X MORA", (1, 3), false, "run");
+        assert_eq!(naught_cell(&c, "Lab", "E9"), "2", "every state spent");
+        assert_eq!(
+            cell(&c, "N11"),
+            "In aeternum: 2 ticks, no rest. 1 flip-flop holds 2 states, so one came twice: it never halts. A short tape answers Turing."
+        );
+        // R forgets how a run ended, and another level's run speaks for itself alone
+        naught_act(&mut c, "X MORA", (1, 3), false, "reset");
+        assert_eq!(cell(&c, "N11"), keys, "R forgets it");
+        // a counter
+        for (at, f) in nt::NUMERA_GATES {
+            naught_wrote(&mut c, "XIII NUMERA", at, f);
+        }
+        naught_act(&mut c, "XIII NUMERA", (1, 4), false, "one");
+        assert_eq!(
+            naught_act(&mut c, "XIII NUMERA", (1, 4), false, "run"),
+            19,
+            "G, sixteen ticks, the fall and the proof"
+        );
+        assert_eq!(
+            naught_cell(&c, "XIII NUMERA", "N11"),
+            "In aeternum: 16 ticks, no rest. 4 flip-flops hold 16 states, so one came twice: it never halts. A short tape answers Turing."
+        );
+        assert_eq!(cell(&c, "N11"), keys, "X says nothing of XIII's run");
+        // G on a level with no clock runs nothing
+        assert_eq!(
+            naught_act(&mut c, "XIV RATIO", (1, 3), false, "run"),
+            3,
+            "an act, its release and the proof"
+        );
+        assert_eq!(naught_cell(&c, "Lab", "E3"), "0", "XIV has no clock");
+    }
+
+    /// 1 and 0 typed on a cell of a level's room that holds no gate write
+    /// themselves (decision 47, the owner's hand test): a value and no gate, which
+    /// a gate may read; a value written over; and nothing on a gate, on a lamp, on
+    /// a name, past the room or off a level, and a switch set as it was.
+    #[test]
+    fn naught_s_digits_write_themselves_on_the_room() {
+        let Some(mut c) = naught_game() else {
+            return;
+        };
+        // a cell by the record's value or the machine's, as the board draws it
+        let typed = |c: &Cartridge, sheet: &str, at: &str| {
+            let (row, col) = nt::place(at);
+            let values = naught_values(c, sheet, at);
+            match naught_val(c, sheet, row, col, &values) {
+                nt::Val::Num(n) => format!("{n}"),
+                nt::Val::Text(t) => t,
+                nt::Val::Empty => String::new(),
+                other => format!("{other:?}"),
+            }
+        };
+        let cell = |c: &Cartridge, at: &str| typed(c, "IV AUT", at);
+        assert_eq!(
+            naught_act(&mut c, "IV AUT", (4, 5), false, "one"),
+            3,
+            "its act, the write and the proof"
+        );
+        assert_eq!(cell(&c, "D5"), "1", "1 on an empty cell of the room");
+        assert_eq!(naught_cell(&c, "Lab", "E14"), "0", "a value is no gate");
+        naught_act(&mut c, "IV AUT", (4, 5), false, "zero");
+        assert_eq!(cell(&c, "D5"), "0", "and 0 over it");
+        naught_act(&mut c, "IV AUT", (4, 5), false, "one");
+        naught_wrote(&mut c, "IV AUT", "J3", "=A3*D5");
+        assert_eq!(naught_cell(&c, "Lab", "Q14"), "0", "a gate reads a value");
+        naught_act(&mut c, "IV AUT", (1, 3), false, "one");
+        assert_eq!(
+            (cell(&c, "A3"), cell(&c, "J3")),
+            ("1".to_string(), "1".to_string()),
+            "1 on a switch sets it, and the gate reads both"
+        );
+        naught_act(&mut c, "IV AUT", (10, 3), false, "zero");
+        assert_eq!(cell(&c, "J3"), "1", "no digit replaces a gate");
+        assert_eq!(naught_cell(&c, "Lab", "E14"), "1", "the gate stands");
+        for (at, name) in [
+            ((12, 3), "L3"),
+            ((2, 3), "B3"),
+            ((3, 11), "C11"),
+            ((14, 3), "N3"),
+        ] {
+            let was = cell(&c, name);
+            assert_eq!(naught_act(&mut c, "IV AUT", at, false, "one"), 3);
+            assert_eq!(cell(&c, name), was, "{name} takes no digit");
+        }
+        naught_act(&mut c, "Bench", (3, 3), false, "one");
+        assert_eq!(
+            naught_cell(&c, "Lab", "H1"),
+            "0",
+            "and off the levels no digit lands"
+        );
+        // a room to its own last row: IX's eleventh, and XV's twenty-first
+        naught_act(&mut c, "IX QUATTUOR", (3, 11), false, "one");
+        assert_eq!(typed(&c, "IX QUATTUOR", "C11"), "1", "IX's last row");
+        naught_act(&mut c, "XV MACHINA", (10, 21), false, "one");
+        assert_eq!(typed(&c, "XV MACHINA", "J21"), "1", "XV's last cell");
+    }
+
+    /// One row, a fill, writes XII's four gates (its second line's advice), each
+    /// a gate of the set by its own text, the room's count four and the test a
+    /// pass at three stars.
+    #[test]
+    fn naught_s_register_is_one_row_over_a_range() {
+        let Some(mut c) = naught_game() else {
+            return;
+        };
+        c.write("(formula \"XII MEMORIA\" \"J3:J6\" \"=IF($A$3,A4,A8)\")")
+            .expect("a fill");
+        naught_settled(&mut c);
+        assert_eq!(
+            naught_cell(&c, "Gates", "J223"),
+            "=IF(A3,A4,A8)",
+            "J3's text"
+        );
+        assert_eq!(
+            naught_cell(&c, "Gates", "J226"),
+            "=IF(A3,A7,A11)",
+            "J6's text"
+        );
+        assert_eq!(naught_cell(&c, "Gates", "T226"), "7", "J6 an ELIGE");
+        naught_act(&mut c, "XII MEMORIA", (1, 3), false, "test");
+        assert_eq!(
+            naught_cell(&c, "Lab", "H22"),
+            "★★★",
+            "four gates, the least known"
+        );
+    }
+
+    /// A number of XV's flip-flops, its four bits from a row.
+    fn naught_nibble(c: &Cartridge, from: u32) -> u32 {
+        (0..4)
+            .map(|i| {
+                naught_cell(c, "XV MACHINA", &format!("A{}", from + i))
+                    .parse::<u32>()
+                    .expect("a bit")
+                    << i
+            })
+            .sum()
+    }
+
+    /// The machine: half its gates fail T at an input the board stands on, its
+    /// word as it stood until the clock moves or R; whole, it passes, and G runs
+    /// the ROM's 3 x 5 to 15 in A at its HLT, seventeen ticks on; a person's line
+    /// moves the answer, a word none of the five is HLT, and every state a loop
+    /// spends is said at 4,096 ticks, inside the settle's K.
+    #[test]
+    fn naught_s_machine_runs_its_rom() {
+        let Some(mut c) = naught_game() else {
+            return;
+        };
+        assert_eq!(naught_cell(&c, "ROM", "C2"), "24", "LDI 3, op 0 and n 3");
+        assert_eq!(naught_cell(&c, "ROM", "D2"), "◄", "p at line 0");
+        let word = |c: &Cartridge| -> String {
+            (3..=9)
+                .map(|r| naught_cell(c, "XV MACHINA", &format!("A{r}")))
+                .collect()
+        };
+        assert_eq!(word(&c), "0001100", "the word of line 0, op then n");
+        let half = nt::MACHINA_GATES.len() / 2;
+        for (at, f) in &nt::MACHINA_GATES[..half] {
+            naught_wrote(&mut c, "XV MACHINA", at, f);
+        }
+        naught_act(&mut c, "XV MACHINA", (1, 3), false, "test");
+        assert_eq!(naught_cell(&c, "Lab", "B25"), "2", "half a machine fails");
+        let stopped: u32 = naught_cell(&c, "Lab", "C25").parse().expect("an input");
+        let bits: String = (0..7)
+            .map(|i| char::from(b'0' + ((stopped >> i) & 1) as u8))
+            .collect();
+        assert_eq!(word(&c), bits, "its word stands on the input that failed");
+        naught_act(&mut c, "XV MACHINA", (1, 3), false, "reset");
+        assert_eq!(word(&c), "0001100", "R gives it back to the ROM");
+        for (at, f) in &nt::MACHINA_GATES[half..] {
+            naught_wrote(&mut c, "XV MACHINA", at, f);
+        }
+        naught_act(&mut c, "XV MACHINA", (1, 3), false, "test");
+        assert_eq!(naught_cell(&c, "Lab", "B25"), "1", "the whole machine");
+        assert_eq!(
+            naught_act(&mut c, "XV MACHINA", (1, 3), false, "run"),
+            21,
+            "G, eighteen ticks, the fall and the proof"
+        );
+        assert_eq!(
+            (
+                naught_nibble(&c, 10),
+                naught_nibble(&c, 14),
+                naught_nibble(&c, 18)
+            ),
+            (15, 7, 0),
+            "3 x 5 in A, p at its HLT, and B counted down"
+        );
+        assert_eq!(
+            naught_cell(&c, "XV MACHINA", "N11"),
+            "Stat, it stands: its last move at tick 17."
+        );
+        assert_eq!(naught_cell(&c, "ROM", "D9"), "◄", "p at line 7");
+        assert_eq!(naught_cell(&c, "Lab", "H25"), "★★★", "and its stars stand");
+        // a line of a person's: 3 x 7 is 21, five in four bits; a word none of the five is HLT, and says so
+        c.write("(cell \"ROM\" \"B4\" \"add 7\")\n(cell \"ROM\" \"B9\" \"FOO\")")
+            .expect("two lines");
+        naught_settled(&mut c);
+        assert_eq!(naught_cell(&c, "ROM", "C4"), "57", "ADD 7 is 1 + 8 x 7");
+        assert_eq!(naught_cell(&c, "ROM", "E9"), "no such word: HLT");
+        assert_eq!(naught_cell(&c, "ROM", "C9"), "4", "HLT's word");
+        naught_act(&mut c, "XV MACHINA", (1, 3), false, "run");
+        assert_eq!(naught_nibble(&c, 10), 5, "21 in four bits");
+        // a loop spends every state, inside K
+        c.write("(cell \"ROM\" \"B2\" \"LDI 1\")\n(cell \"ROM\" \"B3\" \"JNZ 0\")")
+            .expect("two lines");
+        naught_settled(&mut c);
+        assert_eq!(
+            naught_act(&mut c, "XV MACHINA", (1, 3), false, "run"),
+            4099,
+            "G, 4,096 ticks, the fall and the proof"
+        );
+        assert_eq!(
+            naught_cell(&c, "XV MACHINA", "N11"),
+            "In aeternum: 4096 ticks, no rest. 12 flip-flops hold 4096 states, so one came twice: it never halts. A short tape answers Turing."
+        );
+    }
+
+    /// A switch written over no longer gains its level the test's input (the
+    /// short slice's Found, decision 42): `=Lab!$B$6` hands a room the whole
+    /// input as a number, and a value stands still; each fails T at the first
+    /// input its bit differs from, and the verdict says which it is. A flip-flop
+    /// is held the same.
+    #[test]
+    fn naught_s_switches_are_held_to_their_inputs_under_test() {
+        let Some(mut c) = naught_game() else {
+            return;
+        };
+        let said = "a switch written over does not follow the test. Load restores it, and empties every level.";
+        // I NON: y = 1 - a, by a formula that reads the input's number and passes without the switch
+        naught_wrote(&mut c, "I NON", "A3", "=Lab!$B$6");
+        naught_wrote(&mut c, "I NON", "J3", "=1-A3*A3");
+        assert_eq!(naught_act(&mut c, "I NON", (1, 3), false, "test"), 4);
+        assert_eq!(
+            naught_cell(&c, "Lab", "B11"),
+            "1",
+            "its one bit is the number, which the hold allows: no gate is saved"
+        );
+        // II ET: a switch read as the whole number passes no more than its bit
+        naught_wrote(&mut c, "II ET", "A3", "=Lab!$B$6");
+        naught_wrote(&mut c, "II ET", "C3", "=1-A3*A4");
+        naught_wrote(&mut c, "II ET", "J3", "=1-C3");
+        assert_eq!(
+            naught_act(&mut c, "II ET", (1, 3), false, "test"),
+            5,
+            "inputs 0 and 1 stand, and input 2's bit 0 is 0 where the number is 2"
+        );
+        assert_eq!(
+            (
+                naught_cell(&c, "Lab", "B12"),
+                naught_cell(&c, "Lab", "C12"),
+                naught_cell(&c, "Lab", "L12")
+            ),
+            ("2".to_string(), "2".to_string(), "0".to_string()),
+            "it stops where the switch leaves its bit"
+        );
+        assert_eq!(
+            naught_cell(&c, "II ET", "N9"),
+            format!("The test stops at input 3 of 4, standing on the board: {said}")
+        );
+        // X MORA: a flip-flop written over stands still
+        naught_wrote(&mut c, "X MORA", "J3", "=A3");
+        c.write("(cell \"X MORA\" \"A4\" 1)").expect("a value");
+        naught_settled(&mut c);
+        naught_act(&mut c, "X MORA", (1, 3), false, "test");
+        assert_eq!(naught_cell(&c, "Lab", "L20"), "0", "the flip-flop");
+        assert_eq!(
+            naught_cell(&c, "X MORA", "N9"),
+            format!("The test stops at input 1 of 4, standing on the board: {said}")
         );
     }
 }

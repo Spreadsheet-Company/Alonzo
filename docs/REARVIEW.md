@@ -9017,6 +9017,206 @@ The frame after a formula write computes every cell, 1,804 formulas where 910. A
 
 *Committed 2026-10-24 at the owner's word*: "Keep the window's halves as the rule, commit, then suggest next steps." Its files staged as `c2ecf6b` and this commit's hunks alone, the texts the controls ran, beside `REPO.8`'s uncommitted lines in four of them. `CART.9` stays open for slice 4, the clocked rung, scoped finely at its start.
 
+*Slice 4, the clocked rung, 2026-10-30, at the owner's word: "Frazaro/vla-lang 0.12.0 and Alonzo 0.3.0 are both live on GitHub and crates.io, so a lot has changed since your last message. Proceed with scoping and implementing slice 4 of CART.9 once you've caught up to speed with the repos' current state."* Decision 21 left it here: decision 7's register, counter, ALU and toy CPU, decision 8's clock and the ROM sheet. The scoping read `vla-lang` 0.12.0's `define`, `each` and `last` and its library by a probe of its functions, the kit's `hold` and `priority`, the host's `_editFrames`, and this item's decisions 7, 8 and 16 to 33. It played the design through the engine in a scratch driver before either hand held a line of it, and it passed there as it stands below. Built the same day as the decisions recommend; the decisions await the owner, with the build, at the hand test.
+
+34. **The flip-flop given, on the board: a cell of column A below a level's switches, which holds its value and at a tick takes its row of J, as J stood.**
+    - A person writes what a flip-flop takes next, in J, from the switches, the flip-flops and the room, by the shapes the level gives. No gate of theirs holds a state, and none holds a `.last`: the loop runs through the clock, and around it stays the cycle the language refuses by name.
+    - `=IF(R or G on the level,0,IF(T runs it,the input's bit,IF(it ticks,IFERROR(N(X MORA.last!J3),0),IF(an act on it,by hand,X MORA.last!A4))))`. A flip-flop is a switch that also ticks: Space, 1, 0 and a click set it, as they set a switch. `N` and `IFERROR` give 0 where J holds no number, so that a tick carries no error around the loop.
+    - J's lamps and its due read as they read at every level, so that the board, the words, the test and the stars are the first nine levels' own.
+    - nand2tetris gives the DFF and builds the rest; this gives the flip-flop and builds the rest.
+    - *Alternatives:*
+      - decision 8's register typed by a person, `=IF(load,d,'XI TENE.last'!D3)`: the twin in their hands, a seventh shape, a sheet's name in every bit of every register;
+      - decision 8's teacher's rate, every gate reading twins, where a loop is legal and a latch holds: a lesson on races and no machine;
+      - the flip-flops on a sheet of their own, which a level's board could not show beside its gates.
+35. **The clock: C a tick, G a run, each a person's act; no frame ticks otherwise.**
+    - Decision 8's every frame a cycle, under `(settle K)`, runs a counter to K at every act: toggling a switch of XIII would step 65,536 frames with a person's keys waiting (decision 60, `_editFrames`). So a clock is something a person starts.
+    - Commands `tick`, KeyC, and `run`, KeyG, the game's on the levels. The Lab's E1 names the level that ticks at this frame, and each clocked level's I reads it. C on a level with no flip-flop moves nothing. A tick's act is three frames, its own, the release of its command and the proof.
+    - *Alternatives:*
+      - decision 8's (a), the game at a rate above 0, every frame logged, the bench's and the first nine levels' rate 0 gone;
+      - decision 8's (c), a settle paced by the host, the page's question, Found 8.
+36. **T proves the next state: under test a flip-flop is a switch, and J is held to the specification at every state and every input.**
+    - So a clocked level's test is a combinational level's, a vector a settle step, with no machine in the Lab beside the person's and no sequence of ticks. X 4 inputs, XI 8, XII 512, XIII 64.
+    - It is a proof and not a sample, by induction: the flip-flop's formula is the cartridge's, and a machine right for one tick from every state is right at every tick. The Lesson says so, and X's third line.
+    - *Alternatives:*
+      - a sequence of ticks compared with a specification machine in the Lab, as nand2tetris's test scripts run theirs: the clock in the test, a second machine in cells, and only what the sequence reaches proved;
+      - both, the sequence adding nothing the induction lacks.
+37. **A run ends at rest or with every state spent, and says which; K stays behind them.**
+    - G clears the flip-flops, so that a run starts from nothing and needs no R, which forgets a test's stars, and no state a test left. It goes on a settle step a tick while the last tick moved a flip-flop and the ticks are under the states the flip-flops can hold.
+    - At rest: a tick that moved nothing, the switches and the ROM standing, moves nothing again. HLT is that and needs no flip-flop of its own, nor does a jump to itself.
+    - Every state spent: `n` flip-flops hold `2^n` states, and `2^n` ticks that each moved one have stood in `2^n + 1`, so one came twice and the machine never rests. N11, a clocked level's fifth line of words: "Currit, it runs: tick 12", "Stat, it stands: its last move at tick 17." and "In aeternum: 16 ticks, no rest. 4 flip-flops hold 16 states, so one came twice: it never halts. A short tape answers Turing."
+    - XV's 4,096 ticks stand well inside K, 65,536, and take 355 ms natively. K and the engine's "did not settle" stay, for what a person's formula outside the set might do.
+    - *Alternatives:*
+      - decision 8's words, "said unsettled at K": the engine's sentence and a person's keys waiting for 65,536 frames, for a question a counter of 16 answers;
+      - a halt flip-flop in the machine, and a watchdog of a round number that can only say it does not know.
+38. **ELIGE given from X, a seventh shape, `=IF(s,b,a)`.**
+    - Decision 20's road, each gate proven, then given: V proves it, and a clocked level is mostly choices. XV takes 46 gates with it and about 100 without. A constant is an input, so `=IF(A3,0,x)` is reset's whole cost.
+    - Kind 7, read like the rest by its marks, its two commas found by `FIND`'s third argument; X to XV give 7, and I to IX stand as they stood, ELIGE outside their sets. The hands' arithmetic gains `IF`.
+    - *Alternatives:*
+      - no seventh shape, three gates a choice, and a machine typed twice over;
+      - a person's own chips, a proven level's room read as one gate, nand2tetris's real lesson, which no cell can call (Found).
+39. **The ladder: six levels, X to XV.** Every budget allows the plain way and every least is a room both hands hold.
+
+    | level | it asks | switches | flip-flops | outputs | T's inputs | budget | least known |
+    |---|---|---|---|---|---|---|---|
+    | X MORA, delay | q a tick behind d | 1 | 1 | 1 | 4 | 2 | 1 |
+    | XI TENE, hold | a bit with a load | 2 | 1 | 1 | 8 | 3 | 1 |
+    | XII MEMORIA, memory | a register of four | 5 | 4 | 4 | 512 | 6 | 4 |
+    | XIII NUMERA, count | a counter of four, its reset and its inc | 2 | 4 | 4 | 64 | 13 | 11 |
+    | XIV RATIO, the reckoning | four ops over four bits, its carry; no clock | 10 | 0 | 5 | 1,024 | 38 | 31 |
+    | XV MACHINA, the machine | a toy CPU | 7, its word | 12 | 12 | 2,048 | 60 | 46 |
+
+    - XV's machine: registers A and B and a line counter p, four bits each; a word of a 3-bit op and a 4-bit n. 0 LDI, A takes n; 1 ADD, A takes A + n; 2 SWP, A and B trade; 3 JNZ, p takes n where A is not 0; from 4 on HLT. Every word but a jump and HLT takes p to p + 1.
+    - The words lean on the Latin as the first nine do: *sine mora*; Cato's *rem tene, verba sequentur*; Cicero's *thesaurus rerum omnium* (De Oratore I.18); *numera stellas, si potes* (Genesis 15:5, the Vulgate); *ratio* and Leibniz's *calculus ratiocinator*; and Horace's *nec deus intersit* (Ars Poetica 191).
+    - *Alternatives:*
+      - decision 7's 16-bit Hack, 2,000 to 15,000 cells, each a formula a person types (`AD-7`), and a RAM with it: a tool a game cannot ask of a person, and a machine that could be the Bench's;
+      - stopping at the counter, which leaves decision 7's last rung unbuilt.
+40. **XV's test, past fifteen bits: every word at every A, its p and its B drawn by lot, 2,048 inputs of 524,288, and a verdict that says so.**
+    - Decision 18 sends a level past fifteen bits to a suite; XV has nineteen. The low eleven bits of the input's number count through its word and its A, so every word meets every A once; p and B are the bench's stimulus at their rows and column A, a function of the number, so that the Lab and the hands draw alike.
+    - Measured over the least-known machine, a scratch run: every wire of every gate moved to every other cell it could read, 4,941 mutants. The suite catches 4,934, the last at input 1,027 and the mean at 49.5. The other seven are equivalent to the machine at all 524,288 inputs. It misses none. It draws each value of p 110 to 152 times, of B 100 to 158, and 252 of the 256 pairs of A and B.
+    - `the_tests_catch_every_gate_of_a_least_known_room_gone_wrong` keeps the shorter half at every push: each gate of XIII, XIV and XV stuck at 0, stuck at 1 and replaced by another gate fails.
+    - So a pass here is no *Quod erat demonstrandum*: "Probatum: all 2,048 pass, every word at every A. Testing, said Dijkstra, shows the presence of bugs, never their absence."
+    - *Alternatives:*
+      - decision 18's 32,767 drawn, each a frame, sixteen times the wait for no mutant more;
+      - a 3-bit machine, exhaustive at 16,384, its arithmetic modulo 8 and its multiplications at most 7;
+      - every input, past K.
+41. **The ROM: a work sheet of lines typed as words, and XV's word the bits of the line p names.**
+    - `(work "ROM" "Bench")`, between XV and the Bench: every key types there, and `G` on XV runs what it says. B2:B17 a line each, `ADD 5`, in either case; C its word's number, its op plus 8 times its n; D the mark of the line p stands on; E "no such word: HLT". An empty line and a word none of the five are HLT, so that a program ends and never reads past itself.
+    - A little assembler of `MATCH` over F2:F6, the words' table the person reads, and `MID`. It opens on 3 x 5 by repeated addition, which exercises every word and its carry: 15 stands in A, its last move at tick 17.
+    - The test never reads it, so a program cannot make a machine pass.
+    - *Alternatives:*
+      - numbers in two columns and no assembler, a table a person must look up;
+      - decision 7's one-hot `SUM`, needless since `INDEX` computes;
+      - the ROM on the level's sheet, whose keys are the game's and type nothing.
+42. **A switch held to its input under test** (the short slice's Found, the second, left to the owner). Every level's K holds whether each switch and flip-flop stands at its input as the test reads it, D wants it, and L keeps it from the input a test ended on.
+    - A value stands still and fails at the first input it differs from. `=Lab!$B$6` passes at I, whose one bit is the number and saves no gate; at II it fails at input 3, where the number leaves its bit. A switch that follows its bit exactly gains nothing.
+    - The verdict: "The test stops at input 3 of 4, standing on the board: a switch written over does not follow the test, and Load restores it." An error's cell is named first, as it was.
+    - *Alternative:* leaving it, as the Found did, the honor system for this one hole in a checked set.
+43. **XV's word stands on the input that failed.** A test's word is the input's, and a pass gives it back to the ROM; but after a test that failed the word stays as it stood until the clock moves or R, or "standing on the board" would be false of the lines the failing gate reads.
+    - *Alternatives:*
+      - a flag of its own in the Lab, where the result already says it;
+      - a word latched at each tick, a ROM edit unseen until the next.
+44. **A frame held where it can move, and one frame in 64 whole.** Six levels make the replay 4,788 frames of about 5,000 cells, and on the page each sheet's record is read at each frame, the Gates' 1.8 MB among them. The hands compute a level only at a frame an act, a test, a clock or a person's row could move it and the frame after, and both hold those levels, the Lab's state and clock, the bench at a row into it, the Gates at a block a row changed, and every cell of them one frame in 64 (`Game::whole`, `lab_held`, the page's `labHeld`).
+    - The whole frames are what prove the rest stands. The page's replay holds 1,581,635 cells over 4,788 frames, where it held 2,154,122 over 794.
+    - *Alternatives:*
+      - every cell at every frame, about 24 million and 8.5 GB of the Gates' record on the page at each push;
+      - the replay without XV's test, leaving the machine to the engine's tests alone.
+45. **The Lab contiguous: the levels in rows 11 to 25, read by `MATCH` and `INDEX`; their inputs from row 31 and their dues from row 51, a column a level.** XV has 19 inputs and 12 dues, which rows 21 to 29 and five columns could not hold. B1 is `MATCH(Input!$B$19,$A$11:$A$25,0)` where it was a sum of fifteen tests, and B3, B7 and B8 are `INDEX`. A level's due is its range against its dues by one `SUMPRODUCT`.
+    - *Alternative:* the old rows kept and X to XV beside them, two tables to read for one thing.
+46. **Not in this slice.** The depth star stays where decision 19 left it, on a census as a device sheet. No RAM, no chips, no second program a level grades: each is the owner's to ask for, and decision 7's list is met without them.
+47. **1 and 0 write themselves on a cell of the room that holds no gate.** *What the hand test moved:* the owner's word, "The numbers 1 and 0 should probably be allowable keys to type directly so players don't need to preface them with an equals sign"; the short slice's tenth step had met the same wall, a 1 on IV's D5 doing nothing.
+    - No cell of the page sees a selection until an act, so no `holds` can give a key to a switch alone. But an act carries its place. So `one` and `zero` stay the game's on every cell: on a switch they set it, as they did; on a cell of the room they ask the Lab's H1, whether the room holds no gate there, read from the Gates sheet's kinds, and the Write sheet's one row writes the value, a frame on, inside the act's three frames.
+    - A value is no gate (decision 29), and a gate may read it. A derived write cannot replace a formula (`docs/SPEC.md` §3.9) and the guard asks none to, so a stray 1 costs no gate: Delete first. On a name, a lamp, a due, a word or past the room nothing is written.
+    - N7, the Lesson's seventh line and the Commands sheet's words say it. No page changes, and no version.
+    - *Alternatives:*
+      - the two keys left to the page's typing wherever the selection stands on no switch, so that a 1 opens the palette as a 5 then did: a spreadsheet's way, Enter to confirm and a gate replaced, which needs a command to know where it holds, a fifth column of the Commands sheet read against the selection, a version of the page and an item of its own;
+      - the two commands dropped, so that a 1 typed on a switch opens the row that writes over it, and Enter costs the game;
+      - switches as values, as the Bench's are, T driving them by derived writes, each input a frame late and a test twice as long.
+48. **The verdict says what Load costs.** The owner's word at step 13: "Load resets the entire game." So it does: decision 23's price, a formula entering by the load or a person's write alone, which N10 said and the verdict's "Load restores it" did not. The verdict: "a switch written over does not follow the test. Load restores it, and empties every level."
+    - *Alternatives:*
+      - switches a person cannot write, decision 23's range locked, which closes the hole and needs the page (Found);
+      - saying nothing more, N10 standing two rows below.
+49. **On a game sheet a person writes, a key is the game's, or `=`, or nothing.** *What the hand test moved:* the owner's word, "why does 2 open the palette if it does nothing? Asking the bigger picture question here: should games be limited to a whitelisted set of keys, or should they open the palette for any key and reject it at calculation? My gut tells me that 0 and 1 should be whitelisted, like the equals sign, but I'm open to being vetoed. UX is key, Claude. Intuition supersedes ideation every time."
+    - The 2 did not do nothing. `SPEC.5`'s row, "opens the cell's edit where no game key takes it", was written to let `=` through and let everything through: Enter wrote the 2, and on a switch that cost every level (decision 48). So the whitelist stands, and it needs no list of its own: the game's keys, on Naught's levels T, N, P, R, C, G, the space, 1 and 0, and `=`. Any other character is `gridKeyAct`'s `stray`, over the host's `gameSheetHere`: no palette and no frame, and decision 50 its sentence. The palette's note says the rule, and the Lesson already said to type `=`.
+    - 0 and 1 are on the list as the game's, and keep writing at once (decision 47). They do not open the palette as `=` does, the owner's first form: `=` opens it because a formula is still to be typed, and a 1 is whole.
+    - Only Naught's levels move. Of every cartridge theirs alone are `game` and not `read`; Seiyaku's and Superposition's boards and Buffet's views are both, and refuse already. A sheet named by none, where no sheet is named the game's, keeps its typing, the test cards'. F2, a double click, Enter and Backspace still open a cell, Delete still empties one, and a row of the palette writes what it says. `ROM` and `Bench` are work sheets, every key theirs.
+    - No cartridge moves, no digest, and no version: a row of §7.2 amended, since Naught's levels were the one sheet it ruled.
+    - *What it leaves:* Delete on a switch, or Enter after Backspace or `=` there, still costs the game. A key list closes no cell; that is the Found below, switches a person cannot write.
+    - *Alternatives:*
+      - any key opening the palette and the grid refusing at calculation, the owner's other form: a 2 is no error at calculation, it computes, and T blames a lamp far from the key, and a palette opened promises what the game cannot keep;
+      - a list the cartridge gives, `(types "=")`, a version of the page for one client, whose commands already name its keys;
+      - 0 and 1 through the palette: an Enter more, the selection moved down after it, and a gate replaced where decision 47 costs none.
+50. **A key that does nothing says why, in the bar.** *What the hand test moved:* the owner's word, "Hand tests pass, decisions approved, but a dead key should present a generic error message in the bar so the player knows why the key does nothing." Decision 49 had left it silent. Every such key is now one sentence, in the refusals' red, by the sheet's name: "That key does nothing on X MORA: it is not one of the game's keys. Commands lists them, and = opens a cell's formula."
+    - The log counts a repeat in the line it first made (the owner's hand test of 2026-10-09), and the bar passed over a repeat. So a second stray key after an act would have said nothing, and an act repeated after a stray key would have stood under its refusal. A key's refusal now reaches the bar at every press, and the next sentence of any kind replaces it, a repeat among them: `barTakes`, pure, and the page's `sayKeyRefused`. A read-only sheet's key goes the same way, for the same two reasons.
+    - The host's `strayKey`, beside `readKey`, each returning its sentence; `keysStray` beside `keysRead`.
+    - *Alternatives:*
+      - silence, decision 49's first form, a dead key on a board dead: a person cannot tell it from a keyboard that lost the page;
+      - a sentence naming the key: the owner's word is generic, and the name adds nothing to the why;
+      - a read-only sheet's longer words, the manifest's directive and the specification's section among them: a player's bar, not a reader's of the specification;
+      - a sentence that leaves by a timer or at the next arrow key: the bar holds its last sentence everywhere else, and the owner's to ask for.
+51. **A settled act says its frames and what each was for, and a command's name stands in single quotes.** *What the hand test moved, 2026-10-31:* the owner's word, over two screenshots of the bar: "The successful command verbiage reads a little odd, I think the command name should be wrapped in single quotes (example: the command 'one' settled...). Also: "settled in 2 steps after its own" gives almost no information about what it's trying to say. Maybe: "settled in three frames: " then list each frame's purpose."
+    - The sentence: "frame 14: the command 'one' settled in three frames: it ran, it was released, and a last frame proved nothing moved." Each clause is §5's settle in a person's words: the act's own frame; the first step, after the engine's release of a press or a command, or for an edit the first to read what it wrote; the steps while a formula's value still changed; and the last, which changed none and so proves the fixed point. A long settle counts its middle: "the command 'test' settled in 2,050 frames: it ran, it was released, the grid moved for 2,047 more, and a last frame proved nothing moved." A count is a word below ten and a number from there. The host's `settledWords`, pure, and `countWords`.
+    - An act K stopped counts its frames too: "did not settle in nine frames, the most its (settle 8) allows", K steps and the act's own.
+    - Every sentence that says "the command" and a name quotes it: a settled act's, a stepped one's, a refusal, a wait, the Commands sheet's notes, a keymap's problems and a key's shadow, by `commandWords`. A refusal's list of a sheet's commands stays bare, a list and not a sentence about one.
+    - Only the host's and the page's words move: no cartridge, no replay, no digest and no floor but the settle case's own.
+    - *Alternatives:*
+      - each frame by its number, "frame 12 ran it, frame 13 released it, frame 14 proved nothing moved": a number a clause, already at the sentence's head, and a settle of 2,050 frames cannot list them;
+      - nouns, "the run, its release and the proof": shorter, and a reader's of the specification more than a player's;
+      - the quotes on the settled sentence alone, as the owner's example gives it: a command's name then reads two ways in one log;
+      - leaving "did not settle in 8 steps" as the language counts: two sentences side by side counting different things.
+
+*Slice 4 built 2026-10-30.* What it touches:
+- `cartridges/naught/naught.source.vla`, the levels' block:
+  - the six levels, the ROM, the Lab's clock in D1:E9, its contiguous rows, its inputs, dues and XV's workings;
+  - the macros `of-level`, `on-this-level`, `on-this-switch`, `its-last`, `test-bit`, `test-hash`, `test-draw`, `by-hand`, `level-flip-flops`, `level-word`, `level-clock`, `level-verdict` split from the reckoning, `at-test-end`, `lab-clock`, `lab-reckons`, `lab-due`, `a-bit-of`, `rom-op`, `rom-n`, a macro a shape for the kind, and the style's blank lines and `priority` wherever a macro was rewritten;
+  - the Lesson's second and seventh lines, four lines more, the Commands sheet's `tick` and `run`, and a Write sheet of one row.
+
+  1,363 rows where 756, 3,192 formula cells where 1,804. The bench's block and the floors' source are untouched: the frame floors' digests stand.
+- `engine/src/naught.rs`: the levels' table, `Level::switches` and `limit`, `test_input`, `machina`, the dues, `rom_word`, `kind`'s seventh, the gates' `IF`, the frame with its clock, `touched` and `fresh`, `whole`, `lab_held`, `rom_cell`, `clock_words`, and the rooms `NUMERA_GATES`, `RATIO_GATES` and `MACHINA_GATES`; `without_levels` takes the ROM out of `(work ...)`; the session through XV. Six shapes more in `SHAPES`, thirty-five.
+- `cartridges/naught/naught.hand.js`: its twin, line for line.
+- `engine/src/cartridge.rs`: a frame's hold scoped; the fifteen solutions; `naught_s_clock_ticks_at_an_act_and_a_run_stands_or_never_rests`, `naught_s_machine_runs_its_rom`, `naught_s_switches_are_held_to_their_inputs_under_test`, `naught_s_register_is_one_row_over_a_range`, `naught_s_digits_write_themselves_on_the_room`; the host's derived writes in Naught's own act; the replay test's counts.
+- `cartridges/naught/naught.replay.vla` and its golden: the owner's 45 frames, then the stand-in through XV, 4,803 frames, IV's room typed on among them.
+- `engine/testdata/describe/naught.vla` and `tools/check_cartridge.ps1`'s floor.
+- `web/host.js`'s `gameSheetHere`, `strayKey` and `readKey`'s sentence returned, `web/index.template.html`'s `gridKeyAct`, `barTakes`, its handler, the palette's note and the keymap's words, and its modes case: the sheets of Naught, five rows of the table, the double holding `gameSheetHere` on every sheet and `strayKey`'s sentence, and four rows of the bar's `barTakes`. `docs/SPEC.md` §7.2's row and its amendment. Decision 51's `commandWords`, `countWords` and `settledWords` in `web/host.js`, the settle case's eight rows of them and its sentences by their new words, a command's at frame 16 among them.
+- `tools/check_host_loop.ps1`: the replay case's floors, `naughtFrames` 4,803, `naughtCells` 1,608,754, `naughtWritten` 149, `naughtPassed` 14 and `naughtShown` 17; the hand's anchors and frames, EZ 4,752, FY 123, FZ 4,801 and GZ 2; and ten mutants, as Node predicted them against the Rust hand: HE, a tick that moves no flip-flop, frame 737; HF, G leaving the flip-flops as they stand, 746; HG, a run that counts no states, 756; HH, ELIGE read as no gate of the set, 766; HI, a machine's p and B counted and not drawn, 2,563; HJ, a word that does not stand on the input that failed, 2,564; HK, a line of no word read as LDI, 1; HL, a switch written over taken at its word, 4,801; HM, a digit on the room that writes nothing, 83; and HN, a digit written over a gate, 88. Modes' `acts` 39, `bar` 4 and `fakeSaid` 3, settle's `fakeWords` 8 and `said` 2, and eleven mutants more, needing no module, the modes case's: HO, a stray key opening a game sheet's cell; HP, a game sheet's `=` closed; HQ, no sheet a game sheet; HR, a sheet named by none a game sheet; HS, a game sheet's Delete closed; HT, a stray key saying nothing; HU, a repeat standing under a key's refusal; and HV, every repeat in the bar; and the settle case's: HW, a settle's frames counted as its steps; HX, a command's name unquoted; and HY, a command's release unsaid. Two hundred and twenty-two mutant pages, one hundred and twelve without the module, `CART.14.1`'s KV to KY among them, which the words had not counted: its commit raised neither count. `tools/run_checks.ps1`'s label of the control counts them, which stood at one hundred and ninety-four through `ENGINE.14`'s three.
+- `README.md`, `web/README.md`, the Delta map, this record, the roadmap, the memory.
+
+*Measured* natively, release, five rounds each:
+
+| | short slice | slice 4 |
+|---|---|---|
+| the load | 12.7 ms | 28 ms |
+| a gate's write and its frames | 2.33 ms | 4.8 ms |
+| IX's test, 514 frames | 35.1 ms | 47.7 ms |
+| XII's test, 514 frames | | 36 ms |
+| XIV's test, 1,026 frames | | 102 ms |
+| XV's test, 2,050 frames | | 320 ms, 0.156 ms a frame |
+| G over 3 x 5, 21 frames | | 2.8 ms |
+| G over a loop, 4,099 frames | | 355 ms, 0.087 ms a frame |
+
+A write's frame computes every cell, 3,188 where 1,804, which the ask of Frazaro below would end. A page draws a frame in 16.7 ms. The loop check's whole run stands at 27 seconds. A person's clock in the browser is the hand test's to read: Chrome headless dumps a page's DOM at its load unless its clock is virtual, and then it measures nothing (Catches).
+
+*Held*, over `vla-lang` 0.12.0, in a copy of the tree holding `ef0f62e`, `CART.14.1`, and this slice's files:
+- `cargo test --release`, 89 and the doc test, in 12 seconds; `cargo test` at its default profile the same in 78 on a quiet machine, the replay's test over 60 of them; `cargo fmt --check` and `cargo clippy --all-targets`, clean.
+- `expand -- --check`, eleven `same`; the bench's block, `same`, and the frame floors' digests unmoved.
+- The page's hand held to the Rust hand in Node at all 4,803 frames, 76 of them whole, 1,563,154 cells of the game; each of the nineteen hand mutants leaving it at the frame the table names.
+- Every level at its least known, T to a pass and three stars; XV's own, half its gates failing T with its word standing on the input that failed, then whole, G to 15 in A, its p at 7, its last move at tick 17, a person's line moving the answer, and a loop said at 4,096 ticks, 4,099 frames, inside K.
+- `run_checks.ps1 -WithExtras` over the copy, in 5 minutes 27: twelve checks and thirteen verifiers, and `check_spdx` in the tree, 127 tracked files. The loop control: the real page and the game's page pass, and each of the two hundred and twenty-two mutant pages fails for its own reason, Naught's hand at the frames Node predicted. The same control over a page with no module: each of the one hundred and twelve that apply, read from its pool's 113 pages, the game's page the other.
+- A smoke test in headless Chrome over the copy's page, on its virtual clock, each act by the page's own keys:
+  - X MORA: J3 written in the palette, T in 6 frames, three stars; d set, C, and q a tick behind it; G in 5 frames, "Stat, it stands: its last move at tick 1."
+  - XV MACHINA: its 46 gates written one row an act, T in 2,050 frames, "Gates 46; the budget 60, the least known 46: ★★★" over "Probatum: all 2,048 pass…"; G in 21 frames, A10:A13 all lit, p at 7, B empty, "Stat, it stands: its last move at tick 17."
+  - ROM: a character typed on B10 opens `(cell "ROM" "B10" "a")`, and `add 5` writes it, its word 41; `FOO` on B12 says "no such word: HLT".
+  - IV AUT: 1 on D5 and 0 on C5, each in three frames, each a value in its cell and no gate; a gate over D5 reading it; and 0 on a further cell, the palette never opening.
+  - X MORA, decision 49: 2, x and / on C5, no frame and no palette, each key taken from the browser; = opening `(formula "X MORA" "C5" "=")` under the note "X MORA is the game's: its keys are the game's, and = opens a cell's formula."; 1 writing the value in three frames, Enter then showing `(cell "X MORA" "C5" 1)`; on A3, 2 nothing and 1 setting the switch; on `ROM` and `Bench`, 2 opening `(cell "ROM" "A1" 2)` and `(cell "Bench" "A1" 2)`; and on the page's empty sheet, whose manifest names no game sheet, x, 2 and = each opening its cell's row as before.
+  - The bar, decision 50: 2, x and / each showing the one sentence in red, no frame moved; 1 and 0 each replacing it with its own, a repeat among them; 2 after an act showing it again; the Commands list holding `naught.test`, `T on the Screen`, and the rest; and the Lesson's x, its own sentence again after an act.
+  - The bar, decision 51: 1, "the command 'one' settled in three frames: it ran, it was released, and a last frame proved nothing moved."; 0 and Space the same by their names; T and G on X MORA's empty room, "settled in four frames: it ran, it was released, the grid moved for one more, and a last frame proved nothing moved."
+
+*The owner's hand test, 2026-10-30,* fourteen screenshots over the copy's page and a second page holding XIII's, XIV's and XV's rooms: the Lesson; X MORA's wire, T, the tick a tick behind, G at rest and the toggle's "In aeternum"; XII's fill by Ctrl+K; XIII's sixteen ticks; XIV's 1,024 inputs; XV's 2,048 and its 15 at tick 17; the ROM's `add 7`, `FOO` and a loop's 4,096 ticks; and a flip-flop written over. Every step passed as written but the two below, and the owner's two notes are decisions 47 and 48. The owner's next round passed them, and asked of the 2: decision 49. The round after passed that, the owner's one note decision 50.
+
+*Approved 2026-10-30 at the owner's word*, decisions 34 to 49, decision 50 in the same sentence: "Hand tests pass, decisions approved, but a dead key should present a generic error message in the bar so the player knows why the key does nothing." *And 2026-10-31*, decision 50 and the commit, decision 51 in the same message: "Decisions approved; hand tests pass, proceed."
+
+*Found.*
+- *A switch's formula, opened.* The owner, at the hand test: "Interesting that A3 is rewritten into a formula after the 0, C, 1, C, then G series of keys." Nothing rewrites it: a switch has been that formula from the load since slice 3 (decision 17), `I NON!A3` at `db054c2` among them, and Enter shows any cell's formula as it stands. A person's first sight of it reads as a surprise all the same, three hundred characters for what looks like a 0. Not changed; the owner's to weigh. Beside it, a click on a flip-flop toggles it as a click toggles a switch (decision 34), so a click to look at A4 moved q: the screenshot's 0 after a run at rest on 1.
+- *Switches a person cannot write.* A flip-flop or a switch written over costs a person every level (decision 48), and the words now say so; a range of a game sheet no row of a person's writes, decision 23's alternative, would close it, and with a fifth column of the Commands sheet (decision 47's first alternative) would give a level's keys their places. Each is a version of the page. The owner's to ask for.
+- *A word typed without its `=`.* No palette catches its first letter now (decision 49), so `AND(A3,A4)` runs N, the next level, at its second letter, and `OR(` runs R, a reset. Each costs a key or two to undo, the Lesson says `=`, and no word was ever a gate; not changed, the owner's to weigh.
+- *The bar under a repeated act.* The bar passes over a repeat (the owner's hand test of 2026-10-09), so once 1 and 0 have each been said, a 0 after a 1 leaves the bar on "the command one". Older than this slice, and decision 50 changes it only over a key's refusal; the page's to weigh.
+- *A layout whose `=` is Shift+0.* A command's key is read by its place, Shift or not (§3.10), so on a German or a Spanish keyboard `=` is `zero` on a level, and no key opens a cell's formula. Older than this slice, but decision 49 leaves `=` the one door. The page's to weigh.
+- *The short slice's Found on `COLUMN`, corrected.* It said `COLUMN` of a range is an array inside `SUMPRODUCT` alone. The gap is wider and plainer: a `(formula ...)` row is always a legacy formula, implicit intersection and all, and no row can say dynamic (`Draft::set_kind` is test-only). So `=MAX(COLUMN(A2:L2))` is 1 where Excel 365 says 12, faithfully legacy, and a person typing it expects 365. Asked of Frazaro beside two others, a prompt in chat: the information functions, a formula read as 365 reads it typed, and a formula write's frame costing its reach.
+- *`define` names a word across a source, not a macro's local.* A macro that defines `at` twice is refused, `vla-define-name-taken`, and `r` is refused as a reference in R1C1 notation, so a macro of many derived names takes them as parameters. The helper-hungry style has no local name to reach for. Frazaro's to weigh, `VLA.6`'s doctrine.
+- *A person's chips.* XV retypes the half adder of VII and the choice of V: no cell can call a proven room. That is nand2tetris's real lesson, abstraction, and the next rung's question if there is one. A person's formula composing rooms would need a shape for a call, and the hands a call; the owner's to ask for.
+- *An edit is one row.* The palette and the edit row refuse two rows at once by name, so 46 gates cannot be pasted, though a fill may write many of them as one row. The hand test here loads a built copy of the cartridge. The page's to weigh.
+
+*Catches.*
+- `define` twice, and `r`, both refused by name at the first expansions: the row became a parameter.
+- The Write tool decoded `\\u2605` in the hand's scratch part into the star itself, and `check`'s ASCII rule for the hand held: the script writes escapes.
+- A hand's `touched` sticky, reading its own last value: read and mended before it compiled, by a cause and the frame after it.
+- A first attempt at the browser's own clock, `--dump-dom` with no virtual time, returns at the load, empty. No browser number is recorded here.
+- The replay's frames moved EZ, FZ and GZ, and every anchor of the hand's mutants but two moved with its rewrite: each re-derived in Node before the page ran.
+- The hand test's cartridge is `naught.vla` with XIII's, XIV's and XV's rooms written as rows of its own, since no edit takes two rows: a person's 88 gates are a morning, and the checks here hold them already. A copy of the page holds it in Naught's place, so that a person picks it as they pick Naught.
+- The hand test's first writing said `Load` opens a file: it loads the Drawer's box, as its own title says. And it set XIII's inc and not its reset: T leaves a level on its last input, reset at 1 among them, so G rested at once. Each step since is driven through the page before it is given, and XIII's third line says "With reset at 0 and inc at 1".
+- Decision 49's first control failed: the double's two messages had taken the new words between the phrases that FN, FP and FT read their reasons from. The words went back, the game sheet after them, and HQ's and HR's reasons with them. `run_checks.ps1` prints a failure's last 20 lines, under which a failed loop control's verdict lies; the check run alone shows it.
+- `ENGINE.36`, another session's, landed in the shared tree between decisions 50 and 51, `web/host.js`, the template and the loop check among its files. So decision 51 went by content into the tree and into the clean copy alike, the controls ran on the copy, and this commit's blobs are the copy's, HEAD and this slice alone.
+- This slice's regeneration wrote `tools/check_cartridge.ps1` from HEAD and so took out `CART.14.1`'s row floor, uncommitted in the shared tree. Found within the hour by that session's transcript, put back by that slice's own script, and the regeneration writes no shared tool since: only Naught's files, and the rest is hunks by content.
+
 ## `SPEC.5` — the keyboard's sheets declared: the sheets whose keys are the game's, the sheets a person types into, and the sheets no person writes
 
 *Scoped 2026-10-20 at the owner's word, "Recommendations approved; proceed.", after `CART.9`'s fine scoping of its third slice found it first in the order. The middle mode is named *work* at the owner's word: "I feel like "cells" sheets should be called "work" sheets, which plays against their alternate "game" sheets." Built the same day as the decisions recommend; the decisions await the owner, with the build, at the hand test.*

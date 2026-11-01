@@ -419,7 +419,7 @@
   }
 
   // A person's gate as the hand evaluates it (decision 26): numbers; cells of its own level, relative or held;
-  // + - * / and a sign; parentheses; and MAX, MIN, MOD and INT, enough for the six gates and any formula of them.
+  // + - * / and a sign; parentheses; and MAX, MIN, MOD, INT and IF, enough for the seven gates and any formula of them.
   // Anything else refuses the hand by name. A node: { t: 'num' | 'cell' | 'range' | 'neg' | 'op' | 'call', ... }.
   function gex(formula) {
     var p = { s: Array.from(formula.trim()), i: 1, f: formula };
@@ -472,7 +472,7 @@
       for (var j = p.i; j < p.s.length && isAlpha(p.s[j]); j++) word += p.s[j];
       if (p.s[p.i + word.length] === '(') {
         var name = word.toUpperCase();
-        if (name !== 'MAX' && name !== 'MIN' && name !== 'MOD' && name !== 'INT') throw new Error(gOutside(p));
+        if (name !== 'MAX' && name !== 'MIN' && name !== 'MOD' && name !== 'INT' && name !== 'IF') throw new Error(gOutside(p));
         p.i += word.length + 1;
         var args = [];
         for (;;) {
@@ -482,7 +482,7 @@
           else if (d === ')') { p.i++; break; }
           else throw new Error(gOutside(p));
         }
-        var arity = name === 'MOD' ? args.length === 2 : name === 'INT' ? args.length === 1 : args.length > 0;
+        var arity = name === 'MOD' ? args.length === 2 : name === 'INT' ? args.length === 1 : name === 'IF' ? args.length === 3 : args.length > 0;
         if (!arity) throw new Error(gOutside(p));
         return { t: 'call', name: name, args: args };
       }
@@ -579,24 +579,41 @@
       if (isErr(y)) return y;
       return y === 0 ? fault('#DIV/0!') : finite(x - y * Math.floor(x / y));
     }
+    if (g.name === 'IF') {
+      x = truthOf(gEval(g.args[0], cell));
+      return isErr(x) ? x : gEval(g.args[x ? 1 : 2], cell);
+    }
     x = numberOf(gEval(g.args[0], cell));
     return isErr(x) ? x : Math.floor(x);
   }
 
-  // The nine levels in tab order (decisions 16 to 21), I NON the first: each its sheet, its switches and outputs, its
-  // room's rows from row 3 to the board's last, its budget, its least known and the last kind of gate it gives (kind);
-  // their switches' and outputs' names, the B and K columns; and the inputs a test runs through, the Lab's B7.
+  // The fifteen levels in tab order (decisions 16 to 21 and 34 to 46), I NON the first: each its sheet, its switches, the
+  // flip-flops below them and its outputs, its room's rows from row 3 to the board's last, its budget, its least known, the
+  // last kind of gate it gives (kind) and the inputs its test runs through; and their switches' and outputs' names, the B
+  // and K columns.
+  function aLevel(sheet, inputs, state, outputs, rows, budget, least, gives, vectors) {
+    return { sheet: sheet, inputs: inputs, state: state, outputs: outputs, rows: rows, budget: budget, least: least, gives: gives, vectors: vectors, switches: inputs + state, limit: state === 0 ? 0 : Math.pow(2, state) };
+  }
   var LEVELS = [
-    { sheet: 'I NON', inputs: 1, outputs: 1, rows: 8, budget: 2, least: 1, gives: 2 },
-    { sheet: 'II ET', inputs: 2, outputs: 1, rows: 8, budget: 3, least: 2, gives: 3 },
-    { sheet: 'III VEL', inputs: 2, outputs: 1, rows: 8, budget: 4, least: 3, gives: 4 },
-    { sheet: 'IV AUT', inputs: 2, outputs: 1, rows: 8, budget: 5, least: 3, gives: 5 },
-    { sheet: 'V ELIGE', inputs: 3, outputs: 1, rows: 8, budget: 5, least: 3, gives: 6 },
-    { sheet: 'VI DISTRIBUE', inputs: 2, outputs: 2, rows: 8, budget: 4, least: 2, gives: 6 },
-    { sheet: 'VII SEMIS', inputs: 2, outputs: 2, rows: 8, budget: 3, least: 2, gives: 6 },
-    { sheet: 'VIII SUMMA', inputs: 3, outputs: 2, rows: 8, budget: 6, least: 5, gives: 6 },
-    { sheet: 'IX QUATTUOR', inputs: 9, outputs: 5, rows: 9, budget: 21, least: 20, gives: 6 }
+    aLevel('I NON', 1, 0, 1, 8, 2, 1, 2, 2),
+    aLevel('II ET', 2, 0, 1, 8, 3, 2, 3, 4),
+    aLevel('III VEL', 2, 0, 1, 8, 4, 3, 4, 4),
+    aLevel('IV AUT', 2, 0, 1, 8, 5, 3, 5, 4),
+    aLevel('V ELIGE', 3, 0, 1, 8, 5, 3, 6, 8),
+    aLevel('VI DISTRIBUE', 2, 0, 2, 8, 4, 2, 6, 4),
+    aLevel('VII SEMIS', 2, 0, 2, 8, 3, 2, 6, 4),
+    aLevel('VIII SUMMA', 3, 0, 2, 8, 6, 5, 6, 8),
+    aLevel('IX QUATTUOR', 9, 0, 5, 9, 21, 20, 6, 512),
+    aLevel('X MORA', 1, 1, 1, 8, 2, 1, 7, 4),
+    aLevel('XI TENE', 2, 1, 1, 8, 3, 1, 7, 8),
+    aLevel('XII MEMORIA', 5, 4, 4, 9, 6, 4, 7, 512),
+    aLevel('XIII NUMERA', 2, 4, 4, 8, 13, 11, 7, 64),
+    aLevel('XIV RATIO', 10, 0, 5, 10, 38, 31, 7, 1024),
+    aLevel('XV MACHINA', 7, 12, 12, 19, 60, 46, 7, 2048)
   ];
+  // XV's place among them, its inputs its word, read from the ROM; and its switches a test counts through, its word and
+  // its A, the rest, its p and its B, drawn by lot (decision 40).
+  var MACHINA = 14, COUNTED = 11;
   var NAMES = [
     [['a'], ['y']],
     [['a', 'b'], ['y']],
@@ -606,63 +623,139 @@
     [['x', 's'], ['to 0', 'to 1']],
     [['a', 'b'], ['sum', 'carry']],
     [['a', 'b', 'c'], ['sum', 'carry']],
-    [['a0', 'a1', 'a2', 'a3', 'b0', 'b1', 'b2', 'b3', 'c'], ['s0', 's1', 's2', 's3', 'carry']]
+    [['a0', 'a1', 'a2', 'a3', 'b0', 'b1', 'b2', 'b3', 'c'], ['s0', 's1', 's2', 's3', 'carry']],
+    [['d', 'q'], ["q'"]],
+    [['load', 'd', 'q'], ["q'"]],
+    [['load', 'd0', 'd1', 'd2', 'd3', 'q0', 'q1', 'q2', 'q3'], ["q0'", "q1'", "q2'", "q3'"]],
+    [['reset', 'inc', 'q0', 'q1', 'q2', 'q3'], ["q0'", "q1'", "q2'", "q3'"]],
+    [['a0', 'a1', 'a2', 'a3', 'b0', 'b1', 'b2', 'b3', 'op0', 'op1'], ['y0', 'y1', 'y2', 'y3', 'carry']],
+    [['op0', 'op1', 'op2', 'n0', 'n1', 'n2', 'n3', 'a0', 'a1', 'a2', 'a3', 'p0', 'p1', 'p2', 'p3', 'b0', 'b1', 'b2', 'b3'],
+     ["a0'", "a1'", "a2'", "a3'", "p0'", "p1'", "p2'", "p3'", "b0'", "b1'", "b2'", "b3'"]]
   ];
-  var VECTORS = [2, 4, 4, 4, 8, 4, 4, 8, 512];
+  // The words of XV's program, each its op by its place, the ROM's F2:F6; and the program the ROM opens on, 3 x 5 by
+  // repeated addition, B2 down.
+  var ROM_WORDS = ['LDI', 'ADD', 'SWP', 'JNZ', 'HLT'];
+  var ROM_PROGRAM = ['LDI 3', 'SWP', 'ADD 5', 'SWP', 'ADD 15', 'JNZ 1', 'SWP', 'HLT'];
+  // A line of the ROM read as its word's number, its op plus 8 times its n, as its C column computes it: a word none of
+  // the five, or an empty line, is HLT; what follows the word, from its fifth character, is its n, in four bits, 0 for none.
+  function romWord(line) {
+    var text = textOf(line);
+    if (isErr(text)) text = '';
+    var chars = Array.from(text), op = ROM_WORDS.indexOf(chars.slice(0, 3).join('').toUpperCase());
+    var x = textNumber(chars.slice(4, 13).join(''));
+    return (op < 0 ? 4 : op) + 8 * (x === null ? 0 : modulo(Math.floor(x), 16));
+  }
   // The bit of the input's number that input s takes while a test runs, MOD(INT(B6/2^s),2).
   function bit(b6, s) { var v = numberOf(b6); return isErr(v) ? v : finite(modulo(Math.floor(v / Math.pow(2, s)), 2)); }
-  // A level's inputs as its test reads them, the Lab's column of them from row 21: while its test runs (here, the
-  // Lab's N, is 1), the bits of the input's number; and otherwise its switches as they stand, an empty one 0.
-  function tested(here, b6, standing) {
-    return standing.map(function (v, s) { return settled(when(equal(here, 1), function () { return bit(b6, s); }, function () { return v; })); });
+  // What level k's switch s takes at the input's number while its test runs: a bit of the number, or, for XV's p and B, a
+  // bit drawn by lot, the bench's stimulus at the switch's row and column A.
+  function testInput(k, s, b6) {
+    if (k !== MACHINA || s < COUNTED) return bit(b6, s);
+    var v = numberOf(b6);
+    return isErr(v) ? v : stimulus(3 + s, 1, v);
   }
+  // A level's inputs as its test reads them, the Lab's column of them from row 31: while its test runs (here, the Lab's N,
+  // is 1), what testInput gives; and otherwise its switches as they stand, an empty one 0.
+  function tested(k, here, b6, standing) {
+    return standing.map(function (v, s) { return settled(when(equal(here, 1), function () { return testInput(k, s, b6); }, function () { return v; })); });
+  }
+  // A sum of inputs, each with its weight, as the Lab's formulas spell one: the first alone, and a weight of 1 unwritten.
+  function weighted(s, terms) {
+    var term = function (t) { return t[1] === 1 ? s[t[0]] : arith('*', t[1], s[t[0]]); }, out = term(terms[0]);
+    for (var i = 1; i < terms.length; i++) out = arith('+', out, term(terms[i]));
+    return out;
+  }
+  // MOD(v, d) and INT(v) over a value; bit i of a number, the Lab's a-bit-of.
+  function moduloOf(v, d) { var x = numberOf(v); return isErr(x) ? x : finite(x - d * Math.floor(x / d)); }
+  function intOf(v) { var x = numberOf(v); return isErr(x) ? x : Math.floor(x); }
+  function aBitOf(v, i) { return moduloOf(intOf(arith('/', v, Math.pow(2, i))), 2); }
+  // MAX over cells' values: its numbers, an error first.
+  function maxOf(xs) {
+    var items = [];
+    for (var i = 0; i < xs.length; i++) { if (typeof xs[i] === 'number') items.push(xs[i]); else if (isErr(xs[i])) return xs[i]; }
+    return items.length ? Math.max.apply(null, items) : 0;
+  }
+  // CHOOSE(index, items...): the item the index names, from 1.
+  function choose(index, items) {
+    var x = numberOf(index);
+    if (isErr(x)) return x;
+    return x >= 1 && Math.floor(x) <= items.length ? items[Math.floor(x) - 1] : fault(VALUE);
+  }
+  // XV's workings from its inputs as its test reads them, the Lab's P64 to P72: its op, n, A, p and B; its A next, its
+  // p + 1, its p next and its B next.
+  function machina(s) {
+    var op = weighted(s, [[0, 1], [1, 2], [2, 4]]), word = weighted(s, [[3, 1], [4, 2], [5, 4], [6, 8]]);
+    var a = weighted(s, [[7, 1], [8, 2], [9, 4], [10, 8]]), p = weighted(s, [[11, 1], [12, 2], [13, 4], [14, 8]]);
+    var b = weighted(s, [[15, 1], [16, 2], [17, 4], [18, 8]]), index = arith('+', op, 1);
+    var aNext = choose(index, [word, moduloOf(arith('+', a, word), 16), b, a, a, a, a, a]);
+    var inc = moduloOf(arith('+', p, 1), 16), zero = equal(a, 0);
+    var jump = settled(when(typeof zero === 'boolean' ? !zero : zero, function () { return word; }, function () { return inc; }));
+    var pNext = choose(index, [inc, inc, inc, jump, p, p, p, p]);
+    var bNext = settled(when(equal(op, 2), function () { return a; }, function () { return b; }));
+    return [op, word, a, p, b, aNext, inc, pNext, bNext];
+  }
+  // IX's sum of its inputs, the Lab's O19; XIII's count at the next tick, its O23; and XIV's sum of its a and its b, its O24.
+  function quattuor(s) { return weighted(s, [[0, 1], [1, 2], [2, 4], [3, 8], [4, 1], [5, 2], [6, 4], [7, 8], [8, 1]]); }
+  function numera(s) { return weighted(s, [[1, 1], [2, 1], [3, 2], [4, 4], [5, 8]]); }
+  function ratio(s) { return weighted(s, [[0, 1], [1, 2], [2, 4], [3, 8], [4, 1], [5, 2], [6, 4], [7, 8]]); }
   // Level k's outputs due, as the Lab's formulas compute them from its inputs as its test reads them (decision 17's
-  // specification).
+  // specification); a clocked level's its flip-flops' next state.
   function due(k, s) {
-    function maxOf(xs) {
-      var items = [];
-      for (var i = 0; i < xs.length; i++) { if (typeof xs[i] === 'number') items.push(xs[i]); else if (isErr(xs[i])) return xs[i]; }
-      return items.length ? Math.max.apply(null, items) : 0;
-    }
-    function mod2(v) { var x = numberOf(v); return isErr(x) ? x : finite(x - 2 * Math.floor(x / 2)); }
-    function int(v) { var x = numberOf(v); return isErr(x) ? x : Math.floor(x); }
-    var t;
+    var t, i, owed;
+    var isOne = function (v) { return equal(v, 1); };
+    var pick = function (c, x, y) { return settled(when(c, function () { return x; }, function () { return y; })); };
     if (k === 0) return [arith('-', 1, s[0])];
     if (k === 1) return [arith('*', s[0], s[1])];
     if (k === 2) return [maxOf([s[0], s[1]])];
-    if (k === 3) return [mod2(arith('+', s[0], s[1]))];
-    if (k === 4) return [settled(when(equal(s[2], 1), function () { return s[1]; }, function () { return s[0]; }))];
+    if (k === 3) return [moduloOf(arith('+', s[0], s[1]), 2)];
+    if (k === 4) return [pick(isOne(s[2]), s[1], s[0])];
     if (k === 5) return [arith('*', s[0], arith('-', 1, s[1])), arith('*', s[0], s[1])];
-    if (k === 6) { t = arith('+', s[0], s[1]); return [mod2(t), int(arith('/', t, 2))]; }
-    if (k === 7) { t = arith('+', arith('+', s[0], s[1]), s[2]); return [mod2(t), int(arith('/', t, 2))]; }
-    t = s[0];
-    [[1, 2], [2, 4], [3, 8]].forEach(function (p) { t = arith('+', t, arith('*', p[1], s[p[0]])); });
-    [[4, 1], [5, 2], [6, 4], [7, 8]].forEach(function (p) { t = arith('+', t, p[1] === 1 ? s[p[0]] : arith('*', p[1], s[p[0]])); });
-    t = arith('+', t, s[8]);
-    return [mod2(t), mod2(int(arith('/', t, 2))), mod2(int(arith('/', t, 4))), mod2(int(arith('/', t, 8))), int(arith('/', t, 16))];
+    if (k === 6) { t = arith('+', s[0], s[1]); return [moduloOf(t, 2), intOf(arith('/', t, 2))]; }
+    if (k === 7) { t = arith('+', arith('+', s[0], s[1]), s[2]); return [moduloOf(t, 2), intOf(arith('/', t, 2))]; }
+    if (k === 8) { t = quattuor(s); return [aBitOf(t, 0), aBitOf(t, 1), aBitOf(t, 2), aBitOf(t, 3), intOf(arith('/', t, 16))]; }
+    if (k === 9) return [s[0]];
+    if (k === 10) return [pick(isOne(s[0]), s[1], s[2])];
+    owed = [];
+    if (k === 11) { for (i = 0; i < 4; i++) owed.push(pick(isOne(s[0]), s[1 + i], s[5 + i])); return owed; }
+    if (k === 12) {
+      t = numera(s);
+      for (i = 0; i < 4; i++) owed.push(when(isOne(s[0]), function () { return 0; }, aBitOf.bind(null, t, i)));
+      return owed;
+    }
+    if (k === 13) {
+      t = ratio(s);
+      var index = arith('+', arith('+', s[8], arith('*', 2, s[9])), 1);
+      for (i = 0; i < 4; i++) owed.push(choose(index, [arith('*', s[i], s[4 + i]), maxOf([s[i], s[4 + i]]), moduloOf(arith('+', s[i], s[4 + i]), 2), aBitOf(t, i)]));
+      owed.push(when(and([isOne(s[8]), isOne(s[9])]), function () { return intOf(arith('/', t, 16)); }, function () { return 0; }));
+      return owed;
+    }
+    var w = machina(s);
+    [w[5], w[7], w[8]].forEach(function (v) { for (i = 0; i < 4; i++) owed.push(aBitOf(v, i)); });
+    return owed;
   }
 
   // A formula's text as the Gates sheet reads it, FORMULATEXT with its spaces and its $ gone and upper-cased (the short
   // slice of 2026-10-24).
   function gateText(formula) { return formula.replace(/[ $]/g, '').replace(/[a-z]/g, function (c) { return c.toUpperCase(); }); }
-  // The inputs a gate of level k may read, the Lab's P, between bars: its switches, the cells of its room row by row, 0
-  // and 1.
+  // The inputs a gate of level k may read, the Lab's P, between bars: its switches and flip-flops, the cells of its room
+  // row by row, 0 and 1.
   function inputsOf(k) {
     var level = LEVELS[k], out = '|', s, row, c;
-    for (s = 0; s < level.inputs; s++) out += 'A' + (3 + s) + '|';
+    for (s = 0; s < level.switches; s++) out += 'A' + (3 + s) + '|';
     for (row = 3; row < 3 + level.rows; row++) for (c = 0; c < 8; c++) out += 'CDEFGHIJ'.charAt(c) + row + '|';
     return out + '0|1|';
   }
   // MID(f, start, n) over a text's characters: null for an error, a start before the first or a length below 0.
   function mid(f, start, n) { return start < 1 || n < 0 ? null : f.slice(start - 1, start - 1 + n); }
-  // FIND(c, f): the place of a text's first c, from 1, or null.
-  function find(f, c) { var i = f.indexOf(c); return i < 0 ? null : i + 1; }
+  // FIND(c, f, from): the place of a text's first c at or after from, from 1, or null.
+  function find(f, c, from) { var i = f.indexOf(c, from ? from - 1 : 0); return i < 0 ? null : i + 1; }
   // A room cell's kind by its formula's text as gateText reads it, as the Gates sheet computes it: 0 no formula; a gate
-  // of the set, 1 a wire =x, 2 NON-ET =1-x*y, 3 NON =1-x, 4 ET =x*y, 5 VEL =MAX(x,y), 6 AUT =MOD(x+y,2), each input
-  // among inputs, inputsOf the level's; and 9 any other formula.
+  // of the set, 1 a wire =x, 2 NON-ET =1-x*y, 3 NON =1-x, 4 ET =x*y, 5 VEL =MAX(x,y), 6 AUT =MOD(x+y,2), 7 ELIGE =IF(s,b,a),
+  // each input among inputs, inputsOf the level's; and 9 any other formula.
   function kind(f, inputs) {
     if (f === '') return 0;
     var len = f.length, star = find(f, '*'), comma = find(f, ','), plus = find(f, '+');
+    var second = comma === null ? null : find(f, ',', comma + 1);
     var among = function (x) { return x !== null && inputs.indexOf('|' + x + '|') >= 0; };
     var pair = function (x, y) { return among(x) && among(y); };
     var starts = function (p) { return f.slice(0, p.length) === p; };
@@ -672,22 +765,36 @@
     if (star !== null && pair(mid(f, 2, star - 2), mid(f, star + 1, 99))) return 4;
     if (starts('=MAX(') && f.slice(-1) === ')' && comma !== null && pair(mid(f, 6, comma - 6), mid(f, comma + 1, len - comma - 1))) return 5;
     if (starts('=MOD(') && f.slice(-3) === ',2)' && plus !== null && pair(mid(f, 6, plus - 6), mid(f, plus + 1, len - plus - 3))) return 6;
+    if (starts('=IF(') && f.slice(-1) === ')' && second !== null && among(mid(f, 5, comma - 5)) && pair(mid(f, comma + 1, second - comma - 1), mid(f, second + 1, len - second - 1))) return 7;
     return 9;
   }
   // The address of a room's cell by its place in the room read row by row from C3, eight cells a row, 1 the first: the
   // Lab's R and S.
   function roomAddress(i) { return 'CDEFGHIJ'.charAt((i - 1) % 8) + (3 + Math.floor((i - 1) / 8)); }
+  // A value as N reads it, then IFERROR's 0: a number itself, a truth value 1 or 0, and anything else 0, so that a tick
+  // carries no error around the loop.
+  function asAFlipFlopTakes(v) { return typeof v === 'number' ? v : v === true ? 1 : 0; }
+  // How many of two lists' values differ, as SUMPRODUCT(--(x<>y)) counts them; null for an error in either.
+  function differing(x, y) {
+    var count = 0;
+    for (var i = 0; i < x.length; i++) {
+      var same = equal(x[i], y[i]);
+      if (typeof same !== 'boolean') return null;
+      if (!same) count++;
+    }
+    return count;
+  }
 
-  // The game by hand, the levels and the Lab frame by frame, as the cartridge's formulas compute them, its own
+  // The game by hand, the levels, the ROM and the Lab frame by frame, as the cartridge's formulas compute them, its own
   // arithmetic and no formula of the cartridge's: what the replay's frames are held to.
   function Game() {
     var zeros = function (n, v) { var z = []; for (var i = 0; i < n; i++) z.push(v); return z; };
     // each level's cells a person wrote, by 'row,column': { value }, or { formula, text }, the hand's reading of a
     // formula and its text as written
     this.written = LEVELS.map(function () { return {}; });
-    // each level's switches, this frame and the last
-    this.switches = LEVELS.map(function (l) { return zeros(l.inputs, 0); });
-    this.switchesLast = LEVELS.map(function (l) { return zeros(l.inputs, null); });
+    // each level's cells of column A, this frame and the last
+    this.switches = LEVELS.map(function (l) { return zeros(l.switches, 0); });
+    this.switchesLast = LEVELS.map(function (l) { return zeros(l.switches, null); });
     // each level's cells as this frame computes them, by 'row,column'
     this.board = LEVELS.map(function () { return {}; });
     // each level's room as the Gates sheet reads it this frame, row by row from C3: each cell's formula's text
@@ -697,8 +804,21 @@
     // the Lab, its cells by address, this frame and the last
     this.lab = {};
     this.labLast = {};
+    // the ROM's program, its B2:B17
+    this.rom = zeros(16, null).map(function (v, i) { return i < ROM_PROGRAM.length ? ROM_PROGRAM[i] : null; });
     // the Input rows standing
     this.input = { sheet: '', col: 0, row: 0, press: false, command: '' };
+    // the frames computed; each level this frame computed, the others standing as they stood; and each whose gates a
+    // person's row changed at this frame
+    this.frames = 0;
+    this.touched = LEVELS.map(function () { return true; });
+    this.fresh = LEVELS.map(function () { return true; });
+    // a person's row into a level since its last frame, and each level an act, a test or a clock moved at the last frame
+    this.dirty = LEVELS.map(function () { return true; });
+    this.caused = LEVELS.map(function () { return true; });
+    // the Write sheet's row the last frame left, its level, its cell and its value, which lands before this frame
+    // (decision 47)
+    this.derived = null;
   }
   // A level by its sheet's name, its case aside; -1 for none.
   Game.level = function (sheet) {
@@ -706,9 +826,17 @@
     return -1;
   };
   function own(o, at) { return Object.prototype.hasOwnProperty.call(o, at); }
-  // A person's row into a level, { value } or { formula }, over a cell or a range, [top, left, bottom, right]. A row
-  // into any other sheet of the game's is refused by the hand, which models none.
+  // A person's row into a level, { value } or { formula }, over a cell or a range, [top, left, bottom, right], or into the
+  // ROM's program, a value. A row into any other sheet of the game's, or a formula into the ROM, is refused by the hand,
+  // which models none.
   Game.prototype.write = function (sheet, rect, what) {
+    if (asciiLower(sheet) === 'rom') {
+      if (what.formula) throw new Error('the hand models no formula in the ROM');
+      if (rect[1] !== 2 || rect[3] !== 2 || rect[0] < 2 || rect[2] > 17) throw new Error('the hand models the ROM\'s program alone, not ' + rect.join(','));
+      for (var line = rect[0]; line <= rect[2]; line++) this.rom[line - 2] = what.value;
+      this.dirty[MACHINA] = true;
+      return;
+    }
     var k = Game.level(sheet);
     if (k < 0) throw new Error('the hand models no person\'s row into ' + sheet);
     if (what.formula) {
@@ -720,25 +848,83 @@
       }
     }
     for (var r = rect[0]; r <= rect[2]; r++) for (var c = rect[1]; c <= rect[3]; c++) this.written[k][r + ',' + c] = what;
+    this.dirty[k] = true;
   };
   Game.prototype.labOf = function (at) { return own(this.lab, at) ? this.lab[at] : null; };
   Game.prototype.last = function (at) { return own(this.labLast, at) ? this.labLast[at] : null; };
-  // One frame: the act's Input rows, or a settle step's, the press and the command released; every level and the Lab
-  // computed.
+  // A number of the Lab's clock at the last frame, nothing 0.
+  Game.prototype.lastNumber = function (at) { var v = this.last(at); return typeof v === 'number' ? v : 0; };
+  // Whether this frame holds every cell, and not only what its acts could move (decision 44): one frame in 64, the first
+  // among them. The others hold each level this frame computed, so that a long test is held at its own board at every
+  // input and the rest at this rhythm.
+  Game.prototype.whole = function () { return this.frames % 64 === 1; };
+  // The Lab's cells this frame holds: its state and its clock; and each level's row where the level was computed; and at a
+  // whole frame its inputs as tested, its dues and its workings too.
+  Game.prototype.labHeld = function () {
+    var whole = this.whole(), at = [], r, k, s;
+    for (r = 1; r <= 8; r++) at.push('B' + r);
+    for (r = 1; r <= 9; r++) at.push('E' + r);
+    at.push('H1');
+    for (k = 0; k < LEVELS.length; k++) {
+      if (!(whole || this.touched[k])) continue;
+      r = 11 + k;
+      for (s = 0; s < 14; s++) at.push('BCDEHKLNPQRSTU'.charAt(s) + r);
+      if (LEVELS[k].state > 0) at.push('I' + r, 'J' + r);
+    }
+    if (whole) {
+      for (k = 0; k < LEVELS.length; k++) {
+        r = 11 + k;
+        at.push('F' + r, 'G' + r, 'M' + r, 'W' + r);
+        if (LEVELS[k].state > 0) at.push('V' + r);
+      }
+      at.push('O19', 'O23', 'O24');
+      for (r = 64; r <= 72; r++) at.push('P' + r);
+      for (k = 0; k < LEVELS.length; k++) {
+        var col = String.fromCharCode(66 + k);
+        for (s = 0; s < LEVELS[k].switches; s++) at.push(col + (31 + s));
+        for (s = 0; s < LEVELS[k].outputs; s++) at.push(col + (51 + s));
+      }
+    }
+    return at;
+  };
+  // The Write sheet's row as this frame computes it: its sheet, its address and its value (decision 47).
+  Game.prototype.writeRow = function () {
+    var typed = this.labOf('H1') === 1, i = this.input;
+    return [typed ? i.sheet : '', typed ? 'CDEFGHIJ'.charAt(i.col - 3) + i.row : '', i.command === 'one' ? 1 : 0];
+  };
+  // A cell of the ROM's, A to E of its rows 2 to 17, as this frame computes it: its line, its text, its word's number, the
+  // mark of the line p names, and what it says of a word none of the five.
+  Game.prototype.romCell = function (row, col) {
+    var line = this.rom[row - 2];
+    if (col === 1) return row - 2;
+    if (col === 2) return line;
+    if (col === 3) return romWord(line);
+    if (col === 4) return equal(row - 2, this.labOf('E7')) === true ? '\u25c4' : '';
+    var text = textOf(line);
+    return isErr(text) || text === '' || ROM_WORDS.indexOf(Array.from(text).slice(0, 3).join('').toUpperCase()) >= 0 ? '' : 'no such word: HLT';
+  };
+  // One frame: the act's Input rows, or a settle step's, the press and the command released; every level an act, a test, a
+  // clock or a person's row could move computed, and the Lab.
   Game.prototype.frame = function (act) {
     if (act) this.input = { sheet: act.sheet, col: act.col, row: act.row, press: act.press, command: act.command };
     else { this.input.press = false; this.input.command = ''; }
+    if (this.derived) {
+      this.written[this.derived.k][this.derived.at] = { value: this.derived.value };
+      this.dirty[this.derived.k] = true;
+      this.derived = null;
+    }
     this.labLast = this.lab;
-    this.lab = {};
-    this.switchesLast = this.switches.map(function (s) { return s.slice(); });
-    var i = this.input, lab = this.lab;
+    this.lab = Object.assign({}, this.lab);
+    var first = this.frames === 0;
+    this.frames++;
+    var i = this.input, lab = this.lab, self = this;
     var is = function (w) { return equal(i.command, w) === true; };
     // B1 the level the act stands on
     var shown = Game.level(i.sheet) + 1;
     lab.B1 = shown;
     // B2 the level N and P move to, B3 the Camera's sheet
     var lb2 = this.last('B2'), lastB2 = typeof lb2 === 'number' ? Math.max(lb2, 1) : 1;
-    var b2 = is('next') && shown > 0 ? Math.min(shown + 1, 9) : is('previous') && shown > 0 ? Math.max(shown - 1, 1) : lastB2;
+    var b2 = is('next') && shown > 0 ? Math.min(shown + 1, LEVELS.length) : is('previous') && shown > 0 ? Math.max(shown - 1, 1) : lastB2;
     lab.B2 = b2;
     lab.B3 = is('next') || is('previous') ? LEVELS[b2 - 1].sheet : '';
     // B4 the level under test, B5 whether it runs, B6 its input, B7 its inputs
@@ -762,105 +948,183 @@
     }
     lab.B6 = b6;
     var under = typeof b4 === 'number' && b4 >= 1 ? Math.floor(b4) : 1;
-    lab.B7 = VECTORS[under - 1];
-    // each level: whether its test runs, its switches, its board, its due and whether every output is due
-    var k, r;
-    for (k = 0; k < 9; k++) {
-      r = 11 + k;
-      var level = LEVELS[k], kk = k + 1;
-      var here = settled(when(equal(b4, kk), function () { return b5; }, function () { return 0; }));
-      lab['N' + r] = here;
-      var onLevel = Game.level(i.sheet) === k;
-      for (var s = 0; s < level.inputs; s++) {
-        var row = 3 + s;
-        if (own(this.written[k], row + ',1')) continue;
-        var lastS = this.switchesLast[k][s];
-        this.switches[k][s] = is('reset') && onLevel ? 0 : when(equal(here, 1), function () { return bit(b6, s); }, function () {
-          if (onLevel && i.col === 1 && i.row === row) {
-            if (is('one')) return 1;
-            if (is('zero')) return 0;
-            if (is('toggle') || i.press) return arith('-', 1, lastS);
-          }
-          return settled(lastS);
-        });
-      }
-      this.computeBoard(k, here, b6);
-      var sw = [];
-      for (s = 0; s < level.inputs; s++) sw.push(this.cell(k, 3 + s, 1));
-      var inputs = tested(here, b6, sw);
-      for (s = 0; s < inputs.length; s++) lab[String.fromCharCode(66 + k) + (21 + s)] = inputs[s];
-      var owed = due(k, inputs), equals = [];
-      for (var o = 0; o < owed.length; o++) {
-        lab['IJKLM'.charAt(o) + r] = owed[o];
-        equals.push(equal(this.cell(k, 3 + o, 10), owed[o]));
-      }
-      if (k === 8) {
-        var t = inputs[0];
-        [[1, 2], [2, 4], [3, 8], [4, 1], [5, 2], [6, 4], [7, 8], [8, 1]].forEach(function (p) { t = arith('+', t, p[1] === 1 ? inputs[p[0]] : arith('*', p[1], inputs[p[0]])); });
-        lab.O19 = t;
-      }
-      // an output holding an error is never due
-      var ok = when(and(equals), function () { return 1; }, function () { return 0; });
-      lab['D' + r] = isErr(ok) ? 0 : ok;
-      // the gates: every formula of its room, each read by its text as one of the set or outside it; and the room's
-      // first cell holding an error
-      var ops = inputsOf(k), texts = [], kinds = [], error = 0;
-      for (var gr = 3; gr < 3 + level.rows; gr++) {
-        for (var gc = 3; gc <= 10; gc++) {
-          var w = own(this.written[k], gr + ',' + gc) ? this.written[k][gr + ',' + gc] : null;
-          var gt = w && w.formula ? gateText(w.text) : '';
-          kinds.push(kind(gt, ops));
-          texts.push(gt);
-          if (!error && isErr(this.cell(k, gr, gc))) error = texts.length;
-        }
-      }
-      var outside = 0, first = 0, gates = 0;
-      for (var q = 0; q < kinds.length; q++) {
-        if (kinds[q] > level.gives) { outside++; if (!first) first = q + 1; }
-        if (kinds[q] > 0) gates++;
-      }
-      lab['E' + r] = gates;
-      lab['F' + r] = level.budget;
-      lab['G' + r] = level.least;
-      lab['P' + r] = ops;
-      lab['Q' + r] = outside;
-      lab['R' + r] = first ? roomAddress(first) : '';
-      lab['S' + r] = error ? roomAddress(error) : '';
-      this.texts[k] = texts;
-      this.kinds[k] = kinds;
-    }
-    lab.B8 = lab['D' + (10 + under)];
-    // each level's result and the input its test stopped at, then its stars
+    lab.B7 = LEVELS[under - 1].vectors;
+    // the clock: E2 the level last run, E3 whether it runs, E1 the level that ticks, E4 its ticks, E6 its states, E9 how it
+    // ended
+    var c3 = this.lastNumber('E3'), c4 = this.lastNumber('E4'), c5 = this.lastNumber('E5'), c9 = this.lastNumber('E9');
+    var states = function (no) { return LEVELS[Math.max(no, 1) - 1].limit; };
+    var e2 = is('run') ? shown : this.lastNumber('E2');
+    var e3;
+    if (is('run')) e3 = states(shown) > 0 ? 1 : 0;
+    else e3 = c3 !== 1 || c4 >= this.lastNumber('E6') || (c4 > 0 && c5 === 0) ? 0 : 1;
+    var e1 = is('tick') ? shown : e3 === 1 ? e2 : 0;
+    var e4 = is('run') ? 0 : e3 === 1 ? c4 + 1 : c4;
+    var e9 = is('run') || is('reset') ? 0 : c3 === 1 && e3 === 0 ? (c5 > 0 ? 2 : 1) : c9;
+    lab.E1 = e1; lab.E2 = e2; lab.E3 = e3; lab.E4 = e4; lab.E6 = states(e2); lab.E9 = e9;
     var L4 = this.last('B4'), L5 = this.last('B5'), L8 = this.last('B8'), L6 = this.last('B6');
-    for (k = 0; k < 9; k++) {
-      r = 11 + k;
-      var n = k + 1, lastB = settled(this.last('B' + r)), lastC = settled(this.last('C' + r));
-      var away = function (v) { var e = equal(v, n); return typeof e === 'boolean' ? !e : e; };
-      var gone = or([away(L4), away(b4)]);
-      var result = is('reset') && shown === n ? 0 : when(gone, function () { return lastB; }, function () {
-        return when(and([equal(L5, 1), equal(b5, 0)]), function () { return when(equal(L8, 1), function () { return 1; }, function () { return 2; }); }, function () { return lastB; });
-      });
-      var stopped = when(gone, function () { return lastC; }, function () {
-        return when(and([equal(L5, 1), equal(b5, 0)]), function () { return settled(L6); }, function () { return lastC; });
-      });
-      lab['B' + r] = result;
-      lab['C' + r] = stopped;
-      // its gates and those outside the set when its test last ended, which its stars read
-      var atTestEnd = function (col, now) {
-        var last = settled(this.last(col + r));
-        return when(gone, function () { return last; }, function () {
-          return when(and([equal(L5, 1), equal(b5, 0)]), function () { return lab[now + r]; }, function () { return last; });
-        });
-      }.bind(this);
-      var t = lab['T' + r] = atTestEnd('T', 'E'), u = lab['U' + r] = atTestEnd('U', 'Q'), f = lab['F' + r], g = lab['G' + r];
-      lab['H' + r] = when(equal(result, 1), function () {
-        return when(less(0, u), function () { return '\u2605\u2606\u2606'; }, function () {
-          return when(lessEqual(t, g), function () { return '\u2605\u2605\u2605'; }, function () {
-            return when(lessEqual(t, f), function () { return '\u2605\u2605\u2606'; }, function () { return '\u2605\u2606\u2606'; });
-          });
-        });
-      }, function () { return '\u2606\u2606\u2606'; });
+    // each level: whether its test runs and its clock ticks, and what they, an act or a person's row move
+    var k;
+    for (k = 0; k < LEVELS.length; k++) this.frameOf(k, first, is, b4, b5, b6, e1, L4, L5, L8, L6, shown);
+    lab.B8 = lab['D' + (10 + under)];
+    // 1 or 0 on a cell of the level's room that holds no gate: the Write sheet's row, a frame on (decision 47)
+    var typed = (is('one') || is('zero')) && shown > 0 && i.col >= 3 && i.col <= 10 && i.row >= 3 && i.row < 3 + LEVELS[shown - 1].rows && this.kinds[shown - 1][8 * (i.row - 3) + (i.col - 3)] === 0;
+    lab.H1 = typed ? 1 : 0;
+    if (typed) this.derived = { k: shown - 1, at: i.row + ',' + i.col, value: is('one') ? 1 : 0 };
+    var e5 = lab['J' + (10 + Math.max(e2, 1))];
+    lab.E5 = typeof e5 === 'number' ? e5 : 0;
+    void self;
+  };
+  // A level's part of a frame.
+  Game.prototype.frameOf = function (k, first, is, b4, b5, b6, e1, L4, L5, L8, L6, shown) {
+    var lab = this.lab, i = this.input, level = LEVELS[k], r = 11 + k, n = k + 1, self = this;
+    var here = settled(when(equal(b4, n), function () { return b5; }, function () { return 0; }));
+    lab['N' + r] = here;
+    var ticks = e1 === n, onLevel = Game.level(i.sheet) === k;
+    var wasTicking = this.last('I' + r) === 1, tests = here === 1 || this.last('N' + r) === 1;
+    var caused = first || this.dirty[k] || tests || ticks || wasTicking || (onLevel && (i.command !== '' || i.press));
+    // and the frame after, whose twins read what that one moved
+    var touched = caused || this.caused[k], fresh = first || this.dirty[k];
+    this.caused[k] = caused;
+    if (level.state > 0) lab['I' + r] = ticks ? 1 : 0;
+    this.touched[k] = touched;
+    this.fresh[k] = fresh;
+    if (!touched) return;
+    this.switchesLast[k] = this.switches[k].slice();
+    // its result and the input its test stopped at
+    var lastB = settled(this.last('B' + r)), lastC = settled(this.last('C' + r));
+    var away = function (v) { var e = equal(v, n); return typeof e === 'boolean' ? !e : e; };
+    var gone = or([away(L4), away(b4)]), ended = and([equal(L5, 1), equal(b5, 0)]);
+    var result = is('reset') && shown === n ? 0 : when(gone, function () { return lastB; }, function () {
+      return when(ended, function () { return when(equal(L8, 1), function () { return 1; }, function () { return 2; }); }, function () { return lastB; });
+    });
+    var stopped = when(gone, function () { return lastC; }, function () {
+      return when(ended, function () { return settled(L6); }, function () { return lastC; });
+    });
+    lab['B' + r] = result;
+    lab['C' + r] = stopped;
+    // its switches and its flip-flops, each its own last value
+    var total = level.switches, inputsN = level.inputs, s;
+    for (s = total - 1; s >= 0; s--) {
+      if (k === MACHINA && s < inputsN) continue;
+      if (own(this.written[k], (3 + s) + ',1')) continue;
+      this.switches[k][s] = this.switchValue(k, s, here, b6, ticks, onLevel, is);
     }
+    // XV's word: the ROM's line at p, E7, and its number, E8
+    if (k === MACHINA) {
+      var p = weighted(this.switches[k], [[11, 1], [12, 2], [13, 4], [14, 8]]);
+      var word = typeof p === 'number' && p >= 0 && p < 16 ? romWord(this.rom[Math.floor(p)]) : 4;
+      lab.E7 = p;
+      lab.E8 = word;
+      for (s = 0; s < inputsN; s++) {
+        if (own(this.written[k], (3 + s) + ',1')) continue;
+        this.switches[k][s] = this.wordValue(k, s, here, b6, result, ticks, word);
+      }
+    }
+    this.computeBoard(k, here, b6);
+    var sw = [];
+    for (s = 0; s < total; s++) sw.push(this.cell(k, 3 + s, 1));
+    var inputs = tested(k, here, b6, sw), col = String.fromCharCode(66 + k);
+    for (s = 0; s < inputs.length; s++) lab[col + (31 + s)] = inputs[s];
+    var owed = due(k, inputs), outs = [];
+    for (s = 0; s < owed.length; s++) { lab[col + (51 + s)] = owed[s]; outs.push(this.cell(k, 3 + s, 10)); }
+    if (k === 8) lab.O19 = quattuor(inputs);
+    if (k === 12) lab.O23 = numera(inputs);
+    if (k === 13) lab.O24 = ratio(inputs);
+    if (k === MACHINA) machina(inputs).forEach(function (v, j) { lab['P' + (64 + j)] = v; });
+    // whether every switch stands where its test wants it, and every output is its due, an error never
+    var held = differing(sw, inputs) === 0;
+    lab['K' + r] = held ? 1 : 0;
+    lab['D' + r] = held && differing(outs, owed) === 0 ? 1 : 0;
+    // its flip-flops moved at this frame, each against its twin
+    if (level.state > 0) {
+      var moved = differing(sw.slice(inputsN), this.switchesLast[k].slice(inputsN));
+      lab['J' + r] = moved === null ? 0 : moved;
+      lab['V' + r] = level.limit;
+    }
+    // the gates: every formula of its room, each read by its text as one of the set or outside it; and the room's first
+    // cell holding an error
+    if (fresh) this.readGates(k, r);
+    var error = 0, place = 0;
+    for (var gr = 3; gr < 3 + level.rows && !error; gr++) {
+      for (var gc = 3; gc <= 10 && !error; gc++) {
+        place++;
+        if (isErr(this.cell(k, gr, gc))) error = place;
+      }
+    }
+    lab['S' + r] = error ? roomAddress(error) : '';
+    // its gates and those outside the set, and whether its switches held, when its test last ended, which its stars and
+    // its verdict read
+    var lastHeld = settled(this.last('K' + r));
+    var atTestEnd = function (c, now) {
+      var last = settled(self.last(c + r));
+      return when(gone, function () { return last; }, function () {
+        return when(ended, function () { return now; }, function () { return last; });
+      });
+    };
+    var t = lab['T' + r] = atTestEnd('T', lab['E' + r]), u = lab['U' + r] = atTestEnd('U', lab['Q' + r]);
+    lab['L' + r] = atTestEnd('L', lastHeld);
+    var f = lab['F' + r], g = lab['G' + r];
+    lab['H' + r] = when(equal(result, 1), function () {
+      return when(less(0, u), function () { return '\u2605\u2606\u2606'; }, function () {
+        return when(lessEqual(t, g), function () { return '\u2605\u2605\u2605'; }, function () {
+          return when(lessEqual(t, f), function () { return '\u2605\u2605\u2606'; }, function () { return '\u2605\u2606\u2606'; });
+        });
+      });
+    }, function () { return '\u2606\u2606\u2606'; });
+    this.dirty[k] = false;
+  };
+  // A switch or a flip-flop at this frame: 0 at R on its level, and a flip-flop at G; the input's while T runs it; a
+  // flip-flop's next at a tick; and otherwise a person's act on it, or as it was.
+  Game.prototype.switchValue = function (k, s, here, b6, ticks, onLevel, is) {
+    var level = LEVELS[k], i = this.input, row = 3 + s, flipFlop = s >= level.inputs, lastS = this.switchesLast[k][s], board = this.board[k];
+    if ((is('reset') || (flipFlop && is('run'))) && onLevel) return 0;
+    return when(equal(here, 1), function () { return testInput(k, s, b6); }, function () {
+      if (flipFlop && ticks) {
+        var at = (3 + s - level.inputs) + ',10';
+        return asAFlipFlopTakes(own(board, at) ? board[at] : null);
+      }
+      if (onLevel && i.col === 1 && i.row === row) {
+        if (is('one')) return 1;
+        if (is('zero')) return 0;
+        if (is('toggle') || i.press) return arith('-', 1, lastS);
+      }
+      return settled(lastS);
+    });
+  };
+  // XV's word line at this frame: the input's while T runs it; as it stood after a test that failed, until the clock moves
+  // or R; and otherwise the bit of the ROM's word at p.
+  Game.prototype.wordValue = function (k, s, here, b6, result, ticks, word) {
+    var lastS = settled(this.switchesLast[k][s]);
+    return when(equal(here, 1), function () { return testInput(k, s, b6); }, function () {
+      return result === 2 && !ticks ? lastS : aBitOf(word, s);
+    });
+  };
+  // A level's room read by its formulas' texts, and what its row of the Lab says of them.
+  Game.prototype.readGates = function (k, r) {
+    var level = LEVELS[k], lab = this.lab, ops = inputsOf(k), texts = [], kinds = [];
+    for (var gr = 3; gr < 3 + level.rows; gr++) {
+      for (var gc = 3; gc <= 10; gc++) {
+        var w = own(this.written[k], gr + ',' + gc) ? this.written[k][gr + ',' + gc] : null;
+        var gt = w && w.formula ? gateText(w.text) : '';
+        kinds.push(kind(gt, ops));
+        texts.push(gt);
+      }
+    }
+    var outside = 0, first = 0, gates = 0;
+    for (var q = 0; q < kinds.length; q++) {
+      if (kinds[q] > level.gives) { outside++; if (!first) first = q + 1; }
+      if (kinds[q] > 0) gates++;
+    }
+    lab['E' + r] = gates;
+    lab['F' + r] = level.budget;
+    lab['G' + r] = level.least;
+    lab['M' + r] = level.vectors;
+    lab['W' + r] = 2 + level.rows;
+    lab['P' + r] = ops;
+    lab['Q' + r] = outside;
+    lab['R' + r] = first ? roomAddress(first) : '';
+    this.texts[k] = texts;
+    this.kinds[k] = kinds;
   };
   // A level's cell as this frame computes it.
   Game.prototype.cell = function (k, row, col) { var v = this.board[k][row + ',' + col]; return v === undefined ? null : v; };
@@ -868,7 +1132,7 @@
   // formula evaluated over the cells it reads, in their order. here and b6, the Lab's N and B6, which the due's inputs
   // read.
   Game.prototype.computeBoard = function (k, here, b6) {
-    var level = LEVELS[k], last = 2 + Math.max(level.rows, level.inputs), board = {}, doing = {};
+    var level = LEVELS[k], total = level.switches, last = 2 + Math.max(level.rows, total), board = {}, doing = {};
     var switches = this.switches[k], written = this.written[k];
     function value(row, col) {
       var at = row + ',' + col, v;
@@ -878,16 +1142,16 @@
       var w = own(written, at) ? written[at] : null;
       if (w && w.formula) v = settled(gEval(w.formula, value));
       else if (w) v = w.value;
-      else if (col === 1 && row >= 3 && row < 3 + level.inputs) v = switches[row - 3];
+      else if (col === 1 && row >= 3 && row < 3 + total) v = switches[row - 3];
       else if (col === 12 && row >= 3 && row < 3 + level.outputs) {
         v = when(equal(value(row, 10), 1), function () { return '\u25cf'; }, function () { return '\u25cb'; });
         if (isErr(v)) v = '?';
       }
       else if (col === 13 && row >= 3 && row < 3 + level.outputs) {
         var sw = [];
-        for (var s = 0; s < level.inputs; s++) sw.push(value(3 + s, 1));
-        v = due(k, tested(here, b6, sw))[row - 3];
-      } else if (col === 2 && row >= 3 && row < 3 + level.inputs) v = NAMES[k][0][row - 3];
+        for (var s = 0; s < total; s++) sw.push(value(3 + s, 1));
+        v = due(k, tested(k, here, b6, sw))[row - 3];
+      } else if (col === 2 && row >= 3 && row < 3 + total) v = NAMES[k][0][row - 3];
       else if (col === 11 && row >= 3 && row < 3 + level.outputs) v = NAMES[k][1][row - 3];
       else v = null;
       delete doing[at];
@@ -897,15 +1161,15 @@
     for (var row = 3; row <= last; row++) for (var col = 1; col <= 13; col++) value(row, col);
     for (var at in written) if (own(written, at)) { var rc = at.split(','); value(+rc[0], +rc[1]); }
     // a switch a person wrote over is that cell's value from now on
-    for (var s = 0; s < level.inputs; s++) {
+    for (var s = 0; s < total; s++) {
       if (own(written, (3 + s) + ',1')) this.switches[k][s] = own(board, (3 + s) + ',1') ? board[(3 + s) + ',1'] : null;
     }
     this.board[k] = board;
   };
-  // A level's reckoning and verdict, its N8 and N9, as the words say them: its gates, those outside the set and the
-  // first of them, and its last test's stars; its test, and the room's first cell holding an error.
+  // A level's reckoning and verdict, its N8 and N9, as the words say them: its gates, those outside the set and the first
+  // of them, and its last test's stars; its test, and the room's first cell holding an error.
   Game.prototype.words = function (k) {
-    var r = 11 + k, level = LEVELS[k], inputs = VECTORS[k], self = this;
+    var r = 11 + k, level = LEVELS[k], inputs = level.vectors, self = this;
     var lab = function (col) { return self.labOf(col + r); };
     var outside = when(less(0, lab('Q')), function () {
       var q = textOf(lab('Q')), at = textOf(lab('R'));
@@ -922,38 +1186,61 @@
       return isErr(t) ? t : 'Calculemus: input ' + t + ' of ' + inputs;
     }, function () {
       return when(equal(lab('B'), 2), function () {
-        var at = when(equal(lab('S'), ''), function () { return 'a lamp differs from its due.'; }, function () { return error(''); });
+        var at = when(equal(lab('S'), ''), function () {
+          return when(equal(lab('L'), 0), function () { return 'a switch written over does not follow the test. Load restores it, and empties every level.'; }, function () { return 'a lamp differs from its due.'; });
+        }, function () { return error(''); });
         var t = textOf(arith('+', lab('C'), 1)), a = textOf(at);
         return isErr(t) ? t : isErr(a) ? a : 'The test stops at input ' + t + ' of ' + inputs + ', standing on the board: ' + a;
       }, function () {
         return when(equal(lab('S'), ''), function () {
-          return when(equal(lab('B'), 1), function () { return 'Quod erat demonstrandum: every one of its ' + inputs + ' inputs passes.'; },
-            function () { return 'T tests every input, an input a frame. Calculemus!'; });
+          return when(equal(lab('B'), 1), function () {
+            return k === MACHINA ? 'Probatum: all 2,048 pass, every word at every A. Testing, said Dijkstra, shows the presence of bugs, never their absence.' : 'Quod erat demonstrandum: every one of its ' + inputs + ' inputs passes.';
+          }, function () { return 'T tests every input, an input a frame. Calculemus!'; });
         }, function () { return error(' Ex nihilo nihil fit.'); });
       });
     });
     return [reckoning, verdict];
   };
-  // The cells a frame holds, by Sheet!A1, as the engine's tests hold them (naught_game_holds): each level's board, A3
-  // to M at its last row, and its words; the Lab's state, its levels' rows and their inputs as tested; the Camera's
-  // sheet; and the Gates sheet, each room cell's text and kind, a level's block 20 rows apart from row 3.
+  // A clocked level's clock in words, its N11: its keys; the tick a run stands at; where a run came to rest; or that it
+  // never rests.
+  Game.prototype.clockWords = function (k) {
+    var level = LEVELS[k], keys = 'C ticks the clock once. G clears the flip-flops and runs the clock until they stand still.';
+    var number = function (self, at) { var v = self.labOf(at); return typeof v === 'number' ? v : 0; };
+    if (number(this, 'E2') !== k + 1) return keys;
+    var holding = level.state === 1 ? '1 flip-flop holds' : level.state + ' flip-flops hold';
+    if (number(this, 'E3') === 1) return 'Currit, it runs: tick ' + general(number(this, 'E4'));
+    if (number(this, 'E9') === 1) return 'Stat, it stands: its last move at tick ' + general(number(this, 'E4') - 1) + '.';
+    if (number(this, 'E9') === 2) return 'In aeternum: ' + level.limit + ' ticks, no rest. ' + holding + ' ' + level.limit + ' states, so one came twice: it never halts. A short tape answers Turing.';
+    return keys;
+  };
+  // The cells a frame holds, by Sheet!A1, as the engine's tests hold them (naught_game_holds): at a whole frame, one in 64,
+  // every cell of them; at any other, what the hand computed at this frame (decision 44): each such level's board, A3 to M
+  // at its last row, and its words; the Lab's state, its clock and such levels' rows; the Camera's sheet; the ROM, with XV;
+  // and of the Gates sheet each block a person's row changed, each room cell's text and kind, a level's block 20 rows apart
+  // from row 3.
   Game.prototype.cells = function (out) {
-    var k, s, at = [];
+    var k, whole = this.whole();
     for (k = 0; k < LEVELS.length; k++) {
-      var level = LEVELS[k], last = 2 + Math.max(level.rows, level.inputs);
+      if (!(whole || this.touched[k])) continue;
+      var level = LEVELS[k], last = 2 + Math.max(level.rows, level.switches);
       for (var row = 3; row <= last; row++) for (var col = 1; col <= 13; col++) out[level.sheet + '!' + a1(row, col, false, false)] = this.cell(k, row, col);
       var w = this.words(k);
       out[level.sheet + '!N8'] = w[0];
       out[level.sheet + '!N9'] = w[1];
+      if (level.state > 0) out[level.sheet + '!N11'] = this.clockWords(k);
     }
-    for (var r = 1; r <= 8; r++) at.push('B' + r);
-    for (r = 11; r <= 19; r++) for (s = 0; s < 14; s++) at.push('BCDEFGHNPQRSTU'.charAt(s) + r);
-    for (k = 0; k < LEVELS.length; k++) for (s = 0; s < LEVELS[k].outputs; s++) at.push('IJKLM'.charAt(s) + (11 + k));
-    at.push('O19');
-    for (k = 0; k < LEVELS.length; k++) for (s = 0; s < LEVELS[k].inputs; s++) at.push(String.fromCharCode(66 + k) + (21 + s));
+    var at = this.labHeld();
     for (var j = 0; j < at.length; j++) out['Lab!' + at[j]] = this.labOf(at[j]);
     out['Camera!B3'] = this.labOf('B3');
+    var row2 = this.writeRow();
+    out['Write!A2'] = row2[0];
+    out['Write!B2'] = row2[1];
+    out['Write!C2'] = row2[2];
+    if (whole || this.touched[MACHINA]) {
+      for (var line = 2; line <= 17; line++) for (var c = 1; c <= 5; c++) out['ROM!' + a1(line, c, false, false)] = this.romCell(line, c);
+    }
     for (k = 0; k < LEVELS.length; k++) {
+      if (!(whole || this.fresh[k])) continue;
       for (var g = 0; g < this.kinds[k].length; g++) {
         var gr = 3 + 20 * k + Math.floor(g / 8), gc = 3 + g % 8;
         out['Gates!' + a1(gr, gc, false, false)] = this.texts[k][g];
@@ -998,7 +1285,7 @@
     this.switches = new Uint8Array(this.net.switches.length);
     this.at = {};
     for (var k = 0; k < this.net.switches.length; k++) this.at[a1(this.net.switches[k][0], this.net.switches[k][1], false, false)] = k;
-    this.edits = 0; this.lit = 0; this.written = 0;
+    this.edits = 0; this.lit = 0; this.written = 0; this.benched = false;
     this.game = new Game();
     // the Input rows as the recorder last logged them
     this.input = { B11: 0, B12: 0, B13: 0, B14: 0, B15: 0, B19: '', B20: '' };
@@ -1019,6 +1306,7 @@
         if (v !== 0 && v !== 1) throw new Error('the switch ' + row[2] + ' is written ' + JSON.stringify(row[3]) + ', where the hand holds 0 or 1');
         this.switches[k] = v;
         this.edits++;
+        this.benched = true;
         continue;
       }
       this.game.write(row[1], rect(row[2]), head === 'formula' ? { formula: gex(row[3]), text: row[3] } : { value: datum(row[3]) });
@@ -1032,8 +1320,14 @@
     var gates = this.net.evaluate(this.switches), cells = {}, lit = 0;
     var wrong = this.net.check(this.switches, gates);
     if (wrong) throw new Error('frame ' + n + ': ' + wrong);
-    for (var g = 0; g < gates.length; g++) { cells[SHEET + '!' + a1(this.laid.cells[g][0], this.laid.cells[g][1], false, false)] = gates[g]; lit += gates[g]; }
+    // the bench's gates held at a row into it, and at a whole frame (decision 44)
+    var benched = this.benched || this.game.whole();
+    for (var g = 0; g < gates.length; g++) {
+      if (benched) cells[SHEET + '!' + a1(this.laid.cells[g][0], this.laid.cells[g][1], false, false)] = gates[g];
+      lit += gates[g];
+    }
     this.lit = lit;
+    this.benched = false;
     this.game.cells(cells);
     return { cells: cells };
   };
@@ -1041,7 +1335,7 @@
   // whose last test passed: the case's naughtEdits, naughtLit, naughtWritten and naughtPassed.
   NaughtHand.prototype.counts = function () {
     var passed = 0;
-    for (var r = 11; r <= 19; r++) if (this.game.labOf('B' + r) === 1) passed++;
+    for (var r = 11; r <= 25; r++) if (this.game.labOf('B' + r) === 1) passed++;
     return { edits: this.edits, lit: this.lit, written: this.written, passed: passed };
   };
   NaughtHand.Net = Net;
@@ -1058,6 +1352,7 @@
   NaughtHand.kind = kind;
   NaughtHand.gateText = gateText;
   NaughtHand.inputsOf = inputsOf;
+  NaughtHand.Game = Game;
   NaughtHand.BENCH = BENCH;
   NaughtHand.FLOORS = FLOORS;
   NaughtHand.RUN = RUN;

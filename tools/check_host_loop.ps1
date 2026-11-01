@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds one hundred and ninety-seven mutant pages through tools/build_web.ps1 and runs
+-Control builds two hundred and twenty-two mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -879,7 +879,7 @@ $paletteFloors = @{ commands = 33; keyed = 11; lines = 10; opened = 1; ran = 1; 
 # (pressed 2, passed 3); 3 rows written and 2 refused with their count; a key on the read sheet refused; the card at a
 # rate, M and x on the work sheet and on a game sheet (2); 5 of the engine's refusals; and on Alonzo's page Naught's
 # Lesson read and its Bench worked (2), which a game's page, holding no Naught, counts 0.
-$modesPageFloors = @{ acts = 34; words = 10; places = 5; fakeRead = 2; fakeModes = 6; fakeEdits = 5; fakeSaid = 2; fakeUnnamed = 3; fakePlane = 1; fakeOlder = 3 }
+$modesPageFloors = @{ acts = 39; words = 10; places = 5; bar = 4; fakeRead = 2; fakeModes = 6; fakeEdits = 5; fakeSaid = 3; fakeUnnamed = 3; fakePlane = 1; fakeOlder = 3 }
 $modesFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; presses = 5; keyRefused = 1; rate = 2; refusals = 5; naught = 2; kept = 1 }
 $modesGameFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; presses = 5; keyRefused = 1; rate = 2; refusals = 5; kept = 1 }
 # 2026-10-17, ENGINE.25: the twenty-six cases' counts unchanged, and a twenty-seventh, commands, over the module on both
@@ -911,10 +911,10 @@ $commandsFloors = @{ opened = 1; listed = 1; frames = 40; ran = 3; landed = 24; 
 # command by KeyS at 14, released by 16, KeyX passed on; the replay's frames the acts' four and the last, played to all 16;
 # (settle 3) unsettled at frame 6; the directive refused twice; and a version 5 card's N at rate 0.
 $settleFloors = @{ loaded = 1; spilled = 1; clock = 1; released = 1; place = 1; pressed = 1; again = 1; waited = 1; key = 1; passed = 1; commandReleased = 1;
-                   said = 1; replayed = 1; replayFrames = 16; replaySame = 16; rowless = 1; unsettled = 1; refused = 1; fiveKey = 1 }
+                   said = 2; replayed = 1; replayFrames = 16; replaySame = 16; rowless = 1; unsettled = 1; refused = 1; fiveKey = 1 }
 # 2026-10-20, CART.9's hand test: unread, a press over a cell of a cartridge that reads no act's place or press is the
 # viewport's selection and no act, and after a person's formula reading the press the next press is one.
-$settleDoubleFloors = @{ fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased = 1; fakeUnsettled = 4; fakeReloaded = 1; unread = 2 }
+$settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased = 1; fakeUnsettled = 4; fakeReloaded = 1; unread = 2 }
 # 2026-10-18, CART.12's third slice, Superposition the ninth cartridge: pass's sources and same 9; empty's cartridges,
 # ordered and titled 9; and grid's game half over two grid cartridges, the grid card's 12 frames and Superposition's load
 # settled at frame 2 on the 512 by 512 lattice, its Field shown and drawn from the values record cell for cell (grids 2,
@@ -1004,6 +1004,18 @@ $settleDoubleFloors = @{ fakeLoad = 1; fakeActs = 1; fakePress = 1; fakeReleased
 # ENGINE.28's second slice, 2026-10-25: GF, a shared edge's tie the left cell's, needing no module, and GG, a repaint's
 # band not grown, to one hundred and ninety-two, and ninety-three without the module. 2026-10-29, at its hand test: GH,
 # a hidden neighbor's side taken, needing the module, to one hundred and ninety-three, still ninety-three without it.
+# CART.9's fourth slice, 2026-10-30: Naught's replay runs through fifteen levels, 4,803 frames (naughtFrames 4803), 149 rows
+# a person wrote (naughtWritten 149) and fourteen levels passed at its end (naughtPassed 14). Its frames are held as the
+# engine's tests hold them (decision 44): the Lab's state and clock and each level an act, a test, a clock or a person's row
+# could move, the bench at a row into it and the Gates at a block a row changed, and every cell one frame in 64, so that
+# naughtCells, 1,608,754, is under what 794 frames held whole. EZ and FZ move to frames 4752 and 4801, GZ to 2; and HE to HN, the
+# replay case's, take it ten pages higher, to two hundred and seven, and ninety-seven without the module still. The hand test's
+# decision 49, a key on a game sheet a person writes the game's, or =, or nothing: modes' acts 39, and HO to HS, the modes case's,
+# needing no module; with CART.14.1's KV to KY, which the words had not taken, two hundred and sixteen, and one hundred and six
+# without the module. Decision 50, such a key refused in the bar: modes' bar 4 and fakeSaid 3, and HT, HU and HV, the modes
+# case's, needing no module, to two hundred and nineteen, and one hundred and nine without the module. Decision 51, a settled
+# act's frames in words and a command's name in single quotes: settle's fakeWords 8 and said 2, and HW, HX and HY, the settle
+# case's, needing no module, to two hundred and twenty-two, and one hundred and twelve without the module.
 # REPO.11, 2026-10-30: HA, the palette case's, needing no module, a blur never shutting the palette, to one hundred and
 # ninety-four, and ninety-four without the module.
 # ENGINE.14's addendum, 2026-10-30: the empty case's opening 3, a body with no mode hidden, the plane's box opening hidden and
@@ -1044,7 +1056,7 @@ $floors = @(
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
     @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 11; same = 11; refused = 1; handle = 1; ranOn = 1 } },
     @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 5; players = 2; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 7; rate = 5; refused = 1 } },
-    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 5 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 7; frames = 26; same = 26; golden = 7; round = 7; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637; seiyakuFrames = 104; seiyakuCells = 8424; seiyakuActs = 35; seiyakuInstances = 2; seiyakuSettles = 69; naughtFrames = 794; naughtCells = 2154122; naughtEdits = 38; naughtLit = 208; naughtWritten = 51; naughtPassed = 8; naughtShown = 10 } },
+    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 5 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 7; frames = 26; same = 26; golden = 7; round = 7; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637; seiyakuFrames = 104; seiyakuCells = 8424; seiyakuActs = 35; seiyakuInstances = 2; seiyakuSettles = 69; naughtFrames = 4803; naughtCells = 1608754; naughtEdits = 38; naughtLit = 208; naughtWritten = 149; naughtPassed = 14; naughtShown = 17 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } },
     # 2026-10-24, ENGINE.28's first slice: the grid card's rows 17 and 18 are a format's appearance and its stripe starts
@@ -2466,7 +2478,7 @@ if ($Control) {
             @{ L = 'dr'; Name = 'a binding of a command that holds not pressed'; Anchor = '    map = { bindings: map.bindings.filter(function (x) { return !x.game || (!!live && live(x.command)); }) };   // a game''s command, while it is live'
                With = '    map = { bindings: map.bindings };'
                Want = 'case commands.*commands: U on the Screen while count-up holds not presses commandcard.count-up' },
-            @{ L = 'ds'; Name = 'a game''s command key unsaid'; Anchor = "    if (taken.length) out.push('shadows the game\'s command ' + andList(taken.map(function (c) { return c.name; })) + ' on the Screen');"
+            @{ L = 'ds'; Name = 'a game''s command key unsaid'; Anchor = "    if (taken.length) out.push('shadows the game\'s command ' + andList(taken.map(function (c) { return '\'' + c.name + '\''; })) + ' on the Screen');"
                With = '    // the game''s command keys unsaid, by the control'
                Want = 'case commands.*commands: the list says of \(bind "U" pause\) beside the game''s U ""' },
             @{ L = 'dt'; Name = 'the page''s own commands listed first'; Anchor = '  function commandRank(c) { return c.custom ? 0 : c.game ? 1 : 2; }'
@@ -2517,9 +2529,19 @@ if ($Control) {
             @{ L = 'ef'; Name = 'a press read after the viewport''s own'; Module = $true; Anchor = "    this._on(root, 'mousedown', function (ev) { if (still() && self._pressActs()) self._pressAct(ev); }, true);"
                With = "    this._on(root, 'mousedown', function (ev) { if (still() && self._pressActs()) self._pressAct(ev); });"
                Want = 'case settle.*settle: a press on E2 left frame \d+' },
-            @{ L = 'ee'; Name = 'an unsettled act unsaid'; Anchor = "        this._say('frame ' + n + ': ' + sa.what + ' did not settle in ' + steps + ' step' + (steps === 1 ? '' : 's') + ' after its own, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5).');"
+            @{ L = 'ee'; Name = 'an unsettled act unsaid'; Anchor = "        this._say('frame ' + n + ': ' + sa.what + ' did not settle in ' + countWords(steps + 1) + ' frames, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5).');"
                With = '        // the unsettled act unsaid, by the control'
-               Want = 'case settle.*settle, the double: the host said "the load did not settle in 8 steps" 0 time' },
+               Want = 'case settle.*settle, the double: the host said "the load did not settle in nine frames" 0 time' },
+            # CART.9's fourth slice, decision 51: a settled act's frames and what each was for, and a command's name quoted
+            @{ L = 'hw'; Name = 'a settle''s frames counted as its steps'; Anchor = "    return countWords(steps + 1) + ' frames: ' + parts.join(', ');"
+               With = "    return countWords(steps) + ' frames: ' + parts.join(', ');"
+               Want = 'case settle.*settle, the double: an act of 2 step\(s\) reads "two frames: it ran, it was released' },
+            @{ L = 'hx'; Name = 'a command''s name unquoted'; Anchor = "  function commandWords(name) { return 'command \'' + name + '\''; }"
+               With = "  function commandWords(name) { return 'command ' + name; }"
+               Want = 'case settle.*settle, the double: a command reads "command one"' },
+            @{ L = 'hy'; Name = 'a command''s release unsaid'; Anchor = "    if (steps >= 2) parts.push(released ? 'it was released' : 'the grid read it');"
+               With = "    if (steps >= 2) parts.push('the grid read it');"
+               Want = 'case settle.*settle, the double: an act of 2 step\(s\) reads "three frames: it ran, the grid read it' },
             # FG (CART.9's hand test of the second slice): a press an act whatever the cartridge reads, three frames that move
             # nothing on a cartridge that reads neither an act's place nor its press; its anchor since the third slice the line
             # that also asks whether the sheet's keys are the game's, which the mutant keeps.
@@ -2587,6 +2609,31 @@ if ($Control) {
             @{ L = 'fv'; Name = 'Tab the browser''s'; Template = $true; Anchor = "      if (ev.key === 'Tab') return at.rate > 0 && at.gameHere ? 'game' : 'step';"
                With = "      if (ev.key === 'Tab') return at.rate > 0 && at.gameHere ? 'game' : 'pass';"
                Want = 'case modes.*modes: on a work sheet, Tab the page makes pass of the key, where step is due' },
+            # CART.9's fourth slice, decisions 49 and 50: on a game sheet a person writes, a key is the game's, or =, or refused
+            @{ L = 'ho'; Name = 'a stray key opening a game sheet''s cell'; Template = $true; Anchor = "    if (typed && at.gameSheet && ev.key !== '=') return 'stray';"
+               With = '    // a stray key opening a game sheet''s cell, by the control'
+               Want = 'case modes.*modes: on a game sheet, x, no key of the game''s the page makes edit of the key, where stray is due' },
+            @{ L = 'hp'; Name = 'a game sheet''s = closed'; Template = $true; Anchor = "    if (typed && at.gameSheet && ev.key !== '=') return 'stray';"
+               With = "    if (typed && at.gameSheet) return 'stray';"
+               Want = 'case modes.*modes: on a game sheet, = the page makes stray of the key, where edit is due' },
+            @{ L = 'hs'; Name = 'a game sheet''s Delete closed'; Template = $true; Anchor = "    if (typed && at.gameSheet && ev.key !== '=') return 'stray';"
+               With = "    if (at.gameSheet && ev.key !== '=') return 'stray';"
+               Want = 'case modes.*modes: on a game sheet, Delete the page makes stray of the key, where empty is due' },
+            @{ L = 'ht'; Name = 'a stray key saying nothing'; Anchor = '    this._refuse(text);   // the log counts the repeats'
+               With = '    // a stray key saying nothing, by the control'
+               Want = 'case modes.*modes, the double: two stray keys on Tray made 2 refusal\(s\), said 0 time\(s\)' },
+            @{ L = 'hu'; Name = 'a repeat standing under a key''s refusal'; Template = $true; Anchor = '  function barTakes(s, holdsKey) { return !s.repeat || holdsKey; }'
+               With = '  function barTakes(s, holdsKey) { return !s.repeat; }'
+               Want = 'case modes.*modes: the bar passes over a repeat over a key''s refusal, where it takes it' },
+            @{ L = 'hv'; Name = 'every repeat in the bar'; Template = $true; Anchor = '  function barTakes(s, holdsKey) { return !s.repeat || holdsKey; }'
+               With = '  function barTakes(s, holdsKey) { return true; }'
+               Want = 'case modes.*modes: the bar takes a repeat, where it passes over it' },
+            @{ L = 'hq'; Name = 'no sheet a game sheet'; Anchor = '  Host.prototype.gameSheetHere = function () { return this.sheetMode(this._shown()).game; };'
+               With = '  Host.prototype.gameSheetHere = function () { return false; };'
+               Want = 'case modes.*modes, the double: Tray is "game", the game''s keys holding and a person writing it, no game sheet' },
+            @{ L = 'hr'; Name = 'a sheet named by none a game sheet'; Anchor = '  Host.prototype.gameSheetHere = function () { return this.sheetMode(this._shown()).game; };'
+               With = '  Host.prototype.gameSheetHere = function () { return this.gameKeysHere(); };'
+               Want = 'case modes.*modes, the double: under a manifest naming no game sheet the game''s keys hold on Other and a person writes it, read as a game sheet' },
             @{ L = 'fr'; Name = 'a command''s key on every sheet'; Module = $true; Anchor = '    if (!this.gameKeysHere()) return null;   // no command''s key holds on a work or a read sheet (SPEC.5)'
                With = '    // a command''s key on every sheet, by the control'
                Want = 'case modes.*modes: M on Notes was taken' },
@@ -2714,7 +2761,7 @@ if ($Control) {
         }
         $etOk = ($moduleReal -eq 0) -or ($etApplied -and $etFailed -ge 1)
         # mutant EZ (CART.9's first slice), when the real page holds the engine's module: naught's hand that reads aut as
-        # vel, the inclusive or for the exclusive; the stand-in's carry-in, written at frame 743 under a all ones, first
+        # vel, the inclusive or for the exclusive; the stand-in's carry-in, written at frame 4752 under a all ones, first
         # gives an AUT two 1s, the low bit's sum, so the replay case must fail it by name at that frame.
         $ezApplied = $false; $ezFailed = 0; $ezNote = 'aut read as vel in the hand: not applicable, the real page holding no engine module'
         if ($moduleReal -gt 0) {
@@ -2723,10 +2770,10 @@ if ($Control) {
             if (([regex]::Matches($naughtHandText, [regex]::Escape($anchorEZ))).Count -ne 1) { Write-Output "FAIL: the anchor '$anchorEZ' is not in cartridges/naught/naught.hand.js exactly once"; exit 1 }
             $mutEZ = $naughtHandText.Replace($anchorEZ, 'aut: { arity: 2, apply: function (a, b) { return a | b; }')
             $ezApplied = $mutEZ -cne $naughtHandText
-            $rEZ = Invoke-Mutant (New-MutantPage 'ez' $template $hostJs '' (New-HandCopy 'ez' 'naught/naught.hand.js' $mutEZ)) 'input,replay:naught:743'
-            $jEZ = Test-Mutant $rEZ 'input,replay:naught:743'
-            $ezFailed = @($jEZ.Problems | Where-Object { $_ -like "*case replay*naught's committed replay, played on a fresh host, is not its hand's at frame 743:*" }).Count
-            $ezNote = "aut read as vel in the hand applied ($ezApplied) and failed the replay case at frame 743 ($ezFailed)"
+            $rEZ = Invoke-Mutant (New-MutantPage 'ez' $template $hostJs '' (New-HandCopy 'ez' 'naught/naught.hand.js' $mutEZ)) 'input,replay:naught:4752'
+            $jEZ = Test-Mutant $rEZ 'input,replay:naught:4752'
+            $ezFailed = @($jEZ.Problems | Where-Object { $_ -like "*case replay*naught's committed replay, played on a fresh host, is not its hand's at frame 4752:*" }).Count
+            $ezNote = "aut read as vel in the hand applied ($ezApplied) and failed the replay case at frame 4752 ($ezFailed)"
         }
         $ezOk = ($moduleReal -eq 0) -or ($ezApplied -and $ezFailed -ge 1)
         # mutant FH (CART.9's hand test of the second slice), when the real page holds the engine's module: a host that plays a
@@ -2741,44 +2788,80 @@ if ($Control) {
             $fileFH = Join-Path $tmp 'fh.host.js'; [System.IO.File]::WriteAllText($fileFH, $mutFH, $utf8)
             $rFH = Invoke-Mutant (New-MutantPage 'fh' $template $fileFH) 'input,replay:naught'
             $jFH = Test-Mutant $rFH 'input,replay:naught'
-            $fhFailed = @($jFH.Problems | Where-Object { $_ -like '*the case replay at a ratio of 1 counted 0 naughtShown, below its floor of 10*' }).Count
+            $fhFailed = @($jFH.Problems | Where-Object { $_ -like '*the case replay at a ratio of 1 counted 0 naughtShown, below its floor of 17*' }).Count
             $fhNote = "the replay's sheet unshown applied ($fhApplied) and failed the replay case's naughtShown ($fhFailed)"
         }
         $fhOk = ($moduleReal -eq 0) -or ($fhApplied -and $fhFailed -ge 1)
         # mutants FX, FY, FZ and GA (CART.9's third slice), when the real page holds the engine's module: naught's hand, each
         # failing the replay case by name at the frame of the replay where it first leaves the engine. FX, a test that runs
         # on past a wrong input, at the owner's VEL for ET on II, frame 34; FY, the stars counted against the budget alone,
-        # at VI's pass with three gates, two stars, frame 108; FZ, the due under test read from the switches as they stand,
-        # at I's switch written over, frame 792; and GA, a click that toggles no switch, at the owner's first click, frame
+        # at VI's pass with three gates, two stars, frame 123; FZ, the due under test read from the switches as they stand,
+        # at I's switch written over, frame 4801; and GA, a click that toggles no switch, at the owner's first click, frame
         # 15. And GW, GX, GY and GZ (its short slice): GW, a value read as a gate, at III's input emptied by Delete, frame
         # 52; GX, every level giving every gate, at the owner's VEL on II, which II does not give, frame 30; GY, an output's
-        # error due, at the same Delete, frame 52, the Lab's due an error; and GZ, a test's stars read from the gates as
-        # they stand, at the owner's first gate, frame 21.
+        # error due, at the same Delete, frame 52, the Lab's due an error; and GZ, a test's last switches read as they stand,
+        # the Lab's L at the load's second frame. And HE to HL (its fourth slice), the clocked levels': HE, a tick that moves
+        # no flip-flop, at X's first tick, frame 737; HF, G leaving the flip-flops as they stand, at X's first run, frame 746;
+        # HG, a run that counts no states, at X's toggle, frame 756; HH, ELIGE read as no gate of the set, at XI's first
+        # gate, frame 766; HI, a machine's p and B counted and not drawn, at XV's first test, frame 2563; HJ, a word that
+        # does not stand on the input that failed, where that test stops, frame 2564; HK, a line of no word read as LDI, at
+        # the load, frame 1; HL, a switch written over taken at its word, at I's, frame 4801; and at its hand test HM, a digit on
+        # the room that writes nothing, at IV's first, frame 83, and HN, a digit written over a gate, at IV's C3, frame 88.
         $naughtMutants = @(
             @{ L = 'fx'; Name = 'a test past a wrong input'; Frame = 34
-               Anchor = "        return when(and([equal(l8, 1), less(l6, arith('-', l7, 1))]), function () { return 1; }, function () { return 0; });"
-               With = "        return when(and([true, less(l6, arith('-', l7, 1))]), function () { return 1; }, function () { return 0; });" },
-            @{ L = 'fy'; Name = 'the stars against the budget alone'; Frame = 108
-               Anchor = '          return when(lessEqual(t, g), function () {'
-               With = '          return when(lessEqual(t, f), function () {' },
-            @{ L = 'fz'; Name = 'the due under test read from the switches'; Frame = 792
-               Anchor = '    return standing.map(function (v, s) { return settled(when(equal(here, 1), function () { return bit(b6, s); }, function () { return v; })); });'
+               Anchor = '        return when(and([equal(l8, 1), less(l6, arith(''-'', l7, 1))]), function () { return 1; }, function () { return 0; });'
+               With = '        return when(and([true, less(l6, arith(''-'', l7, 1))]), function () { return 1; }, function () { return 0; });' },
+            @{ L = 'fy'; Name = 'the stars against the budget alone'; Frame = 123
+               Anchor = '        return when(lessEqual(t, g), function () {'
+               With = '        return when(lessEqual(t, f), function () {' },
+            @{ L = 'fz'; Name = 'the due under test read from the switches'; Frame = 4801
+               Anchor = '    return standing.map(function (v, s) { return settled(when(equal(here, 1), function () { return testInput(k, s, b6); }, function () { return v; })); });'
                With = '    return standing.map(function (v) { return settled(v); });' },
             @{ L = 'ga'; Name = 'a click that toggles nothing'; Frame = 15
-               Anchor = "            if (is('toggle') || i.press) return arith('-', 1, lastS);"
-               With = "            if (is('toggle')) return arith('-', 1, lastS);" },
+               Anchor = '        if (is(''toggle'') || i.press) return arith(''-'', 1, lastS);'
+               With = '        if (is(''toggle'')) return arith(''-'', 1, lastS);' },
             @{ L = 'gw'; Name = 'a value read as a gate'; Frame = 52
-               Anchor = "          var gt = w && w.formula ? gateText(w.text) : '';"
-               With = "          var gt = w ? (w.formula ? gateText(w.text) : '=?') : '';" },
+               Anchor = '        var gt = w && w.formula ? gateText(w.text) : '''';'
+               With = '        var gt = w ? (w.formula ? gateText(w.text) : ''=?'') : '''';' },
             @{ L = 'gx'; Name = 'every level giving every gate'; Frame = 30
-               Anchor = '        if (kinds[q] > level.gives) { outside++; if (!first) first = q + 1; }'
-               With = '        if (kinds[q] > 6) { outside++; if (!first) first = q + 1; }' },
+               Anchor = '      if (kinds[q] > level.gives) { outside++; if (!first) first = q + 1; }'
+               With = '      if (kinds[q] > 7) { outside++; if (!first) first = q + 1; }' },
             @{ L = 'gy'; Name = 'an output''s error due'; Frame = 52
-               Anchor = "      lab['D' + r] = isErr(ok) ? 0 : ok;"
-               With = "      lab['D' + r] = ok;" },
-            @{ L = 'gz'; Name = 'a test''s stars read from the gates as they stand'; Frame = 21
-               Anchor = '        var last = settled(this.last(col + r));'
-               With = '        var last = lab[now + r];' }
+               Anchor = '    lab[''D'' + r] = held && differing(outs, owed) === 0 ? 1 : 0;'
+               With = '    lab[''D'' + r] = held && !differing(outs, owed) ? 1 : 0;' },
+            @{ L = 'gz'; Name = 'a test''s stars read from the gates as they stand'; Frame = 2
+               Anchor = '      var last = settled(self.last(c + r));'
+               With = '      var last = now;' },
+            @{ L = 'he'; Name = 'a tick that moves no flip-flop'; Frame = 737
+               Anchor = '        return asAFlipFlopTakes(own(board, at) ? board[at] : null);'
+               With = '        return settled(lastS);' },
+            @{ L = 'hf'; Name = 'G leaving the flip-flops as they stand'; Frame = 746
+               Anchor = '    if ((is(''reset'') || (flipFlop && is(''run''))) && onLevel) return 0;'
+               With = '    if (is(''reset'') && onLevel) return 0;' },
+            @{ L = 'hg'; Name = 'a run that counts no states'; Frame = 756
+               Anchor = '    else e3 = c3 !== 1 || c4 >= this.lastNumber(''E6'') || (c4 > 0 && c5 === 0) ? 0 : 1;'
+               With = '    else e3 = c3 !== 1 || (c4 > 0 && c5 === 0) ? 0 : 1;' },
+            @{ L = 'hh'; Name = 'ELIGE read as no gate of the set'; Frame = 766
+               Anchor = '    if (starts(''=IF('') && f.slice(-1) === '')'' && second !== null && among(mid(f, 5, comma - 5)) && pair(mid(f, comma + 1, second - comma - 1), mid(f, second + 1, len - second - 1))) return 7;'
+               With = '    if (false) return 7;' },
+            @{ L = 'hi'; Name = 'a machine''s p and B counted, and not drawn'; Frame = 2563
+               Anchor = '    if (k !== MACHINA || s < COUNTED) return bit(b6, s);'
+               With = '    return bit(b6, s);' },
+            @{ L = 'hj'; Name = 'a word that does not stand on the input that failed'; Frame = 2564
+               Anchor = '      return result === 2 && !ticks ? lastS : aBitOf(word, s);'
+               With = '      return aBitOf(word, s);' },
+            @{ L = 'hk'; Name = 'a line of no word read as LDI'; Frame = 1
+               Anchor = '    return (op < 0 ? 4 : op) + 8 * (x === null ? 0 : modulo(Math.floor(x), 16));'
+               With = '    return (op < 0 ? 0 : op) + 8 * (x === null ? 0 : modulo(Math.floor(x), 16));' },
+            @{ L = 'hm'; Name = 'a digit on the room that writes nothing'; Frame = 83
+               Anchor = '    if (typed) this.derived = { k: shown - 1, at: i.row + '','' + i.col, value: is(''one'') ? 1 : 0 };'
+               With = '    if (false) this.derived = { k: shown - 1, at: i.row + '','' + i.col, value: is(''one'') ? 1 : 0 };' },
+            @{ L = 'hn'; Name = 'a digit written over a gate'; Frame = 88
+               Anchor = ' && this.kinds[shown - 1][8 * (i.row - 3) + (i.col - 3)] === 0;'
+               With = ';' },
+            @{ L = 'hl'; Name = 'a switch written over taken at its word'; Frame = 4801
+               Anchor = '    var held = differing(sw, inputs) === 0;'
+               With = '    var held = true;' }
         )
         $naughtNotes = New-Object System.Collections.Generic.List[string]
         $naughtJudged = New-Object System.Collections.Generic.List[object]
@@ -2853,7 +2936,7 @@ if ($Control) {
         if ($script:LoopMode -eq 'run') { Write-Output (Get-PoolNote) }
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'one hundred and ninety-seven' } else { 'ninety-seven applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and twenty-two' } else { 'one hundred and twelve applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

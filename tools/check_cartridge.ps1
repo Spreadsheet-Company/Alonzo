@@ -342,12 +342,14 @@ if ($Root -eq '') { $Root = $repoRoot }
 # fills, the Deal's row of 81 values and the Givens' flags gone; the Constraints'
 # placed counts one fill where nine. No value moved; its replay carried, its golden
 # moved by the two Planes sheet rows and the Constraints' twelve formula rows.
+# 2026-10-30, CART.9's fourth slice: Naught at 1,363 rows, six clocked levels, the ROM, the Write sheet, the Lab's clock and
+# its rows of inputs and dues, and the Gates' blocks of the six; the other ten's rows unchanged.
 $expectedCartridges = 11
 $expectedSources = 11
 $expectedLibraries = 1
 $expectedReplays = 7
 $expectedGoldens = 7
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 264; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4089; 'cartridges/naught/naught.vla' = 756 }
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 264; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4089; 'cartridges/naught/naught.vla' = 1363 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

@@ -373,7 +373,9 @@ row that empties a cell. A key the game takes stays the game's: a command's
 key, a key its Keys sheet binds at a rate, and every key where it reads the last
 one pressed. A cartridge of version 6 may say whose each sheet's keys are
 (`SPEC.5`, `docs/SPEC.md` section 7.2): `(game "I NON")` names a sheet whose
-keys are the game's, its commands and its Keys holding on such sheets alone;
+keys are the game's, its commands and its Keys holding on such sheets alone,
+and where `=` alone opens a cell, any other character doing nothing, the bar
+saying why (`CART.9`'s fourth slice);
 `(read "Lesson")` a read-only sheet, a key typed there, Delete, Backspace, F2
 or a double click, and a row of the palette or the edit row into it, refused
 by the sheet's name, while the cartridge's own rows still write it; and every
@@ -633,11 +635,13 @@ page shows opened plainly and what Pages deploys.
   to Seiyaku's hand, and its end its golden, the Constraints sheet's record;
   and Naught's, the owner's session at `CART.9`'s third hand test, its
   first two levels played, and a stand-in after it, the other levels, the
-  bench's switches written in the edit row and a switch written over,
-  every frame's 400 gates and its game, each level's board and words, the
-  Lab, the Gates and the Camera's sheet, equal to Naught's hand, its end
-  its golden, the Bench's record, and each sheet its person showed shown
-  as its nineteenth row names it;
+  bench's switches written in the edit row and a switch written over, every
+  frame's Lab state and clock, and each level an act, a test, a clock or a
+  person's row could move, its board and words, the bench at a row into it
+  and the Gates at a block a row changed, and one frame in 64 every cell of
+  them, the ROM and the Camera's sheet, equal to Naught's hand, its end its
+  golden, the Bench's record, and each sheet its person showed shown as its
+  nineteenth row names it;
   and the sound
   itself (`sound`, `ENGINE.4`'s second slice): the host's own voices over
   the double handed an `OfflineAudioContext`, a sequence of voice states
@@ -982,9 +986,11 @@ viewport, not an Excel clone.
     the frames instrument its two fixtures, the bench laid by fill and
     shuffled, byte for byte the native runner's. Since `CART.9`'s third
     slice it answers the game too: a person's gates evaluated in the gates'
-    arithmetic, each level's board and words, the Lab and the Camera's
-    sheet, the Rust hand's `Game` line for line, its acts the replay's
-    Input rows and the engine's release mirrored after each.
+    arithmetic, each level's board and words, the Lab, the ROM and the
+    Camera's sheet, the Rust hand's `Game` line for line, its acts the
+    replay's Input rows and the engine's release mirrored after each, and
+    since its fourth slice the clock, each level's flip-flops at a tick and a
+    run, computing a level only where a frame could move it.
 
   The page opens on the empty sheet whatever it holds and offers its
   cartridges in the picker, each by its manifest's title, its notes in the

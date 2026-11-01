@@ -639,7 +639,8 @@
     '; while that cartridge is loaded and the command holds, its key passing on otherwise (ENGINE.25). And where the',
     '; palette opens, (palette "floating"), away from the cell the selection stands on, or (palette "top") or',
     '; (palette "bottom"), the line the commands palette-floating, palette-top and palette-bottom write and apply;',
-    '; a key typed on a cell opens it holding that cell\'s row (CART.9), on a sheet the cartridge lets a person write.',
+    '; a key typed on a cell opens it holding that cell\'s row (CART.9), on a sheet the cartridge lets a person write,',
+    '; and on a game\'s sheet = alone does, its other keys the game\'s or refused.',
     '(bind "Ctrl+K" palette)',
     '(bind "Control+Shift+[Backquote]" palette)',
     '(bind "Ctrl+Alt+PageDown" next-sheet)',
@@ -796,7 +797,7 @@
       var d = f.d, name = d[1], at = 'line ' + f.line + ': ';
       if (typeof name !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9-]*$/.test(name)) { problems.push(at + 'a command of your own is named by a string of letters, digits and hyphens: (command "p" ...)'); return; }
       if (builtin[name.toLowerCase()]) { problems.push(at + name + ' names a command of the page; a command of your own takes a name of its own'); return; }
-      if (customs[name.toLowerCase()]) { problems.push(at + 'the command ' + name + ' is written twice'); return; }
+      if (customs[name.toLowerCase()]) { problems.push(at + 'the ' + HOST.commandWords(name) + ' is written twice'); return; }
       var words = typeof d[2] === 'string' ? d[2] : null, steps = d.slice(words === null ? 2 : 3);
       customs[name.toLowerCase()] = { name: name, words: words, rawSteps: steps, line: f.line, steps: [] };
       order.push(name.toLowerCase());
@@ -806,7 +807,7 @@
       if (h === 'command') {
         var c = customs[String(d[1]).toLowerCase()];
         if (!c || c.line !== f.line) return;
-        if (!c.rawSteps.length) { problems.push(at + 'the command ' + c.name + ' has no step'); return; }
+        if (!c.rawSteps.length) { problems.push(at + 'the ' + HOST.commandWords(c.name) + ' has no step'); return; }
         c.rawSteps.forEach(function (s) {
           var sh = head(s);
           if (!sh) { problems.push(at + 'a step of ' + c.name + ' is no form: a step is (run), (sheet "Portfolio") or (write (cell "Screen" "A1" 1))'); return; }
@@ -876,7 +877,7 @@
         for (var s = 0; s < c2.steps.length; s++) {
           var nx = c2.steps[s].name.toLowerCase();
           if (!customs[nx]) continue;
-          if (nx === n) { problems.push('line ' + customs[n].line + ': the command ' + customs[n].name + ' runs itself'); stack = []; break; }
+          if (nx === n) { problems.push('line ' + customs[n].line + ': the ' + HOST.commandWords(customs[n].name) + ' runs itself'); stack = []; break; }
           if (!seenNow[nx]) { seenNow[nx] = 1; stack.push(nx); }
         }
       }
@@ -946,7 +947,7 @@
     if (screen && codes && codes.length && keyCodes(b.keys).some(function (c) { return codes.indexOf(c) >= 0; })) out.push('shadows the game\'s button on the Screen');
     else if (screen && readsKey) out.push('shadows a key the game reads on the Screen');
     var taken = screen && !b.keys.alt && commands ? commands.filter(function (c) { return c.full !== b.command && keyCodes(b.keys).indexOf(c.code) >= 0; }) : [];
-    if (taken.length) out.push('shadows the game\'s command ' + andList(taken.map(function (c) { return c.name; })) + ' on the Screen');
+    if (taken.length) out.push('shadows the game\'s command ' + andList(taken.map(function (c) { return '\'' + c.name + '\''; })) + ' on the Screen');
     return out.join('; ');
   }
   // Whether a cartridge's formulas read the last key, Input!B17 or B18, the frame's or the last frame's (docs/SPEC.md
@@ -1092,12 +1093,13 @@
   // table, docs/SPEC.md section 7.2), pure: 'game', the game's, left to the host, a command's key, a key its Keys sheet
   // binds at a rate, or any key where it reads the last one pressed, each on a sheet whose keys are the game's, and Tab
   // on such a sheet while a game runs, kept from walking out of the page (ENGINE.14's hand test); 'read', a key that
-  // would write a read-only sheet, refused by the sheet's name; 'edit', a character opening the cell's edit; 'empty',
-  // Delete emptying the selection; 'emptied', Backspace opening the cell emptied; 'step', Enter on a read-only sheet and
-  // Tab on any, moving the selection down and right as a spreadsheet's do, Shift back (SPEC.5's hand test); and 'pass',
-  // any other key, the viewport's, Enter's among them where a person writes, which opens the cell's edit. ev, the event;
-  // at, the host's answers for the sheet shown: { rate, lastKeyRead, gameHere, editsHere, takes }, takes whether the host
-  // takes the key as the game's.
+  // would write a read-only sheet, refused by the sheet's name; 'stray', a character on a game sheet a person writes that
+  // is neither the game's nor =, doing nothing and refused by the sheet's name (CART.9's fourth slice, decisions 49 and
+  // 50); 'edit', a character opening the cell's edit; 'empty', Delete emptying the selection; 'emptied', Backspace
+  // opening the cell emptied; 'step', Enter on a read-only sheet and Tab on any, moving the selection down and right as
+  // a spreadsheet's do, Shift back (SPEC.5's hand test); and 'pass', any other key, the viewport's, Enter's among them
+  // where a person writes, which opens the cell's edit. ev, the event; at, the host's answers for the sheet shown:
+  // { rate, lastKeyRead, gameHere, gameSheet, editsHere, takes }, takes whether the host takes the key as the game's.
   function gridKeyAct(ev, at) {
     var typed = cellEditKey(ev), clear = cellClearKey(ev), step = cellStepKey(ev);
     if (!typed && !clear && !step) return 'pass';
@@ -1107,8 +1109,13 @@
       return at.editsHere ? 'pass' : 'step';
     }
     if (!at.editsHere) return 'read';
+    if (typed && at.gameSheet && ev.key !== '=') return 'stray';   // the game's keys and =, no other (the owner's word)
     return typed ? 'edit' : ev.key === 'Backspace' ? 'emptied' : 'empty';
   }
+  // Whether the bar takes a sentence of the host's (CART.9's fourth slice, decision 50), pure: any but a repeat, which the
+  // log counts; and a repeat too while the bar holds a key's refusal, which the next sentence of any kind replaces, so that
+  // an act after a refused key never stands under the refusal. s, the host's status event; holdsKey, whether the bar holds one.
+  function barTakes(s, holdsKey) { return !s.repeat || holdsKey; }
   // A keymap's text with the palette's place (SPEC.5's rider, the owner's food for thought at CART.9's second hand test):
   // every (palette ...) line taken out and, for the top or the bottom, one written at its end; floating writes none, the
   // keymap's default. A comment that names the line is kept.
@@ -1126,7 +1133,7 @@
   // the manifest names a game sheet, a sheet it names by none then as a work sheet.
   function sheetModeWords(name, m, gameNamed) {
     if (m.game && m.read) return name + ' is the game\'s and read-only: its keys are the game\'s.';
-    if (m.game) return name + ' is the game\'s: its keys are the game\'s first, and a key it leaves types into a cell.';
+    if (m.game) return name + ' is the game\'s: its keys are the game\'s, and = opens a cell\'s formula.';
     if (m.work) return name + ' is a work sheet: every key types into its cells.';
     if (m.read) return name + ' is a read-only sheet.';   // the owner's words at SPEC.5's hand test
     return gameNamed ? name + ' is a work sheet: every key types into its cells.' : '';
@@ -1454,10 +1461,13 @@
     // Every refusal one color, red until the page's palette is drawn (the owner's word, 2026-10-09):
     // the status line while it shows one, each refused line of the log, the frame line after a refused load.
     // The bar's status line holds the latest sentence whole in its title, the line itself cut to the bar.
+    var barHoldsKey = false;
     host.on('status', function (s) {
-      if (!s.repeat) { statusEl.textContent = s.text; statusEl.title = s.text; statusEl.className = s.refusal ? 'status refused' : 'status'; }
+      if (barTakes(s, barHoldsKey)) { statusEl.textContent = s.text; statusEl.title = s.text; statusEl.className = s.refusal ? 'status refused' : 'status'; barHoldsKey = false; }
       if (s.kind !== 'progress') renderLog();
     });
+    // A key's refusal, in the bar at every press though the log counts a repeat (CART.9's fourth slice, decision 50).
+    function sayKeyRefused(text) { statusEl.textContent = text; statusEl.title = text; statusEl.className = 'status refused'; barHoldsKey = true; }
     host.on('frame', function (e) {
       var c = host.counters();
       if (e.rate !== undefined) rate = e.rate;   // the Clock's rate, which a person may write (ENGINE.3)
@@ -1536,7 +1546,7 @@
     }
     // Run and Pause each say so in the bar with the frame, so that the line never reads paused while the loop
     // runs (the owner's hand test of ENGINE.14: "Paused at frame 740." beside the frame counter at 1,553).
-    function sayBar(text) { statusEl.textContent = text; statusEl.title = text; statusEl.className = 'status'; }
+    function sayBar(text) { statusEl.textContent = text; statusEl.title = text; statusEl.className = 'status'; barHoldsKey = false; }
     document.getElementById('eng-run').addEventListener('click', function () { host.start(); if (host.running) sayBar('Running from frame ' + thousands(host.counters().frame) + '.'); focusScreen(); });
     document.getElementById('eng-pause').addEventListener('click', function () { host.stop(); sayBar('Paused at frame ' + thousands(host.counters().frame) + '.'); });
     // Sound on and off (ENGINE.4, decision 5): the audio context is made at this press, a person's act, as
@@ -1723,7 +1733,7 @@
     function runGame(full, how) {
       var g = gameName(full);
       if (!g) return;
-      if (!host.cart || g.cart !== loadedName()) { sayBar('The command ' + full + ' was not run: it is ' + g.cart + '\'s, and ' + (host.cart ? 'the cartridge loaded is ' + loadedName() : 'no cartridge is loaded') + '.'); statusEl.className = 'status refused'; return; }
+      if (!host.cart || g.cart !== loadedName()) { sayBar('The ' + HOST.commandWords(full) + ' was not run: it is ' + g.cart + '\'s, and ' + (host.cart ? 'the cartridge loaded is ' + loadedName() : 'no cartridge is loaded') + '.'); statusEl.className = 'status refused'; return; }
       host.command(g.name, how);
     }
     function gameLive(full) {
@@ -1986,10 +1996,12 @@
         return;
       }
       // a character typed on a cell of the grid opens that cell's edit in the palette, Delete empties the selection's cells
-      // and Backspace opens the cell emptied, as a spreadsheet's do, unless the game takes the key (CART.9), and on a read
-      // sheet none writes, refused by the sheet's name (SPEC.5): gridKeyAct's table
-      var act = place === 'screen' && mode === 'grid' ? gridKeyAct(ev, { rate: rate, lastKeyRead: lastKeyRead, gameHere: host.gameKeysHere(), editsHere: host.editsHere(), takes: host.takesKey(ev.code, ev.key, ev) }) : 'pass';
-      if (act === 'read') { host.readKey(); ev.preventDefault(); ev.stopPropagation(); return; }
+      // and Backspace opens the cell emptied, as a spreadsheet's do, unless the game takes the key (CART.9), on a read
+      // sheet none writes, refused by the sheet's name (SPEC.5), and on a game sheet = alone opens a cell, any other
+      // character doing nothing and refused so too (CART.9's fourth slice): gridKeyAct's table
+      var act = place === 'screen' && mode === 'grid' ? gridKeyAct(ev, { rate: rate, lastKeyRead: lastKeyRead, gameHere: host.gameKeysHere(), gameSheet: host.gameSheetHere(), editsHere: host.editsHere(), takes: host.takesKey(ev.code, ev.key, ev) }) : 'pass';
+      if (act === 'read') { sayKeyRefused(host.readKey()); ev.preventDefault(); ev.stopPropagation(); return; }
+      if (act === 'stray') { sayKeyRefused(host.strayKey()); ev.preventDefault(); ev.stopPropagation(); return; }
       if (act === 'step') { if (stepSelection(ev)) { ev.preventDefault(); ev.stopPropagation(); } return; }
       if (act === 'edit' || act === 'empty' || act === 'emptied') {
         if (act === 'edit' ? openCellEdit(ev.key) : act === 'emptied' ? openCellEdit('') : clearCells()) { ev.preventDefault(); ev.stopPropagation(); }
@@ -6404,8 +6416,8 @@
      [base + '(bind "Ctrl+J" sheet)', 'line ' + at + ': sheet needs a sheet\'s name'],
      [base + '(bind "Ctrl+J" run "x")', 'line ' + at + ': run takes nothing after its name'],
      [base + '(command "run" (pause))', 'line ' + at + ': run names a command of the page'],
-     [base + '(command "a" (b))\n(command "b" (a))', 'the command a runs itself'],
-     [base + '(command "a")', 'line ' + at + ': the command a has no step'],
+     [base + '(command "a" (b))\n(command "b" (a))', 'the command \'a\' runs itself'],
+     [base + '(command "a")', 'line ' + at + ': the command \'a\' has no step'],
      [base + '(frobnicate)', 'line ' + at + ': no form named frobnicate'],
      [base + '(bind "Ctrl+J" run', 'line ' + at + ': a form that never closes'],
      [base + ')', 'line ' + at + ': a ) that closes nothing'],
@@ -6633,7 +6645,7 @@
     if (ran.join(' | ') === 'commandcard.count-up | commandcard.count-up') k.steps++; else P.push('commands: the command twice ran ' + JSON.stringify(ran) + ', where commandcard.count-up twice is due');
     // the list's word of a game's command key a person's binding shadows on the Screen
     var held = [{ code: 'KeyU', name: 'count-up', full: 'commandcard.count-up' }];
-    [['(bind "U" pause)', 'shadows the game\'s command count-up on the Screen'], ['(bind "Ctrl+U" pause)', ''], ['(bind "Alt+U" pause)', ''], ['(bind "U" commandcard.count-up)', ''],
+    [['(bind "U" pause)', 'shadows the game\'s command \'count-up\' on the Screen'], ['(bind "Ctrl+U" pause)', ''], ['(bind "Alt+U" pause)', ''], ['(bind "U" commandcard.count-up)', ''],
      ['(bind "U" pause source)', '']].forEach(function (x) {
       var r = readKeymap(base + x[0] + '\n', COMMANDS), b = r.ok ? r.bindings[r.bindings.length - 1] : null, said = b ? bindingNotes(b, [], false, 'Desk', held) : 'refused';
       if (said === x[1]) k.shadow++; else P.push('commands: the list says of ' + x[0] + ' beside the game\'s U ' + JSON.stringify(said) + ', where ' + JSON.stringify(x[1]) + ' is due');
@@ -6856,7 +6868,7 @@
   // card under (settle 3), unsettled and said; the directive refused at version 5 and at a rate; and a version 5 card's
   // command key taken at rate 0.
   function caseSettle() {
-    var P = [], k = { fakeLoad: 0, fakeActs: 0, fakePress: 0, fakeReleased: 0, fakeUnsettled: 0, fakeReloaded: 0,
+    var P = [], k = { fakeWords: 0, fakeLoad: 0, fakeActs: 0, fakePress: 0, fakeReleased: 0, fakeUnsettled: 0, fakeReloaded: 0,
                       module: 0, loaded: 0, spilled: 0, clock: 0, released: 0, place: 0, pressed: 0, again: 0, waited: 0, key: 0, passed: 0, commandReleased: 0,
                       said: 0, replayed: 0, replayFrames: 0, replaySame: 0, rowless: 0, unsettled: 0, refused: 0, fiveKey: 0, unread: 0 };
     settleDouble(k, P);
@@ -6888,6 +6900,18 @@
   // its K settle steps, K + 1 frames, and ends unsettled, said; the Clock counts acts; a press over C3 writes its place and
   // press, the double releasing the press; and under (settle 2) an act is three frames.
   function settleDouble(k, P) {
+    // a settled act's frames and what each was for, and a command's name (CART.9's fourth slice, decision 51)
+    [[{ command: 'one' }, 1, 'two frames: it ran, and a last frame proved nothing moved'],
+     [{ command: 'one' }, 2, 'three frames: it ran, it was released, and a last frame proved nothing moved'],
+     [{ command: 'test' }, 2049, '2,050 frames: it ran, it was released, the grid moved for 2,047 more, and a last frame proved nothing moved'],
+     [{ press: 1 }, 7, 'eight frames: it landed, it was released, the grid moved for five more, and a last frame proved nothing moved'],
+     ['(cell "State" "B1" 5)', 2, 'three frames: it was written, the grid read it, and a last frame proved nothing moved'],
+     [{ row: '(cell "State" "B1" 5)' }, 3, 'four frames: it was written, the grid read it, the grid moved for one more, and a last frame proved nothing moved'],
+     [{ load: true }, 1, 'two frames: it took its first step, and a last frame proved nothing moved']].forEach(function (x) {
+      var got = HOST.settledWords(x[0], x[1]);
+      if (got === x[2]) k.fakeWords++; else P.push('settle, the double: an act of ' + x[1] + ' step(s) reads ' + JSON.stringify(got) + ', where ' + JSON.stringify(x[2]) + ' is due');
+    });
+    if (HOST.commandWords('one') === 'command \'one\'') k.fakeWords++; else P.push('settle, the double: a command reads ' + JSON.stringify(HOST.commandWords('one')) + ', where command \'one\' is due');
     // its one row, which the double never reads, reads the press, so that the host takes a press as an act (CART.9)
     var text = '(cartridge "settle6"\n  (spec 6)\n  (title "A settle over the double")\n  (rate 0)\n  (screen grid 20 12)\n  (seed 1)\n  (settle 8))\n' +
                '(formula "Screen" "A1" "=Input!B13")\n';
@@ -6914,14 +6938,14 @@
       else P.push('settle, the double: a press over C3 made the act ' + JSON.stringify(first) + ' and frame ' + c.frame + ', where its place C3 on the Screen and the left button held, an act of ' + (K + 1) + ' frames, are due');
       if (peek('Input', 'B13') === 0 && peek('Clock', 'B1') === 3) k.fakeReleased = 1;
       else P.push('settle, the double: after the press\'s settle Input!B13 holds ' + peek('Input', 'B13') + ' and Clock!B1 ' + peek('Clock', 'B1') + ', where the press released and three acts are due');
-      ['the load did not settle in 8 steps', 'the edit (cell "State" "B1" 5) did not settle in 8 steps', 'the left press on Screen!C3 did not settle in 8 steps'].forEach(function (w) {
+      ['the load did not settle in nine frames', 'the edit (cell "State" "B1" 5) did not settle in nine frames', 'the left press on Screen!C3 did not settle in nine frames'].forEach(function (w) {
         if (settleSaid(host, w) === 1) k.fakeUnsettled++; else P.push('settle, the double: the host said ' + JSON.stringify(w) + ' ' + settleSaid(host, w) + ' time(s), where once is due');
       });
       // a Load of the cartridge loaded again (the rider of CART.9's third slice, and the owner's word after it): its
       // sentences repeat the first load's, and the log begins lines of its own for them, a timeline across loads whose
       // lines each hold one run's frames; the status line says them, the press's line before it the run's the Load ended
-      var reload = host.load(text, 'life6.vla'), loadLine = 'frame ' + (K + 1) + ': the load did not settle in ' + K + ' steps';
-      var counted = host.logEntries().filter(function (x) { return x.key.indexOf('the load did not settle in ' + K + ' steps') === 0; });
+      var reload = host.load(text, 'life6.vla'), loadLine = 'frame ' + (K + 1) + ': the load did not settle in nine frames';
+      var counted = host.logEntries().filter(function (x) { return x.key.indexOf('the load did not settle in nine frames') === 0; });
       var timeline = counted.length === 2 && counted[0].count === 1 && counted[1].count === 1 && counted[0].id < counted[1].id && counted[1].text.indexOf(loadLine) === 0;
       if (reload.ok && host.status.indexOf(loadLine) === 0 && timeline) k.fakeReloaded = 1;
       else P.push('settle, the double: a Load of the cartridge loaded again left the status line at ' + JSON.stringify(String(host.status).slice(0, 90)) + ' and the log\'s lines of its load ' + JSON.stringify(counted.map(function (x) { return x.text.slice(0, 60); })) + ', where the reload\'s own ' + JSON.stringify(loadLine) + ' and a line of its own after the first load\'s, each counting 1, are due');
@@ -6930,7 +6954,7 @@
     try {
       var l2 = short.attach(fake2.exports).ok ? short.load(text.replace('(settle 8)', '(settle 2)'), 'life6.vla') : { ok: false };
       var c2 = short.counters();
-      if (l2.ok && c2.frame === 3 && !c2.settling && c2.unsettled === 1 && settleSaid(short, 'the load did not settle in 2 steps after its own, the most its (settle 2) allows') === 1) k.fakeUnsettled++;
+      if (l2.ok && c2.frame === 3 && !c2.settling && c2.unsettled === 1 && settleSaid(short, 'the load did not settle in three frames, the most its (settle 2) allows') === 1) k.fakeUnsettled++;
       else P.push('settle, the double: under (settle 2) the load stands at frame ' + c2.frame + ' with ' + c2.unsettled + ' unsettled, where its act and two settle steps leave frame 3, unsettled and said once');
     } finally { short.destroy(); box2.parentNode.removeChild(box2); }
     // A cartridge whose rows read neither an act's place nor its press (CART.9's hand test): a press over a cell is the
@@ -6979,7 +7003,7 @@
       if (!ld.ok) { P.push('settle: the settle card did not load: ' + ld.sentence); return; }
       var c = host.counters(), s = snap();
       acts.push(1);
-      if (c.frame === 2 && !c.settling && s.clock === 1 && s.spill === '0000000000' && settleSaid(host, 'frame 2: the load settled in 1 step after its own.') === 1) k.loaded = 1;
+      if (c.frame === 2 && !c.settling && s.clock === 1 && s.spill === '0000000000' && settleSaid(host, 'frame 2: the load settled in two frames: it took its first step, and a last frame proved nothing moved.') === 1) k.loaded = 1;
       else P.push('settle: the load stands at frame ' + c.frame + (c.settling ? ', settling,' : '') + ' with ' + JSON.stringify(s) + ', where its act and one settle step leave frame 2 on computed values, said');
       var t = 1000;
       host.start(); host.tick(t);
@@ -6997,7 +7021,7 @@
       if (viewsNum(inp.B11) === 5 && viewsNum(inp.B12) === 2 && inp.B19 === 'Screen' && viewsNum(inp.B13) === 0) k.place = 1;
       else P.push('settle: the press left Input!B11 ' + JSON.stringify(inp.B11) + ', B12 ' + JSON.stringify(inp.B12) + ', B19 ' + JSON.stringify(inp.B19) + ' and B13 ' + JSON.stringify(inp.B13) + ', where its place E2 on the Screen stays and the press is released');
       if (c.presses === 1 && host.vp.selection().text === 'E2') k.pressed = 1; else P.push('settle: the host counted ' + c.presses + ' press(es) and the selection is ' + host.vp.selection().text + ', where one press selected E2');
-      if (settleSaid(host, 'frame 10: the left press on Screen!E2 settled in 7 steps after its own.') === 1) k.said++; else P.push('settle: the press\'s settle was not said as settled in 7 steps at frame 10');
+      if (settleSaid(host, 'frame 10: the left press on Screen!E2 settled in eight frames: it landed, it was released, the grid moved for five more, and a last frame proved nothing moved.') === 1) k.said++; else P.push('settle: the press\'s settle was not said as settled in eight frames at frame 10');
       // the same press again: its rows written against the release, the press held at its act's frame
       settlePress(host, 2, 5);
       acts.push(11);
@@ -7013,6 +7037,7 @@
       else P.push('settle: KeyS at rate 0 was ' + (ev.defaultPrevented ? 'taken' : 'passed on') + ' and frame 14 read the command ' + JSON.stringify(cmd.command) + ' and the Clock ' + cmd.clock + ', where the command spill runs, the fourth act');
       if (after.B20 === '' && live[15] && live[15].command === '' && host.counters().frame === 16) k.commandReleased = 1;
       else P.push('settle: after the command Input!B20 holds ' + JSON.stringify(after.B20) + ' and the settle ended at frame ' + host.counters().frame + ', where the command is released before the first settle step and the settle ends at frame 16');
+      if (settleSaid(host, 'frame 16: the command \'spill\' settled in three frames: it ran, it was released, and a last frame proved nothing moved.') === 1) k.said++; else P.push('settle: the command\'s settle was not said by its name in single quotes, in three frames, at frame 16');
       var evx = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, code: 'KeyX', key: 'x' });
       host.vp.scroller.dispatchEvent(evx);
       if (!evx.defaultPrevented && host.counters().frame === 16) k.passed = 1; else P.push('settle: KeyX, no command\'s key, was taken or stepped the grid at rate 0');
@@ -7078,7 +7103,7 @@
       settlePress(host, 2, 2);
       var c = host.counters(), s = recordValues(D.call('alonzo_view', [c.handle], ['grid', 'Screen', 'B2:K2']).text), row = '';
       for (var col = 2; col <= 11; col++) row += String(viewsNum(s[VP.colName(col) + '2']));
-      var said = settleSaid(host, 'frame 6: the left press on Screen!B2 did not settle in 3 steps after its own, the most its (settle 3) allows');
+      var said = settleSaid(host, 'frame 6: the left press on Screen!B2 did not settle in four frames, the most its (settle 3) allows');
       if (c.frame === 6 && !c.settling && c.unsettled === 1 && row === '1111000000' && said === 1) k.unsettled = 1;
       else P.push('settle, K: a press on B2 under (settle 3) left frame ' + c.frame + ', ' + c.unsettled + ' unsettled, the spill ' + row + ' and the sentence said ' + said + ' time(s), where frame 6, unsettled, 1111000000 and the sentence once are due');
     } finally { host.destroy(); box.parentNode.removeChild(box); }
@@ -7288,7 +7313,7 @@
   // person writes it
   var MODES_SHEETS = [['Board', 'game read', true, false], ['Tray', 'game', true, true], ['Notes', 'work', false, true], ['Rules', 'read', false, false], ['Other', '', false, true]];
   function caseModes() {
-    var P = [], k = { acts: 0, words: 0, places: 0, fakeRead: 0, fakeModes: 0, fakeEdits: 0, fakeSaid: 0, fakeUnnamed: 0, fakePlane: 0, fakeOlder: 0,
+    var P = [], k = { acts: 0, words: 0, places: 0, bar: 0, fakeRead: 0, fakeModes: 0, fakeEdits: 0, fakeSaid: 0, fakeUnnamed: 0, fakePlane: 0, fakeOlder: 0,
                       module: 0, described: 0, opened: 0, takes: 0, pressed: 0, passed: 0, written: 0, refusedRows: 0, presses: 0, keyRefused: 0, rate: 0, refusals: 0, naught: 0, kept: 0 };
     modesPage(k, P);
     modesDouble(k, P);
@@ -7306,10 +7331,15 @@
   function modesPage(k, P) {
     var keyM = { key: 'm', code: 'KeyM' }, keyX = { key: 'x', code: 'KeyX' }, del = { key: 'Delete', code: 'Delete' }, bs = { key: 'Backspace', code: 'Backspace' }, down = { key: 'ArrowDown', code: 'ArrowDown' };
     var enter = { key: 'Enter', code: 'Enter' }, shiftEnter = { key: 'Enter', code: 'Enter', shiftKey: true }, tab = { key: 'Tab', code: 'Tab' }, shiftTab = { key: 'Tab', code: 'Tab', shiftKey: true };
-    var GAME = { gameHere: true, editsHere: true }, GAMEREAD = { gameHere: true, editsHere: false }, WORK = { gameHere: false, editsHere: true }, READ = { gameHere: false, editsHere: false };
-    function at(o, takes, rate) { return { rate: rate || 0, lastKeyRead: !!rate, gameHere: o.gameHere, editsHere: o.editsHere, takes: takes }; }
+    var eq = { key: '=', code: 'Equal' }, two = { key: '2', code: 'Digit2' };
+    var GAME = { gameHere: true, gameSheet: true, editsHere: true }, GAMEREAD = { gameHere: true, gameSheet: true, editsHere: false }, WORK = { gameHere: false, gameSheet: false, editsHere: true }, READ = { gameHere: false, gameSheet: false, editsHere: false };
+    var UNNAMED = { gameHere: true, gameSheet: false, editsHere: true };   // a sheet named by none, where no sheet is named the game's
+    function at(o, takes, rate) { return { rate: rate || 0, lastKeyRead: !!rate, gameHere: o.gameHere, gameSheet: o.gameSheet, editsHere: o.editsHere, takes: takes }; }
     // the table's rows: the host answers takes no on a work or a read sheet that is not the game's, which the module's half holds
-    [['a game sheet, its command\'s M', keyM, at(GAME, true), 'game'], ['a game sheet, x, no key of the game\'s', keyX, at(GAME, false), 'edit'],
+    [['a game sheet, its command\'s M', keyM, at(GAME, true), 'game'], ['a game sheet, x, no key of the game\'s', keyX, at(GAME, false), 'stray'],
+     // a game sheet a person writes (CART.9's fourth slice, decision 49): the game's keys and =, and any other nothing
+     ['a game sheet, =', eq, at(GAME, false), 'edit'], ['a game sheet, 2, no key of the game\'s', two, at(GAME, false), 'stray'], ['a game and read sheet, =', eq, at(GAMEREAD, false), 'read'],
+     ['a sheet named by none, x', keyX, at(UNNAMED, false), 'edit'], ['a work sheet, =', eq, at(WORK, false), 'edit'],
      ['a game sheet, Delete', del, at(GAME, false), 'empty'], ['a game sheet, Backspace', bs, at(GAME, false), 'emptied'],
      ['a game sheet at a rate reading the last key, x', keyX, at(GAME, false, 30), 'game'],
      ['a game and read sheet, M', keyM, at(GAMEREAD, true), 'game'], ['a game and read sheet, x', keyX, at(GAMEREAD, false), 'read'],
@@ -7326,16 +7356,21 @@
      ['a game and read sheet, Enter', enter, at(GAMEREAD, false), 'step'], ['a work sheet, Enter', enter, at(WORK, false), 'pass'],
      ['a game sheet, Enter', enter, at(GAME, false), 'pass'], ['a work sheet, Tab', tab, at(WORK, false), 'step'],
      ['a game sheet, Tab', tab, at(GAME, false), 'step'], ['a game sheet while a game runs, Tab', tab, at(GAME, false, 30), 'game'],
-     ['a game sheet at a rate, Tab', tab, { rate: 30, lastKeyRead: false, gameHere: true, editsHere: true, takes: false }, 'game'],
-     ['a work sheet at a rate, Tab', tab, { rate: 30, lastKeyRead: false, gameHere: false, editsHere: true, takes: false }, 'step'],
+     ['a game sheet at a rate, Tab', tab, { rate: 30, lastKeyRead: false, gameHere: true, gameSheet: true, editsHere: true, takes: false }, 'game'],
+     ['a work sheet at a rate, Tab', tab, { rate: 30, lastKeyRead: false, gameHere: false, gameSheet: false, editsHere: true, takes: false }, 'step'],
      ['a game sheet, Enter the command\'s key', enter, at(GAME, true), 'game'], ['a work sheet, Ctrl+Enter', { key: 'Enter', code: 'Enter', ctrlKey: true }, at(WORK, false), 'pass']].forEach(function (x) {
       var got = gridKeyAct(x[1], x[2]);
       if (got === x[3]) k.acts++; else P.push('modes: on ' + x[0] + ' the page makes ' + got + ' of the key, where ' + x[3] + ' is due');
     });
+    // the bar (CART.9's fourth slice, decision 50): a new sentence, never a repeat, and a repeat over a key's refusal
+    [[false, false, true], [true, false, false], [true, true, true], [false, true, true]].forEach(function (x) {
+      var got = barTakes({ repeat: x[0] }, x[1]);
+      if (got === x[2]) k.bar++; else P.push('modes: the bar ' + (got ? 'takes' : 'passes over') + ' a ' + (x[0] ? 'repeat' : 'new sentence') + (x[1] ? ' over a key\'s refusal' : '') + ', where it ' + (x[2] ? 'takes it' : 'passes over it'));
+    });
     // the palette's note of the sheet shown, and the drawer's of the cartridge's sheets
     var c = { game: ['I NON', 'II ET'], work: ['Bench'], read: ['Lesson'] };
     [[sheetModeWords('Board', { game: true, work: false, read: true }, true), 'Board is the game\'s and read-only: its keys are the game\'s.'],
-     [sheetModeWords('I NON', { game: true, work: false, read: false }, true), 'I NON is the game\'s: its keys are the game\'s first, and a key it leaves types into a cell.'],
+     [sheetModeWords('I NON', { game: true, work: false, read: false }, true), 'I NON is the game\'s: its keys are the game\'s, and = opens a cell\'s formula.'],
      [sheetModeWords('Bench', { game: false, work: true, read: false }, true), 'Bench is a work sheet: every key types into its cells.'],
      [sheetModeWords('Lesson', { game: false, work: false, read: true }, false), 'Lesson is a read-only sheet.'],
      [sheetModeWords('Other', { game: false, work: false, read: false }, true), 'Other is a work sheet: every key types into its cells.'],
@@ -7378,9 +7413,9 @@
       if (desc.indexOf('(game "Board" "Tray")\n(work "State")\n(read "Rules" "Board")\n') >= 0) k.fakeRead++; else P.push('modes, the double: its describe prints ' + JSON.stringify(desc.slice(0, 300)) + ', where the three directives as the manifest gives them are due');
       MODES_DOUBLE.forEach(function (x) {
         host.shownName = x[0];
-        var m = modeLetters(host.sheetMode(x[0])), g = host.gameKeysHere(), e = host.editsHere();
-        if (m === x[1] && g === x[2] && e === x[3]) k.fakeModes++;
-        else P.push('modes, the double: ' + x[0] + ' is ' + JSON.stringify(m) + ', the game\'s keys ' + (g ? 'holding' : 'not holding') + ' and a person ' + (e ? 'writing' : 'not writing') + ' it, where ' + JSON.stringify(x[1]) + ', ' + (x[2] ? 'holding' : 'not holding') + ' and ' + (x[3] ? 'writing' : 'not writing') + ' are due');
+        var m = modeLetters(host.sheetMode(x[0])), g = host.gameKeysHere(), e = host.editsHere(), s = host.gameSheetHere();
+        if (m === x[1] && g === x[2] && e === x[3] && s === (x[1].indexOf('game') >= 0)) k.fakeModes++;
+        else P.push('modes, the double: ' + x[0] + ' is ' + JSON.stringify(m) + ', the game\'s keys ' + (g ? 'holding' : 'not holding') + ' and a person ' + (e ? 'writing' : 'not writing') + ' it, ' + (s ? 'a game sheet' : 'no game sheet') + ', where ' + JSON.stringify(x[1]) + ', ' + (x[2] ? 'holding' : 'not holding') + ' and ' + (x[3] ? 'writing' : 'not writing') + ' are due');
       });
       // a row into a read sheet refused by its name, compared without case, a formula's too; one into a work sheet written
       host.shownName = 'State'; host.start(); host.tick(1000);
@@ -7396,6 +7431,13 @@
       host.shownName = 'Rules'; host.readKey(); host.readKey();
       if (host.counters().keysRead === 2 && settleSaid(host, 'Rules is a read-only sheet, named by the manifest\'s (read ...): a key there writes nothing') === 2) k.fakeSaid++;
       else P.push('modes, the double: two keys on Rules made ' + host.counters().keysRead + ' refusal(s), where two, each said by the sheet\'s name, are due');
+      // a stray key on a game sheet, one sentence for every such key (CART.9's fourth slice, decision 50)
+      host.shownName = 'Tray';
+      var strayWords = 'That key does nothing on Tray: it is not one of the game\'s keys. Commands lists them, and = opens a cell\'s formula.', strayFirst = host.strayKey();
+      host.strayKey();
+      var straySaid = host.sentences().filter(function (sn) { return sn.refusal && sn.text === strayWords; }).length;
+      if (host.counters().keysStray === 2 && straySaid === 2 && strayFirst === strayWords) k.fakeSaid++;
+      else P.push('modes, the double: two stray keys on Tray made ' + host.counters().keysStray + ' refusal(s), said ' + straySaid + ' time(s) and returned ' + JSON.stringify(strayFirst) + ', where two, each said by the sheet\'s name, are due');
     } finally { host.destroy(); }
     // a sheet named by none: as a work sheet where a game sheet is named, and as before where none is
     [[text.replace('  (game "Board" "Tray")\n', ''), 'Other', true, true, 'a manifest naming no game sheet'],
@@ -7405,8 +7447,8 @@
       try {
         if (!b.ld.ok) { P.push('modes, the double: ' + x[4] + ' did not load: ' + b.ld.sentence); return; }
         b.host.shownName = x[1];
-        var g = b.host.gameKeysHere(), e = b.host.editsHere();
-        if (g === x[2] && e === x[3]) k.fakeUnnamed++; else P.push('modes, the double: under ' + x[4] + ' the game\'s keys ' + (g ? 'hold' : 'hold not') + ' on ' + x[1] + ' and a person ' + (e ? 'writes' : 'writes not') + ' it, where ' + (x[2] ? 'they hold' : 'they hold not') + ' and ' + (x[3] ? 'a person writes it' : 'no person writes it'));
+        var g = b.host.gameKeysHere(), e = b.host.editsHere(), s = b.host.gameSheetHere();
+        if (g === x[2] && e === x[3] && !s) k.fakeUnnamed++; else P.push('modes, the double: under ' + x[4] + ' the game\'s keys ' + (g ? 'hold' : 'hold not') + ' on ' + x[1] + ' and a person ' + (e ? 'writes' : 'writes not') + ' it, ' + (s ? 'read as a game sheet' : 'no game sheet') + ', where ' + (x[2] ? 'they hold' : 'they hold not') + ', ' + (x[3] ? 'a person writes it' : 'no person writes it') + ' and no game sheet');
       } finally { b.host.destroy(); }
     });
     // a plane's read sheet: its keys the canvas's, the game's, and a person's row into it refused
@@ -7553,13 +7595,15 @@
       var ld = host.load(cartText('naught'), 'naught.vla');
       if (!ld.ok) { P.push('modes, Naught: it did not load: ' + ld.sentence); return; }
       var c = host.cart, sheets = [c.game.join(','), c.work.join(','), c.read.join(',')].join(' | ');
-      var levels = 'I NON,II ET,III VEL,IV AUT,V ELIGE,VI DISTRIBUE,VII SEMIS,VIII SUMMA,IX QUATTUOR';   // the game's levels (CART.9's third slice)
+      var levels = 'I NON,II ET,III VEL,IV AUT,V ELIGE,VI DISTRIBUE,VII SEMIS,VIII SUMMA,IX QUATTUOR,X MORA,XI TENE,XII MEMORIA,XIII NUMERA,XIV RATIO,XV MACHINA';   // the game's levels (CART.9's third and fourth slices)
       host.shownName = 'Lesson';
       var lessonRead = !host.editsHere() && !host.gameKeysHere();
       host.shownName = 'IX QUATTUOR';
-      var levelGame = host.editsHere() && host.gameKeysHere();
+      var levelGame = host.editsHere() && host.gameKeysHere() && host.gameSheetHere();
+      host.shownName = 'Bench';
+      var benchTyped = host.editsHere() && !host.gameSheetHere();
       host.shownName = 'Lesson';
-      if (sheets === levels + ' | Bench | Lesson' && lessonRead && levelGame) k.naught++; else P.push('modes, Naught: its sheets read ' + JSON.stringify(sheets) + ', the Lesson ' + (lessonRead ? 'read' : 'written or the game\'s') + ' and IX ' + (levelGame ? 'the game\'s' : 'not the game\'s') + ', where its nine levels the game\'s, the Bench a work sheet and the Lesson read are due');
+      if (sheets === levels + ' | ROM,Bench | Lesson' && lessonRead && levelGame && benchTyped) k.naught++; else P.push('modes, Naught: its sheets read ' + JSON.stringify(sheets) + ', the Lesson ' + (lessonRead ? 'read' : 'written or the game\'s') + ', IX ' + (levelGame ? 'the game\'s' : 'not the game\'s') + ' and the Bench ' + (benchTyped ? 'typed into' : 'not typed into') + ', where its levels the game\'s, the Bench a work sheet and the Lesson read are due');
       host.start(); host.tick(1000);
       var lesson = host.edit('(cell "Lesson" "A1" "graffiti")');
       host.shownName = 'Bench';
