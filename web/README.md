@@ -895,8 +895,11 @@ its left and a centered one into both, half the overhang each way; a
 number never spills, and a number or a date under General or a code whose text is
 wider than its column draws as many `#` as fit, as Excel fills a cell under
 a fixed number format, never a cut text (`ENGINE.14`); a wrapped text is
-broken at the column's width and the lines that fit the row are drawn, and
-a number is never wrapped. The layout is in device pixels, every size
+broken at each line feed and then at the column's width and the lines that
+fit the row are drawn, a text that does not wrap draws nothing at a line
+feed, the letters run together and its measure counting a digit for each,
+and a carriage return draws nothing, each as Excel draws them (`ENGINE.36`);
+and a number is never wrapped. The layout is in device pixels, every size
 an integer of them, every gridline at an integer plus a half, so the image
 is crisp at the machine's ratio, and the backing store is remade when the
 ratio changes. A line in an opaque color is filled as a rectangle one

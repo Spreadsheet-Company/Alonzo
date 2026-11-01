@@ -80,7 +80,9 @@
   load, a tab, a scroll and redraw() always view. Every device sheet is read
   the same way, its cells kept and patched, and only the Input rows that
   differ from the rows last written are written, all of them after a
-  person's edit of the Input sheet, a replay's rows or a refused write.
+  person's edit of the Input sheet, a replay's rows or a refused write. The
+  language prints a text's line feed raw, so a row holding one runs over the
+  record's lines, and a record is read by its rows and not its lines (ENGINE.36).
 
   And it sounds the Audio sheet (docs/SPEC.md section 3.6; ENGINE.4): after each
   frame, once the Clock's rate is read, its four voices, each the Web Audio
@@ -395,16 +397,34 @@
   }
   // A cell's place in row-major order, one number: a row's 16,384 columns fit under 32,768.
   function placeOf(letters, row) { return +row * 32768 + VP().colIndex(letters); }
+  // Whether a row's text so far ends inside a string (ENGINE.36): the language prints a text's line feed raw and escapes
+  // a quote, so a row holding one runs on over the lines to where its string closes, and no line of it after the first
+  // can pass CELL_LINE, which asks a bare quote straight after the row's head. So a line that passes costs nothing here.
+  function stringOpen(row) {
+    var open = false;
+    for (var i = 0; i < row.length; i++) {
+      var c = row.charCodeAt(i);
+      if (c === 92) i++;
+      else if (c === 34) open = !open;
+    }
+    return open;
+  }
   // A values record by cell (decision 3): the rows before the first cell's as one text, and each cell's rows as one
   // text in the record's row-major order; null for a record whose rows after the first cell's are not all a cell's
   // in that order, which no patch is laid on.
   function byCell(text) {
-    var lines = text.split('\n'), n = lines.length, i = 0, head = '', keys = [], pieces = new Map(), last = -1;
+    var lines = text.split('\n'), n = lines.length, i = 0, head = '', keys = [], pieces = new Map(), last = -1, row = '';
     if (n && lines[n - 1] === '') n--;
     for (; i < n && !CELL_LINE.test(lines[i]); i++) head += lines[i] + '\n';
     for (; i < n; i++) {
       var m = CELL_LINE.exec(lines[i]);
-      if (!m) return null;
+      if (!m) {
+        if (!stringOpen(row)) return null;
+        row += lines[i] + '\n';
+        pieces.set(last, pieces.get(last) + lines[i] + '\n');
+        continue;
+      }
+      row = lines[i] + '\n';
       var k = placeOf(m[1], m[2]);
       if (k === last) { pieces.set(k, pieces.get(k) + lines[i] + '\n'); continue; }
       if (k < last) return null;
@@ -423,11 +443,17 @@
   // taken out, and the header untouched; the record's text, joined at once. Null, the record untouched, for rows that
   // are not cells' in row-major order, each cell's together.
   function patchRecord(rec, rows) {
-    var lines = rows.split('\n'), n = lines.length, groups = [], last = -1;
+    var lines = rows.split('\n'), n = lines.length, groups = [], last = -1, row = '';
     if (n && lines[n - 1] === '') n--;
     for (var i = 0; i < n; i++) {
       var m = CELL_LINE.exec(lines[i]);
-      if (!m) return null;
+      if (!m) {
+        if (!stringOpen(row)) return null;
+        row += lines[i] + '\n';
+        groups[groups.length - 1].text += lines[i] + '\n';
+        continue;
+      }
+      row = lines[i] + '\n';
       var k = placeOf(m[1], m[2]), empty = lines[i].lastIndexOf('(empty ', 0) === 0;
       if (k === last) { if (empty || groups[groups.length - 1].empty) return null; groups[groups.length - 1].text += lines[i] + '\n'; continue; }
       if (k < last) return null;

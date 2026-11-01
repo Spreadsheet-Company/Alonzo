@@ -1074,7 +1074,17 @@ impl Cartridge {
     /// A cartridge's text loaded into a grid, `name` the file's name as the
     /// host gave it and `size` its length in bytes, for the File sheet.
     pub fn load(text: &str, name: &str, size: usize) -> Result<Cartridge, LineRefusal> {
-        let forms = read_forms(text).map_err(|refusal| LineRefusal { line: 0, refusal })?;
+        // One digest, one grid (ENGINE.36): a replay names its cartridge by
+        // its text with LF line ends, a `.vla` is CRLF in a tree and LF in a
+        // page, and the reader keeps what a literal holds, so a raw line
+        // break in one is a line feed whatever the file's line ends. The
+        // copy lasts the reading alone, under every heap's high-water mark.
+        let forms = if text.contains("\r\n") {
+            read_forms(&text.replace("\r\n", "\n"))
+        } else {
+            read_forms(text)
+        }
+        .map_err(|refusal| LineRefusal { line: 0, refusal })?;
         let Some(first) = forms.first() else {
             return Err(refused(
                 0,
@@ -1618,6 +1628,26 @@ mod tests {
             }
         }
         out
+    }
+
+    /// A raw line break in a literal is one line feed at the load, whatever
+    /// the file's line ends, so that one digest is one grid (ENGINE.36).
+    #[test]
+    fn a_raw_line_break_in_a_literal_is_one_line_feed_whatever_the_files_line_ends() {
+        let lf = "(cartridge \"t\"\n  (spec 3)\n  (title \"t\")\n  (rate 30)\n  (screen grid 4 2)\n  (seed 1))\n(sheet \"Screen\" visible)\n(cell \"Screen\" \"A1\" \"raw\nbreak\")\n(formula \"Screen\" \"B1\" \"=LEN(A1)\")\n";
+        let crlf = lf.replace('\n', "\r\n");
+        let values = |text: &str| {
+            let mut c = Cartridge::load(text, "t.vla", lf.len()).expect("it loads");
+            let _ = c.step(0);
+            let v = c.view("values", "Screen", Some("A1:B1")).expect("a view");
+            String::from_utf8(v.bytes().to_vec()).expect("text")
+        };
+        let held = values(&crlf);
+        assert_eq!(held, values(lf), "one digest, one grid");
+        assert!(
+            held.contains("\"raw\nbreak\"") && held.contains("(value \"Screen\" \"B1\" 9)"),
+            "{held}"
+        );
     }
 
     #[test]

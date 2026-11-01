@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds two hundred and twenty-two mutant pages through tools/build_web.ps1 and runs
+-Control builds two hundred and thirty-four mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -553,6 +553,12 @@ resolves it to the shown cell's blue one.
 And REPO.11 one more, needing no module: HA, a prompt's blur that never shuts the palette, which the palette case must
 fail by its second verdict's line, a blur while the window has the focus, as FF fails by its first's. The case dispatches
 both blurs itself, since a headless page's window focus comes late now and then and a browser fires no blur without it.
+And ENGINE.36 twelve, each failing the changes case by name, eight when the real page holds the module: a viewport whose
+wrap takes no line feed, LF; one that drops a piece's indent, LG; one that keeps its trailing spaces, LH; one that draws a
+carriage return, LI; a nowrap's line feed drawn, LJ; a nowrap's measure counting none, LK; the loop oracle's twin without
+the rule, LP, and its compare holding a line feed against a line, LQ; and, needing no module, each by the crafted
+patches: a record by cell that joins no line, LL; a patch that joins none, LM; a row reader that joins any line, LN; and a
+model's lines left at one a row, LO.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -829,7 +835,9 @@ $viewsFloors = @{ frames = 90; opened = 1; held = 80; values = 80; screen = 10; 
 # and the 5 frames of the window out of view repainting nothing (unseen). drawnHeld falls from 60 to 49 for a written
 # reason, not silently: the oracle's own layout has no frozen panes, so the window is held to the record cell for cell
 # at the 49 frames the panes are thawed, and the 11 frozen ones are held to the twin's full paint instead.
-$changesFloors = @{ crafted = 7; double = 32; frames = 60; decided = 60; drawn = 3; patched = 57; equal = 60; models = 60; drawnHeld = 49; calls = 60; devices = 60;
+# 2026-10-30, ENGINE.36: the crafted patches take a row running over lines, five laid and two refused (crafted 14); the
+# frames' counts stand, the card's line feeds patched and repainted among the 57, its wrapped lines held text by text.
+$changesFloors = @{ crafted = 14; double = 32; frames = 60; decided = 60; drawn = 3; patched = 57; equal = 60; models = 60; drawnHeld = 49; calls = 60; devices = 60;
                     inputs = 60; kept = 48; two = 3; whole = 2; dayViewer = 60; dayPatched = 58; screenViewer = 20; patches = 57; inputsKept = 48; saves = 2; replayed = 1; replayFrames = 60;
                     repainted = 57; pixels = 60; ops = 60; frozen = 11; unseen = 5 }
 # 2026-10-16, ENGINE.7: the twenty-three cases' counts unchanged, and a twenty-fourth, continue, over the module on both
@@ -1088,7 +1096,7 @@ $floors = @(
     @{ Case = 'empty';    Min = @{ cartridges = 11; ordered = 11; titled = 11; libraries = 1; double = 1; opening = 3 }; WithModule = @{ engine = 1 } },
     @{ Case = 'still';    Min = @{}; WithModule = $stillFloors },
     @{ Case = 'views';    Min = @{}; WithModule = $viewsFloors },
-    @{ Case = 'changes';  Min = @{ crafted = 7; double = 32 }; WithModule = $changesFloors },
+    @{ Case = 'changes';  Min = @{ crafted = 14; double = 32 }; WithModule = $changesFloors },
     @{ Case = 'continue'; Min = @{}; WithModule = $continueFloors },
     @{ Case = 'palette';  Min = $paletteFloors },
     @{ Case = 'keys';     Min = $keysFloors },
@@ -1112,7 +1120,7 @@ $gameFloors = @(
     @{ Case = 'empty';  Min = @{ cartridges = 1; ordered = 1; titled = 1; libraries = 1; double = 1; opening = 3 }; WithModule = @{ engine = 1 } },
     @{ Case = 'still';  Min = @{}; WithModule = $stillFloors },
     @{ Case = 'views';  Min = @{}; WithModule = $viewsFloors },
-    @{ Case = 'changes'; Min = @{ crafted = 7; double = 32 }; WithModule = $changesFloors },
+    @{ Case = 'changes'; Min = @{ crafted = 14; double = 32 }; WithModule = $changesFloors },
     @{ Case = 'continue'; Min = @{}; WithModule = $continueFloors },
     @{ Case = 'palette'; Min = $paletteFloors },
     @{ Case = 'keys'; Min = $keysFloors },
@@ -2162,7 +2170,8 @@ if ($Control) {
         # And BV to BZ (ENGINE.20), viewports: a repaint without the span its text spills over, L2 left at frame 2; one
         # without a neighbor's text spilling into a named cell, O6 left; one that leaves out the selection, M1 under it
         # (since ENGINE.28's second slice L1 or M1, the card bordered and the band grown two pixels left over L1's pixels
-        # under the selection's border);
+        # under the selection's border; since ENGINE.36 said by the first crafted patch, A1 under the selection there, the
+        # crafted patches' own sentences filling its report before frame 2's);
         # and, with or without the module, one with no clip, the crafted selection blended twice in A1, and a draw list
         # that keeps the last full paint's ops, which the first crafted patch finds.
         $changesMutants = @(
@@ -2195,25 +2204,51 @@ if ($Control) {
             @{ L = 'bx'; Name = 'a repaint with no clip'; Module = $false; File = 'viewport'; Anchor = '    p.clipped(rect, function () {'; With = '    (function (fn) { fn(); })(function () {'
                Want = 'case changes.*crafted, an empty row: the canvas is not a full paint''s of the record after the patch: \d+ pixel\(s\), the first at \d+,\d+ in A1' },
             @{ L = 'by'; Name = 'a repaint without the selection'; Module = $true; File = 'viewport'; Anchor = '      self._paintRanges(p, model, g, clip, r1, r2, c1, c2, sx, sy, name);'; With = '      if (!part) self._paintRanges(p, model, g, clip, r1, r2, c1, c2, sx, sy, name);'
-               Want = 'case changes.*changes frame 2: the canvas is not a full paint''s of the record in the view''s state: \d+ pixel\(s\), the first at \d+,\d+ in [LM]1' },
+               Want = 'case changes.*crafted, a new cell: the canvas is not a full paint''s of the record after the patch: \d+ pixel\(s\), the first at \d+,\d+ in A1' },
             @{ L = 'bz'; Name = 'a draw list that keeps the old ops'; Module = $false; File = 'viewport'; Anchor = '    if (!this.over) return this.ops.slice();'; With = '    if (true) return this.ops.slice();'
                Want = 'case changes.*crafted, an empty row: the draw list is not a full paint''s of the record after the patch' },
             @{ L = 'gg'; Name = 'a repaint''s band not grown'; Module = $true; File = 'viewport'; Anchor = '    var up = model.bordered ? 2 : (model.filled ? 1 : 0), down = model.bordered ? 1 : 0;'; With = '    var up = 0, down = 0;   // the band not grown, by the control'
-               Want = 'case changes.*the canvas is not a full paint''s of the record in the view''s state' }
+               Want = 'case changes.*the canvas is not a full paint''s of the record in the view''s state' },
+            # LF to LQ (ENGINE.36): the card's line feeds through each path a text takes; LL to LO the crafted patches', with
+            # or without the module, and LP and LQ the oracle's own twin, which the template holds
+            @{ L = 'lf'; Name = 'a wrap that takes no line feed'; Module = $true; File = 'viewport'; Anchor = "    if (shown.indexOf('\n') < 0) { wrapPiece(ctx, shown, width, lines, ''); return lines; }"; With = "    if (true) { wrapPiece(ctx, shown, width, lines, ''); return lines; }"
+               Want = 'case changes.*changes frame \d+: the wrapped K7 breaks into 1 line\(s\), and the record into [23]' },
+            @{ L = 'lg'; Name = 'a piece''s indent dropped'; Module = $true; File = 'viewport'; Anchor = "    words[0] = lead + words[0];"; With = ""
+               Want = 'case changes.*changes frame \d+: the wrapped N7 draws its lines' },
+            @{ L = 'lh'; Name = 'a piece''s trailing spaces kept'; Module = $true; File = 'viewport'; Anchor = "      var piece = pieces[p].replace(/ +`$/, ''), lead = /^ */.exec(piece)[0];"; With = "      var piece = pieces[p], lead = /^ */.exec(piece)[0];"
+               Want = 'case changes.*changes frame \d+: the wrapped N7 draws its lines' },
+            @{ L = 'li'; Name = 'a carriage return drawn'; Module = $true; File = 'viewport'; Anchor = "    var shown = text.indexOf('\r') < 0 ? text : text.replace(/\r/g, ''), lines = [];"; With = "    var shown = text, lines = [];"
+               Want = 'case changes.*changes frame \d+: the wrapped M7 shows' },
+            @{ L = 'lj'; Name = 'a nowrap''s line feed drawn'; Module = $true; File = 'viewport'; Anchor = "      shown = shown.replace(/[\r\n]/g, '');"; With = ""
+               Want = 'case changes.*changes frame \d+: K3 shows' },
+            @{ L = 'lk'; Name = 'a nowrap''s measure counting no line feed'; Module = $true; File = 'viewport'; Anchor = "      feedW = feedsIn(shown) * ctx.measureText('0').width;"; With = "      feedW = 0;"
+               Want = 'case changes.*changes frame \d+: S3 is drawn at \d+,\d+, and the record places it at' },
+            @{ L = 'll'; Name = 'a record by cell that joins no line'; Anchor = "        pieces.set(last, pieces.get(last) + lines[i] + '\n');"; With = "        return null;"
+               Want = 'case changes.*crafted, a cell beside a row over lines: the host''s patch gives null' },
+            @{ L = 'lm'; Name = 'a patch that joins no line'; Anchor = "        groups[groups.length - 1].text += lines[i] + '\n';"; With = "        return null;"
+               Want = 'case changes.*crafted, a row over lines: the host''s patch gives null' },
+            @{ L = 'ln'; Name = 'a row reader that joins any line'; Anchor = "  function stringOpen(row) {"; With = "  function stringOpen(row) { return true;"
+               Want = 'case changes.*crafted: the host laid an answer''s line no string runs on to on a record' },
+            @{ L = 'lo'; Name = 'a model''s lines at one a row'; File = 'viewport'; Anchor = "m.lines -= n + feedsOf(e);"; With = "m.lines -= n;"
+               Want = 'case changes.*crafted, a row over lines replaced: the viewport''s patched model is not the one a load of the record after it makes: lines' },
+            @{ L = 'lp'; Name = 'the oracle''s twin without the rule'; Module = $true; File = 'template'; Anchor = "    var shown = text.replace(/\r/g, ''), pieces = shown.split('\n'), out = [], many = pieces.length > 1;"; With = "    var shown = text, pieces = [shown], out = [], many = false;"
+               Want = 'case changes.*changes frame \d+: the wrapped K7 breaks into [23] line\(s\), and the record into 1' },
+            @{ L = 'lq'; Name = 'the oracle''s compare holding a line feed'; Module = $true; File = 'template'; Anchor = "wx.text.replace(/[ \r\n]/g, '')) say("; With = "wx.text.replace(/ /g, '')) say("
+               Want = 'case changes.*changes frame \d+: the wrapped K7 shows' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
         $changesOk = $true
         foreach ($mu in $changesMutants) {
             if ($mu.Module -and $moduleReal -eq 0) { $changesNotes.Add(("{0}: not applicable, the real page holding no engine module" -f $mu.Name)); continue }
-            # a viewport's mutant (ENGINE.20) or the host's
+            # a viewport's mutant (ENGINE.20), the template's (ENGINE.36) or the host's
             $c2File = if ($mu.ContainsKey('File')) { $mu.File } else { 'host' }
-            $c2Orig = if ($c2File -eq 'viewport') { $vpText } else { $js }
+            $c2Orig = if ($c2File -eq 'viewport') { $vpText } elseif ($c2File -eq 'template') { $tpl } else { $js }
             if (([regex]::Matches($c2Orig, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in web/$c2File.js exactly once"; exit 1 }
             $mutC2 = $c2Orig.Replace($mu.Anchor, $mu.With)
             $c2Applied = $mutC2 -cne $c2Orig
             $fileC2 = Join-Path $tmp ($mu.L + '.' + $c2File + '.js'); [System.IO.File]::WriteAllText($fileC2, $mutC2, $utf8)
-            $pageC2 = if ($c2File -eq 'viewport') { New-MutantPage $mu.L $template $hostJs '' '' $fileC2 } else { New-MutantPage $mu.L $template $fileC2 }
+            $pageC2 = if ($c2File -eq 'viewport') { New-MutantPage $mu.L $template $hostJs '' '' $fileC2 } elseif ($c2File -eq 'template') { New-MutantPage $mu.L $fileC2 $hostJs } else { New-MutantPage $mu.L $template $fileC2 }
             $rC2 = Invoke-Mutant $pageC2 'changes'
             $c2Judge = Test-Mutant $rC2 'changes'
             $c2Failed = @($c2Judge.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
@@ -2936,7 +2971,7 @@ if ($Control) {
         if ($script:LoopMode -eq 'run') { Write-Output (Get-PoolNote) }
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and twenty-two' } else { 'one hundred and twelve applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and thirty-four' } else { 'one hundred and sixteen applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

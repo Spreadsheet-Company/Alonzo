@@ -32,7 +32,9 @@
   the tallest own size in it; a format's border draws its four edges as
   Excel draws its fourteen lines on a screen, a shared edge once, the
   heavier line winning, and a fill covers the gridlines around its cell, as
-  Excel lays one.
+  Excel lays one. Since ENGINE.36 a line feed breaks a text that wraps and draws
+  nothing in one that does not, and a carriage return draws nothing, each as
+  Excel draws them.
 
   What the viewport owns is the state no program sees (SD-23): the scroll, the
   selection, the widths a person dragged, each sheet's its own as a
@@ -399,8 +401,18 @@
       m.counts.unknown++;
     }
   }
-  // An entry's rows taken back from its model's counts and lines, the entry removed (ENGINE.19, a patch): one form
-  // and one line a row, as the language prints a record, each counted by its head.
+  // The line feeds a text holds; and those an entry's rows hold, its formula's text, its value's and the text it draws
+  // under a code, each running its row on to another line of the record, since the language prints one raw (ENGINE.36).
+  function feedsIn(s) { var n = 0; for (var i = s.indexOf('\n'); i >= 0; i = s.indexOf('\n', i + 1)) n++; return n; }
+  function feedsOf(e) {
+    var n = 0;
+    if (e.rows & CELL_ROWS.formula) n += feedsIn(e.formula);
+    if (e.rows & (CELL_ROWS.cell | CELL_ROWS.value)) n += feedsIn(e.rows & CELL_ROWS.text ? e.value : e.text);
+    if (e.rows & CELL_ROWS.text) n += feedsIn(e.text);
+    return n;
+  }
+  // An entry's rows taken back from its model's counts and lines, the entry removed (ENGINE.19, a patch): one form a
+  // row, each counted by its head, and one line a row and its line feeds, as the language prints a record.
   function unread(m, e) {
     var n = 0;
     for (var head in CELL_ROWS) {
@@ -408,7 +420,7 @@
       n++;
       m.counts[head === 'cell' ? 'cells' : head === 'formula' ? 'formulas' : head === 'value' ? 'values' : head === 'text' ? 'texts' : head === 'style' ? 'styles' : 'sentences']--;
     }
-    m.counts.forms -= n; m.lines -= n;
+    m.counts.forms -= n; m.lines -= n + feedsOf(e);
     m.cells.delete(cellKey(e.row, e.col));
   }
 
@@ -831,10 +843,25 @@
   Tracer.prototype.text = function (text, x, y, align, color, clip, op) {
     if (op) { op.text = text; op.x = x; op.y = y; op.align = align; op.color = color; op.clip = { x: clip.x, y: clip.y, w: clip.w, h: clip.h }; this.ops.push(op); }
   };
-  // A text broken at word boundaries to a width, in the context's font; a
-  // word wider than the width is cut.
+  // A text broken into the lines it draws, as Excel's drawing breaks it (ENGINE.36): a carriage return draws nothing and
+  // breaks nothing; a line feed breaks, so two together, a trailing one and a leading one are each a blank line; and a
+  // piece between them breaks at word boundaries to a width, in the context's font, a word wider than the width cut. A
+  // piece of a text holding a line feed keeps the spaces that begin it, an indent, and loses those that end it, which
+  // hang and move nothing; a text holding none is one piece, as it has always been.
   function wrapText(ctx, text, width) {
-    var words = text.split(' '), lines = [], line = '';
+    var shown = text.indexOf('\r') < 0 ? text : text.replace(/\r/g, ''), lines = [];
+    if (shown.indexOf('\n') < 0) { wrapPiece(ctx, shown, width, lines, ''); return lines; }
+    var pieces = shown.split('\n');
+    for (var p = 0; p < pieces.length; p++) {
+      var piece = pieces[p].replace(/ +$/, ''), lead = /^ */.exec(piece)[0];
+      wrapPiece(ctx, piece.slice(lead.length), width, lines, lead);
+    }
+    return lines;
+  }
+  // One piece's lines, added to lines; lead, the spaces its first line begins with.
+  function wrapPiece(ctx, text, width, lines, lead) {
+    var words = text.split(' '), line = '';
+    words[0] = lead + words[0];
     for (var i = 0; i < words.length; i++) {
       var w = words[i];
       var trial = line === '' ? w : line + ' ' + w;
@@ -856,7 +883,6 @@
       }
     }
     lines.push(line);
-    return lines;
   }
 
   // ---- (4) the viewport ----
@@ -1279,8 +1305,8 @@
     }
   };
   // One cell's text, in its format's font and color (ENGINE.28): aligned as its format says or by its kind, a
-  // nowrap text spilling into empty neighbors by its alignment, a wrapped text broken at the column's width and
-  // placed by its vertical alignment, a number too wide for its column drawn as #s. cFirst and cLast are the
+  // nowrap text spilling into empty neighbors by its alignment, a wrapped text broken at its line feeds and the column's
+  // width and placed by its vertical alignment, a number too wide for its column drawn as #s. cFirst and cLast are the
   // quadrant's columns, which a spill never leaves.
   Viewport.prototype._paintCell = function (p, model, g, cell, r, c, left, top, cLast, quadrant, qclip, cFirst) {
     var ctx = p.ctx, colors = this.colors;
@@ -1317,7 +1343,15 @@
       }
       return;
     }
-    var textW = ctx.measureText(cell.text).width;
+    // what a text that does not wrap draws, as Excel's drawing has it (ENGINE.36): no line feed or carriage return, the
+    // letters on each side run together, and a measure that still counts each line feed, a digit's width, which the
+    // spill reads and which stands a text aligned right that far to the left of flush and a centered one half that
+    var shown = cell.text, feedW = 0;
+    if (shown.indexOf('\n') >= 0 || shown.indexOf('\r') >= 0) {
+      feedW = feedsIn(shown) * ctx.measureText('0').width;
+      shown = shown.replace(/[\r\n]/g, '');
+    }
+    var textW = ctx.measureText(shown).width + feedW;
     var need = textW + 2 * pad - w, clipX = left, clipW = w;
     // a nowrap text wider than its cell spills into empty neighbors by its alignment (decision 6): a left-aligned one
     // into the cells to its right, as before ENGINE.28; a text aligned right into those to its left; a centered text
@@ -1342,9 +1376,9 @@
     }
     // a text whose clip never reaches the quadrant is not drawn at all
     if (clipX + clipW <= qclip.x || clipX >= qclip.x + qclip.w) return;
-    var ax2 = align === 'left' ? left + pad : (align === 'right' ? left + w - pad : left + Math.round(w / 2));
+    var ax2 = align === 'left' ? left + pad : (align === 'right' ? left + w - pad - Math.round(feedW) : left + Math.round(w / 2) - Math.round(feedW / 2));
     op.wrap = false;
-    p.text(cell.text, ax2, cy, align, color, { x: clipX, y: top, w: clipW, h: h }, op);
+    p.text(shown, ax2, cy, align, color, { x: clipX, y: top, w: clipW, h: h }, op);
   };
 
   // The selection and the marks inside a quadrant.
@@ -1981,6 +2015,7 @@
       if (e) unread(model, e);
       for (var j = 0; j < g.rows.length; j++) { readRow(model, g.rows[j], reach); model.lines++; }
       var after = model.cells.get(g.key);
+      if (after) model.lines += feedsOf(after);
       if ((after ? after.style : 0) !== was) restyled = true;
     }
     // a cell whose own format changed may move its row's fit (ENGINE.28, decision 7): the fits found again, and a

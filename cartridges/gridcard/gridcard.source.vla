@@ -14,7 +14,8 @@
 ;   - a formula computing each kind every frame, a number among them whose look, and so
 ;     whose fill, changes every frame;
 ;   - a text that spills into its empty neighbors and one its neighbor cuts; a number
-;     under a text format; a wrapped text in a tall row; a cell's own style, and a look
+;     under a text format; a wrapped text in a tall row, and line feeds in it, wrapped and
+;     not; a cell's own style, and a look
 ;     over a style; a sentence row; a hidden row and a hidden column, each holding a
 ;     value that is never drawn; a narrow column and a column whose style fills its
 ;     empty cells; looks on a text, a truth value and an error;
@@ -187,6 +188,18 @@
   (style "C10" 25)                  ; the same, under the look of 5
   (sentence "B11" 11))              ; the program row that wrote the cell
 
+; Row 9's line feeds (ENGINE.36), as Excel draws them, each by (char 10), since a raw break in a
+; literal runs a row across lines of this file: one breaking a wrapped text and two a blank line;
+; and two texts that do not wrap, drawing no break and nothing at the line feed, the letters run
+; together, the one on the right standing a digit left of flush, Excel's measure counting it.
+(rules "Screen"                                  ; the sheet every entry below writes
+  ("C9" (& "one" (char 10) "two"))               ; two lines
+  ("D9" (& "a" (char 10) (char 10) "b"))         ; a blank line between
+  ("E9" (& "no" (char 10) "wrap"))               ; drawn nowrap, on the left
+  ("J9" (& "no" (char 10) "wrap")))              ; the same, aligned right, its style below
+(on "Screen"                        ; the sheet every row below writes
+  (style "C9:D9" 18))               ; the wrapped text's
+
 ; Row 16: numbers under codes of Excel's (KERNEL.47). The record prints, after a value
 ; under a format holding a code, the text the value draws under it, and the viewport
 ; draws that text and computes nothing (drawn since CART.12): aligned and matched to a
@@ -293,6 +306,7 @@
   (style "I17" 41) (style "J17" 42) (style "K17" 43) (style "L17" 44)
   (style "M17" 45) (style "N17" 46) (style "O17" 35)
   (style "D18" 38) (style "L18" 39) (style "N18" 40)
+  (style "J9" 39)                   ; row 9's text on the right
   (style "I2" 48) (style "J2" 49) (style "K2" 50) (style "L2" 51) (style "M2" 52)
   (style "N2" 53) (style "O2" 54) (style "P2" 55)
   (style "S2" 56) (style "T2" 57)

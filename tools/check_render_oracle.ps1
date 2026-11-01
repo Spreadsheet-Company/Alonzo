@@ -54,7 +54,10 @@ twelve, the appearance case failing each of five more by name: a shared edge
 drawn twice, its loser's op beside its winner's; the fills laid as they were,
 not over their gridlines; an edge stroked rather than filled, its pixels
 blended; a pattern phased on the edge's start and not on the sheet's; and an
-edge cut at its corners, the reach of the lines across it there lost.
+edge cut at its corners, the reach of the lines across it there lost. Since
+ENGINE.36 fourteen, the line_feeds case failing each of two more by name: a
+viewport whose wrap takes no line feed, and an oracle whose twin has no such
+rule.
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A page's dump is read
@@ -126,9 +129,11 @@ $floors = @(
     @{ Case = 'sheets_other';             Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
     @{ Case = 'sheets_back';              Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 },
     @{ Case = 'appearance';               Texts = 26; Fills = 2;  Lines = 0;   Headers = 33; Selection = 1; Marks = 0; Probes = 80; Hashes = 0;  Fonts = 12; Twin = 2; Edges = 57 },
-    @{ Case = 'appearance_drawn';         Texts = 26; Fills = 2;  Lines = 0;   Headers = 33; Selection = 1; Marks = 0; Probes = 80; Hashes = 0;  Fonts = 12; Twin = 0; Edges = 57 }
+    @{ Case = 'appearance_drawn';         Texts = 26; Fills = 2;  Lines = 0;   Headers = 33; Selection = 1; Marks = 0; Probes = 80; Hashes = 0;  Fonts = 12; Twin = 0; Edges = 57 },
+    # 2026-10-30, ENGINE.36: a record of the page's own, a text's line feeds and carriage returns, and no fixture
+    @{ Case = 'line_feeds';               Texts = 7;  Fills = 0;  Lines = 32;  Headers = 32; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0 }
 )
-$expectedCases = 17
+$expectedCases = 18
 
 # The browser: named, from the environment, or found.
 function Find-Browser([string]$named) {
@@ -333,17 +338,24 @@ if ($Control) {
             @{ L = 'k'; Name = 'a pattern phased on its edge'; Anchor = '        var on = u <= u1 && mask.charAt((((u - origin) % n) + n) % n) === want;'; With = '        var on = u <= u1 && mask.charAt((((u - u0) % n) + n) % n) === want;'
                Want = 'case appearance.*the pixel \d+,\d+ of the edge body:[vh]\d+,\d+, (drawn|a gap), is' },
             @{ L = 'l'; Name = 'an edge cut at its corners'; Anchor = '        var y0 = t0 + Math.min(0, low(lineH(above, b)), low(lineH(above, nb))), y1 = t1 + Math.max(0, high(lineH(r, b)), high(lineH(r, nb)));'; With = '        var y0 = t0, y1 = t1;'
-               Want = 'case appearance.*the edge body:v\d+,\d+ at \d+,\d+ \d+x\d+, expected' }
+               Want = 'case appearance.*the edge body:v\d+,\d+ at \d+,\d+ \d+x\d+, expected' },
+            @{ L = 'm'; Name = 'a wrap that takes no line feed'; Anchor = "    if (shown.indexOf('\n') < 0) { wrapPiece(ctx, shown, width, lines, ''); return lines; }"; With = "    if (true) { wrapPiece(ctx, shown, width, lines, ''); return lines; }"
+               Want = 'case line_feeds.*wrapped cell body:2,1 breaks into 1 line\(s\), the record into 2' },
+            @{ L = 'n'; Name = 'a twin without the rule'; Template = $true; Anchor = "    var pieces = text.replace(/\r/g, '').split('\n'), many = pieces.length > 1, total = 0;"; With = "    var pieces = [text], many = false, total = 0;"
+               Want = 'case line_feeds.*wrapped cell body:2,1 breaks into 2 line\(s\), the record into 1' }
         )
         $edgeNotes = New-Object System.Collections.Generic.List[string]
         $edgeJudged = New-Object System.Collections.Generic.List[object]
         $edgeOk = $true
         foreach ($mu in $edgeMutants) {
-            if (([regex]::Matches($js, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in web/viewport.js exactly once"; exit 1 }
-            $mutX = $js.Replace($mu.Anchor, $mu.With)
-            $xApplied = $mutX -cne $js
+            # a viewport's mutant, or the template's (ENGINE.36)
+            $xOrig = if ($mu.ContainsKey('Template')) { $tpl } else { $js }
+            if (([regex]::Matches($xOrig, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in its file exactly once"; exit 1 }
+            $mutX = $xOrig.Replace($mu.Anchor, $mu.With)
+            $xApplied = $mutX -cne $xOrig
             $jsX = Join-Path $tmp ($mu.L + '.js'); [System.IO.File]::WriteAllText($jsX, $mutX, $utf8)
-            $rX = Invoke-Oracle $browser (New-MutantPage $mu.L $template $jsX) '1'
+            $pageX = if ($mu.ContainsKey('Template')) { New-MutantPage $mu.L $jsX $viewport } else { New-MutantPage $mu.L $template $jsX }
+            $rX = Invoke-Oracle $browser $pageX '1'
             $jX = if ($rX.Text -ne '') { Test-Oracle $rX.Text '1' } else { @{ Problems = @($rX.Reason) } }
             $xFailed = @($jX.Problems | Where-Object { $_ -cmatch $mu.Want }).Count
             $edgeJudged.Add(@{ Name = $mu.Name; Problems = @($jX.Problems) })
@@ -353,7 +365,7 @@ if ($Control) {
         Write-Output ("control: the real page has {0} problem(s); the padding mutant applied ({1}) and failed on {2} position(s); the dropped column failed as {3} cell(s) not drawn; the cut element left no block ({4}); the number cut again applied ({5}) and failed sparse_hashes ({6}); the widths one map applied ({7}) and failed sheets_other ({8}); the groups passed over applied ({9}) and failed appearance ({10}); the look whole applied ({11}) and failed appearance at C1 ({12}) and against the twin ({13})" -f @($j0.Problems).Count, $aApplied, $aPosition, $bNotDrawn, $cNoBlock, $dApplied, $dFailed, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $gTwin)
         Write-Output ('control: ' + ($edgeNotes -join '; '))
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aPosition -ge 1 -and $bNotDrawn -ge 1 -and $cNoBlock -and $dApplied -and $dFailed -ge 1 -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $gTwin -ge 1 -and $edgeOk) {
-            Write-Output 'OK: the check passes the real page and fails each of the twelve mutants for its own reason, each proving it applied'
+            Write-Output 'OK: the check passes the real page and fails each of the fourteen mutants for its own reason, each proving it applied'
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

@@ -3125,21 +3125,27 @@
     return (fo.italic ? 'italic ' : '') + (fo.bold ? 'bold ' : '') + px + 'px system-ui, "Segoe UI", sans-serif';
   }
   function gqLineH(f, dpr) { var fo = f.font; return fo && fo.size !== null ? Math.round(fo.size / 20 * GQ.pointFont * GQ.lineHeight * dpr) : Math.round(GQ.font * GQ.lineHeight * dpr); }
-  // The lines a wrapped text breaks into at a width, the viewport's rule: at its spaces, a word wider than the width
-  // cut by characters.
-  function gqWrapCount(measure, text, width) {
-    var words = text.split(' '), n = 0, line = '';
-    for (var i = 0; i < words.length; i++) {
-      var w = words[i], trial = line === '' ? w : line + ' ' + w;
-      if (measure.measureText(trial).width <= width || line === '') {
-        if (line === '' && measure.measureText(w).width > width) {
-          var cut = '';
-          for (var k = 0; k < w.length; k++) { if (measure.measureText(cut + w.charAt(k)).width > width && cut !== '') { n++; cut = ''; } cut += w.charAt(k); }
-          line = cut;
-        } else line = trial;
-      } else { n++; line = w; }
-    }
-    return n + 1;
+  // The lines a wrapped text breaks into at a width, the viewport's rule (ENGINE.36): a carriage return nothing, a line
+  // feed a break, a piece of a text holding one keeping the spaces that begin it and losing those that end it; and each
+  // piece at its spaces, a word wider than the width cut by characters.
+  function gqWrapLines(measure, text, width) {
+    var shown = text.replace(/\r/g, ''), pieces = shown.split('\n'), out = [], many = pieces.length > 1;
+    pieces.forEach(function (raw) {
+      var piece = many ? raw.replace(/ +$/, '') : raw, lead = many ? /^ */.exec(piece)[0] : '', words = piece.slice(lead.length).split(' '), line = '';
+      words[0] = lead + words[0];
+      for (var i = 0; i < words.length; i++) {
+        var w = words[i], trial = line === '' ? w : line + ' ' + w;
+        if (measure.measureText(trial).width <= width || line === '') {
+          if (line === '' && measure.measureText(w).width > width) {
+            var cut = '';
+            for (var k = 0; k < w.length; k++) { if (measure.measureText(cut + w.charAt(k)).width > width && cut !== '') { out.push(cut); cut = ''; } cut += w.charAt(k); }
+            line = cut;
+          } else line = trial;
+        } else { out.push(line); line = w; }
+      }
+      out.push(line);
+    });
+    return out;
   }
   function gqRead(text) {
     var forms = VP.readForms(text), m = { window: null, gridlines: true, columns: {}, rows: {}, formats: { 0: { fill: null, num: 'general', wrap: false, font: null, align: null, border: null } }, looks: [], cells: {}, styled: false, bordered: false };
@@ -3300,12 +3306,16 @@
         }
         if (fm.f.wrap) {
           if (left + w <= clip.x || left >= clip.x + clip.w) continue;
-          var n = gqWrapCount(measure, cell.text, Math.max(1, w - 2 * L.pad));
+          var wl = gqWrapLines(measure, cell.text, Math.max(1, w - 2 * L.pad)), n = wl.length;
           var ty = valign === 'middle' ? top + Math.round(h / 2) - Math.round((n - 1) * lineH / 2) : (valign === 'bottom' ? top + h - half - (n - 1) * lineH : top + half);
-          E.wraps[r + ',' + c] = { text: cell.text, x: ax, y: ty, clip: { x: left, y: top, w: w, h: h }, font: font, color: color, lines: n, styled: styled };
+          E.wraps[r + ',' + c] = { text: cell.text, x: ax, y: ty, clip: { x: left, y: top, w: w, h: h }, font: font, color: color, lines: n, texts: wl, lineH: lineH, styled: styled };
           continue;
         }
-        var textW = measure.measureText(cell.text).width, need = textW + 2 * L.pad - w, clipX = left, clipW = w;
+        // no line feed or carriage return drawn, the letters run together, and each line feed in the measure at a digit's
+        // width, which the spill reads and which stands a text aligned right or centered to the left (ENGINE.36)
+        var shown = cell.text, feedW = 0;
+        if (/[\r\n]/.test(shown)) { feedW = (shown.split('\n').length - 1) * measure.measureText('0').width; shown = shown.replace(/[\r\n]/g, ''); }
+        var textW = measure.measureText(shown).width + feedW, need = textW + 2 * L.pad - w, clipX = left, clipW = w;
         if (need > 0 && (align === 'left' || (textual && (align === 'right' || align === 'center')))) {
           var wantR = align === 'left' ? need : (align === 'center' ? Math.ceil(need / 2) : 0), wantL = align === 'right' ? need : (align === 'center' ? Math.ceil(need / 2) : 0), grown = 0, cc;
           for (cc = c + 1; cc <= L.cols && grown < wantR; cc++) { var e2 = m.cells[r + ',' + cc]; if (e2 && e2.text !== '') break; grown += L.colW[cc]; }
@@ -3314,7 +3324,7 @@
           clipX -= grown; clipW += grown;
         }
         if (clipX + clipW <= clip.x || clipX >= clip.x + clip.w) continue;
-        E.texts[r + ',' + c] = { text: cell.text, x: ax, y: cy, align: align, clip: { x: clipX, y: top, w: clipW, h: h }, valued: cell.valued, formula: cell.kind === 'formula', coded: !!cell.coded, font: font, color: color, styled: styled };
+        E.texts[r + ',' + c] = { text: shown, x: align === 'right' ? ax - Math.round(feedW) : (align === 'center' ? ax - Math.round(feedW / 2) : ax), y: cy, align: align, clip: { x: clipX, y: top, w: clipW, h: h }, valued: cell.valued, formula: cell.kind === 'formula', coded: !!cell.coded, font: font, color: color, styled: styled };
       }
     }
     // the edges, where a format says a border (ENGINE.28, decisions 8 to 10)
@@ -3352,7 +3362,10 @@
       if (!lines) { say('the wrapped ' + gqName(key) + ' is not drawn'); continue; }
       lines.sort(function (p, q) { return p.line - q.line; });
       var joined = lines.map(function (l) { return l.text; }).join(' ');
-      if (joined.replace(/ /g, '') !== wx.text.replace(/ /g, '')) say('the wrapped ' + gqName(key) + ' shows ' + JSON.stringify(joined) + ', and the record says ' + JSON.stringify(wx.text));
+      // its count, its text, and each line where the record puts it, a blank line among them (ENGINE.36)
+      if (lines[0].lines !== wx.lines) say('the wrapped ' + gqName(key) + ' breaks into ' + lines[0].lines + ' line(s), and the record into ' + wx.lines);
+      else if (joined.replace(/ /g, '') !== wx.text.replace(/[ \r\n]/g, '')) say('the wrapped ' + gqName(key) + ' shows ' + JSON.stringify(joined) + ', and the record says ' + JSON.stringify(wx.text));
+      else if (lines.some(function (l) { return l.text !== wx.texts[l.line] || l.y !== wx.y + l.line * wx.lineH; })) say('the wrapped ' + gqName(key) + ' draws its lines ' + JSON.stringify(lines.map(function (l) { return [l.text, l.y]; })) + ', and the record breaks it into ' + JSON.stringify(wx.texts) + ' from ' + wx.y + ' by ' + wx.lineH);
       else if (lines[0].x !== wx.x || lines[0].y !== wx.y || lines[0].clip.w !== wx.clip.w || lines[0].clip.h !== wx.clip.h) say('the wrapped ' + gqName(key) + ' is drawn at ' + lines[0].x + ',' + lines[0].y + ' in ' + lines[0].clip.w + ' by ' + lines[0].clip.h + ', and the record places it at ' + wx.x + ',' + wx.y + ' in ' + wx.clip.w + ' by ' + wx.clip.h);
       else if (lines[0].font !== wx.font || String(lines[0].color).toLowerCase() !== wx.color.toLowerCase()) say('the wrapped ' + gqName(key) + ' is drawn in the font ' + lines[0].font + ' and ' + lines[0].color + ', and the record says ' + wx.font + ' and ' + wx.color);
       else { k.wraps++; if (wx.styled) k.fonts = (k.fonts || 0) + 1; }
@@ -4412,6 +4425,11 @@
   // constant long text cut by a neighbor that fills on even frames and spilling again when it empties (L6, N6); a wrapped
   // text in a tall row, two lines and three, every line in the row (B7); a cell in a hidden row (A9); and a cell in the
   // columns the view freezes (A5).
+  // Since ENGINE.36 it holds line feeds in each path a text takes, by CHAR(10), so that their rows run over the record's
+  // lines at every frame: in the tall row a wrapped text whose lines change, a blank line among them (K7), one that holds
+  // still (L7), a carriage return (M7) and an indent and a trailing space (N7); a nowrap text spilling on row 3, on the left
+  // (K3) and aligned right (S3), a centered one on row 10 (P10), each moved by its measure; and a value the Write sheet
+  // lands at every frame, so that a cell row holds one on the Day's viewer's patch (Day!B4).
   var CHANGES = { file: 'changes.vla',
                   text: '(cartridge "changes"\n  (spec 3)\n  (title "A changes card")\n  (rate 30)\n  (screen grid 20 10)\n  (seed 1))\n' +
                         '(sheet "Screen" visible)\n(sheet "Day" visible)\n(sheet "Camera" visible)\n(sheet "Keys" visible)\n(sheet "Write" visible)\n' +
@@ -4438,7 +4456,17 @@
                         '(cell "Screen" "K4" 1)\n(formula "Screen" "A5" "=MOD(Clock!$B$1,10)")\n' +
                         '(cell "Screen" "L6" "a constant text much longer than its column")\n(formula "Screen" "N6" "=IF(MOD(Clock!$B$1,2)=0,\\"x\\",\\"\\")")\n' +
                         '(formula "Screen" "B7" "=IF(MOD(Clock!$B$1,2)=0,\\"wrapped in two\\",\\"and in three lines\\")")\n(style "Screen" "B7" 1)\n' +
-                        '(formula "Screen" "A9" "=Clock!$B$1")\n(formula "Screen" "C3:J10" "=Day!$B$1*100+ROW()*10+COLUMN()")\n' };
+                        '(formula "Screen" "A9" "=Clock!$B$1")\n(formula "Screen" "C3:J10" "=Day!$B$1*100+ROW()*10+COLUMN()")\n' +
+                        // ENGINE.36: the line feeds, each a formula's value, no raw break in a row of the card
+                        '(format 10 none general nowrap (align right))\n' +
+                        '(formula "Screen" "K7" "=IF(MOD(Clock!$B$1,2)=0,\\"two\\"&CHAR(10)&\\"lines\\",\\"a\\"&CHAR(10)&CHAR(10)&\\"gap\\")")\n(style "Screen" "K7" 1)\n' +
+                        '(formula "Screen" "L7" "=\\"held\\"&CHAR(10)&\\"still\\"")\n(style "Screen" "L7" 1)\n' +
+                        '(formula "Screen" "M7" "=\\"cr\\"&CHAR(13)&\\"lf\\"&CHAR(13)&CHAR(10)&\\"next\\"")\n(style "Screen" "M7" 1)\n' +
+                        '(formula "Screen" "N7" "=\\"  in \\"&CHAR(10)&\\"   dent \\"")\n(style "Screen" "N7" 1)\n' +
+                        '(formula "Screen" "K3" "=IF(MOD(Clock!$B$1,3)=0,\\"no wrap\\"&CHAR(10)&\\"and a long text spilling\\",\\"a\\"&CHAR(10)&\\"b\\")")\n' +
+                        '(formula "Screen" "S3" "=IF(MOD(Clock!$B$1,2)=0,\\"right\\"&CHAR(10)&\\"and a long text spilling\\",\\"c\\"&CHAR(13)&\\"d\\"&CHAR(10))")\n(style "Screen" "S3" 10)\n' +
+                        '(formula "Screen" "P10" "=IF(MOD(Clock!$B$1,2)=0,\\"centered\\"&CHAR(10)&\\"and spilling both ways\\",\\"e\\"&CHAR(10)&\\"f\\")")\n(style "Screen" "P10" 4)\n' +
+                        '(cell "Day" "A4" "fed")\n(cell "Day" "B4" "")\n(cell "Write" "A3" "Day")\n(cell "Write" "B3" "B4")\n(formula "Write" "C3" "=\\"w\\"&CHAR(10)&Clock!$B$1")\n' };
   var CHANGES_FRAMES = 60, CHANGES_DEVICES = ['Camera', 'Keys', 'File', 'Write', 'Clock'];
   // The person's acts before each frame: the pointer over three cells, a bound key pressed and let go, an edit of the
   // Input sheet, the Keys rebound and the new key pressed and let go, the value's edit, a notch of the wheel, the Camera
@@ -4542,18 +4570,27 @@
   // stays the same object, counts the patch and is the model a load of the patched record makes, every cell and count.
   // Since ENGINE.20 each is repainted by its cells, the canvas pixel for pixel and the draw list op for op a fresh
   // viewport's full paint of the record after it; and a patch of every cell of a window of 8 by 8, more than a quarter of
-  // the cells in view, is painted whole, held the same way.
+  // the cells in view, is painted whole, held the same way. Since ENGINE.36 a row holding a line feed runs over the
+  // record's lines: laid on a record, with a quote before its line feed, a row of a record replaced and emptied and a cell
+  // patched beside one, each held the same way, the model's lines with it; and a line no string runs on to, in an answer
+  // or in a record, patches nothing.
   function changesCrafted(P) {
-    var head = '(sheet "Crafted" visible)\n(window "Crafted" "A1:D4")\n(extent "Crafted" "A1:D4")\n(gridlines "Crafted" on)\n(format 0 none general nowrap)\n(format 2 "00AA00" general nowrap)\n';
+    var head = '(sheet "Crafted" visible)\n(window "Crafted" "A1:D4")\n(extent "Crafted" "A1:D4")\n(gridlines "Crafted" on)\n(format 0 none general nowrap)\n(format 2 "00AA00" general nowrap)\n(format 3 none general wrap)\n';
     var a1 = '(cell "Crafted" "A1" "a")\n', b1 = '(value "Crafted" "B1" 1)\n(style "Crafted" "B1" 2)\n', c2 = '(value "Crafted" "C2" 3)\n', d4 = '(cell "Crafted" "D4" 4)\n';
     var rec = head + a1 + b1 + c2 + d4, held = 0;
     function changes(n, rows) { return '(changes "Crafted" "A1:D4" 1 2 ' + n + ')\n' + rows; }
+    var fedA = '(cell "Crafted" "A1" "a\nb")\n(style "Crafted" "A1" 3)\n', fedB = '(cell "Crafted" "A1" "b\nc")\n(style "Crafted" "A1" 3)\n', quoted = '(value "Crafted" "C2" "say \\"b\nc\\"")\n', recFed = head + fedA + b1 + c2 + d4;
     var cases = [
       ['an empty row', changes(1, '(empty "Crafted" "C2")\n'), head + a1 + b1 + d4],
       ['a new cell', changes(1, '(value "Crafted" "A2" 9)\n'), head + a1 + b1 + '(value "Crafted" "A2" 9)\n' + c2 + d4],
       ['a value and its style', changes(1, '(value "Crafted" "B1" 5)\n(style "Crafted" "B1" 2)\n'), head + a1 + '(value "Crafted" "B1" 5)\n(style "Crafted" "B1" 2)\n' + c2 + d4],
       ['a style lost', changes(1, '(value "Crafted" "B1" 1)\n'), head + a1 + '(value "Crafted" "B1" 1)\n' + c2 + d4],
-      ['several cells', changes(3, '(cell "Crafted" "A1" "b")\n(empty "Crafted" "C2")\n(value "Crafted" "D3" 7)\n'), head + '(cell "Crafted" "A1" "b")\n' + b1 + '(value "Crafted" "D3" 7)\n' + d4]
+      ['several cells', changes(3, '(cell "Crafted" "A1" "b")\n(empty "Crafted" "C2")\n(value "Crafted" "D3" 7)\n'), head + '(cell "Crafted" "A1" "b")\n' + b1 + '(value "Crafted" "D3" 7)\n' + d4],
+      ['a row over lines', changes(1, fedB), head + fedB + b1 + c2 + d4],
+      ['a quote before a line feed', changes(1, quoted), head + a1 + b1 + quoted + d4],
+      ['a row over lines replaced', changes(1, '(cell "Crafted" "A1" "z")\n'), head + '(cell "Crafted" "A1" "z")\n' + b1 + c2 + d4, recFed],
+      ['a cell beside a row over lines', changes(1, '(value "Crafted" "C2" 8)\n'), head + fedA + b1 + '(value "Crafted" "C2" 8)\n' + d4, recFed],
+      ['a row over lines emptied', changes(1, '(empty "Crafted" "A1")\n'), head + b1 + c2 + d4, recFed]
     ];
     var stage = document.getElementById('stage'), box = document.createElement('div'), box2 = document.createElement('div');
     box.style.cssText = box2.style.cssText = 'width:640px;height:200px;position:relative;background:#fff;';
@@ -4572,9 +4609,9 @@
     }
     try {
       for (var i = 0; i < cases.length; i++) {
-        var c = cases[i], at = 'crafted, ' + c[0], got = HOST.patchRecord(rec, c[1]);
+        var c = cases[i], at = 'crafted, ' + c[0], was = c[3] || rec, got = HOST.patchRecord(was, c[1]);
         if (got !== c[2]) { P.push(at + ': the host\'s patch gives ' + JSON.stringify(got) + ', where the record after it is ' + JSON.stringify(c[2])); continue; }
-        vp.load(rec);
+        vp.load(was);
         var m0 = vp.model(), p0 = vp.patches(), rp0 = vp.repaints(), r = vp.patch(c[1]);
         if (!r || vp.model() !== m0 || vp.patches() !== p0 + 1) { P.push(at + ': the viewport ' + (r ? 'replaced its model or counted no patch' : 'refused the patch')); continue; }
         var diff = modelDiff(vp.model(), VP.readRecord(c[2]));
@@ -4585,6 +4622,10 @@
       vp.load(rec);
       if (HOST.patchRecord(rec, whole) !== null) P.push('crafted: the host patched a record by a whole answer');
       else if (vp.patch(whole) !== false) P.push('crafted: the viewport patched its model by a whole answer');
+      else held++;
+      if (HOST.patchRecord(rec, changes(1, '(cell "Crafted" "A1" "b")\nno row\n')) !== null) P.push('crafted: the host laid an answer\'s line no string runs on to on a record');
+      else held++;
+      if (HOST.patchRecord(head + a1 + 'no row\n' + b1, changes(1, '(cell "Crafted" "A1" "b")\n')) !== null) P.push('crafted: the host patched a record holding a line no string runs on to');
       else held++;
       // a patch of every cell of a window of 8 by 8, more than a quarter of the 80 or so cells in view: painted whole
       var big = '(sheet "Crafted" visible)\n(window "Crafted" "A1:H8")\n(extent "Crafted" "A1:H8")\n(gridlines "Crafted" on)\n(format 0 none general nowrap)\n', b0 = big, rows = '';
@@ -8519,21 +8560,27 @@
   function colAt(L, x, c0) { var c = Math.max(1, c0); while (c <= L.cols && L.colX[c + 1] <= x) c++; return c; }
   // The row a content y falls in, from r0: the last row whose top is at or above y (ENGINE.28: the rows' own heights).
   function rowAt(L, y, r0) { var r = Math.max(1, r0); while (r < L.rows && L.top[r + 1] <= y) r++; return r; }
-  // The lines a wrapped text breaks into at a width, the viewport's rule written again: at its spaces, a word wider
-  // than the width cut by characters.
+  // The lines a wrapped text breaks into at a width, the viewport's rule written again (ENGINE.36): a carriage return
+  // nothing, a line feed a break, a piece of a text holding one keeping the spaces that begin it and losing those that end
+  // it; and each piece at its spaces, a word wider than the width cut by characters.
   function wrapCount(text, width) {
-    var words = text.split(' '), n = 0, line = '';
-    for (var i = 0; i < words.length; i++) {
-      var w = words[i], trial = line === '' ? w : line + ' ' + w;
-      if (measureCtx.measureText(trial).width <= width || line === '') {
-        if (line === '' && measureCtx.measureText(w).width > width) {
-          var cut = '';
-          for (var k = 0; k < w.length; k++) { if (measureCtx.measureText(cut + w.charAt(k)).width > width && cut !== '') { n++; cut = ''; } cut += w.charAt(k); }
-          line = cut;
-        } else line = trial;
-      } else { n++; line = w; }
+    var pieces = text.replace(/\r/g, '').split('\n'), many = pieces.length > 1, total = 0;
+    for (var p = 0; p < pieces.length; p++) {
+      var piece = many ? pieces[p].replace(/ +$/, '') : pieces[p], lead = many ? /^ */.exec(piece)[0] : '', words = piece.slice(lead.length).split(' '), n = 0, line = '';
+      words[0] = lead + words[0];
+      for (var i = 0; i < words.length; i++) {
+        var w = words[i], trial = line === '' ? w : line + ' ' + w;
+        if (measureCtx.measureText(trial).width <= width || line === '') {
+          if (line === '' && measureCtx.measureText(w).width > width) {
+            var cut = '';
+            for (var k = 0; k < w.length; k++) { if (measureCtx.measureText(cut + w.charAt(k)).width > width && cut !== '') { n++; cut = ''; } cut += w.charAt(k); }
+            line = cut;
+          } else line = trial;
+        } else { n++; line = w; }
+      }
+      total += n + 1;
     }
-    return n + 1;
+    return total;
   }
   // The expected draws of one quadrant.
   function expectQuadrant(model, L, clip, r1, r2, c1, c2, sx, sy, name, E) {
@@ -8595,7 +8642,10 @@
           E.wraps.push({ key: name + ':' + r + ',' + c, text: cell.text, x: ax, y: ty, align: align, clip: { x: left, y: y, w: w, h: h }, font: font, color: color, lines: n, styled: styled });
           continue;
         }
-        var textW = measureCtx.measureText(cell.text).width, need = textW + 2 * L.pad - w, clipX = left, clipW = w;
+        // no line feed or carriage return drawn, each line feed in the measure at a digit's width (ENGINE.36)
+        var shown = cell.text, feedW = 0;
+        if (/[\r\n]/.test(shown)) { feedW = (shown.split('\n').length - 1) * measureCtx.measureText('0').width; shown = shown.replace(/[\r\n]/g, ''); }
+        var textW = measureCtx.measureText(shown).width + feedW, need = textW + 2 * L.pad - w, clipX = left, clipW = w;
         if (need > 0 && (align === 'left' || (textual && (align === 'right' || align === 'center')))) {
           var wantR = align === 'left' ? need : (align === 'center' ? Math.ceil(need / 2) : 0), wantL = align === 'right' ? need : (align === 'center' ? Math.ceil(need / 2) : 0), grown = 0, cc;
           for (cc = c + 1; cc <= c2 && grown < wantR; cc++) { var e = model.cells.get(r + ',' + cc); if (e && e.text !== '') break; grown += L.colW[cc]; }
@@ -8604,7 +8654,7 @@
           clipX -= grown; clipW += grown;
         }
         if (clipX + clipW <= clip.x || clipX >= clip.x + clip.w) continue;
-        E.texts.push({ key: name + ':' + r + ',' + c, text: cell.text, x: ax, y: cy, align: align, clip: { x: clipX, y: y, w: clipW, h: h }, kind: cell.kind, font: font, color: color, styled: styled });
+        E.texts.push({ key: name + ':' + r + ',' + c, text: shown, x: align === 'right' ? ax - Math.round(feedW) : (align === 'center' ? ax - Math.round(feedW / 2) : ax), y: cy, align: align, clip: { x: clipX, y: y, w: clipW, h: h }, kind: cell.kind, font: font, color: color, styled: styled });
       }
     }
     // the edges, where a format says a border (ENGINE.28, decisions 8 to 10)
@@ -8646,7 +8696,7 @@
     var vp = null, twinVp = null, twinBox = null;
     try {
       vp = new VP(box, { willReadFrequently: !!cs.twin });
-      var text = fixtureText(cs.fixture);
+      var text = cs.record || fixtureText(cs.fixture);
       var model = VP.readRecord(text);
       oracleGroups(model, text);
       vp.load(text);
@@ -8714,8 +8764,9 @@
         if (!lines) { problems.push('wrapped cell ' + wx.key + ' not drawn'); continue; }
         lines.sort(function (a, b) { return a.line - b.line; });
         var joined = lines.map(function (l) { return l.text; }).join(' ');
-        var sameText = joined === wx.text || joined.replace(/ /g, '') === wx.text.replace(/ /g, '');
-        if (!sameText) problems.push('wrapped cell ' + wx.key + ' shows ' + joined + ', the record says ' + wx.text);
+        var sameText = joined === wx.text || joined.replace(/ /g, '') === wx.text.replace(/[ \r\n]/g, '');
+        if (lines[0].lines !== wx.lines) problems.push('wrapped cell ' + wx.key + ' breaks into ' + lines[0].lines + ' line(s), the record into ' + wx.lines);
+        else if (!sameText) problems.push('wrapped cell ' + wx.key + ' shows ' + joined + ', the record says ' + wx.text);
         else if (lines[0].x !== wx.x || lines[0].y !== wx.y) problems.push('wrapped cell ' + wx.key + ' at ' + lines[0].x + ',' + lines[0].y + ', expected ' + wx.x + ',' + wx.y);
         else if (lines[0].clip.x !== wx.clip.x || lines[0].clip.w !== wx.clip.w) problems.push('wrapped cell ' + wx.key + ' clipped to ' + lines[0].clip.w + ', expected ' + wx.clip.w);
         else if (lines[0].font !== wx.font || String(lines[0].color).toLowerCase() !== wx.color.toLowerCase()) problems.push('wrapped cell ' + wx.key + ' in the font ' + lines[0].font + ' and ' + lines[0].color + ', expected ' + wx.font + ' and ' + wx.color);
@@ -8910,7 +8961,13 @@
       // color at its place, held to the oracle's own look's rule and drawn as its twin with the looks folded in; and the
       // twin itself, each cell's style the format the language gives it
       { name: 'appearance', fixture: 'appearance', w: 1100, h: 400, twin: 'appearance_drawn' },
-      { name: 'appearance_drawn', fixture: 'appearance_drawn', w: 1100, h: 400 }
+      { name: 'appearance_drawn', fixture: 'appearance_drawn', w: 1100, h: 400 },
+      // ENGINE.36: a text's line feeds and carriage returns, a record of its own and no fixture, so that no pin moves and
+      // the twin above is held: wrapped, a break, a blank line, CR LF and an indent; not wrapped, on the left and on the right
+      { name: 'line_feeds', w: 1100, h: 400, record: '(sheet "Feeds" visible)\n(window "Feeds" "A1:H4")\n(extent "Feeds" "A1:H4")\n(gridlines "Feeds" on)\n(row "Feeds" 2 60 shown)\n' +
+        '(format 0 none general nowrap)\n(format 1 none general wrap)\n(format 2 none general nowrap (align right))\n' +
+        '(cell "Feeds" "A2" "one\ntwo")\n(style "Feeds" "A2" 1)\n(cell "Feeds" "B2" "a\n\nb")\n(style "Feeds" "B2" 1)\n(cell "Feeds" "C2" "cr\r\nlf")\n(style "Feeds" "C2" 1)\n(cell "Feeds" "D2" "  in \n   dent")\n(style "Feeds" "D2" 1)\n' +
+        '(cell "Feeds" "A3" "no\nbreak")\n(cell "Feeds" "C3" "a\rb")\n(cell "Feeds" "H3" "right\nand a long text spilling")\n(style "Feeds" "H3" 2)\n' }
     ];
     var ok = 0;
     for (var i = 0; i < cases.length; i++) if (runCase(cases[i], out)) ok++;
