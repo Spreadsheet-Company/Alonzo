@@ -1037,6 +1037,57 @@ Found:
 - *The floors' instrument cannot share the machine.* Four runs refused themselves while another session's probes loaded it, and the three on the quiet machine still read the act's p95 15 to 21% above the seventeenth's on the same stepping code: a row under a millisecond spreads between sessions past the floors' margin of 10%, so the five rows lowered tonight are a quiet session's to raise again.
 - *0.12.0's expander costs the page 46,640 bytes* of module, 2.6%, for forms only a source's pass uses; the page carries the pass whole, as it carries the library (the seventeenth's Found).
 
+*The pin at `vla-lang` 0.13.0, 2026-11-15, at the owner's word: "0.13.0 is released on GitHub and crates.io. Proceed with CART.9", the pin first and `CART.9`'s slice over it, as the pin to 0.11.0 and `CART.9`'s short slice went.*
+
+The release is Frazaro's, its release commit `78a6dc1`, tagged `v0.13.0`; the crate's `src/` and `data/` are the tag's, 56 files, file for file.
+- `VLA.9` and `VLA.10`, named pieces with defaults and `self`, `bind-expand` and `offset-expand`, each name reserved; `KERNEL.67`, a style row over a range held as its rectangle; `KERNEL.58`, a format of groups alone, a font's family, underline and strike, a conditional format, a merged range and the rule kinds no formula says; `KERNEL.60`, `ADDRESS`; `KERNEL.68`, the information functions, `ERROR.TYPE` among them, with `ROUND` and `IFS`; `KERNEL.69`, a formula write's frame costing what it reaches; `KERNEL.70`, a row's word `dynamic`; `KERNEL.71`, `BITAND`, `BITOR` and `BITXOR`; and `KERNEL.72`, the save's shape and a load one form at a time.
+
+What moved:
+- `Cargo.toml`'s pin and its comment, and the lock: the checksum `6096b0f9…`, still two packages.
+- `check_engine_deps.ps1`'s baseline and its header.
+- `engine/src/cartridge.rs`: the engine's checks of a written row read its first four items whatever follows them. `KERNEL.70`'s row carries a fifth, `dynamic`, and the checks matched a row of exactly four, so such a row skipped every one of them: over 0.13.0 with the old pattern, `(formula "Clock" "B1" "=1" dynamic)` was written into the Clock's host cell, one cell, past `cart-device-cell-formula`. `the_write_checks_come_before_the_machine` holds that row and a dynamic Screen formula outside the declared size, `cart-screen-outside`; the first is the case that failed before the fix. A cartridge's own rows were never open to it: the load checks the draft's cells, a dynamic formula a formula there.
+- `check_frame_floors.ps1`: the nineteenth baseline (below), and the twelve heap ceilings raised with their note.
+- No source, golden or replay: the eleven cartridges expand to their bytes, no macro of theirs taking a name 0.13.0 reserves, and every describe golden and replay digest stands.
+
+The oracle, on the day (*measurement*):
+- `cargo test --release`: 90 tests of the library and the doc test, every cartridge required (`ALONZO_REQUIRE_CARTRIDGES=1`); `cargo clippy --all-targets` and `cargo fmt --check` are clean.
+- `expand -- --check`: eleven `same`.
+- The module: 2,068,963 bytes, 202,578 more than the 1,866,385 it was, 0.13.0's library and rules. It imports nothing and exports the twelve names; the page, 5,526,870 characters.
+- `check_engine_deps.ps1 -Control` and `check_frame_floors.ps1 -Control` pass; `run_checks.ps1`, ALL GREEN, 13 of 13, the loop oracle among them over the new module.
+
+*The floors' nineteenth baseline,* two runs of `tools/bench_frames.ps1` by this session in the tree, the machine otherwise quiet (6 to 8% load), both halves opted out of the throttling and on the performance cores. The first refused native gun and wasm gun, each measured under its floor, the gun's idle frame of 20 to 30 microseconds; the second is the block pasted. No floor is lowered and ten are raised; wasm superposition-act, which the run would raise, stays at 1,020,000,000 (the fifteenth's note). Every allocation count is the ceiling's, and every native heap rose by the same bytes on both runs, 3,365 to 5,981, the same at each rung of the ladder: a constant a load, not a cost of the cells.
+
+| row | frame p50 | cells a second | floor |
+|---|---|---|---|
+| native life | 2.1 ms | 29,602,257 | 27,800,000, kept |
+| native life-x4 | 9.1 ms | 27,806,566 | 26,400,000, kept |
+| native life-x16 | 35.8 ms | 28,459,002 | 26,200,000, kept |
+| native gun | 0.0196 ms | 3,205,294,305 | 3,100,000,000, kept |
+| native gun-x4 | 0.0201 ms | 12,629,107,864 | 11,300,000,000, from 10,600,000,000 |
+| native gun-x16 | 0.0211 ms | 48,264,144,637 | 43,800,000,000, kept |
+| native sand | 3.1 ms | 61,504,331 | 55,300,000, from 52,300,000 |
+| native superposition | 0.0010 ms | 786,810,816,136 | 735,000,000,000, kept |
+| native superposition-act | 0.2978 ms, p95 0.4162 | 1,919,103,796 | 1,720,000,000, from 1,590,000,000 |
+| native superposition-cascade | 0.1646 ms | 4,752,079,558 | 4,290,000,000, kept |
+| native naught-f | 5.0 ms | 10,602,050 | 9,540,000, from 9,520,000 |
+| native naught-s | 20.6 ms | 2,568,806 | 2,310,000, from 2,260,000 |
+| wasm life | 2.5 ms | 24,691,765 | 22,200,000, from 20,200,000 |
+| wasm life-x4 | 11.1 ms | 22,876,036 | 22,100,000, kept |
+| wasm life-x16 | 44.2 ms | 23,099,524 | 21,300,000, kept |
+| wasm gun | 0.0289 ms | 2,178,214,061 | 2,130,000,000, kept |
+| wasm gun-x4 | 0.0273 ms | 9,286,363,429 | 8,860,000,000, kept |
+| wasm gun-x16 | 0.0266 ms | 38,394,127,328 | 34,500,000,000, from 33,500,000,000 |
+| wasm sand | 4.2 ms | 45,051,191 | 40,500,000, kept |
+| wasm superposition | 0.0014 ms | 570,522,128,283 | 513,000,000,000, kept |
+| wasm superposition-act | 0.4000 ms, p95 0.6000 | 1,331,218,280 | 1,020,000,000, kept |
+| wasm superposition-cascade | 0.2000 ms | 3,652,819,229 | 3,280,000,000, from 3,070,000,000 |
+| wasm naught-f | 6.1 ms | 8,666,393 | 7,790,000, from 7,670,000 |
+| wasm naught-s | 20.6 ms | 2,566,262 | 2,300,000, from 2,080,000 |
+
+Found:
+- *0.13.0's library costs the page 202,578 bytes* of module, 10.9%, every function and rule kind in it whether a cartridge calls it or not (the seventeenth's Found, again).
+- *The heaps' 3.4 KB is untraced.* The bytes are the same at every rung and on both runs, so they are no cost of a cell; which of 0.13.0's fields makes them, a sheet's rules or merges or a wider format, is not measured here.
+
 ## `ENGINE.2` — the frame path: the plane held to the record of the same window
 
 *Scoped 2026-10-09, at the owner's word, the day `ENGINE.1` closed: the Screen read out of the module's memory as bytes and blitted whole, held equal to the view record of the same window by a test, the record being the oracle (`CHARTER.md` §3), and the window the Camera's (`SPEC.md` §13's two oracles for this item). The scoping finds the path itself already laid, since `ENGINE.1` had to draw something: the host views the plane, copies the bytes out and blits them through the Palette. What is missing is the oracle, a fixture that reaches every arm of the byte's rule, and the cost the second slice measured, which is the language's. So the scoping is mostly a measurement, made before any claim, and its first finding moves the cost to Frazaro.*

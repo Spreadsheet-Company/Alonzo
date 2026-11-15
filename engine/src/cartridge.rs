@@ -1322,9 +1322,13 @@ impl Cartridge {
 
     /// The engine's checks of one written row, section 4.3 and section 3.9:
     /// a row the machine would refuse whatever its target is left to it.
+    /// A row is read by its first four items, so that a word after its value,
+    /// the language's `dynamic` since vla-lang 0.13.0, is the machine's to
+    /// read or refuse and never takes a row past these checks.
     fn check_row(&self, form: &Form) -> Result<(), LineRefusal> {
         let Form::List(l) = form else { return Ok(()) };
-        let [Form::Sym(head), Form::Str(sheet), Form::Str(addr), value] = l.items.as_slice() else {
+        let [Form::Sym(head), Form::Str(sheet), Form::Str(addr), value, ..] = l.items.as_slice()
+        else {
             return Ok(());
         };
         if !matches!(head.as_str(), "cell" | "formula" | "derived") {
@@ -2658,10 +2662,19 @@ mod tests {
     #[test]
     fn the_write_checks_come_before_the_machine() {
         let mut c = load(&small(30)).expect("loads");
-        let cases: [(&str, &str); 10] = [
+        let cases: [(&str, &str); 12] = [
             (
                 "(formula \"Clock\" \"B1\" \"=1\")",
                 "cart-device-cell-formula",
+            ),
+            // A word after the value, vla-lang 0.13.0's dynamic, leaves the row the engine's to check.
+            (
+                "(formula \"Clock\" \"B1\" \"=1\" dynamic)",
+                "cart-device-cell-formula",
+            ),
+            (
+                "(formula \"Screen\" \"A11\" \"=1\" dynamic)",
+                "cart-screen-outside",
             ),
             ("(derived \"Input\" \"B5\" 1)", "cart-write-derived"),
             ("(derived \"Clock\" \"A1\" 1)", "cart-write-derived"),
