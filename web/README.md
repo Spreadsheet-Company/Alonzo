@@ -630,9 +630,10 @@ page shows opened plainly and what Pages deploys.
   every frame's Tally, the sum of each row of its lattice,
   equal to Superposition's hand, a frame with no row a settle step after
   the engine's release, and its end its golden, the Tally's row sums;
-  and Seiyaku's, the owner's session at `CART.14`'s hand test, every
-  frame's Board, its 81 variables' codes and marks, equal
-  to Seiyaku's hand, and its end its golden, the Constraints sheet's record;
+  and Seiyaku's, the owner's session at `CART.14.1`'s second hand test,
+  the ladder's `I`, `P`, `U` and `M` among its acts, every frame's Board,
+  its 81 variables' codes and marks and the words under it, equal to
+  Seiyaku's hand, and its end its golden, the Constraints sheet's record;
   and Naught's, the owner's session at `CART.9`'s third hand test, its
   first two levels played, and a stand-in after it, the other levels, the
   bench's switches written in the edit row and a switch written over, every
@@ -981,8 +982,9 @@ viewport, not an Excel clone.
     each row of its lattice, a frame with no row a settle step after the
     engine's release; it also lends the frames and blit instruments its
     lattice, its scripted player and its deepest deal. Seiyaku's answers
-    the Board's 81 variables, each a code or its marks' text, and reads its
-    book from the page's own text of the source, the block `source-seiyaku`.
+    the Board's 81 variables, each a code or its marks' text, and the
+    ladder's words under them, and reads its book from the page's own text
+    of the source, the block `source-seiyaku`.
     Naught's answers every gate of the bench, and is the twin of the Rust
     generator, `engine/src/naught.rs`: made, it lays the bench and holds
     its block to the block `source-naught` line for line, and it writes

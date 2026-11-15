@@ -20,7 +20,9 @@
 //!   seed and the instance's number, and every frame of a session computed
 //!   from the Input rows as the engine's frame sees them, sharing no formula
 //!   with the cartridge: its codes, its marks' texts and its Constraints
-//!   sheet's values.
+//!   sheet's values; and since `CART.14.1`'s second slice the ladder, the
+//!   grader's three techniques an inference a frame, its strikes, the
+//!   assignments it made, and its words.
 //!
 //! The engine's tests compile it as a module of the crate for the tests
 //! alone; the book's writer includes the same file by its path.
@@ -711,6 +713,29 @@ pub const GRADES: [&str; 4] = [
     "beyond the three",
 ];
 
+/// The ladder's next inference, or why there is none (`CART.14.1`'s second
+/// slice): the Ladder sheet's `B1` to `B9` and its words, `B21`.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Inference {
+    /// 0 none, 1 a naked single, 2 a hidden single, 3 a pointing.
+    pub kind: u8,
+    /// The value assigned or struck, 1 to 9, or 0.
+    pub value: u8,
+    /// The variable an assignment takes, 1 to 81, or 0.
+    pub place: usize,
+    /// A pointing's box, 1 to 9, whether its line is a column, and the line,
+    /// 1 to 9.
+    pub boxed: u8,
+    pub down: bool,
+    pub line: u8,
+    /// Why there is none: 0 there is one, 1 satisfied, 2 a violated
+    /// constraint, 3 an emptied domain, 4 a value with no place in a
+    /// constraint, 5 nothing the three techniques infer.
+    pub stop: u8,
+    /// The words the Board shows under it while they are lit.
+    pub words: String,
+}
+
 /// The board, by hand.
 pub struct Seiyaku {
     pub book: Vec<Board>,
@@ -736,7 +761,19 @@ pub struct Seiyaku {
     pub col_counts: [[u8; 10]; 9],
     pub box_counts: [[u8; 10]; 9],
     pub violated: [bool; 81],
+    /// The values the constraints still allow, less those struck, a bit a
+    /// value as the marks are.
     pub candidates: [u16; 81],
+    /// The ladder's (`CART.14.1`'s second slice): each variable's strikes, a
+    /// bit a value; the variables inference assigned; the words lit, a
+    /// propagation running, the marks filtered; and the inference this
+    /// frame names, which the next applies.
+    pub struck: [u16; 81],
+    pub inferred: [bool; 81],
+    pub lit: bool,
+    pub propagating: bool,
+    pub filtered: bool,
+    pub ladder: Inference,
 }
 
 /// The value a command names after its prefix, 1 to 9, or 0.
@@ -747,6 +784,57 @@ fn value_of(command: &str, prefix: &str) -> u8 {
             _ => 0,
         },
         _ => 0,
+    }
+}
+
+/// A variable's address as the Board's headers show it, the Board standing
+/// from `B2`: the variable 1 is `B2`, the variable 81 `J10`.
+pub fn address_of(place: usize) -> String {
+    let (r, c) = ((place - 1) / 9, (place - 1) % 9);
+    format!("{}{}", char::from(b'B' + c as u8), r + 2)
+}
+
+/// n and the words for one or for many.
+fn counted(n: usize, one: &str, many: &str) -> String {
+    format!("{n} {}", if n == 1 { one } else { many })
+}
+
+/// Each unit's places left for each value, from the candidates: the rows',
+/// the columns' and the boxes', and a line's inside a box, a row's in each
+/// stack and a column's in each band.
+struct Open {
+    rows: [[u8; 10]; 9],
+    cols: [[u8; 10]; 9],
+    boxes: [[u8; 10]; 9],
+    across: [[[u8; 3]; 9]; 10],
+    down: [[[u8; 3]; 9]; 10],
+}
+
+impl Open {
+    fn of(grid: &Board, candidates: &[u16; 81]) -> Open {
+        let mut o = Open {
+            rows: [[0; 10]; 9],
+            cols: [[0; 10]; 9],
+            boxes: [[0; 10]; 9],
+            across: [[[0; 3]; 9]; 10],
+            down: [[[0; 3]; 9]; 10],
+        };
+        for k in 0..81 {
+            if grid[k] > 0 {
+                continue;
+            }
+            let (r, c, x) = units_of(k);
+            for v in 1..=9usize {
+                if candidates[k] & (1 << (v - 1)) != 0 {
+                    o.rows[r][v] += 1;
+                    o.cols[c][v] += 1;
+                    o.boxes[x][v] += 1;
+                    o.across[v][r][c / 3] += 1;
+                    o.down[v][c][r / 3] += 1;
+                }
+            }
+        }
+        o
     }
 }
 
@@ -774,6 +862,12 @@ impl Seiyaku {
             box_counts: [[0; 10]; 9],
             violated: [false; 81],
             candidates: [0; 81],
+            struck: [0; 81],
+            inferred: [false; 81],
+            lit: false,
+            propagating: false,
+            filtered: false,
+            ladder: Inference::default(),
         }
     }
 
@@ -803,24 +897,53 @@ impl Seiyaku {
             self.grade
         };
         let acts = if reset { 0 } else { self.acts + u64::from(act) };
-        let assigned = value_of(cmd, "assign-");
+        // the ladder's switches, the Lab's B13 to B18: the words lit by infer or propagate and put
+        // out by any other command; a propagation running while the last frame named an inference;
+        // that inference applied, an assignment or a strike; the marks filtered
+        let asked = cmd == "infer" || cmd == "propagate";
+        let lit = if asked {
+            true
+        } else if !cmd.is_empty() {
+            false
+        } else {
+            self.lit
+        };
+        let named = self.ladder.kind > 0;
+        let propagating = cmd == "propagate" || (self.propagating && named);
+        let applied = named && (propagating || (cmd == "infer" && self.lit));
+        let assigns = applied && self.ladder.kind < 3;
+        let strikes = applied && self.ladder.kind == 3;
+        let filtered = if first {
+            false
+        } else if cmd == "filter" {
+            !self.filtered
+        } else {
+            self.filtered
+        };
+        // the person's value and place, which an inference that assigns takes the place of
         let marked = value_of(cmd, "domain-");
         let retract = cmd == "retract";
         let domains = cmd == "domains";
+        let undo = cmd == "retract-inferred";
         // the Board stands from B2, a margin row and column before it (the owner's second look at
         // `ENGINE.28`'s third slice): a place is a variable on B2:J10
         let on_board = |n: u32| (2..=10).contains(&n);
-        let place = if i.sheet == "Board" && on_board(i.column) && on_board(i.row) {
-            ((i.row - 2) * 9 + i.column - 1) as usize
+        let (assigned, place) = if assigns {
+            (self.ladder.value, self.ladder.place)
         } else {
-            0
+            let place = if i.sheet == "Board" && on_board(i.column) && on_board(i.row) {
+                ((i.row - 2) * 9 + i.column - 1) as usize
+            } else {
+                0
+            };
+            (value_of(cmd, "assign-"), place)
         };
         let deal = deal(self.seed, instances, grade);
         let givens = deal.givens(&self.book);
         let mut entries = [0u8; 81];
         for k in 0..81 {
             let last = self.entries[k];
-            entries[k] = if reset || givens[k] > 0 {
+            entries[k] = if reset || givens[k] > 0 || (undo && self.inferred[k]) {
                 0
             } else if place == k + 1 {
                 if assigned > 0 {
@@ -832,6 +955,18 @@ impl Seiyaku {
                 }
             } else {
                 last
+            };
+        }
+        let mut inferred = [false; 81];
+        for k in 0..81 {
+            inferred[k] = if reset || entries[k] == 0 {
+                false
+            } else if assigns && place == k + 1 {
+                true
+            } else if entries[k] != self.entries[k] {
+                false
+            } else {
+                self.inferred[k]
             };
         }
         let mut grid = [0u8; 81];
@@ -847,6 +982,29 @@ impl Seiyaku {
                 boxes[x][usize::from(v)] += 1;
             }
         }
+        // the strikes (decision 7): cleared by a restart, a new instance, or any variable assigned
+        // at the last frame holding another value or none; else a pointing applied strikes its
+        // value from every unassigned variable on its line outside its box
+        let cleared =
+            reset || (0..81).any(|k| self.entries[k] > 0 && entries[k] != self.entries[k]);
+        let mut struck = [0u16; 81];
+        for k in 0..81 {
+            let (r, c, x) = units_of(k);
+            let on_line = if self.ladder.down {
+                c + 1 == usize::from(self.ladder.line)
+            } else {
+                r + 1 == usize::from(self.ladder.line)
+            };
+            let last = self.struck[k];
+            struck[k] = if cleared {
+                0
+            } else if strikes && grid[k] == 0 && on_line && x + 1 != usize::from(self.ladder.boxed)
+            {
+                last | (1 << (self.ladder.value - 1))
+            } else {
+                last
+            };
+        }
         let mut violated = [false; 81];
         let mut candidates = [0u16; 81];
         for k in 0..81 {
@@ -859,6 +1017,7 @@ impl Seiyaku {
                         candidates[k] |= 1 << (w - 1);
                     }
                 }
+                candidates[k] &= !struck[k];
             }
         }
         let mut marks = [0u16; 81];
@@ -895,6 +1054,13 @@ impl Seiyaku {
         } else {
             0
         };
+        let ladder = Self::infer(
+            &grid,
+            &candidates,
+            [&rows, &cols, &boxes],
+            &violated,
+            satisfied,
+        );
         self.acts = acts;
         self.instances = instances;
         self.restarts = restarts;
@@ -911,17 +1077,186 @@ impl Seiyaku {
         self.box_counts = boxes;
         self.violated = violated;
         self.candidates = candidates;
+        self.struck = struck;
+        self.inferred = inferred;
+        self.lit = lit;
+        self.propagating = propagating;
+        self.filtered = filtered;
+        self.ladder = ladder;
+    }
+
+    /// The next inference on a board, in the grader's order (`grade`): a
+    /// contradiction or the board satisfied first, which stops the ladder;
+    /// then the first naked single by variable, the first hidden single by
+    /// unit, rows, columns and boxes, and value, and the first pointing by
+    /// box and value, a row before a column; or none.
+    pub fn infer(
+        grid: &Board,
+        candidates: &[u16; 81],
+        counts: [&[[u8; 10]; 9]; 3],
+        violated: &[bool; 81],
+        satisfied: bool,
+    ) -> Inference {
+        let open = Open::of(grid, candidates);
+        let naked = (0..81).find(|&k| candidates[k].count_ones() == 1);
+        let units = units();
+        let mut hidden = None;
+        'units: for (u, unit) in units.iter().enumerate() {
+            let places = match u / 9 {
+                0 => &open.rows[u],
+                1 => &open.cols[u - 9],
+                _ => &open.boxes[u - 18],
+            };
+            for v in 1..=9u8 {
+                if places[usize::from(v)] == 1 {
+                    let k = unit
+                        .iter()
+                        .copied()
+                        .find(|&k| candidates[k] & (1 << (v - 1)) != 0)
+                        .expect("a place counted");
+                    hidden = Some((u + 1, v, k));
+                    break 'units;
+                }
+            }
+        }
+        let mut pointing = None;
+        'boxes: for b in 0..9 {
+            let (band, stack) = (b / 3, b % 3);
+            for v in 1..=9usize {
+                let n = open.boxes[b][v];
+                if n < 2 {
+                    continue;
+                }
+                for r in 3 * band..3 * band + 3 {
+                    if open.across[v][r][stack] == n && open.rows[r][v] > n {
+                        pointing = Some((b + 1, v as u8, false, r + 1));
+                        break 'boxes;
+                    }
+                }
+                for c in 3 * stack..3 * stack + 3 {
+                    if open.down[v][c][band] == n && open.cols[c][v] > n {
+                        pointing = Some((b + 1, v as u8, true, c + 1));
+                        break 'boxes;
+                    }
+                }
+            }
+        }
+        let violations = violated.iter().filter(|&&b| b).count();
+        let emptied = (0..81)
+            .filter(|&k| grid[k] == 0 && candidates[k] == 0)
+            .count();
+        let tables = [&open.rows, &open.cols, &open.boxes];
+        let no_place: usize = (0..3)
+            .map(|t| {
+                (0..9)
+                    .map(|j| {
+                        (1..=9)
+                            .filter(|&v| tables[t][j][v] == 0 && counts[t][j][v] == 0)
+                            .count()
+                    })
+                    .sum::<usize>()
+            })
+            .sum();
+        let any = naked.is_some() || hidden.is_some() || pointing.is_some();
+        let stop = if satisfied {
+            1
+        } else if violations > 0 {
+            2
+        } else if emptied > 0 {
+            3
+        } else if no_place > 0 {
+            4
+        } else if any {
+            0
+        } else {
+            5
+        };
+        let mut i = Inference {
+            stop,
+            ..Inference::default()
+        };
+        let left = grid.iter().filter(|&&v| v == 0).count();
+        if stop > 0 {
+            i.words = match stop {
+                1 => "Satisfied: nothing is left to infer.".to_string(),
+                2 => format!(
+                    "Nothing to infer: {} a constraint.",
+                    counted(violations, "variable violates", "variables violate")
+                ),
+                3 => format!(
+                    "Nothing to infer: {}",
+                    counted(
+                        emptied,
+                        "variable has no value left in its domain.",
+                        "variables have no value left in their domains."
+                    )
+                ),
+                4 => format!(
+                    "Nothing to infer: {} no place left in a constraint.",
+                    counted(no_place, "value has", "values have")
+                ),
+                _ => format!("Nothing the three techniques can infer: {left} variables left."),
+            };
+        } else if let Some(k) = naked {
+            i.kind = 1;
+            i.value = candidates[k].trailing_zeros() as u8 + 1;
+            i.place = k + 1;
+            i.words = format!(
+                "{} is {}: the only value left in its domain.",
+                address_of(i.place),
+                i.value
+            );
+        } else if let Some((u, v, k)) = hidden {
+            i.kind = 2;
+            i.value = v;
+            i.place = k + 1;
+            let named = match (u - 1) / 9 {
+                0 => "row",
+                1 => "column",
+                _ => "box",
+            };
+            i.words = format!(
+                "{} is {v}: the only place left for it in its {named}.",
+                address_of(i.place)
+            );
+        } else if let Some((b, v, down, line)) = pointing {
+            i.kind = 3;
+            i.value = v;
+            i.boxed = b as u8;
+            i.down = down;
+            i.line = line as u8;
+            let named = if down {
+                format!("column {}", char::from(b'A' + line as u8))
+            } else {
+                format!("row {}", line + 1)
+            };
+            let first = 9 * (3 * ((b - 1) / 3)) + 3 * ((b - 1) % 3) + 1;
+            i.words = format!(
+                "{v} is struck from the rest of {named}: in the box from {}, every place left for it is on that line.",
+                address_of(first)
+            );
+        }
+        i
+    }
+
+    /// The marks a variable draws: all of them, or, filtered, those still
+    /// candidates (decision 13).
+    pub fn drawn(&self, k: usize) -> u16 {
+        if self.filtered {
+            self.marks[k] & self.candidates[k]
+        } else {
+            self.marks[k]
+        }
     }
 
     /// What the Board shows at row and column from 1: a value's code, 100
     /// times its kind, 10 times its box's parity and the value, the kinds a
     /// given, an assignment, each violated and each satisfied; else the
-    /// marks kept, a digit or a figure space in each of nine places, a line
-    /// of three with three figure spaces between them, and a line of four
-    /// figure spaces between two lines, too wide to share a line with marks,
-    /// each line a word the viewport's wrap breaks after and centers, so that
-    /// each mark stands in its third of the cell (the owner's hand tests,
-    /// 2026-10-19 and `ENGINE.28`'s of 2026-10-29).
+    /// marks drawn, a digit or a figure space in each of nine places, a line
+    /// of three with three figure spaces between them, and two line feeds
+    /// between two lines, so that each mark stands in its third of the cell
+    /// (the owner's hand tests, 2026-10-19 and `ENGINE.28`'s of 2026-10-29;
+    /// the line feeds since `CART.14.1`'s second slice, by `ENGINE.36`).
     pub fn shown(&self, row: u32, column: u32) -> Shown {
         let k = ((row - 1) * 9 + (column - 1)) as usize;
         let v = self.grid[k];
@@ -938,7 +1273,7 @@ impl Seiyaku {
             let parity = ((row - 1) / 3 + (column - 1) / 3) % 2;
             return Shown::Number(f64::from(100 * kind + 10 * parity + u32::from(v)));
         }
-        let m = self.marks[k];
+        let m = self.drawn(k);
         if m == 0 {
             return Shown::Text(String::new());
         }
@@ -951,7 +1286,6 @@ impl Seiyaku {
             }
         };
         let within: String = [fs; 3].iter().collect();
-        let between: String = [fs; 4].iter().collect();
         let lines: Vec<String> = [1u8, 4, 7]
             .iter()
             .map(|&d| {
@@ -963,7 +1297,16 @@ impl Seiyaku {
                 )
             })
             .collect();
-        Shown::Text(lines.join(&format!(" {between} ")))
+        Shown::Text(lines.join("\n\n"))
+    }
+
+    /// The words under the Board, `B11`: the ladder's while lit.
+    pub fn words(&self) -> String {
+        if self.lit {
+            self.ladder.words.clone()
+        } else {
+            String::new()
+        }
     }
 
     /// The givens of the instance.
@@ -974,6 +1317,11 @@ impl Seiyaku {
     /// The variables assigned, the givens among them.
     pub fn filled(&self) -> usize {
         self.grid.iter().filter(|&&v| v > 0).count()
+    }
+
+    /// The variables inference assigned.
+    pub fn inferred_count(&self) -> usize {
+        self.inferred.iter().filter(|&&b| b).count()
     }
 
     /// The constraints violated: each row, column and box with a value twice.

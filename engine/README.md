@@ -117,7 +117,12 @@ holds each to its grade and writes the book again from its seed; another
 holds the solvers to each other; another holds every instance to a symmetry
 of its puzzle, its one solution and its grade kept; and a session holds the
 Board, the givens, the marks, the Lab and the Constraints sheet to the hand at
-every frame. The book is written into the source by an example of its own,
+every frame. Since `CART.14.1`'s second slice the hand keeps the ladder too,
+the grader's three techniques an inference a frame: a second session holds
+its strikes, its assignments and its words at every frame through `I`, `P`,
+`U` and `M`, and a test deals every puzzle of the book by name and propagates
+it in cells, the three techniques satisfying the first three grades and none
+of the fourth. The book is written into the source by an example of its own,
 which includes the same file by its path:
 
 ```text

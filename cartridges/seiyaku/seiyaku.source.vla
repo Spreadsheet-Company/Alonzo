@@ -21,6 +21,12 @@
 ;   F: fill every unassigned variable's domain with the values its constraints still allow.
 ;   R: retract every assignment and strike every mark.
 ;   N: a new instance. G: the next instance's grade, 1 to 4 and round.
+;   I: infer. The next inference the three techniques make is said under the Board; pressed
+;     again, it is applied and the next one said, so that I, again and again, walks the puzzle.
+;   P: propagate. Inference after inference is applied until none is left, and the words say
+;     where it stopped: satisfied, a contradiction, or as far as the three techniques reach.
+;   U: retract every assignment inference made, and leave yours.
+;   M: draw only the marks the constraints still allow, the rest kept beneath; again, all.
 ; A variable whose value repeats in one of its constraints is violated, and drawn red. When
 ; every variable is assigned and no constraint is violated, the instance is satisfied, and
 ; the Board turns Lovelace Lavender, its digits white. The Constraints sheet keeps the counts and each
@@ -40,17 +46,32 @@
 ; relabeled. Each is a symmetry of the rules, so the instance keeps its puzzle's one solution
 ; and its grade.
 ;
-; How it settles. The cartridge says (settle 16): after an act the engine steps the board
+; How it settles. The cartridge says (settle 165): after an act the engine steps the board
 ; again, with no act, until a frame changes nothing (docs/SPEC.md section 5, version 6). An
 ; act is three frames, its own, the one after the engine releases its command, and one that
-; proves nothing moved; the load settles too, so the board opens on its values.
+; proves nothing moved; the load settles too, so the board opens on its values. Propagation
+; is an inference a frame across the settle's steps (CART.14.1, decisions 4 and 14): at most
+; 81 assignments and 81 strikes, since a box and a value point once until a person acts
+; again, and the frames around them.
+;
+; How it infers (CART.14.1's second slice). Every frame the Ladder sheet names the next
+; inference from the candidates, the values the constraints still allow less those struck,
+; in the grader's order (engine/src/seiyaku.rs, grade): a naked single, a variable with one
+; value left; a hidden single, a value with one place left in a row, a column or a box; and
+; a pointing pair or triple, a box whose places for a value all lie on one line, the value
+; struck from the rest of that line. A frame applies what the last one named, through the
+; person's own path, the Lab's assignment and place, or the Struck sheet, so no cell reads
+; itself. The ladder reads the constraints alone and never the person's marks.
 ;
 ; What a rule costs (docs/SPEC.md section 2), and how this source keeps it:
 ;   - The constraints are counted by COUNTIF over the Grid: a unit's count of a value is one
 ;     COUNTIF over its row, column or box, a fill a table, read by the unit's nine variables
 ;     through INDEX.
 ;   - A command is read once, in a cell of the Lab, and every variable reads that cell.
-;   - The marks' text is built by & and never compared.
+;   - The marks' text is built by & and never compared, a mark read by BITAND.
+;   - The ladder counts each unit's places for each value by SUM over the candidates' planes,
+;     a flip reaching only its own value's counts (CART.14.1, decision 8), and finds the
+;     first of each technique by MIN over keys that sort as the grader's order does.
 
 (cartridge "seiyaku"
   (spec 6)                          ; the version of docs/SPEC.md this cartridge is written to: an act's place, (settle K), (bound ...), (game ...) and (read ...)
@@ -58,13 +79,13 @@
   (rate 0)                          ; an act steps the board; nothing else does
   (screen grid 9 9)                 ; the Screen, hidden: the Camera shows the Board in its place
   (seed host)                       ; the host's seed, new instances each load; a seed typed into Clock!B3 brings them back
-  (settle 16)                       ; an act's settle, at most 16 steps
+  (settle 165)                      ; an act's settle, at most 165 steps: propagation's assignments and strikes, and the frames around them
   (bound "Board")                   ; the Board drawn to its extent and no further
   (game "Board" "Constraints")      ; the game's keys on both tabs, G where the next grade shows among them
   (read "Board" "Constraints")      ; read-only: no key or row of a person's writes either, so no cell loses its formula
   (author "Spreadsheet Company")    ; who wrote it
   (license "0BSD")                  ; the header's twin: copy this file to start a game of your own
-  (notes "Seiyaku 制約: eighty-one variables, twenty-seven constraints, one solution, proven before you began. 1 to 9, the row's or the keypad's, assign a value to the variable the selection stands on and Backspace retracts it; Q W E, A S D and Z X C mark a value in its domain, each key where its mark stands in the cell; F fills every unassigned domain with the values its constraints allow; R retracts every assignment, N deals a new instance and G sets the next instance's grade."))
+  (notes "Seiyaku 制約: eighty-one variables, twenty-seven constraints, one solution, proven before you began. 1 to 9, the row's or the keypad's, assign a value to the variable the selection stands on and Backspace retracts it; Q W E, A S D and Z X C mark a value in its domain, each key where its mark stands in the cell; F fills every unassigned domain with the values its constraints allow; R retracts every assignment, N deals a new instance and G sets the next instance's grade. I says the next inference and, again, applies it; P propagates to the fixed point; U retracts what inference assigned; M draws only the marks the constraints allow."))
 
 ; The library whose macros this source calls: sheets, labels and headers; cells, rules
 ; and on, each naming a sheet once over a run of its rows; rule and priority; count and first-frame;
@@ -86,6 +107,17 @@
 (sheet "Units" hidden)
 (sheet "Candidates" hidden)
 (sheet "Violations" hidden)
+(sheet "Struck" hidden)
+(sheet "Across" hidden)
+(sheet "Down" hidden)
+(sheet "Boxes" hidden)
+(sheet "Open" hidden)
+(sheet "Naked" hidden)
+(sheet "Hidden" hidden)
+(sheet "Forced" hidden)
+(sheet "Ladder" hidden)
+(sheet "Inferred" hidden)
+(sheet "Drawn" hidden)
 (sheet "Lab" hidden)
 (sheet "Screen" hidden)
 (sheet "Camera" hidden)
@@ -123,13 +155,22 @@
   ("A21" "domains")    ("B21" "fill every unassigned variable's domain with the values its constraints still allow") ("D21" "KeyF")
   ("A22" "retract-all") ("B22" "retract every assignment and strike every mark of the instance")                 ("D22" "KeyR")
   ("A23" "instance")   ("B23" "deal a new instance, at the next instance's grade")                               ("D23" "KeyN")
-  ("A24" "grade")      ("B24" "the next instance's grade: 1, 2, 3, 4 and round")                                 ("D24" "KeyG"))
+  ("A24" "grade")      ("B24" "the next instance's grade: 1, 2, 3, 4 and round")                                 ("D24" "KeyG")
+  ("A25" "infer")      ("B25" "say the next inference; pressed again, apply it and say the next")                ("D25" "KeyI")
+  ("A26" "propagate")  ("B26" "apply inference after inference to the fixed point, and say where it stopped")    ("D26" "KeyP")
+  ("A27" "retract-inferred") ("B27" "retract every assignment inference made")                                   ("D27" "KeyU")
+  ("A28" "filter")     ("B28" "draw only the marks the constraints still allow, or every mark again")            ("D28" "KeyM"))
 
 ; ---- the Lab: the counts, and the act read once ---------------------------------------
 ; The acts of this instance, the instances dealt, the restarts; the next instance's grade,
 ; 2 at the load, and this instance's; the act's value, its mark, a retraction, the domains
-; filled, and the variable it stands on, 1 to 81 or 0; satisfied, and the acts it took.
-(labels "Lab" "A1" "acts" "instances" "restarts" "next grade" "grade" "assigned" "marked" "retract" "domains" "place" "satisfied" "satisfied in")
+; filled, and the variable it stands on, 1 to 81 or 0; satisfied, and the acts it took. Then
+; the ladder's (CART.14.1's second slice): its words lit, a propagation running, an inference
+; applied at this frame, an assignment or a strike, the marks filtered; the person's own
+; value and place, which the assigned and the place are unless an inference assigns; and the
+; strikes cleared.
+(labels "Lab" "A1" "acts" "instances" "restarts" "next grade" "grade" "assigned" "marked" "retract" "domains" "place" "satisfied" "satisfied in"
+  "lit" "propagating" "applied" "assigns" "strikes" "filtered" "the person's value" "the person's place" "strikes cleared")
 
 (defmacro (the-variables-filled)
   "how many variables hold a value, given or assigned"
@@ -148,15 +189,43 @@
 (count "Lab" "B2" (if (a-command "instance") 1 0))
 (count "Lab" "B3" (if (a-command "retract-all") 1 0))
 (first-frame "Lab" "B4" 2 (if (a-command "grade") (+ (mod Lab.last!B4 4) 1) Lab.last!B4))
+(defmacro (the-ladder-asked)
+  "infer or propagate run at this frame, which light the ladder's words"
+  (or (a-command "infer") (a-command "propagate")))
+
+(defmacro (an-inference-named)
+  "the last frame's ladder named an inference: an assignment or a strike"
+  (> Ladder.last!$B$1 0))
+
+(defmacro (the-inference-applied)
+  "the last frame's inference applied at this one: while a propagation runs, or at infer pressed while its words were lit"
+  (and (an-inference-named)
+       (or (= Lab!B14 1)
+           (and (a-command "infer") (= Lab.last!B13 1)))))
+
 (rules "Lab"
   ("B5" (if (or (= Clock!$B$1 1) (<> Lab!B2 Lab.last!B2)) Lab!B4 Lab.last!B5))
-  ("B6" (+ (each (k (1 2 3 4 5 6 7 8 9)) (named-as "assign-" k))))
+  ("B6" (if (= Lab!B16 1) Ladder.last!$B$2 Lab!B19))   ; the value assigned: the inference's, or the person's
   ("B7" (+ (each (k (1 2 3 4 5 6 7 8 9)) (named-as "domain-" k))))
   ("B8" (if (a-command "retract") 1 0))
   ("B9" (if (a-command "domains") 1 0))
-  ("B10" (if (and (= Input!$B$19 "Board") (>= Input!$B$11 2) (<= Input!$B$11 10) (>= Input!$B$12 2) (<= Input!$B$12 10)) (+ (* (- Input!$B$12 2) 9) (- Input!$B$11 1)) 0))
+  ("B10" (if (= Lab!B16 1) Ladder.last!$B$3 Lab!B20))  ; the place acted on: the inference's, or the person's
   ("B11" (if (and (= (the-variables-filled) 81) (= (sum Violations!A1:I9) 0)) 1 0))
-  ("B12" (if (= Lab!B11 1) (if (= Lab.last!B11 1) Lab.last!B12 Lab!B1) 0)))
+  ("B12" (if (= Lab!B11 1) (if (= Lab.last!B11 1) Lab.last!B12 Lab!B1) 0))
+  ("B13" (priority
+           ((the-ladder-asked) 1)
+           ((<> Input!$B$20 "") 0)                       ; any other command puts the words out
+           (else Lab.last!B13)))
+  ("B14" (priority
+           ((a-command "propagate") 1)
+           ((and (= Lab.last!B14 1) (an-inference-named)) 1)
+           (else 0)))
+  ("B15" (if (the-inference-applied) 1 0))
+  ("B16" (if (and (= Lab!B15 1) (< Ladder.last!$B$1 3)) 1 0))   ; a naked or a hidden single assigns
+  ("B17" (if (and (= Lab!B15 1) (= Ladder.last!$B$1 3)) 1 0))   ; a pointing strikes
+  ("B19" (+ (each (k (1 2 3 4 5 6 7 8 9)) (named-as "assign-" k))))
+  ("B20" (if (and (= Input!$B$19 "Board") (>= Input!$B$11 2) (<= Input!$B$11 10) (>= Input!$B$12 2) (<= Input!$B$12 10)) (+ (* (- Input!$B$12 2) 9) (- Input!$B$11 1)) 0)))
+(first-frame "Lab" "B18" 0 (if (a-command "filter") (- 1 Lab.last!B18) Lab.last!B18))
 
 ; ---- the Deal: the instance's puzzle, and its transform --------------------------------
 ; Rows 10 to 44 hash the seed, the instance and the row: Life's soup hash, two linear forms
@@ -231,8 +300,8 @@
   (^ 2 (- Lab!$B$7 1)))
 
 (defmacro (bit-of cell k)
-  "a bit of a number of marks: the number over k, 2 to the mark's place, whole and modulo 2"
-  (mod (int (/ cell k)) 2))
+  "a bit of a number of marks, 1 or 0: the number and k, 2 to the mark's place, by BITAND"
+  (if (> (bitand cell k) 0) 1 0))
 
 (defmacro (an-act-here)
   "true where the act stands on this variable"
@@ -245,22 +314,44 @@
     ((= Lab!$B$8 1) 0)
     (else Entries.last!A1)))
 
+(defmacro (inferred-and-retracted)
+  "retract-inferred run at this frame, on a variable inference assigned"
+  (and (a-command "retract-inferred") (= Inferred.last!A1 1)))
+
 (rule "Entries" "A1:I9"
   (priority
     ((a-new-instance) 0)                       ; a new instance or a restart empties it
     ((> Givens!A1 0) 0)                        ; a given is never assigned
+    ((inferred-and-retracted) 0)               ; U takes back what inference assigned
     ((an-act-here) (the-assignment-acted-on))
     (else Entries.last!A1)))                   ; else as it was
+
+; The variables inference assigned, each 1 until a retraction, a person's assignment over it,
+; a restart or a new instance; the Constraints sheet counts them, and U retracts them.
+(rule "Inferred" "A1:I9"
+  (priority
+    ((a-new-instance) 0)
+    ((= Entries!A1 0) 0)                       ; retracted, or never assigned
+    ((and (= Lab!$B$16 1) (an-act-here)) 1)    ; inference assigned it at this frame
+    ((<> Entries!A1 Entries.last!A1) 0)        ; the person assigned over it
+    (else Inferred.last!A1)))
+
+; The strikes cleared (CART.14.1, decision 7): an assignment only narrows the domains, so the
+; strikes hold across one; a retraction or an overwrite of any variable widens them, and a
+; restart or a new instance begins again, so each clears every strike.
+(defmacro (a-value-taken-back)
+  "some variable assigned at the last frame holds another value or none at this one"
+  (> (sumproduct (* (> Entries.last!A1:I9 0) (<> Entries!A1:I9 Entries.last!A1:I9))) 0))
+
+(rule "Lab" "B21" (if (or (a-new-instance) (a-value-taken-back)) 1 0))
 
 (defmacro (the-domain-filled)
   "domains: an unassigned variable's marks its candidates, an assigned variable's kept"
   (if (> Entries!A1 0) Marks.last!A1 Candidates!A83))
 
 (defmacro (the-mark-toggled)
-  "the act's value marked in the domain, or struck where it stands marked"
-  (if (= (bit-of Marks.last!A1 (the-mark)) 1)
-    (- Marks.last!A1 (the-mark))
-    (+ Marks.last!A1 (the-mark))))
+  "the act's value marked in the domain, or struck where it stands marked: its bit flipped"
+  (bitxor Marks.last!A1 (the-mark)))
 
 (defmacro (the-marks-acted-on)
   "an act on this variable: a mark on an unassigned variable toggled, a retraction of an unassigned variable striking every mark, or the marks as they were"
@@ -318,33 +409,291 @@
   (if (= Grid!A1 0) 0
     (if (or (> (its-row-count) 1) (> (its-column-count) 1) (> (its-box-count) 1)) 1 0)))
 
+; ---- the strikes: the values a pointing took out of a domain (CART.14.1, decision 7) -------
+; Each variable's strikes a number of bits, as its marks are: a pointing the last frame named
+; and this frame applies strikes its value from every unassigned variable on its line outside
+; its box; the Lab's B21 clears them all.
+(defmacro (on-the-struck-line)
+  "the variable lies on the line the last frame's pointing named, a row or a column, outside its box"
+  (and (if (= Ladder.last!$B$6 1)
+         (= (column) Ladder.last!$B$7)
+         (= (row) Ladder.last!$B$7))
+       (<> (the-box-from 1) Ladder.last!$B$5)))
+
+(defmacro (struck-here)
+  "a strike applied at this frame to this unassigned variable"
+  (and (= Lab!$B$17 1) (= Grid!A1 0) (on-the-struck-line)))
+
+(rule "Struck" "A1:I9"
+  (priority
+    ((= Lab!$B$21 1) 0)                                                 ; cleared
+    ((struck-here) (bitor Struck.last!A1 Ladder.last!$B$4))             ; the pointing's value struck
+    (else Struck.last!A1)))
+
 ; A value is a candidate of an unassigned variable where it counts in none of its three
-; constraints: nine planes, the value v's at rows 9 (v - 1) + 1 to 9 v, each a fill; A83:I91
-; the candidates as marks.
-(defmacro (candidate-plane letter top bottom units-row)
-  "a plane of candidates from the row top to the row bottom: the value's counts in the Units' column letter, its columns' on units-row"
+; constraints and no pointing struck it: nine planes, the value v's at rows 9 (v - 1) + 1 to
+; 9 v, each a fill; A83:I91 the candidates as marks, which F fills a domain with.
+(defmacro (candidate-plane bit letter top bottom units-row)
+  "a plane of candidates from the row top to the row bottom: the value's bit not struck, and its counts in the Units' column letter, its columns' on units-row"
   (rule "Candidates" (&expand "A" top ":I" bottom)
     (if (and (= Grid!A1 0)
+             (= (bitand Struck!A1 bit) 0)
              (= (ref "Units" (&expand "$" letter 1)) 0)
              (= (ref "Units" (&expand "A$" units-row)) 0)
              (= (index (ref "Units" (&expand "$" letter "$21:$" letter "$29")) (the-box-from top)) 0))
       1 0)))
 
-(each (v (1 2 3 4 5 6 7 8 9))
-  (candidate-plane (column-letters-expand v) (+expand (*expand 9 (-expand v 1)) 1) (*expand 9 v) (+expand 10 v)))
+(each-index (v bit (1 2 4 8 16 32 64 128 256) 1)
+  (candidate-plane bit (column-letters-expand v) (+expand (*expand 9 (-expand v 1)) 1) (*expand 9 v) (+expand 10 v)))
 
 (rule "Candidates" "A83:I91"
   (+ A1 (* 2 A10) (* 4 A19) (* 8 A28) (* 16 A37) (* 32 A46) (* 64 A55) (* 128 A64) (* 256 A73)))
+
+; ---- the open places: each unit's count of each value's places left (decision 8) ----------
+; Across, a row a row of the planes (9 (v - 1) + r): A to C the places in each stack's three
+; columns, D the row's whole count. Down, a row a band of a plane (3 (v - 1) + band + 1): A to
+; I the places in each column's three rows of the band. Boxes, Down's rows: A to C each
+; stack's box. Open, laid out as the Units are: A1:I9 each row's places for each value, a value
+; a column; A11:I19 each column's, a value a row; A21:I29 each box's, a value a column.
+(rule "Across" "A1:A81" (sum Candidates!$A1:$C1))
+(rule "Across" "B1:B81" (sum Candidates!$D1:$F1))
+(rule "Across" "C1:C81" (sum Candidates!$G1:$I1))
+(rule "Across" "D1:D81" (sum A1:C1))
+
+(defmacro (a-band-down row top)
+  "a row of Down: the value's places in each column within a band, its plane's three rows from top summed"
+  (rule "Down" (&expand "A" row ":I" row)
+    (sum (ref "Candidates" (&expand "A" top ":A" (+expand top 2))))))
+
+(each (v (1 2 3 4 5 6 7 8 9))
+  (each (band (0 1 2))
+    (a-band-down
+      (+expand (*expand 3 (-expand v 1)) (+expand band 1))
+      (+expand (*expand 9 (-expand v 1)) (+expand (*expand 3 band) 1)))))
+
+(rule "Boxes" "A1:A27" (sum Down!$A1:$C1))
+(rule "Boxes" "B1:B27" (sum Down!$D1:$F1))
+(rule "Boxes" "C1:C27" (sum Down!$G1:$I1))
+
+(defmacro (a-value-across v row)
+  "Open's column of the value v: each row's places left for it, the Across sheet's whole counts from its plane's first row"
+  (rule "Open" (&expand (column-letters-expand v) "1:" (column-letters-expand v) "9")
+    (ref "Across" (&expand "$D" row))))
+
+(defmacro (a-value-down row top)
+  "Open's row of a value among the columns: each column's places left for it, its three bands in Down from top summed"
+  (rule "Open" (&expand "A" row ":I" row)
+    (sum (ref "Down" (&expand "A" top ":A" (+expand top 2))))))
+
+(each (v (1 2 3 4 5 6 7 8 9))
+  (a-value-across v (+expand (*expand 9 (-expand v 1)) 1))
+  (a-value-down (+expand 10 v) (+expand (*expand 3 (-expand v 1)) 1)))
+
+(defmacro (the-band-of-the-box top)
+  "a box's band, 0 to 2, where the rows of the boxes start at top"
+  (int (/ (- (row) top) 3)))
+
+(defmacro (the-stack-of-the-box top)
+  "a box's stack, 0 to 2, where the rows of the boxes start at top"
+  (mod (- (row) top) 3))
+
+(rule "Open" "A21:I29"
+  (index Boxes!$A$1:$C$27
+    (+ (* 3 (- (column) 1)) (the-band-of-the-box 21) 1)
+    (+ (the-stack-of-the-box 21) 1)))
+
+; ---- the three techniques' keys: each one's first by MIN, in the grader's order (decision 9) ----
+; Naked: a variable with one value left, 10 times the variable and the value. Hidden: each
+; unit's first value with one place left, 100 times the unit and the value, the rows units 1
+; to 9 (A1:A9), the columns 10 to 18 (A11:I11) and the boxes 19 to 27 (A21:A29); the place,
+; Forced, the variable in that unit holding that value. A pointing, Across!E1:G81 by rows and
+; Down!A31:I57 by columns: a box's two or more places for a value all on one line, the line
+; holding more beyond the box, 10000 times the box, 100 times the value, 10 for a column and
+; the line. 9999 and 999999 are none.
+(defmacro (none-naked) 9999)
+
+(defmacro (none-pointing) 999999)
+
+(rule "Naked" "A1:I9"
+  (iferror
+    (+ (* 10 (this-variable)) (match Candidates!A83 (quote (1 2 4 8 16 32 64 128 256)) 0))
+    (none-naked)))
+
+(rule "Hidden" "A1:A9" (iferror (+ (* 100 (row)) (match 1 Open!$A1:$I1 0)) (none-naked)))
+(rule "Hidden" "A11:I11" (iferror (+ (* 100 (+ 9 (column))) (match 1 Open!A$11:A$19 0)) (none-naked)))
+(rule "Hidden" "A21:A29" (iferror (+ (* 100 (- (row) 2)) (match 1 Open!$A21:$I21 0)) (none-naked)))
+
+(defmacro (in-the-unit unit)
+  "the variable lies in the unit: a row 1 to 9, a column 10 to 18, a box 19 to 27"
+  (priority
+    ((<= unit 9) (= (row) unit))
+    ((<= unit 18) (= (column) (- unit 9)))
+    (else (= (the-box-from 1) (- unit 18)))))
+
+(rule "Forced" "A1:I9"
+  (if (and (in-the-unit Ladder!$B$17) (> (bitand Candidates!A83 Ladder!$B$19) 0)) (this-variable) 0))
+
+(defmacro (the-plane-value)
+  "the value whose plane this row of Across counts, 1 to 9"
+  (+ (int (/ (- (row) 1) 9)) 1))
+
+(defmacro (the-plane-row)
+  "the row of variables this row of Across counts, 1 to 9"
+  (+ (mod (- (row) 1) 9) 1))
+
+(defmacro (the-band-of line)
+  "a row's band or a column's stack, 0 to 2"
+  (int (/ (- line 1) 3)))
+
+(defmacro (the-box-places-across)
+  "the value's places left in the box this row and stack meet, read from its row of the Boxes"
+  (index Boxes!A$1:A$27 (+ (* 3 (- (the-plane-value) 1)) (the-band-of (the-plane-row)) 1)))
+
+(defmacro (a-row-pointing)
+  "the box's places for the value, two or more, all on this row, and the row holding more beyond the box"
+  (and (>= (the-box-places-across) 2)
+       (= A1 (the-box-places-across))
+       (> $D1 A1)))
+
+(defmacro (a-row-pointing-key)
+  "10000 times the box, 100 times the value, and the row"
+  (+ (* 10000 (+ (* 3 (the-band-of (the-plane-row))) (- (column) 4)))
+     (* 100 (the-plane-value))
+     (the-plane-row)))
+
+(rule "Across" "E1:G81" (if (a-row-pointing) (a-row-pointing-key) (none-pointing)))
+
+(defmacro (the-down-value)
+  "the value whose plane this row of Down's pointings counts, 1 to 9, from row 31"
+  (+ (int (/ (- (row) 31) 3)) 1))
+
+(defmacro (the-down-band)
+  "the band this row of Down's pointings counts, 0 to 2"
+  (mod (- (row) 31) 3))
+
+(defmacro (the-box-places-down)
+  "the value's places left in the box this band and column meet, read from its row of the Boxes"
+  (index Boxes!$A1:$C1 (+ (the-band-of (column)) 1)))
+
+(defmacro (a-column-pointing)
+  "the box's places for the value, two or more, all on this column, and the column holding more beyond the box"
+  (and (>= (the-box-places-down) 2)
+       (= A1 (the-box-places-down))
+       (> (index Open!A$11:A$19 (the-down-value)) A1)))
+
+(defmacro (a-column-pointing-key)
+  "10000 times the box, 100 times the value, 10 for a column, and the column"
+  (+ (* 10000 (+ (* 3 (the-down-band)) (the-band-of (column)) 1))
+     (* 100 (the-down-value))
+     10
+     (column)))
+
+(rule "Down" "A31:I57" (if (a-column-pointing) (a-column-pointing-key) (none-pointing)))
+
+; ---- the Ladder: the next inference, or where it stops (decisions 4, 9 and 10) ----------------
+; B1 the kind, 0 none, 1 a naked single, 2 a hidden single, 3 a pointing; B2 its value; B3 the
+; place an assignment takes; B4 the value's bit; B5 to B7 a pointing's box, 1 for a column, and
+; its line; B9 why there is none, 1 satisfied, 2 a violated constraint, 3 an emptied domain, 4
+; a value with no place in a constraint, 5 nothing the three techniques infer. B11 to B22 the
+; workings, and B21 the words.
+(labels "Ladder" "A1" "kind" "value" "place" "bit" "box" "down" "line" "" "stop")
+(labels "Ladder" "A11" "naked" "hidden" "pointing" "violated" "emptied" "no place" "hidden unit" "hidden value" "hidden bit" "hidden place" "words" "unassigned")
+
+(defmacro (a-naked-single) (< Ladder!$B$11 (none-naked)))
+
+(defmacro (a-hidden-single) (< Ladder!$B$12 (none-naked)))
+
+(defmacro (a-pointing) (< Ladder!$B$13 (none-pointing)))
+
+(defmacro (no-place-in units)
+  "a unit's values with no place left and none placed, over one of the Open's three tables and its Units"
+  (countifs (ref "Open" units) 0 (ref "Units" units) 0))
+
+(rules "Ladder"
+  ("B11" (min Naked!A1:I9))
+  ("B12" (min Hidden!A1:A9 Hidden!A11:I11 Hidden!A21:A29))
+  ("B13" (min Across!E1:G81 Down!A31:I57))
+  ("B14" (sum Violations!A1:I9))
+  ("B15" (countifs Grid!A1:I9 0 Candidates!A83:I91 0))
+  ("B16" (+ (no-place-in "A1:I9") (no-place-in "A11:I19") (no-place-in "A21:I29")))
+  ("B17" (int (/ B12 100)))
+  ("B18" (mod B12 100))
+  ("B19" (if (a-hidden-single) (^ 2 (- B18 1)) 0))
+  ("B20" (max Forced!A1:I9))
+  ("B22" (- 81 (the-variables-filled)))
+  ("B9" (priority
+          ((= Lab!$B$11 1) 1)
+          ((> B14 0) 2)
+          ((> B15 0) 3)
+          ((> B16 0) 4)
+          ((or (a-naked-single) (a-hidden-single) (a-pointing)) 0)
+          (else 5)))
+  ("B1" (priority
+          ((> B9 0) 0)
+          ((a-naked-single) 1)
+          ((a-hidden-single) 2)
+          (else 3)))
+  ("B2" (choose (+ B1 1) 0 (mod B11 10) B18 (mod (int (/ B13 100)) 100)))
+  ("B3" (choose (+ B1 1) 0 (int (/ B11 10)) B20 0))
+  ("B4" (if (> B2 0) (^ 2 (- B2 1)) 0))
+  ("B5" (if (= B1 3) (int (/ B13 10000)) 0))
+  ("B6" (if (= B1 3) (mod (int (/ B13 10)) 10) 0))
+  ("B7" (if (= B1 3) (mod B13 10) 0)))
+
+; The words (decision 12): a variable by the address the Board's headers show, from B2, and a
+; constraint as the variable's row, column or box; a pointing's line by its header, row 6 or
+; column F, and its box by the box's first variable.
+(defmacro (the-address-of place)
+  "a variable's address as the Board's headers show it: E2"
+  (address (+ (int (/ (- place 1) 9)) 2) (+ (mod (- place 1) 9) 2) 4))
+
+(defmacro (the-unit-named unit)
+  "a unit by its kind, as a variable's constraint: its row, its column or its box"
+  (priority
+    ((<= unit 9) "row")
+    ((<= unit 18) "column")
+    (else "box")))
+
+(defmacro (the-line-named)
+  "a pointing's line as the Board's headers name it: row 6, or column F"
+  (if (= B6 1)
+    (& "column " (char (+ 65 B7)))
+    (& "row " (+ B7 1))))
+
+(defmacro (the-box-at box)
+  "a box by its first variable's address: E5"
+  (address (+ (* 3 (int (/ (- box 1) 3))) 2) (+ (* 3 (mod (- box 1) 3)) 2) 4))
+
+(defmacro (counted n one many)
+  "n and the words for one or for many"
+  (& n " " (if (= n 1) one many)))
+
+(rule "Ladder" "B21"
+  (priority
+    ((= B9 1) "Satisfied: nothing is left to infer.")
+    ((= B9 2) (& "Nothing to infer: " (counted B14 "variable violates" "variables violate") " a constraint."))
+    ((= B9 3) (& "Nothing to infer: " (counted B15 "variable has no value left in its domain." "variables have no value left in their domains.")))
+    ((= B9 4) (& "Nothing to infer: " (counted B16 "value has" "values have") " no place left in a constraint."))
+    ((= B9 5) (& "Nothing the three techniques can infer: " B22 " variables left."))
+    ((= B1 1) (& (the-address-of B3) " is " B2 ": the only value left in its domain."))
+    ((= B1 2) (& (the-address-of B3) " is " B2 ": the only place left for it in its " (the-unit-named B17) "."))
+    (else (& B2 " is struck from the rest of " (the-line-named) ": in the box from " (the-box-at B5) ", every place left for it is on that line."))))
+
+; ---- the marks drawn: all, or filtered (decision 13) ---------------------------------------
+; M filters: a mark no longer a candidate is not drawn, kept beneath, and back when a
+; retraction widens its domain again.
+(rule "Drawn" "A1:I9" (if (= Lab!$B$18 1) (bitand Marks!A1 Candidates!A83) Marks!A1))
 
 ; ---- the Board: what a person sees -------------------------------------------------------
 ; An assigned variable shows a code, 100 times its kind, 10 times its box's parity and its
 ; value: the kinds a given (1), an assignment (2), a violated given (3), a violated
 ; assignment (4), and, once satisfied, a given (5) and an assignment (6); the parity 0 on the
 ; boxes 1, 3, 5, 7 and 9 and 1 on the others. Each code draws through a look. An unassigned
-; variable shows its marks, a digit or a figure space in each of nine places, three figure
-; spaces between two of a line, which its own format wraps into five lines and centers,
-; three of marks and between two of them a line of four figure spaces, too wide to share a
-; line with marks, so that each mark stands centered in its third of the cell; or nothing.
+; variable shows its marks drawn, all of them or, filtered, those still candidates: a digit
+; or a figure space in each of nine places, three figure spaces between two of a line, and
+; two line feeds between two lines, which its own format draws as five lines, centered,
+; three of marks and an empty line between two of them, so that each mark stands centered in
+; its third of the cell; or nothing.
 ; The Board stands from B2, a margin row and column before it in the canvas's gray, so that its
 ; frame's top and left draw as its right and bottom do: Excel draws no line of a cell's on
 ; row 1's top or column A's left, beside the headers, and the page draws as Excel does (the
@@ -358,12 +707,12 @@
   "   ")
 
 (defmacro (between-lines)
-  "a space, four figure spaces and a space, too wide to share a line with marks, so that it wraps to a line of its own"
-  "      ")
+  "two line feeds, a line of marks ended and an empty line between it and the next, so that each mark stands in its third of the cell (ENGINE.36)"
+  (& (char 10) (char 10)))
 
 (defmacro (a-mark bit digit)
-  "the digit where the marks hold its bit, else a figure space"
-  (if (= (bit-of Marks!A1 bit) 1) digit (figure-space)))
+  "the digit where the marks drawn hold its bit, else a figure space"
+  (if (= (bit-of Drawn!A1 bit) 1) digit (figure-space)))
 
 (defmacro (the-marks)
   "an unassigned variable's marks as text, three lines of three, each digit in its place"
@@ -386,8 +735,12 @@
 (rule "Board" "B2:J10"
   (priority
     ((> Grid!A1 0) (+ (the-kind) (the-box-parity) Grid!A1))
-    ((= Marks!A1 0) "")
+    ((= Drawn!A1 0) "")
     (else (the-marks))))
+
+; The ladder's words on the row under the Board, while infer or propagate has lit them and no
+; other command has put them out, on the gray over the empty cells to the right (decision 12).
+(rule "Board" "B11" (if (= Lab!$B$13 1) Ladder!$B$21 ""))
 
 ; Each variable's own format, one of nine by its place in its box (ENGINE.28): its edges
 ; medium where the place lies on its box's bound and thin within, so that the lines tell the
@@ -525,13 +878,18 @@
   ("L6" "R") ("M6" "retract every assignment and every mark")
   ("L7" "N") ("M7" "deal a new instance")
   ("L8" "G") ("M8" "the next instance's grade, 1 to 4 and round")
-  ("L9" "← ↑ → ↓") ("M9" "move the selection, as a click does")
-  ("L10" "Ctrl+K") ("M10" "every command, by its name"))
+  ("L9" "I") ("M9" "say the next inference, and again to apply it")
+  ("L10" "P") ("M10" "propagate to the fixed point, and say where it stopped")
+  ("L11" "U") ("M11" "retract what inference assigned")
+  ("L12" "M") ("M12" "draw only the marks the constraints allow, or all")
+  ("L13" "← ↑ → ↓") ("M13" "move the selection, as a click does")
+  ("L14" "Ctrl+K") ("M14" "every command, by its name"))
 (on "Board"
   (style "L2:L3" 113)                ; the first two keys
   (style "L4" 112)                   ; the marks' keys
-  (style "L5:L10" 113)               ; the rest of the keys
-  (style "M2:M10" 111))              ; their words
+  (style "L5:L14" 113)               ; the rest of the keys
+  (style "M2:M14" 111)               ; their words
+  (style "B11" 111))                 ; the ladder's words, on the gray as the keys' words are, lit or not
 ; the gutter's empty cells by its column's format; the keys' column a variable's width, so that
 ; the marks' keys lie as the marks do; the words' column as wide as the longest words
 (on "Board" (column "K" 3 shown 111) (column "L" 12.57 shown 111) (column "M" 48 shown 111))
@@ -554,28 +912,33 @@
   ("B7" Clock!B3)
   ("B8" Lab!B4)
   ("C8" (grade-named Lab!B4)))
-(labels "Constraints" "A10" "givens" "assignments" "unassigned" "violated variables" "violated constraints" "marks kept" "acts" "satisfied")
+; The counts: the assignments the person's and inference's, inference's counted apart, so
+; that "satisfied, in 3 acts" says how (CART.14.1, decision 12); and the next inference, the
+; Board's words, while they are lit.
+(labels "Constraints" "A10" "givens" "assignments" "inferred" "unassigned" "violated variables" "violated constraints" "marks kept" "acts" "next inference" "satisfied")
 (rules "Constraints"
   ("B10" (countif Givens!A1:I9 ">0"))
   ("B11" (- (the-variables-filled) B10))
-  ("B12" (- 81 (the-variables-filled)))
-  ("B13" (sum Violations!A1:I9))
-  ("B14" (sum D31:D57))
-  ("B15" (sum Marks!A11:I19))
-  ("B16" Lab!B1)
-  ("B17" (if (= Lab!B11 1) (& "satisfied, in " Lab!B12 " acts") "not yet"))
-  ("B18" (if (= Lab!B11 1) "No search was performed by the cartridge." "")))
+  ("B12" (sum Inferred!A1:I9))
+  ("B13" (- 81 (the-variables-filled)))
+  ("B14" (sum Violations!A1:I9))
+  ("B15" (sum D34:D60))
+  ("B16" (sum Marks!A11:I19))
+  ("B17" Lab!B1)
+  ("B18" (if (= Lab!B13 1) Ladder!B21 ""))
+  ("B19" (if (= Lab!B11 1) (& "satisfied, in " Lab!B12 " acts") "not yet"))
+  ("B20" (if (= Lab!B11 1) "No search was performed by the cartridge." "")))
 
 ; Each value's count on the board, 9 of each when satisfied, a value a row.
-(headers "Constraints" "A19" "value" "placed")
-(labels "Constraints" "A20" 1 2 3 4 5 6 7 8 9)
+(headers "Constraints" "A22" "value" "placed")
+(labels "Constraints" "A23" 1 2 3 4 5 6 7 8 9)
 
-(rule "Constraints" "B20:B28" (countif Grid!$A$1:$I$9 A20))
+(rule "Constraints" "B23:B31" (countif Grid!$A$1:$I$9 A23))
 
 ; The twenty-seven constraints: each its variables assigned and its state, violated where a
 ; value counts twice, satisfied where nine are assigned and none is violated, open else.
-(headers "Constraints" "A30" "constraint" "assigned" "state" "violated")
-(labels "Constraints" "A31"
+(headers "Constraints" "A33" "constraint" "assigned" "state" "violated")
+(labels "Constraints" "A34"
   "row 1" "row 2" "row 3" "row 4" "row 5" "row 6" "row 7" "row 8" "row 9"
   "column 1" "column 2" "column 3" "column 4" "column 5" "column 6" "column 7" "column 8" "column 9"
   "box 1" "box 2" "box 3" "box 4" "box 5" "box 6" "box 7" "box 8" "box 9")
@@ -585,21 +948,21 @@
   (if (> (max counts) 1) "violated" (if (= assigned 9) "satisfied" "open")))
 
 (rules "Constraints"
-  ("B31:B39" (sum Units!$A1:$I1))
-  ("C31:C39" (state-of Units!$A1:$I1 B31))
-  ("B49:B57" (sum Units!$A21:$I21))
-  ("C49:C57" (state-of Units!$A21:$I21 B49))
-  ("D31:D57" (if (= C31 "violated") 1 0)))
+  ("B34:B42" (sum Units!$A1:$I1))
+  ("C34:C42" (state-of Units!$A1:$I1 B34))
+  ("B52:B60" (sum Units!$A21:$I21))
+  ("C52:C60" (state-of Units!$A21:$I21 B52))
+  ("D34:D60" (if (= C34 "violated") 1 0)))
 
 (defmacro (a-column-of-the-units c)
   "the column c's counts, down the Units' rows 11 to 19"
   (ref "Units" (&expand (column-letters-expand c) "11:" (column-letters-expand c) "19")))
 
-(each (c (1 2 3 4 5 6 7 8 9))                          ; the column c's constraint, on the row 39 + c
-  (rule "Constraints" (address-expand (+expand 39 c) 2)
+(each (c (1 2 3 4 5 6 7 8 9))                          ; the column c's constraint, on the row 42 + c
+  (rule "Constraints" (address-expand (+expand 42 c) 2)
     (sum (a-column-of-the-units c)))
-  (rule "Constraints" (address-expand (+expand 39 c) 3)
-    (state-of (a-column-of-the-units c) (symbol "B" (+expand 39 c)))))
+  (rule "Constraints" (address-expand (+expand 42 c) 3)
+    (state-of (a-column-of-the-units c) (symbol "B" (+expand 42 c)))))
 
 ; Column B twelve characters wide, so that a seed of ten digits, which a person reads off to share an instance, reads
 ; whole (Superposition's catch at CART.12's hand test).

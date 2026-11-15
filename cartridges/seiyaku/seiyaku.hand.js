@@ -7,7 +7,9 @@
 // where it stands, and it registers one constructor under its cartridge's name in window.AlonzoHands. The loop
 // oracle's replay case answers it each frame of Seiyaku's committed replay and holds the frame to what it answers,
 // the Board's 81 variables, each a code or its marks' text. The book is the page's own text of the source, the
-// block source-seiyaku, read between the two lines the book's writer keeps (engine/examples/seiyaku.rs).
+// block source-seiyaku, read between the two lines the book's writer keeps (engine/examples/seiyaku.rs). Since CART.14.1's
+// second slice it keeps the ladder too, the Rust hand's Seiyaku::infer line for line: its strikes, the variables inference
+// assigned, the words lit, a propagation running and the marks filtered, and it answers the words under the Board.
 (function (hands) {
   'use strict';
   var P = 67108859, PER_GRADE = 32, FS = String.fromCharCode(0x2007);
@@ -67,6 +69,80 @@
   function counts() { var u = []; for (var i = 0; i < 9; i++) u.push(zeros(10)); return u; }
   function valueOf(command, prefix) { var m = new RegExp('^' + prefix + '([1-9])$').exec(command || ''); return m ? +m[1] : 0; }
 
+  // The ladder (CART.14.1's second slice): a variable's address as the Board's headers show it, from B2; n and its
+  // words; and the 27 units, rows, columns and boxes, each its nine variables, in the grader's order.
+  function addressOf(place) { var r = Math.floor((place - 1) / 9), c = (place - 1) % 9; return String.fromCharCode(66 + c) + (r + 2); }
+  function counted(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  function ones(m) { var n = 0; while (m) { n += m & 1; m >>>= 1; } return n; }
+  var UNITS = (function () {
+    var u = [], r, c, x, k, line;
+    for (r = 0; r < 9; r++) { line = []; for (c = 0; c < 9; c++) line.push(9 * r + c); u.push(line); }
+    for (c = 0; c < 9; c++) { line = []; for (r = 0; r < 9; r++) line.push(9 * r + c); u.push(line); }
+    for (x = 0; x < 9; x++) { line = []; for (k = 0; k < 9; k++) line.push(9 * (3 * Math.floor(x / 3) + Math.floor(k / 3)) + 3 * (x % 3) + k % 3); u.push(line); }
+    return u;
+  })();
+  // Each unit's places left for each value, and a line's inside a box: a row's in each stack, a column's in each band.
+  function openOf(grid, candidates) {
+    var o = { rows: counts(), cols: counts(), boxes: counts(), across: [], down: [] }, v, j;
+    for (v = 0; v <= 9; v++) { o.across.push([]); o.down.push([]); for (j = 0; j < 9; j++) { o.across[v].push([0, 0, 0]); o.down[v].push([0, 0, 0]); } }
+    for (var k = 0; k < 81; k++) {
+      if (grid[k] > 0) continue;
+      var u = unitsOf(k), r = u[0], c = u[1];
+      for (v = 1; v <= 9; v++) if (candidates[k] & (1 << (v - 1))) {
+        o.rows[r][v]++; o.cols[c][v]++; o.boxes[u[2]][v]++; o.across[v][r][Math.floor(c / 3)]++; o.down[v][c][Math.floor(r / 3)]++;
+      }
+    }
+    return o;
+  }
+  // The next inference in the grader's order: a contradiction or the board satisfied first, which stops the ladder; then
+  // the first naked single by variable, the first hidden single by unit and value, and the first pointing by box and
+  // value, a row before a column; or none. Its kind 0 to 3, value, place, a pointing's box, line and whether a column, why
+  // there is none, and its words.
+  function infer(grid, candidates, tables, violated, satisfied) {
+    var open = openOf(grid, candidates), k, v, u, j, naked = -1, hidden = null, pointing = null;
+    for (k = 0; k < 81 && naked < 0; k++) if (ones(candidates[k]) === 1) naked = k;
+    for (u = 0; u < 27 && !hidden; u++) {
+      var places = u < 9 ? open.rows[u] : (u < 18 ? open.cols[u - 9] : open.boxes[u - 18]);
+      for (v = 1; v <= 9 && !hidden; v++) if (places[v] === 1) {
+        for (j = 0; j < 9 && !hidden; j++) if (candidates[UNITS[u][j]] & (1 << (v - 1))) hidden = { unit: u + 1, value: v, k: UNITS[u][j] };
+      }
+    }
+    for (var b = 0; b < 9 && !pointing; b++) {
+      var band = Math.floor(b / 3), stack = b % 3;
+      for (v = 1; v <= 9 && !pointing; v++) {
+        var n = open.boxes[b][v];
+        if (n < 2) continue;
+        for (var r = 3 * band; r < 3 * band + 3 && !pointing; r++) if (open.across[v][r][stack] === n && open.rows[r][v] > n) pointing = { box: b + 1, value: v, down: false, line: r + 1 };
+        for (var c = 3 * stack; c < 3 * stack + 3 && !pointing; c++) if (open.down[v][c][band] === n && open.cols[c][v] > n) pointing = { box: b + 1, value: v, down: true, line: c + 1 };
+      }
+    }
+    var violations = 0, emptied = 0, noPlace = 0, left = 0, mine = [open.rows, open.cols, open.boxes];
+    for (k = 0; k < 81; k++) { if (violated[k]) violations++; if (grid[k] === 0) { left++; if (candidates[k] === 0) emptied++; } }
+    for (var t = 0; t < 3; t++) for (j = 0; j < 9; j++) for (v = 1; v <= 9; v++) if (mine[t][j][v] === 0 && tables[t][j][v] === 0) noPlace++;
+    var any = naked >= 0 || !!hidden || !!pointing;
+    var stop = satisfied ? 1 : violations > 0 ? 2 : emptied > 0 ? 3 : noPlace > 0 ? 4 : any ? 0 : 5;
+    var i = { kind: 0, value: 0, place: 0, box: 0, down: false, line: 0, stop: stop, words: '' };
+    if (stop === 1) i.words = 'Satisfied: nothing is left to infer.';
+    else if (stop === 2) i.words = 'Nothing to infer: ' + counted(violations, 'variable violates', 'variables violate') + ' a constraint.';
+    else if (stop === 3) i.words = 'Nothing to infer: ' + counted(emptied, 'variable has no value left in its domain.', 'variables have no value left in their domains.');
+    else if (stop === 4) i.words = 'Nothing to infer: ' + counted(noPlace, 'value has', 'values have') + ' no place left in a constraint.';
+    else if (stop === 5) i.words = 'Nothing the three techniques can infer: ' + left + ' variables left.';
+    else if (naked >= 0) {
+      for (v = 1; v <= 9; v++) if (candidates[naked] & (1 << (v - 1))) i.value = v;
+      i.kind = 1; i.place = naked + 1;
+      i.words = addressOf(i.place) + ' is ' + i.value + ': the only value left in its domain.';
+    } else if (hidden) {
+      i.kind = 2; i.value = hidden.value; i.place = hidden.k + 1;
+      i.words = addressOf(i.place) + ' is ' + i.value + ': the only place left for it in its ' + (hidden.unit <= 9 ? 'row' : hidden.unit <= 18 ? 'column' : 'box') + '.';
+    } else {
+      i.kind = 3; i.value = pointing.value; i.box = pointing.box; i.down = pointing.down; i.line = pointing.line;
+      var first = 27 * Math.floor((i.box - 1) / 3) + 3 * ((i.box - 1) % 3) + 1;
+      i.words = i.value + ' is struck from the rest of ' + (i.down ? 'column ' + String.fromCharCode(65 + i.line) : 'row ' + (i.line + 1)) +
+        ': in the box from ' + addressOf(first) + ', every place left for it is on that line.';
+    }
+    return i;
+  }
+
   // The board by hand: a frame takes the Input rows as the engine's frame sees them, the act's at its frame and the
   // released ones at a settle step, and computes, in the cartridge's order, the Lab's counts, the instance dealt and
   // its givens, the assignments, the counts of each unit, the violations and the candidates, then the marks.
@@ -74,6 +150,8 @@
     this.book = book; this.seed = seed; this.clock = 0; this.acts = 0; this.instances = 0; this.restarts = 0;
     this.nextGrade = 0; this.grade = 0; this.satisfied = false; this.satisfiedActs = 0;
     this.givens = zeros(81); this.entries = zeros(81); this.marks = zeros(81); this.grid = zeros(81); this.violated = zeros(81);
+    this.candidates = zeros(81); this.struck = zeros(81); this.inferred = zeros(81); this.lit = false; this.propagating = false; this.filtered = false;
+    this.ladder = { kind: 0, value: 0, place: 0, box: 0, down: false, line: 0, stop: 0, words: '' };
   }
   Board.prototype.frame = function (i, beginsAct) {
     if (beginsAct) this.clock++;
@@ -84,24 +162,41 @@
     var nextGrade = first ? 2 : (cmd === 'grade' ? this.nextGrade % 4 + 1 : this.nextGrade);
     var grade = first || dealt ? nextGrade : this.grade;
     var acts = reset ? 0 : this.acts + (act ? 1 : 0);
-    var assigned = valueOf(cmd, 'assign-'), marked = valueOf(cmd, 'domain-'), retract = cmd === 'retract', domains = cmd === 'domains';
-    // the Board stands from B2, a margin row and column before it: a place is a variable on B2:J10
-    var place = i.sheet === 'Board' && i.column >= 2 && i.column <= 10 && i.row >= 2 && i.row <= 10 ? (i.row - 2) * 9 + (i.column - 1) : 0;
-    var givens = givensOf(deal(this.seed, instances, grade), this.book), entries = [], grid = [];
+    // the ladder's switches, the Lab's B13 to B18: the words lit by infer or propagate and put out by any other command;
+    // a propagation running while the last frame named an inference; that inference applied, an assignment or a strike
+    var L = this.ladder, lit = cmd === 'infer' || cmd === 'propagate' ? true : (cmd !== '' ? false : this.lit), named = L.kind > 0;
+    var propagating = cmd === 'propagate' || (this.propagating && named), applied = named && (propagating || (cmd === 'infer' && this.lit));
+    var assigns = applied && L.kind < 3, strikes = applied && L.kind === 3, filtered = first ? false : (cmd === 'filter' ? !this.filtered : this.filtered);
+    var marked = valueOf(cmd, 'domain-'), retract = cmd === 'retract', domains = cmd === 'domains', undo = cmd === 'retract-inferred';
+    // the Board stands from B2, a margin row and column before it: a place is a variable on B2:J10; an inference that
+    // assigns takes the place of the person's value and place
+    var assigned = assigns ? L.value : valueOf(cmd, 'assign-');
+    var place = assigns ? L.place : (i.sheet === 'Board' && i.column >= 2 && i.column <= 10 && i.row >= 2 && i.row <= 10 ? (i.row - 2) * 9 + (i.column - 1) : 0);
+    var givens = givensOf(deal(this.seed, instances, grade), this.book), entries = [], grid = [], inferred = [];
     for (k = 0; k < 81; k++) {
       var last = this.entries[k];
-      entries.push(reset || givens[k] > 0 ? 0 : (place === k + 1 ? (assigned > 0 ? assigned : (retract ? 0 : last)) : last));
+      entries.push(reset || givens[k] > 0 || (undo && this.inferred[k]) ? 0 : (place === k + 1 ? (assigned > 0 ? assigned : (retract ? 0 : last)) : last));
       grid.push(givens[k] + entries[k]);
+      inferred.push(reset || entries[k] === 0 ? false : (assigns && place === k + 1 ? true : (entries[k] !== last ? false : this.inferred[k])));
     }
     var rows = counts(), cols = counts(), boxes = counts(), u;
     for (k = 0; k < 81; k++) if (grid[k] > 0) { u = unitsOf(k); rows[u[0]][grid[k]]++; cols[u[1]][grid[k]]++; boxes[u[2]][grid[k]]++; }
+    // the strikes: cleared by a restart, a new instance, or any variable assigned at the last frame holding another value or
+    // none; else a pointing applied strikes its value from every unassigned variable on its line outside its box
+    var cleared = reset, struck = [];
+    for (k = 0; k < 81 && !cleared; k++) if (this.entries[k] > 0 && entries[k] !== this.entries[k]) cleared = true;
+    for (k = 0; k < 81; k++) {
+      u = unitsOf(k);
+      var onLine = L.down ? u[1] + 1 === L.line : u[0] + 1 === L.line;
+      struck.push(cleared ? 0 : (strikes && grid[k] === 0 && onLine && u[2] + 1 !== L.box ? this.struck[k] | (1 << (L.value - 1)) : this.struck[k]));
+    }
     var violated = [], candidates = [];
     for (k = 0; k < 81; k++) {
       u = unitsOf(k);
       var v = grid[k], cand = 0;
       violated.push(v > 0 && (rows[u[0]][v] > 1 || cols[u[1]][v] > 1 || boxes[u[2]][v] > 1));
       if (v === 0) for (var w = 1; w <= 9; w++) if (rows[u[0]][w] === 0 && cols[u[1]][w] === 0 && boxes[u[2]][w] === 0) cand += 1 << (w - 1);
-      candidates.push(cand);
+      candidates.push(cand & ~struck[k]);
     }
     var marks = [];
     for (k = 0; k < 81; k++) {
@@ -117,25 +212,29 @@
     this.satisfiedActs = satisfied ? (this.satisfied ? this.satisfiedActs : acts) : 0;
     this.acts = acts; this.instances = instances; this.restarts = restarts; this.nextGrade = nextGrade; this.grade = grade;
     this.satisfied = satisfied; this.givens = givens; this.entries = entries; this.marks = marks; this.grid = grid; this.violated = violated;
+    this.candidates = candidates; this.struck = struck; this.inferred = inferred; this.lit = lit; this.propagating = propagating; this.filtered = filtered;
+    this.ladder = infer(grid, candidates, [rows, cols, boxes], violated, satisfied);
   };
   // What the Board shows at row and column from 1: a value's code, 100 times its kind, 10 times its box's parity and
   // the value; else the marks kept, a digit or a figure space in each of nine places, a line of three with three
-  // figure spaces between them, and a line of four figure spaces between two lines, too wide to share a line with
-  // marks, each line a word the viewport's wrap breaks after and centers, so that each mark stands in its third of the
-  // cell (the owner's hand tests, 2026-10-19 and ENGINE.28's of 2026-10-29); or nothing.
+  // figure spaces between them, and two line feeds between two lines, so that each mark stands in its third of the cell
+  // (the owner's hand tests, 2026-10-19 and ENGINE.28's of 2026-10-29; the line feeds since CART.14.1's second slice, by
+  // ENGINE.36); the marks drawn, all or, filtered, those still candidates; or nothing.
   Board.prototype.shown = function (row, column) {
     var k = (row - 1) * 9 + (column - 1), v = this.grid[k];
     if (v > 0) {
       var given = this.givens[k] > 0, kind = this.satisfied ? (given ? 5 : 6) : (given ? (this.violated[k] ? 3 : 1) : (this.violated[k] ? 4 : 2));
       return 100 * kind + 10 * ((Math.floor((row - 1) / 3) + Math.floor((column - 1) / 3)) % 2) + v;
     }
-    var m = this.marks[k];
+    var m = this.filtered ? this.marks[k] & this.candidates[k] : this.marks[k];
     if (m === 0) return '';
-    var lines = [], within = FS + FS + FS, between = within + FS;
+    var lines = [], within = FS + FS + FS;
     function place(d) { return m & (1 << (d - 1)) ? String(d) : FS; }
     for (var d = 1; d <= 7; d += 3) lines.push(place(d) + within + place(d + 1) + within + place(d + 2));
-    return lines.join(' ' + between + ' ');
+    return lines.join('\n\n');
   };
+  // The words under the Board, B11: the ladder's while lit.
+  Board.prototype.words = function () { return this.lit ? this.ladder.words : ''; };
 
   // A replay of Seiyaku: the Input sheet's cells as the replay's rows leave them, a frame with rows an act's and a
   // frame with none a settle step, before which the engine has released the press and the command; an edit of the
@@ -162,6 +261,7 @@
     if (b.satisfied) this.satisfiedOnce = true;
     var cells = {};
     for (var r = 1; r <= 9; r++) for (var c = 1; c <= 9; c++) cells['Board!' + String.fromCharCode(65 + c) + (r + 1)] = b.shown(r, c);   // from B2
+    cells['Board!B11'] = b.words();
     return { cells: cells };
   };
   // The acts begun, the load's among them, the instances, the settle steps, and whether an instance was satisfied:

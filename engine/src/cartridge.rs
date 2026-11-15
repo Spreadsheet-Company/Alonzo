@@ -3457,12 +3457,15 @@ mod tests {
                 let board = puzzle_hand.board.as_ref().expect("the replay's board");
                 assert_eq!(
                     (board.clock, board.instances, puzzle_hand.settles, board.restarts, board.filled() - board.given_count(), board.satisfied),
-                    (35, 1, 69, 1, 0, false),
-                    "the owner's session at the first slice's hand test: 35 acts begun, the load's among them, one instance after the first, 69 settle steps, and every assignment and mark retracted once, at its end"
+                    (26, 2, 132, 0, 32, false),
+                    "the owner's session at CART.14.1's second slice's hand test: 26 acts begun, the load's among them, two instances after the first, 132 settle steps, no restart, and 32 variables assigned by its last propagation"
                 );
                 assert!(
-                    !puzzle_hand.satisfied_once,
-                    "the owner's session satisfies no instance; the scripted session of seiyaku_s_board_is_its_hand_at_every_frame holds one"
+                    puzzle_hand.satisfied_once
+                        && board.lit
+                        && board.ladder.stop == 5
+                        && board.inferred_count() == 32,
+                    "its first propagation satisfies a grade-3 instance, and its last stops on a grade-4 one where the three techniques do, every assignment inference's"
                 );
             }
             if name == "naught" {
@@ -5448,7 +5451,9 @@ mod tests {
     }
 
     /// The board held to the hand's: every variable's code or marks, the
-    /// givens, the Lab's counts and the Constraints sheet's every value.
+    /// givens, the Lab's counts and the Constraints sheet's every value; and
+    /// since `CART.14.1`'s second slice the ladder's, every variable's strikes
+    /// and whether inference assigned it, the inference named and its words.
     fn seiyaku_holds(c: &Cartridge, hand: &Seiyaku, at: &str) {
         let n = |v: f64| Shown::Number(v);
         let t = |s: &str| Shown::Text(s.to_string());
@@ -5460,7 +5465,27 @@ mod tests {
                 want.push(("Board", r + 1, col + 1, hand.shown(r, col)));
                 want.push(("Givens", r, col, n(f64::from(hand.givens[k]))));
                 want.push(("Marks", r, col, n(f64::from(hand.marks[k]))));
+                want.push(("Struck", r, col, n(f64::from(hand.struck[k]))));
+                want.push(("Inferred", r, col, n(f64::from(u8::from(hand.inferred[k])))));
             }
+        }
+        want.push(("Board", 11, 2, t(&hand.words())));
+        let i = &hand.ladder;
+        let ladder = [
+            (1, f64::from(i.kind)),
+            (2, f64::from(i.value)),
+            (3, i.place as f64),
+            (5, f64::from(i.boxed)),
+            (6, f64::from(u8::from(i.down))),
+            (7, f64::from(i.line)),
+            (9, f64::from(i.stop)),
+        ];
+        for (row, v) in ladder {
+            want.push(("Ladder", row, 2, n(v)));
+        }
+        want.push(("Ladder", 21, 2, t(&i.words)));
+        for (row, on) in [(13, hand.lit), (14, hand.propagating), (18, hand.filtered)] {
+            want.push(("Lab", row, 2, n(f64::from(u8::from(on)))));
         }
         let deal = hand.deal.as_ref().expect("a frame dealt");
         let lab = [
@@ -5486,14 +5511,16 @@ mod tests {
             (8, n(f64::from(hand.next_grade))),
             (10, n(givens)),
             (11, n(filled - givens)),
-            (12, n(81.0 - filled)),
-            (13, n(violated)),
-            (14, n(hand.violated_constraints() as f64)),
-            (15, n(f64::from(hand.marks_kept()))),
-            (16, n(hand.acts as f64)),
-            (17, t(&hand.satisfied_words())),
+            (12, n(hand.inferred_count() as f64)),
+            (13, n(81.0 - filled)),
+            (14, n(violated)),
+            (15, n(hand.violated_constraints() as f64)),
+            (16, n(f64::from(hand.marks_kept()))),
+            (17, n(hand.acts as f64)),
+            (18, t(&hand.words())),
+            (19, t(&hand.satisfied_words())),
             (
-                18,
+                20,
                 t(if hand.satisfied {
                     "No search was performed by the cartridge."
                 } else {
@@ -5518,12 +5545,12 @@ mod tests {
         ));
         for v in 1..=9u8 {
             let placed = hand.grid.iter().filter(|&&x| x == v).count() as f64;
-            want.push(("Constraints", 19 + u32::from(v), 2, n(placed)));
+            want.push(("Constraints", 22 + u32::from(v), 2, n(placed)));
         }
         let units = [&hand.row_counts, &hand.col_counts, &hand.box_counts];
         for (u, counts) in units.iter().enumerate() {
             for (j, unit) in counts.iter().enumerate() {
-                let row = 31 + 9 * u as u32 + j as u32;
+                let row = 34 + 9 * u as u32 + j as u32;
                 let state = Seiyaku::state(unit);
                 let assigned: u32 = unit.iter().map(|&x| u32::from(x)).sum();
                 want.push(("Constraints", row, 2, n(f64::from(assigned))));
@@ -5948,6 +5975,224 @@ mod tests {
         let (r4, c4) = free(&hand)[0];
         seiyaku_act(&mut c, &mut hand, &on_board(r4, c4, "retract"));
         assert!(!hand.satisfied, "a retraction unsatisfies it");
+    }
+
+    /// The ladder (`CART.14.1`'s second slice, decision 16), every frame held
+    /// to the hand: `I` lit and pressed again, an inference a press; `P` to
+    /// the fixed point, a pointing's strikes among its frames; `U` taking back
+    /// what inference assigned and the strikes with it; `M` filtering the
+    /// marks drawn and not the marks kept; the words put out by another
+    /// command; a violation, a wrong value propagated to a contradiction, and
+    /// a grade the three techniques do not reach.
+    #[test]
+    fn seiyaku_s_ladder_is_its_hand_at_every_frame() {
+        let Some((text, source)) = seiyaku() else {
+            return;
+        };
+        let seed = 20_261_019u64;
+        let mut c = seiyaku_loaded(&text, seed);
+        let mut hand = Seiyaku::new(sy::book_of(&source), seed);
+        let mut load = on_board(1, 1, "");
+        load.left = false;
+        seiyaku_act(&mut c, &mut hand, &load);
+        let press = |c: &mut Cartridge, hand: &mut Seiyaku, cmd: &str| {
+            seiyaku_act(c, hand, &on_board(5, 5, cmd))
+        };
+        // a grade-3 instance: G from 2 to 3, then N
+        press(&mut c, &mut hand, "grade");
+        press(&mut c, &mut hand, "instance");
+        assert_eq!(hand.grade, 3, "an instance of pointing pairs");
+        // I lights the next inference and changes nothing; I again applies it
+        press(&mut c, &mut hand, "infer");
+        assert!(hand.lit && hand.ladder.kind > 0, "the next inference said");
+        assert!(!hand.words().is_empty());
+        assert_eq!(hand.filled(), hand.given_count(), "I alone assigns nothing");
+        for _ in 0..6 {
+            let before = hand.ladder.clone();
+            assert_eq!(press(&mut c, &mut hand, "infer"), 3, "an inference a press");
+            if before.kind < 3 {
+                assert_eq!(
+                    hand.grid[before.place - 1],
+                    before.value,
+                    "the inference applied"
+                );
+            }
+        }
+        let by_inference = hand.inferred_count();
+        assert!(by_inference > 0, "inference assigned");
+        // a command puts the words out
+        press(&mut c, &mut hand, "grade");
+        assert!(!hand.lit && hand.words().is_empty(), "the light out");
+        press(&mut c, &mut hand, "grade");
+        press(&mut c, &mut hand, "grade");
+        press(&mut c, &mut hand, "grade");
+        assert_eq!(hand.next_grade, 3, "the grade round again");
+        // P to the fixed point: satisfied, the strikes of a pointing on the way
+        let frames = press(&mut c, &mut hand, "propagate");
+        assert!(frames <= 165, "inside the settle's K: {frames}");
+        assert!(hand.satisfied, "P satisfies a grade-3 instance");
+        assert_eq!(hand.ladder.stop, 1);
+        assert_eq!(hand.words(), "Satisfied: nothing is left to infer.");
+        assert!(
+            hand.struck.iter().any(|&s| s > 0),
+            "a pointing struck on the way"
+        );
+        assert_eq!(hand.inferred_count(), 81 - hand.given_count());
+        // U takes back what inference assigned, and the strikes with it
+        press(&mut c, &mut hand, "retract-inferred");
+        assert_eq!(hand.filled(), hand.given_count(), "U retracts inference's");
+        assert!(hand.struck.iter().all(|&s| s == 0), "the strikes cleared");
+        // a person's assignment kept by U: the solution's value at a free variable
+        let solution = sy::solve(&hand.givens).expect("the instance's solution");
+        let k = (0..81)
+            .find(|&k| hand.givens[k] == 0)
+            .expect("a free variable");
+        let (r, col) = (k as u32 / 9 + 1, k as u32 % 9 + 1);
+        seiyaku_act(
+            &mut c,
+            &mut hand,
+            &on_board(r, col, &format!("assign-{}", solution[k])),
+        );
+        press(&mut c, &mut hand, "infer");
+        press(&mut c, &mut hand, "infer");
+        press(&mut c, &mut hand, "retract-inferred");
+        assert_eq!(hand.grid[k], solution[k], "U leaves the person's");
+        assert_eq!(hand.filled(), hand.given_count() + 1);
+        // M: the domains filled, inference narrows them, the filter hides what is no longer allowed
+        press(&mut c, &mut hand, "domains");
+        for _ in 0..8 {
+            press(&mut c, &mut hand, "infer");
+        }
+        press(&mut c, &mut hand, "filter");
+        assert!(hand.filtered);
+        let hidden = (0..81)
+            .filter(|&k| hand.grid[k] == 0 && hand.drawn(k) != hand.marks[k])
+            .count();
+        assert!(hidden > 0, "a mark no longer allowed is not drawn");
+        let kept = hand.marks_kept();
+        press(&mut c, &mut hand, "filter");
+        assert!(!hand.filtered && hand.marks_kept() == kept, "kept beneath");
+        // a violation: I says so and infers nothing
+        press(&mut c, &mut hand, "retract-all");
+        let k = (0..81)
+            .find(|&k| hand.givens[k] == 0)
+            .expect("a free variable");
+        let (r, col) = (k as u32 / 9 + 1, k as u32 % 9 + 1);
+        let row_given = (0..9)
+            .map(|cc| hand.givens[(r as usize - 1) * 9 + cc])
+            .find(|&v| v > 0)
+            .expect("a given in the row");
+        seiyaku_act(
+            &mut c,
+            &mut hand,
+            &on_board(r, col, &format!("assign-{row_given}")),
+        );
+        press(&mut c, &mut hand, "infer");
+        assert_eq!(hand.ladder.stop, 2, "a violated constraint stops it");
+        let violations = hand.violated.iter().filter(|&&v| v).count();
+        assert_eq!(
+            hand.words(),
+            format!("Nothing to infer: {violations} variables violate a constraint.")
+        );
+        press(&mut c, &mut hand, "infer");
+        assert_eq!(hand.inferred_count(), 0, "nothing applied");
+        // a wrong value the constraints allow, propagated to a contradiction
+        let solution = sy::solve(&hand.givens).expect("the instance's solution");
+        let mut contradicted = false;
+        let free: Vec<usize> = (0..81).filter(|&k| hand.givens[k] == 0).collect();
+        'wrong: for k in free {
+            let (r, col) = (k as u32 / 9 + 1, k as u32 % 9 + 1);
+            press(&mut c, &mut hand, "retract-all");
+            let allowed = hand.candidates[k];
+            for v in 1..=9u8 {
+                if v == solution[k] || allowed & (1 << (v - 1)) == 0 {
+                    continue;
+                }
+                seiyaku_act(&mut c, &mut hand, &on_board(r, col, &format!("assign-{v}")));
+                let frames = press(&mut c, &mut hand, "propagate");
+                assert!(frames <= 165);
+                if matches!(hand.ladder.stop, 3 | 4) {
+                    contradicted = true;
+                    break 'wrong;
+                }
+                press(&mut c, &mut hand, "retract-all");
+            }
+        }
+        assert!(contradicted, "a wrong value propagated to a contradiction");
+        assert!(hand.words().starts_with("Nothing to infer: "));
+        // grade 4: the three techniques stop short
+        press(&mut c, &mut hand, "grade");
+        press(&mut c, &mut hand, "instance");
+        assert_eq!(hand.grade, 4);
+        press(&mut c, &mut hand, "propagate");
+        assert_eq!(hand.ladder.stop, 5, "beyond the three");
+        assert!(!hand.satisfied);
+        assert!(hand
+            .words()
+            .starts_with("Nothing the three techniques can infer: "));
+    }
+
+    /// An act's rows written and the act stepped to its settle's end, the
+    /// board read off the machine alone: its frames.
+    fn seiyaku_press(c: &mut Cartridge, i: &sy::Inputs) -> u32 {
+        let rows = format!(
+            "(cell \"Input\" \"B11\" {})\n(cell \"Input\" \"B12\" {})\n(cell \"Input\" \"B13\" {})\n(cell \"Input\" \"B19\" {})\n(cell \"Input\" \"B20\" {})",
+            i.column,
+            i.row,
+            u8::from(i.left),
+            quoted(&i.sheet),
+            quoted(&i.command)
+        );
+        c.write(&rows).expect("the act's rows");
+        let mut frames = 0;
+        loop {
+            while !c.step(0).done {}
+            frames += 1;
+            if c.settle() != Settle::Settling {
+                assert_eq!(c.settle(), Settle::Settled, "the act settles inside its K");
+                return frames;
+            }
+        }
+    }
+
+    /// The book's exam in cells (`CART.14.1`, decision 15): every puzzle of
+    /// the book dealt by name, its cartridge's `Deal!B1` written as the
+    /// puzzle's number, and `P` pressed once. The three techniques satisfy
+    /// every puzzle of the first three grades and none of the fourth, as the
+    /// grader says, each inside the settle's K.
+    #[test]
+    fn seiyaku_s_book_is_propagated_in_cells_as_the_grader_grades_it() {
+        let Some((text, source)) = seiyaku() else {
+            return;
+        };
+        let book = sy::book_of(&source);
+        let row = "(formula \"Deal\" \"B1\" \"=32*(Lab!$B$5-1)+1+MOD(B10,32)\")";
+        assert_eq!(text.matches(row).count(), 1, "Deal!B1's row");
+        let mut satisfied = [0usize; 4];
+        let mut deepest = 0;
+        for (k, puzzle) in book.iter().enumerate() {
+            let dealt = text.replacen(row, &format!("(cell \"Deal\" \"B1\" {})", k + 1), 1);
+            let mut c = seiyaku_loaded(&dealt, 20_261_019);
+            let mut load = on_board(1, 1, "");
+            load.left = false;
+            seiyaku_press(&mut c, &load);
+            let frames = seiyaku_press(&mut c, &on_board(5, 5, "propagate"));
+            deepest = deepest.max(frames);
+            let grade = usize::from(sy::grade(puzzle));
+            assert_eq!(grade, k / sy::PER_GRADE + 1, "the book's block by grade");
+            if value_of(&c, "Lab", "B11") == "1" {
+                satisfied[grade - 1] += 1;
+            } else {
+                let words = value_of(&c, "Board", "B11");
+                assert!(
+                    words.starts_with("\"Nothing the three techniques can infer: "),
+                    "puzzle {}: {words}",
+                    k + 1
+                );
+            }
+        }
+        assert_eq!(satisfied, [32, 32, 32, 0], "the exam by grade");
+        assert!(deepest <= 165, "the deepest propagation, {deepest} frames");
     }
 
     // ---- CART.9: Naught, the bench of gates ----

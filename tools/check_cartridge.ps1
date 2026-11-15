@@ -353,7 +353,12 @@ $expectedGoldens = 7
 # other ten's rows unchanged.
 # 2026-11-15, CART.9's fifth slice: Naught at 1,379 rows, the Lab's X, a level's error kind, fifteen rows and its header;
 # the other ten's rows unchanged.
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 270; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4089; 'cartridges/naught/naught.vla' = 1379 }
+# 2026-11-15, CART.14.1's second slice: Seiyaku at 4,248 rows, the ladder: eleven
+# hidden sheets (Struck, Across, Down, Boxes, Open, Naked, Hidden, Forced, Ladder,
+# Inferred, Drawn), the Lab's nine rows of its switches, four commands, the Board's
+# words, its gray and four keys, and the Constraints' two rows; Naught's as CART.9's
+# fifth slice left it, and the other nine's rows unchanged.
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 270; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4248; 'cartridges/naught/naught.vla' = 1379 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---
