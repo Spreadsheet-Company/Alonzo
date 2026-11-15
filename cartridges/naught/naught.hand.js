@@ -771,6 +771,29 @@
   // The address of a room's cell by its place in the room read row by row from C3, eight cells a row, 1 the first: the
   // Lab's R and S.
   function roomAddress(i) { return 'CDEFGHIJ'.charAt((i - 1) % 8) + (3 + Math.floor((i - 1) / 8)); }
+  // The language's eight errors as ERROR.TYPE numbers them, 1 to 7 and 14, each with what the verdict says makes one, in
+  // the cell or in a cell it reads: the Lab's X and the cartridge's error-spelled and error-cause (CART.9's fifth slice).
+  var ERRORS = [
+    [1, '#NULL!', 'meets two ranges that do not cross.'],
+    [2, '#DIV/0!', 'divides by zero.'],
+    [3, '#VALUE!', 'takes a text for a number, and an emptied cell holds one.'],
+    [4, '#REF!', 'names a cell that is not there.'],
+    [5, '#NAME?', 'names what the language does not know.'],
+    [6, '#NUM!', 'makes a number too large for a cell.'],
+    [7, '#N/A', 'finds no value.'],
+    [14, '#CALC!', 'calculates no answer.']
+  ];
+  // An error's ERROR.TYPE, by its spelling: the Lab's X.
+  function errorType(spelled) {
+    for (var i = 0; i < ERRORS.length; i++) if (ERRORS[i][1] === spelled) return ERRORS[i][0];
+    throw new Error('the language has no error ' + spelled);
+  }
+  // An error's spelling and its cause, by its ERROR.TYPE, as the verdict chooses them: its place among the eight,
+  // MIN(X,8), and CHOOSE's #VALUE! at a place under 1.
+  function errorWords(kind) {
+    var place = Math.trunc(Math.min(kind, 8));
+    return place < 1 ? fault(VALUE) : ERRORS[place - 1];
+  }
   // A value as N reads it, then IFERROR's 0: a number itself, a truth value 1 or 0, and anything else 0, so that a tick
   // carries no error around the loop.
   function asAFlipFlopTakes(v) { return typeof v === 'number' ? v : v === true ? 1 : 0; }
@@ -868,7 +891,7 @@
     for (k = 0; k < LEVELS.length; k++) {
       if (!(whole || this.touched[k])) continue;
       r = 11 + k;
-      for (s = 0; s < 14; s++) at.push('BCDEHKLNPQRSTU'.charAt(s) + r);
+      for (s = 0; s < 15; s++) at.push('BCDEHKLNPQRSTUX'.charAt(s) + r);
       if (LEVELS[k].state > 0) at.push('I' + r, 'J' + r);
     }
     if (whole) {
@@ -1044,14 +1067,16 @@
     // the gates: every formula of its room, each read by its text as one of the set or outside it; and the room's first
     // cell holding an error
     if (fresh) this.readGates(k, r);
-    var error = 0, place = 0;
+    var error = 0, place = 0, kind = 0;
     for (var gr = 3; gr < 3 + level.rows && !error; gr++) {
       for (var gc = 3; gc <= 10 && !error; gc++) {
         place++;
-        if (isErr(this.cell(k, gr, gc))) error = place;
+        var standing = this.cell(k, gr, gc);
+        if (isErr(standing)) { error = place; kind = errorType(standing.error); }
       }
     }
     lab['S' + r] = error ? roomAddress(error) : '';
+    lab['X' + r] = kind;
     // its gates and those outside the set, and whether its switches held, when its test last ended, which its stars and
     // its verdict read
     var lastHeld = settled(this.last('K' + r));
@@ -1178,8 +1203,8 @@
     var e = textOf(lab('E')), o = textOf(outside), h = textOf(lab('H'));
     var reckoning = isErr(e) ? e : isErr(o) ? o : isErr(h) ? h : 'Gates ' + e + o + '; the budget ' + level.budget + ', the least known ' + level.least + ': ' + h;
     var error = function (tail) {
-      var at = textOf(lab('S'));
-      return isErr(at) ? at : at + ' holds an error: it reads a text, an emptied cell or an error.' + tail;
+      var at = textOf(lab('S')), kind = numberOf(lab('X')), words = isErr(kind) ? kind : errorWords(kind);
+      return isErr(at) ? at : isErr(words) ? words : at + ' holds ' + words[1] + ': it or a cell it reads ' + words[2] + tail;
     };
     var verdict = when(equal(lab('N'), 1), function () {
       var t = textOf(arith('+', self.labOf('B6'), 1));

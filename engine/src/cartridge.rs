@@ -3473,8 +3473,8 @@ mod tests {
                     .count();
                 assert_eq!(
                     (bench_hand.frames, bench_hand.edits, bench_hand.lit, bench_hand.written, passed),
-                    (4803, 38, 208, 149, 14),
-                    "the owner's session at the third slice's hand test, 45 frames through I and II, then the stand-in: the levels III to XV, its clocks and its ROM among them, the bench's 38 switches written, each and its settle two frames, 208 gates lit at its end, and I's switch written over; 51 rows a person wrote, eight levels passed at its end"
+                    (4807, 38, 208, 151, 14),
+                    "the owner's session at the third slice's hand test, 45 frames through I and II, then the stand-in: the levels III to XV, its clocks and its ROM among them, the bench's 38 switches written, each and its settle two frames, 208 gates lit at its end, I's switch written over, and III's room given a gate dividing by zero and emptied; 151 rows a person wrote, fourteen levels passed at its end"
                 );
             }
             played.push(name);
@@ -7106,7 +7106,7 @@ mod tests {
         );
         assert_eq!(
             naught_cell(&c, "I NON", "N9"),
-            "I8 holds an error: it reads a text, an emptied cell or an error. Ex nihilo nihil fit."
+            "I8 holds #VALUE!: it or a cell it reads takes a text for a number, and an emptied cell holds one. Ex nihilo nihil fit."
         );
     }
 
@@ -7134,7 +7134,7 @@ mod tests {
         );
         assert_eq!(
             naught_cell(&c, "III VEL", "N9"),
-            "J3 holds an error: it reads a text, an emptied cell or an error. Ex nihilo nihil fit.",
+            "J3 holds #VALUE!: it or a cell it reads takes a text for a number, and an emptied cell holds one. Ex nihilo nihil fit.",
             "named before T"
         );
         let frames = naught_act(&mut c, "III VEL", (1, 3), false, "test");
@@ -7146,7 +7146,7 @@ mod tests {
         );
         assert_eq!(
             naught_cell(&c, "III VEL", "N9"),
-            "The test stops at input 1 of 4, standing on the board: J3 holds an error: it reads a text, an emptied cell or an error."
+            "The test stops at input 1 of 4, standing on the board: J3 holds #VALUE!: it or a cell it reads takes a text for a number, and an emptied cell holds one."
         );
         for (addr, f) in [
             ("J3", "=MOD(A3+A4,2)"),
@@ -7862,5 +7862,62 @@ mod tests {
             naught_cell(&c, "X MORA", "N9"),
             format!("The test stops at input 1 of 4, standing on the board: {said}")
         );
+    }
+
+    /// An error said by its kind (`CART.9`'s fifth slice, `KERNEL.68`'s
+    /// `ERROR.TYPE`): each of the language's eight errors a gate can hold,
+    /// written into a fresh III's room, gives the Lab's X its number and the
+    /// verdict its spelling and its cause, as the hand's table says them; the
+    /// page's hand spells the same table, and an emptied cell is no error.
+    #[test]
+    fn naught_says_each_error_by_its_kind() {
+        let Some(mut c) = naught_game() else {
+            return;
+        };
+        let gates = [
+            ("=#NULL!", 1),
+            ("=A3/0", 2),
+            ("=A3+\"one\"", 3),
+            ("=#REF!", 4),
+            ("=#NAME?", 5),
+            ("=1E+308*10", 6),
+            ("=NA()", 7),
+            ("=FILTER(A3:A4,A3:A4>5)", 14),
+        ];
+        for (formula, kind) in gates {
+            naught_wrote(&mut c, "III VEL", "E5", formula);
+            let (_, spelled, cause) = nt::ERRORS
+                .iter()
+                .find(|e| e.0 == kind)
+                .copied()
+                .expect("a kind of the table");
+            assert_eq!(
+                (naught_cell(&c, "Lab", "S13"), naught_cell(&c, "Lab", "X13")),
+                ("E5".to_string(), kind.to_string()),
+                "{formula}: the room's first error and its kind"
+            );
+            assert_eq!(
+                naught_cell(&c, "III VEL", "N9"),
+                format!("E5 holds {spelled}: it or a cell it reads {cause} Ex nihilo nihil fit."),
+                "{formula}: the verdict says the error by its kind"
+            );
+        }
+        c.write("(cell \"III VEL\" \"E5\" \"\")").expect("Delete");
+        naught_settled(&mut c);
+        assert_eq!(
+            (naught_cell(&c, "Lab", "S13"), naught_cell(&c, "Lab", "X13")),
+            (String::new(), "0".to_string()),
+            "an emptied cell holds the empty text, no error"
+        );
+        let Some(hand) = crate::repository::read("naught/naught.hand.js") else {
+            return;
+        };
+        for (kind, spelled, cause) in nt::ERRORS {
+            let row = format!("[{kind}, '{spelled}', '{cause}']");
+            assert!(
+                hand.contains(&row),
+                "the page's hand spells the error the hand's table does: {row}"
+            );
+        }
     }
 }

@@ -2478,6 +2478,45 @@ pub fn room_address(i: usize) -> String {
     )
 }
 
+/// The language's eight errors as `ERROR.TYPE` numbers them, 1 to 7 and 14,
+/// each with what the verdict says makes one, in the cell or in a cell it
+/// reads: the Lab's X and the cartridge's `error-spelled` and `error-cause`.
+pub const ERRORS: [(u8, &str, &str); 8] = [
+    (1, "#NULL!", "meets two ranges that do not cross."),
+    (2, "#DIV/0!", "divides by zero."),
+    (
+        3,
+        "#VALUE!",
+        "takes a text for a number, and an emptied cell holds one.",
+    ),
+    (4, "#REF!", "names a cell that is not there."),
+    (5, "#NAME?", "names what the language does not know."),
+    (6, "#NUM!", "makes a number too large for a cell."),
+    (7, "#N/A", "finds no value."),
+    (14, "#CALC!", "calculates no answer."),
+];
+
+/// An error's `ERROR.TYPE`, by its spelling: the Lab's X.
+pub fn error_type(spelled: &str) -> u8 {
+    ERRORS
+        .iter()
+        .find(|e| e.1 == spelled)
+        .unwrap_or_else(|| panic!("the language has no error {spelled}"))
+        .0
+}
+
+/// An error's spelling and its cause, by its `ERROR.TYPE`, as the verdict
+/// chooses them: its place among the eight, `MIN(X,8)`, and `CHOOSE`'s
+/// `#VALUE!` at a place under 1.
+pub fn error_words(kind: f64) -> Result<(&'static str, &'static str), &'static str> {
+    let place = kind.min(8.0).trunc();
+    if place < 1.0 {
+        return Err(VALUE);
+    }
+    let (_, spelled, cause) = ERRORS[place as usize - 1];
+    Ok((spelled, cause))
+}
+
 /// What a person wrote into a level's cell, the cartridge's own row gone: a
 /// value, or a formula's text as written and the hand's reading of it.
 #[derive(Clone, Debug)]
@@ -2701,7 +2740,7 @@ impl Game {
                 continue;
             }
             let r = 11 + k;
-            for col in "BCDEHKLNPQRSTU".chars() {
+            for col in "BCDEHKLNPQRSTUX".chars() {
                 at.push(format!("{col}{r}"));
             }
             if level.state > 0 {
@@ -3167,14 +3206,18 @@ impl Game {
                 .flat_map(|row| (3..=10).map(move |col| (row, col)))
                 .enumerate()
             {
-                if matches!(self.cell(k, row, col), Val::Err(_)) {
-                    error = Some(place + 1);
+                if let Val::Err(kind) = self.cell(k, row, col) {
+                    error = Some((place + 1, kind));
                     break 'room;
                 }
             }
             self.lab.insert(
                 format!("S{r}"),
-                Val::Text(error.map_or(String::new(), room_address)),
+                Val::Text(error.map_or(String::new(), |(place, _)| room_address(place))),
+            );
+            self.lab.insert(
+                format!("X{r}"),
+                n(error.map_or(0.0, |(_, kind)| f64::from(error_type(kind)))),
             );
             // its gates and those outside the set, and whether its switches held, when its test last ended, which its
             // stars and its verdict read
@@ -3374,11 +3417,11 @@ impl Game {
             )),
             (Err(k), _, _) | (_, Err(k), _) | (_, _, Err(k)) => Val::Err(k),
         };
-        let error = |tail: &str| match lab("S").text() {
-            Ok(at) => Val::Text(format!(
-                "{at} holds an error: it reads a text, an emptied cell or an error.{tail}"
+        let error = |tail: &str| match (lab("S").text(), lab("X").number().and_then(error_words)) {
+            (Ok(at), Ok((spelled, cause))) => Val::Text(format!(
+                "{at} holds {spelled}: it or a cell it reads {cause}{tail}"
             )),
-            Err(k) => Val::Err(k),
+            (Err(k), _) | (_, Err(k)) => Val::Err(k),
         };
         let no_error = equal(&lab("S"), &Val::Text(String::new()));
         let verdict = if_(
@@ -3731,6 +3774,10 @@ pub fn session() -> Vec<(Acted, Option<Edit>)> {
     s.push(value("I NON", "A3", Val::Num(1.0)));
     s.push(key("I NON", 1, 3, "toggle"));
     s.push(key("I NON", 1, 3, "test"));
+    // an error by its kind (CART.9's fifth slice): on III, passed, a gate outside the set dividing by zero, the verdict
+    // naming its #DIV/0!; then the cell emptied by Delete, and the pass's words again
+    s.push(gate("III VEL", "E5", "=A3/0"));
+    s.push(value("III VEL", "E5", Val::Text(String::new())));
     s
 }
 

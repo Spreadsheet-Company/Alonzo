@@ -9269,6 +9269,71 @@ A write's frame computes every cell, 3,188 where 1,804, which the ask of Frazaro
 - `ENGINE.36`, another session's, landed in the shared tree between decisions 50 and 51, `web/host.js`, the template and the loop check among its files. So decision 51 went by content into the tree and into the clean copy alike, the controls ran on the copy, and this commit's blobs are the copy's, HEAD and this slice alone.
 - This slice's regeneration wrote `tools/check_cartridge.ps1` from HEAD and so took out `CART.14.1`'s row floor, uncommitted in the shared tree. Found within the hour by that session's transcript, put back by that slice's own script, and the regeneration writes no shared tool since: only Naught's files, and the rest is hunks by content.
 
+*Slice 5, the language's 0.13.0 in Naught, 2026-11-15, at the owner's word: "0.13.0 is released on GitHub and crates.io. Proceed with CART.9", over the pin to `vla-lang` 0.13.0 (`ENGINE.1`'s record of it).* What 0.13.0 brings this item is the three asks of the fourth slice, built in Frazaro as `KERNEL.68` to `KERNEL.70`, and `ADDRESS` (`KERNEL.60`). Built the same day as the decisions below recommend; the decisions await the owner, with the build, at the hand test.
+
+**The gaps, each tried at the released language** (the probe below, through the pass and a load), sorted by whether filling one later would move the rows:
+- *An error's kind* (`KERNEL.68`'s `ERROR.TYPE`): the short slice's Found. Filled, decision 52.
+- *A cell's name* (`KERNEL.60`'s `ADDRESS`): the Lab spelled a room cell's column out of the text `"CDEFGHIJ"` by `MID`. Filled, decision 53, since the rows move with this slice anyway.
+- *A formula read as Excel 365 reads it typed* (`KERNEL.70`'s word `dynamic`): the fourth slice's Found. Tried, and left for the language's spills, decision 54.
+- *A formula write's frame costing its reach* (`KERNEL.69`): nothing to build, the pin brings it; measured below.
+- *`BITAND`* (`KERNEL.71`): not taken. `test-bit`'s `MOD(INT(x/2^k),2)` is a bit, 0 or 1, and `BITAND` a mask, which wants a comparison more to be one; no reader would gain.
+- *Named pieces and `self`* (`VLA.9`, `VLA.10`): no row moves by them, so nothing waits; `KIT.6`'s slices take them into the kit first, and Naught's own macros after.
+- *A conditional format and a merge* (`KERNEL.58`): the page draws neither yet, the painter's half that `KERNEL.58`'s close leaves Alonzo to mint, so the lamps stay a text and a look.
+
+**The decisions, the owner's.** Each with the recommendation and the alternatives it declines.
+
+52. **An error said by its kind.**
+    - The Lab's X, a level's row: the kind of the error S names, `ERROR.TYPE`'s number, and 0 where S names none. It asks S first, since the `#N/A` that `MATCH` answers where no cell holds an error has a kind of its own, 7.
+    - N9 says the kind as Excel spells it and what makes one, in the cell or in a cell it reads: "E5 holds #DIV/0!: it or a cell it reads divides by zero. Ex nihilo nihil fit." Where T stops: "The test stops at input 1 of 4, standing on the board: J3 holds #VALUE!: it or a cell it reads takes a text for a number, and an emptied cell holds one."
+    - The eight the language holds, `ERROR.TYPE`'s 1 to 7 and its 14, each with its cause: `#NULL!` meets two ranges that do not cross; `#DIV/0!` divides by zero; `#VALUE!` takes a text for a number, and an emptied cell holds one; `#REF!` names a cell that is not there; `#NAME?` names what the language does not know; `#NUM!` makes a number too large for a cell; `#N/A` finds no value; `#CALC!` calculates no answer. The verdict chooses by `MIN(X,8)`.
+    - What a gate can hold, written into a room (*measurement*): `=A3/0` `#DIV/0!`, `=1E+308*10` `#NUM!`, `=NA()` `#N/A`, `=A3+"one"` `#VALUE!`, an empty `FILTER` `#CALC!`, and `#REF!`, `#NULL!` and `#NAME?` typed as themselves. A function the language does not compute, `=FACT(3)`, and an intersection, `=A3 A4`, are refused at the write, as before.
+    - *Alternatives:*
+      - the kind alone, which leaves a person to know what `#NUM!` means;
+      - the error's root by the gates' references, which no formula finds (decision 32's second alternative).
+53. **A room's cell named by `ADDRESS`.** The Lab's R and S name a room's cell by `ADDRESS(row,column,4)`, and P its inputs by `ADDRESS` over `SEQUENCE`, which lifts row by row in the order the letters gave. No value moves, and the hands, which spell a name their own way, stand. *Alternative:* the letters kept, a spelling the language no longer needs.
+54. **A person's formula stays a legacy formula: the page writes no `dynamic` until the language places a spill** (`KERNEL.55`).
+    - With the word, a gate whose answer is many values, `=A3:A4`, is `(not-computed "a spill")`. That is no error, so no `IFERROR` contains it, and every cell reading a not-computed cell is not computed: the lamps, the Lab's S and D, the verdict.
+    - Under T the label reached the Lab's testing flag and B5, and from them the level's switches, each its own last value. Each switch took the label and kept it: the gate rewritten plainly left C3 not computed, and only R gave the level back (*measurement*, the probe below).
+    - Without the word the same text is Excel's legacy formula: its value is the cell of its own row, and its `FORMULATEXT` the label "a formula Excel shows with @", so the reckoning is not computed while the gate stands, while the room's values, the Lab's S and D and the verdict are computed (measured).
+    - What the word would buy: `=MAX(COLUMN(A2:L2))` is 12 where 1 (measured), the short slice's Found. No gate of a level's set reads a range, and no level asks for one.
+    - The pin keeps a written `dynamic` row under the engine's checks either way (`ENGINE.1`'s record).
+    - *Alternatives:*
+      - the word written on every one-cell formula a person types, `KERNEL.70`'s design, which gives a typo the power to freeze a level until R;
+      - the word on the work sheets alone, the Bench and the ROM, where the page cannot know which sheets keep a state;
+      - a level's switches reset when a label reaches them: a workaround of the language's gap, which the owner's rule declines.
+
+*Slice 5 built 2026-11-15.* What it touches:
+- `cartridges/naught/naught.source.vla`, the levels' block: the macros `error-kind`, `error-spelled`, `error-cause`, `room-read` and `first-error-place`; `an-error-at`, `room-address`, `lab-gates` and `lab-gate-inputs` rewritten; the Lab's X and its header. 1,379 rows where 1,363: fifteen rows and a header. The bench's block, the manifest and the floors' source are untouched, so the frame floors' digests stand.
+- `engine/src/naught.rs`: `ERRORS`, `error_type` and `error_words`; the frame's X; the words' kinds; X among the held cells; the session's last two acts, on III, passed by then, `=A3/0` at E5 and the cell emptied.
+- `cartridges/naught/naught.hand.js`: its twin, line for line.
+- `cartridges/naught/naught.replay.vla`: its tail, frames 4804 to 4807, the session's two acts as the host's recorder logs them, each settling in two frames, written by the engine's own steps over the replay played to its end; its header the new cartridge's digest, `F1E3EB54…`. Its golden, the Bench's record, stands.
+- `engine/src/cartridge.rs`: `naught_says_each_error_by_its_kind`, each of the eight written into a fresh III and held to the hand's table, the page's hand's rows read as its text; the error words of two tests; the replay test's counts.
+- `engine/testdata/describe/naught.vla`.
+- `tools/check_cartridge.ps1`: Naught's row floor, 1,379.
+- `tools/check_host_loop.ps1`: the replay case's floors, `naughtFrames` 4,807, `naughtCells` 1,615,368, `naughtWritten` 151 and `naughtShown` 18; and two mutants of the page's hand, HZ, an error's kind read as `#VALUE!` whatever the error, at frame 4804, and IA, the words of a kind a place after its own, at frame 52, where III's emptied cell makes its first `#VALUE!`. The control's total to two hundred and thirty-six.
+
+*Measured* natively, release, by a probe over the engine (ten writes alternated, two runs):
+
+| | slice 4, over 0.12.0 | slice 5, over 0.13.0 |
+|---|---|---|
+| the load | 28 ms | 28.9 ms |
+| a gate's write and its frames | 4.8 ms | 1.3 to 1.7 ms |
+
+*Held* in the shared tree over the pin, 2026-11-15: `cargo test --release`, 91 tests and the doc test, every cartridge required; `expand -- --check`, eleven `same`; `cargo fmt --check` and `cargo clippy --all-targets` clean; `run_checks.ps1` ALL GREEN, 13 of 13; `check_host_loop.ps1 -Control`, its 236 mutants each failing for its own reason, HZ at frame 4804 and IA at 52, in 371 seconds; `check_cartridge.ps1 -Control` passing; the page 5,543,878 characters.
+
+*The owner's hand test, 2026-11-15,* four screenshots over the page built for it: on III VEL, `=A3/0` written at E5 and N8 "Gates 1, 1 outside the set given, the first at E5; the budget 4, the least known 3: ☆☆☆" over N9 "E5 holds #DIV/0!: it or a cell it reads divides by zero. Ex nihilo nihil fit."; `=NA()` there, "E5 holds #N/A: it or a cell it reads finds no value. Ex nihilo nihil fit."; Delete, "Gates 0" and "T tests every input, an input a frame. Calculemus!"; and the textbook's three gates, C4 emptied and T, "The test stops at input 1 of 4, standing on the board: J3 holds #VALUE!: it or a cell it reads takes a text for a number, and an emptied cell holds one.", the lamp a question mark. Every step passed as written; the lamp stands at L3, under its label, where the hand test's writing named K3. *Approved* at the owner's word, "If everything looks good, commit before suggesting next steps.", and committed the same day, the pin first.
+
+*Found.*
+- *A not-computed label in a state stays there.* A cell reading its own last value takes a label once and keeps it, since a label is no value a test can replace, until the level's R or a Load. Met through decision 54's spill. Frazaro's to weigh beside `KERNEL.55`: a spill the language cannot place said as `#SPILL!`, as Excel says one it cannot place, an error a game contains.
+- *A legacy range gate's `FORMULATEXT` is a label.* `=A3:A4` written without the word: the Gates sheet's text of it is "a formula Excel shows with @", so a level's reckoning is not computed while it stands (since the short slice, measured here). Frazaro's to weigh: `FORMULATEXT` answering Excel's own text, `=@A3:A4`.
+- *`=#CALC!` typed is refused* (`calc-construct-not-read`), where `#NULL!`, `#REF!` and `#NAME?` typed are written. Frazaro's to weigh.
+
+*Catches.*
+- The fourth slice's generators went with an emptied scratchpad, but the stand-in's script is `naught::session()`: the tail was written by a test that played the committed replay as `play_to_golden` plays it and then made the session's two new acts as the recorder logs them, each act's frames counted by the engine's own settle.
+- Mutant FH reads its reason as "below its floor of 17", the floor `naughtShown` held; raised to 18, the control failed it, and its words moved with the floor.
+- `ALONZO_BLESS=1` writes every describe golden with LF; only Naught's moved in content, and all eleven went back to the tree's CRLF.
+- A test inserted for the tail by a script written in Python's text mode turned `engine/src/cartridge.rs` CRLF; it was put back LF, and the test taken out.
+
 ## `SPEC.5` — the keyboard's sheets declared: the sheets whose keys are the game's, the sheets a person types into, and the sheets no person writes
 
 *Scoped 2026-10-20 at the owner's word, "Recommendations approved; proceed.", after `CART.9`'s fine scoping of its third slice found it first in the order. The middle mode is named *work* at the owner's word: "I feel like "cells" sheets should be called "work" sheets, which plays against their alternate "game" sheets." Built the same day as the decisions recommend; the decisions await the owner, with the build, at the hand test.*

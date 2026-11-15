@@ -280,9 +280,33 @@
   "the verdict of a test that tried every input"
   (&expand "Quod erat demonstrandum: every one of its " inputs " inputs passes."))
 
+(defmacro (error-kind lab-row)
+  "the kind of the room's first error, its place among the language's eight: ERROR.TYPE's 1 to 7, and 8 for its 14"
+  (min (ref "Lab" (&expand "X" lab-row)) 8))
+
+(defmacro (error-spelled lab-row)
+  "the room's first error as Excel spells it"
+  (choose (error-kind lab-row) "#NULL!" "#DIV/0!" "#VALUE!" "#REF!" "#NAME?" "#NUM!" "#N/A" "#CALC!"))
+
+(defmacro (error-cause lab-row)
+  "what makes the room's first error, in the cell or in a cell it reads"
+  (choose (error-kind lab-row)
+    "meets two ranges that do not cross."
+    "divides by zero."
+    "takes a text for a number, and an emptied cell holds one."
+    "names a cell that is not there."
+    "names what the language does not know."
+    "makes a number too large for a cell."
+    "finds no value."
+    "calculates no answer."))
+
 (defmacro (an-error-at lab-row)
-  "the room's first cell holding an error, named"
-  (& (ref "Lab" (&expand "S" lab-row)) " holds an error: it reads a text, an emptied cell or an error."))
+  "the room's first cell holding an error, named with its kind and what makes it"
+  (& (ref "Lab" (&expand "S" lab-row))
+     " holds "
+     (error-spelled lab-row)
+     ": it or a cell it reads "
+     (error-cause lab-row)))
 
 (defmacro (why-it-stopped lab-row)
   "what the board shows where a test stopped: an error's cell, a switch written over that did not follow the test, or a lamp"
@@ -710,11 +734,11 @@
 ; never while the test runs, and L the same at the input its last test ended on; M the inputs its test runs through; N
 ; whether its test runs; O its workings where it needs a sum; P the inputs a gate of it may read, between bars; Q its
 ; gates outside the set it gives, R the first of them and S the room's first cell holding an error, each read row by
-; row; T and U its gates and those outside when its test last ended; V the states its flip-flops can hold, or none; and
-; W its room's last row.
+; row; T and U its gates and those outside when its test last ended; V the states its flip-flops can hold, or none; W
+; its room's last row; and X the kind of the error S names, ERROR.TYPE's number, 0 where S names none.
 (labels "Lab" "A11" "I NON" "II ET" "III VEL" "IV AUT" "V ELIGE" "VI DISTRIBUE" "VII SEMIS" "VIII SUMMA" "IX QUATTUOR" "X MORA" "XI TENE" "XII MEMORIA" "XIII NUMERA" "XIV RATIO" "XV MACHINA")
 (headers "Lab" "B10" "result" "stopped at" "due" "gates" "budget" "least" "stars" "ticks" "moved" "held" "held tested" "inputs" "testing" "sum"
-  "gate inputs" "outside" "first outside" "first error" "gates tested" "outside tested" "states" "last row")
+  "gate inputs" "outside" "first outside" "first error" "gates tested" "outside tested" "states" "last row" "error kind")
 
 (defmacro (at-test-end r k column now)
   "a level's cell of column in row r of the Lab, taking now as the level's test ends and otherwise as it was, so that what
@@ -959,7 +983,15 @@
 
 (defmacro (room-address i)
   "the address of a room's cell by its place i in the room read row by row from C3, eight cells a row"
-  (& (mid "CDEFGHIJ" (+ (mod (- i 1) 8) 1) 1) (+ 3 (int (/ (- i 1) 8)))))
+  (address (+ 3 (int (/ (- i 1) 8))) (+ 3 (mod (- i 1) 8)) 4))
+
+(defmacro (room-read sheet rows)
+  "a level's room as one column, read row by row from C3, rows of it from 3"
+  (tocol (ref sheet (&expand "C3:J" (+expand rows 2)))))
+
+(defmacro (first-error-place sheet rows)
+  "the place of the room's first cell holding an error, read row by row, or #N/A where none does"
+  (match true (iserror (room-read sheet rows)) 0))
 
 (defmacro (gates-block sheet r top rows)
   "a level's block of the Gates sheet, from row top: each room cell's text, and ten columns to its right its kind. rows, its
@@ -971,8 +1003,9 @@
 
 (defmacro (lab-gates sheet r top rows gives)
   "a level's gates read from their formulas: its block of the Gates sheet; and on its row r of the Lab, its gates, every
-   formula of its room (E), its gates outside the set it gives, kinds past gives (Q), the first of them (R), and the room's
-   first cell holding an error (S). rows, its room's rows from 3"
+   formula of its room (E), its gates outside the set it gives, kinds past gives (Q), the first of them (R), the room's
+   first cell holding an error (S) and its kind (X), 0 where none does: ERROR.TYPE of #N/A is a kind, so X asks S first.
+   rows, its room's rows from 3"
   (gates-block sheet r top rows)
   (cell "Lab" (&expand "W" r) (+expand rows 2))
   (rule "Lab" (&expand "E" r) (sumproduct (- (- (isformula (ref sheet (&expand "C3:J" (+expand rows 2))))))))
@@ -980,13 +1013,17 @@
   (rule "Lab" (&expand "R" r)
     (iferror (room-address (match true (> (tocol (ref "Gates" (&expand "M" top ":T" (+expand top (-expand rows 1))))) gives) 0)) ""))
   (rule "Lab" (&expand "S" r)
-    (iferror (room-address (match true (iserror (tocol (ref sheet (&expand "C3:J" (+expand rows 2))))) 0)) "")))
+    (iferror (room-address (first-error-place sheet rows)) ""))
+  (rule "Lab" (&expand "X" r)
+    (if (= (ref "Lab" (&expand "S" r)) "")
+        0
+        (error.type (index (room-read sheet rows) (first-error-place sheet rows))))))
 
 (defmacro (lab-gate-inputs r rows switches)
   "the inputs a level's gate may read, between bars, on its row r of the Lab (P): its switches and flip-flops, the cells of
    its room, rows of them from 3, 0 and 1"
   (rule "Lab" (&expand "P" r)
-    (& "|" (textjoin "|" true (& "A" (sequence switches 1 3)) (& (mid "CDEFGHIJ" (sequence 1 8) 1) (sequence rows 1 3)) "0" "1") "|")))
+    (& "|" (textjoin "|" true (address (sequence switches 1 3) 1 4) (address (sequence rows 1 3) (sequence 1 8 3) 4) "0" "1") "|")))
 
 (sheet "Gates" hidden)
 (cells "Gates"

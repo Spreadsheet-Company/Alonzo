@@ -18,11 +18,13 @@
 ; stands on, C and R, the rest of them, its 2,048 inputs, G running the ROM's 3 x 5 to 15, a line rewritten, a word none
 ; of the five, and G again, 3 x 7 in four bits. Then the bench's 38 switches, each written in the drawer's edit row, its
 ; tab chosen at the first: the adder's a to all ones and its carry-in, 65,535 + 1 rippling through all sixteen bits; the
-; multiplier's 255 x 255 = 65,025; and the low bits turned back, 254 x 127 = 32,258. And last, I's switch written over,
-; which the test no longer drives, so that it stops at input 1, and says so. Every frame of the game is held to the hand
+; multiplier's 255 x 255 = 65,025; and the low bits turned back, 254 x 127 = 32,258. Then I's switch written over,
+; which the test no longer drives, so that it stops at input 1, and says so. And last, since CART.9's fifth slice, III's
+; room given a gate outside the set that divides by zero, its verdict naming the #DIV/0!, and the cell emptied by
+; Delete, the pass's words again. Every frame of the game is held to the hand
 ; where an act, a test, a clock or a person's row could move it, and one in 64 whole: the gates, the boards, the words,
 ; the Lab, the ROM, the Gates sheet and the Camera's sheet. Its golden is the Bench's record at its end.
-(replay "naught" (spec 6) (cartridge "D19436051BF0A18E2D39A4F5D1A2327A1342D95D37408C30169CA46CF8211A18") (seed 1))
+(replay "naught" (spec 6) (cartridge "F1E3EB541E1F0E5B2F52B773ABC11809146848A3DFBBAEBC48168C33AD095B9F") (seed 1))
 (frame 1
   (cell "Input" "B11" 1)
   (cell "Input" "B12" 1)
@@ -770,4 +772,11 @@
   (cell "Input" "B20" "toggle"))
 (frame 4801
   (cell "Input" "B20" "test"))
-(frame 4803)
+(frame 4804
+  (cell "Input" "B11" 5)
+  (cell "Input" "B12" 5)
+  (cell "Input" "B19" "III VEL")
+  (formula "III VEL" "E5" "=A3/0"))
+(frame 4806
+  (cell "III VEL" "E5" ""))
+(frame 4807)

@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds two hundred and thirty-four mutant pages through tools/build_web.ps1 and runs
+-Control builds two hundred and thirty-six mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -559,6 +559,9 @@ carriage return, LI; a nowrap's line feed drawn, LJ; a nowrap's measure counting
 the rule, LP, and its compare holding a line feed against a line, LQ; and, needing no module, each by the crafted
 patches: a record by cell that joins no line, LL; a patch that joins none, LM; a row reader that joins any line, LN; and a
 model's lines left at one a row, LO.
+And CART.9's fifth slice two, each Naught's hand's, failing the replay case at its frame when the real page holds the
+module: an error's kind read as #VALUE! whatever the error, HZ, at frame 4804, where III's gate divides by zero; and the
+words of the kind a place after its own, IA, at frame 52, where III's emptied cell makes its first #VALUE!.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -1024,6 +1027,10 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # case's, needing no module, to two hundred and nineteen, and one hundred and nine without the module. Decision 51, a settled
 # act's frames in words and a command's name in single quotes: settle's fakeWords 8 and said 2, and HW, HX and HY, the settle
 # case's, needing no module, to two hundred and twenty-two, and one hundred and twelve without the module.
+# CART.9's fifth slice, 2026-11-15: the replay's tail, III's room given a gate dividing by zero and the cell emptied, 4,807
+# frames (naughtFrames 4807, naughtCells 1,615,368), 151 rows a person wrote (naughtWritten 151) and eighteen sheets shown
+# (naughtShown 18); HZ and IA, the replay case's, needing the module, to two hundred and thirty-six with ENGINE.36's twelve,
+# and one hundred and sixteen without the module still.
 # REPO.11, 2026-10-30: HA, the palette case's, needing no module, a blur never shutting the palette, to one hundred and
 # ninety-four, and ninety-four without the module.
 # ENGINE.14's addendum, 2026-10-30: the empty case's opening 3, a body with no mode hidden, the plane's box opening hidden and
@@ -1064,7 +1071,7 @@ $floors = @(
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
     @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 11; same = 11; refused = 1; handle = 1; ranOn = 1 } },
     @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 5; players = 2; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 7; rate = 5; refused = 1 } },
-    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 5 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 7; frames = 26; same = 26; golden = 7; round = 7; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637; seiyakuFrames = 104; seiyakuCells = 8424; seiyakuActs = 35; seiyakuInstances = 2; seiyakuSettles = 69; naughtFrames = 4803; naughtCells = 1608754; naughtEdits = 38; naughtLit = 208; naughtWritten = 149; naughtPassed = 14; naughtShown = 17 } },
+    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 5 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 7; frames = 26; same = 26; golden = 7; round = 7; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637; seiyakuFrames = 104; seiyakuCells = 8424; seiyakuActs = 35; seiyakuInstances = 2; seiyakuSettles = 69; naughtFrames = 4807; naughtCells = 1615368; naughtEdits = 38; naughtLit = 208; naughtWritten = 151; naughtPassed = 14; naughtShown = 18 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } },
     # 2026-10-24, ENGINE.28's first slice: the grid card's rows 17 and 18 are a format's appearance and its stripe starts
@@ -2823,7 +2830,7 @@ if ($Control) {
             $fileFH = Join-Path $tmp 'fh.host.js'; [System.IO.File]::WriteAllText($fileFH, $mutFH, $utf8)
             $rFH = Invoke-Mutant (New-MutantPage 'fh' $template $fileFH) 'input,replay:naught'
             $jFH = Test-Mutant $rFH 'input,replay:naught'
-            $fhFailed = @($jFH.Problems | Where-Object { $_ -like '*the case replay at a ratio of 1 counted 0 naughtShown, below its floor of 17*' }).Count
+            $fhFailed = @($jFH.Problems | Where-Object { $_ -like '*the case replay at a ratio of 1 counted 0 naughtShown, below its floor of 18*' }).Count
             $fhNote = "the replay's sheet unshown applied ($fhApplied) and failed the replay case's naughtShown ($fhFailed)"
         }
         $fhOk = ($moduleReal -eq 0) -or ($fhApplied -and $fhFailed -ge 1)
@@ -2896,7 +2903,13 @@ if ($Control) {
                With = ';' },
             @{ L = 'hl'; Name = 'a switch written over taken at its word'; Frame = 4801
                Anchor = '    var held = differing(sw, inputs) === 0;'
-               With = '    var held = true;' }
+               With = '    var held = true;' },
+            @{ L = 'hz'; Name = 'an error''s kind read as #VALUE! whatever the error'; Frame = 4804
+               Anchor = '        if (isErr(standing)) { error = place; kind = errorType(standing.error); }'
+               With = '        if (isErr(standing)) { error = place; kind = 3; }' },
+            @{ L = 'ia'; Name = 'the words of an error''s kind a place after its own'; Frame = 52
+               Anchor = '    return place < 1 ? fault(VALUE) : ERRORS[place - 1];'
+               With = '    return place < 1 ? fault(VALUE) : ERRORS[place % 8];' }
         )
         $naughtNotes = New-Object System.Collections.Generic.List[string]
         $naughtJudged = New-Object System.Collections.Generic.List[object]
@@ -2971,7 +2984,7 @@ if ($Control) {
         if ($script:LoopMode -eq 'run') { Write-Output (Get-PoolNote) }
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and thirty-four' } else { 'one hundred and sixteen applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and thirty-six' } else { 'one hundred and sixteen applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
