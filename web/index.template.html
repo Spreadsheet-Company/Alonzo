@@ -251,6 +251,9 @@
     <button type="button" id="eng-pause" data-command="pause">Pause</button>
     <button type="button" id="eng-sound" data-command="sound" aria-pressed="false">Sound on</button>
     <button type="button" id="eng-load" data-command="load" title="the cartridge in the drawer's box, loaded again from frame 0; Ctrl+Enter in that box, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Load</button>
+    <button type="button" id="eng-save" data-command="save" title="the running game saved to a file of yours, a cartridge that opens at its frame; Ctrl+S, Cmd+S on a Mac" aria-keyshortcuts="Control+S Meta+S">Save</button>
+    <button type="button" id="eng-open" data-command="open" title="a cartridge or a save opened from a file of yours, and loaded; Ctrl+O, Cmd+O on a Mac" aria-keyshortcuts="Control+O Meta+O">Open</button>
+    <input type="file" id="eng-open-file" accept=".vla,text/plain" hidden>
     <span id="frame-short" class="frame-short"></span>
     <p id="eng-status" class="status"></p>
     <button type="button" id="eng-palette" data-command="palette" title="the command palette: every act of the page by its name, a sheet by its name, a row of VLA written as a person's edit; Ctrl+K, Cmd+K on a Mac, or Ctrl+Shift+`" aria-keyshortcuts="Control+K Meta+K Control+Shift+`">Commands</button>
@@ -311,7 +314,7 @@
 </div>
 <header>
   <h1>Alonzo: <em>the bench</em></h1>
-  <p class="lede">The engine page's bench, each a mode of the one page the checks open: <code>?loop=1</code> the host loop's oracle, <code>?oracle=1</code> the render oracle, <code>?viewport=1</code> the viewport over the fixtures, <code>?frames=1</code>, <code>?blit=1</code> and <code>?bench=1</code> the floors' instruments. Opened plainly, the page is the player. Nothing on this page leaves it: it reads nothing from the network and writes nothing anywhere but a person's keys, kept in the browser at their own Apply the keys.</p>
+  <p class="lede">The engine page's bench, each a mode of the one page the checks open: <code>?loop=1</code> the host loop's oracle, <code>?oracle=1</code> the render oracle, <code>?viewport=1</code> the viewport over the fixtures, <code>?frames=1</code>, <code>?blit=1</code> and <code>?bench=1</code> the floors' instruments. Opened plainly, the page is the player. Nothing on this page leaves it: it reads nothing from the network and writes nothing anywhere but a person's keys, kept in the browser at their own Apply the keys, and the files a person saves, at their own Save.</p>
   <p id="about" class="about"></p>
 </header>
 <main>
@@ -603,6 +606,8 @@
     { name: 'pause', words: 'pause the loop at its frame' },
     { name: 'sound', words: 'turn the sound on, or off' },
     { name: 'load', words: 'load the cartridge in the drawer\'s box again from frame 0' },
+    { name: 'save', words: 'save the running game to a file of yours, a cartridge that opens at its frame' },
+    { name: 'open', words: 'open a cartridge or a save from a file of yours, and load it' },
     { name: 'full-screen', words: 'enter full screen, or leave it' },
     { name: 'drawer', words: 'open the drawer, or close it' },
     { name: 'sheet', words: 'show a sheet as its tab shows it', arg: 'sheet' },
@@ -659,6 +664,8 @@
     '(bind "Ctrl+Alt+PageUp" previous-sheet)',
     '(bind "Ctrl+PageDown" next-sheet)',
     '(bind "Ctrl+PageUp" previous-sheet)',
+    '(bind "Ctrl+S" save)',
+    '(bind "Ctrl+O" open)',
     '(bind "Enter" write edit)',
     '(bind "Ctrl+Enter" write edit)',
     '(bind "Ctrl+Enter" build source library)',
@@ -1043,10 +1050,31 @@
   KeyStore.prototype.keep = function (text, defaults) {
     try {
       if (!this.s) return false;
-      if (text === defaults) this.s.removeItem(this.key); else this.s.setItem(this.key, text);
+      if (text === defaults) { this.s.removeItem(this.key); this.s.removeItem(this.key + '-commands'); } else this.s.setItem(this.key, text);
       return true;
     } catch (e) { return false; }
   };
+  // The page's commands a kept keymap has been offered (ENGINE.5's hand test): their names, kept beside it and forgotten
+  // with it, so that a command's default key reaches a keymap kept before the command was the page's, once, and a key a
+  // person took out later stays out; null where none are kept.
+  KeyStore.prototype.known = function () {
+    try { var t = this.s ? this.s.getItem(this.key + '-commands') : null; return t === null ? null : t.split(' ').filter(function (n) { return n !== ''; }); } catch (e) { return null; }
+  };
+  KeyStore.prototype.know = function (names) { try { if (!this.s) return false; this.s.setItem(this.key + '-commands', names.join(' ')); return true; } catch (e) { return false; } };
+  // The lines of the page's own keymap a kept one gains (ENGINE.5's hand test, where a keymap kept at an earlier hand test
+  // held no Save and no Open, and Ctrl+S and Ctrl+O went to the browser): each default binding of a command the page had
+  // not offered that keymap, known (none known, every command), which the kept keymap binds to no key, and whose keys it
+  // holds for nothing, as the defaults spell it.
+  function offeredLines(kept, known, defaults, commands) {
+    var def = readKeymap(defaults, commands), lines = String(defaults).split('\n'), out = [];
+    if (!def.ok || !kept || !kept.ok) return out;
+    def.bindings.forEach(function (b) {
+      if (known && known.indexOf(b.command) >= 0) return;
+      if (kept.bindings.some(function (x) { return x.command === b.command || x.keys.text === b.keys.text; })) return;
+      out.push(lines[b.line - 1]);
+    });
+    return out;
+  }
   // How well a text matches a name or words, both in lower case: the whole of it, from its start, from a word's start,
   // inside it, or its letters in order; 0 for none.
   function matchScore(q, s) {
@@ -1401,12 +1429,15 @@
       pickEl.appendChild(opt);
     }
     pickEl.value = '';
-    function current() { return CARTRIDGES[pickEl.value] || EMPTY; }
+    // A file opened (ENGINE.5) is an entry of the picker's own, its last option, the cartridge or save it holds and
+    // no source or replay of its own; its value no cartridge's name, which never begins with a colon.
+    var OPENED = ':opened', opened = null;
+    function current() { return pickEl.value === OPENED && opened ? opened : (CARTRIDGES[pickEl.value] || EMPTY); }
     // The drawer's texts for what is picked: the cartridge, its source and their paths, and its notes, the
     // cartridge's own words for what it is and how it is played.
     function showTexts(c) {
       cartEl.value = c.text; pathEl.textContent = c.path || 'none: the empty sheet is the page\'s own';
-      srcEl.value = c.source || ''; srcPathEl.textContent = c.sourcePath || (c === EMPTY ? 'none: an empty sheet has no source' : 'none: this cartridge is written by hand');
+      srcEl.value = c.source || ''; srcPathEl.textContent = c.sourcePath || (c === EMPTY ? 'none: an empty sheet has no source' : (c === opened ? 'none: a file opened brings no source' : 'none: this cartridge is written by hand'));
       notesEl.textContent = c.notes || c.title;
     }
     showTexts(EMPTY);
@@ -1514,8 +1545,9 @@
       // Enter, F2 or a double click on a cell opens its edit with what it holds (CART.9), heard once the viewport is made
       if (mode === 'grid' && host.vp && !cellOpenHeard) { cellOpenHeard = true; host.vp.on('cellopen', function () { if (!(rate > 0 && lastKeyRead && host.gameKeysHere())) openCellEdit(null); }); }
       frameEl.className = 'frame-line';
-      frameShort.textContent = 'Frame 0';
-      frameEl.textContent = 'Frame 0, the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + ': the cartridge as loaded, nothing computed until ' + (e.rate ? 'the first step.' : 'an edit steps it.');
+      // a save opens at its frame (ENGINE.5), its values computed when it was saved
+      frameShort.textContent = 'Frame ' + thousands(e.frame || 0);
+      frameEl.textContent = 'Frame ' + thousands(e.frame || 0) + ', the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + (e.frame ? ': the save as it was saved, ' : ': the cartridge as loaded, nothing computed until ') + (e.frame ? (e.rate ? 'running on at the next step.' : 'an edit stepping it on.') : (e.rate ? 'the first step.' : 'an edit steps it.'));
       refreshGameKeys(true);   // the game's keys said and the list's words of them, the cartridge's Keys sheet now read
     });
     function loadCartridge() {
@@ -1590,6 +1622,66 @@
       offerReplay(c);
       if (host.m) { loadCartridge(); focusScreen(); }
     });
+    // ---- Save and Open (ENGINE.5; docs/SPEC.md sections 3.7 and 7.5) ----
+    // A file of the person's: the browser's save picker where it has one and the save is a person's act still at hand,
+    // the one place the page names the picker (tools/check_web_offline.ps1); else a download into the browser's own
+    // folder, which needs no act, so that a cartridge's save (File!B3) and one that waited for its settle are written
+    // too. Nothing else on the page writes a file. The picker opens in the Downloads folder every time, startIn with no
+    // id, which the File System Access API sets before the folder it last chose (the owner's word at the hand test).
+    // Answers a promise of how it was written.
+    function personFile(text, file, ask) {
+      var blob = new Blob([text], { type: 'text/plain' }), pick = window.showSaveFilePicker;
+      function download() {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = file; a.style.display = 'none';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+        return 'downloaded';
+      }
+      if (!ask || typeof pick !== 'function') return Promise.resolve(download());
+      return pick.call(window, { suggestedName: file, startIn: 'downloads', types: [{ description: 'An Alonzo cartridge', accept: { 'text/plain': ['.vla'] } }] })
+        .then(function (h) { return h.createWritable(); })
+        .then(function (w) { return w.write(blob).then(function () { return w.close(); }); })
+        .then(function () { return 'picked'; }, function (e) { return e && e.name === 'AbortError' ? 'cancelled' : download(); });
+    }
+    // A save the host took, written: through the picker when a person asked and it was taken at once, else downloaded.
+    host.on('save', function (e) {
+      personFile(e.text, e.file, e.by === 'person' && !e.waited).then(function (how) {
+        var where = how === 'picked' ? 'where you chose' : (how === 'downloaded' ? 'into your downloads' : null);
+        sayBar(where ? 'Saved frame ' + thousands(e.frame) + ' as ' + e.file + ', ' + where + '.' : 'The save was not written: the picker was closed.');
+      });
+    });
+    document.getElementById('eng-save').addEventListener('click', function () {
+      var r = host.save('person');
+      if (r.waiting) sayBar('The save waits for the act to settle, and is downloaded then.');
+      else if (!r.ok) sayBar(r.words || 'The save was refused, and the log says why.');
+    });
+    // Open: a file of the person's read through the browser's open picker where it has one, in the Downloads folder as
+    // Save's starts, and through the file input elsewhere, any browser; put in the picker as the file opened, its text in
+    // the cartridge's box; then loaded and run as a picked cartridge is, so that Load loads it again from where it was
+    // saved.
+    var openFileEl = document.getElementById('eng-open-file');
+    document.getElementById('eng-open').addEventListener('click', function () {
+      var pickOpen = window.showOpenFilePicker;
+      if (typeof pickOpen !== 'function') { openFileEl.value = ''; openFileEl.click(); return; }
+      pickOpen.call(window, { startIn: 'downloads', types: [{ description: 'An Alonzo cartridge', accept: { 'text/plain': ['.vla'] } }] })
+        .then(function (hs) { return hs[0].getFile(); })
+        .then(openedFile, function (e) { if (!(e && e.name === 'AbortError')) sayBar('The file was not opened: ' + (e && e.message ? e.message : e) + '.'); });
+    });
+    openFileEl.addEventListener('change', function () { if (openFileEl.files && openFileEl.files[0]) openedFile(openFileEl.files[0]); });
+    function openedFile(f) {
+      f.text().then(function (text) {
+        opened = { name: '', title: 'The file ' + f.name, file: f.name, path: 'the file ' + f.name + ', opened from your machine', text: text,
+                   notes: 'The file ' + f.name + ', opened from your machine: a cartridge loads at frame 0 and a save at the frame it was saved at. Load loads it again from there.' };
+        var opt = pickEl.querySelector('option[value="' + OPENED + '"]');
+        if (!opt) { opt = document.createElement('option'); opt.value = OPENED; pickEl.appendChild(opt); }
+        opt.textContent = 'The file ' + f.name;
+        pickEl.value = OPENED;
+        showTexts(opened);
+        offerReplay(opened);
+        if (host.m) { loadCartridge(); focusScreen(); }
+      }, function () { sayBar('The file ' + f.name + ' could not be read.'); });
+    }
     // A text on the clipboard, the button saying so, or the way to copy it by hand when the browser keeps the clipboard closed.
     function copyText(btn, label, text, what) {
       var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = label; }, 1200); };
@@ -1704,6 +1796,8 @@
       pause: function () { document.getElementById('eng-pause').click(); },
       sound: function () { soundEl.click(); },
       load: function () { document.getElementById('eng-load').click(); },
+      save: function () { document.getElementById('eng-save').click(); },
+      open: function () { document.getElementById('eng-open').click(); },
       'full-screen': function () { fullBtn.click(); },
       drawer: function () { drawerBtn.click(); },
       sheet: function (name) { showSheetIn(sheetsViewport(), name); },
@@ -1764,8 +1858,16 @@
       if (kept === null) return;
       var r = readKeymap(kept, COMMANDS, true);
       if (!r.ok) { keptSaid = 'The keymap this browser kept was refused, and the page\'s own keys hold: ' + r.problems.join('; ') + '.'; return; }
+      // the page's commands new since it was kept given their own keys where the keymap leaves both free (ENGINE.5)
+      var added = offeredLines(r, store.known(), KEYMAP_DEFAULTS, COMMANDS), gained = '';
+      if (added.length) {
+        var more = kept.replace(/\s*$/, '\n') + added.join('\n') + '\n', r2 = readKeymap(more, COMMANDS, true);
+        if (r2.ok) { r = r2; store.keep(more, KEYMAP_DEFAULTS); gained = 'The keymap this browser kept gains the page\'s keys for its commands new since: ' + added.join(', ') + '.'; }
+      }
+      store.know(COMMANDS.map(function (c) { return c.name; }));
       keymap = r;
-      if (r.notes.length) keptSaid = 'The keymap this browser kept is applied, ' + r.notes.length + ' of its lines set aside: ' + r.notes.join('; ') + '.';
+      keptSaid = gained;
+      if (r.notes.length) keptSaid = (gained ? gained + ' ' : '') + 'The keymap this browser kept is applied, ' + r.notes.length + ' of its lines set aside: ' + r.notes.join('; ') + '.';
     })();
     keysEl.value = keymap.text;
     // Every command's keys said: the list in the drawer, describe-bindings, with what keeps a key from the page and a
@@ -1840,6 +1942,7 @@
       if (!r.ok) { sayKeysLine('The keys were not applied, and nothing changed: ' + r.problems.join('; ') + '.', true); return; }
       keymap = r;
       var own = keysEl.value === KEYMAP_DEFAULTS, kept = store.keep(keysEl.value, KEYMAP_DEFAULTS), mine = r.order.length;
+      if (kept && !own) store.know(COMMANDS.map(function (c) { return c.name; }));   // the commands this keymap has been offered (ENGINE.5)
       sayKeys();
       sayKeysLine((typeof lead === 'string' ? lead + '; the keys applied: ' : 'The keys applied: ') + r.bindings.length + ' binding' + (r.bindings.length === 1 ? '' : 's') + (mine ? ' and ' + mine + ' command' + (mine === 1 ? '' : 's') + ' of your own' : '') +
         (own ? ', the page\'s own, no keymap kept in this browser' : kept ? ', kept in this browser' : ', which this browser will not keep, so a reload brings back the page\'s own') + '.', false);
@@ -5045,7 +5148,11 @@
         if (f === 41 && choice !== 'patch') P.push(at + ': the frame after the Camera\'s move is ' + choice + ', where the patches start again');
         if (f === 50 && choice !== 'drawn') P.push(at + ': the formula written into L4 made the frame ' + choice + ', where its changes are whole');
         // ---- the module's calls in the frame ----
-        var bad = '', views = function (s) { return log.filter(function (x) { return x.call === 'view' && x.sheet === s; }).map(function (x) { return x.projection; }).join(' '); };
+        // a save's views at File!B3's edge (ENGINE.5), every sheet's fills and, the first time, the sheet list's look at the
+        // Clock, are the save's and not the frame's draw
+        var saved = log.some(function (x) { return x.call === 'view' && x.projection === 'fills'; });
+        var drawn = function (x) { return x.call === 'view' && x.projection !== 'fills' && !(saved && x.sheet === 'Clock' && x.projection === 'grid' && x.window === 'A1'); };
+        var bad = '', views = function (s) { return log.filter(function (x) { return drawn(x) && x.sheet === s; }).map(function (x) { return x.projection; }).join(' '); };
         var screenWant = (asked ? 'changes' : '') + (byChanges ? '' : (asked ? ' values' : 'values'));
         if (views('Screen') !== screenWant) bad = 'the Screen was viewed "' + views('Screen') + '", where the frame is "' + screenWant + '"';
         for (var di = 0; !bad && di < CHANGES_DEVICES.length; di++) {
@@ -5053,7 +5160,7 @@
           if (views(s) !== dw) bad = s + ' was viewed "' + views(s) + '", where its changes ask "' + dw + '"';
           deviceHeld[s] = true;
         }
-        if (!bad && log.some(function (x) { return x.call === 'view' && x.sheet !== 'Screen' && CHANGES_DEVICES.indexOf(x.sheet) < 0; })) bad = 'a sheet no device reads was viewed';
+        if (!bad && log.some(function (x) { return drawn(x) && x.sheet !== 'Screen' && CHANGES_DEVICES.indexOf(x.sheet) < 0; })) bad = 'a sheet no device reads was viewed';
         if (bad) P.push(at + ': ' + bad); else k.calls++;
         // ---- the Input rows written ----
         var inputWrites = log.filter(function (x) { return x.call === 'write' && edits.indexOf(x.rows) < 0 && x.rows.split('\n').every(function (l) { return l.indexOf('(cell "Input" ') === 0; }); });
@@ -5101,7 +5208,7 @@
         }
         live[f] = { screen: V, input: canonCells(deviceCells(grid('Input'))) };
       }
-      k.patches = host.counters().patches; k.inputsKept = host.counters().inputsKept; k.saves = saves;
+      k.patches = host.counters().patches; k.inputsKept = host.counters().inputsKept; k.saves = saves; k.saved = host.counters().saved;   // and the saves written at those edges (ENGINE.5)
       // ---- the run's replay, played on a fresh host without a viewport ----
       var text = host.replayText() || '', M = new HOST({ drive: 'manual', budget: 0, now: frozen }), ex2 = HOST.instantiateSync(bytes), MD = new Driver({ exports: ex2 }), off = '';
       try {
@@ -5124,7 +5231,7 @@
   }
   function caseChanges() {
     var P = [], k = { crafted: 0, double: 0, module: 0, frames: 0, decided: 0, drawn: 0, patched: 0, still: 0, equal: 0, models: 0, drawnHeld: 0, calls: 0, devices: 0, inputs: 0, kept: 0, two: 0, whole: 0,
-                      dayViewer: 0, dayPatched: 0, screenViewer: 0, patches: 0, inputsKept: 0, saves: 0, replayed: 0, replayFrames: 0,
+                      dayViewer: 0, dayPatched: 0, screenViewer: 0, patches: 0, inputsKept: 0, saves: 0, saved: 0, replayed: 0, replayFrames: 0,
                       repainted: 0, pixels: 0, ops: 0, frozen: 0, unseen: 0, strands: 0 };
     k.crafted = changesCrafted(P);
     k.double = changesDouble(P);
@@ -5543,6 +5650,96 @@
     var x = String(a).split('\n'), y = String(b).split('\n');
     for (var i = 0; i < Math.max(x.length, y.length); i++) if (x[i] !== y[i]) return 'at line ' + (i + 1) + ', ' + JSON.stringify((x[i] === undefined ? 'no line' : x[i]).slice(0, 80)) + ' against ' + JSON.stringify((y[i] === undefined ? 'no line' : y[i]).slice(0, 80));
     return 'nowhere by line';
+  }
+  // ---- ENGINE.5: a save, the host's own, resumes as the run (the replay law's host half) ----
+  // Every committed replay the page holds, played on a host over the module to its middle and on to the first frame at
+  // rest, a cartridge that settles saved between acts; there the host's own save, saveText, the path Save and File!B3
+  // take. Loaded plainly on a second host, it opens at the Clock's frame with the seed it ran on. Loaded on a third, it
+  // plays the rest of the replay, its frames counted from the save and its header naming the save's digest, frame for
+  // frame beside the first: every sheet's fills the same, the File's name and size apart, at the load, the frame after,
+  // every 64th frame and the last. Where a cartridge settles, a save asked inside an act's settle waits, says so, and is
+  // handed to the page by the event save at the frame the settle ends, at rest.
+  function caseSave() {
+    var P = [], k = { saves: 0, opened: 0, seeds: 0, resumed: 0, compared: 0, frames: 0, waited: 0, kilobytes: 0 };
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm);
+    k.module = bytes.length;
+    var FOREVER = { used: 0, limit: 0x7fffffff, deadline: Infinity };
+    function step(h) { h._begin(); if (h.inFrame) h._continue(FOREVER); }
+    function host(ex) { var h = new HOST({ drive: 'manual', budget: 0, now: frozen }); return h.attach(ex).ok ? h : null; }
+    // every sheet that is no twin, its fills, the File's name and size apart, which a load writes for its file
+    function fillsOf(h, D) {
+      var list = h._sheets(), named = {}, out = [], i;
+      for (i = 0; i < list.length; i++) named[list[i].name] = true;
+      for (i = 0; i < list.length; i++) {
+        var n = list[i].name;
+        if (/\.last$/.test(n) && named[n.slice(0, -5)]) continue;
+        var t = D.call('alonzo_view', [h.counters().handle], ['fills', n, '']).text;
+        out.push(t.split('\n').filter(function (l) { return l.indexOf('(cell "File" "B1" ') !== 0 && l.indexOf('(cell "File" "B2" ') !== 0; }).join('\n'));
+      }
+      return out.join('\n');
+    }
+    for (var cn in CARTRIDGES) {
+      if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn) || !CARTRIDGES[cn].replayPath) continue;
+      var cart = CARTRIDGES[cn], exA = HOST.instantiateSync(bytes), DA = new Driver({ exports: exA }), A = host(exA);
+      if (!A || !A.load(cart.text, cart.file).ok) { P.push(cn + ': a fresh host did not load ' + cart.file + ' over the module'); continue; }
+      var pa = A.play(cart.replay);
+      if (!pa.ok) { P.push(cn + ': its committed replay did not play: ' + (pa.sentence || '')); continue; }
+      var last = pa.frames, settles = A.cart.settle > 0, waitedOn = false;
+      // a save asked inside an act's settle: it waits, and the page is handed it at the frame the settle ends
+      if (settles) A.on('save', function (e) { if (e.waited && !A.settling) waitedOn = e; });
+      var asked = false;
+      while (A.player && (A.counters().frame < Math.floor(last / 2) || A.settling || A.inFrame)) {
+        step(A);
+        if (settles && !asked && A.settling) {
+          asked = true;
+          var w = A.save('person');
+          if (!w.waiting) P.push(cn + ': a save asked inside an act\'s settle at frame ' + A.counters().frame + ' was taken at once, where it waits for the act to settle');
+        }
+      }
+      if (settles) {
+        if (waitedOn && waitedOn.by === 'person' && waitedOn.ok !== false) k.waited++;
+        else P.push(cn + ': the save asked inside an act\'s settle was never handed to the page at rest' + (asked ? '' : ' (no settle was met before the middle)'));
+      }
+      if (!A.player) { P.push(cn + ': its replay ended before a frame at rest from its middle'); continue; }
+      var at = A.counters().frame, s = A.saveText();
+      if (!s.ok) { P.push(cn + ': the host\'s save at frame ' + at + ' was refused: ' + (s.words || 'it waits')); continue; }
+      k.saves++; k.kilobytes += Math.round(s.bytes / 1024);
+      var before = fillsOf(A, DA), clockFrame = A._clockAt('B1') || 0;
+      // a plain load: the Clock's frame, and the seed it ran on
+      var exO = HOST.instantiateSync(bytes), DO = new Driver({ exports: exO }), O = host(exO);
+      if (!O || !O.load(s.text, s.file).ok) { P.push(cn + ': the save at frame ' + at + ' did not load: ' + (O ? O.sentences().slice(-1)[0].text : 'no host')); continue; }
+      if (O.counters().frame === clockFrame && fillsOf(O, DO) === before) k.opened++;
+      else P.push(cn + ': the save at frame ' + at + ' opens at frame ' + O.counters().frame + ', the Clock saying ' + clockFrame + (fillsOf(O, DO) === before ? '' : ', and its sheets are not the run\'s there'));
+      if (O._clockAt('B3') === A._clockAt('B3')) k.seeds++;
+      else P.push(cn + ': the save at frame ' + at + ' opens on the seed ' + O._clockAt('B3') + ', and the run\'s is ' + A._clockAt('B3'));
+      // the rest of the replay on a third host, its frames counted from the frame the save opens at
+      var rp = A._readReplay(cart.replay), off = at - O.counters().frame, rest = afterComments(cart.replay).split('\n')[0].replace(/\(cartridge "[0-9A-F]{64}"\)/, '(cartridge "' + HOST.sha256(s.text) + '")') + '\n';
+      for (var f = at + 1; f <= rp.last; f++) {
+        var rows = rp.frames[f];
+        if (rows) rest += '(frame ' + (f - off) + '\n  ' + rows.join('\n  ') + ')\n';
+        else if (f === rp.last) rest += '(frame ' + (f - off) + ')\n';
+      }
+      var exB = HOST.instantiateSync(bytes), DB = new Driver({ exports: exB }), B = host(exB);
+      if (!B || !B.load(s.text, s.file).ok) { P.push(cn + ': the save did not load on the third host'); continue; }
+      var pb = B.play(rest);
+      if (!pb.ok) { P.push(cn + ': the rest of the replay did not play on the save: ' + (pb.sentence || '')); continue; }
+      var bad = '';
+      if (fillsOf(B, DB) !== before) bad = 'at its load';
+      var j = 0;
+      while (!bad && A.player && B.player) {
+        step(A); step(B); j++; k.frames++;
+        if (j === 1 || j % 64 === 0 || !A.player) {
+          k.compared++;
+          if (fillsOf(B, DB) !== fillsOf(A, DA)) bad = 'at frame ' + A.counters().frame;
+        }
+      }
+      if (!bad && (A.player || B.player)) bad = 'at the end: the run stands at frame ' + A.counters().frame + ' and the save\'s at ' + B.counters().frame;
+      if (bad) P.push(cn + ': the save at frame ' + at + ' played on is not the run ' + bad);
+      else k.resumed++;
+    }
+    return { counters: k, problems: P };
   }
   function caseReplay() {
     var P = [], notes = [], k = OWN ? { vectors: 0, liveFrames: 0, doubleSame: 0, doubleRound: 0, paced: 0, stopped: 0, waited: 0, refused: 0 } : { vectors: 0 };
@@ -6668,8 +6865,8 @@
   function caseKeys() {
     var P = [], k = { defaults: 0, refused: 0, places: 0, steps: 0, lines: 0, kept: 0, spelled: 0, said: 0, sheets: 0, last: 0, game: 0 };
     var map = readKeymap(KEYMAP_DEFAULTS, COMMANDS);
-    if (map.ok && map.bindings.length === 14 && !map.order.length && map.bindings.some(function (b) { return b.command === 'palette'; })) k.defaults++;
-    else P.push('keys: the page\'s own keymap reads ' + (map.ok ? map.bindings.length + ' binding(s)' : 'refused: ' + map.problems.join('; ')) + ', where 14 bindings, the palette\'s among them, are due');
+    if (map.ok && map.bindings.length === 16 && !map.order.length && map.bindings.some(function (b) { return b.command === 'palette'; })) k.defaults++;
+    else P.push('keys: the page\'s own keymap reads ' + (map.ok ? map.bindings.length + ' binding(s)' : 'refused: ' + map.problems.join('; ')) + ', where 16 bindings, the palette\'s and Save\'s and Open\'s among them, are due');
     // every refusal whole, by its line and its words
     var base = KEYMAP_DEFAULTS + '\n', at = base.split('\n').length;
     var noPalette = KEYMAP_DEFAULTS.replace('(bind "Ctrl+K" palette)\n', '').replace('(bind "Control+Shift+[Backquote]" palette)\n', '');
@@ -6743,6 +6940,23 @@
     if (store.read() === null) k.kept++; else P.push('keys: the page\'s own keymap applied left a keymap kept, where it forgets it');
     var later = readKeymap(mine + '(bind "Ctrl+Q" a-later-command)\n', COMMANDS, true), strict = readKeymap(mine + '(bind "Ctrl+Q" a-later-command)\n', COMMANDS);
     if (later.ok && later.notes.length === 1 && !strict.ok) k.kept++; else P.push('keys: a kept keymap naming a later page\'s command was ' + (later.ok ? 'read with ' + later.notes.length + ' note(s)' : 'refused') + ' and a typed one ' + (strict.ok ? 'applied' : 'refused') + ', where the kept is read with its line set aside and the typed refused');
+    // ENGINE.5's hand test: a keymap kept before Save and Open gains Ctrl+S and Ctrl+O, once; a keymap offered them gains
+    // nothing, a key taken out staying out; a key the keymap holds for another command is not taken; and the commands
+    // known are kept beside the keymap and forgotten with it
+    k.offered = 0;
+    var older = KEYMAP_DEFAULTS.split('\n').filter(function (l) { return l !== '(bind "Ctrl+S" save)' && l !== '(bind "Ctrl+O" open)'; }).join('\n'), olderMap = readKeymap(older, COMMANDS, true);
+    var names = COMMANDS.map(function (c) { return c.name; });
+    var o1 = offeredLines(olderMap, null, KEYMAP_DEFAULTS, COMMANDS), o2 = offeredLines(olderMap, names, KEYMAP_DEFAULTS, COMMANDS);
+    var o3 = offeredLines(readKeymap(older + '\n(bind "Ctrl+S" run)\n', COMMANDS, true), null, KEYMAP_DEFAULTS, COMMANDS);
+    var o4 = offeredLines(readKeymap(older + '\n(bind "Alt+Shift+S" save)\n', COMMANDS, true), names.filter(function (n) { return n !== 'save' && n !== 'open'; }), KEYMAP_DEFAULTS, COMMANDS);
+    if (JSON.stringify(o1) === JSON.stringify(['(bind "Ctrl+S" save)', '(bind "Ctrl+O" open)'])) k.offered++; else P.push('keys: a keymap kept before Save and Open is offered ' + JSON.stringify(o1) + ', where Ctrl+S and Ctrl+O alone are due');
+    if (o2.length === 0) k.offered++; else P.push('keys: a keymap offered every command is offered ' + JSON.stringify(o2) + ' again, where a key taken out stays out');
+    if (JSON.stringify(o3) === JSON.stringify(['(bind "Ctrl+O" open)'])) k.offered++; else P.push('keys: a keymap holding Ctrl+S for run is offered ' + JSON.stringify(o3) + ', where Open\'s key alone is due');
+    if (JSON.stringify(o4) === JSON.stringify(['(bind "Ctrl+O" open)'])) k.offered++; else P.push('keys: a keymap binding save to Alt+Shift+S is offered ' + JSON.stringify(o4) + ', where Open\'s key alone is due');
+    store.keep(mine, KEYMAP_DEFAULTS); store.know(names);
+    var knownBack = store.known();
+    store.keep(KEYMAP_DEFAULTS, KEYMAP_DEFAULTS);
+    if (knownBack && knownBack.join(' ') === names.join(' ') && store.known() === null) k.offered++; else P.push('keys: the commands known were ' + JSON.stringify(knownBack) + ' beside the keymap kept and ' + JSON.stringify(store.known()) + ' after it was forgotten');
     var shut = new KeyStore({ getItem: function () { throw new Error('denied'); }, setItem: function () { throw new Error('denied'); }, removeItem: function () { throw new Error('denied'); } }, 'x');
     if (shut.read() === null && shut.keep(mine, KEYMAP_DEFAULTS) === false && new KeyStore(null, 'x').read() === null) k.kept++; else P.push('keys: a store that refuses, or none, was not read as nothing kept');
     // Record a key's spellings, each read back to the key it spells
@@ -7895,7 +8109,7 @@
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
-                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths], ['modes', caseModes]];
+                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths], ['modes', caseModes], ['save', caseSave]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -7904,7 +8118,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }

@@ -192,6 +192,7 @@
   var MAX_COMMANDS = 100;            // a Commands sheet's rows 2 to 101 (ENGINE.25; docs/SPEC.md section 3.10)
   var COMMANDS_WAITING = 16;         // the commands that may wait for their frames, one a frame: a seventeenth is said
                                      // and dropped (ENGINE.25, decision 3)
+  var MAX_CARTRIDGE_BYTES = 16 * 1048576;   // section 10's file, which the engine refuses to load past (ENGINE.5)
   var REPLAY_CAP = 8 * 1048576;      // the replay's text, past which the recorder stops and says so: about an
                                      // hour of a pointer that never rests (ENGINE.3, decision 10)
   // ---- the sound's rules, as ENGINE.4's scoping states them (decisions 1 to 4) ----
@@ -338,6 +339,21 @@
     var out = new Uint8Array(bytes.length), j = 0;
     for (var i = 0; i < bytes.length; i++) { if (bytes[i] === 13 && bytes[i + 1] === 10) continue; out[j++] = bytes[i]; }
     return out.subarray(0, j);
+  }
+  // A text's first form as written (ENGINE.5): to the parenthesis that closes it, a literal's and a comment's passed
+  // over; the manifest a save begins with is the one its load took.
+  function firstForm(text) {
+    var depth = 0, inText = false, escaped = false, comment = false;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text.charAt(i);
+      if (comment) comment = ch !== '\n';
+      else if (inText) { if (escaped) escaped = false; else if (ch === '\\') escaped = true; else if (ch === '"') inText = false; }
+      else if (ch === ';') comment = true;
+      else if (ch === '"') inText = true;
+      else if (ch === '(') depth++;
+      else if (ch === ')') { depth--; if (depth === 0) return text.slice(0, i + 1); }
+    }
+    return text;
   }
   // The cartridge's name, its manifest's first field, after the comment lines before it.
   function manifestName(text) {
@@ -743,6 +759,7 @@
     // (the rider of CART.9's third slice and the owner's word after it)
     this.run = (this.run || 0) + 1;
     this.frame = 0; this.inFrame = false; this.progress = null; this.stepEdit = null; this.stepAct = null;
+    this.saveWaiting = null; this.saveAsked = null;   // a save asked for inside a frame or a settle, and the cartridge's, taken at a frame's end (ENGINE.5)
     this.acc = 0; this.lastTs = null; this.deltas = []; this.interval = DEFAULT_INTERVAL_MS;
     this.cellsPerMs = 0; this.frameCells = 0;
     this.pending = []; this.edits = [];
@@ -779,7 +796,7 @@
     // null until asked, after a load or a continue (CART.9's hand test)
     this.actRead = null;
     this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
-    this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, inputsKept: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, patches: 0, shows: 0, saves: 0,
+    this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, inputsKept: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, patches: 0, shows: 0, saves: 0, saved: 0,
                sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0, commands: 0, commandsRefused: 0,
                settles: 0, settleSteps: 0, unsettled: 0, presses: 0, playedShown: 0, editsRead: 0, keysRead: 0, keysStray: 0 };
   };
@@ -817,6 +834,10 @@
     this.cartBytes = bytes; this.cartFile = name || '';
     var c = this.cart = { title: str(f[2]), mode: sym(f[3]), w: num(f[4]), h: num(f[5]), rate: num(f[6]), seed: '', spec: 0, settle: 0, bound: [], game: [], work: [], read: [], devices: {}, budget: null, name: null, digest: null };
     this._describe();
+    // A save resumes at its frame (docs/SPEC.md section 7.5; ENGINE.5): the host counts from the Clock's frame as loaded,
+    // so that the frame said, the recorder's frames and a replay of the resumed run are the Clock's, and a replay of a
+    // run resumed from a save plays on that save
+    this.frame = this._clockAt('B1') || 0;
     this.window = rangeOf(1, 1, c.h, c.w);
     this._say('Loaded ' + c.title + ': ' + article(c.w) + ' ' + c.w + ' by ' + c.h + ' ' + c.mode + ' at ' + (c.rate ? c.rate + ' frames a second' : 'rate 0, a step on every edit') + ', seed ' + c.seed + ', on ' + this.version + '.');
     if (c.budget) {
@@ -828,7 +849,10 @@
                        : 'The budget: ' + thousands(bd.cells) + ' formula cells a step, one step an edit.');
     }
     if (c.mode === 'grid' && !this.gridEl) this._say('This page gave the host no element for grid mode: the cartridge runs, and nothing draws it.');
-    if (c.seed === 'host') this._seed();
+    // a save of a cartridge whose host chose its seed holds the seed it ran on, which the host keeps (ENGINE.5)
+    var held = c.seed === 'host' && this.playSeed === undefined ? this._clockAt('B3') : null;
+    if (held) { c.seed = held; c.seedChosen = true; this._say('The cartridge asks the host for its seed: the save holds ' + held + ', in Clock!B3, and keeps it.'); }
+    else if (c.seed === 'host') this._seed();
     this._startReplay();   // the replay of this load's run, from frame 0 (section 7.6)
     if (c.devices.camera) this._readCamera('load');
     if (c.devices.palette) this._readPalette();
@@ -839,10 +863,10 @@
     // the last run's picture, a grid that no longer exists (the owner's hand test, 2026-10-09).
     if (c.mode === 'plane') this._drawPlane();   // frame 0, drawn at the load
     if (c.mode === 'grid') this._open();   // and a grid's, its record as loaded (ENGINE.8), on the sheet it opens on (ENGINE.18)
-    this._emit('load', { handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate, window: this.window, scale: this.scale || 0 });
+    this._emit('load', { handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate, window: this.window, scale: this.scale || 0, frame: this.frame });
     // A cartridge that settles opens on computed values (CART.12; docs/SPEC.md section 5): the load's act, frame 1, stepped
     // with its settle as an act at rate 0 is, at once and on the ticks after; a replay's player steps it itself.
-    if (this._settles() && c.rate === 0 && this.playSeed === undefined) { this.edits.push({ load: true }); this._editFrames(this._window()); }
+    if (this._settles() && c.rate === 0 && this.playSeed === undefined && this.frame === 0) { this.edits.push({ load: true }); this._editFrames(this._window()); }   // a save rests as it was saved (ENGINE.5)
     return { ok: true, handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate };
   };
   // The host's seed (ENGINE.3, decision 1): a cartridge whose manifest says (seed host) loads with
@@ -863,6 +887,13 @@
     this.cart.seed = n; this.cart.seedChosen = true;
     this._say(played ? 'The cartridge asks the host for its seed: the replay names ' + n + ', written in Clock!B3.'
                      : 'The cartridge asks the host for its seed: the host chose ' + n + ', in Clock!B3.');
+  };
+  // A Clock cell's whole number above 0 as the grid holds it, read from its values view, or null (ENGINE.5): a save's
+  // frame and seed at its load.
+  Host.prototype._clockAt = function (addr) {
+    var r = this.m.texts('alonzo_view', [this.handle], ['values', 'Clock', addr]);
+    var m = r.status === 0 ? new RegExp('^\\((?:cell|value) "Clock" "' + addr + '" (\\d+)\\)$', 'm').exec(r.text) : null;
+    return m && +m[1] > 0 ? +m[1] : null;
   };
   Host.prototype._describe = function () {
     var r = this.m.call('alonzo_describe', [this.handle]);
@@ -1303,6 +1334,10 @@
         this._say('frame ' + n + ': ' + sa.what + ' settled in ' + settledWords(sa.act, steps) + '.');
       }
     }
+    // the cartridge's save, taken after the frame's reads, the Clock's among them, at rest or held for the act's settle;
+    // and a save asked for inside a frame or a settle, taken now that the grid rests (ENGINE.5)
+    if (this.saveAsked) { var by = this.saveAsked; this.saveAsked = null; this.save(by); }
+    else if (this.saveWaiting && !this.settling) { var asked = this.saveWaiting; this.saveWaiting = null; this._saveNow(asked, true); }
     var p = this.player;
     this._emit('frame', { frame: n, window: this.window, scale: this.scale || 0, rate: this.cart.rate, replay: p ? p.last : 0 });
     if (p && p === this.player && n >= p.last) this._endReplay(n);
@@ -1812,8 +1847,10 @@
     var cells = this._cells('File');
     if (!cells) return;
     var v = cells.B3 === 1 ? 1 : 0;
-    if (v === 1 && this.saveValue !== 1) { this.c.saves++; this._say('frame ' + this.frame + ': the cartridge asked to be saved (File!B3 rose to 1); writing the save is the File device\'s, ENGINE.5.'); }
+    // on its rising edge the cartridge's save, taken as a person's is (ENGINE.5; docs/SPEC.md section 3.7)
+    var rose = v === 1 && this.saveValue !== 1;
     this.saveValue = v;
+    if (rose) { this.c.saves++; this._say('frame ' + this.frame + ': the cartridge asked to be saved (File!B3 rose to 1).'); this.saveAsked = 'cartridge'; }
   };
   // The Clock's rate (ENGINE.3, decision 3): a person may write Clock!B2, 0 or a whole number from 1
   // to 120, which the engine holds to that range, and the loop steps at what the grid says, the
@@ -2346,6 +2383,57 @@
     var c = this.cart;
     if (c.digest === null) c.digest = sha256(lfOnly(this.cartBytes));
     return c.digest;
+  };
+  // ---- the save (ENGINE.5; docs/SPEC.md sections 3.7 and 7.5) ----
+  // A save is a cartridge: the manifest this load took, its first form as written; every sheet that is no twin, its
+  // fills view whole, in the record's order, the language's save (vla-lang 0.13.0, Frazaro's KERNEL.72); then the
+  // loaded text's name rows, which no view prints and no write makes, so that a formula reading a name reads it in the
+  // save. Taken at rest alone, between frames, and for a cartridge that settles between acts: a load assumes a grid at
+  // rest, and a save inside a settle resumes otherwise (the replay law, engine/src/cartridge.rs). Named for the Clock's
+  // frame, <name>-<frame>.vla, and never over section 10's file, which the engine refuses to load (cart-too-large).
+  // Answers { ok, text, file, frame, bytes }, or { ok: false, wait: true } inside a frame or a settle, or a refusal.
+  Host.prototype.saveText = function () {
+    if (!this.m || !this.handle || !this.cart) return { ok: false, words: 'There is nothing to save: no cartridge is loaded.' };
+    if (this.inFrame || this.settling) return { ok: false, wait: true };
+    var loaded = dec.decode(this.cartBytes).replace(/\r\n/g, '\n'), out = [firstForm(loaded) + '\n'];
+    var list = this._sheets(), named = {}, i;
+    for (i = 0; i < list.length; i++) named[list[i].name] = true;
+    for (i = 0; i < list.length; i++) {
+      var s = list[i].name;
+      if (/\.last$/.test(s) && named[s.slice(0, -5)]) continue;   // a twin, filled at the load with its sheet's values
+      var r = this.m.texts('alonzo_view', [this.handle], ['fills', s, '']);
+      if (r.status !== 0) return { ok: false, words: 'The save was not written: the view of ' + s + ' was refused: ' + words(r) + '.' };
+      out.push(r.text);
+    }
+    var lines = loaded.split('\n');
+    for (i = 0; i < lines.length; i++) if (lines[i].indexOf('(name ') === 0) out.push(lines[i] + '\n');
+    // the Clock's frame as this frame read it, the host's kept cells and no view, else as the grid holds it
+    var text = out.join(''), bytes = enc.encode(text).length, kept = this.kept && this.kept.Clock, frame = kept && typeof kept.cells.B1 === 'number' ? kept.cells.B1 : (this._clockAt('B1') || 0);
+    if (bytes > MAX_CARTRIDGE_BYTES) return { ok: false, words: 'The save was not written: it is ' + thousands(bytes) + ' bytes, over the ' + thousands(MAX_CARTRIDGE_BYTES) + ' (16 MiB) a cartridge may be (docs/SPEC.md section 10), which the engine would not load again.' };
+    return { ok: true, text: text, file: this._cartName() + '-' + frame + '.vla', frame: frame, bytes: bytes };
+  };
+  // A save asked for (ENGINE.5): by a person's command, 'person', or by the cartridge's File!B3 rising, 'cartridge'.
+  // Taken now at rest, else held and taken at the end of the frame that rests, the act's settle ended, and said so;
+  // then handed to the page by the event save, { text, file, frame, bytes, by, waited }, which writes it to a file of
+  // the person's. Answers what it did.
+  Host.prototype.save = function (by) {
+    var s = this.saveText();
+    by = by === 'cartridge' ? 'cartridge' : 'person';
+    if (s.wait) {
+      this.saveWaiting = by;
+      this._say('The save waits for ' + (this.settling ? 'the act to settle' : 'the frame to end') + ', and is written then.');
+      return { ok: true, waiting: true };
+    }
+    return this._saveNow(by, false, s);
+  };
+  Host.prototype._saveNow = function (by, waited, s) {
+    s = s || this.saveText();
+    if (!s.ok) { if (s.wait) { this.saveWaiting = by; return { ok: true, waiting: true }; } this._refuse(s.words); return s; }
+    s.by = by; s.waited = waited;
+    this.c.saved++;
+    this._say('Saved frame ' + s.frame + ' as ' + s.file + ', ' + thousands(s.bytes) + ' bytes' + (by === 'cartridge' ? ', as the cartridge asked' : '') + '.');
+    this._emit('save', s);
+    return s;
   };
   // The replay of the run since the last load: its header, then each frame that wrote a row, and
   // the last frame however empty, so that a replay names its length; null with no cartridge.

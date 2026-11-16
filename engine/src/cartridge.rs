@@ -46,10 +46,10 @@ use std::sync::OnceLock;
 
 use vla_lang::calc::{self, graph::is_formula, library, Env};
 use vla_lang::form::Form;
-use vla_lang::machine::{read_rows, Draft, Drafted, LineRefusal, Machine, Step, Viewed};
+use vla_lang::machine::{read_rows_each, Draft, Drafted, LineRefusal, Machine, Step, Viewed};
 use vla_lang::messages::{self, Catalogue, Refusal};
 use vla_lang::printer::write_datum;
-use vla_lang::reader::read_forms;
+use vla_lang::reader::{each_form, read_forms};
 use vla_lang::sheet::{number_text, parse_a1_range, A1Range, Content, MAX_ROW};
 
 /// The engine's half of the catalog, embedded at build time: no file is
@@ -100,6 +100,9 @@ pub const MAX_SETTLE: u32 = 65_536;
 pub const MAX_RATE: u32 = 120;
 /// The highest seed, so that a Park and Miller cell never sticks at 0.
 pub const MAX_SEED: u32 = 2_147_483_646;
+/// The longest cartridge file, in bytes (section 10): a 32-bit memory's comfort,
+/// held at the load since `ENGINE.5`, so that a save a host writes under it loads.
+pub const MAX_CARTRIDGE_BYTES: usize = 16 * 1024 * 1024;
 /// The largest window each mode draws (section 10): plane, then grid.
 pub const PLANE_MAX: (u32, u32) = (320, 200);
 pub const GRID_MAX: (u32, u32) = (80, 50);
@@ -892,6 +895,20 @@ pub const INPUT_SHEET_LABEL: &str = "sheet";
 /// decision 3).
 pub const INPUT_COMMAND_LABEL: &str = "command";
 
+/// A count spelled with commas between its thousands, as the engine's words
+/// spell a size.
+fn grouped(n: usize) -> String {
+    let digits = n.to_string();
+    let mut out = String::new();
+    for (i, d) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i) % 3 == 0 {
+            out.push(',');
+        }
+        out.push(d);
+    }
+    out
+}
+
 /// A cell's value when it is a whole number within a range.
 fn whole_in(cell: Option<Drafted<'_>>, low: f64, high: f64) -> Option<f64> {
     match cell.map(|c| c.content()) {
@@ -953,15 +970,21 @@ fn check_clock(
 /// three cells, the File's two, and the Input sheet when the cartridge holds
 /// none, each cell the draft's own put, its style kept where the rows wrote
 /// the cell and counted where it is new. Answers a save's frame, the whole number above 0 its rows wrote in
-/// `Clock!B1`, or 0.
-fn make_own_sheets(draft: &mut Draft, m: &Manifest, name: &str, size: usize) -> u64 {
+/// `Clock!B1`, or 0; and the rate the grid runs at, the manifest's, or since `ENGINE.5` a save's: the rate
+/// its rows wrote in `Clock!B2` where the Clock takes it, as a person's write does (0 alone for a cartridge
+/// that settles), so that a rate the person changed survives a save, as a seed the host chose does.
+fn make_own_sheets(draft: &mut Draft, m: &Manifest, name: &str, size: usize) -> (u64, u32) {
     let clock = draft.ensure_sheet("Clock");
     let saved = whole_in(draft.content(clock, 1, 2), 1.0, 9_007_199_254_740_991.0).unwrap_or(0.0);
+    let kept_rate = whole_in(draft.content(clock, 2, 2), 0.0, f64::from(MAX_RATE))
+        .filter(|r| m.settle.is_none() || *r == 0.0)
+        .map(|r| r as u32);
+    let rate = kept_rate.unwrap_or(m.rate);
     let kept_seed = whole_in(draft.content(clock, 3, 2), 1.0, f64::from(MAX_SEED));
     draft.put(clock, 1, 1, Content::Text("frame".to_string()));
     draft.put(clock, 1, 2, Content::Number(saved));
     draft.put(clock, 2, 1, Content::Text("rate".to_string()));
-    draft.put(clock, 2, 2, Content::Number(f64::from(m.rate)));
+    draft.put(clock, 2, 2, Content::Number(f64::from(rate)));
     draft.put(clock, 3, 1, Content::Text("seed".to_string()));
     match (m.seed, kept_seed) {
         (Seed::Number(n), _) => draft.put(clock, 3, 2, Content::Number(f64::from(n))),
@@ -1009,7 +1032,7 @@ fn make_own_sheets(draft: &mut Draft, m: &Manifest, name: &str, size: usize) -> 
             }
         }
     }
-    saved as u64
+    (saved as u64, rate)
 }
 
 // ---- the cartridge ---------------------------------------------------------
@@ -1053,6 +1076,8 @@ pub struct Cartridge {
     machine: Machine,
     manifest: Manifest,
     camera: bool,
+    /// The rate the grid loaded at, the manifest's or a save's (`ENGINE.5`).
+    rate: u32,
     acts: u64,
     settle: Settle,
     settle_steps: u32,
@@ -1074,46 +1099,69 @@ impl Cartridge {
     /// A cartridge's text loaded into a grid, `name` the file's name as the
     /// host gave it and `size` its length in bytes, for the File sheet.
     pub fn load(text: &str, name: &str, size: usize) -> Result<Cartridge, LineRefusal> {
+        // The file's limit (section 10), held here since ENGINE.5, so that a
+        // save a host writes under it loads again.
+        if text.len() > MAX_CARTRIDGE_BYTES {
+            return Err(refused(
+                0,
+                "cart-too-large",
+                &[
+                    ("size", &grouped(text.len())),
+                    (
+                        "limit",
+                        &format!("{} (16 MiB)", grouped(MAX_CARTRIDGE_BYTES)),
+                    ),
+                ],
+            ));
+        }
         // One digest, one grid (ENGINE.36): a replay names its cartridge by
         // its text with LF line ends, a `.vla` is CRLF in a tree and LF in a
         // page, and the reader keeps what a literal holds, so a raw line
         // break in one is a line feed whatever the file's line ends. The
         // copy lasts the reading alone, under every heap's high-water mark.
-        let forms = if text.contains("\r\n") {
-            read_forms(&text.replace("\r\n", "\n"))
+        let lf;
+        let text = if text.contains("\r\n") {
+            lf = text.replace("\r\n", "\n");
+            lf.as_str()
         } else {
-            read_forms(text)
+            text
+        };
+        // The forms one at a time (ENGINE.5, over Frazaro's KERNEL.72): the
+        // text read through once for its refusals, each form made at its turn
+        // and given up after it, so that a save of a large board is never
+        // held as forms whole, a peak many times its size.
+        let mut forms = each_form(text).map_err(|refusal| LineRefusal { line: 0, refusal })?;
+        // A source is the pass's to expand and never the load's: refused
+        // before its manifest, which a source may open on an include before,
+        // found by the heads alone, no form made, a head's word compared
+        // without case as a form's head is.
+        let source = |head: &str| {
+            ["defmacro", "include"]
+                .into_iter()
+                .find(|word| head.eq_ignore_ascii_case(word))
+        };
+        if let Some((word, line)) = forms
+            .heads()
+            .find_map(|(head, line)| source(head).map(|word| (word, line)))
+        {
+            return Err(refused(
+                line,
+                "cart-source-unexpanded",
+                &[("form", &format!("({word} ...)"))],
+            ));
         }
-        .map_err(|refusal| LineRefusal { line: 0, refusal })?;
-        let Some(first) = forms.first() else {
+        let Some(first) = forms.next() else {
             return Err(refused(
                 0,
                 "cart-manifest-invalid",
                 &[("what", "is missing: the file holds no form")],
             ));
         };
-        // A source is the pass's to expand and never the load's: refused
-        // before its manifest, which a source may open on an include before.
-        if let Some(source) = forms
-            .iter()
-            .find(|f| f.head_is("defmacro") || f.head_is("include"))
-        {
-            let head = if source.head_is("defmacro") {
-                "defmacro"
-            } else {
-                "include"
-            };
-            return Err(refused(
-                source.as_list().map(|l| l.line).unwrap_or(0),
-                "cart-source-unexpanded",
-                &[("form", &format!("({head} ...)"))],
-            ));
-        }
-        let manifest = Manifest::read(first)?;
-        let mut draft = read_rows(&forms[1..])?;
+        let manifest = Manifest::read(&first)?;
+        let mut draft = read_rows_each(forms)?;
         let camera = draft.find_sheet("Camera").is_some();
         check_devices(&draft, &manifest, camera)?;
-        let frame = make_own_sheets(&mut draft, &manifest, name, size);
+        let (frame, rate) = make_own_sheets(&mut draft, &manifest, name, size);
         // The keyboard's sheets name sheets the rows hold (version 6, SPEC.5).
         for (sheet, at, text) in &manifest.keyed {
             if draft.find_sheet(sheet).is_none() {
@@ -1156,6 +1204,7 @@ impl Cartridge {
             machine,
             manifest,
             camera,
+            rate,
             // a save's frame is its acts for a cartridge that settles, whose
             // Clock counts acts (section 3.5)
             acts: frame,
@@ -1174,7 +1223,9 @@ impl Cartridge {
         &self.machine
     }
 
-    /// The load's answer: `(cartridge <handle> "<title>" <mode> <w> <h> <rate>)`.
+    /// The load's answer: `(cartridge <handle> "<title>" <mode> <w> <h> <rate>)`,
+    /// the rate the grid loaded at, which since `ENGINE.5` is a save's own where
+    /// the person changed it, so that a host steps at it from the first frame.
     pub fn row(&self, handle: u32) -> String {
         let m = &self.manifest;
         format!(
@@ -1183,7 +1234,7 @@ impl Cartridge {
             m.mode.word(),
             m.width,
             m.height,
-            m.rate
+            self.rate
         )
     }
 
@@ -1717,6 +1768,7 @@ mod tests {
             ("cart-source-unexpanded", vec![("form", "x")]),
             ("cart-write-clock", vec![("target", "x"), ("what", "x")]),
             ("cart-command-invalid", vec![("what", "x")]),
+            ("cart-too-large", vec![("size", "x"), ("limit", "x")]),
         ];
         assert_eq!(catalog().count(), ids.len(), "every entry is raised");
         for (id, slots) in &ids {
@@ -2916,6 +2968,177 @@ mod tests {
         assert_eq!(plane(&resumed), reference(3));
     }
 
+    /// A save as the host writes one (docs/SPEC.md section 7.5; `ENGINE.5`): the
+    /// manifest the cartridge was loaded with, its first form as written; every
+    /// sheet that is no twin, its `fills` view whole, in the record's order; and
+    /// then the loaded text's `name` rows, which no view prints and no write
+    /// makes, so that a formula reading a name reads it in the save. The host's
+    /// `saveText` writes the same, which the loop oracle's save case holds.
+    fn save_of(c: &Cartridge, loaded: &str) -> String {
+        let loaded = loaded.replace("\r\n", "\n");
+        let mut out = first_form_text(&loaded).to_string();
+        out.push('\n');
+        for i in 0..c.machine().sheets() {
+            let name = c
+                .machine()
+                .sheet_name(i)
+                .expect("a sheet's name")
+                .to_string();
+            match c.view("fills", &name, None) {
+                Ok(Viewed::Text(t)) => out.push_str(&t),
+                other => panic!("{name}'s fills: {other:?}"),
+            }
+        }
+        for line in loaded.lines().filter(|l| l.starts_with("(name ")) {
+            out.push_str(line);
+            out.push('\n');
+        }
+        out
+    }
+
+    /// A text's first form as written: to the parenthesis that closes it, a
+    /// literal's and a comment's passed over.
+    fn first_form_text(text: &str) -> &str {
+        let (mut depth, mut in_text, mut escaped, mut comment) = (0u32, false, false, false);
+        for (i, ch) in text.char_indices() {
+            if comment {
+                comment = ch != '\n';
+            } else if in_text {
+                if escaped {
+                    escaped = false;
+                } else if ch == '\\' {
+                    escaped = true;
+                } else if ch == '"' {
+                    in_text = false;
+                }
+            } else if ch == ';' {
+                comment = true;
+            } else if ch == '"' {
+                in_text = true;
+            } else if ch == '(' {
+                depth += 1;
+            } else if ch == ')' {
+                depth -= 1;
+                if depth == 0 {
+                    return &text[..=i];
+                }
+            }
+        }
+        text
+    }
+
+    /// Every sheet's `fills` view, the File's name and size apart, which a load
+    /// writes for the file it is given (section 3.7).
+    fn fills_of(c: &Cartridge) -> Vec<(String, String)> {
+        (0..c.machine().sheets())
+            .map(|i| {
+                let name = c
+                    .machine()
+                    .sheet_name(i)
+                    .expect("a sheet's name")
+                    .to_string();
+                let text = match c.view("fills", &name, None) {
+                    Ok(Viewed::Text(t)) => t,
+                    other => panic!("{name}'s fills: {other:?}"),
+                };
+                let kept: String = text
+                    .lines()
+                    .filter(|l| {
+                        !l.starts_with("(cell \"File\" \"B1\"")
+                            && !l.starts_with("(cell \"File\" \"B2\"")
+                    })
+                    .map(|l| format!("{l}\n"))
+                    .collect();
+                (name, kept)
+            })
+            .collect()
+    }
+
+    /// A rate the person wrote survives a save (`ENGINE.5`): `make_own_sheets`
+    /// keeps the save's `Clock!B2`, as it keeps a seed the host chose, and the
+    /// load's answer says it, so that a host steps at it from the first frame.
+    /// Before, the manifest's 30 was written over it (inputcard's frame 19).
+    #[test]
+    fn a_save_keeps_the_rate_the_person_set() {
+        let mut original = load(&small(30)).expect("loads");
+        original.step(0);
+        assert_eq!(original.write("(cell \"Clock\" \"B2\" 10)"), Ok(1));
+        original.step(0);
+        let save = save_of(&original, &small(30));
+        let resumed = Cartridge::load(&save, "small-2.vla", save.len()).expect("a save loads");
+        assert_eq!(
+            cell_text(&resumed, "Clock", "B2"),
+            "(cell \"Clock\" \"B2\" 10)"
+        );
+        assert_eq!(resumed.row(1), "(cartridge 1 \"Small\" plane 12 10 10)");
+        assert_eq!(
+            load(&small(30)).expect("loads").row(1),
+            "(cartridge 1 \"Small\" plane 12 10 30)",
+            "a cartridge's own rate stands"
+        );
+        assert_eq!(fills_of(&resumed), fills_of(&original));
+    }
+
+    /// A cartridge's names ride its save (`ENGINE.5`): no view prints a `name`
+    /// row and no write makes one, so the host copies the rows the cartridge
+    /// was loaded with, and a formula reading a name reads it in the save.
+    #[test]
+    fn a_save_keeps_the_cartridge_s_names() {
+        let text = format!(
+            "{}(sheet \"Count\" visible)\n(name \"seeded\" \"Seed!$B$2:$K$9\")\n(formula \"Count\" \"A1\" \"=SUM(seeded)+Clock!$B$1\")\n",
+            small(30)
+        );
+        let mut original = load(&text).expect("loads");
+        for _ in 0..3 {
+            original.step(0);
+        }
+        let save = save_of(&original, &text);
+        assert!(
+            save.ends_with("(name \"seeded\" \"Seed!$B$2:$K$9\")\n"),
+            "the name rides the save"
+        );
+        let mut resumed =
+            Cartridge::load(&save, "small-3.vla", save.len()).expect("a save with its name loads");
+        original.step(0);
+        resumed.step(0);
+        assert_eq!(
+            cell_text(&resumed, "Count", "A1"),
+            cell_text(&original, "Count", "A1")
+        );
+        assert_eq!(fills_of(&resumed), fills_of(&original));
+        // and without the name row the save's formula reads no range
+        let nameless: String = save
+            .lines()
+            .filter(|l| !l.starts_with("(name "))
+            .map(|l| format!("{l}\n"))
+            .collect();
+        if let Ok(mut lost) = Cartridge::load(&nameless, "small-3.vla", nameless.len()) {
+            lost.step(0);
+            assert_ne!(
+                cell_text(&lost, "Count", "A1"),
+                cell_text(&original, "Count", "A1"),
+                "a save without its names reads none"
+            );
+        }
+    }
+
+    /// The file's limit (section 10), held at the load since `ENGINE.5`: a
+    /// cartridge over 16 MiB is refused by name, its size and the limit said,
+    /// and one at the limit is read.
+    #[test]
+    fn a_cartridge_over_sixteen_mebibytes_is_refused_by_name() {
+        let base = small(30);
+        let pad = |n: usize| format!("{base}{}", " ".repeat(n - base.len()));
+        let over = load(&pad(MAX_CARTRIDGE_BYTES + 1));
+        assert_eq!(id_of(over), "cart-too-large");
+        let words = text_of(load(&pad(MAX_CARTRIDGE_BYTES + 1)));
+        assert!(
+            words.contains("16,777,217 bytes") && words.contains("16,777,216 (16 MiB)"),
+            "{words}"
+        );
+        assert_eq!(id_of(load(&pad(MAX_CARTRIDGE_BYTES))), "loaded");
+    }
+
     /// Since `vla-lang` 0.9.2 the census follows the budget (`KERNEL.30`,
     /// laid here): the small Life is one shape in one run of its 80 cells,
     /// the Seed, the Clock and the Screen's twin each followed to it.
@@ -3412,6 +3635,146 @@ mod tests {
     /// board to the page's game; Naught's every gate of its bench to the
     /// netlist by hand, and its levels, boards, words, Lab and Camera's sheet
     /// to the game by hand (`CART.9`).
+    /// The replay law (`ENGINE.5`): every committed replay played, and at a half
+    /// and at three quarters of its frames, at the first frame at rest from
+    /// there (a cartridge that settles saved between acts, never inside one), a
+    /// save written as the host writes one and loaded beside the run; then every
+    /// copy given the same rows and the derived writes its own Write sheet asks
+    /// for, and stepped, to the replay's end. Every sheet's `fills`, the File's
+    /// name and size apart, is held to the run's at the load, at the frame
+    /// after it, at every 64th frame and at the last. Measured at the scoping
+    /// (Frazaro's `b4238af`), 26 of 27 saves at rest resumed whole and the
+    /// miss was a rate the person set, inputcard's at frame 19.
+    #[test]
+    fn every_committed_replay_resumes_from_a_save_at_rest() {
+        let Some(root) = crate::repository::cartridges() else {
+            return;
+        };
+        let mut folders: Vec<std::path::PathBuf> = std::fs::read_dir(&root)
+            .expect("cartridges/")
+            .filter_map(|e| e.ok().map(|e| e.path()))
+            .filter(|p| p.is_dir())
+            .collect();
+        folders.sort();
+        let read = |p: std::path::PathBuf| {
+            std::fs::read_to_string(&p).unwrap_or_else(|e| panic!("{}: {e}", p.display()))
+        };
+        let mut resumed_from = Vec::new();
+        for dir in folders {
+            let name = dir
+                .file_name()
+                .and_then(|n| n.to_str())
+                .expect("a folder's name")
+                .to_string();
+            let replay = dir.join(format!("{name}.replay.vla"));
+            if !replay.exists() {
+                continue;
+            }
+            let cart = read(dir.join(format!("{name}.vla")));
+            let forms = read_forms(&read(replay))
+                .unwrap_or_else(|e| panic!("{name}'s replay reads: {e:?}"));
+            let header = match &forms[0] {
+                Form::List(l) => l.items.clone(),
+                other => panic!("{name}: a header: {other:?}"),
+            };
+            let seed = header
+                .iter()
+                .find_map(|d| match d {
+                    Form::List(l) => match l.items.as_slice() {
+                        [Form::Sym(k), Form::Sym(n)] if k == "seed" => Some(n.clone()),
+                        _ => None,
+                    },
+                    _ => None,
+                })
+                .unwrap_or_else(|| panic!("{name}: the header's seed"));
+            let frames: std::collections::BTreeMap<u32, String> = forms[1..]
+                .iter()
+                .map(|f| match f {
+                    Form::List(l) => match l.items.as_slice() {
+                        [Form::Sym(head), Form::Sym(n), rows @ ..] if head == "frame" => (
+                            n.parse().expect("a frame's number"),
+                            rows.iter().map(write_datum).collect::<Vec<_>>().join("\n"),
+                        ),
+                        other => panic!("{name}: a frame: {other:?}"),
+                    },
+                    other => panic!("{name}: a frame: {other:?}"),
+                })
+                .collect();
+            let last = *frames.keys().last().expect("a frame");
+            let mut run = Cartridge::load(&cart, &format!("{name}.vla"), cart.len())
+                .unwrap_or_else(|e| panic!("{name} loads: {}", e.refusal.text));
+            if run.describe().contains("(seed host)\n") {
+                assert_eq!(run.write(&format!("(cell \"Clock\" \"B3\" {seed})")), Ok(1));
+            }
+            // The run, then each copy resumed from a save: its cartridge, the
+            // frame it was saved at and the derived writes it owes.
+            let mut copies: Vec<(Cartridge, u32, Vec<String>)> = Vec::new();
+            let mut pending: Vec<String> = Vec::new();
+            let mut targets = vec![last / 2, last * 3 / 4];
+            for frame in 1..=last {
+                for row in pending.drain(..) {
+                    run.write(&row)
+                        .unwrap_or_else(|e| panic!("{name}, frame {frame}: {row}: {e:?}"));
+                }
+                let rows = frames.get(&frame);
+                if let Some(rows) = rows {
+                    run.write(rows)
+                        .unwrap_or_else(|e| panic!("{name}, frame {frame}: {e:?}"));
+                }
+                assert!(run.step(0).done, "{name}, frame {frame}");
+                for (copy, from, owed) in copies.iter_mut() {
+                    for row in owed.drain(..) {
+                        copy.write(&row).unwrap_or_else(|e| {
+                            panic!("{name} from {from}, frame {frame}: {row}: {e:?}")
+                        });
+                    }
+                    if let Some(rows) = rows {
+                        copy.write(rows)
+                            .unwrap_or_else(|e| panic!("{name} from {from}, frame {frame}: {e:?}"));
+                    }
+                    assert!(copy.step(0).done, "{name} from {from}, frame {frame}");
+                    *owed = derived_rows(copy);
+                    if frame == *from + 1 || frame % 64 == 0 || frame == last {
+                        assert!(
+                            fills_of(copy) == fills_of(&run),
+                            "{name}: the save at frame {from}, played to frame {frame}, is not the run there"
+                        );
+                    }
+                }
+                pending = derived_rows(&run);
+                // a save at the first frame at rest from a target
+                if targets.first().is_some_and(|t| frame >= *t) && run.settle() == Settle::Settled {
+                    targets.remove(0);
+                    let save = save_of(&run, &cart);
+                    let copy = Cartridge::load(&save, &format!("{name}-{frame}.vla"), save.len())
+                        .unwrap_or_else(|e| {
+                            panic!("{name}'s save at frame {frame} loads: {}", e.refusal.text)
+                        });
+                    assert!(
+                        fills_of(&copy) == fills_of(&run),
+                        "{name}: the save at frame {frame} is not the run there"
+                    );
+                    let owed = derived_rows(&copy);
+                    assert_eq!(
+                        owed, pending,
+                        "{name}: the save at frame {frame} asks for the run's derived writes"
+                    );
+                    resumed_from.push(format!("{name} at {frame}"));
+                    copies.push((copy, frame, owed));
+                }
+            }
+            assert!(
+                targets.is_empty(),
+                "{name}: no frame at rest after {targets:?}"
+            );
+        }
+        assert_eq!(
+            resumed_from.len(),
+            14,
+            "two saves of each of the seven replays: {resumed_from:?}"
+        );
+    }
+
     #[test]
     fn every_committed_replay_plays_to_its_golden() {
         let Some(root) = crate::repository::cartridges() else {
