@@ -2967,6 +2967,50 @@
   var PAINTER_STACK = 'system-ui, "Segoe UI", sans-serif';
   // A font's family as a canvas font names it: the name quoted, then its class's generic family, else the painter's stack.
   function familyFont(fam) { return '"' + fam.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '", ' + (fam.generic ? FAMILY_CLASSES[fam.generic] : PAINTER_STACK); }
+  // A font's lines (decision 10), the page's own table of the places measured from Excel's screen at 11 and 22 points,
+  // which the viewport's is held to: each kind's first strand, its center below the baseline as a fraction of the font's
+  // pixels, above it where negative; each strand's thickness a fraction too, at least a device pixel; a double's second
+  // strand one bare strand below its first; its reach, the drawn line's advance or, under a text, the cell between its
+  // paddings; and whether a wrapped text's last line alone draws it.
+  var LINE_PLACES = {
+    'single': { at: 0.06, size: 0.03, strands: 1, reach: 'line', last: false },
+    'double': { at: 0.06, size: 0.03, strands: 2, reach: 'line', last: false },
+    'single-accounting': { at: 0.28, size: 0.03, strands: 1, reach: 'cell', last: true },
+    'double-accounting': { at: 0.28, size: 0.03, strands: 2, reach: 'cell', last: true },
+    'strike': { at: -0.34, size: 0.05, strands: 1, reach: 'line', last: false }
+  };
+  // How far a font's alphabetic baseline lies below the middle line a text is drawn at, in device pixels, by the page's
+  // own measure: an H's ascent from each, once a font.
+  var PAGE_BASELINES = {};
+  function pageBaseline(ctx, font) {
+    if (Object.prototype.hasOwnProperty.call(PAGE_BASELINES, font)) return PAGE_BASELINES[font];
+    var was = ctx.textBaseline, wasFont = ctx.font;
+    ctx.font = font;
+    ctx.textBaseline = 'alphabetic';
+    var a = ctx.measureText('H').actualBoundingBoxAscent;
+    ctx.textBaseline = 'middle';
+    var b = PAGE_BASELINES[font] = a - ctx.measureText('H').actualBoundingBoxAscent;
+    ctx.textBaseline = was; ctx.font = wasFont;
+    return b;
+  }
+  // The strands one drawn line of text draws (decision 10), the page's own: for each line its format's font says, an
+  // underline and a strike, each strand a rectangle in device pixels. em, the font's pixels; ly, the line's middle; ax and
+  // align, the text's anchor; left, w and pad, its cell's; textual, a value of kind text; last, its text's last line.
+  function pageStrands(f, ctx, font, em, ly, text, ax, align, left, w, pad, textual, last) {
+    var u = f.font && f.font.underline && f.font.underline !== 'none' ? f.font.underline : null, st = !!(f.font && f.font.strike), out = [], kinds = [];
+    if (u && (!LINE_PLACES[u].last || last)) kinds.push(u);
+    if (st) kinds.push('strike');
+    if (!kinds.length) return out;
+    ctx.font = font;
+    var tw = ctx.measureText(text).width, tx = align === 'left' ? ax : (align === 'right' ? ax - tw : ax - tw / 2), base = ly + Math.round(pageBaseline(ctx, font));
+    kinds.forEach(function (kind) {
+      var d = LINE_PLACES[kind], t = Math.max(1, Math.round(d.size * em)), y = base + Math.round(d.at * em - t / 2);
+      var wide = d.reach === 'cell' && textual, x0 = wide ? left + pad : Math.round(tx), x1 = wide ? left + w - pad : Math.round(tx + tw);
+      if (x1 <= x0) return;
+      for (var s = 0; s < d.strands; s++) out.push({ kind: kind, strand: s, x: x0, y: y + 2 * t * s, w: x1 - x0, h: t });
+    });
+    return out;
+  }
   // A format's groups as the page reads them (ENGINE.28; ENGINE.37): a font's weight, slant, size in twentieths of a
   // point, color, underline, strike and family; an alignment's horizontal and vertical word; a border's four edges; and in a
   // format of groups alone (its second item a list) its fill, number format and wrap, what it leaves unsaid noted in
@@ -3177,6 +3221,8 @@
     return (fo.italic ? 'italic ' : '') + (fo.bold ? 'bold ' : '') + px + 'px ' + (fo.family ? familyFont(fo.family) : PAINTER_STACK);
   }
   function gqLineH(f, dpr) { var fo = f.font; return fo && fo.size !== null ? Math.round(fo.size / 20 * GQ.pointFont * GQ.lineHeight * dpr) : Math.round(GQ.font * GQ.lineHeight * dpr); }
+  // A format's font in device pixels, the em a font's lines are measured in (ENGINE.37).
+  function gqSize(f, dpr) { var fo = f.font; return fo && fo.size !== null ? Math.round(fo.size / 20 * GQ.pointFont * dpr) : Math.round(GQ.font * dpr); }
   // The lines a wrapped text breaks into at a width, the viewport's rule (ENGINE.36): a carriage return nothing, a line
   // feed a break, a piece of a text holding one keeping the spaces that begin it and losing those that end it; and each
   // piece at its spaces, a word wider than the width cut by characters.
@@ -3340,8 +3386,15 @@
   // it sits, how it aligns and where it is clipped, a nowrap text spilling into empty neighbors and one
   // left of the view reaching into it; and the cells the record holds in a hidden row or column, counted.
   function gqExpect(m, L, measure) {
-    var E = { texts: {}, wraps: {}, fills: {}, edges: [], hiddenHeld: 0, font: L.font, lineH: L.lineH, ox: L.ox, oy: L.oy, gridlines: m.gridlines, layout: L }, ox = L.ox, oy = L.oy, sx = L.sx, sy = L.sy;
+    var E = { texts: {}, wraps: {}, fills: {}, edges: [], decos: {}, hiddenHeld: 0, font: L.font, lineH: L.lineH, ox: L.ox, oy: L.oy, gridlines: m.gridlines, layout: L }, ox = L.ox, oy = L.oy, sx = L.sx, sy = L.sy;
     var clip = { x: ox, y: oy, w: L.W - ox, h: L.H - oy }, r, c, cell;
+    // a font's lines (ENGINE.37, decision 10): one drawn line of text's strands, by the page's own table and measure, keyed
+    // by the cell, the line, the kind and the strand
+    function strands(f, font, color, key, text, sax, sly, salign, left, w, textual, line, last) {
+      var got = pageStrands(f, measure, font, gqSize(f, L.dpr), sly, text, sax, salign, left, w, L.pad, textual, last);
+      for (var gi = 0; gi < got.length; gi++) { var s = got[gi]; E.decos[key + '|' + (line === undefined ? '' : line) + '|' + s.kind + '|' + s.strand] = { x: s.x, y: s.y, w: s.w, h: s.h, color: color }; }
+      measure.font = font;
+    }
     function rowAt(y) { var rr = 1; while (rr < L.rows && L.top[rr + 1] <= y) rr++; return rr; }
     function colAt(xx) { var cc = 1; while (cc <= L.cols && L.colX[cc + 1] <= xx) cc++; return cc; }
     var r0 = rowAt(sy), r1 = Math.min(L.rows, rowAt(L.H - 1 - oy + sy)), c0 = colAt(sx), c1 = Math.min(L.cols, colAt(L.W - 1 - ox + sx));
@@ -3373,6 +3426,7 @@
         if (hashes !== null) {
           if (left + w <= clip.x || left >= clip.x + clip.w) continue;
           E.texts[r + ',' + c] = { text: hashes, x: left + w - L.pad, y: cy, align: 'right', clip: { x: left, y: top, w: w, h: h }, valued: cell.valued, formula: cell.kind === 'formula', coded: !!cell.coded, hashes: true, font: font, color: color, styled: styled };
+          strands(fm.f, font, color, r + ',' + c, hashes, left + w - L.pad, cy, 'right', left, w, false, undefined, true);
           continue;
         }
         if (fm.f.wrap) {
@@ -3380,6 +3434,8 @@
           var wl = gqWrapLines(measure, cell.text, Math.max(1, w - 2 * L.pad)), n = wl.length;
           var ty = valign === 'middle' ? top + Math.round(h / 2) - Math.round((n - 1) * lineH / 2) : (valign === 'bottom' ? top + h - half - (n - 1) * lineH : top + half);
           E.wraps[r + ',' + c] = { text: cell.text, x: ax, y: ty, clip: { x: left, y: top, w: w, h: h }, font: font, color: color, lines: n, texts: wl, lineH: lineH, styled: styled };
+          // each line the viewport draws, its lines with it, an accounting kind's under the last alone
+          for (var li = 0, lty = ty; li < n && lty - half < top + h; li++, lty += lineH) { if (lty + half > top) strands(fm.f, font, color, r + ',' + c, wl[li], ax, lty, align, left, w, textual, li, li === n - 1); }
           continue;
         }
         // no line feed or carriage return drawn, the letters run together, and each line feed in the measure at a digit's
@@ -3395,7 +3451,9 @@
           clipX -= grown; clipW += grown;
         }
         if (clipX + clipW <= clip.x || clipX >= clip.x + clip.w) continue;
-        E.texts[r + ',' + c] = { text: shown, x: align === 'right' ? ax - Math.round(feedW) : (align === 'center' ? ax - Math.round(feedW / 2) : ax), y: cy, align: align, clip: { x: clipX, y: top, w: clipW, h: h }, valued: cell.valued, formula: cell.kind === 'formula', coded: !!cell.coded, font: font, color: color, styled: styled };
+        var tax = align === 'right' ? ax - Math.round(feedW) : (align === 'center' ? ax - Math.round(feedW / 2) : ax);
+        E.texts[r + ',' + c] = { text: shown, x: tax, y: cy, align: align, clip: { x: clipX, y: top, w: clipW, h: h }, valued: cell.valued, formula: cell.kind === 'formula', coded: !!cell.coded, font: font, color: color, styled: styled };
+        strands(fm.f, font, color, r + ',' + c, shown, tax, cy, align, left, w, textual, undefined, true);
       }
     }
     // the edges, where a format says a border (ENGINE.28, decisions 8 to 10)
@@ -3452,6 +3510,25 @@
       delete fills[key];
     }
     for (key in fills) if (Object.prototype.hasOwnProperty.call(fills, key)) say('a fill is drawn at ' + gqName(key) + ' where the record declares none');
+    // a font's lines (ENGINE.37, decision 10): each strand drawn once, where the page's own table and measure place it, in
+    // its text's color, keyed by its cell, its line, its kind and its strand
+    var strandOps = {}, decos = E.decos || {};
+    for (i = 0; i < ops.length; i++) {
+      op = ops[i];
+      if (op.op !== 'decoration' || op.quadrant !== 'body') continue;
+      key = op.row + ',' + op.col + '|' + (op.line === undefined ? '' : op.line) + '|' + op.kind + '|' + op.strand;
+      if (strandOps[key]) say('the strand ' + key + ' is drawn twice');
+      strandOps[key] = op;
+    }
+    for (key in decos) {
+      var ed = decos[key], gd = strandOps[key], sname = gqName(key.split('|')[0]) + '\'s ' + key.split('|').slice(1).join(' ');
+      if (!gd) { say('the strand ' + sname + ' is not drawn'); continue; }
+      if (gd.x !== ed.x || gd.y !== ed.y || gd.w !== ed.w || gd.h !== ed.h) say('the strand ' + sname + ' is at ' + [gd.x, gd.y, gd.w, gd.h].join(',') + ', and the record places it at ' + [ed.x, ed.y, ed.w, ed.h].join(','));
+      else if (String(gd.color).toLowerCase() !== ed.color.toLowerCase()) say('the strand ' + sname + ' is drawn in ' + gd.color + ', and the record says ' + ed.color);
+      else k.strands = (k.strands || 0) + 1;
+      delete strandOps[key];
+    }
+    for (key in strandOps) if (Object.prototype.hasOwnProperty.call(strandOps, key)) say('a strand is drawn at ' + key + ' where the record says none');
     // the edges (ENGINE.28): each boundary drawn once, as the record's borders resolve it, where they place it
     var edges = {};
     for (i = 0; i < ops.length; i++) { op = ops[i]; if (op.op !== 'edge' || op.quadrant !== 'body') continue; if (edges[op.at]) say('the edge ' + edgeName(op.at, E.layout) + ' is drawn twice'); edges[op.at] = op; }
@@ -3891,6 +3968,7 @@
     var res = OWN ? gridOwn() : { counters: {}, problems: [] }, k = res.counters, P = res.problems;
     k.grids = 0; k.gridFrames = 0; k.gridEqual = 0; k.gridValues = 0; k.gridTexts = 0; k.gridCleared = 0; k.gridMoves = 0; k.gridBound = 0; k.gridCanvas = 0; k.gridFocused = 0; k.gridTyped = 0;
     k.gridEdges = 0; k.gridFonts = 0;   // ENGINE.28's third slice: the edges and the dressed texts held, Seiyaku's Board's among them
+    k.gridStrands = 0;   // ENGINE.37's second slice: a font's lines held, the grid card's row 17 among them
     var wasm = builtModule();
     if (!wasm) return res;
     var bytes = bytesOfBase64(wasm);
@@ -3902,7 +3980,7 @@
       gridRun(HOST.instantiateSync(bytes), c.name, c.text, c.file, c.rate > 0 ? GAME_GRID_FRAMES : 0, { strict: true, moves: true }, g, P);
       k.grids++; k.gridFrames += g.frames; k.gridEqual += g.equal; k.gridValues += g.values; k.gridTexts += g.texts; k.gridCleared += g.cleared;
       k.gridMoves += g.moves; k.gridBound += g.bound; k.gridCanvas += g.canvas; k.gridFocused += g.focused; k.gridTyped += g.typed;
-      k.gridEdges += g.edges; k.gridFonts += g.fonts;
+      k.gridEdges += g.edges; k.gridFonts += g.fonts; k.gridStrands += g.strands || 0;
     }
     return res;
   }
@@ -4538,7 +4616,9 @@
   // Since ENGINE.37 it holds conditional formats on row 4, each lit and unlit by the Clock's frame with no value moving, so
   // that a frame's changes name a cell whose answer alone moved and its lit row is patched and repainted: a constant lit
   // on and off by a rule of a fill of groups alone (O4), an empty cell under the same rule (P4), a rule that stops the
-  // rule after it, each lighting Q4 by turns, a rule of four edges beside R5's own (R4), and a rule over a look (S4).
+  // rule after it, each lighting Q4 by turns, a rule of four edges beside R5's own (R4), and a rule over a look (S4). And
+  // since its second slice a font's lines: a rule's underline and strike over L6's spill, a double under K2, an accounting
+  // underline under M1's number and its #s.
   var CHANGES = { file: 'changes.vla',
                   text: '(cartridge "changes"\n  (spec 3)\n  (title "A changes card")\n  (rate 30)\n  (screen grid 20 10)\n  (seed 1))\n' +
                         '(sheet "Screen" visible)\n(sheet "Day" visible)\n(sheet "Camera" visible)\n(sheet "Keys" visible)\n(sheet "Write" visible)\n' +
@@ -4580,7 +4660,13 @@
                         '(format 11 (fill "FFE699"))\n(format 12 (font bold))\n(format 13 (fill "C8E6C9"))\n(format 14 (border (left thin "6B4FC8") (right thin "6B4FC8") (top thin "6B4FC8") (bottom thin "6B4FC8")))\n(format 15 (font italic "800020"))\n' +
                         '(conditional "Screen" 1 "O4:P4" "=MOD(Clock!$B$1,4)<2" 11)\n(conditional "Screen" 2 "Q4" "=MOD(Clock!$B$1,3)=0" 12 stop)\n(conditional "Screen" 3 "Q4" "=TRUE" 13)\n' +
                         '(conditional "Screen" 4 "R4" "=MOD(Clock!$B$1,2)=0" 14)\n(conditional "Screen" 5 "S4" "=MOD(Clock!$B$1,2)=1" 15)\n' +
-                        '(cell "Screen" "O4" 7)\n(cell "Screen" "Q4" "q")\n(cell "Screen" "R4" "r")\n(cell "Screen" "S4" "on")\n' };
+                        '(cell "Screen" "O4" 7)\n(cell "Screen" "Q4" "q")\n(cell "Screen" "R4" "r")\n(cell "Screen" "S4" "on")\n' +
+                        // ENGINE.37's second slice: a font's lines, each a strand a repaint must lay again where the full paint does:
+                        // a rule's underline and strike on and off by the Clock over L6's constant spill, which N6 cuts every other
+                        // frame; a double underline under K2's value, long and spilling or short; and an accounting underline under
+                        // M1's number, its digits' width, or its #s' when it is too wide
+                        '(format 16 (font underline strike))\n(format 17 none general nowrap (font double-underline))\n(format 18 none general nowrap (font accounting-underline))\n' +
+                        '(conditional "Screen" 6 "L6" "=MOD(Clock!$B$1,4)>=2" 16)\n(style "Screen" "K2" 17)\n(style "Screen" "M1" 18)\n' };
   var CHANGES_FRAMES = 60, CHANGES_DEVICES = ['Camera', 'Keys', 'File', 'Write', 'Clock'];
   // The person's acts before each frame: the pointer over three cells, a bound key pressed and let go, an edit of the
   // Input sheet, the Keys rebound and the new key pressed and let go, the value's edit, a notch of the wheel, the Camera
@@ -4922,6 +5008,7 @@
         // the window drawn held to the record cell for cell while the panes are thawed, the oracle's own layout having none
         var gm = gqRead(V), fz = vp.frozen();
         if (!fz.rows && !fz.cols && gqCompare(gqExpect(gm, gqLayout(gm, vp.geometry()), measure), vp.draws(), at, P, gk)) k.drawnHeld++;
+        k.strands = gk.strands || 0;   // a font's lines held over the frames, L6's, K2's and M1's (ENGINE.37's second slice)
         // ---- ENGINE.20: the canvas a full paint's, pixel for pixel and op for op; a patched frame repainted by its cells ----
         var drp = vp.repaints() - rp0;
         if (drp !== (choice === 'patch' ? 1 : 0)) P.push(at + ': the viewport repainted ' + drp + ' patch(es) by their cells, where the frame is ' + (choice === 'patch' ? 'a patch' : (choice === 'drawn' ? 'a whole view' : 'still')));
@@ -5025,7 +5112,7 @@
   function caseChanges() {
     var P = [], k = { crafted: 0, double: 0, module: 0, frames: 0, decided: 0, drawn: 0, patched: 0, still: 0, equal: 0, models: 0, drawnHeld: 0, calls: 0, devices: 0, inputs: 0, kept: 0, two: 0, whole: 0,
                       dayViewer: 0, dayPatched: 0, screenViewer: 0, patches: 0, inputsKept: 0, saves: 0, replayed: 0, replayFrames: 0,
-                      repainted: 0, pixels: 0, ops: 0, frozen: 0, unseen: 0 };
+                      repainted: 0, pixels: 0, ops: 0, frozen: 0, unseen: 0, strands: 0 };
     k.crafted = changesCrafted(P);
     k.double = changesDouble(P);
     var wasm = builtModule();
@@ -8610,6 +8697,7 @@
       return (f.italic ? 'italic ' : '') + (f.bold ? 'bold ' : '') + px + 'px ' + (f.family ? familyFont(f.family) : PAINTER_STACK);
     };
     L.lineHOf = function (fmt) { var f = fmt.font; return f && f.size !== null ? Math.round(f.size / 20 * R.pointFont * R.lineHeight * dpr) : L.lineH; };
+    L.sizeOf = function (fmt) { var f = fmt.font; return f && f.size !== null ? Math.round(f.size / 20 * R.pointFont * dpr) : L.fontPx; };   // a font's pixels (ENGINE.37)
     var digits = String(L.rows).length;
     L.rhW = Math.round(Math.max(R.headerMin, R.headerPad + R.headerDigit * digits) * dpr);
     L.colW = [0]; L.colX = [0, 0];
@@ -8754,11 +8842,19 @@
         var color = cell.kind === 'formula' && !cell.valued ? FORMULA_INK : (fmt.font && fmt.font.color !== null ? fmt.font.color : INK);
         var styled = !!(fmt.font || (fmt.align && fmt.align.v !== null));   // a text its format dresses: counted as a font asserted
         var cy = valign === 'top' ? y + half : (valign === 'bottom' ? y + h - half : y + Math.round(h / 2));
+        // a font's lines (ENGINE.37, decision 10): each drawn line's strands, by the page's own table and measure
+        var em = L.sizeOf(fmt), key = name + ':' + r + ',' + c;
+        function strands(text, sax, sly, salign, sclip, line, last) {
+          var got = pageStrands(fmt, measureCtx, font, em, sly, text, sax, salign, left, w, L.pad, textual, last);
+          for (var gi = 0; gi < got.length; gi++) { var s = got[gi]; E.decos.push({ key: key + '|' + (line === undefined ? '' : line) + '|' + s.kind + '|' + s.strand, x: s.x, y: s.y, w: s.w, h: s.h, color: color, clip: sclip, row: r }); }
+          measureCtx.font = font;
+        }
         measureCtx.font = font;
         var hashes = hashRule(cell, fmt, w, L.pad);
         if (hashes !== null) {
           if (left + w <= clip.x || left >= clip.x + clip.w) continue;
-          E.texts.push({ key: name + ':' + r + ',' + c, text: hashes, x: left + w - L.pad, y: cy, align: 'right', clip: { x: left, y: y, w: w, h: h }, kind: cell.kind, hashes: true, font: font, color: color, styled: styled, lit: !!cell.lit });
+          E.texts.push({ key: key, text: hashes, x: left + w - L.pad, y: cy, align: 'right', clip: { x: left, y: y, w: w, h: h }, kind: cell.kind, hashes: true, font: font, color: color, styled: styled, lit: !!cell.lit });
+          strands(hashes, left + w - L.pad, cy, 'right', { x: left, y: y, w: w, h: h }, undefined, true);
           continue;
         }
         var ax = align === 'left' ? left + L.pad : (align === 'right' ? left + w - L.pad : left + Math.round(w / 2));
@@ -8766,7 +8862,13 @@
           if (left + w <= clip.x || left >= clip.x + clip.w) continue;
           var n = wrapCount(cell.text, Math.max(1, w - 2 * L.pad));
           var ty = valign === 'middle' ? y + Math.round(h / 2) - Math.round((n - 1) * lineH / 2) : (valign === 'bottom' ? y + h - half - (n - 1) * lineH : y + half);
-          E.wraps.push({ key: name + ':' + r + ',' + c, text: cell.text, x: ax, y: ty, align: align, clip: { x: left, y: y, w: w, h: h }, font: font, color: color, lines: n, styled: styled, lit: !!cell.lit });
+          E.wraps.push({ key: key, text: cell.text, x: ax, y: ty, align: align, clip: { x: left, y: y, w: w, h: h }, font: font, color: color, lines: n, styled: styled, lit: !!cell.lit });
+          // each line the viewport draws, its own lines with it, the accounting kinds under the last alone
+          var broke = gqWrapLines(measureCtx, cell.text, Math.max(1, w - 2 * L.pad));
+          for (var li = 0, lty = ty; li < broke.length && lty - half < y + h; li++, lty += lineH) {
+            if (lty + half <= y) continue;
+            strands(broke[li], ax, lty, align, { x: left, y: y, w: w, h: h }, li, li === broke.length - 1);
+          }
           continue;
         }
         // no line feed or carriage return drawn, each line feed in the measure at a digit's width (ENGINE.36)
@@ -8781,7 +8883,9 @@
           clipX -= grown; clipW += grown;
         }
         if (clipX + clipW <= clip.x || clipX >= clip.x + clip.w) continue;
-        E.texts.push({ key: name + ':' + r + ',' + c, text: shown, x: align === 'right' ? ax - Math.round(feedW) : (align === 'center' ? ax - Math.round(feedW / 2) : ax), y: cy, align: align, clip: { x: clipX, y: y, w: clipW, h: h }, kind: cell.kind, font: font, color: color, styled: styled, lit: !!cell.lit });
+        var tax = align === 'right' ? ax - Math.round(feedW) : (align === 'center' ? ax - Math.round(feedW / 2) : ax);
+        E.texts.push({ key: key, text: shown, x: tax, y: cy, align: align, clip: { x: clipX, y: y, w: clipW, h: h }, kind: cell.kind, font: font, color: color, styled: styled, lit: !!cell.lit });
+        strands(shown, tax, cy, align, { x: clipX, y: y, w: clipW, h: h }, undefined, true);
       }
     }
     // the edges, where a format says a border (ENGINE.28, decisions 8 to 10)
@@ -8792,7 +8896,7 @@
     E.visible.push({ name: name, rowStart: rowStart, rowEnd: rowEnd, colStart: colStart, colEnd: colEnd, sx: sx, sy: sy });
   }
   function expectAll(model, L) {
-    var E = { fills: [], edges: [], vlines: [], hlines: [], texts: [], wraps: [], colHeaders: {}, rowHeaders: {}, visible: [] };
+    var E = { fills: [], edges: [], vlines: [], hlines: [], texts: [], wraps: [], decos: [], colHeaders: {}, rowHeaders: {}, visible: [] };
     var ox = L.ox, oy = L.oy, fx = ox + L.frozenW, fy = oy + L.frozenH, W = L.W, H = L.H;
     expectQuadrant(model, L, { x: fx, y: fy, w: W - fx, h: H - fy }, L.fr + 1, L.rows, L.fc + 1, L.cols, L.sx, L.sy, 'body', E);
     if (L.fr > 0) expectQuadrant(model, L, { x: fx, y: oy, w: W - fx, h: L.frozenH }, 1, L.fr, L.fc + 1, L.cols, L.sx, 0, 'frozen-rows', E);
@@ -8819,7 +8923,7 @@
     box.className = 'case';
     box.style.cssText = 'width:' + cs.w + 'px;height:' + cs.h + 'px;';
     stage.appendChild(box);
-    var problems = [], counts = { texts: 0, wraps: 0, fills: 0, lines: 0, headers: 0, selection: 0, marks: 0, probes: 0, hashes: 0, fonts: 0, twin: 0, edges: 0, lit: 0 };
+    var problems = [], counts = { texts: 0, wraps: 0, fills: 0, lines: 0, headers: 0, selection: 0, marks: 0, probes: 0, hashes: 0, fonts: 0, twin: 0, edges: 0, lit: 0, strands: 0 };
     var vp = null, twinVp = null, twinBox = null;
     try {
       vp = new VP(box, { willReadFrequently: !!cs.twin });
@@ -8906,6 +9010,26 @@
         delete drawnWraps[wx.key];
       }
       for (k in drawnWraps) if (Object.prototype.hasOwnProperty.call(drawnWraps, k)) problems.push('a wrapped text drawn at ' + k + ' that the record does not put there');
+      // (2b) a font's lines (ENGINE.37, decision 10): each strand drawn once, where the page's own table, its measure of the
+      // baseline and its reach place it, in its text's color; and the viewport's table the page's
+      if (JSON.stringify(VP.DECORATIONS) !== JSON.stringify(LINE_PLACES)) problems.push('the viewport\'s table of a font\'s lines is not the one measured from Excel\'s screen');
+      var strandOps = {};
+      for (i = 0; i < ops.length; i++) {
+        op = ops[i];
+        if (op.op !== 'decoration') continue;
+        k = op.quadrant + ':' + op.row + ',' + op.col + '|' + (op.line === undefined ? '' : op.line) + '|' + op.kind + '|' + op.strand;
+        if (strandOps[k]) problems.push('the strand ' + k + ' drawn twice');
+        strandOps[k] = op;
+      }
+      for (i = 0; i < E.decos.length; i++) {
+        var ed = E.decos[i], gd = strandOps[ed.key];
+        if (!gd) { problems.push('the strand ' + ed.key + ' not drawn'); continue; }
+        if (gd.x !== ed.x || gd.y !== ed.y || gd.w !== ed.w || gd.h !== ed.h) problems.push('the strand ' + ed.key + ' at ' + gd.x + ',' + gd.y + ' ' + gd.w + 'x' + gd.h + ', expected ' + ed.x + ',' + ed.y + ' ' + ed.w + 'x' + ed.h);
+        else if (String(gd.color).toLowerCase() !== ed.color.toLowerCase()) problems.push('the strand ' + ed.key + ' in ' + gd.color + ', expected ' + ed.color);
+        else counts.strands++;
+        delete strandOps[ed.key];
+      }
+      for (k in strandOps) if (Object.prototype.hasOwnProperty.call(strandOps, k)) problems.push('a strand drawn at ' + k + ' that the record does not say');
       // (3) the fills
       var fills = {};
       for (i = 0; i < ops.length; i++) { op = ops[i]; if (op.op === 'fill') fills[op.quadrant + ':' + op.row + ',' + op.col] = op; }
@@ -9027,6 +9151,19 @@
           else counts.probes++;
         }
       }
+      // (7c) the strands' pixels (ENGINE.37): each strand's middle pixel inside its clip, off the selection and the marks,
+      // its text's color exactly, so that a line ops say and the canvas never shows, or one drawn under another clip, is told
+      for (i = 0; i < E.decos.length; i++) {
+        var sd = E.decos[i], sx0 = Math.max(sd.x, sd.clip.x), sx1 = Math.min(sd.x + sd.w, sd.clip.x + sd.clip.w), smy = sd.y + Math.floor(sd.h / 2);
+        if (sx1 <= sx0 || smy < sd.clip.y || smy >= sd.clip.y + sd.clip.h) continue;
+        var smx = Math.floor((sx0 + sx1) / 2);
+        if (smx < L.ox || smy < L.oy || smx >= L.W || smy >= L.H) continue;
+        var sq = E.visible[0], scol = sq ? colAt(L, smx - L.ox + sq.sx, 1) : 0;
+        if (inRange(selRange, sd.row, scol) || (cs.mark && inRange(VP.parseRange(cs.mark[1][0]), sd.row, scol))) continue;
+        var spx = pixel(smx, smy), swant = hexOf(sd.color);
+        if (!same(spx, swant, 0)) problems.push('the middle pixel of the strand ' + sd.key + ', ' + smx + ',' + smy + ', is ' + spx.join(',') + ', its text\'s color ' + swant.join(','));
+        else counts.probes++;
+      }
       // (8) the drawn twin (ENGINE.28, decision 15): the record with its looks drawn op for op and pixel for pixel as its
       // twin, the same window with the looks folded in by the language, each cell's style the format Style::over gives it
       if (cs.twin) {
@@ -9056,7 +9193,7 @@
       if (box.parentNode) box.parentNode.removeChild(box);
       if (twinBox && twinBox.parentNode) twinBox.parentNode.removeChild(twinBox);
     }
-    var head = 'case ' + cs.name + ' [' + cs.w + 'x' + cs.h + ' css]: texts ' + counts.texts + ', wrapped ' + counts.wraps + ', fills ' + counts.fills + ', lines ' + counts.lines + ', headers ' + counts.headers + ', selection ' + counts.selection + ', marks ' + counts.marks + ', probes ' + counts.probes + ', hashes ' + counts.hashes + ', fonts ' + counts.fonts + ', twin ' + counts.twin + ', edges ' + counts.edges + ', lit ' + counts.lit + ': ';
+    var head = 'case ' + cs.name + ' [' + cs.w + 'x' + cs.h + ' css]: texts ' + counts.texts + ', wrapped ' + counts.wraps + ', fills ' + counts.fills + ', lines ' + counts.lines + ', headers ' + counts.headers + ', selection ' + counts.selection + ', marks ' + counts.marks + ', probes ' + counts.probes + ', hashes ' + counts.hashes + ', fonts ' + counts.fonts + ', twin ' + counts.twin + ', edges ' + counts.edges + ', lit ' + counts.lit + ', strands ' + counts.strands + ': ';
     if (problems.length === 0) { out.push(head + 'OK'); return true; }
     out.push(head + 'FAIL: ' + problems.slice(0, 6).join('; ') + (problems.length > 6 ? '; and ' + (problems.length - 6) + ' more' : ''));
     return false;
@@ -9116,7 +9253,25 @@
         '(format 4 "C8E6C9" general nowrap (font bold))\n(format 5 (font italic "800020"))\n(format 6 none general nowrap (font (family "Consolas" mono)))\n(format 7 (font (family "NoSuchFamily" serif)))\n' +
         '(look "Lit" "on" 4)\n(conditional "Lit" 1 "D2" "=TRUE" 1)\n(conditional "Lit" 2 "G2" "=TRUE" 2)\n(conditional "Lit" 3 "B3" "=TRUE" 5)\n(conditional "Lit" 4 "E4" "=TRUE" 7)\n(merge "Lit" "A5:B5")\n' +
         '(cell "Lit" "C2" "a text spilling over a cell a rule fills")\n(lit "Lit" "D2" 1)\n(lit "Lit" "G2" 2)\n(cell "Lit" "B3" "on")\n(lit "Lit" "B3" 3)\n' +
-        '(cell "Lit" "A4" "0123456789 iiii WWWW")\n(style "Lit" "A4" 6)\n(cell "Lit" "E4" "serif by a rule")\n(lit "Lit" "E4" 4)\n(cell "Lit" "A5" "merged, read")\n' }
+        '(cell "Lit" "A4" "0123456789 iiii WWWW")\n(style "Lit" "A4" 6)\n(cell "Lit" "E4" "serif by a rule")\n(lit "Lit" "E4" 4)\n(cell "Lit" "A5" "merged, read")\n' },
+      // ENGINE.37's second slice: a font's lines, a record of the page's own, every strand held to the page's own table, its
+      // measure of the baseline and its reach, and its middle pixel to its text's color: each kind on a text (A1:C1, A2) and
+      // on a number (E1, F1), a number's #s underlined (D1), a strike in an ink (B2), both centered (C2), a single aligned
+      // right (E2), a single spilling and an accounting line kept to its cell under a spill (A3, E3), bold on a fill (A4), a
+      // look's underline (B4), a look's not-underline over a cell's own underline (C4), a rule's underline and strike (C5),
+      // a wrapped single on every line and a wrapped double accounting under the last alone (A6, B6), and an accounting line
+      // at 22 points in Consolas under its spill (A7)
+      { name: 'lines', w: 1100, h: 400, record: '(sheet "Lines" visible)\n(window "Lines" "A1:F7")\n(extent "Lines" "A1:F7")\n(gridlines "Lines" on)\n(column "Lines" "D" 6 shown none)\n(row "Lines" 6 60 shown)\n' +
+        '(format 0 none general nowrap)\n(format 1 none general nowrap (font underline))\n(format 2 none general nowrap (font double-underline))\n(format 3 none general nowrap (font accounting-underline))\n(format 4 none general nowrap (font double-accounting-underline))\n' +
+        '(format 5 none general nowrap (font strike "800020"))\n(format 6 none general nowrap (font underline strike) (align center))\n(format 7 none general nowrap (font underline) (align right))\n(format 8 "FFE699" general nowrap (font bold underline))\n' +
+        '(format 9 none general wrap (font underline))\n(format 10 none general wrap (font double-accounting-underline))\n(format 11 none general nowrap (font 22 accounting-underline (family "Consolas" mono)))\n(format 12 (font underline strike))\n' +
+        '(format 13 none general nowrap (font not-underline))\n(format 14 none general nowrap (font underline))\n(look "Lines" "lk" 14)\n(look "Lines" "nl" 13)\n(conditional "Lines" 1 "C5" "=TRUE" 12)\n' +
+        '(cell "Lines" "A1" "single gjpqy")\n(style "Lines" "A1" 1)\n(cell "Lines" "B1" "double gjpqy")\n(style "Lines" "B1" 2)\n(cell "Lines" "C1" "acct")\n(style "Lines" "C1" 3)\n(cell "Lines" "D1" 123456)\n(style "Lines" "D1" 1)\n' +
+        '(cell "Lines" "E1" 1234.5)\n(style "Lines" "E1" 3)\n(cell "Lines" "F1" 1234.5)\n(style "Lines" "F1" 4)\n(cell "Lines" "A2" "double acct")\n(style "Lines" "A2" 4)\n(cell "Lines" "B2" "struck in red")\n(style "Lines" "B2" 5)\n' +
+        '(cell "Lines" "C2" "both, centered")\n(style "Lines" "C2" 6)\n(cell "Lines" "E2" "right")\n(style "Lines" "E2" 7)\n(cell "Lines" "A3" "a long text underlined, spilling into its neighbors")\n(style "Lines" "A3" 1)\n' +
+        '(cell "Lines" "E3" "accounting under a spill")\n(style "Lines" "E3" 3)\n(cell "Lines" "A4" "bold on a fill")\n(style "Lines" "A4" 8)\n(cell "Lines" "B4" "lk")\n(cell "Lines" "C4" "nl")\n(style "Lines" "C4" 1)\n' +
+        '(cell "Lines" "C5" "lit by a rule")\n(lit "Lines" "C5" 1)\n(cell "Lines" "A6" "first line gjpqy second line gjpqy")\n(style "Lines" "A6" 9)\n(cell "Lines" "B6" "first line second line")\n(style "Lines" "B6" 10)\n' +
+        '(cell "Lines" "A7" "Consolas 22")\n(style "Lines" "A7" 11)\n' }
     ];
     var ok = 0;
     for (var i = 0; i < cases.length; i++) if (runCase(cases[i], out)) ok++;

@@ -288,7 +288,8 @@ the rows of Frazaro's `KERNEL.58` (`vla-lang` 0.13.0): a sheet's rules,
 viewport folds from the last to the first over what the cell draws, a lit
 cell holding nothing drawn as an empty one over its column's format, a
 format of groups alone laid over the cell's own, a font's family drawn by
-its name and its class, and a merged range read and not drawn; an unknown row is counted, never refused. What the viewport owns is the state no program sees:
+its name and its class, its underline and strike drawn as Excel draws them,
+and a merged range read and not drawn; an unknown row is counted, never refused. What the viewport owns is the state no program sees:
 the scroll, the selection, the widths a person dragged, each sheet's its own
 as a spreadsheet keeps them (`ENGINE.26`), the frozen panes and the marks a
 host asked for. The record is never written.
@@ -808,8 +809,9 @@ vp.on('select', function (s) { /* s.text is 'B2:C3'; s.focus.sentence the row th
 cell's lit row names (4 since `ENGINE.28` read a format's font, alignment and
 border and drew them, 3 since `ENGINE.26` kept a dragged width for its sheet
 alone, 2 since `ENGINE.20`'s repaint). `AlonzoViewport.GENERICS` is a
-family's class to the canvas's generic family, which the page's oracles hold
-to their own. The options: `record`, a record's text to
+family's class to the canvas's generic family, and `AlonzoViewport.DECORATIONS`
+a font's lines, each kind's strands, places and reach, which the page's oracles
+hold to their own. The options: `record`, a record's text to
 load at once; `colors`, any of the defaults below; `showHidden`, whether
 hidden sheets' tabs show at first; `willReadFrequently`, a canvas the CPU
 rasterizes from the first paint, for a page that reads its pixels back
@@ -914,7 +916,13 @@ and a carriage return draws nothing, each as Excel draws them (`ENGINE.36`);
 and a number is never wrapped. A lit cell draws each rule its `lit` row
 names laid over what it draws unlit, from the last to the first, the first
 winning what it says (`ENGINE.37`); a lit cell holding nothing draws as an
-empty cell, so that a text spills over it and its fill. The layout is in device pixels, every size
+empty cell, so that a text spills over it and its fill. A font's underline and
+strike are rectangles in the text's color after each line it draws, placed from
+the font's baseline, measured once a font, by the fractions of its size Excel's
+screen showed: an underline and a strike across the line drawn, an accounting
+underline across a text's cell between its paddings, or a number's digits, and
+under a wrapped text's last line alone; each an op of its cell's, `decoration`,
+which a repaint lays again with the cell's texts. The layout is in device pixels, every size
 an integer of them, every gridline at an integer plus a half, so the image
 is crisp at the machine's ratio, and the backing store is remade when the
 ratio changes. A line in an opaque color is filled as a rectangle one

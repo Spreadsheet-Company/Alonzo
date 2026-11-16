@@ -63,6 +63,11 @@ the first to the last, which rules fails at E1's fill; a format of groups alone
 taken whole under a look, which partial fails at B1; and, in rules_own, a lit
 empty cell drawn over format 0 and not its column's (G2), a lit empty cell
 stopping a spill (C2) and a family drawn in the painter's own stack (A4).
+Since ENGINE.37's second slice twenty-five, the lines case failing each of five
+more by name: an underline undrawn (A1); a strike at the underline's place, the
+viewport's table moved (B2); an accounting line at a text's advance and not its
+cell's (C1); a font's lines from the middle line and not the baseline (B1); and
+an accounting line under every line of a wrapped text and not its last (B6).
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named. A page's dump is read
@@ -117,38 +122,44 @@ $onWindows = ($env:OS -eq 'Windows_NT')
 # gridline, held to the oracle's own rule and to the twin; and appearance_drawn, the twin itself, each cell's style
 # the format the language gives it. The fifteen earlier cases keep their counts, their fonts and twin at 0.
 # Since ENGINE.37 a case fails too where the viewport reads a row of its record as unknown or malformed (decision 1).
+# Since its second slice every line counts its strands, a font's lines held to the page's own table, its measure of the
+# baseline and its reach, and each strand's middle pixel probed: 0 in every case but lines, a record of the page's own.
 $scales = @('1', '1.5')
 $floors = @(
-    @{ Case = 'fixture_frazaro';          Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 0; Probes = 3; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'fixture_output';           Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'fixture_output_b2_c3';     Texts = 4;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'fixture_data';             Texts = 1;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'into_output';              Texts = 2;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'into_checks';              Texts = 1;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'sparse_top';               Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'sparse_middle';            Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'sparse_end';               Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'sparse_frozen';            Texts = 38; Fills = 0;  Lines = 100; Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'sparse_resized';           Texts = 38; Fills = 0;  Lines = 48;  Headers = 48; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'fixture_frazaro_selected'; Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 1; Probes = 3; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'sparse_hashes';            Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 13; Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'sheets_other';             Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'sheets_back';              Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
-    @{ Case = 'appearance';               Texts = 26; Fills = 2;  Lines = 0;   Headers = 33; Selection = 1; Marks = 0; Probes = 80; Hashes = 0;  Fonts = 12; Twin = 2; Edges = 57; Lit = 0 },
-    @{ Case = 'appearance_drawn';         Texts = 26; Fills = 2;  Lines = 0;   Headers = 33; Selection = 1; Marks = 0; Probes = 80; Hashes = 0;  Fonts = 12; Twin = 0; Edges = 57; Lit = 0 },
+    @{ Case = 'fixture_frazaro';          Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 0; Probes = 3; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'fixture_output';           Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'fixture_output_b2_c3';     Texts = 4;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'fixture_data';             Texts = 1;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'into_output';              Texts = 2;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'into_checks';              Texts = 1;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'sparse_top';               Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'sparse_middle';            Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'sparse_end';               Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'sparse_frozen';            Texts = 38; Fills = 0;  Lines = 100; Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'sparse_resized';           Texts = 38; Fills = 0;  Lines = 48;  Headers = 48; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'fixture_frazaro_selected'; Texts = 18; Fills = 34; Lines = 0;   Headers = 20; Selection = 1; Marks = 1; Probes = 3; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'sparse_hashes';            Texts = 38; Fills = 0;  Lines = 50;  Headers = 50; Selection = 1; Marks = 0; Probes = 2; Hashes = 13; Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'sheets_other';             Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'sheets_back';              Texts = 7;  Fills = 0;  Lines = 30;  Headers = 30; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
+    @{ Case = 'appearance';               Texts = 26; Fills = 2;  Lines = 0;   Headers = 33; Selection = 1; Marks = 0; Probes = 80; Hashes = 0;  Fonts = 12; Twin = 2; Edges = 57; Lit = 0; Strands = 0 },
+    @{ Case = 'appearance_drawn';         Texts = 26; Fills = 2;  Lines = 0;   Headers = 33; Selection = 1; Marks = 0; Probes = 80; Hashes = 0;  Fonts = 12; Twin = 0; Edges = 57; Lit = 0; Strands = 0 },
     # 2026-10-30, ENGINE.36: a record of the page's own, a text's line feeds and carriage returns, and no fixture
-    @{ Case = 'line_feeds';               Texts = 7;  Fills = 0;  Lines = 32;  Headers = 32; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0 },
+    @{ Case = 'line_feeds';               Texts = 7;  Fills = 0;  Lines = 32;  Headers = 32; Selection = 1; Marks = 0; Probes = 2; Hashes = 0;  Fonts = 0; Twin = 0; Edges = 0; Lit = 0; Strands = 0 },
     # 2026-11-15, ENGINE.37: every line counting its lit, the texts and fills asserted at a cell a rule lights; the language's
     # two fixtures of KERNEL.58 (vla-lang 0.13.0's testdata/appearance/), each held to the oracle's own reading and drawn op
     # for op and pixel for pixel as its twin, and each twin; and a record of the page's own, rules_own, a spill over a rule's
     # fill, a lit empty cell of a filled column, a rule over a look, a family by its class and a merge read
-    @{ Case = 'partial';                  Texts = 19; Fills = 12; Lines = 0;   Headers = 34; Selection = 1; Marks = 0; Probes = 10; Hashes = 0;  Fonts = 13; Twin = 2; Edges = 12; Lit = 0 },
-    @{ Case = 'partial_drawn';            Texts = 19; Fills = 12; Lines = 0;   Headers = 34; Selection = 1; Marks = 0; Probes = 10; Hashes = 0;  Fonts = 13; Twin = 0; Edges = 12; Lit = 0 },
-    @{ Case = 'rules';                    Texts = 13; Fills = 7;  Lines = 0;   Headers = 34; Selection = 1; Marks = 0; Probes = 8;  Hashes = 0;  Fonts = 10; Twin = 2; Edges = 9;  Lit = 12 },
-    @{ Case = 'rules_drawn';              Texts = 13; Fills = 7;  Lines = 0;   Headers = 34; Selection = 1; Marks = 0; Probes = 8;  Hashes = 0;  Fonts = 10; Twin = 0; Edges = 9;  Lit = 0 },
-    @{ Case = 'rules_own';                Texts = 5;  Fills = 20; Lines = 32;  Headers = 32; Selection = 1; Marks = 0; Probes = 8;  Hashes = 0;  Fonts = 3;  Twin = 0; Edges = 4;  Lit = 5 }
+    @{ Case = 'partial';                  Texts = 19; Fills = 12; Lines = 0;   Headers = 34; Selection = 1; Marks = 0; Probes = 10; Hashes = 0;  Fonts = 13; Twin = 2; Edges = 12; Lit = 0; Strands = 0 },
+    @{ Case = 'partial_drawn';            Texts = 19; Fills = 12; Lines = 0;   Headers = 34; Selection = 1; Marks = 0; Probes = 10; Hashes = 0;  Fonts = 13; Twin = 0; Edges = 12; Lit = 0; Strands = 0 },
+    @{ Case = 'rules';                    Texts = 13; Fills = 7;  Lines = 0;   Headers = 34; Selection = 1; Marks = 0; Probes = 8;  Hashes = 0;  Fonts = 10; Twin = 2; Edges = 9;  Lit = 12; Strands = 0 },
+    @{ Case = 'rules_drawn';              Texts = 13; Fills = 7;  Lines = 0;   Headers = 34; Selection = 1; Marks = 0; Probes = 8;  Hashes = 0;  Fonts = 10; Twin = 0; Edges = 9;  Lit = 0; Strands = 0 },
+    @{ Case = 'rules_own';                Texts = 5;  Fills = 20; Lines = 32;  Headers = 32; Selection = 1; Marks = 0; Probes = 8;  Hashes = 0;  Fonts = 3;  Twin = 0; Edges = 4;  Lit = 5; Strands = 0 },
+    # 2026-11-15, ENGINE.37's second slice: a font's lines, a record of the page's own, each kind on a text and a number, a
+    # number's #s, centered, right, spilling, wrapped, in an ink, bold on a fill, by a look and by a rule, and at 22 points;
+    # 28 strands at both ratios under headless Chrome 157 on Windows, their middle pixels among the probes
+    @{ Case = 'lines';                    Texts = 19; Fills = 1;  Lines = 32;  Headers = 32; Selection = 1; Marks = 0; Probes = 30; Hashes = 1;  Fonts = 19; Twin = 0; Edges = 0;  Lit = 1; Strands = 28 }
 )
-$expectedCases = 23
+$expectedCases = 24
 
 # The browser: named, from the environment, or found.
 function Find-Browser([string]$named) {
@@ -219,17 +230,17 @@ function Test-Oracle([string]$text, [string]$scale) {
     $cases = @{}
     $caseLines = New-Object System.Collections.Generic.List[string]
     foreach ($l in $lines) {
-        $m = [regex]::Match($l, '^case (\S+) \[[^\]]*\]: texts (\d+), wrapped (\d+), fills (\d+), lines (\d+), headers (\d+), selection (\d+), marks (\d+), probes (\d+), hashes (\d+), fonts (\d+), twin (\d+), edges (\d+), lit (\d+): (OK|FAIL.*)$')
+        $m = [regex]::Match($l, '^case (\S+) \[[^\]]*\]: texts (\d+), wrapped (\d+), fills (\d+), lines (\d+), headers (\d+), selection (\d+), marks (\d+), probes (\d+), hashes (\d+), fonts (\d+), twin (\d+), edges (\d+), lit (\d+), strands (\d+): (OK|FAIL.*)$')
         if (-not $m.Success) { continue }
         $name = $m.Groups[1].Value
-        $cases[$name] = @{ Texts = [int]$m.Groups[2].Value + [int]$m.Groups[3].Value; Fills = [int]$m.Groups[4].Value; Lines = [int]$m.Groups[5].Value; Headers = [int]$m.Groups[6].Value; Selection = [int]$m.Groups[7].Value; Marks = [int]$m.Groups[8].Value; Probes = [int]$m.Groups[9].Value; Hashes = [int]$m.Groups[10].Value; Fonts = [int]$m.Groups[11].Value; Twin = [int]$m.Groups[12].Value; Edges = [int]$m.Groups[13].Value; Lit = [int]$m.Groups[14].Value; Verdict = $m.Groups[15].Value }
+        $cases[$name] = @{ Texts = [int]$m.Groups[2].Value + [int]$m.Groups[3].Value; Fills = [int]$m.Groups[4].Value; Lines = [int]$m.Groups[5].Value; Headers = [int]$m.Groups[6].Value; Selection = [int]$m.Groups[7].Value; Marks = [int]$m.Groups[8].Value; Probes = [int]$m.Groups[9].Value; Hashes = [int]$m.Groups[10].Value; Fonts = [int]$m.Groups[11].Value; Twin = [int]$m.Groups[12].Value; Edges = [int]$m.Groups[13].Value; Lit = [int]$m.Groups[14].Value; Strands = [int]$m.Groups[15].Value; Verdict = $m.Groups[16].Value }
         $caseLines.Add(("  {0}: {1}" -f $name, ($l -replace '^case \S+ \[[^\]]*\]: ', '')))
     }
     foreach ($f in $floors) {
         $c = $cases[$f.Case]
         if ($null -eq $c) { $problems.Add("the case $($f.Case) was not run"); continue }
         if ($c.Verdict -ne 'OK') { $problems.Add("the case $($f.Case) at a ratio of $scale`: $($c.Verdict)") }
-        foreach ($k in @('Texts', 'Fills', 'Lines', 'Headers', 'Selection', 'Marks', 'Probes', 'Hashes', 'Fonts', 'Twin', 'Edges', 'Lit')) {
+        foreach ($k in @('Texts', 'Fills', 'Lines', 'Headers', 'Selection', 'Marks', 'Probes', 'Hashes', 'Fonts', 'Twin', 'Edges', 'Lit', 'Strands')) {
             if ($c[$k] -lt $f[$k]) { $problems.Add("the case $($f.Case) at a ratio of $scale asserted $($c[$k]) $($k.ToLower()), below its floor of $($f[$k])") }
         }
     }
@@ -372,7 +383,19 @@ if ($Control) {
             @{ L = 's'; Name = 'a lit empty cell stopping a spill'; Anchor = "        if (e && e.text !== '') break;"; With = "        if (e && (e.text !== '' || e.lit)) break;"
                Want = 'case rules_own at a ratio of 1: FAIL: cell body:2,3 clipped to' },
             @{ L = 't'; Name = 'the family dropped'; Anchor = "+ px + 'px ' + (fam ? familyCss(fam) : FONT_FAMILY);"; With = "+ px + 'px ' + FONT_FAMILY;"
-               Want = 'case rules_own at a ratio of 1: FAIL: .*cell body:4,1 in the font 13px system-ui' }
+               Want = 'case rules_own at a ratio of 1: FAIL: .*cell body:4,1 in the font 13px system-ui' },
+            # ENGINE.37's second slice, each the lines case's by name: an underline undrawn; a strike at the underline's place;
+            # an accounting line at a text's advance; the lines from the middle line; and an accounting line under every line
+            @{ L = 'u'; Name = 'an underline undrawn'; Anchor = '    if (under && (!DECORATIONS[under].last || last)) kinds.push(under);'; With = '    if (false) kinds.push(under);'
+               Want = 'case lines at a ratio of 1: FAIL: .*the strand body:1,1\|\|single\|0 not drawn' },
+            @{ L = 'v'; Name = 'a strike at the underline''s place'; Anchor = "    'strike': { at: -0.34, size: 0.05, strands: 1, reach: 'line', last: false }"; With = "    'strike': { at: 0.06, size: 0.05, strands: 1, reach: 'line', last: false }"
+               Want = 'case lines at a ratio of 1: FAIL: .*the strand body:2,2\|\|strike\|0 at \d+,\d+ \d+x\d+, expected' },
+            @{ L = 'w'; Name = 'an accounting line at a text''s advance'; Anchor = '      var cellWide = d.reach === ''cell'' && textual, a = cellWide ? x0 : Math.round(tx), b = cellWide ? x1 : Math.round(tx + tw);'; With = '      var cellWide = false, a = cellWide ? x0 : Math.round(tx), b = cellWide ? x1 : Math.round(tx + tw);'
+               Want = 'case lines at a ratio of 1: FAIL: .*the strand body:1,3\|\|single-accounting\|0 at \d+,\d+ \d+x\d+, expected' },
+            @{ L = 'x'; Name = 'the lines from the middle line'; Anchor = 'ly + Math.round(g.baselineOf(ctx, font))'; With = 'ly'
+               Want = 'case lines at a ratio of 1: FAIL: .*the strand body:1,2\|\|double\|0 at \d+,\d+ \d+x\d+, expected' },
+            @{ L = 'y'; Name = 'an accounting line under every line'; Anchor = '    if (under && (!DECORATIONS[under].last || last)) kinds.push(under);'; With = '    if (under) kinds.push(under);'
+               Want = 'case lines at a ratio of 1: FAIL: .*a strand drawn at body:6,2\|0\|double-accounting\|0 that the record does not say' }
         )
         $edgeNotes = New-Object System.Collections.Generic.List[string]
         $edgeJudged = New-Object System.Collections.Generic.List[object]
@@ -395,7 +418,7 @@ if ($Control) {
         Write-Output ("control: the real page has {0} problem(s); the padding mutant applied ({1}) and failed on {2} position(s); the dropped column failed as {3} cell(s) not drawn; the cut element left no block ({4}); the number cut again applied ({5}) and failed sparse_hashes ({6}); the widths one map applied ({7}) and failed sheets_other ({8}); the groups passed over applied ({9}) and failed appearance ({10}); the look whole applied ({11}) and failed appearance at C1 ({12}) and against the twin ({13})" -f @($j0.Problems).Count, $aApplied, $aPosition, $bNotDrawn, $cNoBlock, $dApplied, $dFailed, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $gTwin)
         Write-Output ('control: ' + ($edgeNotes -join '; '))
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aPosition -ge 1 -and $bNotDrawn -ge 1 -and $cNoBlock -and $dApplied -and $dFailed -ge 1 -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $gTwin -ge 1 -and $edgeOk) {
-            Write-Output 'OK: the check passes the real page and fails each of the twenty mutants for its own reason, each proving it applied'
+            Write-Output 'OK: the check passes the real page and fails each of the twenty-five mutants for its own reason, each proving it applied'
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

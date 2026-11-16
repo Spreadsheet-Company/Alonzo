@@ -362,7 +362,9 @@ $expectedGoldens = 7
 # 2026-11-15, ENGINE.37: the grid card at 300 rows, rows 17 and 18 from column P, eleven
 # formats of groups alone and a family, nine conditional formats, eight cells and two
 # styles; the other ten's rows unchanged.
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 300; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4248; 'cartridges/naught/naught.vla' = 1379 }
+# 2026-11-15, ENGINE.37's second slice: the grid card at 318 rows, row 17's lines from Q, six formats, a rule and
+# eleven rows of its cells and styles.
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 318; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4248; 'cartridges/naught/naught.vla' = 1379 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds two hundred and forty-five mutant pages through tools/build_web.ps1 and runs
+-Control builds two hundred and forty-six mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -853,9 +853,12 @@ $viewsFloors = @{ frames = 90; opened = 1; held = 80; values = 80; screen = 10; 
 # off with it, a lit row alone at a cell holding nothing and that cell emptied (crafted 18); the double's answers name its
 # A1 where its rule's answer alone moved, held by the oracle's own diff, its counts standing; and the changes card's rules
 # on row 4, lit by the Clock's frame with no value moving, patched and repainted among the 57, its frames' counts standing.
+# 2026-11-15, ENGINE.37's second slice: strands, a font's lines held over the frames by the page's own table, a rule's
+# underline and strike on and off over L6's spill, a double under K2 and an accounting underline under M1's number and its
+# #s, 176; the frames' counts standing.
 $changesFloors = @{ crafted = 18; double = 32; frames = 60; decided = 60; drawn = 3; patched = 57; equal = 60; models = 60; drawnHeld = 49; calls = 60; devices = 60;
                     inputs = 60; kept = 48; two = 3; whole = 2; dayViewer = 60; dayPatched = 58; screenViewer = 20; patches = 57; inputsKept = 48; saves = 2; replayed = 1; replayFrames = 60;
-                    repainted = 57; pixels = 60; ops = 60; frozen = 11; unseen = 5 }
+                    repainted = 57; pixels = 60; ops = 60; frozen = 11; unseen = 5; strands = 176 }
 # 2026-10-16, ENGINE.7: the twenty-three cases' counts unchanged, and a twenty-fourth, continue, over the module on both
 # pages, its counts a function of its plan: its ten sources built by the page's pass; 20 frames, each cell held to its
 # rule at all 20 and the five sheets' records to the twin's at 21 with frame 0; 2 continues applied, the first in the
@@ -991,6 +994,7 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # row's, and a filter that strikes the marks it hides, fail the replay case at frames 63, 21 and 36.
 # They take the control to two hundred and thirty-nine, landed after CART.9's fifth slice's HZ and IA.
 # 2026-11-15, ENGINE.37's LR to LW take it to two hundred and forty-five, five of them needing no module (121 applicable).
+# 2026-11-15, ENGINE.37's second slice: LX takes it to two hundred and forty-six, over the module (121 applicable without).
 # 2026-10-20, CART.9's first slice, Naught the eleventh cartridge: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -1121,9 +1125,11 @@ $floors = @(
     # 2026-11-15, ENGINE.37: fakeRule, the double's A1 held by name lit at frame 1 and unlit at 2 (2), and fakeRules its fills
     # by its rule at the frames A1 is in view and lit (3); cardRules, the grid card's rows 17 and 18 held by name at frames
     # 1, 2, 21 and 22 (4), and rules the card's fills by a rule over the frames, 84, its floor 5% below.
+# 2026-11-15, ENGINE.37's second slice: gridStrands, a font's lines the game half holds, the grid card's row 17 alone, 78
+# at both ratios: Q17 to W17's seven strands and X17's two on the frames its rule lights.
     @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 2080; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1; fakePatches = 8; fakeFonts = 170; fakeEdges = 500; sheetViews = 9; fakeRule = 2; fakeRules = 3 };
                             WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 10300; wraps = 40; fills = 9150; looks = 8650; styles = 80; columns = 326; unvalued = 288; hidden = 17; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 200; values = 24; patches = 20; codes = 3; coded = 213; fonts = 260; edges = 410; cardRules = 4; rules = 80;
-                                            grids = 4; gridFrames = 18; gridEqual = 16; gridValues = 33; gridTexts = 5250; gridCleared = 4; gridMoves = 18; gridBound = 3; gridCanvas = 10; gridFocused = 6; gridTyped = 3; gridEdges = 48000; gridFonts = 250 } },
+                                            grids = 4; gridFrames = 18; gridEqual = 16; gridValues = 33; gridTexts = 5250; gridCleared = 4; gridMoves = 18; gridBound = 3; gridCanvas = 10; gridFocused = 6; gridTyped = 3; gridEdges = 48000; gridFonts = 250; gridStrands = 78 } },
     @{ Case = 'tabs';     Min = @{ fakeFrames = 14; fakeShown = 1; fakeHeld = 8; fakeScrolled = 1; fakeBack = 1; fakeScreen = 9; fakePointer = 1; fakeRouted = 1; fakeKey = 1; fakeStrip = 1; fakeWheel = 4; fakeTexts = 4600 };
                             WithModule = @{ frames = 12; shown = 1; held = 5; back = 1; screen = 8; pointer = 1; routed = 1; strip = 1; wheel = 4; clock = 4; texts = 3100 } },
     @{ Case = 'empty';    Min = @{ cartridges = 11; ordered = 11; titled = 11; libraries = 1; double = 1; opening = 3 }; WithModule = @{ engine = 1 } },
@@ -2233,7 +2239,7 @@ if ($Control) {
             @{ L = 'bv'; Name = 'a repaint without the spill''s widening'; Module = $true; File = 'viewport'; Anchor = '    if (own) xs.push(own.x, own.x + own.w);'; With = '    // the spill unwidened, by the control'
                Want = 'case changes.*changes frame 2: the canvas is not a full paint''s of the record in the view''s state: \d+ pixel\(s\), the first at \d+,\d+ in L2' },
             @{ L = 'bw'; Name = 'a repaint without the left neighbor''s widening'; Module = $true; File = 'viewport'; Anchor = '      if (left && left.x + left.w > x + g.colX[c]) xs.push(left.x, left.x + left.w);'; With = '      // the left neighbor''s spill unwidened, by the control'
-               Want = 'case changes.*changes frame 2: the canvas is not a full paint''s of the record in the view''s state: \d+ pixel\(s\), the first at \d+,\d+ in O6' },
+               Want = 'case changes.*changes frame \d+: the canvas is not a full paint''s of the record in the view''s state: \d+ pixel\(s\), the first at \d+,\d+ in O6' },   # frame 3 since ENGINE.37's second slice: L6 lit by its rule at frame 2 repaints its own spill
             @{ L = 'bx'; Name = 'a repaint with no clip'; Module = $false; File = 'viewport'; Anchor = '    p.clipped(rect, function () {'; With = '    (function (fn) { fn(); })(function () {'
                Want = 'case changes.*crafted, an empty row: the canvas is not a full paint''s of the record after the patch: \d+ pixel\(s\), the first at \d+,\d+ in A1' },
             @{ L = 'by'; Name = 'a repaint without the selection'; Module = $true; File = 'viewport'; Anchor = '      self._paintRanges(p, model, g, clip, r1, r2, c1, c2, sx, sy, name);'; With = '      if (!part) self._paintRanges(p, model, g, clip, r1, r2, c1, c2, sx, sy, name);'
@@ -2282,7 +2288,11 @@ if ($Control) {
                Want = 'case changes.*the double, frame \d+, Screen: the answer names' },
             @{ L = 'lw'; Name = 'a rule''s fill never repainted'; File = 'viewport'; Anchor = "            if (fmt.fill) p.fillRect(ox + g.colX[c] - sx - 1, y - 1, w + 1, rh + 1, fmt.fill, { op: 'fill', row: r, col: c, quadrant: name });"
                With = "            if (fmt.fill && !(part && cell && cell.lit)) p.fillRect(ox + g.colX[c] - sx - 1, y - 1, w + 1, rh + 1, fmt.fill, { op: 'fill', row: r, col: c, quadrant: name });"
-               Want = 'case changes.*crafted, a lit row laid: the canvas is not a full paint''s of the record after the patch' }
+               Want = 'case changes.*crafted, a lit row laid: the canvas is not a full paint''s of the record after the patch' },
+            # LX (ENGINE.37's second slice): a repaint that lays a cell's texts again in the draw list and drops its lines,
+            # which the changes card's frames fail by name over the module, a strand of K2, L6 or M1 not drawn
+            @{ L = 'lx'; Name = 'a repaint that drops a text''s lines'; Module = $true; File = 'viewport'; Anchor = "      else if (op.op === 'text' || op.op === 'decoration') { if (!drawn.has(key)) drawn.set(key, []); drawn.get(key).push(op); }"; With = "      else if (op.op === 'text') { if (!drawn.has(key)) drawn.set(key, []); drawn.get(key).push(op); }"
+               Want = 'case changes.*changes frame \d+: the strand [KLM]\d+''s .* is not drawn' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
@@ -3055,7 +3065,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and forty-five' } else { 'one hundred and twenty-one applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and forty-six' } else { 'one hundred and twenty-one applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

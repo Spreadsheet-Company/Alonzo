@@ -100,6 +100,20 @@
   // A font's underlines (KERNEL.58), the record's word to the kind the painter keeps; not-underline says none.
   var UNDERLINES = { 'underline': 'single', 'double-underline': 'double', 'accounting-underline': 'single-accounting',
                      'double-accounting-underline': 'double-accounting', 'not-underline': 'none' };
+  // The lines a font says (ENGINE.37, decision 10), as Excel 365 draws them at 100% on a display at 150%, measured at the
+  // slice's start from the owner's screenshots of the probe workbook at 11 and 22 points: each kind's first strand, its
+  // center below the text's baseline as a fraction of the font's pixels (above it where negative), and each strand's
+  // thickness as a fraction too, rounded and at least a device pixel; a double's second strand one bare strand below its
+  // first. And its reach: 'line', the drawn line's advance, the whole of a spilling text's and each wrapped line's own;
+  // 'cell', under a text the cell between its paddings, however the text aligns or spills, and under any other value its
+  // advance; last, a wrapped text's last line alone.
+  var DECORATIONS = {
+    'single': { at: 0.06, size: 0.03, strands: 1, reach: 'line', last: false },
+    'double': { at: 0.06, size: 0.03, strands: 2, reach: 'line', last: false },
+    'single-accounting': { at: 0.28, size: 0.03, strands: 1, reach: 'cell', last: true },
+    'double-accounting': { at: 0.28, size: 0.03, strands: 2, reach: 'cell', last: true },
+    'strike': { at: -0.34, size: 0.05, strands: 1, reach: 'line', last: false }
+  };
   var DEFAULT_COLORS = {
     background: '#ffffff',
     gridline: '#d9d9d2',
@@ -523,6 +537,7 @@
     this.pad = Math.round(TEXT_PAD_PX * dpr);
     this.lineH = Math.round(FONT_PX * LINE_HEIGHT * dpr);
     this.fonts = {};   // a font string a format's weight, slant and pixels (ENGINE.28), built once each
+    this.baselines = {};   // a font string to its baseline below the middle line, measured once each (ENGINE.37)
     // The rows with settings of their own (ENGINE.8): a height in points turned into whole CSS pixels and then
     // device pixels, as a column's width is, or 0 for a hidden row; kept sorted with the running difference
     // from the default above each, so that a row's top is the default arithmetic corrected by the rows with
@@ -656,6 +671,38 @@
     if (!s) s = this.fonts[key] = (f.italic ? 'italic ' : '') + (f.bold ? 'bold ' : '') + px + 'px ' + (fam ? familyCss(fam) : FONT_FAMILY);
     return s;
   };
+  // How far a font's alphabetic baseline lies below the middle line the painter draws its text at (ENGINE.37), in device
+  // pixels: an H's ascent from each, measured once a font, the context left drawing from the middle. Excel's lines follow
+  // the baseline, which each font sets at its own depth below the middle.
+  Geometry.prototype.baselineOf = function (ctx, font) {
+    var b = this.baselines[font];
+    if (b === undefined) {
+      var was = ctx.font;
+      ctx.font = font;
+      ctx.textBaseline = 'alphabetic';
+      var a = ctx.measureText('H').actualBoundingBoxAscent;
+      ctx.textBaseline = 'middle';
+      b = this.baselines[font] = a - ctx.measureText('H').actualBoundingBoxAscent;
+      ctx.font = was;
+    }
+    return b;
+  };
+  // The strands of one drawn line of text's lines (ENGINE.37, decision 10), as rectangles in device pixels: under, the
+  // underline's kind or null, and struck, a strike; em, the font's pixels, and base, the line's baseline; tx and tw, the
+  // text's left and advance as drawn; x0 to x1, the cell between its paddings; textual, a value of kind text; and last,
+  // whether the line is its text's last.
+  function linesOf(under, struck, em, base, tx, tw, x0, x1, textual, last) {
+    var out = [], kinds = [];
+    if (under && (!DECORATIONS[under].last || last)) kinds.push(under);
+    if (struck) kinds.push('strike');
+    for (var k = 0; k < kinds.length; k++) {
+      var d = DECORATIONS[kinds[k]], t = Math.max(1, Math.round(d.size * em)), y = base + Math.round(d.at * em - t / 2);
+      var cellWide = d.reach === 'cell' && textual, a = cellWide ? x0 : Math.round(tx), b = cellWide ? x1 : Math.round(tx + tw);
+      if (b <= a) continue;
+      for (var s = 0; s < d.strands; s++) out.push({ kind: kinds[k], strand: s, x: a, y: y + 2 * t * s, w: b - a, h: t });
+    }
+    return out;
+  }
   // A family as a canvas font names it: the name quoted as CSS quotes one, then its class's generic family, else the
   // painter's stack.
   function familyCss(fam) {
@@ -957,9 +1004,11 @@
     ctx.clip();
     try { fn(); } finally { ctx.restore(); }
   };
-  // One line of text at an anchor, clipped to a rectangle.
-  Painter.prototype.text = function (text, x, y, align, color, clip, op) {
-    var ctx = this.ctx;
+  // One line of text at an anchor, clipped to a rectangle. Since ENGINE.37 (decision 10) its font's lines with it, lined,
+  // each strand a rectangle in the text's color under the same clip, at integer device pixels, which every rasterizer
+  // covers exactly, as an edge is; and each an op of its cell's after its text's, so that a repaint lays it with the texts.
+  Painter.prototype.text = function (text, x, y, align, color, clip, op, lined) {
+    var ctx = this.ctx, i;
     ctx.save();
     ctx.beginPath();
     ctx.rect(clip.x, clip.y, clip.w, clip.h);
@@ -967,11 +1016,19 @@
     ctx.fillStyle = color;
     ctx.textAlign = align;
     ctx.fillText(text, x, y);
+    if (lined) for (i = 0; i < lined.rects.length; i++) ctx.fillRect(lined.rects[i].x, lined.rects[i].y, lined.rects[i].w, lined.rects[i].h);
     ctx.restore();
     if (op) { op.text = text; op.x = x; op.y = y; op.align = align; op.color = color; op.clip = { x: clip.x, y: clip.y, w: clip.w, h: clip.h }; this.ops.push(op); }
+    if (lined) {
+      for (i = 0; i < lined.rects.length; i++) {
+        var s = lined.rects[i];
+        this.ops.push({ op: 'decoration', kind: s.kind, strand: s.strand, row: lined.row, col: lined.col, quadrant: lined.quadrant, line: lined.line, x: s.x, y: s.y, w: s.w, h: s.h, color: color });
+      }
+    }
   };
   // A painter that paints nothing (ENGINE.20): a cell's paint run through it keeps the ops the full paint would draw,
-  // so that a repaint finds where a text lies, its spill with it, by the full paint's own code.
+  // so that a repaint finds where a text lies, its spill with it, by the full paint's own code. A text's lines lie
+  // inside its clip, so it keeps none of them.
   function Tracer(ctx) { this.ctx = ctx; this.ops = []; }
   Tracer.prototype.text = function (text, x, y, align, color, clip, op) {
     if (op) { op.text = text; op.x = x; op.y = y; op.align = align; op.color = color; op.clip = { x: clip.x, y: clip.y, w: clip.w, h: clip.h }; this.ops.push(op); }
@@ -1453,26 +1510,37 @@
     // text's (KERNEL.5, decision 7)
     var color = cell.kind === 'formula' && !cell.valued ? colors.formula : (fmt.font && fmt.font.color !== null ? fmt.font.color : colors.text);
     var op = { op: 'text', row: r, col: c, kind: cell.kind, valued: cell.valued, quadrant: quadrant, font: font };
+    // a font's lines (ENGINE.37, decision 10): after each line of text it draws, its underline and its strike, in its color
+    // and under its clip, from its baseline by the table, across its reach
+    var under = fmt.font && fmt.font.underline && fmt.font.underline !== 'none' ? fmt.font.underline : null, struck = !!(fmt.font && fmt.font.strike);
+    // and drawn under the text's own clip by the painter, the text's advance taken from the measure already made where there
+    // is one
+    var lines = under || struck ? function (text, ax, ly, align, i, last, tw) {
+      if (tw === undefined) tw = ctx.measureText(text).width;
+      var tx = align === 'left' ? ax : (align === 'right' ? ax - tw : ax - tw / 2);
+      var rects = linesOf(under, struck, g.sizeOf(fmt), ly + Math.round(g.baselineOf(ctx, font)), tx, tw, left + pad, left + w - pad, cell.vkind === 'text', last);
+      return rects.length ? { rects: rects, row: r, col: c, quadrant: quadrant, line: i } : null;
+    } : null;
     // one line's vertical place: the cell's middle, as before ENGINE.28, unless its format says top or bottom
     var cy = valign === 'top' ? top + half : (valign === 'bottom' ? top + h - half : top + Math.round(h / 2));
     var hashes = hashesOf(ctx, cell, fmt, w, pad);
     if (hashes !== null) {
       if (left + w <= qclip.x || left >= qclip.x + qclip.w) return;
       op.wrap = false; op.hashes = true;
-      p.text(hashes, left + w - pad, cy, 'right', color, { x: left, y: top, w: w, h: h }, op);
+      p.text(hashes, left + w - pad, cy, 'right', color, { x: left, y: top, w: w, h: h }, op, lines ? lines(hashes, left + w - pad, cy, 'right', undefined, true) : null);
       return;
     }
     if (fmt.wrap) {
       if (left + w <= qclip.x || left >= qclip.x + qclip.w) return;
-      var lines = wrapText(ctx, cell.text, Math.max(1, w - 2 * pad));
+      var broken = wrapText(ctx, cell.text, Math.max(1, w - 2 * pad));
       var clip = { x: left, y: top, w: w, h: h };
       // the block's first line from the cell's top, as before ENGINE.28, unless its format says middle or bottom
-      var ty = valign === 'middle' ? top + Math.round(h / 2) - Math.round((lines.length - 1) * lineH / 2) : (valign === 'bottom' ? top + h - half - (lines.length - 1) * lineH : top + half);
-      for (var i = 0; i < lines.length && ty - half < top + h; i++, ty += lineH) {
+      var ty = valign === 'middle' ? top + Math.round(h / 2) - Math.round((broken.length - 1) * lineH / 2) : (valign === 'bottom' ? top + h - half - (broken.length - 1) * lineH : top + half);
+      for (var i = 0; i < broken.length && ty - half < top + h; i++, ty += lineH) {
         if (ty + half <= top) continue;   // a line above the cell under a middle or bottom alignment
         var ax = align === 'left' ? left + pad : (align === 'right' ? left + w - pad : left + Math.round(w / 2));
-        var lop = { op: 'text', row: r, col: c, kind: cell.kind, quadrant: quadrant, line: i, lines: lines.length, wrap: true, font: font };
-        p.text(lines[i], ax, ty, align, color, clip, lop);
+        var lop = { op: 'text', row: r, col: c, kind: cell.kind, quadrant: quadrant, line: i, lines: broken.length, wrap: true, font: font };
+        p.text(broken[i], ax, ty, align, color, clip, lop, lines ? lines(broken[i], ax, ty, align, i, i === broken.length - 1) : null);
       }
       return;
     }
@@ -1484,7 +1552,7 @@
       feedW = feedsIn(shown) * ctx.measureText('0').width;
       shown = shown.replace(/[\r\n]/g, '');
     }
-    var textW = ctx.measureText(shown).width + feedW;
+    var shownW = ctx.measureText(shown).width, textW = shownW + feedW;   // the letters' advance kept apart, a font's lines' reach (ENGINE.37)
     var need = textW + 2 * pad - w, clipX = left, clipW = w;
     // a nowrap text wider than its cell spills into empty neighbors by its alignment (decision 6): a left-aligned one
     // into the cells to its right, as before ENGINE.28; a text aligned right into those to its left; a centered text
@@ -1511,7 +1579,7 @@
     if (clipX + clipW <= qclip.x || clipX >= qclip.x + qclip.w) return;
     var ax2 = align === 'left' ? left + pad : (align === 'right' ? left + w - pad - Math.round(feedW) : left + Math.round(w / 2) - Math.round(feedW / 2));
     op.wrap = false;
-    p.text(shown, ax2, cy, align, color, { x: clipX, y: top, w: clipW, h: h }, op);
+    p.text(shown, ax2, cy, align, color, { x: clipX, y: top, w: clipW, h: h }, op, lines ? lines(shown, ax2, cy, align, undefined, true, shownW) : null);
   };
 
   // The selection and the marks inside a quadrant.
@@ -1762,7 +1830,7 @@
       if (!op.row) continue;
       key = cellKey(op.row, op.col);
       if (op.op === 'fill') o.fills.set(key, op);
-      else if (op.op === 'text') { if (!drawn.has(key)) drawn.set(key, []); drawn.get(key).push(op); }
+      else if (op.op === 'text' || op.op === 'decoration') { if (!drawn.has(key)) drawn.set(key, []); drawn.get(key).push(op); }   // a text's lines with it (ENGINE.37)
     }
     drawn.forEach(function (list, k) { o.texts.set(k, list); });
   };
@@ -2417,6 +2485,7 @@
   Viewport.RULES = RULES;
   Viewport.LINES = LINES;   // the lines' table, which the page's oracles hold to their own (ENGINE.28)
   Viewport.GENERICS = GENERICS;   // a family's class to the canvas's generic family (ENGINE.37), the oracles' too
+  Viewport.DECORATIONS = DECORATIONS;   // a font's lines, their places and reaches (ENGINE.37, decision 10), held by the oracles
   Viewport.DEFAULT_COLORS = DEFAULT_COLORS;
   Viewport.version = 5;
 
