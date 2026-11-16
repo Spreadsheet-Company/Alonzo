@@ -19,10 +19,12 @@
 //! - *The board by hand.* The instance a transform of its book puzzle by the
 //!   seed and the instance's number, and every frame of a session computed
 //!   from the Input rows as the engine's frame sees them, sharing no formula
-//!   with the cartridge: its codes, its marks' texts and its Constraints
-//!   sheet's values; and since `CART.14.1`'s second slice the ladder, the
+//!   with the cartridge: its values, its marks' texts and its Constraints
+//!   sheet's values; since `CART.14.1`'s second slice the ladder, the
 //!   grader's three techniques an inference a frame, its strikes, the
-//!   assignments it made, and its words.
+//!   assignments it made, and its words; and since its third the light, what
+//!   the Board lights while the ladder is asked and the rules each variable
+//!   is lit by.
 //!
 //! The engine's tests compile it as a module of the crate for the tests
 //! alone; the book's writer includes the same file by its path.
@@ -45,6 +47,20 @@ pub const BOOK_END: &str = "; ---- the book's end ----";
 pub fn figure_space() -> char {
     char::from_u32(0x2007).expect("the figure space")
 }
+
+/// What an emptied domain shows while the light names it, the empty set
+/// (`CART.14.1`'s third slice, decision 10).
+pub const EMPTY_DOMAIN: &str = "\u{2205}";
+
+/// The rules over the Board, by priority (`CART.14.1`'s third slice): the
+/// satisfied board's two, by box, each stopping the rest; the inference's
+/// place; a violation or an emptied domain; a reason; an assignment.
+pub const RULE_SATISFIED_ODD: u32 = 1;
+pub const RULE_SATISFIED_EVEN: u32 = 2;
+pub const RULE_PLACE: u32 = 3;
+pub const RULE_RED: u32 = 4;
+pub const RULE_REASON: u32 = 5;
+pub const RULE_ASSIGNED: u32 = 6;
 
 /// A puzzle or a board: 81 values, row by row, 0 an empty variable.
 pub type Board = [u8; 81];
@@ -728,6 +744,9 @@ pub struct Inference {
     pub boxed: u8,
     pub down: bool,
     pub line: u8,
+    /// A hidden single's constraint, the rows 1 to 9, the columns 10 to 18
+    /// and the boxes 19 to 27, which the light reads; else 0.
+    pub unit: usize,
     /// Why there is none: 0 there is one, 1 satisfied, 2 a violated
     /// constraint, 3 an emptied domain, 4 a value with no place in a
     /// constraint, 5 nothing the three techniques infer.
@@ -1210,6 +1229,7 @@ impl Seiyaku {
             i.kind = 2;
             i.value = v;
             i.place = k + 1;
+            i.unit = u;
             let named = match (u - 1) / 9 {
                 0 => "row",
                 1 => "column",
@@ -1249,29 +1269,113 @@ impl Seiyaku {
         }
     }
 
-    /// What the Board shows at row and column from 1: a value's code, 100
-    /// times its kind, 10 times its box's parity and the value, the kinds a
-    /// given, an assignment, each violated and each satisfied; else the
-    /// marks drawn, a digit or a figure space in each of nine places, a line
-    /// of three with three figure spaces between them, and two line feeds
-    /// between two lines, so that each mark stands in its third of the cell
-    /// (the owner's hand tests, 2026-10-19 and `ENGINE.28`'s of 2026-10-29;
-    /// the line feeds since `CART.14.1`'s second slice, by `ENGINE.36`).
+    /// A variable's light, the Light sheet's (`CART.14.1`'s third slice,
+    /// decisions 10 and 11): 0 none; 1 a reason, a variable the inference is
+    /// read by; 2 the inference's place, the variable a single assigns or a
+    /// place a pointing strikes its value from; 3 an emptied domain. A naked
+    /// single is read by its assigned neighbors, a hidden single by its
+    /// constraint whole and every variable holding its value, a pointing by
+    /// its box whole and every variable holding its value; all of it only
+    /// while the ladder is asked.
+    pub fn light(&self, k: usize) -> u8 {
+        if !self.lit {
+            return 0;
+        }
+        if self.grid[k] == 0 && self.candidates[k] == 0 {
+            return 3;
+        }
+        let i = &self.ladder;
+        let (r, c, x) = units_of(k);
+        let place = match i.kind {
+            1 | 2 => k + 1 == i.place,
+            3 => {
+                let on_line = if i.down {
+                    c + 1 == usize::from(i.line)
+                } else {
+                    r + 1 == usize::from(i.line)
+                };
+                self.grid[k] == 0
+                    && on_line
+                    && x + 1 != usize::from(i.boxed)
+                    && self.candidates[k] & (1 << (i.value - 1)) != 0
+            }
+            _ => false,
+        };
+        if place {
+            return 2;
+        }
+        let holding = self.grid[k] > 0 && self.grid[k] == i.value;
+        let reason = match i.kind {
+            1 => {
+                let (pr, pc, px) = units_of(i.place - 1);
+                self.grid[k] > 0 && (r == pr || c == pc || x == px)
+            }
+            2 => {
+                let within = match (i.unit - 1) / 9 {
+                    0 => r + 1 == i.unit,
+                    1 => c + 10 == i.unit,
+                    _ => x + 19 == i.unit,
+                };
+                within || holding
+            }
+            3 => x + 1 == usize::from(i.boxed) || holding,
+            _ => false,
+        };
+        u8::from(reason)
+    }
+
+    /// The rules a variable at row and column from 1 is lit by, in priority
+    /// order up to the first that stops, as the record's `lit` row names them:
+    /// the satisfied board's, by box, alone; else the inference's place, a
+    /// violation or an emptied domain, a reason and an assignment, each where
+    /// it holds.
+    pub fn lit_rules(&self, row: u32, column: u32) -> Vec<u32> {
+        let k = ((row - 1) * 9 + (column - 1)) as usize;
+        if self.satisfied {
+            let parity = ((row - 1) / 3 + (column - 1) / 3) % 2;
+            return vec![if parity == 0 {
+                RULE_SATISFIED_ODD
+            } else {
+                RULE_SATISFIED_EVEN
+            }];
+        }
+        let light = self.light(k);
+        let mut lit = Vec::new();
+        if light == 2 {
+            lit.push(RULE_PLACE);
+        }
+        if self.violated[k] || light == 3 {
+            lit.push(RULE_RED);
+        }
+        if light == 1 {
+            lit.push(RULE_REASON);
+        }
+        if self.grid[k] > 0 && self.givens[k] == 0 {
+            lit.push(RULE_ASSIGNED);
+        }
+        lit
+    }
+
+    /// What the Board shows at row and column from 1: a variable's value, and
+    /// since `CART.14.1`'s third slice, while the light names it, a single's
+    /// value at the variable it assigns before it is applied and an emptied
+    /// domain's ∅; else the marks drawn, a digit or a figure space in each of
+    /// nine places, a line of three with three figure spaces between them,
+    /// and two line feeds between two lines, so that each mark stands in its
+    /// third of the cell (the owner's hand tests, 2026-10-19 and `ENGINE.28`'s
+    /// of 2026-10-29; the line feeds since `CART.14.1`'s second slice, by
+    /// `ENGINE.36`). A code stood for a value until the third slice: 100 times
+    /// its kind, 10 times its box's parity and the value.
     pub fn shown(&self, row: u32, column: u32) -> Shown {
         let k = ((row - 1) * 9 + (column - 1)) as usize;
         let v = self.grid[k];
         if v > 0 {
-            let given = self.givens[k] > 0;
-            let kind = match (self.satisfied, given, self.violated[k]) {
-                (true, true, _) => 5,
-                (true, false, _) => 6,
-                (false, true, false) => 1,
-                (false, false, false) => 2,
-                (false, true, true) => 3,
-                (false, false, true) => 4,
-            };
-            let parity = ((row - 1) / 3 + (column - 1) / 3) % 2;
-            return Shown::Number(f64::from(100 * kind + 10 * parity + u32::from(v)));
+            return Shown::Number(f64::from(v));
+        }
+        match self.light(k) {
+            2 if self.ladder.kind < 3 => return Shown::Number(f64::from(self.ladder.value)),
+            3 => return Shown::Text(EMPTY_DOMAIN.to_string()),
+            _ => {}
         }
         let m = self.drawn(k);
         if m == 0 {

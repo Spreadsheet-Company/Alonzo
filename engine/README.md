@@ -122,7 +122,10 @@ the grader's three techniques an inference a frame: a second session holds
 its strikes, its assignments and its words at every frame through `I`, `P`,
 `U` and `M`, and a test deals every puzzle of the book by name and propagates
 it in cells, the three techniques satisfying the first three grades and none
-of the fourth. The book is written into the source by an example of its own,
+of the fourth. Since its third slice the hand keeps the light, what the Board
+lights while the ladder is asked: both sessions hold every variable's light
+and the rules its record's `lit` row names at every frame. The book is
+written into the source by an example of its own,
 which includes the same file by its path:
 
 ```text

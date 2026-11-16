@@ -5487,10 +5487,35 @@ mod tests {
         }
     }
 
-    /// The board held to the hand's: every variable's code or marks, the
-    /// givens, the Lab's counts and the Constraints sheet's every value; and
-    /// since `CART.14.1`'s second slice the ladder's, every variable's strikes
-    /// and whether inference assigned it, the inference named and its words.
+    /// The rules each variable of Seiyaku's Board is lit by, read off the
+    /// record of its values view: a `lit` row's priorities by its address.
+    fn seiyaku_lit(c: &Cartridge) -> std::collections::HashMap<String, Vec<u32>> {
+        let v = c
+            .view("values", "Board", Some("B2:J10"))
+            .expect("the Board's view");
+        let text = String::from_utf8(v.bytes().to_vec()).expect("a record is text");
+        let mut lit = std::collections::HashMap::new();
+        for line in text.lines() {
+            let Some(rest) = line.strip_prefix("(lit \"Board\" \"") else {
+                continue;
+            };
+            let (addr, tail) = rest.split_once('"').expect("a lit row's address");
+            let rules: Vec<u32> = tail
+                .trim_end_matches(')')
+                .split_whitespace()
+                .map(|p| p.parse().expect("a rule's priority"))
+                .collect();
+            lit.insert(addr.to_string(), rules);
+        }
+        lit
+    }
+
+    /// The board held to the hand's: every variable's value or marks, the
+    /// givens, the Lab's counts and the Constraints sheet's every value; since
+    /// `CART.14.1`'s second slice the ladder's, every variable's strikes and
+    /// whether inference assigned it, the inference named and its words; and
+    /// since its third the light, every variable's on the Light sheet and the
+    /// rules its record's `lit` row names.
     fn seiyaku_holds(c: &Cartridge, hand: &Seiyaku, at: &str) {
         let n = |v: f64| Shown::Number(v);
         let t = |s: &str| Shown::Text(s.to_string());
@@ -5504,6 +5529,7 @@ mod tests {
                 want.push(("Marks", r, col, n(f64::from(hand.marks[k]))));
                 want.push(("Struck", r, col, n(f64::from(hand.struck[k]))));
                 want.push(("Inferred", r, col, n(f64::from(u8::from(hand.inferred[k])))));
+                want.push(("Light", r, col, n(f64::from(hand.light(k)))));
             }
         }
         want.push(("Board", 11, 2, t(&hand.words())));
@@ -5608,6 +5634,27 @@ mod tests {
                 address(row, col)
             );
         }
+        let lit = seiyaku_lit(c);
+        for r in 1..=9 {
+            for col in 1..=9 {
+                let cell = address(r + 1, col + 1);
+                let got = lit.get(&cell).cloned().unwrap_or_default();
+                let want = hand.lit_rules(r, col);
+                assert!(
+                    got == want,
+                    "{at}: Board!{cell} is lit by the rules {got:?}, and the hand's {want:?}"
+                );
+            }
+        }
+        assert!(
+            lit.keys().all(|k| {
+                let (letter, digits) = k.split_at(1);
+                ("B"..="J").contains(&letter)
+                    && digits.parse::<u32>().is_ok_and(|n| (2..=10).contains(&n))
+            }),
+            "{at}: a lit row outside the variables: {:?}",
+            lit.keys().collect::<Vec<_>>()
+        );
     }
 
     /// One act and its settle, stepped to the end: the hand framed with the

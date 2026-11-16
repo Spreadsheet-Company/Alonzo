@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds two hundred and forty-six mutant pages through tools/build_web.ps1 and runs
+-Control builds two hundred and forty-nine mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -995,6 +995,11 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # They take the control to two hundred and thirty-nine, landed after CART.9's fifth slice's HZ and IA.
 # 2026-11-15, ENGINE.37's LR to LW take it to two hundred and forty-five, five of them needing no module (121 applicable).
 # 2026-11-15, ENGINE.37's second slice: LX takes it to two hundred and forty-six, over the module (121 applicable without).
+# 2026-11-15, CART.14.1's third slice, the light: Seiyaku's Board holds each variable's own digit where a code stood, and
+# six rules light it; the hand answers the rules each variable is lit by and the replay case holds them to the record's
+# lit rows, every frame of the owner's session (seiyakuLit 3,442, the lit cells held). Mutants LY, LZ and MA, the hand's
+# reasons never lit, a pointing's box no reason, and a single's value not shown at its place before it is applied, fail
+# the replay case at frames 15, 62 and 15, and take the control to two hundred and forty-nine, over the module.
 # 2026-10-20, CART.9's first slice, Naught the eleventh cartridge: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -1098,7 +1103,7 @@ $floors = @(
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
     @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 11; same = 11; refused = 1; handle = 1; ranOn = 1 } },
     @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 5; players = 2; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 7; rate = 5; refused = 1 } },
-    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 5 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 7; frames = 26; same = 26; golden = 7; round = 7; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637; seiyakuFrames = 158; seiyakuCells = 12956; seiyakuActs = 26; seiyakuInstances = 3; seiyakuSettles = 132; seiyakuSatisfied = 1; naughtFrames = 4807; naughtCells = 1615368; naughtEdits = 38; naughtLit = 208; naughtWritten = 151; naughtPassed = 14; naughtShown = 18 } },
+    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 5 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 7; frames = 26; same = 26; golden = 7; round = 7; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637; seiyakuFrames = 158; seiyakuCells = 12956; seiyakuActs = 26; seiyakuInstances = 3; seiyakuSettles = 132; seiyakuLit = 3442; seiyakuSatisfied = 1; naughtFrames = 4807; naughtCells = 1615368; naughtEdits = 38; naughtLit = 208; naughtWritten = 151; naughtPassed = 14; naughtShown = 18 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } },
     # 2026-10-24, ENGINE.28's first slice: the grid card's rows 17 and 18 are a format's appearance and its stripe starts
@@ -2859,13 +2864,19 @@ if ($Control) {
         # and a column's for a row's, and whose filter strikes the marks it hides. In the owner's session the first
         # names another inference after P's first strikes and applies it at frame 63, the second applies a wrong
         # hidden single at frame 21, the second inference I applies, and the third keeps the marks it hid when M draws
-        # them whole again at frame 36: the replay case must fail each by name at its frame.
+        # them whole again at frame 36: the replay case must fail each by name at its frame. Since CART.14.1's third slice
+        # the light's three, LY, LZ and MA, the same way: a reason never lit fails at frame 15, the first I lights; a
+        # pointing's box no reason at frame 62, the first pointing P names; and a single's value not shown at its place,
+        # drawn as its marks before it is applied, at frame 15.
         $ladderMutants = @(
             @{ L = 'ks'; Name = 'the candidates blind to the strikes'; Anchor = 'candidates.push(cand & ~struck[k]);'; With = 'candidates.push(cand);'; Frame = 63 },
             @{ L = 'kt'; Name = 'a hidden single read from the wrong unit'; Anchor = 'var places = u < 9 ? open.rows[u] : (u < 18 ? open.cols[u - 9] : open.boxes[u - 18]);'; With = 'var places = u < 9 ? open.cols[u] : (u < 18 ? open.rows[u - 9] : open.boxes[u - 18]);'; Frame = 21 },
-            @{ L = 'ku'; Name = 'a filter that strikes the mark'; Anchor = '      else marks.push(m);'; With = '      else marks.push(filtered ? m & candidates[k] : m);'; Frame = 36 }
+            @{ L = 'ku'; Name = 'a filter that strikes the mark'; Anchor = '      else marks.push(m);'; With = '      else marks.push(filtered ? m & candidates[k] : m);'; Frame = 36 },
+            @{ L = 'ly'; Name = 'a reason never lit'; Anchor = '    return reason ? 1 : 0;'; With = '    return 0;'; Frame = 15 },
+            @{ L = 'lz'; Name = 'a pointing''s box no reason'; Anchor = 'else if (L.kind === 3) reason = u[2] + 1 === L.box || holding;'; With = 'else if (L.kind === 3) reason = holding;'; Frame = 62 },
+            @{ L = 'ma'; Name = 'a single''s value not shown at its place'; Anchor = 'if (light === 2 && this.ladder.kind < 3) return this.ladder.value;'; With = 'if (light === 2 && this.ladder.kind < 1) return this.ladder.value;'; Frame = 15 }
         )
-        $ladderOk = $true; $ladderNote = 'the ladder''s three in the hand: not applicable, the real page holding no engine module'
+        $ladderOk = $true; $ladderNote = 'the ladder''s three and the light''s three in the hand: not applicable, the real page holding no engine module'
         if ($moduleReal -gt 0) {
             $seiyakuHandNow = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'cartridges/seiyaku/seiyaku.hand.js'))
             $ladderWords = @()
@@ -3065,7 +3076,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and forty-six' } else { 'one hundred and twenty-one applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and forty-nine' } else { 'one hundred and twenty-one applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

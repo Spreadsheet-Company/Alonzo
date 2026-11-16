@@ -2826,6 +2826,19 @@
     }
     return out;
   }
+  // A record's lit rows (KERNEL.58; drawn since ENGINE.37): each cell's rules by priority, as the language answers them,
+  // the first that stops the last; a hand's light is held to them (CART.14.1's third slice).
+  function recordLit(text) {
+    var forms = VP.readForms(text), out = {};
+    for (var i = 0; i < forms.length; i++) {
+      var f = forms[i];
+      if (!Array.isArray(f) || f.length < 4 || !f[0] || f[0].sym !== 'lit' || typeof f[2] !== 'string') continue;
+      var rules = [];
+      for (var j = 3; j < f.length; j++) rules.push(f[j] && f[j].num !== undefined ? f[j].num : NaN);
+      out[f[2].toUpperCase()] = rules;
+    }
+    return out;
+  }
   function cellIndex(R, addr) { var a = VP.parseRange(addr); return (a.top - R.top) * (R.right - R.left + 1) + (a.left - R.left); }
   // The host over one module, the test card loaded and stepped by manual ticks, a frame a tick: at
   // frame 0 and after every frame, the window the host drew through is the Camera's, by its record
@@ -5494,12 +5507,13 @@
   }
   function handSpell(x) { return x === undefined || x === null ? 'nothing' : (typeof x === 'object' ? 'the error ' + x.error : JSON.stringify(x)); }
   // What a hand answers for a frame, held to the frame: its plane, byte for byte, the host's plane of the window;
-  // its cells, each Sheet!A1 to that sheet's record at the frame, one view a sheet over the range its cells span.
-  // { diff } at the first that differs, else { cells }, the count of cells held.
+  // its cells, each Sheet!A1 to that sheet's record at the frame, one view a sheet over the range its cells span; and,
+  // where it answers lit, each cell it names lit by the rules it says, none where it says none, its record's lit row's
+  // (CART.14.1's third slice). { diff } at the first that differs, else { cells, lit }, the cells held and the lit among them.
   function handHeld(want, M, D) {
     if (!want || typeof want !== 'object' || (!want.plane && !want.cells)) return { diff: 'the hand answered neither a plane nor cells' };
     if (want.plane) { var pd = firstDiff(M.plane, want.plane, M.cart ? M.cart.w : 0); if (pd) return { diff: pd }; }
-    var held = 0, sheets = {}, order = [];
+    var held = 0, lit = 0, sheets = {}, order = [];
     for (var at in want.cells || {}) {
       if (!Object.prototype.hasOwnProperty.call(want.cells, at)) continue;
       var bang = at.lastIndexOf('!'), a = bang > 0 ? VP.parseRange(at.slice(bang + 1)) : null;
@@ -5512,14 +5526,18 @@
     for (var i = 0; i < order.length; i++) {
       var S = sheets[order[i]], v = D.call('alonzo_view', [M.counters().handle], ['grid', order[i], VP.rangeText(S)]);
       if (v.status !== 0) return { diff: 'the view of ' + order[i] + ' was refused: ' + (v.id || 'status ' + v.status) };
-      var rec = recordValues(v.text);
+      var rec = recordValues(v.text), lits = want.lit ? recordLit(v.text) : null;
       for (var j = 0; j < S.cells.length; j++) {
         var c = S.cells[j], got = sndPlain(rec[c.addr]);
         if (!handSame(got, c.want)) return { diff: c.name + ' holds ' + handSpell(got) + ', and the hand ' + handSpell(c.want) };
         held++;
+        if (!lits) continue;
+        var gl = lits[c.addr] || [], wl = want.lit[c.name] || [];
+        if (gl.join(',') !== wl.join(',')) return { diff: c.name + ' is lit by the rules ' + JSON.stringify(gl) + ', and the hand\'s ' + JSON.stringify(wl) };
+        if (gl.length) lit++;
       }
     }
-    return { diff: '', cells: held };
+    return { diff: '', cells: held, lit: lit };
   }
   function firstDiffLine(a, b) {
     var x = String(a).split('\n'), y = String(b).split('\n');
@@ -5690,6 +5708,7 @@
           if (held.diff) { if (!handOff) handOff = 'frame ' + e.frame + ': ' + held.diff; return; }
           k[tag + 'Frames']++;
           if (held.cells) k[tag + 'Cells'] = (k[tag + 'Cells'] || 0) + held.cells;
+          if (held.lit) k[tag + 'Lit'] = (k[tag + 'Lit'] || 0) + held.lit;
         });
         var cutText = upto ? replayUpTo(rBody, upto) : null;
         var pm = M.play(cutText || cart.replay, true);

@@ -7,7 +7,7 @@
 ; I saying the violation, and the assignment retracted; the grade to 4, an instance, and P stopping where the three
 ; techniques do. 26 acts over 158 frames; a settle's frames hold no row. Its golden is the Constraints sheet's record
 ; at its end.
-(replay "seiyaku" (spec 6) (cartridge "777677A4EB4D1FF54AE96ADC0E3E40A9B0D9A70197FF3CB5FDDC7FA5B39DBC9C") (seed 760238680))
+(replay "seiyaku" (spec 6) (cartridge "BF01399DB3B639CAB02B51D55B9374190A48DD4888CB3FA10037241B2EE75AA6") (seed 760238680))
 (frame 1
   (cell "Input" "B11" 1)
   (cell "Input" "B12" 1)

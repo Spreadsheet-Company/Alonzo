@@ -29,9 +29,12 @@
 ;   M: draw only the marks the constraints still allow, the rest kept beneath; again, all.
 ; A variable whose value repeats in one of its constraints is violated, and drawn red. When
 ; every variable is assigned and no constraint is violated, the instance is satisfied, and
-; the Board turns Lovelace Lavender, its digits white. The Constraints sheet keeps the counts and each
-; constraint's state. Clock!B3 is the seed: everyone who types the same seed is dealt the
-; same instances.
+; the Board turns Lovelace Lavender, its digits white. While I or P has lit the words, the
+; Board lights the inference they say: a single's variable in Lovelace Lavender, its value
+; drawn white before it is applied, or the places a pointing strikes its value from; what it
+; is read by on a pale lavender; and a domain with no value left as ∅ on the red. The
+; Constraints sheet keeps the counts and each constraint's state. Clock!B3 is the seed:
+; everyone who types the same seed is dealt the same instances.
 ;
 ; The words are constraint programming's: a cell is a variable, a digit a value, an entry an
 ; assignment, an erasure a retraction, the pencil marks the variable's domain, a conflict a
@@ -118,6 +121,7 @@
 (sheet "Ladder" hidden)
 (sheet "Inferred" hidden)
 (sheet "Drawn" hidden)
+(sheet "Light" hidden)
 (sheet "Lab" hidden)
 (sheet "Screen" hidden)
 (sheet "Camera" hidden)
@@ -413,12 +417,16 @@
 ; Each variable's strikes a number of bits, as its marks are: a pointing the last frame named
 ; and this frame applies strikes its value from every unassigned variable on its line outside
 ; its box; the Lab's B21 clears them all.
+(defmacro (on-the-line-outside-the-box down line box)
+  "the variable lies on a pointing's line, its column where down is 1 and else its row, outside the pointing's box"
+  (and (if (= down 1)
+         (= (column) line)
+         (= (row) line))
+       (<> (the-box-from 1) box)))
+
 (defmacro (on-the-struck-line)
-  "the variable lies on the line the last frame's pointing named, a row or a column, outside its box"
-  (and (if (= Ladder.last!$B$6 1)
-         (= (column) Ladder.last!$B$7)
-         (= (row) Ladder.last!$B$7))
-       (<> (the-box-from 1) Ladder.last!$B$5)))
+  "the variable lies on the line the last frame's pointing named, outside its box"
+  (on-the-line-outside-the-box Ladder.last!$B$6 Ladder.last!$B$7 Ladder.last!$B$5))
 
 (defmacro (struck-here)
   "a strike applied at this frame to this unassigned variable"
@@ -684,16 +692,103 @@
 ; retraction widens its domain again.
 (rule "Drawn" "A1:I9" (if (= Lab!$B$18 1) (bitand Marks!A1 Candidates!A83) Marks!A1))
 
+; ---- the light: what the Board lights while the ladder is asked (decisions 10 and 11) -------
+; A1:I9, each variable's light, laid out as the Grid is: 0 none; 1 a reason, a variable the inference
+; is read by; 2 the inference's place, the variable a single assigns or a place a pointing
+; strikes its value from; 3 an emptied domain, an unassigned variable with no value left. A
+; naked single is read by its assigned neighbors, the variables of its row, its column and
+; its box holding a value; a hidden single by its constraint, every variable of it, and every
+; variable holding its value; a pointing by its box, every variable of it, and every variable
+; holding its value. All of it only while the ladder is asked, so that a wrong digit is not
+; flagged before a person asks (CART.14.1's third slice). A11:I19, what an unassigned variable
+; shows in its marks' place while it is lit: a single's value at the variable it assigns, before
+; the inference is applied, and ∅ at an emptied domain; else nothing, and the marks. The Board
+; reads this cell alone, so that a variable whose light keeps its value does not draw its marks
+; again at every inference: a cell the language computes again only where what it reads moved.
+(defmacro (the-inference-is kind)
+  "the inference this frame's ladder names is of the kind: 1 a naked single, 2 a hidden single, 3 a pointing"
+  (= Ladder!$B$1 kind))
+
+(defmacro (the-row-of place)
+  "a variable's row, 1 to 9, from its place, 1 to 81"
+  (+ (int (/ (- place 1) 9)) 1))
+
+(defmacro (the-column-of place)
+  "a variable's column, 1 to 9, from its place, 1 to 81"
+  (+ (mod (- place 1) 9) 1))
+
+(defmacro (the-box-of place)
+  "a variable's box, 1 to 9, from its place, 1 to 81"
+  (+ (* 3 (int (/ (- (the-row-of place) 1) 3))) (int (/ (- (the-column-of place) 1) 3)) 1))
+
+(defmacro (beside-the-place)
+  "the variable shares a row, a column or a box with the variable the inference assigns"
+  (or (= (row) (the-row-of Ladder!$B$3))
+      (= (column) (the-column-of Ladder!$B$3))
+      (= (the-box-from 1) (the-box-of Ladder!$B$3))))
+
+(defmacro (holding-the-value)
+  "the variable holds the value the inference assigns or strikes"
+  (= Grid!A1 Ladder!$B$2))
+
+(defmacro (a-place-struck)
+  "an unassigned variable the pointing strikes its value from: on its line, outside its box, the value still a candidate"
+  (and (= Grid!A1 0)
+       (on-the-line-outside-the-box Ladder!$B$6 Ladder!$B$7 Ladder!$B$5)
+       (> (bitand Candidates!A83 Ladder!$B$4) 0)))
+
+(defmacro (the-inference-s-place)
+  "the variable a single assigns, or a place a pointing strikes its value from"
+  (if (the-inference-is 3)
+    (a-place-struck)
+    (= (this-variable) Ladder!$B$3)))
+
+(defmacro (a-reason)
+  "a variable the inference is read by: a naked single's assigned neighbors; a hidden single's constraint and a pointing's box, each whole, and every variable holding the value"
+  (priority
+    ((the-inference-is 1) (and (> Grid!A1 0) (beside-the-place)))
+    ((the-inference-is 2) (or (in-the-unit Ladder!$B$17) (holding-the-value)))
+    ((the-inference-is 3) (or (= (the-box-from 1) Ladder!$B$5) (holding-the-value)))
+    (else false)))
+
+(defmacro (an-emptied-domain)
+  "an unassigned variable with no value left in its domain"
+  (and (= Grid!A1 0) (= Candidates!A83 0)))
+
+(rule "Light" "A1:I9"
+  (priority
+    ((= Lab!$B$13 0) 0)                        ; the ladder not asked: nothing lit
+    ((an-emptied-domain) 3)
+    ((the-inference-s-place) 2)
+    ((a-reason) 1)
+    (else 0)))
+
+(defmacro (the-empty-domain)
+  "what an emptied domain shows while the light names it: the empty set, U+2205"
+  "∅")
+
+(defmacro (a-single-s-place)
+  "the light names this variable as the place a single assigns: a naked or a hidden single's, not a pointing's"
+  (and (= A1 2) (< Ladder!$B$1 3)))
+
+(rule "Light" "A11:I19"
+  (priority
+    ((a-single-s-place) Ladder!$B$2)            ; the single's value, before it is applied
+    ((= A1 3) (the-empty-domain))
+    (else "")))
+
 ; ---- the Board: what a person sees -------------------------------------------------------
-; An assigned variable shows a code, 100 times its kind, 10 times its box's parity and its
-; value: the kinds a given (1), an assignment (2), a violated given (3), a violated
-; assignment (4), and, once satisfied, a given (5) and an assignment (6); the parity 0 on the
-; boxes 1, 3, 5, 7 and 9 and 1 on the others. Each code draws through a look. An unassigned
-; variable shows its marks drawn, all of them or, filtered, those still candidates: a digit
-; or a figure space in each of nine places, three figure spaces between two of a line, and
-; two line feeds between two lines, which its own format draws as five lines, centered,
-; three of marks and an empty line between two of them, so that each mark stands centered in
-; its third of the cell; or nothing.
+; An assigned variable shows its value, and so, while the light names it, does the variable a
+; single assigns, before the inference is applied; an emptied domain the light names shows
+; ∅. Each draws through a look, and the rules over the Board say its state (CART.14.1's
+; third slice, where a code a value stood: 100 times its kind, 10 times its box's parity and
+; the value). An unassigned variable shows its marks drawn, all of them or, filtered, those
+; still candidates: a digit or a figure space in each of nine places, three figure spaces
+; between two of a line, and two line feeds between two lines, which its own format draws as
+; five lines, centered, three of marks and an empty line between two of them, so that each
+; mark stands centered in its third of the cell; or nothing. A figure space is no workaround
+; for a family: a wrapped line's trailing spaces hang and move nothing, in Excel's drawing and
+; the page's, so a line whose last mark is not there would stand centered by its first.
 ; The Board stands from B2, a margin row and column before it in the canvas's gray, so that its
 ; frame's top and left draw as its right and bottom do: Excel draws no line of a cell's on
 ; row 1's top or column A's left, beside the headers, and the page draws as Excel does (the
@@ -721,20 +816,10 @@
     (a-mark 8 "4") (between-marks) (a-mark 16 "5") (between-marks) (a-mark 32 "6") (between-lines)
     (a-mark 64 "7") (between-marks) (a-mark 128 "8") (between-marks) (a-mark 256 "9")))
 
-(defmacro (the-kind)
-  "an assigned variable's kind, in hundreds: once satisfied a given or an assignment, else each of them violated or not"
-  (priority
-    ((= Lab!$B$11 1) (if (> Givens!A1 0) 500 600))
-    ((> Givens!A1 0) (if (= Violations!A1 1) 300 100))
-    (else (if (= Violations!A1 1) 400 200))))
-
-(defmacro (the-box-parity)
-  "the box's parity, in tens: 0 on the boxes 1, 3, 5, 7 and 9, 1 on the others, the Board standing from B2"
-  (* 10 (mod (+ (int (/ (- (row) 2) 3)) (int (/ (- (column) 2) 3))) 2)))
-
 (rule "Board" "B2:J10"
   (priority
-    ((> Grid!A1 0) (+ (the-kind) (the-box-parity) Grid!A1))
+    ((> Grid!A1 0) Grid!A1)
+    ((<> Light!A11 "") Light!A11)               ; a single's value, or an emptied domain's ∅, while lit
     ((= Drawn!A1 0) "")
     (else (the-marks))))
 
@@ -786,78 +871,52 @@
 
 (on "Board" (column "A" 1.71 shown 111) (row 1 9 shown))   ; the margin, 12 pixels each way
 
-; ---- the look: Lovelace Lavender -------------------------------------------------------------
-; A code draws through its look's format (ENGINE.28): its value's digit alone, plain in every
-; kind, bold at 22 points, twice the marks' size; a given in the host's ink and an assignment
-; in the family's deep lavender; a violation on Superposition's red; and the satisfied board
-; Lovelace Lavender itself, by box, every digit white (the owner's hand test, 2026-10-29). A
-; look says no alignment and no edge, so the cell's own format centers the digit and draws its
-; box's lines. A kind whose fill tells no box gives both parities one format a value, and the
-; satisfied two share theirs, so the 108 codes draw by 54 formats: 10 to 45 the kinds 1 to 4,
-; and 46 to 63 the satisfied board's, by parity.
-(defmacro (when-satisfied kind then else)
-  "then for the satisfied board's kinds, 5 and 6, whose fill tells the box, and else for the others"
-  (quote-if (>expand kind 4) then else))
+; ---- the look: Lovelace Lavender, by rules ---------------------------------------------------
+; A variable holds its own digit (CART.14.1's third slice), and its look draws it bold at 22
+; points, twice the marks' size; ∅ the same. A look says no alignment and no edge, so the
+; cell's own format centers the digit and draws its box's lines. Then six rules over the Board
+; lay what the variable's state says over what it draws (KERNEL.58, drawn since ENGINE.37),
+; the first winning what it says and the later lending what it leaves: the satisfied board
+; Lovelace Lavender itself and its lighter shade, by box, every digit white, stopping the rest
+; (the owner's hand test, 2026-10-29); the inference's place in Lovelace Lavender, white
+; (decision 11); a violation, and an emptied domain while the ladder is asked, on
+; Superposition's red (decision 10); a reason on the pale lavender; and an assignment's digit
+; in the family's deep lavender, a given's in the host's ink. A rule says no size and no
+; family, which a conditional format in Excel never sets; the look says the size.
+(format 10 (font bold 22))                    ; a value's digit, and the emptied domain: bold at 22 points
+(format 11 (fill "A080E0") (font "FFFFFF"))   ; Lovelace Lavender, white: the satisfied board's boxes 1, 3, 5, 7 and 9, and the inference's place
+(format 12 (fill "B9A3E7") (font "FFFFFF"))   ; its lighter shade, white: the satisfied board's other boxes
+(format 13 (fill "FFD5D5"))                   ; Superposition's red: a violation, and an emptied domain
+(format 14 (fill "E6DFF7"))                   ; the pale lavender: a reason
+(format 15 (font "6B4FC8"))                   ; the family's deep lavender: an assignment's digit
 
-(defmacro (when-given kind then else)
-  "then for a given's kinds, 1, 3 and 5, and else for an assignment's"
-  (quote-if (=expand (mod-expand kind 2) 1) then else))
+(each (v (1 2 3 4 5 6 7 8 9))
+  (look "Board" v 10))
 
-(defmacro (code-of kind parity v)
-  "the code a variable shows: 100 times its kind, 10 times its box's parity, and its value"
-  (+expand (*expand 100 kind) (+expand (*expand 10 parity) v)))
+(look "Board" (the-empty-domain) 10)
 
-(defmacro (digit-format-at kind parity v)
-  "the format a code draws by: its value's of its kind, and once satisfied its value's of its box's parity"
-  (when-satisfied kind
-    (+expand 45 (+expand (*expand 9 parity) v))
-    (+expand 9 (+expand (*expand 9 (-expand kind 1)) v))))
+(defmacro (the-odd-boxes)
+  "the boxes 1, 3, 5, 7 and 9, Lovelace Lavender itself on the satisfied board"
+  "B2:D4 H2:J4 E5:G7 B8:D10 H8:J10")
 
-(defmacro (lavender parity)
-  "Lovelace Lavender by box: itself on the boxes 1, 3, 5, 7 and 9, its lighter shade on the others"
-  (quote-if (=expand parity 0) "A080E0" "B9A3E7"))
+(defmacro (the-even-boxes)
+  "the boxes 2, 4, 6 and 8, its lighter shade"
+  "E2:G4 B5:D7 H5:J7 E8:G10")
 
-(defmacro (open-fill kind)
-  "the fill of a code not yet satisfied: none for a given or an assignment, red for a violation"
-  (quote-if (<expand kind 3) none "FFD5D5"))
+(defmacro (a-light priority range test laid)
+  "a rule over the Board: its priority, the cells it answers for, its test an expression, and the format it lays"
+  (conditional "Board" priority range (formula-expand test) laid))
 
-(defmacro (digit-fill kind parity)
-  "a code's fill: its box's lavender once satisfied, else its own"
-  (when-satisfied kind (lavender parity) (open-fill kind)))
+(defmacro (a-last-light priority range test laid)
+  "a rule over the Board that stops every later rule at a cell it lights"
+  (conditional "Board" priority range (formula-expand test) laid stop))
 
-(defmacro (digit-font kind)
-  "a code's font, bold at 22 points: a given in the host's ink, an assignment in the family's deep lavender, and white once satisfied"
-  (when-satisfied kind (font bold 22 "FFFFFF") (when-given kind (font bold 22) (font bold 22 "6B4FC8"))))
-
-(defmacro (digit-code v)
-  "the value's digit alone, a number format's quoted text"
-  (&expand "\"" v "\""))
-
-(defmacro (digit-format kind parity v)
-  "a code's format: its digit, in its kind's font, on its kind's fill"
-  (format (digit-format-at kind parity v) (digit-fill kind parity) (digit-code v) nowrap (digit-font kind)))
-
-(defmacro (digit-look kind parity v)
-  "a code's look, drawn by its format"
-  (look "Board" (code-of kind parity v) (digit-format-at kind parity v)))
-
-(defmacro (looks-with-formats kind parity)
-  "a kind's looks on one parity's boxes, each with its format"
-  (each (v (1 2 3 4 5 6 7 8 9))
-    (digit-format kind parity v)
-    (digit-look kind parity v)))
-
-(defmacro (looks-sharing kind parity)
-  "a kind's looks on one parity's boxes, drawn by the formats the other parity's wrote"
-  (each (v (1 2 3 4 5 6 7 8 9))
-    (digit-look kind parity v)))
-
-(looks-with-formats 1 0) (looks-sharing 1 1)        ; a given
-(looks-with-formats 2 0) (looks-sharing 2 1)        ; an assignment
-(looks-with-formats 3 0) (looks-sharing 3 1)        ; a violated given
-(looks-with-formats 4 0) (looks-sharing 4 1)        ; a violated assignment
-(looks-with-formats 5 0) (looks-with-formats 5 1)   ; a given, satisfied, by box
-(looks-sharing 6 0) (looks-sharing 6 1)             ; an assignment, satisfied, by the given's formats
+(a-last-light 1 (the-odd-boxes) (= Lab!$B$11 1) 11)                       ; satisfied
+(a-last-light 2 (the-even-boxes) (= Lab!$B$11 1) 12)                      ; satisfied
+(a-light 3 "B2:J10" (= Light!A1 2) 11)                                    ; the inference's place
+(a-light 4 "B2:J10" (or (= Violations!A1 1) (= Light!A1 3)) 13)           ; violated, or emptied
+(a-light 5 "B2:J10" (= Light!A1 1) 14)                                    ; a reason
+(a-light 6 "B2:J10" (and (> Grid!A1 0) (= Givens!A1 0)) 15)               ; an assignment
 (on "Board" (gridlines off))                            ; the edges draw every line of the Board
 
 ; ---- the keys, beside the Board (the owner's hand test, 2026-10-19) ---------------------------
@@ -865,15 +924,18 @@
 ; canvas's gray, the headers' own, which a bound sheet stands on, so that the Board alone is
 ; white; K a gutter of the same gray; the keys bold and centered in their column (the owner's
 ; hand test, 2026-10-29). The marks' keys drawn as the marks are, in five lines, each key in
-; its mark's place, in fullwidth letters, every letter one width, so that each stands in its
-; third as a digit does (the owner's second look, 2026-10-29).
+; its mark's place (the owner's second look, 2026-10-29): three letters a line, three spaces
+; between two of them and two line feeds between two lines, in a family whose letters and
+; spaces are one width, Consolas, or the platform's monospace where it has none (ENGINE.37),
+; so that each stands in its third as a digit does. Its lines end in a letter, so no space
+; hangs, and the fullwidth letters that stood there until CART.14.1's third slice are gone.
 (format 111 "F3F3EE" general nowrap)   ; a key's words
-(format 112 "F3F3EE" general wrap (font bold) (align center middle))   ; the marks' keys, wrapped into their places and centered as the marks are
+(format 112 "F3F3EE" general wrap (font bold (family "Consolas" mono)) (align center middle))   ; the marks' keys, in their places and centered as the marks are, one width a letter
 (format 113 "F3F3EE" general nowrap (font bold) (align center middle))   ; a key, bold and centered in its column
 (cells "Board"
   ("L2" "1 to 9") ("M2" "assign the value to the variable, row or keypad")
   ("L3" "Backspace") ("M3" "retract the assignment, or strike the marks")
-  ("L4" "Ｑ  Ｗ  Ｅ      Ａ  Ｓ  Ｄ      Ｚ  Ｘ  Ｃ") ("M4" "mark a value in the domain, at its key's place")
+  ("M4" "mark a value in the domain, at its key's place")
   ("L5" "F") ("M5" "fill every domain with what its constraints allow")
   ("L6" "R") ("M6" "retract every assignment and every mark")
   ("L7" "N") ("M7" "deal a new instance")
@@ -884,6 +946,9 @@
   ("L12" "M") ("M12" "draw only the marks the constraints allow, or all")
   ("L13" "← ↑ → ↓") ("M13" "move the selection, as a click does")
   ("L14" "Ctrl+K") ("M14" "every command, by its name"))
+(rule "Board" "L4"
+  (& "Q   W   E" (between-lines) "A   S   D" (between-lines) "Z   X   C"))
+
 (on "Board"
   (style "L2:L3" 113)                ; the first two keys
   (style "L4" 112)                   ; the marks' keys

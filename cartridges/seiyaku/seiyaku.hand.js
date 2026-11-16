@@ -6,13 +6,17 @@
 // hand (ENGINE.16): the builder writes this file into the page as the block hand-seiyaku, a script the page runs
 // where it stands, and it registers one constructor under its cartridge's name in window.AlonzoHands. The loop
 // oracle's replay case answers it each frame of Seiyaku's committed replay and holds the frame to what it answers,
-// the Board's 81 variables, each a code or its marks' text. The book is the page's own text of the source, the
+// the Board's 81 variables, each a value or its marks' text. The book is the page's own text of the source, the
 // block source-seiyaku, read between the two lines the book's writer keeps (engine/examples/seiyaku.rs). Since CART.14.1's
 // second slice it keeps the ladder too, the Rust hand's Seiyaku::infer line for line: its strikes, the variables inference
-// assigned, the words lit, a propagation running and the marks filtered, and it answers the words under the Board.
+// assigned, the words lit, a propagation running and the marks filtered, and it answers the words under the Board; and
+// since its third the light, the Rust hand's Seiyaku::light and lit_rules, answering the rules each variable is lit by.
 (function (hands) {
   'use strict';
-  var P = 67108859, PER_GRADE = 32, FS = String.fromCharCode(0x2007);
+  var P = 67108859, PER_GRADE = 32, FS = String.fromCharCode(0x2007), EMPTY_DOMAIN = String.fromCharCode(0x2205);
+  // The rules over the Board, by priority (CART.14.1's third slice): the satisfied board's two, by box, each stopping the
+  // rest; the inference's place; a violation or an emptied domain; a reason; an assignment.
+  var RULE_SATISFIED_ODD = 1, RULE_SATISFIED_EVEN = 2, RULE_PLACE = 3, RULE_RED = 4, RULE_REASON = 5, RULE_ASSIGNED = 6;
   var BOOK_BEGIN = '; ---- the book, written by cargo run --release --example seiyaku: edit the generator, never these lines ----';
   var BOOK_END = '; ---- the book\'s end ----';
 
@@ -97,7 +101,7 @@
   // The next inference in the grader's order: a contradiction or the board satisfied first, which stops the ladder; then
   // the first naked single by variable, the first hidden single by unit and value, and the first pointing by box and
   // value, a row before a column; or none. Its kind 0 to 3, value, place, a pointing's box, line and whether a column, why
-  // there is none, and its words.
+  // there is none, its words, and a hidden single's constraint, which the light reads.
   function infer(grid, candidates, tables, violated, satisfied) {
     var open = openOf(grid, candidates), k, v, u, j, naked = -1, hidden = null, pointing = null;
     for (k = 0; k < 81 && naked < 0; k++) if (ones(candidates[k]) === 1) naked = k;
@@ -121,7 +125,7 @@
     for (var t = 0; t < 3; t++) for (j = 0; j < 9; j++) for (v = 1; v <= 9; v++) if (mine[t][j][v] === 0 && tables[t][j][v] === 0) noPlace++;
     var any = naked >= 0 || !!hidden || !!pointing;
     var stop = satisfied ? 1 : violations > 0 ? 2 : emptied > 0 ? 3 : noPlace > 0 ? 4 : any ? 0 : 5;
-    var i = { kind: 0, value: 0, place: 0, box: 0, down: false, line: 0, stop: stop, words: '' };
+    var i = { kind: 0, value: 0, place: 0, box: 0, down: false, line: 0, unit: 0, stop: stop, words: '' };
     if (stop === 1) i.words = 'Satisfied: nothing is left to infer.';
     else if (stop === 2) i.words = 'Nothing to infer: ' + counted(violations, 'variable violates', 'variables violate') + ' a constraint.';
     else if (stop === 3) i.words = 'Nothing to infer: ' + counted(emptied, 'variable has no value left in its domain.', 'variables have no value left in their domains.');
@@ -132,7 +136,7 @@
       i.kind = 1; i.place = naked + 1;
       i.words = addressOf(i.place) + ' is ' + i.value + ': the only value left in its domain.';
     } else if (hidden) {
-      i.kind = 2; i.value = hidden.value; i.place = hidden.k + 1;
+      i.kind = 2; i.value = hidden.value; i.place = hidden.k + 1; i.unit = hidden.unit;
       i.words = addressOf(i.place) + ' is ' + i.value + ': the only place left for it in its ' + (hidden.unit <= 9 ? 'row' : hidden.unit <= 18 ? 'column' : 'box') + '.';
     } else {
       i.kind = 3; i.value = pointing.value; i.box = pointing.box; i.down = pointing.down; i.line = pointing.line;
@@ -151,7 +155,7 @@
     this.nextGrade = 0; this.grade = 0; this.satisfied = false; this.satisfiedActs = 0;
     this.givens = zeros(81); this.entries = zeros(81); this.marks = zeros(81); this.grid = zeros(81); this.violated = zeros(81);
     this.candidates = zeros(81); this.struck = zeros(81); this.inferred = zeros(81); this.lit = false; this.propagating = false; this.filtered = false;
-    this.ladder = { kind: 0, value: 0, place: 0, box: 0, down: false, line: 0, stop: 0, words: '' };
+    this.ladder = { kind: 0, value: 0, place: 0, box: 0, down: false, line: 0, unit: 0, stop: 0, words: '' };
   }
   Board.prototype.frame = function (i, beginsAct) {
     if (beginsAct) this.clock++;
@@ -215,17 +219,48 @@
     this.candidates = candidates; this.struck = struck; this.inferred = inferred; this.lit = lit; this.propagating = propagating; this.filtered = filtered;
     this.ladder = infer(grid, candidates, [rows, cols, boxes], violated, satisfied);
   };
-  // What the Board shows at row and column from 1: a value's code, 100 times its kind, 10 times its box's parity and
-  // the value; else the marks kept, a digit or a figure space in each of nine places, a line of three with three
-  // figure spaces between them, and two line feeds between two lines, so that each mark stands in its third of the cell
-  // (the owner's hand tests, 2026-10-19 and ENGINE.28's of 2026-10-29; the line feeds since CART.14.1's second slice, by
-  // ENGINE.36); the marks drawn, all or, filtered, those still candidates; or nothing.
+  // A variable's light, the Light sheet's (CART.14.1's third slice, decisions 10 and 11): 0 none; 1 a reason, a variable
+  // the inference is read by; 2 the inference's place, the variable a single assigns or a place a pointing strikes its
+  // value from; 3 an emptied domain. A naked single is read by its assigned neighbors, a hidden single by its constraint
+  // whole and every variable holding its value, a pointing by its box whole and every variable holding its value; all of
+  // it only while the ladder is asked.
+  Board.prototype.light = function (k) {
+    if (!this.lit) return 0;
+    if (this.grid[k] === 0 && this.candidates[k] === 0) return 3;
+    var L = this.ladder, u = unitsOf(k), place = false, reason = false, holding = this.grid[k] > 0 && this.grid[k] === L.value;
+    if (L.kind === 1 || L.kind === 2) place = k + 1 === L.place;
+    else if (L.kind === 3) place = this.grid[k] === 0 && (L.down ? u[1] + 1 === L.line : u[0] + 1 === L.line) && u[2] + 1 !== L.box && (this.candidates[k] & (1 << (L.value - 1))) !== 0;
+    if (place) return 2;
+    if (L.kind === 1) { var p = unitsOf(L.place - 1); reason = this.grid[k] > 0 && (u[0] === p[0] || u[1] === p[1] || u[2] === p[2]); }
+    else if (L.kind === 2) reason = (L.unit <= 9 ? u[0] + 1 === L.unit : (L.unit <= 18 ? u[1] + 10 === L.unit : u[2] + 19 === L.unit)) || holding;
+    else if (L.kind === 3) reason = u[2] + 1 === L.box || holding;
+    return reason ? 1 : 0;
+  };
+  // The rules a variable at row and column from 1 is lit by, in priority order up to the first that stops, as the
+  // record's lit row names them: the satisfied board's, by box, alone; else the inference's place, a violation or an
+  // emptied domain, a reason and an assignment, each where it holds.
+  Board.prototype.litRules = function (row, column) {
+    var k = (row - 1) * 9 + (column - 1);
+    if (this.satisfied) return [(Math.floor((row - 1) / 3) + Math.floor((column - 1) / 3)) % 2 === 0 ? RULE_SATISFIED_ODD : RULE_SATISFIED_EVEN];
+    var light = this.light(k), lit = [];
+    if (light === 2) lit.push(RULE_PLACE);
+    if (this.violated[k] || light === 3) lit.push(RULE_RED);
+    if (light === 1) lit.push(RULE_REASON);
+    if (this.grid[k] > 0 && this.givens[k] === 0) lit.push(RULE_ASSIGNED);
+    return lit;
+  };
+  // What the Board shows at row and column from 1: a variable's value, and since CART.14.1's third slice, while the light
+  // names it, a single's value at the variable it assigns before it is applied and an emptied domain's empty set; else the
+  // marks kept, a digit or a figure space in each of nine places, a line of three with three figure spaces between them,
+  // and two line feeds between two lines, so that each mark stands in its third of the cell (the owner's hand tests,
+  // 2026-10-19 and ENGINE.28's of 2026-10-29; the line feeds since CART.14.1's second slice, by ENGINE.36); the marks
+  // drawn, all or, filtered, those still candidates; or nothing. A code stood for a value until the third slice.
   Board.prototype.shown = function (row, column) {
     var k = (row - 1) * 9 + (column - 1), v = this.grid[k];
-    if (v > 0) {
-      var given = this.givens[k] > 0, kind = this.satisfied ? (given ? 5 : 6) : (given ? (this.violated[k] ? 3 : 1) : (this.violated[k] ? 4 : 2));
-      return 100 * kind + 10 * ((Math.floor((row - 1) / 3) + Math.floor((column - 1) / 3)) % 2) + v;
-    }
+    if (v > 0) return v;
+    var light = this.light(k);
+    if (light === 2 && this.ladder.kind < 3) return this.ladder.value;
+    if (light === 3) return EMPTY_DOMAIN;
     var m = this.filtered ? this.marks[k] & this.candidates[k] : this.marks[k];
     if (m === 0) return '';
     var lines = [], within = FS + FS + FS;
@@ -238,7 +273,8 @@
 
   // A replay of Seiyaku: the Input sheet's cells as the replay's rows leave them, a frame with rows an act's and a
   // frame with none a settle step, before which the engine has released the press and the command; an edit of the
-  // seed read as the board reads it. Each frame answers the Board's 81 variables.
+  // seed read as the board reads it. Each frame answers the Board's 81 variables, the words under them, and the rules
+  // each variable is lit by.
   function num(v) { return v && v.num !== undefined ? +v.num : (typeof v === 'number' ? v : 0); }
   function SeiyakuHand(seed) {
     var el = document.getElementById('source-seiyaku');
@@ -259,10 +295,14 @@
     b.frame({ column: num(input.B11), row: num(input.B12), left: num(input.B13) === 1, right: num(input.B14) === 1, middle: num(input.B15) === 1,
               sheet: typeof input.B19 === 'string' ? input.B19 : '', command: typeof input.B20 === 'string' ? input.B20 : '' }, rows.length > 0);
     if (b.satisfied) this.satisfiedOnce = true;
-    var cells = {};
-    for (var r = 1; r <= 9; r++) for (var c = 1; c <= 9; c++) cells['Board!' + String.fromCharCode(65 + c) + (r + 1)] = b.shown(r, c);   // from B2
+    var cells = {}, lit = {};
+    for (var r = 1; r <= 9; r++) for (var c = 1; c <= 9; c++) {
+      var at = 'Board!' + String.fromCharCode(65 + c) + (r + 1);   // from B2
+      cells[at] = b.shown(r, c);
+      lit[at] = b.litRules(r, c);
+    }
     cells['Board!B11'] = b.words();
-    return { cells: cells };
+    return { cells: cells, lit: lit };
   };
   // The acts begun, the load's among them, the instances, the settle steps, and whether an instance was satisfied:
   // the case's seiyakuActs and the rest.
