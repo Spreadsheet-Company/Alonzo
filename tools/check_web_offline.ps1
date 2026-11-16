@@ -80,7 +80,8 @@ source calls eval; and since ENGINE.23's second slice a template naming
 sessionStorage, one naming localStorage a second time, a host source naming
 localStorage, and a hand whose source names indexedDB: twenty-eight mutants;
 since ENGINE.5 a template naming showSaveFilePicker a second time and a host
-source naming it: thirty.
+source naming it: thirty; since ENGINE.38 a template naming indexedDB a second
+time and a host source naming navigator.locks: thirty-two.
 
 SINCE ENGINE.5 (docs/REARVIEW.md, ENGINE.5): the page writes one thing more,
 a file the person saves, through the browser's save picker where it has one
@@ -90,6 +91,17 @@ nothing else names; the download's object URL is no address on any network,
 so these names are set aside before 'url(' is looked for. The promise the
 page states: it writes nothing anywhere but a person's keys, kept in the
 browser, and the files a person saves.
+
+SINCE ENGINE.38 (docs/REARVIEW.md, ENGINE.38; the owner's word of 2026-10-30):
+the page writes one thing more, a person's unsaved work, kept in the browser's
+database for pages, indexedDB, under Web Locks, navigator.locks, so that a tab
+closed or crashed costs nothing: by default where the page is hosted, and from
+disk only at the person's word, since any page opened from disk can read what
+the browser keeps for files (measured in Chrome and Firefox). The template
+names each once, in workStore(), and nothing else names either; every other
+store stays named here and banned. The promise the page states: "Nothing you
+type leaves this machine. Unsaved work stays in this browser until you save or
+discard it."
 
 House style (tools/check_*.ps1): PowerShell 5.1, host-free, no network;
 exit 0 clean, exit 1 with every problem named.
@@ -130,11 +142,14 @@ $namedPlace = '\{\{[A-Z]+:[^}]*\}\}'
 $handEval = '\beval\s*\(|\bFunction\s*\('
 # The stores (ENGINE.23's second slice, decision 8): the page writes a person's keymap alone, through localStorage, which
 # the template names once and nothing else names; no source names any other store. Compared without case.
-$storageTokens = @('sessionStorage', 'indexedDB', 'openDatabase', 'document.cookie', 'cookieStore', 'caches.', 'navigator.storage', 'showDirectoryPicker')
+$storageTokens = @('sessionStorage', 'openDatabase', 'document.cookie', 'cookieStore', 'caches.', 'navigator.storage', 'showDirectoryPicker')
 $keptStore = 'localStorage'
 # A person's file (ENGINE.5): the save picker and the download's object URL, each named once, in the template's
 # personFile(), and nowhere else; set aside before the code tokens are looked for, an object URL being no address.
 $keptFile = @('showSaveFilePicker', 'createObjectURL', 'revokeObjectURL')
+# A person's unsaved work (ENGINE.38): the browser's database for pages and its Web Locks, each named once, in the
+# template's workStore(), and nowhere else.
+$keptWork = @('indexedDB', 'navigator.locks')
 
 function Get-FixtureNames([string]$dir) {
     $names = @()
@@ -195,6 +210,11 @@ function Test-Template([string]$path, [string]$script, [string]$fake = $fakePath
         $nk = ([regex]::Matches($lower, [regex]::Escape($k.ToLowerInvariant()))).Count
         if ($nk -ne 1) { $problems += ("the template names {0} {1} time(s), where the page writes a person's file through it in one place, personFile() (ENGINE.5)" -f $k, $nk) }
     }
+    # A person's unsaved work, kept through each of its names once, in workStore() (ENGINE.38).
+    foreach ($k in $keptWork) {
+        $nk = ([regex]::Matches($lower, [regex]::Escape($k.ToLowerInvariant()))).Count
+        if ($nk -ne 1) { $problems += ("the template names {0} {1} time(s), where the page keeps a person's unsaved work through it in one place, workStore() (ENGINE.38)" -f $k, $nk) }
+    }
     if (-not $lower.Contains('<meta charset="utf-8">')) { $problems += 'no <meta charset="utf-8">' }
     # The one store, the keymap's, named once (ENGINE.23); no other named.
     foreach ($t in $storageTokens) {
@@ -215,8 +235,8 @@ function Test-Template([string]$path, [string]$script, [string]$fake = $fakePath
         foreach ($t in $codeTokens) {
             if ($js.Contains($t.ToLowerInvariant())) { $problems += ("{0} reaches out: '{1}'" -f $pair[0], $t) }
         }
-        foreach ($t in ($storageTokens + @($keptStore) + $keptFile)) {
-            if ($js.Contains($t.ToLowerInvariant())) { $problems += ("{0} names '{1}', and the page writes nothing but a person's keymap, through the template's one {2} (ENGINE.23), and a person's file, through its one personFile() (ENGINE.5)" -f $pair[0], $t, $keptStore) }
+        foreach ($t in ($storageTokens + @($keptStore) + $keptFile + $keptWork)) {
+            if ($js.Contains($t.ToLowerInvariant())) { $problems += ("{0} names '{1}', and the page writes nothing but a person's keymap, through the template's one {2} (ENGINE.23), a person's file, through its one personFile() (ENGINE.5), and a person's unsaved work, through its one workStore() (ENGINE.38)" -f $pair[0], $t, $keptStore) }
         }
         if ($pair[1] -ne $hostjs) { continue }
         foreach ($t in $shimAudioTokens) {
@@ -236,7 +256,7 @@ function Test-Hands([string]$cartridges = $cartridgesDir) {
         $lower = $js.ToLowerInvariant()
         foreach ($t in $codeTokens) { if ($lower.Contains($t.ToLowerInvariant())) { $problems += ("the hand of {0} reaches out: '{1}'" -f $n, $t) } }
         if ([regex]::IsMatch($js, $handEval)) { $problems += ("the hand of {0} makes code of a text: '{1}'" -f $n, [regex]::Match($js, $handEval).Value) }
-        foreach ($t in ($storageTokens + @($keptStore) + $keptFile)) { if ($lower.Contains($t.ToLowerInvariant())) { $problems += ("the hand of {0} names '{1}', and the page writes nothing but a person's keymap, through the template's one {2} (ENGINE.23)" -f $n, $t, $keptStore) } }
+        foreach ($t in ($storageTokens + @($keptStore) + $keptFile + $keptWork)) { if ($lower.Contains($t.ToLowerInvariant())) { $problems += ("the hand of {0} names '{1}', and the page writes nothing but a person's keymap, through the template's one {2} (ENGINE.23)" -f $n, $t, $keptStore) } }
     }
     return $problems
 }
@@ -303,6 +323,12 @@ if ($Control) {
         $fqjs = Join-Path $tmp 'fq.js'; [System.IO.File]::WriteAllText($fqjs, ([System.IO.File]::ReadAllText($hostPath) + "`nwindow.showSaveFilePicker();`n"), $utf8)
         $fpHit = @(@(Test-Template $fp $scriptPath) | Where-Object { $_ -like 'the template names showSaveFilePicker 2 time(s)*' }).Count
         $fqHit = @(@(Test-Template $templatePath $scriptPath $fakePath $fqjs) | Where-Object { $_ -like "the host's source names 'showSaveFilePicker'*" }).Count
+        # ENGINE.38: a template naming the browser's database a second time, and a host source naming Web Locks, each
+        # failing by its words
+        $wr = Join-Path $tmp 'wr.html'; [System.IO.File]::WriteAllText($wr, ($text + "`n<script>window.indexedDB.open('x');</script>`n"), $utf8)
+        $wsjs = Join-Path $tmp 'ws.js'; [System.IO.File]::WriteAllText($wsjs, ([System.IO.File]::ReadAllText($hostPath) + "`nnavigator.locks.request('x', function () {});`n"), $utf8)
+        $wrHit = @(@(Test-Template $wr $scriptPath) | Where-Object { $_ -like 'the template names indexedDB 2 time(s)*' }).Count
+        $wsHit = @(@(Test-Template $templatePath $scriptPath $fakePath $wsjs) | Where-Object { $_ -like "the host's source names 'navigator.locks'*" }).Count
         # ENGINE.15: a page built in the scratch folder, which passes, and four built pages that must not.
         $shell = if (Get-Command powershell.exe -ErrorAction SilentlyContinue) { 'powershell.exe' } else { 'pwsh' }
         $page = Join-Path $tmp 'page.html'
@@ -357,9 +383,9 @@ if ($Control) {
             $audioHits.Add(("{0} {1}" -f $tok, $(if ($applied -and $hit -ge 1) { 'failed' } else { 'NOT failed' })))
             if (-not ($applied -and $hit -ge 1)) { $audioOk = $false }
         }
-        Write-Output ("control: the real set has {0} problem(s), its hands {18} and the page built from it {1}; the script src {2}, the fetch {3}, the missing placeholder {4}, the anchor {5}, the image {6}, the place naming a file {7}, the fetch in the viewport {8}, the blocks' place removed {9}, the fetch in the host {10}; built, Life's block cut ({11}) {12}, the stray library block {13}, the template as a page {14}, the golden's block cut ({15}) {16}, Kairos's hand's block cut ({19}) {20}; the stores: sessionStorage in the template {22}, localStorage there a second time {23}, localStorage in the host {24}; the Web Audio names planted in the host: {17}; planted in Kairos's hand: {21}" -f $real.Count, $realBuilt.Count, $ra.Count, $rb.Count, $rc.Count, $rd.Count, $re.Count, $fHit, $rg.Count, $hHit, $iHit, $jApplied, $jHit, $kHit, $lHit, $mApplied, $mHit, ($audioHits -join ', '), $realHands.Count, $nApplied, $nHit, ($handHits -join ', '), $soHit, $spHit, $sqHit)
-        if ($real.Count -eq 0 -and $realBuilt.Count -eq 0 -and $realHands.Count -eq 0 -and $ra.Count -ge 1 -and $rb.Count -ge 1 -and $rc.Count -ge 1 -and $rd.Count -ge 1 -and $re.Count -ge 1 -and $fHit -ge 1 -and $rg.Count -ge 1 -and $hHit -ge 1 -and $iHit -ge 1 -and $jApplied -and $jHit -ge 1 -and $kHit -ge 1 -and $lHit -ge 1 -and $mApplied -and $mHit -ge 1 -and $audioOk -and $nApplied -and $nHit -ge 1 -and $handsOk -and $soHit -ge 1 -and $spHit -ge 1 -and $sqHit -ge 1 -and $fpHit -ge 1 -and $fqHit -ge 1) {
-            Write-Output 'OK: the check passes the template, the three scripts, the hands and a page built from them, and fails each of the thirty mutants'
+        Write-Output ("control: the real set has {0} problem(s), its hands {18} and the page built from it {1}; the script src {2}, the fetch {3}, the missing placeholder {4}, the anchor {5}, the image {6}, the place naming a file {7}, the fetch in the viewport {8}, the blocks' place removed {9}, the fetch in the host {10}; built, Life's block cut ({11}) {12}, the stray library block {13}, the template as a page {14}, the golden's block cut ({15}) {16}, Kairos's hand's block cut ({19}) {20}; the stores: sessionStorage in the template {22}, localStorage there a second time {23}, localStorage in the host {24}, the save picker there a second time {25} and in the host {26}, the work's store there a second time {27} and its locks in the host {28}; the Web Audio names planted in the host: {17}; planted in Kairos's hand: {21}" -f $real.Count, $realBuilt.Count, $ra.Count, $rb.Count, $rc.Count, $rd.Count, $re.Count, $fHit, $rg.Count, $hHit, $iHit, $jApplied, $jHit, $kHit, $lHit, $mApplied, $mHit, ($audioHits -join ', '), $realHands.Count, $nApplied, $nHit, ($handHits -join ', '), $soHit, $spHit, $sqHit, $fpHit, $fqHit, $wrHit, $wsHit)
+        if ($real.Count -eq 0 -and $realBuilt.Count -eq 0 -and $realHands.Count -eq 0 -and $ra.Count -ge 1 -and $rb.Count -ge 1 -and $rc.Count -ge 1 -and $rd.Count -ge 1 -and $re.Count -ge 1 -and $fHit -ge 1 -and $rg.Count -ge 1 -and $hHit -ge 1 -and $iHit -ge 1 -and $jApplied -and $jHit -ge 1 -and $kHit -ge 1 -and $lHit -ge 1 -and $mApplied -and $mHit -ge 1 -and $audioOk -and $nApplied -and $nHit -ge 1 -and $handsOk -and $soHit -ge 1 -and $spHit -ge 1 -and $sqHit -ge 1 -and $fpHit -ge 1 -and $fqHit -ge 1 -and $wrHit -ge 1 -and $wsHit -ge 1) {
+            Write-Output 'OK: the check passes the template, the three scripts, the hands and a page built from them, and fails each of the thirty-two mutants'
             exit 0
         }
         Write-Output 'FAIL: the control did not behave'
@@ -382,7 +408,7 @@ if (Test-Path -LiteralPath $builtPath) {
     $builtNote = ("the built page ({0:N0} characters) holds too, its {1} blocks the folders' files both ways" -f (Get-Item -LiteralPath $builtPath).Length, $owedCount)
 }
 if ($problems.Count -eq 0) {
-    Write-Output ("OK: web/index.template.html, web/viewport.js, web/fake.js, web/host.js and the {0} hand(s) load nothing and link nowhere, no hand makes code of a text, nothing names a store but the template's one localStorage, a person's keymap's, the host names no Web Audio call past the graph's oscillators and gains, the scripts', the module's and the blocks' placeholders each in its one place, and no place naming a file; {1}" -f $handCount, $builtNote)
+    Write-Output ("OK: web/index.template.html, web/viewport.js, web/fake.js, web/host.js and the {0} hand(s) load nothing and link nowhere, no hand makes code of a text, nothing names a store but the template's one localStorage, a person's keymap's, and its one workStore(), a person's unsaved work's, the host names no Web Audio call past the graph's oscillators and gains, the scripts', the module's and the blocks' placeholders each in its one place, and no place naming a file; {1}" -f $handCount, $builtNote)
     exit 0
 }
 Write-Output ("FAIL: the web page has {0} problem(s):" -f $problems.Count)

@@ -184,6 +184,11 @@ sound the frame the grid holds again when it starts.
 | `refreshSheet(viewport, moved, still)` | the sheet a viewport shows viewed again through the region it shows, its view kept: what the host does at every frame for its own viewport, and a page at its viewer's refresh; `moved` only when the region has left the window the record was viewed through, at a scroll (`viewer.on('scroll', ...)`); `still` (`ENGINE.17`) not loaded again when the record is the one the host last loaded into the viewport and the viewport holds the model it made of it, as a frame does and the player's drawer does. The region and never the sheet whole: a full screen of Sand's Stay is 33 ms natively, its whole record 1.4 s and 34 MB. The record is the values record after frame 0 (`ENGINE.18`), so a still sheet's frame keeps only that view: a sheet of 1,000 formulas views in about 0.35 ms where its grid record took 2. Since `ENGINE.19` a `still` refresh asks the window's changes first: patched in place when they name cells since the record the host holds for that viewport, kept when they name none, viewed whole otherwise, as at a refresh frames apart, the drawer's at a rate above zero |
 | `save(by)` | a save of the running grid (`ENGINE.5`; docs/SPEC.md sections 3.7 and 7.5), `by` `'person'` or `'cartridge'`: taken now at rest and handed to the page by the `save` event, or, inside a frame or an act's settle, held and taken at the end of the frame that rests, `{ ok, waiting }`; a refusal's sentence otherwise. The cartridge's `File!B3` edge asks it at the frame's end |
 | `saveText()` | the save's text as the host writes one, `{ ok, text, file, frame, bytes }`: the manifest the load took, every sheet that is no twin through its `fills` view whole, then the loaded cartridge's `name` rows; `{ ok: false, wait: true }` inside a frame or a settle, and a refusal over section 10's 16 MiB |
+| `keptWork(since)` | the run's unsaved work for a page to keep (`ENGINE.38`; docs/SPEC.md section 7.9): `null` with no cartridge, or when nothing moved since the version `since`; else `{ version, kf, acted, name, title, file, spec, seed, opens, frame, frames, keyframe }`, the keyframe a cartridge (the one loaded, then a save at rest), `keyframe` its text when newer than `since`, else `null`, and `frames` the run's frames since it to the last frame at rest, a replay's frames numbered from the frame it opens at. A keyframe is taken at a frame's end at rest once the steps since cost a second or twenty times the last keyframe, or the frames pass 1 MiB; `acted` false until a person acts (an edit, a command, a replay played, an Input row but the pointer's place and the sheet shown) |
+| `keyframeNow()` | a keyframe taken now, at rest, where a person acted and a frame stepped since the last: the page's, as its tab hides; whether it took one |
+| `keepSaved()` | the page's word that the save the host last handed it was written to a file: nothing moved since, the save is the keyframe; no act since, nothing is unsaved (`acted` false); whether there was a save to take |
+| `restore(work)` | a run's work restored, `{ keyframe, frames, seed, file, kf }`: the keyframe loaded as a replay's player loads its cartridge, on the seed and with no load's act, then the frames played at once, drawn and sounded once at the end, and paused; `{ ok, frame, played, opened }`, or a refusal of frames that do not follow the keyframe |
+| `keptActed()` / `cartName()` | whether a person acted in the run; the cartridge's name, as its manifest says it, which a page matches a record to |
 | `replayText()` | the replay of the run since the last load, as text, a replay played included; `null` with no cartridge loaded. Its header names the page its rows are written to, the cartridge's version, and 3 for a cartridge written to 1 to 3 (`ENGINE.18`) |
 | `play(text, all)` | a replay checked whole, then the cartridge loaded again with its seed and its frames played through the loop at the cartridge's rate, edits refused until it ends, the loop paused at its last frame: `{ ok, frames }`, or the refusal's sentence with nothing loaded; `all` plays every frame at once, synchronously (the oracle) |
 | `counters()` / `sentences()` | what the host has done, the sound's among it (`sounded`, `restarts`, `skipped`, `silences`), and a grid's frames drawn and still (`draws`, `stills`: a frame whose record of the Screen, or of a sheet shown in its place, is byte for byte the one the host last loaded into the viewport, and whose model it still holds, is neither read nor painted, `ENGINE.17`; a still Screen's `timing` is `{ view, draw: 0, skipped: true }`), and the sheets a version 4 cartridge's Camera showed (`shows`, `ENGINE.18`). Since `ENGINE.19` a frame asks the window's changes before its view, so a still frame views nothing at all, and a frame whose changes name cells since the record the host holds is patched, the held record and the viewport's model laid with them in place: `patches`, each also a draw, its `timing` `{ view, draw, patched }`, `view` the changes' time and `patched` the cells named; and `inputsKept`, the frames whose Input rows all stood as last written, so that none was written; since `ENGINE.7` `applied` and `appliedRefused`, the continues written and those whose write was refused; since `ENGINE.25` `commands` and `commandsRefused`, the commands written into `Input!B20` and those refused; since `CART.12` `presses`, a version 6 cartridge's presses over a cell taken as acts at rate 0, `settles` and `unsettled`, the acts whose settle ended still and those K stopped, `settleSteps`, the settle steps stepped, and `settling`, whether the last step's answer left the grid settling; every sentence said, in order |
@@ -556,18 +561,45 @@ paste a record of your own under *Paste a record*. The line under the grid
 spells the selection as the grammar spells it (`B2`, `B2:C3`, `C:C`, `2:2`,
 the sheet's name) and names the sentence that wrote the cell.
 
+Save, Ctrl+S or the bar's Save, writes the running game to a file of yours,
+a cartridge that opens at its frame, and Open, Ctrl+O, opens one (`ENGINE.5`).
+Between saves the page keeps your unsaved work in this browser
+(`ENGINE.38`): close the tab, or let it crash, and open the page again, and
+the line under the bar says `Unsaved work on Sand, frame 1,043, kept at 3:41
+PM.` with Restore and Discard, `restore` and `discard` in the palette.
+Restore opens the work at that frame, paused, its cartridge in the picker as
+Your work on Sand, restored; Discard drops it from the browser. A page keeps
+a run's work from its first act, a key, a press, an edit or a command, and
+never a game only watched; at most eight runs a page, the oldest dropped and
+said; and a save written leaves nothing unsaved. Where the page is hosted it
+keeps work by default, Autosave on. From a file it keeps none until you say
+so: the line says why at your first act, any page opened from a file on your
+machine being able to read what the browser keeps for files, with Turn on
+Autosave and Keep Autosave off, `autosave-on` and `autosave-off` in the
+palette, your answer kept beside the keymap. The page gives the Screen the
+keys as it opens, so that typing goes into the grid without a click. A saved file is the durable copy: a browser may
+clear what it keeps.
+
 ## What it promises
 
-Nothing on the page leaves it: no script, stylesheet, font, image, frame,
-form, link or fetch, which `tools/check_web_offline.ps1` holds on the
-template and on the viewport's source on every push. It writes one thing, a
-person's keymap, when they apply it, under the one name `alonzo-keys` in the
-browser's storage for pages, kept until the page's own
-keymap is applied (`ENGINE.23`, the owner's word); in Chrome, Edge, Opera
-and Firefox every page opened from disk shares that store (measured), so a
-keymap follows a person from Alonzo's page to a game's. The same check holds
-the template to naming that store once and every source to naming no
-other: no session store, database, cookie or cache. And the records inside
+"Nothing you type leaves this machine. Unsaved work stays in this browser
+until you save or discard it." Nothing on the page leaves it: no script,
+stylesheet, font, image, frame, form, link or fetch, which
+`tools/check_web_offline.ps1` holds on the template and on the viewport's
+source on every push. It writes three things. A person's keymap, when they
+apply it, under the one name `alonzo-keys` in the browser's storage for
+pages, kept until the page's own keymap is applied (`ENGINE.23`, the owner's
+word); in Chrome, Edge, Opera and Firefox every page opened from disk shares
+that store (measured), so a keymap follows a person from Alonzo's page to a
+game's. The files a person saves, through the browser's save picker or a
+download (`ENGINE.5`). And a person's unsaved work, in the browser's
+database for pages under its locks, one writer a run (`ENGINE.38`), by
+default where the page is hosted and from disk only at their word, since in
+Chrome and Firefox a page in another folder read everything a page from disk
+kept (measured). The same check holds the template to naming each of those
+once, the keymap's store in `browserStore()`, the file's names in
+`personFile()` and the work's store and locks in `workStore()`, and every
+source to naming no other: no session store, cookie or cache. And the records inside
 are the door's own output, pinned byte for byte by
 `tools/check_view_fixtures.ps1`. Every cell is drawn where the record puts it:
 `tools/check_render_oracle.ps1` runs the page's own oracle under a headless
@@ -1064,12 +1096,16 @@ viewport, not an Excel clone.
   the keyboard's sheets (`SPEC.5`): the page's rule for a key on each mode's
   sheet, the palette's place, the double's three directives, and the page's
   own modes card, a game's key, a character and a person's row on each of
-  its sheets, at rate 0 and at a rate; and `save` (`ENGINE.5`), the
+  its sheets, at rate 0 and at a rate; `save` (`ENGINE.5`), the
   page's committed replays each saved at rest by the host's own save,
-  opened at its frame on its seed and played on beside the run. Each of
-  the fifteen others prints
+  opened at its frame on its seed and played on beside the run; and `keep`
+  (`ENGINE.38`), the page's committed replays each played with a keyframe
+  every 37 frames, its tab dropped at frames across it and a fresh page
+  over a double of the browser's store restoring it to every sheet, and the
+  store's rules, a run watched, a save, Discard, two tabs, a stale and a torn
+  record, eight runs and a refused store. Each of the fifteen others prints
   `case <name>: not on this page`, being proven in Alonzo's CI, and the
-  last line reads `loop ok cases=16 dpr=1; 15 of Alonzo's own not on this
+  last line reads `loop ok cases=17 dpr=1; 15 of Alonzo's own not on this
   page` at a ratio of 1. A replay with no hand is held to its golden alone, counted `alone`
   and said in a note under the case. Every other mode of the bench is
   Alonzo's own and says so on a game's page; `?frames=1` and `?blit=1` over

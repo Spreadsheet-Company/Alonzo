@@ -1100,6 +1100,18 @@ $scales = @('1', '1.5')
 # after, every 64th frame and the last (compared 93, over 5,315 frames); and a save asked inside an act's settle waiting
 # for it and handed to the page at rest, the three cartridges that settle (waited 3).
 $saveFloors = @{ saves = 7; opened = 7; seeds = 7; resumed = 7; compared = 93; frames = 5315; waited = 3 }
+# 2026-11-16, ENGINE.38: the thirty-second case, keep, over the module and a double of the browser's store: every
+# committed replay the page holds played frame by frame with a keyframe at the first rest past every 37 frames, the run's
+# work written at every frame at rest, and the tab dropped at frame 1, every 64th frame at rest and the last, a fresh page
+# over what the browser kept offered the run and restoring it to every sheet's fills (cartridges 7, frames 10,903,
+# restores and held 113, keyframes 189, eight of them Sand's live run drawn with the pointer, session 8); a run no person
+# acted in keeping nothing (watched 1); a save written dropping the record, an act after it keeping it again (saved 1);
+# Discard (discarded 1); a run another tab holds neither offered nor restored (tabs 2); a record of a later format and of
+# a later page refused by name and left (stale 2), and one whose keyframe is not its frames' (torn 1); a ninth run
+# dropping the oldest, said (capped 1); and a refused store said once, the run as without one (refused 1). The
+# browser's own store answers nothing under the check's virtual clock (measured; its round trip holds over CDP in real
+# time, store 1), so the case says so in a note and the double is the check's.
+$keepFloors = @{ cartridges = 7; frames = 10903; restores = 113; held = 113; keyframes = 189; session = 8; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1 }
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
     @{ Case = 'rate0';    Min = @{ frames = 4; applied = 3; edits = 4; windows = 3 } },
@@ -1160,16 +1172,17 @@ $floors = @(
     @{ Case = 'settle';   Min = $settleDoubleFloors; WithModule = $settleFloors },
     @{ Case = 'widths';   Min = @{}; WithModule = $widthsFloors },
     @{ Case = 'modes';    Min = $modesPageFloors; WithModule = $modesFloors },
-    @{ Case = 'save';     Min = @{}; WithModule = $saveFloors }
+    @{ Case = 'save';     Min = @{}; WithModule = $saveFloors },
+    @{ Case = 'keep';     Min = @{}; WithModule = $keepFloors }
 )
 $zero = @('live', 'misfrees', 'filled', 'alone')
-$expectedCases = 31
+$expectedCases = 32
 # ENGINE.16: a game's page, built on every run from a scratch folder holding Kairos alone, its cartridge, source,
-# replay, golden and hand and the library its source includes. Its loop runs the sixteen cases that need nothing
+# replay, golden and hand and the library its source includes. Its loop runs the seventeen cases that need nothing
 # of Alonzo's own files, over its own blocks, still since ENGINE.17, views since ENGINE.18, changes since
 # ENGINE.19, continue since ENGINE.7, palette and keys since ENGINE.23, commands since ENGINE.25, settle since CART.12,
-# widths since ENGINE.26, modes since SPEC.5 and save since ENGINE.5 among them, and each of the fifteen others says
-# it is not on the page.
+# widths since ENGINE.26, modes since SPEC.5, save since ENGINE.5 and keep since ENGINE.38 among them, and each of the
+# fifteen others says it is not on the page.
 $gameFloors = @(
     @{ Case = 'abi';    Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
     @{ Case = 'pass';   Min = @{}; WithModule = @{ sources = 1; same = 1 } },
@@ -1186,10 +1199,11 @@ $gameFloors = @(
     @{ Case = 'settle'; Min = $settleDoubleFloors; WithModule = $settleFloors },
     @{ Case = 'widths'; Min = @{}; WithModule = $widthsFloors },
     @{ Case = 'modes'; Min = $modesPageFloors; WithModule = $modesGameFloors },
-    @{ Case = 'save'; Min = @{}; WithModule = @{ saves = 1; opened = 1; seeds = 1; resumed = 1 } }
+    @{ Case = 'save'; Min = @{}; WithModule = @{ saves = 1; opened = 1; seeds = 1; resumed = 1 } },
+    @{ Case = 'keep'; Min = @{}; WithModule = @{ cartridges = 1; restores = 1; held = 1; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1 } }
 )
 $gameAbsent = @('rate30', 'rate0', 'yield', 'slice', 'pace', 'memory', 'refusals', 'scale', 'engine', 'parity', 'plane', 'input', 'audio', 'sound', 'tabs')
-$gameCases = 16
+$gameCases = 17
 $gameFiles = @('kairos/kairos.vla', 'kairos/kairos.source.vla', 'kairos/kairos.replay.vla', 'kairos/kairos.golden.vla', 'kairos/kairos.hand.js', 'common.vla')
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
@@ -1580,7 +1594,7 @@ if ($Control) {
             return ("pool: {0} pages built in the background, at most {1} at a time, and {5} run(s) of the sound case alone, in {2:N1} s ({6:N1} s of the runs alone); {3} runs side by side, the longest first, in {4:N1} s, the longest {8:N1} s ({9}); {7} run(s) the plan missed" -f $s.Builds, $Jobs, $s.BuildSeconds, $s.Pooled, $s.PoolSeconds, $s.Alone, $s.AloneSeconds, $script:Misses, $s.Longest, $s.LongestName)
         }
         $realNames = @($floors | ForEach-Object { $_.Case })
-        $realParts = @(, @('abi', 'sound')) + @(, @('abi', 'input', 'replay')) + @(, @('abi', 'save')) + @(, @($realNames | Where-Object { @('input', 'replay', 'sound', 'save') -notcontains $_ }))
+        $realParts = @(, @('abi', 'sound')) + @(, @('abi', 'input', 'replay')) + @(, @('abi', 'save')) + @(, @('abi', 'keep')) + @(, @($realNames | Where-Object { @('input', 'replay', 'sound', 'save', 'keep') -notcontains $_ }))
         # The control's code, run twice since REPO.8, a plan pass and a run pass, as its end says.
         $controlBody = {
         # the real page first: its module, which decides the mutants that apply, read at once by abi alone; then, as the
@@ -2318,6 +2332,20 @@ if ($Control) {
             # MD (ENGINE.5's hand test), the keys case's, the page's: a kept keymap offered nothing of the commands new since
             @{ L = 'md'; Name = 'a kept keymap offered nothing'; File = 'template'; Case = 'keys'; Anchor = '      if (known && known.indexOf(b.command) >= 0) return;'; With = '      return;'
                Want = 'case keys.*a keymap kept before Save and Open is offered \[\]' },
+            # ME to MI (ENGINE.38), the keep case's over the module, each by name: the frames kept numbered by the host's
+            # frame and not from the keyframe's, which a settling cartridge's restore past a keyframe fails; a run's first
+            # frame, its Input logged whole, taken for a person's act; a restore over a run another tab holds; a keyframe
+            # not held to its frames; and a save written that leaves the run's record standing
+            @{ L = 'me'; Name = 'frames kept by the host''s number'; Module = $true; Case = 'keep'; Anchor = '    var k = this.keep, f = n - k.off;'; With = '    var k = this.keep, f = n;'
+               Want = 'case keep.*: frame \d+: (the work restored is not the run there|the offer was not restored)' },
+            @{ L = 'mf'; Name = 'a run''s first frame an act'; Module = $true; Case = 'keep'; Anchor = '        if (was && !KEPT_NOT_ACTS[m[1]]) this._acted();   // a key, a press, the wheel or a command: a person''s act'; With = '        if (!KEPT_NOT_ACTS[m[1]]) this._acted();'
+               Want = 'case keep.*watched: a run no person acted in kept 1 record' },
+            @{ L = 'mg'; Name = 'a restore over another tab''s run'; File = 'template'; Module = $true; Case = 'keep'; Anchor = '      if (!release) { self._say(''The unsaved work on '' + workOn(w) + '' is open in another tab of this page'; With = '      if (false) { self._say(''The unsaved work on '' + workOn(w) + '' is open in another tab of this page'
+               Want = 'case keep.*tabs: a run another tab holds was restored' },
+            @{ L = 'mh'; Name = 'a keyframe not held to its frames'; File = 'template'; Module = $true; Case = 'keep'; Anchor = "        var torn = !k ? 'its keyframe is missing from this browser\'s store' : (k.kf !== w.kf ?"; With = "        var torn = !k ? 'its keyframe is missing from this browser\'s store' : (false ?"
+               Want = 'case keep.*torn: restored, dropped, or refused otherwise' },
+            @{ L = 'mi'; Name = 'a save written leaving the record'; Module = $true; Case = 'keep'; Anchor = '    if (k.acts === s.acts) k.acted = false;'; With = '    // the act kept, by the control'
+               Want = 'case keep.*saved: kept true, dropped at the save false' },
             # LX (ENGINE.37's second slice): a repaint that lays a cell's texts again in the draw list and drops its lines,
             # which the changes card's frames fail by name over the module, a strand of K2, L6 or M1 not drawn
             @{ L = 'lx'; Name = 'a repaint that drops a text''s lines'; Module = $true; File = 'viewport'; Anchor = "      else if (op.op === 'text' || op.op === 'decoration') { if (!drawn.has(key)) drawn.set(key, []); drawn.get(key).push(op); }"; With = "      else if (op.op === 'text') { if (!drawn.has(key)) drawn.set(key, []); drawn.get(key).push(op); }"
@@ -3101,7 +3129,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and fifty-two' } else { 'one hundred and twenty-two applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and fifty-seven' } else { 'one hundred and twenty-two applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -3199,8 +3227,9 @@ $runs = @(
     @{ Key = 'sound'; Label = 'ratio 1, the sound case alone'; Scale = $scales[0]; Cases = @('abi', 'sound') },
     @{ Key = 'replay'; Label = 'ratio 1, the input and replay cases'; Scale = $scales[0]; Cases = @('abi', 'input', 'replay') },
     @{ Key = 'save'; Label = 'ratio 1, the save case'; Scale = $scales[0]; Cases = @('abi', 'save') },
-    @{ Key = 'rest'; Label = 'ratio 1, the other cases'; Scale = $scales[0]; Cases = @($names | Where-Object { @('input', 'replay', 'sound', 'save') -notcontains $_ }) },
-    @{ Key = 'second'; Label = 'ratio 1.5, every case but replay, sound and save'; Scale = $scales[1]; Cases = @($names | Where-Object { @('replay', 'sound', 'save') -notcontains $_ }) }
+    @{ Key = 'keep'; Label = 'ratio 1, the keep case'; Scale = $scales[0]; Cases = @('abi', 'keep') },
+    @{ Key = 'rest'; Label = 'ratio 1, the other cases'; Scale = $scales[0]; Cases = @($names | Where-Object { @('input', 'replay', 'sound', 'save', 'keep') -notcontains $_ }) },
+    @{ Key = 'second'; Label = 'ratio 1.5, every case but replay, sound, save and keep'; Scale = $scales[1]; Cases = @($names | Where-Object { @('replay', 'sound', 'save', 'keep') -notcontains $_ }) }
 )
 $gameTmp = Join-Path ([System.IO.Path]::GetTempPath()) ('alonzo_loop_game_' + [System.IO.Path]::GetRandomFileName())
 New-Item -ItemType Directory -Path $gameTmp | Out-Null
@@ -3239,7 +3268,7 @@ try {
 }
 Write-Output ''
 if ($failed.Count -eq 0) {
-    Write-Output "=== CHECK: clean - every case OK, the replay, sound and save cases at the first ratio and every other at both, every count at or above its floor, and the game's page's sixteen cases OK with Alonzo's fifteen said absent ==="
+    Write-Output "=== CHECK: clean - every case OK, the replay, sound, save and keep cases at the first ratio and every other at both, every count at or above its floor, and the game's page's seventeen cases OK with Alonzo's fifteen said absent ==="
     exit 0
 }
 Write-Output "=== CHECK: $($failed.Count) problem(s) ==="

@@ -135,6 +135,20 @@
   recorder records what is played, so a replay played and copied is the
   replay played.
 
+  And it keeps the run's work for a page to keep in the browser (docs/SPEC.md
+  section 7.9; ENGINE.38): a keyframe, a cartridge, at first the one the load
+  took and then a save at rest, and every frame since as a replay's frames,
+  numbered from the frame the keyframe opens at, beside the recorder's and
+  free of its cap. A keyframe is taken at a frame's end at rest once the
+  steps since the last have cost a second or twenty times the last
+  keyframe's own cost, whichever is more, or the frames kept pass 1 MiB of
+  text; keyframeNow() takes one for a page whose tab hides. keptWork(since)
+  answers the keyframe and the frames to the last frame at rest, and whether
+  a person has acted, a run no person acted in keeping nothing a page keeps;
+  keepSaved() takes the page's word that a save was written to a file;
+  restore(work) opens the keyframe as a load and plays the frames at once,
+  the replay law, and pauses there.
+
   What the host holds is SD-23's interface state and nothing else (AD-6):
   the keys held, the pointer's place, the accumulator, the budget's
   measurement, the palette's table, the key map, the Camera's two cells,
@@ -143,8 +157,9 @@
   nodes and the timeline's end, and since ENGINE.19 the records it holds
   with their frames, the device sheets' cells as last read and the Input
   rows last written, and since ENGINE.7 the text of the cartridge the grid
-  was last given, and since ENGINE.25 the commands waiting for their frames.
-  Every value is the module's.
+  was last given, and since ENGINE.25 the commands waiting for their frames,
+  and since ENGINE.38 the run's work kept, its keyframe's text and the frames
+  since. Every value is the module's.
   Every refusal and every event is a sentence, the latest new one in the
   status and the last twenty events in a log, a repeat of an event counted in
   the line it first made rather than pushing the others out (SD-30), and a
@@ -195,6 +210,13 @@
   var MAX_CARTRIDGE_BYTES = 16 * 1048576;   // section 10's file, which the engine refuses to load past (ENGINE.5)
   var REPLAY_CAP = 8 * 1048576;      // the replay's text, past which the recorder stops and says so: about an
                                      // hour of a pointer that never rests (ENGINE.3, decision 10)
+  var KEEP_STEPS_MS = 1000;          // the work kept (ENGINE.38, decision 2): a keyframe at rest once the steps since the
+  var KEEP_COST_TIMES = 20;          // last have cost a second, or twenty times that keyframe's own cost if more, so that a
+                                     // keyframe costs at most a twentieth of the stepping and a restore plays about a
+                                     // second of steps; Superposition's save of 176 ms, its steps 3.5 s (measured)
+  var KEEP_FRAMES_CAP = 1048576;     // or once the frames kept since it pass 1 MiB of text
+  var KEPT_NOT_ACTS = { B11: true, B12: true, B19: true };   // the Input rows no person's act: the pointer's place, and the
+                                     // sheet shown, which a cartridge's Camera moves too (ENGINE.38, decision 4)
   // ---- the sound's rules, as ENGINE.4's scoping states them (decisions 1 to 4) ----
   var LOOKAHEAD = 0.05;              // s: a frame that starts the timeline sounds this far ahead of the audio clock,
                                      // and no frame sounds further ahead than twice it
@@ -782,6 +804,7 @@
     // sheet the Camera asked for, shown at the frame's end.
     this.shownName = null; this.cameraSheet = null; this.sheetsList = null; this.showWanted = null;
     this.rec = null; this.player = null;   // the replay recorded since the load, and one playing
+    this.keep = null;   // the run's work kept since the load (ENGINE.38): its keyframe and the frames since
     this.given = null;   // the text of the cartridge the grid was last given by a continue, null for the bytes loaded (ENGINE.7)
     // Version 5's commands (ENGINE.25): the Commands sheet as last read, each { name, words, holds, code, row }, and the
     // codes of the commands that hold now; the commands waiting for their frames, one a frame; the one that runs at the
@@ -798,7 +821,8 @@
     this.snd.end = null; this.snd.bad = {}; this.snd.wanted = false;   // the sound's timeline and its notices, a load's own
     this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, inputsKept: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, patches: 0, shows: 0, saves: 0, saved: 0,
                sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0, commands: 0, commandsRefused: 0,
-               settles: 0, settleSteps: 0, unsettled: 0, presses: 0, playedShown: 0, editsRead: 0, keysRead: 0, keysStray: 0 };
+               settles: 0, settleSteps: 0, unsettled: 0, presses: 0, playedShown: 0, editsRead: 0, keysRead: 0, keysStray: 0,
+               keyframes: 0, restores: 0 };
   };
 
   // The module: its ABI number asked first, then every export the loop calls.
@@ -854,6 +878,7 @@
     if (held) { c.seed = held; c.seedChosen = true; this._say('The cartridge asks the host for its seed: the save holds ' + held + ', in Clock!B3, and keeps it.'); }
     else if (c.seed === 'host') this._seed();
     this._startReplay();   // the replay of this load's run, from frame 0 (section 7.6)
+    this._startKeep();     // and the work kept, the cartridge loaded its first keyframe (ENGINE.38)
     if (c.devices.camera) this._readCamera('load');
     if (c.devices.palette) this._readPalette();
     if (c.devices.keys) this._readKeys();
@@ -1101,6 +1126,7 @@
     var r = this.m.call('alonzo_step', [this.handle, budget]);
     var ms = Math.max(this.now() - t0, TIMER_FLOOR_MS);
     win.used++; this.c.calls++;
+    if (this.keep) this.keep.steps += ms;   // the steps since the keyframe, which time the next (ENGINE.38)
     var f = r.status === 0 ? first(r.text, 'step') : null;
     if (!f) {
       this.inFrame = false; this.progress = null; this.stop();
@@ -1316,7 +1342,7 @@
     if (d.file) this._readFile();
     if (d.write) this._readWrite();
     if (d.clock) this._readClock();
-    if (d.audio) this._sound();   // step 6, the sound, after the Clock's rate that times it (ENGINE.4)
+    if (d.audio && !this._restoring()) this._sound();   // step 6, the sound, after the Clock's rate that times it (ENGINE.4)
     // an act's sentence: stepped once for it; for a cartridge that settles (CART.12), said when its settle ends, with its
     // frames and what each was for, or that K stopped it with the grid still moving (SD-30)
     if (this.stepEdit) {
@@ -1338,6 +1364,8 @@
     // and a save asked for inside a frame or a settle, taken now that the grid rests (ENGINE.5)
     if (this.saveAsked) { var by = this.saveAsked; this.saveAsked = null; this.save(by); }
     else if (this.saveWaiting && !this.settling) { var asked = this.saveWaiting; this.saveWaiting = null; this._saveNow(asked, true); }
+    // a keyframe of the work kept, at rest and never while a restore plays its frames (ENGINE.38)
+    if (this.keep && !this.settling && !(this.player && this.player.restore) && this._keyframeDue()) this._keyframe();
     var p = this.player;
     this._emit('frame', { frame: n, window: this.window, scale: this.scale || 0, rate: this.cart.rate, replay: p ? p.last : 0 });
     if (p && p === this.player && n >= p.last) this._endReplay(n);
@@ -1429,7 +1457,10 @@
     this.table = table; this.paletteCount = count;
     if (bad.length) this._say('frame ' + this.frame + ': the Palette\'s ' + bad.join(', ') + ' hold no #RRGGBB color; those indices paint magenta.');
   };
+  // A restore's frames, played at once (ENGINE.38): drawn and sounded once, at its end, and never frame by frame.
+  Host.prototype._restoring = function () { return !!(this.player && this.player.restore); };
   Host.prototype._drawPlane = function () {
+    if (this._restoring()) return;
     var c = this.cart, t0 = this.now();
     var r = this.m.texts('alonzo_view', [this.handle], ['plane', 'Screen', this.window], true);
     var t1 = this.now();
@@ -1472,6 +1503,7 @@
   // neither loaded nor painted, and counted; the view still runs, its text being what tells, and the viewport
   // paints a person's scroll and selection itself. A load, a tab clicked and redraw() always draw.
   Host.prototype._drawGrid = function (atLoad, frame) {
+    if (frame && this._restoring()) return;   // a restore's frame (ENGINE.38)
     // A frame's draw when the Camera asked for a sheet: that sheet shown (ENGINE.18, decision 5).
     if (frame && this.showWanted) { this._drawShown(); return; }
     // A host with no viewport views no sheet it shows other than the Screen, nothing drawing it (ENGINE.18).
@@ -2325,43 +2357,51 @@
     var s = this.cart.seed;
     this.rec = { seed: typeof s === 'number' ? s : null, blocks: [], size: 0, rows: [], input: null, last: 0, written: 0, full: false };
   };
+  // The recorder's rows go on past its cap while the work is kept (ENGINE.38), whose frames are free of it.
   Host.prototype._recordInputs = function (text) {
     var rec = this.rec;
-    if (!rec || rec.full) return;
+    if (!rec || (rec.full && !this.keep)) return;
     var lines = text.split('\n'), was = rec.input, now = {};
     for (var i = 0; i < lines.length; i++) {
       var m = INPUT_ROW.exec(lines[i]);
       if (!m) continue;
       now[m[1]] = m[2];
-      if (!was || was[m[1]] !== m[2]) rec.rows.push(lines[i]);
+      if (!was || was[m[1]] !== m[2]) {
+        rec.rows.push(lines[i]);
+        if (was && !KEPT_NOT_ACTS[m[1]]) this._acted();   // a key, a press, the wheel or a command: a person's act
+      }
     }
     rec.input = now;
   };
   Host.prototype._recordEdit = function (row) {
     var rec = this.rec;
-    if (!rec || rec.full) return;
+    if (!rec || (rec.full && !this.keep)) return;
     var f = VP().readForms(row)[0];
     rec.rows.push(spellForm(f));
+    this._acted();
     if (String(str(f[1])).toLowerCase() === 'input') rec.input = null;   // the Input sheet unknown to the replay: its next rows are logged whole
   };
   // The twentieth row written alone at rate 0 (ENGINE.25): logged when it differs from the recorder's record of the
   // cell, which it then holds, the rest of the record kept.
   Host.prototype._recordCommandRow = function (row, name) {
     var rec = this.rec;
-    if (!rec || rec.full) return;
+    if (!rec || (rec.full && !this.keep)) return;
     var v = quote(name), was = rec.input;
-    if (!was || was.B20 !== v) rec.rows.push(row);
+    if (!was || was.B20 !== v) { rec.rows.push(row); this._acted(); }
     if (was) was.B20 = v;
   };
   Host.prototype._recordPlayed = function (rows) {
     var rec = this.rec;
-    if (!rec || rec.full) return;
+    if (!rec || (rec.full && !this.keep)) return;
     for (var i = 0; i < rows.length; i++) rec.rows.push(rows[i]);
+    if (rows.length) this._acted();   // a replay a person played, a restore's frames among them
     rec.input = null;   // a replay's rows are its own record: live rows after it are logged whole
   };
   Host.prototype._recordFrame = function (n) {
     var rec = this.rec;
-    if (!rec || rec.full) return;
+    if (!rec || (rec.full && !this.keep)) return;
+    if (this.keep) this._keepFrame(n, rec.rows);
+    if (rec.full) { rec.rows = []; return; }
     if (rec.rows.length) {
       var block = '(frame ' + n + '\n  ' + rec.rows.join('\n  ') + ')\n';
       rec.rows = [];
@@ -2373,6 +2413,133 @@
       rec.blocks.push(block); rec.size += block.length; rec.written = n;
     }
     rec.last = n;
+  };
+  // ---- the work kept (ENGINE.38; docs/SPEC.md section 7.9) ----
+  // A run's work as two texts a page keeps for it in the browser: a keyframe, a cartridge, at first the one this load took
+  // and then a save at rest (ENGINE.5's), and every frame since as a replay's frames, numbered from the frame the keyframe
+  // opens at, off being the host's frame less the Clock's at the keyframe (a settling cartridge's Clock counts its acts).
+  // A restore opens the keyframe as a load and plays the frames at once: ENGINE.5's replay law. A restore's load carries
+  // its keyframe's number on, kf, so that a page's records of the run go on as they were; acted, whether a person acted.
+  Host.prototype._startKeep = function () {
+    var r = this.restoring;
+    this.keep = { kf: r ? r.kf : 0, text: null, opens: this.frame, off: 0, blocks: [], size: 0, last: this.frame, rested: this.frame,
+                  steps: 0, cost: 0, frames: 0, acted: !!r, acts: r ? 1 : 0, version: 0, kfVersion: 0, saved: null, unsaved: false };
+  };
+  Host.prototype._acted = function () {
+    var k = this.keep;
+    if (!k || this.restoring) return;
+    k.acts++;
+    if (!k.acted) { k.acted = true; k.version++; }
+  };
+  // A frame's rows, as the recorder logged them, kept as the frame since the keyframe it is; the last frame at rest, the
+  // one a restore lands on, since a restore plays to rest.
+  Host.prototype._keepFrame = function (n, rows) {
+    var k = this.keep, f = n - k.off;
+    if (rows.length) {
+      var b = '(frame ' + f + '\n  ' + rows.join('\n  ') + ')\n';
+      k.blocks.push({ f: f, text: b }); k.size += b.length;
+    }
+    k.last = f; k.frames++;
+    if (!this.settling) k.rested = f;
+    k.version++;
+  };
+  // A keyframe due (decision 2): at the first rest past every keepEvery frames where a caller names it, the oracle; else
+  // once the steps since have cost the larger of a second and twenty times the last keyframe, or the frames kept pass
+  // 1 MiB of text. A save the host cannot write (section 10's file) is no keyframe, said once, and the frames kept on.
+  Host.prototype._keyframeDue = function () {
+    var k = this.keep, every = this.options.keepEvery;
+    if (k.unsaved) return false;
+    if (every) return k.frames >= every;
+    return k.size >= KEEP_FRAMES_CAP || k.steps >= Math.max(KEEP_STEPS_MS, KEEP_COST_TIMES * k.cost);
+  };
+  Host.prototype._keyframe = function () {
+    var k = this.keep, t0 = this.now(), s = this.saveText();
+    if (!s.ok) {
+      if (!s.wait) { k.unsaved = true; this._say('frame ' + this.frame + ': no keyframe of the work kept was taken: ' + s.words.replace(/^The save was not written: /, '') + ' The frames since the last are kept on.'); }
+      return false;
+    }
+    k.kf++; k.text = s.text; k.opens = s.frame; k.off = this.frame - s.frame;
+    k.blocks = []; k.size = 0; k.steps = 0; k.frames = 0; k.last = s.frame; k.rested = s.frame;
+    k.cost = Math.max(this.now() - t0, TIMER_FLOOR_MS);
+    k.version++; k.kfVersion = k.version;
+    this.c.keyframes++;
+    return true;
+  };
+  // A keyframe now, for a page whose tab hides (decision 3): taken at rest when a person acted and a frame stepped since the
+  // last, else none.
+  Host.prototype.keyframeNow = function () {
+    var k = this.keep;
+    if (!k || !k.acted || !this.handle || this.inFrame || this.settling || (this.player && this.player.restore) || !k.frames) return false;
+    return this._keyframe();
+  };
+  // Whether a person acted in the run since its load, or since a save written with no act after it (decision 4); and the
+  // cartridge's name, its manifest's, as a page matches a run's kept work to a cartridge it loads.
+  Host.prototype.keptActed = function () { return !!(this.keep && this.keep.acted); };
+  Host.prototype.cartName = function () { return this.cart && this.cartBytes ? this._cartName() || '' : ''; };
+  // The work kept, for a page to keep (decision 3): null with no cartridge, or when nothing moved since the version a page
+  // last took, since; else { version, kf, acted, name, title, file, spec, seed, opens, frame, frames, keyframe }: the
+  // frames' text to the last frame at rest, a replay's frames without its header, which restore() writes for the keyframe
+  // it loads, and the keyframe's text when it is newer than since, else null. A page keeps nothing of a run no person
+  // acted in (decision 4).
+  Host.prototype.keptWork = function (since) {
+    var k = this.keep;
+    if (!k || !this.handle || !this.cart) return null;
+    var fresh = since === undefined || since === null;
+    if (!fresh && k.version === since) return null;
+    var out = [], i, lastBlock = 0;
+    for (i = 0; i < k.blocks.length && k.blocks[i].f <= k.rested; i++) { out.push(k.blocks[i].text); lastBlock = k.blocks[i].f; }
+    if (k.rested > k.opens && lastBlock !== k.rested) out.push('(frame ' + k.rested + ')\n');   // the last frame however empty, so the frames name their length
+    var keyframe = fresh || k.kfVersion > since ? (k.text !== null ? k.text : dec.decode(this.cartBytes).replace(/\r\n/g, '\n')) : null;
+    return { version: k.version, kf: k.kf, acted: k.acted, name: this._cartName() || '', title: this.cart.title || '', file: this.cartFile,
+             spec: this.cart.spec, seed: typeof this.cart.seed === 'number' ? this.cart.seed : null, opens: k.opens, frame: k.rested,
+             frames: out.join(''), keyframe: keyframe };
+  };
+  // The page's word that the save the host last handed it is written to a file of the person's (decision 6): no frame
+  // since, the save is the keyframe and nothing is unsaved; frames since with no act, nothing is unsaved and the frames
+  // are kept on; an act since, the work since it is unsaved and kept. Answers whether there was a save to take.
+  Host.prototype.keepSaved = function () {
+    var k = this.keep, s = k && k.saved;
+    if (!s) return false;
+    k.saved = null;
+    if (k.version === s.version) {
+      k.kf++; k.text = s.text; k.opens = s.frame; k.off = s.at - s.frame;
+      k.blocks = []; k.size = 0; k.steps = 0; k.frames = 0; k.last = s.frame; k.rested = s.frame;
+      k.kfVersion = k.version + 1;
+    }
+    if (k.acts === s.acts) k.acted = false;
+    k.version++;
+    return true;
+  };
+  // A run's work restored (decision 6): its keyframe opened as a load, with the run's seed, as a replay's player loads its
+  // cartridge, so that a settling cartridge takes no load's act; then its frames played at once, through the player, and
+  // the loop paused there. work: { keyframe, frames, seed, file, kf }. Answers { ok, frame, played, opened } or a failure.
+  Host.prototype.restore = function (w) {
+    if (!this.m) return this._fail('There is no engine module to restore work on.');
+    if (this.player) return this._fail('The work kept was not restored: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + '.');
+    w = w || {};
+    var t0 = this.now(), seed = typeof w.seed === 'number' && w.seed >= 1 && w.seed <= MAX_SEED ? w.seed : null, ld;
+    this.restoring = { kf: w.kf || 0 };
+    this.playSeed = seed;
+    try { ld = this.loadBytes(enc.encode(String(w.keyframe || '')), w.file || 'kept.vla'); } finally { this.playSeed = undefined; this.restoring = null; }
+    if (!ld.ok) return ld;
+    var opened = this.frame, frames = String(w.frames || '');
+    this.c.restores++;
+    if (!frames.trim()) {
+      this._say('frame ' + opened + ': restored the work kept at frame ' + opened + ', no frame to play again; ' + (this.cart.rate > 0 ? 'the loop is paused, and Run carries on.' : 'the grid rests, and the next act steps it.'));
+      return { ok: true, frame: opened, played: 0, opened: opened };
+    }
+    var rp = this._readReplay('(replay ' + quote(this._cartName() || '') + ' (spec ' + SPEC + ') (cartridge "' + this._cartDigest() + '") (seed ' + (seed || 1) + '))\n' + frames);
+    if (rp.error) return this._fail('The work kept was not restored past its keyframe at frame ' + opened + ': its frames are no replay\'s: ' + rp.error);
+    var firstFrame = Infinity;
+    for (var n in rp.frames) if (Object.prototype.hasOwnProperty.call(rp.frames, n)) firstFrame = Math.min(firstFrame, +n);
+    if (Math.min(firstFrame, rp.last) <= opened) return this._fail('The work kept was not restored past its keyframe: its frames begin at ' + Math.min(firstFrame, rp.last) + ', and its keyframe opens at frame ' + opened + '.');
+    this.player = { frames: rp.frames, last: rp.last, restore: { from: opened, t0: t0 } };
+    var win = { used: 0, limit: 0x7fffffff, deadline: Infinity };
+    while (this.player && this.handle) {
+      this._begin();
+      if (!this.inFrame || !this._continue(win)) break;
+    }
+    return { ok: this.frame === rp.last, frame: this.frame, played: this.frame - opened, opened: opened };
   };
   Host.prototype._cartName = function () {
     var c = this.cart;
@@ -2431,6 +2598,7 @@
     if (!s.ok) { if (s.wait) { this.saveWaiting = by; return { ok: true, waiting: true }; } this._refuse(s.words); return s; }
     s.by = by; s.waited = waited;
     this.c.saved++;
+    if (this.keep) this.keep.saved = { text: s.text, frame: s.frame, at: this.frame, version: this.keep.version, acts: this.keep.acts };   // for keepSaved (ENGINE.38)
     this._say('Saved frame ' + s.frame + ' as ' + s.file + ', ' + thousands(s.bytes) + ' bytes' + (by === 'cartridge' ? ', as the cartridge asked' : '') + '.');
     this._emit('save', s);
     return s;
@@ -2542,9 +2710,13 @@
     }
   };
   Host.prototype._endReplay = function (n) {
+    var r = this.player && this.player.restore;
     this.player = null; this.stop();
     this.notches = 0; this.lastKey = null;   // what the wheel and the keys did while it played is no person's frame
-    this._say('frame ' + n + ': the replay ended at its last frame; the loop is paused, and Run carries on from here with the live inputs.');
+    // a restore's one draw, its frames having drawn nothing: a sheet its Camera asked for shown, else the grid whole
+    if (r) { if (this.cart.mode === 'plane') this._drawPlane(); else if (this.showWanted) this._drawShown(); else this._drawGrid(false, false); }
+    if (r) this._say('frame ' + n + ': restored the work kept: its keyframe at frame ' + r.from + ' opened and ' + countWords(n - r.from) + ' frame' + (n - r.from === 1 ? '' : 's') + ' played again in ' + Math.round(this.now() - r.t0) + ' ms; ' + (this.cart.rate > 0 ? 'the loop is paused, and Run carries on.' : 'the grid rests, and the next act steps it.'));
+    else this._say('frame ' + n + ': the replay ended at its last frame; the loop is paused, and Run carries on from here with the live inputs.');
   };
 
   // ---- what a page asks of the host ----

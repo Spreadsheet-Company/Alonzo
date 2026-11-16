@@ -14,7 +14,10 @@
   with a record the door printed, and writes web/index.html, one file that runs
   from disk. The page loads nothing from the network, writes nothing anywhere but
   a person's keymap, kept when they apply it, under one name in the
-  browser's storage for pages (ENGINE.23, the owner's word), and
+  browser's storage for pages (ENGINE.23, the owner's word), the files a
+  person saves (ENGINE.5), and a person's unsaved work, kept in the browser's
+  database for pages until they save or discard it, by default where the page
+  is hosted and from disk only at their word (ENGINE.38), and
   executes nothing but the scripts below and its cartridges' hands, each a block
   the builder writes as a script (ENGINE.16): tools/check_web_offline.ps1 holds
   this file, the three scripts and the hands to that doctrine on every push, as
@@ -188,6 +191,9 @@
   .player-bar .status { flex: 1 1 160px; min-width: 0; min-height: 0; margin: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .player-bar button[aria-pressed="true"], .player-bar button[aria-expanded="true"] { background: var(--lavender); border-color: var(--lavender-deep); }
   .player-body { flex: 1 1 auto; min-height: 0; display: flex; }
+  .kept-line { flex: none; display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; padding: 5px 10px; background: var(--lavender-whisper); border-bottom: 1px solid var(--lavender); font-size: 13px; color: #1d1d1b; }
+  .kept-line[hidden] { display: none; }
+  .kept-line .kept-text { flex: 0 1 auto; min-width: 0; }
   /* no color of its own: the plane's box is dark and shown for a plane alone, so that a page opening on a grid never flashes dark */
   .player-screen { flex: 1 1 auto; min-width: 0; position: relative; }
   /* the plane centered in the Screen's box at the whole number of device pixels a cell that fits it */
@@ -260,6 +266,7 @@
     <button type="button" id="eng-full" data-command="full-screen" aria-pressed="false">Full screen</button>
     <button type="button" id="eng-drawer" data-command="drawer" aria-expanded="false" aria-controls="drawer">Drawer</button>
   </div>
+  <div id="eng-kept" class="kept-line" role="status" aria-live="polite" hidden><span id="eng-kept-text" class="kept-text"></span> <button type="button" id="eng-restore" data-command="restore">Restore</button> <button type="button" id="eng-discard" data-command="discard">Discard</button> <button type="button" id="eng-keep-on" data-command="autosave-on" hidden>Turn on Autosave</button> <button type="button" id="eng-keep-off" data-command="autosave-off" hidden>Keep Autosave off</button></div>
   <div class="player-body">
     <div class="player-screen">
       <div id="plane-box" class="plane-box" hidden><canvas id="plane" tabindex="0" aria-label="the Screen, drawn as a plane of color indices"></canvas></div>
@@ -267,6 +274,7 @@
     </div>
     <aside id="drawer" class="drawer" hidden aria-label="the drawer">
       <p id="frame-line" class="frame-line"></p>
+      <p id="eng-promise" class="note"></p>
       <p class="controls edit-row"><label for="eng-edit">An edit, one row:</label> <input type="text" id="eng-edit" spellcheck="false" value="(formula &quot;Screen&quot; &quot;A1&quot; &quot;=6*7&quot;)"> <button type="button" id="eng-write" data-command="write" title="the row written as a person's edit at the next frame; Enter in the row" aria-keyshortcuts="Enter">Write</button></p>
       <p class="note">Click the Screen to give it the keys: <span id="eng-game-keys">this cartridge binds no key</span>. In a grid, a key the Keys sheet does not bind moves the selection, and the wheel scrolls everywhere but over the cells of the Camera's window, where the game takes it. While a game runs, Tab is the game's too; Ctrl+K opens the palette, whose commands give any box the keys.</p>
       <h2>The log <button type="button" id="eng-copy" data-command="copy-log">Copy the log</button></h2>
@@ -314,7 +322,7 @@
 </div>
 <header>
   <h1>Alonzo: <em>the bench</em></h1>
-  <p class="lede">The engine page's bench, each a mode of the one page the checks open: <code>?loop=1</code> the host loop's oracle, <code>?oracle=1</code> the render oracle, <code>?viewport=1</code> the viewport over the fixtures, <code>?frames=1</code>, <code>?blit=1</code> and <code>?bench=1</code> the floors' instruments. Opened plainly, the page is the player. Nothing on this page leaves it: it reads nothing from the network and writes nothing anywhere but a person's keys, kept in the browser at their own Apply the keys, and the files a person saves, at their own Save.</p>
+  <p class="lede">The engine page's bench, each a mode of the one page the checks open: <code>?loop=1</code> the host loop's oracle, <code>?oracle=1</code> the render oracle, <code>?viewport=1</code> the viewport over the fixtures, <code>?frames=1</code>, <code>?blit=1</code> and <code>?bench=1</code> the floors' instruments. Opened plainly, the page is the player. Nothing on this page leaves it: it reads nothing from the network and writes nothing anywhere but a person's keys, kept in the browser at their own Apply the keys, the files a person saves, at their own Save, and a person's unsaved work, kept in the browser until they save or discard it, by default where the page is hosted and from a file at their own Turn on Autosave.</p>
   <p id="about" class="about"></p>
 </header>
 <main>
@@ -608,6 +616,10 @@
     { name: 'load', words: 'load the cartridge in the drawer\'s box again from frame 0' },
     { name: 'save', words: 'save the running game to a file of yours, a cartridge that opens at its frame' },
     { name: 'open', words: 'open a cartridge or a save from a file of yours, and load it' },
+    { name: 'restore', words: 'restore the unsaved work the line under the bar names, at its frame, paused' },
+    { name: 'discard', words: 'discard the unsaved work the line under the bar names from this browser' },
+    { name: 'autosave-on', words: 'turn on Autosave: unsaved work kept in this browser until you save or discard it, which a page from a file does only at your word' },
+    { name: 'autosave-off', words: 'keep Autosave off: no unsaved work kept in this browser, the work this run kept discarded' },
     { name: 'full-screen', words: 'enter full screen, or leave it' },
     { name: 'drawer', words: 'open the drawer, or close it' },
     { name: 'sheet', words: 'show a sheet as its tab shows it', arg: 'sheet' },
@@ -1075,6 +1087,304 @@
     });
     return out;
   }
+  // ---- the work kept (ENGINE.38; docs/SPEC.md section 7.9) ----
+  // A run's unsaved work kept in this browser, so that a tab closed or crashed costs a person nothing: the host's keyframe
+  // and the frames since (web/host.js, keptWork), written at most once a second while the run moves and at once as the
+  // tab hides or goes, a record a run under the page's path, at most eight a page, the oldest dropped and said. Asked
+  // about and never restored silently: the newest when the page opens, a cartridge's newest when it loads, on the line
+  // under the bar. One writer a run: a run's lock held for its tab's life, so that a run another tab holds is neither
+  // offered nor restored here.
+  var WORK_FORMAT = 1, WORK_RUNS = 8;
+  // The store, the browser's database for pages, and its Web Locks: the one place the page names either
+  // (tools/check_web_offline.ps1). Null where either is missing or refused, an old browser's, so that nothing is kept.
+  function workStore(name) {
+    try {
+      var db = window.indexedDB, locks = navigator.locks;
+      return db && locks && typeof locks.request === 'function' && typeof locks.query === 'function' ? new WorkDb(db, locks, name || 'alonzo-work') : null;
+    } catch (e) { return null; }
+  }
+  // The store's two tables, work and keyframes, a run's record in each under the page's path and its run, both written
+  // in one transaction so that a run's frames and their keyframe stand or fall together. Every call answers by its
+  // callback, err first; a store that refuses answers its error, which the keeper says once.
+  function WorkDb(db, locks, name) { this.idb = db; this.locks = locks; this.name = name; this.db = null; this.waiting = null; }
+  function workKey(page, run) { return page + '\u0000' + run; }
+  function workLock(page, run) { return 'alonzo-work ' + page + ' ' + run; }
+  function once(cb) { var done = false; return function (a, b) { if (!done) { done = true; cb(a, b); } }; }
+  WorkDb.prototype._open = function (cb) {
+    var self = this, q;
+    if (this.db) { cb(null, this.db); return; }
+    if (this.waiting) { this.waiting.push(cb); return; }
+    this.waiting = [cb];
+    function done(err, db) { var w = self.waiting; self.waiting = null; self.db = db || null; for (var i = 0; i < w.length; i++) w[i](err, db); }
+    try { q = this.idb.open(this.name, 1); } catch (e) { done(e); return; }
+    q.onupgradeneeded = function () { var db = q.result; ['work', 'keyframes'].forEach(function (n) { if (!db.objectStoreNames.contains(n)) db.createObjectStore(n); }); };
+    q.onsuccess = function () { var db = q.result; db.onversionchange = function () { db.close(); self.db = null; }; done(null, db); };
+    q.onerror = function () { done(q.error || new Error('the store refused to open')); };
+    q.onblocked = function () { done(new Error('the store is held by an older page')); };
+  };
+  WorkDb.prototype._read = function (table, how, cb) {
+    cb = once(cb);
+    this._open(function (err, db) {
+      if (err) { cb(err); return; }
+      try {
+        var q = how(db.transaction(table, 'readonly').objectStore(table));
+        q.onsuccess = function () { cb(null, q.result); };
+        q.onerror = function () { cb(q.error || new Error('the store refused a read')); };
+      } catch (e) { cb(e); }
+    });
+  };
+  WorkDb.prototype._write = function (how, cb) {
+    cb = once(cb);
+    this._open(function (err, db) {
+      if (err) { cb(err); return; }
+      try {
+        var tx = db.transaction(['work', 'keyframes'], 'readwrite');
+        how(tx.objectStore('work'), tx.objectStore('keyframes'));
+        tx.oncomplete = function () { cb(null); };
+        tx.onerror = tx.onabort = function () { cb(tx.error || new Error('the store refused a write')); };
+      } catch (e) { cb(e); }
+    });
+  };
+  WorkDb.prototype.all = function (page, cb) {
+    this._read('work', function (t) { return t.getAll(IDBKeyRange.bound(workKey(page, ''), workKey(page, '\uffff'))); }, function (err, list) { cb(err, list || []); });
+  };
+  WorkDb.prototype.keyframe = function (page, run, cb) {
+    this._read('keyframes', function (t) { return t.get(workKey(page, run)); }, function (err, k) { cb(err, k || null); });
+  };
+  WorkDb.prototype.put = function (page, work, keyframe, cb) {
+    var k = workKey(page, work.run);
+    this._write(function (w, kf) { w.put(work, k); if (keyframe) kf.put(keyframe, k); }, cb);
+  };
+  WorkDb.prototype.drop = function (page, run, cb) {
+    var k = workKey(page, run);
+    this._write(function (w, kf) { w['delete'](k); kf['delete'](k); }, cb);
+  };
+  // The locks held by every tab of the origin, by name; and a lock taken for as long as the tab lives or until let go,
+  // answered with the function that lets it go, or null where another tab holds it.
+  WorkDb.prototype.held = function (cb) {
+    cb = once(cb);
+    try { this.locks.query().then(function (s) { cb(null, ((s && s.held) || []).map(function (l) { return l.name; })); }, function (e) { cb(e); }); } catch (e) { cb(e); }
+  };
+  WorkDb.prototype.hold = function (name, cb) {
+    cb = once(cb);
+    try {
+      this.locks.request(name, { ifAvailable: true }, function (lock) {
+        if (!lock) { cb(null, null); return null; }
+        return new Promise(function (resolve) { cb(null, function () { resolve(); }); });
+      }).then(null, function (e) { cb(e); });
+    } catch (e) { cb(e); }
+  };
+  // A record's words on the line: the cartridge, the frame and when, and why it cannot be restored here where it cannot.
+  function workStale(w) {
+    if (!w || typeof w !== 'object') return 'it is no record this page wrote';
+    if (w.format !== WORK_FORMAT) return 'it was kept in the store\'s format ' + w.format + ', and this page reads format ' + WORK_FORMAT;
+    if (typeof w.pageSpec === 'number' && w.pageSpec > HOST.SPEC) return 'it was kept by a page of version ' + w.pageSpec + ', and this page implements versions 1 to ' + HOST.SPEC;
+    return '';
+  }
+  function workOn(w) { return w.name === 'empty' ? 'the empty sheet' : (w.title || w.name || 'a cartridge'); }
+  function workWhen(t, now) {
+    var d = new Date(t), time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return d.toDateString() === new Date(now).toDateString() ? 'at ' + time : 'on ' + d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' at ' + time;
+  }
+  function workWords(w, now) {
+    var stale = workStale(w);
+    return 'Unsaved work on ' + workOn(w) + ', frame ' + thousands(w.frame || 0) + ', kept ' + workWhen(w.when, now) + '.' + (stale ? ' It cannot be restored here: ' + stale + '.' : '');
+  }
+  var WORK_FROM_FILE = 'This page runs from a file, so Autosave is off: any page opened from a file on this machine can read what the browser keeps for files. Turn on Autosave to keep unsaved work in this browser anyway; Save keeps it in a file of yours.';
+  // The keeper: a host's work written to a store, the store's records offered, restored and discarded. o: { page, host,
+  // on, choice ('on', 'off' or null), now(), newRun(), module(), show(kind, text), say(text), restored(text, record) }.
+  // store null: nothing kept, said once.
+  function WorkKeeper(store, o) {
+    this.store = store; this.o = o; this.host = o.host; this.on = !!o.on; this.choice = o.choice === undefined ? null : o.choice;
+    this.run = null; this.since = null; this.written = false; this.kfWritten = null; this.release = null; this.restoring = null;
+    this.offer = null; this.scope = null; this.opened = false; this.noticeShown = false; this.noticeUp = false;
+    this.writing = false; this.again = false; this.refused = !store;
+    this.c = { writes: 0, keyframes: 0, drops: 0, restores: 0, refusals: 0, offers: 0, capped: 0, notices: 0 };
+  }
+  WorkKeeper.prototype._say = function (t) { if (this.o.say) this.o.say(t); };
+  WorkKeeper.prototype._failed = function (err) {
+    if (this.refused) return;
+    this.refused = true; this.c.refusals++; this.writing = false;
+    if (this.release) { this.release(); this.release = null; }
+    this._say('This browser keeps no unsaved work for this page: its store refused (' + (err && err.message ? err.message : String(err)) + '), so a tab closed loses the work since the last save; Save keeps it in a file of yours.');
+    this.offer = null; this._show();
+  };
+  WorkKeeper.prototype.promise = function () {
+    var head = 'Nothing you type leaves this machine. ';
+    if (this.on && !this.refused) return head + 'Unsaved work stays in this browser until you save or discard it.';
+    if (this.on) return head + 'This browser keeps nothing for this page, its store refused, so unsaved work is lost if the tab closes; Save keeps it in a file of yours.';
+    if (this.choice === 'off') return head + 'Autosave is off, as you chose: Turn on Autosave keeps unsaved work in this browser again, and Save keeps it in a file of yours.';
+    return head + WORK_FROM_FILE;
+  };
+  // A load: a run of its own, its record looked for when the page opens (any cartridge's newest) and at every load after
+  // (the loaded cartridge's newest); a restore's own load is its run going on.
+  WorkKeeper.prototype.loaded = function () {
+    if (this.restoring !== null) return;
+    if (this.release) { this.release(); this.release = null; }
+    this.run = this.o.newRun(); this.since = null; this.written = false; this.kfWritten = null; this.writing = false; this.again = false;
+    this.scope = this.opened ? this.host.cartName() : null; this.opened = true;
+    this._lookup();
+  };
+  WorkKeeper.prototype._lookup = function () {
+    var self = this, page = this.o.page, scope = this.scope;
+    if (this.refused) { this.offer = null; this._show(); return; }
+    this.store.all(page, function (err, list) {
+      if (err) { self._failed(err); return; }
+      self.store.held(function (err2, held) {
+        held = err2 || !held ? [] : held;
+        var c = list.filter(function (w) { return w && w.run !== self.run && held.indexOf(workLock(page, w.run)) < 0 && (scope === null || w.name === scope); });
+        c.sort(function (a, b) { return (b.when || 0) - (a.when || 0); });
+        self.offer = c[0] || null;
+        if (self.offer) self.c.offers++;
+        self._show();
+      });
+    });
+  };
+  WorkKeeper.prototype._show = function () {
+    if (!this.o.show) return;
+    if (this.offer) this.o.show('offer', workWords(this.offer, this.o.now()));
+    else if (this.noticeUp) this.o.show('notice', WORK_FROM_FILE);
+    else this.o.show(null, '');
+  };
+  // The run's work written (decision 3): nothing of a run no person acted in, and a record written dropped when a save
+  // leaves nothing unsaved; a run's first write takes its lock and makes room among the page's eight.
+  WorkKeeper.prototype.tick = function () {
+    if (this.refused || this.restoring !== null || this.run === null) return;
+    if (this.writing) { this.again = true; return; }
+    if (!this.on) {
+      if (this.choice === null && !this.noticeShown && this.host.keptActed()) { this.noticeShown = true; this.noticeUp = true; this.c.notices++; this._show(); }
+      return;
+    }
+    var w = this.host.keptWork(this.since);
+    if (!w) return;
+    var self = this, page = this.o.page, run = this.run;
+    if (!w.acted) {
+      this.since = w.version;
+      if (this.written) this._drop(run);
+      return;
+    }
+    if (w.keyframe === null && this.kfWritten !== w.kf) { this.since = null; this.tick(); return; }   // the store lacks the keyframe: asked for whole
+    var rec = { format: WORK_FORMAT, pageSpec: HOST.SPEC, page: page, run: run, name: w.name, title: w.title, file: w.file, when: this.o.now(),
+                kf: w.kf, opens: w.opens, frame: w.frame, seed: w.seed, frames: w.frames, module: this.o.module ? this.o.module() : '' };
+    var kf = w.keyframe !== null && this.kfWritten !== w.kf ? { format: WORK_FORMAT, page: page, run: run, kf: w.kf, text: w.keyframe } : null;
+    function write() {
+      self.writing = true;
+      self.store.put(page, rec, kf, function (err) {
+        self.writing = false;
+        if (err) { self.since = null; self.kfWritten = null; self._failed(err); return; }
+        if (self.run !== run) return;   // a load came while it was written: the record stands under its own run
+        self.written = true; self.since = w.version; self.c.writes++;
+        if (kf) { self.kfWritten = w.kf; self.c.keyframes++; }
+        if (self.again) { self.again = false; self.tick(); }
+      });
+    }
+    if (this.written || this.release) { write(); return; }
+    this.writing = true;
+    this.store.hold(workLock(page, run), function (err, release) {
+      if (err || !release) { self._failed(err || new Error('the run\'s lock is held by another tab')); return; }
+      if (self.run !== run) { release(); self.writing = false; return; }
+      self.release = release;
+      self._room(function () { write(); });
+    });
+  };
+  // Room for a run among the page's eight: the oldest record no other tab holds dropped, and said.
+  WorkKeeper.prototype._room = function (then) {
+    var self = this, page = this.o.page;
+    this.store.all(page, function (err, list) {
+      if (err) { then(); return; }
+      self.store.held(function (err2, held) {
+        held = err2 || !held ? [] : held;
+        var others = list.filter(function (w) { return w && w.run !== self.run; }), over = others.length - (WORK_RUNS - 1);
+        if (over <= 0) { then(); return; }
+        var free = others.filter(function (w) { return held.indexOf(workLock(page, w.run)) < 0; }).sort(function (a, b) { return (a.when || 0) - (b.when || 0); }).slice(0, over);
+        var left = free.length;
+        if (!left) { then(); return; }
+        free.forEach(function (w) {
+          self.store.drop(page, w.run, function () {
+            self.c.capped++;
+            self._say('This browser keeps eight runs\' unsaved work for this page: the oldest, on ' + workOn(w) + ', frame ' + thousands(w.frame || 0) + ', kept ' + workWhen(w.when, self.o.now()) + ', was dropped.');
+            if (self.offer && self.offer.run === w.run) { self.offer = null; self._lookup(); }
+            if (--left === 0) then();
+          });
+        });
+      });
+    });
+  };
+  WorkKeeper.prototype._drop = function (run) {
+    var self = this;
+    this.store.drop(this.o.page, run, function (err) {
+      if (err) { self._failed(err); return; }
+      self.c.drops++;
+      if (run === self.run) { self.written = false; self.kfWritten = null; }
+    });
+  };
+  // The tab hides or goes (decision 3): a keyframe at rest where a person acted, then the work written at once.
+  WorkKeeper.prototype.hide = function () {
+    if (this.refused || !this.on || this.run === null || this.restoring !== null) return;
+    this.host.keyframeNow();
+    this.tick();
+  };
+  // A save written to a file of the person's (decision 6): the host told, and the record written again or dropped.
+  WorkKeeper.prototype.saved = function () { if (this.host.keepSaved()) this.tick(); };
+  // The line's Restore (decision 6): the record's lock taken, its keyframe read and held to its frames, the host's restore
+  // over it, then a keyframe at the frame restored, so that the cartridge's box and Load hold the work as it stands.
+  WorkKeeper.prototype.restoreOffer = function () {
+    var w = this.offer, self = this, page = this.o.page;
+    if (!w) { this._say('There is no unsaved work on the line to restore.'); return false; }
+    var stale = workStale(w);
+    if (stale) { this._say('The unsaved work on ' + workOn(w) + ' was not restored: ' + stale + '; it stays in this browser for that page, and Discard removes it.'); return false; }
+    if (this.refused) return false;
+    this.store.hold(workLock(page, w.run), function (err, release) {
+      if (err) { self._failed(err); return; }
+      if (!release) { self._say('The unsaved work on ' + workOn(w) + ' is open in another tab of this page, which keeps it; close that tab to restore it here.'); self._lookup(); return; }
+      self.store.keyframe(page, w.run, function (err2, k) {
+        if (err2) { release(); self._failed(err2); return; }
+        var torn = !k ? 'its keyframe is missing from this browser\'s store' : (k.kf !== w.kf ? 'its frames follow keyframe ' + w.kf + ', and the store holds keyframe ' + k.kf : '');
+        if (torn) { release(); self._say('The unsaved work on ' + workOn(w) + ' was not restored: ' + torn + '; Discard removes it.'); return; }
+        var mine = self.o.module ? self.o.module() : '', other = w.module && mine && w.module !== mine;
+        if (self.release) { self.release(); self.release = null; }
+        self.restoring = w.run;
+        var r;
+        try { r = self.host.restore({ keyframe: k.text, frames: w.frames, seed: w.seed, file: w.file, kf: w.kf }); } finally { self.restoring = null; }
+        if (!r || !r.ok) { release(); self.loaded(); return; }   // the host said why; what it holds is a run of its own
+        self.c.restores++;
+        self.run = w.run; self.release = release; self.written = true; self.kfWritten = w.kf; self.since = null;
+        self.offer = null; self.scope = self.host.cartName();
+        if (other) self._say('The unsaved work on ' + workOn(w) + ' was kept by another build of this page\'s engine, and its frames were played again on this one.');
+        self.host.keyframeNow();
+        var now = self.host.keptWork(null);
+        if (self.o.restored) self.o.restored(now ? now.keyframe : k.text, w);
+        self.tick();
+        self._show();
+      });
+    });
+    return true;
+  };
+  WorkKeeper.prototype.discardOffer = function () {
+    var w = this.offer, self = this;
+    if (!w) { this._say('There is no unsaved work on the line to discard.'); return false; }
+    if (this.refused) return false;
+    this.store.drop(this.o.page, w.run, function (err) {
+      if (err) { self._failed(err); return; }
+      self.c.drops++;
+      self._say('Discarded the unsaved work on ' + workOn(w) + ', frame ' + thousands(w.frame || 0) + ', from this browser.');
+      self.offer = null;
+      self._lookup();
+    });
+    return true;
+  };
+  // Autosave turned on, or kept off (decision 9, its words the owner's at the hand test): the person's word, which the page
+  // keeps beside the keymap.
+  WorkKeeper.prototype.setOn = function (on) {
+    this.on = !!on; this.choice = on ? 'on' : 'off'; this.noticeUp = false;
+    if (on) { this._say(this.refused ? this.promise() : 'Autosave is on: unsaved work is kept in this browser until you save or discard it.'); this.since = null; this.tick(); }
+    else {
+      if (this.written && !this.refused) this._drop(this.run);
+      if (this.release) { this.release(); this.release = null; }
+      this._say('Autosave is off: no unsaved work is kept in this browser' + (this.written ? ', and this run\'s was discarded' : '') + '; Save keeps your work in a file of yours.');
+    }
+    this._show();
+  };
   // How well a text matches a name or words, both in lower case: the whole of it, from its start, from a word's start,
   // inside it, or its letters in order; 0 for none.
   function matchScore(q, s) {
@@ -1649,6 +1959,7 @@
       personFile(e.text, e.file, e.by === 'person' && !e.waited).then(function (how) {
         var where = how === 'picked' ? 'where you chose' : (how === 'downloaded' ? 'into your downloads' : null);
         sayBar(where ? 'Saved frame ' + thousands(e.frame) + ' as ' + e.file + ', ' + where + '.' : 'The save was not written: the picker was closed.');
+        if (where) keeper.saved();   // the work saved is unsaved no longer (ENGINE.38)
       });
     });
     document.getElementById('eng-save').addEventListener('click', function () {
@@ -1798,6 +2109,10 @@
       load: function () { document.getElementById('eng-load').click(); },
       save: function () { document.getElementById('eng-save').click(); },
       open: function () { document.getElementById('eng-open').click(); },
+      restore: function () { keeper.restoreOffer(); },
+      discard: function () { keeper.discardOffer(); },
+      'autosave-on': function () { keepWork(true); },
+      'autosave-off': function () { keepWork(false); },
       'full-screen': function () { fullBtn.click(); },
       drawer: function () { drawerBtn.click(); },
       sheet: function (name) { showSheetIn(sheetsViewport(), name); },
@@ -1853,6 +2168,65 @@
     // read at the load through the same reader, a refused one said and the page's own holding.
     function browserStore() { try { return window.localStorage; } catch (e) { return null; } }
     var store = new KeyStore(browserStore(), 'alonzo-keys'), keymap = readKeymap(KEYMAP_DEFAULTS, COMMANDS), keptSaid = '';
+    // The work kept (ENGINE.38): on by default where the page is hosted, and from a file only at the person's word, kept
+    // beside the keymap, since any page opened from a file on this machine can read what the browser keeps for files
+    // (measured in Chrome and Firefox, decision 9).
+    var choiceStore = new KeyStore(browserStore(), 'alonzo-autosave'), choice = choiceStore.read(), fromFile = location.protocol === 'file:';
+    choice = choice === 'on' || choice === 'off' ? choice : null;
+    var keptEl = document.getElementById('eng-kept'), keptText = document.getElementById('eng-kept-text'), promiseEl = document.getElementById('eng-promise');
+    var keptButtons = { restore: document.getElementById('eng-restore'), discard: document.getElementById('eng-discard'), on: document.getElementById('eng-keep-on'), off: document.getElementById('eng-keep-off') };
+    var moduleId = null;
+    function moduleDigest() {
+      if (moduleId === null) { var w = builtModule(); moduleId = w ? HOST.sha256(bytesOfBase64(w)) : 'the fake module'; }
+      return moduleId;
+    }
+    var keeper = new WorkKeeper(workStore(), {
+      page: location.pathname, host: host, on: choice === 'on' || (choice === null && !fromFile), choice: choice,
+      now: function () { return Date.now(); },
+      newRun: function () { return Date.now().toString(36) + '-' + Math.floor(Math.random() * 2176782336).toString(36); },
+      module: moduleDigest,
+      say: function (t) { sayBar(t); },
+      show: function (kind, text) {
+        keptEl.hidden = !kind; keptText.textContent = text || '';
+        keptButtons.restore.hidden = keptButtons.discard.hidden = kind !== 'offer';
+        keptButtons.on.hidden = keptButtons.off.hidden = kind !== 'notice';
+        promiseEl.textContent = keeper ? keeper.promise() : '';
+      },
+      restored: function (text, w) {
+        opened = { name: '', title: 'Your work on ' + workOn(w) + ', restored', file: w.file || 'kept.vla', path: 'your unsaved work, restored from this browser', text: text,
+                   notes: 'Your unsaved work on ' + workOn(w) + ', restored from this browser at the frame it was kept at. Load loads it again from there; Save keeps it in a file of yours.' };
+        var opt = pickEl.querySelector('option[value="' + OPENED + '"]');
+        if (!opt) { opt = document.createElement('option'); opt.value = OPENED; pickEl.appendChild(opt); }
+        opt.textContent = opened.title;
+        pickEl.value = OPENED;
+        showTexts(opened);
+        offerReplay(opened);
+        // the frame line said at the frame restored, which no stop event brings, the restore's frames played while no
+        // loop ran; and the drawer's sheet drawn there
+        var at = host.counters().frame;
+        frameShort.textContent = 'Frame ' + thousands(at);
+        frameEl.className = 'frame-line';
+        frameEl.textContent = 'Frame ' + thousands(at) + ': your unsaved work, restored at the frame it was kept at.';
+        shownAt = at; shownTime = performance.now(); refreshViewer();
+        if (host.cart && host.cart.rate === 0) host.start();   // at rate 0 the loop waits for acts, as a load's does
+        focusScreen();
+      }
+    });
+    promiseEl.textContent = keeper.promise();
+    function keepWork(on) {
+      choice = on ? 'on' : 'off';
+      choiceStore.keep(choice, null);
+      keeper.setOn(on);
+    }
+    host.on('load', function () { keeper.loaded(); });
+    keptButtons.restore.addEventListener('click', function () { keeper.restoreOffer(); });
+    keptButtons.discard.addEventListener('click', function () { keeper.discardOffer(); });
+    keptButtons.on.addEventListener('click', function () { keepWork(true); });
+    keptButtons.off.addEventListener('click', function () { keepWork(false); });
+    // written at most once a second while the page shows, and at once as it hides or goes (decision 3)
+    setInterval(function () { if (!document.hidden) keeper.tick(); }, 1000);
+    document.addEventListener('visibilitychange', function () { if (document.hidden) keeper.hide(); });
+    window.addEventListener('pagehide', function () { keeper.hide(); });
     (function () {
       var kept = store.read();
       if (kept === null) return;
@@ -2137,7 +2511,9 @@
     var bytes = bytesOfBase64(wasm);
     HOST.instantiate(bytes).then(function (x) {
       var a = host.attach(x);
-      if (a.ok) { moduleEl.textContent = 'The engine module, ' + a.version + '.'; loadCartridge(); }
+      // the Screen given the keys as the page opens, a tab duplicated or reloaded among them, so that typing goes into the
+      // grid without a click (ENGINE.38's hand test)
+      if (a.ok) { moduleEl.textContent = 'The engine module, ' + a.version + '.'; loadCartridge(); focusScreen(); }
       else useFake('The engine module built into this page (' + bytes.length + ' bytes) was refused: ' + a.sentence);
     }, function (e) { useFake('The engine module built into this page did not instantiate: ' + (e && e.message ? e.message : e) + '.'); });
   }
@@ -8098,6 +8474,233 @@
     for (var key in k) if (Object.prototype.hasOwnProperty.call(k, key)) parts.push(key + ' ' + k[key]);
     return 'case ' + name + ': ' + parts.join(', ') + ': ' + (problems.length ? 'FAIL: ' + problems.slice(0, 6).join('; ') + (problems.length > 6 ? '; and ' + (problems.length - 6) + ' more' : '') : 'OK');
   }
+  // ---- the work kept (ENGINE.38): the closure law over a double of the store ----
+  // The store's double: one browser's tables and locks shared by its tabs, each tab a double over them; a value copied in
+  // and out, as the browser's store clones one; a tab closed lets its locks go; refuse, every call refused.
+  function WorkDouble(shared, tab) { this.s = shared; this.tab = tab; this.refuse = false; this.calls = 0; }
+  function workCopy(v) { return v === undefined || v === null ? null : JSON.parse(JSON.stringify(v)); }
+  function workWorld(from) { return from ? { work: workCopy(from.work), keyframes: workCopy(from.keyframes), locks: {} } : { work: {}, keyframes: {}, locks: {} }; }
+  WorkDouble.prototype._no = function (cb) { this.calls++; if (this.refuse) { cb(new Error('the double refuses')); return true; } return false; };
+  WorkDouble.prototype.all = function (page, cb) {
+    if (this._no(cb)) return;
+    var out = [], p = page + '\u0000';
+    for (var k in this.s.work) if (k.indexOf(p) === 0) out.push(workCopy(this.s.work[k]));
+    cb(null, out);
+  };
+  WorkDouble.prototype.keyframe = function (page, run, cb) { if (this._no(cb)) return; cb(null, workCopy(this.s.keyframes[workKey(page, run)])); };
+  WorkDouble.prototype.put = function (page, work, keyframe, cb) {
+    if (this._no(cb)) return;
+    var k = workKey(page, work.run);
+    this.s.work[k] = workCopy(work);
+    if (keyframe) this.s.keyframes[k] = workCopy(keyframe);
+    cb(null);
+  };
+  WorkDouble.prototype.drop = function (page, run, cb) { if (this._no(cb)) return; var k = workKey(page, run); delete this.s.work[k]; delete this.s.keyframes[k]; cb(null); };
+  WorkDouble.prototype.held = function (cb) { if (this._no(cb)) return; cb(null, Object.keys(this.s.locks)); };
+  WorkDouble.prototype.hold = function (name, cb) {
+    if (this._no(cb)) return;
+    var s = this.s, tab = this.tab;
+    if (s.locks[name]) { cb(null, null); return; }
+    s.locks[name] = tab;
+    cb(null, function () { if (s.locks[name] === tab) delete s.locks[name]; });
+  };
+  WorkDouble.prototype.close = function () { for (var n in this.s.locks) if (this.s.locks[n] === this.tab) delete this.s.locks[n]; };
+  function caseKeep() {
+    var P = [], k = { cartridges: 0, frames: 0, restores: 0, held: 0, keyframes: 0, writes: 0, session: 0, watched: 0, saved: 0, discarded: 0, tabs: 0, stale: 0, torn: 0, capped: 0, refused: 0, store: 0 };
+    var wasm = builtModule(), notes = [];
+    if (!wasm) return { counters: k, problems: P };
+    // one instance of the module for every host of the case, each grid a handle of its own and unloaded when done, since a
+    // page makes a few instances and a browser refuses a hundred (measured: out of memory at the first run)
+    var EX = HOST.instantiateSync(bytesOfBase64(wasm)), FOREVER = { used: 0, limit: 0x7fffffff, deadline: Infinity }, runs = 0, clock = 0, PAGE = '/oracle';
+    function step(h) { h._begin(); if (h.inFrame) h._continue(FOREVER); }
+    function host(every) { var h = new HOST({ drive: 'manual', budget: 0, now: frozen, keepEvery: every }); return h.attach(EX).ok ? h : null; }
+    function keeper(h, D, on) {
+      var said = [], K = new WorkKeeper(D, { page: PAGE, host: h, on: on !== false, choice: null, now: function () { return ++clock; }, newRun: function () { return 'r' + (++runs); },
+                                            module: function () { return 'the oracle\'s'; }, say: function (t) { said.push(t); }, show: function () {} });
+      K.said = said;
+      h.on('load', function () { K.loaded(); });
+      return K;
+    }
+    function fillsOf(h) {
+      var list = h._sheets(), named = {}, out = [], i;
+      for (i = 0; i < list.length; i++) named[list[i].name] = true;
+      for (i = 0; i < list.length; i++) {
+        var n = list[i].name;
+        if (/\.last$/.test(n) && named[n.slice(0, -5)]) continue;
+        var t = h.m.texts('alonzo_view', [h.handle], ['fills', n, '']).text;
+        out.push(t.split('\n').filter(function (l) { return l.indexOf('(cell "File" "B1" ') !== 0 && l.indexOf('(cell "File" "B2" ') !== 0; }).join('\n'));
+      }
+      return out.join('\n');
+    }
+    function records(world) { var n = 0; for (var x in world.work) if (Object.prototype.hasOwnProperty.call(world.work, x)) n++; return n; }
+    // The tab dies at a frame at rest: a fresh page over what the browser kept, its locks gone with the tab, opens on the
+    // empty sheet, is offered the newest record, restores it, and stands where the run stood, every sheet's fills.
+    function closure(name, A, KA, world) {
+      KA.tick();
+      var at = A.counters().frame, W = workWorld(world), DB = new WorkDouble(W, 'b'), B = host(37), KB = B && keeper(B, DB);
+      if (!B || !B.load(EMPTY.text, EMPTY.file).ok) { P.push(name + ': frame ' + at + ': a fresh page did not open'); return; }
+      if (!KB.offer || KB.offer.run !== KA.run) { P.push(name + ': frame ' + at + ': the page opened offers ' + (KB.offer ? 'the run ' + KB.offer.run + ', not the one kept last, ' + KA.run : 'nothing') + ' (' + records(W) + ' kept)'); return; }
+      KB.restoreOffer();
+      k.restores++;
+      if (B.counters().restores !== 1) { P.push(name + ': frame ' + at + ': the offer was not restored: ' + KB.said.concat(B.sentences().slice(-1).map(function (x) { return x.text; })).join(' | ')); return; }
+      if (fillsOf(B) === fillsOf(A)) k.held++;
+      else P.push(name + ': frame ' + at + ': the work restored is not the run there, restored at frame ' + B.counters().frame);
+      if (KB.run !== KA.run) P.push(name + ': frame ' + at + ': the restored run is ' + KB.run + ', and it goes on as ' + KA.run);
+      B.unload();
+    }
+    // Each committed replay, played frame by frame at a keyframe every 37 frames; the tab dies at frame 1, every 64th frame
+    // at rest and the last.
+    for (var cn in CARTRIDGES) {
+      if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn) || !CARTRIDGES[cn].replayPath) continue;
+      var cart = CARTRIDGES[cn], world = workWorld(), DA = new WorkDouble(world, 'a'), A = host(37), KA = A && keeper(A, DA);
+      if (!A || !A.load(cart.text, cart.file).ok) { P.push(cn + ': a fresh host did not load ' + cart.file); continue; }
+      if (!A.play(cart.replay).ok) { P.push(cn + ': its committed replay did not play'); continue; }
+      k.cartridges++;
+      var j = 0;
+      while (A.player) {
+        step(A); j++; k.frames++;
+        if (A.settling || A.inFrame) continue;
+        KA.tick();
+        if (j === 1 || j % 64 === 0 || !A.player) closure(cn, A, KA, world);
+      }
+      k.keyframes += A.counters().keyframes; k.writes += KA.c.writes;
+      A.unload();
+    }
+    // A live run: Sand drawn with the pointer, pressed and let go, a person's edit between, its rows the recorder's live
+    // ones against its record of the Input sheet; the tab dies every 50 frames.
+    if (CARTRIDGES.sand) {
+      var lw = workWorld(), LD = new WorkDouble(lw, 'a'), L = host(37), KL = L && keeper(L, LD);
+      if (!L || !L.load(CARTRIDGES.sand.text, CARTRIDGES.sand.file).ok) P.push('live: Sand did not load');
+      else {
+        for (var f = 1; f <= 400; f++) {
+          if (f % 80 === 20) { L.pointerAt(8 + (f % 23), 6); L.pointerButtons(1, 0, 0); }
+          if (f % 80 > 20 && f % 80 < 45) L.pointerAt(8 + (f % 23), 6 + (f % 7));
+          if (f % 80 === 45) L.pointerButtons(0, 0, 0);
+          if (f === 210) L.edit('(cell "Clock" "B2" 30)');
+          step(L);
+          if (L.settling || L.inFrame) continue;
+          KL.tick();
+          if (f % 50 === 0) { closure('session', L, KL, lw); k.session++; }
+        }
+        k.keyframes += L.counters().keyframes;
+        L.unload();
+      }
+    }
+    // A run no person acted in keeps nothing: Kairos, its frames stepped and no key, press or edit.
+    if (CARTRIDGES.kairos) {
+      var ww = workWorld(), WD = new WorkDouble(ww, 'a'), Wh = host(37), KW = Wh && keeper(Wh, WD);
+      if (Wh && Wh.load(CARTRIDGES.kairos.text, CARTRIDGES.kairos.file).ok) {
+        for (var g = 0; g < 120; g++) { step(Wh); KW.tick(); }
+        KW.hide();
+        if (records(ww) === 0 && !Wh.keptActed()) k.watched++; else P.push('watched: a run no person acted in kept ' + records(ww) + ' record(s)');
+        Wh.unload();
+      }
+    }
+    // On the empty sheet, at rate 0, where an edit is an act and a frame.
+    function sheet(world, tab, on) {
+      var D = new WorkDouble(world, tab), h = host(0), K = h && keeper(h, D, on);
+      if (!h || !h.load(EMPTY.text, EMPTY.file).ok) return null;
+      return { h: h, K: K, D: D };
+    }
+    // A save written: nothing unsaved, the record dropped; an act after it keeps the work again.
+    var sw = workWorld(), sv = sheet(sw, 'a');
+    if (sv) {
+      sv.h.edit('(formula "Screen" "A1" "=6*7")'); sv.K.tick();
+      var hadOne = records(sw) === 1;
+      sv.h.save('person'); sv.K.saved();
+      var none = records(sw) === 0;
+      sv.h.edit('(cell "Screen" "B1" 5)'); sv.K.tick();
+      if (hadOne && none && records(sw) === 1) k.saved++; else P.push('saved: kept ' + hadOne + ', dropped at the save ' + none + ', kept again after an act ' + records(sw));
+    }
+    // Discard: the offer dropped from the store, the next one offered.
+    var dw = workWorld(), dv = sheet(dw, 'a');
+    if (dv) {
+      dv.h.edit('(formula "Screen" "A1" "=1+1")'); dv.K.tick(); dv.D.close();
+      var dB = sheet(workWorld(dw), 'b');
+      if (dB && dB.K.offer && dB.K.discardOffer() && records(dB.D.s) === 0 && dB.K.offer === null) k.discarded++; else P.push('discard: the offer was not discarded from the store');
+    }
+    // Two tabs: a run another tab holds is neither offered nor restored here.
+    var tw = workWorld(), t1 = sheet(tw, 'a');
+    if (t1) {
+      t1.h.edit('(cell "Screen" "A1" 1)'); t1.K.tick();
+      var t2 = sheet(tw, 'b');
+      if (t2 && t2.K.offer === null) k.tabs++; else P.push('tabs: a run another tab holds is offered');
+      if (t2) {
+        var rec = null; for (var tk in tw.work) rec = tw.work[tk];
+        t2.K.offer = workCopy(rec);
+        t2.K.restoreOffer();
+        if (t2.h.counters().restores === 0 && t2.K.said.some(function (x) { return x.indexOf('is open in another tab of this page') >= 0; })) k.tabs++;
+        else P.push('tabs: a run another tab holds was restored, or not refused by name: ' + t2.K.said.join(' | '));
+      }
+    }
+    // Stale and torn: a record of a later format, of a later page, and one whose keyframe is not its frames', each refused
+    // by name and left in the store.
+    function refusedAs(mutate, words, name) {
+      var w0 = workWorld(), a = sheet(w0, 'a');
+      if (!a) return;
+      a.h.edit('(cell "Screen" "A1" 2)'); a.K.tick(); a.D.close();
+      var w1 = workWorld(w0); mutate(w1);
+      var b2 = sheet(w1, 'b');
+      if (!b2 || !b2.K.offer) { P.push(name + ': nothing offered'); return; }
+      b2.K.restoreOffer();
+      if (b2.h.counters().restores === 0 && records(w1) === 1 && b2.K.said.some(function (x) { return x.indexOf(words) >= 0; })) k[name]++;
+      else P.push(name + ': restored, dropped, or refused otherwise: ' + b2.K.said.join(' | '));
+    }
+    refusedAs(function (w) { for (var x in w.work) w.work[x].format = WORK_FORMAT + 1; }, 'it was kept in the store\'s format ' + (WORK_FORMAT + 1), 'stale');
+    refusedAs(function (w) { for (var x in w.work) w.work[x].pageSpec = HOST.SPEC + 1; }, 'it was kept by a page of version ' + (HOST.SPEC + 1), 'stale');
+    refusedAs(function (w) { for (var x in w.keyframes) w.keyframes[x].kf += 1; }, 'its frames follow keyframe', 'torn');
+    // Eight runs a page: a ninth run's record drops the oldest, said.
+    var cw = workWorld(), cs = sheet(cw, 'a');
+    if (cs) {
+      for (var r9 = 0; r9 < 9; r9++) { if (r9) cs.h.load(EMPTY.text, EMPTY.file); cs.h.edit('(cell "Screen" "A1" ' + (r9 + 1) + ')'); cs.K.tick(); }
+      if (records(cw) === WORK_RUNS && cs.K.c.capped === 1 && !cw.work[workKey(PAGE, 'r' + (runs - 8))] && cs.K.said.some(function (x) { return x.indexOf('keeps eight runs\' unsaved work') >= 0; })) k.capped++;
+      else P.push('capped: nine runs left ' + records(cw) + ' records, ' + cs.K.c.capped + ' dropped');
+    }
+    // A refused store, a private window's: the run plays as it does with none, and it is said once.
+    var rw = workWorld(), rs = sheet(rw, 'a'), twin = host(0);
+    if (rs && twin && twin.load(EMPTY.text, EMPTY.file).ok) {
+      rs.D.refuse = true;
+      for (var e5 = 0; e5 < 5; e5++) { var row = '(cell "Screen" "A' + (e5 + 1) + '" ' + (e5 * 3) + ')'; rs.h.edit(row); twin.edit(row); rs.K.tick(); rs.K.hide(); }
+      var said = rs.K.said.filter(function (x) { return x.indexOf('This browser keeps no unsaved work for this page') === 0; }).length;
+      if (said === 1 && fillsOf(rs.h) === fillsOf(twin) && rs.h.counters().frame === twin.counters().frame) k.refused++;
+      else P.push('refused: said ' + said + ' time(s), the run ' + (fillsOf(rs.h) === fillsOf(twin) ? 'unchanged' : 'changed'));
+    }
+    // The browser's own store, where the page has one: a record and its keyframe written, read, held and dropped.
+    var real = workStore('alonzo-oracle');
+    if (!real) { notes.push('the browser gives this page no store, so the double alone was held'); return { counters: k, problems: P, notes: notes }; }
+    return new Promise(function (resolve) {
+      var page = '/oracle-' + Date.now(), recd = { format: WORK_FORMAT, pageSpec: HOST.SPEC, page: page, run: 'x', name: 'x', when: 1, kf: 1, frames: '(frame 2)\n' }, answered = false;
+      function done(r) { if (!answered) { answered = true; resolve(r); } }
+      setTimeout(function () { notes.push('the browser\'s store did not answer in 3 s of the page\'s clock'); done({ counters: k, problems: P, notes: notes }); }, 3000);
+      function fail(why) { P.push('store: ' + why); done({ counters: k, problems: P, notes: notes }); }
+      real.put(page, recd, { format: WORK_FORMAT, page: page, run: 'x', kf: 1, text: '(cartridge "x")' }, function (e1) {
+        if (e1) return fail('the write was refused: ' + e1);
+        real.all(page, function (e2, list) {
+          if (e2 || list.length !== 1 || list[0].frames !== recd.frames) return fail('the record was not read back');
+          real.keyframe(page, 'x', function (e3, kf) {
+            if (e3 || !kf || kf.kf !== 1) return fail('the keyframe was not read back');
+            real.hold(workLock(page, 'x'), function (e4, release) {
+              if (e4 || !release) return fail('its lock was not taken');
+              real.hold(workLock(page, 'x'), function (e5, again) {
+                if (again) return fail('its lock was taken twice');
+                real.held(function (e6, held) {
+                  if (e6 || held.indexOf(workLock(page, 'x')) < 0) return fail('the lock held is not listed');
+                  release();
+                  real.drop(page, 'x', function (e7) {
+                    real.all(page, function (e8, after) {
+                      if (e7 || e8 || after.length) return fail('the record was not dropped');
+                      k.store++;
+                      done({ counters: k, problems: P, notes: notes });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  }
   function runLoopOracle() {
     var out = [], dpr = window.devicePixelRatio || 1, ok = 0, R = HOST.RULES;
     // ?loop=1&cases=a,b: only the cases named run, in the list's order, so that a control's mutant page runs the case
@@ -8109,7 +8712,7 @@
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
-                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths], ['modes', caseModes], ['save', caseSave]];
+                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths], ['modes', caseModes], ['save', caseSave], ['keep', caseKeep]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -8118,7 +8721,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1, keep: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }
