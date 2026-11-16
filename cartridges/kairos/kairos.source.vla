@@ -57,8 +57,9 @@
 
 ; The library whose macros this source calls: sheets, labels and headers; on, cells and
 ; rules, each naming a sheet once over a run of its rows; rule; default-keys; picture;
-; camera; put, the Write sheet's row; palette-entry and looks-from, a Palette row and the
-; look map's walk, which this source's colors calls an entry at a time; audio; the verbs
+; camera; put, the Write sheet's row by its named pieces; palette-entry and look-entry, a
+; Palette row and one fill of a look map, which this source's colors calls an entry at a
+; time; audio; the verbs
 ; first-frame, pressed, count, hold, every and since, each piece an expression; and within
 ; and priority, the expressions a piece may hold (KIT.6).
 (include "../common.vla")
@@ -69,16 +70,9 @@
 
 (defmacro (colors & entries)
   "each entry a fill and its name: a Palette row and a look for the value its place gives, from 0"
-  (quasiquote (colors-from 0 (unquote entries))))
-
-(defmacro (colors-from index entries)
-  "colors' walk: a Palette row, then the entry's fill through the library's look map, an entry at a time from an index on"
-  (quote-if (null? entries)
-    (begin)
-    (begin
-      (palette-entry index ((&expand "#" (car (car entries))) (car (cdr (car entries)))))
-      (looks-from "Screen" index ((car (car entries))))
-      (colors-from (+expand index 1) (cdr entries)))))
+  (each-index (index entry entries 0)
+    (palette-entry index ((&expand "#" (car entry)) (car (cdr entry))))
+    (look-entry "Screen" index (car entry))))
 
 ; ---- the board, lying on its side or standing up -----------------------------------
 ; Everything that turns with the board: the Gate's rows, the Tower, the WIN picture, the
@@ -330,18 +324,16 @@
 (defmacro (writes orientation)
   "the Write sheet's two rows: a stop's run into the Tower, and the tower cleared once a result has been held"
   (on "Write"
-    (put                            ; a stop's run into the Tower, one range:
-      "A2"                          ;   the row of the Write sheet
-      "Tower"                       ;   the sheet it writes
-      (and (= State!B12 1) (> State!B17 0))   ; when: a stop, something stayed
-      (stop-run orientation)        ;   where: the run, at the level played
-      1)                            ;   what: a light that stayed
-    (put                            ; the tower cleared, once a result has been held:
-      "A3"                          ;   the row of the Write sheet
-      "Tower"                       ;   the sheet it writes
-      (and (= State!B1 4) (= State!B2 Levels!$K$4))   ; when: the result's hold just ended
-      (board-range orientation)     ;   where: the whole tower
-      0)))                          ;   what: no light
+    (put "A2"                       ; a stop's run into the Tower, one range:
+      (sheet "Tower")
+      (when (and (= State!B12 1) (> State!B17 0)))  ; a stop, something stayed
+      (address (stop-run orientation))  ; the run, at the level played
+      (value 1))                    ; a light that stayed
+    (put "A3"                       ; the tower cleared, once a result has been held:
+      (sheet "Tower")
+      (when (and (= State!B1 4) (= State!B2 Levels!$K$4)))  ; the result's hold just ended
+      (address (board-range orientation))  ; the whole tower
+      (value 0))))                  ; no light
 
 ; The board: its five parts, in the order their rows stand in the cartridge.
 

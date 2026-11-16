@@ -114,12 +114,11 @@
   "address"                         ;   its cell,
   "value")                          ;   and the value
 (on "Write"                         ; the sheet the row below writes
-  (put                              ; the one write, a left click's frame into the Tally:
-    "A2"                            ;   the row of the Write sheet, from its cell in column A
-    "Tally"                         ;   the sheet it writes
-    (edge Input!B13)                ;   when: a left click's rising edge, and in no other frame
-    "B20"                           ;   where: B20, the address as a text
-    Clock!B1))                      ;   what: the frame it came in
+  (put "A2"                         ; the one write, a left click's frame into the Tally, from A2:
+    (sheet "Tally")
+    (when (edge Input!B13))         ; a left click's rising edge, and in no other frame
+    (address "B20")                 ; B20, the address as a text
+    (value Clock!B1)))              ; the frame it came in
 
 ; ---- the Panel: the lamps, the layer under the cursor ------------------------------
 ; The lamps sit in columns I to AM, which the window shows wherever the wheel pans it;

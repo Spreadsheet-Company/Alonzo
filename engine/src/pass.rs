@@ -706,7 +706,11 @@ mod tests {
     /// `KIT.6`, `within` and `priority`, the expressions a piece may hold:
     /// a priority's else, a test that is a bare reference, no else
     /// answering `#N/A` as Excel's `IFS` does, an else alone, and both
-    /// inside a verb's piece.
+    /// inside a verb's piece. Since `KIT.6`'s second slice, the lists are
+    /// loops: `put` over its named pieces in either order, each piece left
+    /// out or unknown refused by name, a legend's number key holding no
+    /// character, and a run of cells and a picture's rows past the length a
+    /// walk's chain held.
     #[test]
     fn the_kit_s_verbs_write_the_rows_they_name() {
         let Some(library) = crate::repository::read("common.vla") else {
@@ -936,9 +940,11 @@ mod tests {
                 &[r#"(formula "Patch" "B8:C8" "=IF(beat=1,0,Patch.last!B8+1)")"#],
             ),
             // The Write sheet's row: its target, its address while a test
-            // holds, its value; an address a text, or a range's.
+            // holds, its value, each a piece named in the call (KIT.6's
+            // second slice, over the language's named pieces) and in any
+            // order; an address a text, or a range's.
             (
-                r#"(put "Write" "A2" "Tally" (edge Input!B13) "B20" Clock!B1)"#,
+                r#"(put "Write" "A2" (sheet "Tally") (when (edge Input!B13)) (address "B20") (value Clock!B1))"#,
                 &[
                     r#"(cell "Write" "A2" "Tally")"#,
                     r#"(formula "Write" "B2" "=IF(AND(Input!B13=1,Input.last!B13=0),\"B20\",\"\")")"#,
@@ -946,7 +952,7 @@ mod tests {
                 ],
             ),
             (
-                r#"(on "Write" (put "A3" "Tower" (= State!B1 4) "A1:O7" 0))"#,
+                r#"(on "Write" (put "A3" (value 0) (address "A1:O7") (when (= State!B1 4)) (sheet "Tower")))"#,
                 &[
                     r#"(cell "Write" "A3" "Tower")"#,
                     r#"(formula "Write" "B3" "=IF(State!B1=4,\"A1:O7\",\"\")")"#,
@@ -1013,10 +1019,12 @@ mod tests {
                 ],
             ),
             // A legend's every path: a dot's entry never read, a later entry,
-            // a number key, a text and a truth value, the first of two
-            // entries for one character.
+            // a digit's key, a text and a truth value, the first of two
+            // entries for one character. A key is a character, a text: the
+            // entry is found by its head as written (assoc-expand), so a
+            // number key, (7 true), holds no character.
             (
-                r#"(picture "S" "A1" (("." 5) ("W" "wall") (7 true) ("x" 1) ("x" 2)) ".W7x")"#,
+                r#"(picture "S" "A1" (("." 5) ("W" "wall") ("7" true) ("x" 1) ("x" 2)) ".W7x")"#,
                 &[
                     r#"(cell "S" "B1" "wall")"#,
                     r#"(cell "S" "C1" true)"#,
@@ -1040,6 +1048,10 @@ mod tests {
                     r#"(cell "S" "A1" 1)"#,
                     r#"(not-in-the-legend "S" "B1" "o")"#,
                 ],
+            ),
+            (
+                r#"(picture "S" "A1" ((7 true)) "7")"#,
+                &[r#"(not-in-the-legend "S" "A1" "7")"#],
             ),
             // A picture inside on, a $ top-left, and the grid's last cells.
             (
@@ -1069,6 +1081,33 @@ mod tests {
         assert_eq!(r.refusal.id, "vla-formula-expand-nested");
         assert_eq!(r.line, 8);
 
+        // put's pieces are the language's (VLA.9): one left out, and one put
+        // does not declare, are each refused by name at the caller's line.
+        let r = rows_of(r#"(put "Write" "A2" (sheet "Tally") (when 1) (address "B20"))"#)
+            .expect_err("a piece left out");
+        assert_eq!(r.refusal.id, "vla-macro-piece-missing");
+        assert_eq!(r.line, 8);
+        let r = rows_of(
+            r#"(put "Write" "A2" (sheet "Tally") (when 1) (address "B20") (value 1) (what 1))"#,
+        )
+        .expect_err("a piece put does not declare");
+        assert_eq!(r.refusal.id, "vla-macro-piece-unknown");
+        assert_eq!(r.line, 8);
+
+        // A list is a loop, one application and no chain (KIT.6's second
+        // slice): a run of cells and a picture's rows each go past the 2,499
+        // entries a walk's chain of 5,000 links held.
+        let entries: String = (1..=5_000).map(|r| format!(" (\"A{r}\" {r})")).collect();
+        let got = rows_of(&format!("(cells \"S\"{entries})"))
+            .unwrap_or_else(|r| panic!("5,000 cells: {} {}", r.refusal.id, r.refusal.text));
+        assert_eq!(got.len(), 5_000);
+        assert_eq!(got[4_999], r#"(cell "S" "A5000" 5000)"#);
+        let rows: String = (0..2_500).map(|_| " \"1\"").collect();
+        let got = rows_of(&format!("(picture \"S\" \"A1\" hex{rows})"))
+            .unwrap_or_else(|r| panic!("2,500 rows: {} {}", r.refusal.id, r.refusal.text));
+        assert_eq!(got.len(), 2_500);
+        assert_eq!(got[2_499], r#"(cell "S" "A2500" 1)"#);
+
         // A character no legend holds: the pass judges no row, and the load
         // refuses the first such row at its own line of the cartridge, the
         // banner on 1, the manifest on 2 to 7 and the picture's 1 on 8.
@@ -1089,9 +1128,10 @@ mod tests {
         );
 
         // A legend that is no list of entries is the pass's to refuse, at the
-        // call's line: the text "hex" is not the name hex.
+        // call's line: the text "hex" is not the name hex, and assoc-expand
+        // takes a list of entries.
         let r = rows_of(r#"(picture "S" "A1" "hex" "1")"#).expect_err("a text for a legend");
-        assert_eq!(r.refusal.id, "vla-car-expected-list");
+        assert_eq!(r.refusal.id, "vla-expand-expected-list");
         assert_eq!(r.line, 8);
 
         // The Screen's extent: a row as wide as the plane's 320 columns and a

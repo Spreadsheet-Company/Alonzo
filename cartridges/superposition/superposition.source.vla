@@ -256,8 +256,9 @@
 ; fill's first cell, a cell of its row's Probe, and its eight neighbors as that cell reads
 ; them, a neighbor off the sheet being the site itself, which never counts: a reading
 ; collapsing is no box, a site in superposition no reading of nothing, and a box no
-; reading of nothing. The eight are handed on to the macro that counts them, since a
-; macro's call is no argument of a primitive; a loop over them is KIT.6's second slice.
+; reading of nothing. The eight are handed on as one list to the macro that counts them,
+; since a loop takes no macro's call for its list, and each counts them by a loop
+; (KIT.6's second slice).
 (defmacro (site kind)
   "the fill's first cell by its kind: the corner's A1, the first row's B1, the first column's A2, the inner sites' B2"
   (cond
@@ -276,12 +277,12 @@
         (else 1)))))
 
 (defmacro (neighbors kind then)
-  "the eight neighbors of the fill's first cell, handed on as (then a b c d e f g h), a neighbor off the sheet the site itself"
+  "the eight neighbors of the fill's first cell, handed on as one list, (then (a b c d e f g h)), a neighbor off the sheet the site itself"
   (cond
-    ((eq? kind "corner") (then "A1" "A1" "A1" "A1" "B1" "A1" "A2" "B2"))
-    ((eq? kind "top") (then "B1" "B1" "B1" "A1" "C1" "A2" "B2" "C2"))
-    ((eq? kind "left") (then "A2" "A1" "B1" "A2" "B2" "A2" "A3" "B3"))
-    (else (then "A1" "B1" "C1" "A2" "C2" "A3" "B3" "C3"))))
+    ((eq? kind "corner") (then ("A1" "A1" "A1" "A1" "B1" "A1" "A2" "B2")))
+    ((eq? kind "top") (then ("B1" "B1" "B1" "A1" "C1" "A2" "B2" "C2")))
+    ((eq? kind "left") (then ("A2" "A1" "B1" "A2" "B2" "A2" "A3" "B3")))
+    (else (then ("A1" "B1" "C1" "A2" "C2" "A3" "B3" "C3")))))
 
 (defmacro (was at)
   "a site's last value, a reference into the Field's twin from its address"
@@ -315,17 +316,20 @@
   "the kind of the last act on the site's row: 1 an observation, 2 a box, 3 a collapse"
   (probe-cell "Probe" "$C" kind))
 
-(defmacro (boxes-around a b c d e f g h)
+(defmacro (boxes-around sites)
   "the boxes among the eight neighbors, counted: a comparison a neighbor, summed"
-  (+ (= (was a) 10000000) (= (was b) 10000000) (= (was c) 10000000) (= (was d) 10000000) (= (was e) 10000000) (= (was f) 10000000) (= (was g) 10000000) (= (was h) 10000000)))
+  (+ (each (n sites)
+       (= (was n) 10000000))))
 
-(defmacro (a-nothing-around a b c d e f g h)
+(defmacro (a-nothing-around sites)
   "a neighbor that holds a reading of nothing, 10,000"
-  (or (= (was a) 10000) (= (was b) 10000) (= (was c) 10000) (= (was d) 10000) (= (was e) 10000) (= (was f) 10000) (= (was g) 10000) (= (was h) 10000)))
+  (or (each (n sites)
+        (= (was n) 10000))))
 
-(defmacro (a-nothing-indeed-around a b c d e f g h)
+(defmacro (a-nothing-indeed-around sites)
   "a neighbor that is a reading of nothing on the Field and on the Readings both, their sum 20,000"
-  (or (= (+ (was a) (reading-of a)) 20000) (= (+ (was b) (reading-of b)) 20000) (= (+ (was c) (reading-of c)) 20000) (= (+ (was d) (reading-of d)) 20000) (= (+ (was e) (reading-of e)) 20000) (= (+ (was f) (reading-of f)) 20000) (= (+ (was g) (reading-of g)) 20000) (= (+ (was h) (reading-of h)) 20000)))
+  (or (each (n sites)
+        (= (+ (was n) (reading-of n)) 20000))))
 
 (defmacro (a-branch)
   "a branch this frame: the world's count moved"
