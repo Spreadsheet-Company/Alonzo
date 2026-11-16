@@ -204,10 +204,6 @@
   "a level's cell of a column of the Lab: its testing column at row 11 is Lab!$N$11"
   (ref "Lab" (&expand "$" column "$" lab-row)))
 
-(defmacro (its-last sheet first)
-  "this cell's twin, the first cell of a range as the range's first reads it"
-  (ref (&expand sheet ".last") first))
-
 (defmacro (test-bit i)
   "bit i of the input's number, i from 1: what switch i takes while T runs its level"
   (mod (int (/ Lab!$B$6 (choose i 1 2 4 8 16 32 64 128 256 512 1024))) 2))
@@ -235,8 +231,8 @@
     (priority
       ((on-this-level "reset" sheet) 0)
       ((= (of-level "N" lab-row) 1) (test-bit (- (row) 2)))
-      ((on-this-switch sheet) (by-hand (its-last sheet (first-of range))))
-      (else (its-last sheet (first-of range))))))
+      ((on-this-switch sheet) (by-hand (its-last sheet range)))
+      (else (its-last sheet range)))))
 
 (defmacro (level-flip-flops sheet lab-row range next the-bit)
   "a level's flip-flops: a switch that also takes next, its row of J as J stood, at a tick; 0 at R and at G on its level,
@@ -247,8 +243,8 @@
       ((or (on-this-level "reset" sheet) (on-this-level "run" sheet)) 0)
       ((= (of-level "N" lab-row) 1) the-bit)
       ((= (of-level "I" lab-row) 1) (iferror (n (its-last sheet next)) 0))
-      ((on-this-switch sheet) (by-hand (its-last sheet (first-of range))))
-      (else (its-last sheet (first-of range))))))
+      ((on-this-switch sheet) (by-hand (its-last sheet range)))
+      (else (its-last sheet range)))))
 
 (defmacro (level-word sheet lab-row range)
   "XV's word: the bits of the ROM's line its counter names, Lab!$E$8, low bit first; the input's bits while T runs it; and,
@@ -256,7 +252,7 @@
   (rule sheet range
     (priority
       ((= (of-level "N" lab-row) 1) (test-bit (- (row) 2)))
-      ((and (= (of-level "B" lab-row) 2) (= (of-level "I" lab-row) 0)) (its-last sheet (first-of range)))
+      ((and (= (of-level "B" lab-row) 2) (= (of-level "I" lab-row) 0)) (its-last sheet range))
       (else (mod (int (/ Lab!$E$8 (choose (- (row) 2) 1 2 4 8 16 32 64))) 2)))))
 
 (defmacro (level-lamps sheet range)

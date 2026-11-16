@@ -14,7 +14,9 @@
 ; from texts; since KIT.6 within and priority, a test of two bounds and a choice by
 ; the first test that holds, so that a choice of five reads as five lines; and since
 ; KIT.6's second slice its lists are loops, and put takes its pieces by name, so that a
-; call says what each part is and not where it stands.
+; call says what each part is and not where it stands; and since its third slice a cell
+; has a name, a block's labels and its words from one list, and a verb writes its row at
+; a name, so that a formula reads as what it means and not where its cells are.
 ;
 ; The rules each macro here keeps, which are the language's:
 ;   - Template macros only. A parameter is replaced by the form the caller passes; no
@@ -32,11 +34,10 @@
 ;     A loop refuses a name its template already holds, and a list written as a macro's
 ;     call, which no primitive expands: a list a macro makes is handed on, (then (a b)),
 ;     as Superposition's neighbors hands its eight.
-;   - A walk is kept where no loop says it, a recursion a step. first-of and twin-of fold
-;     a text's characters into one text, which no loop over forms writes, and end in the
-;     primitive that makes it. A chain stops at 5,000 links: each application is one,
-;     and so is each begin it unwraps; a walk that hands its list on whole, (cdr
-;     characters), costs its length.
+;   - A walk is kept only where a macro writes a nest, as priority does below. A
+;     reference's first cell and its twin are the language's, first-cell-expand and last
+;     (Frazaro's VLA.15 and VLA.6), so no macro walks a text's characters. A chain stops
+;     at 5,000 links: each application is one, and so is each begin it unwraps.
 ;   - A macro that writes a nest recurses inside the form it writes, a level a step:
 ;     priority's (if test value (priority rest...)). A form nests at most 64 lists deep,
 ;     the language's limit, so a rule's priority holds at most 61 clauses and an else,
@@ -52,18 +53,20 @@
 ;     (column-letters-expand column), and a text is split by characters-expand: the
 ;     expand-time primitives vla-lang 0.9.0 added (docs/SPEC.md section 7.8).
 ;   - A macro's call is no argument of &expand, nor of symbol, nor of any expand-time
-;     primitive, which takes its arguments as data: (&expand "=" (twin-of ...)) is
-;     refused, with the id vla-expand-arg-is-list. A walk that must end in a primitive
-;     calls it in its base case, where the text it made is an atom: (symbol made).
+;     primitive, which takes its arguments as data: (&expand "=" (beside "A1" 1)) is
+;     refused, with the id vla-expand-arg-is-list. The primitives nest instead, as beside's
+;     own (address-expand (row-expand at) ...) does.
 ;   - A formula is written by the formula syntax (VLA.4, vla-lang 0.10.0): (formula-expand
 ;     expression) is the row's text, in Excel's own spelling, a reference bare, Input!B5
 ;     or Screen.last!A1:C3, a test (= State!B1 4), a sum (+ a b c), a text "x", a truth
 ;     value true. The syntax expands its expression first, so a macro's call stands inside
-;     it, (twin-of Input!B5) for Input.last!B5, and an expand-time primitive computes
+;     it, (edge Input!B13) for AND(Input!B13=1,Input.last!B13=0), and an expand-time primitive computes
 ;     there, (ref "Probe" (&expand "$D" row)) for Probe!$D1. A verb's pieces are such
 ;     expressions, and a verb inside another verb's piece is refused by name, since each
 ;     verb's row is a formula-expand of its own (vla-formula-expand-nested); a predicate
-;     two verbs share is an expression macro, as twin-of is, and stands in either.
+;     two verbs share is an expression macro, as edge is, and stands in either.
+;   - A name is a word for a cell, and a verb's row may stand at one: (at stop (rule ...)),
+;     by the section on names below (Frazaro's VLA.6 and VLA.15).
 
 ; ---- one sheet, named once ----------------------------------------------------------
 ; A run of rows on one sheet, the sheet named at the top of the run and not on every
@@ -123,6 +126,69 @@
   "texts along a row from a cell, one a column: a table's headers"
   (each-index (column text texts (column-expand first))
     (cell sheet (address-expand (row-expand first) column) text)))
+
+; ---- names: a block's words, a verb's row at a word, the devices (KIT.6) ---------------
+; A name is a word for a cell (Frazaro's VLA.6): a define binds it for every form after its
+; own and writes no row, so that a formula says (= phase sliding) where it said (= State!B1
+; 1). Its twin is (last phase), State.last!B1, and its anchored reading (absolute phase),
+; State!$B$1, each the formula syntax's. A block's labels and its words come from one list:
+; names writes each label in a column from the first cell down and names the cell beside it,
+; an entry a word that is its own label or a label and its word, ("stopped at" stopped-at),
+; told apart by list? (Frazaro's VLA.15). A verb writes its row at a word by at, which hands
+; the word's sheet and cell in where the verb takes them: (at stop (rule ...)) is (rule
+; "State" "B12" ...). And devices names the device cells a cartridge reads, each word asked
+; for a label of docs/SPEC.md sections 3.3 and 3.5, player 1's: (devices a mouse-left frame)
+; for Input!B5, Input!B13 and Clock!B1. Two labels are other words, select-button for select,
+; which VBA's Select refuses, and sheet-shown for sheet, a row's kind; a word no device has is
+; written as a not-a-device row, which the load refuses by name. A word is never a macro's
+; name nor one defined already, and a macro's parameter of the same word hides it.
+
+(defmacro (names sheet first & entries)
+  "A block of named cells. Each entry's label goes down a column from the first cell, and its word names the cell beside the label. An entry is a word that is its own label, or a label and its word."
+  (each-index (row entry entries (row-expand first))
+    (name-entry sheet row (column-expand first) entry)))
+
+(defmacro (name-entry sheet row column entry)
+  "One entry of a block: a word that is its own label, or a label and its word."
+  (quote-if (list? entry)
+    (label-and-name sheet row column (car entry) (car (cdr entry)))
+    (label-and-name sheet row column (&expand entry) entry)))
+
+(defmacro (label-and-name sheet row column label word)
+  "A label in its cell, and a word for the cell beside it."
+  (cell sheet (address-expand row column) label)
+  (define word (ref sheet (address-expand row (+expand column 1)))))
+
+(defmacro (at word call)
+  "A verb's row at a word: the word's sheet and cell handed in after the verb's name, as on hands a sheet in."
+  (quasiquote
+    ((unquote (car call))
+     (sheet-expand (unquote word))
+     (range-expand (unquote word))
+     (unquote-splicing (cdr call)))))
+
+(defmacro (devices & words)
+  "Names the device cells a cartridge reads. Each word is the label of a cell of player 1's Input rows or of the Clock."
+  (each (word words)
+    (device word)))
+
+(defmacro (device word)
+  "One device cell's word, found in the table of the Input sheet's rows for player 1 and the Clock's."
+  (device-entry word
+    (assoc-expand word
+      (quote ((up Input!B1) (down Input!B2) (left Input!B3) (right Input!B4)
+              (a Input!B5) (b Input!B6) (x Input!B7) (y Input!B8)
+              (start Input!B9) (select-button Input!B10)
+              (mouse-x Input!B11) (mouse-y Input!B12) (mouse-left Input!B13)
+              (mouse-right Input!B14) (mouse-middle Input!B15) (mouse-wheel Input!B16)
+              (key Input!B17) (code Input!B18) (sheet-shown Input!B19) (command Input!B20)
+              (frame Clock!B1) (rate Clock!B2) (seed Clock!B3))))))
+
+(defmacro (device-entry word entry)
+  "The define a device's entry gives, or the word written as a not-a-device row when no device has it."
+  (quote-if (null? entry)
+    (not-a-device word)
+    (define word (car (cdr entry)))))
 
 ; ---- the Palette (docs/SPEC.md section 3.2) ----------------------------------------------
 
@@ -253,9 +319,10 @@
 ; macro's call, since the syntax expands its expression first: a verb's predicates can
 ; be named, and every pattern's value is still a cell a person sees, one verb writing a
 ; cell that another reads. A verb that reads its own last value writes the twin of its
-; range's first cell, Tally.last!B1 for a fill over Tally!B1:E10, through ref over its
-; sheet's name and .last, so a sheet whose name needs quotes is quoted as Excel quotes
-; it; and pressed writes its button's twin by twin-of, the expression macro below.
+; range's first cell, Tally.last!B1 for a fill over Tally!B1:E10, by its-last, the formula
+; syntax's last over the range's first cell; and pressed writes its button's twin by last.
+; Each reads its sheet and range only where the formula reads them, so a verb stands at a
+; name, (at games (count start)), as it stands at an address.
 
 (defmacro (first-frame sheet range start rule)
   "the first frame's value, then the rule every later frame: =IF(Clock!$B$1=1,start,rule)"
@@ -274,24 +341,28 @@
   (quasiquote (first-frame (unquote sheet) (unquote (&expand "B2:" (address-expand (-expand height 1) (-expand width 1)))) (unquote start) (unquote rule))))
 
 (defmacro (edge button)
-  "a button's rising edge as a test, an expression for any piece: its cell 1 this frame and 0 the last, AND(button=1,its twin=0)"
-  (and (= button 1) (= (twin-of button) 0)))
+  "A button's rising edge, as a test any piece may hold: its cell is 1 this frame and was 0 the last, AND(button=1,its twin=0)."
+  (and (= button 1) (= (last button) 0)))
 
 (defmacro (pressed sheet range button)
   "1 in the frame a button goes down and 0 otherwise, its rising edge (docs/SPEC.md section 3.3): =IF(AND(button=1,its twin=0),1,0)"
   (formula sheet range (formula-expand (if (edge button) 1 0))))
 
+(defmacro (its-last sheet range)
+  "The last frame's value of a range's first cell, as the fill's first cell reads it: Tally.last!B1 for Tally!B1:E10."
+  (last (ref sheet (first-cell-expand (ref sheet range)))))
+
 (defmacro (count sheet range event)
   "each cell its own last value plus an event, a count of the frames it is 1 or a sum of its numbers: =sheet.last!first+event"
-  (formula sheet range (formula-expand (+ (ref (&expand sheet ".last") (first-of range)) event))))
+  (formula sheet range (formula-expand (+ (its-last sheet range) event))))
 
 (defmacro (hold sheet range when new)
   "each cell its own last value until an event replaces it, docs/SPEC.md section 3.9's keep-last: =IF(when,new,sheet.last!first)"
-  (formula sheet range (formula-expand (if when new (ref (&expand sheet ".last") (first-of range))))))
+  (formula sheet range (formula-expand (if when new (its-last sheet range)))))
 
 (defmacro (dice sheet at)
   "Park and Miller's minimal standard in one cell (docs/SPEC.md section 3.5): the seed in the first frame, then the last value times 16807, modulo 2147483647; one cell, since its Clock references are relative and a fill would move them"
-  (formula sheet at (formula-expand (if (= Clock!B1 1) Clock!B3 (mod (* (ref (&expand sheet ".last") at) 16807) 2147483647)))))
+  (formula sheet at (formula-expand (if (= Clock!B1 1) Clock!B3 (mod (* (its-last sheet at) 16807) 2147483647)))))
 
 (defmacro (every sheet range counted n)
   "1 in every nth frame of a count and 0 in the others, the clock divider of docs/SPEC.md section 12 over any count: =IF(MOD(count,n)=0,1,0)"
@@ -299,7 +370,7 @@
 
 (defmacro (since sheet range event)
   "the frames since an event, 0 in its frame and one more in each frame after, Appendix C's age: =IF(event,0,sheet.last!first+1)"
-  (formula sheet range (formula-expand (if event 0 (+ (ref (&expand sheet ".last") (first-of range)) 1)))))
+  (formula sheet range (formula-expand (if event 0 (+ (its-last sheet range) 1)))))
 
 ; ---- the expressions a piece may hold: within, priority (KIT.6) -----------------------
 ; Each stands inside any piece, as edge does, and writes what a person writes in Excel by
@@ -326,36 +397,6 @@
       (if (car (car clauses))
           (car (cdr (car clauses)))
           (quasiquote (priority (unquote-splicing (cdr clauses))))))))
-
-; The two walks the verbs stand on, each an expression's piece and never a row, and the
-; kit's two walks a loop does not replace: a fold of a text's characters into one text,
-; which no loop over forms writes. A macro's call is no argument of a primitive, so each
-; walks the characters, a character an application, up to the range's colon or the
-; reference's end, and ends in the primitive that makes its text what the expression
-; needs: first-of a text, which ref takes, and twin-of a symbol, a bare reference, made by
-; symbol in the walk's base case.
-
-(defmacro (first-of range)
-  "a range's first cell as a text, its characters before the colon: B1 for B1:E10, and a cell whole"
-  (first-of-from (characters-expand range) ""))
-
-(defmacro (first-of-from characters made)
-  "first-of's walk: the range's characters one at a time, up to its colon or its end"
-  (quote-if (null? characters)
-    made
-    (quote-if (eq? (car characters) ":")
-      made
-      (first-of-from (cdr characters) (&expand made (car characters))))))
-
-(defmacro (twin-of reference)
-  "a reference's twin as a bare reference, Input!B5 read as Input.last!B5: its ! written .last!, the text made a symbol"
-  (twin-of-from (characters-expand (&expand reference)) ""))
-
-(defmacro (twin-of-from characters made)
-  "twin-of's walk: the reference's characters one at a time, its ! written .last!, and the text a symbol at its end"
-  (quote-if (null? characters)
-    (symbol made)
-    (twin-of-from (cdr characters) (quote-if (eq? (car characters) "!") (&expand made ".last!") (&expand made (car characters))))))
 
 ; ---- pictures -----------------------------------------------------------------------
 ; A picture is rows of text: each string one row of cells, down from a top-left cell,

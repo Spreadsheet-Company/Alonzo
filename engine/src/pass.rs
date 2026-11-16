@@ -710,7 +710,13 @@ mod tests {
     /// loops: `put` over its named pieces in either order, each piece left
     /// out or unknown refused by name, a legend's number key holding no
     /// character, and a run of cells and a picture's rows past the length a
-    /// walk's chain held.
+    /// walk's chain held. Since its third slice, a cell has a name: `names`
+    /// over a word and a pair, at the block's column, a word's twin and its
+    /// anchored reading; `at`, a verb's row at a word, over `rule`, `count`
+    /// and `pressed`; `devices`, a word asked for each cell, the two labels
+    /// that are other words, and a word no device has written as a row the
+    /// load refuses; `its-last`; and a twin by the formula syntax's `last`,
+    /// where the kit's character walks wrote it.
     #[test]
     fn the_kit_s_verbs_write_the_rows_they_name() {
         let Some(library) = crate::repository::read("common.vla") else {
@@ -843,11 +849,16 @@ mod tests {
                     r#"(formula "Tally" "B1:E10" "=Tally.last!B1+IF(AND(Input!B1=1,Input.last!B1=0),1,0)")"#,
                 ],
             ),
-            // A reference's twin as an expression, and a sheet whose name needs
-            // quotes, its twin quoted as Excel quotes it.
+            // A reference's twin as an expression, the formula syntax's last
+            // (KIT.6's third slice, where twin-of walked the characters), and a
+            // sheet whose name needs quotes, its twin quoted as Excel quotes it.
             (
-                r#"(rule "S" "A1" (twin-of Input!$B$5))"#,
+                r#"(rule "S" "A1" (last Input!$B$5))"#,
                 &[r#"(formula "S" "A1" "=Input.last!$B$5")"#],
+            ),
+            (
+                r#"(rule "S" "A1" (+ (its-last "Tally" "B1:E10") (its-last "I NON" "A3")))"#,
+                &[r#"(formula "S" "A1" "=Tally.last!B1+'I NON.last'!A3")"#],
             ),
             (
                 r#"(hold "I NON" "A3" (= Input!B1 1) 0)"#,
@@ -959,6 +970,56 @@ mod tests {
                     r#"(formula "Write" "C3" "=0")"#,
                 ],
             ),
+            // KIT.6's third slice: a block's names, a word that is its own label
+            // and a label with its word, each naming the cell beside its label;
+            // a word read bare, by its twin and anchored, in the forms after.
+            (
+                r#"(names "State" "A1" phase ("stopped at" stopped-at)) (rule "T" "A1" (if (= phase 1) stopped-at (last phase)))"#,
+                &[
+                    r#"(cell "State" "A1" "phase")"#,
+                    r#"(cell "State" "A2" "stopped at")"#,
+                    r#"(formula "T" "A1" "=IF(State!B1=1,State!B2,State.last!B1)")"#,
+                ],
+            ),
+            (
+                r#"(names "S" "C3" speed) (rule "T" "A1:B2" (* 2 (absolute speed)))"#,
+                &[
+                    r#"(cell "S" "C3" "speed")"#,
+                    r#"(formula "T" "A1:B2" "=2*S!$D$3")"#,
+                ],
+            ),
+            // A verb's row at a word: rule, count and pressed, each written
+            // where the word's cell is.
+            (
+                r#"(names "State" "A1" phase stop) (at stop (rule (if (= (last phase) 1) 1 0)))"#,
+                &[
+                    r#"(cell "State" "A1" "phase")"#,
+                    r#"(cell "State" "A2" "stop")"#,
+                    r#"(formula "State" "B2" "=IF(State.last!B1=1,1,0)")"#,
+                ],
+            ),
+            (
+                r#"(names "Tally" "A1" games held press) (at games (count Input!B9)) (at press (pressed held))"#,
+                &[
+                    r#"(cell "Tally" "A1" "games")"#,
+                    r#"(cell "Tally" "A2" "held")"#,
+                    r#"(cell "Tally" "A3" "press")"#,
+                    r#"(formula "Tally" "B1" "=Tally.last!B1+Input!B9")"#,
+                    r#"(formula "Tally" "B3" "=IF(AND(Tally!B2=1,Tally.last!B2=0),1,0)")"#,
+                ],
+            ),
+            // The devices a cartridge reads, each word asked for: the Input's,
+            // the Clock's, the two labels that are other words, and a word no
+            // device has, a row the load refuses.
+            (
+                r#"(devices a mouse-left frame) (rule "S" "A1" (if (= frame 1) 0 (max a mouse-left)))"#,
+                &[r#"(formula "S" "A1" "=IF(Clock!B1=1,0,MAX(Input!B5,Input!B13))")"#],
+            ),
+            (
+                r#"(devices select-button sheet-shown seed) (rule "S" "A1" (& select-button sheet-shown seed))"#,
+                &[r#"(formula "S" "A1" "=Input!B10&Input!B19&Clock!B3")"#],
+            ),
+            (r#"(devices z)"#, &[r#"(not-a-device z)"#]),
             // The look map, a format and a look a fill from 0; a still Camera.
             (
                 r#"(looks "S" "112233" "AABBCC")"#,
