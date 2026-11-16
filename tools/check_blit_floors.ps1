@@ -226,16 +226,43 @@ $ErrorActionPreference = 'Stop'
 #   engine:  FirstFrame 1.0, ViewP50 0.1, BlitP50 0.1, SyncP50 0.3, FrameP50 0.4, FrameP95 0.7, Max 1.0, Dropped 0, N 120
 #   grid:    FirstFrame 5.3, ViewP50 1.0, BlitP50 3.3, SyncP50 4.5, FrameP50 5.4, FrameP95 6.0, Max 6.8, Dropped 0, N 120
 #   still:   FirstFrame 0.3, ViewP50 0.0, BlitP50 0.0, SyncP50 0.1, FrameP50 0.2, FrameP95 0.4, Max 3.0, Dropped 0, N 120, Stills 116
-$baselineDate = '2026-10-19'
+# 2026-11-15, the seventh baseline (ENGINE.37's first slice, its hand test): the
+# owner's run, Google Chrome 157.0.8103.51, the same screen, ratio and display,
+# over the module at vla-lang 0.13.0 (2,068,963 bytes), the first paste since the
+# sixth. Every case under its bars. The grid case moved most: its p95 6.4 to 7.4
+# against its bar of 8.3, its max 7.3 to 8.5, its p50 5.5 to 6.7, the module's
+# view 1.1 to 1.3 and the viewport's load and draw 3.3 to 4.3. Measured apart in
+# headless Chrome 157 on real time, the card's values view drawn alone in a box
+# of this screen at a ratio of 1.5, four rounds interleaved, each round's median
+# and the fastest batch: 8b62646's viewport over 8b62646's card 3.90 to 4.08 ms
+# and 3.62, this slice's viewport over that card 3.82 to 4.02 and 3.59, and over
+# this slice's card 3.90 to 4.76 and 3.71. So the painter moves nothing the rounds
+# can tell, the card's 30 new rows cost about 0.1 to 0.2 ms, within the scoping's
+# 0.3, and the rest came in the month between, not measured apart: ENGINE.28's
+# looks and the card's rows of them, ENGINE.36, Chrome 155 to 157, and the module
+# from 1,042,949 bytes. The double's two cases moved too: fit's p95 1.2 to 1.6,
+# scale-1's 1.1 to 1.6, both syncs 0.7 to 0.9. The host's frame over the double,
+# timed the same way with 8b62646's three scripts and with this slice's, is 0.55
+# ms under each, so that move is not this slice's either. engine's p95 0.6 to 0.8;
+# still's 0.5 to 0.6 and its max 3.9 to 4.9, with its 116 still frames; act's 1.1
+# and its max 2.6 to 2.8 over 448 frames. Recorded in docs/REARVIEW.md and not
+# hidden by the paste. The sixth baseline's six rows, kept here for the record:
+#   fit:     FirstFrame 0.9, ViewP50 0.3, BlitP50 0.1, SyncP50 0.7, FrameP50 0.9, FrameP95 1.2, Max 3.0, Dropped 0, N 120
+#   scale-1: FirstFrame 1.0, ViewP50 0.2, BlitP50 0.1, SyncP50 0.7, FrameP50 0.8, FrameP95 1.1, Max 1.4, Dropped 0, N 120
+#   engine:  FirstFrame 0.6, ViewP50 0.1, BlitP50 0.1, SyncP50 0.3, FrameP50 0.4, FrameP95 0.6, Max 1.0, Dropped 0, N 120
+#   grid:    FirstFrame 7.3, ViewP50 1.1, BlitP50 3.3, SyncP50 4.5, FrameP50 5.5, FrameP95 6.4, Max 7.3, Dropped 0, N 120
+#   still:   FirstFrame 0.3, ViewP50 0.0, BlitP50 0.0, SyncP50 0.1, FrameP50 0.2, FrameP95 0.5, Max 3.9, Dropped 0, N 120, Stills 116
+#   act:     FirstFrame 0.8, ViewP50 0.0, BlitP50 0.0, SyncP50 0.7, FrameP50 0.8, FrameP95 1.1, Max 2.6, Dropped 0, N 120, Frames 448
+$baselineDate = '2026-11-15'
 $baselineInterval = 16.7
-$baselineEnvironment = 'Environment: Google Chrome 155.0.8059.79, Chromium 155.0.8059.79 on Windows | DPR 1.5 | screen 2560x1440 | fullscreen yes | frame interval 16.7 ms (about 60 Hz) | the fake module, the Life cartridge, 120 frames a case; the engine case over the module built into this page, 1,042,949 bytes, Life at its first frame redrawn; the grid case, the grid card at its first frame drawn again from the values view; the still case, the still card''s frame path, a day''s boundary drawn every 30 frames and the frames between still; the act case, Superposition''s scripted acts, 120 after 20, each from its command to its settle''s end drawn'
+$baselineEnvironment = 'Environment: Google Chrome 157.0.8103.51, Chromium 157.0.8103.51 on Windows | DPR 1.5 | screen 2560x1440 | fullscreen yes | frame interval 16.7 ms (about 60 Hz) | the fake module, the Life cartridge, 120 frames a case; the engine case over the module built into this page, 2,068,963 bytes, Life at its first frame redrawn; the grid case, the grid card at its first frame drawn again from the values view; the still case, the still card''s frame path, a day''s boundary drawn every 30 frames and the frames between still; the act case, Superposition''s scripted acts, 120 after 20, each from its command to its settle''s end drawn'
 $baseline = @(
-    @{ Case = 'fit'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 0.9; ViewP50 = 0.3; BlitP50 = 0.1; SyncP50 = 0.7; FrameP50 = 0.9; FrameP95 = 1.2; Max = 3.0; Dropped = 0; N = 120; Holds = 'yes' },
-    @{ Case = 'scale-1'; Scale = 1; Width = 320; Height = 200; FirstFrame = 1.0; ViewP50 = 0.2; BlitP50 = 0.1; SyncP50 = 0.7; FrameP50 = 0.8; FrameP95 = 1.1; Max = 1.4; Dropped = 0; N = 120; Holds = 'yes' },
-    @{ Case = 'engine'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 0.6; ViewP50 = 0.1; BlitP50 = 0.1; SyncP50 = 0.3; FrameP50 = 0.4; FrameP95 = 0.6; Max = 1.0; Dropped = 0; N = 120; Holds = 'yes' },
-    @{ Case = 'grid'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 7.3; ViewP50 = 1.1; BlitP50 = 3.3; SyncP50 = 4.5; FrameP50 = 5.5; FrameP95 = 6.4; Max = 7.3; Dropped = 0; N = 120; Holds = 'yes' },
-    @{ Case = 'still'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 0.3; ViewP50 = 0.0; BlitP50 = 0.0; SyncP50 = 0.1; FrameP50 = 0.2; FrameP95 = 0.5; Max = 3.9; Dropped = 0; N = 120; Holds = 'yes'; Stills = 116 },
-    @{ Case = 'act'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 0.8; ViewP50 = 0.0; BlitP50 = 0.0; SyncP50 = 0.7; FrameP50 = 0.8; FrameP95 = 1.1; Max = 2.6; Dropped = 0; N = 120; Holds = 'yes'; Frames = 448 }
+    @{ Case = 'fit'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 1.3; ViewP50 = 0.3; BlitP50 = 0.1; SyncP50 = 0.9; FrameP50 = 1.1; FrameP95 = 1.6; Max = 1.7; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'scale-1'; Scale = 1; Width = 320; Height = 200; FirstFrame = 1.3; ViewP50 = 0.3; BlitP50 = 0.1; SyncP50 = 0.9; FrameP50 = 1.1; FrameP95 = 1.6; Max = 1.8; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'engine'; Scale = 10; Width = 3200; Height = 2000; FirstFrame = 0.6; ViewP50 = 0.1; BlitP50 = 0.1; SyncP50 = 0.4; FrameP50 = 0.5; FrameP95 = 0.8; Max = 1.0; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'grid'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 7.2; ViewP50 = 1.3; BlitP50 = 4.3; SyncP50 = 5.7; FrameP50 = 6.7; FrameP95 = 7.4; Max = 8.5; Dropped = 0; N = 120; Holds = 'yes' },
+    @{ Case = 'still'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 0.3; ViewP50 = 0.0; BlitP50 = 0.0; SyncP50 = 0.2; FrameP50 = 0.3; FrameP95 = 0.6; Max = 4.9; Dropped = 0; N = 120; Holds = 'yes'; Stills = 116 },
+    @{ Case = 'act'; Scale = 0; Width = 3840; Height = 2117; FirstFrame = 0.9; ViewP50 = 0.0; BlitP50 = 0.0; SyncP50 = 0.7; FrameP50 = 0.8; FrameP95 = 1.1; Max = 2.8; Dropped = 0; N = 120; Holds = 'yes'; Frames = 448 }
 )
 
 # --- the bars ---

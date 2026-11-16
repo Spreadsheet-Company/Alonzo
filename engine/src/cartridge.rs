@@ -1654,6 +1654,43 @@ mod tests {
         );
     }
 
+    /// A rule's answers through the engine's views (ENGINE.37, decision 20):
+    /// the values record prints a lit cell's `lit` row after its others, alone
+    /// at a cell holding nothing, and a window's changes name a cell whose
+    /// answer alone moved, its `lit` row among its rows, so that the host's
+    /// premise, a lit row a cell's row on the change path, is the engine's too.
+    #[test]
+    fn a_rules_answer_is_a_cells_row_in_its_values_and_its_changes() {
+        let text = "(cartridge \"t\"\n  (spec 3)\n  (title \"t\")\n  (rate 30)\n  (screen grid 4 2)\n  (seed 1))\n(sheet \"Screen\" visible)\n(format 1 (fill \"FFE699\"))\n(conditional \"Screen\" 1 \"A1:B1\" \"=MOD(Clock!$B$1,2)=1\" 1)\n(cell \"Screen\" \"A1\" 7)\n";
+        let mut c = Cartridge::load(text, "t.vla", text.len()).expect("it loads");
+        let view = |c: &Cartridge, projection: &str| {
+            let v = c.view(projection, "Screen", Some("A1:B1")).expect("a view");
+            String::from_utf8(v.bytes().to_vec()).expect("text")
+        };
+        let _ = c.step(0);
+        let lit = view(&c, "values");
+        assert!(
+            lit.contains("(conditional \"Screen\" 1 \"A1:B1\" \"=MOD(Clock!$B$1,2)=1\" 1)\n")
+                && lit.ends_with(
+                    "(cell \"Screen\" \"A1\" 7)\n(lit \"Screen\" \"A1\" 1)\n(lit \"Screen\" \"B1\" 1)\n"
+                ),
+            "frame 1, the answer true: {lit}"
+        );
+        let _ = c.step(0);
+        let out = view(&c, "changes");
+        assert_eq!(
+            out, "(changes \"Screen\" \"A1:B1\" 1 2 2)\n(cell \"Screen\" \"A1\" 7)\n(empty \"Screen\" \"B1\")\n",
+            "frame 2, the answer false and no value moving"
+        );
+        let _ = c.step(0);
+        let back = view(&c, "changes");
+        assert_eq!(
+            back,
+            "(changes \"Screen\" \"A1:B1\" 2 3 2)\n(cell \"Screen\" \"A1\" 7)\n(lit \"Screen\" \"A1\" 1)\n(lit \"Screen\" \"B1\" 1)\n",
+            "frame 3, the answer true again"
+        );
+    }
+
     #[test]
     fn the_catalog_holds_every_id_the_engine_raises() {
         let ids = [

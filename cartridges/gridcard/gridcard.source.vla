@@ -22,6 +22,10 @@
 ;   - numbers under codes of Excel's, each drawn as the text the record prints for it
 ;     (KERNEL.47, drawn since CART.12), a formula's among them every frame, a text under
 ;     a code's text section, a code under a look of General, and a glyph through a look;
+;   - conditional formats (KERNEL.58, drawn since ENGINE.37), a rule lighting a cell by
+;     its value, by the Clock's frame with no value moving, an empty cell among them, two
+;     rules folded, a rule that stops the next, a rule's code, a rule over a look, a format
+;     of groups alone as a cell's own, and a family drawn by its name and its class;
 ;   - and below them a stripe that moves a cell a frame, through two looks.
 ; A formula before its first value shows its text, so frame 0 shows the Screen's
 ; formulas as written.
@@ -311,6 +315,54 @@
   (style "N2" 53) (style "O2" 54) (style "P2" 55)
   (style "S2" 56) (style "T2" 57)
   (style "I12" 56) (style "I13" 58))
+
+; Rows 17 and 18 from column P: conditional formats (KERNEL.58, drawn since ENGINE.37). A rule's
+; row names its sheet, its priority, its range, its test, a formula's text or Excel's own list,
+; and its format or none, and stop where it stops the rules after it at a cell; the language
+; answers each test at each cell every frame and the record prints a cell's lit row, the rules
+; true at it, which the viewport folds from the last to the first over what the cell draws. Each
+; rule's format is of groups alone (KERNEL.58 too), saying a fill, a font, an edge or a code and
+; leaving the cell's own the rest. Row 18, a default row: P18, 9, lit by Excel's own test of a
+; value greater than 5; Q18, a constant, lit on and off by the Clock's frame, two frames of four,
+; no value moving, and R18 beside it, empty in the narrow column, lit by the same rule; T18, an
+; empty cell of the styled column, lit by the same test with four edges, the column's fill under
+; them; U18, two rules folded, the fill of the first and the bold of the second; V18, a rule
+; that stops the next on even frames, an italic, the fill of the next on odd ones; W18, a rule
+; saying a code, 0.5 drawn as the record's text, 50.00%; X18, a rule over the look of "x", an
+; ink and an italic over the look's fill; and Y18, a format of groups alone as a cell's own, a
+; fill and a bold, general and nowrap the rest. Row 17, the 22-point row: P17, a family by its
+; name and its class, Consolas, a mono, whose i is as wide as its W.
+(format 59 (fill "FFE699"))                                       ; a rule's fill
+(format 60 (fill "C8E6C9"))                                       ; a rule's fill, lit on and off
+(format 61 (border (left thin "6B4FC8") (right thin "6B4FC8") (top thin "6B4FC8") (bottom thin "6B4FC8")))   ; a rule's four edges
+(format 62 (fill "E8E0F7"))                                       ; the first of two rules folded: its fill
+(format 63 (font bold))                                           ; the second: its weight
+(format 64 (font italic))                                         ; a rule that stops the next
+(format 65 (fill "FFD5D5"))                                       ; the next, lit where the first is not
+(format 66 (number "0.00%"))                                      ; a rule's code
+(format 67 (font italic "800020"))                                ; a rule over a look: an ink and a slant
+(format 68 (fill "FFF2CC") (font bold))                           ; a format of groups alone as a cell's own
+(format 69 none general nowrap (font (family "Consolas" mono)))   ; a family by its name and its class
+(conditional "Screen" 1 "P18" (cell greater "=5") 59)
+(conditional "Screen" 2 "Q18:R18" "=MOD(Clock!$B$1,4)<2" 60)
+(conditional "Screen" 3 "T18" "=MOD(Clock!$B$1,4)<2" 61)
+(conditional "Screen" 4 "U18" "=TRUE" 62)
+(conditional "Screen" 5 "U18" "=TRUE" 63)
+(conditional "Screen" 6 "V18" "=MOD(Clock!$B$1,2)=0" 64 stop)
+(conditional "Screen" 7 "V18" "=TRUE" 65)
+(conditional "Screen" 8 "W18" "=TRUE" 66)
+(conditional "Screen" 9 "X18" "=TRUE" 67)
+(cells "Screen"                     ; the sheet every entry below writes
+  ("P17" "0123 iW")                 ; Consolas, by its name and its class
+  ("P18" 9)                         ; greater than 5: lit
+  ("Q18" "q")                       ; lit two frames of four, its value still
+  ("U18" "two")                     ; two rules folded
+  ("V18" "stop")                    ; a rule that stops the next
+  ("W18" 0.5)                       ; 50.00% by the rule's code
+  ("X18" "x")                       ; the look of "x" under a rule
+  ("Y18" "own"))                    ; a format of groups alone, its own
+(on "Screen"                        ; the sheet every row below writes
+  (style "P17" 69) (style "Y18" 68))
 
 ; Rows 19 to 50: a stripe that moves, one fill over the Screen's whole width, a "#" every
 ; eighth cell along a diagonal and a "." elsewhere, each through its look.

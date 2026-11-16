@@ -34,7 +34,10 @@
   order of every write the host made. Since ENGINE.19 it answers a window's
   changes, the fourth projection, from the twins of the last two frames' ends,
   with room for every change, so that its Screen, whose tiles all change at
-  every frame, is patched whole at every frame.
+  every frame, is patched whole at every frame. Since ENGINE.37 its grid-mode
+  Screen holds a conditional format, a rule over A1 that lights it on the
+  frames whose Clock reads 0 or 1 modulo 4, its value 255 at every frame, so
+  that a frame where the answer alone moved names A1 among its changes.
 
   What it exercises in the host, on purpose: its memory grows by zero pages
   on a schedule, at every load and every seventeenth allocation, which
@@ -110,6 +113,9 @@
     saveEvery: 25,       // File!B3 is 1 on every twenty-fifth frame, 0 otherwise
     gridLooks: 16,       // in grid mode the Screen's record holds the palette's sixteen as formats 1 to 16, and a look
                          // for each color index, 0 to 15, to its format, so its tiles draw through a look (ENGINE.8)
+    ruleFormat: 18,      // and a rule over A1 (ENGINE.37, decision 16): this format, of groups alone, a pale lavender fill
+                         // and an italic, laid over A1 at a frame whose Clock litAt answers true, its lit row after A1's
+    litAt: function (clock) { return typeof clock === 'number' && ((clock % 4) + 4) % 4 < 2; },
     sheets: SHEETS,
     palette: PALETTE,
     buttons: BUTTONS,
@@ -641,10 +647,19 @@
       var out = [];
       for (var i = 0; i < list.length; i++) {
         var p = list[i], addr = addrOf(p.r, p.c);
-        var a = valuesRow(name, addr, c.contentIn(sk.key, p.r, p.c, now, at)), b = valuesRow(name, addr, c.contentIn(sk.key, p.r, p.c, was, at - 1));
+        var ea = c.contentIn(sk.key, p.r, p.c, now, at), eb = c.contentIn(sk.key, p.r, p.c, was, at - 1);
+        var la = litOf(c, sk, addr, ea, c.twins.clock), lb = litOf(c, sk, addr, eb, c.prevTwins.clock);
+        var a = valuesRow(name, addr, ea) + (la ? '\n' + la : ''), b = valuesRow(name, addr, eb) + (lb ? '\n' + lb : '');
         if (a !== b) out.push(a === '' ? '(empty ' + name + ' ' + quote(addr) + ')' : a);
       }
       return record(0, 0, '', head + out.length + ')\n' + (out.length ? out.join('\n') + '\n' : ''), outLen);
+    }
+    // A cell's lit row (ENGINE.37): the grid-mode Screen's A1, once it has a value, at a frame whose Clock, read from the
+    // map given, the rule's answer is true at; else none.
+    function litOf(c, sk, addr, e, clock) {
+      if (sk.key !== 'screen' || sk.twin || c.mode !== 'grid' || addr !== 'A1' || !e || e.v === undefined) return '';
+      var k = clock ? clock.get('B1') : null;
+      return k && RULES.litAt(k.v) ? '(lit ' + quote(sk.name) + ' "A1" 1)' : '';
     }
     // A cell's row in the values record: a value cell's cell row, a formula's value row once it has a value, else none.
     function valuesRow(name, addr, e) {
@@ -702,8 +717,12 @@
         // and a seventeenth, every group said (ENGINE.28): white bold text centered on the deep lavender, each edge thin,
         // on the look of 200, the row that moves a frame (byteAt), so that a game's page holds the painter to it too
         lines.push('(format ' + (RULES.gridLooks + 1) + ' "6B4FC8" general nowrap (font bold "FFFFFF") (align center middle) (border (left thin) (right thin) (top thin) (bottom thin)))');
+        // and the rule's format, of groups alone (ENGINE.37), after the looks' formats and before the looks, as the
+        // language prints them, the rule after the looks
+        lines.push('(format ' + RULES.ruleFormat + ' (fill "E6DFF7") (font italic))');
         for (var l = 0; l < RULES.gridLooks; l++) lines.push('(look ' + name + ' ' + l + ' ' + (l + 1) + ')');
         lines.push('(look ' + name + ' 200 ' + (RULES.gridLooks + 1) + ')');
+        lines.push('(conditional ' + name + ' 1 "A1" "=MOD(Clock!$B$1,4)<2" ' + RULES.ruleFormat + ')');
       }
       var map = sk.twin ? c.twins[sk.key] : c.cells[sk.key], addrs = [];
       map.forEach(function (e, addr) { var p = rcOf(addr); if (p && p.r >= R.top && p.r <= R.bottom && p.c >= R.left && p.c <= R.right) addrs.push(p); });
@@ -720,6 +739,8 @@
         } else {
           lines.push('(cell ' + name + ' ' + quote(at) + ' ' + spell(e.v) + ')');
         }
+        var lit = litOf(c, sk, at, e, c.cells.clock);
+        if (lit) lines.push(lit);
       }
       return record(0, 0, '', lines.join('\n') + '\n', outLen);
     }

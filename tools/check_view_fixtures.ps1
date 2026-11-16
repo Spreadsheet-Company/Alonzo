@@ -35,7 +35,13 @@ with font, alignment and border groups of their own, and appearance_drawn.vla,
 the same window with the looks folded in by the language's Style::over, the
 render oracle's witness that the viewport draws the one as the other. Their
 source is the crate's test data, the same bytes in the cargo registry and in
-Frazaro's tree, where -Frazaro compares them.
+Frazaro's tree, where -Frazaro compares them. Since ENGINE.37 (2026-11-15) four
+more, vla-lang 0.13.0's of Frazaro's KERNEL.58: partial.vla, formats of groups
+alone under looks, and rules.vla, a sheet's conditional formats and each lit
+cell's lit row, each with its drawn twin, the looks and the rules folded in by
+the language; the order learns the rule rows after the looks, the merged
+ranges after them, and a cell's lit row after its style, alone at the place of
+a lit cell holding nothing.
 
 -Frazaro <tree> compares each copy to that tree's scripts/view/<name>.vla
 (normalized), and -Door <frazaro.exe> with -Frazaro has the door print the
@@ -88,14 +94,22 @@ $fixtures = @(
     # by the language, each cell's style the format Style::over gives it. Written again by
     # VLA_BLESS=1 cargo test -p vla-lang --test appearance in Frazaro's tree.
     @{ Name = 'appearance';           Floor = 89;    Sha256 = '382b01e735c4682fcda479a331832cadcf737a1b45ed693b6e11d47e92a298c9'; Source = 'vla-lang/testdata/appearance/appearance.vla' },
-    @{ Name = 'appearance_drawn';     Floor = 84;    Sha256 = '3750c1c88559fda193ca5f1f518963c050ef0ea70784b02984d28dac110b7b18'; Source = 'vla-lang/testdata/appearance/appearance_drawn.vla' }
+    @{ Name = 'appearance_drawn';     Floor = 84;    Sha256 = '3750c1c88559fda193ca5f1f518963c050ef0ea70784b02984d28dac110b7b18'; Source = 'vla-lang/testdata/appearance/appearance_drawn.vla' },
+    # 2026-11-15, ENGINE.37: KERNEL.58's two and their twins, vla-lang 0.13.0's testdata/appearance/, the crates.io package
+    # built from Frazaro's 78a6dc1 that Cargo.lock names: formats of groups alone under looks, and a sheet's rules with each
+    # lit cell's answers, each with the same window folded in by the language (the drawn twins' rule, tests/appearance.rs).
+    @{ Name = 'partial';              Floor = 64;    Sha256 = '2bc2523802f31bd6da4088659edabb7a09a9a0eed701b0a3bd296c7e4c724747'; Source = 'vla-lang/testdata/appearance/partial.vla' },
+    @{ Name = 'partial_drawn';        Floor = 67;    Sha256 = 'cc0c135b0efa0ee81ccaf5ad2a53453935f42f2b62281bbb8ba502c4906ce8dc'; Source = 'vla-lang/testdata/appearance/partial_drawn.vla' },
+    @{ Name = 'rules';                Floor = 60;    Sha256 = 'b5ec7eb69532edc47c233d8c07cdf36dc73e060a8c59e4e248de1d66bdc0937b'; Source = 'vla-lang/testdata/appearance/rules.vla' },
+    @{ Name = 'rules_drawn';          Floor = 54;    Sha256 = 'b3f63bc3266ec43d1ed44cbd85c31fc12e68da6549cd76e0040bbc6382a5dc0f'; Source = 'vla-lang/testdata/appearance/rules_drawn.vla' }
 )
-$expectedFixtures = 9
+$expectedFixtures = 13
 
 # The forms a view record holds, and the phase each belongs to in the fixed order: since ENGINE.28 the row rows after
 # the column rows and the look rows after the format rows, as vla-lang's view.rs prints them, and a value or a text
-# row with its cell's rows (KERNEL.7, KERNEL.47), which the view goldens of KERNEL.5's day never held.
-$phases = @{ 'sheet' = 0; 'window' = 1; 'extent' = 2; 'gridlines' = 3; 'column' = 4; 'row' = 5; 'format' = 6; 'look' = 7; 'cell' = 8; 'formula' = 8; 'value' = 8; 'text' = 8; 'style' = 8; 'sentence' = 8 }
+# row with its cell's rows (KERNEL.7, KERNEL.47), which the view goldens of KERNEL.5's day never held; and since ENGINE.37
+# the rule rows after the looks, the merged ranges after them, and a lit row with its cell's (KERNEL.58).
+$phases = @{ 'sheet' = 0; 'window' = 1; 'extent' = 2; 'gridlines' = 3; 'column' = 4; 'row' = 5; 'format' = 6; 'look' = 7; 'conditional' = 8; 'merge' = 9; 'cell' = 10; 'formula' = 10; 'value' = 10; 'text' = 10; 'style' = 10; 'lit' = 10; 'sentence' = 10 }
 
 # A text with its line endings normalized to LF.
 function Get-Normalized([string]$text) { return ($text -replace "`r`n", "`n") }
@@ -149,7 +163,8 @@ function Test-Order($lines) {
     $lastFormat = -1
     $lastCell = $null
     $open = ''
-    $hadStyle = $false; $hadSentence = $false
+    $hadStyle = $false; $hadSentence = $false; $hadLit = $false
+    $lastRule = 0
     $n = 0
     foreach ($line in $lines) {
         $n++
@@ -166,6 +181,14 @@ function Test-Order($lines) {
             'column' { if ($strings[0] -ne $windowSheet) { $problems.Add("line ${n}: a column of another sheet than the window: $line") } }
             'row' { if ($strings[0] -ne $windowSheet) { $problems.Add("line ${n}: a row of another sheet than the window: $line") } }
             'look' { if ($strings[0] -ne $windowSheet) { $problems.Add("line ${n}: a look of another sheet than the window: $line") } }
+            'conditional' {
+                $m = [regex]::Match($line, '^\(conditional "(?:[^"\\]|\\.)*" ([0-9]+) ')
+                $pr = if ($m.Success) { [int]$m.Groups[1].Value } else { -1 }
+                if ($strings[0] -ne $windowSheet) { $problems.Add("line ${n}: a rule of another sheet than the window: $line") }
+                elseif ($pr -le $lastRule) { $problems.Add("line ${n}: a rule out of ascending priority: $line") }
+                $lastRule = $pr
+            }
+            'merge' { if ($strings[0] -ne $windowSheet) { $problems.Add("line ${n}: a merged range of another sheet than the window: $line") } }
             'format' {
                 $m = [regex]::Match($line, '^\(format ([0-9]+) ')
                 $idx = if ($m.Success) { [int]$m.Groups[1].Value } else { -1 }
@@ -179,17 +202,29 @@ function Test-Order($lines) {
                 $rc = Get-RowCol $strings[1]
                 if ($null -eq $rc) { $problems.Add("line ${n}: not an address: $line") }
                 elseif ($null -ne $lastCell -and ($rc[0] -lt $lastCell[0] -or ($rc[0] -eq $lastCell[0] -and $rc[1] -le $lastCell[1]))) { $problems.Add("line ${n}: a cell out of row-major order: $line") }
-                $lastCell = $rc; $open = $strings[1]; $hadStyle = $false; $hadSentence = $false
+                $lastCell = $rc; $open = $strings[1]; $hadStyle = $false; $hadSentence = $false; $hadLit = $false
             }
             'value' {
-                if ($strings[0] -ne $windowSheet -or $strings[1] -ne $open -or $hadStyle -or $hadSentence) { $problems.Add("line ${n}: a value row not right after its formula: $line") }
+                if ($strings[0] -ne $windowSheet -or $strings[1] -ne $open -or $hadStyle -or $hadSentence -or $hadLit) { $problems.Add("line ${n}: a value row not right after its formula: $line") }
             }
             'text' {
-                if ($strings[0] -ne $windowSheet -or $strings[1] -ne $open -or $hadStyle -or $hadSentence) { $problems.Add("line ${n}: a text row not after its cell's value: $line") }
+                if ($strings[0] -ne $windowSheet -or $strings[1] -ne $open -or $hadStyle -or $hadSentence -or $hadLit) { $problems.Add("line ${n}: a text row not after its cell's value: $line") }
             }
             'style' {
-                if ($strings[0] -ne $windowSheet -or $strings[1] -ne $open -or $hadStyle -or $hadSentence) { $problems.Add("line ${n}: a style row not right after its cell: $line") }
+                if ($strings[0] -ne $windowSheet -or $strings[1] -ne $open -or $hadStyle -or $hadSentence -or $hadLit) { $problems.Add("line ${n}: a style row not right after its cell: $line") }
                 $hadStyle = $true
+            }
+            'lit' {
+                # after its cell's rows and before its sentence; alone, a lit cell holding nothing at its place in row-major order
+                if ($strings[0] -ne $windowSheet) { $problems.Add("line ${n}: a lit row of another sheet than the window: $line") }
+                elseif ($strings[1] -eq $open) { if ($hadLit -or $hadSentence) { $problems.Add("line ${n}: a lit row not after its cell's rows: $line") } }
+                else {
+                    $rc = Get-RowCol $strings[1]
+                    if ($null -eq $rc) { $problems.Add("line ${n}: not an address: $line") }
+                    elseif ($null -ne $lastCell -and ($rc[0] -lt $lastCell[0] -or ($rc[0] -eq $lastCell[0] -and $rc[1] -le $lastCell[1]))) { $problems.Add("line ${n}: a lit cell out of row-major order: $line") }
+                    $lastCell = $rc; $open = $strings[1]; $hadStyle = $true; $hadSentence = $false
+                }
+                $hadLit = $true
             }
             'sentence' {
                 if ($strings[0] -ne $windowSheet -or $strings[1] -ne $open -or $hadSentence) { $problems.Add("line ${n}: a sentence row not after its cell (and its style row): $line") }

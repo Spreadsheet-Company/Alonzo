@@ -333,6 +333,10 @@
       <optgroup label="the painter's fixture, vla-lang's testdata/appearance/">
         <option value="appearance">Look, its looks over cells with groups of their own</option>
         <option value="appearance_drawn">Look, the looks folded in by the language</option>
+        <option value="partial">Partial, a format of groups alone under looks</option>
+        <option value="partial_drawn">Partial, the looks folded in by the language</option>
+        <option value="rules">Rules, the conditional formats lit over a sheet</option>
+        <option value="rules_drawn">Rules, the rules folded in by the language</option>
       </optgroup>
     </select></label>
     <label>Freeze rows <input type="number" id="freeze-rows" min="0" value="0"></label>
@@ -515,14 +519,22 @@
     // the painter's fixture (ENGINE.28), vla-lang's testdata/appearance/: a sheet whose looks fall over cells with
     // groups of their own, and its twin with the looks folded in, each cell's style the format Style::over gives it
     appearance: { program: 'appearance', sheet: 'Look' },
-    appearance_drawn: { program: 'appearance', sheet: 'Look' }
+    appearance_drawn: { program: 'appearance', sheet: 'Look' },
+    // KERNEL.58's two (ENGINE.37), vla-lang 0.13.0's: a format of groups alone under looks, and rules lit over a sheet,
+    // each with its twin, the looks and the rules folded in by the language
+    partial: { program: 'partial', sheet: 'Partial' },
+    partial_drawn: { program: 'partial', sheet: 'Partial' },
+    rules: { program: 'rules', sheet: 'Rules' },
+    rules_drawn: { program: 'rules', sheet: 'Rules' }
   };
   // What a program's other sheets load when a tab without a record is clicked.
   var PROGRAMS = {
     fixture: { frazaro: 'fixture_frazaro', output: 'fixture_output', data: 'fixture_data' },
     into: { output: 'into_output', checks: 'into_checks' },
     sparse: { output: 'sparse_10000' },
-    appearance: { look: 'appearance' }
+    appearance: { look: 'appearance' },
+    partial: { partial: 'partial' },
+    rules: { rules: 'rules' }
   };
   function fixtureText(name) {
     var el = document.getElementById('fixture-' + name);
@@ -2947,6 +2959,78 @@
     'slant-dash-dot': { rank: 20, strands: [[-1, '111111111110111110'], [0, '111111111001111001']] }
   };
   var EDGE_INK = '#000000', EDGE_GROUND = '#ffffff';
+  // ---- ENGINE.37's rules, the page's own reading, for both oracles ----
+  // A family's class as the canvas names it (decision 9), the page's own table, which the viewport's is held to; and a
+  // font's underline words, each the kind the oracles keep, not-underline saying none.
+  var FAMILY_CLASSES = { serif: 'serif', sans: 'sans-serif', mono: 'monospace', script: 'cursive', decorative: 'fantasy' };
+  var UNDERLINE_WORDS = { 'underline': 'single', 'double-underline': 'double', 'accounting-underline': 'single-accounting', 'double-accounting-underline': 'double-accounting', 'not-underline': 'none' };
+  var PAINTER_STACK = 'system-ui, "Segoe UI", sans-serif';
+  // A font's family as a canvas font names it: the name quoted, then its class's generic family, else the painter's stack.
+  function familyFont(fam) { return '"' + fam.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '", ' + (fam.generic ? FAMILY_CLASSES[fam.generic] : PAINTER_STACK); }
+  // A format's groups as the page reads them (ENGINE.28; ENGINE.37): a font's weight, slant, size in twentieths of a
+  // point, color, underline, strike and family; an alignment's horizontal and vertical word; a border's four edges; and in a
+  // format of groups alone (its second item a list) its fill, number format and wrap, what it leaves unsaid noted in
+  // unsaid. A property unsaid is null.
+  function pageGroups(f) {
+    var alone = Array.isArray(f[2]), out = { font: null, align: null, border: null };
+    if (alone) { out.fill = null; out.num = 'general'; out.code = null; out.wrap = false; out.unsaid = { fill: true, num: true, wrap: true }; }
+    for (var i = alone ? 2 : 5; i < f.length; i++) {
+      var g = f[i], head = Array.isArray(g) && g[0] && g[0].sym !== undefined ? g[0].sym : null, items = Array.isArray(g) ? g.slice(1) : [], d0 = items[0];
+      if (head === 'font') {
+        var fo = { bold: null, italic: null, size: null, color: null, underline: null, strike: null, family: null };
+        items.forEach(function (d) {
+          var w = d && d.sym !== undefined ? d.sym : null;
+          if (w === 'bold' || w === 'not-bold') fo.bold = w === 'bold';
+          else if (w === 'italic' || w === 'not-italic') fo.italic = w === 'italic';
+          else if (w !== null && Object.prototype.hasOwnProperty.call(UNDERLINE_WORDS, w)) fo.underline = UNDERLINE_WORDS[w];
+          else if (w === 'strike' || w === 'not-strike') fo.strike = w === 'strike';
+          else if (Array.isArray(d) && d[0] && d[0].sym === 'family') fo.family = { name: d[1], generic: d[2] && d[2].sym !== undefined ? d[2].sym : null };
+          else if (d && d.num !== undefined) fo.size = Math.round(d.num * 20);
+          else if (typeof d === 'string') fo.color = '#' + d.toUpperCase();
+        });
+        out.font = fo;
+      } else if (head === 'align') {
+        var al = { h: null, v: null };
+        items.forEach(function (d) { var w = d && d.sym !== undefined ? d.sym : null; if (w === 'top' || w === 'middle' || w === 'bottom') al.v = w; else if (w) al.h = w; });
+        out.align = al;
+      } else if (head === 'border') {
+        var bo = { left: null, right: null, top: null, bottom: null };
+        items.forEach(function (e) { if (Array.isArray(e) && e[0] && e[0].sym !== undefined) bo[e[0].sym] = { line: e[1] && e[1].sym !== undefined ? e[1].sym : null, color: typeof e[2] === 'string' ? '#' + e[2].toUpperCase() : null }; });
+        out.border = bo;
+      } else if (alone && head === 'fill') { out.fill = typeof d0 === 'string' ? '#' + d0 : null; out.unsaid.fill = false; }
+      else if (alone && head === 'number') { out.num = typeof d0 === 'string' ? 'code' : d0.sym; out.code = typeof d0 === 'string' ? d0 : null; out.unsaid.num = false; }
+      else if (alone && head === 'wrap') { out.wrap = !!d0 && d0.sym === 'wrap'; out.unsaid.wrap = false; }
+    }
+    return out;
+  }
+  // The look's and a rule's rule (vla-lang's Style::over), the page's own: the look's fill, number format and wrap, each
+  // the cell's own where a format of groups alone leaves it unsaid; its font, alignment and edges property by property
+  // where said, else the cell's own.
+  function pageOver(look, own) {
+    function prop(a, b) { return a !== null && a !== undefined ? a : (b !== null && b !== undefined ? b : null); }
+    var u = look.unsaid || null;
+    var f = { fill: u && u.fill ? own.fill : look.fill, num: u && u.num ? own.num : look.num, code: u && u.num ? own.code : look.code, wrap: u && u.wrap ? own.wrap : look.wrap, font: null, align: null, border: null };
+    if (look.font || own.font) {
+      var lf = look.font || {}, of = own.font || {};
+      f.font = { bold: prop(lf.bold, of.bold), italic: prop(lf.italic, of.italic), size: prop(lf.size, of.size), color: prop(lf.color, of.color),
+                 underline: prop(lf.underline, of.underline), strike: prop(lf.strike, of.strike), family: prop(lf.family, of.family) };
+    }
+    if (look.align || own.align) { var la = look.align || {}, oa = own.align || {}; f.align = { h: prop(la.h, oa.h), v: prop(la.v, oa.v) }; }
+    if (look.border || own.border) { var lb = look.border || {}, ob = own.border || {}; f.border = { left: prop(lb.left, ob.left), right: prop(lb.right, ob.right), top: prop(lb.top, ob.top), bottom: prop(lb.bottom, ob.bottom) }; }
+    return f;
+  }
+  // A lit cell's format (decision 3; the language's drawn twin), the page's own: each rule its lit row names, from the last
+  // to the first, its format laid over what the cell draws unlit, base; and whether a rule laid the fill drawn.
+  function pageFold(formats, rules, lit, base) {
+    var f = base, byRule = false;
+    for (var i = lit.length - 1; i >= 0; i--) {
+      var rule = rules[lit[i]], rf = rule && rule.format !== null ? formats[rule.format] : null;
+      if (!rf) continue;
+      f = pageOver(rf, f);
+      if (!(rf.unsaid && rf.unsaid.fill)) byRule = true;
+    }
+    return { f: f, byRule: byRule };
+  }
   // The edges one quadrant draws, as the viewport must: L the oracle's layout, formatAt(r, c) its own drawn format of a
   // cell, rows r1..r2 and columns c1..c2 in view, the quadrant's scroll and name, and bound a bound sheet's last row and
   // column, or null. Each edge's op as the viewport records it, keyed by its boundary: the resolved line, its owner and
@@ -3077,52 +3161,20 @@
   function gqColumnPixels(width) { return Math.floor(((256 * width + Math.floor(128 / GQ.digit)) / 256) * GQ.digit); }
   function gqName(key) { var p = key.split(','); return VP.colName(+p[1]) + p[0]; }
   function gqLessFormulas(text) { return text.split('\n').filter(function (l) { return l.indexOf('(formula ') !== 0; }).join('\n'); }
-  // The groups after a format row's wrap (ENGINE.28), the oracle's own reading: a font's weight, slant, size in
-  // twentieths of a point and color; an alignment's horizontal and vertical word; a border's four edges. A property
-  // unsaid is null.
-  function gqGroups(f) {
-    var out = { font: null, align: null, border: null };
-    for (var i = 5; i < f.length; i++) {
-      var g = f[i], head = Array.isArray(g) && g[0] && g[0].sym !== undefined ? g[0].sym : null, items = Array.isArray(g) ? g.slice(1) : [];
-      if (head === 'font') {
-        var fo = { bold: null, italic: null, size: null, color: null };
-        items.forEach(function (d) {
-          var w = d && d.sym !== undefined ? d.sym : null;
-          if (w === 'bold' || w === 'not-bold') fo.bold = w === 'bold';
-          else if (w === 'italic' || w === 'not-italic') fo.italic = w === 'italic';
-          else if (d && d.num !== undefined) fo.size = Math.round(d.num * 20);
-          else if (typeof d === 'string') fo.color = '#' + d.toUpperCase();
-        });
-        out.font = fo;
-      } else if (head === 'align') {
-        var al = { h: null, v: null };
-        items.forEach(function (d) { var w = d && d.sym !== undefined ? d.sym : null; if (w === 'top' || w === 'middle' || w === 'bottom') al.v = w; else if (w) al.h = w; });
-        out.align = al;
-      } else if (head === 'border') {
-        var bo = { left: null, right: null, top: null, bottom: null };
-        items.forEach(function (e) { if (Array.isArray(e) && e[0] && e[0].sym !== undefined) bo[e[0].sym] = { line: e[1] && e[1].sym !== undefined ? e[1].sym : null, color: typeof e[2] === 'string' ? '#' + e[2].toUpperCase() : null }; });
-        out.border = bo;
-      }
-    }
-    return out;
-  }
-  // The look's rule (ENGINE.28, decision 2; vla-lang's Style::over), written again here: the look's fill, number
-  // format and wrap; its font, alignment and edges property by property where said, else the cell's own.
-  function gqOver(look, own) {
-    function prop(a, b) { return a !== null && a !== undefined ? a : (b !== null && b !== undefined ? b : null); }
-    var f = { fill: look.fill, num: look.num, wrap: look.wrap, font: null, align: null, border: null };
-    if (look.font || own.font) { var lf = look.font || {}, of = own.font || {}; f.font = { bold: prop(lf.bold, of.bold), italic: prop(lf.italic, of.italic), size: prop(lf.size, of.size), color: prop(lf.color, of.color) }; }
-    if (look.align || own.align) { var la = look.align || {}, oa = own.align || {}; f.align = { h: prop(la.h, oa.h), v: prop(la.v, oa.v) }; }
-    if (look.border || own.border) { var lb = look.border || {}, ob = own.border || {}; f.border = { left: prop(lb.left, ob.left), right: prop(lb.right, ob.right), top: prop(lb.top, ob.top), bottom: prop(lb.bottom, ob.bottom) }; }
-    return f;
-  }
+  // The groups of a format row (ENGINE.28; since ENGINE.37 a format of groups alone and the font's words of KERNEL.58),
+  // the oracle's own reading, the page's (pageGroups).
+  function gqGroups(f) { return pageGroups(f); }
+  // The look's rule (ENGINE.28, decision 2; vla-lang's Style::over), written again here, the page's (pageOver): since
+  // ENGINE.37 a format of groups alone leaves the cell's own fill, number format and wrap where it says none.
+  function gqOver(look, own) { return pageOver(look, own); }
   // A format's font, as the oracle expects the viewport to set it (ENGINE.28, decision 3): a said size of s points at
-  // round(s × 13/11 × dpr), the default text taken as 11 points; its slant and weight before the pixels.
+  // round(s × 13/11 × dpr), the default text taken as 11 points; its slant and weight before the pixels; and since
+  // ENGINE.37 a family said, by its name and its class (decision 9).
   function gqFont(f, dpr) {
     var fo = f.font;
-    if (!fo) return Math.round(GQ.font * dpr) + 'px system-ui, "Segoe UI", sans-serif';
+    if (!fo) return Math.round(GQ.font * dpr) + 'px ' + PAINTER_STACK;
     var px = fo.size !== null ? Math.round(fo.size / 20 * GQ.pointFont * dpr) : Math.round(GQ.font * dpr);
-    return (fo.italic ? 'italic ' : '') + (fo.bold ? 'bold ' : '') + px + 'px system-ui, "Segoe UI", sans-serif';
+    return (fo.italic ? 'italic ' : '') + (fo.bold ? 'bold ' : '') + px + 'px ' + (fo.family ? familyFont(fo.family) : PAINTER_STACK);
   }
   function gqLineH(f, dpr) { var fo = f.font; return fo && fo.size !== null ? Math.round(fo.size / 20 * GQ.pointFont * GQ.lineHeight * dpr) : Math.round(GQ.font * GQ.lineHeight * dpr); }
   // The lines a wrapped text breaks into at a width, the viewport's rule (ENGINE.36): a carriage return nothing, a line
@@ -3148,7 +3200,7 @@
     return out;
   }
   function gqRead(text) {
-    var forms = VP.readForms(text), m = { window: null, gridlines: true, columns: {}, rows: {}, formats: { 0: { fill: null, num: 'general', wrap: false, font: null, align: null, border: null } }, looks: [], cells: {}, styled: false, bordered: false };
+    var forms = VP.readForms(text), m = { window: null, gridlines: true, columns: {}, rows: {}, formats: { 0: { fill: null, num: 'general', wrap: false, font: null, align: null, border: null } }, looks: [], cells: {}, styled: false, bordered: false, rules: {} };
     for (var i = 0; i < forms.length; i++) {
       var f = forms[i];
       if (!Array.isArray(f) || !f[0] || f[0].sym === undefined) continue;
@@ -3160,11 +3212,22 @@
       else if (head === 'row') m.rows[f[2].num] = { height: f[3] && f[3].num !== undefined ? f[3].num : null, hidden: !!f[4] && f[4].sym === 'hidden' };
       else if (head === 'format') {
         var gg = gqGroups(f);
-        m.formats[f[1].num] = { fill: typeof f[2] === 'string' ? '#' + f[2] : null, num: typeof f[3] === 'string' ? 'code' : f[3].sym, wrap: f[4].sym === 'wrap', font: gg.font, align: gg.align, border: gg.border };
+        // a format of groups alone (ENGINE.37): what its groups say, the default of what it leaves unsaid, noted
+        m.formats[f[1].num] = Array.isArray(f[2]) ? { fill: gg.fill, num: gg.num, wrap: gg.wrap, font: gg.font, align: gg.align, border: gg.border, unsaid: gg.unsaid }
+                                                   : { fill: typeof f[2] === 'string' ? '#' + f[2] : null, num: typeof f[3] === 'string' ? 'code' : f[3].sym, wrap: f[4].sym === 'wrap', font: gg.font, align: gg.align, border: gg.border };
         if (gg.font || gg.align) m.styled = true;
         if (gg.border) m.bordered = true;
       }
       else if (head === 'look') m.looks.push({ key: gqKey(f[2]), index: f[3].num });
+      // a rule (ENGINE.37): its priority and its format or none; and a cell's lit row, the rules whose answer is true at
+      // it, a lit cell holding nothing an entry of its own, empty
+      else if (head === 'conditional') m.rules[f[2].num] = { format: f[5] && f[5].num !== undefined ? f[5].num : null };
+      else if (head === 'lit') {
+        a = VP.parseRange(f[2]);
+        if (!a) continue;
+        e = m.cells[a.top + ',' + a.left] || (m.cells[a.top + ',' + a.left] = { kind: 'empty', text: '', vkind: 'text', key: null, valued: false, style: 0 });
+        e.lit = f.slice(3).map(function (d) { return d.num; });
+      }
       else if (head === 'cell' || head === 'formula' || head === 'value' || head === 'text' || head === 'style') {
         a = VP.parseRange(f[2]);
         if (!a) continue;
@@ -3187,8 +3250,16 @@
     return m;
   }
   // A cell's format and where it came from: its value's first look, what it says over the cell's own since
-  // ENGINE.28 (gqOver), else its own style, else, for an empty cell, its column's style, else format 0.
+  // ENGINE.28 (gqOver), else its own style, else, for an empty cell, its column's style, else format 0; and since
+  // ENGINE.37 a lit cell's rules folded over that (pageFold), a lit cell holding nothing over its column's, the fill's
+  // source the rule's where one laid it.
   function gqFormat(m, cell, c) {
+    var unlit = gqUnlit(m, cell, c);
+    if (!cell || !cell.lit) return unlit;
+    var fold = pageFold(m.formats, m.rules, cell.lit, unlit.f);
+    return { f: fold.f, src: fold.byRule ? 'rule' : unlit.src, lit: true };
+  }
+  function gqUnlit(m, cell, c) {
     if (cell && cell.key !== null) {
       for (var i = 0; i < m.looks.length; i++) {
         if (m.looks[i].key !== cell.key) continue;
@@ -3197,7 +3268,7 @@
       }
     }
     if (cell && cell.style !== 0 && m.formats[cell.style]) return { f: m.formats[cell.style], src: 'style' };
-    if (!cell) { var col = m.columns[c]; if (col && col.style !== null && m.formats[col.style]) return { f: m.formats[col.style], src: 'column' }; }
+    if (!cell || cell.kind === 'empty') { var col = m.columns[c]; if (col && col.style !== null && m.formats[col.style]) return { f: m.formats[col.style], src: 'column' }; }
     return { f: m.formats[0], src: 'none' };
   }
   function gqAlign(cell, f) {
@@ -3377,7 +3448,7 @@
       if (!gf) { say(gqName(key) + '\'s fill, ' + ef.color + ' by its ' + ef.src + ', is not drawn'); continue; }
       if (gf.x !== ef.x || gf.y !== ef.y || gf.w !== ef.w || gf.h !== ef.h) say(gqName(key) + '\'s fill is at ' + [gf.x, gf.y, gf.w, gf.h].join(',') + ', and the record places it at ' + [ef.x, ef.y, ef.w, ef.h].join(','));
       else if (String(gf.color).toLowerCase() !== ef.color.toLowerCase()) say(gqName(key) + '\'s fill is ' + gf.color + ', and the record says ' + ef.color + ' by its ' + ef.src);
-      else { k.fills++; if (ef.src === 'look') k.looks++; else if (ef.src === 'style') k.styles++; else if (ef.src === 'column') k.columns++; }
+      else { k.fills++; if (ef.src === 'look') k.looks++; else if (ef.src === 'style') k.styles++; else if (ef.src === 'column') k.columns++; else if (ef.src === 'rule') k.rules = (k.rules || 0) + 1; }
       delete fills[key];
     }
     for (key in fills) if (Object.prototype.hasOwnProperty.call(fills, key)) say('a fill is drawn at ' + gqName(key) + ' where the record declares none');
@@ -3684,7 +3755,7 @@
   function gridOwn() {
     var P = [], kf = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0 };
     var km = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0 };
-    var x = { pointer: 0, key: 0, edited: 0, waits: 0, edits: 0, followed: 0, lone: 0, codes: 0 }, module = 0;
+    var x = { pointer: 0, key: 0, edited: 0, waits: 0, edits: 0, followed: 0, lone: 0, codes: 0, rule: 0, cardRules: 0 }, module = 0;
     var fake = FAKE.create({}), taken = false;
     function cellCenter(host, r, c) {
       var g = host.vp.geometry(), rect = host.vp.box.getBoundingClientRect();
@@ -3712,6 +3783,14 @@
           else x.edited = 1;
         }
         if (f === 6) { if (v('B11') !== 14 || v('B12') !== 4) P.push(at + ': the pointer over N4 was written as column ' + v('B11') + ' and row ' + v('B12') + ', not the Screen\'s own column 14 and row 4'); else x.pointer = 1; }
+        // the double's rule over A1 (ENGINE.37, decision 16): lit at frame 1, its fill the rule's pale lavender and its value
+        // italic, and unlit at frame 2, no fill and its value upright, the value 255 at both
+        if (f === 1 || f === 2) {
+          var a1f = E.fills['1,1'], a1t = E.texts['1,1'], lit1 = f === 1;
+          if (!a1t || a1t.text !== '255' || (lit1 ? (!a1f || a1f.src !== 'rule' || a1f.color.toLowerCase() !== '#e6dff7' || a1t.font.indexOf('italic ') !== 0) : (a1f || a1t.font.indexOf('italic') >= 0)))
+            P.push(at + ': A1, the value 255, is drawn ' + (a1f ? 'on ' + a1f.color + ' by its ' + a1f.src : 'with no fill') + (a1t ? ' in ' + a1t.font : ', its value undrawn') + ', where the double\'s rule ' + (lit1 ? 'lights it, a fill of #E6DFF7 and an italic' : 'is false and lays nothing'));
+          else x.rule++;
+        }
         if (f === 7) { if (!taken || v('B4') !== 1) P.push(at + ': ArrowRight, bound to player 1\'s right, was ' + (taken ? '' : 'not ') + 'taken from the viewport and Input!B4 holds ' + v('B4') + ', not 1'); else x.key = 1; }
       },
       // Paused at its rate, an edit waits for the next frame, which Run brings, and says so (the owner's hand
@@ -3766,6 +3845,31 @@
             else x.codes++;
           }
           if (f === 20) x.followed = 1;   // its scroll check held the person's two rows through the Camera's move
+          // rows 17 and 18, the conditional formats (ENGINE.37), each by name: at frames 1 and 2, the Camera at A, P18 lit by
+          // its value, Q18 lit at 1 and not at 2 with its value still, T18 an empty cell of the styled column, its fill the
+          // column's and the rule's edges at 1 and none at 2, U18 two rules folded, P17 in Consolas by its class; at frames 21
+          // and 22, the Camera at C, V18's stop by turns, W18 under the rule's code, X18 a rule over a look and Y18 a format
+          // of groups alone as its own
+          if (f === 1 || f === 2 || f === 21 || f === 22) {
+            var bad18 = [], on = f === 1, fillOf = function (k) { return E.fills[k] ? E.fills[k].color.toLowerCase() + ' by its ' + E.fills[k].src : 'none'; };
+            var edged = function (r, c) { return E.edges.some(function (ed) { return ed.row === r && ed.col === c; }); };
+            if (f <= 2) {
+              var p17 = E.texts['17,16'], u18t = E.texts['18,21'], q18t = E.texts['18,17'];
+              if (fillOf('18,16') !== '#ffe699 by its rule') bad18.push('P18, 9, is on ' + fillOf('18,16') + ', not the rule\'s #ffe699 by its value');
+              if (fillOf('18,17') !== (on ? '#c8e6c9 by its rule' : 'none') || !q18t || q18t.text !== 'q') bad18.push('Q18, "q", is on ' + fillOf('18,17') + (on ? ', where its rule lights it' : ', where its rule is false'));
+              if (fillOf('18,20') !== '#e8f0fe by its column' || edged(18, 20) !== on) bad18.push('T18, empty, is on ' + fillOf('18,20') + (edged(18, 20) ? ' with' : ' without') + ' edges, where its column fills it' + (on ? ' and its rule edges it' : ' and its rule is false'));
+              if (fillOf('18,21') !== '#e8e0f7 by its rule' || !u18t || u18t.font.indexOf('bold ') !== 0) bad18.push('U18, "two", is on ' + fillOf('18,21') + (u18t ? ' in ' + u18t.font : '') + ', not the first rule\'s fill in the second\'s bold');
+              if (!p17 || p17.font.indexOf('"Consolas", monospace') < 0) bad18.push('P17 is drawn ' + (p17 ? 'in ' + p17.font : 'not at all') + ', not in Consolas by its class');
+            } else {
+              var v18t = E.texts['18,22'], w18t = E.texts['18,23'], x18t = E.texts['18,24'], y18t = E.texts['18,25'], odd = f === 21;
+              if (!v18t || fillOf('18,22') !== (odd ? '#ffd5d5 by its rule' : 'none') || (v18t.font.indexOf('italic ') === 0) === odd) bad18.push('V18, "stop", is on ' + fillOf('18,22') + (v18t ? ' in ' + v18t.font : '') + (odd ? ', where the first rule is false and the next fills it' : ', where the first rule stops the next and slants it'));
+              if (!w18t || w18t.text !== '50.00%' || !w18t.coded || w18t.align !== 'right') bad18.push('W18, 0.5, is drawn ' + (w18t ? JSON.stringify(w18t.text) + ' ' + w18t.align : 'not at all') + ', not the rule\'s code\'s 50.00% on the right');
+              if (fillOf('18,24') !== '#e2d8f6 by its look' || !x18t || x18t.font.indexOf('italic ') !== 0 || x18t.color.toLowerCase() !== '#800020') bad18.push('X18, "x", is on ' + fillOf('18,24') + (x18t ? ' in ' + x18t.font + ' ' + x18t.color : '') + ', not the look\'s fill under the rule\'s ink and slant');
+              if (fillOf('18,25') !== '#fff2cc by its style' || !y18t || y18t.font.indexOf('bold ') !== 0) bad18.push('Y18, "own", is on ' + fillOf('18,25') + (y18t ? ' in ' + y18t.font : '') + ', not its own format of groups alone, a fill and a bold');
+            }
+            if (bad18.length) P.push(at + ': rows 17 and 18, the rules: ' + bad18.join('; '));
+            else x.cardRules++;
+          }
         },
         strict: true
       }, km, P);
@@ -3774,6 +3878,7 @@
                          pointer: x.pointer, key: x.key, edited: x.edited, waits: x.waits, lone: x.lone, module: module, frames: km.frames, equal: km.equal, windows: km.windows, texts: km.texts, wraps: km.wraps, fills: km.fills, looks: km.looks, styles: km.styles,
                          columns: km.columns, unvalued: km.unvalued, hidden: km.hidden, probes: km.probes, kept: km.kept, followed: x.followed, edits: x.edits, cleared: km.cleared, hashes: km.hashes || 0, values: km.values,
                          fakePatches: kf.patches || 0, patches: km.patches || 0, codes: x.codes, coded: km.coded || 0, fakeFonts: kf.fonts || 0, fonts: km.fonts || 0, fakeEdges: kf.edges || 0, edges: km.edges || 0,
+                         fakeRule: x.rule, fakeRules: kf.rules || 0, cardRules: x.cardRules, rules: km.rules || 0,
                          live: st.live, misfrees: st.misfrees }, problems: P };
   }
   // ENGINE.16's half, a game's page's and Alonzo's alike: every grid cartridge the page holds, by its manifest,
@@ -4430,6 +4535,10 @@
   // still (L7), a carriage return (M7) and an indent and a trailing space (N7); a nowrap text spilling on row 3, on the left
   // (K3) and aligned right (S3), a centered one on row 10 (P10), each moved by its measure; and a value the Write sheet
   // lands at every frame, so that a cell row holds one on the Day's viewer's patch (Day!B4).
+  // Since ENGINE.37 it holds conditional formats on row 4, each lit and unlit by the Clock's frame with no value moving, so
+  // that a frame's changes name a cell whose answer alone moved and its lit row is patched and repainted: a constant lit
+  // on and off by a rule of a fill of groups alone (O4), an empty cell under the same rule (P4), a rule that stops the
+  // rule after it, each lighting Q4 by turns, a rule of four edges beside R5's own (R4), and a rule over a look (S4).
   var CHANGES = { file: 'changes.vla',
                   text: '(cartridge "changes"\n  (spec 3)\n  (title "A changes card")\n  (rate 30)\n  (screen grid 20 10)\n  (seed 1))\n' +
                         '(sheet "Screen" visible)\n(sheet "Day" visible)\n(sheet "Camera" visible)\n(sheet "Keys" visible)\n(sheet "Write" visible)\n' +
@@ -4466,7 +4575,12 @@
                         '(formula "Screen" "K3" "=IF(MOD(Clock!$B$1,3)=0,\\"no wrap\\"&CHAR(10)&\\"and a long text spilling\\",\\"a\\"&CHAR(10)&\\"b\\")")\n' +
                         '(formula "Screen" "S3" "=IF(MOD(Clock!$B$1,2)=0,\\"right\\"&CHAR(10)&\\"and a long text spilling\\",\\"c\\"&CHAR(13)&\\"d\\"&CHAR(10))")\n(style "Screen" "S3" 10)\n' +
                         '(formula "Screen" "P10" "=IF(MOD(Clock!$B$1,2)=0,\\"centered\\"&CHAR(10)&\\"and spilling both ways\\",\\"e\\"&CHAR(10)&\\"f\\")")\n(style "Screen" "P10" 4)\n' +
-                        '(cell "Day" "A4" "fed")\n(cell "Day" "B4" "")\n(cell "Write" "A3" "Day")\n(cell "Write" "B3" "B4")\n(formula "Write" "C3" "=\\"w\\"&CHAR(10)&Clock!$B$1")\n' };
+                        '(cell "Day" "A4" "fed")\n(cell "Day" "B4" "")\n(cell "Write" "A3" "Day")\n(cell "Write" "B3" "B4")\n(formula "Write" "C3" "=\\"w\\"&CHAR(10)&Clock!$B$1")\n' +
+                        // ENGINE.37: the rules, each answer moving with the frame and no value with it
+                        '(format 11 (fill "FFE699"))\n(format 12 (font bold))\n(format 13 (fill "C8E6C9"))\n(format 14 (border (left thin "6B4FC8") (right thin "6B4FC8") (top thin "6B4FC8") (bottom thin "6B4FC8")))\n(format 15 (font italic "800020"))\n' +
+                        '(conditional "Screen" 1 "O4:P4" "=MOD(Clock!$B$1,4)<2" 11)\n(conditional "Screen" 2 "Q4" "=MOD(Clock!$B$1,3)=0" 12 stop)\n(conditional "Screen" 3 "Q4" "=TRUE" 13)\n' +
+                        '(conditional "Screen" 4 "R4" "=MOD(Clock!$B$1,2)=0" 14)\n(conditional "Screen" 5 "S4" "=MOD(Clock!$B$1,2)=1" 15)\n' +
+                        '(cell "Screen" "O4" 7)\n(cell "Screen" "Q4" "q")\n(cell "Screen" "R4" "r")\n(cell "Screen" "S4" "on")\n' };
   var CHANGES_FRAMES = 60, CHANGES_DEVICES = ['Camera', 'Keys', 'File', 'Write', 'Clock'];
   // The person's acts before each frame: the pointer over three cells, a bound key pressed and let go, an edit of the
   // Input sheet, the Keys rebound and the new key pressed and let go, the value's edit, a notch of the wheel, the Camera
@@ -4530,7 +4644,7 @@
   function rowsByCell(text) {
     var cells = {}, order = [];
     text.split('\n').forEach(function (l) {
-      var m = /^\((?:cell|value|style|sentence|formula) "(?:[^"\\]|\\.)*" "([A-Z]+)(\d+)"/.exec(l);
+      var m = /^\((?:cell|value|style|sentence|formula|lit) "(?:[^"\\]|\\.)*" "([A-Z]+)(\d+)"/.exec(l);
       if (!m) return;
       var r = +m[2], c = VP.colIndex(m[1]), key = r * 32768 + c;
       if (!cells[key]) { cells[key] = { addr: m[1] + m[2], r: r, c: c, rows: '' }; order.push(key); }
@@ -4579,6 +4693,7 @@
     var a1 = '(cell "Crafted" "A1" "a")\n', b1 = '(value "Crafted" "B1" 1)\n(style "Crafted" "B1" 2)\n', c2 = '(value "Crafted" "C2" 3)\n', d4 = '(cell "Crafted" "D4" 4)\n';
     var rec = head + a1 + b1 + c2 + d4, held = 0;
     function changes(n, rows) { return '(changes "Crafted" "A1:D4" 1 2 ' + n + ')\n' + rows; }
+    var headLit = head + '(format 4 (fill "FFE699") (font italic))\n(conditional "Crafted" 1 "A1:D4" "=TRUE" 4)\n', litC2 = '(lit "Crafted" "C2" 1)\n', litB3 = '(lit "Crafted" "B3" 1)\n';
     var fedA = '(cell "Crafted" "A1" "a\nb")\n(style "Crafted" "A1" 3)\n', fedB = '(cell "Crafted" "A1" "b\nc")\n(style "Crafted" "A1" 3)\n', quoted = '(value "Crafted" "C2" "say \\"b\nc\\"")\n', recFed = head + fedA + b1 + c2 + d4;
     var cases = [
       ['an empty row', changes(1, '(empty "Crafted" "C2")\n'), head + a1 + b1 + d4],
@@ -4590,7 +4705,13 @@
       ['a quote before a line feed', changes(1, quoted), head + a1 + b1 + quoted + d4],
       ['a row over lines replaced', changes(1, '(cell "Crafted" "A1" "z")\n'), head + '(cell "Crafted" "A1" "z")\n' + b1 + c2 + d4, recFed],
       ['a cell beside a row over lines', changes(1, '(value "Crafted" "C2" 8)\n'), head + fedA + b1 + '(value "Crafted" "C2" 8)\n' + d4, recFed],
-      ['a row over lines emptied', changes(1, '(empty "Crafted" "A1")\n'), head + b1 + c2 + d4, recFed]
+      ['a row over lines emptied', changes(1, '(empty "Crafted" "A1")\n'), head + b1 + c2 + d4, recFed],
+      // ENGINE.37: a record holding a rule, a cell's lit row laid with its value and taken off with it, a lit row alone at
+      // a cell holding nothing, and that cell emptied
+      ['a lit row laid', changes(1, '(value "Crafted" "C2" 3)\n' + litC2), headLit + a1 + b1 + '(value "Crafted" "C2" 3)\n' + litC2 + d4, headLit + a1 + b1 + c2 + d4],
+      ['a lit row taken off', changes(1, c2), headLit + a1 + b1 + c2 + d4, headLit + a1 + b1 + c2 + litC2 + d4],
+      ['a lit cell holding nothing', changes(1, litB3), headLit + a1 + b1 + c2 + litB3 + d4, headLit + a1 + b1 + c2 + d4],
+      ['a lit cell holding nothing emptied', changes(1, '(empty "Crafted" "B3")\n'), headLit + a1 + b1 + c2 + d4, headLit + a1 + b1 + c2 + litB3 + d4]
     ];
     var stage = document.getElementById('stage'), box = document.createElement('div'), box2 = document.createElement('div');
     box.style.cssText = box2.style.cssText = 'width:640px;height:200px;position:relative;background:#fff;';
@@ -8485,7 +8606,8 @@
       var f = fmt.font;
       if (!f) return L.font;
       var px = f.size !== null ? Math.round(f.size / 20 * R.pointFont * dpr) : L.fontPx;
-      return (f.italic ? 'italic ' : '') + (f.bold ? 'bold ' : '') + px + 'px system-ui, "Segoe UI", sans-serif';
+      // since ENGINE.37 a family said, by its name and its class (decision 9)
+      return (f.italic ? 'italic ' : '') + (f.bold ? 'bold ' : '') + px + 'px ' + (f.family ? familyFont(f.family) : PAINTER_STACK);
     };
     L.lineHOf = function (fmt) { var f = fmt.font; return f && f.size !== null ? Math.round(f.size / 20 * R.pointFont * R.lineHeight * dpr) : L.lineH; };
     var digits = String(L.rows).length;
@@ -8506,42 +8628,47 @@
     L.W = env.canvasW; L.H = env.canvasH;
     return L;
   }
-  // The look's rule (ENGINE.28, decision 2; vla-lang's Style::over), the oracle's own: the look's fill, number format
-  // and wrap, and its font, alignment and edges property by property where it says one, else the cell's own.
-  function overRule(look, own) {
-    function prop(a, b) { return a !== null && a !== undefined ? a : (b !== null && b !== undefined ? b : null); }
-    var f = { fill: look.fill, num: look.num, code: look.code, wrap: look.wrap, font: null, align: null, border: null };
-    if (look.font || own.font) { var lf = look.font || {}, of = own.font || {}; f.font = { bold: prop(lf.bold, of.bold), italic: prop(lf.italic, of.italic), size: prop(lf.size, of.size), color: prop(lf.color, of.color) }; }
-    if (look.align || own.align) { var la = look.align || {}, oa = own.align || {}; f.align = { h: prop(la.h, oa.h), v: prop(la.v, oa.v) }; }
-    if (look.border || own.border) { var lb = look.border || {}, ob = own.border || {}; f.border = { left: prop(lb.left, ob.left), right: prop(lb.right, ob.right), top: prop(lb.top, ob.top), bottom: prop(lb.bottom, ob.bottom) }; }
-    return f;
-  }
-  // The record's format groups read again by the oracle's own hand (ENGINE.28), over the model the viewport's reader
-  // made, so that a viewport whose reader passes over a group, or misreads one, is told by name and not only by a
-  // floor: each format row's groups as gqGroups reads them, and whether any format says a font, an alignment or a
-  // border.
+  // The look's rule (ENGINE.28, decision 2; vla-lang's Style::over), the oracle's own, the page's (pageOver): the look's
+  // fill, number format and wrap, each the cell's own where a format of groups alone leaves it unsaid (ENGINE.37), and its
+  // font, alignment and edges property by property where it says one, else the cell's own.
+  function overRule(look, own) { return pageOver(look, own); }
+  // The record's formats, rules and lit rows read again by the oracle's own hand (ENGINE.28; ENGINE.37), over the model
+  // the viewport's reader made, so that a viewport whose reader passes over a group, a rule or a lit row, or misreads one,
+  // is told by name and not only by a floor: each format row as pageGroups reads it, a format of groups alone with what it
+  // leaves unsaid; each rule's format; each lit row's rules on its cell's entry, a lit cell holding nothing an entry of its
+  // own, empty; and whether any format says a font, an alignment or a border.
   function oracleGroups(model, text) {
-    var forms = VP.readForms(text), styled = false, bordered = false;
+    var forms = VP.readForms(text), styled = false, bordered = false, rules = {};
     for (var i = 0; i < forms.length; i++) {
-      var f = forms[i];
-      if (!Array.isArray(f) || !f[0] || f[0].sym !== 'format' || !f[1] || f[1].num === undefined) continue;
-      var g = gqGroups(f), fmt = model.formats[f[1].num];
-      if (!fmt) continue;
-      fmt.font = g.font; fmt.align = g.align; fmt.border = g.border;
-      if (g.font || g.align) styled = true;
-      if (g.border) bordered = true;
+      var f = forms[i], head = Array.isArray(f) && f[0] ? f[0].sym : null;
+      if (head === 'format' && f[1] && f[1].num !== undefined) {
+        var g = gqGroups(f);
+        model.formats[f[1].num] = Array.isArray(f[2]) ? { fill: g.fill, num: g.num, code: g.code, wrap: g.wrap, font: g.font, align: g.align, border: g.border, unsaid: g.unsaid }
+          : { fill: typeof f[2] === 'string' ? '#' + f[2] : null, num: typeof f[3] === 'string' ? 'code' : f[3].sym, code: typeof f[3] === 'string' ? f[3] : null, wrap: !!f[4] && f[4].sym === 'wrap', font: g.font, align: g.align, border: g.border };
+        if (g.font || g.align) styled = true;
+        if (g.border) bordered = true;
+      } else if (head === 'conditional' && f[2] && f[2].num !== undefined) {
+        rules[f[2].num] = { format: f[5] && f[5].num !== undefined ? f[5].num : null };
+      } else if (head === 'lit' && typeof f[2] === 'string') {
+        var a = VP.parseRange(f[2]), key = a.top + ',' + a.left, e = model.cells.get(key);
+        if (!e) model.cells.set(key, e = { row: a.top, col: a.left, address: f[2], kind: 'empty', vkind: 'text', text: '', style: 0, sentence: 0, formula: '', valued: false, lookKey: null });
+        e.lit = f.slice(3).map(function (d) { return d.num; });
+      }
     }
-    model.styled = styled; model.bordered = bordered;
+    model.styled = styled; model.bordered = bordered; model.rules = rules;
   }
+  // A cell's format, the oracle's own (ENGINE.28; ENGINE.37): its look over its own, its own, for an empty cell or a lit
+  // one holding nothing its column's, else format 0; then a lit cell's rules folded over it (pageFold).
   function fmtOf(model, cell, c) {
-    var own = cell && cell.style !== 0 && model.formats[cell.style] ? model.formats[cell.style] : model.formats[0];
+    var own = cell && cell.style !== 0 && model.formats[cell.style] ? model.formats[cell.style] : model.formats[0], base = null;
     if (cell && cell.lookKey !== null && Object.prototype.hasOwnProperty.call(model.looks, cell.lookKey)) {
       var lf = model.formats[model.looks[cell.lookKey]];
-      if (lf) return overRule(lf, own);
+      if (lf) base = overRule(lf, own);
     }
-    if (cell && cell.style !== 0 && model.formats[cell.style]) return own;
-    if (!cell) { var col = model.columns[c]; if (col && col.style !== null && model.formats[col.style]) return model.formats[col.style]; }
-    return model.formats[0];
+    if (!base && cell && cell.style !== 0 && model.formats[cell.style]) base = own;
+    if (!base && (!cell || cell.kind === 'empty')) { var col = model.columns[c]; if (col && col.style !== null && model.formats[col.style]) base = model.formats[col.style]; }
+    if (!base) base = model.formats[0];
+    return cell && cell.lit ? pageFold(model.formats, model.rules || {}, cell.lit, base).f : base;
   }
   function alignRule(cell, fmt) {
     if (fmt.align && fmt.align.h !== null && fmt.align.h !== 'general') return fmt.align.h;   // said (ENGINE.28)
@@ -8600,7 +8727,7 @@
         cell = model.cells.get(r + ',' + c) || null;
         var f = fmtOf(model, cell, c);
         // a fill over its four gridlines, the cell's rectangle grown a pixel up and left (ENGINE.28, decision 11)
-        if (f.fill) E.fills.push({ key: name + ':' + r + ',' + c, x: ox + L.colX[c] - sx - 1, y: y - 1, w: w + 1, h: h + 1, color: f.fill });
+        if (f.fill) E.fills.push({ key: name + ':' + r + ',' + c, x: ox + L.colX[c] - sx - 1, y: y - 1, w: w + 1, h: h + 1, color: f.fill, lit: !!(cell && cell.lit) });
       }
     }
     if (model.gridlines) {
@@ -8631,7 +8758,7 @@
         var hashes = hashRule(cell, fmt, w, L.pad);
         if (hashes !== null) {
           if (left + w <= clip.x || left >= clip.x + clip.w) continue;
-          E.texts.push({ key: name + ':' + r + ',' + c, text: hashes, x: left + w - L.pad, y: cy, align: 'right', clip: { x: left, y: y, w: w, h: h }, kind: cell.kind, hashes: true, font: font, color: color, styled: styled });
+          E.texts.push({ key: name + ':' + r + ',' + c, text: hashes, x: left + w - L.pad, y: cy, align: 'right', clip: { x: left, y: y, w: w, h: h }, kind: cell.kind, hashes: true, font: font, color: color, styled: styled, lit: !!cell.lit });
           continue;
         }
         var ax = align === 'left' ? left + L.pad : (align === 'right' ? left + w - L.pad : left + Math.round(w / 2));
@@ -8639,7 +8766,7 @@
           if (left + w <= clip.x || left >= clip.x + clip.w) continue;
           var n = wrapCount(cell.text, Math.max(1, w - 2 * L.pad));
           var ty = valign === 'middle' ? y + Math.round(h / 2) - Math.round((n - 1) * lineH / 2) : (valign === 'bottom' ? y + h - half - (n - 1) * lineH : y + half);
-          E.wraps.push({ key: name + ':' + r + ',' + c, text: cell.text, x: ax, y: ty, align: align, clip: { x: left, y: y, w: w, h: h }, font: font, color: color, lines: n, styled: styled });
+          E.wraps.push({ key: name + ':' + r + ',' + c, text: cell.text, x: ax, y: ty, align: align, clip: { x: left, y: y, w: w, h: h }, font: font, color: color, lines: n, styled: styled, lit: !!cell.lit });
           continue;
         }
         // no line feed or carriage return drawn, each line feed in the measure at a digit's width (ENGINE.36)
@@ -8654,7 +8781,7 @@
           clipX -= grown; clipW += grown;
         }
         if (clipX + clipW <= clip.x || clipX >= clip.x + clip.w) continue;
-        E.texts.push({ key: name + ':' + r + ',' + c, text: shown, x: align === 'right' ? ax - Math.round(feedW) : (align === 'center' ? ax - Math.round(feedW / 2) : ax), y: cy, align: align, clip: { x: clipX, y: y, w: clipW, h: h }, kind: cell.kind, font: font, color: color, styled: styled });
+        E.texts.push({ key: name + ':' + r + ',' + c, text: shown, x: align === 'right' ? ax - Math.round(feedW) : (align === 'center' ? ax - Math.round(feedW / 2) : ax), y: cy, align: align, clip: { x: clipX, y: y, w: clipW, h: h }, kind: cell.kind, font: font, color: color, styled: styled, lit: !!cell.lit });
       }
     }
     // the edges, where a format says a border (ENGINE.28, decisions 8 to 10)
@@ -8692,14 +8819,19 @@
     box.className = 'case';
     box.style.cssText = 'width:' + cs.w + 'px;height:' + cs.h + 'px;';
     stage.appendChild(box);
-    var problems = [], counts = { texts: 0, wraps: 0, fills: 0, lines: 0, headers: 0, selection: 0, marks: 0, probes: 0, hashes: 0, fonts: 0, twin: 0, edges: 0 };
+    var problems = [], counts = { texts: 0, wraps: 0, fills: 0, lines: 0, headers: 0, selection: 0, marks: 0, probes: 0, hashes: 0, fonts: 0, twin: 0, edges: 0, lit: 0 };
     var vp = null, twinVp = null, twinBox = null;
     try {
       vp = new VP(box, { willReadFrequently: !!cs.twin });
       var text = cs.record || fixtureText(cs.fixture);
       var model = VP.readRecord(text);
       oracleGroups(model, text);
-      vp.load(text);
+      // every row read (ENGINE.37, decision 1): a viewport that counts a row of the record unknown or malformed, a rule's,
+      // a lit row or a format's, drops it, and is told so by name
+      var loaded = vp.load(text);
+      if (loaded.unknown || loaded.malformed) problems.push('the viewport read ' + loaded.unknown + ' row(s) as unknown and ' + loaded.malformed + ' as malformed');
+      // and the page's table of a family's classes is the viewport's (decision 9)
+      if (JSON.stringify(VP.GENERICS) !== JSON.stringify(FAMILY_CLASSES)) problems.push('the viewport\'s table of a family\'s classes is not the page\'s');
       var st = { widths: {}, frozenRows: 0, frozenCols: 0 };
       if (cs.freeze) { vp.freeze(cs.freeze[0], cs.freeze[1]); st.frozenRows = cs.freeze[0]; st.frozenCols = cs.freeze[1]; }
       if (cs.columnWidth) { vp.columnWidth(cs.columnWidth[0], cs.columnWidth[1]); st.widths[cs.columnWidth[0]] = cs.columnWidth[1]; }
@@ -8755,7 +8887,7 @@
         else if ((got.kind === 'formula') !== (ex.kind === 'formula')) problems.push('cell ' + ex.key + ' drawn as a ' + got.kind);
         else if (got.font !== ex.font) problems.push('cell ' + ex.key + ' in the font ' + got.font + ', expected ' + ex.font);
         else if (String(got.color).toLowerCase() !== ex.color.toLowerCase()) problems.push('cell ' + ex.key + ' in ' + got.color + ', expected ' + ex.color);
-        else { counts.texts++; if (ex.hashes) counts.hashes++; if (ex.styled) counts.fonts++; }
+        else { counts.texts++; if (ex.hashes) counts.hashes++; if (ex.styled) counts.fonts++; if (ex.lit) counts.lit++; }
         delete drawn[ex.key];
       }
       for (k in drawn) if (Object.prototype.hasOwnProperty.call(drawn, k)) problems.push('a text drawn at ' + k + ' (' + drawn[k].text + ') that the record does not put there');
@@ -8770,7 +8902,7 @@
         else if (lines[0].x !== wx.x || lines[0].y !== wx.y) problems.push('wrapped cell ' + wx.key + ' at ' + lines[0].x + ',' + lines[0].y + ', expected ' + wx.x + ',' + wx.y);
         else if (lines[0].clip.x !== wx.clip.x || lines[0].clip.w !== wx.clip.w) problems.push('wrapped cell ' + wx.key + ' clipped to ' + lines[0].clip.w + ', expected ' + wx.clip.w);
         else if (lines[0].font !== wx.font || String(lines[0].color).toLowerCase() !== wx.color.toLowerCase()) problems.push('wrapped cell ' + wx.key + ' in the font ' + lines[0].font + ' and ' + lines[0].color + ', expected ' + wx.font + ' and ' + wx.color);
-        else { counts.wraps++; if (wx.styled) counts.fonts++; }
+        else { counts.wraps++; if (wx.styled) counts.fonts++; if (wx.lit) counts.lit++; }
         delete drawnWraps[wx.key];
       }
       for (k in drawnWraps) if (Object.prototype.hasOwnProperty.call(drawnWraps, k)) problems.push('a wrapped text drawn at ' + k + ' that the record does not put there');
@@ -8782,7 +8914,7 @@
         if (!gf) { problems.push('fill ' + ef.key + ' not drawn'); continue; }
         if (gf.x !== ef.x || gf.y !== ef.y || gf.w !== ef.w || gf.h !== ef.h) problems.push('fill ' + ef.key + ' at ' + gf.x + ',' + gf.y + ' ' + gf.w + 'x' + gf.h + ', expected ' + ef.x + ',' + ef.y + ' ' + ef.w + 'x' + ef.h);
         else if (String(gf.color).toLowerCase() !== ef.color.toLowerCase()) problems.push('fill ' + ef.key + ' is ' + gf.color + ', expected ' + ef.color);
-        else counts.fills++;
+        else { counts.fills++; if (ef.lit) counts.lit++; }
         delete fills[ef.key];
       }
       for (k in fills) if (Object.prototype.hasOwnProperty.call(fills, k)) problems.push('a fill drawn at ' + k + ' that the record does not declare');
@@ -8924,7 +9056,7 @@
       if (box.parentNode) box.parentNode.removeChild(box);
       if (twinBox && twinBox.parentNode) twinBox.parentNode.removeChild(twinBox);
     }
-    var head = 'case ' + cs.name + ' [' + cs.w + 'x' + cs.h + ' css]: texts ' + counts.texts + ', wrapped ' + counts.wraps + ', fills ' + counts.fills + ', lines ' + counts.lines + ', headers ' + counts.headers + ', selection ' + counts.selection + ', marks ' + counts.marks + ', probes ' + counts.probes + ', hashes ' + counts.hashes + ', fonts ' + counts.fonts + ', twin ' + counts.twin + ', edges ' + counts.edges + ': ';
+    var head = 'case ' + cs.name + ' [' + cs.w + 'x' + cs.h + ' css]: texts ' + counts.texts + ', wrapped ' + counts.wraps + ', fills ' + counts.fills + ', lines ' + counts.lines + ', headers ' + counts.headers + ', selection ' + counts.selection + ', marks ' + counts.marks + ', probes ' + counts.probes + ', hashes ' + counts.hashes + ', fonts ' + counts.fonts + ', twin ' + counts.twin + ', edges ' + counts.edges + ', lit ' + counts.lit + ': ';
     if (problems.length === 0) { out.push(head + 'OK'); return true; }
     out.push(head + 'FAIL: ' + problems.slice(0, 6).join('; ') + (problems.length > 6 ? '; and ' + (problems.length - 6) + ' more' : ''));
     return false;
@@ -8967,7 +9099,24 @@
       { name: 'line_feeds', w: 1100, h: 400, record: '(sheet "Feeds" visible)\n(window "Feeds" "A1:H4")\n(extent "Feeds" "A1:H4")\n(gridlines "Feeds" on)\n(row "Feeds" 2 60 shown)\n' +
         '(format 0 none general nowrap)\n(format 1 none general wrap)\n(format 2 none general nowrap (align right))\n' +
         '(cell "Feeds" "A2" "one\ntwo")\n(style "Feeds" "A2" 1)\n(cell "Feeds" "B2" "a\n\nb")\n(style "Feeds" "B2" 1)\n(cell "Feeds" "C2" "cr\r\nlf")\n(style "Feeds" "C2" 1)\n(cell "Feeds" "D2" "  in \n   dent")\n(style "Feeds" "D2" 1)\n' +
-        '(cell "Feeds" "A3" "no\nbreak")\n(cell "Feeds" "C3" "a\rb")\n(cell "Feeds" "H3" "right\nand a long text spilling")\n(style "Feeds" "H3" 2)\n' }
+        '(cell "Feeds" "A3" "no\nbreak")\n(cell "Feeds" "C3" "a\rb")\n(cell "Feeds" "H3" "right\nand a long text spilling")\n(style "Feeds" "H3" 2)\n' },
+      // ENGINE.37: the language's two fixtures of KERNEL.58, a format of groups alone under a look and the rules lit over a
+      // sheet, each held to the oracle's own reading and drawn as its twin, the looks and the rules folded in by the
+      // language; and each twin itself
+      { name: 'partial', fixture: 'partial', w: 1100, h: 400, twin: 'partial_drawn' },
+      { name: 'partial_drawn', fixture: 'partial_drawn', w: 1100, h: 400 },
+      { name: 'rules', fixture: 'rules', w: 1100, h: 400, twin: 'rules_drawn' },
+      { name: 'rules_drawn', fixture: 'rules_drawn', w: 1100, h: 400 },
+      // and a record of its own, so that no pin moves: a text spilling over an empty cell a rule fills (C2, D2); an empty
+      // cell of a column its style fills, lit by a rule of four edges (G2); a rule over a look (B3); a family as a cell's
+      // own, Consolas by its class (A4), and a rule's family no machine holds, drawn by its class (E4); and a merged range
+      // read, its cells drawn as their own (A5:B5)
+      { name: 'rules_own', w: 1100, h: 400, record: '(sheet "Lit" visible)\n(window "Lit" "A1:H5")\n(extent "Lit" "A1:H5")\n(gridlines "Lit" on)\n(column "Lit" "G" none shown 3)\n' +
+        '(format 0 none general nowrap)\n(format 1 (fill "FFE699"))\n(format 2 (border (left thin "6B4FC8") (right thin "6B4FC8") (top thin "6B4FC8") (bottom thin "6B4FC8")))\n(format 3 "E8E0F7" general nowrap)\n' +
+        '(format 4 "C8E6C9" general nowrap (font bold))\n(format 5 (font italic "800020"))\n(format 6 none general nowrap (font (family "Consolas" mono)))\n(format 7 (font (family "NoSuchFamily" serif)))\n' +
+        '(look "Lit" "on" 4)\n(conditional "Lit" 1 "D2" "=TRUE" 1)\n(conditional "Lit" 2 "G2" "=TRUE" 2)\n(conditional "Lit" 3 "B3" "=TRUE" 5)\n(conditional "Lit" 4 "E4" "=TRUE" 7)\n(merge "Lit" "A5:B5")\n' +
+        '(cell "Lit" "C2" "a text spilling over a cell a rule fills")\n(lit "Lit" "D2" 1)\n(lit "Lit" "G2" 2)\n(cell "Lit" "B3" "on")\n(lit "Lit" "B3" 3)\n' +
+        '(cell "Lit" "A4" "0123456789 iiii WWWW")\n(style "Lit" "A4" 6)\n(cell "Lit" "E4" "serif by a rule")\n(lit "Lit" "E4" 4)\n(cell "Lit" "A5" "merged, read")\n' }
     ];
     var ok = 0;
     for (var i = 0; i < cases.length; i++) if (runCase(cases[i], out)) ok++;

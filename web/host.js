@@ -83,6 +83,8 @@
   person's edit of the Input sheet, a replay's rows or a refused write. The
   language prints a text's line feed raw, so a row holding one runs over the
   record's lines, and a record is read by its rows and not its lines (ENGINE.36).
+  A cell's lit row, the rules whose answer is true at it, is one of its rows, so
+  that a frame whose answers alone moved patches its cells (ENGINE.37).
 
   And it sounds the Audio sheet (docs/SPEC.md section 3.6; ENGINE.4): after each
   frame, once the Clock's rate is read, its four voices, each the Web Audio
@@ -349,8 +351,9 @@
   // for a cell with none, in row-major order.
   var CHANGES_HEAD = /^\(changes "((?:[^"\\]|\\.)*)" "([^"]*)" (\d+) (\d+) (whole|\d+)\)$/;
   // A cell's row of a values record or of a changes answer, its address the first group and its row the second; a
-  // text row (KERNEL.47) is a cell's, after its value's.
-  var CELL_LINE = /^\((?:cell|value|text|style|sentence|formula|empty) "(?:[^"\\]|\\.)*" "([A-Z]+)([0-9]+)"/;
+  // text row (KERNEL.47) is a cell's, after its value's, and since ENGINE.37 a lit row (KERNEL.58), after the rest, alone
+  // at a lit cell holding nothing.
+  var CELL_LINE = /^\((?:cell|value|text|style|sentence|formula|lit|empty) "(?:[^"\\]|\\.)*" "([A-Z]+)([0-9]+)"/;
   // A record's window row, its sheet and its range.
   var WINDOW_LINE = /^\(window "((?:[^"\\]|\\.)*)" "([^"]*)"\)$/m;
   function unquote(s) { return s.replace(/\\(.)/g, '$1'); }

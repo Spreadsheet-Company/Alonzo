@@ -97,12 +97,13 @@ Commands of its own, Life written to (spec 6) at rate 0 with (settle 8), and
 Life written to (spec 6) bounding its Screen, (bound "Screen"), the grid
 card written to (spec 6), its Screen the game's and read and its Camera read,
 and Life written to (spec 6), its Screen read;
-fifty-three mutants must each fail for its own reason, each
+fifty-five mutants must each fail for its own reason, each
 asserting its anchor once and proving it applied before the check is asked.
-Thirteen are of life.vla: a directive dropped, a rate of 121, a screen 321
+Fifteen are of life.vla: a directive dropped, a rate of 121, a screen 321
 wide, a cell written twice, a cell outside the Screen, a Palette index out
 of order, a color that is not #RRGGBB, NOW() in the rule, a sheet named
-Board.last, the header dropped, an unknown row kind, a formula into
+Board.last, the header dropped, an unknown row kind, since ENGINE.37 a
+format saying nothing and a rule of no test, a formula into
 Input!B1, and the file renamed out of its folder's name, which the count
 must catch. Seven are SPEC.3's: a (spec 7) since CART.12 made 6 a page
 this version reads, a macro left in a cartridge,
@@ -358,23 +359,32 @@ $expectedGoldens = 7
 # Inferred, Drawn), the Lab's nine rows of its switches, four commands, the Board's
 # words, its gray and four keys, and the Constraints' two rows; Naught's as CART.9's
 # fifth slice left it, and the other nine's rows unchanged.
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 270; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4248; 'cartridges/naught/naught.vla' = 1379 }
+# 2026-11-15, ENGINE.37: the grid card at 300 rows, rows 17 and 18 from column P, eleven
+# formats of groups alone and a family, nine conditional formats, eight cells and two
+# styles; the other ten's rows unchanged.
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 300; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4248; 'cartridges/naught/naught.vla' = 1379 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---
 $requiredDirectives = @('spec', 'title', 'rate', 'screen', 'seed')
 $optionalDirectives = @('author', 'license', 'notes', 'settle', 'bound', 'game', 'work', 'read')
-$rowKinds = @('sheet', 'cell', 'formula', 'value', 'name', 'column', 'format', 'style', 'gridlines', 'sentence', 'table', 'refers', 'look', 'row')
+# Since ENGINE.37 the language's rows of KERNEL.58 (vla-lang 0.13.0) too: a conditional format, a merged range, and a
+# cell's lit row, a save's, as a value row is (section 7.5).
+$rowKinds = @('sheet', 'cell', 'formula', 'value', 'name', 'column', 'format', 'style', 'gridlines', 'sentence', 'table', 'refers', 'look', 'row', 'conditional', 'merge', 'lit')
 # A format row's groups after its wrap (ENGINE.28, over vla-lang 0.11.0's KERNEL.50): each a list headed font, align
 # or border, each head at most once; what a group holds is the loader's to refuse by name, which the engine's load
-# of every cartridge holds elsewhere in this check.
+# of every cartridge holds elsewhere in this check. Since ENGINE.37 a format of groups alone (KERNEL.58): its groups
+# from its second item, headed fill, number or wrap too, each head at most once and at least one.
 function Test-Groups($items) {
     $seen = @{}
-    for ($gi = 5; $gi -lt $items.Count; $gi++) {
+    $alone = $items.Count -ge 3 -and (Test-Kind $items[2] 'list')
+    if (-not $alone -and $items.Count -lt 5) { return $false }
+    $heads = if ($alone) { @('fill', 'number', 'wrap', 'font', 'align', 'border') } else { @('font', 'align', 'border') }
+    for ($gi = $(if ($alone) { 2 } else { 5 }); $gi -lt $items.Count; $gi++) {
         $g = $items[$gi]
         if (-not (Test-Kind $g 'list') -or $g.Items.Count -eq 0 -or -not (Test-Kind $g.Items[0] 'symbol')) { return $false }
         $head = $g.Items[0].Text
-        if ($head -cne 'font' -and $head -cne 'align' -and $head -cne 'border') { return $false }
+        if ($heads -cnotcontains $head) { return $false }
         if ($seen.ContainsKey($head)) { return $false }
         $seen[$head] = $true
     }
@@ -618,12 +628,17 @@ function Test-Cartridge([string]$path) {
             'value' { $it.Count -eq 4 -and (Test-Kind $it[1] 'string') -and (Test-Kind $it[2] 'string') -and (Test-Value $it[3]) }
             'name' { $it.Count -eq 3 -and (Test-Kind $it[1] 'string') -and (Test-Kind $it[2] 'string') }
             'column' { $it.Count -eq 6 -and (Test-Kind $it[1] 'string') -and (Test-Kind $it[2] 'string') }
-            'format' { $it.Count -ge 5 -and (Test-Whole $it[1]) -and (Test-Groups $it) }
+            'format' { $it.Count -ge 3 -and (Test-Whole $it[1]) -and (Test-Groups $it) }
             'style' { $it.Count -eq 4 -and (Test-Kind $it[1] 'string') -and (Test-Kind $it[2] 'string') -and (Test-Whole $it[3]) }
             'gridlines' { $it.Count -eq 3 -and (Test-Kind $it[1] 'string') -and ((Test-Sym $it[2] 'on') -or (Test-Sym $it[2] 'off')) }
             'sentence' { $it.Count -eq 4 -and (Test-Kind $it[1] 'string') -and (Test-Kind $it[2] 'string') -and (Test-Whole $it[3]) }
             'look' { $it.Count -eq 4 -and (Test-Kind $it[1] 'string') -and (Test-Value $it[2]) -and (Test-Whole $it[3]) }
             'row' { $it.Count -eq 5 -and (Test-Kind $it[1] 'string') -and (Test-Whole $it[2]) }
+            # ENGINE.37: (conditional "<sheet>" <priority> "<range>" <test> <format>|none [stop]), its test a formula's text or a
+            # list; (merge "<sheet>" "<range>"); (lit "<sheet>" "<addr>" <priority> ...)
+            'conditional' { ($it.Count -eq 6 -or ($it.Count -eq 7 -and (Test-Sym $it[6] 'stop'))) -and (Test-Kind $it[1] 'string') -and (Test-Whole $it[2]) -and (Test-Kind $it[3] 'string') -and ((Test-Kind $it[4] 'string') -or (Test-Kind $it[4] 'list')) -and ((Test-Whole $it[5]) -or (Test-Sym $it[5] 'none')) }
+            'merge' { $it.Count -eq 3 -and (Test-Kind $it[1] 'string') -and (Test-Kind $it[2] 'string') }
+            'lit' { $it.Count -ge 4 -and (Test-Kind $it[1] 'string') -and (Test-Kind $it[2] 'string') -and @($it[3..($it.Count - 1)] | Where-Object { -not (Test-Whole $_) }).Count -eq 0 }
             default { $true }
         }
         if (-not $shapeOk) { $problems.Add("line $($f.Line): grid-row-malformed: the ($kind ...) row is not in its shape (docs/SPEC.md section 7.3)"); continue }
@@ -1000,6 +1015,9 @@ if ($Control) {
             @{ Name = 'a sheet named Board.last'; Append = '(cell "Board.last" "A1" 1)'; Want = 'cart-sheet-reserved: the sheet Board.last' },
             @{ Name = 'the header dropped'; Anchor = $header; With = '; no license'; Want = 'the license header is not the first line' },
             @{ Name = 'an unknown row kind'; Append = '(paint "Screen" "A1" 1)'; Want = 'grid-row-unknown: (paint ...)' },
+            # ENGINE.37: a format of groups alone that says nothing, which the language refuses; and a rule of no test
+            @{ Name = 'a format saying nothing'; Append = '(format 99)'; Want = 'grid-row-malformed: the (format ...) row is not in its shape' },
+            @{ Name = 'a rule of no test'; Append = '(conditional "Screen" 1 "A1")'; Want = 'grid-row-malformed: the (conditional ...) row is not in its shape' },
             @{ Name = 'a formula into Input!B1'; Append = '(formula "Input" "B1" "=1")'; Want = 'cart-device-cell-formula: Input!B1' },
             @{ Name = 'the file renamed out of its folder''s name'; Rename = 'life.txt'; Want = ("found {0} cartridge(s)" -f ($expectedCartridges - 1)) },
             @{ Name = 'Life written to (spec 3)'; Anchor = '(spec 2)'; With = '(spec 3)'; Want = '' },
@@ -1106,7 +1124,7 @@ if ($Control) {
             else { $ok = $false; $verdicts.Add("$($mu.Name): PASSED but should fail") }
         }
         foreach ($v in $verdicts) { Write-Output ('control: ' + $v) }
-        if ($ok) { Write-Output 'OK: the check passes the clean copy, Life written to (spec 3), Life written to (spec 4) with its Camera''s third row, Life written to (spec 5) with its Commands sheet, Life written to (spec 4) with a sheet named Commands of its own, Life written to (spec 6) at rate 0, settling, Life written to (spec 6), its Screen bound, the grid card written to (spec 6), its sheets by mode, and Life written to (spec 6), its Screen read, and fails each of the fifty-three mutants for its own reason, each proving it applied'; exit 0 }
+        if ($ok) { Write-Output 'OK: the check passes the clean copy, Life written to (spec 3), Life written to (spec 4) with its Camera''s third row, Life written to (spec 5) with its Commands sheet, Life written to (spec 4) with a sheet named Commands of its own, Life written to (spec 6) at rate 0, settling, Life written to (spec 6), its Screen bound, the grid card written to (spec 6), its sheets by mode, and Life written to (spec 6), its Screen read, and fails each of the fifty-five mutants for its own reason, each proving it applied'; exit 0 }
         Write-Output 'FAIL: the control did not behave as the header says'
         exit 1
     } finally {
