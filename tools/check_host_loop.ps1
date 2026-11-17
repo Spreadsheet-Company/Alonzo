@@ -1005,6 +1005,13 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # 2026-11-16, ENGINE.5: MB and MC take it to two hundred and fifty-one, the save case's, over the module (121 without).
 # 2026-11-16, ENGINE.5's hand test: MD, a kept keymap offered nothing, the keys case's, takes it to two hundred and
 # fifty-two, needing no module (122 applicable without).
+# 2026-11-17, CART.3's first slice, Brickwork the twelfth cartridge, its floors and AP's words found unmoved by ENGINE.41's
+# run of this control and moved: pass's sources and same 12; empty's cartridges, ordered and titled 12, and mutant AP's
+# words moved, the picker in reverse offering Brickwork second, after the empty sheet; grid's game half over five grid
+# cartridges, the Wall at rate 60 ticked at its own rate (grids 5, gridFrames 30, gridEqual 29, gridValues 51,
+# gridCleared 5, gridMoves 24, gridBound 4, gridCanvas 15, gridFocused 8, gridTyped 4). Its gridTexts, gridEdges and
+# gridFonts stand, each above its floor at both ratios, 6,155 texts, 62,281 and 61,583 edges, 872 and 868 fonts, their
+# room kept for another platform's metrics.
 # 2026-10-20, CART.9's first slice, Naught the eleventh cartridge: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -1128,7 +1135,7 @@ $floors = @(
     @{ Case = 'engine';   Min = @{}; WithModule = @{ frames = 11; equal = 2; live1 = 23683; live11 = 14482; chunked = 1; grown = 1; devices = 5; reloaded = 1 } },
     @{ Case = 'parity';   Min = @{}; WithModule = @{ same = 14 } },
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
-    @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 11; same = 11; refused = 1; handle = 1; ranOn = 1 } },
+    @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 12; same = 12; refused = 1; handle = 1; ranOn = 1 } },
     @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 5; players = 2; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 7; rate = 5; refused = 1 } },
     @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 5 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 7; frames = 26; same = 26; golden = 7; round = 7; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637; seiyakuFrames = 158; seiyakuCells = 12956; seiyakuActs = 26; seiyakuInstances = 3; seiyakuSettles = 132; seiyakuLit = 3442; seiyakuSatisfied = 1; naughtFrames = 4807; naughtCells = 1615368; naughtEdits = 38; naughtLit = 208; naughtWritten = 151; naughtPassed = 14; naughtShown = 18 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
@@ -1161,10 +1168,10 @@ $floors = @(
 # at both ratios: Q17 to W17's seven strands and X17's two on the frames its rule lights.
     @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 2080; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1; fakePatches = 8; fakeFonts = 170; fakeEdges = 500; sheetViews = 9; fakeRule = 2; fakeRules = 3 };
                             WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 10300; wraps = 40; fills = 9150; looks = 8650; styles = 80; columns = 326; unvalued = 288; hidden = 17; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 200; values = 24; patches = 20; codes = 3; coded = 213; fonts = 260; edges = 410; cardRules = 4; rules = 80;
-                                            grids = 4; gridFrames = 18; gridEqual = 16; gridValues = 33; gridTexts = 5250; gridCleared = 4; gridMoves = 18; gridBound = 3; gridCanvas = 10; gridFocused = 6; gridTyped = 3; gridEdges = 48000; gridFonts = 250; gridStrands = 78 } },
+                                            grids = 5; gridFrames = 30; gridEqual = 29; gridValues = 51; gridTexts = 5250; gridCleared = 5; gridMoves = 24; gridBound = 4; gridCanvas = 15; gridFocused = 8; gridTyped = 4; gridEdges = 48000; gridFonts = 250; gridStrands = 78 } },
     @{ Case = 'tabs';     Min = @{ fakeFrames = 14; fakeShown = 1; fakeHeld = 8; fakeScrolled = 1; fakeBack = 1; fakeScreen = 9; fakePointer = 1; fakeRouted = 1; fakeKey = 1; fakeStrip = 1; fakeWheel = 4; fakeTexts = 4600 };
                             WithModule = @{ frames = 12; shown = 1; held = 5; back = 1; screen = 8; pointer = 1; routed = 1; strip = 1; wheel = 4; clock = 4; texts = 3100 } },
-    @{ Case = 'empty';    Min = @{ cartridges = 11; ordered = 11; titled = 11; libraries = 1; double = 1; opening = 3 }; WithModule = @{ engine = 1 } },
+    @{ Case = 'empty';    Min = @{ cartridges = 12; ordered = 12; titled = 12; libraries = 1; double = 1; opening = 3 }; WithModule = @{ engine = 1 } },
     @{ Case = 'still';    Min = @{}; WithModule = $stillFloors },
     @{ Case = 'views';    Min = @{}; WithModule = $viewsFloors },
     @{ Case = 'changes';  Min = @{ crafted = 18; double = 32 }; WithModule = $changesFloors },
@@ -2122,7 +2129,7 @@ if ($Control) {
                Want = 'case empty.*the empty sheet on the double steps at a rate of 30, where it waits at 0 for an edit' },
             @{ L = 'ap'; Name = 'the picker in reverse'; Anchor = '    for (var i = 0; i < ORDER.length; i++) out.push({ value: ORDER[i], label: CARTRIDGES[ORDER[i]].title });'
                With = '    for (var i = ORDER.length - 1; i >= 0; i--) out.push({ value: ORDER[i], label: CARTRIDGES[ORDER[i]].title });'
-               Want = 'case empty.*the picker''s entry 2 is naught, and the page''s cartridge block 1 is life' },
+               Want = 'case empty.*the picker''s entry 2 is brickwork, and the page''s cartridge block 1 is life' },
             # HB, HC and HD (ENGINE.14's addendum): the bench's heading painted before the script chooses the player, and the
             # dark Screen before the grid, each by the one rule or attribute that holds it back
             @{ L = 'hb'; Name = 'a body with no mode shown'; Anchor = '  body:not([class]) { visibility: hidden; }'; With = '  /* no rule */'
