@@ -3383,9 +3383,10 @@ impl Game {
             value((r, c), k, test, &switches, &written, &mut board, &mut doing);
         }
         // a switch a person wrote over is that cell's value from now on
-        for s in 0..total as usize {
-            if written.contains_key(&(3 + s as u32, 1)) {
-                self.switches[k][s] = board.get(&(3 + s as u32, 1)).cloned().unwrap_or(Val::Empty);
+        for (s, switch) in self.switches[k].iter_mut().enumerate().take(total as usize) {
+            let at = (3 + s as u32, 1);
+            if written.contains_key(&at) {
+                *switch = board.get(&at).cloned().unwrap_or(Val::Empty);
             }
         }
         self.board[k] = board;
