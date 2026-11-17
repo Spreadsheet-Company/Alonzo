@@ -5293,6 +5293,33 @@
     }
     return '';
   }
+  // The font the canvas holds as each text is drawn, beside the font its op names (ENGINE.41): while paint runs, the
+  // viewport's context notes its font at every fillText, and each text it drew is found in the draw list after by its
+  // words and its place, a header's never; each font as the canvas spells it. { texts, wrong }: the texts held, and ''
+  // where every one was drawn in its op's font, else the first that was not, in words.
+  var FONT_SPELLER = null, FONT_SPELLED = {};
+  function spelledFont(f) {
+    if (!Object.prototype.hasOwnProperty.call(FONT_SPELLED, f)) {
+      var s = FONT_SPELLER || (FONT_SPELLER = document.createElement('canvas').getContext('2d'));
+      s.font = '10px serif'; s.font = f;
+      FONT_SPELLED[f] = s.font;
+    }
+    return FONT_SPELLED[f];
+  }
+  function fontsDrawn(vp, paint) {
+    var ctx = vp.canvas.getContext('2d'), seen = [], out = { texts: 0, wrong: '' }, byPlace = {}, i;
+    ctx.fillText = function (text, x, y) { seen.push({ text: String(text), x: x, y: y, font: ctx.font }); return CanvasRenderingContext2D.prototype.fillText.apply(ctx, arguments); };
+    try { paint(); } finally { delete ctx.fillText; }
+    var ops = vp.draws();
+    for (i = 0; i < ops.length; i++) if (ops[i].op === 'text') byPlace[ops[i].text + '\n' + ops[i].x + ',' + ops[i].y] = ops[i];
+    for (i = 0; i < seen.length; i++) {
+      var s = seen[i], op = byPlace[s.text + '\n' + s.x + ',' + s.y];
+      if (!op) continue;
+      if (s.font === spelledFont(op.font)) out.texts++;
+      else if (!out.wrong) out.wrong = VP.colName(op.col) + op.row + ' (' + s.text + ') drawn in ' + s.font + ', where its op names ' + spelledFont(op.font);
+    }
+    return out;
+  }
   // A full paint of a record in a viewport's state (ENGINE.20): the twin loads the record and takes the viewport's frozen
   // panes, selection and scroll, each a full paint; the marks it is given at its making, as the viewport's were.
   function twinPaint(twin, vp, text) {
@@ -5364,7 +5391,10 @@
   // the cells in view, is painted whole, held the same way. Since ENGINE.36 a row holding a line feed runs over the
   // record's lines: laid on a record, with a quote before its line feed, a row of a record replaced and emptied and a cell
   // patched beside one, each held the same way, the model's lines with it; and a line no string runs on to, in an answer
-  // or in a record, patches nothing.
+  // or in a record, patches nothing. Since ENGINE.41 every text a patch's repaint draws is drawn in the font its op
+  // names, the canvas's font noted at each (fontsDrawn): among the patches two cells of one bold font apart in a row,
+  // changed together, the second's rectangle painted after the first's clip restored the font; and, a full paint, a
+  // frozen row of that font over a sheet whose last text is of it too, its quadrants each a clip.
   function changesCrafted(P) {
     var head = '(sheet "Crafted" visible)\n(window "Crafted" "A1:D4")\n(extent "Crafted" "A1:D4")\n(gridlines "Crafted" on)\n(format 0 none general nowrap)\n(format 2 "00AA00" general nowrap)\n(format 3 none general wrap)\n';
     var a1 = '(cell "Crafted" "A1" "a")\n', b1 = '(value "Crafted" "B1" 1)\n(style "Crafted" "B1" 2)\n', c2 = '(value "Crafted" "C2" 3)\n', d4 = '(cell "Crafted" "D4" 4)\n';
@@ -5372,6 +5402,8 @@
     function changes(n, rows) { return '(changes "Crafted" "A1:D4" 1 2 ' + n + ')\n' + rows; }
     var headLit = head + '(format 4 (fill "FFE699") (font italic))\n(conditional "Crafted" 1 "A1:D4" "=TRUE" 4)\n', litC2 = '(lit "Crafted" "C2" 1)\n', litB3 = '(lit "Crafted" "B3" 1)\n';
     var fedA = '(cell "Crafted" "A1" "a\nb")\n(style "Crafted" "A1" 3)\n', fedB = '(cell "Crafted" "A1" "b\nc")\n(style "Crafted" "A1" 3)\n', quoted = '(value "Crafted" "C2" "say \\"b\nc\\"")\n', recFed = head + fedA + b1 + c2 + d4;
+    var headBold = head + '(format 5 none general nowrap (font bold 16))\n';
+    function bold(addr, v) { return '(value "Crafted" "' + addr + '" ' + v + ')\n(style "Crafted" "' + addr + '" 5)\n'; }
     var cases = [
       ['an empty row', changes(1, '(empty "Crafted" "C2")\n'), head + a1 + b1 + d4],
       ['a new cell', changes(1, '(value "Crafted" "A2" 9)\n'), head + a1 + b1 + '(value "Crafted" "A2" 9)\n' + c2 + d4],
@@ -5388,7 +5420,11 @@
       ['a lit row laid', changes(1, '(value "Crafted" "C2" 3)\n' + litC2), headLit + a1 + b1 + '(value "Crafted" "C2" 3)\n' + litC2 + d4, headLit + a1 + b1 + c2 + d4],
       ['a lit row taken off', changes(1, c2), headLit + a1 + b1 + c2 + d4, headLit + a1 + b1 + c2 + litC2 + d4],
       ['a lit cell holding nothing', changes(1, litB3), headLit + a1 + b1 + c2 + litB3 + d4, headLit + a1 + b1 + c2 + d4],
-      ['a lit cell holding nothing emptied', changes(1, '(empty "Crafted" "B3")\n'), headLit + a1 + b1 + c2 + d4, headLit + a1 + b1 + c2 + litB3 + d4]
+      ['a lit cell holding nothing emptied', changes(1, '(empty "Crafted" "B3")\n'), headLit + a1 + b1 + c2 + d4, headLit + a1 + b1 + c2 + litB3 + d4],
+      // ENGINE.41: two cells of one font not the default, apart in a row and changed together, so that the patch repaints
+      // one rectangle and then the other: the first's text leaves its font noted, and the second's text, of that font, is
+      // drawn in it, never in the one the first's clip restored
+      ['two cells of one font repainted in turn', changes(2, bold('A1', 11) + bold('C1', 33)), headBold + bold('A1', 11) + bold('C1', 33), headBold + bold('A1', 1) + bold('C1', 3)]
     ];
     var stage = document.getElementById('stage'), box = document.createElement('div'), box2 = document.createElement('div');
     box.style.cssText = box2.style.cssText = 'width:640px;height:200px;position:relative;background:#fff;';
@@ -5410,12 +5446,28 @@
         var c = cases[i], at = 'crafted, ' + c[0], was = c[3] || rec, got = HOST.patchRecord(was, c[1]);
         if (got !== c[2]) { P.push(at + ': the host\'s patch gives ' + JSON.stringify(got) + ', where the record after it is ' + JSON.stringify(c[2])); continue; }
         vp.load(was);
-        var m0 = vp.model(), p0 = vp.patches(), rp0 = vp.repaints(), r = vp.patch(c[1]);
+        var m0 = vp.model(), p0 = vp.patches(), rp0 = vp.repaints(), r = null;
+        // each text the repaint draws in its own font (ENGINE.41)
+        var fd = fontsDrawn(vp, function () { r = vp.patch(c[1]); });
         if (!r || vp.model() !== m0 || vp.patches() !== p0 + 1) { P.push(at + ': the viewport ' + (r ? 'replaced its model or counted no patch' : 'refused the patch')); continue; }
         var diff = modelDiff(vp.model(), VP.readRecord(c[2]));
         if (diff) { P.push(at + ': the viewport\'s patched model is not the one a load of the record after it makes: ' + diff); continue; }
-        if (painted(at, c[2], rp0 + 1)) held++;
+        if (!painted(at, c[2], rp0 + 1)) continue;
+        if (fd.wrong) P.push(at + ': a text not drawn in its own font: ' + fd.wrong);
+        else if (c[0] === 'two cells of one font repainted in turn' && fd.texts < 2) P.push(at + ': ' + fd.texts + ' text(s) seen drawn, where the patch repaints 2');
+        else held++;
       }
+      // ENGINE.41: a full paint's quadrants, each a clip: a frozen row of one font not the default over a sheet whose last
+      // text is of that font too, as bold headers over a bold total, every text drawn in its own font
+      var frozenRec = '(sheet "Crafted" visible)\n(window "Crafted" "A1:B4")\n(extent "Crafted" "A1:B4")\n(gridlines "Crafted" on)\n(format 0 none general nowrap)\n(format 5 none general nowrap (font bold 16))\n' +
+                      '(cell "Crafted" "A1" "item")\n(style "Crafted" "A1" 5)\n(cell "Crafted" "B1" "sum")\n(style "Crafted" "B1" 5)\n(cell "Crafted" "A2" "a")\n(cell "Crafted" "B2" 1)\n' +
+                      '(cell "Crafted" "A3" "b")\n(cell "Crafted" "B3" 2)\n(cell "Crafted" "A4" "total")\n(cell "Crafted" "B4" 3)\n(style "Crafted" "B4" 5)\n';
+      vp.load(frozenRec);
+      var ff = fontsDrawn(vp, function () { vp.freeze(1, 0); });
+      if (ff.wrong) P.push('crafted, a frozen row over a total of its font: a text not drawn in its own font: ' + ff.wrong);
+      else if (ff.texts < 8) P.push('crafted, a frozen row over a total of its font: ' + ff.texts + ' text(s) seen drawn, where the record holds 8');
+      else held++;
+      vp.freeze(0, 0);
       var whole = '(changes "Crafted" "A1:D4" 1 2 whole)\n';
       vp.load(rec);
       if (HOST.patchRecord(rec, whole) !== null) P.push('crafted: the host patched a record by a whole answer');

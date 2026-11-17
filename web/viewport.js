@@ -42,7 +42,11 @@
   holding nothing draws as an empty cell, its column's format under the rules;
   a format of groups alone draws what it says over the cell's own and leaves
   the rest, a font's family is drawn by its name and its class, and a merged
-  range is read and not drawn.
+  range is read and not drawn. Since ENGINE.41 a clip's restore forgets the
+  font the painter noted, so that every text is drawn in its own font, the
+  first after a clip setting it: a repaint's rectangles and a full paint's
+  quadrants are each a clip, and the font a text inside one set was the
+  restore's to take back.
 
   What the viewport owns is the state no program sees (SD-23): the scroll, the
   selection, the widths a person dragged, each sheet's its own as a
@@ -996,13 +1000,17 @@
     }
     if (!opaque) ctx.stroke();
   };
+  // A clip's paint (ENGINE.41): the restore takes back the font a text inside set, so the font the painter noted is
+  // forgotten with it, and the first text after the clip sets its own. Kept, it named a font the canvas no longer
+  // held: a repaint's next rectangle, or a full paint's next quadrant, drew its first text of that font in the one the
+  // restore left, a changing cell of a font not the default drawn in the default.
   Painter.prototype.clipped = function (rect, fn) {
     var ctx = this.ctx;
     ctx.save();
     ctx.beginPath();
     ctx.rect(rect.x, rect.y, rect.w, rect.h);
     ctx.clip();
-    try { fn(); } finally { ctx.restore(); }
+    try { fn(); } finally { ctx.restore(); this.font = null; }
   };
   // One line of text at an anchor, clipped to a rectangle. Since ENGINE.37 (decision 10) its font's lines with it, lined,
   // each strand a rectangle in the text's color under the same clip, at integer device pixels, which every rasterizer

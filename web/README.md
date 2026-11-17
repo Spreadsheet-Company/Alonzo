@@ -973,6 +973,10 @@ ratio changes. A line in an opaque color is filled as a rectangle one
 device pixel wide, which every rasterizer covers exactly, so that a
 repaint's few lines paint the full paint's pixels (`ENGINE.20`); an edge
 is filled the same way, a band of whole device pixels a run (`ENGINE.28`).
+A font is set only where it differs from the last the painter set, and a
+clip's restore, which takes back the canvas's font, forgets it, so that the
+first text after a repaint's rectangle or a full paint's quadrant sets its
+own (`ENGINE.41`).
 
 **The colors** are options with defaults: `background` `#ffffff`,
 `gridline` `#d9d9d2`, `header` `#f3f3ee`, `headerText` `#6b6b66`,
@@ -1079,7 +1083,9 @@ viewport, not an Excel clone.
   `views`, the page's own views card (`ENGINE.18`); and `changes`, the
   page's own changes card, a frame read by its changes (`ENGINE.19`), each
   patch repainted by its cells and held pixel for pixel to a full paint
-  (`ENGINE.20`), bordered, filled and looked cells among them (`ENGINE.28`);
+  (`ENGINE.20`), bordered, filled and looked cells among them (`ENGINE.28`),
+  every text a crafted patch repaints, and a frozen row's full paint, held to
+  the font its op names, the canvas's own font noted at each (`ENGINE.41`);
   `continue`, the page's own continue card, its source
   rebuilt and applied as it runs (`ENGINE.7`); `palette`, the palette's
   keys, lines and second Escape over the page's own registry (`ENGINE.23`),
