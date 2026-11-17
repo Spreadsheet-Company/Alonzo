@@ -22,7 +22,11 @@
 //! after resting the lay's delay where it rests, the rest's count restarted
 //! only by a fall. The full courses are cleared after the beat, each a level,
 //! the score, and each quickens the pace by a share. A game ends when the
-//! next brick has no room at the top center.
+//! next brick has no room at the top center. And since the second slice, the
+//! page's version 7, the commands on Ctrl: a slide to the edge of the brick's
+//! region, the brick moved to its landing course not laid, and the cut, the
+//! falling brick to the Clipboard and the Clipboard's, or the deal's next, in
+//! its place, once a brick, refused where the brick it brings has no room.
 //!
 //! The frames follow the cartridge's cells exactly, its first frame
 //! included: [`Game::load`] is the grid as the load computes it, frame 0, and
@@ -220,7 +224,8 @@ impl Phase {
     }
 }
 
-/// What a person holds this frame, and whether the pause command runs.
+/// What a person holds this frame, and the command run, by its name, or the
+/// empty name: `pause`, `slide-left`, `slide-right`, `to-the-bottom` or `cut`.
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Keys {
     pub up: bool,
@@ -231,7 +236,7 @@ pub struct Keys {
     pub b: bool,
     pub start: bool,
     pub select: bool,
-    pub pause: bool,
+    pub command: &'static str,
 }
 
 /// A brick's place: its kind, its turn, and its box's top course and left
@@ -385,6 +390,21 @@ pub struct Game {
     pub tally_at_once: [u32; 4],
     pub games: u32,
     pub topouts: u32,
+    /// The second slice's: a cut this frame, a cut refused, the Clipboard's
+    /// kind (0 none), whether this brick was cut, the frames since a cut was
+    /// refused, a slide that moved the brick, the brick moved to the bottom,
+    /// and every brick that entered this game, each brick's serial.
+    pub cut: bool,
+    pub cut_refused: bool,
+    pub clip_kind: usize,
+    pub cut_used: bool,
+    pub refused_since: u32,
+    pub slid: bool,
+    pub dropped: bool,
+    pub serial: u32,
+    pub tally_slides: u32,
+    pub tally_dropped: u32,
+    pub tally_cuts: u32,
 }
 
 impl Game {
@@ -442,6 +462,17 @@ impl Game {
             tally_at_once: [0; 4],
             games: 0,
             topouts: 0,
+            cut: false,
+            cut_refused: false,
+            clip_kind: 0,
+            cut_used: false,
+            refused_since: 1,
+            slid: false,
+            dropped: false,
+            serial: 0,
+            tally_slides: 0,
+            tally_dropped: 0,
+            tally_cuts: 0,
         }
     }
 
@@ -513,7 +544,9 @@ impl Game {
         self.held_lay = lay_held;
         self.paused = if first {
             false
-        } else if keys.pause && (last.phase == Phase::Falling || last.phase == Phase::Beat) {
+        } else if keys.command == "pause"
+            && (last.phase == Phase::Falling || last.phase == Phase::Beat)
+        {
             !last.paused
         } else {
             last.paused
@@ -533,6 +566,14 @@ impl Game {
         } else {
             0
         };
+        let slide = match keys.command {
+            "slide-left" => -1,
+            "slide-right" => 1,
+            _ => 0,
+        };
+        let to_bottom = keys.command == "to-the-bottom";
+        let cut_wanted =
+            go && last.phase == Phase::Falling && keys.command == "cut" && !last.cut_used;
 
         // a game starts, never at the first frame, and a brick enters, its
         // kind from the bags the last frame left, by the size they were
@@ -544,7 +585,6 @@ impl Game {
         let ending = go
             && last.phase == Phase::Beat
             && last.since == if last.clearing { last.beat_now - 1 } else { 0 };
-        let enter = self.starts || ending;
         let entering_at = if self.starts { 1 } else { last.dealt + 1 };
         let counts = in_use(&s.bag);
         let size_before = if first {
@@ -552,35 +592,58 @@ impl Game {
         } else {
             size_of(&last.counts)
         };
-        let enter_kind = kind_at(
-            entering_at,
-            last.deal_start,
-            size_before,
-            &last.this_bag,
-            &last.next_bag,
-            last.bag_number,
-        );
+        let from_clip = cut_wanted && last.clip_kind > 0;
+        let enter_kind = if from_clip {
+            last.clip_kind
+        } else {
+            kind_at(
+                entering_at,
+                last.deal_start,
+                size_before,
+                &last.this_bag,
+                &last.next_bag,
+                last.bag_number,
+            )
+        };
         let spawn = Place {
             course: 1,
             column: Game::spawn_column(),
             turn: 0,
         };
         let spawn_ok = self.starts || Game::fits_in(&last.wall, enter_kind, spawn);
-        self.topout = enter && !spawn_ok;
+        self.cut = cut_wanted && spawn_ok;
+        self.cut_refused = cut_wanted && !spawn_ok;
+        let enter = self.starts || ending || self.cut;
+        self.topout = (self.starts || ending) && !spawn_ok;
         self.entered = enter && spawn_ok;
+        let bag_entry = self.entered && !from_clip;
 
         // the deal: dealt afresh at a top-out or at a count changed, the
         // places from a count changed counted from the deal's start
         self.recount = !first && counts != last.counts;
         self.redeal = self.topout || self.recount;
         let new_bag =
-            self.entered && (entering_at - last.deal_start - 1) / size_before > last.bag_number;
+            bag_entry && (entering_at - last.deal_start - 1) / size_before > last.bag_number;
         self.dealt = if first || self.topout {
             0
-        } else if self.entered {
+        } else if bag_entry {
             entering_at
         } else {
             last.dealt
+        };
+        self.serial = if first || self.topout {
+            0
+        } else if self.entered {
+            last.serial + 1
+        } else {
+            last.serial
+        };
+        self.clip_kind = if first || self.starts {
+            0
+        } else if self.cut {
+            last.kind
+        } else {
+            last.clip_kind
         };
         self.deal_start = if first || self.topout {
             0
@@ -618,7 +681,7 @@ impl Game {
         let kind = self.kind;
 
         // the stages
-        let moving = go && last.phase == Phase::Falling;
+        let moving = go && last.phase == Phase::Falling && !cut_wanted;
         let aim = ((last.brick.turn as i32 + dt + 4) % 4) as usize;
         let lb = last.brick;
         let tries = [
@@ -650,12 +713,33 @@ impl Game {
         } else {
             lb
         };
+        let mut slid_to = turned_to;
+        while slide != 0
+            && Game::fits_in(
+                &last.wall,
+                kind,
+                Place {
+                    column: slid_to.column + slide,
+                    ..slid_to
+                },
+            )
+        {
+            slid_to.column += slide;
+        }
+        self.slid = moving && slide != 0 && slid_to.column != turned_to.column;
         let moved_to = Place {
             column: turned_to.column + dx,
             ..turned_to
         };
-        self.moved = moving && dx != 0 && Game::fits_in(&last.wall, kind, moved_to);
-        let after_move = if self.moved { moved_to } else { turned_to };
+        self.moved = moving
+            && (self.slid || (slide == 0 && dx != 0 && Game::fits_in(&last.wall, kind, moved_to)));
+        let after_move = if self.slid {
+            slid_to
+        } else if self.moved {
+            moved_to
+        } else {
+            turned_to
+        };
         self.period = s.fastest.max((last.pace + 0.5).floor() as u32);
         let period = self.period;
         let gravity = if keys.down {
@@ -668,11 +752,18 @@ impl Game {
             course: after_move.course + 1,
             ..after_move
         };
-        self.fell = moving && due && Game::fits_in(&last.wall, kind, below);
+        let bottom = Place {
+            course: Game::landing_of(&last.wall, kind, after_move),
+            ..after_move
+        };
+        self.dropped = moving && to_bottom && bottom.course > after_move.course;
+        self.fell = moving && (self.dropped || (due && Game::fits_in(&last.wall, kind, below)));
         self.placed = if self.entered {
             spawn
         } else if moving {
-            if self.fell {
+            if self.dropped {
+                bottom
+            } else if self.fell {
                 below
             } else {
                 after_move
@@ -759,7 +850,7 @@ impl Game {
             for r in 1..=HEIGHT as i32 {
                 for c in 1..=WIDTH as i32 {
                     if Game::covers(kind, at, r, c) {
-                        laid[(r - 1) as usize][(c - 1) as usize] = self.dealt as i32;
+                        laid[(r - 1) as usize][(c - 1) as usize] = self.serial as i32;
                     }
                 }
             }
@@ -848,6 +939,25 @@ impl Game {
         }
         self.games += u32::from(self.starts);
         self.topouts += u32::from(self.topout);
+        self.cut_used = if first || self.starts {
+            false
+        } else if self.cut {
+            true
+        } else if self.lay {
+            false
+        } else {
+            last.cut_used
+        };
+        self.refused_since = if first {
+            99
+        } else if self.cut_refused {
+            0
+        } else {
+            (last.refused_since + 1).min(99)
+        };
+        self.tally_slides += u32::from(self.slid);
+        self.tally_dropped += u32::from(self.dropped);
+        self.tally_cuts += u32::from(self.cut);
     }
 
     pub fn go(&self) -> bool {
@@ -899,7 +1009,7 @@ impl Game {
     /// The serial a cell shows the joints, the falling brick's its own.
     pub fn serial(&self, course: i32, column: i32) -> i32 {
         if self.phase == Phase::Falling && Game::covers(self.kind, self.brick, course, column) {
-            self.dealt as i32
+            self.serial as i32
         } else {
             self.wall[(course - 1) as usize][(column - 1) as usize]
         }
@@ -910,6 +1020,9 @@ impl Game {
         match self.phase {
             Phase::Waiting => "Enter or Space begins a wall.",
             _ if self.paused => "Paused: P resumes.",
+            Phase::Falling if self.refused_since < 60 => {
+                "Ctrl+X: no room at the top for the brick it brings."
+            }
             Phase::Over => "#SPILL! The next brick has no room.",
             _ => "",
         }
@@ -933,7 +1046,7 @@ impl Game {
             Voice {
                 wave: "square",
                 note: 76.0,
-                volume: if go && (self.turned || self.moved) {
+                volume: if go && (self.turned || self.moved || self.cut) {
                     0.25
                 } else {
                     0.0
@@ -1084,6 +1197,109 @@ mod tests {
                 .iter()
                 .all(|&k| (1..=KINDS).contains(&k) && counts[k - 1] > 0));
         }
+    }
+
+    /// A game begun, its first brick falling at the top center.
+    fn falling() -> Game {
+        let mut g = Game::load(Settings::default(), 1);
+        g.step(Keys::default());
+        g.step(Keys::default());
+        g.step(Keys {
+            start: true,
+            ..Keys::default()
+        });
+        assert_eq!(g.phase, Phase::Falling);
+        g
+    }
+
+    fn command(name: &'static str) -> Keys {
+        Keys {
+            command: name,
+            ..Keys::default()
+        }
+    }
+
+    /// A slide stops at the last column the brick fits at, before a brick or
+    /// the wall, in one frame, and a slide that moves nothing is none.
+    #[test]
+    fn a_slide_stops_at_a_brick_and_at_the_wall() {
+        let mut g = falling();
+        g.kind = 1;
+        g.brick = Place {
+            course: 2,
+            column: 6,
+            turn: 0,
+        };
+        g.wall[1][1] = 99;
+        g.step(command("slide-left"));
+        assert_eq!(g.brick.column, 3, "stopped beside the brick in column 2");
+        assert!(g.slid && g.moved);
+        g.step(command("slide-right"));
+        assert_eq!(g.brick.column, WIDTH as i32, "stopped at the wall");
+        g.step(command("slide-right"));
+        assert!(!g.slid && !g.moved, "no slide where none moves");
+    }
+
+    /// To the bottom moves the brick to where its shadow stands and lays it
+    /// not, its rest's count begun again, the brick still free to slide.
+    #[test]
+    fn to_the_bottom_moves_the_brick_to_its_shadow_unlaid() {
+        let mut g = falling();
+        g.kind = 1;
+        g.brick = Place {
+            course: 2,
+            column: 6,
+            turn: 0,
+        };
+        g.step(command("to-the-bottom"));
+        assert!(g.dropped && g.fell && !g.lay);
+        assert_eq!(g.brick.course, HEIGHT as i32);
+        assert_eq!((g.phase, g.resting_for), (Phase::Falling, 0));
+        g.step(command("slide-left"));
+        assert_eq!(
+            (g.brick.course, g.brick.column),
+            (HEIGHT as i32, 1),
+            "slid along the bottom"
+        );
+        assert_eq!(g.phase, Phase::Falling, "and not laid");
+    }
+
+    /// A cut sends the falling brick to the Clipboard and takes the deal's
+    /// next, once a brick: a second cut of the brick it took does nothing
+    /// until one is laid. The next brick's cut takes the Clipboard's back, and
+    /// every brick that entered has a serial of its own.
+    #[test]
+    fn a_cut_takes_the_clipboards_brick_once_a_brick() {
+        let mut g = falling();
+        let (first, serial, dealt) = (g.kind, g.serial, g.dealt);
+        g.step(command("cut"));
+        assert!(g.cut && g.cut_used);
+        assert_eq!(
+            (g.clip_kind, g.serial, g.dealt),
+            (first, serial + 1, dealt + 1)
+        );
+        let taken = g.kind;
+        g.step(command("cut"));
+        assert!(!g.cut, "once a brick");
+        assert_eq!(g.kind, taken);
+        g.step(Keys {
+            select: true,
+            ..Keys::default()
+        });
+        assert!(g.lay && !g.cut_used, "the lay frees the cut");
+        while g.phase != Phase::Falling {
+            g.step(Keys::default());
+        }
+        let next = g.kind;
+        assert_eq!(g.serial, serial + 2);
+        g.step(command("cut"));
+        assert!(g.cut, "the Clipboard's brick back");
+        assert_eq!((g.kind, g.clip_kind, g.serial), (first, next, serial + 3));
+        assert_eq!(
+            g.dealt,
+            dealt + 2,
+            "a brick back from the Clipboard takes no place in the deal"
+        );
     }
 
     /// A setting typed is held inside its bounds, a whole number where it

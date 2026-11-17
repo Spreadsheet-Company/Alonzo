@@ -202,7 +202,7 @@
   var HISTORY_LINES = 2000;
   var MAX_SEED = 2147483646;         // the highest seed, so a Park and Miller cell never sticks at 0 (section 3.5)
   var MAX_RATE = 120;                // the highest rate, in frames a second (section 10)
-  var SPEC = 6;                      // the page's version this host implements; a replay's header names its
+  var SPEC = 7;                      // the page's version this host implements; a replay's header names its
                                      // cartridge's, 3 for a cartridge written to 1 to 3 (ENGINE.18, decision 7)
   var MAX_COMMANDS = 100;            // a Commands sheet's rows 2 to 101 (ENGINE.25; docs/SPEC.md section 3.10)
   var COMMANDS_WAITING = 16;         // the commands that may wait for their frames, one a frame: a seventeenth is said
@@ -273,6 +273,88 @@
   // letters, digits and hyphens; and a key's code, as a Keys sheet spells one (section 3.4): KeyB, Digit1, Space, F2.
   var COMMAND_NAME = /^[a-z0-9-]+$/;
   var KEY_CODE = /^[A-Z][A-Za-z0-9]+$/;
+  // ---- the key language: the page's keymap's, and since version 7 a Commands sheet's (CART.3's second slice, decision
+  // 14; docs/SPEC.md section 3.10), one parser and one match, so that a page and a cartridge spell a key alike ----
+  // A key's spelling read: modifiers joined by +, then the key. mod: 'either' for Ctrl, Ctrl or Cmd as ENGINE.22 takes
+  // them; 'control' for the Control key alone; 'meta' for Cmd alone. kind: a letter, which matches the key that types it,
+  // so that a mnemonic follows the person's layout, or on a layout whose keys type no Latin letter the key in its place;
+  // a digit, by its key on the top row or the pad; a named key, as KeyboardEvent.key names it; a code in brackets, the
+  // key's place; or a character. text: the spelling printed back.
+  var KEY_NAMES = { enter: 'Enter', escape: 'Escape', esc: 'Escape', tab: 'Tab', backspace: 'Backspace', delete: 'Delete', insert: 'Insert', home: 'Home', end: 'End',
+                    pageup: 'PageUp', pagedown: 'PageDown', up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', arrowup: 'ArrowUp', arrowdown: 'ArrowDown',
+                    arrowleft: 'ArrowLeft', arrowright: 'ArrowRight', space: 'Space' };
+  // The modifiers of a spelling, its parts before the key: { mod, alt, shift } or { error }.
+  function modifiersOf(parts) {
+    var k = { mod: '', alt: false, shift: false, kind: '', value: '' };
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i].toLowerCase(), m = p === 'ctrl' ? 'either' : p === 'control' ? 'control' : (p === 'cmd' || p === 'meta' || p === 'command') ? 'meta' : '';
+      if (m) { if (k.mod) return { error: 'two of Ctrl, Control and Cmd' }; k.mod = m; }
+      else if (p === 'alt' || p === 'option') k.alt = true;
+      else if (p === 'shift') k.shift = true;
+      else return { error: 'no modifier named ' + parts[i] + ': the modifiers are Ctrl, Control, Cmd, Alt and Shift' };
+    }
+    return k;
+  }
+  // The modifiers of a key as a spelling prints them, in the keymap's order, each followed by +.
+  function modifiersText(k) {
+    var mods = [];
+    if (k.mod) mods.push(k.mod === 'either' ? 'Ctrl' : k.mod === 'control' ? 'Control' : 'Cmd');
+    if (k.alt) mods.push('Alt');
+    if (k.shift) mods.push('Shift');
+    return mods.length ? mods.join('+') + '+' : '';
+  }
+  function parseKeys(spelling) {
+    var parts = String(spelling).split('+'), key = parts.pop();
+    if (key === '' && parts.length && parts[parts.length - 1] === '') { parts.pop(); key = '+'; }
+    var k = modifiersOf(parts);
+    if (k.error) return k;
+    var fn = /^f([1-9]|1[0-9]|2[0-4])$/i.exec(key), code = /^\[([A-Za-z0-9]+)\]$/.exec(key);
+    if (code) { k.kind = 'code'; k.value = code[1]; }
+    else if (/^[A-Za-z]$/.test(key)) { k.kind = 'letter'; k.value = key.toLowerCase(); }
+    else if (/^[0-9]$/.test(key)) { k.kind = 'digit'; k.value = key; }
+    else if (fn) { k.kind = 'named'; k.value = 'F' + fn[1]; }
+    else if (KEY_NAMES[key.toLowerCase()]) { k.kind = 'named'; k.value = KEY_NAMES[key.toLowerCase()]; }
+    else if (key.length === 1 && key !== ' ') { k.kind = 'char'; k.value = key; }
+    else return { error: 'no key named ' + (key || 'nothing') };
+    k.text = modifiersText(k) + (k.kind === 'code' ? '[' + k.value + ']' : k.kind === 'letter' ? k.value.toUpperCase() : k.value);
+    return k;
+  }
+  // Whether a key event holds exactly a key's modifiers: Ctrl or Cmd for Ctrl and never both, and Shift and Alt as written,
+  // so that Ctrl+K is not Edge's Ctrl+Shift+K.
+  function modifiersMatch(k, ev) {
+    var ctrl = !!ev.ctrlKey, meta = !!ev.metaKey;
+    if (k.mod === 'either') { if (ctrl === meta) return false; }
+    else if (k.mod === 'control') { if (!ctrl || meta) return false; }
+    else if (k.mod === 'meta') { if (!meta || ctrl) return false; }
+    else if (ctrl || meta) return false;
+    if (!!ev.shiftKey !== k.shift || !!ev.altKey !== k.alt) return false;
+    return true;
+  }
+  // Whether a key event presses a key read by parseKeys: its modifiers exactly, then the key.
+  function keyMatches(k, ev) {
+    if (!modifiersMatch(k, ev)) return false;
+    var key = String(ev.key || ''), low = key.toLowerCase();
+    if (k.kind === 'code') return ev.code === k.value;
+    if (k.kind === 'letter') return low === k.value || (ev.code === 'Key' + k.value.toUpperCase() && !/^[a-z0-9]$/.test(low));
+    if (k.kind === 'digit') return ev.code === 'Digit' + k.value || ev.code === 'Numpad' + k.value || low === k.value;
+    if (k.kind === 'named') return k.value === 'Space' ? key === ' ' : low === k.value.toLowerCase();
+    return key === k.value;
+  }
+  // A command's key as a Commands sheet's column D writes it (docs/SPEC.md section 3.10): a KeyboardEvent.code, as the
+  // Keys sheet spells one, and for a cartridge written to version 7 the keymap's modifiers before it, joined by +,
+  // Ctrl+ArrowRight (CART.3's second slice, decision 14). { mod, alt, shift, kind: 'code', value, text, bare }, text the
+  // spelling printed back in the keymap's order and bare whether it holds no modifier; { error } for any other text,
+  // 'version 7' for modifiers a cartridge written to 1 to 6 writes.
+  function commandKeyOf(text, seven) {
+    var parts = String(text).split('+'), code = parts.pop();
+    if (!KEY_CODE.test(code)) return { error: 'no key\'s code' };
+    if (parts.length && !seven) return { error: 'version 7' };
+    var k = modifiersOf(parts);
+    if (k.error) return k;
+    k.kind = 'code'; k.value = code; k.bare = !k.mod && !k.alt && !k.shift;
+    k.text = modifiersText(k) + code;
+    return k;
+  }
   // Whether a Commands sheet's holds cell holds (section 3.10): empty, the empty text or a formula before its first value,
   // true, or a number other than 0, hold; false and 0 hold not; null for a text or an error, which is no truth value.
   function holdsOf(v) {
@@ -1601,6 +1683,8 @@
   Host.prototype._four = function () { return !!this.cart && this.cart.spec >= 4; };
   // Whether the cartridge is written to version 5, whose Commands sheet and twentieth row are its alone (ENGINE.25).
   Host.prototype._five = function () { return !!this.cart && this.cart.spec >= 5; };
+  // Whether the cartridge is written to version 7, whose commands' keys may hold modifiers (CART.3's second slice).
+  Host.prototype._seven = function () { return !!this.cart && this.cart.spec >= 7; };
   // Whether the cartridge is written to version 6 and stands at rate 0, where an act has a place and a press over a cell
   // is an act (CART.12); and whether it settles, (settle K), each act then stepped again while the grid moves.
   Host.prototype._sixAtZero = function () { return !!this.cart && this.cart.spec >= 6 && this.cart.rate === 0; };
@@ -1821,18 +1905,27 @@
       if (byName[name]) { note('A' + r, 'Commands!A' + r + ' names ' + name + ', as A' + byName[name].row + ' does, so the row is no command (docs/SPEC.md section 3.10).'); continue; }
       var holds = holdsOf(h);
       if (holds === null) { note('C' + r, 'Commands!C' + r + ' holds ' + shownValue(h) + ', which is no truth value, so the ' + commandWords(name) + ' holds not (docs/SPEC.md section 3.10).'); holds = false; }
-      var code = '';
-      if (typeof key === 'string' && KEY_CODE.test(key)) code = key;
-      else if (key !== undefined && key !== null && key !== '') {
-        var hint = typeof key === 'string' && /^[A-Za-z]$/.test(key) ? ': the key ' + key.toUpperCase() + ' is Key' + key.toUpperCase() : (typeof key === 'string' && /^[0-9]$/.test(key) ? ': the key ' + key + ' is Digit' + key : '');
-        note('D' + r, 'Commands!D' + r + ' holds ' + shownValue(key) + ', which is no key\'s code' + hint + ', so the ' + commandWords(name) + ' has no key (docs/SPEC.md section 3.10).');
+      // the key: a code, and at version 7 the keymap's modifiers before it (CART.3's second slice, decision 14), its code
+      // the spelling printed back, so that one key spelled two ways is one key
+      var code = '', chord = null;
+      if (typeof key === 'string' && key !== '') {
+        var ck = commandKeyOf(key, this._seven());
+        if (!ck.error) { chord = ck; code = ck.text; }
+        else if (ck.error === 'version 7') note('D' + r, 'Commands!D' + r + ' holds ' + shownValue(key) + ', a key with modifiers, which is version 7\'s, and the cartridge is written to version ' + (this.cart.spec || 1) + ', so the ' + commandWords(name) + ' has no key (docs/SPEC.md section 3.10).');
+        else if (ck.error === 'no key\'s code') {
+          var hint = /^[A-Za-z]$/.test(key) ? ': the key ' + key.toUpperCase() + ' is Key' + key.toUpperCase() : (/^[0-9]$/.test(key) ? ': the key ' + key + ' is Digit' + key : '');
+          note('D' + r, 'Commands!D' + r + ' holds ' + shownValue(key) + ', which is no key\'s code' + hint + ', so the ' + commandWords(name) + ' has no key (docs/SPEC.md section 3.10).');
+        }
+        else note('D' + r, 'Commands!D' + r + ' holds ' + shownValue(key) + ', whose modifiers this page does not read, ' + ck.error + ', so the ' + commandWords(name) + ' has no key (docs/SPEC.md section 3.10).');
       }
-      var cmd = { name: name, words: typeof words === 'string' ? words : (typeof words === 'number' || typeof words === 'boolean' ? String(words) : ''), holds: holds, code: code, row: r };
+      else if (key !== undefined && key !== null && key !== '') note('D' + r, 'Commands!D' + r + ' holds ' + shownValue(key) + ', which is no key\'s code, so the ' + commandWords(name) + ' has no key (docs/SPEC.md section 3.10).');
+      var cmd = { name: name, words: typeof words === 'string' ? words : (typeof words === 'number' || typeof words === 'boolean' ? String(words) : ''), holds: holds, code: code, chord: chord, row: r };
       byName[name] = cmd; list.push(cmd);
       if (!code || !holds) continue;
       if (keys[code]) { note('key-' + code, 'Commands!D' + r + ' gives ' + code + ', as D' + keys[code].row + ' does while both hold, so the ' + commandWords(keys[code].name) + ' takes it.'); continue; }
       keys[code] = cmd;
-      for (var b = 0; this.keymap && b < this.keymap.length; b++) for (var p = 0; p < this.keymap[b].length; p++) {
+      // a Keys button's key is bare, so a key with modifiers shares none (docs/SPEC.md section 3.4)
+      for (var b = 0; chord.bare && this.keymap && b < this.keymap.length; b++) for (var p = 0; p < this.keymap[b].length; p++) {
         if (this.keymap[b][p] === code && now['button-' + code] === undefined) note('button-' + code, 'Commands!D' + r + '\'s ' + code + ' is the Keys sheet\'s ' + PLAYERS[p] + (b + 1) + ' too, so the ' + commandWords(name) + ' takes it while it holds.');
       }
     }
@@ -2148,11 +2241,20 @@
   // names the keypad's own, as a spreadsheet takes the keypad's digits for the row's and the page's keymap does (CART.14's
   // hand test, 2026-10-19); Num Lock off, its arrows, Home and End stay the viewport's. key, the event's KeyboardEvent.key
   // where a caller has no event.
+  // Since version 7 a key with modifiers is taken with exactly its modifiers held, as the keymap takes a binding, before a
+  // bare key of the same code, and a bare key is taken as before, Shift either way (CART.3's second slice, decision 14).
   Host.prototype._commandKey = function (code, ev, key) {
-    if (!this._five() || (ev && (ev.ctrlKey || ev.metaKey || ev.altKey))) return null;
+    if (!this._five()) return null;
     if (!this.gameKeysHere()) return null;   // no command's key holds on a work or a read sheet (SPEC.5)
+    var row = keypadDigit(code, key !== undefined ? key : (ev ? ev.key : undefined)), name, c;
+    if (ev && this._seven()) {
+      for (name in this.commandKeys) {
+        c = this.commandKeys[name];
+        if (c.chord && !c.chord.bare && (c.chord.value === code || c.chord.value === row) && modifiersMatch(c.chord, ev)) return c;
+      }
+    }
+    if (ev && (ev.ctrlKey || ev.metaKey || ev.altKey)) return null;   // a bare key, with no Ctrl, Cmd or Alt held (decision 52)
     if (Object.prototype.hasOwnProperty.call(this.commandKeys, code)) return this.commandKeys[code];
-    var row = keypadDigit(code, key !== undefined ? key : (ev ? ev.key : undefined));
     return row && Object.prototype.hasOwnProperty.call(this.commandKeys, row) ? this.commandKeys[row] : null;
   };
   // The digit row's key a keypad's digit stands for, Digit7 for Numpad7, while Num Lock is on so that its key is the
@@ -2826,6 +2928,10 @@
   Host.instantiateSync = function (bytes) { return new WebAssembly.Instance(new WebAssembly.Module(bytes), {}).exports; };
   Host.RULES = RULES;
   Host.commandWords = commandWords;
+  Host.KEY_NAMES = KEY_NAMES;
+  Host.parseKeys = parseKeys;
+  Host.keyMatches = keyMatches;
+  Host.commandKeyOf = commandKeyOf;
   Host.settledWords = settledWords;
   Host.EXPORTS = EXPORTS;
   Host.ABI = ABI;

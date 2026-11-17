@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds two hundred and sixty-two mutant pages through tools/build_web.ps1 and runs
+-Control builds two hundred and sixty-six mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -575,6 +575,10 @@ And ENGINE.41 two, each failing the changes case by name and needing no module, 
 its two holds: a clip whose restore keeps the font the painter noted, MM by the crafted patch of two cells of one bold
 font apart in a row, C1's pixels not a full paint's, the second rectangle drawing it in the default; and MN by the full
 paint of a frozen row over a total of that font, A1 drawn in the default where its op names bold.
+And CART.3's second slice four, each failing the commands case by name over the module, version 7's: a key with modifiers
+taken with Shift held too, MO; Cmd not taken for Ctrl, MP; a key with modifiers read below version 7, MQ; and a key with
+Shift left to the bare key of its code, MR. The key language moved into the host with it, so CK and CL, the palette's,
+mutate web/host.js, and DM's line is the bare key's own.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -930,9 +934,15 @@ $modesGameFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed 
 # 2026-10-19, CART.14's hand test, the fifth note: the card's eighth row, seven, its key the digit row's 7; the keypad's 7
 # before frame 38, Num Lock on, taken and running seven, and before 39, Num Lock off, passing on (keypad 2); Input!B20
 # naming the command due at 24 frames and empty at 16, the frame seven runs moved from the one to the other.
+# 2026-11-17, CART.3's second slice, version 7: a command's key with modifiers, a card of its own at (spec 7), its keys
+# listed as the keymap spells them and said in words (2), and twelve frames each as planned (12): U, Ctrl+U, Cmd+U and
+# Shift+U each running its own; Ctrl+Shift+U, Ctrl+Cmd+U and Alt+U passed on; Ctrl+U and its repeat once and the frame
+# after it empty; Ctrl+B running bee and holding no button, B holding it, and Shift+N running note (chords 14); and the
+# card at (spec 6), its three keys with modifiers said once each and no keys, listed so, Ctrl+U passed on and Shift+U
+# count-up's (chordsOlder 6).
 $commandsFloors = @{ opened = 1; listed = 1; frames = 40; ran = 3; landed = 24; emptied = 16; apart = 1; twice = 1; repeats = 1; ctrl = 1; holdsNot = 2; refused = 1;
                      passed = 1; noted = 1; words = 1; waited = 16; dropped = 1; said = 4; replayed = 1; replayFrames = 40; replaySame = 40; during = 1; rate0 = 1;
-                     rate0Empty = 1; rate0Replayed = 1; older = 1; keypad = 2 }
+                     rate0Empty = 1; rate0Replayed = 1; older = 1; keypad = 2; chords = 14; chordsOlder = 6 }
 # 2026-10-18, CART.12's viewport slice, a code's text drawn: the twenty-seven cases' counts unchanged but for grid over
 # the module, the grid card's row 16 of codes added, its counts a function of the card: codes 3, the row pinned by name
 # at frames 1, 4 and 5; coded 213, the texts drawn from text rows over the 25 frames, the row's eight constants at the
@@ -1022,6 +1032,8 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # room kept for another platform's metrics.
 # 2026-11-17, ENGINE.41: MM and MN, one viewport's mutation by each of the changes case's two holds of the painter's font,
 # take it to two hundred and sixty-two, needing no module (124 applicable without).
+# 2026-11-17, CART.3's second slice: MO to MR, version 7's, the commands case's over the module, take it to two hundred
+# and sixty-six (124 applicable without).
 # 2026-10-20, CART.9's first slice, Naught the eleventh cartridge: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -2462,10 +2474,10 @@ if ($Control) {
         # chosen; the focus given nowhere back; a row read in ( alone; the first Escape in full screen leaving; the palette
         # left open after its line runs; and a held key's repeat toggling it.
         $paletteMutants = @(
-            @{ L = 'ck'; Name = 'Shift ignored, Ctrl+Shift+K taken'; Anchor = '    if (!!ev.shiftKey !== k.shift || !!ev.altKey !== k.alt) return false;'
+            @{ L = 'ck'; Name = 'Shift ignored, Ctrl+Shift+K taken'; File = 'host'; Anchor = '    if (!!ev.shiftKey !== k.shift || !!ev.altKey !== k.alt) return false;'
                With = '    if (!!ev.altKey !== k.alt) return false;'
                Want = 'case palette.*palette: Ctrl\+Shift\+K, which Edge keeps, opens the palette' },
-            @{ L = 'cl'; Name = 'Control taken for Cmd, Cmd+Shift+` taken'; Anchor = "    else if (k.mod === 'control') { if (!ctrl || meta) return false; }"
+            @{ L = 'cl'; Name = 'Control taken for Cmd, Cmd+Shift+` taken'; File = 'host'; Anchor = "    else if (k.mod === 'control') { if (!ctrl || meta) return false; }"
                With = "    else if (k.mod === 'control') { if (!ctrl && !meta) return false; }"
                Want = 'case palette.*palette: Cmd\+Shift\+`, a Mac''s, opens the palette' },
             @{ L = 'cm'; Name = 'Enter running the first line'; Anchor = "    if (this.runLine(this.sel) && after && line && line.kind === 'row') after(direction);"
@@ -2521,13 +2533,17 @@ if ($Control) {
         $paletteJudged = New-Object System.Collections.Generic.List[object]
         $paletteOk = $true
         foreach ($mu in $paletteMutants) {
-            $origP = if ($mu.File -eq 'viewport') { $vpText } else { $tpl }
-            if (([regex]::Matches($origP, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in $(if ($mu.File -eq 'viewport') { 'web/viewport.js' } else { 'the template' }) exactly once"; exit 1 }
+            # since CART.3's second slice the key language is the host's, so CK and CL mutate web/host.js
+            $origP = if ($mu.File -eq 'viewport') { $vpText } elseif ($mu.File -eq 'host') { $js } else { $tpl }
+            if (([regex]::Matches($origP, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in $(if ($mu.File -eq 'viewport') { 'web/viewport.js' } elseif ($mu.File -eq 'host') { 'web/host.js' } else { 'the template' }) exactly once"; exit 1 }
             $mutP = $origP.Replace($mu.Anchor, $mu.With)
             $pApplied = $mutP -cne $origP
             if ($mu.File -eq 'viewport') {
                 $vpP = Join-Path $tmp ($mu.L + '.viewport.js'); [System.IO.File]::WriteAllText($vpP, $mutP, $utf8)
                 $pageP = New-MutantPage $mu.L $template $hostJs '' '' $vpP
+            } elseif ($mu.File -eq 'host') {
+                $hostP = Join-Path $tmp ($mu.L + '.host.js'); [System.IO.File]::WriteAllText($hostP, $mutP, $utf8)
+                $pageP = New-MutantPage $mu.L $template $hostP
             } else {
                 $tplP = Join-Path $tmp ($mu.L + '.template.html'); [System.IO.File]::WriteAllText($tplP, $mutP, $utf8)
                 $pageP = New-MutantPage $mu.L $tplP $hostJs
@@ -2571,7 +2587,7 @@ if ($Control) {
             @{ L = 'da'; Name = 'a window''s browser''s keys unsaid'; Anchor = "    if (!k.alt && ((ctrl && /^(t|n|w|tab)$/.test(v)) || (k.mod === 'meta' && /^(t|n|w)$/.test(v)) || (ctrl && !k.shift && /^(f4|pagedown|pageup)$/.test(v)))) out.push('the browser\'s in a window, the page\'s in full screen');"
                With = '    // a window''s browser''s keys unsaid, by the control'
                Want = 'case keys.*keys: the list says of Ctrl\+W "", where it names' },
-            @{ L = 'db'; Name = 'a shadow said of a key held with Ctrl'; Anchor = 'screen = !b.keys.mod && (!b.places || !!b.places.screen)'; With = 'screen = (!b.places || !!b.places.screen)'
+            @{ L = 'db'; Name = 'a shadow said of a key held with Ctrl'; Anchor = 'screen = !b.keys.mod && place'; With = 'screen = place'
                Want = 'case keys.*keys: the list says of \(bind "Ctrl\+Z" run\) beside a game''s Z.*where no shadow is due' },
             @{ L = 'dc'; Name = 'a binding on a sheet held on every sheet'; Anchor = '      return shown !== null && shown !== undefined && !!b.sheets[String(shown).toLowerCase()];'; With = '      return true;'
                Want = 'case keys.*keys: P in the place screen showing Day presses pause, where run is due' },
@@ -2621,16 +2637,28 @@ if ($Control) {
                Want = 'case commands.*commands frame 16: count-up on the Ledger was run, where it holds not' },
             @{ L = 'dl'; Name = 'a command run while a replay plays'; Anchor = '    if (this.player) return no('; With = '    if (false) return no('
                Want = 'case commands.*commands: a command while a replay plays was run, where it is refused as an edit is' },
-            @{ L = 'dm'; Name = 'a command''s key taken with Ctrl held'; Anchor = '    if (!this._five() || (ev && (ev.ctrlKey || ev.metaKey || ev.altKey))) return null;'; With = '    if (!this._five()) return null;'
+            @{ L = 'dm'; Name = 'a command''s key taken with Ctrl held'; Anchor = '    if (ev && (ev.ctrlKey || ev.metaKey || ev.altKey)) return null;   // a bare key, with no Ctrl, Cmd or Alt held (decision 52)'; With = '    // the bare key taken with Ctrl held, by the control'
                Want = 'case commands.*commands frame 12: Ctrl\+U on the Desk was taken' },
             @{ L = 'dn'; Name = 'a command''s key run again at its repeat'; Anchor = '    if (cmd) { if (!(ev && ev.repeat)) this.command(cmd.name, ''key''); return true; }'; With = '    if (cmd) { this.command(cmd.name, ''key''); return true; }'
                Want = 'case commands.*commands frame 11: Input!B20 holds "count-up", where no command runs and it is empty' },
             @{ L = 'do'; Name = 'the twentieth row left at rate 0'; Anchor = '    else if (atRateZero && this._five()) this._writeCommandRow(act.command !== undefined ? act.command : '''');'
                With = '    else if (atRateZero && this._five() && act.command !== undefined) this._writeCommandRow(act.command);'
                Want = 'case commands.*commands, rate 0: the step of the edit after the command sees Input!B20 "count-up"' },
-            @{ L = 'ey'; Name = 'the keypad''s digits no digits'; Anchor = '    var row = keypadDigit(code, key !== undefined ? key : (ev ? ev.key : undefined));'
-               With = '    var row = null;'
-               Want = 'case commands.*commands frame 38: the keypad''s 7 with Num Lock on was passed on and Input!B20 holds "", where the command seven, whose key is the digit row''s 7, takes it' }
+            @{ L = 'ey'; Name = 'the keypad''s digits no digits'; Anchor = '    var row = keypadDigit(code, key !== undefined ? key : (ev ? ev.key : undefined)), name, c;'
+               With = '    var row = null, name, c;'
+               Want = 'case commands.*commands frame 38: the keypad''s 7 with Num Lock on was passed on and Input!B20 holds "", where the command seven, whose key is the digit row''s 7, takes it' },
+            # MO to MR (CART.3's second slice, version 7), hosts, each failing the commands case by name over the module: a key with
+            # modifiers taken with Shift held too; Cmd not taken for Ctrl; a key with modifiers read below version 7; and a key
+            # with Shift left to the bare key of its code.
+            @{ L = 'mo'; Name = 'a key with modifiers taken with more held'; Anchor = '    if (!!ev.shiftKey !== k.shift || !!ev.altKey !== k.alt) return false;'; With = '    if ((k.shift && !ev.shiftKey) || (k.alt && !ev.altKey)) return false;'
+               Want = 'case commands.*commands, version 7, frame 6: Ctrl\+Shift\+U was taken, where it is passed on' },
+            @{ L = 'mp'; Name = 'Cmd not taken for Ctrl'; Anchor = "    if (k.mod === 'either') { if (ctrl === meta) return false; }"; With = "    if (k.mod === 'either') { if (!ctrl || meta) return false; }"
+               Want = 'case commands.*commands, version 7, frame 4: Cmd\+U was passed on, where it is taken' },
+            @{ L = 'mq'; Name = 'a key with modifiers read below version 7'; Anchor = "    if (parts.length && !seven) return { error: 'version 7' };"; With = '    // the version unasked, by the control'
+               Want = 'case commands.*commands, version 6: the host lists count-up KeyU, count-ten Ctrl\+KeyU' },
+            @{ L = 'mr'; Name = 'a key with Shift left to the bare key'; Anchor = '        if (c.chord && !c.chord.bare && (c.chord.value === code || c.chord.value === row) && modifiersMatch(c.chord, ev)) return c;'
+               With = '        if (c.chord && !c.chord.bare && !c.chord.shift && (c.chord.value === code || c.chord.value === row) && modifiersMatch(c.chord, ev)) return c;'
+               Want = 'case commands.*commands, version 7, frame 5: Input!B20 holds "count-up", where the command count-hundred runs' }
         )
         $commandsNotes = New-Object System.Collections.Generic.List[string]
         $commandsJudged = New-Object System.Collections.Generic.List[object]
@@ -3164,7 +3192,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and sixty-two' } else { 'one hundred and twenty-four applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and sixty-six' } else { 'one hundred and twenty-four applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

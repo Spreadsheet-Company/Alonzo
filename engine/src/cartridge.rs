@@ -91,8 +91,11 @@ fn refused(line: u32, id: &str, slots: &[(&str, &str)]) -> LineRefusal {
 /// unreleased, the keyboard's sheets, `(game ...)`, `(work ...)` and `(read ...)`
 /// (`SPEC.5`), and no sheet or row, so
 /// that a cartridge written to 1 to 5 loads and describes as it did (`CART.12`,
-/// decision 66).
-pub const SPECS: [u32; 6] = [1, 2, 3, 4, 5, 6];
+/// decision 66). Version 7 adds no directive, sheet or row: a command's key in the
+/// Commands sheet's column D may hold modifiers, the host's to read (`CART.3`'s
+/// second slice, decision 14), so a cartridge written to 1 to 6 loads and describes
+/// as it did.
+pub const SPECS: [u32; 7] = [1, 2, 3, 4, 5, 6, 7];
 /// The most settle steps an act takes, version 6's `(settle K)` (`CART.12`, decision
 /// 57): fifty times the deepest cascade the scoping measured, 1,315 frames.
 pub const MAX_SETTLE: u32 = 65_536;
@@ -1850,16 +1853,19 @@ mod tests {
 
     #[test]
     fn a_later_spec_is_refused_before_its_directives() {
-        let text = small(30).replacen("(spec 2)", "(spec 7)\n  (layers 2)", 1);
+        let text = small(30).replacen("(spec 2)", "(spec 8)\n  (layers 2)", 1);
         let r = load(&text).expect_err("a later page is refused");
         assert_eq!(r.refusal.id, "cart-spec-unsupported");
         assert_eq!(r.line, 2, "the spec's own line");
+        assert!(r.refusal.text.contains("(spec 8)"), "{}", r.refusal.text);
         assert!(r.refusal.text.contains("(spec 7)"), "{}", r.refusal.text);
-        assert!(r.refusal.text.contains("(spec 6)"), "{}", r.refusal.text);
         // Version 3 adds no row and no directive, version 4's rows and version 5's
-        // sheet and row are their cartridges' alone, and version 6's directive is
-        // its own cartridges': every page's loads alike.
-        for spec in ["(spec 1)", "(spec 3)", "(spec 4)", "(spec 5)", "(spec 6)"] {
+        // sheet and row are their cartridges' alone, version 6's directive is its
+        // own cartridges', and version 7 adds nothing the engine reads: every
+        // page's loads alike.
+        for spec in [
+            "(spec 1)", "(spec 3)", "(spec 4)", "(spec 5)", "(spec 6)", "(spec 7)",
+        ] {
             assert_eq!(
                 id_of(load(&small(30).replacen("(spec 2)", spec, 1))),
                 "loaded",
@@ -8657,10 +8663,7 @@ mod tests {
         }
         let mut rows = input_rows(&held, (0, 0), [0, 0, 0], 0, ("", ""));
         rows.push_str("(cell \"Input\" \"B19\" \"Wall\")\n");
-        rows.push_str(&format!(
-            "(cell \"Input\" \"B20\" {})\n",
-            quoted(if k.pause { "pause" } else { "" })
-        ));
+        rows.push_str(&format!("(cell \"Input\" \"B20\" {})\n", quoted(k.command)));
         rows
     }
 
@@ -8732,8 +8735,14 @@ mod tests {
     /// brick it has carried for 150 frames; it pauses at every seventh brick
     /// for twenty frames; after its first game's brick `reckless_after` it
     /// lays each at once where it enters, or from its frame
-    /// `reckless_frame`, until the wall tops out; and once the wall has stood
-    /// it begins again.
+    /// `reckless_frame`, until the wall tops out, and tries a cut of every
+    /// brick on the way, so that near the top a cut finds no room; and once the
+    /// wall has stood it begins again. Since the second slice, by each brick's
+    /// serial, which a brick back from the Clipboard has its own of: every
+    /// third brick slides to its column where a slide stops there, every
+    /// tenth goes to the left wall by a slide, every fourth laid by rest goes
+    /// to the bottom first, every eighth goes to the bottom as it enters and
+    /// is planned from there, and every ninth is cut at its second frame.
     struct BrickworkBot {
         target: Option<(usize, i32, BrickworkLay)>,
         brick: u32,
@@ -8745,6 +8754,27 @@ mod tests {
         reckless_after: u32,
         reckless_frame: u32,
         paused_for: u32,
+        cut_this: bool,
+        drop_first: bool,
+        sent_down: bool,
+        cut_tried: u32,
+    }
+
+    /// Where a slide would stop: from the brick's place, column by column
+    /// while the next fits.
+    fn brickwork_slide_end(g: &bw::Game, dir: i32) -> i32 {
+        let mut at = g.brick;
+        while bw::Game::fits_in(
+            &g.wall,
+            g.kind,
+            bw::Place {
+                column: at.column + dir,
+                ..at
+            },
+        ) {
+            at.column += dir;
+        }
+        at.column
     }
 
     impl BrickworkBot {
@@ -8760,6 +8790,10 @@ mod tests {
                 reckless_after,
                 reckless_frame: u32::MAX,
                 paused_for: 0,
+                cut_this: false,
+                drop_first: false,
+                sent_down: false,
+                cut_tried: u32::MAX,
             }
         }
 
@@ -8767,15 +8801,29 @@ mod tests {
         /// the plan.
         fn carry(&mut self, g: &bw::Game, k: &mut bw::Keys) {
             let last = self.last;
-            if self.brick != g.dealt {
-                self.brick = g.dealt;
-                self.stage = if g.dealt % 5 == 0 { 0 } else { 3 };
+            if self.brick != g.serial {
+                self.brick = g.serial;
+                self.stage = if g.serial % 5 == 0 { 0 } else { 3 };
                 self.target = None;
                 self.carried = 0;
+                self.cut_this = g.serial % 9 == 4 && !g.cut_used;
+                self.drop_first = g.serial % 8 == 6;
+                self.sent_down = false;
             }
             self.carried += 1;
             if self.carried > 150 {
                 k.select = !last.select;
+                return;
+            }
+            if self.cut_this && self.carried == 2 {
+                self.cut_this = false;
+                k.command = "cut";
+                return;
+            }
+            if self.drop_first && self.carried == 3 {
+                self.drop_first = false;
+                self.target = None;
+                k.command = "to-the-bottom";
                 return;
             }
             if self.stage == 0 {
@@ -8792,7 +8840,11 @@ mod tests {
                     ..g.brick
                 };
                 if bw::Game::fits_in(&g.wall, g.kind, left) {
-                    k.left = !last.left;
+                    if g.serial % 10 == 0 {
+                        k.command = "slide-left";
+                    } else {
+                        k.left = !last.left;
+                    }
                     return;
                 }
                 self.stage = 2;
@@ -8810,7 +8862,7 @@ mod tests {
                 None => {
                     let (t, c) = brickwork_plan(g);
                     let h = [BrickworkLay::Key, BrickworkLay::Rest, BrickworkLay::Held]
-                        [(g.dealt % 3) as usize];
+                        [(g.serial % 3) as usize];
                     self.target = Some((t, c, h));
                     (t, c, h)
                 }
@@ -8823,12 +8875,21 @@ mod tests {
                 }
             } else if g.brick.column != column {
                 let right = column > g.brick.column;
-                let press = how == BrickworkLay::Held || !(last.left || last.right);
-                k.right = right && press;
-                k.left = !right && press;
+                let dir = if right { 1 } else { -1 };
+                if g.serial % 3 == 0 && brickwork_slide_end(g, dir) == column {
+                    k.command = if right { "slide-right" } else { "slide-left" };
+                } else {
+                    let press = how == BrickworkLay::Held || !(last.left || last.right);
+                    k.right = right && press;
+                    k.left = !right && press;
+                }
             } else {
                 match how {
                     BrickworkLay::Key => k.select = !last.select,
+                    BrickworkLay::Rest if g.serial % 4 == 2 && !self.sent_down => {
+                        self.sent_down = true;
+                        k.command = "to-the-bottom";
+                    }
                     BrickworkLay::Rest => k.down = true,
                     BrickworkLay::Held => k.start = !last.start,
                 }
@@ -8842,7 +8903,7 @@ mod tests {
             if g.paused {
                 self.paused_for += 1;
                 if self.paused_for >= 20 {
-                    k.pause = true;
+                    k.command = "pause";
                     self.paused_for = 0;
                 }
                 self.last = k;
@@ -8856,11 +8917,16 @@ mod tests {
                 bw::Phase::Beat => {}
                 bw::Phase::Falling => {
                     if g.since == 5 && g.dealt % 7 == 3 {
-                        k.pause = true;
+                        k.command = "pause";
                     } else if g.games == 1
                         && (g.dealt > self.reckless_after || self.frames > self.reckless_frame)
                     {
-                        k.select = !last.select;
+                        if !g.cut_used && self.cut_tried != g.serial {
+                            self.cut_tried = g.serial;
+                            k.command = "cut";
+                        } else {
+                            k.select = !last.select;
+                        }
                     } else {
                         self.carry(g, &mut k);
                     }
@@ -8980,7 +9046,7 @@ mod tests {
                 "frame {frame}: no rule lights the count at Wall!{addr}"
             );
         }
-        let st = record_cells(c, "values", "State", "B1:B91");
+        let st = record_cells(c, "values", "State", "B1:B106");
         let num = |a: &str| {
             st.get(a)
                 .and_then(|v| v.parse::<f64>().ok())
@@ -9081,12 +9147,58 @@ mod tests {
             ),
             ("B90, the beat", num("B90"), f64::from(g.settings.beat)),
             ("B91, the hold", num("B91"), f64::from(g.settings.hold)),
+            ("B96, cut", num("B96"), f64::from(u8::from(g.cut))),
+            (
+                "B97, a cut refused",
+                num("B97"),
+                f64::from(u8::from(g.cut_refused)),
+            ),
+            ("B99, the serial", num("B99"), f64::from(g.serial)),
+            ("B100, the Clipboard", num("B100"), g.clip_kind as f64),
+            (
+                "B101, a cut this brick",
+                num("B101"),
+                f64::from(u8::from(g.cut_used)),
+            ),
+            (
+                "B102, since a cut refused",
+                num("B102"),
+                f64::from(g.refused_since),
+            ),
+            ("B103, slid", num("B103"), f64::from(u8::from(g.slid))),
+            ("B106, dropped", num("B106"), f64::from(u8::from(g.dropped))),
         ];
         for (what, got, want) in held {
             assert!(
                 got == want,
                 "frame {frame}: State!{what} is {got}, the game by hand's {want}"
             );
+        }
+        // the Clipboard's box, its brick queued, and no rule lighting it (its marquee withdrawn at the second slice's
+        // hand test)
+        let clip_cells = if g.clip_kind > 0 {
+            bw::cells(g.clip_kind, 0)
+        } else {
+            Vec::new()
+        };
+        for r in 0..3u32 {
+            for col in 0..3u32 {
+                let addr = address(15 + r, w + 5 + col);
+                let want = if clip_cells.contains(&(r as i32, col as i32)) {
+                    "queued"
+                } else {
+                    ""
+                };
+                assert_eq!(
+                    shown(&addr),
+                    want,
+                    "frame {frame}: the Clipboard at Wall!{addr}"
+                );
+                assert!(
+                    !lit.contains_key(&addr),
+                    "frame {frame}: no rule lights the Clipboard at Wall!{addr}"
+                );
+            }
         }
         let bag = record_cells(c, "values", "Bag", "I1:I9");
         for (i, &n) in g.counts.iter().enumerate() {
@@ -9164,7 +9276,7 @@ mod tests {
 
     /// The Tally, the game by hand's counts.
     fn brickwork_tally_holds(c: &Cartridge, g: &bw::Game) {
-        let t = record_cells(c, "values", "Tally", "A1:B18");
+        let t = record_cells(c, "values", "Tally", "A1:B21");
         let num = |a: &str| {
             t.get(a)
                 .and_then(|v| v.parse::<f64>().ok())
@@ -9192,6 +9304,16 @@ mod tests {
             "frame {}: the Tally's games and top-outs",
             g.frame
         );
+        assert_eq!(
+            [num("B19"), num("B20"), num("B21")],
+            [
+                f64::from(g.tally_slides),
+                f64::from(g.tally_dropped),
+                f64::from(g.tally_cuts)
+            ],
+            "frame {}: the Tally's slides, bricks to the bottom and cuts",
+            g.frame
+        );
     }
 
     /// What a session of Brickwork did, beyond the game by hand's counts:
@@ -9207,6 +9329,8 @@ mod tests {
         period: u32,
         recounts: u32,
         longest_beat: u32,
+        swaps: u32,
+        refused: u32,
     }
 
     /// What a person types into a cell: a number, or a text.
@@ -9267,6 +9391,8 @@ mod tests {
             period: u32::MAX,
             recounts: 0,
             longest_beat: 0,
+            swaps: 0,
+            refused: 0,
         };
         let mut beat = 0u32;
         for frame in 1..=frames {
@@ -9281,8 +9407,12 @@ mod tests {
                 .expect("the Input sheet takes the host's rows");
             assert!(c.step(0).done, "frame {frame} completes");
             let before = g.counts;
+            let clip_before = g.clip_kind;
             g.step(keys);
-            if g.entered {
+            run.swaps += u32::from(g.cut && clip_before > 0);
+            run.refused += u32::from(g.cut_refused);
+            // a brick of the deal, one the counts held; one back from the Clipboard was dealt before
+            if g.entered && !(g.cut && clip_before > 0) {
                 assert!(
                     (1..=bw::KINDS).contains(&g.kind) && before[g.kind - 1] > 0,
                     "frame {frame}: a brick of kind {} entered, the counts in use {before:?}",
@@ -9302,7 +9432,7 @@ mod tests {
             {
                 run.repeats += 1;
             }
-            run.pauses += u32::from(keys.pause);
+            run.pauses += u32::from(keys.command == "pause");
             run.level = run.level.max(g.level);
             if g.phase == bw::Phase::Falling {
                 run.period = run.period.min(g.period);
@@ -9384,6 +9514,124 @@ mod tests {
             "every kind laid: {:?}",
             g.tally_kinds
         );
+        assert!(g.tally_slides > 0, "a slide");
+        assert!(g.tally_dropped > 0, "a brick to the bottom");
+        assert!(
+            g.tally_cuts >= 2 && run.swaps >= 1,
+            "cuts into an empty Clipboard and from a full one: {} cuts, {} swaps",
+            g.tally_cuts,
+            run.swaps
+        );
+    }
+
+    /// A cut whose brick has no room is refused, never a top-out: flues alone
+    /// dealt and one cut to the Clipboard; then headers alone, the flue
+    /// falling laid at once, and headers laid in column H, the wall's eighth,
+    /// up to course 3, where the Clipboard's flue, three by three at the top
+    /// center, no longer fits; then a header cut there, refused, the words
+    /// saying so, the header falling on and the flue kept. Every frame held to
+    /// the game by hand.
+    #[test]
+    fn a_cut_whose_brick_has_no_room_is_refused() {
+        let Some(text) = brickwork() else {
+            return;
+        };
+        let mut c = Cartridge::load(&text, "brickwork.vla", text.len()).expect("Brickwork loads");
+        assert_eq!(c.write("(cell \"Clock\" \"B3\" 777)"), Ok(1));
+        let mut g = bw::Game::load(bw::Settings::default(), 777);
+        let mut frame = 0u32;
+        let mut step =
+            |c: &mut Cartridge, g: &mut bw::Game, keys: bw::Keys, typed: &[(u32, f64)]| {
+                frame += 1;
+                for &(row, v) in typed {
+                    c.write(&format!("(cell \"Pace\" \"B{row}\" {v})"))
+                        .expect("a count typed");
+                    g.settings.type_into(row, Some(v));
+                }
+                c.write(&brickwork_inputs(&keys)).expect("the Input rows");
+                assert!(c.step(0).done, "frame {frame} completes");
+                g.step(keys);
+                brickwork_holds(c, g, frame);
+                frame
+            };
+        let flues: Vec<(u32, f64)> = (12..=20)
+            .map(|r| (r, if r == 20 { 1.0 } else { 0.0 }))
+            .collect();
+        step(&mut c, &mut g, bw::Keys::default(), &flues);
+        while g.phase != bw::Phase::Falling {
+            let start = g.frame == 3;
+            step(
+                &mut c,
+                &mut g,
+                bw::Keys {
+                    start,
+                    ..bw::Keys::default()
+                },
+                &[],
+            );
+        }
+        assert_eq!(g.kind, 9, "a flue falls");
+        step(
+            &mut c,
+            &mut g,
+            bw::Keys {
+                command: "cut",
+                ..bw::Keys::default()
+            },
+            &[],
+        );
+        assert!(
+            g.cut && g.clip_kind == 9 && g.kind == 9,
+            "the flue cut to the Clipboard and another dealt"
+        );
+        let headers: Vec<(u32, f64)> = (12..=20)
+            .map(|r| (r, if r == 12 { 1.0 } else { 0.0 }))
+            .collect();
+        step(
+            &mut c,
+            &mut g,
+            bw::Keys {
+                select: true,
+                ..bw::Keys::default()
+            },
+            &headers,
+        );
+        let mut last = bw::Keys::default();
+        while g.wall[2][7] == 0 {
+            assert!(g.frame < 2000, "the column of headers grows");
+            let mut k = bw::Keys::default();
+            if g.phase == bw::Phase::Falling {
+                if g.brick.column < 8 {
+                    k.right = !last.right;
+                } else {
+                    k.select = !last.select;
+                }
+            }
+            step(&mut c, &mut g, k, &[]);
+            last = k;
+        }
+        while g.phase != bw::Phase::Falling || g.brick.course > 2 {
+            assert!(g.frame < 2100, "a header falls at the top");
+            step(&mut c, &mut g, bw::Keys::default(), &[]);
+        }
+        let falling = (g.kind, g.serial);
+        step(
+            &mut c,
+            &mut g,
+            bw::Keys {
+                command: "cut",
+                ..bw::Keys::default()
+            },
+            &[],
+        );
+        assert!(g.cut_refused && !g.cut, "the cut refused");
+        assert_eq!((g.kind, g.serial), falling, "the header falls on");
+        assert_eq!(g.clip_kind, 9, "the flue kept in the Clipboard");
+        assert_eq!(
+            g.words(),
+            "Ctrl+X: no room at the top for the brick it brings."
+        );
+        assert_eq!(g.topouts, 0, "a cut never tops out");
     }
 
     /// A person types into the Pace while the wall waits, while it is built

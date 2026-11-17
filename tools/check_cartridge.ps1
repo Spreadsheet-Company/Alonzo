@@ -18,7 +18,7 @@ WHAT IT HOLDS, for each .vla under cartridges/, with the catalog's ids:
     directive, when given, the header's twin;
   - the manifest form first, (cartridge "name" ...), the name lowercase
     letters, digits and hyphens; every directive present once and in range
-    (cart-manifest-invalid): (spec 1..6), (title "..."), (rate 0..120),
+    (cart-manifest-invalid): (spec 1..7), (title "..."), (rate 0..120),
     (screen plane w h) at most 320 by 200 or (screen grid w h) at most 80 by
     50, (seed 1..2147483646|host); author, license and notes optional and at
     most once, and settle (1..65536) too, a (spec 6) cartridge's at (rate 0)
@@ -105,13 +105,13 @@ of order, a color that is not #RRGGBB, NOW() in the rule, a sheet named
 Board.last, the header dropped, an unknown row kind, since ENGINE.37 a
 format saying nothing and a rule of no test, a formula into
 Input!B1, and the file renamed out of its folder's name, which the count
-must catch. Seven are SPEC.3's: a (spec 7) since CART.12 made 6 a page
-this version reads, a macro left in a cartridge,
+must catch. Seven are SPEC.3's: a (spec 8) since CART.3's second slice made 7
+a page this version reads, a macro left in a cartridge,
 an include before a cartridge's manifest, a source whose cartridge is gone,
 a banner naming a source that is not there, a stray .vla in a cartridge's
 folder, and a second library. Nine are ENGINE.3's, of the input card's
 replay and golden: a digest that is not the cartridge's, a replay named for
-another folder, a (spec 7), a seed of 0, frames out of order, a derived row,
+another folder, a (spec 8), a seed of 0, frames out of order, a derived row,
 a row outside a frame, a golden without its window row, and a golden whose
 replay is gone. Three are ENGINE.4's: the sound card's voice 2 written the
 wave "triangel", and Life given an Audio sheet whose voice 1 has the note
@@ -379,7 +379,13 @@ $expectedGoldens = 7
 # 2026-11-17, before its third look: 750 rows, what a person types into the Pace held: each count none to four and
 # a bag of 36 at most, a count changed dealing the bags again, each setting held inside its bounds, and the beat's
 # length as its lay began it.
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 318; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/brickwork/brickwork.vla' = 750; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4111; 'cartridges/naught/naught.vla' = 1379 }
+# 2026-11-17, CART.3's second slice: 828 rows, the page's version 7, four commands on Ctrl: the slides, the brick to
+# its shadow unlaid and the cut; fifteen State cells after the last, the slides' rows and their two chains and the
+# bottom's column on the Fit, the Clipboard's box and its marquee of four rules and four formats, the legend and three
+# counts of the Tally; the other eleven's rows unchanged.
+# 2026-11-17, at the second slice's hand test: 820 rows, the marquee's four rules and four formats withdrawn at the
+# owner's word, and the legend's words a column wider; the other eleven's rows unchanged.
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 318; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/brickwork/brickwork.vla' = 820; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4111; 'cartridges/naught/naught.vla' = 1379 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---
@@ -549,7 +555,7 @@ function Test-Cartridge([string]$path) {
             switch -CaseSensitive ($dn) {
                 'spec' {
                     if ($args1 -ne 1 -or -not (Test-Whole $d.Items[1])) { $problems.Add("line $($d.Line): cart-manifest-invalid: (spec ...) holds one whole number") }
-                    elseif ([int]$d.Items[1].Text -gt 6 -or [int]$d.Items[1].Text -lt 1) { $problems.Add("line $($d.Line): cart-spec-unsupported: (spec $($d.Items[1].Text)); this version reads 1, 2, 3, 4, 5 and 6") }
+                    elseif ([int]$d.Items[1].Text -gt 7 -or [int]$d.Items[1].Text -lt 1) { $problems.Add("line $($d.Line): cart-spec-unsupported: (spec $($d.Items[1].Text)); this version reads 1, 2, 3, 4, 5, 6 and 7") }
                     else { $specN = [int]$d.Items[1].Text }
                 }
                 'title' { if ($args1 -ne 1 -or -not (Test-Kind $d.Items[1] 'string')) { $problems.Add("line $($d.Line): cart-manifest-invalid: (title `"...`") holds one text") } }
@@ -838,7 +844,7 @@ function Test-Replay([string]$path, [string]$name, [string]$cartridgePath) {
     foreach ($k in @('spec', 'cartridge', 'seed')) { if (-not $given.ContainsKey($k)) { $problems.Add("line $($h.Line): the header has no ($k ...), and a replay's header is $shape") } }
     if ($given.ContainsKey('spec')) {
         $s = $given['spec']
-        if (-not (Test-Whole $s) -or $s.Value -lt 1 -or $s.Value -gt 6) { $problems.Add("line $($h.Line): (spec $(Show-Datum $s)): a replay is written to the page's version 1, 2, 3, 4, 5 or 6") }
+        if (-not (Test-Whole $s) -or $s.Value -lt 1 -or $s.Value -gt 7) { $problems.Add("line $($h.Line): (spec $(Show-Datum $s)): a replay is written to the page's version 1, 2, 3, 4, 5, 6 or 7") }
     }
     if ($given.ContainsKey('cartridge')) {
         $c = $given['cartridge']
@@ -1038,7 +1044,7 @@ if ($Control) {
             @{ Name = 'a formula into Input!B1'; Append = '(formula "Input" "B1" "=1")'; Want = 'cart-device-cell-formula: Input!B1' },
             @{ Name = 'the file renamed out of its folder''s name'; Rename = 'life.txt'; Want = ("found {0} cartridge(s)" -f ($expectedCartridges - 1)) },
             @{ Name = 'Life written to (spec 3)'; Anchor = '(spec 2)'; With = '(spec 3)'; Want = '' },
-            @{ Name = 'a (spec 7)'; Anchor = '(spec 2)'; With = '(spec 7)'; Want = 'cart-spec-unsupported: (spec 7)' },
+            @{ Name = 'a (spec 8)'; Anchor = '(spec 2)'; With = '(spec 8)'; Want = 'cart-spec-unsupported: (spec 8)' },
             # CART.12: version 6's directive, (settle K), a (spec 6) cartridge's at (rate 0) alone
             @{ Name = 'Life written to (spec 6) at rate 0, settling'; Anchor = "(spec 2)`n  (title `"Life`")`n  (rate 30)"; With = "(spec 6)`n  (title `"Life`")`n  (rate 0)`n  (settle 8)"; Want = '' },
             @{ Name = 'a settle at (spec 5)'; Anchor = "(spec 2)`n  (title `"Life`")`n  (rate 30)"; With = "(spec 5)`n  (title `"Life`")`n  (rate 0)`n  (settle 8)"; Want = '(settle ...) is a directive of version 6''s, where the cartridge says (spec 5)' },
@@ -1081,7 +1087,7 @@ if ($Control) {
             # ENGINE.3's second slice: the input card's replay and its golden
             @{ Name = 'a replay naming another digest'; File = 'inputcard/inputcard.replay.vla'; Pattern = '\(cartridge "[0-9A-F]{64}"\)'; With = ('(cartridge "' + ('0' * 64) + '")'); Want = 'a replay plays only on the file it was recorded from' },
             @{ Name = 'a replay named for another folder'; File = 'inputcard/inputcard.replay.vla'; Anchor = '(replay "inputcard"'; With = '(replay "life"'; Want = 'the header names life, and the replay stands in the folder of inputcard' },
-            @{ Name = 'a replay of a (spec 7)'; File = 'inputcard/inputcard.replay.vla'; Anchor = '(spec 3)'; With = '(spec 7)'; Want = '(spec 7): a replay is written to the page''s version 1, 2, 3, 4, 5 or 6' },
+            @{ Name = 'a replay of a (spec 8)'; File = 'inputcard/inputcard.replay.vla'; Anchor = '(spec 3)'; With = '(spec 8)'; Want = '(spec 8): a replay is written to the page''s version 1, 2, 3, 4, 5, 6 or 7' },
             @{ Name = 'a replay''s seed of 0'; File = 'inputcard/inputcard.replay.vla'; Pattern = '\(seed \d+\)\)'; With = '(seed 0))'; Want = '(seed 0): a seed is a whole number from 1 to 2147483646' },
             @{ Name = 'a replay''s frames out of order'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 3`n"; With = "(frame 30`n"; Want = 'follows (frame 30 ...), and a replay''s frames ascend from 1' },
             @{ Name = 'a derived row in a replay'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 1`n"; With = "(frame 1`n  (derived `"Tally`" `"B20`" 1)`n"; Want = 'a (derived ...) row: the host''s derived writes are re-derived' },

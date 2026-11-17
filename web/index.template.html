@@ -691,56 +691,10 @@
     '; (command "again" "the cartridge loaded again and run" (load) (run))',
     ''
   ].join('\n');
-  // A key's spelling read: modifiers joined by +, then the key. mod: 'either' for Ctrl, Ctrl or Cmd as ENGINE.22 takes
-  // them; 'control' for the Control key alone; 'meta' for Cmd alone. kind: a letter, which matches the key that types it,
-  // so that a mnemonic follows the person's layout, or on a layout whose keys type no Latin letter the key in its place;
-  // a digit, by its key on the top row or the pad; a named key, as KeyboardEvent.key names it; a code in brackets, the
-  // key's place; or a character. text: the spelling printed back.
-  var KEY_NAMES = { enter: 'Enter', escape: 'Escape', esc: 'Escape', tab: 'Tab', backspace: 'Backspace', delete: 'Delete', insert: 'Insert', home: 'Home', end: 'End',
-                    pageup: 'PageUp', pagedown: 'PageDown', up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', arrowup: 'ArrowUp', arrowdown: 'ArrowDown',
-                    arrowleft: 'ArrowLeft', arrowright: 'ArrowRight', space: 'Space' };
-  function parseKeys(spelling) {
-    var parts = String(spelling).split('+'), key = parts.pop(), k = { mod: '', alt: false, shift: false, kind: '', value: '' };
-    if (key === '' && parts.length && parts[parts.length - 1] === '') { parts.pop(); key = '+'; }
-    for (var i = 0; i < parts.length; i++) {
-      var p = parts[i].toLowerCase(), m = p === 'ctrl' ? 'either' : p === 'control' ? 'control' : (p === 'cmd' || p === 'meta' || p === 'command') ? 'meta' : '';
-      if (m) { if (k.mod) return { error: 'two of Ctrl, Control and Cmd' }; k.mod = m; }
-      else if (p === 'alt' || p === 'option') k.alt = true;
-      else if (p === 'shift') k.shift = true;
-      else return { error: 'no modifier named ' + parts[i] + ': the modifiers are Ctrl, Control, Cmd, Alt and Shift' };
-    }
-    var fn = /^f([1-9]|1[0-9]|2[0-4])$/i.exec(key), code = /^\[([A-Za-z0-9]+)\]$/.exec(key);
-    if (code) { k.kind = 'code'; k.value = code[1]; }
-    else if (/^[A-Za-z]$/.test(key)) { k.kind = 'letter'; k.value = key.toLowerCase(); }
-    else if (/^[0-9]$/.test(key)) { k.kind = 'digit'; k.value = key; }
-    else if (fn) { k.kind = 'named'; k.value = 'F' + fn[1]; }
-    else if (KEY_NAMES[key.toLowerCase()]) { k.kind = 'named'; k.value = KEY_NAMES[key.toLowerCase()]; }
-    else if (key.length === 1 && key !== ' ') { k.kind = 'char'; k.value = key; }
-    else return { error: 'no key named ' + (key || 'nothing') };
-    var mods = [];
-    if (k.mod) mods.push(k.mod === 'either' ? 'Ctrl' : k.mod === 'control' ? 'Control' : 'Cmd');
-    if (k.alt) mods.push('Alt');
-    if (k.shift) mods.push('Shift');
-    mods.push(k.kind === 'code' ? '[' + k.value + ']' : k.kind === 'letter' ? k.value.toUpperCase() : k.value);
-    k.text = mods.join('+');
-    return k;
-  }
-  // Whether a key event presses a key read by parseKeys: its modifiers exactly, Ctrl or Cmd for Ctrl and never both, and
-  // Shift and Alt as written, so that Ctrl+K is not Edge's Ctrl+Shift+K; then the key.
-  function keyMatches(k, ev) {
-    var ctrl = !!ev.ctrlKey, meta = !!ev.metaKey;
-    if (k.mod === 'either') { if (ctrl === meta) return false; }
-    else if (k.mod === 'control') { if (!ctrl || meta) return false; }
-    else if (k.mod === 'meta') { if (!meta || ctrl) return false; }
-    else if (ctrl || meta) return false;
-    if (!!ev.shiftKey !== k.shift || !!ev.altKey !== k.alt) return false;
-    var key = String(ev.key || ''), low = key.toLowerCase();
-    if (k.kind === 'code') return ev.code === k.value;
-    if (k.kind === 'letter') return low === k.value || (ev.code === 'Key' + k.value.toUpperCase() && !/^[a-z0-9]$/.test(low));
-    if (k.kind === 'digit') return ev.code === 'Digit' + k.value || ev.code === 'Numpad' + k.value || low === k.value;
-    if (k.kind === 'named') return k.value === 'Space' ? key === ' ' : low === k.value.toLowerCase();
-    return key === k.value;
-  }
+  // The key language, the keymap's and since version 7 a Commands sheet's, is the host's, so that a page and a cartridge
+  // spell a key alike (CART.3's second slice, decision 14): a spelling read, modifiers joined by + and then the key, and
+  // whether a key event presses it, its modifiers exactly (web/host.js).
+  var KEY_NAMES = HOST.KEY_NAMES, parseKeys = HOST.parseKeys, keyMatches = HOST.keyMatches;
   // The places a binding holds in. A box is a place where a key types: there a binding written for anywhere holds only for
   // a key held with Ctrl or Cmd, or a function key, and never for the box's own editing keys, so typing is the box's. A
   // binding on a sheet (ENGINE.24), (on "Portfolio"), holds on the Screen or in the drawer's sheets while that sheet shows
@@ -964,6 +918,16 @@
     if (k.kind === 'named') return k.value === 'Enter' ? ['Enter', 'NumpadEnter'] : [k.value];
     return [];
   }
+  // Whether a binding's key presses a game's command's key on the Screen, as the host takes one: a bare key by a key held
+  // with no Ctrl, Cmd or Alt at its place (ENGINE.25), and since version 7 a key with modifiers by the same modifiers at
+  // its place, Ctrl meeting Control and Cmd (CART.3's second slice).
+  function shadowsCommand(k, code) {
+    var c = HOST.commandKeyOf(code, true);
+    if (c.error || keyCodes(k).indexOf(c.value) < 0) return false;
+    if (c.bare) return !k.mod && !k.alt;
+    var mods = k.mod === c.mod || (k.mod === 'either' && c.mod !== '') || (c.mod === 'either' && k.mod !== '');
+    return mods && k.alt === c.alt && k.shift === c.shift;
+  }
   // The list's words of a binding: what keeps its key from the page, and a game's key it shadows on the Screen (decision
   // 9), a key held with no Ctrl and no Cmd that holds there: a button, at a place the loaded cartridge's Keys sheet binds,
   // or, since ENGINE.24, any key at all when the cartridge reads the last key pressed (readsKey), as Sand reads 1 to 3. The
@@ -973,11 +937,11 @@
   // Ctrl, Cmd or Alt, as the host takes a command's key: commands, [{ code, name, full }] of the commands holding with a
   // key, a binding of that command itself shadowing nothing.
   function bindingNotes(b, codes, readsKey, shown, commands) {
-    var out = [], kept = keptWords(b.keys), screen = !b.keys.mod && (!b.places || !!b.places.screen) && (!b.sheets || (shown !== null && shown !== undefined && !!b.sheets[String(shown).toLowerCase()]));
+    var out = [], kept = keptWords(b.keys), place = (!b.places || !!b.places.screen) && (!b.sheets || (shown !== null && shown !== undefined && !!b.sheets[String(shown).toLowerCase()])), screen = !b.keys.mod && place;
     if (kept) out.push(kept);
     if (screen && codes && codes.length && keyCodes(b.keys).some(function (c) { return codes.indexOf(c) >= 0; })) out.push('shadows the game\'s button on the Screen');
     else if (screen && readsKey) out.push('shadows a key the game reads on the Screen');
-    var taken = screen && !b.keys.alt && commands ? commands.filter(function (c) { return c.full !== b.command && keyCodes(b.keys).indexOf(c.code) >= 0; }) : [];
+    var taken = place && commands ? commands.filter(function (c) { return c.full !== b.command && shadowsCommand(b.keys, c.code); }) : [];
     if (taken.length) out.push('shadows the game\'s command ' + andList(taken.map(function (c) { return '\'' + c.name + '\''; })) + ' on the Screen');
     return out.join('; ');
   }
@@ -1005,11 +969,11 @@
   // The game's own keys in words, the drawer's note (ENGINE.24): each player's keys in the Keys sheet's order (docs/SPEC.md
   // section 3.4), the four arrows as one; else whether the cartridge has a Keys sheet; and whether it reads the last key.
   // km: the host's Keys sheet as read after the frame, ten rows of four codes.
+  // A key with modifiers, version 7's, keeps them before its code's words: Ctrl+Left (CART.3's second slice).
   function codeWords(code) {
-    var m = /^(?:Key|Digit)(.+)$/.exec(code) || /^Arrow(.+)$/.exec(code);
-    if (m) return m[1];
-    m = /^Numpad(.+)$/.exec(code);
-    return m ? 'pad ' + m[1] : code;
+    var parts = String(code).split('+'), last = parts.pop();
+    var m = /^(?:Key|Digit)(.+)$/.exec(last) || /^Arrow(.+)$/.exec(last), words = m ? m[1] : ((m = /^Numpad(.+)$/.exec(last)) ? 'pad ' + m[1] : last);
+    return parts.concat([words]).join('+');
   }
   function andList(items) { return items.length > 1 ? items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1] : items.join(''); }
   // Since ENGINE.25 the keys of the game's commands holding now are said after its buttons': commands, [{ code, name }].
@@ -3137,7 +3101,7 @@
     }
     if (lifeText.split('(rate 30)').length !== 2 || lifeText.split('(spec 2)').length !== 2) P.push('the anchors (rate 30) and (spec 2) are not in the cartridge exactly once');
     expectLoad(host.load(lifeText.replace('(rate 30)', ''), 'life.vla'), 'cart-manifest-invalid');
-    expectLoad(host.load(lifeText.replace('(spec 2)', '(spec 7)'), 'life.vla'), 'cart-spec-unsupported');
+    expectLoad(host.load(lifeText.replace('(spec 2)', '(spec 8)'), 'life.vla'), 'cart-spec-unsupported');
     expectLoad(host.loadBytes(new Uint8Array([0x28, 0xff, 0xfe, 0x29]), 'bad.vla'), 'is not UTF-8');
     var ok = host.load(lifeText, 'life.vla');
     if (!ok.ok) P.push('Life did not load: ' + ok.sentence);
@@ -3340,7 +3304,7 @@
       var D = new Driver({ exports: exports }), out = [];
       function load(text) { return D.call('alonzo_load', [], [text, 'life.vla']); }
       out.push(['a manifest without its rate', load(lifeText.replace('(rate 30)', ''))]);
-      out.push(['a (spec 7)', load(lifeText.replace('(spec 2)', '(spec 7)'))]);
+      out.push(['a (spec 8)', load(lifeText.replace('(spec 2)', '(spec 8)'))]);
       out.push(['bytes that are not UTF-8', D.call('alonzo_load', [], [new Uint8Array([0x28, 0xff, 0xfe, 0x29]), 'bad.vla'])]);
       var L = load(lifeText), m = /^\(cartridge (\d+) /.exec(L.text);
       if (!m) { P.push('Life did not load for the parity: ' + L.id + ' ' + L.text); return out; }
@@ -6332,7 +6296,7 @@
       var C = doubleHost();
       var wrong = [
         ['another cartridge\'s replay', CARTRIDGES.inputcard.replay, 'a replay plays only on the file it was recorded from'],
-        ['a later version\'s replay', text.replace('(spec 3)', '(spec 7)'), 'this host implements versions 1 to 6'],
+        ['a later version\'s replay', text.replace('(spec 3)', '(spec 8)'), 'this host implements versions 1 to 7'],
         ['a derived row', text.replace('(frame 1\n', '(frame 1\n  (derived "State" "B1" 1)\n'), 'holds a derived row'],
         ['frames out of order', text + '(frame 1)\n', 'frames are out of order'],
         ['a row outside a frame', text.replace('(frame 1\n', '(cell "State" "B1" 1)\n(frame 1\n'), 'outside a frame'],
@@ -7589,7 +7553,7 @@
     var P = [], k = { named: 0, lines: 0, read: 0, refusals: 0, found: 0, steps: 0, shadow: 0, note: 0, order: 0,
                       module: 0, opened: 0, listed: 0, frames: 0, ran: 0, landed: 0, emptied: 0, apart: 0, twice: 0, repeats: 0, ctrl: 0, holdsNot: 0, refused: 0,
                       passed: 0, noted: 0, words: 0, waited: 0, dropped: 0, said: 0, replayed: 0, replayFrames: 0, replaySame: 0, during: 0, rate0: 0, rate0Empty: 0,
-                      rate0Replayed: 0, older: 0, keypad: 0 };
+                      rate0Replayed: 0, older: 0, keypad: 0, chords: 0, chordsOlder: 0 };
     commandsPage(k, P);
     var wasm = builtModule();
     if (!wasm) return { counters: k, problems: P };
@@ -7597,6 +7561,7 @@
     k.module = bytes.length;
     commandsRun(bytes, k, P);
     commandsOlder(bytes, k, P);
+    commandsChords(bytes, k, P);
     return { counters: k, problems: P };
   }
   // The case's page half (slice 2), pure, needing no module: a game's command as a page names it; the palette's lines of a
@@ -7851,6 +7816,111 @@
       else if (!/^\(replay "commandcard" \(spec 4\) /.test(host.replayText() || '')) P.push('commands, version 4: the replay\'s header is ' + (host.replayText() || '').split('\n')[0] + ', where a version 4 cartridge\'s names version 4');
       else k.older = 1;
     } finally { host.destroy(); stage.removeChild(box); }
+  }
+  // Version 7 (CART.3's second slice, decision 14): a command's key with modifiers, on a card of its own at (spec 7):
+  // count-up on U, count-ten on Ctrl+U, count-hundred on Shift+U, bee on Ctrl+B beside the Keys sheet's button b on B, and
+  // note on N. Each press is made before the frame it lands at: U; Ctrl+U and Cmd+U, Ctrl Cmd too; Shift+U, a key with
+  // Shift before the bare key of its code; Ctrl+Shift+U, Ctrl+Cmd+U and Alt+U each passed on, running nothing; Ctrl+U and
+  // its repeat, once; Ctrl+B running bee and holding no button; B held over its frame, holding the button and running
+  // nothing; and Shift+N running note, a bare key taken with Shift. The host lists each key as the keymap spells it, and
+  // the page says it in words. Then the card at (spec 6): its keys with modifiers no keys, each said once, Ctrl+U passed
+  // on and Shift+U count-up's.
+  var CHORDCARD = { file: 'chordcard.vla',
+                    text: '(cartridge "chordcard"\n  (spec 7)\n  (title "A chords card")\n  (rate 30)\n  (screen grid 20 10)\n  (seed 1))\n' +
+                          '(sheet "Screen" hidden)\n(sheet "Desk" visible)\n(sheet "Commands" visible)\n(sheet "Keys" visible)\n' +
+                          '(cell "Commands" "A1" "name")\n(cell "Commands" "B1" "words")\n(cell "Commands" "C1" "holds")\n(cell "Commands" "D1" "key")\n' +
+                          '(cell "Commands" "A2" "count-up")\n(cell "Commands" "D2" "KeyU")\n(cell "Commands" "A3" "count-ten")\n(cell "Commands" "D3" "Ctrl+KeyU")\n' +
+                          '(cell "Commands" "A4" "count-hundred")\n(cell "Commands" "D4" "Shift+KeyU")\n(cell "Commands" "A5" "bee")\n(cell "Commands" "D5" "Ctrl+KeyB")\n' +
+                          '(cell "Commands" "A6" "note")\n(cell "Commands" "D6" "KeyN")\n(cell "Keys" "A6" "b")\n(cell "Keys" "B6" "KeyB")\n' +
+                          '(cell "Desk" "A1" "count")\n(formula "Desk" "B1" "=Desk.last!B1+IF(Input!$B$20=\\"count-up\\",1,0)+IF(Input!$B$20=\\"count-ten\\",10,0)+IF(Input!$B$20=\\"count-hundred\\",100,0)+IF(Input!$B$20=\\"bee\\",1000,0)")\n' +
+                          '(cell "Desk" "A2" "b held")\n(formula "Desk" "B2" "=Desk.last!B2+Input!$B$6")\n' +
+                          '(cell "Desk" "A3" "noted")\n(formula "Desk" "B3" "=Desk.last!B3+IF(Input!$B$20=\\"note\\",1,0)")\n' +
+                          '(cell "Screen" "A1" "the Screen")\n' };
+  function commandsChords(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:640px;height:300px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    function run(spec, each) {
+      var exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box }), D = new Driver({ exports: exports });
+      try {
+        var ld = host.attach(exports).ok ? host.load(CHORDCARD.text.replace('(spec 7)', '(spec ' + spec + ')'), CHORDCARD.file) : { ok: false };
+        if (!ld.ok) { P.push('commands, version ' + spec + ': the chords card did not load: ' + ld.sentence); return; }
+        var sc = host.vp.scroller;
+        function press(type, init) {
+          var o = { bubbles: true, cancelable: true };
+          for (var x in init) if (Object.prototype.hasOwnProperty.call(init, x)) o[x] = init[x];
+          var ev = new KeyboardEvent(type, o);
+          sc.dispatchEvent(ev);
+          return ev;
+        }
+        function vals(sheet, win) { return recordValues(D.call('alonzo_view', [ld.handle], ['grid', sheet, win]).text); }
+        each(host, press, vals);
+      } finally { host.destroy(); }
+    }
+    try {
+      run(7, function (host, press, vals) {
+        var listed = host.commands().map(function (c) { return c.name + ' ' + (c.key || '-'); }).join(', ');
+        if (listed === 'count-up KeyU, count-ten Ctrl+KeyU, count-hundred Shift+KeyU, bee Ctrl+KeyB, note KeyN') k.chords++;
+        else P.push('commands, version 7: the host lists ' + listed + ', where each key as the keymap spells it is due');
+        var said = gameCommands(host.commands(), 'chordcard').map(function (g) { return g.own; }).join(', ');
+        if (said === 'U on the Screen, Ctrl+U on the Screen, Shift+U on the Screen, Ctrl+B on the Screen, N on the Screen') k.chords++;
+        else P.push('commands, version 7: the page says the keys ' + said + ', where each with its modifiers is due');
+        // [frame, presses, each { init, taken, held over the frame }, the command due, the count, b held and noted after it]
+        var u = { code: 'KeyU', key: 'u' }, plan = [
+          [2, [[u, true]], 'count-up', 1, 0, 0],
+          [3, [[{ code: 'KeyU', key: 'u', ctrlKey: true }, true]], 'count-ten', 11, 0, 0],
+          [4, [[{ code: 'KeyU', key: 'u', metaKey: true }, true]], 'count-ten', 21, 0, 0],
+          [5, [[{ code: 'KeyU', key: 'U', shiftKey: true }, true]], 'count-hundred', 121, 0, 0],
+          [6, [[{ code: 'KeyU', key: 'U', ctrlKey: true, shiftKey: true }, false]], '', 121, 0, 0],
+          [7, [[{ code: 'KeyU', key: 'u', ctrlKey: true, metaKey: true }, false]], '', 121, 0, 0],
+          [8, [[{ code: 'KeyU', key: 'u', altKey: true }, false]], '', 121, 0, 0],
+          [9, [[{ code: 'KeyU', key: 'u', ctrlKey: true }, true], [{ code: 'KeyU', key: 'u', ctrlKey: true, repeat: true }, true]], 'count-ten', 131, 0, 0],
+          [10, [], '', 131, 0, 0],
+          [11, [[{ code: 'KeyB', key: 'b', ctrlKey: true }, true]], 'bee', 1131, 0, 0],
+          [12, [[{ code: 'KeyB', key: 'b' }, true, true]], '', 1131, 1, 0],
+          [13, [[{ code: 'KeyN', key: 'N', shiftKey: true }, true]], 'note', 1131, 1, 1]
+        ];
+        var t = 1000;
+        host.start(); host.tick(t);
+        for (var i = 0; i < plan.length; i++) {
+          var x = plan[i], at = 'commands, version 7, frame ' + x[0], ups = [], ok = true;
+          while (host.counters().frame < x[0] - 1) { t += 1000 / 30; host.tick(t); }
+          x[1].forEach(function (pr) {
+            var ev = press('keydown', pr[0]), words = (pr[0].ctrlKey ? 'Ctrl+' : '') + (pr[0].metaKey ? 'Cmd+' : '') + (pr[0].altKey ? 'Alt+' : '') + (pr[0].shiftKey ? 'Shift+' : '') + pr[0].code.replace('Key', '') + (pr[0].repeat ? '\'s repeat' : '');
+            if (ev.defaultPrevented !== pr[1]) { ok = false; P.push(at + ': ' + words + ' was ' + (ev.defaultPrevented ? 'taken' : 'passed on') + ', where it is ' + (pr[1] ? 'taken' : 'passed on')); }
+            if (pr[2]) ups.push(pr[0]); else press('keyup', { code: pr[0].code, key: pr[0].key });
+          });
+          t += 1000 / 30; host.tick(t);
+          ups.forEach(function (init) { press('keyup', { code: init.code, key: init.key }); });
+          if (host.counters().frame !== x[0]) { P.push(at + ': after its tick the host is at frame ' + host.counters().frame); break; }
+          var inp = vals('Input', 'B20'), desk = vals('Desk', 'B1:B3'), b20 = inp.B20 === undefined ? '' : inp.B20;
+          if (b20 !== x[2]) { ok = false; P.push(at + ': Input!B20 holds ' + JSON.stringify(b20) + ', where ' + (x[2] ? 'the command ' + x[2] + ' runs' : 'no command runs and it is empty')); }
+          else if (viewsNum(desk.B1) !== x[3] || viewsNum(desk.B2) !== x[4] || viewsNum(desk.B3) !== x[5]) { ok = false; P.push(at + ': the Desk counts ' + viewsNum(desk.B1) + ', b held ' + viewsNum(desk.B2) + ' and noted ' + viewsNum(desk.B3) + ', where ' + x[3] + ', ' + x[4] + ' and ' + x[5] + ' are due'); }
+          if (ok) k.chords++;
+        }
+      });
+      run(6, function (host, press, vals) {
+        ['Commands!D3 holds "Ctrl+KeyU", a key with modifiers, which is version 7\'s', 'Commands!D4 holds "Shift+KeyU", a key with modifiers, which is version 7\'s',
+         'Commands!D5 holds "Ctrl+KeyB", a key with modifiers, which is version 7\'s'].forEach(function (w) {
+          var n = host.sentences().filter(function (s) { return s.text.indexOf(w) >= 0; }).length;
+          if (n === 1) k.chordsOlder++; else P.push('commands, version 6: the host said ' + JSON.stringify(w) + ' ' + n + ' time(s), where once is due');
+        });
+        var listed = host.commands().map(function (c) { return c.name + ' ' + (c.key || '-'); }).join(', ');
+        if (listed === 'count-up KeyU, count-ten -, count-hundred -, bee -, note KeyN') k.chordsOlder++;
+        else P.push('commands, version 6: the host lists ' + listed + ', where its keys with modifiers are no keys');
+        host.start(); host.tick(1000);
+        var e1 = press('keydown', { code: 'KeyU', key: 'u', ctrlKey: true });
+        press('keyup', { code: 'KeyU', key: 'u' });
+        host.tick(1000 + 1000 / 30);
+        var b1 = vals('Input', 'B20').B20 || '';
+        var e2 = press('keydown', { code: 'KeyU', key: 'U', shiftKey: true });
+        press('keyup', { code: 'KeyU', key: 'U' });
+        host.tick(1000 + 2000 / 30);
+        var b2 = vals('Input', 'B20').B20 || '';
+        if (!e1.defaultPrevented && b1 === '') k.chordsOlder++; else P.push('commands, version 6: Ctrl+U was ' + (e1.defaultPrevented ? 'taken' : 'passed on') + ' and Input!B20 holds ' + JSON.stringify(b1) + ', where a key with modifiers is no key below version 7');
+        if (e2.defaultPrevented && b2 === 'count-up') k.chordsOlder++; else P.push('commands, version 6: Shift+U was ' + (e2.defaultPrevented ? 'taken' : 'passed on') + ' and Input!B20 holds ' + JSON.stringify(b2) + ', where the bare U is count-up\'s, Shift either way');
+      });
+    } finally { stage.removeChild(box); }
   }
   // ---- CART.12: version 6, an act settled ----
   // The settle card, the page's own as the commands card is, written here and never a file, at version 6, so that a game's

@@ -135,7 +135,15 @@ the command's alone, holding no button and naming no last key. Since `CART.12`
 it is taken on the grid's viewport at rate 0 too, before the viewport sees it,
 every other key staying the viewport's. Since `CART.14`'s hand test a digit of
 the keypad, Num Lock on, runs the command of the digit row's key, `Numpad7`
-the one of `Digit7`, unless a command names the keypad's own. The replay logs
+the one of `Digit7`, unless a command names the keypad's own. Since version
+7 (`CART.3`'s second slice) a key may carry modifiers as the page's keymap
+spells them, `Ctrl+ArrowRight`, Ctrl meaning Ctrl or Cmd: taken with exactly
+those held, before a bare key of its code, its repeat running nothing, a bare
+key taken as before with Shift either way. The parser and the match are the
+host's, `Host.parseKeys` and `Host.keyMatches`, which the page's keymap calls,
+and `Host.commandKeyOf` reads a Commands sheet's key, so that a page and a
+cartridge spell a key in one language. A cartridge written to 1 to 6 whose
+column D writes modifiers has no key there, said once by its cell. The replay logs
 `B20` as every Input cell, and a version 5 cartridge's replay says
 `(spec 5)`. A cartridge written to 1 to 4 has no commands, and a sheet of its
 named Commands is its own.
@@ -462,7 +470,9 @@ your own; while its cartridge is not loaded, or the command holds not, its
 keys press nothing and pass on to the game, and the list says so, marking
 the game's commands (game). Its own key, the sheet's column D, runs it on
 the Screen with no Ctrl, Cmd or Alt, the drawer's note naming it, and the
-list says which binding of yours shadows it.
+list says which binding of yours shadows it; since version 7 a key with
+modifiers runs it with exactly those held, `Ctrl+Left` in the drawer's words,
+and a binding of yours with the same modifiers shadows it.
 The keymap applied is kept in this browser, the one thing the page writes
 (below), and holds again at the next load; since `ENGINE.5`'s hand test it
 gains, once, the page's keys for commands new since it was kept, each where

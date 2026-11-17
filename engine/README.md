@@ -55,6 +55,10 @@ engine is:
   `(work ...)`, the sheets a person types into, each naming the sheets it
   holds once each, read into the manifest (`Manifest`'s `bound`, `game`,
   `read` and `work`) for the host that keeps a person's keys to them;
+- since the page's version 7 (`CART.3`'s second slice), nothing new to load:
+  a command's key with modifiers, `Ctrl+ArrowRight`, is the host's to read,
+  so a `(spec 7)` cartridge loads, is checked and describes as a `(spec 6)`
+  one;
 - `describe`, the manifest, the devices and the budget, and since
   `vla-lang` 0.9.2 the machine's census, the plan as rows, a row for each
   shape with its cells, its levels, its runs and the path each of its reads
@@ -121,7 +125,15 @@ A third types into the Pace while the wall waits, while it is built and after
 it tops out, counts and settings past their bounds and texts among them, the
 hand reading each value as the cartridge does, every frame held and every
 brick entering one the counts held; a fourth holds that a key held as the
-wall loads begins no game.
+wall loads begins no game. Since its second slice, the page's version 7, the
+session's bot slides bricks to their columns and to the wall by the commands
+on Ctrl+← and Ctrl+→, sends bricks to the bottom unlaid by Ctrl+↓'s and cuts
+them to the Clipboard by Ctrl+X's, into an empty Clipboard and from a full
+one, every frame's Clipboard held with the rest; a fifth test
+cuts a brick whose Clipboard's brick has no room at the top, the cut refused
+and the wall standing; and the hand's own tests hold a slide's stop at a brick
+and at the wall, a brick sent to the bottom unlaid, and a cut once a brick
+with its swap back.
 
 Seiyaku, `cartridges/seiyaku/`, the number-placement puzzle (`CART.14`), is
 held to a board written by hand, `src/seiyaku.rs`, compiled for the tests
