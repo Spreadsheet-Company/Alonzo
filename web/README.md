@@ -577,7 +577,12 @@ so: the line says why at your first act, any page opened from a file on your
 machine being able to read what the browser keeps for files, with Turn on
 Autosave and Keep Autosave off, `autosave-on` and `autosave-off` in the
 palette, your answer kept beside the keymap. The page gives the Screen the
-keys as it opens, so that typing goes into the grid without a click. A saved file is the durable copy: a browser may
+keys as it opens, so that typing goes into the grid without a click. What you
+type in the drawer's boxes is kept the same way (`ENGINE.40`): the source, a
+library, the cartridge, the edit row, the replay and the keymap, each from
+your first keystroke, the line saying `with its source typed`, Restore putting
+each back as you left it, a keymap or a replay in its box until you apply or
+play it; a cartridge picked keeps your typing with the run you typed it in. A saved file is the durable copy: a browser may
 clear what it keeps.
 
 ## What it promises
