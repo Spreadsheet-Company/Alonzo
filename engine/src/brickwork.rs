@@ -28,6 +28,9 @@
 //! falling brick to the Clipboard and the Clipboard's, or the deal's next, in
 //! its place, once a brick, refused where the brick it brings has no room.
 //!
+//! A scripted player, [`Bot`], watches the game by hand and presses as a
+//! person would; the engine's tests and the playtest session share it.
+//!
 //! The frames follow the cartridge's cells exactly, its first frame
 //! included: [`Game::load`] is the grid as the load computes it, frame 0, and
 //! the first step sets what the cartridge's first-frame cells set, every
@@ -1080,6 +1083,281 @@ impl Game {
                 },
             },
         ]
+    }
+}
+
+// ---- the scripted player --------------------------------------------------
+
+/// How the bot lays a brick: at once by a lay key, by the soft fall and
+/// the lay's delay, or carried to its column by a held arrow and laid.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Lay {
+    Key,
+    Rest,
+    Held,
+}
+
+/// The turn and column a brick lands lowest at with the fewest gaps under
+/// it, of those it fits at from where it stands, falling straight.
+pub fn plan(g: &Game) -> (usize, i32) {
+    let mut best: Option<(i64, usize, i32)> = None;
+    for turn in 0..4 {
+        for column in -2..=WIDTH as i32 {
+            let at = Place {
+                course: g.brick.course,
+                column,
+                turn,
+            };
+            if !Game::fits_in(&g.wall, g.kind, at) {
+                continue;
+            }
+            let mut landing = at.course;
+            while Game::fits_in(
+                &g.wall,
+                g.kind,
+                Place {
+                    course: landing + 1,
+                    ..at
+                },
+            ) {
+                landing += 1;
+            }
+            let cells = cells(g.kind, turn);
+            let mut gaps = 0i64;
+            for &(r, c) in &cells {
+                let (below, col) = (landing + r + 1, column + c);
+                let own = cells
+                    .iter()
+                    .any(|&(r2, c2)| landing + r2 == below && column + c2 == col);
+                if below <= HEIGHT as i32
+                    && !own
+                    && g.wall[(below - 1) as usize][(col - 1) as usize] == 0
+                {
+                    gaps += 1;
+                }
+            }
+            let top = cells.iter().map(|&(r, _)| landing + r).min().unwrap_or(0);
+            let score = i64::from(top) * 10 - gaps * 25;
+            if best.map_or(true, |(b, _, _)| score > b) {
+                best = Some((score, turn, column));
+            }
+        }
+    }
+    best.map(|(_, t, c)| (t, c))
+        .unwrap_or((g.brick.turn, g.brick.column))
+}
+
+/// A player that watches the game by hand after each frame and presses
+/// as a person would (the engine's tests' and the playtest session's,
+/// `engine/examples/play.rs`, since `CART.3`'s third slice), a key down for a frame and up the next. For each
+/// brick it picks the turn and column of `plan`, turns it the
+/// shorter way, moves it, and lays it one of three ways in turn; every
+/// fifth brick it first turns it once, slides it to the left wall and
+/// turns it again there, where a turn in place seldom fits; it lays a
+/// brick it has carried for 150 frames; it pauses at every seventh brick
+/// for twenty frames; after its first game's brick `reckless_after` it
+/// lays each at once where it enters, or from its frame
+/// `reckless_frame`, until the wall tops out, and tries a cut of every
+/// brick on the way, so that near the top a cut finds no room; and once the
+/// wall has stood it begins again. Since the second slice, by each brick's
+/// serial, which a brick back from the Clipboard has its own of: every
+/// third brick slides to its column where a slide stops there, every
+/// tenth goes to the left wall by a slide, every fourth laid by rest goes
+/// to the bottom first, every eighth goes to the bottom as it enters and
+/// is planned from there, and every ninth is cut at its second frame.
+pub struct Bot {
+    target: Option<(usize, i32, Lay)>,
+    brick: u32,
+    stage: u8,
+    turned_from: usize,
+    carried: u32,
+    last: Keys,
+    frames: u32,
+    reckless_after: u32,
+    /// The frame from which the first game is laid recklessly, whatever
+    /// its brick; none until a caller sets it.
+    pub reckless_frame: u32,
+    paused_for: u32,
+    cut_this: bool,
+    drop_first: bool,
+    sent_down: bool,
+    cut_tried: u32,
+}
+
+/// Where a slide would stop: from the brick's place, column by column
+/// while the next fits.
+pub fn slide_end(g: &Game, dir: i32) -> i32 {
+    let mut at = g.brick;
+    while Game::fits_in(
+        &g.wall,
+        g.kind,
+        Place {
+            column: at.column + dir,
+            ..at
+        },
+    ) {
+        at.column += dir;
+    }
+    at.column
+}
+
+impl Bot {
+    pub fn new(reckless_after: u32) -> Bot {
+        Bot {
+            target: None,
+            brick: 0,
+            stage: 3,
+            turned_from: 0,
+            carried: 0,
+            last: Keys::default(),
+            frames: 0,
+            reckless_after,
+            reckless_frame: u32::MAX,
+            paused_for: 0,
+            cut_this: false,
+            drop_first: false,
+            sent_down: false,
+            cut_tried: u32::MAX,
+        }
+    }
+
+    /// The keys for a falling brick: the wall's routine's stages, then
+    /// the plan.
+    fn carry(&mut self, g: &Game, k: &mut Keys) {
+        let last = self.last;
+        if self.brick != g.serial {
+            self.brick = g.serial;
+            self.stage = if g.serial % 5 == 0 { 0 } else { 3 };
+            self.target = None;
+            self.carried = 0;
+            self.cut_this = g.serial % 9 == 4 && !g.cut_used;
+            self.drop_first = g.serial % 8 == 6;
+            self.sent_down = false;
+        }
+        self.carried += 1;
+        if self.carried > 150 {
+            k.select = !last.select;
+            return;
+        }
+        if self.cut_this && self.carried == 2 {
+            self.cut_this = false;
+            k.command = "cut";
+            return;
+        }
+        if self.drop_first && self.carried == 3 {
+            self.drop_first = false;
+            self.target = None;
+            k.command = "to-the-bottom";
+            return;
+        }
+        if self.stage == 0 {
+            if g.brick.turn == 1 {
+                self.stage = 1;
+            } else {
+                k.up = !last.up;
+                return;
+            }
+        }
+        if self.stage == 1 {
+            let left = Place {
+                column: g.brick.column - 1,
+                ..g.brick
+            };
+            if Game::fits_in(&g.wall, g.kind, left) {
+                if g.serial % 10 == 0 {
+                    k.command = "slide-left";
+                } else {
+                    k.left = !last.left;
+                }
+                return;
+            }
+            self.stage = 2;
+            self.turned_from = g.brick.turn;
+        }
+        if self.stage == 2 {
+            if g.brick.turn == self.turned_from {
+                k.up = !last.up;
+                return;
+            }
+            self.stage = 3;
+        }
+        let (turn, column, how) = match self.target {
+            Some(t) => t,
+            None => {
+                let (t, c) = plan(g);
+                let h = [Lay::Key, Lay::Rest, Lay::Held][(g.serial % 3) as usize];
+                self.target = Some((t, c, h));
+                (t, c, h)
+            }
+        };
+        if g.brick.turn != turn {
+            if (turn + 4 - g.brick.turn) % 4 <= 2 {
+                k.up = !last.up;
+            } else {
+                k.a = !last.a;
+            }
+        } else if g.brick.column != column {
+            let right = column > g.brick.column;
+            let dir = if right { 1 } else { -1 };
+            if g.serial % 3 == 0 && slide_end(g, dir) == column {
+                k.command = if right { "slide-right" } else { "slide-left" };
+            } else {
+                let press = how == Lay::Held || !(last.left || last.right);
+                k.right = right && press;
+                k.left = !right && press;
+            }
+        } else {
+            match how {
+                Lay::Key => k.select = !last.select,
+                Lay::Rest if g.serial % 4 == 2 && !self.sent_down => {
+                    self.sent_down = true;
+                    k.command = "to-the-bottom";
+                }
+                Lay::Rest => k.down = true,
+                Lay::Held => k.start = !last.start,
+            }
+        }
+    }
+
+    /// The keys this frame, from the game as the last frame left it.
+    pub fn decide(&mut self, g: &Game) -> Keys {
+        self.frames += 1;
+        let mut k = Keys::default();
+        let last = self.last;
+        if g.paused {
+            self.paused_for += 1;
+            if self.paused_for >= 20 {
+                k.command = "pause";
+                self.paused_for = 0;
+            }
+            self.last = k;
+            return k;
+        }
+        match g.phase {
+            Phase::Waiting => k.start = self.frames > 3 && !last.start,
+            Phase::Over => {
+                k.select = g.since >= g.settings.hold + 10 && g.games < 2 && !last.select;
+            }
+            Phase::Beat => {}
+            Phase::Falling => {
+                if g.since == 5 && g.dealt % 7 == 3 {
+                    k.command = "pause";
+                } else if g.games == 1
+                    && (g.dealt > self.reckless_after || self.frames > self.reckless_frame)
+                {
+                    if !g.cut_used && self.cut_tried != g.serial {
+                        self.cut_tried = g.serial;
+                        k.command = "cut";
+                    } else {
+                        k.select = !last.select;
+                    }
+                } else {
+                    self.carry(g, &mut k);
+                }
+            }
+        }
+        self.last = k;
+        k
     }
 }
 

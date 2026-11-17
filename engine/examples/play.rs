@@ -10,12 +10,21 @@
 //! threshold's, where an opening winds across the lattice, and one at 15%
 //! again, each act's time and frames printed by move; every act's Tally held
 //! to the lattice written by hand, `engine/src/superposition.rs`, and the
-//! whole lattice at each phase's end.
+//! whole lattice at each phase's end. Since `CART.3`'s third slice
+//! (decision 21), a cartridge named brickwork is played twice: by the tests'
+//! scripted player, `engine/src/brickwork.rs`'s `Bot`, through two phases,
+//! the opening pace and a pace typed fast; then, as a person played it, by a
+//! replay's rows, the one named after the cartridge or the replay beside it.
+//! Every frame's wall words, level and words are held to the game written by
+//! hand, each step timed by what the frame did, and a session's games are
+//! counted: how each brick was laid, courses at once, slides, drops and
+//! cuts, and the wall each game left.
 //!
 //! ```text
 //! cargo run --release --example play                       # cartridges/sand/sand.vla
 //! cargo run --release --example play -- path/to/sand.vla   # another build of the same rule
 //! cargo run --release --example play -- cartridges/superposition/superposition.vla
+//! cargo run --release --example play -- cartridges/brickwork/brickwork.vla [a replay]
 //! ```
 //!
 //! **Why a session.** The frame floors time Sand's opening, frames 2 to 31,
@@ -270,9 +279,13 @@ fn main() -> ExitCode {
         Some(p) => PathBuf::from(p),
         None => PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../cartridges/sand/sand.vla"),
     };
+    let replay = std::env::args().nth(2).map(PathBuf::from);
     let played = match std::fs::read_to_string(&path) {
         Ok(text) if text.contains("(cartridge \"superposition\"") => {
             play_superposition(&path, &text)
+        }
+        Ok(text) if text.contains("(cartridge \"brickwork\"") => {
+            play_brickwork(&path, &text, replay)
         }
         _ => play(&path),
     };
@@ -543,4 +556,582 @@ fn act_rows(i: &Inputs, known: &mut Option<Vec<String>>) -> String {
     kept[6] = "\"\"".to_string();
     *known = Some(kept);
     rows.join("\n")
+}
+
+// ---- Brickwork's session (CART.3's third slice, the playtest pass) ---------
+
+/// The hand-written game, the engine's tests' own file: the rule and the
+/// scripted player.
+#[path = "../src/brickwork.rs"]
+#[allow(dead_code)]
+mod brickwork;
+
+use brickwork as bw;
+use std::collections::BTreeMap;
+use vla_lang::form::Form;
+use vla_lang::printer::write_datum;
+use vla_lang::reader::read_forms;
+
+/// The seed the host would choose, fixed here for the bot's session.
+const BW_SEED: u64 = 12_345;
+
+/// What a frame did, a row of the timing each.
+const BW_ACTS: [&str; 13] = [
+    "still",
+    "waiting",
+    "paused",
+    "a fall",
+    "a move or a turn",
+    "a slide",
+    "to the bottom",
+    "a cut",
+    "a lay",
+    "a lay that fills a course",
+    "a beat's end",
+    "a start",
+    "a top-out",
+];
+
+/// The act a frame did, by the hand's account of it; `beat_before`, whether
+/// the frame before it stood in a beat.
+fn bw_act(g: &bw::Game, beat_before: bool) -> usize {
+    let beat_now = g.phase == bw::Phase::Beat;
+    if g.topout {
+        12
+    } else if g.starts {
+        11
+    } else if g.cut {
+        7
+    } else if g.dropped {
+        6
+    } else if g.slid {
+        5
+    } else if g.lay && g.full_count > 0 {
+        9
+    } else if g.lay {
+        8
+    } else if beat_before && !beat_now {
+        10
+    } else if g.turned || g.moved {
+        4
+    } else if g.fell {
+        3
+    } else if g.paused {
+        2
+    } else if g.phase != bw::Phase::Falling && !beat_now {
+        1
+    } else {
+        0
+    }
+}
+
+/// One frame's Input rows as the host writes them at a rate to a cartridge
+/// of version 7: player 1's buttons held, no pointer, no key named, the Wall
+/// shown and the command run.
+fn bw_rows(k: &bw::Keys) -> String {
+    let held = [
+        k.up, k.down, k.left, k.right, k.a, k.b, false, false, k.start, k.select,
+    ];
+    let mut out = String::new();
+    for (b, on) in held.iter().enumerate() {
+        for col in ['B', 'C', 'D', 'E'] {
+            let v = u8::from(*on && col == 'B');
+            out.push_str(&format!("(cell \"Input\" \"{col}{}\" {v})\n", b + 1));
+        }
+    }
+    for r in 11..=16 {
+        out.push_str(&format!("(cell \"Input\" \"B{r}\" 0)\n"));
+    }
+    out.push_str("(cell \"Input\" \"B17\" \"\")\n(cell \"Input\" \"B18\" \"\")\n");
+    out.push_str(&format!(
+        "(cell \"Input\" \"B19\" \"Wall\")\n(cell \"Input\" \"B20\" \"{}\")\n",
+        k.command
+    ));
+    out
+}
+
+/// A cell's address from its row and column, from 1.
+fn bw_address(row: u32, col: u32) -> String {
+    let (mut c, mut letters) = (col, String::new());
+    while c > 0 {
+        letters.insert(0, (b'A' + ((c - 1) % 26) as u8) as char);
+        c = (c - 1) / 26;
+    }
+    format!("{letters}{row}")
+}
+
+/// Every word of the wall, the level and the words above it held to the
+/// hand, through the values record of the Wall's `B2:X25`.
+fn bw_hold(c: &Cartridge, g: &bw::Game, frame: u32) -> Result<(), String> {
+    let text = match c.view("values", "Wall", Some("B2:X25")) {
+        Ok(Viewed::Text(t)) => t,
+        _ => return Err(format!("frame {frame}: the Wall's values were refused")),
+    };
+    let mut cells = BTreeMap::new();
+    for line in text.lines() {
+        if let Some(rest) = line.strip_prefix("(value \"Wall\" \"") {
+            if let Some((addr, v)) = rest.split_once("\" ") {
+                let v = v.strip_suffix(')').unwrap_or(v);
+                let v = v
+                    .strip_prefix('"')
+                    .and_then(|x| x.strip_suffix('"'))
+                    .unwrap_or(v);
+                cells.insert(addr.to_string(), v.to_string());
+            }
+        }
+    }
+    let at = |a: &str| cells.get(a).cloned().unwrap_or_default();
+    for course in 1..=bw::HEIGHT as i32 {
+        for column in 1..=bw::WIDTH as i32 {
+            let addr = bw_address(course as u32 + 1, column as u32 + 1);
+            let want = g.word(course, column);
+            if at(&addr) != want {
+                return Err(format!(
+                    "(play-differs (frame {frame}) (cell \"Wall!{addr}\") (engine {:?}) (reference {want:?}))",
+                    at(&addr)
+                ));
+            }
+        }
+    }
+    if at("X4") != g.level.to_string() {
+        return Err(format!(
+            "(play-differs (frame {frame}) (cell \"Wall!X4\") (engine {:?}) (reference {}))",
+            at("X4"),
+            g.level
+        ));
+    }
+    if at("W2") != g.words() {
+        return Err(format!(
+            "(play-differs (frame {frame}) (cell \"Wall!W2\") (engine {:?}) (reference {:?}))",
+            at("W2"),
+            g.words()
+        ));
+    }
+    Ok(())
+}
+
+/// A session's steps by act: each act's times in µs, and the longest step.
+struct BwTimes {
+    by: Vec<Vec<f64>>,
+    total: f64,
+    longest: (f64, u32, usize),
+}
+
+impl BwTimes {
+    fn new() -> BwTimes {
+        BwTimes {
+            by: vec![Vec::new(); BW_ACTS.len()],
+            total: 0.0,
+            longest: (0.0, 0, 0),
+        }
+    }
+
+    fn add(&mut self, act: usize, us: f64, frame: u32) {
+        self.by[act].push(us);
+        self.total += us;
+        if us > self.longest.0 {
+            self.longest = (us, frame, act);
+        }
+    }
+
+    fn print(&mut self, frames: u32) {
+        println!(
+            "  {frames} frames, {:.0} ms stepping, {:.1} us a frame; the longest {:.0} us at frame {}, {}",
+            self.total / 1e3,
+            self.total / f64::from(frames.max(1)),
+            self.longest.0,
+            self.longest.1,
+            BW_ACTS[self.longest.2]
+        );
+        for (i, times) in self.by.iter_mut().enumerate() {
+            if times.is_empty() {
+                continue;
+            }
+            times.sort_by(f64::total_cmp);
+            let at = |q: f64| times[((times.len() - 1) as f64 * q).round() as usize];
+            println!(
+                "    {}: {} frames, median {:.0} us, p95 {:.0}, longest {:.0}",
+                BW_ACTS[i],
+                times.len(),
+                at(0.5),
+                at(0.95),
+                at(1.0)
+            );
+        }
+    }
+}
+
+/// One frame stepped and held: the rows written, the step timed alone, the
+/// hand stepped with the same keys, and the frame held to it. Its act and
+/// the step's time in µs.
+fn bw_frame(
+    c: &mut Cartridge,
+    g: &mut bw::Game,
+    rows: &str,
+    keys: bw::Keys,
+    frame: u32,
+    beat_before: &mut bool,
+) -> Result<(usize, f64), String> {
+    if !rows.is_empty() {
+        c.write(rows)
+            .map_err(|e| format!("frame {frame}: the rows were refused: {}", e.refusal.text))?;
+    }
+    let t = Instant::now();
+    let s = c.step(0);
+    let us = t.elapsed().as_secs_f64() * 1e6;
+    if !s.done || s.frame != u64::from(frame) {
+        return Err(format!("frame {frame}: the step answered {}", s.row()));
+    }
+    g.step(keys);
+    bw_hold(c, g, frame)?;
+    let act = bw_act(g, *beat_before);
+    *beat_before = g.phase == bw::Phase::Beat;
+    Ok((act, us))
+}
+
+/// A game of a session, as its mechanics count it.
+#[derive(Default)]
+struct BwGame {
+    start: u32,
+    end: u32,
+    level: u32,
+    entered: u32,
+    by_key: u32,
+    by_rest: u32,
+    at_once: [u32; 4],
+    slides: u32,
+    drops: u32,
+    cuts: u32,
+    swaps: u32,
+    refused: u32,
+    paused: u32,
+    frames_a_brick: Vec<u32>,
+    height: u32,
+    holes: u32,
+    pace: f64,
+}
+
+/// The mechanics of a session, counted frame by frame from the hand.
+#[derive(Default)]
+struct BwMechanics {
+    games: Vec<BwGame>,
+    last_entry: u32,
+    after_drop: Option<u32>,
+    drop_waits: Vec<u32>,
+}
+
+impl BwMechanics {
+    fn count(
+        &mut self,
+        g: &bw::Game,
+        keys: &bw::Keys,
+        last: &bw::Keys,
+        clip_before: usize,
+        frame: u32,
+    ) {
+        if g.starts {
+            self.games.push(BwGame {
+                start: frame,
+                ..BwGame::default()
+            });
+            self.last_entry = frame;
+        }
+        if let Some(r) = self.games.last_mut() {
+            if g.entered {
+                if !g.starts {
+                    r.frames_a_brick.push(frame - self.last_entry);
+                }
+                self.last_entry = frame;
+                r.entered += 1;
+            }
+            if g.lay {
+                if (keys.start && !last.start) || (keys.select && !last.select) {
+                    r.by_key += 1;
+                } else {
+                    r.by_rest += 1;
+                }
+                if g.full_count > 0 {
+                    r.at_once[(g.full_count as usize - 1).min(3)] += 1;
+                }
+            }
+            r.slides += u32::from(g.slid);
+            r.drops += u32::from(g.dropped);
+            r.cuts += u32::from(g.cut);
+            r.swaps += u32::from(g.cut && clip_before > 0);
+            r.refused += u32::from(g.cut_refused);
+            r.paused += u32::from(g.paused);
+            r.level = g.level;
+            r.pace = g.pace;
+            if g.topout {
+                r.end = frame;
+                // the wall it left: each column read down from its highest
+                // brick, an empty cell beneath it a hole
+                let mut top = bw::HEIGHT;
+                for col in 0..bw::WIDTH {
+                    let column: Vec<i32> = g.wall.iter().map(|row| row[col]).collect();
+                    if let Some(first) = column.iter().position(|&v| v != 0) {
+                        top = top.min(first);
+                        r.holes += column[first..].iter().filter(|&&v| v == 0).count() as u32;
+                    }
+                }
+                r.height = (bw::HEIGHT - top) as u32;
+            }
+        }
+        if g.dropped {
+            self.after_drop = Some(frame);
+        } else if let Some(d) = self.after_drop {
+            if g.slid || g.moved || g.turned || g.lay {
+                self.drop_waits.push(frame - d);
+                self.after_drop = None;
+            }
+        }
+    }
+
+    fn print(&self, last_frame: u32) {
+        for (i, r) in self.games.iter().enumerate() {
+            let mut fb = r.frames_a_brick.clone();
+            fb.sort_unstable();
+            let at = |q: f64| {
+                if fb.is_empty() {
+                    0
+                } else {
+                    fb[((fb.len() - 1) as f64 * q).round() as usize]
+                }
+            };
+            let end = if r.end > 0 { r.end } else { last_frame };
+            println!(
+                "  game {}: frames {} to {}{}, level {}, {} bricks, laid by a key {} and at rest {}, courses at once {:?}, slides {}, drops {}, cuts {} ({} from a full Clipboard, {} refused), paused {} frames; a brick's frames median {} and p95 {}; {}",
+                i + 1,
+                r.start,
+                end,
+                if r.end > 0 { ", a top-out" } else { ", still standing" },
+                r.level,
+                r.entered,
+                r.by_key,
+                r.by_rest,
+                r.at_once,
+                r.slides,
+                r.drops,
+                r.cuts,
+                r.swaps,
+                r.refused,
+                r.paused,
+                at(0.5),
+                at(0.95),
+                if r.end > 0 {
+                    format!("the wall {} courses high with {} holes, the pace {:.2} frames a course", r.height, r.holes, r.pace)
+                } else {
+                    format!("the pace {:.2} frames a course", r.pace)
+                }
+            );
+        }
+        if !self.drop_waits.is_empty() {
+            println!(
+                "  after each brick sent to the bottom, the frames to its next slide, move, turn or lay: {:?}",
+                self.drop_waits
+            );
+        }
+    }
+}
+
+/// A phase of the bot's session: its name, its frames, and what is typed
+/// into the Pace before it, a row and a number.
+struct BwPhase {
+    name: &'static str,
+    frames: u32,
+    typed: Option<(u32, f64)>,
+}
+
+const BW_PHASES: [BwPhase; 2] = [
+    BwPhase {
+        name: "the opening pace: a game laid with care to its sixtieth brick, then recklessly to a top-out, and the next begun",
+        frames: 4000,
+        typed: None,
+    },
+    BwPhase {
+        name: "the pace typed to 6 frames a course",
+        frames: 2000,
+        typed: Some((1, 6.0)),
+    },
+];
+
+/// Brickwork's session: the scripted player through its phases, then a
+/// person's replay when there is one, each frame held to the game by hand
+/// and each step timed by what the frame did.
+fn play_brickwork(path: &Path, text: &str, replay: Option<PathBuf>) -> Result<(), String> {
+    let load = |what: &str| {
+        let t = Instant::now();
+        let c = Cartridge::load(text, "brickwork.vla", text.len()).map_err(|e| {
+            format!(
+                "{}: refused at line {}: {}",
+                path.display(),
+                e.line,
+                e.refusal.text
+            )
+        })?;
+        println!("{what}: the load {:.1} ms", t.elapsed().as_secs_f64() * 1e3);
+        Ok::<Cartridge, String>(c)
+    };
+    // the scripted player's session
+    let mut c = load("the scripted player")?;
+    c.write(&format!("(cell \"Clock\" \"B3\" {BW_SEED})"))
+        .map_err(|e| format!("the seed was refused: {}", e.refusal.text))?;
+    let mut g = bw::Game::load(bw::Settings::default(), BW_SEED);
+    let mut bot = bw::Bot::new(60);
+    let (mut frame, mut beat_before) = (0u32, false);
+    let mut all = BwTimes::new();
+    let mut mechanics = BwMechanics::default();
+    let mut last = bw::Keys::default();
+    for phase in &BW_PHASES {
+        if let Some((row, v)) = phase.typed {
+            c.write(&format!("(cell \"Pace\" \"B{row}\" {v})"))
+                .map_err(|e| format!("the Pace was refused: {}", e.refusal.text))?;
+            g.settings.type_into(row, Some(v));
+        }
+        let mut times = BwTimes::new();
+        for _ in 0..phase.frames {
+            frame += 1;
+            let keys = bot.decide(&g);
+            let clip_before = g.clip_kind;
+            let (act, us) = bw_frame(
+                &mut c,
+                &mut g,
+                &bw_rows(&keys),
+                keys,
+                frame,
+                &mut beat_before,
+            )?;
+            times.add(act, us, frame);
+            all.add(act, us, frame);
+            mechanics.count(&g, &keys, &last, clip_before, frame);
+            last = keys;
+        }
+        println!("{}:", phase.name);
+        times.print(phase.frames);
+    }
+    println!("the scripted player's session, every frame held to the game by hand:");
+    all.print(frame);
+    mechanics.print(frame);
+    // a person's session, its replay beside the cartridge unless named
+    let replay = replay.or_else(|| {
+        let p = path.with_file_name("brickwork.replay.vla");
+        p.exists().then_some(p)
+    });
+    let Some(replay) = replay else {
+        return Ok(());
+    };
+    let rtext = std::fs::read_to_string(&replay)
+        .map_err(|e| format!("{}: cannot be read: {e}", replay.display()))?
+        .replace("\r\n", "\n");
+    let forms = read_forms(&rtext).map_err(|e| format!("{}: {e:?}", replay.display()))?;
+    let items = |f: &Form| match f {
+        Form::List(l) => Ok(l.items.clone()),
+        other => Err(format!("{}: a list, not {other:?}", replay.display())),
+    };
+    let header = items(forms.first().ok_or("an empty replay")?)?;
+    let seed: u64 = header
+        .iter()
+        .find_map(|d| match d {
+            Form::List(l) => match l.items.as_slice() {
+                [Form::Sym(k), Form::Sym(n)] if k == "seed" => n.parse().ok(),
+                _ => None,
+            },
+            _ => None,
+        })
+        .ok_or("the replay's header names no seed")?;
+    let mut frames: Vec<(u32, Vec<Form>)> = Vec::new();
+    for f in &forms[1..] {
+        match items(f)?.as_slice() {
+            [Form::Sym(head), Form::Sym(n), rows @ ..] if head == "frame" => frames.push((
+                n.parse().map_err(|_| format!("a frame's number: {n}"))?,
+                rows.to_vec(),
+            )),
+            other => return Err(format!("{}: a frame, not {other:?}", replay.display())),
+        }
+    }
+    let last_frame = frames.last().map_or(0, |f| f.0);
+    let mut c = load(&format!("{}", replay.display()))?;
+    c.write(&format!("(cell \"Clock\" \"B3\" {seed})"))
+        .map_err(|e| format!("the seed was refused: {}", e.refusal.text))?;
+    let mut g = bw::Game::load(bw::Settings::default(), seed);
+    let mut input: BTreeMap<String, String> = BTreeMap::new();
+    let mut written = frames.iter().peekable();
+    let (mut times, mut mechanics, mut beat_before) =
+        (BwTimes::new(), BwMechanics::default(), false);
+    let mut last = bw::Keys::default();
+    for frame in 1..=last_frame {
+        let rows: &[Form] = match written.next_if(|(n, _)| *n == frame) {
+            Some((_, rows)) => rows,
+            None => &[],
+        };
+        for r in rows {
+            match r {
+                Form::List(l) => match l.items.as_slice() {
+                    [Form::Sym(head), Form::Str(sheet), Form::Str(addr), Form::Sym(v) | Form::Str(v)]
+                        if head == "cell" && sheet == "Input" =>
+                    {
+                        input.insert(addr.clone(), v.clone());
+                    }
+                    [Form::Sym(head), Form::Str(sheet), Form::Str(addr), Form::Sym(v)]
+                        if head == "cell" && sheet == "Pace" =>
+                    {
+                        let row = addr.trim_start_matches('B').parse().unwrap_or(0);
+                        g.settings.type_into(row, v.parse().ok());
+                    }
+                    _ => {
+                        return Err(format!(
+                            "frame {frame}: a row the hand does not read: {}",
+                            write_datum(r)
+                        ))
+                    }
+                },
+                _ => return Err(format!("frame {frame}: a row: {}", write_datum(r))),
+            }
+        }
+        let on = |a: &str| input.get(a).is_some_and(|v| v == "1");
+        let command = match input.get("B20").map_or("", String::as_str) {
+            "" => "",
+            "pause" => "pause",
+            "slide-left" => "slide-left",
+            "slide-right" => "slide-right",
+            "to-the-bottom" => "to-the-bottom",
+            "cut" => "cut",
+            other => {
+                return Err(format!(
+                    "frame {frame}: a command the hand does not know: {other}"
+                ))
+            }
+        };
+        let keys = bw::Keys {
+            up: on("B1"),
+            down: on("B2"),
+            left: on("B3"),
+            right: on("B4"),
+            a: on("B5"),
+            b: on("B6"),
+            start: on("B9"),
+            select: on("B10"),
+            command,
+        };
+        let text: Vec<String> = rows.iter().map(write_datum).collect();
+        let clip_before = g.clip_kind;
+        let (act, us) = bw_frame(
+            &mut c,
+            &mut g,
+            &text.join("\n"),
+            keys,
+            frame,
+            &mut beat_before,
+        )?;
+        times.add(act, us, frame);
+        mechanics.count(&g, &keys, &last, clip_before, frame);
+        last = keys;
+    }
+    println!(
+        "{}, every frame held to the game by hand:",
+        replay.display()
+    );
+    times.print(last_frame);
+    mechanics.print(last_frame);
+    Ok(())
 }

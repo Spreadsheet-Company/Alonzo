@@ -11389,6 +11389,147 @@ Its own look (`CHARTER.md` §6): its own name; its own bricks, and not the seven
 
 *Held.* 820 rows, the floor lowered from 828 with its note; the describe golden 217 shapes; `cargo fmt --check`, clippy on stable and on 1.100.0, `cargo test --workspace` (111, at opt-level 3), `expand --check` (twelve `same`), `tools/run_checks.ps1 -WithExtras`. In headless Chrome from disk, a brick cut to the Clipboard: the box plain, and the cut's words whole with room to spare. *Committed at the owner's word,* the slice's one commit (decision 20); the item stays open for its third slice, the playtest pass and then the replay.
 
+### Its third slice, scoped 2026-11-17
+
+*Scoped at the owner's word, "Push, then scope Brickwork slice 3", over `e531845`, pushed and green on CI's three jobs, the module job's checks under pwsh among them.* Decision 13 gives the slice its order. First the playtest pass, `CART.1`'s route over a played session (`CART.2`'s entry, "The playtest pass"), in the owner's word of 2026-10-12: "once the game works, we play it to test for performance bugs to file as optimization passes and game mechanic improvements"; its findings a slice of their own. Then the owner's session as the replay and the Tally's record as its golden, recorded only once the rules settle, since a replay pins its cartridge's digest.
+
+**Substrate, verified.** Read and measured on the day.
+- *The route.* `CART.2`'s pass played a session as the host plays it, `engine/examples/play.rs` since, every frame held to the hand and each step timed alone. Beside it stood the live loop in Chrome, the floors' runner, and copies of the language with timers and counters. Each candidate was built in a copy of its own, held to the references, put through the tests and timed in alternated launches, and the owner adjudicated the findings. `play.rs` plays Sand's phases and Superposition's acts; Brickwork has neither.
+- *A person's session.* The page records one as it plays, the Input cells that changed and each edit that landed, and the drawer's Copy the replay puts it on the clipboard (`SPEC.md` §7.6). Five committed replays are the owner's sessions taken so: Sand's 2,085 frames, Kairos's 3,469, Superposition's 118, Seiyaku's 158, and Naught's first 45 with a stand-in after them. Superposition's was carried onto a later cartridge by its header's digest, as Sand's first was.
+- *What a replay costs.* Four laws play every committed replay. The loop oracle's replay case holds every frame to the game's hand where it has one (`handHeld`, a grid view of each sheet the hand names); its save case (`ENGINE.5`) and its keep case (`ENGINE.38`) play each again; and natively `every_committed_replay_plays_to_its_golden` and `every_committed_replay_resumes_from_a_save_at_rest`, which pin seven replays and fourteen saves. A stand-in measured them (*measurement*, 2026-11-17): a blind player's keys, moves, lays, slides, drops and cuts, recorded by the real host over the module in Chrome, its golden the Tally's record, both dropped into a scratch worktree of `e531845`, nothing in the repository changed.
+
+  | | today | 6,000 frames | 15,000 frames |
+  |---|---|---|---|
+  | the loop oracle's replay case, no hand | 28.0 s | 28.2 | 28.8 |
+  | its save case | 19.3 | 18.3 | 18.0 |
+  | its keep case | 30.5 | 33.3 | 38.1 |
+  | the two laws natively, at opt-level 3 | 10.4 to 10.5 | | 11.1 |
+  | the replay's size | | 71 KB, one frame in eight written | 178 KB |
+
+  The loop check runs its cases side by side, so its time is its longest case's, the keep case's, which grows by about half a millisecond for each frame of Brickwork's. The laws fail on the stand-in only at their pinned lists.
+- *What a hand's hold costs.* Views in Chrome over the module, a mean a frame over 3,000 frames (*measurement*). The replay plays at 96 µs a frame. A grid view of the Wall's words and joints costs 2.8 ms over `B2:X25` (1,450 rows) and 2.4 over `B2:O25`; the Tally's grid view 104 µs; the State's values, `B1:B106`, 76 µs; the Wall's changes 13 µs. A hand that holds the whole Wall at every frame costs thirty times the replay it holds.
+
+**The decisions.** Each with the recommendation and the alternatives it declines.
+
+21. **The pass's two sessions** (decision 13).
+    - *The bot's,* in `play.rs` beside Sand's and Superposition's. The tests' bot moves into `engine/src/brickwork.rs`, so that the example and the tests share it. Its phases: a game at the opening pace, one at a pace typed fast, clears of one to four courses at once, the slides, the drop and the cut, and a top-out. Every frame is held to the hand and each step timed by act.
+    - *The owner's,* a game played in the page and copied (decision 25), which `play.rs` reads as a replay, every frame held and timed the same way. What a person does that a bot never does is the pass's to see.
+
+    *Alternatives:* the bot's alone, Sand's way, which sees nothing of a person's play; the owner's alone, which is no repeatable bench. Recommended: both.
+22. **What the pass looks at,** four lenses, each with its instrument.
+    - *A frame natively,* by act (still, a fall, a move or a turn, a slide, a drop, a cut, a lay, a clear's beat, a bag dealt): median, p95 and the longest. A copy of the language counts the cells each shape evaluates and changes, and each candidate is built in a copy and held to the hand.
+    - *The browser:* the real host over the module, ticked in real time at 60 with the viewport drawing the Wall. Frames presented a second and the gaps between them, at a lay, a clear's beat and a deal; and a key's latency, a key down to the frame drawn that moved the brick. Brickwork is the first grid game at 60, so the viewport's repaint is the other half of its frame.
+    - *Mechanics,* from both sessions, per game: the bricks and how each was laid (a key, the rest, the soft fall); slides, drops, cuts and swaps; courses cleared at once; the level reached; frames a brick; the holes left; and how the game topped out. And after a drop, the frames a person takes before sliding or laying, against the rest's 30.
+    - *The record:* what the sessions say, set against the owner's notes of the three looks.
+
+    *Declined:* the bond, a course scored for a running bond, which the first scoping named the pass's candidate, in the light of the owner's word at the first hand test, "The level is the score. Simpler feels better."
+23. **The stop rule, before the first session.** A finding is a measured fact and its candidate, never a change made on the spot.
+    - A stall a person would see, a gap of more than a frame at 60 or a key's latency over two frames, is fixed in the fixes' slice.
+    - A change of a mechanic is the owner's to adjudicate, its numbers beside it.
+    - An ask of the language is drafted for the owner to relay, as `KERNEL.33`'s was.
+    - A defect of the page or the engine is a Found, minted only at the owner's word.
+
+    Everything is measured in scratch, and nothing in either repository changes until the adjudication.
+24. **Three commits, each at the owner's word.** (a) The pass: its record and `play.rs`'s Brickwork session, the bot shared, once adjudicated. (b) The fixes the adjudication keeps, a slice of their own with the owner's hand test, or none. (c) The replay: the owner's session, its golden and the two hands, and the item's close, at the owner's hand test of the replay. *Alternative:* (a) and (c) as one, the pass's record waiting for the replay. Recommended: three.
+25. **The owner's session, once if the rules hold** (question 1). The owner plays now, in the page as it stands: one game to its top-out, every act at least once (a slide each way, a drop and then a slide under an overhang, a cut into the empty Clipboard and a swap back, a pause). Copy the replay goes into `cartridges/brickwork/brickwork.replay.vla`. It is the pass's person's session. If the adjudication keeps no change of a rule, it is the replay too, carried onto the fixes' cartridge by its header's digest as Superposition's was, every frame held to both hands, so that the owner plays once. A rule changed records the session again, at the fixes' hand test, where the owner is playing anyway. *Alternatives:* the pass on the bot alone and the owner's one session at the end, which leaves the mechanics lens blind; two sessions always, one for the pass and one for the replay. Recommended: once, and again only if a rule changes.
+26. **The replay's length** (question 2). One game to its top-out, however long, with the acts above, the owner stopping at its end; about five minutes or less, 18,000 frames. Its cost from the table: the loop check's longest case about half a second per thousand frames, and natively 0.05 s per thousand. *Alternatives:* two games, Kairos's, twice the frames for a second top-out the first already shows; a minute's play, which may never top out. Recommended: one game.
+27. **What each hand holds, and when** (question 3), the slice's one cost fork. The replay's frames are held to `brickwork.hand.js` in the page and to `BrickworkHand` natively, one of four ways:
+    - *(a) Everything, every frame:* the Wall's words and joints, the panel, the State and the Tally. The replay case pays 2.9 ms a frame, about 44 s for 15,000 frames, and becomes the loop check's longest case by far.
+    - *(b) The state every frame, the whole at what moves the wall:* the State's cells (the brick's place, kind and turn, the phase, the counts) and the Tally at every frame; the whole, words, joints and panel, at every lay, every clear and every 64th frame, Naught's rule (`Game::whole`). About 0.2 to 0.3 ms a frame, 3 to 5 s for 15,000. The Wall's words are formulas of the State and the Laid wall, which moves only at a lay and a clear, so a word drawn wrong is caught at the next whole frame at the latest.
+    - *(c) The changes every frame:* the whole at the first frame and the last, and between them each frame's changes (`ENGINE.19`'s answer, the cells the frame changed), held to the cells the hand changed. 13 µs a frame and complete, but a new way of holding in the replay case, `handHeld` by changes, and the changes record's completeness taken on trust.
+    - *(d) The Tally alone every frame,* Kairos's way: 0.1 ms, and blind to the wall between top-outs.
+
+    Recommended: (b).
+28. **The golden and the hands.**
+    - *The golden:* the Tally's record at the replay's last frame, `Tally!A1:B21` (each brick laid, the courses at once, games, top-outs, slides, drops and cuts), written by a scratch player over the engine, Kairos's way.
+    - *The page's hand,* `cartridges/brickwork/brickwork.hand.js`: the Rust hand's rule written a third time (*prediction* 500 to 700 lines), registering `brickwork` in `window.AlonzoHands`, the replay's edits among its inputs, so that a Pace typed reaches the hand's settings.
+    - *The native hand,* `BrickworkHand` in `cartridge.rs`'s replay law, the session's ends asserted.
+    - *The counts:* `check_cartridge.ps1` at eight replays and goldens; the loop oracle's replay case at 8, its hands 6, with `brickworkFrames` and its cells and joints; the two laws' lists and sixteen saves.
+    - *The control's hand mutants,* each a rule the session exercises and each failing the replay case by name at its first frame: a slide stopping a column short, a cut taking a place in the deal, a lay's rest restarted by a turn, the pace a power. Node finds each frame first against the Rust hand, as Naught's are.
+29. **The close.** `CART.3` leaves the roadmap for the closed ledger with (c), at the owner's hand test: pick Brickwork, Play the replay, and the game plays to its top-out and pauses at its last frame, the Tally the golden's.
+
+**Predictions, written before any session.** *Prediction*, 2026-11-17.
+- Natively, no frame over 2 ms, the heaviest a lay that clears four courses.
+- In Chrome at 60: frames presented evenly, a gap's p95 under 17.5 ms, and a key's latency one to two frames; the viewport's repaint, not the step, the larger half of a frame there.
+- The owner's game 6,000 to 18,000 frames, a replay of 70 to 200 KB; the page's hand 500 to 700 lines.
+- With the replay and hold (b), the loop check 31 to 40 s, its longest case still the keep case's; `cargo test` 1 to 3 s more.
+
+**Not this slice.** A held key repeating a command, and the grid's own cut, copy and paste (`ENGINE.39`); Seiyaku's Shift with a digit, version 7's second client; a wider wall, `wall-size`'s one line; the bond.
+
+**Size.** `~days` (*prediction*): the pass one to two days, its fixes as adjudicated, the replay one day.
+
+*Scoped 2026-11-17; decisions 21 to 29 await the owner, with three questions.*
+
+*Taken 2026-11-17 by the owner's word after playing decision 25's session: "Opening the drawer severely lags the page down to several seconds between registered keyboard/mouse events, but the replay is saved. Proceed with slice 3". The decisions went ahead as recommended: the session played once, one game to its top-out, and hold (b). The drawer is a finding of the pass's browser lens.*
+
+### Its third slice's playtest pass, 2026-11-17
+
+*Measured in scratch over `e531845`, nothing in the repository changed but the pass's own instrument, `play.rs`'s Brickwork session and the bot moved beside the hand (decision 21), uncommitted until the adjudication.*
+
+**The owner's session.** `cartridges/brickwork/brickwork.replay.vla`, as the page copied it, CRLF as a `.vla` file checks out: 41,129 frames, 3,994 of them written, 293 KB. It was recorded on `e531845`'s cartridge, the header's digest `B54F5B3A…6A49D` measured equal, with the host's seed 1267650254. One game runs from frame 73 to its top-out at 40,550, and 579 frames stand after it until Copy the replay. No edit, nothing typed into the Pace; the pointer's rows are there, which the cartridge does not read.
+
+**A frame natively.** `engine/examples/play.rs`'s Brickwork session, a release build. Every frame's 336 words of the wall, the level and the words are held to the hand; each step is timed alone by what the frame did (*measurement*, 2026-11-17).
+
+| act | the owner's, frames | median µs | p95 | longest |
+|---|---|---|---|---|
+| still | 35,620 | 9 | 32 | 644 |
+| a fall | 2,011 | 43 | 72 | 425 |
+| a move or a turn | 1,792 | 81 | 138 | 640 |
+| a slide | 5 | 85 | 420 | 420 |
+| to the bottom | 6 | 68 | 73 | 73 |
+| a cut | 15 | 191 | 261 | 602 |
+| a lay | 301 | 122 | 142 | 382 |
+| a lay that fills a course | 75 | 129 | 164 | 657 |
+| a beat's end | 375 | 216 | 289 | 792 |
+
+The owner's session steps at 21.4 µs a frame, the longest 792 µs at a beat's end (*prediction* no frame over 2 ms). The bot's, 6,000 frames in two phases, the opening pace and a pace typed to 6 frames a course, steps at 41.6 µs a frame, its longest 690 µs at the first frame. No frame comes near a frame's budget, 16.7 ms at 60, so the counting copy of the language had nothing to count, and the pass has no ask of the language.
+
+**The browser.** The page built from `e531845` in headless Chrome 157, the owner's session pasted into The replay and played by Play the replay at 60 frames a second, the viewport drawing the Wall (*measurement*):
+- with the drawer closed and then open at six points from 20 s to 720 s, Autosave off, and at four from 30 s to 660 s in a second run with Autosave on: frames presented every 16.7 ms, the p95 16.8 to 16.9 and the worst 17.2, no long task, and a key's handler waiting 0 to 1 ms;
+- at a device pixel ratio of 2 in a window of 1,920 by 1,080, the same;
+- the drawer's opening lays out its boxes, the source's 54 KB, the cartridge's 38 and the library's 29, in 12 ms the first time and 1 ms after.
+
+A key's latency is the wait for the next frame and its draw, one to two frames, as predicted.
+
+**Found: the drawer takes the keys** (unminted, the owner's report). A click on Drawer leaves the keyboard's focus on the button, and its listener never gives it back to the game (`web/index.template.html`), where Run and Full screen call `focusScreen()`. From then on the game hears no key: the arrows and Enter go to the bar, where no game key is taken, and Space, one of the lay keys, presses the button again and closes the drawer. Measured in headless Chrome by a real click and real keys: the focus on `eng-drawer`, the left arrow moving nothing, and Space closing the drawer. Pause and Load leave the keys on their buttons too, by reading. *The candidate:* a bar button pressed by the pointer gives the keys back to the Screen after its act, as Run does, the drawer's toggle among them; a box given the keys by the palette (`give`) keeps them. Held by the loop oracle: a real click on Drawer, then a game key that moves the brick.
+
+**Found: a long replay in its box stalls the page** (unminted; the owner's report, reproduced after the adjudication's detail, below). The runs above opened the drawer but never The replay's section, so the box was never laid out with its text. Opened, holding the owner's session (281 KB, 12,051 lines) while the game runs, in headless Chrome over `e531845`'s page (*measurement*, 2026-11-17):
+- a frame every 67 to 83 ms, about 12 a second, with 22 to 24 long tasks of 80 to 94 ms in every two seconds, the replay playing at a twentieth of its rate;
+- with the box's text selected, as the owner selected it to copy it: a frame every 5,000 ms, the five seconds the owner's right click waited;
+- the selection cleared, 83 ms again; the section closed, 16.7 ms.
+
+The cause, by elimination and a trace. A CPU profile puts 52% of the samples in `Viewport.geometry` (`web/viewport.js`), a layout read the host makes at every frame, and most of the rest in the browser's own work. A trace shows each of those layouts starting from the document's root, about 50 ms each and 36 in a second and a half, with 11 objects dirty of 36,369. Hiding the drawer's frame line, `#frame-line`, whose words change at every frame, takes the stall away entirely: 16.7 ms, no long task. Hiding the log does not; nor does `contain: strict` on the box or on the frame line with a fixed height, `contain: layout paint` on the section, or the drawer's scroll anchoring turned off. So each frame's words dirty the layout, the viewport's read forces it at once, and the browser lays out the box's twelve thousand lines again every time. *The candidate,* decision 23's, since a person sees it: the fixes' slice measures and holds a cure, two kinds named: a box's text kept out of a layout the frame forces (the frame line's words written at the viewer's pace, or the viewport's geometry read only when its box is resized), or a long replay kept off the screen (the box showing its size and holding the text for Copy and Play). Held by the loop oracle: a replay of tens of thousands of lines in its open box while the game runs, every frame under a frame's time.
+
+**Mechanics,** from both sessions.
+- *The owner's game:* level 81 in 11.2 minutes from 391 bricks, a brick's frames 94 at the median (1.6 s) and 172 at the p95. At its end the pace stood at 5.09 frames a course, the 3% quickening's value at level 81; it reaches 1 frame a course, the fewest, at about level 120. It topped out with the wall 22 courses high and 23 holes in it.
+- *How the bricks were laid:* 243 by Enter or Space and 133 at rest; the soft fall held at no lay, its key pressed nine times in the game.
+- *Courses at once:* 69 singles and 6 doubles, nothing larger.
+- *Version 7's acts:* 5 slides, 6 drops and 15 cuts, 14 of them swaps from a full Clipboard and none refused. After a drop, the next act came after 5 and 10 frames twice and at the rest's 30 frames four times: the drop used four times as a lay with a breath, twice to place a brick under.
+- *The bot's:* a game to level 8 laid recklessly to its top-out, and a second at level 19 still standing at the session's end.
+- *Against the owner's notes of the three looks:* each is in the game as built, and nothing the session shows goes against one.
+
+*Candidates for the owner, none recommended as a change.* (1) The pace: a person's game runs eleven minutes to level 81 at 3%; 4% would reach that pace by about level 60, and 5% by about level 48 (*derived*). The owner's 3% stands unless shorter games are wanted. (2) The soft fall, nearly unused beside Enter: the genre's key, costing nothing. (3) Clears of more than one course are rare and count as singles: "Simpler feels better".
+
+**The replay's length.** Decision 26 assumed about five minutes; the owner's one game ran 11.4. Its costs at 41,129 frames, from the scoping's measured rates (*derived*):
+- the loop check's keep case +20 s, 30.5 to about 51 s, the check's own time, and its replay case about +14 s with hold (b), still under it;
+- natively, the two laws +2 s and the Rust hand's hold (b) +6 to 10 s at opt-level 3;
+- the replay 293 KB in the repository, nine times Sand's.
+
+The options:
+- (a) The whole session: the owner's game and its top-out as played.
+- (b) Its first 10,000 frames or so with a stand-in after them to a top-out, Naught's way: a quarter of the cost, and the end not the owner's.
+- (c) Its first frames alone: no top-out.
+
+Recommended: (a).
+
+*Predictions met and missed.* Met: no frame natively over 2 ms; frames presented evenly at 60; a key's latency one to two frames. Missed: the owner's game was 41,129 frames, where 6,000 to 18,000 were predicted, and its replay 293 KB, where 70 to 200.
+
+*Adjudicated 2026-11-17, the owner's words:* "Leave the pace, keep the whole replay session, and the entire page lagged (even right-clicking the highlighted replay text to copy it took 5 seconds to display the right-click dialog box) but if it can't be repeated it could have just been a slow machine. If everything looks good, commit before suggesting next steps." No mechanic changes; the replay is the whole session, option (a); and the lag was repeated, its Found above, so the stop rule puts it in the fixes' slice. The drawer's keys were not named, and wait for the owner's word.
+
+*What remains* (decision 24): (a) the pass's commit, this record and `play.rs`'s session with the bot shared, committed at this adjudication; (b) the fixes: the long replay's stall, and the drawer's keys at the owner's word; (c) the replay.
+
+*The scratch,* in the session's scratchpad: `s3/` (`cdp_eval.ps1` and the probes over the built page, `drawer_*.ps1` the drawer's measurements), `bwprobe/src/bin/session.rs` (the first native session), `edits/move_bot.py`.
+
 ## `ENGINE.41` — a text drawn in its own font after a clip: the painter's noted font forgotten at a clip's restore, so that neither a repaint's next rectangle nor a full paint's next quadrant draws a text in the font the restore left
 
 *Minted, scoped and built 2026-11-17 at the owner's word, "Proceed with minting, scoping, and implementing ENGINE.41", from `CART.3`'s third look's Found.* No question was the owner's: the cause is one line, its fix that line's, and the hold's place the item's own.
