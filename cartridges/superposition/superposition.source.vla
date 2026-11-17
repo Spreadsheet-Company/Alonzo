@@ -144,7 +144,7 @@
       (readings (unquote n))
       (field (unquote n))
       (tally (unquote n))
-      (widths "Field" 1 (unquote n) 3))))
+      (widths "Field" 1 (unquote n) 3 none))))
 
 ; The lattice's range, A1 to its last site; a column of it from row 1; and its three parts
 ; past the corner, A1: the rest of the first row, the rest of the first column, and the
@@ -426,15 +426,8 @@
     ((rows-range (column-letters-expand (+expand at 2)) n) (int (/ (mod (symbol (column-letters-expand at) "1") 10000000000) 10000000)))
     ((rows-range (column-letters-expand (+expand at 3)) n) (int (/ (symbol (column-letters-expand at) "1") 10000000000)))))
 
-; A column row for each column from one to another, each the width given: the lattice's
-; sites three characters wide, 21 pixels, so that a full screen shows about 120 by 67.
-(defmacro (widths sheet from last width)
-  "a column row a column, from the column given to the last"
-  (quote-if (>expand from last)
-    (begin)
-    (begin
-      (column sheet (column-letters-expand from) width shown none)
-      (quasiquote (widths (unquote sheet) (unquote (+expand from 1)) (unquote last) (unquote width))))))
+; The lattice's sites are three characters wide, 21 pixels, so that a full screen shows
+; about 120 by 67: the kit's widths, a column row a column (moved to the kit at CART.3).
 
 (lattice-side layers)
 

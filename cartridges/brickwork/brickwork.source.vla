@@ -1,0 +1,857 @@
+; SPDX-License-Identifier: 0BSD
+; brickwork.source.vla - Brickwork, the falling-block game on a spreadsheet's grid (CART.3):
+; the arcade's first grid game with gravity, its wall a range of cells with its column
+; letters and row numbers kept. The pass expands this file into brickwork.vla beside it, the
+; rows the engine loads (docs/SPEC.md section 7.8): edit this one, then expand it again with
+;   cargo run --release --example expand
+;
+; How to play. Bricks fall into the wall, one at a time; lay each so that the courses fill.
+; Left and Right move the brick a column, and held they repeat; Down falls faster while held;
+; Up or X turns it clockwise, Z counterclockwise; Space or Enter lays it where it would land;
+; P pauses. A course whose every cell is laid is cleared, the courses above moving down, as a
+; spreadsheet deletes a row. Each course cleared is a level, and the level is the score: each
+; quickens the fall by a few percent. The game ends when the next brick has no room to enter.
+;
+; The bricks are nine: the header, the brick, the corner, the lintel, the square, the arch, the
+; block, the horseshoe and the flue, of one to eight cells, none with a left and a right hand
+; (the Bricks sheet draws each in its four turns). The flue's middle is closed as it lands, so
+; the course through it clears only once the course above it has cleared with nothing on it
+; and the gap is filled from above, by the header or a brick on end. A bag deals them in a
+; random order, the four smallest twice a bag and the rest once, so that a flue comes one
+; brick in thirteen; the Pace sheet holds each brick's count in a bag, and the fall's pace, in
+; the open, for anyone to change, at any frame: a count changed deals the bag again, and a
+; setting typed out of its bounds is held at its bound, so nothing typed there stops the wall. The wall is 14 columns by 24 courses, the one line at the
+; top of the wall's section below; its cells square, 34 pixels, the line beside it.
+;
+; The sheets: the Wall, the game, and its panel; the Bricks, read-only; the Pace, a person's to
+; type into; and hidden, the State, the game in named cells; the Fit, each place a brick might
+; move to tested against the wall; the Courses, a row a course; the Turns, each brick's turns
+; as bit masks; the Laid wall, a cell its brick's serial; the Serials, the same with the
+; falling brick, which the joints are drawn from; the Bits; the Bag; the Tally; and the
+; devices: the Screen, the Camera, the Commands, the Keys and the Audio.
+;
+; What a rule costs (docs/SPEC.md section 2), and how this source keeps it:
+;   - A course is one number, a bit a column, so a fit is a BITAND a course: a brick tested
+;     against the wall reads at most three cells of the Courses, never the wall's cells.
+;   - A rare test reads a cell of its own row: each cell of the Wall reads its course's
+;     gates, the falling brick's bits and its shadow's, so a move computes the courses the
+;     brick spans and no other.
+;   - No term that changes every frame in a wall cell: the counts of the fall and the rest
+;     are the State's, and the wall's cells never read them.
+;   - The wall changes at a lay, a shift and a game's start alone, each a value of one cell
+;     the Laid wall reads first, so that between them the wall computes nothing.
+;   - The pace is a product kept from course to course, a multiplication each, never a
+;     power, so that a machine and the browser compute it alike.
+
+(cartridge "brickwork"
+  (spec 6)                          ; the version of docs/SPEC.md this cartridge is written to: (bound ...) and the keyboard's sheets
+  (title "Brickwork")               ; what the host shows
+  (rate 60)                         ; frames a second: the pace's every count is in frames
+  (screen grid 14 24)               ; the Screen, hidden: the Camera shows the Wall in its place
+  (seed host)                       ; the host's seed, a new deal each load; a seed typed into Clock!B3 deals the same bricks again
+  (bound "Wall")                    ; the Wall drawn to its extent and no further
+  (game "Wall")                     ; the game's keys on the Wall
+  (read "Wall" "Bricks")            ; read-only: no key or row of a person's writes either, so no cell loses its formula
+  (work "Pace")                     ; the pace and the bag, a person's to type into
+  (author "Spreadsheet Company")    ; who wrote it
+  (license "0BSD")                  ; the header's twin: copy this file to start a game of your own
+  (notes "Brickwork: lay the falling bricks into whole courses. Left and Right move a brick, Down falls faster, Up or X turns it clockwise and Z counterclockwise, Space or Enter lays it where its shadow shows, P pauses. Each course cleared is a level, the score, and quickens the fall. The Pace sheet holds the pace and each brick's count in a bag, in the open."))
+
+; The library whose macros this source calls: sheets, labels and headers; names, at and
+; devices; on, cells and rules, each naming a sheet once over a run of its rows; rule;
+; first-frame, pressed and count; within and priority; picture; camera; audio; button-labels;
+; and widths and heights, a run of columns' widths and of rows' heights.
+(include "../common.vla")
+
+; ---- the sheets, in tab order ---------------------------------------------------------------
+; The Wall, the Bricks and the Pace a person sees; the rest hidden, each a layer of the rule.
+(sheets "Wall" "Bricks" "Pace")
+(sheet "State" hidden)
+(sheet "Fit" hidden)
+(sheet "Courses" hidden)
+(sheet "Turns" hidden)
+(sheet "Laid" hidden)
+(sheet "Serials" hidden)
+(sheet "Bits" hidden)
+(sheet "Bag" hidden)
+(sheet "Tally" hidden)
+(sheet "Screen" hidden)
+(sheet "Camera" hidden)
+(sheet "Commands" hidden)
+(sheet "Keys" hidden)
+(sheet "Audio" hidden)
+
+; ---- the looks: white bricks on a midnight plum wall ------------------------------------------
+; The wall's empty cells are midnight plum, a dark lavender, its lines a shade lighter, with no
+; gridlines on the sheet; a brick is white, falling or laid, the lines between its cells a
+; faint lavender; its shadow, where it would land, is Lovelace Lavender, and so is a course
+; the beat clears; a joint, where a brick meets another or the open wall, is a medium line of
+; midnight plum. Round the wall, the margins and the panel stand in the canvas's gray, the
+; headers' own, so that the wall stands out, the next three drawn on it in Lovelace Lavender.
+; Each look hides its word by the code ;;;, so the bar shows a cell's word and the wall its
+; color. These come before the arrows are named, since left and right are an edge's words in
+; a border.
+
+(defmacro (lines color)
+  "a cell's four edges, thin, in a color"
+  (border (left thin color) (right thin color) (top thin color) (bottom thin color)))
+
+(format 1 "FFFFFF" ";;;" nowrap (lines "E2D8F6"))   ; a brick, falling or laid: white, its cells' lines a faint lavender
+(format 3 "A080E0" ";;;" nowrap (lines "C4B0F0"))   ; a shadow, a course the beat clears, a brick to come: Lovelace Lavender
+(format 5 "2E2645" general nowrap (lines "3B3159")) ; the wall's cells: midnight plum, its lines a shade lighter
+(format 6 "F3F3EE" general nowrap (font 14))        ; the panel and the margins: the canvas's gray
+(format 7 "F3F3EE" general nowrap (font bold 16))   ; the title
+(format 8 "F3F3EE" general nowrap (font bold 14) (align center middle))   ; a key and the level's label, bold and centered
+(format 9 "F3F3EE" general nowrap (font "2E2645" 12) (align center middle))   ; a course's count, midnight plum and centered
+(format 10 "F3F3EE" general nowrap (font bold 14) (align left middle))   ; the level, bold and on the left
+(format 11 (border (top medium "2E2645")))          ; a joint above
+(format 12 (border (right medium "2E2645")))        ; a joint on the right
+(format 13 (border (bottom medium "2E2645")))       ; a joint below
+(format 14 (border (left medium "2E2645")))         ; a joint on the left
+(format 20 "A080E0" ";;;" nowrap (border (right thin "D9D9D2") (bottom thin "D9D9D2")))   ; a cell of a picture on the Bricks
+(format 21 none "0%" nowrap)                        ; a percent on the Pace
+(on "Wall"
+  (look "brick" 1)
+  (look "falling" 1)
+  (look "landing" 3)
+  (look "full" 3)
+  (look "queued" 3)
+  (gridlines off))
+(on "Bricks"
+  (look "#" 20)
+  (gridlines on))
+
+; ---- the devices --------------------------------------------------------------------------
+; The buttons the game reads: up and X turn clockwise, Z counterclockwise, down falls, and
+; Enter or Space lays; the side arrows take longer words, since left and right are an edge's.
+(devices up down a b start select-button command seed)
+(define arrow-left Input!B3)        ; the left arrow, held
+(define arrow-right Input!B4)       ; the right arrow, held
+
+(button-labels "Keys")
+(cells "Keys"                       ; player 1's keys; x and y left unbound
+  ("B1" "ArrowUp")                  ; up: a turn clockwise
+  ("B2" "ArrowDown")                ; down: falling faster
+  ("B3" "ArrowLeft")                ; left: a column left
+  ("B4" "ArrowRight")               ; right: a column right
+  ("B5" "KeyZ")                     ; a: a turn counterclockwise
+  ("B6" "KeyX")                     ; b: a turn clockwise
+  ("B9" "Enter")                    ; start: lay, or begin
+  ("B10" "Space"))                  ; select: lay, or begin
+
+(camera 1 1)
+(cells "Camera" ("A3" "sheet") ("B3" "Wall"))
+
+(headers "Commands" "A1" "name" "words" "holds" "key")
+(cells "Commands"
+  ("A2" "pause") ("B2" "pause the wall, or resume it") ("D2" "KeyP"))
+
+; ---- the Pace: the fall's pace and the bag, in the open -------------------------------------
+; Each setting a word, a person's to type: the frames a brick takes to fall a course as a game
+; begins; how much quicker each course cleared makes it, a percent of the frames before; the
+; fewest frames a course it reaches; and the counts of the lay, the held arrows, the soft
+; fall, the beat and the hold after a top-out, all in frames. Each is written with its default
+; and its bounds after the State's names, where the game reads it held inside them. Below
+; them, each brick's count in a bag, none to four; a brick of none never comes.
+(names "Pace" "A1"
+  ("frames a course as a game begins" typed-start-pace)
+  ("each course cleared quickens it by" typed-quickening)
+  ("the fewest frames a course" typed-fastest)
+  ("frames a brick rests before it is laid" typed-lay-delay)
+  ("frames a held arrow waits to repeat" typed-repeat-delay)
+  ("frames between its repeats" typed-repeat-period)
+  ("frames a course while Down is held" typed-soft-fall)
+  ("frames from a lay that clears to the next brick" typed-beat-length)
+  ("frames a topped-out wall stands before a key builds again" typed-the-hold))
+(labels "Pace" "A11" "a bag holds, of each brick, none to four" "header" "brick" "corner" "lintel" "square" "arch" "block" "horseshoe" "flue")
+(cells "Pace" ("B12" 2) ("B13" 2) ("B14" 2) ("B15" 2) ("B16" 1) ("B17" 1) ("B18" 1) ("B19" 1) ("B20" 1))
+
+; ---- the Bricks: each in its four turns, a picture a turn ------------------------------------
+; A brick a band of four rows from row 2: its name and its cells, then each turn drawn in a
+; box of three by three cells, clockwise from the turn it enters in, a cell of the brick a #
+; as the source draws it. The brick, the corner and the square turn in a box of two, the
+; header in one. The Turns sheet reads each picture as masks.
+(headers "Bricks" "A1" "brick" "cells")
+(cells "Bricks" ("D1" "as it enters") ("H1" "one turn") ("L1" "two turns") ("P1" "three turns"))
+
+(defmacro (turns kind name size t0 t1 t2 t3)
+  "a brick's band: its name and cells, and its four turns, each a picture of rows"
+  (cell "Bricks" (address-expand (-expand (*expand 4 kind) 2) 1) name)
+  (cell "Bricks" (address-expand (-expand (*expand 4 kind) 2) 2) size)
+  (turn-picture kind 4 t0)
+  (turn-picture kind 8 t1)
+  (turn-picture kind 12 t2)
+  (turn-picture kind 16 t3))
+
+(defmacro (turn-picture kind at-column rows)
+  "one turn's picture, its top-left the band's first row and the turn's first column; # a cell of the brick"
+  (quasiquote
+    (picture "Bricks" (unquote (address-expand (-expand (*expand 4 kind) 2) at-column)) (("#" "#")) (unquote-splicing rows))))
+
+(turns 1 "header" 1
+  ("#") ("#") ("#") ("#"))
+(turns 2 "brick" 2
+  ("##") (".#" ".#") (".." "##") ("#." "#."))
+(turns 3 "corner" 3
+  ("##" "#.") ("##" ".#") (".#" "##") ("#." "##"))
+(turns 4 "lintel" 3
+  ("..." "###") (".#." ".#." ".#.") ("..." "###") (".#." ".#." ".#."))
+(turns 5 "square" 4
+  ("##" "##") ("##" "##") ("##" "##") ("##" "##"))
+(turns 6 "arch" 5
+  ("###" "#.#") (".##" "..#" ".##") ("..." "#.#" "###") ("##." "#.." "##."))
+(turns 7 "block" 6
+  ("###" "###") (".##" ".##" ".##") ("..." "###" "###") ("##." "##." "##."))
+(turns 8 "horseshoe" 7
+  ("###" "#.#" "#.#") ("###" "..#" "###") ("#.#" "#.#" "###") ("###" "#.." "###"))
+(turns 9 "flue" 8
+  ("###" "#.#" "###") ("###" "#.#" "###") ("###" "#.#" "###") ("###" "#.#" "###"))
+(on "Bricks" (column "A" 11 shown none) (column "B" 5 shown none)
+  (column "C" 2 shown none) (column "G" 2 shown none) (column "K" 2 shown none) (column "O" 2 shown none))
+(widths "Bricks" 4 6 3 none)
+(widths "Bricks" 8 10 3 none)
+(widths "Bricks" 12 14 3 none)
+(widths "Bricks" 16 18 3 none)
+
+; ---- the Turns: a row a brick's turn, its masks ------------------------------------------
+; Row k*4-2+t holds kind k's turn t: each box row's mask, a bit a box column, and the box
+; columns and rows the turn fills; read by its key, (kind-1)*4+turn+1.
+
+(defmacro (pictured box-row box-column)
+  "1 where this row's kind and turn draw a cell at the box row and column, else 0"
+  (if (= (index Bricks!$A$1:$R$37 (- (+ (* 4 $A2) box-row) 2) (+ 4 (* 4 $B2) box-column)) "#") 1 0))
+
+(defmacro (box-mask box-row)
+  "a box row's mask: a bit a box column, 1, 2 and 4"
+  (+ (pictured box-row 0) (* 2 (pictured box-row 1)) (* 4 (pictured box-row 2))))
+
+(headers "Turns" "A1" "kind" "turn" "top row" "middle row" "bottom row" "left" "right" "top" "bottom" "columns")
+(rules "Turns"
+  ("A2:A37" (+ (int (/ (- (row) 2) 4)) 1))
+  ("B2:B37" (mod (- (row) 2) 4))
+  ("C2:C37" (box-mask 0))
+  ("D2:D37" (box-mask 1))
+  ("E2:E37" (box-mask 2))
+  ("J2:J37" (bitor (bitor $C2 $D2) $E2))
+  ("F2:F37" (priority ((> (bitand $J2 1) 0) 0) ((> (bitand $J2 2) 0) 1) (else 2)))
+  ("G2:G37" (priority ((> (bitand $J2 4) 0) 2) ((> (bitand $J2 2) 0) 1) (else 0)))
+  ("H2:H37" (priority ((> $C2 0) 0) ((> $D2 0) 1) (else 2)))
+  ("I2:I37" (priority ((> $E2 0) 2) ((> $D2 0) 1) (else 0))))
+
+; ---- the State: the game in named cells --------------------------------------------------
+; The phase is waiting, falling, the beat after a lay, or over. A brick is its kind, its
+; turn and its box's place, the box's top course and left column; each stage of a frame
+; moves it from where the last left it: a turn, with its kicks; a move; a fall. Each place
+; it might take is a row of the Fit, which tests it against the wall as it stood when the
+; frame began.
+(define waiting 0)                  ; the phases: before a game,
+(define falling 1)                  ;   a brick falling,
+(define the-beat 2)                 ;   the frames from a lay to the next brick,
+(define over 3)                     ;   and topped out
+
+(names "State" "A1"
+  ("the wall's width" wall-width) ("the wall's height" wall-height) ("a full course" full-course)
+  ("the spawn's column" spawn-column)
+  paused go ("turn held" turn-held) cw ccw ("lay held" lay-held) ("lay key" lay-key)
+  ("left held" held-left) ("right held" held-right) ("a step left" step-left) ("a step right" step-right) dx dt
+  starts ending enter ("entering at" entering-at) ("its kind" enter-kind) ("its key" entry-key) ("it fits" spawn-ok)
+  topout entered dealt ("a new bag" new-bag) ("the bag's number" bag-number) generator kind
+  moving ("the turn aimed at" aim-turn) ("its key, aimed" aim-key) turned ("after the turn, the course" turn-course)
+  ("the column" turn-column) ("the turn" turn-now) ("the key" turn-key)
+  moved ("after the move, the column" move-column) period gravity due fell
+  ("placed, the course" placed-course) ("the column" placed-column) ("the turn" placed-turn) ("the key" placed-key)
+  resting ("since the fall" since-fall) ("resting for" resting-for) landing lay ("the lay's course" lay-course)
+  ("the brick's course" brick-course) ("its column" brick-column) ("its turn" brick-turn) ("its key" brick-key)
+  phase ("since the phase" since-phase) ("full courses" full-count) level ("each course's share" quicken) pace
+  clearing ("courses laid" laid-courses) shift ("the wall's event" wall-event)
+  ("since the lay" since-lay) tick ("next" next-1) ("then" next-2) ("then" next-3) words hint
+  ("the bag's size" bag-size) ("the counts changed" recount) ("dealt afresh" redeal)
+  ("the bag's size before" size-before) ("the deal's start" deal-start) ("the beat's length" beat-now)
+  ("frames a course as a game begins" start-pace) ("each course cleared quickens it by" quickening)
+  ("the fewest frames a course" fastest) ("frames a brick rests before it is laid" lay-delay)
+  ("frames a held arrow waits to repeat" repeat-delay) ("frames between its repeats" repeat-period)
+  ("frames a course while Down is held" soft-fall) ("frames from a lay that clears to the next brick" beat-length)
+  ("frames a topped-out wall stands before a key builds again" the-hold))
+
+; The keys' kind, (kind-1)*4+turn+1, and 1 where no brick is, so that no lookup reads past
+; the Turns.
+(defmacro (key-of the-kind the-turn)
+  "the Turns' row of a kind's turn, from 1"
+  (if (< the-kind 1) 1 (+ (* (- the-kind 1) 4) the-turn 1)))
+
+; A held arrow steps at its press and, after the repeat's delay, every repeat's period.
+(defmacro (held-step held-count)
+  "1 when a held arrow steps: at its press, then every period after the delay"
+  (if (or (= held-count 1)
+          (and (> held-count repeat-delay) (= (mod (- held-count repeat-delay 1) repeat-period) 0)))
+      1 0))
+
+; The kind at a place of the game's deal, from the bags: counted from the deal's start, this
+; bag holds its number's size of the places, and the next bag those after.
+(defmacro (kind-at place-of start-of size-of this-bag next-bag bag-at)
+  "the kind dealt at a place of the game, from this bag or the next"
+  (if (= (int (/ (- place-of start-of 1) size-of)) bag-at)
+      (index this-bag (+ (mod (- place-of start-of 1) size-of) 1))
+      (index next-bag (+ (mod (- place-of start-of 1) size-of) 1))))
+
+; A course cleared quickens the pace once: the pace kept times the share, or times 1 for a
+; course not cleared, one multiplication a course and never a power.
+(defmacro (share-for nth-course)
+  "the share a lay's nth full course takes off the pace, or 1"
+  (if (>= full-count nth-course) quicken 1))
+
+(defmacro (the-wall-size)
+  "the wall's width and height, the source's one parameter, written into the State"
+  (wall-size the-size-cells))
+
+(defmacro (the-size-cells w h)
+  "the State's two cells of the wall's size"
+  (cells "State" ("B1" w) ("B2" h)))
+
+(at full-course (rule (- (^ 2 wall-width) 1)))
+(at spawn-column (rule (+ (int (/ (- wall-width 3) 2)) 1)))
+(at bag-size (rule (sum Bag!$I$1:$I$9)))
+
+; ---- the settings as the game reads them ----------------------------------------------------
+; Each Pace setting once: its default, written into its cell on the Pace, and its word on the
+; State, the setting in use: the number typed held inside its bounds, a whole number where it
+; counts frames, or the default where the cell holds no number; so that nothing typed on the
+; Pace stops the wall. The most frames any counts is a minute's.
+(define a-minute 3600)
+
+(defmacro (setting typed held lowest highest default)
+  "a Pace setting: its default in its cell, and the State's cell the game reads, the number typed held inside its bounds"
+  (cell (sheet-expand typed) (range-expand typed) default)
+  (at held (rule (if (isnumber typed) (max lowest (min highest typed)) default))))
+
+(defmacro (frames-setting typed held lowest highest default)
+  "a Pace setting in frames: its default in its cell, and the State's cell the game reads, a whole number held inside its bounds"
+  (cell (sheet-expand typed) (range-expand typed) default)
+  (at held (rule (if (isnumber typed) (max lowest (min highest (int typed))) default))))
+
+(setting typed-start-pace start-pace 1 a-minute 60)
+(setting typed-quickening quickening 0 1 0.03)
+(frames-setting typed-fastest fastest 1 a-minute 1)
+(frames-setting typed-lay-delay lay-delay 0 a-minute 30)
+(frames-setting typed-repeat-delay repeat-delay 0 a-minute 10)
+(frames-setting typed-repeat-period repeat-period 1 a-minute 2)
+(frames-setting typed-soft-fall soft-fall 1 a-minute 2)
+(frames-setting typed-beat-length beat-length 2 a-minute 12)
+(frames-setting typed-the-hold the-hold 0 a-minute 60)
+(on "Pace" (style "B2" 21) (column "A" 52 shown none) (column "B" 8 shown none))
+
+; pause: P toggles it while a brick falls or the beat runs; go is its opposite
+(at paused
+  (first-frame
+    0
+    (if (and (= command "pause") (or (= (last phase) falling) (= (last phase) the-beat)))
+        (- 1 (last paused))
+        (last paused))))
+(at go (rule (- 1 paused)))
+
+; the keys: each a rising edge, the turn's of up or X, the lay's of Enter or Space
+(at turn-held (rule (max up b)))
+(at cw (pressed turn-held))
+(at ccw (pressed a))
+(at lay-held (rule (max start select-button)))
+(at lay-key (pressed lay-held))
+
+; the arrows: the frames each is held, and its steps
+(at held-left (rule (if (= arrow-left 1) (+ (last held-left) 1) 0)))
+(at held-right (rule (if (= arrow-right 1) (+ (last held-right) 1) 0)))
+(at step-left (rule (if (and (= go 1) (= arrow-left 1) (= (held-step held-left) 1)) 1 0)))
+(at step-right (rule (if (and (= go 1) (= arrow-right 1) (= (held-step held-right) 1)) 1 0)))
+(at dx (rule (- step-right step-left)))
+(at dt (rule (if (= go 1) (- cw ccw) 0)))
+
+; a game starts at a lay key while the wall waits, or a second after it topped out, never at
+; the first frame, which deals the bags its first brick comes from; a brick enters at a start
+; and when the beat ends, at once after a lay that cleared nothing
+(at starts
+  (rule
+    (if (and (> Clock!$B$1 1)
+             (= lay-key 1)
+             (or (= (last phase) waiting)
+                 (and (= (last phase) over) (>= (last since-phase) the-hold))))
+        1 0)))
+(at ending
+  (rule
+    (if (and (= go 1)
+             (= (last phase) the-beat)
+             (= (last since-phase) (if (= (last clearing) 1) (- (last beat-now) 1) 0)))
+        1 0)))
+(at enter (rule (if (or (= starts 1) (= ending 1)) 1 0)))
+
+; the brick entering: its place in the game's deal, its kind from the bags as they stood,
+; and whether it fits at the top center; at a start the wall is cleared, so it fits
+(at entering-at (rule (if (= starts 1) 1 (+ (last dealt) 1))))
+(at enter-kind
+  (rule (kind-at entering-at (last deal-start) size-before Bag.last!$F$1:$F$36 Bag.last!$G$1:$G$36 (last bag-number))))
+(at entry-key (rule (key-of enter-kind 0)))
+(at spawn-ok (rule (if (= starts 1) 1 Fit!P9)))
+(at topout (rule (if (and (= enter 1) (= spawn-ok 0)) 1 0)))
+(at entered (rule (if (and (= enter 1) (= spawn-ok 1)) 1 0)))
+
+; the deal: the bricks entered this game, each brick's serial; whether a count changed, the
+; counts in use against the last frame's; and two bags dealt afresh at a top-out, for the next
+; game, its first three shown while it waits, or at a count changed, the places from then on
+; counted from the deal's start; a new bag after each bag's size of them, the size the bags
+; were dealt at; the bag's number; the generator, Park and Miller's, after the last dice the
+; bags took
+(at dealt (first-frame 0 (if (= topout 1) 0 (if (= entered 1) entering-at (last dealt)))))
+(at recount
+  (first-frame 0 (if (= (sumproduct (* (<> Bag!$I$1:$I$9 Bag.last!$I$1:$I$9) 1)) 0) 0 1)))
+(at redeal (rule (if (or (= topout 1) (= recount 1)) 1 0)))
+(at size-before (first-frame bag-size (last bag-size)))
+(at deal-start (first-frame 0 (if (= topout 1) 0 (if (= recount 1) dealt (last deal-start)))))
+(at new-bag
+  (rule
+    (if (and (= entered 1) (> (int (/ (- entering-at (last deal-start) 1) size-before)) (last bag-number)))
+        1 0)))
+(at bag-number
+  (first-frame 0 (if (= redeal 1) 0 (if (= new-bag 1) (+ (last bag-number) 1) (last bag-number)))))
+(at generator
+  (first-frame Bag!A72 (if (= redeal 1) Bag!A72 (if (= new-bag 1) Bag!A36 (last generator)))))
+(at kind (first-frame 0 (if (= entered 1) enter-kind (last kind))))
+
+; the stages, while a brick falls and the wall is not paused: the turn, tried in place, a
+; column right, a column left and a course up, the first that fits
+(at moving (rule (if (and (= go 1) (= (last phase) falling)) 1 0)))
+(at aim-turn (rule (mod (+ (last brick-turn) dt 4) 4)))
+(at aim-key (rule (key-of kind aim-turn)))
+(at turned (rule (if (and (= moving 1) (<> dt 0) (> (+ Fit!P2 Fit!P3 Fit!P4 Fit!P5) 0)) 1 0)))
+(at turn-course
+  (rule
+    (if (and (= turned 1) (= (+ Fit!P2 Fit!P3 Fit!P4) 0))
+        (- (last brick-course) 1)
+        (last brick-course))))
+(at turn-column
+  (rule
+    (if (= turned 1)
+        (priority
+          ((= Fit!P2 1) (last brick-column))
+          ((= Fit!P3 1) (+ (last brick-column) 1))
+          ((= Fit!P4 1) (- (last brick-column) 1))
+          (else (last brick-column)))
+        (last brick-column))))
+(at turn-now (rule (if (= turned 1) aim-turn (last brick-turn))))
+(at turn-key (rule (key-of kind turn-now)))
+
+; the move, a column from where the turn left it
+(at moved (rule (if (and (= moving 1) (<> dx 0) (= Fit!P6 1)) 1 0)))
+(at move-column (rule (+ turn-column (* moved dx))))
+
+; the fall, a course when the pace's frames or the soft fall's have passed since the last; the
+; pace as the frame began, a whole number of frames, never fewer than the fewest
+(at period (rule (max fastest (int (+ (last pace) 0.5)))))
+(at gravity (rule (if (= down 1) (min soft-fall period) period)))
+(at due (rule (if (>= (+ (last since-fall) 1) gravity) 1 0)))
+(at fell (rule (if (and (= moving 1) (= due 1) (= Fit!P7 1)) 1 0)))
+
+; where the brick stands this frame before any lay: at the top center as it enters, else
+; where the stages left it, else where it stood
+(at placed-course (rule (if (= entered 1) 1 (if (= moving 1) (+ turn-course fell) (last brick-course)))))
+(at placed-column (rule (if (= entered 1) spawn-column (if (= moving 1) move-column (last brick-column)))))
+(at placed-turn (rule (if (= entered 1) 0 (if (= moving 1) turn-now (last brick-turn)))))
+(at placed-key (rule (key-of kind placed-turn)))
+
+; resting: no course below it fits; the counts since the fall and at rest, the rest's
+; restarted only by a fall, so that no turning holds a brick up forever
+(at resting (rule (if (= Fit!P8 1) 0 1)))
+(at since-fall
+  (first-frame 0 (if (= entered 1) 0 (if (= moving 1) (if (= fell 1) 0 (+ (last since-fall) 1)) (last since-fall)))))
+(at resting-for
+  (first-frame
+    0
+    (if (= entered 1)
+        0
+        (if (= moving 1)
+            (if (= fell 1) 0 (if (= resting 1) (+ (last resting-for) 1) (last resting-for)))
+            (last resting-for)))))
+
+; the landing, where the shadow stands: the course before the first one below the brick
+; where it no longer fits (written with the Fit's rows, below, since their number is the
+; wall's height)
+
+; the lay: at a lay key, where it would land; or resting the lay's delay, where it rests
+(at lay (rule (if (and (= moving 1) (or (= lay-key 1) (and (= resting 1) (>= resting-for lay-delay)))) 1 0)))
+(at lay-course (rule (if (= lay-key 1) landing placed-course)))
+
+; the brick's place as the frame leaves it
+(at brick-course (first-frame 1 (if (= lay 1) lay-course placed-course)))
+(at brick-column (first-frame spawn-column placed-column))
+(at brick-turn (first-frame 0 placed-turn))
+(at brick-key (rule (key-of kind brick-turn)))
+
+; the phase, and the frames since it began, which a pause holds
+(at phase
+  (first-frame
+    waiting
+    (priority
+      ((= topout 1) over)
+      ((= entered 1) falling)
+      ((= lay 1) the-beat)
+      (else (last phase)))))
+(at since-phase
+  (first-frame 0 (if (<> phase (last phase)) 0 (if (= go 1) (+ (last since-phase) 1) (last since-phase)))))
+
+; the level, the score: the courses this game has cleared, each at its lay; and the pace, the
+; frames a course, quickened once for each of them (the full courses are written with the
+; Courses, below)
+(at level (first-frame 0 (if (= starts 1) 0 (+ (last level) full-count))))
+(at quicken (rule (- 1 quickening)))
+(at pace
+  (first-frame
+    start-pace
+    (if (= starts 1)
+        start-pace
+        (* (last pace) (share-for 1) (share-for 2) (share-for 3) (share-for 4)))))
+
+; the beat: a lay that clears courses holds the next brick for the beat, the courses removed
+; at its last frame but one; a lay that clears none, for one frame; the beat's length as its
+; lay began it, so that a length typed while it runs waits for the next
+(at clearing (first-frame 0 (if (= lay 1) (if (> full-count 0) 1 0) (last clearing))))
+(at laid-courses (first-frame 0 (if (= lay 1) full-count (last laid-courses))))
+(at beat-now (first-frame beat-length (if (= lay 1) beat-length (last beat-now))))
+(at shift
+  (rule
+    (if (and (= go 1)
+             (= (last phase) the-beat)
+             (= (last clearing) 1)
+             (= (last since-phase) (- (last beat-now) 2)))
+        1 0)))
+
+; what the Laid wall does this frame: 0 nothing, 1 a lay, 2 the shift, 3 cleared
+(at wall-event
+  (first-frame
+    3
+    (priority
+      ((= starts 1) 3)
+      ((= lay 1) 1)
+      ((= shift 1) 2)
+      (else 0))))
+
+; the sound's counts: the frames since a lay, and a tick at a turn or a move
+(at since-lay (first-frame 99 (if (= lay 1) 0 (if (= go 1) (min 99 (+ (last since-lay) 1)) (last since-lay)))))
+(at tick (rule (if (or (= turned 1) (= moved 1)) 1 0)))
+
+; the next three, from the bags as this frame leaves them
+(at next-1 (rule (kind-at (+ dealt 1) deal-start bag-size Bag!$F$1:$F$36 Bag!$G$1:$G$36 bag-number)))
+(at next-2 (rule (kind-at (+ dealt 2) deal-start bag-size Bag!$F$1:$F$36 Bag!$G$1:$G$36 bag-number)))
+(at next-3 (rule (kind-at (+ dealt 3) deal-start bag-size Bag!$F$1:$F$36 Bag!$G$1:$G$36 bag-number)))
+
+; the words the Wall shows beside the wall, two lines, when there is something to say: the
+; level stands below them
+(at words
+  (rule
+    (priority
+      ((= phase waiting) "Enter or Space begins a wall.")
+      ((= paused 1) "Paused: P resumes.")
+      ((= phase over) "#SPILL! The next brick has no room.")
+      (else ""))))
+(at hint (rule (if (and (= phase over) (>= since-phase the-hold)) "Enter or Space builds again." "")))
+
+; ---- the Bag: the dice and the deal -----------------------------------------------------
+; The counts as the game reads them: each the number typed on the Pace, a whole number from
+; none to four, or none where the cell holds no number; each brick once if none is counted;
+; and a bag of fewer than three dealt twice or three times over, so that the next three are
+; always this bag's or the next's. A bag is thirty-six slots at most, as many as the counts
+; in use sum to, each slot a brick, the header's first, then the brick's, and so on, each as
+; many as its count. Seventy-two dice, each Park and Miller's next after the one above, the
+; first after the seed at the first frame and after the generator since: thirty-six for this
+; bag, thirty-six for the next. A bag's order is each slot's die's rank among its thirty-six,
+; a slot past the bag's size taking a die larger than any, so that it ranks last; the kind at
+; a place the slot of that rank's. This bag and the next are dealt at the first frame, at a
+; top-out and at a count changed; at a new bag, the next becomes this one, and the next is
+; dealt from the first thirty-six. A: the dice; B: a slot's die, or larger than any; C: its
+; rank; D: a slot's brick; E: the kind at each place, this bag's draw and then the next's; F:
+; this bag; G: the next; H: each brick's count as typed and held; I: the counts in use; J:
+; each brick's count in use summed to it.
+(rule "Bag" "A1" (mod (* (if (= Clock!$B$1 1) seed (last generator)) 16807) 2147483647))
+(rules "Bag"
+  ("A2:A72" (mod (* A1 16807) 2147483647))
+  ("B1:B36" (if (<= (row) (absolute bag-size)) A1 (+ 3000000000 (row))))
+  ("B37:B72" (if (<= (- (row) 36) (absolute bag-size)) A37 (+ 3000000000 (row))))
+  ("C1:C36" (+ (countif $B$1:$B$36 (& "<" B1)) 1))
+  ("C37:C72" (+ (countif $B$37:$B$72 (& "<" B37)) 1))
+  ("H1:H9" (if (isnumber Pace!B12) (max 0 (min 4 (int Pace!B12))) 0))
+  ("I1:I9" (if (= (sum $H$1:$H$9) 0) 1 (* H1 (int (/ (+ (sum $H$1:$H$9) 2) (sum $H$1:$H$9))))))
+  ("J1" I1)
+  ("J2:J9" (+ J1 I2))
+  ("D1:D36" (if (> (row) (absolute bag-size)) 0 (+ (countif $J$1:$J$9 (& "<" (row))) 1)))
+  ("E1:E36" (if (> (row) (absolute bag-size)) 0 (index $D$1:$D$36 (match (row) $C$1:$C$36 0))))
+  ("E37:E72" (if (> (- (row) 36) (absolute bag-size)) 0 (index $D$1:$D$36 (match (- (row) 36) $C$37:$C$72 0)))))
+(first-frame "Bag" "F1:F36" E1 (if (= (absolute redeal) 1) E1 (if (= (absolute new-bag) 1) Bag.last!G1 Bag.last!F1)))
+(first-frame "Bag" "G1:G36" E37 (if (= (absolute redeal) 1) E37 (if (= (absolute new-bag) 1) E1 Bag.last!G1)))
+
+; ---- the Fit: each place a brick might take, tested against the wall ---------------------
+; A row a place: its course, column and key, then the turn's masks and bounds by the key,
+; whether the box lies inside the wall, whether each box row's cells are free in its course,
+; and whether all are. The rows: the turn and its three kicks, the move, the fall, the rest,
+; the entry, and a row a course of the wall for the landing, each blocked course its own
+; number. A box row past the wall is never read: each test stands behind the one before it.
+
+(defmacro (box-row-free mask offset)
+  "1 when a box row's cells are free in its course: no mask, or no laid cell under its bits"
+  (if (= $L2 0)
+      0
+      (if (= mask 0)
+          1
+          (if (= (bitand (index Courses!$B$2:$B$25 (+ $B2 offset)) (* mask (^ 2 (- $C2 1)))) 0) 1 0))))
+
+(headers "Fit" "A1" "place" "course" "column" "key" "top row" "middle row" "bottom row" "left" "right" "top" "bottom"
+  "inside" "top free" "middle free" "bottom free" "fits" "blocked")
+(labels "Fit" "A2" "the turn" "a kick right" "a kick left" "a kick up" "the move" "the fall" "the rest" "the entry")
+(rules "Fit"
+  ("B2" (last brick-course)) ("C2" (last brick-column)) ("D2" aim-key)
+  ("B3" (last brick-course)) ("C3" (+ (last brick-column) 1)) ("D3" aim-key)
+  ("B4" (last brick-course)) ("C4" (- (last brick-column) 1)) ("D4" aim-key)
+  ("B5" (- (last brick-course) 1)) ("C5" (last brick-column)) ("D5" aim-key)
+  ("B6" turn-course) ("C6" (+ turn-column dx)) ("D6" turn-key)
+  ("B7" (+ turn-course 1)) ("C7" move-column) ("D7" turn-key)
+  ("B8" (+ placed-course 1)) ("C8" placed-column) ("D8" placed-key)
+  ("B9" 1) ("C9" spawn-column) ("D9" entry-key))
+
+(defmacro (the-fit w h)
+  "the Fit's landing rows, a course each, and its tests over every row"
+  (rules "Fit"
+    ((&expand "A10:A" (+expand h 9)) (& "course " (- (row) 9)))
+    ((&expand "B10:B" (+expand h 9)) (- (row) 9))
+    ((&expand "C10:C" (+expand h 9)) (absolute placed-column))
+    ((&expand "D10:D" (+expand h 9)) (absolute placed-key))
+    ((&expand "E2:E" (+expand h 9)) (index Turns!$C$2:$C$37 $D2))
+    ((&expand "F2:F" (+expand h 9)) (index Turns!$D$2:$D$37 $D2))
+    ((&expand "G2:G" (+expand h 9)) (index Turns!$E$2:$E$37 $D2))
+    ((&expand "H2:H" (+expand h 9)) (index Turns!$F$2:$F$37 $D2))
+    ((&expand "I2:I" (+expand h 9)) (index Turns!$G$2:$G$37 $D2))
+    ((&expand "J2:J" (+expand h 9)) (index Turns!$H$2:$H$37 $D2))
+    ((&expand "K2:K" (+expand h 9)) (index Turns!$I$2:$I$37 $D2))
+    ((&expand "L2:L" (+expand h 9))
+     (if (and (>= (+ $C2 $H2) 1) (<= (+ $C2 $I2) (absolute wall-width))
+              (>= (+ $B2 $J2) 1) (<= (+ $B2 $K2) (absolute wall-height)))
+         1 0))
+    ((&expand "M2:M" (+expand h 9)) (box-row-free $E2 0))
+    ((&expand "N2:N" (+expand h 9)) (box-row-free $F2 1))
+    ((&expand "O2:O" (+expand h 9)) (box-row-free $G2 2))
+    ((&expand "P2:P" (+expand h 9)) (* $M2 $N2 $O2))
+    ((&expand "Q10:Q" (+expand h 9))
+     (if (and (> $B10 (absolute placed-course)) (= $P10 0)) $B10 (+ (absolute wall-height) 1))))
+  (at landing (rule (- (min (ref "Fit" (&expand "$Q$10:$Q$" (+expand h 9)))) 1))))
+
+; ---- the Courses: a row a course, each at its own row of the wall --------------------------
+; The course's number; its laid cells' mask as the frame began; the falling brick's bits in
+; it, and its shadow's, the Wall's gates; at a lay, the brick's bits, the course merged with
+; them, and whether it is full; whether it is full as the frame began, where it moves at a
+; shift, and the course it takes; and its count of laid cells now.
+
+(defmacro (brick-bits course-number at-course at-column at-key)
+  "a brick's bits in a course, from its box's place and its key; 0 in a course it does not span"
+  (if (within (- course-number at-course) 0 2)
+      (* (index Turns!$C$2:$E$37 at-key (+ (- course-number at-course) 1)) (^ 2 (- at-column 1)))
+      0))
+
+(defmacro (the-courses w h)
+  "the Courses' columns, a row a course from row 2"
+  (headers "Courses" "A1" "course" "laid" "falling" "shadow" "the lay" "merged" "full at the lay" "full"
+    "moves to" "takes" "count")
+  (rules "Courses"
+    ((&expand "A2:A" (+expand h 1)) (- (row) 1))
+    ((&expand "B2:B" (+expand h 1))
+     (sumproduct (* (<> (ref "Laid.last" (&expand "$B2:$" (column-letters-expand (+expand w 1)) 2)) 0) 1)
+                 (ref "Bits" (&expand "$B$1:$" (column-letters-expand (+expand w 1)) "$1"))))
+    ((&expand "C2:C" (+expand h 1))
+     (if (= (absolute phase) falling)
+         (brick-bits $A2 (absolute brick-course) (absolute brick-column) (absolute brick-key))
+         0))
+    ((&expand "D2:D" (+expand h 1))
+     (if (= (absolute phase) falling)
+         (brick-bits $A2 (absolute landing) (absolute brick-column) (absolute brick-key))
+         0))
+    ((&expand "E2:E" (+expand h 1))
+     (if (= (absolute lay) 1)
+         (brick-bits $A2 (absolute lay-course) (absolute placed-column) (absolute placed-key))
+         0))
+    ((&expand "F2:F" (+expand h 1)) (if (= (absolute lay) 1) (bitor $B2 $E2) 0))
+    ((&expand "G2:G" (+expand h 1))
+     (if (and (= (absolute lay) 1) (= $F2 (absolute full-course))) 1 0))
+    ((&expand "H2:H" (+expand h 1)) (if (= $B2 (absolute full-course)) 1 0))
+    ((&expand "I2:I" (+expand h 1))
+     (if (= $H2 1) 0 (+ $A2 (- (countif (ref "Courses" (&expand "$H2:$H$" (+expand h 1))) 1) $H2))))
+    ((&expand "J2:J" (+expand h 1))
+     (iferror (match $A2 (ref "Courses" (&expand "$I$2:$I$" (+expand h 1))) 0) 0))
+    ((&expand "K2:K" (+expand h 1))
+     (sumproduct (* (<> (ref "Laid" (&expand "$B2:$" (column-letters-expand (+expand w 1)) 2)) 0) 1))))
+  (at full-count (rule (countif (ref "Courses" (&expand "$G$2:$G$" (+expand h 1))) 1))))
+
+; ---- the Laid wall, the Serials and the Bits -----------------------------------------------
+; The Laid wall holds each laid cell's brick, its serial, its number among the game's bricks,
+; and an empty cell 0, at the Wall's own addresses. It reads the wall's event first: nothing,
+; and it keeps its last; a lay, and the brick's bits take its serial and the rest are kept;
+; the shift, and each course takes the one its Courses row names; a start, and it is
+; cleared. The Serials are the same with the falling brick's cells, which the joints are
+; drawn from. Bits!B1 is 1, the wall's first column, each column after it twice the one
+; before.
+
+(defmacro (covers gate)
+  "a course's gate holds this cell's column: its bit set"
+  (> (bitand gate Bits!B$1) 0))
+
+(defmacro (the-wall-cells w h)
+  "the Laid wall, the Serials and the Bits, over the wall's range"
+  (rule "Laid" (wall-range w h)
+    (if (= (absolute wall-event) 0)
+        Laid.last!B2
+        (choose (absolute wall-event)
+          (if (covers Courses!$E2) (absolute dealt) Laid.last!B2)
+          (if (= Courses!$J2 0)
+              0
+              (index (ref "Laid.last" (&expand "$B$2:$" (column-letters-expand (+expand w 1)) "$" (+expand h 1)))
+                     Courses!$J2
+                     (- (column) 1)))
+          0)))
+  (rule "Serials" (wall-range w h) (if (covers Courses!$C2) (absolute dealt) Laid!B2))
+  (rule "Bits" (&expand "B1:" (column-letters-expand (+expand w 1)) 1) (^ 2 (- (column) 2))))
+
+(defmacro (wall-range w h)
+  "the wall's cells, B2 to its last column and course"
+  (&expand "B2:" (column-letters-expand (+expand w 1)) (+expand h 1)))
+
+; ---- the Wall: the game's view, and its panel ----------------------------------------------
+; Each cell of the wall shows a word, its look drawing it: falling where the falling brick's
+; gate holds its column, landing where its shadow's does, nothing where no brick is laid, full
+; in a course the beat is clearing, and brick. Its own format is the wall's midnight plum.
+; The rules draw the joints where two bricks meet or a brick meets the open wall.
+
+(defmacro (the-view w h)
+  "the wall's cells, their own format and the joints over them"
+  (rule "Wall" (wall-range w h)
+    (priority
+      ((covers Courses!$C2) "falling")
+      ((covers Courses!$D2) "landing")
+      ((= Laid!B2 0) "")
+      ((and (= (absolute phase) the-beat) (= Courses!$K2 (absolute wall-width))) "full")
+      (else "brick")))
+  (style "Wall" (wall-range w h) 5)
+  (joint 1 w h (<> Serials!B2 Serials!B1) 11)
+  (joint 2 w h (<> Serials!B2 Serials!C2) 12)
+  (joint 3 w h (<> Serials!B2 Serials!B3) 13)
+  (joint 4 w h (<> Serials!B2 Serials!A2) 14))
+
+(defmacro (joint priority-number w h differs laid)
+  "a joint: a brick's edge where the cell beside holds another brick or none"
+  (conditional "Wall" priority-number (wall-range w h) (formula-expand (and (> Serials!B2 0) differs)) laid))
+
+; The panel, right of the wall's margin: each course's count of the wall's width, the next
+; three bricks, the title, the words, the level and the keys, on the canvas's gray. No text of
+; the panel is one of the wall's words, since a look draws every cell of the Wall holding its
+; word. Every column's empty cells are the gray, the margins' and the row above the wall's
+; among them.
+(defmacro (the-panel w h)
+  "the panel's cells and the Wall's columns and rows, right of the wall"
+  (rule "Wall" (&expand (column-letters-expand (+expand w 3)) "2:" (column-letters-expand (+expand w 3)) (+expand h 1))
+    (if (= Courses!$K2 0) "" (& Courses!$K2 " / " (absolute wall-width))))
+  (style "Wall" (&expand (column-letters-expand (+expand w 3)) "2:" (column-letters-expand (+expand w 3)) (+expand h 1)) 9)
+  (cell "Wall" (address-expand 1 (+expand w 5)) "Next")
+  (style "Wall" (address-expand 1 (+expand w 5)) 6)
+  (next-box next-1 2 (+expand w 5))
+  (next-box next-2 6 (+expand w 5))
+  (next-box next-3 10 (+expand w 5))
+  (cell "Wall" (address-expand 1 (+expand w 9)) "Brickwork")
+  (style "Wall" (address-expand 1 (+expand w 9)) 7)
+  (rule "Wall" (address-expand 2 (+expand w 9)) (absolute words))
+  (style "Wall" (address-expand 2 (+expand w 9)) 6)
+  (rule "Wall" (address-expand 3 (+expand w 9)) (absolute hint))
+  (style "Wall" (address-expand 3 (+expand w 9)) 6)
+  (cell "Wall" (address-expand 4 (+expand w 9)) "Level")
+  (style "Wall" (address-expand 4 (+expand w 9)) 8)
+  (rule "Wall" (address-expand 4 (+expand w 10)) (absolute level))
+  (style "Wall" (address-expand 4 (+expand w 10)) 10)
+  (labels "Wall" (address-expand 6 (+expand w 9)) "← →" "↓" "↑ X" "Z" "Enter Space" "P" "Ctrl+K")
+  (labels "Wall" (address-expand 6 (+expand w 10))
+    "move the brick a column; held, they repeat"
+    "fall faster while held"
+    "turn the brick clockwise"
+    "turn it counterclockwise"
+    "lay it where its shadow shows, or begin a wall"
+    "pause, or resume"
+    "every command, by its name")
+  (style "Wall" (&expand (address-expand 6 (+expand w 9)) ":" (address-expand 12 (+expand w 9))) 8)
+  (style "Wall" (&expand (address-expand 6 (+expand w 10)) ":" (address-expand 12 (+expand w 10))) 6)
+  (on "Wall"
+    (column "A" 4.86 shown 6)
+    (column (column-letters-expand (+expand w 2)) 1 shown 6)
+    (column (column-letters-expand (+expand w 3)) 8 shown 6)
+    (column (column-letters-expand (+expand w 4)) 2 shown 6)
+    (column (column-letters-expand (+expand w 8)) 2 shown 6)
+    (column (column-letters-expand (+expand w 9)) 16 shown 6)
+    (column (column-letters-expand (+expand w 10)) 50 shown 6))
+  (cell-size w h))
+
+; One of the next three: a box of three by three cells on the gray, each a cell of the kind's
+; picture as it enters, read from the Bricks, queued in Lovelace Lavender.
+(defmacro (next-box word top left)
+  "the next brick's box: a cell of its picture as it enters, from the Bricks"
+  (rule "Wall" (&expand (address-expand top left) ":" (address-expand (+expand top 2) (+expand left 2)))
+    (if (= (index Bricks!$A$1:$R$37 (- (+ (* 4 (max 1 (absolute word))) (- (row) top)) 2) (+ 4 (- (column) left))) "#")
+        "queued"
+        ""))
+  (style "Wall" (&expand (address-expand top left) ":" (address-expand (+expand top 2) (+expand left 2))) 6))
+
+; ---- the wall's size and its cells' -----------------------------------------------------------
+; The wall is 14 columns by 24 courses, its cells B2 to O25 of the Wall: a macro that hands
+; the two numbers on, as Superposition's lattice-side hands its side on (ENGINE.9), so that a
+; wider wall is this one line. Each cell is 34 pixels square, the owner's zoom of the hand
+; test, a column 4.86 characters wide and a row 25.5 points tall, every row of the Wall's and
+; each square column's, the wall's and the next three's; the margin before the wall is as
+; wide as a column of it.
+(defmacro (wall-size then & args)
+  "the wall's width and height, handed on: (then 14 24 args...)"
+  (quasiquote ((unquote then) 14 24 (unquote-splicing args))))
+
+(defmacro (cell-size w h)
+  "the Wall's rows and its square columns, each 34 pixels"
+  (heights "Wall" 1 (+expand h 1) 25.5)
+  (widths "Wall" 2 (+expand w 1) 4.86 6)
+  (widths "Wall" (+expand w 5) (+expand w 7) 4.86 6))
+
+(the-wall-size)
+(wall-size the-fit)
+(wall-size the-courses)
+(wall-size the-wall-cells)
+(wall-size the-view)
+(wall-size the-panel)
+
+; ---- the Audio: four voices -------------------------------------------------------------
+; A tick at a turn or a move; a low note for six frames at a lay; the courses cleared, a note
+; each, three frames apiece, C, E, G and C an octave up; and a falling note at a top-out.
+(audio)
+(cells "Audio"                      ; the waves, which never change
+  ("B2" "square")                   ; voice 1, the tick
+  ("B3" "triangle")                 ; voice 2, the lay
+  ("B4" "square")                   ; voice 3, the courses
+  ("B5" "sawtooth"))                ; voice 4, the top-out
+(rules "Audio"
+  ("C2" 76)
+  ("D2" (if (and (= go 1) (= tick 1)) 0.25 0))
+  ("C3" 45)
+  ("D3" (if (and (= go 1) (< since-lay 6)) 0.6 0))
+  ("C4" (choose (min 4 (+ (int (/ since-lay 3)) 1)) 72 76 79 84))
+  ("D4" (if (and (= go 1) (> laid-courses 0) (< since-lay (* 3 laid-courses))) 0.35 0))
+  ("C5" (if (= phase over) (max 24 (- 60 (/ since-phase 2))) 60))
+  ("D5" (if (and (= phase over) (< since-phase 40)) 0.4 0)))
+
+; ---- the Tally: the game's counts, a replay's golden ---------------------------------------
+; The bricks laid by kind; the lays by the courses each cleared; the games begun and the
+; top-outs.
+(headers "Tally" "A1" "kind" "laid")
+(labels "Tally" "A2" 1 2 3 4 5 6 7 8 9)
+(on "Tally"
+  (count "B2:B10" (if (and (= (absolute lay) 1) (= (absolute kind) $A2)) 1 0)))
+(headers "Tally" "A11" "courses at once" "lays")
+(labels "Tally" "A12" 1 2 3 4)
+(on "Tally"
+  (count "B12:B15" (if (and (= (absolute lay) 1) (= (absolute full-count) $A12)) 1 0)))
+(labels "Tally" "A17" "games" "top-outs")
+(on "Tally"
+  (count "B17" starts)
+  (count "B18" topout))

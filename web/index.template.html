@@ -4567,7 +4567,8 @@
       var c = CARTRIDGES[ORDER[i]];
       if (c.mode !== 'grid') continue;
       var g = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0, moves: 0, bound: 0, canvas: 0, focused: 0, typed: 0, edges: 0, fonts: 0 };
-      gridRun(HOST.instantiateSync(bytes), c.name, c.text, c.file, c.rate > 0 ? GAME_GRID_FRAMES : 0, { strict: true, moves: true }, g, P);
+      // a tick a frame at the cartridge's own rate, 34 ms at 30 and 17 at 60 (CART.3, the first grid game at 60)
+      gridRun(HOST.instantiateSync(bytes), c.name, c.text, c.file, c.rate > 0 ? GAME_GRID_FRAMES : 0, { strict: true, moves: true, tick: c.rate > 0 ? Math.ceil(1000 / c.rate) : 34 }, g, P);
       k.grids++; k.gridFrames += g.frames; k.gridEqual += g.equal; k.gridValues += g.values; k.gridTexts += g.texts; k.gridCleared += g.cleared;
       k.gridMoves += g.moves; k.gridBound += g.bound; k.gridCanvas += g.canvas; k.gridFocused += g.focused; k.gridTyped += g.typed;
       k.gridEdges += g.edges; k.gridFonts += g.fonts; k.gridStrands += g.strands || 0;

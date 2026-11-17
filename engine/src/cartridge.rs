@@ -3273,6 +3273,7 @@ mod tests {
         assert_eq!(
             described,
             [
+                "brickwork",
                 "gridcard",
                 "gun",
                 "inputcard",
@@ -4680,7 +4681,19 @@ mod tests {
         sheet: &str,
         window: &str,
     ) -> std::collections::HashMap<String, String> {
-        let Ok(Viewed::Text(record)) = c.view("grid", sheet, Some(window)) else {
+        record_cells(c, "grid", sheet, window)
+    }
+
+    /// Each cell of a sheet's window by its address through a projection,
+    /// `grid` or `values`: a value cell's value or a formula's last value, as
+    /// the record spells it, a text unquoted.
+    fn record_cells(
+        c: &Cartridge,
+        projection: &str,
+        sheet: &str,
+        window: &str,
+    ) -> std::collections::HashMap<String, String> {
+        let Ok(Viewed::Text(record)) = c.view(projection, sheet, Some(window)) else {
             panic!("the {sheet}'s record");
         };
         let mut out = std::collections::HashMap::new();
@@ -8611,5 +8624,887 @@ mod tests {
                 "the page's hand spells the error the hand's table does: {row}"
             );
         }
+    }
+
+    // ---- CART.3: Brickwork, the falling-block game ----
+
+    /// Brickwork (CART.3): the falling-block game on a spreadsheet's grid,
+    /// read from the repository at run time.
+    fn brickwork() -> Option<String> {
+        crate::repository::read("brickwork/brickwork.vla")
+    }
+
+    use crate::brickwork as bw;
+
+    /// One frame's Input rows as the host writes them at a rate to a
+    /// cartridge of version 6: the buttons player 1 holds, the pointer, the
+    /// keys, the sheet shown and the command run.
+    fn brickwork_inputs(k: &bw::Keys) -> String {
+        let mut held = Vec::new();
+        for (on, button) in [
+            (k.up, 0),
+            (k.down, 1),
+            (k.left, 2),
+            (k.right, 3),
+            (k.a, 4),
+            (k.b, 5),
+            (k.start, 8),
+            (k.select, 9),
+        ] {
+            if on {
+                held.push((button, 0));
+            }
+        }
+        let mut rows = input_rows(&held, (0, 0), [0, 0, 0], 0, ("", ""));
+        rows.push_str("(cell \"Input\" \"B19\" \"Wall\")\n");
+        rows.push_str(&format!(
+            "(cell \"Input\" \"B20\" {})\n",
+            quoted(if k.pause { "pause" } else { "" })
+        ));
+        rows
+    }
+
+    /// How the bot lays a brick: at once by a lay key, by the soft fall and
+    /// the lay's delay, or carried to its column by a held arrow and laid.
+    #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+    enum BrickworkLay {
+        Key,
+        Rest,
+        Held,
+    }
+
+    /// The turn and column a brick lands lowest at with the fewest gaps under
+    /// it, of those it fits at from where it stands, falling straight.
+    fn brickwork_plan(g: &bw::Game) -> (usize, i32) {
+        let mut best: Option<(i64, usize, i32)> = None;
+        for turn in 0..4 {
+            for column in -2..=bw::WIDTH as i32 {
+                let at = bw::Place {
+                    course: g.brick.course,
+                    column,
+                    turn,
+                };
+                if !bw::Game::fits_in(&g.wall, g.kind, at) {
+                    continue;
+                }
+                let mut landing = at.course;
+                while bw::Game::fits_in(
+                    &g.wall,
+                    g.kind,
+                    bw::Place {
+                        course: landing + 1,
+                        ..at
+                    },
+                ) {
+                    landing += 1;
+                }
+                let cells = bw::cells(g.kind, turn);
+                let mut gaps = 0i64;
+                for &(r, c) in &cells {
+                    let (below, col) = (landing + r + 1, column + c);
+                    let own = cells
+                        .iter()
+                        .any(|&(r2, c2)| landing + r2 == below && column + c2 == col);
+                    if below <= bw::HEIGHT as i32
+                        && !own
+                        && g.wall[(below - 1) as usize][(col - 1) as usize] == 0
+                    {
+                        gaps += 1;
+                    }
+                }
+                let top = cells.iter().map(|&(r, _)| landing + r).min().unwrap_or(0);
+                let score = i64::from(top) * 10 - gaps * 25;
+                if best.map_or(true, |(b, _, _)| score > b) {
+                    best = Some((score, turn, column));
+                }
+            }
+        }
+        best.map(|(_, t, c)| (t, c))
+            .unwrap_or((g.brick.turn, g.brick.column))
+    }
+
+    /// A player that watches the game by hand after each frame and presses
+    /// as a person would, a key down for a frame and up the next. For each
+    /// brick it picks the turn and column of `brickwork_plan`, turns it the
+    /// shorter way, moves it, and lays it one of three ways in turn; every
+    /// fifth brick it first turns it once, slides it to the left wall and
+    /// turns it again there, where a turn in place seldom fits; it lays a
+    /// brick it has carried for 150 frames; it pauses at every seventh brick
+    /// for twenty frames; after its first game's brick `reckless_after` it
+    /// lays each at once where it enters, or from its frame
+    /// `reckless_frame`, until the wall tops out; and once the wall has stood
+    /// it begins again.
+    struct BrickworkBot {
+        target: Option<(usize, i32, BrickworkLay)>,
+        brick: u32,
+        stage: u8,
+        turned_from: usize,
+        carried: u32,
+        last: bw::Keys,
+        frames: u32,
+        reckless_after: u32,
+        reckless_frame: u32,
+        paused_for: u32,
+    }
+
+    impl BrickworkBot {
+        fn new(reckless_after: u32) -> BrickworkBot {
+            BrickworkBot {
+                target: None,
+                brick: 0,
+                stage: 3,
+                turned_from: 0,
+                carried: 0,
+                last: bw::Keys::default(),
+                frames: 0,
+                reckless_after,
+                reckless_frame: u32::MAX,
+                paused_for: 0,
+            }
+        }
+
+        /// The keys for a falling brick: the wall's routine's stages, then
+        /// the plan.
+        fn carry(&mut self, g: &bw::Game, k: &mut bw::Keys) {
+            let last = self.last;
+            if self.brick != g.dealt {
+                self.brick = g.dealt;
+                self.stage = if g.dealt % 5 == 0 { 0 } else { 3 };
+                self.target = None;
+                self.carried = 0;
+            }
+            self.carried += 1;
+            if self.carried > 150 {
+                k.select = !last.select;
+                return;
+            }
+            if self.stage == 0 {
+                if g.brick.turn == 1 {
+                    self.stage = 1;
+                } else {
+                    k.up = !last.up;
+                    return;
+                }
+            }
+            if self.stage == 1 {
+                let left = bw::Place {
+                    column: g.brick.column - 1,
+                    ..g.brick
+                };
+                if bw::Game::fits_in(&g.wall, g.kind, left) {
+                    k.left = !last.left;
+                    return;
+                }
+                self.stage = 2;
+                self.turned_from = g.brick.turn;
+            }
+            if self.stage == 2 {
+                if g.brick.turn == self.turned_from {
+                    k.up = !last.up;
+                    return;
+                }
+                self.stage = 3;
+            }
+            let (turn, column, how) = match self.target {
+                Some(t) => t,
+                None => {
+                    let (t, c) = brickwork_plan(g);
+                    let h = [BrickworkLay::Key, BrickworkLay::Rest, BrickworkLay::Held]
+                        [(g.dealt % 3) as usize];
+                    self.target = Some((t, c, h));
+                    (t, c, h)
+                }
+            };
+            if g.brick.turn != turn {
+                if (turn + 4 - g.brick.turn) % 4 <= 2 {
+                    k.up = !last.up;
+                } else {
+                    k.a = !last.a;
+                }
+            } else if g.brick.column != column {
+                let right = column > g.brick.column;
+                let press = how == BrickworkLay::Held || !(last.left || last.right);
+                k.right = right && press;
+                k.left = !right && press;
+            } else {
+                match how {
+                    BrickworkLay::Key => k.select = !last.select,
+                    BrickworkLay::Rest => k.down = true,
+                    BrickworkLay::Held => k.start = !last.start,
+                }
+            }
+        }
+
+        fn decide(&mut self, g: &bw::Game) -> bw::Keys {
+            self.frames += 1;
+            let mut k = bw::Keys::default();
+            let last = self.last;
+            if g.paused {
+                self.paused_for += 1;
+                if self.paused_for >= 20 {
+                    k.pause = true;
+                    self.paused_for = 0;
+                }
+                self.last = k;
+                return k;
+            }
+            match g.phase {
+                bw::Phase::Waiting => k.start = self.frames > 3 && !last.start,
+                bw::Phase::Over => {
+                    k.select = g.since >= g.settings.hold + 10 && g.games < 2 && !last.select;
+                }
+                bw::Phase::Beat => {}
+                bw::Phase::Falling => {
+                    if g.since == 5 && g.dealt % 7 == 3 {
+                        k.pause = true;
+                    } else if g.games == 1
+                        && (g.dealt > self.reckless_after || self.frames > self.reckless_frame)
+                    {
+                        k.select = !last.select;
+                    } else {
+                        self.carry(g, &mut k);
+                    }
+                }
+            }
+            self.last = k;
+            k
+        }
+    }
+
+    /// One frame of Brickwork held to the game by hand: the wall's words, the
+    /// panel (each course's count, the next three, the words and the score),
+    /// the Laid wall's serials, the State's cells and the four voices.
+    fn brickwork_holds(c: &Cartridge, g: &bw::Game, frame: u32) {
+        let (w, h) = (bw::WIDTH as u32, bw::HEIGHT as u32);
+        let (wall, lit) = brickwork_wall(c);
+        let laid = record_cells(c, "values", "Laid", "B2:O25");
+        let shown = |addr: &str| wall.get(addr).cloned().unwrap_or_default();
+        for course in 1..=h {
+            for column in 1..=w {
+                let addr = address(course + 1, column + 1);
+                let want = g.word(course as i32, column as i32);
+                assert!(
+                    shown(&addr) == want,
+                    "frame {frame}: Wall!{addr} shows {:?}, the game by hand's {want:?} ({:?}, kind {}, at {:?}, landing {})",
+                    shown(&addr),
+                    g.phase,
+                    g.kind,
+                    g.brick,
+                    g.landing
+                );
+                let serial = laid.get(&addr).cloned().unwrap_or_default();
+                let held = g.wall[(course - 1) as usize][(column - 1) as usize].to_string();
+                assert!(
+                    serial == held,
+                    "frame {frame}: Laid!{addr} holds {serial}, the game by hand's {held}"
+                );
+            }
+            let n = g.count(course as usize);
+            let want = if n == 0 {
+                String::new()
+            } else {
+                format!("{n} / {w}")
+            };
+            let addr = address(course + 1, w + 3);
+            assert_eq!(
+                shown(&addr),
+                want,
+                "frame {frame}: the count at Wall!{addr}"
+            );
+        }
+        for (i, kind) in g.next().iter().enumerate() {
+            let cells = bw::cells(*kind, 0);
+            for r in 0..3u32 {
+                for col in 0..3u32 {
+                    let addr = address(2 + 4 * i as u32 + r, w + 5 + col);
+                    let want = if cells.contains(&(r as i32, col as i32)) {
+                        "queued"
+                    } else {
+                        ""
+                    };
+                    assert_eq!(
+                        shown(&addr),
+                        want,
+                        "frame {frame}: the next brick {} at Wall!{addr}",
+                        i + 1
+                    );
+                }
+            }
+        }
+        assert_eq!(
+            shown(&address(2, w + 9)),
+            g.words(),
+            "frame {frame}: the words"
+        );
+        assert_eq!(
+            shown(&address(3, w + 9)),
+            g.hint(),
+            "frame {frame}: the words below them"
+        );
+        assert_eq!(
+            shown(&address(4, w + 10)),
+            g.level.to_string(),
+            "frame {frame}: the level"
+        );
+        let serials = record_cells(c, "values", "Serials", "B2:O25");
+        let serial = |r: i32, col: i32| {
+            if r < 1 || r > h as i32 || col < 1 || col > w as i32 {
+                0
+            } else {
+                g.serial(r, col)
+            }
+        };
+        for course in 1..=h as i32 {
+            for column in 1..=w as i32 {
+                let addr = address(course as u32 + 1, column as u32 + 1);
+                let held = serials.get(&addr).cloned().unwrap_or_default();
+                assert_eq!(
+                    held,
+                    serial(course, column).to_string(),
+                    "frame {frame}: Serials!{addr}"
+                );
+                let sides = [(-1, 0), (0, 1), (1, 0), (0, -1)];
+                let mut want: Vec<u32> = Vec::new();
+                for (i, (dr, dc)) in sides.iter().enumerate() {
+                    let me = serial(course, column);
+                    if me > 0 && me != serial(course + dr, column + dc) {
+                        want.push(i as u32 + 1);
+                    }
+                }
+                let got = lit.get(&addr).cloned().unwrap_or_default();
+                assert_eq!(got, want, "frame {frame}: the rules lit at Wall!{addr}");
+            }
+            let addr = address(course as u32 + 1, w + 3);
+            assert!(
+                !lit.contains_key(&addr),
+                "frame {frame}: no rule lights the count at Wall!{addr}"
+            );
+        }
+        let st = record_cells(c, "values", "State", "B1:B91");
+        let num = |a: &str| {
+            st.get(a)
+                .and_then(|v| v.parse::<f64>().ok())
+                .unwrap_or(f64::NAN)
+        };
+        let held = [
+            ("B5, paused", num("B5"), f64::from(u8::from(g.paused))),
+            ("B12, left held", num("B12"), f64::from(g.held_left)),
+            ("B13, right held", num("B13"), f64::from(g.held_right)),
+            ("B18, starts", num("B18"), f64::from(u8::from(g.starts))),
+            ("B25, topout", num("B25"), f64::from(u8::from(g.topout))),
+            ("B27, dealt", num("B27"), f64::from(g.dealt)),
+            ("B29, the bag's number", num("B29"), f64::from(g.bag_number)),
+            ("B30, the generator", num("B30"), g.generator as f64),
+            ("B31, the kind", num("B31"), g.kind as f64),
+            ("B35, turned", num("B35"), f64::from(u8::from(g.turned))),
+            ("B40, moved", num("B40"), f64::from(u8::from(g.moved))),
+            ("B45, fell", num("B45"), f64::from(u8::from(g.fell))),
+            (
+                "B46, placed, the course",
+                num("B46"),
+                f64::from(g.placed.course),
+            ),
+            (
+                "B47, placed, the column",
+                num("B47"),
+                f64::from(g.placed.column),
+            ),
+            ("B48, placed, the turn", num("B48"), g.placed.turn as f64),
+            ("B50, resting", num("B50"), f64::from(u8::from(g.resting))),
+            ("B51, since the fall", num("B51"), f64::from(g.since_fall)),
+            ("B52, resting for", num("B52"), f64::from(g.resting_for)),
+            ("B53, the landing", num("B53"), f64::from(g.landing)),
+            ("B54, lay", num("B54"), f64::from(u8::from(g.lay))),
+            (
+                "B56, the brick's course",
+                num("B56"),
+                f64::from(g.brick.course),
+            ),
+            ("B57, its column", num("B57"), f64::from(g.brick.column)),
+            ("B58, its turn", num("B58"), g.brick.turn as f64),
+            ("B60, the phase", num("B60"), f64::from(g.phase.code())),
+            ("B61, since the phase", num("B61"), f64::from(g.since)),
+            ("B42, the period", num("B42"), f64::from(g.period)),
+            ("B62, full courses", num("B62"), f64::from(g.full_count)),
+            ("B63, the level", num("B63"), f64::from(g.level)),
+            ("B65, the pace", num("B65"), g.pace),
+            ("B66, clearing", num("B66"), f64::from(u8::from(g.clearing))),
+            ("B67, courses laid", num("B67"), f64::from(g.laid_courses)),
+            ("B70, since the lay", num("B70"), f64::from(g.since_lay)),
+            (
+                "B77, the bag's size",
+                num("B77"),
+                f64::from(g.counts.iter().sum::<u32>()),
+            ),
+            (
+                "B78, the counts changed",
+                num("B78"),
+                f64::from(u8::from(g.recount)),
+            ),
+            (
+                "B79, dealt afresh",
+                num("B79"),
+                f64::from(u8::from(g.redeal)),
+            ),
+            ("B81, the deal's start", num("B81"), f64::from(g.deal_start)),
+            ("B82, the beat's length", num("B82"), f64::from(g.beat_now)),
+            (
+                "B83, the pace a game begins at",
+                num("B83"),
+                g.settings.start_pace,
+            ),
+            ("B84, the quickening", num("B84"), g.settings.quickening),
+            (
+                "B85, the fewest frames",
+                num("B85"),
+                f64::from(g.settings.fastest),
+            ),
+            (
+                "B86, the lay's delay",
+                num("B86"),
+                f64::from(g.settings.lay_delay),
+            ),
+            (
+                "B87, the repeat's delay",
+                num("B87"),
+                f64::from(g.settings.repeat_delay),
+            ),
+            (
+                "B88, the repeat's period",
+                num("B88"),
+                f64::from(g.settings.repeat_period),
+            ),
+            (
+                "B89, the soft fall",
+                num("B89"),
+                f64::from(g.settings.soft_fall),
+            ),
+            ("B90, the beat", num("B90"), f64::from(g.settings.beat)),
+            ("B91, the hold", num("B91"), f64::from(g.settings.hold)),
+        ];
+        for (what, got, want) in held {
+            assert!(
+                got == want,
+                "frame {frame}: State!{what} is {got}, the game by hand's {want}"
+            );
+        }
+        let bag = record_cells(c, "values", "Bag", "I1:I9");
+        for (i, &n) in g.counts.iter().enumerate() {
+            let addr = format!("I{}", i + 1);
+            assert_eq!(
+                bag.get(&addr).cloned().unwrap_or_default(),
+                n.to_string(),
+                "frame {frame}: Bag!{addr}, the {} in use",
+                bw::BRICKS[i].0
+            );
+        }
+        let au = record_cells(c, "values", "Audio", "B2:D5");
+        for (k, v) in g.voices().iter().enumerate() {
+            let r = k + 2;
+            let wave = au.get(&format!("B{r}")).cloned().unwrap_or_default();
+            let number = |col: &str| {
+                au.get(&format!("{col}{r}"))
+                    .and_then(|x| x.parse::<f64>().ok())
+                    .unwrap_or(f64::NAN)
+            };
+            let (note, volume) = (number("C"), number("D"));
+            assert!(
+                wave == v.wave && note == v.note && volume == v.volume,
+                "frame {frame}: voice {} is {wave} {note} {volume}, the game by hand's {} {} {}",
+                k + 1,
+                v.wave,
+                v.note,
+                v.volume
+            );
+        }
+    }
+
+    /// The Wall's window read once from the values record: each cell's
+    /// value by address, as `record_cells` reads it, and the rules each cell
+    /// lights, in priority order, as its `lit` row names them.
+    #[allow(clippy::type_complexity)]
+    fn brickwork_wall(
+        c: &Cartridge,
+    ) -> (
+        std::collections::HashMap<String, String>,
+        std::collections::HashMap<String, Vec<u32>>,
+    ) {
+        let Ok(Viewed::Text(record)) = c.view("values", "Wall", Some("A1:X25")) else {
+            panic!("the Wall's record");
+        };
+        let (mut cells, mut lit) = (
+            std::collections::HashMap::new(),
+            std::collections::HashMap::new(),
+        );
+        for line in record.lines() {
+            if let Some((addr, rest)) = line
+                .strip_prefix("(lit \"Wall\" \"")
+                .and_then(|r| r.split_once("\" "))
+            {
+                let rules = rest
+                    .trim_end_matches(')')
+                    .split_whitespace()
+                    .filter_map(|n| n.parse().ok())
+                    .collect();
+                lit.insert(addr.to_string(), rules);
+                continue;
+            }
+            for head in ["(value \"Wall\" \"", "(cell \"Wall\" \""] {
+                if let Some((addr, v)) = line
+                    .strip_prefix(head)
+                    .and_then(|rest| rest.split_once("\" "))
+                {
+                    let v = v.trim_end_matches(')').trim_matches('"');
+                    cells.insert(addr.to_string(), v.to_string());
+                }
+            }
+        }
+        (cells, lit)
+    }
+
+    /// The Tally, the game by hand's counts.
+    fn brickwork_tally_holds(c: &Cartridge, g: &bw::Game) {
+        let t = record_cells(c, "values", "Tally", "A1:B18");
+        let num = |a: &str| {
+            t.get(a)
+                .and_then(|v| v.parse::<f64>().ok())
+                .unwrap_or(f64::NAN)
+        };
+        for kind in 1..=bw::KINDS {
+            assert_eq!(
+                num(&format!("B{}", kind + 1)),
+                f64::from(g.tally_kinds[kind - 1]),
+                "frame {}: the Tally's bricks of kind {kind}",
+                g.frame
+            );
+        }
+        for n in 1..=4 {
+            assert_eq!(
+                num(&format!("B{}", n + 11)),
+                f64::from(g.tally_at_once[n - 1]),
+                "frame {}: the Tally's lays clearing {n}",
+                g.frame
+            );
+        }
+        assert_eq!(
+            [num("B17"), num("B18")],
+            [f64::from(g.games), f64::from(g.topouts)],
+            "frame {}: the Tally's games and top-outs",
+            g.frame
+        );
+    }
+
+    /// What a session of Brickwork did, beyond the game by hand's counts:
+    /// the turns that kicked, the steps an arrow held repeated, the pauses,
+    /// the highest level and the fewest frames a course reached, the frames
+    /// the counts changed at, and the longest beat.
+    struct BrickworkRun {
+        game: bw::Game,
+        kicks: u32,
+        repeats: u32,
+        pauses: u32,
+        level: u32,
+        period: u32,
+        recounts: u32,
+        longest_beat: u32,
+    }
+
+    /// What a person types into a cell: a number, or a text.
+    #[derive(Clone, Copy, Debug)]
+    enum Typed {
+        Number(f64),
+        Text(&'static str),
+    }
+
+    impl Typed {
+        /// The number the cell holds, or none.
+        fn number(self) -> Option<f64> {
+            match self {
+                Typed::Number(x) => Some(x),
+                Typed::Text(_) => None,
+            }
+        }
+
+        /// The row a person's typing writes into a cell of the Pace.
+        fn pace_row(self, row: u32) -> String {
+            let value = match self {
+                Typed::Number(x) => format!("{x}"),
+                Typed::Text(t) => quoted(t),
+            };
+            format!("(cell \"Pace\" \"B{row}\" {value})")
+        }
+    }
+
+    /// What a person types into the Pace before a frame, by the frame and the
+    /// game as the last frame left it: each a row of the Pace and its value.
+    type BrickworkTyping<'a> = &'a dyn Fn(u32, &bw::Game) -> Vec<(u32, Typed)>;
+
+    /// Brickwork played by the bot over a cartridge's text for a number of
+    /// frames, the host's seed written at the load, what a person types into
+    /// the Pace written before its frame, every frame held to the game by
+    /// hand, each brick entering one the counts held, and the Tally at the
+    /// end.
+    fn brickwork_session(
+        text: &str,
+        seed: u64,
+        frames: u32,
+        bot: &mut BrickworkBot,
+        typing: BrickworkTyping,
+    ) -> BrickworkRun {
+        let mut c = Cartridge::load(text, "brickwork.vla", text.len()).expect("Brickwork loads");
+        assert_eq!(
+            c.write(&format!("(cell \"Clock\" \"B3\" {seed})")),
+            Ok(1),
+            "the host's seed"
+        );
+        let mut g = bw::Game::load(bw::Settings::default(), seed);
+        let mut run = BrickworkRun {
+            game: g.clone(),
+            kicks: 0,
+            repeats: 0,
+            pauses: 0,
+            level: 0,
+            period: u32::MAX,
+            recounts: 0,
+            longest_beat: 0,
+        };
+        let mut beat = 0u32;
+        for frame in 1..=frames {
+            for (row, typed) in typing(frame, &g) {
+                c.write(&typed.pace_row(row)).unwrap_or_else(|e| {
+                    panic!("frame {frame}: {typed:?} typed into Pace!B{row}: {e:?}")
+                });
+                g.settings.type_into(row, typed.number());
+            }
+            let keys = bot.decide(&g);
+            c.write(&brickwork_inputs(&keys))
+                .expect("the Input sheet takes the host's rows");
+            assert!(c.step(0).done, "frame {frame} completes");
+            let before = g.counts;
+            g.step(keys);
+            if g.entered {
+                assert!(
+                    (1..=bw::KINDS).contains(&g.kind) && before[g.kind - 1] > 0,
+                    "frame {frame}: a brick of kind {} entered, the counts in use {before:?}",
+                    g.kind
+                );
+            }
+            run.recounts += u32::from(g.recount);
+            beat = if g.phase == bw::Phase::Beat {
+                beat + 1
+            } else {
+                0
+            };
+            run.longest_beat = run.longest_beat.max(beat);
+            run.kicks += u32::from(g.kicked);
+            if g.moved
+                && (g.held_left > g.settings.repeat_delay || g.held_right > g.settings.repeat_delay)
+            {
+                run.repeats += 1;
+            }
+            run.pauses += u32::from(keys.pause);
+            run.level = run.level.max(g.level);
+            if g.phase == bw::Phase::Falling {
+                run.period = run.period.min(g.period);
+            }
+            brickwork_holds(&c, &g, frame);
+        }
+        brickwork_tally_holds(&c, &g);
+        run.game = g;
+        run
+    }
+
+    /// The Bricks sheet draws each brick's four turns as the hand turns its
+    /// first picture in its box: the Turns sheet's three masks a row, read
+    /// from the pictures, held to the hand's cells.
+    #[test]
+    fn the_bricks_sheet_draws_each_turn_the_hand_turns() {
+        let Some(text) = brickwork() else {
+            return;
+        };
+        let mut c = Cartridge::load(&text, "brickwork.vla", text.len()).expect("Brickwork loads");
+        assert_eq!(c.write("(cell \"Clock\" \"B3\" 1)"), Ok(1));
+        c.write(&brickwork_inputs(&bw::Keys::default()))
+            .expect("the Input rows");
+        assert!(c.step(0).done);
+        let t = kairos_cells(&c, "Turns", "A2:M37");
+        for kind in 1..=bw::KINDS {
+            for turn in 0..4 {
+                let row = (kind - 1) * 4 + turn + 2;
+                let cells = bw::cells(kind, turn);
+                for (i, col) in ["C", "D", "E"].iter().enumerate() {
+                    let want: i32 = cells
+                        .iter()
+                        .filter(|&&(r, _)| r == i as i32)
+                        .map(|&(_, c)| 1 << c)
+                        .sum();
+                    assert_eq!(
+                        t.get(&format!("{col}{row}")).cloned().unwrap_or_default(),
+                        want.to_string(),
+                        "the Turns' {col}{row}: {} turned {turn}, box row {i}",
+                        bw::BRICKS[kind - 1].0
+                    );
+                }
+            }
+        }
+    }
+
+    /// A session of Brickwork, every frame held to the game by hand: a first
+    /// game played well for forty bricks, each laid by a key, by the soft
+    /// fall and the lay's delay, or carried by a held arrow, paused now and
+    /// then; then laid at once where each enters until the wall tops out; and
+    /// a second game begun once the wall has stood.
+    #[test]
+    fn a_session_of_brickwork_holds_every_frame_to_the_game_by_hand() {
+        let Some(text) = brickwork() else {
+            return;
+        };
+        let run = brickwork_session(&text, 12345, 3000, &mut BrickworkBot::new(40), &|_, _| {
+            Vec::new()
+        });
+        let g = &run.game;
+        assert!(
+            g.games == 2 && g.topouts >= 1,
+            "two games and a top-out: {} and {}",
+            g.games,
+            g.topouts
+        );
+        assert!(g.tally_at_once.iter().sum::<u32>() > 0, "courses cleared");
+        assert!(run.level >= 3, "levels gained: {}", run.level);
+        assert!(
+            run.period < 60,
+            "the pace quickened: {} frames a course",
+            run.period
+        );
+        assert!(run.kicks > 0, "a turn that kicked");
+        assert!(run.repeats > 0, "a held arrow repeating");
+        assert!(run.pauses >= 4, "pauses, each resumed");
+        assert!(
+            g.tally_kinds.iter().all(|&n| n > 0),
+            "every kind laid: {:?}",
+            g.tally_kinds
+        );
+    }
+
+    /// A person types into the Pace while the wall waits, while it is built
+    /// and after it tops out, and the game reads each value held inside its
+    /// bounds: a count changed deals the bags again, so no brick of none
+    /// enters; a count grown, none counted, a bag of one and of two, a text
+    /// and a number past its bounds; the settings likewise; and the beat's
+    /// length typed while a beat that clears runs, which waits for the next.
+    /// Every frame held to the game by hand.
+    #[test]
+    fn what_a_person_types_into_the_pace_never_stops_the_wall() {
+        let Some(text) = brickwork() else {
+            return;
+        };
+        use Typed::{Number as N, Text as T};
+        let defaults = [60.0, 0.03, 1.0, 30.0, 10.0, 2.0, 2.0, 12.0, 60.0];
+        let counts = [2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+        let beat_typed = std::cell::Cell::new(0u32);
+        let over_typed = std::cell::Cell::new(false);
+        let typing = |frame: u32, g: &bw::Game| -> Vec<(u32, Typed)> {
+            match frame {
+                2 => return vec![(19, N(0.0))],
+                150 => return vec![(20, N(0.0))],
+                300 => return vec![(12, N(4.0))],
+                450 => return vec![(13, N(-3.0)), (14, N(2.9)), (15, T("two"))],
+                600 => return (12..=20).map(|r| (r, N(0.0))).collect(),
+                750 => return vec![(12, N(1.0))],
+                900 => return vec![(16, N(1.0))],
+                1050 => {
+                    return vec![
+                        (6, N(0.0)),
+                        (2, N(-0.2)),
+                        (3, N(0.5)),
+                        (1, T("brisk")),
+                        (13, N(9.0)),
+                    ]
+                }
+                1800 => {
+                    let mut v: Vec<(u32, Typed)> =
+                        (1..=9).map(|r| (r, N(defaults[r as usize - 1]))).collect();
+                    v.extend((12..=20).map(|r| (r, N(counts[r as usize - 12]))));
+                    return v;
+                }
+                _ => {}
+            }
+            if frame > 1100
+                && beat_typed.get() == 0
+                && g.phase == bw::Phase::Beat
+                && g.clearing
+                && g.since == 4
+            {
+                beat_typed.set(frame);
+                return vec![(8, N(1.0))];
+            }
+            if g.phase == bw::Phase::Over && g.since == 5 && !over_typed.get() {
+                over_typed.set(true);
+                return vec![(17, N(4.0))];
+            }
+            Vec::new()
+        };
+        let mut bot = BrickworkBot::new(u32::MAX);
+        bot.reckless_frame = 1900;
+        let run = brickwork_session(&text, 4242, 2600, &mut bot, &typing);
+        let g = &run.game;
+        assert!(
+            run.recounts == 10,
+            "the counts changed at {} frames",
+            run.recounts
+        );
+        assert!(
+            beat_typed.get() > 0,
+            "a beat's length typed while a beat ran"
+        );
+        assert!(
+            run.longest_beat <= 12,
+            "the longest beat ran {} frames",
+            run.longest_beat
+        );
+        assert!(over_typed.get(), "a count typed after the wall topped out");
+        assert!(
+            g.games == 2 && g.topouts >= 1,
+            "{} games, {} top-outs",
+            g.games,
+            g.topouts
+        );
+        assert_eq!(g.settings.beat, 12, "the beat's length typed back");
+    }
+
+    /// A lay key held as the wall loads begins no game at the first frame,
+    /// which deals the bags; pressed again, the game begins with the first
+    /// brick the wall showed next.
+    #[test]
+    fn a_key_held_as_the_wall_loads_begins_no_game() {
+        let Some(text) = brickwork() else {
+            return;
+        };
+        let mut c = Cartridge::load(&text, "brickwork.vla", text.len()).expect("Brickwork loads");
+        assert_eq!(c.write("(cell \"Clock\" \"B3\" 99)"), Ok(1));
+        let mut g = bw::Game::load(bw::Settings::default(), 99);
+        let held = bw::Keys {
+            start: true,
+            ..bw::Keys::default()
+        };
+        let mut shown = 0;
+        for (frame, keys) in [held, held, bw::Keys::default(), held]
+            .into_iter()
+            .enumerate()
+        {
+            let frame = frame as u32 + 1;
+            c.write(&brickwork_inputs(&keys)).expect("the Input rows");
+            assert!(c.step(0).done);
+            g.step(keys);
+            brickwork_holds(&c, &g, frame);
+            if frame < 4 {
+                assert_eq!(g.phase, bw::Phase::Waiting, "frame {frame}: the wall waits");
+                shown = g.next()[0];
+            }
+        }
+        assert_eq!(g.phase, bw::Phase::Falling, "the press begins the game");
+        assert_eq!(g.kind, shown, "the first brick is the one shown next");
+        brickwork_tally_holds(&c, &g);
+        assert_eq!(g.games, 1);
     }
 }

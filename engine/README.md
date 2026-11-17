@@ -108,6 +108,21 @@ frames, holds its board, State, voices and Tally to the game by hand at
 every frame, under the buttons the replay's Input rows press (`CART.4`'s
 second slice).
 
+Brickwork, `cartridges/brickwork/`, the falling-block game (`CART.3`), is held
+to the game written by hand, `src/brickwork.rs`, compiled for the tests alone:
+its wall a grid of cells and each brick turned in its box, where the cartridge
+keeps a course as a number and reads its turns from the pictures of its Bricks
+sheet. A test holds the Turns sheet's masks to the hand's turns; another plays
+a session of two games by a bot that lays its bricks by a key, by the soft
+fall and the lay's delay, or carried by a held arrow, kicks a turn at the
+wall, pauses, and tops the wall out, every frame's wall, Laid wall, serials,
+lit rules, panel, State and voices held to the hand, and the Tally at its end.
+A third types into the Pace while the wall waits, while it is built and after
+it tops out, counts and settings past their bounds and texts among them, the
+hand reading each value as the cartridge does, every frame held and every
+brick entering one the counts held; a fourth holds that a key held as the
+wall loads begins no game.
+
 Seiyaku, `cartridges/seiyaku/`, the number-placement puzzle (`CART.14`), is
 held to a board written by hand, `src/seiyaku.rs`, compiled for the tests
 alone, which also holds two solvers written apart, backtracking over bits and

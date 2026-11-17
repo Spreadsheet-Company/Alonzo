@@ -70,6 +70,11 @@ mod sand;
 #[cfg(test)]
 mod kairos;
 
+/// Brickwork by hand (`CART.3`), the reference the engine's tests hold the
+/// falling-block game's frames to, compiled for the tests alone.
+#[cfg(test)]
+mod brickwork;
+
 /// Superposition by hand (`CART.12`), the reference the engine's tests hold
 /// the large board's frames to, compiled for the tests alone; the native
 /// runner and the playtest session include the same file by its path.

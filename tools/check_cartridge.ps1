@@ -345,8 +345,8 @@ if ($Root -eq '') { $Root = $repoRoot }
 # moved by the two Planes sheet rows and the Constraints' twelve formula rows.
 # 2026-10-30, CART.9's fourth slice: Naught at 1,363 rows, six clocked levels, the ROM, the Write sheet, the Lab's clock and
 # its rows of inputs and dues, and the Gates' blocks of the six; the other ten's rows unchanged.
-$expectedCartridges = 11
-$expectedSources = 11
+$expectedCartridges = 12
+$expectedSources = 12
 $expectedLibraries = 1
 $expectedReplays = 7
 $expectedGoldens = 7
@@ -367,7 +367,19 @@ $expectedGoldens = 7
 # 2026-11-15, CART.14.1's third slice: Seiyaku lowered to 4,111 rows, the light: its 108 codes' 54 formats and 108
 # looks gone for a look format and its ten looks, five formats of groups alone and six rules; the Light sheet and its
 # two fills; the marks' keys a formula where a value stood; the other ten's rows unchanged.
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 318; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4111; 'cartridges/naught/naught.vla' = 1379 }
+# 2026-11-17, CART.3's first slice: Brickwork, the twelfth cartridge, 713 rows: the Wall, the Bricks and the Levels,
+# and the State, the Fit, the Courses, the Turns, the Laid wall, the Serials, the Bits, the Bag and the Tally hidden;
+# Superposition's widths moved into the kit with its bytes unchanged, and the other eleven's rows unchanged.
+# 2026-11-17, at the slice's hand test: 686 rows, mortar retired, the level the courses cleared and the pace a
+# product kept course by course, the Pace sheet for the Levels, a dark lavender wall with white bricks on the
+# canvas's gray, and cells of 34 pixels; widths and heights in the kit, Seiyaku's and Superposition's bytes unchanged.
+# 2026-11-17, at its second look: 720 rows, a ninth brick, the corner, and a bag of each brick's count from the Pace
+# sheet, thirteen by default; the falling brick white and its shadow Lovelace Lavender, the next three on the gray, each
+# course's count a fraction, and the outline's and the one-short's rules gone.
+# 2026-11-17, before its third look: 750 rows, what a person types into the Pace held: each count none to four and
+# a bag of 36 at most, a count changed dealing the bags again, each setting held inside its bounds, and the beat's
+# length as its lay began it.
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 318; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/brickwork/brickwork.vla' = 750; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4111; 'cartridges/naught/naught.vla' = 1379 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

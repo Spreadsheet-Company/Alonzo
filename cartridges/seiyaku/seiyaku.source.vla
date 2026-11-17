@@ -863,11 +863,8 @@
 ; and a line, a space and four figure spaces do not, so the marks wrap into five lines, the
 ; first, third and fifth of them marks, in their places. The columns from B and the rows from
 ; 2; every column's empty cells in the canvas's gray, the margin's among them.
-(each (c (1 2 3 4 5 6 7 8 9))
-  (column "Board" (column-letters-expand (+expand c 1)) 12.57 shown 111))
-
-(each (r (1 2 3 4 5 6 7 8 9))
-  (row "Board" (+expand r 1) 66 shown))
+(widths "Board" 2 10 12.57 111)
+(heights "Board" 2 10 66)
 
 (on "Board" (column "A" 1.71 shown 111) (row 1 9 shown))   ; the margin, 12 pixels each way
 

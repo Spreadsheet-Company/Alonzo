@@ -127,6 +127,30 @@
   (each-index (column text texts (column-expand first))
     (cell sheet (address-expand (row-expand first) column) text)))
 
+; A run of columns' widths and a run of rows' heights: a column row for each column from one
+; to another, by number, each the width given and the format its empty cells draw, or none;
+; and a row row for each row, each the height given in points. Superposition's lattice wrote
+; the first, its sites three characters wide, 21 pixels beside the default row's 20, and
+; Seiyaku both, its variables 88 pixels square; Brickwork's wall is their next client
+; (CART.3), so they live here since. A column or a row is one row, so a run is one
+; application a column or a row.
+
+(defmacro (widths sheet from last width style)
+  "a column row a column, from the column given to the last, each its width and its empty cells' format"
+  (quote-if (>expand from last)
+    (begin)
+    (begin
+      (column sheet (column-letters-expand from) width shown style)
+      (quasiquote (widths (unquote sheet) (unquote (+expand from 1)) (unquote last) (unquote width) (unquote style))))))
+
+(defmacro (heights sheet from last height)
+  "a row row a row, from the row given to the last, each its height in points"
+  (quote-if (>expand from last)
+    (begin)
+    (begin
+      (row sheet from height shown)
+      (quasiquote (heights (unquote sheet) (unquote (+expand from 1)) (unquote last) (unquote height))))))
+
 ; ---- names: a block's words, a verb's row at a word, the devices (KIT.6) ---------------
 ; A name is a word for a cell (Frazaro's VLA.6): a define binds it for every form after its
 ; own and writes no row, so that a formula says (= phase sliding) where it said (= State!B1
