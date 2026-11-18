@@ -1897,12 +1897,18 @@
     return { sheet: this.active, text: this._selectionText(), kind: s.kind, range: { top: r.top, left: r.left, bottom: r.bottom, right: r.right },
              focus: this._cellInfo(s.focus.row, s.focus.col) };
   };
+  // The region is what the scroller shows, measured as _scrollIntoView measures it, over its client area in device
+  // pixels, the scrollbars' strips left out (ENGINE.43): the canvas runs under the scrollbars, and a column or a row
+  // wholly under one is no cell a person sees. Measured over the canvas, an unbound sheet scrolled to its end, the column
+  // under the scrollbar laid only once the record lands, showed a column and a row past the record it was viewed
+  // through (Buffet's Exam, 2026-10-30).
   Viewport.prototype._scrollPayload = function () {
     var g = this.g;
     if (!g) return { sheet: this.active, top: 1, left: 1, window: 'A1' };
     var sx = this.scroll.x, sy = this.scroll.y;
+    var seenW = Math.min(g.canvasW, Math.round(this.scroller.clientWidth * g.dpr)), seenH = Math.min(g.canvasH, Math.round(this.scroller.clientHeight * g.dpr));
     var top = g.rowAt(g.frozenH + sy, g.fr + 1), left = g.columnAt(g.colX[g.fc + 1] + sx, g.fc + 1);
-    var bottom = Math.min(g.rows, g.rowAt(g.canvasH - 1 - g.oy + sy, top)), right = Math.min(g.cols, g.columnAt(g.canvasW - 1 - g.ox + sx, left));
+    var bottom = Math.min(g.rows, g.rowAt(seenH - 1 - g.oy + sy, top)), right = Math.min(g.cols, g.columnAt(seenW - 1 - g.ox + sx, left));
     return { sheet: this.active, top: top, left: left, bottom: bottom, right: right, window: rangeText({ top: top, left: left, bottom: bottom, right: right }) };
   };
   Viewport.prototype._setSelection = function (kind, anchor, focus, emit) {
@@ -2288,11 +2294,14 @@
   // The range a sheet shows from A1 in this box, its columns laid as its layout and its own widths set them (ENGINE.26),
   // never the sheet shown's, and its rows at the default height, within a bound sheet's extent: the window a host views
   // a sheet through before it shows it.
+  // The headers are no row or column of cells (ENGINE.43): the client area less the column letters' row and the row
+  // numbers' column, as the region drawn will measure it, so that the first frame after a sheet is shown keeps its view.
   Viewport.prototype.fresh = function (name) {
     var key = String(name || '').toLowerCase(), layout = this.layouts[key] || null, model = this._findSheet(name) ? this.records[this._findSheet(name)] : null;
-    var w = Math.max(1, this.scroller.clientWidth), x = 0, c = 0;
+    var rh = this.g ? this.g.rhW / this.g.dpr : 0;
+    var w = Math.max(1, this.scroller.clientWidth - rh), x = 0, c = 0;
     while (x < w && c < MAX_COLUMNS) { c++; x += columnWidthCss(model, this._widthsOf(name), c, layout); }
-    var r = Math.max(1, Math.ceil(this.scroller.clientHeight / DEFAULT_ROW_PX)), ext = this.bounds[key] ? ((model && model.extent) || (layout && layout.extent)) : null;
+    var r = Math.max(1, Math.ceil((this.scroller.clientHeight - DEFAULT_ROW_PX) / DEFAULT_ROW_PX)), ext = this.bounds[key] ? ((model && model.extent) || (layout && layout.extent)) : null;
     if (ext) { c = Math.min(c, ext.right); r = Math.min(r, ext.bottom); }
     return rangeText({ top: 1, left: 1, bottom: r, right: Math.max(1, c) });
   };

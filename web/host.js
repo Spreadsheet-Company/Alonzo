@@ -370,11 +370,22 @@
   function regionOf(vp, fresh) {
     var V = VP(), g = vp.geometry();
     if (!g) return 'A1';
-    if (fresh) return rangeOf(1, 1, Math.max(1, Math.ceil(g.clientH / V.RULES.row)), Math.max(1, Math.ceil(g.clientW / V.RULES.column)));
+    // a sheet not yet drawn: the scroller's client area less its headers, at the default cell's size (ENGINE.43: the
+    // headers no row or column of cells, as the region drawn will measure it, so that the first frame drawn keeps the view)
+    if (fresh) return rangeOf(1, 1, Math.max(1, Math.ceil((g.clientH - g.headH / g.dpr) / V.RULES.row)), Math.max(1, Math.ceil((g.clientW - g.rhW / g.dpr) / V.RULES.column)));
     var s = vp.scrolled(), top = g.frozenRows > 0 ? 1 : s.top, left = g.frozenCols > 0 ? 1 : s.left;
     var r = { top: top, left: left, bottom: Math.max(top, s.bottom), right: Math.max(left, s.right) };
     var m = vp.model(), w = m && m.windowText ? V.parseRange(m.windowText) : null;
     if (w) carried(r, w, g, m, V);
+    // A region that reaches the last column or row laid takes one more (ENGINE.43): an unbound sheet's layout grows with
+    // the record it is viewed through, and at a ratio that is no whole number the scroller's end stands up to a device
+    // pixel past the content it laid (its range in whole CSS pixels, its offset in fractions), so the column or row laid
+    // next shows a sliver once the record lands; the record names it beforehand. A bound sheet's layout ends at its
+    // extent and never grows.
+    if (!g.bounded) {
+      if (s.right >= g.cols) r.right = Math.max(r.right, Math.min(16384, s.right + 1));
+      if (s.bottom >= g.rows) r.bottom = Math.max(r.bottom, Math.min(1048576, s.bottom + 1));
+    }
     if (g.bounded) { r.bottom = Math.min(r.bottom, g.sheetRows); r.right = Math.min(r.right, g.sheetCols); }   // a bound sheet's extent (version 6)
     return V.rangeText(r);
   }

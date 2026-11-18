@@ -4649,6 +4649,17 @@
       P.push(at + ': the viewport shows ' + sh + '!' + shown + ', past the record\'s window ' + wt + ', its columns or rows past it drawn with no record');
       return null;
     }
+    // and the region is what the scroller shows (ENGINE.43): its last column and its last row each begin inside the
+    // scroller's client area, none wholly under a scrollbar, where the canvas runs on and no person sees a cell
+    var vg = vp.g, seenR = vp.scroller.clientWidth * vg.dpr, seenB = vp.scroller.clientHeight * vg.dpr;
+    if (a.right > vg.fc && vg.colX[a.right] + vg.ox - vp.scroll.x >= seenR) {
+      P.push(at + ': the region ' + sh + '!' + shown + ' ends in column ' + VP.colName(a.right) + ', which begins past the scroller\'s client area, wholly under its scrollbar');
+      return null;
+    }
+    if (a.bottom > vg.fr && vg.rowTop(a.bottom) + vg.oy - vp.scroll.y >= seenB) {
+      P.push(at + ': the region ' + sh + '!' + shown + ' ends in row ' + a.bottom + ', which begins past the scroller\'s client area, wholly under its scrollbar');
+      return null;
+    }
     var m = gqRead(due), gb = vp.geometry();
     // a sheet its cartridge bounds (version 6's (bound ...), CART.12's hand test) is laid as its extent, no more
     if (host._bounded(sh) && (!m.extent || !gb.bounded || gb.cols !== m.extent.right || gb.rows !== m.extent.bottom)) {
@@ -4998,6 +5009,7 @@
     k.grids = 0; k.gridFrames = 0; k.gridEqual = 0; k.gridValues = 0; k.gridTexts = 0; k.gridCleared = 0; k.gridMoves = 0; k.gridBound = 0; k.gridCanvas = 0; k.gridFocused = 0; k.gridTyped = 0;
     k.gridEdges = 0; k.gridFonts = 0;   // ENGINE.28's third slice: the edges and the dressed texts held, Seiyaku's Board's among them
     k.gridStrands = 0;   // ENGINE.37's second slice: a font's lines held, the grid card's row 17 among them
+    k.gridUnbound = 0;   // ENGINE.43: the moves held over an unbound sheet, the views card's Ledger
     var wasm = builtModule();
     if (!wasm) return res;
     var bytes = bytesOfBase64(wasm);
@@ -5012,6 +5024,13 @@
       k.gridMoves += g.moves; k.gridBound += g.bound; k.gridCanvas += g.canvas; k.gridFocused += g.focused; k.gridTyped += g.typed;
       k.gridEdges += g.edges; k.gridFonts += g.fonts; k.gridStrands += g.strands || 0;
     }
+    // ENGINE.43: an unbound sheet moved as a person moves it, the views card's Ledger, shown from frame 40, whose extent
+    // grows with each record as Buffet's Exam's does; every sheet the cartridges above move is bound, its layout ending at
+    // its extent. At the last column and the last row the region shown stays inside the record's window, a column or a
+    // row wholly under a scrollbar no cell a person sees.
+    var u = { frames: 0, equal: 0, windows: 0, texts: 0, wraps: 0, fills: 0, looks: 0, styles: 0, columns: 0, unvalued: 0, hidden: 0, probes: 0, kept: 0, cleared: 0, values: 0, moves: 0, bound: 0, canvas: 0, focused: 0, typed: 0, edges: 0, fonts: 0 };
+    gridRun(HOST.instantiateSync(bytes), 'views', VIEWS.text, VIEWS.file, 45, { strict: true, moves: true, tick: 34 }, u, P);
+    k.gridUnbound = u.moves;
     return res;
   }
   // A values record read whole (ENGINE.8's second slice, KERNEL.37) by a viewport of its own: a formula known by
@@ -5083,13 +5102,14 @@
       function move(target, p) { target.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: p.x, clientY: p.y })); }
       function taken(target, p) { return !target.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, clientX: p.x, clientY: p.y, deltaY: 100 })); }
       // the cells in view by the viewport's geometry and scroll, the oracle's own arithmetic over its edges (the
-      // sheets shown here hold no row settings, so every row is the default's)
+      // sheets shown here hold no row settings, so every row is the default's), over the scroller's client area, the
+      // scrollbars' strips left out (ENGINE.43), where the canvas runs on and no person sees a cell
       function inView() {
-        var g = vp.geometry(), c0 = 1;
+        var g = vp.geometry(), c0 = 1, seenW = Math.min(g.canvasW, Math.round(g.clientW * g.dpr)), seenH = Math.min(g.canvasH, Math.round(g.clientH * g.dpr));
         while (c0 < g.cols && g.colX[c0 + 1] <= g.scrollX) c0++;
         var c1 = c0;
-        while (c1 < g.cols && g.colX[c1 + 1] <= g.scrollX + g.canvasW - g.rhW - 1) c1++;
-        return { top: Math.floor(g.scrollY / g.rowH) + 1, left: c0, bottom: Math.floor((g.scrollY + g.canvasH - g.headH - 1) / g.rowH) + 1, right: c1 };
+        while (c1 < g.cols && g.colX[c1 + 1] <= g.scrollX + seenW - g.rhW - 1) c1++;
+        return { top: Math.floor(g.scrollY / g.rowH) + 1, left: c0, bottom: Math.floor((g.scrollY + seenH - g.headH - 1) / g.rowH) + 1, right: c1 };
       }
       // the sheet shown is the record of a window that holds every cell in view, drawn cell for cell
       function heldShown(where) {
@@ -8932,15 +8952,17 @@
         k.held++;
         return true;
       }
-      // the region a sheet shows from A1 in this box, as the oracle reads its columns whole and lays them at its own widths
+      // the region a sheet shows from A1 in this box, as the oracle reads its columns whole and lays them at its own widths,
+      // over the client area less its headers, the column letters' row and the row numbers' column (ENGINE.43)
       function freshOf(sheet) {
-        var t = gqTruth(D, host.counters().handle, sheet, false), own = mine[sheet.toLowerCase()], W = Math.max(1, sc.clientWidth), x = 0, c = 0;
+        var gg = vp.geometry(), rh = gg ? gg.rhW / gg.dpr : 0;
+        var t = gqTruth(D, host.counters().handle, sheet, false), own = mine[sheet.toLowerCase()], W = Math.max(1, sc.clientWidth - rh), x = 0, c = 0;
         while (x < W && c < 16384) {
           c++;
           var L = VP.colName(c), col = t ? t.columns[c] : null;
           x += Object.prototype.hasOwnProperty.call(own, L) ? own[L] : (!col ? GQ.column : (col.hidden ? 0 : (col.width !== null ? gqColumnPixels(col.width) : GQ.column)));
         }
-        return lqRange(1, 1, Math.max(1, Math.ceil(sc.clientHeight / GQ.row)), Math.max(1, c));
+        return lqRange(1, 1, Math.max(1, Math.ceil((sc.clientHeight - GQ.row) / GQ.row)), Math.max(1, c));
       }
       function tab(name) { var b = pt.tab(name); if (!b) { P.push('widths: no tab ' + name + ' in the strip'); return false; } b.click(); return true; }
       var n0;
