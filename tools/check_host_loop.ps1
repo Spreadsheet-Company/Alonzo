@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds two hundred and sixty-six mutant pages through tools/build_web.ps1 and runs
+-Control builds two hundred and sixty-eight mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -579,6 +579,9 @@ And CART.3's second slice four, each failing the commands case by name over the 
 taken with Shift held too, MO; Cmd not taken for Ctrl, MP; a key with modifiers read below version 7, MQ; and a key with
 Shift left to the bare key of its code, MR. The key language moved into the host with it, so CK and CL, the palette's,
 mutate web/host.js, and DM's line is the bare key's own.
+And ENGINE.40's second slice two, each failing the keep case by name over the module, a file's drafts not taken back as
+typed: a raw string of one # whatever its text holds, MS, which the closer's own run of # in a box ends early; and a
+draft read and dropped, MT.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -1034,6 +1037,8 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # take it to two hundred and sixty-two, needing no module (124 applicable without).
 # 2026-11-17, CART.3's second slice: MO to MR, version 7's, the commands case's over the module, take it to two hundred
 # and sixty-six (124 applicable without).
+# 2026-11-17, ENGINE.40's second slice: MS and MT, a file's drafts, the keep case's over the module, take it to two
+# hundred and sixty-eight (124 applicable without).
 # 2026-10-20, CART.9's first slice, Naught the eleventh cartridge: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -1142,8 +1147,11 @@ $saveFloors = @{ saves = 7; opened = 7; seeds = 7; resumed = 7; compared = 93; f
 # time, store 1), so the case says so in a note and the double is the check's. Since ENGINE.40's first slice, the drawer's
 # typing: a source typed in a run with no act kept, offered with its words and put back by a restore (typed 1); a run's
 # typing its own across a cartridge picked, the next run carrying the boxes the pick left alone (switched 1); and typing a
-# save leaves unsaved keeping the record (typedSaved 1).
-$keepFloors = @{ cartridges = 7; frames = 10903; restores = 113; held = 113; keyframes = 189; session = 8; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1; typed = 1; switched = 1; typedSaved = 1 }
+# save leaves unsaved keeping the record (typedSaved 1). Since its second slice a save carries the typing, so typedSaved
+# holds a save leaving nothing typed unsaved and a keystroke while the picker stood open kept; and a file's drafts, each
+# box written after a save's rows over a raw string and taken back as typed (draftsRound 1), the file without them loading
+# the grid as the save alone does (draftsLoaded 1).
+$keepFloors = @{ cartridges = 7; frames = 10903; restores = 113; held = 113; keyframes = 189; session = 8; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1; typed = 1; switched = 1; typedSaved = 1; draftsRound = 1; draftsLoaded = 1 }
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
     @{ Case = 'rate0';    Min = @{ frames = 4; applied = 3; edits = 4; windows = 3 } },
@@ -1232,7 +1240,7 @@ $gameFloors = @(
     @{ Case = 'widths'; Min = @{}; WithModule = $widthsFloors },
     @{ Case = 'modes'; Min = $modesPageFloors; WithModule = $modesGameFloors },
     @{ Case = 'save'; Min = @{}; WithModule = @{ saves = 1; opened = 1; seeds = 1; resumed = 1 } },
-    @{ Case = 'keep'; Min = @{}; WithModule = @{ cartridges = 1; restores = 1; held = 1; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1; typed = 1; switched = 1; typedSaved = 1 } }
+    @{ Case = 'keep'; Min = @{}; WithModule = @{ cartridges = 1; restores = 1; held = 1; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1; typed = 1; switched = 1; typedSaved = 1; draftsRound = 1; draftsLoaded = 1 } }
 )
 $gameAbsent = @('rate30', 'rate0', 'yield', 'slice', 'pace', 'memory', 'refusals', 'scale', 'engine', 'parity', 'plane', 'input', 'audio', 'sound', 'tabs')
 $gameCases = 17
@@ -2386,6 +2394,12 @@ if ($Control) {
                Want = 'case keep.*switched: the run.s typing was not its own across a cartridge picked' },
             @{ L = 'ml'; Name = 'typing keeping no run'; File = 'template'; Module = $true; Case = 'keep'; Anchor = '    if (!w.acted && !names.length) {'; With = '    if (!w.acted) {'
                Want = 'case keep.*typed: a source typed in a run with no act was not kept' },
+            # MS and MT (ENGINE.40's second slice), a file's drafts: a raw string of one # whatever its text holds, and a
+            # draft read and dropped
+            @{ L = 'ms'; Name = 'a raw string of one #'; File = 'template'; Module = $true; Case = 'keep'; Anchor = "    while (text.indexOf('`"' + new Array(n + 1).join('#')) >= 0) n++;"; With = '    // one #, by the control'
+               Want = 'case keep.*drafts: a file.s boxes were not taken back as typed' },
+            @{ L = 'mt'; Name = 'a draft read and dropped'; File = 'template'; Module = $true; Case = 'keep'; Anchor = '        drafts[d.key] = d.path === undefined ? { text: d.text } : { text: d.text, path: d.path };'; With = '        // the draft read and dropped, by the control'
+               Want = 'case keep.*drafts: a file.s boxes were not taken back as typed' },
             # LX (ENGINE.37's second slice): a repaint that lays a cell's texts again in the draw list and drops its lines,
             # which the changes card's frames fail by name over the module, a strand of K2, L6 or M1 not drawn
             @{ L = 'lx'; Name = 'a repaint that drops a text''s lines'; Module = $true; File = 'viewport'; Anchor = "      else if (op.op === 'text' || op.op === 'decoration') { if (!drawn.has(key)) drawn.set(key, []); drawn.get(key).push(op); }"; With = "      else if (op.op === 'text') { if (!drawn.has(key)) drawn.set(key, []); drawn.get(key).push(op); }"
@@ -3192,7 +3206,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and sixty-six' } else { 'one hundred and twenty-four applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and sixty-eight' } else { 'one hundred and twenty-four applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

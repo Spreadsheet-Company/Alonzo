@@ -592,7 +592,9 @@ type in the drawer's boxes is kept the same way (`ENGINE.40`): the source, a
 library, the cartridge, the edit row, the replay and the keymap, each from
 your first keystroke, the line saying `with its source typed`, Restore putting
 each back as you left it, a keymap or a replay in its box until you apply or
-play it; a cartridge picked keeps your typing with the run you typed it in. A saved file is the durable copy: a browser may
+play it; a cartridge picked keeps your typing with the run you typed it in.
+Save carries the boxes you typed in the one file, a `(draft ...)` form a box
+after the grid, its text written as you typed it, and Open puts each back. A saved file is the durable copy: a browser may
 clear what it keeps.
 
 ## What it promises

@@ -2936,6 +2936,7 @@
   Host.EXPORTS = EXPORTS;
   Host.ABI = ABI;
   Host.SPEC = SPEC;
+  Host.MAX_CARTRIDGE_BYTES = MAX_CARTRIDGE_BYTES;   // section 10's file, which a page's save with its drafts is held to (ENGINE.40)
   // The host's SHA-256 of bytes, or of a text's UTF-8, in upper-case hex: an oracle holds it to FIPS 180-2's vectors.
   Host.sha256 = function (x) { return sha256(typeof x === 'string' ? enc.encode(x) : x); };
   // The host's patch of a values record by a window's changes (ENGINE.19, decision 3), pure: the record's text after

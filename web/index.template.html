@@ -1162,7 +1162,6 @@
   // The drawer's boxes by the names a record keeps them under (ENGINE.40): a library's its name after 'library:'.
   var DRAFT_WORDS = { edit: 'the edit row', source: 'its source', cartridge: 'the cartridge\'s box', replay: 'the replay\'s box', keys: 'the keymap' };
   function draftWords(name) { return DRAFT_WORDS[name] || (name.indexOf('library:') === 0 ? 'the library ' + name.slice(8) : name); }
-  function andList(words) { return words.length < 2 ? words.join('') : words.slice(0, -1).join(', ') + ' and ' + words[words.length - 1]; }
   function workWords(w, now) {
     var stale = workStale(w), typed = (w.typed || []).map(draftWords);
     return 'Unsaved work on ' + workOn(w) + ', frame ' + thousands(w.frame || 0) + (typed.length ? ', with ' + andList(typed) + ' typed' : '') + ', kept ' + workWhen(w.when, now) + '.' + (stale ? ' It cannot be restored here: ' + stale + '.' : '');
@@ -1346,9 +1345,20 @@
     this.host.keyframeNow();
     this.tick();
   };
-  // A save written to a file of the person's (decision 6): the host told, and the record written again or dropped. The
-  // boxes typed are no part of a save in this slice, so a run with typing stays kept (ENGINE.40).
-  WorkKeeper.prototype.saved = function () { if (this.host.keepSaved()) this.tick(); };
+  // The boxes typed, for a saved file to carry (ENGINE.40's second slice): their names in the drawer's order, their texts,
+  // and the version of the typing they are.
+  WorkKeeper.prototype.drafts = function () {
+    var names = this._typedNames();
+    return { names: names, texts: this.o.drafts ? this.o.drafts(names) : {}, version: this.typedVersion };
+  };
+  // A save written to a file of the person's (decision 6): the host told, and the record written again or dropped. A save
+  // carries the boxes typed (ENGINE.40's second slice): given the typing's version it carried, and no keystroke since,
+  // nothing typed is unsaved; a keystroke while the picker stood open stays unsaved, and kept.
+  WorkKeeper.prototype.saved = function (typedVersion) {
+    var heard = this.host.keepSaved(), carried = typedVersion !== undefined && typedVersion === this.typedVersion;
+    if (carried) { this.typed = {}; this.typedVersion++; }
+    if (heard || carried) this.tick();
+  };
   // The line's Restore (decision 6): the record's lock taken, its keyframe and drafts read and the keyframe held to its
   // frames, the host's restore over it, then a keyframe at the frame restored, so that the cartridge's box and Load hold
   // the work as it stands, and the boxes typed put back as they were kept (ENGINE.40).
@@ -1417,6 +1427,102 @@
     }
     this._show();
   };
+  // ---- the drawer's boxes in a saved file (ENGINE.40's second slice; docs/SPEC.md section 7.5) ----
+  // A box a person typed, written after the grid's rows as (draft "<box>" "<name>" #"<text>"#), its text a raw string as
+  // the language reads one since Frazaro's VLA.18, with as many # as the text needs, and its name the source's path or
+  // the library's, else empty. The language's printer never writes a raw string, so the page does.
+  function rawString(text) {
+    var n = 1;
+    while (text.indexOf('"' + new Array(n + 1).join('#')) >= 0) n++;
+    var h = new Array(n + 1).join('#');
+    return h + '"' + text + '"' + h;
+  }
+  function draftForms(texts, names) {
+    return names.filter(function (n) { return texts[n]; }).map(function (n) {
+      var lib = n.indexOf('library:') === 0, box = lib ? 'library' : n, name = lib ? n.slice(8) : (texts[n].path || '');
+      return '(draft ' + vlaString(box) + ' ' + vlaString(name) + ' ' + rawString(String(texts[n].text)) + ')\n';
+    }).join('');
+  }
+  // A file's drafts taken out of it: the text without them, which the engine loads, and each box's text by the name the
+  // keeper keeps it under. A draft is a form of the top level; strings, raw strings and comments are read past as the
+  // language reads them, a raw string's CR before a line feed read as LF (VLA.18). A form that says draft and is not one
+  // of three texts, the box, its name and a raw string, is left in the text, for the load to name.
+  function takeDrafts(text) {
+    var n = text.length, drafts = {}, kept = [], from = 0, i = 0, count = 0;
+    function str(j) {   // the string at j's quote: its end and its content unescaped
+      var k = j + 1, out = '';
+      while (k < n) {
+        var c = text.charAt(k);
+        if (c === '"') return { end: k + 1, text: out };
+        if (c === '\\' && (text.charAt(k + 1) === '"' || text.charAt(k + 1) === '\\')) { out += text.charAt(k + 1); k += 2; } else { out += c; k++; }
+      }
+      return { end: n, text: null };
+    }
+    function raw(j) {   // the raw string at j's first #, or null where the #s open none
+      var k = j;
+      while (text.charAt(k) === '#') k++;
+      if (text.charAt(k) !== '"') return null;
+      var close = '"' + text.slice(j, k), at = text.indexOf(close, k + 1);
+      if (at < 0) return { end: n, text: null };
+      return { end: at + close.length, text: text.slice(k + 1, at).replace(/\r\n/g, '\n') };
+    }
+    function skip(j) {   // past white space and comments
+      for (;;) {
+        while (j < n && /\s/.test(text.charAt(j))) j++;
+        if (text.charAt(j) !== ';') return j;
+        while (j < n && text.charAt(j) !== '\n') j++;
+      }
+    }
+    function formEnd(j) {   // the end of the form at j's open paren
+      var depth = 0;
+      while (j < n) {
+        var c = text.charAt(j);
+        if (c === '"') { j = str(j).end; continue; }
+        if (c === '#') { var r = raw(j); if (r) { j = r.end; continue; } }
+        if (c === ';') { while (j < n && text.charAt(j) !== '\n') j++; continue; }
+        if (c === '(') depth++;
+        else if (c === ')') { depth--; if (depth === 0) return j + 1; }
+        j++;
+      }
+      return n;
+    }
+    function draftAt(j, end) {   // the draft the form at j holds, or null
+      var k = skip(j + 1);
+      if (text.slice(k, k + 5) !== 'draft' || !/[\s"]/.test(text.charAt(k + 5))) return null;
+      k = skip(k + 5);
+      if (text.charAt(k) !== '"') return null;
+      var box = str(k); if (box.text === null) return null;
+      k = skip(box.end);
+      if (text.charAt(k) !== '"') return null;
+      var name = str(k); if (name.text === null) return null;
+      k = skip(name.end);
+      var body = text.charAt(k) === '#' ? raw(k) : null;
+      if (!body || body.text === null) return null;
+      k = skip(body.end);
+      if (k !== end - 1 || text.charAt(k) !== ')') return null;
+      var key = box.text === 'library' ? 'library:' + name.text : box.text;
+      if (!/^(source|library:.+|cartridge|edit|replay|keys)$/.test(key)) return null;
+      return { key: key, text: body.text, path: box.text === 'source' ? name.text : undefined };
+    }
+    while (i < n) {
+      i = skip(i);
+      if (i >= n) break;
+      if (text.charAt(i) !== '(') { i++; continue; }
+      var end = formEnd(i), d = draftAt(i, end);
+      if (d) {
+        var cut = end;
+        if (text.charAt(cut) === '\r') cut++;
+        if (text.charAt(cut) === '\n') cut++;
+        kept.push(text.slice(from, i));
+        from = cut;
+        drafts[d.key] = d.path === undefined ? { text: d.text } : { text: d.text, path: d.path };
+        count++;
+      }
+      i = end;
+    }
+    kept.push(text.slice(from));
+    return { text: kept.join(''), drafts: drafts, count: count };
+  }
   // How well a text matches a name or words, both in lower case: the whole of it, from its start, from a word's start,
   // inside it, or its letters in order; 0 for none.
   function matchScore(q, s) {
@@ -1990,10 +2096,13 @@
     }
     // A save the host took, written: through the picker when a person asked and it was taken at once, else downloaded.
     host.on('save', function (e) {
-      personFile(e.text, e.file, e.by === 'person' && !e.waited).then(function (how) {
+      // the drawer's boxes typed after the grid's rows, a draft each (ENGINE.40), the whole file held to section 10's
+      var kd = keeper.drafts(), text = e.text + draftForms(kd.texts, kd.names), bytes = new TextEncoder().encode(text).length;
+      if (bytes > HOST.MAX_CARTRIDGE_BYTES) { sayBar('The save was not written: with the boxes you typed in the drawer it is ' + thousands(bytes) + ' bytes, over the ' + thousands(HOST.MAX_CARTRIDGE_BYTES) + ' (16 MiB) a cartridge may be (docs/SPEC.md section 10), which the engine would not load again.'); return; }
+      personFile(text, e.file, e.by === 'person' && !e.waited).then(function (how) {
         var where = how === 'picked' ? 'where you chose' : (how === 'downloaded' ? 'into your downloads' : null);
-        sayBar(where ? 'Saved frame ' + thousands(e.frame) + ' as ' + e.file + ', ' + where + '.' : 'The save was not written: the picker was closed.');
-        if (where) keeper.saved();   // the work saved is unsaved no longer (ENGINE.38)
+        sayBar(where ? 'Saved frame ' + thousands(e.frame) + ' as ' + e.file + (kd.names.length ? ', with ' + andList(kd.names.map(draftWords)) : '') + ', ' + where + '.' : 'The save was not written: the picker was closed.');
+        if (where) keeper.saved(kd.version);   // the work saved, and the typing it carried, unsaved no longer (ENGINE.38, ENGINE.40)
       });
     });
     document.getElementById('eng-save').addEventListener('click', function () {
@@ -2014,9 +2123,20 @@
         .then(openedFile, function (e) { if (!(e && e.name === 'AbortError')) sayBar('The file was not opened: ' + (e && e.message ? e.message : e) + '.'); });
     });
     openFileEl.addEventListener('change', function () { if (openFileEl.files && openFileEl.files[0]) openedFile(openFileEl.files[0]); });
+    // Each box a record or a file carries put back as it was typed (ENGINE.40), a keymap and a replay standing in their boxes,
+    // never applied nor played; the source put back with the cartridge's entry, which showTexts writes.
+    function putBoxes(texts, from) {
+      if (texts.edit) editEl.value = texts.edit.text;
+      if (texts.cartridge) cartEl.value = texts.cartridge.text;
+      if (texts.replay) { replayEl.value = texts.replay.text; replayPathEl.textContent = 'the replay you were typing, from ' + from; }
+      if (texts.keys) keysEl.value = texts.keys.text;
+      for (var tn in texts) if (Object.prototype.hasOwnProperty.call(texts, tn) && tn.indexOf('library:') === 0) { libEdits[tn.slice(8)] = texts[tn].text; if (libShown === tn.slice(8)) libEl.value = texts[tn].text; }
+    }
     function openedFile(f) {
-      f.text().then(function (text) {
+      f.text().then(function (whole) {
+        var taken = takeDrafts(whole), text = taken.text, src = taken.drafts.source;   // the drawer's boxes the file carries (ENGINE.40)
         opened = { name: '', title: 'The file ' + f.name, file: f.name, path: 'the file ' + f.name + ', opened from your machine', text: text,
+                   source: src ? src.text : undefined, sourcePath: src ? src.path : undefined,
                    notes: 'The file ' + f.name + ', opened from your machine: a cartridge loads at frame 0 and a save at the frame it was saved at. Load loads it again from there.' };
         var opt = pickEl.querySelector('option[value="' + OPENED + '"]');
         if (!opt) { opt = document.createElement('option'); opt.value = OPENED; pickEl.appendChild(opt); }
@@ -2025,8 +2145,9 @@
         keeper.tick();   // the run's typing written before the boxes take the file's texts (ENGINE.40)
         showTexts(opened);
         offerReplay(opened);
-        keeper.replaced(['source', 'cartridge', 'replay']);
+        keeper.replaced(['source', 'cartridge', 'replay'].concat(Object.keys(taken.drafts)));
         if (host.m) { loadCartridge(); focusScreen(); }
+        putBoxes(taken.drafts, 'the file ' + f.name);   // after the load, so that the cartridge's box shows what was typed in it
       }, function () { sayBar('The file ' + f.name + ' could not be read.'); });
     }
     // A text on the clipboard, the button saying so, or the way to copy it by hand when the browser keeps the clipboard closed.
@@ -2253,13 +2374,7 @@
         pickEl.value = OPENED;
         showTexts(opened);
         offerReplay(opened);
-        // each box typed put back as it was kept (ENGINE.40), a keymap and a replay standing in their boxes, never applied
-        // nor played
-        if (texts.edit) editEl.value = texts.edit.text;
-        if (texts.cartridge) cartEl.value = texts.cartridge.text;
-        if (texts.replay) { replayEl.value = texts.replay.text; replayPathEl.textContent = 'the replay you were typing, restored from this browser'; }
-        if (texts.keys) keysEl.value = texts.keys.text;
-        for (var tn in texts) if (Object.prototype.hasOwnProperty.call(texts, tn) && tn.indexOf('library:') === 0) { libEdits[tn.slice(8)] = texts[tn].text; if (libShown === tn.slice(8)) libEl.value = texts[tn].text; }
+        putBoxes(texts, 'this browser');
         // the frame line said at the frame restored, which no stop event brings, the restore's frames played while no
         // loop ran; and the drawer's sheet drawn there
         var at = host.counters().frame;
@@ -8729,7 +8844,7 @@
   };
   WorkDouble.prototype.close = function () { for (var n in this.s.locks) if (this.s.locks[n] === this.tab) delete this.s.locks[n]; };
   function caseKeep() {
-    var P = [], k = { cartridges: 0, frames: 0, restores: 0, held: 0, keyframes: 0, writes: 0, session: 0, watched: 0, saved: 0, discarded: 0, tabs: 0, stale: 0, torn: 0, capped: 0, refused: 0, typed: 0, switched: 0, typedSaved: 0, store: 0 };
+    var P = [], k = { cartridges: 0, frames: 0, restores: 0, held: 0, keyframes: 0, writes: 0, session: 0, watched: 0, saved: 0, discarded: 0, tabs: 0, stale: 0, torn: 0, capped: 0, refused: 0, typed: 0, switched: 0, typedSaved: 0, draftsRound: 0, draftsLoaded: 0, store: 0 };
     var wasm = builtModule(), notes = [];
     if (!wasm) return { counters: k, problems: P };
     // one instance of the module for every host of the case, each grid a handle of its own and unloaded when done, since a
@@ -8931,8 +9046,27 @@
     var uw = workWorld(), us = sheet(uw, 'a');
     if (us) {
       us.h.edit('(cell "Screen" "A1" 3)'); us.K.boxes.edit = { text: '(cell "Screen" "B1" 4)' }; us.K.typing('edit'); us.K.tick();
-      us.h.save('person'); us.K.saved();
-      if (records(uw) === 1) k.typedSaved++; else P.push('typedSaved: a save dropped a record whose typing it did not hold');
+      var carried = us.K.drafts().version;
+      us.h.save('person'); us.K.saved(carried);   // a save that carried the typing, the drafts in its file (ENGINE.40's second slice)
+      var none = records(uw) === 0;
+      us.K.typing('edit'); var late = us.K.drafts().version; us.h.save('person'); us.K.typing('edit'); us.K.saved(late);   // a keystroke while the picker stood open
+      if (none && records(uw) === 1) k.typedSaved++; else P.push('typedSaved: a save carrying the typing left it unsaved (' + !none + '), or a keystroke after the save was not kept (' + records(uw) + ')');
+    }
+    // A file's drafts (ENGINE.40's second slice): each box written after a save's rows as a draft over a raw string and taken
+    // back as typed, quotes, backslashes and the closer's own run of # among them, the save's own text untouched, and the
+    // file without its drafts loading the grid as the save alone does.
+    closeSheets();
+    var dw = sheet(workWorld(), 'a');
+    if (dw) {
+      dw.h.edit('(formula "Screen" "A1" "=6*7")');
+      var saveOf = dw.h.saveText(), typedIn = { source: { text: '; mine\n(cartridge "x" (title "a \\"#quoted\\"#"))\n', path: 'x/x.source.vla' },
+        'library:common': { text: 'holds "## and ends "' }, edit: { text: '(cell "Screen" "B1" "制約")' }, keys: { text: '(bind "Ctrl+J" pause)\r\n' }, replay: { text: '' } };
+      var order = ['source', 'library:common', 'edit', 'replay', 'keys'], fileText = saveOf.text + draftForms(typedIn, order), back = takeDrafts(fileText), same = back.text === saveOf.text;
+      order.forEach(function (n) { if (!back.drafts[n] || back.drafts[n].text !== typedIn[n].text.replace(/\r\n/g, '\n')) same = false; });
+      if (same && back.drafts.source.path === 'x/x.source.vla' && back.count === order.length) k.draftsRound++;
+      else P.push('drafts: a file\'s boxes were not taken back as typed: ' + JSON.stringify(back.drafts).slice(0, 200));
+      var reload = host(0);
+      if (reload) { sheetsOpen.push(reload); if (reload.load(back.text, 'x.vla').ok && fillsOf(reload) === fillsOf(dw.h)) k.draftsLoaded++; else P.push('drafts: the file without its drafts did not load as the save'); }
     }
     closeSheets();
     // The browser's own store, where the page has one: a record and its keyframe written, read, held and dropped.

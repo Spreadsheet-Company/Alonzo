@@ -177,6 +177,12 @@ pub struct Manifest {
     pub directives: Vec<String>,
 }
 
+/// A `draft` form, a box of the drawer a save carries (ENGINE.40), its head
+/// compared without case as a row's head is.
+fn is_draft(form: &Form) -> bool {
+    matches!(form, Form::List(l) if matches!(l.items.first(), Some(Form::Sym(head)) if head.eq_ignore_ascii_case("draft")))
+}
+
 /// A whole number as a row writes it: digits alone.
 fn whole(f: &Form) -> Option<u64> {
     match f {
@@ -1161,7 +1167,11 @@ impl Cartridge {
             ));
         };
         let manifest = Manifest::read(&first)?;
-        let mut draft = read_rows_each(forms)?;
+        // A save's drafts, the drawer's boxes a person typed (ENGINE.40's
+        // second slice; docs/SPEC.md section 7.5): the page's and never the
+        // grid's, set aside wherever a file holds one, so that a save loads
+        // the grid it loads without them.
+        let mut draft = read_rows_each(forms.filter(|form| !is_draft(form)))?;
         let camera = draft.find_sheet("Camera").is_some();
         check_devices(&draft, &manifest, camera)?;
         let (frame, rate) = make_own_sheets(&mut draft, &manifest, name, size);
@@ -3083,6 +3093,85 @@ mod tests {
             "a cartridge's own rate stands"
         );
         assert_eq!(fills_of(&resumed), fills_of(&original));
+    }
+
+    /// A save's drafts (`ENGINE.40`), the drawer's boxes a page writes after a
+    /// save's rows, each `(draft "<box>" "<name>" #"<text>"#)` over the
+    /// language's raw string (Frazaro's `VLA.18`), are set aside by the load
+    /// wherever they stand, so that the grid is the save's alone; and the
+    /// language reads each text as it was typed.
+    #[test]
+    fn a_save_s_drafts_are_set_aside() {
+        let text = format!(
+            "{}(sheet \"Count\" visible)\n(formula \"Count\" \"A1\" \"=Clock!$B$1*2\")\n",
+            small(30)
+        );
+        let mut original = load(&text).expect("loads");
+        for _ in 0..3 {
+            original.step(0);
+        }
+        let save = save_of(&original, &text);
+        // the drafts after the rows as a page writes them, more # where a text
+        // holds "#, a CRLF and an empty box among them; one among the rows, as
+        // a person might move one, a head of any case; and one over a plain
+        // string, which the load sets aside alike
+        let head = first_form_text(&save);
+        let rows = &save[head.len()..];
+        let mut drafted = String::new();
+        drafted.push_str(head);
+        drafted.push('\n');
+        drafted.push_str(r###"(DRAFT "edit" "" #"(cell "Count" "B1" 9)"#)"###);
+        drafted.push('\n');
+        drafted.push_str(rows);
+        drafted.push_str(r###"(draft "source" "small/small.source.vla" ##"; mine "#quoted"#"###);
+        drafted.push_str("\r\n");
+        drafted.push_str(r###"(cartridge "small" (title "a \"b\" C:\path"))"##)"###);
+        drafted.push('\n');
+        drafted.push_str(r###"(draft "keys" "" #"(bind "Ctrl+J" pause)"#)"###);
+        drafted.push('\n');
+        drafted.push_str(r###"(draft "replay" "" #""#)"###);
+        drafted.push('\n');
+        drafted.push_str(r#"(draft "library" "common" "a plain \"string\"")"#);
+        drafted.push('\n');
+        let plain = Cartridge::load(&save, "small-3.vla", save.len()).expect("the save loads");
+        let with = Cartridge::load(&drafted, "small-3.vla", drafted.len())
+            .expect("a save with its drafts loads");
+        assert_eq!(
+            fills_of(&with),
+            fills_of(&plain),
+            "the drafts are no part of the grid"
+        );
+        // each text as typed, the CRLF inside a raw string read as LF
+        let drafts: Vec<[String; 3]> = read_forms(&drafted)
+            .expect("the language reads the drafted save")
+            .iter()
+            .filter(|form| is_draft(form))
+            .map(|form| match form {
+                Form::List(l) => match &l.items[..] {
+                    [_, Form::Str(b), Form::Str(n), Form::Str(t)] => {
+                        [b.clone(), n.clone(), t.clone()]
+                    }
+                    _ => panic!("a draft of three texts: {form:?}"),
+                },
+                _ => unreachable!(),
+            })
+            .collect();
+        let typed = [
+            ["edit", "", r#"(cell "Count" "B1" 9)"#],
+            [
+                "source",
+                "small/small.source.vla",
+                "; mine \"#quoted\"#\n(cartridge \"small\" (title \"a \\\"b\\\" C:\\path\"))",
+            ],
+            ["keys", "", r#"(bind "Ctrl+J" pause)"#],
+            ["replay", "", ""],
+            ["library", "common", r#"a plain "string""#],
+        ];
+        assert_eq!(
+            drafts,
+            typed.map(|d| d.map(String::from)).to_vec(),
+            "each draft's text as typed"
+        );
     }
 
     /// A cartridge's names ride its save (`ENGINE.5`): no view prints a `name`
