@@ -156,6 +156,9 @@
   details p { margin: 6px 0; }
   details li { margin: 4px 0; }
   textarea { display: block; width: 100%; box-sizing: border-box; font: 12.5px/1.4 ui-monospace, Consolas, "Cascadia Mono", monospace; border: 1px solid #c8c8c0; padding: 8px; margin: 8px 0; white-space: pre; overflow: auto; color: #2a2a28; background: #fff; }
+  /* A box a person types a text into, the page's own (CART.3's third slice, the TextBox): its text in blocks, each a
+     <div>, laid out as a textarea's, its height a number of rows. */
+  .box { position: relative; display: block; width: 100%; box-sizing: border-box; height: calc(var(--rows, 10) * 1.4em + 18px); font: 12.5px/1.4 ui-monospace, Consolas, "Cascadia Mono", monospace; border: 1px solid #c8c8c0; padding: 8px; margin: 8px 0; white-space: pre; overflow: auto; color: #2a2a28; background: #fff; resize: vertical; cursor: text; tab-size: 8; }
   code { font: 12.5px/1.4 ui-monospace, Consolas, "Cascadia Mono", monospace; }
   .panel { border: 1px solid #d9d9d2; background: #fff; margin: 14px 0; }
   .panel .bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: #f3f3ee; border-bottom: 1px solid #d9d9d2; font-size: 12px; font-weight: 600; color: #6b6b66; }
@@ -204,7 +207,10 @@
   .plane-box canvas:focus { box-shadow: 0 0 0 2px var(--lavender-deep); }
   /* a grid cartridge's Screen, drawn by the host's viewport in the plane's place at the cells' own sizes (ENGINE.8) */
   .grid.screen { position: absolute; left: 0; top: 0; right: 0; bottom: 0; height: auto; border: 0; }
-  .drawer { flex: none; width: 460px; max-width: 45vw; overflow: auto; box-sizing: border-box; padding: 8px 12px 16px; background: #fafaf7; border-left: 1px solid #d9d9d2; font-size: 13px; color: #4b4b47; }
+  /* the drawer's size the player's row's alone, never its contents' (CART.3's third slice): the row that stretches it
+     measured them at every change in it, the frame line's at every frame, laying each box out again, 50 ms a frame with a
+     replay of twelve thousand lines in its box */
+  .drawer { flex: none; width: 460px; max-width: 45vw; overflow: auto; box-sizing: border-box; padding: 8px 12px 16px; background: #fafaf7; border-left: 1px solid #d9d9d2; font-size: 13px; color: #4b4b47; contain: size layout; }
   .drawer[hidden] { display: none; }
   .drawer h2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; margin: 14px 0 6px; color: #1d1d1b; }
   .drawer .controls { margin: 6px 0; }
@@ -286,31 +292,31 @@
         <summary>The source and the cartridge</summary>
         <p>The source, <code id="eng-src-path">none: an empty sheet has no source</code>, is what a person writes: the cartridge's manifest, then its rows written short by template macros, a palette one call and a pattern one picture, a string a row of it, from the library the source includes, below. Build the cartridge runs the pass in the page, the module's <code>alonzo_expand</code>, the function <code>cargo run --release --example expand</code> runs, to the same bytes, and puts the cartridge it writes in the second box, to be read before Load loads it: the pass loads nothing, and a cartridge running goes on running (docs/SPEC.md section 7.8). Apply the source builds it the same way and applies the cartridge to the game that runs, edit and continue: the rows it changed are written as a person's edit at the next frame, the frame number and every other cell kept, and the replay records them; what a write cannot carry, a line of the manifest, a sheet added or removed, a look, or a row removed, is named, and Load starts the cartridge from frame 0. The fake module holds no pass, and says so.</p>
         <p class="controls"><button type="button" id="eng-build" data-command="build" title="the source built by the pass into the cartridge's box, nothing loaded; Ctrl+Enter in the source's box or a library's, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Build the cartridge</button> <button type="button" id="eng-apply" data-command="apply" title="the source built, and the rows it changed written into the running game at the next frame, its frame number and every other cell kept; Ctrl+Shift+Enter in the source's box or a library's, Cmd+Shift+Enter on a Mac" aria-keyshortcuts="Control+Shift+Enter Meta+Shift+Enter">Apply the source</button></p>
-        <p class="note">The keys, Cmd for Ctrl on a Mac: Ctrl+Enter in a box presses its button, building in the source's box or a library's, loading in the cartridge's and playing in the replay's; Ctrl+Shift+Enter in the source's box, a library's or the cartridge's applies it to the game that runs, its state kept, the source built first and the cartridge as it stands. A key leaves the caret where it was.</p>
-        <textarea id="eng-src" rows="14" spellcheck="false" aria-label="the cartridge's source"></textarea>
+        <p class="note">The keys, Cmd for Ctrl on a Mac: Ctrl+Enter in a box presses its button, building in the source's box or a library's, loading in the cartridge's and playing in the replay's; Ctrl+Shift+Enter in the source's box, a library's or the cartridge's applies it to the game that runs, its state kept, the source built first and the cartridge as it stands. A key leaves the caret where it was. Ctrl+Z undoes in a box and Ctrl+Y or Ctrl+Shift+Z redoes, each box its own history, and a box of any length selects and scrolls as a short one does.</p>
+        <div id="eng-src" class="box" style="--rows: 14" contenteditable="plaintext-only" role="textbox" aria-multiline="true" spellcheck="false" autocapitalize="off" translate="no" aria-label="the cartridge's source"></div>
         <p>The cartridge, <code id="eng-cart-path">none: the empty sheet is the page's own</code>, the file the host loads, picked in the bar or pasted here.</p>
         <p id="eng-cart-notes" class="note"></p>
         <p>Paste another cartridge, edit this one, or build it again from its source, and press Load: change <code>(rate 30)</code> to <code>(rate 0)</code> and the loop has no tick, one step for each edit. The engine's module reads it whole, the manifest and every row, and the language computes each cell; the fake module, when no engine is built in, reads the manifest alone and draws its declared tiles whatever the rows say.</p>
-        <textarea id="eng-cart" rows="14" spellcheck="false" aria-label="the cartridge, the rows a load takes"></textarea>
+        <div id="eng-cart" class="box" style="--rows: 14" contenteditable="plaintext-only" role="textbox" aria-multiline="true" spellcheck="false" autocapitalize="off" translate="no" aria-label="the cartridge, the rows a load takes"></div>
         <details>
           <summary>The libraries the sources include</summary>
           <p class="controls"><select id="eng-lib-pick" aria-label="the library shown in the box"></select> <code id="eng-lib-path"></code></p>
           <p>Template macros, the author's and never the engine's: change one, or write one of your own in a source, and build again. Build hands the pass every library the page holds, as edited here.</p>
-          <textarea id="eng-lib" rows="14" spellcheck="false" aria-label="the library the sources include"></textarea>
+          <div id="eng-lib" class="box" style="--rows: 14" contenteditable="plaintext-only" role="textbox" aria-multiline="true" spellcheck="false" autocapitalize="off" translate="no" aria-label="the library the sources include"></div>
         </details>
       </details>
       <details id="eng-replay-box">
         <summary>The replay</summary>
         <p class="controls"><button type="button" id="eng-replay-play" data-command="play-replay" title="the cartridge loaded again with the replay's seed and its frames played; Ctrl+Enter in the replay's box, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Play the replay</button> <button type="button" id="eng-replay-copy" data-command="copy-replay">Copy the replay</button></p>
         <p>A replay, <code id="eng-replay-path">none: this cartridge has no replay of its own</code>, is every write a run made between its steps: a header naming the cartridge by the SHA-256 of its text and the seed, then each frame as one form holding its rows, <code>(frame 12 (cell "Input" "B5" 1))</code>, the Input sheet's cells that changed and each person's edit that landed; the host's derived writes are never logged, a replay re-deriving them (docs/SPEC.md section 7.6). Paste one here and press Play the replay: the host loads the cartridge again with the replay's seed and plays its frames at the cartridge's rate, a person's edits waiting until it ends, and pauses at its last frame; Run then carries on with the live inputs. Copy the replay puts what the host has recorded since the last load on the clipboard and in this box, a replay played among it, so a replay played and copied is the replay played. The input card's and the sound card's own replays are the loop oracle's runs of them: play the sound card's with the sound on and hear the run again, its ticks, the knob turned to a word that is no wave and back, and a stretch at a third of the speed. Kairos's is the owner's two games: the major prize won, the minor refused on the way, then a fall at the last level. Superposition's is the owner's session at its hand test: eighteen acts in one world by the pointer and the commands, a box sealed, two decays observed and a cascade of 288 sites among them, each act's settle played as the engine stepped it.</p>
-        <textarea id="eng-replay" rows="10" spellcheck="false" aria-label="a replay to play"></textarea>
+        <div id="eng-replay" class="box" style="--rows: 10" contenteditable="plaintext-only" role="textbox" aria-multiline="true" spellcheck="false" autocapitalize="off" translate="no" aria-label="a replay to play"></div>
       </details>
       <details id="eng-keys-box">
         <summary>The keys</summary>
         <p>Every act of the page is a command, run from the palette by its name (Ctrl+K, Cmd+K on a Mac, or Ctrl+Shift+`), and the keys that press one besides are this keymap, a text to read and change: a binding a line, and commands of your own, a name of your choosing and the steps it runs in order, a command of the page, a sheet or a row of VLA. Apply the keys applies the box whole, or refuses it whole and says which line and why; applied, it is kept in this browser, and every page of the house opened in it reads it as it loads. Back to the defaults puts the page's own keymap in the box; Record a key writes the next key pressed into the box at the caret, as the keymap spells it.</p>
         <p class="controls"><button type="button" id="eng-keys-apply" data-command="apply-keys">Apply the keys</button> <button type="button" id="eng-keys-defaults" data-command="default-keys">Back to the defaults</button> <button type="button" id="eng-keys-record" data-command="record-key">Record a key</button></p>
         <p id="eng-keys-said" class="note"></p>
-        <textarea id="eng-keys" rows="16" spellcheck="false" aria-label="the keymap, a binding a line"></textarea>
+        <div id="eng-keys" class="box" style="--rows: 16" contenteditable="plaintext-only" role="textbox" aria-multiline="true" spellcheck="false" autocapitalize="off" translate="no" aria-label="the keymap, a binding a line"></div>
         <h3 class="keys-head">Every command and its keys</h3>
         <ul id="eng-keys-list" class="keys-list" aria-label="every command, its words and its keys"></ul>
       </details>
@@ -1604,6 +1610,340 @@
   // log counts; and a repeat too while the bar holds a key's refusal, which the next sentence of any kind replaces, so that
   // an act after a refused key never stands under the refusal. s, the host's status event; holdsKey, whether the bar holds one.
   function barTakes(s, holdsKey) { return !s.repeat || holdsKey; }
+  // Whether a press of the mouse on an element leaves the keys where they were (CART.3's third slice, whose pass found a
+  // click on Drawer keeping the keys on the button, the game deaf and Space shutting the drawer again), pure: on a
+  // command's button and a section's summary, as the command's key leaves them, its click running the command as before;
+  // a box, a list and the Screen take them at a press as ever. el, the element pressed.
+  function keepsTheKeys(el) { return !!el && typeof el.closest === 'function' && !!el.closest('button[data-command], summary'); }
+  // The rule heard over root: a press of the left button that keeps the keys has its focus refused.
+  function pressesKeepTheKeys(root) { root.addEventListener('mousedown', function (ev) { if (ev.button === 0 && keepsTheKeys(ev.target)) ev.preventDefault(); }, true); }
+  // A box a person types a text into, the drawer's five (CART.3's third slice, decision 31 as the owner amended it,
+  // 2026-11-18): the browser's own plain-text editing over the text laid in blocks of BOX_BLOCK_LINES lines, each block a
+  // <div> of one text node. Chrome's own box, its text selected whole by Ctrl+A while a game runs, takes a time at every
+  // frame drawn that grows with the square of its lines, 21 s and then 5 s a frame at the owner's replay of 12,052 lines
+  // and its right click 29 s, where text in blocks takes 102 ms, its frames 17 ms and its right click 12 ms, and a keystroke
+  // only what its block costs, 27 to 45 ms where the box's took 44 to 76 (measured over real presses, 2026-11-18). The
+  // browser types, selects, composes and finds; the page keeps the text, its line breaks, the clipboard's text and the
+  // undo, since Chrome writes a typed line break as a <br> and its undo leaves such breaks behind: Enter, a paste, a drop, a
+  // cut, a copy and any edit reaching across a block's edge are the page's, and Ctrl+Z and Ctrl+Y its own history. The
+  // element answers value, selectionStart and selectionEnd as a textarea does, so that the page reads and writes it as it
+  // read and wrote its boxes; a value written clears the history, as a textarea's does.
+  var BOX_BLOCK_LINES = 100, BOX_UNDOS = 500, BOX_COALESCE_MS = 1500;
+  // A text in blocks of BOX_BLOCK_LINES lines, the blocks' texts joined by line feeds the text: never no block.
+  function boxBlocks(text) {
+    var lines = text.split('\n'), out = [];
+    for (var i = 0; i < lines.length; i += BOX_BLOCK_LINES) out.push(lines.slice(i, i + BOX_BLOCK_LINES).join('\n'));
+    return out;
+  }
+  // A block as the page writes it: its text one node, and a <br> after it where its last line is empty, which Chrome
+  // would not draw otherwise, the line the caret stands on after a line feed at its end.
+  function boxBlock(text) {
+    var d = document.createElement('div');
+    if (text) d.appendChild(document.createTextNode(text));
+    if (!text || text.charCodeAt(text.length - 1) === 10) d.appendChild(document.createElement('br'));
+    return d;
+  }
+  // A block as the page reads it, whatever the browser's edit left in it: each node with where its text begins and how
+  // long it is, and the text. A <br> is a line feed only where neither the block's start nor a line feed is before it and
+  // a node is after it; otherwise it is the empty line's placeholder, written by the page or by the browser, and no text.
+  function boxPieces(d) {
+    var pieces = [], text = '';
+    for (var n = d.firstChild; n; n = n.nextSibling) {
+      var t = n.nodeType === 3 ? n.data : n.nodeName === 'BR' ? (n.nextSibling && text && text.charCodeAt(text.length - 1) !== 10 ? '\n' : '') : n.textContent;
+      pieces.push([n, text.length, t.length]);
+      text += t;
+    }
+    return { pieces: pieces, text: text };
+  }
+  // Whether a block stands as the page writes it, so that nothing need be written again.
+  function boxWritten(d, text) {
+    var f = d.firstChild, last = d.lastChild, needsBreak = !text || text.charCodeAt(text.length - 1) === 10;
+    if (!text) return f === last && f && f.nodeName === 'BR';
+    return f && f.nodeType === 3 && f.data === text && (needsBreak ? f.nextSibling === last && last.nodeName === 'BR' : f === last);
+  }
+  // The text a beforeinput carries, its data or its transfer's plain text, and null for none.
+  function boxData(ev) {
+    if (typeof ev.data === 'string') return ev.data;
+    if (ev.dataTransfer && typeof ev.dataTransfer.getData === 'function') return ev.dataTransfer.getData('text/plain');
+    return null;
+  }
+  function boxLines(text) { return text.split('\n').length; }
+  function TextBox(el) {
+    var box = this;
+    this.el = el; this.texts = ['']; this.sel = [0, 0]; this.undos = []; this.redos = [];
+    this.native = -1; this.nativeSel = null; this.own = false; this.pointing = false;
+    el.textContent = '';
+    el.appendChild(boxBlock(''));
+    Object.defineProperty(el, 'value', { configurable: true, get: function () { return box.text(); }, set: function (v) { box.put(v); } });
+    Object.defineProperty(el, 'selectionStart', { configurable: true, get: function () { return box.selection()[0]; }, set: function (v) { var e = box.selection()[1]; box.select(v, Math.max(v, e)); } });
+    Object.defineProperty(el, 'selectionEnd', { configurable: true, get: function () { return box.selection()[1]; }, set: function (v) { var s = box.selection()[0]; box.select(Math.min(s, v), v); } });
+    el.addEventListener('beforeinput', function (ev) { box.beforeInput(ev); });
+    el.addEventListener('input', function (ev) { if (!box.own && !ev.isComposing) box.settle(ev.inputType); });
+    el.addEventListener('compositionend', function () { box.settle('insertCompositionText'); });
+    el.addEventListener('keydown', function (ev) { box.keydown(ev); });
+    el.addEventListener('copy', function (ev) { box.clip(ev, false); });
+    el.addEventListener('cut', function (ev) { box.clip(ev, true); });
+    el.addEventListener('paste', function (ev) { box.paste(ev); });
+    el.addEventListener('dragstart', function (ev) { ev.preventDefault(); });
+    el.addEventListener('drop', function (ev) { box.drop(ev); });
+    el.addEventListener('mousedown', function () { box.pointing = true; });
+    document.addEventListener('mouseup', function () { box.pointing = false; });
+    // focused by the page or by Tab, the caret goes back where it stood, as a textarea's does; by a press, where it falls
+    el.addEventListener('focus', function () { if (!box.pointing) box.restore(); });
+    document.addEventListener('selectionchange', function () { box.note(); });
+  }
+  TextBox.prototype.text = function () { return this.texts.join('\n'); };
+  // where block b's text begins in the text
+  TextBox.prototype.start = function (b) { var s = 0; for (var k = 0; k < b; k++) s += this.texts[k].length + 1; return s; };
+  // the block an offset of the text falls in and the offset in it, the end of a block before the next one's start
+  TextBox.prototype.locate = function (at) {
+    var b = 0, s = 0, n = this.texts.length;
+    while (b < n - 1 && at > s + this.texts[b].length) { s += this.texts[b].length + 1; b++; }
+    return [b, Math.max(0, Math.min(at - s, this.texts[b].length))];
+  };
+  TextBox.prototype.blockOf = function (node) {
+    var d = node;
+    while (d && d.parentNode !== this.el) d = d.parentNode;
+    return d ? Array.prototype.indexOf.call(this.el.childNodes, d) : -1;
+  };
+  // The offset into the text of a place in the box, a node and an offset as a selection or a range give them; null outside.
+  TextBox.prototype.offsetOf = function (node, off) {
+    var el = this.el, n = this.texts.length;
+    if (node === el) return off >= n ? this.start(n) - 1 : this.start(off);
+    var b = this.blockOf(node);
+    if (b < 0 || b >= n) return null;
+    var d = el.childNodes[b], read = boxPieces(d), local = read.text.length;
+    if (node === d) { local = 0; for (var k = 0; k < off && k < read.pieces.length; k++) local += read.pieces[k][2]; }
+    else for (var i = 0; i < read.pieces.length; i++) {
+      var p = read.pieces[i];
+      if (p[0] === node) { local = p[1] + (node.nodeType === 3 ? Math.min(off, p[2]) : 0); break; }
+      if (p[0].contains(node)) { local = p[1] + Math.min(off, p[2]); break; }
+    }
+    return this.start(b) + Math.min(local, this.texts[b].length);
+  };
+  // The place in the box of an offset into the text: a text node and an offset in it, or a block's start where it holds
+  // none; after a line feed that ends a block's text, the place before the empty line's <br>, where Chrome draws the caret
+  // on that line.
+  TextBox.prototype.place = function (at) {
+    var p = this.locate(at), d = this.el.childNodes[p[0]], pieces = boxPieces(d).pieces;
+    for (var i = 0; i < pieces.length; i++) {
+      var q = pieces[i], n = q[0];
+      if (n.nodeType !== 3 || p[1] < q[1] || p[1] > q[1] + q[2]) continue;
+      if (p[1] === q[1] + q[2] && q[2] && n.data.charCodeAt(q[2] - 1) === 10 && n.nextSibling && n.nextSibling.nodeName === 'BR') return [d, i + 1];
+      return [n, p[1] - q[1]];
+    }
+    return [d, 0];
+  };
+  TextBox.prototype.focused = function () { return document.activeElement === this.el; };
+  // The document's selection, where it stands in the box, kept as offsets into the text.
+  TextBox.prototype.note = function () {
+    var s = window.getSelection();
+    if (!s || !s.rangeCount) return;
+    var r = s.getRangeAt(0);
+    if (!this.el.contains(r.startContainer) || !this.el.contains(r.endContainer)) return;
+    var a = this.offsetOf(r.startContainer, r.startOffset), b = this.offsetOf(r.endContainer, r.endOffset);
+    if (a !== null && b !== null) this.sel = [Math.min(a, b), Math.max(a, b)];
+  };
+  TextBox.prototype.selection = function () { if (this.focused()) this.note(); return this.sel.slice(); };
+  // The selection set by offsets into the text: kept, and drawn where the box has the keys.
+  TextBox.prototype.select = function (s, e) {
+    var n = this.start(this.texts.length) - 1;
+    s = Math.max(0, Math.min(Number(s) || 0, n)); e = Math.max(s, Math.min(Number(e) || 0, n));
+    this.sel = [s, e];
+    if (this.focused()) this.restore();
+  };
+  TextBox.prototype.restore = function () {
+    var s = window.getSelection();
+    if (!s) return;
+    var a = this.place(this.sel[0]), b = this.place(this.sel[1]);
+    s.setBaseAndExtent(a[0], a[1], b[0], b[1]);
+  };
+  // The caret's line brought into the box's view, after an edit of the page's own, which the browser does not scroll to.
+  TextBox.prototype.reveal = function (at) {
+    var p = this.locate(at), d = this.el.childNodes[p[0]], el = this.el;
+    var before = this.texts[p[0]].slice(0, p[1]), line = boxLines(before) - 1, lh = parseFloat(getComputedStyle(el).lineHeight) || 17.5;
+    var y = d.offsetTop + line * lh;
+    if (y < el.scrollTop) el.scrollTop = y;
+    else if (y + lh > el.scrollTop + el.clientHeight) el.scrollTop = y + lh - el.clientHeight;
+    if (before.lastIndexOf('\n') === before.length - 1) el.scrollLeft = 0;
+  };
+  // Blocks i to j, j not included, written as texts: the page's, and the only way the page writes the box.
+  TextBox.prototype.render = function (i, j, texts) {
+    var el = this.el, after = el.childNodes[j] || null, frag = document.createDocumentFragment();
+    for (var k = j - 1; k >= i; k--) el.removeChild(el.childNodes[k]);
+    texts.forEach(function (t) { frag.appendChild(boxBlock(t)); });
+    el.insertBefore(frag, after);
+    Array.prototype.splice.apply(this.texts, [i, j - i].concat(texts));
+  };
+  // A value written by the page: the text in blocks, the history cleared and the caret at its end, as a textarea's.
+  TextBox.prototype.put = function (v) {
+    var text = String(v === undefined || v === null ? '' : v).replace(/\r\n?/g, '\n');
+    this.undos = []; this.redos = []; this.native = -1; this.texts = [];
+    this.render(0, this.el.childNodes.length, boxBlocks(text));
+    this.sel = [text.length, text.length];
+    if (this.focused()) this.restore();
+  };
+  // The text at and after at, len of its characters, replaced by text, unrecorded: the blocks it reaches written again,
+  // in blocks of BOX_BLOCK_LINES where they would hold more than twice as many, else as one.
+  TextBox.prototype.apply = function (at, len, text) {
+    var a = this.locate(at), z = this.locate(at + len);
+    var joined = this.texts[a[0]].slice(0, a[1]) + text + this.texts[z[0]].slice(z[1]);
+    this.render(a[0], z[0] + 1, boxLines(joined) > 2 * BOX_BLOCK_LINES ? boxBlocks(joined) : [joined]);
+  };
+  // An edit of the page's own: applied, recorded, the caret after it, told as the browser tells its own, by an input event.
+  TextBox.prototype.splice = function (at, len, text, kind) {
+    var before = this.sel.slice(), removed = this.text().slice(at, at + len);
+    this.apply(at, len, text);
+    this.record(at, removed, text, before, kind);
+    this.select(at + text.length, at + text.length);
+    this.reveal(at + text.length);
+    this.told(kind);
+  };
+  TextBox.prototype.told = function (kind) {
+    this.own = true;
+    try { this.el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: kind })); } finally { this.own = false; }
+  };
+  // A step of the history: typing at the end of the step before and deleting back from its start join it, within
+  // BOX_COALESCE_MS, as a word typed is one step of a textarea's; a step done anew forgets what was undone.
+  TextBox.prototype.record = function (at, removed, inserted, before, kind) {
+    var last = this.undos[this.undos.length - 1], now = Date.now(), after = [at + inserted.length, at + inserted.length];
+    this.redos = [];
+    if (last && last.kind === kind && now - last.when < BOX_COALESCE_MS) {
+      if (kind === 'insertText' && !removed && !last.removed && at === last.at + last.inserted.length) { last.inserted += inserted; last.after = after; last.when = now; return; }
+      if (kind === 'deleteContentBackward' && !inserted && !last.inserted && at + removed.length === last.at) { last.at = at; last.removed = removed + last.removed; last.after = after; last.when = now; return; }
+      if (kind === 'deleteContentForward' && !inserted && !last.inserted && at === last.at) { last.removed += removed; last.when = now; return; }
+    }
+    this.undos.push({ at: at, removed: removed, inserted: inserted, before: before, after: after, kind: kind, when: now });
+    if (this.undos.length > BOX_UNDOS) this.undos.shift();
+  };
+  TextBox.prototype.undo = function () {
+    var u = this.undos.pop();
+    if (!u) return false;
+    this.apply(u.at, u.inserted.length, u.removed);
+    this.redos.push(u);
+    this.select(u.before[0], u.before[1]); this.reveal(u.before[0]);
+    this.told('historyUndo');
+    return true;
+  };
+  TextBox.prototype.redo = function () {
+    var u = this.redos.pop();
+    if (!u) return false;
+    this.apply(u.at, u.removed.length, u.inserted);
+    this.undos.push(u);
+    this.select(u.after[0], u.after[1]); this.reveal(u.after[0]);
+    this.told('historyRedo');
+    return true;
+  };
+  // What an input will replace, as offsets into the text: its target ranges where the browser names them, else the
+  // selection, and a character either side of a caret for a delete.
+  TextBox.prototype.targetOf = function (ev) {
+    var rs = typeof ev.getTargetRanges === 'function' ? ev.getTargetRanges() : [], s = null, e = null;
+    for (var i = 0; i < rs.length; i++) {
+      var a = this.offsetOf(rs[i].startContainer, rs[i].startOffset), b = this.offsetOf(rs[i].endContainer, rs[i].endOffset);
+      if (a === null || b === null) continue;
+      s = s === null ? Math.min(a, b) : Math.min(s, a, b); e = e === null ? Math.max(a, b) : Math.max(e, a, b);
+    }
+    if (s !== null) return [s, e];
+    s = this.sel[0]; e = this.sel[1];
+    if (s === e && ev.inputType === 'deleteContentBackward' && s > 0) return [s - 1, s];
+    if (s === e && ev.inputType === 'deleteContentForward' && s < this.start(this.texts.length) - 1) return [s, s + 1];
+    return [s, e];
+  };
+  TextBox.prototype.beforeInput = function (ev) {
+    var t = ev.inputType || '';
+    if (t === 'historyUndo' || t === 'historyRedo') { ev.preventDefault(); if (t === 'historyUndo') this.undo(); else this.redo(); return; }
+    this.note();
+    if (ev.isComposing || /Composition/.test(t)) { this.native = this.blockOf(window.getSelection().focusNode); this.nativeSel = this.sel.slice(); return; }
+    var span = this.targetOf(ev), data = boxData(ev);
+    // the page's: a line break; a text carrying one, pasted, dropped, yanked or replaced; and any edit reaching across a
+    // block's edge, the selection's or a delete's from a block's start or end, which the browser would leave as markup
+    var across = this.locate(span[0])[0] !== this.locate(span[1])[0];
+    if (t === 'insertParagraph' || t === 'insertLineBreak' || across || /^insertFrom|^insertReplacementText$|^insertTranspose$|^deleteBy/.test(t) || (data !== null && /[\r\n]/.test(data))) {
+      ev.preventDefault();
+      var text = t === 'insertParagraph' || t === 'insertLineBreak' ? '\n' : /^delete/.test(t) || data === null ? '' : data.replace(/\r\n?/g, '\n');
+      this.splice(span[0], span[1] - span[0], text, t);
+      return;
+    }
+    // the browser's own, inside one block, read back at its input
+    this.native = this.locate(span[0])[0]; this.nativeSel = this.sel.slice();
+  };
+  // A browser's edit read back: the block it changed, the change the common head and tail leave, recorded; and the block
+  // written again where the edit left it other than the page writes it. A box whose blocks the edit broke is read whole.
+  TextBox.prototype.settle = function (kind) {
+    var el = this.el, kids = el.childNodes, b = this.native, before = this.nativeSel || this.sel.slice();
+    this.native = -1; this.nativeSel = null;
+    var whole = kids.length !== this.texts.length;
+    for (var k = 0; !whole && k < kids.length; k++) if (kids[k].nodeName !== 'DIV') whole = true;
+    // an input no beforeinput named, a composition's end among them: the block the caret stands in
+    if (!whole && (b < 0 || b >= kids.length)) { var fs = window.getSelection(); b = fs && fs.focusNode && el.contains(fs.focusNode) ? this.blockOf(fs.focusNode) : -1; }
+    if (whole || b < 0 || b >= kids.length) { this.resync(kind, before); return; }
+    var read = boxPieces(kids[b]).text, old = this.texts[b];
+    if (read !== old) {
+      var p = 0, m = Math.min(read.length, old.length);
+      while (p < m && read.charCodeAt(p) === old.charCodeAt(p)) p++;
+      var q = 0;
+      while (q < m - p && read.charCodeAt(read.length - 1 - q) === old.charCodeAt(old.length - 1 - q)) q++;
+      this.texts[b] = read;
+      this.record(this.start(b) + p, old.slice(p, old.length - q), read.slice(p, read.length - q), before, kind || 'insertText');
+    }
+    this.note();
+    if (!boxWritten(kids[b], read)) {
+      var sel = this.sel.slice();
+      this.render(b, b + 1, [read]);
+      if (this.focused()) { this.sel = sel; this.restore(); }
+    }
+  };
+  // The box read whole, block by block and whatever stands between them, the change recorded and the box written again.
+  TextBox.prototype.resync = function (kind, before) {
+    var parts = [], cur = null, old = this.text();
+    for (var n = this.el.firstChild; n; n = n.nextSibling) {
+      if (n.nodeName === 'DIV') { if (cur !== null) parts.push(cur); cur = null; parts.push(boxPieces(n).text); }
+      else if (n.nodeName === 'BR') { if (cur !== null) { parts.push(cur); cur = null; } else parts.push(''); }
+      else cur = (cur || '') + (n.textContent || '');
+    }
+    if (cur !== null) parts.push(cur);
+    var text = parts.join('\n'), p = 0, m = Math.min(text.length, old.length);
+    while (p < m && text.charCodeAt(p) === old.charCodeAt(p)) p++;
+    var q = 0;
+    while (q < m - p && text.charCodeAt(text.length - 1 - q) === old.charCodeAt(old.length - 1 - q)) q++;
+    var sel = this.sel.slice(), at = text.length - q;
+    this.texts = [];
+    this.render(0, this.el.childNodes.length, boxBlocks(text));
+    // nothing changed: the blocks written again and the caret where it stood; else the change recorded, the caret after it
+    if (text === old) { this.select(sel[0], sel[1]); return; }
+    this.record(p, old.slice(p, old.length - q), text.slice(p, text.length - q), before, kind || 'insertText');
+    this.select(at, at);
+  };
+  TextBox.prototype.keydown = function (ev) {
+    if (ev.altKey || !(ev.ctrlKey || ev.metaKey) || ev.isComposing) return;
+    var k = String(ev.key || '').toLowerCase();
+    if (k === 'z' && !ev.shiftKey) { ev.preventDefault(); this.undo(); }
+    else if ((k === 'z' && ev.shiftKey) || (k === 'y' && !ev.shiftKey)) { ev.preventDefault(); this.redo(); }
+  };
+  // A copy or a cut of the selection: its text as the box holds it, line feeds where its blocks meet.
+  TextBox.prototype.clip = function (ev, cut) {
+    this.note();
+    var s = this.sel[0], e = this.sel[1];
+    if (s === e || !ev.clipboardData) return;
+    ev.preventDefault();
+    ev.clipboardData.setData('text/plain', this.text().slice(s, e));
+    if (cut) this.splice(s, e - s, '', 'deleteByCut');
+  };
+  TextBox.prototype.paste = function (ev) {
+    if (!ev.clipboardData) return;
+    ev.preventDefault();
+    this.note();
+    this.splice(this.sel[0], this.sel[1] - this.sel[0], ev.clipboardData.getData('text/plain').replace(/\r\n?/g, '\n'), 'insertFromPaste');
+  };
+  // A text dropped on the box, put where it fell; a drag out of the box is refused at its start, so a drop is a copy.
+  TextBox.prototype.drop = function (ev) {
+    if (!ev.dataTransfer) return;
+    ev.preventDefault();
+    var at = this.sel[0], r = document.caretRangeFromPoint ? document.caretRangeFromPoint(ev.clientX, ev.clientY) : null;
+    if (r && this.el.contains(r.startContainer)) { var o = this.offsetOf(r.startContainer, r.startOffset); if (o !== null) at = o; }
+    this.select(at, at);
+    this.splice(at, 0, ev.dataTransfer.getData('text/plain').replace(/\r\n?/g, '\n'), 'insertFromDrop');
+  };
   // A keymap's text with the palette's place (SPEC.5's rider, the owner's food for thought at CART.9's second hand test):
   // every (palette ...) line taken out and, for the top or the bottom, one written at its end; floating writes none, the
   // keymap's default. A comment that names the line is kept.
@@ -1866,6 +2206,8 @@
     var pathEl = document.getElementById('eng-cart-path'), srcEl = document.getElementById('eng-src'), srcPathEl = document.getElementById('eng-src-path');
     var libEl = document.getElementById('eng-lib'), textsEl = document.getElementById('eng-texts');
     var replayEl = document.getElementById('eng-replay'), replayBoxEl = document.getElementById('eng-replay-box'), replayPathEl = document.getElementById('eng-replay-path');
+    // the drawer's boxes the page's own (CART.3's third slice), each answering value and its caret as a textarea does
+    [cartEl, srcEl, libEl, replayEl].forEach(function (el) { new TextBox(el); });
     // The bar named for the page, and the picker's entries: the empty sheet first, which the page opens on
     // whatever cartridges it holds, and each cartridge after it, loaded in its place when picked (ENGINE.15).
     document.getElementById('eng-brand').textContent = PAGE_NAME;
@@ -1998,9 +2340,12 @@
       frameEl.textContent = 'Frame ' + thousands(e.frame || 0) + ', the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + (e.frame ? ': the save as it was saved, ' : ': the cartridge as loaded, nothing computed until ') + (e.frame ? (e.rate ? 'running on at the next step.' : 'an edit stepping it on.') : (e.rate ? 'the first step.' : 'an edit steps it.'));
       refreshGameKeys(true);   // the game's keys said and the list's words of them, the cartridge's Keys sheet now read
     });
+    // A load leaves the Screen the keys it had, a press on Load keeping them there (CART.3's third slice), though a grid
+    // loaded after a plane, or a plane after a grid, draws in the other box.
     function loadCartridge() {
+      var screenHad = placeOf(document.activeElement) === 'screen';
       var r = host.load(cartEl.value, current().file);
-      if (r.ok) { host.start(); showViewer(); return; }
+      if (r.ok) { host.start(); showViewer(); if (screenHad) focusScreen(); return; }
       // a refusal is red, as the viewport's own status line paints one (the owner's hand test, 2026-10-09)
       frameEl.className = 'frame-line refused';
       frameEl.textContent = 'No cartridge is loaded: the last load was refused, and the log says why.';
@@ -2186,11 +2531,14 @@
     // The drawer's keys (ENGINE.22), Enter in the edit row and Ctrl+Enter and Ctrl+Shift+Enter in the boxes, are the
     // keymap's since ENGINE.23's second slice, its defaults, each a binding a person may move.
     // The drawer (ENGINE.14, decision 9), closed at first so the window is the game's: opened, it pushes the
-    // Screen aside, which refits, and its sheet, measured again in its box, is viewed through the cells in view.
+    // Screen aside, which refits, and its sheet, measured again in its box, is viewed through the cells in view. Shut
+    // with the keys in one of its boxes, it gives them to the Screen, never to no one (CART.3's third slice).
     drawerBtn.addEventListener('click', function () {
+      var inside = drawer.contains(document.activeElement);
       drawer.hidden = !drawer.hidden;
       drawerBtn.setAttribute('aria-expanded', drawer.hidden ? 'false' : 'true');
       if (!drawer.hidden) { dvp.redraw(); host.refreshSheet(dvp); renderLog(); logEl.scrollTop = logEl.scrollHeight; }
+      else if (inside) focusScreen();
     });
     // Full screen, the browser's, over the whole player, the bar kept: Esc leaves it, as the button does. Entered, the page
     // locks Escape where the browser has Keyboard Lock (ENGINE.23, the owner's word): a second Escape leaves, or one held.
@@ -2257,6 +2605,7 @@
     // how: 'key' when a key pressed it, which leaves the focus where it was, as ENGINE.22's keys did; a press of the
     // palette or a button gives the Screen the keys where the button does.
     var keysEl = document.getElementById('eng-keys'), keysBox = document.getElementById('eng-keys-box'), keysSaid = document.getElementById('eng-keys-said'), keysList = document.getElementById('eng-keys-list');
+    new TextBox(keysEl);   // the keys' box the page's own, as the drawer's others are
     var ACTS = {
       palette: function () { palette.toggle(); },
       pick: function () { pickEl.focus(); try { if (pickEl.showPicker) pickEl.showPicker(); } catch (e) { /* a browser that shows the list only on a click */ } },
@@ -2618,10 +2967,12 @@
     document.getElementById('eng-keys-apply').addEventListener('click', applyKeys);
     document.getElementById('eng-keys-defaults').addEventListener('click', defaultKeys);
     document.getElementById('eng-keys-record').addEventListener('click', recordKey);
-    // the Commands button, the palette's convenience: pressed while the palette is open, it keeps the prompt's focus, so
-    // that its click shuts the palette rather than opening it again
+    // A press on any of the player's commands' buttons or sections' summaries leaves the keys where they were
+    // (keepsTheKeys), so that a click on Drawer, Pause or Load leaves the game its keys. The Commands button, the
+    // palette's convenience, so keeps the prompt's focus while the palette is open, and its click shuts the palette
+    // rather than opening it again.
+    pressesKeepTheKeys(document.getElementById('player'));
     var paletteBtn = document.getElementById('eng-palette');
-    paletteBtn.addEventListener('mousedown', function (ev) { if (palette.isOpen()) ev.preventDefault(); });
     paletteBtn.addEventListener('click', function () { palette.toggle(mode === 'grid' && host.vp ? host.vp.scroller : planeCv); });
     // The keys, heard on the document in the capture phase before the game, the viewport or a box hear them. Record a key
     // first; the palette's prompt is its own but for the palette's key; then the keymap's binding in the place that has
@@ -2643,7 +2994,7 @@
       if (el === keysEl) return 'keys';
       if (el === planeCv || (host.vp && host.vp.root.contains(el))) return 'screen';
       if (dvp.root.contains(el)) return 'viewer';
-      return /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) ? 'box' : 'page';
+      return /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable ? 'box' : 'page';
     }
     function repeats(name) { return COMMANDS.some(function (c) { return c.name === name && c.repeats; }); }
     document.addEventListener('keydown', function (ev) {
@@ -7462,6 +7813,158 @@
     }
     return { counters: k, problems: P };
   }
+  // The drawer's (CART.3's third slice), pure, over the page's own markup and a box of the stage: the drawer's size the
+  // player's row's alone, so that no change in it lays its boxes out again; a press of the mouse on a command's button or a
+  // section's summary leaving the keys where they were, a box, a list and a button of no command taking them, and a press of
+  // the right button too; and the five boxes the page's own (TextBox): the text in blocks, read back as written, the caret
+  // kept, Enter, a delete across a block's edge, a paste, a copy and a cut the page's, the page's own history, and its
+  // edits told as the browser tells its own.
+  function caseDrawer() {
+    var P = [], k = { contained: 0, buttons: 0, summaries: 0, boxes: 0, pressed: 0, regions: 0, blocks: 0, read: 0, caret: 0, breaks: 0, merged: 0, pasted: 0, copied: 0, undone: 0, told: 0 };
+    var drawer = document.getElementById('drawer'), contain = drawer ? getComputedStyle(drawer).contain : '';
+    if (/\b(strict|size)\b/.test(contain) && /\b(strict|layout)\b/.test(contain)) k.contained++;
+    else P.push('drawer: the drawer\'s contain is ' + JSON.stringify(contain) + ', where size and layout are due, so that no change in it lays its boxes out again');
+    var player = document.getElementById('player');
+    if (!player) P.push('drawer: the page holds no player');
+    else {
+      Array.prototype.forEach.call(player.querySelectorAll('button'), function (b) {
+        if (b.hasAttribute('data-command') && keepsTheKeys(b)) k.buttons++;
+        else P.push('drawer: a press on the player\'s button ' + JSON.stringify(b.id || b.textContent) + ' takes the keys, where a command\'s button leaves them where they were');
+      });
+      Array.prototype.forEach.call(player.querySelectorAll('summary'), function (m) {
+        if (keepsTheKeys(m)) k.summaries++;
+        else P.push('drawer: a press on the summary ' + JSON.stringify(m.textContent) + ' takes the keys, where a section\'s summary leaves them where they were');
+      });
+      Array.prototype.forEach.call(player.querySelectorAll('textarea, input, select, [contenteditable]'), function (b) {
+        if (!keepsTheKeys(b)) k.boxes++;
+        else P.push('drawer: a press on the box ' + JSON.stringify(b.id || b.tagName) + ' leaves the keys where they were, where a box takes them');
+      });
+    }
+    ['eng-src', 'eng-cart', 'eng-lib', 'eng-replay', 'eng-keys'].forEach(function (id) {
+      var b = document.getElementById(id);
+      if (b && b.nodeName === 'DIV' && b.classList.contains('box') && b.getAttribute('contenteditable') === 'plaintext-only' && b.getAttribute('role') === 'textbox' && b.getAttribute('aria-multiline') === 'true') k.regions++;
+      else P.push('drawer: the box ' + id + ' is ' + (b ? b.outerHTML.slice(0, 90) : 'missing') + ', where it is the page\'s own, plain text a person edits, with a box\'s role');
+    });
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.innerHTML = '<button type="button" data-command="run"><span>Run</span></button><details open><summary>The replay</summary><div class="box" style="--rows: 6" contenteditable="plaintext-only" role="textbox" aria-multiline="true" spellcheck="false"></div></details><button type="button">no command</button>';
+    stage.appendChild(box);
+    try {
+      pressesKeepTheKeys(box);
+      var btns = box.querySelectorAll('button');
+      var press = function (el, button) { var ev = new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: button }); el.dispatchEvent(ev); return ev.defaultPrevented; };
+      [[btns[0], 0, true, 'a command\'s button'], [btns[0].firstChild, 0, true, 'the words of a command\'s button'], [box.querySelector('summary'), 0, true, 'a section\'s summary'],
+       [box.querySelector('.box'), 0, false, 'a box'], [btns[1], 0, false, 'a button of no command'], [btns[0], 2, false, 'a command\'s button by the right button']].forEach(function (x) {
+        if (press(x[0], x[1]) === x[2]) k.pressed++;
+        else P.push('drawer: a press on ' + x[3] + (x[2] ? ' took the keys, where it leaves them where they were' : ' left the keys where they were, where it takes them'));
+      });
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      var area = box.querySelector('.box'), T = new TextBox(area);
+      var lines = function (n, tail) { var a = []; for (var i = 1; i <= n; i++) a.push('(frame ' + i + ' (cell "Input" "B5" 1))'); return a.join('\n') + (tail || ''); };
+      // where line n of a text begins, the box's blocks aside, so that a box laid otherwise fails by name and never by error
+      var lineAt = function (text, n) { var at = 0; for (var i = 1; i < n; i++) { at = text.indexOf('\n', at); if (at < 0) return text.length; at++; } return at; };
+      var written = function () { for (var i = 0; i < area.childNodes.length; i++) if (!boxWritten(area.childNodes[i], T.texts[i])) return false; return area.childNodes.length === T.texts.length; };
+      var most = function () { var m = 0; T.texts.forEach(function (t) { m = Math.max(m, t.split('\n').length); }); return m; };
+      // a text of 1,201 lines in thirteen blocks, a hundred lines each but the last's one
+      var long = lines(1201);
+      area.value = long;
+      if (area.value === long && area.childNodes.length === 13 && T.texts[0].split('\n').length === 100 && T.texts[12] === lines(1201).split('\n')[1200] && written()) k.blocks++;
+      else P.push('drawer: a text of 1,201 lines lies in ' + area.childNodes.length + ' blocks, the first of ' + T.texts[0].split('\n').length + ' lines, where it lies in thirteen of a hundred lines, the last of one');
+      // each text read back as written, a CRLF's and a CR's line feeds as a textarea reads them, each block as the page writes it
+      [['', ''], ['a', 'a'], ['a\n', 'a\n'], ['\n', '\n'], ['\n\n\n', '\n\n\n'], ['a\r\nb\rc', 'a\nb\nc'], [lines(100, '\n\nz'), lines(100, '\n\nz')], [lines(1201, '\n'), lines(1201, '\n')]].forEach(function (x) {
+        area.value = x[0];
+        if (area.value === x[1] && written()) k.read++;
+        else P.push('drawer: the text ' + JSON.stringify(x[0].slice(0, 24)) + ' (' + x[0].length + ' characters) reads back as ' + JSON.stringify(area.value.slice(0, 24)) + ' (' + area.value.length + ')' + (written() ? '' : ', its blocks not as the page writes them'));
+      });
+      // what a browser's edit leaves: an empty line's <br> no text, a <br> between texts a line feed
+      [['a\n<br>', 'a\n'], ['a<br>b', 'a\nb'], ['a\n<br>x', 'a\nx']].forEach(function (x) {
+        var d = document.createElement('div');
+        d.innerHTML = x[0];
+        if (boxPieces(d).text === x[1]) k.read++;
+        else P.push('drawer: a block of ' + JSON.stringify(x[0]) + ' reads as ' + JSON.stringify(boxPieces(d).text) + ', where ' + JSON.stringify(x[1]));
+      });
+      // the caret: kept while the box has no keys, as a textarea keeps its own, and drawn in the document's selection once it has them
+      area.value = 'abc\ndef';
+      area.selectionStart = area.selectionEnd = 5;
+      if (area.selectionStart === 5 && area.selectionEnd === 5) k.caret++; else P.push('drawer: the caret written at 5 reads ' + area.selectionStart + ' to ' + area.selectionEnd);
+      area.selectionEnd = 2;
+      if (area.selectionStart === 2 && area.selectionEnd === 2) k.caret++; else P.push('drawer: an end written before the start reads ' + area.selectionStart + ' to ' + area.selectionEnd + ', where both are 2');
+      area.focus();
+      var ds = window.getSelection(), at0 = ds.rangeCount ? T.offsetOf(ds.anchorNode, ds.anchorOffset) : null;
+      if (document.activeElement === area && at0 === 2) k.caret++; else P.push('drawer: the box given the keys draws its caret at ' + at0 + ', where it stood, 2');
+      area.selectionStart = 4; area.selectionEnd = 7;
+      var r0 = ds.rangeCount ? ds.getRangeAt(0) : null;
+      if (r0 && T.offsetOf(r0.startContainer, r0.startOffset) === 4 && T.offsetOf(r0.endContainer, r0.endOffset) === 7) k.caret++; else P.push('drawer: a selection written from 4 to 7 in a box with the keys is not the document\'s');
+      var told = 0;
+      area.addEventListener('input', function (ev) { if (/^(insertParagraph|insertLineBreak|insertFromPaste|deleteByCut|deleteContentBackward|historyUndo|historyRedo)$/.test(ev.inputType)) told++; });
+      var before = function (type, data) { var ev = new InputEvent('beforeinput', { inputType: type, data: data === undefined ? null : data, cancelable: true, bubbles: true }); area.dispatchEvent(ev); return ev.defaultPrevented; };
+      // Enter's line feed and Shift+Enter's the page's, in the text, the caret after it; and over a selection reaching across blocks
+      var old = lines(150), s = lineAt(old, 101) + 5;
+      area.value = old; area.selectionStart = area.selectionEnd = s;
+      if (before('insertParagraph') && area.value === old.slice(0, s) + '\n' + old.slice(s) && area.selectionStart === s + 1 && written()) k.breaks++;
+      else P.push('drawer: Enter in the hundred and first line leaves ' + area.value.length + ' characters, the caret at ' + area.selectionStart + ', where the page writes a line feed at ' + s + ' and the caret after it');
+      area.value = old; area.selectionStart = area.selectionEnd = 3;
+      if (before('insertLineBreak') && area.value === old.slice(0, 3) + '\n' + old.slice(3) && written()) k.breaks++;
+      else P.push('drawer: Shift+Enter left the box ' + area.value.length + ' characters long, where the page writes a line feed');
+      var e = lineAt(old, 101) + 2;
+      area.value = old; area.selectionStart = 3; area.selectionEnd = e;
+      if (before('insertParagraph') && area.value === old.slice(0, 3) + '\n' + old.slice(e) && written()) k.breaks++;
+      else P.push('drawer: Enter over a selection across two blocks left ' + area.value.length + ' characters, where the selection is replaced by a line feed');
+      // a delete at a block's start or end reaches across its edge, so it is the page's
+      area.value = old; s = lineAt(old, 101); area.selectionStart = area.selectionEnd = s;
+      if (before('deleteContentBackward') && area.value === old.slice(0, s - 1) + old.slice(s) && area.selectionStart === s - 1 && written()) k.merged++;
+      else P.push('drawer: Backspace at the second block\'s start leaves ' + area.value.length + ' characters, where the line feed before it is deleted and the two lines one');
+      area.value = old; area.selectionStart = area.selectionEnd = s - 1;
+      if (before('deleteContentForward') && area.value === old.slice(0, s - 1) + old.slice(s) && written()) k.merged++;
+      else P.push('drawer: Delete at the first block\'s end leaves ' + area.value.length + ' characters, where the line feed after it is deleted');
+      // a paste of 1,200 lines, its CRLFs line feeds, at the caret, in blocks of no more than two hundred lines
+      var pasted = lines(1200), dt = new DataTransfer();
+      dt.setData('text/plain', pasted.replace(/\n/g, '\r\n'));
+      area.value = 'ab'; area.selectionStart = area.selectionEnd = 1;
+      var pe = new ClipboardEvent('paste', { clipboardData: dt, cancelable: true, bubbles: true });
+      area.dispatchEvent(pe);
+      if (pe.defaultPrevented && area.value === 'a' + pasted + 'b' && area.selectionStart === 1 + pasted.length && most() <= 200 && written()) k.pasted++;
+      else P.push('drawer: a paste of 1,200 lines leaves ' + area.value.length + ' characters in ' + area.childNodes.length + ' blocks of at most ' + most() + ' lines, where ' + (pasted.length + 2) + ' in blocks of no more than 200');
+      // a copy and a cut: the selection's text as the box holds it, line feeds where its blocks meet
+      area.value = lines(250);
+      var cs = lineAt(area.value, 101) - 4, cz = lineAt(area.value, 201) + 3, want = area.value.slice(cs, cz), dt2 = new DataTransfer();
+      area.selectionStart = cs; area.selectionEnd = cz;
+      var ce = new ClipboardEvent('copy', { clipboardData: dt2, cancelable: true, bubbles: true });
+      area.dispatchEvent(ce);
+      if (ce.defaultPrevented && dt2.getData('text/plain') === want) k.copied++;
+      else P.push('drawer: a copy across three blocks gave ' + JSON.stringify(dt2.getData('text/plain').slice(0, 30)) + ', where the box\'s text from ' + cs + ' to ' + cz);
+      var dt3 = new DataTransfer(), whole = area.value, cu = new ClipboardEvent('cut', { clipboardData: dt3, cancelable: true, bubbles: true });
+      area.dispatchEvent(cu);
+      if (cu.defaultPrevented && dt3.getData('text/plain') === want && area.value === whole.slice(0, cs) + whole.slice(cz) && written()) k.copied++;
+      else P.push('drawer: a cut across three blocks left ' + area.value.length + ' characters and gave ' + dt3.getData('text/plain').length + ', where the selection goes to the clipboard and out of the box');
+      // the history: three keystrokes of the browser's one step, Enter and a paste a step each, Ctrl+Z back, Ctrl+Y and
+      // Ctrl+Shift+Z forward, and a value written forgetting it
+      area.value = 'abc'; area.selectionStart = area.selectionEnd = 3;
+      var typed = function (ch) {
+        if (before('insertText', ch)) return;
+        var sel = window.getSelection(), n = sel.focusNode, o = sel.focusOffset;
+        if (!n || n.nodeType !== 3) return;
+        n.insertData(o, ch); sel.collapse(n, o + ch.length);
+        area.dispatchEvent(new InputEvent('input', { inputType: 'insertText', data: ch, bubbles: true }));
+      };
+      var key = function (ch, shift) { var ev = new KeyboardEvent('keydown', { key: ch, ctrlKey: true, shiftKey: !!shift, cancelable: true, bubbles: true }); area.dispatchEvent(ev); return ev.defaultPrevented; };
+      typed('x'); typed('y'); typed('z');
+      before('insertParagraph');
+      var dt4 = new DataTransfer();
+      dt4.setData('text/plain', 'P\nQ');
+      area.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt4, cancelable: true, bubbles: true }));
+      [['abcxyz\nP\nQ', null], ['abcxyz\n', 'z'], ['abcxyz', 'z'], ['abc', 'z'], ['abc', 'z'], ['abcxyz', 'y'], ['abcxyz\n', 'Z']].forEach(function (x, i) {
+        if (x[1] && !key(x[1], x[1] === 'Z')) { P.push('drawer: Ctrl+' + x[1] + ' in the box was left to the browser'); return; }
+        if (area.value === x[0] && written()) k.undone++;
+        else P.push('drawer: at the history\'s step ' + i + ' the box holds ' + JSON.stringify(area.value) + ', where ' + JSON.stringify(x[0]));
+      });
+      area.value = 'new';
+      key('z');
+      if (area.value === 'new') k.undone++; else P.push('drawer: Ctrl+Z after a value written gave ' + JSON.stringify(area.value) + ', where the history is forgotten');
+      if (told >= 7) k.told++; else P.push('drawer: the page\'s own edits told ' + told + ' input events, where Enter, Shift+Enter, the paste, the cut, the undo and the redo each tell one');
+      area.blur();
+    } finally { stage.removeChild(box); }
+    return { counters: k, problems: P };
+  }
   // The keymap (ENGINE.23's second slice): the page's own read clean; every refusal of a crafted text, whole and by its
   // line and words, nothing applied; the command a key presses in each place, a box's typing and editing keys its own;
   // a command of a person's own run step by step and listed in the palette; the keymap kept, read again and forgotten
@@ -9119,7 +9622,7 @@
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
-                 ['continue', caseContinue], ['palette', casePalette], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths], ['modes', caseModes], ['save', caseSave], ['keep', caseKeep]];
+                 ['continue', caseContinue], ['palette', casePalette], ['drawer', caseDrawer], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths], ['modes', caseModes], ['save', caseSave], ['keep', caseKeep]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -9128,7 +9631,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1, keep: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, drawer: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1, keep: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }

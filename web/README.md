@@ -346,7 +346,11 @@ the cartridge, Run, Pause, Sound, Load, the frame and the latest sentence;
 without the engine the player runs against the fake module and says so.
 Press Full screen for the browser's fullscreen over the whole player, the bar
 kept; Esc leaves it, pressed twice where the page holds Escape (below). Press Drawer, and the drawer opens at the right and
-pushes the Screen aside, which refits. Type a row in its edit box and press
+pushes the Screen aside, which refits. A click on a button of the page or on a section of the drawer leaves the keys
+where they were, as the command's key does, so a game keeps them while the drawer opens; and the drawer's boxes are
+the page's own, their text in blocks of a hundred lines, so that a long text, a long game's replay among them, selects
+and scrolls as a short one does, with the page's own undo (`CART.3`'s third slice). Type a
+row in its edit box and press
 Write (`(cell "Palette" "B1" "#FF8800")` turns the dead cells orange,
 `(cell "Screen" "B2:K11" 1)` holds a block alive while Life flows around
 it), watch the log, each repeat counted in its first line, and press Copy

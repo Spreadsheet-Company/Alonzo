@@ -278,9 +278,9 @@ cartridge, source, replay, golden and hand and the library its source
 includes, and runs its loop at a ratio of 1: abi, pass, replay with the
 hand, grid over an empty set, empty and, since ENGINE.17, ENGINE.18,
 ENGINE.19, ENGINE.7, ENGINE.23, ENGINE.25, CART.12, ENGINE.26, SPEC.5 and ENGINE.5, still, views,
-changes, continue, palette, keys, commands, settle, widths, modes and save must be OK at their own
-floors, each of Alonzo's fifteen other cases must say it is not on this page, and the last
-line must count sixteen cases.
+changes, continue, palette, drawer, keys, commands, settle, widths, modes, save and keep must be OK
+at their own floors, each of Alonzo's fifteen other cases must say it is not on this page, and
+the last line must count eighteen cases.
 
 THE BROWSER, as tools/check_render_oracle.ps1 finds and launches it:
 -Browser, else $env:ALONZO_BROWSER, else Google Chrome, Microsoft Edge or
@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds two hundred and sixty-eight mutant pages through tools/build_web.ps1 and runs
+-Control builds two hundred and eighty-two mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -582,6 +582,13 @@ mutate web/host.js, and DM's line is the bare key's own.
 And ENGINE.40's second slice two, each failing the keep case by name over the module, a file's drafts not taken back as
 typed: a raw string of one # whatever its text holds, MS, which the closer's own run of # in a box ends early; and a
 draft read and dropped, MT.
+And CART.3's third slice fourteen, each failing the drawer case by name and needing no module: the drawer measured by
+its contents, its containment taken out, MU; a press on a command's button that takes the keys, MV; a section's
+summary left to take them, MW; and the drawer's boxes, the page's own: a text laid in one block whatever its length, MX;
+an empty line's <br> read as a line feed, MY; Enter left to the browser, MZ; a paste left to it, NA; a copy and a cut
+left to it, NB; Ctrl+Z left to it, NC; a delete at a block's edge left to it, ND; a value's CRLF kept, NE; three
+keystrokes three steps of the history, NF; the history kept across a value written, NG; and the page's own edits
+untold, NH.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -909,6 +916,16 @@ $keysFloors = @{ defaults = 1; refused = 18; places = 25; steps = 3; lines = 3; 
 # the cell in the frozen corner, unscrolled and scrolled.
 # 2026-10-30, REPO.11: every count as it was, the kept's 2 now over two blurs the case dispatches itself, so that a page
 # whose window's focus comes late, which counted 1 and failed here now and then, counts the same as any other.
+# 2026-11-17 and 2026-11-18, CART.3's third slice: the thirty-third case, drawer, pure, over the page's own markup and
+# a box of the stage: the drawer contained, its size and layout its own (contained 1); every button of the player a
+# command's, a press on it leaving the keys where they were (buttons 22), so too each section's summary (summaries 4),
+# and each box and list taking them (boxes 9); six presses heard over the stage's box (pressed 6); and the drawer's five
+# boxes the page's own, editable plain text with a box's role (regions 5): a text of 1,201 lines in thirteen blocks
+# (blocks 1); eight texts, and three blocks as a browser's edit leaves them, read back as written (read 11); the caret
+# kept and drawn (caret 4); Enter, Shift+Enter and Enter over two blocks the page's (breaks 3); a delete at a block's
+# start and at its end (merged 2); a paste of 1,200 lines (pasted 1); a copy and a cut (copied 2); the history's seven
+# steps and a value written forgetting it (undone 8); and the page's own edits told (told 1).
+$drawerFloors = @{ contained = 1; buttons = 22; summaries = 4; boxes = 9; pressed = 6; regions = 5; blocks = 1; read = 11; caret = 4; breaks = 3; merged = 2; pasted = 1; copied = 2; undone = 8; told = 1 }
 $paletteFloors = @{ commands = 33; keyed = 11; lines = 10; opened = 1; ran = 1; chosen = 1; rows = 1; recalled = 1; closed = 3; restored = 1; held = 1; passed = 1; clicked = 1; escapes = 5; edits = 12; sides = 8; boxes = 3; cellEdits = 7; placed = 5; clears = 6; kept = 2 }
 # 2026-10-20, SPEC.5: the twenty-nine cases' counts unchanged but the palette's commands, and a thirtieth, modes, on both
 # pages, its counts a function of its plan. Its page half, pure: 34 keys of SPEC.5's table, each mode's sheet given a
@@ -1039,6 +1056,8 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # and sixty-six (124 applicable without).
 # 2026-11-17, ENGINE.40's second slice: MS and MT, a file's drafts, the keep case's over the module, take it to two
 # hundred and sixty-eight (124 applicable without).
+# 2026-11-17 and 2026-11-18, CART.3's third slice: MU to NH, the drawer case's, needing no module, take it to two hundred
+# and eighty-two (138 applicable without).
 # 2026-10-20, CART.9's first slice, Naught the eleventh cartridge: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -1207,6 +1226,7 @@ $floors = @(
     @{ Case = 'changes';  Min = @{ crafted = 20; double = 32 }; WithModule = $changesFloors },
     @{ Case = 'continue'; Min = @{}; WithModule = $continueFloors },
     @{ Case = 'palette';  Min = $paletteFloors },
+    @{ Case = 'drawer';   Min = $drawerFloors },
     @{ Case = 'keys';     Min = $keysFloors },
     @{ Case = 'commands'; Min = $commandsPageFloors; WithModule = $commandsFloors },
     @{ Case = 'settle';   Min = $settleDoubleFloors; WithModule = $settleFloors },
@@ -1216,12 +1236,13 @@ $floors = @(
     @{ Case = 'keep';     Min = @{}; WithModule = $keepFloors }
 )
 $zero = @('live', 'misfrees', 'filled', 'alone')
-$expectedCases = 32
+$expectedCases = 33
 # ENGINE.16: a game's page, built on every run from a scratch folder holding Kairos alone, its cartridge, source,
-# replay, golden and hand and the library its source includes. Its loop runs the seventeen cases that need nothing
+# replay, golden and hand and the library its source includes. Its loop runs the eighteen cases that need nothing
 # of Alonzo's own files, over its own blocks, still since ENGINE.17, views since ENGINE.18, changes since
 # ENGINE.19, continue since ENGINE.7, palette and keys since ENGINE.23, commands since ENGINE.25, settle since CART.12,
-# widths since ENGINE.26, modes since SPEC.5, save since ENGINE.5 and keep since ENGINE.38 among them, and each of the
+# widths since ENGINE.26, modes since SPEC.5, save since ENGINE.5, keep since ENGINE.38 and drawer since CART.3's
+# third slice among them, and each of the
 # fifteen others says it is not on the page.
 $gameFloors = @(
     @{ Case = 'abi';    Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
@@ -1234,6 +1255,7 @@ $gameFloors = @(
     @{ Case = 'changes'; Min = @{ crafted = 20; double = 32 }; WithModule = $changesFloors },
     @{ Case = 'continue'; Min = @{}; WithModule = $continueFloors },
     @{ Case = 'palette'; Min = $paletteFloors },
+    @{ Case = 'drawer'; Min = $drawerFloors },
     @{ Case = 'keys'; Min = $keysFloors },
     @{ Case = 'commands'; Min = $commandsPageFloors; WithModule = $commandsFloors },
     @{ Case = 'settle'; Min = $settleDoubleFloors; WithModule = $settleFloors },
@@ -1243,7 +1265,7 @@ $gameFloors = @(
     @{ Case = 'keep'; Min = @{}; WithModule = @{ cartridges = 1; restores = 1; held = 1; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1; typed = 1; switched = 1; typedSaved = 1; draftsRound = 1; draftsLoaded = 1 } }
 )
 $gameAbsent = @('rate30', 'rate0', 'yield', 'slice', 'pace', 'memory', 'refusals', 'scale', 'engine', 'parity', 'plane', 'input', 'audio', 'sound', 'tabs')
-$gameCases = 17
+$gameCases = 18
 $gameFiles = @('kairos/kairos.vla', 'kairos/kairos.source.vla', 'kairos/kairos.replay.vla', 'kairos/kairos.golden.vla', 'kairos/kairos.hand.js', 'common.vla')
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
@@ -2410,7 +2432,40 @@ if ($Control) {
             @{ L = 'mm'; Name = 'a clip that keeps the painter''s font, by the repaint'; Module = $false; File = 'viewport'; Anchor = '    try { fn(); } finally { ctx.restore(); this.font = null; }'; With = '    try { fn(); } finally { ctx.restore(); }'
                Want = 'case changes.*crafted, two cells of one font repainted in turn: the canvas is not a full paint''s of the record after the patch: \d+ pixel\(s\), the first at \d+,\d+ in C1' },
             @{ L = 'mn'; Name = 'a clip that keeps the painter''s font, by the full paint'; Module = $false; File = 'viewport'; Anchor = '    try { fn(); } finally { ctx.restore(); this.font = null; }'; With = '    try { fn(); } finally { ctx.restore(); }'
-               Want = 'case changes.*crafted, a frozen row over a total of its font: a text not drawn in its own font: A1 \(item\) drawn in' }
+               Want = 'case changes.*crafted, a frozen row over a total of its font: a text not drawn in its own font: A1 \(item\) drawn in' },
+            # MU to NH (CART.3's third slice), the drawer case's, each by name and needing no module: the drawer measured by
+            # its contents; a press on a command's button that takes the keys; a section's summary left to take them; and the
+            # drawer's boxes, the page's own: a text in one block; an empty line's <br> read as a line feed; Enter, a paste, a
+            # copy, Ctrl+Z and a delete at a block's edge left to the browser; a value's CRLF kept; keystrokes steps apart; the
+            # history kept across a value written; and the page's own edits untold
+            @{ L = 'mu'; Name = 'the drawer measured by its contents'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = 'color: #4b4b47; contain: size layout; }'; With = 'color: #4b4b47; }'
+               Want = 'case drawer.*drawer: the drawer.s contain is "none"' },
+            @{ L = 'mv'; Name = 'a press that takes the keys'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = 'if (ev.button === 0 && keepsTheKeys(ev.target)) ev.preventDefault();'; With = 'if (ev.button === 0 && keepsTheKeys(ev.target)) return;'
+               Want = 'case drawer.*drawer: a press on a command.s button took the keys' },
+            @{ L = 'mw'; Name = 'a summary that takes the keys'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = '!!el.closest(''button[data-command], summary'')'; With = '!!el.closest(''button[data-command]'')'
+               Want = 'case drawer.*drawer: a press on the summary .* takes the keys' },
+            @{ L = 'mx'; Name = 'a text in one block'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = '  var BOX_BLOCK_LINES = 100, BOX_UNDOS = 500, BOX_COALESCE_MS = 1500;'; With = '  var BOX_BLOCK_LINES = 1e9, BOX_UNDOS = 500, BOX_COALESCE_MS = 1500;'
+               Want = 'case drawer.*drawer: a text of 1,201 lines lies in 1 blocks' },
+            @{ L = 'my'; Name = 'an empty line''s br read as a line feed'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = '(n.nextSibling && text && text.charCodeAt(text.length - 1) !== 10 ? ''\n'' : '''')'; With = '''\n'''
+               Want = 'case drawer.*drawer: a block of "a\\n.{1,4}br.{1,4}" reads as "a\\n\\n"' },
+            @{ L = 'mz'; Name = 'Enter left to the browser'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = 'if (t === ''insertParagraph'' || t === ''insertLineBreak'' || across ||'; With = 'if (across ||'
+               Want = 'case drawer.*drawer: Enter in the hundred and first line leaves' },
+            @{ L = 'na'; Name = 'a paste left to the browser'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = '    if (!ev.clipboardData) return;'; With = '    return;'
+               Want = 'case drawer.*drawer: a paste of 1,200 lines leaves 2 characters' },
+            @{ L = 'nb'; Name = 'a copy and a cut left to the browser'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = '    if (s === e || !ev.clipboardData) return;'; With = '    return;'
+               Want = 'case drawer.*drawer: a copy across three blocks gave ""' },
+            @{ L = 'nc'; Name = 'Ctrl+Z left to the browser'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = '    if (k === ''z'' && !ev.shiftKey) { ev.preventDefault(); this.undo(); }'; With = '    if (false) { ev.preventDefault(); this.undo(); }'
+               Want = 'case drawer.*drawer: Ctrl\+z in the box was left to the browser' },
+            @{ L = 'nd'; Name = 'a delete at a block''s edge left to the browser'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = '    var across = this.locate(span[0])[0] !== this.locate(span[1])[0];'; With = '    var across = false;'
+               Want = 'case drawer.*drawer: Backspace at the second block.s start leaves' },
+            @{ L = 'ne'; Name = 'a value''s CRLF kept'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = '    var text = String(v === undefined || v === null ? '''' : v).replace(/\r\n?/g, ''\n'');'; With = '    var text = String(v === undefined || v === null ? '''' : v);'
+               Want = 'case drawer.*drawer: the text "a\\r\\nb\\rc" \(6 characters\) reads back as "a\\r\\nb\\rc" \(6\)' },
+            @{ L = 'nf'; Name = 'three keystrokes three steps'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = '      if (kind === ''insertText'' && !removed && !last.removed && at === last.at + last.inserted.length) { last.inserted += inserted; last.after = after; last.when = now; return; }'; With = '      // typed steps kept apart, by the control'
+               Want = 'case drawer.*drawer: at the history.s step 3 the box holds "abcxy"' },
+            @{ L = 'ng'; Name = 'the history kept across a value written'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = '    this.undos = []; this.redos = []; this.native = -1; this.texts = [];'; With = '    this.native = -1; this.texts = [];'
+               Want = 'case drawer.*drawer: at the history.s step 4 the box holds' },
+            @{ L = 'nh'; Name = 'the page''s own edits untold'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = '    try { this.el.dispatchEvent(new InputEvent(''input'', { bubbles: true, inputType: kind })); } finally { this.own = false; }'; With = '    this.own = false;'
+               Want = 'case drawer.*drawer: the page.s own edits told 0 input events' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
@@ -3206,7 +3261,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and sixty-eight' } else { 'one hundred and twenty-four applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and eighty-two' } else { 'one hundred and thirty-eight applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -3345,7 +3400,7 @@ try {
 }
 Write-Output ''
 if ($failed.Count -eq 0) {
-    Write-Output "=== CHECK: clean - every case OK, the replay, sound, save and keep cases at the first ratio and every other at both, every count at or above its floor, and the game's page's seventeen cases OK with Alonzo's fifteen said absent ==="
+    Write-Output "=== CHECK: clean - every case OK, the replay, sound, save and keep cases at the first ratio and every other at both, every count at or above its floor, and the game's page's eighteen cases OK with Alonzo's fifteen said absent ==="
     exit 0
 }
 Write-Output "=== CHECK: $($failed.Count) problem(s) ==="

@@ -11634,6 +11634,101 @@ Recommended: (a).
 
 *The scratch,* in the session's scratchpad: `s3/` (`cdp_eval.ps1` and the probes over the built page, `drawer_*.ps1` the drawer's measurements), `bwprobe/src/bin/session.rs` (the first native session), `edits/move_bot.py`.
 
+### Its third slice's fixes, built 2026-11-17 and 2026-11-18
+
+*At the owner's word, "Push, then proceed with the fixes, drawer keys included": the pass pushed (`664c74c`, CI green on its three jobs), and both of its Founds fixed: measured over `664c74c`, built and gated in a copy of `dc72170`, where the pin to 0.14.0 and `ENGINE.40`'s second slice had landed meanwhile, and landed in the tree. The owner's replay waits in the repository's ignored `scratch/`, so that the page builds and `check_cartridge` passes while (c) waits. Decisions 30 to 33, the session's; the owner's hand test of the first version stopped at its seventh step, and decision 31 was built again; the owner called the second version's paint, and the third makes the drawer's boxes the page's own, at the owner's word, "Recommendations approved" (below). The owner's hand test of the third version passed its twelve steps the same day: "Hand tests pass, commit both and push."*
+
+**The stall's cause, corrected.** The pass blamed the frame line's layouts, which the viewport's geometry forced; the frame line was only the most frequent change. The player's row, `.player-body`, a flex row, stretches the drawer, and at every change inside the drawer it lays the drawer out twice, measuring its contents' height and then at the row's. Neither pass's constraints are the other's, so the layout cache misses and every box in the drawer is laid out again, the replay's 12,052 lines about 50 ms a pass. Each candidate alone over `664c74c`'s page, the owner's replay in The replay's open box while it plays, two seconds of frames (*measurement*, headless Chrome 157, 2026-11-17):
+
+| the candidate | a frame, median | long tasks in 2 s |
+|---|---|---|
+| none | 83 ms | 22 to 24 |
+| the viewport's geometry read from its last draw, no layout read | 50 ms | 16 |
+| the frame line's words never written | 16.7 ms | 0 |
+| the frame line out of the drawer, absolute against the page | 16.7 ms | 0 |
+| the frame line absolute in the drawer with a spacer in its place, sticky, or its height fixed | 67 to 83 ms | 22 to 23 |
+| the drawer a column, the frame line over a body that scrolls | 83 ms | 22 |
+| the box `contain: strict` at a fixed height, or a wrapper so; its section `content-visibility: auto` or a flow root | 67 to 83 ms | 22 to 24 |
+| the drawer `contain: layout` | 83 ms | 24 |
+| the drawer `contain: size layout`, or `strict` | 16.7 ms | 0 |
+| the row `align-items: flex-start` | 16.7 ms | 0 |
+| the box emptied, hidden, or its first 1,000 lines | 16.7 ms | 0 |
+
+**The selection, a cause of its own.** With the box's text selected whole, the drawer contained and both frame lines frozen, frames still came seconds apart. The cost is Chrome's box under a real Ctrl+A: at every frame drawn while a game runs, a time that grows with the square of the box's lines (*measurement*, headless Chrome 157, a real click into the box and a real Ctrl+A over CDP, the drawer contained, the box holding the owner's replay's first lines while it plays):
+
+| lines | a frame | a right click's wait for its menu |
+|---|---|---|
+| 400 | 17 ms | 57 ms |
+| 600 | 17 ms, one frame of 33 | 88 ms |
+| 800 | 33 ms | 76 ms |
+| 1,000 | 33 to 50 ms | 0.2 s |
+| 1,500 | 100 ms | 0.4 s |
+| 2,000 | 167 ms | 0.8 s |
+| 3,000 | 367 ms | 1.7 s |
+| 12,052 | about 6 s | 29 s |
+
+A last line end makes no difference to it, nor do both frame lines frozen, nor the renderer's accessibility forced on: the game's drawing alone pays it.
+
+**The first version, and the owner's hand test.** The first version measured the selection by the page's own `select()`, which ends inside the last line; with the text's last line end left off, that selection cost nothing at 10,000 lines. So it put a replay in its box without its last line end, and deleted a paste's after the browser's paste. The owner's hand test passed its first six steps and stopped at the seventh: "Hand tests pass up to #7: Control + A inside the replay box slows the browser back down to a standstill (several seconds between frames) and right-clicking took 15+ seconds to register. Chrome really doesn't like large text files in textareas..." Ctrl+A ends its selection after the box's last line whatever the text's ending, so the first version cured nothing a person does: it is withdrawn, and decision 31 is built again. *The lesson:* measure a selection the way a person makes one, by a real click and a real key.
+
+**The second version, and the owner's word.** The second version held a replay of more than 500 lines beside its box, the box empty and saying so. The owner called it paint, 2026-11-18: "That doesn't really sound like a fix, though? "Not displaying long replays" paints over the fact that any textbox over ten thousand lines will essentially freeze the game (replay, cartridge, or otherwise)? Does this mean that textarea boxes are unviable in Alonzo? Lest we forget: the end goal of Frazaro is to edit VLA files in the browser in the same way the VBE allows VBA editing in Excel." Measured then over the same page, Brickwork running, a box 900 px tall, by real presses (*measurement*, headless Chrome 157, 2026-11-18):
+
+| the owner's replay, 12,051 lines | Chrome's box | the browser's own editing, the text one node | the same in blocks of 100 lines |
+|---|---|---|---|
+| Ctrl+A, then each frame | 21 s, then about 5 s | 100 ms, then 17 ms | 102 ms, then 17 ms |
+| a right click's menu | 29 s | 11 ms | 12 ms |
+| a keystroke, to the frame after next (about 31 ms with nothing to do) | 44 to 76 ms | 47 to 66 ms | 27 to 45 ms |
+
+At four times the replay, 1.1 MB, a keystroke took 138 to 204 ms in one node and 42 to 109 in blocks; at fourteen times, 3.9 MB, 406 to 550 and 57 to 160, Ctrl+A in blocks 429 ms and each frame 100 ms while the text stays selected. Coloring every token by the CSS Custom Highlight API, 64,328 ranges, live or static, cost 200 to 250 ms a frame and 1.6 to 6.4 s a keystroke; the lines in view and a screen either side, 1,000 to 2,100 ranges, 1 ms. Chrome writes a typed line break as a `<br>`, whether Enter is replaced at its beforeinput by an inserted line feed or not and whether the box is `pre` or `pre-wrap`, and two undos after three typed lines left their breaks behind. The owner then proposed the drawer as an IDE, the palette and the drawer one pane; the discussion recommended this version, the browser's own editing with the text, its breaks and its undo the page's, as the IDE's first brick, and the owner approved it and minted the `IDE` family (`ROADMAP.md`, THE IDE).
+
+**The decisions.**
+30. **The drawer contained,** `contain: size layout` on `.drawer`: its size is the row's alone, so a change in it lays out only what changed. `.player` is 100vh, so the drawer's height was the row's already; every rect of the drawer and its boxes measured equal with and without; the palette and the copy's fallback box stand in the body, outside it. *The alternatives, measured:* the frame line written at the viewer's pace, still five layouts of 50 ms a second, a stutter; the geometry read from the last draw, half the cost; a long replay kept out of its box, which decision 31 now does for the selection's sake.
+31. **The drawer's boxes are the page's own** (`TextBox`, at the owner's word, 2026-11-18, where the second version held a replay of more than 500 lines beside its box, which the owner called paint). Each of the five, the source's, the cartridge's, a library's, the replay's and the keys', is a `<div class="box" contenteditable="plaintext-only">` with a textbox's role, its text laid in blocks of `BOX_BLOCK_LINES`, 100 lines, each block a `<div>` of one text node and, where its last line is empty, the `<br>` Chrome needs to draw that line. The browser types, selects, composes, finds and draws the caret; the page keeps the text and writes every edit that would leave markup: Enter and Shift+Enter, a text carrying a line feed, a paste, a drop, a cut and any edit reaching across a block's edge, a delete at a block's start or end among them, are the page's, written into the blocks they reach, a block of more than 200 lines laid again in blocks of 100. A copy and a cut give the box's own text, line feeds where blocks meet. Ctrl+Z, Ctrl+Y and Ctrl+Shift+Z, and the menu's Undo and Redo, are the page's own history of 500 steps, a typed run and a run of Backspaces each one step within 1.5 s, as a textarea's word is; a value written clears it, as a textarea's does. The element answers `value`, `selectionStart` and `selectionEnd` as a textarea does, its caret kept while it has no keys and drawn again when the page or Tab gives them back, so the 57 lines of the player that read and write its boxes stand unchanged, the hold's taken out; its own edits are told by an `input` event, as the browser tells its own, so that the keeper keeps them (`ENGINE.40`). A drag out of a box is refused at its start, so a drop is a copy. *The alternatives:* the hold (the second version, withdrawn); Chrome's box kept with its Ctrl+A refused, which leaves the right click's selection and the menu's Select all; a vendored editor, CodeMirror, which every game's page would vendor; and an editor of the page's own drawn by the painter over a model of its own, the lines in view alone, which the `IDE` family leaves unminted until a text past four megabytes, a fold or a widget asks for it.
+32. **A press of the mouse on a command's button or a section's summary leaves the keys where they were,** as the command's key does (`keepsTheKeys`, heard over the player by `pressesKeepTheKeys`: the press's focus refused, its click as before). A box, a list and the Screen take the keys at a press as ever, the right button's press stays its own, and a keyboard's Tab and Enter on a button keep their focus. The Commands button's own rule, the prompt's focus kept while the palette is open, is now this one.
+33. **The keys never left to no one.** The drawer shut with the keys in one of its boxes gives them to the Screen. A load gives the Screen back the keys it had when the load draws it in the other box, a grid after a plane or a plane after a grid.
+
+**Measured after,** over the tree's page with the third version (*measurement*, headless Chrome 157, real presses and keys over CDP, 2026-11-18). The hand test's flow, Brickwork picked, the drawer and The replay open:
+- a real Ctrl+V of the owner's replay, 281,295 characters, in 57 to 65 ms, the box the replay byte for byte in 121 blocks;
+- Play the replay with the box open: a frame every 16.7 ms;
+- a click in the box and Ctrl+A while it plays: 36 to 86 ms, the selection the whole text, then a frame every 16.7 ms, where Chrome's box took 21 s and then about 5 s a frame; a right click's menu after 8 ms, where 29 s;
+- Ctrl+End 28 to 42 ms, a keystroke 31 to 49 ms and Enter 32 to 48 ms, the line feed in the text and no `<br>` in it; Ctrl+Z 32 to 47 ms, three of them undoing the typed line, Enter and the typed run back to the replay as pasted, and Ctrl+Y forward again;
+- Ctrl+C over a selection across two blocks copies the box's own 420 characters; Copy the replay puts the run in the box and on the clipboard alike, the clipboard's line feeds CRLF as Windows writes them;
+- in the source's box, Enter and a typed comment at its end, Ctrl+Enter building the cartridge in 53 to 63 ms with the keys left in the box, and two Ctrl+Z giving back the source as it was;
+- a line typed at the source's end kept across a reload, the line under the bar offering "Unsaved work on Brickwork ... with its source typed", and Restore putting it back in its box (`ENGINE.38`, `ENGINE.40`).
+
+The presses of decisions 32 and 33 stand as the second version measured them: no line of theirs changed, and the drawer case holds them.
+
+**The oracle.** The loop check's thirty-third case, `drawer`, pure and so on a game's page too:
+- the drawer's computed `contain` holds size and layout (contained 1);
+- every button of the player is a command's, so `keepsTheKeys` (buttons 22); so is each section's summary (summaries 4); each box and list is not (boxes 9);
+- six presses heard over a box of the stage: a command's button, the words inside it and a summary refuse the press's focus, and a box, a button of no command and the right button do not (pressed 6);
+- the five boxes of the player's markup the page's own, editable plain text with a textbox's role (regions 5);
+- over a `TextBox` of the stage: a text of 1,201 lines in thirteen blocks (blocks 1); eight texts read back as written, the empty text, line feeds alone, a hundredth line empty and a CRLF's and a CR's line feeds among them, each block as the page writes it, and three blocks as a browser's edit leaves them read as their text (read 11); the caret kept with no keys and drawn when the box has them (caret 4); Enter, Shift+Enter and Enter over a selection across two blocks the page's (breaks 3); Backspace at a block's start and Delete at its end (merged 2); a paste of 1,200 lines, its CRLFs line feeds, in blocks of 100 (pasted 1); a copy and a cut across three blocks (copied 2); three keystrokes of the browser's one step, Enter and a paste a step each, back and forward, and a value written forgetting the history (undone 8); and the page's own edits told by input events (told 1).
+
+Its fourteen mutants each fail it by name and need no module:
+- MU, the drawer measured by its contents, its containment taken out;
+- MV, a press on a command's button that takes the keys;
+- MW, a section's summary left to take them;
+- MX, a text laid in one block whatever its length;
+- MY, an empty line's `<br>` read as a line feed;
+- MZ, Enter left to the browser;
+- NA, a paste left to the browser;
+- NB, a copy and a cut left to the browser;
+- NC, Ctrl+Z left to the browser;
+- ND, a delete at a block's edge left to the browser;
+- NE, a value's CRLF kept;
+- NF, three keystrokes three steps of the history;
+- NG, the history kept across a value written;
+- NH, the page's own edits untold.
+
+The real presses, the stall and the selection are no virtual clock's: the hand test holds them.
+
+**Found: Chrome's box selected whole costs every frame a time that grows with the square of its lines** (unminted). The cartridge's, a source's and a library's boxes hold texts of up to 4,126 lines, Seiyaku's cartridge; selected whole by Ctrl+A while a game runs, each costs a frame what the curve above says, Brickwork's own cartridge, 835 lines, about a frame in two. The page cannot hold them beside their boxes, since a person edits them there and their bytes are the load's and the pass's. The cure would be a box of the page's own drawing only the lines in view. *Closed by the third version (decision 31):* every box of the drawer is the page's own, Seiyaku's cartridge selected whole in it costing what its blocks cost; the bench's two boxes, `?viewport=1`'s, stay Chrome's, holding the fixtures' records alone.
+
+**The gate.** The copy of `dc72170` with the fixes, its module, runners and page built and current, the module byte for byte the tree's. The first version: `run_checks.ps1 -WithExtras` in 654 s, its checks green but `check_spdx`, which reads `git ls-files` and is green in the tree, and its controls green but the loop control, red there, its verdict among the lines the run cut, then green alone over its 273 mutants. The second version: `run_checks.ps1`'s 13 checks, `check_spdx` in the tree; the loop control alone, every one of its two hundred and seventy-five mutants failing for its own reason, MU to NA by name, in 521 s; and the offline control's thirty-two and the render oracle's twenty-five, the two other controls that read the template. The other controls passed over the first version, and no line of the second reaches what they read. The third version, built and gated in the tree over `650bb6b`, where a peer's mint of `ENGINE.42` had landed meanwhile holding none of its hunks: `run_checks.ps1`'s 13 checks in 51 s; the offline control's thirty-two and the render oracle's twenty-five; and the loop control alone, every one of its two hundred and eighty-two mutants failing for its own reason, MU to NH by name, in 550 s. That was its third run. The first found two of the drawer's mutants failing by another name: MX by an error, the case having read the second block's place from the box itself, and NE by a count of seven characters where the text holds six; the case now takes its places from the text's lines and NE's words count six, and both, applied alone to the built page, failed by name. The second held all fourteen by name and missed one of the replay case's, HE, whose browser never wrote its dump, Chrome's network service having crashed, where the first had held it by name. Once, the plain check's sound case found its render not landed after 45 s of the page's clock with no other browser running, and the run after it was green. No line of the third version reaches what the other controls read, and no Rust changed, so `cargo test` was not run again.
+
+*The scratch,* in the session's scratchpad: `s3b/` (`cure.ps1` and its candidate files, `sel_trace.ps1`, `flow.ps1` to `flow3.ps1`, `ctrla.ps1` the real Ctrl+A, `paste_native2.ps1`, `presses.ps1`, `loopcase.ps1`; `edits/page2.py`, `loop2.py` and `docs2.py`, which write the fixes by content onto a copy of HEAD and onto the tree alike; `ce.ps1`, `editcost.ps1`, `ide1.ps1` and `ide2.ps1`, the browser's own editing measured, one node, blocks and colors); and `s3c/` (`e2e3.ps1`, the hand test's flow by real presses; `edits/roadmap_ide.py`, the `IDE` family; `edits/page3.py` with `textbox.js` and `casedrawer.js`, `loop3.py` and `docs3.py`, the third version by content, and `case_offsets.py`, the case's places from the text's lines; `mut.ps1`, two mutants applied alone to the built page; `e2e4.ps1`, a box's typing kept across a reload; `gate3.txt`, this gate's words).
+
 ## `ENGINE.41` — a text drawn in its own font after a clip: the painter's noted font forgotten at a clip's restore, so that neither a repaint's next rectangle nor a full paint's next quadrant draws a text in the font the restore left
 
 *Minted, scoped and built 2026-11-17 at the owner's word, "Proceed with minting, scoping, and implementing ENGINE.41", from `CART.3`'s third look's Found.* No question was the owner's: the cause is one line, its fix that line's, and the hold's place the item's own.
