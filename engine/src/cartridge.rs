@@ -3866,8 +3866,8 @@ mod tests {
         }
         assert_eq!(
             resumed_from.len(),
-            14,
-            "two saves of each of the seven replays: {resumed_from:?}"
+            16,
+            "two saves of each of the eight replays: {resumed_from:?}"
         );
     }
 
@@ -3899,11 +3899,13 @@ mod tests {
             }
             let cart = read(dir.join(format!("{name}.vla")));
             let golden = read(dir.join(format!("{name}.golden.vla")));
+            let replay_text = read(replay);
             let mut hand = SandHand::default();
             let mut kairos_hand = KairosHand::new();
             let mut lattice_hand = SuperpositionHand::default();
             let mut puzzle_hand = SeiyakuHand::default();
             let mut bench_hand = NaughtHand::new(&bench);
+            let mut brick_hand = BrickworkHand::new(replay_seed(&name, &replay_text));
             let mut held = |c: &Cartridge, frame: u32, rows: &[Form]| {
                 if name == "sand" {
                     hand.holds(c, frame, rows);
@@ -3915,9 +3917,20 @@ mod tests {
                     puzzle_hand.holds(c, frame, rows);
                 } else if name == "naught" {
                     bench_hand.holds(c, frame, rows);
+                } else if name == "brickwork" {
+                    brick_hand.holds(c, frame, rows);
                 }
             };
-            play_to_golden(&name, &cart, &read(replay), &golden, &mut held);
+            play_to_golden(&name, &cart, &replay_text, &golden, &mut held);
+            if name == "brickwork" {
+                let g = &brick_hand.game;
+                let laid: u32 = g.tally_kinds.iter().sum();
+                assert_eq!(
+                    (g.frame, g.games, g.topouts, g.level, laid, g.phase, brick_hand.wholes),
+                    (41_129, 1, 1, 81, 376, bw::Phase::Over, 1085),
+                    "the owner's session at the third slice: one game to level 81 from 376 bricks laid and its top-out, in 41,129 frames, 1,085 of them held whole"
+                );
+            }
             if name == "sand" {
                 assert!(
                     hand.painted > 0,
@@ -3981,6 +3994,7 @@ mod tests {
         assert_eq!(
             played,
             [
+                "brickwork",
                 "inputcard",
                 "kairos",
                 "naught",
@@ -8757,115 +8771,10 @@ mod tests {
         rows
     }
 
-    /// One frame of Brickwork held to the game by hand: the wall's words, the
-    /// panel (each course's count, the next three, the words and the score),
-    /// the Laid wall's serials, the State's cells and the four voices.
-    fn brickwork_holds(c: &Cartridge, g: &bw::Game, frame: u32) {
-        let (w, h) = (bw::WIDTH as u32, bw::HEIGHT as u32);
-        let (wall, lit) = brickwork_wall(c);
-        let laid = record_cells(c, "values", "Laid", "B2:O25");
-        let shown = |addr: &str| wall.get(addr).cloned().unwrap_or_default();
-        for course in 1..=h {
-            for column in 1..=w {
-                let addr = address(course + 1, column + 1);
-                let want = g.word(course as i32, column as i32);
-                assert!(
-                    shown(&addr) == want,
-                    "frame {frame}: Wall!{addr} shows {:?}, the game by hand's {want:?} ({:?}, kind {}, at {:?}, landing {})",
-                    shown(&addr),
-                    g.phase,
-                    g.kind,
-                    g.brick,
-                    g.landing
-                );
-                let serial = laid.get(&addr).cloned().unwrap_or_default();
-                let held = g.wall[(course - 1) as usize][(column - 1) as usize].to_string();
-                assert!(
-                    serial == held,
-                    "frame {frame}: Laid!{addr} holds {serial}, the game by hand's {held}"
-                );
-            }
-            let n = g.count(course as usize);
-            let want = if n == 0 {
-                String::new()
-            } else {
-                format!("{n} / {w}")
-            };
-            let addr = address(course + 1, w + 3);
-            assert_eq!(
-                shown(&addr),
-                want,
-                "frame {frame}: the count at Wall!{addr}"
-            );
-        }
-        for (i, kind) in g.next().iter().enumerate() {
-            let cells = bw::cells(*kind, 0);
-            for r in 0..3u32 {
-                for col in 0..3u32 {
-                    let addr = address(2 + 4 * i as u32 + r, w + 5 + col);
-                    let want = if cells.contains(&(r as i32, col as i32)) {
-                        "queued"
-                    } else {
-                        ""
-                    };
-                    assert_eq!(
-                        shown(&addr),
-                        want,
-                        "frame {frame}: the next brick {} at Wall!{addr}",
-                        i + 1
-                    );
-                }
-            }
-        }
-        assert_eq!(
-            shown(&address(2, w + 9)),
-            g.words(),
-            "frame {frame}: the words"
-        );
-        assert_eq!(
-            shown(&address(3, w + 9)),
-            g.hint(),
-            "frame {frame}: the words below them"
-        );
-        assert_eq!(
-            shown(&address(4, w + 10)),
-            g.level.to_string(),
-            "frame {frame}: the level"
-        );
-        let serials = record_cells(c, "values", "Serials", "B2:O25");
-        let serial = |r: i32, col: i32| {
-            if r < 1 || r > h as i32 || col < 1 || col > w as i32 {
-                0
-            } else {
-                g.serial(r, col)
-            }
-        };
-        for course in 1..=h as i32 {
-            for column in 1..=w as i32 {
-                let addr = address(course as u32 + 1, column as u32 + 1);
-                let held = serials.get(&addr).cloned().unwrap_or_default();
-                assert_eq!(
-                    held,
-                    serial(course, column).to_string(),
-                    "frame {frame}: Serials!{addr}"
-                );
-                let sides = [(-1, 0), (0, 1), (1, 0), (0, -1)];
-                let mut want: Vec<u32> = Vec::new();
-                for (i, (dr, dc)) in sides.iter().enumerate() {
-                    let me = serial(course, column);
-                    if me > 0 && me != serial(course + dr, column + dc) {
-                        want.push(i as u32 + 1);
-                    }
-                }
-                let got = lit.get(&addr).cloned().unwrap_or_default();
-                assert_eq!(got, want, "frame {frame}: the rules lit at Wall!{addr}");
-            }
-            let addr = address(course as u32 + 1, w + 3);
-            assert!(
-                !lit.contains_key(&addr),
-                "frame {frame}: no rule lights the count at Wall!{addr}"
-            );
-        }
+    /// One frame of Brickwork's State held to the game by hand: every cell the
+    /// game by hand computes, the place, the phase, the pace, the deal and the
+    /// settings in use.
+    fn brickwork_state_holds(c: &Cartridge, g: &bw::Game, frame: u32) {
         let st = record_cells(c, "values", "State", "B1:B106");
         let num = |a: &str| {
             st.get(a)
@@ -8994,6 +8903,118 @@ mod tests {
                 "frame {frame}: State!{what} is {got}, the game by hand's {want}"
             );
         }
+    }
+
+    /// One frame of Brickwork held to the game by hand: the wall's words, the
+    /// panel (each course's count, the next three, the words and the score),
+    /// the Laid wall's serials, the State's cells and the four voices.
+    fn brickwork_holds(c: &Cartridge, g: &bw::Game, frame: u32) {
+        let (w, h) = (bw::WIDTH as u32, bw::HEIGHT as u32);
+        let (wall, lit) = brickwork_wall(c);
+        let laid = record_cells(c, "values", "Laid", "B2:O25");
+        let shown = |addr: &str| wall.get(addr).cloned().unwrap_or_default();
+        for course in 1..=h {
+            for column in 1..=w {
+                let addr = address(course + 1, column + 1);
+                let want = g.word(course as i32, column as i32);
+                assert!(
+                    shown(&addr) == want,
+                    "frame {frame}: Wall!{addr} shows {:?}, the game by hand's {want:?} ({:?}, kind {}, at {:?}, landing {})",
+                    shown(&addr),
+                    g.phase,
+                    g.kind,
+                    g.brick,
+                    g.landing
+                );
+                let serial = laid.get(&addr).cloned().unwrap_or_default();
+                let held = g.wall[(course - 1) as usize][(column - 1) as usize].to_string();
+                assert!(
+                    serial == held,
+                    "frame {frame}: Laid!{addr} holds {serial}, the game by hand's {held}"
+                );
+            }
+            let n = g.count(course as usize);
+            let want = if n == 0 {
+                String::new()
+            } else {
+                format!("{n} / {w}")
+            };
+            let addr = address(course + 1, w + 3);
+            assert_eq!(
+                shown(&addr),
+                want,
+                "frame {frame}: the count at Wall!{addr}"
+            );
+        }
+        for (i, kind) in g.next().iter().enumerate() {
+            let cells = bw::cells(*kind, 0);
+            for r in 0..3u32 {
+                for col in 0..3u32 {
+                    let addr = address(2 + 4 * i as u32 + r, w + 5 + col);
+                    let want = if cells.contains(&(r as i32, col as i32)) {
+                        "queued"
+                    } else {
+                        ""
+                    };
+                    assert_eq!(
+                        shown(&addr),
+                        want,
+                        "frame {frame}: the next brick {} at Wall!{addr}",
+                        i + 1
+                    );
+                }
+            }
+        }
+        assert_eq!(
+            shown(&address(2, w + 9)),
+            g.words(),
+            "frame {frame}: the words"
+        );
+        assert_eq!(
+            shown(&address(3, w + 9)),
+            g.hint(),
+            "frame {frame}: the words below them"
+        );
+        assert_eq!(
+            shown(&address(4, w + 10)),
+            g.level.to_string(),
+            "frame {frame}: the level"
+        );
+        let serials = record_cells(c, "values", "Serials", "B2:O25");
+        let serial = |r: i32, col: i32| {
+            if r < 1 || r > h as i32 || col < 1 || col > w as i32 {
+                0
+            } else {
+                g.serial(r, col)
+            }
+        };
+        for course in 1..=h as i32 {
+            for column in 1..=w as i32 {
+                let addr = address(course as u32 + 1, column as u32 + 1);
+                let held = serials.get(&addr).cloned().unwrap_or_default();
+                assert_eq!(
+                    held,
+                    serial(course, column).to_string(),
+                    "frame {frame}: Serials!{addr}"
+                );
+                let sides = [(-1, 0), (0, 1), (1, 0), (0, -1)];
+                let mut want: Vec<u32> = Vec::new();
+                for (i, (dr, dc)) in sides.iter().enumerate() {
+                    let me = serial(course, column);
+                    if me > 0 && me != serial(course + dr, column + dc) {
+                        want.push(i as u32 + 1);
+                    }
+                }
+                let got = lit.get(&addr).cloned().unwrap_or_default();
+                assert_eq!(got, want, "frame {frame}: the rules lit at Wall!{addr}");
+            }
+            let addr = address(course as u32 + 1, w + 3);
+            assert!(
+                !lit.contains_key(&addr),
+                "frame {frame}: no rule lights the count at Wall!{addr}"
+            );
+        }
+        brickwork_state_holds(c, g, frame);
         // the Clipboard's box, its brick queued, and no rule lighting it (its marquee withdrawn at the second slice's
         // hand test)
         let clip_cells = if g.clip_kind > 0 {
@@ -9092,6 +9113,114 @@ mod tests {
             }
         }
         (cells, lit)
+    }
+
+    /// The seed a replay's header names, `(seed N)`.
+    fn replay_seed(name: &str, replay: &str) -> u64 {
+        let forms = read_forms(replay).unwrap_or_else(|e| panic!("{name}'s replay reads: {e:?}"));
+        let header = match forms.first() {
+            Some(Form::List(l)) => l.items.clone(),
+            _ => panic!("{name}: the replay's header"),
+        };
+        header
+            .iter()
+            .find_map(|d| match d {
+                Form::List(l) => match l.items.as_slice() {
+                    [Form::Sym(k), Form::Sym(n)] if k == "seed" => n.parse().ok(),
+                    _ => None,
+                },
+                _ => None,
+            })
+            .unwrap_or_else(|| panic!("{name}: the header's seed"))
+    }
+
+    /// Brickwork's committed replay held to the game by hand (CART.3's third
+    /// slice (c), decision 27's design (b)), as the page's hand,
+    /// `cartridges/brickwork/brickwork.hand.js`, holds it: the Input sheet's
+    /// cells as the replay's rows leave them, player 1's buttons B1 to B10 and
+    /// the command B20, and a number typed into the Pace's column B the game's
+    /// at once; at every frame the State's cells and the Tally; and the whole,
+    /// the wall's words and joints, its counts, the panel, the Clipboard, the
+    /// serials, the laid wall, the bag in use and the voices
+    /// (`brickwork_holds`), at every frame that moves the wall, a lay, a clear,
+    /// a start or a top-out, at the first and at every 64th.
+    struct BrickworkHand {
+        game: bw::Game,
+        input: std::collections::HashMap<String, String>,
+        wholes: u32,
+    }
+
+    impl BrickworkHand {
+        fn new(seed: u64) -> BrickworkHand {
+            BrickworkHand {
+                game: bw::Game::load(bw::Settings::default(), seed),
+                input: std::collections::HashMap::new(),
+                wholes: 0,
+            }
+        }
+
+        fn holds(&mut self, c: &Cartridge, frame: u32, rows: &[Form]) {
+            for r in rows {
+                let items = match r {
+                    Form::List(l) => l.items.as_slice(),
+                    _ => panic!("frame {frame}: a row: {}", write_datum(r)),
+                };
+                match items {
+                    [Form::Sym(h), Form::Str(sheet), Form::Str(addr), Form::Sym(v) | Form::Str(v)]
+                        if h == "cell" && sheet == "Input" =>
+                    {
+                        self.input.insert(addr.clone(), v.clone());
+                    }
+                    [Form::Sym(h), Form::Str(sheet), Form::Str(addr), v]
+                        if h == "cell" && sheet == "Pace" =>
+                    {
+                        let row = addr
+                            .strip_prefix('B')
+                            .and_then(|n| n.parse().ok())
+                            .unwrap_or_else(|| panic!("frame {frame}: Pace!{addr}, no row of a setting"));
+                        let typed = match v {
+                            Form::Sym(n) => n.parse().ok(),
+                            _ => None,
+                        };
+                        self.game.settings.type_into(row, typed);
+                    }
+                    _ => panic!("frame {frame}: a row the hand does not read: {}", write_datum(r)),
+                }
+            }
+            let on = |a: &str| self.input.get(a).is_some_and(|v| v == "1");
+            let command = match self.input.get("B20").map_or("", String::as_str) {
+                "" => "",
+                "pause" => "pause",
+                "slide-left" => "slide-left",
+                "slide-right" => "slide-right",
+                "to-the-bottom" => "to-the-bottom",
+                "cut" => "cut",
+                other => panic!("frame {frame}: a command the hand does not know: {other}"),
+            };
+            let keys = bw::Keys {
+                up: on("B1"),
+                down: on("B2"),
+                left: on("B3"),
+                right: on("B4"),
+                a: on("B5"),
+                b: on("B6"),
+                start: on("B9"),
+                select: on("B10"),
+                command,
+            };
+            let before = self.game.wall;
+            self.game.step(keys);
+            let g = &self.game;
+            assert_eq!(g.frame, frame, "the hand's frame is the replay's");
+            let shifted = !g.lay && !g.starts && g.wall != before;
+            if frame == 1 || g.lay || shifted || g.starts || g.topout || frame % 64 == 0 {
+                brickwork_holds(c, g, frame);
+                self.wholes += 1;
+            } else {
+                brickwork_state_holds(c, g, frame);
+            }
+            brickwork_tally_holds(c, g);
+        }
     }
 
     /// The Tally, the game by hand's counts.

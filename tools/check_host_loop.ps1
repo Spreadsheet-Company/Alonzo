@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds two hundred and eighty-six mutant pages through tools/build_web.ps1 and runs
+-Control builds two hundred and ninety mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -588,7 +588,11 @@ summary left to take them, MW; and the drawer's boxes, the page's own: a text la
 an empty line's <br> read as a line feed, MY; Enter left to the browser, MZ; a paste left to it, NA; a copy and a cut
 left to it, NB; Ctrl+Z left to it, NC; a delete at a block's edge left to it, ND; a value's CRLF kept, NE; three
 keystrokes three steps of the history, NF; the history kept across a value written, NG; and the page's own edits
-untold, NH.
+untold, NH. And its last, (c), four, Brickwork's hand, each failing the replay case by name at the frame of the
+owner's game where it first leaves the engine, over the module: a slide stopping a column short, at the first slide,
+frame 409, NM; a cut taking a place in the deal, at the second cut, the Clipboard's brick swapped in, frame 5155, NN;
+a lay's rest restarted by a turn, at a turn of a brick resting, frame 35015, NO; and the pace a power, at the second
+course cleared, frame 2524, NP.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -1124,6 +1128,13 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # frames (naughtFrames 4807, naughtCells 1,615,368), 151 rows a person wrote (naughtWritten 151) and eighteen sheets shown
 # (naughtShown 18); HZ and IA, the replay case's, needing the module, to two hundred and thirty-six with ENGINE.36's twelve,
 # and one hundred and sixteen without the module still.
+# CART.3's third slice (c), 2026-11-18: Brickwork's replay, the owner's one game to level 81, held to its hand, the block
+# hand-brickwork (hands 6): every one of its 41,129 frames (brickworkFrames 41129), the State's cells and the Tally's at
+# each and the whole at the 1,085 that move its wall, the first and every 64th among them (brickworkWholes 1085,
+# brickworkCells 4,146,108), the joints its rules light (brickworkLit 120,412), and its ends, the hand's own counts: level
+# 81, 376 bricks laid, one game and one top-out; eight replays, goldens and recordings (replays, golden and round 8).
+# NM to NP, the replay case's, needing the module, Brickwork's hand, to two hundred and ninety, and one hundred and
+# thirty-nine without the module still.
 # REPO.11, 2026-10-30: HA, the palette case's, needing no module, a blur never shutting the palette, to one hundred and
 # ninety-four, and ninety-four without the module.
 # ENGINE.14's addendum, 2026-10-30: the empty case's opening 3, a body with no mode hidden, the plane's box opening hidden and
@@ -1154,8 +1165,9 @@ $scales = @('1', '1.5')
 # the Clock's frame with every sheet the run's (opened 7) and on the seed it ran on (seeds 7), and played on by the rest of
 # its replay on a third host frame for frame beside the run (resumed 7), every sheet's fills held at the load, the frame
 # after, every 64th frame and the last (compared 93, over 5,315 frames); and a save asked inside an act's settle waiting
-# for it and handed to the page at rest, the three cartridges that settle (waited 3).
-$saveFloors = @{ saves = 7; opened = 7; seeds = 7; resumed = 7; compared = 93; frames = 5315; waited = 3 }
+# for it and handed to the page at rest, the three cartridges that settle (waited 3). Since CART.3's third slice (c), eight,
+# Brickwork's game of 41,129 frames among them: saves, opened, seeds and resumed 8, compared 416 over 25,880 frames.
+$saveFloors = @{ saves = 8; opened = 8; seeds = 8; resumed = 8; compared = 416; frames = 25880; waited = 3 }
 # 2026-11-16, ENGINE.38: the thirty-second case, keep, over the module and a double of the browser's store: every
 # committed replay the page holds played frame by frame with a keyframe at the first rest past every 37 frames, the run's
 # work written at every frame at rest, and the tab dropped at frame 1, every 64th frame at rest and the last, a fresh page
@@ -1172,8 +1184,9 @@ $saveFloors = @{ saves = 7; opened = 7; seeds = 7; resumed = 7; compared = 93; f
 # save leaves unsaved keeping the record (typedSaved 1). Since its second slice a save carries the typing, so typedSaved
 # holds a save leaving nothing typed unsaved and a keystroke while the picker stood open kept; and a file's drafts, each
 # box written after a save's rows over a raw string and taken back as typed (draftsRound 1), the file without them loading
-# the grid as the save alone does (draftsLoaded 1).
-$keepFloors = @{ cartridges = 7; frames = 10903; restores = 113; held = 113; keyframes = 189; session = 8; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1; typed = 1; switched = 1; typedSaved = 1; draftsRound = 1; draftsLoaded = 1 }
+# the grid as the save alone does (draftsLoaded 1). Since CART.3's third slice (c), eight cartridges, Brickwork's game
+# among them: frames 52,032, restores and held 757, keyframes 1,300.
+$keepFloors = @{ cartridges = 8; frames = 52032; restores = 757; held = 757; keyframes = 1300; session = 8; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1; typed = 1; switched = 1; typedSaved = 1; draftsRound = 1; draftsLoaded = 1 }
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
     @{ Case = 'rate0';    Min = @{ frames = 4; applied = 3; edits = 4; windows = 3 } },
@@ -1189,7 +1202,7 @@ $floors = @(
     @{ Case = 'plane';    Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeProbes = 40 }; WithModule = @{ frames = 24; equal = 25; windows = 21; probes = 96; kinds = 31 } },
     @{ Case = 'pass';     Min = @{ declined = 1 }; WithModule = @{ sources = 12; same = 12; refused = 1; handle = 1; ranOn = 1 } },
     @{ Case = 'input';    Min = @{}; WithModule = @{ frames = 26; equal = 26; seed = 1; presses = 5; players = 2; clicks = 2; wheel = 3; typed = 4; code = 1; dice = 1; clicked = 11; pointer = 8; cursor = 16; held = 7; rate = 5; refused = 1 } },
-    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 5 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 7; frames = 26; same = 26; golden = 7; round = 7; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637; seiyakuFrames = 158; seiyakuCells = 12956; seiyakuActs = 26; seiyakuInstances = 3; seiyakuSettles = 132; seiyakuLit = 3442; seiyakuSatisfied = 1; naughtFrames = 4807; naughtCells = 1615368; naughtEdits = 38; naughtLit = 208; naughtWritten = 151; naughtPassed = 14; naughtShown = 18 } },
+    @{ Case = 'replay';   Min = @{ vectors = 5; liveFrames = 24; doubleSame = 1; doubleRound = 1; paced = 1; stopped = 1; waited = 1; refused = 6; hands = 6 }; WithModule = @{ digest = 1; seed = 1; recorded = 1; edits = 3; whole = 2; replays = 8; frames = 26; same = 26; golden = 8; round = 8; cardSame = 240; sandFrames = 2085; sandPainted = 453; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30; superpositionFrames = 118; superpositionCells = 60416; superpositionActs = 18; superpositionWorlds = 1; superpositionSettles = 99; superpositionOpened = 637; seiyakuFrames = 158; seiyakuCells = 12956; seiyakuActs = 26; seiyakuInstances = 3; seiyakuSettles = 132; seiyakuLit = 3442; seiyakuSatisfied = 1; naughtFrames = 4807; naughtCells = 1615368; naughtEdits = 38; naughtLit = 208; naughtWritten = 151; naughtPassed = 14; naughtShown = 18; brickworkFrames = 41129; brickworkCells = 4146108; brickworkLit = 120412; brickworkWholes = 1085; brickworkLevel = 81; brickworkLaid = 376; brickworkGames = 1; brickworkTopouts = 1 } },
     @{ Case = 'audio';    Min = @{ frames = 43; sounded = 41; calls = 80; oscillators = 3; restarts = 5; skipped = 5; silences = 3; notices = 2; rate0 = 3; wanted = 1 }; WithModule = @{ cardFrames = 240; cardEqual = 240; cardSounded = 241; cardCalls = 248; ticks = 5; silenced = 1; cardNotices = 1; slow = 10; waterfall = 240; recorded = 1 } },
     @{ Case = 'sound';    Min = @{ frames = 49; settled = 19; rests = 17; steps = 8; dips = 2; releases = 5; waves = 4; notes = 6; span = 60 } },
     # 2026-10-24, ENGINE.28's first slice: the grid card's rows 17 and 18 are a format's appearance and its stripe starts
@@ -3224,6 +3237,47 @@ if ($Control) {
             }
         }
         $naughtNote = $naughtNotes -join '; '
+        # mutants NM, NN, NO and NP (CART.3's third slice (c)), when the real page holds the engine's module: Brickwork's
+        # hand, each failing the replay case by name at the frame of the owner's game where it first leaves the engine,
+        # found by the replay case over the whole game (`replays=brickwork`) with the mutant's hand: NM, a slide stopping a
+        # column short, at the owner's first slide, frame 409; NN, a cut taking a place in the deal, at the owner's second
+        # cut, the Clipboard's brick swapped in, frame 5155; NO, a lay's rest restarted by a turn, at a turn of a brick
+        # resting, frame 35015; and NP, the pace a power and not a product kept course by course, at the second course
+        # cleared, frame 2524, its pace 56.454 by hand where the product is 56.45399999999999.
+        $brickworkMutants = @(
+            @{ L = 'nm'; Name = 'a slide stopping a column short'; Frame = 409
+               Anchor = '    while (slide !== 0 && fitsIn(last.wall, kind, place(slidTo.course, slidTo.column + slide, slidTo.turn))) slidTo = place(slidTo.course, slidTo.column + slide, slidTo.turn);'
+               With = '    while (slide !== 0 && fitsIn(last.wall, kind, place(slidTo.course, slidTo.column + 2 * slide, slidTo.turn))) slidTo = place(slidTo.course, slidTo.column + slide, slidTo.turn);' },
+            @{ L = 'nn'; Name = 'a cut taking a place in the deal'; Frame = 5155
+               Anchor = '    var bagEntry = this.entered && !fromClip;'
+               With = '    var bagEntry = this.entered;' },
+            @{ L = 'no'; Name = 'a lay''s rest restarted by a turn'; Frame = 35015
+               Anchor = '    this.restingFor = first || this.entered ? 0 : moving ? (this.fell ? 0 : this.resting ? last.restingFor + 1 : last.restingFor) : last.restingFor;'
+               With = '    this.restingFor = first || this.entered ? 0 : moving ? (this.fell || this.turned ? 0 : this.resting ? last.restingFor + 1 : last.restingFor) : last.restingFor;' },
+            @{ L = 'np'; Name = 'the pace a power'; Frame = 2524
+               Anchor = '    else { var p = last.pace; for (var nth = 1; nth <= 4; nth++) p *= this.fullCount >= nth ? quicken : 1; this.pace = p; }'
+               With = '    else this.pace = s.startPace * Math.pow(quicken, last.level + this.fullCount);' }
+        )
+        $brickworkNotes = New-Object System.Collections.Generic.List[string]
+        $brickworkJudged = New-Object System.Collections.Generic.List[object]
+        $brickworkOk = $true
+        if ($moduleReal -eq 0) { $brickworkNotes.Add('brickwork''s hand: not applicable, the real page holding no engine module') }
+        else {
+            $brickworkHandNow = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'cartridges/brickwork/brickwork.hand.js'))
+            foreach ($mu in $brickworkMutants) {
+                if (([regex]::Matches($brickworkHandNow, [regex]::Escape($mu.Anchor))).Count -ne 1) { Write-Output "FAIL: the anchor '$($mu.Anchor)' is not in cartridges/brickwork/brickwork.hand.js exactly once"; exit 1 }
+                $mutBw = $brickworkHandNow.Replace($mu.Anchor, $mu.With)
+                $bwApplied = $mutBw -cne $brickworkHandNow
+                $bwCases = 'input,replay:brickwork:' + $mu.Frame
+                $rBw = Invoke-Mutant (New-MutantPage $mu.L $template $hostJs '' (New-HandCopy $mu.L 'brickwork/brickwork.hand.js' $mutBw)) $bwCases
+                $jBw = Test-Mutant $rBw $bwCases
+                $bwFailed = @($jBw.Problems | Where-Object { $_ -like ("*case replay*brickwork's committed replay, played on a fresh host, is not its hand's at frame " + $mu.Frame + ':*') }).Count
+                $brickworkJudged.Add(@{ Name = $mu.Name; Problems = @($jBw.Problems) })
+                $brickworkNotes.Add(("{0} applied ({1}) and failed the replay case at frame {2} ({3})" -f $mu.Name, $bwApplied, $mu.Frame, $bwFailed))
+                if (-not ($bwApplied -and $bwFailed -ge 1)) { $brickworkOk = $false }
+            }
+        }
+        $brickworkNote = $brickworkNotes -join '; '
         # mutants AT, AU, AV and AW (ENGINE.16), each a game's page of Kairos alone, which must pass first: its
         # hand a frame late, answering each frame with the frame before it; its hand's Tally counting a stack at
         # the level above its own, which moves no light; its hand's block dropped, so that its replay is held to
@@ -3276,9 +3330,9 @@ if ($Control) {
         if ($script:LoopMode -eq 'plan') { return }   # the plan pass judges nothing (REPO.8)
         if ($script:LoopMode -eq 'run') { Write-Output (Get-PoolNote) }
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
-        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
-        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and eighty-six' } else { 'one hundred and thirty-nine applicable' }) + ' mutants for its own reason, each proving it applied')
+        Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}; {54}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote, $brickworkNote)
+        if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk -and $brickworkOk) {
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and ninety' } else { 'one hundred and thirty-nine applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -3325,6 +3379,7 @@ if ($Control) {
         foreach ($wj in $widthsJudged) { foreach ($p in @($wj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $wj.Name + ': ' + $p) } }
         foreach ($mj in $modesJudged) { foreach ($p in @($mj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $mj.Name + ': ' + $p) } }
         foreach ($nj in $naughtJudged) { foreach ($p in @($nj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $nj.Name + ': ' + $p) } }
+        foreach ($bj in $brickworkJudged) { foreach ($p in @($bj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $bj.Name + ': ' + $p) } }
         foreach ($p in @($jG0.Problems) | Select-Object -First 3) { Write-Output ('  the game''s page: ' + $p) }
         foreach ($gj in $gameJudged) { foreach ($p in @($gj.Problems) | Select-Object -First 3) { Write-Output ('  ' + $gj.Name + ': ' + $p) } }
         exit 1

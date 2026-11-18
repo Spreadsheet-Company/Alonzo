@@ -345,11 +345,13 @@ if ($Root -eq '') { $Root = $repoRoot }
 # moved by the two Planes sheet rows and the Constraints' twelve formula rows.
 # 2026-10-30, CART.9's fourth slice: Naught at 1,363 rows, six clocked levels, the ROM, the Write sheet, the Lab's clock and
 # its rows of inputs and dues, and the Gates' blocks of the six; the other ten's rows unchanged.
+# 2026-11-18, CART.3's third slice (c): Brickwork's replay, the owner's one game to level 81 in 41,129 frames, and
+# its golden, the Tally's A1:B21 at the replay's last frame: eight replays and eight goldens.
 $expectedCartridges = 12
 $expectedSources = 12
 $expectedLibraries = 1
-$expectedReplays = 7
-$expectedGoldens = 7
+$expectedReplays = 8
+$expectedGoldens = 8
 # 2026-10-30, ENGINE.36: the grid card at 270 rows, row 9's four line feeds by (char 10) and their two style rows; the
 # other ten's rows unchanged.
 # 2026-11-15, CART.9's fifth slice: Naught at 1,379 rows, the Lab's X, a level's error kind, fifteen rows and its header;
