@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds two hundred and eighty-two mutant pages through tools/build_web.ps1 and runs
+-Control builds two hundred and eighty-six mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -939,10 +939,13 @@ $paletteFloors = @{ commands = 33; keyed = 11; lines = 10; opened = 1; ran = 1; 
 # printed (2); the card opened on its Board; 5 sheets by their tabs, M taken as the game's on the two game sheets alone
 # (pressed 2, passed 3); 3 rows written and 2 refused with their count; a key on the read sheet refused; the card at a
 # rate, M and x on the work sheet and on a game sheet (2); 5 of the engine's refusals; and on Alonzo's page Naught's
-# Lesson read and its Bench worked (2), which a game's page, holding no Naught, counts 0.
-$modesPageFloors = @{ acts = 39; words = 10; places = 5; bar = 4; fakeRead = 2; fakeModes = 6; fakeEdits = 5; fakeSaid = 3; fakeUnnamed = 3; fakePlane = 1; fakeOlder = 3 }
-$modesFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; presses = 5; keyRefused = 1; rate = 2; refusals = 5; naught = 2; kept = 1 }
-$modesGameFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; presses = 5; keyRefused = 1; rate = 2; refusals = 5; kept = 1 }
+# Lesson read and its Bench worked (2), which a game's page, holding no Naught, counts 0. Since ENGINE.42 the bar's rule
+# has 8, a repeat or not, an act's answer or not and over a key's refusal or not; and over the module, on a game's page
+# too, an act's answers said again: a source built again and an edit written again, each the bar's after a refusal, the
+# bar held over the loop's own repeat, and the log's last line each answer's (2).
+$modesPageFloors = @{ acts = 39; words = 10; places = 5; bar = 8; fakeRead = 2; fakeModes = 6; fakeEdits = 5; fakeSaid = 3; fakeUnnamed = 3; fakePlane = 1; fakeOlder = 3 }
+$modesFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; presses = 5; keyRefused = 1; rate = 2; refusals = 5; naught = 2; kept = 1; answersBuilt = 1; answersEdited = 1; answersHeld = 1; answersLast = 2 }
+$modesGameFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed = 3; written = 3; refusedRows = 3; presses = 5; keyRefused = 1; rate = 2; refusals = 5; kept = 1; answersBuilt = 1; answersEdited = 1; answersHeld = 1; answersLast = 2 }
 # 2026-10-17, ENGINE.25: the twenty-six cases' counts unchanged, and a twenty-seventh, commands, over the module on both
 # pages, its counts a function of its plan: the card opened on the Desk, its four commands listed at the load; 40 frames,
 # 3 commands run alone, Input!B20 naming the command due at 23 frames and empty at 17; two commands a frame apart and one
@@ -2042,7 +2045,7 @@ if ($Control) {
                Want = 'case grid.*fake frame 3: the viewport shows A1 at its top left, and the Camera at L1 puts L1 there' },
             @{ L = 'ag'; Name = 'every row at the default height'; File = 'viewport'; Module = $true; Anchor = '    if (model && model.rowSettings) {'; With = '    if (false) {'
                Want = 'case grid.*engine frame 0: (A9|B9|A10|B10|C10|A11|B11|A12|B12)\b' },
-            @{ L = 'ah'; Name = 'a paused edit unsaid'; File = 'host'; Anchor = '    else if (this.cart.rate > 0 && !this.running) this._say('; With = '    else if (false) this._say('
+            @{ L = 'ah'; Name = 'a paused edit unsaid'; File = 'host'; Anchor = '    else if (this.cart.rate > 0 && !this.running) this._answer('; With = '    else if (false) this._answer('
                Want = 'case grid.*fake: the edit \(cell "Screen" "W7" 1\), made while the loop was paused at its rate, was not said to wait' },
             @{ L = 'aq'; Name = 'the grid record at every frame'; File = 'host'; Anchor = "    var t0 = this.now(), projection = this.frame > 0 ? 'values' : 'grid';"; With = "    var t0 = this.now(), projection = 'grid';"
                Want = 'case grid.*fake frame 1: the host drew the grid record of [A-Z]+\d+:[A-Z]+\d+, where the values record is due' },
@@ -2465,7 +2468,16 @@ if ($Control) {
             @{ L = 'ng'; Name = 'the history kept across a value written'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = '    this.undos = []; this.redos = []; this.native = -1; this.texts = [];'; With = '    this.native = -1; this.texts = [];'
                Want = 'case drawer.*drawer: at the history.s step 4 the box holds' },
             @{ L = 'nh'; Name = 'the page''s own edits untold'; Module = $false; File = 'template'; Case = 'drawer'; Anchor = '    try { this.el.dispatchEvent(new InputEvent(''input'', { bubbles: true, inputType: kind })); } finally { this.own = false; }'; With = '    this.own = false;'
-               Want = 'case drawer.*drawer: the page.s own edits told 0 input events' }
+               Want = 'case drawer.*drawer: the page.s own edits told 0 input events' },
+            # NI to NK (ENGINE.42), an act's answer said again, each failing the modes case's answers over the module: an
+            # edit's answer unmarked where it lands, the bar passing over it; every sentence an act's, the loop's own repeat
+            # taking the bar; and an act's repeat left in place in the log, its last line a refusal over a success
+            @{ L = 'ni'; Name = 'an edit''s answer unmarked where it lands'; File = 'host'; Module = $true; Case = 'modes'; Anchor = "      if (!atRateZero) this._answer('frame ' + (this.frame + 1) + ': the edit ' + row + ' was written.');"; With = "      if (!atRateZero) this._say('frame ' + (this.frame + 1) + ': the edit ' + row + ' was written.');"
+               Want = 'case modes.*answers: after an edit written, refused and written again, the bar says' },
+            @{ L = 'nj'; Name = 'every sentence an act''s answer'; File = 'host'; Module = $true; Case = 'modes'; Anchor = '    kind = kind || ''event''; refusal = !!refusal; act = !!act;'; With = '    kind = kind || ''event''; refusal = !!refusal; act = true;'
+               Want = 'case modes.*answers: a frame more, the loop.s own repeat' },
+            @{ L = 'nk'; Name = 'an act''s repeat left in place in the log'; File = 'host'; Module = $true; Case = 'modes'; Anchor = '      if (act) { this.order.splice(this.order.indexOf(e), 1); this.order.push(e); this.status = text; }'; With = '      if (act) { this.status = text; }'
+               Want = 'case modes.*answers: the log.s last line after the third build' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
@@ -2497,7 +2509,7 @@ if ($Control) {
         # landing after D1's at 11; and the manifest, a removed row's cells and the rows no write takes each uncompared,
         # their rebuilt sources answered ok.
         $continueMutants = @(
-            @{ L = 'ca'; Name = 'the rebuilt cartridge loaded instead'; Anchor = '    if (!this.m) return this._fail(''There is no engine module to apply a cartridge to.'');'
+            @{ L = 'ca'; Name = 'the rebuilt cartridge loaded instead'; Anchor = '    if (!this.m) return this._answerFailed(''There is no engine module to apply a cartridge to.'');'
                With = '    if (this.m) return this.loadBytes(enc.encode(String(text || '''')), this.cartFile);'
                Want = 'case continue.*continue frame 11: after its tick the host is at frame 0 and its twin at 11, where a continue keeps the frame number' },
             @{ L = 'cb'; Name = 'every value row written'; Anchor = '    B.carried.forEach(function (v, key) { var o = A.carried.get(key); if (!o || o.text !== v.text) write.push(v); });'
@@ -2812,7 +2824,7 @@ if ($Control) {
             @{ L = 'ef'; Name = 'a press read after the viewport''s own'; Module = $true; Anchor = "    this._on(root, 'mousedown', function (ev) { if (still() && self._pressActs()) self._pressAct(ev); }, true);"
                With = "    this._on(root, 'mousedown', function (ev) { if (still() && self._pressActs()) self._pressAct(ev); });"
                Want = 'case settle.*settle: a press on E2 left frame \d+' },
-            @{ L = 'ee'; Name = 'an unsettled act unsaid'; Anchor = "        this._say('frame ' + n + ': ' + sa.what + ' did not settle in ' + countWords(steps + 1) + ' frames, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5).');"
+            @{ L = 'ee'; Name = 'an unsettled act unsaid'; Anchor = "        this._answer('frame ' + n + ': ' + sa.what + ' did not settle in ' + countWords(steps + 1) + ' frames, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5).');"
                With = '        // the unsettled act unsaid, by the control'
                Want = 'case settle.*settle, the double: the host said "the load did not settle in nine frames" 0 time' },
             # CART.9's fourth slice, decision 51: a settled act's frames and what each was for, and a command's name quoted
@@ -2902,15 +2914,20 @@ if ($Control) {
             @{ L = 'hs'; Name = 'a game sheet''s Delete closed'; Template = $true; Anchor = "    if (typed && at.gameSheet && ev.key !== '=') return 'stray';"
                With = "    if (at.gameSheet && ev.key !== '=') return 'stray';"
                Want = 'case modes.*modes: on a game sheet, Delete the page makes stray of the key, where empty is due' },
-            @{ L = 'ht'; Name = 'a stray key saying nothing'; Anchor = '    this._refuse(text);   // the log counts the repeats'
+            @{ L = 'ht'; Name = 'a stray key saying nothing'; Anchor = '    this._answerRefused(text);   // the log counts the repeats'
                With = '    // a stray key saying nothing, by the control'
                Want = 'case modes.*modes, the double: two stray keys on Tray made 2 refusal\(s\), said 0 time\(s\)' },
-            @{ L = 'hu'; Name = 'a repeat standing under a key''s refusal'; Template = $true; Anchor = '  function barTakes(s, holdsKey) { return !s.repeat || holdsKey; }'
-               With = '  function barTakes(s, holdsKey) { return !s.repeat; }'
+            @{ L = 'hu'; Name = 'a repeat standing under a key''s refusal'; Template = $true; Anchor = '  function barTakes(s, holdsKey) { return !s.repeat || !!s.act || holdsKey; }'
+               With = '  function barTakes(s, holdsKey) { return !s.repeat || !!s.act; }'
                Want = 'case modes.*modes: the bar passes over a repeat over a key''s refusal, where it takes it' },
-            @{ L = 'hv'; Name = 'every repeat in the bar'; Template = $true; Anchor = '  function barTakes(s, holdsKey) { return !s.repeat || holdsKey; }'
+            @{ L = 'hv'; Name = 'every repeat in the bar'; Template = $true; Anchor = '  function barTakes(s, holdsKey) { return !s.repeat || !!s.act || holdsKey; }'
                With = '  function barTakes(s, holdsKey) { return true; }'
                Want = 'case modes.*modes: the bar takes a repeat, where it passes over it' },
+            # NL (ENGINE.42): the bar of 2026-10-09 again, an act's answer said a second time passed over as the loop's
+            # own repeat is, which the bar's table and the answers over the module each fail
+            @{ L = 'nl'; Name = 'an act''s answer said again passed over'; Template = $true; Anchor = '  function barTakes(s, holdsKey) { return !s.repeat || !!s.act || holdsKey; }'
+               With = '  function barTakes(s, holdsKey) { return !s.repeat || holdsKey; }'
+               Want = 'case modes.*modes: the bar passes over a repeat answering an act, where it takes it' },
             @{ L = 'hq'; Name = 'no sheet a game sheet'; Anchor = '  Host.prototype.gameSheetHere = function () { return this.sheetMode(this._shown()).game; };'
                With = '  Host.prototype.gameSheetHere = function () { return false; };'
                Want = 'case modes.*modes, the double: Tray is "game", the game''s keys holding and a person writing it, no game sheet' },
@@ -3261,7 +3278,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and eighty-two' } else { 'one hundred and thirty-eight applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and eighty-six' } else { 'one hundred and thirty-nine applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

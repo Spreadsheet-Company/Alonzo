@@ -1606,10 +1606,12 @@
     if (typed && at.gameSheet && ev.key !== '=') return 'stray';   // the game's keys and =, no other (the owner's word)
     return typed ? 'edit' : ev.key === 'Backspace' ? 'emptied' : 'empty';
   }
-  // Whether the bar takes a sentence of the host's (CART.9's fourth slice, decision 50), pure: any but a repeat, which the
-  // log counts; and a repeat too while the bar holds a key's refusal, which the next sentence of any kind replaces, so that
-  // an act after a refused key never stands under the refusal. s, the host's status event; holdsKey, whether the bar holds one.
-  function barTakes(s, holdsKey) { return !s.repeat || holdsKey; }
+  // Whether the bar takes a sentence of the host's (CART.9's fourth slice, decision 50), pure: any but the loop's own
+  // repeat, which the log counts; an act's answer though it repeats (ENGINE.42), so that the bar says what the person just
+  // did, a build after a refused one among them; and a repeat too while the bar holds a key's refusal, which the next
+  // sentence of any kind replaces, so that an act after a refused key never stands under the refusal. s, the host's status
+  // event; holdsKey, whether the bar holds one.
+  function barTakes(s, holdsKey) { return !s.repeat || !!s.act || holdsKey; }
   // Whether a press of the mouse on an element leaves the keys where they were (CART.3's third slice, whose pass found a
   // click on Drawer keeping the keys on the button, the game deaf and Space shutting the drawer again), pure: on a
   // command's button and a section's summary, as the command's key leaves them, its click running the command as before;
@@ -2265,8 +2267,9 @@
     // The keys go to what shows the Screen: the plane's canvas, or the viewport's scroller.
     function focusScreen() { if (mode === 'grid' && host.vp) host.vp.scroller.focus(); else planeCv.focus(); }
     // The log drawn in place: a new event appends a line, a repeat changes only its own line's
-    // count, so the other lines stay put to be read, selected and copied; the list follows a new
-    // line only when it was already at its bottom.
+    // count, so the other lines stay put to be read, selected and copied; an act's repeat, last in
+    // the host's order (ENGINE.42), moves its own line to the end and no other; the list follows a
+    // new line or a moved one only when it was already at its bottom.
     function renderLog() {
       var entries = host.logEntries(), keep = {}, added = false;
       var atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 4;
@@ -2277,6 +2280,8 @@
         if (li.textContent !== e.text) li.textContent = e.text;
       }
       for (var id in items) if (Object.prototype.hasOwnProperty.call(items, id) && !keep[id]) { logEl.removeChild(items[id]); delete items[id]; }
+      var last = entries.length ? items[entries[entries.length - 1].id] : null;
+      if (last && logEl.lastChild !== last) { logEl.appendChild(last); added = true; }
       if (added && atBottom) logEl.scrollTop = logEl.scrollHeight;
     }
     // The sheet the viewer shows, viewed again through the cells in view with its scroll and selection kept
@@ -9015,7 +9020,8 @@
   var MODES_SHEETS = [['Board', 'game read', true, false], ['Tray', 'game', true, true], ['Notes', 'work', false, true], ['Rules', 'read', false, false], ['Other', '', false, true]];
   function caseModes() {
     var P = [], k = { acts: 0, words: 0, places: 0, bar: 0, fakeRead: 0, fakeModes: 0, fakeEdits: 0, fakeSaid: 0, fakeUnnamed: 0, fakePlane: 0, fakeOlder: 0,
-                      module: 0, described: 0, opened: 0, takes: 0, pressed: 0, passed: 0, written: 0, refusedRows: 0, presses: 0, keyRefused: 0, rate: 0, refusals: 0, naught: 0, kept: 0 };
+                      module: 0, described: 0, opened: 0, takes: 0, pressed: 0, passed: 0, written: 0, refusedRows: 0, presses: 0, keyRefused: 0, rate: 0, refusals: 0, naught: 0, kept: 0,
+                      answersBuilt: 0, answersEdited: 0, answersHeld: 0, answersLast: 0 };
     modesPage(k, P);
     modesDouble(k, P);
     var wasm = builtModule();
@@ -9026,6 +9032,7 @@
     modesRate(bytes, k, P);
     modesRefused(bytes, k, P);
     modesNaught(bytes, k, P);
+    modesAnswers(bytes, k, P);
     return { counters: k, problems: P };
   }
   function modeLetters(m) { return [m.game ? 'game' : '', m.work ? 'work' : '', m.read ? 'read' : ''].filter(Boolean).join(' '); }
@@ -9063,10 +9070,13 @@
       var got = gridKeyAct(x[1], x[2]);
       if (got === x[3]) k.acts++; else P.push('modes: on ' + x[0] + ' the page makes ' + got + ' of the key, where ' + x[3] + ' is due');
     });
-    // the bar (CART.9's fourth slice, decision 50): a new sentence, never a repeat, and a repeat over a key's refusal
-    [[false, false, true], [true, false, false], [true, true, true], [false, true, true]].forEach(function (x) {
-      var got = barTakes({ repeat: x[0] }, x[1]);
-      if (got === x[2]) k.bar++; else P.push('modes: the bar ' + (got ? 'takes' : 'passes over') + ' a ' + (x[0] ? 'repeat' : 'new sentence') + (x[1] ? ' over a key\'s refusal' : '') + ', where it ' + (x[2] ? 'takes it' : 'passes over it'));
+    // the bar (CART.9's fourth slice, decision 50; ENGINE.42): a new sentence, never the loop's own repeat, an act's answer
+    // though it repeats, and a repeat over a key's refusal; each case a repeat or not, an act's or not, over a key's
+    // refusal or not, and whether the bar takes it
+    [[false, false, false, true], [true, false, false, false], [true, true, false, true], [false, true, false, true],
+     [true, false, true, true], [false, false, true, true], [true, true, true, true], [false, true, true, true]].forEach(function (x) {
+      var got = barTakes({ repeat: x[0], act: x[1] }, x[2]);
+      if (got === x[3]) k.bar++; else P.push('modes: the bar ' + (got ? 'takes' : 'passes over') + ' a ' + (x[0] ? 'repeat' : 'new sentence') + (x[1] ? ' answering an act' : '') + (x[2] ? ' over a key\'s refusal' : '') + ', where it ' + (x[3] ? 'takes it' : 'passes over it'));
     });
     // the palette's note of the sheet shown, and the drawer's of the cartridge's sheets
     var c = { game: ['I NON', 'II ET'], work: ['Bench'], read: ['Lesson'] };
@@ -9310,6 +9320,46 @@
       host.shownName = 'Bench';
       var bench = host.edit('(cell "Bench" "A3" 1)'), a3 = recordValues(D.call('alonzo_view', [ld.handle], ['grid', 'Bench', 'A3']).text).A3;
       if (!lesson && bench && viewsNum(a3) === 1) k.naught++; else P.push('modes, Naught: a row into the Lesson was ' + (lesson ? 'written' : 'refused') + ' and one into the Bench ' + (bench ? 'written, A3 holding ' + JSON.stringify(a3) : 'refused') + ', where the Lesson refuses it and the Bench takes it');
+    } finally { host.destroy(); }
+  }
+  // An act's answer said again (ENGINE.42), over the module, the bar read by the page's own rule: a source built, refused
+  // and built again, and an edit written, refused and written again, the bar holding the act's last answer each time and
+  // not the refusal before it, and the log's last line that answer's, its count risen; then a frame more, the card's
+  // Write sheet writing into a formula, refused at every frame, the loop's own repeat, which leaves the bar and the log as
+  // they were. It needs no file of Alonzo's, so a game's page runs it.
+  var ANSWERSCARD = { file: 'answers.vla', source: 'answers.source.vla',
+                      text: '(cartridge "answers"\n  (spec 3)\n  (title "The act\'s answers")\n  (rate 30)\n  (screen grid 4 4)\n  (seed 1))\n' +
+                            '(sheet "Screen" visible)\n(sheet "Write" visible)\n(cell "Screen" "A1" 1)\n(formula "Screen" "B3" "=1+1")\n' +
+                            '(cell "Write" "A1" "sheet")\n(cell "Write" "B1" "address")\n(cell "Write" "C1" "value")\n(cell "Write" "A2" "Screen")\n(cell "Write" "B2" "B3")\n(cell "Write" "C2" 1)\n' };
+  function modesAnswers(bytes, k, P) {
+    var exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: frozen }), bar = null;
+    host.on('status', function (s) { if (s.kind !== 'progress' && barTakes(s, false)) bar = s; });
+    function last() { var e = host.logEntries(); return e.length ? e[e.length - 1].text : ''; }
+    function barWords() { return bar ? (bar.refusal ? 'the refusal ' : '') + JSON.stringify(bar.text.slice(0, 120)) : 'nothing'; }
+    try {
+      if (!host.attach(exports).ok) { P.push('modes, answers: the host refused the module'); return; }
+      var built = 'Built answers.vla from answers.source.vla by the pass: its manifest and 10 rows, and nothing loaded.';
+      host.expand(ANSWERSCARD.text, ANSWERSCARD.source, []);
+      var refused = host.expand(ANSWERSCARD.text + '(cell "Screen" "B1"\n', ANSWERSCARD.source, []);
+      var again = host.expand(ANSWERSCARD.text, ANSWERSCARD.source, []);
+      if (!refused.ok && again.ok && bar && !bar.refusal && bar.text === built) k.answersBuilt++;
+      else P.push('modes, answers: after a source built, refused and built again, the bar says ' + barWords() + ', where ' + JSON.stringify(built) + ' is due');
+      if (last() === '2 times: ' + built) k.answersLast++; else P.push('modes, answers: the log\'s last line after the third build is ' + JSON.stringify(last()) + ', where the build\'s, counted twice, is due');
+      var ld = host.load(ANSWERSCARD.text, ANSWERSCARD.file);
+      if (!ld.ok) { P.push('modes, answers: the card did not load: ' + ld.sentence); return; }
+      var row = '(cell "Screen" "B1" 7)', written = 'the edit ' + row + ' was written.';
+      host.edit(row); host.runFrameSync();
+      host.edit('(formula "Screen" "B2" "=6*")'); host.runFrameSync();
+      host.edit(row); host.runFrameSync();
+      var f = host.counters().frame;
+      if (bar && !bar.refusal && bar.text === 'frame ' + f + ': ' + written) k.answersEdited++;
+      else P.push('modes, answers: after an edit written, refused and written again, the bar says ' + barWords() + ', where the edit written at frame ' + f + ' is due');
+      host.runFrameSync();
+      var loop = host.logEntries().filter(function (e) { return e.key.indexOf('A derived write cannot go into Screen!B3') === 0; });
+      if (loop.length === 1 && loop[0].count >= 3 && bar && bar.text === 'frame ' + f + ': ' + written) k.answersHeld++;
+      else P.push('modes, answers: a frame more, the loop\'s own repeat, the derived write into Screen!B3 refused ' + (loop.length ? loop[0].count + ' times' : 'never') + ', left the bar saying ' + barWords() + ', where the edit written at frame ' + f + ' is due');
+      if (/^2 times, frames \d+ to \d+: the edit \(cell "Screen" "B1" 7\) was written\.$/.test(last())) k.answersLast++;
+      else P.push('modes, answers: the log\'s last line a frame after the edit written again is ' + JSON.stringify(last()) + ', where the edit\'s, counted twice, is due');
     } finally { host.destroy(); }
   }
   function loopLine(name, k, problems) {

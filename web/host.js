@@ -926,16 +926,16 @@
 
   Host.prototype.load = function (text, name) { return this.loadBytes(enc.encode(String(text)), name); };
   Host.prototype.loadBytes = function (bytes, name) {
-    if (!this.m) return this._fail('There is no engine module to load a cartridge into.');
+    if (!this.m) return this._answerFailed('There is no engine module to load a cartridge into.');
     this.stop();
     if (this.handle) this.unload();
     this._reset();
     this.cartBytes = null; this.cartFile = '';
     var b = this.m.put(bytes), n = this.m.text(name || ''), r;
     try { r = this.m.call('alonzo_load', [b.ptr, b.len, n.ptr, n.len]); } finally { this.m.release(b); this.m.release(n); }
-    if (r.status !== 0) return this._fail('The cartridge was refused: ' + words(r) + '.');
+    if (r.status !== 0) return this._answerFailed('The cartridge was refused: ' + words(r) + '.');
     var f = first(r.text, 'cartridge');
-    if (!f) return this._fail('The module answered the load with ' + r.text.trim() + ', not a cartridge row.');
+    if (!f) return this._answerFailed('The module answered the load with ' + r.text.trim() + ', not a cartridge row.');
     this.handle = num(f[1]);
     this.cartBytes = bytes; this.cartFile = name || '';
     var c = this.cart = { title: str(f[2]), mode: sym(f[3]), w: num(f[4]), h: num(f[5]), rate: num(f[6]), seed: '', spec: 0, settle: 0, bound: [], game: [], work: [], read: [], devices: {}, budget: null, name: null, digest: null };
@@ -945,19 +945,19 @@
     // run resumed from a save plays on that save
     this.frame = this._clockAt('B1') || 0;
     this.window = rangeOf(1, 1, c.h, c.w);
-    this._say('Loaded ' + c.title + ': ' + article(c.w) + ' ' + c.w + ' by ' + c.h + ' ' + c.mode + ' at ' + (c.rate ? c.rate + ' frames a second' : 'rate 0, a step on every edit') + ', seed ' + c.seed + ', on ' + this.version + '.');
+    this._answer('Loaded ' + c.title + ': ' + article(c.w) + ' ' + c.w + ' by ' + c.h + ' ' + c.mode + ' at ' + (c.rate ? c.rate + ' frames a second' : 'rate 0, a step on every edit') + ', seed ' + c.seed + ', on ' + this.version + '.');
     if (c.budget) {
       // "may", since CART.2 (2026-10-11, decision 16): the budget counts every formula cell every frame,
       // and the engine computes only the cells a change reaches, so a cartridge over the line may run
       // at its rate, as Sand's 126,449 cells at 30 frames a second do.
       var bd = c.budget, over = bd.perSecond > bd.line;
-      this._say(c.rate ? 'The budget: ' + thousands(bd.cells) + ' formula cells a frame at ' + c.rate + ' frames a second, ' + thousands(bd.perSecond) + ' a second, ' + (over ? 'over' : 'under') + ' the console\'s line of ' + thousands(bd.line) + (over ? ': it may run slowly, in plain sight.' : '.')
+      this._answer(c.rate ? 'The budget: ' + thousands(bd.cells) + ' formula cells a frame at ' + c.rate + ' frames a second, ' + thousands(bd.perSecond) + ' a second, ' + (over ? 'over' : 'under') + ' the console\'s line of ' + thousands(bd.line) + (over ? ': it may run slowly, in plain sight.' : '.')
                        : 'The budget: ' + thousands(bd.cells) + ' formula cells a step, one step an edit.');
     }
-    if (c.mode === 'grid' && !this.gridEl) this._say('This page gave the host no element for grid mode: the cartridge runs, and nothing draws it.');
+    if (c.mode === 'grid' && !this.gridEl) this._answer('This page gave the host no element for grid mode: the cartridge runs, and nothing draws it.');
     // a save of a cartridge whose host chose its seed holds the seed it ran on, which the host keeps (ENGINE.5)
     var held = c.seed === 'host' && this.playSeed === undefined ? this._clockAt('B3') : null;
-    if (held) { c.seed = held; c.seedChosen = true; this._say('The cartridge asks the host for its seed: the save holds ' + held + ', in Clock!B3, and keeps it.'); }
+    if (held) { c.seed = held; c.seedChosen = true; this._answer('The cartridge asks the host for its seed: the save holds ' + held + ', in Clock!B3, and keeps it.'); }
     else if (c.seed === 'host') this._seed();
     this._startReplay();   // the replay of this load's run, from frame 0 (section 7.6)
     this._startKeep();     // and the work kept, the cartridge loaded its first keyframe (ENGINE.38)
@@ -990,9 +990,9 @@
       n = 1 + (u[0] % MAX_SEED);
     }
     var r = this._write('(cell "Clock" "B3" ' + n + ')');
-    if (r.status !== 0) { this._refuse('The cartridge asks the host for its seed, and the write of ' + n + ' into Clock!B3 was refused: ' + words(r, true) + '.'); return; }
+    if (r.status !== 0) { this._answerRefused('The cartridge asks the host for its seed, and the write of ' + n + ' into Clock!B3 was refused: ' + words(r, true) + '.'); return; }
     this.cart.seed = n; this.cart.seedChosen = true;
-    this._say(played ? 'The cartridge asks the host for its seed: the replay names ' + n + ', written in Clock!B3.'
+    this._answer(played ? 'The cartridge asks the host for its seed: the replay names ' + n + ', written in Clock!B3.'
                      : 'The cartridge asks the host for its seed: the host chose ' + n + ', in Clock!B3.');
   };
   // A Clock cell's whole number above 0 as the grid holds it, read from its values view, or null (ENGINE.5): a save's
@@ -1004,7 +1004,7 @@
   };
   Host.prototype._describe = function () {
     var r = this.m.call('alonzo_describe', [this.handle]);
-    if (r.status !== 0) { this._refuse('The describe was refused: ' + words(r) + '.'); return; }
+    if (r.status !== 0) { this._answerRefused('The describe was refused: ' + words(r) + '.'); return; }
     var forms = VP().readForms(r.text), c = this.cart;
     for (var i = 0; i < forms.length; i++) {
       var f = forms[i], head = Array.isArray(f) ? sym(f[0]) : null;
@@ -1022,7 +1022,7 @@
     this.stop();
     this._release();   // the oscillators stopped after the silence, the next load making its own (ENGINE.4, decision 6)
     var r = this.m.call('alonzo_unload', [this.handle]);
-    if (r.status !== 0) this._refuse('The unload was refused: ' + words(r) + '.');
+    if (r.status !== 0) this._answerRefused('The unload was refused: ' + words(r) + '.');
     this.handle = 0; this.cart = null; this.inFrame = false; this.progress = null; this.plane = null;
     this._clear();
   };
@@ -1043,15 +1043,15 @@
   // export is asked for at the act and not at the attach, since the fake module holds no pass and
   // still drives the loop: over a module without one, the build is declined in words.
   Host.prototype.expand = function (source, path, files) {
-    if (!this.m) return this._fail('There is no engine module to run the pass.');
+    if (!this.m) return this._answerFailed('There is no engine module to run the pass.');
     var name = String(path || '').replace(/^.*[\/\\]/, '');
-    if (typeof this.m.x.alonzo_expand !== 'function') return this._fail('The module exports no alonzo_expand, so it holds no pass to build a cartridge from ' + (name || 'its source') + ': the engine\'s module holds one (docs/SPEC.md section 7.8).');
+    if (typeof this.m.x.alonzo_expand !== 'function') return this._answerFailed('The module exports no alonzo_expand, so it holds no pass to build a cartridge from ' + (name || 'its source') + ': the engine\'s module holds one (docs/SPEC.md section 7.8).');
     var parts = [];
     for (var i = 0; i < (files || []).length; i++) parts.push(String(files[i][0]), String(files[i][1]));
     var t0 = this.now(), r = this.m.texts('alonzo_expand', [], [source, path, parts.join('\u0000')]), ms = this.now() - t0;
-    if (r.status !== 0) return this._fail('The pass refused ' + name + ': ' + words(r) + '.');
+    if (r.status !== 0) return this._answerFailed('The pass refused ' + name + ': ' + words(r) + '.');
     var rows = Math.max(0, VP().readForms(r.text).length - 1);
-    this._say('Built ' + name.replace(/\.source\.vla$/i, '.vla') + ' from ' + name + ' by the pass: its manifest and ' + thousands(rows) + ' row' + (rows === 1 ? '' : 's') + ', and nothing loaded.');
+    this._answer('Built ' + name.replace(/\.source\.vla$/i, '.vla') + ' from ' + name + ' by the pass: its manifest and ' + thousands(rows) + ' row' + (rows === 1 ? '' : 's') + ', and nothing loaded.');
     return { ok: true, text: r.text, rows: rows, ms: ms };
   };
 
@@ -1065,20 +1065,20 @@
   // press waiting replaced by the next; at rate zero, one edit and one step. name: the file's name in the sentences, the
   // name the cartridge loaded was given by default.
   Host.prototype.apply = function (text, name) {
-    if (!this.m) return this._fail('There is no engine module to apply a cartridge to.');
-    if (!this.handle || !this.cart || !this.cartBytes) return this._fail('No cartridge is loaded to apply a rebuilt one to: Load starts one from frame 0.');
+    if (!this.m) return this._answerFailed('There is no engine module to apply a cartridge to.');
+    if (!this.handle || !this.cart || !this.cartBytes) return this._answerFailed('No cartridge is loaded to apply a rebuilt one to: Load starts one from frame 0.');
     var file = name || this.cartFile || 'the cartridge', next = String(text || '');
-    if (this.player) return this._fail('The rebuilt ' + file + ' was not applied: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s edits wait until it ends, so that what plays is the replay alone.');
+    if (this.player) return this._answerFailed('The rebuilt ' + file + ' was not applied: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s edits wait until it ends, so that what plays is the replay alone.');
     var cmp = compareCartridges(this._given(), next), at = 'frame ' + this.frame + ': ';
-    if (cmp.why.length) return this._fail(at + file + ' cannot be applied to the running game: ' + cmp.why[0] + (cmp.why.length > 1 ? ', and ' + (cmp.why.length - 1) + ' more' : '') + '. Load starts it from frame 0.');
-    if (!cmp.rows.length) { this._say(at + file + ' changes no cell or formula row of the cartridge the running game holds: nothing to apply.'); return { ok: true, rows: 0, cells: 0, formulas: 0, values: 0 }; }
+    if (cmp.why.length) return this._answerFailed(at + file + ' cannot be applied to the running game: ' + cmp.why[0] + (cmp.why.length > 1 ? ', and ' + (cmp.why.length - 1) + ' more' : '') + '. Load starts it from frame 0.');
+    if (!cmp.rows.length) { this._answer(at + file + ' changes no cell or formula row of the cartridge the running game holds: nothing to apply.'); return { ok: true, rows: 0, cells: 0, formulas: 0, values: 0 }; }
     var r = this._checkLoad(next, file);
-    if (r) return this._fail(at + file + ' cannot be applied to the running game, since a load refuses it: ' + words(r) + '; nothing was written.');
+    if (r) return this._answerFailed(at + file + ' cannot be applied to the running game, since a load refuses it: ' + words(r) + '; nothing was written.');
     for (var i = this.edits.length - 1; i >= 0; i--) if (typeof this.edits[i] !== 'string') this.edits.splice(i, 1);   // a press waiting, replaced
     var b = { text: next, file: file, rows: cmp.rows, lines: linesOf(next, cmp.rows), formulas: cmp.formulas, values: cmp.values, cells: cmp.cells };
     this.edits.push(b);
     if (!this.inFrame && this.cart.rate === 0) this._editFrames(this._window());
-    else if (!this.running && this.cart.rate > 0) this._say(at + file + ' waits for the next frame, which Run brings: ' + appliedWords(b) + ' to write; the loop is paused at ' + this.cart.rate + ' frame' + (this.cart.rate === 1 ? '' : 's') + ' a second.');
+    else if (!this.running && this.cart.rate > 0) this._answer(at + file + ' waits for the next frame, which Run brings: ' + appliedWords(b) + ' to write; the loop is paused at ' + this.cart.rate + ' frame' + (this.cart.rate === 1 ? '' : 's') + ' a second.');
     return { ok: true, rows: cmp.rows.length, cells: cmp.cells, formulas: cmp.formulas, values: cmp.values };
   };
   // The rebuilt cartridge loaded in a second handle of the same module and given back at once (decision 6): false when
@@ -1317,7 +1317,7 @@
       var r = this._write(rows.join('\n'));
       if (r.status !== 0) {
         this.actKnown = null; this.commandRow = null;
-        this._refuse('frame ' + (this.frame + 1) + ': the act\'s rows were refused: ' + words(r, true) + '; no step for ' + actWords(act) + '.');
+        this._answerRefused('frame ' + (this.frame + 1) + ': the act\'s rows were refused: ' + words(r, true) + '; no step for ' + actWords(act) + '.');
         return false;
       }
     }
@@ -1339,7 +1339,7 @@
   Host.prototype._writeCommandRow = function (name) {
     if (this.commandRow === name) return true;
     var row = '(cell "Input" "B20" ' + quote(name) + ')', r = this._write(row);
-    if (r.status !== 0) { this.commandRow = null; this._refuse('frame ' + (this.frame + 1) + ': the command row ' + row + ' was refused: ' + words(r, true) + '; no step for it.'); return false; }
+    if (r.status !== 0) { this.commandRow = null; this._answerRefused('frame ' + (this.frame + 1) + ': the command row ' + row + ' was refused: ' + words(r, true) + '; no step for it.'); return false; }
     this.commandRow = name; this.inputsLast = null;
     this._recordCommandRow(row, name);
     return true;
@@ -1358,13 +1358,13 @@
         if (editsInput(b.rows[i])) { this.commandRow = null; this.actKnown = null; }   // the twentieth row and the act's rows no longer known (ENGINE.25, CART.12)
       }
       this.given = b.text; this.actRead = null;   // the rebuilt rows read again for an act's place and press
-      this._say('frame ' + (this.frame + 1) + ': applied ' + b.file + ' to the running game: ' + appliedWords(b) + ' written, the frame number and every other cell kept.');
+      this._answer('frame ' + (this.frame + 1) + ': applied ' + b.file + ' to the running game: ' + appliedWords(b) + ' written, the frame number and every other cell kept.');
       return true;
     }
     this.c.appliedRefused++;
     var k = r.line >= 1 && r.line <= b.rows.length ? r.line - 1 : -1;
     var where = k >= 0 ? ', its row ' + shortly(b.rows[k]) + (b.lines[k] ? ' at line ' + b.lines[k] : '') : '';
-    this._refuse('frame ' + (this.frame + 1) + ': ' + b.file + ' was not applied: the write of its rows was refused' + where + ': ' + r.text + ' [' + r.id + ']; nothing was written, and the game runs on under the rules it had. Load starts the rebuilt cartridge from frame 0' + (atRateZero ? '; no step.' : '.'));
+    this._answerRefused('frame ' + (this.frame + 1) + ': ' + b.file + ' was not applied: the write of its rows was refused' + where + ': ' + r.text + ' [' + r.id + ']; nothing was written, and the game runs on under the rules it had. Load starts the rebuilt cartridge from frame 0' + (atRateZero ? '; no step.' : '.'));
     return false;
   };
   Host.prototype._issueEdit = function (row, atRateZero) {
@@ -1375,11 +1375,11 @@
       if (readsInputRows(row, 11, 15)) this.actRead = true;   // a person's formula reading an act's place or press: a press is an act from here (CART.9)
       if (editsInput(row)) this.inputsLast = null;   // the Input sheet a person wrote: the next frame's rows written whole (ENGINE.19)
       if (editsInput(row)) { this.commandRow = null; this.actKnown = null; }   // and its twentieth row and the act's rows no longer known (ENGINE.25, CART.12)
-      if (!atRateZero) this._say('frame ' + (this.frame + 1) + ': the edit ' + row + ' was written.');
+      if (!atRateZero) this._answer('frame ' + (this.frame + 1) + ': the edit ' + row + ' was written.');
       return true;
     }
     this.c.editsRefused++;
-    this._refuse('frame ' + (this.frame + 1) + ': the edit ' + row + ' was refused: ' + words(r, true) + (atRateZero ? '; no step.' : '.'));
+    this._answerRefused('frame ' + (this.frame + 1) + ': the edit ' + row + ' was refused: ' + words(r, true) + (atRateZero ? '; no step.' : '.'));
     return false;
   };
   // The Input sheet's eighteen rows (section 3.3): ten buttons for four players through the key map,
@@ -1429,17 +1429,17 @@
     // frames and what each was for, or that K stopped it with the grid still moving (SD-30)
     if (this.stepEdit) {
       if (this.settling) this.settleAct = { what: this.stepEdit, act: this.stepAct, from: n };
-      else this._say('frame ' + n + ': stepped once for ' + this.stepEdit + '.');
+      else this._answer('frame ' + n + ': stepped once for ' + this.stepEdit + '.');
       this.stepEdit = null;
     } else if (this.settleAct && !this.settling) {
       var sa = this.settleAct, steps = n - sa.from;
       this.settleAct = null;
       if (this.settleWord === 'unsettled') {
         this.c.unsettled++;
-        this._say('frame ' + n + ': ' + sa.what + ' did not settle in ' + countWords(steps + 1) + ' frames, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5).');
+        this._answer('frame ' + n + ': ' + sa.what + ' did not settle in ' + countWords(steps + 1) + ' frames, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5).');
       } else {
         this.c.settles++;
-        this._say('frame ' + n + ': ' + sa.what + ' settled in ' + settledWords(sa.act, steps) + '.');
+        this._answer('frame ' + n + ': ' + sa.what + ' settled in ' + settledWords(sa.act, steps) + '.');
       }
     }
     // the cartridge's save, taken after the frame's reads, the Clock's among them, at rest or held for the act's settle;
@@ -1957,7 +1957,7 @@
       if (!this.inFrame) this._editFrames(this._window());
     } else {
       this.waiting.push(cmd.name);
-      if (!this.running) this._say('frame ' + this.frame + ': the ' + commandWords(cmd.name) + ' waits for the next frame, which Run brings: the loop is paused at ' + c.rate + ' frame' + (c.rate === 1 ? '' : 's') + ' a second.');
+      if (!this.running) this._answer('frame ' + this.frame + ': the ' + commandWords(cmd.name) + ' waits for the next frame, which Run brings: the loop is paused at ' + c.rate + ' frame' + (c.rate === 1 ? '' : 's') + ' a second.');
     }
     return { ok: true, name: cmd.name, how: how || 'page' };
   };
@@ -2177,14 +2177,14 @@
     var s = this.snd, self = this;
     if (!s.ctx) {
       var AC = global.AudioContext || global.webkitAudioContext;
-      if (!AC) return this._fail('This browser has no Web Audio: the Audio sheet is read and never heard.');
-      try { s.ctx = new AC(); } catch (e) { return this._fail('The browser made no audio context: ' + (e && e.message ? e.message : e) + '.'); }
+      if (!AC) return this._answerFailed('This browser has no Web Audio: the Audio sheet is read and never heard.');
+      try { s.ctx = new AC(); } catch (e) { return this._answerFailed('The browser made no audio context: ' + (e && e.message ? e.message : e) + '.'); }
       s.now = function () { return s.ctx.currentTime; };
       s.ctx.onstatechange = function () { if (s.on && s.ctx.state === 'running') self._resound(); };
     }
     s.on = true;
     if (s.ctx.state !== 'running' && s.ctx.resume) s.ctx.resume();
-    this._say('Sound on: ' + (this.cart && this.cart.devices.audio ? 'the Audio sheet\'s four voices sound on the audio clock, ' + (LOOKAHEAD * 1000) + ' ms ahead of it.' : 'this cartridge has no Audio sheet, so nothing sounds.'));
+    this._answer('Sound on: ' + (this.cart && this.cart.devices.audio ? 'the Audio sheet\'s four voices sound on the audio clock, ' + (LOOKAHEAD * 1000) + ' ms ahead of it.' : 'this cartridge has no Audio sheet, so nothing sounds.'));
     this._resound();
     return { ok: true };
   };
@@ -2195,7 +2195,7 @@
     this._release();
     s.on = false;
     if (s.ctx && !s.injected && s.ctx.suspend) global.setTimeout(function () { if (!s.on) s.ctx.suspend(); }, 1000 * RELEASE_TAUS * GAIN_TAU + 20);
-    this._say('Sound off.');
+    this._answer('Sound off.');
     return { ok: true };
   };
   Host.prototype.soundIs = function () { return this.snd.on; };
@@ -2206,22 +2206,22 @@
   Host.prototype.edit = function (row) {
     var t = String(row || '').trim(), forms = VP().readForms(t);
     var head = forms.length === 1 && Array.isArray(forms[0]) ? sym(forms[0][0]) : null;
-    if (head !== 'cell' && head !== 'formula') { this._refuse('An edit is one cell or formula row, as (cell "Palette" "B1" "#FF8800"); ' + (t || 'an empty line') + ' is not one.'); return false; }
-    if (!this.handle) { this._refuse('No cartridge is loaded to edit.'); return false; }
+    if (head !== 'cell' && head !== 'formula') { this._answerRefused('An edit is one cell or formula row, as (cell "Palette" "B1" "#FF8800"); ' + (t || 'an empty line') + ' is not one.'); return false; }
+    if (!this.handle) { this._answerRefused('No cartridge is loaded to edit.'); return false; }
     var into = str(forms[0][1]);
     if (into !== null && this.sheetMode(into).read) {   // a read-only sheet (SPEC.5), its cartridge's rows and the Write sheet's still writing it
       this.c.editsRead++;
-      this._refuse('The edit ' + t + ' was not written: ' + into + ' is a read-only sheet, named by the manifest\'s (read ...); the cartridge\'s own rows still write it (version 6, docs/SPEC.md section 7.2).');
+      this._answerRefused('The edit ' + t + ' was not written: ' + into + ' is a read-only sheet, named by the manifest\'s (read ...); the cartridge\'s own rows still write it (version 6, docs/SPEC.md section 7.2).');
       return false;
     }
-    if (this.player) { this._refuse('The edit ' + t + ' was not written: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s edit waits until it ends, so that what plays is the replay alone.'); return false; }
+    if (this.player) { this._answerRefused('The edit ' + t + ' was not written: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s edit waits until it ends, so that what plays is the replay alone.'); return false; }
     // at rate 0 a version 6 cartridge's edit stands on the cell the selection stands on when it is made (CART.12)
     this.edits.push(this._sixAtZero() ? { row: t, place: this._place() } : t);
     if (this.cart.rate === 0 && !this.inFrame) this._editFrames(this._window());
     // At a rate above zero the edit is written at the next frame, which a paused loop does not bring until Run:
     // said, so that an edit is never silent (the owner's hand test of ENGINE.8, 2026-10-12: the grid card,
     // paused, took an edit and showed nothing).
-    else if (this.cart.rate > 0 && !this.running) this._say('frame ' + this.frame + ': the edit ' + t + ' waits for the next frame, which Run brings: the loop is paused at ' + this.cart.rate + ' frame' + (this.cart.rate === 1 ? '' : 's') + ' a second.');
+    else if (this.cart.rate > 0 && !this.running) this._answer('frame ' + this.frame + ': the edit ' + t + ' waits for the next frame, which Run brings: the loop is paused at ' + this.cart.rate + ' frame' + (this.cart.rate === 1 ? '' : 's') + ' a second.');
     return true;
   };
   // A key down on the Screen: a command's key (ENGINE.25) runs its command and is no button's and no last key, a repeat
@@ -2301,7 +2301,7 @@
   Host.prototype.readKey = function () {
     var name = this._shown(), text = name + ' is a read-only sheet, named by the manifest\'s (read ...): a key there writes nothing, and the cartridge\'s own rows still write it (version 6, docs/SPEC.md section 7.2).';
     this.c.keysRead++;
-    this._refuse(text);
+    this._answerRefused(text);
     return text;
   };
   // A character on a game sheet a person writes that is neither the game's key nor = (CART.9's fourth slice, decisions 49
@@ -2309,7 +2309,7 @@
   Host.prototype.strayKey = function () {
     var text = 'That key does nothing on ' + this._shown() + ': it is not one of the game\'s keys. Commands lists them, and = opens a cell\'s formula.';
     this.c.keysStray++;
-    this._refuse(text);   // the log counts the repeats
+    this._answerRefused(text);   // the log counts the repeats
     return text;
   };
   Host.prototype.keyUp = function (code) { delete this.held[code]; };
@@ -2616,8 +2616,8 @@
   // cartridge, so that a settling cartridge takes no load's act; then its frames played at once, through the player, and
   // the loop paused there. work: { keyframe, frames, seed, file, kf }. Answers { ok, frame, played, opened } or a failure.
   Host.prototype.restore = function (w) {
-    if (!this.m) return this._fail('There is no engine module to restore work on.');
-    if (this.player) return this._fail('The work kept was not restored: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + '.');
+    if (!this.m) return this._answerFailed('There is no engine module to restore work on.');
+    if (this.player) return this._answerFailed('The work kept was not restored: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + '.');
     w = w || {};
     var t0 = this.now(), seed = typeof w.seed === 'number' && w.seed >= 1 && w.seed <= MAX_SEED ? w.seed : null, ld;
     this.restoring = { kf: w.kf || 0 };
@@ -2627,14 +2627,14 @@
     var opened = this.frame, frames = String(w.frames || '');
     this.c.restores++;
     if (!frames.trim()) {
-      this._say('frame ' + opened + ': restored the work kept at frame ' + opened + ', no frame to play again; ' + (this.cart.rate > 0 ? 'the loop is paused, and Run carries on.' : 'the grid rests, and the next act steps it.'));
+      this._answer('frame ' + opened + ': restored the work kept at frame ' + opened + ', no frame to play again; ' + (this.cart.rate > 0 ? 'the loop is paused, and Run carries on.' : 'the grid rests, and the next act steps it.'));
       return { ok: true, frame: opened, played: 0, opened: opened };
     }
     var rp = this._readReplay('(replay ' + quote(this._cartName() || '') + ' (spec ' + SPEC + ') (cartridge "' + this._cartDigest() + '") (seed ' + (seed || 1) + '))\n' + frames);
-    if (rp.error) return this._fail('The work kept was not restored past its keyframe at frame ' + opened + ': its frames are no replay\'s: ' + rp.error);
+    if (rp.error) return this._answerFailed('The work kept was not restored past its keyframe at frame ' + opened + ': its frames are no replay\'s: ' + rp.error);
     var firstFrame = Infinity;
     for (var n in rp.frames) if (Object.prototype.hasOwnProperty.call(rp.frames, n)) firstFrame = Math.min(firstFrame, +n);
-    if (Math.min(firstFrame, rp.last) <= opened) return this._fail('The work kept was not restored past its keyframe: its frames begin at ' + Math.min(firstFrame, rp.last) + ', and its keyframe opens at frame ' + opened + '.');
+    if (Math.min(firstFrame, rp.last) <= opened) return this._answerFailed('The work kept was not restored past its keyframe: its frames begin at ' + Math.min(firstFrame, rp.last) + ', and its keyframe opens at frame ' + opened + '.');
     this.player = { frames: rp.frames, last: rp.last, restore: { from: opened, t0: t0 } };
     var win = { used: 0, limit: 0x7fffffff, deadline: Infinity };
     while (this.player && this.handle) {
@@ -2690,18 +2690,18 @@
     by = by === 'cartridge' ? 'cartridge' : 'person';
     if (s.wait) {
       this.saveWaiting = by;
-      this._say('The save waits for ' + (this.settling ? 'the act to settle' : 'the frame to end') + ', and is written then.');
+      this._say('The save waits for ' + (this.settling ? 'the act to settle' : 'the frame to end') + ', and is written then.', 'event', false, by === 'person');
       return { ok: true, waiting: true };
     }
     return this._saveNow(by, false, s);
   };
   Host.prototype._saveNow = function (by, waited, s) {
     s = s || this.saveText();
-    if (!s.ok) { if (s.wait) { this.saveWaiting = by; return { ok: true, waiting: true }; } this._refuse(s.words); return s; }
+    if (!s.ok) { if (s.wait) { this.saveWaiting = by; return { ok: true, waiting: true }; } this._say(s.words, 'event', true, by === 'person'); return s; }
     s.by = by; s.waited = waited;
     this.c.saved++;
     if (this.keep) this.keep.saved = { text: s.text, frame: s.frame, at: this.frame, version: this.keep.version, acts: this.keep.acts };   // for keepSaved (ENGINE.38)
-    this._say('Saved frame ' + s.frame + ' as ' + s.file + ', ' + thousands(s.bytes) + ' bytes' + (by === 'cartridge' ? ', as the cartridge asked' : '') + '.');
+    this._say('Saved frame ' + s.frame + ' as ' + s.file + ', ' + thousands(s.bytes) + ' bytes' + (by === 'cartridge' ? ', as the cartridge asked' : '') + '.', 'event', false, by === 'person');
     this._emit('save', s);
     return s;
   };
@@ -2759,21 +2759,21 @@
   // refused while it plays, and at its last frame the loop pauses. all: every frame at once, for an
   // oracle. The recorder records what is played, so a replay played and copied is the replay played.
   Host.prototype.play = function (text, all) {
-    if (!this.m) return this._fail('There is no engine module to play a replay on.');
-    if (!this.handle || !this.cart || !this.cartBytes) return this._fail('No cartridge is loaded to play a replay on: load the cartridge it was recorded from, then play it.');
+    if (!this.m) return this._answerFailed('There is no engine module to play a replay on.');
+    if (!this.handle || !this.cart || !this.cartBytes) return this._answerFailed('No cartridge is loaded to play a replay on: load the cartridge it was recorded from, then play it.');
     var rp = this._readReplay(String(text || ''));
-    if (rp.error) return this._fail(rp.error);
+    if (rp.error) return this._answerFailed(rp.error);
     var name = this._cartName(), digest = this._cartDigest(), c = this.cart;
-    if (rp.digest !== digest) return this._fail('The replay was recorded from ' + (rp.name || 'a cartridge') + ', its digest ' + rp.digest.slice(0, 16) + '..., and the cartridge loaded is ' + (name || 'another') + ', ' + digest.slice(0, 16) + '...: a replay plays only on the file it was recorded from (docs/SPEC.md section 7.6).');
-    if (typeof c.seed === 'number' && !c.seedChosen && rp.seed !== c.seed) return this._fail('The replay\'s seed is ' + rp.seed + ', and the cartridge\'s manifest says (seed ' + c.seed + '): a replay of this cartridge holds its manifest\'s seed.');
+    if (rp.digest !== digest) return this._answerFailed('The replay was recorded from ' + (rp.name || 'a cartridge') + ', its digest ' + rp.digest.slice(0, 16) + '..., and the cartridge loaded is ' + (name || 'another') + ', ' + digest.slice(0, 16) + '...: a replay plays only on the file it was recorded from (docs/SPEC.md section 7.6).');
+    if (typeof c.seed === 'number' && !c.seedChosen && rp.seed !== c.seed) return this._answerFailed('The replay\'s seed is ' + rp.seed + ', and the cartridge\'s manifest says (seed ' + c.seed + '): a replay of this cartridge holds its manifest\'s seed.');
     var ld;
     this.playSeed = rp.seed;
     try { ld = this.loadBytes(this.cartBytes, this.cartFile); } finally { this.playSeed = undefined; }
     if (!ld.ok) return ld;
-    if (this.cart.seed !== rp.seed) return this._fail('The cartridge loaded again holds the seed ' + this.cart.seed + ', and the replay names ' + rp.seed + ': the replay is not played.');
-    if (rp.last === 0) { this._say('The replay of ' + name + ' holds no frame: the cartridge stands at frame 0, loaded again from the seed ' + rp.seed + '.'); return { ok: true, frames: 0 }; }
+    if (this.cart.seed !== rp.seed) return this._answerFailed('The cartridge loaded again holds the seed ' + this.cart.seed + ', and the replay names ' + rp.seed + ': the replay is not played.');
+    if (rp.last === 0) { this._answer('The replay of ' + name + ' holds no frame: the cartridge stands at frame 0, loaded again from the seed ' + rp.seed + '.'); return { ok: true, frames: 0 }; }
     this.player = { frames: rp.frames, last: rp.last };
-    this._say('Playing the replay of ' + name + ': ' + rp.last + ' frame' + (rp.last === 1 ? '' : 's') + ' from the seed ' + rp.seed + (all ? ', all at once' : ', at the cartridge\'s rate') + '; a person\'s edits wait until it ends.');
+    this._answer('Playing the replay of ' + name + ': ' + rp.last + ' frame' + (rp.last === 1 ? '' : 's') + ' from the seed ' + rp.seed + (all ? ', all at once' : ', at the cartridge\'s rate') + '; a person\'s edits wait until it ends.');
     if (!all) { this.start(); return { ok: true, frames: rp.last }; }
     var win = { used: 0, limit: 0x7fffffff, deadline: Infinity };
     while (this.player && this.handle) {
@@ -2795,7 +2795,7 @@
       return;
     }
     this.inFrame = false; this.progress = null; this.player = null; this.stop();
-    this._refuse('frame ' + n + ': the replay\'s rows were refused: ' + words(r) + '; the replay stops, and the cartridge stands at frame ' + this.frame + '.');
+    this._answerRefused('frame ' + n + ': the replay\'s rows were refused: ' + words(r) + '; the replay stops, and the cartridge stands at frame ' + this.frame + '.');
   };
   // A replay's nineteenth row (version 4), the sheet its person's viewport showed when they acted: shown at the frame's
   // end, as a tab clicked is shown, when it is not the sheet shown, so that a replay shows what its person saw (CART.9's
@@ -2817,8 +2817,8 @@
     this.notches = 0; this.lastKey = null;   // what the wheel and the keys did while it played is no person's frame
     // a restore's one draw, its frames having drawn nothing: a sheet its Camera asked for shown, else the grid whole
     if (r) { if (this.cart.mode === 'plane') this._drawPlane(); else if (this.showWanted) this._drawShown(); else this._drawGrid(false, false); }
-    if (r) this._say('frame ' + n + ': restored the work kept: its keyframe at frame ' + r.from + ' opened and ' + countWords(n - r.from) + ' frame' + (n - r.from === 1 ? '' : 's') + ' played again in ' + Math.round(this.now() - r.t0) + ' ms; ' + (this.cart.rate > 0 ? 'the loop is paused, and Run carries on.' : 'the grid rests, and the next act steps it.'));
-    else this._say('frame ' + n + ': the replay ended at its last frame; the loop is paused, and Run carries on from here with the live inputs.');
+    if (r) this._answer('frame ' + n + ': restored the work kept: its keyframe at frame ' + r.from + ' opened and ' + countWords(n - r.from) + ' frame' + (n - r.from === 1 ? '' : 's') + ' played again in ' + Math.round(this.now() - r.t0) + ' ms; ' + (this.cart.rate > 0 ? 'the loop is paused, and Run carries on.' : 'the grid rests, and the next act steps it.'));
+    else this._answer('frame ' + n + ': the replay ended at its last frame; the loop is paused, and Run carries on from here with the live inputs.');
   };
 
   // ---- what a page asks of the host ----
@@ -2889,28 +2889,38 @@
   // Load, and the owner's word after it, the log's "2 times, frames 2 to 2"). A refusal
   // or a failure is marked as one, the module's or the host's, so that a page paints it so (the
   // owner's word, 2026-10-09: every refusal one color); a notice of a value coerced is not one.
-  Host.prototype._say = function (text, kind, refusal) {
-    kind = kind || 'event'; refusal = !!refusal;
+  // An act's answer is marked too (ENGINE.42), act: a sentence answering a person's act, said where the page called the
+  // host for it or where the act lands at a frame. Its repeat is the status line's again and its line moves to the log's
+  // end, so that the bar and the log's last line both say what the person just did (the owner's hand test of KIT.6's
+  // held step: a build after a refused one left the refusal in the bar, red, over a success); the loop's own repeat
+  // counts in place and leaves both as they were, a refusal said at every frame never taking them from a person's act.
+  Host.prototype._say = function (text, kind, refusal, act) {
+    kind = kind || 'event'; refusal = !!refusal; act = !!act;
     this.history.push({ text: text, kind: kind, refusal: refusal });
     if (this.history.length > HISTORY_LINES) this.history.shift();
-    if (kind !== 'event') { this.status = text; this._emit('status', { text: text, kind: kind, repeat: false, refusal: refusal }); return; }
+    if (kind !== 'event') { this.status = text; this._emit('status', { text: text, kind: kind, repeat: false, refusal: refusal, act: act }); return; }
     this.said++;
     var m = FRAME_PREFIX.exec(text), key = m ? text.slice(m[0].length) : text, frame = m ? +m[1] : null;
     var slot = this.run + ':' + key, e = this.entries.get(slot);
     if (e) {
       e.count++; e.last = frame;
-      this._emit('status', { text: text, kind: kind, repeat: true, entry: e.id, refusal: refusal });
+      if (act) { this.order.splice(this.order.indexOf(e), 1); this.order.push(e); this.status = text; }
+      this._emit('status', { text: text, kind: kind, repeat: true, entry: e.id, refusal: refusal, act: act });
       return;
     }
     e = { id: ++this.entryId, key: key, slot: slot, count: 1, first: frame, last: frame, refusal: refusal };
     this.entries.set(slot, e); this.order.push(e);
     if (this.order.length > LOG_LINES) this.entries.delete(this.order.shift().slot);
     this.status = text;
-    this._emit('status', { text: text, kind: kind, repeat: false, entry: e.id, refusal: refusal });
+    this._emit('status', { text: text, kind: kind, repeat: false, entry: e.id, refusal: refusal, act: act });
   };
   Host.prototype._refuse = function (text) { this._say(text, 'event', true); };
   Host.prototype._sayOnce = function (key, text, refusal) { if (this.said1[key] === text) return; this.said1[key] = text; this._say(text, 'event', refusal); };
   Host.prototype._fail = function (text) { this._refuse(text); return { ok: false, sentence: text }; };
+  // A person's act answered (ENGINE.42): said, refused, or refused with the failure handed back, each marked the act's.
+  Host.prototype._answer = function (text) { this._say(text, 'event', false, true); };
+  Host.prototype._answerRefused = function (text) { this._say(text, 'event', true, true); };
+  Host.prototype._answerFailed = function (text) { this._answerRefused(text); return { ok: false, sentence: text }; };
   Host.prototype.on = function (name, fn) { (this.listeners[name] = this.listeners[name] || []).push(fn); return this; };
   Host.prototype.off = function (name, fn) {
     var l = this.listeners[name];
