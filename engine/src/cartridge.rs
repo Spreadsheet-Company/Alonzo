@@ -9177,14 +9177,19 @@ mod tests {
                         let row = addr
                             .strip_prefix('B')
                             .and_then(|n| n.parse().ok())
-                            .unwrap_or_else(|| panic!("frame {frame}: Pace!{addr}, no row of a setting"));
+                            .unwrap_or_else(|| {
+                                panic!("frame {frame}: Pace!{addr}, no row of a setting")
+                            });
                         let typed = match v {
                             Form::Sym(n) => n.parse().ok(),
                             _ => None,
                         };
                         self.game.settings.type_into(row, typed);
                     }
-                    _ => panic!("frame {frame}: a row the hand does not read: {}", write_datum(r)),
+                    _ => panic!(
+                        "frame {frame}: a row the hand does not read: {}",
+                        write_datum(r)
+                    ),
                 }
             }
             let on = |a: &str| self.input.get(a).is_some_and(|v| v == "1");
