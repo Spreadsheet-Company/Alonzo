@@ -1688,7 +1688,11 @@
     el.addEventListener('drop', function (ev) { box.drop(ev); });
     el.addEventListener('mousedown', function () { box.pointing = true; });
     document.addEventListener('mouseup', function () { box.pointing = false; });
-    // focused by the page or by Tab, the caret goes back where it stood, as a textarea's does; by a press, where it falls
+    // given the keys by the page or by Tab, the caret goes back where it stood, as a textarea's does; by a press, where
+    // it falls. The page's own focus() puts it back at once, since a window without the system's focus tells no focus
+    // event (a headless browser's now and then, and CI's always), and Tab's is told by its event.
+    var focusIt = el.focus;
+    el.focus = function (options) { focusIt.call(el, options); if (!box.pointing) box.restore(); };
     el.addEventListener('focus', function () { if (!box.pointing) box.restore(); });
     document.addEventListener('selectionchange', function () { box.note(); });
   }
@@ -7890,7 +7894,7 @@
       if (area.selectionStart === 2 && area.selectionEnd === 2) k.caret++; else P.push('drawer: an end written before the start reads ' + area.selectionStart + ' to ' + area.selectionEnd + ', where both are 2');
       area.focus();
       var ds = window.getSelection(), at0 = ds.rangeCount ? T.offsetOf(ds.anchorNode, ds.anchorOffset) : null;
-      if (document.activeElement === area && at0 === 2) k.caret++; else P.push('drawer: the box given the keys draws its caret at ' + at0 + ', where it stood, 2');
+      if (document.activeElement === area && at0 === 2) k.caret++; else P.push('drawer: the box given the keys draws its caret at ' + at0 + ', where it stood, 2, the keys ' + (document.activeElement === area ? 'in it' : 'elsewhere'));
       area.selectionStart = 4; area.selectionEnd = 7;
       var r0 = ds.rangeCount ? ds.getRangeAt(0) : null;
       if (r0 && T.offsetOf(r0.startContainer, r0.startOffset) === 4 && T.offsetOf(r0.endContainer, r0.endOffset) === 7) k.caret++; else P.push('drawer: a selection written from 4 to 7 in a box with the keys is not the document\'s');
