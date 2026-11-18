@@ -16,11 +16,16 @@ own contract), shows in the lock and fails here by name.
 THE PIN, the owner's route of 2026-10-09 (docs/REARVIEW.md, ENGINE.1's second
 slice, decision 1): vla-lang by git at a commit of Frazaro's while the
 language's change is unreleased, and the exact registry pin once it is
-released. Since 2026-11-15 it is "=0.13.0" from crates.io, Frazaro's release
+released. Since 2026-11-17 it is "=0.14.0" from crates.io, Frazaro's release
+of KERNEL.29, LET, LAMBDA and named functions, KERNEL.73, a held column read
+row by row, VLA.16, a loop naming an entry's parts, VLA.17, funcall in the
+formula syntax, and VLA.18, the raw string a saved file's drafts are written
+in (its release commit 77516bd, tagged v0.14.0); before it "=0.13.0"
+(2026-11-15), Frazaro's release
 of VLA.9 and VLA.10, named pieces and self, KERNEL.58's looks held, the
 information functions, a formula write's frame costing its reach and a
 row's word dynamic (KERNEL.68 to KERNEL.70), ADDRESS, BITAND and the save's
-shape (its release commit 78a6dc1, tagged v0.13.0); before it "=0.12.0"
+shape (its release commit 78a6dc1, tagged v0.13.0); before that "=0.12.0"
 (2026-10-30), Frazaro's release
 of VLA.5, VLA.6 and VLA.15, the expander's loops and names (its release
 commit 30c4522, tagged v0.12.0 on bc6dd77); before that "=0.11.0"
@@ -48,7 +53,7 @@ the release that decision expected as 0.9.0, whose source is KERNEL.25's
 (f5dc344) byte for byte, and before that, git at f5dc344 (CART.1's second
 slice), at KERNEL.24's c0686a9 (ENGINE.2's second slice) and at KERNEL.22's
 6cca2e1. The moves from 0.8.1 to 0.9.0, 0.9.1, 0.9.2, 0.9.3, 0.9.4, 0.10.0, 0.10.1,
-0.11.0, 0.12.0 and 0.13.0 took no git rev between them. The pin is either kind, and
+0.11.0, 0.12.0, 0.13.0 and 0.14.0 took no git rev between them. The pin is either kind, and
 the baseline below says which: a git pin is a rev, never a branch or a tag,
 since a branch moves, resolved in the lock to the full commit with no
 checksum; a registry pin is one exact version, never a range, since a range
@@ -107,7 +112,9 @@ if ($Root -eq '') { $Root = Split-Path -Parent $PSScriptRoot }
 #     raised together. The git pin before this one, for the day one returns:
 #     '{ git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "f5dc344" }',
 #     'git+https://github.com/Spreadsheet-Company/Frazaro?rev=f5dc344#f5dc344aeae5e3efdad03b6a7dbf7b1783e313fe', ''. ---
-# The registry pins before this one, "=0.12.0", checksum
+# The registry pins before this one, "=0.13.0", checksum
+# 6096b0f98c82bba10ace1ab57a576ccd689d3f84399d51a68f9df258a42c4d26 (2026-11-15),
+# "=0.12.0", checksum
 # 7e83f2f148db88db662a568c46f304559195fb5b79684d964d62252e8c2868af (2026-10-30),
 # "=0.11.0", checksum
 # a5181874dd21808e447213de2482e40572cb5c63f6b385fa92bc12099c3d6256 (2026-10-23),
@@ -127,9 +134,9 @@ if ($Root -eq '') { $Root = Split-Path -Parent $PSScriptRoot }
 # 248b3ecf10365f9acbf2da3a481e53642d90d028ef7155b02e582da480d2d68d (2026-10-11),
 # and "=0.8.1", checksum
 # 3c44ebaf0d769b193a2d31ca0e04abe2332dc743ac50d5c9ef5fb2e0318cd202 (2026-10-10).
-$langSpec = '"=0.13.0"'
+$langSpec = '"=0.14.0"'
 $langSource = 'registry+https://github.com/rust-lang/crates.io-index'
-$langChecksum = '6096b0f98c82bba10ace1ab57a576ccd689d3f84399d51a68f9df258a42c4d26'
+$langChecksum = '21af335ea8503bc3c7a9c3cb96848ef3db208cf61a89307b3c69d5bda47eebe2'
 
 function Get-Lines([string]$path) {
     $text = [System.IO.File]::ReadAllText($path)

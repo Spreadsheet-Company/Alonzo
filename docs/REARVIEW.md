@@ -1099,6 +1099,59 @@ Found:
 - *0.13.0's library costs the page 202,578 bytes* of module, 10.9%, every function and rule kind in it whether a cartridge calls it or not (the seventeenth's Found, again).
 - *The heaps' 3.4 KB is untraced.* The bytes are the same at every rung and on both runs, so they are no cost of a cell; which of 0.13.0's fields makes them, a sheet's rules or merges or a wider format, is not measured here.
 
+*The pin at `vla-lang` 0.14.0, 2026-11-17, at the owner's word: "0.14.0 is published to GitHub and crates.io; proceed with slice 2", the pin first and `ENGINE.40`'s second slice over it, as the pin to 0.13.0 and `CART.9`'s fifth slice went.*
+
+The release is Frazaro's, its release commit `77516bd`, tagged `v0.14.0`; the crate's `src/` and `data/` are the tag's, 61 files, file for file.
+- `KERNEL.29`, `LET`, `LAMBDA`, a call in place and named functions, the helpers `MAP` to `MAKEARRAY`, and a room of cells a function a formula calls; `KERNEL.73`, a held column read row by row, where every release from 0.9.2 read the first row's in a run carried into the next level's block; `VLA.16`, a loop naming an entry's parts; `VLA.17`, `funcall` in the formula syntax; and `VLA.18`, the raw string, `#"…"#`, which `ENGINE.40`'s drafts are written in.
+
+What moved:
+- `Cargo.toml`'s pin and its comment, and the lock: the checksum `21af335e…`, still two packages.
+- `check_engine_deps.ps1`'s baseline and its header.
+- `check_frame_floors.ps1`: the twentieth baseline (below), and the twelve heap ceilings and two allocation ceilings lowered with their note.
+- No source, golden or replay, and no line of the engine: the twelve cartridges expand to their bytes, and every describe golden and replay digest stands. `KERNEL.73`'s fix moved no frame of any cartridge's: every replay and every session held to its hand stands.
+
+The oracle, on the day (*measurement*):
+- `cargo test --release`: 112 tests of the library and the doc test, every cartridge required (`ALONZO_REQUIRE_CARTRIDGES=1`); `cargo clippy --all-targets` and `cargo fmt --check` are clean.
+- `expand -- --check`: twelve `same`.
+- The module: 2,258,186 bytes, 180,322 more than the 2,077,864 it was at `e531845` over 0.13.0, 0.14.0's library and the slice's few lines. It imports nothing and exports the twelve names; the page, 6,115,132 characters.
+- `check_engine_deps.ps1 -Control` and `check_frame_floors.ps1 -Control` pass; `run_checks.ps1`, ALL GREEN, 13 of 13, the loop oracle among them over the new module.
+
+*The floors' twentieth baseline,* thirteen runs of `tools/bench_frames.ps1` by this session in its worktree, the machine otherwise idle, both halves opted out of the throttling and on the performance cores. Twelve refused themselves, the clock's spread past 10% at one fixture or another, 10.2 to 12.6%: the first in the browser's `naught-s` while another session built a benchmark of Frazaro's, the second perhaps beside that benchmark's run, and each after it begun with no other session's work running; the seventh is the block pasted. It measured native gun and wasm life under their floors, so the entry lowers those two by hand, each with its reason: native gun 2,931,007,746 cells a second against 3,100,000,000, 5.5% under, its idle frame 0.0215 ms where its rungs over 4 and 16 times the board read 0.0199 and 0.0198 ms, each above its floor, the spread of a frame of 20 microseconds the 2026-10-18 entry found; and wasm life 22,092,632 against 22,200,000, 0.5% under. Twelve floors are raised; wasm superposition-act, which the run would raise to 1,190,000,000, stays at 1,020,000,000 (the fifteenth's note). Every value the same, each fixture's frames held to its hand; every allocation count the ceiling's but Superposition's act and cascade, four fewer each; and every native heap less than the nineteenth's, the same bytes in the instrument's run and the check's.
+
+| row | frame p50 | cells a second | floor |
+|---|---|---|---|
+| native life | 2.0 ms | 30,855,631 | 27,800,000, kept |
+| native life-x4 | 8.6 ms | 29,415,397 | 26,400,000, kept |
+| native life-x16 | 34.4 ms | 29,626,002 | 26,600,000, from 26,200,000 |
+| native gun | 0.0215 ms | 2,931,007,746 | 2,630,000,000, from 3,100,000,000 |
+| native gun-x4 | 0.0199 ms | 12,756,995,055 | 11,400,000,000, from 11,300,000,000 |
+| native gun-x16 | 0.0198 ms | 51,448,402,633 | 46,300,000,000, from 43,800,000,000 |
+| native sand | 3.0 ms | 63,788,221 | 57,400,000, from 55,300,000 |
+| native superposition | 0.0010 ms | 831,881,476,853 | 748,000,000,000, from 735,000,000,000 |
+| native superposition-act | 0.2516 ms, p95 0.3191 | 2,503,074,271 | 2,250,000,000, from 1,720,000,000 |
+| native superposition-cascade | 0.1542 ms | 4,992,289,612 | 4,490,000,000, from 4,290,000,000 |
+| native naught-f | 4.8 ms | 10,950,236 | 9,850,000, from 9,540,000 |
+| native naught-s | 15.0 ms | 3,526,402 | 3,170,000, from 2,310,000 |
+| wasm life | 2.8 ms | 22,092,632 | 19,800,000, from 22,200,000 |
+| wasm life-x4 | 9.9 ms | 25,779,086 | 23,200,000, from 22,100,000 |
+| wasm life-x16 | 43.2 ms | 23,607,500 | 21,300,000, kept |
+| wasm gun | 0.0266 ms | 2,370,409,418 | 2,130,000,000, kept |
+| wasm gun-x4 | 0.0258 ms | 9,849,173,342 | 8,860,000,000, kept |
+| wasm gun-x16 | 0.0273 ms | 37,297,152,000 | 34,500,000,000, kept |
+| wasm sand | 4.3 ms | 44,521,176 | 40,500,000, kept |
+| wasm superposition | 0.0014 ms | 570,522,140,428 | 513,000,000,000, kept |
+| wasm superposition-act | 0.4000 ms, p95 0.6000 | 1,331,218,347 | 1,020,000,000, kept |
+| wasm superposition-cascade | 0.2000 ms | 3,572,907,237 | 3,280,000,000, kept |
+| wasm naught-f | 6.1 ms | 8,666,393 | 7,790,000, kept |
+| wasm naught-s | 20.7 ms | 2,553,865 | 2,300,000, kept |
+
+The heaps, against the ceilings 0.13.0 set: 27,817 bytes less for Life's soup and at each of its rungs, 5,781 at the gun's window and its rungs, 162,704 for Sand, 335,829 for each of Superposition's three, 146,030 for naught's filled bench and 35,978,666 for its shuffled one, 28%, about 808 bytes a shape of its 44,548; the ceilings lowered to them.
+
+Found:
+- *The floors' instrument refused twelve runs of thirteen on an idle machine.* The clock's spread read 5 to 12% at most fixtures in every run, so a margin of 10% over three readings a side passed a run only now and then that day. Nothing was traced: each run began with no other session's build, check, browser or benchmark running for thirty seconds, the processor at 7 to 11% between runs, and Windows logged no standby (Kernel-Power 506 and 507) in those two hours.
+- *0.14.0 made the shuffled bench 27% faster natively and 28% lighter,* its steady frame 15.0 ms where 20.6 and its heap 92.7 MB where 128.7, the regularity premium's steady frame 3.1 times where 4; the browser's the same, 20.7 ms where 20.6. Which of its changes, `KERNEL.29`'s shapes or `KERNEL.73`'s run, is not traced here.
+- *0.14.0's library costs the page 180,322 bytes* of module, 8.7%, `LET`, `LAMBDA`, the helpers and a room's compiler whether a cartridge calls them or not (the seventeenth's Found, again).
+
 ## `ENGINE.2` — the frame path: the plane held to the record of the same window
 
 *Scoped 2026-10-09, at the owner's word, the day `ENGINE.1` closed: the Screen read out of the module's memory as bytes and blitted whole, held equal to the view record of the same window by a test, the record being the oracle (`CHARTER.md` §3), and the window the Camera's (`SPEC.md` §13's two oracles for this item). The scoping finds the path itself already laid, since `ENGINE.1` had to draw something: the host views the plane, copies the bytes out and blits them through the Palette. What is missing is the oracle, a fixture that reaches every arm of the byte's rule, and the cost the second slice measured, which is the language's. So the scoping is mostly a measurement, made before any claim, and its first finding moves the cost to Frazaro.*
