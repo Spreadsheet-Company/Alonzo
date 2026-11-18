@@ -870,6 +870,20 @@ mod tests {
                 r#"(rule "S" "A1" (mod Clock!$B$1 16))"#,
                 &[r#"(formula "S" "A1" "=MOD(Clock!$B$1,16)")"#],
             ),
+            // cells and formulas over the same entries, an address or a range
+            // and its value or its formula's text, each part named in the
+            // loop (vla-lang 0.14.0, Frazaro's VLA.16).
+            (
+                r#"(cells "S" ("A1" 1) ("B1:B2" "x"))"#,
+                &[r#"(cell "S" "A1" 1)"#, r#"(cell "S" "B1:B2" "x")"#],
+            ),
+            (
+                r#"(formulas "S" ("A1" "=1+2") ("B1:B2" (formula-expand (mod Clock!$B$1 16))))"#,
+                &[
+                    r#"(formula "S" "A1" "=1+2")"#,
+                    r#"(formula "S" "B1:B2" "=MOD(Clock!$B$1,16)")"#,
+                ],
+            ),
             (
                 r#"(rules "S" ("A1" (+ 1 2)) ("B1:B2" "x"))"#,
                 &[
@@ -1020,6 +1034,19 @@ mod tests {
                 &[r#"(formula "S" "A1" "=Input!B10&Input!B19&Clock!B3")"#],
             ),
             (r#"(devices z)"#, &[r#"(not-a-device z)"#]),
+            // The Palette, a row a color and its name, its index its place
+            // from 0.
+            (
+                r##"(palette ("#000000" "black") ("#0000AA" "blue"))"##,
+                &[
+                    r#"(cell "Palette" "A1" 0)"#,
+                    r##"(cell "Palette" "B1" "#000000")"##,
+                    r#"(cell "Palette" "C1" "black")"#,
+                    r#"(cell "Palette" "A2" 1)"#,
+                    r##"(cell "Palette" "B2" "#0000AA")"##,
+                    r#"(cell "Palette" "C2" "blue")"#,
+                ],
+            ),
             // The look map, a format and a look a fill from 0; a still Camera.
             (
                 r#"(looks "S" "112233" "AABBCC")"#,
@@ -1154,6 +1181,21 @@ mod tests {
         .expect_err("a piece put does not declare");
         assert_eq!(r.refusal.id, "vla-macro-piece-unknown");
         assert_eq!(r.line, 8);
+
+        // An entry's parts are named in its loop (vla-lang 0.14.0,
+        // Frazaro's VLA.16): an entry of another size is refused by name at
+        // the caller's line, the entry shown, where a read by position took
+        // a longer entry's first two parts and refused a shorter one only by
+        // car of an empty list.
+        for (call, entry) in [
+            (r#"(cells "S" ("A1" 1 2))"#, r#"("A1" 1 2)"#),
+            (r##"(palette ("#000000"))"##, r##"("#000000")"##),
+        ] {
+            let r = rows_of(call).expect_err(call);
+            assert_eq!(r.refusal.id, "vla-each-entry-shape", "{call}");
+            assert_eq!(r.line, 8, "{call}");
+            assert!(r.refusal.text.contains(entry), "{call}: {}", r.refusal.text);
+        }
 
         // A list is a loop, one application and no chain (KIT.6's second
         // slice): a run of cells and a picture's rows each go past the 2,499

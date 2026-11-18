@@ -70,10 +70,10 @@
 ; colors, so that one model is drawn by two renderers side by side (docs/SPEC.md decision 19).
 
 (defmacro (colors & entries)
-  "each entry a fill and its name: a Palette row and a look for the value its place gives, from 0"
-  (each-index (index entry entries 0)
-    (palette-entry index ((&expand "#" (car entry)) (car (cdr entry))))
-    (look-entry "Screen" index (car entry))))
+  "Each entry is a fill color and its name. It writes a Palette row, and a look on the Screen for the value its place in the list gives, counted from 0."
+  (each-index (index (fill name) entries 0)
+    (palette-entry index (&expand "#" fill) name)
+    (look-entry "Screen" index fill)))
 
 ; ---- the board, lying on its side or standing up -----------------------------------
 ; Everything that turns with the board: the Gate's rows, the Tower, the WIN picture, the

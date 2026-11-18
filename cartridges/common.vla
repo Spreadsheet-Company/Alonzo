@@ -16,7 +16,9 @@
 ; KIT.6's second slice its lists are loops, and put takes its pieces by name, so that a
 ; call says what each part is and not where it stands; and since its third slice a cell
 ; has a name, a block's labels and its words from one list, and a verb writes its row at
-; a name, so that a formula reads as what it means and not where its cells are.
+; a name, so that a formula reads as what it means and not where its cells are; and
+; since vla-lang 0.14.0, Frazaro's VLA.16, a loop names an entry's parts, so that a
+; template reads aloud as what it does.
 ;
 ; The rules each macro here keeps, which are the language's:
 ;   - Template macros only. A parameter is replaced by the form the caller passes; no
@@ -34,6 +36,13 @@
 ;     A loop refuses a name its template already holds, and a list written as a macro's
 ;     call, which no primitive expands: a list a macro makes is handed on, (then (a b)),
 ;     as Superposition's neighbors hands its eight.
+;   - An entry's parts are named in its loop (vla-lang 0.14.0, Frazaro's VLA.16): (each
+;     ((address value) entries) form) binds address and value to each entry's two parts,
+;     and (each-index (index (color name) entries 0) form) the same beside a count. An
+;     entry of another size is refused by name, vla-each-entry-shape, the entry shown,
+;     and each name is checked as a loop's name is. A list of no fixed shape is read by
+;     its head and the rest still, car and cdr, as on, at and priority read theirs, and
+;     so is one entry no loop walks: a name's pair, a device's entry and a legend's.
 ;   - A walk is kept only where a macro writes a nest, as priority does below. A
 ;     reference's first cell and its twin are the language's, first-cell-expand and last
 ;     (Frazaro's VLA.15 and VLA.6), so no macro walks a text's characters. A chain stops
@@ -76,14 +85,14 @@
 ; there, as the record prints it (docs/SPEC.md section 7.3).
 
 (defmacro (cells sheet & entries)
-  "value cells of one sheet, named once: each entry an address or a range, then its value"
-  (each (entry entries)
-    (cell sheet (car entry) (car (cdr entry)))))
+  "Puts values in cells of one sheet. Each entry is a cell's address, or a range of cells, and the value that goes there."
+  (each ((address value) entries)
+    (cell sheet address value)))
 
 (defmacro (formulas sheet & entries)
-  "formula cells of one sheet, named once: each entry an address or a range, then its formula, a text or a formula-expand"
-  (each (entry entries)
-    (formula sheet (car entry) (car (cdr entry)))))
+  "Puts formulas in cells of one sheet. Each entry is a cell's address, or a range of cells, and its formula's text, written out or by formula-expand."
+  (each ((address text) entries)
+    (formula sheet address text)))
 
 (defmacro (on sheet & forms)
   "rows of one sheet, named once: each a row, or a call whose first argument is the sheet, written without it"
@@ -101,9 +110,9 @@
   (formula sheet range (formula-expand expression)))
 
 (defmacro (rules sheet & entries)
-  "formula cells of one sheet from expressions, named once: each entry an address or a range, then its expression"
-  (each (entry entries)
-    (rule sheet (car entry) (car (cdr entry)))))
+  "Puts formulas in cells of one sheet from expressions. Each entry is a cell's address, or a range of cells, and the expression its formula says."
+  (each ((address expression) entries)
+    (rule sheet address expression)))
 
 ; ---- the sheets, and their words ----------------------------------------------------
 ; A cartridge's sheets in tab order, each visible; a sheet hidden is written as its own
@@ -217,15 +226,15 @@
 ; ---- the Palette (docs/SPEC.md section 3.2) ----------------------------------------------
 
 (defmacro (palette & entries)
-  "the Palette's sixteen rows: each entry a color and a name, its index its place from 0"
-  (each-index (index entry entries 0)
-    (palette-entry index entry)))
+  "The Palette's sixteen rows. Each entry is a color and its name, and the entry's place in the list, counted from 0, is its index."
+  (each-index (index (color name) entries 0)
+    (palette-entry index color name)))
 
-(defmacro (palette-entry index entry)
-  "one Palette row: the index in column A, the color in B, the name in C"
+(defmacro (palette-entry index color name)
+  "One Palette row: the index in column A, the color in column B, the name in column C."
   (cell "Palette" (address-expand (+expand index 1) 1) index)
-  (cell "Palette" (address-expand (+expand index 1) 2) (car entry))
-  (cell "Palette" (address-expand (+expand index 1) 3) (car (cdr entry))))
+  (cell "Palette" (address-expand (+expand index 1) 2) color)
+  (cell "Palette" (address-expand (+expand index 1) 3) name))
 
 (defmacro (cga-palette)
   "the CGA's sixteen in their own order, docs/SPEC.md section 3.2's table, a palette with a name"
