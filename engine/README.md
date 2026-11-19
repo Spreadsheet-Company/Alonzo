@@ -59,6 +59,14 @@ engine is:
   a command's key with modifiers, `Ctrl+ArrowRight`, is the host's to read,
   so a `(spec 7)` cartridge loads, is checked and describes as a `(spec 6)`
   one;
+- since 0.4.0, a save read back (`ENGINE.5`): the page's Save writes a
+  running game as a cartridge, and the load reads a file one form at a time,
+  the language's `each_form`, refusing one over 16 MiB before it reads a
+  form (`MAX_CARTRIDGE_BYTES`); opens it at the frame its Clock holds and
+  keeps the Clock's rate and seed, so that a rate a person set survives a
+  save as a seed the host chose does; and sets aside every `(draft ...)` form, a
+  box of the page's drawer that a save carries and the page alone reads back
+  (`ENGINE.40`);
 - `describe`, the manifest, the devices and the budget, and since
   `vla-lang` 0.9.2 the machine's census, the plan as rows, a row for each
   shape with its cells, its levels, its runs and the path each of its reads
@@ -68,12 +76,13 @@ engine is:
   (Frazaro's `KERNEL.30`, laid here; each cartridge's held to a golden in
   `testdata/describe/`, which `ALONZO_BLESS=1 cargo test describe` writes
   again);
-- the engine's own refusals, a catalog of eleven in `data/messages.vla`:
+- the engine's own refusals, a catalog of twelve in `data/messages.vla`:
   the ninth a cartridge's source handed to the load, which never expands;
-  the tenth a person's write into the Clock, its frame, or a rate or a seed
-  outside its range (`ENGINE.3`); and the eleventh a value in a version 5
-  cartridge's Commands sheet that is no command's name, or a name written
-  twice (`ENGINE.25`).
+  the tenth a file over 16 MiB, `cart-too-large` (`ENGINE.5`); the eleventh
+  a person's write into the Clock, its frame, or a rate or a seed outside its
+  range (`ENGINE.3`); and the twelfth a value in a version 5 cartridge's
+  Commands sheet that is no command's name, or a name written twice
+  (`ENGINE.25`).
 
 Beside the engine, the pass (`src/pass.rs`, `docs/SPEC.md` section 7.8): a
 cartridge's source, VLA with template macros and `include`s, expanded by the
@@ -133,7 +142,11 @@ one, every frame's Clipboard held with the rest; a fifth test
 cuts a brick whose Clipboard's brick has no room at the top, the cut refused
 and the wall standing; and the hand's own tests hold a slide's stop at a brick
 and at the wall, a brick sent to the bottom unlaid, and a cut once a brick
-with its swap back.
+with its swap back. Its replay, the owner's game of 41,129 frames to level
+81, holds the State and the Tally to the hand at every frame, and the whole,
+the wall, its counts, the panel, the Clipboard and the voices, at every frame
+that moves the wall, a lay, a clear, a start or a top-out, at the first and
+at every 64th (`CART.3`'s third slice).
 
 Seiyaku, `cartridges/seiyaku/`, the number-placement puzzle (`CART.14`), is
 held to a board written by hand, `src/seiyaku.rs`, compiled for the tests
@@ -183,13 +196,25 @@ cargo run --release --example naught              # the bench written into the s
 cargo run --release --example naught -- --check   # the same, compared and written nowhere
 ```
 
+The hand also keeps the game, `Game`: a person's gates read by their
+formulas and evaluated, the Lesson and the fifteen levels, I NON to XV
+MACHINA, their tests, stars and errors, the flip-flops a tick and a run
+step, and XV's machine running the lines of its ROM. A test solves every
+level at its least known and passes it by T, and the hand's own test holds
+that the test of each level past 15 bits, or with gates enough to err,
+catches every gate of its least-known room stuck at 0 or at 1, or another
+gate in its place; a session of the stand-in's and the replay, the owner's
+session and the stand-in after it, 4,807 frames, hold each frame to the hand
+where it could move and one frame in 64 whole (`CART.9`'s third to fifth
+slices).
+
 Its tests hold the two projections of a window to one another: the plane of
 a window is the view record of the same window, byte for value, the record
 read with the language's own reader, every frame of the repository's test
 card, a cartridge holding every kind of value a Screen cell can under a
 Camera that pans a column a frame, and Life at its corners (`ENGINE.2`).
 And one plays every committed replay, the input card's, Kairos's, Sand's, the
-sound card's, Superposition's, Seiyaku's and Naught's, as `docs/SPEC.md` section 7.6 plays one, the derived writes the
+sound card's, Superposition's, Seiyaku's, Naught's and Brickwork's, as `docs/SPEC.md` section 7.6 plays one, the derived writes the
 Write sheet leaves before each frame's rows, to the golden beside it, byte
 for byte, so the host's player and the engine alone end in the same sheet
 (`ENGINE.3`, made general over every folder holding a replay by `ENGINE.4`).
@@ -208,10 +233,10 @@ end, so a view is a copy. The host sounds the Audio sheet too (`ENGINE.4`):
 this module holds the sheet's layout and checks it at
 load and at a write, and the host reads the four voices after each step and
 schedules the Web Audio graph's own oscillators and gains from them; the
-module computes no sound. What comes next is `docs/ROADMAP.md`'s, File
-(`ENGINE.5`) among it; the accelerators (`ENGINE.6`) closed at 0.2.0, each
-landed in the language or ruled out, the twin's values kept as an array
-among them (Frazaro's `KERNEL.20`). Since `vla-lang` 0.9.3 a view has a third projection,
+module computes no sound. What comes next is `docs/ROADMAP.md`'s; File
+(`ENGINE.5`) closed at 0.4.0, Save and Open, and the accelerators
+(`ENGINE.6`) at 0.2.0, each landed in the language or ruled out, the twin's
+values kept as an array among them (Frazaro's `KERNEL.20`). Since `vla-lang` 0.9.3 a view has a third projection,
 `values`, the record without its formulas, which the language answers and
 the engine passes through; the host draws a grid's every frame after the
 first from it (`ENGINE.8`'s second slice). Since 0.9.4 it has a fourth,
@@ -233,7 +258,18 @@ the lookups, the texts, the dates and the aggregates (`KERNEL.8`), with
 its font, alignment and borders, in the grid record (`KERNEL.50`), which the
 engine passes through and the page draws. Since 0.12.0 a cartridge's source
 may loop and name at expand time, `each`, `assoc-expand`, `define`, `last`
-and their kin (`VLA.5`, `VLA.6` and `VLA.15`).
+and their kin (`VLA.5`, `VLA.6` and `VLA.15`). Since 0.13.0 the language
+prints a sheet's conditional formats, a `lit` row naming the rules a cell
+answers, a format of groups alone, a font's family, underline and strike,
+and a merged range (`KERNEL.58`), which the engine passes through and the
+page draws; computes `ADDRESS`, the information functions, `ROUND`, `IFS`
+and `BITAND` and its kin (`KERNEL.60`, `KERNEL.68` and `KERNEL.71`); writes
+a save in the shape a load reads one form at a time (`KERNEL.72`); and a
+macro takes named pieces with defaults and `self` (`VLA.9` and `VLA.10`).
+Since 0.14.0 it computes `LET`, `LAMBDA` and the helpers `MAP` to
+`MAKEARRAY` (`KERNEL.29`); reads a held column row by row (`KERNEL.73`);
+names an entry's parts in a loop (`VLA.16`); and reads a raw string,
+`#"…"#` (`VLA.18`), in which the page writes a save's drafts.
 
 ## The rules that bind every line
 
@@ -259,8 +295,8 @@ loads. Name it and the language it answers in, each pinned exactly:
 
 ```toml
 [dependencies]
-alonzo = "=0.3.0"
-vla-lang = "=0.12.0"
+alonzo = "=0.4.0"
+vla-lang = "=0.14.0"
 ```
 
 A cartridge is rows in the one notation. The engine loads it, steps it and
@@ -458,6 +494,17 @@ natively. Since 0.11.0's grid as written the heap holds about 40 bytes a
 grid cell: Life's soup 2.5 MB natively where 0.10.0's held 30.0, the top
 rung 21.0 MB where it held 480.8, and Superposition's lattice of 798,731
 formula cells 10.8 MB.
+
+Over `vla-lang` 0.14.0, the 0.4.0 release's language, the floors' twentieth
+baseline (the run of the session that moved the pin, 2026-11-17, on the same
+machine and the same instrument) read Life's frame at 2.0, 8.6 and 34.4 ms
+natively and 2.8, 9.9 and 43.2 in the browser, the gun's idle frame at
+0.0215 ms natively and 0.0266 in the browser, and Superposition's at a
+microsecond natively and 1.4 in the browser, its act a p95 of 0.32 ms
+natively. The heap holds what 0.12.0's held, Superposition's lattice 10.5
+MB; and Naught's shuffled bench steps in 15.0 ms natively where 0.12.0's
+took 19.3, its heap 92.7 MB where 128.7, the regularity premium's steady
+frame 3.1 times where 3.9.
 
 ## Where it comes from
 
