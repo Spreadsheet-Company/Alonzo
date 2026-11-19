@@ -1233,7 +1233,9 @@ $floors = @(
 # at both ratios: Q17 to W17's seven strands and X17's two on the frames its rule lights.
 # 2026-11-18, ENGINE.43: gridUnbound, the views card's Ledger moved as a person moves it, an unbound sheet whose extent
 # grows with each record, its six moves each held inside the record's window and its last column and row inside the
-# scroller's client area, at both ratios, on Alonzo's page and a game's; every other count as it stood.
+# scroller's client area, at both ratios, on Alonzo's page and a game's; every other count as it stood. A page with
+# no module moves no sheet, so a game's page counts it with the module alone, as Alonzo's does: CI's ratchets job,
+# whose page carries none, found the game's floor in Min at the push.
     @{ Case = 'grid';     Min = @{ fakeFrames = 12; fakeEqual = 13; fakeWindows = 2; fakeTexts = 2300; fakeLooks = 2080; fakeUnvalued = 240; fakeProbes = 12; fakeKept = 10; fakeCleared = 1; fakeValues = 12; pointer = 1; key = 1; edited = 1; waits = 1; lone = 1; fakePatches = 8; fakeFonts = 170; fakeEdges = 500; sheetViews = 9; fakeRule = 2; fakeRules = 3 };
                             WithModule = @{ frames = 24; equal = 25; windows = 3; texts = 10300; wraps = 40; fills = 9150; looks = 8650; styles = 80; columns = 326; unvalued = 288; hidden = 17; probes = 70; kept = 22; followed = 1; edits = 1; cleared = 1; hashes = 200; values = 24; patches = 20; codes = 3; coded = 213; fonts = 260; edges = 410; cardRules = 4; rules = 80;
                                             grids = 5; gridFrames = 30; gridEqual = 29; gridValues = 51; gridTexts = 5250; gridCleared = 5; gridMoves = 24; gridBound = 4; gridCanvas = 15; gridFocused = 8; gridTyped = 4; gridEdges = 48000; gridFonts = 250; gridStrands = 78; gridUnbound = 6 } },
@@ -1267,7 +1269,7 @@ $gameFloors = @(
     @{ Case = 'abi';    Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
     @{ Case = 'pass';   Min = @{}; WithModule = @{ sources = 1; same = 1 } },
     @{ Case = 'replay'; Min = @{ vectors = 5; hands = 1 }; WithModule = @{ replays = 1; golden = 1; round = 1; kairosFrames = 3469; kairosCells = 156105; kairosStops = 30 } },
-    @{ Case = 'grid';   Min = @{ grids = 0; gridUnbound = 6 } },
+    @{ Case = 'grid';   Min = @{ grids = 0 }; WithModule = @{ gridUnbound = 6 } },
     @{ Case = 'empty';  Min = @{ cartridges = 1; ordered = 1; titled = 1; libraries = 1; double = 1; opening = 3 }; WithModule = @{ engine = 1 } },
     @{ Case = 'still';  Min = @{}; WithModule = $stillFloors },
     @{ Case = 'views';  Min = @{}; WithModule = $viewsFloors },
