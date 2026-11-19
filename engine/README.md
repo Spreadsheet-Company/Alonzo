@@ -285,7 +285,7 @@ names an entry's parts in a loop (`VLA.16`); and reads a raw string,
   is the language's; what can only be measured is the engine's.
 - The engine's imports are the host's functions, named by hand as
   `extern "C"` and held to an allowlist read off the artifact on every
-  push, its exports to the specification's twelve names; the crate depends
+  push, its exports to the specification's thirteen names; the crate depends
   on the language crate and nothing else, which a check reads off the
   manifests and the lock. It makes no outbound network call, ever.
 - Nothing the browser rents is rebuilt until a measurement says the rent is

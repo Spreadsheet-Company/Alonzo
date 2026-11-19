@@ -156,9 +156,11 @@
   edit in its frame; it refuses, saying why, a replay playing, a read-only
   sheet, a value into a game sheet a person writes and a cell past an edge.
   cellsOf(sheet, range) answers a range's cells as the sheet is drawn, a
-  copy's, extentOf(sheet) a sheet's extent, and sayAct(text) says a page's
-  own act's answer, its copy's and its cut's; an edit, an applied
-  cartridge and a paste that land tell their rows ('wrote').
+  copy's, and since the third slice its formulas as fills; moved(text,
+  dRow, dCol) a formula's text moved by the language's mover, the module's
+  thirteenth export; extentOf(sheet) a sheet's extent; and sayAct(text)
+  says a page's own act's answer, its copy's and its cut's. An edit, an
+  applied cartridge and a paste that land tell their rows ('wrote').
 
   What the host holds is SD-23's interface state and nothing else (AD-6):
   the keys held, the pointer's place, the accumulator, the budget's
@@ -2322,24 +2324,44 @@
   // ---- copy, cut and paste in the grid (ENGINE.39's second slice; docs/SPEC.md section 7.2) ----
   // The page keeps the clipboard's text, its own copy and a cut's mark, and writes a paste's rows; the host reads the cells a
   // copy takes, refuses or takes the paste as one act, and says each act's answer.
-  // The cells of a range of a sheet as the sheet is drawn (decision 7): through the values projection after frame 0, and at
-  // frame 0 the grid record, a formula shown as its text until its first value. range, { top, left, bottom, right }. { ok,
-  // sheet, range, rows }, each row an array of { shown, value, formula }: the text the cell shows; its value as a cell row
-  // spells it, exact where its shown text rounds, the empty text for an empty cell; and whether a formula computed it. A
-  // date, which no cell row holds, and a formula with no value yet keep the text they show. Else { ok: false, sentence },
-  // said as the act's refusal.
+  // The cells of a range of a sheet as the sheet is drawn (decision 7), and since the third slice its formulas (decision 13).
+  // The cells through the record the sheet is drawn from, the values projection after frame 0 and the grid record at frame
+  // 0, a formula shown as its text until its first value; the formulas after frame 0 through the fills record, each fill's
+  // formula row printed once over each of its rectangles in the range, so that a board of one fill copies one formula and
+  // not one a cell (its values are runs, which the viewport's reader takes no row of, so the values projection gives them),
+  // and at frame 0 the grid record's own, a cell's each. range, { top, left, bottom, right }. { ok, sheet, range, rows,
+  // fills }: each row an array of { shown, value, formula }, the text the cell shows, its value as a cell row spells it,
+  // exact where its shown text rounds, the empty text for an empty cell, and whether a formula computed it; and fills, each
+  // formula's rectangle in the range and the text of its first cell, { top, left, bottom, right, text }. A date, which no
+  // cell row holds, and a formula with no value yet keep the text they show. Else { ok: false, sentence }, said as the act's
+  // refusal.
   Host.prototype.cellsOf = function (sheet, range) {
     if (!this.handle || !this.cart) return this._answerFailed('Nothing was copied: no cartridge is loaded.');
     if (this.inFrame) return this._answerFailed('Nothing was copied: frame ' + (this.frame + 1) + ' is being computed, and a copy takes the cells as a frame left them; copy again once it lands.');
-    var t = this._viewDrawn(sheet, VP().rangeText(range));
+    var win = VP().rangeText(range), t = this._viewDrawn(sheet, win);
     if (t === null) return { ok: false, sentence: 'The view of ' + sheet + ' was refused.' };
-    var m = VP().readRecord(t), rows = [];
+    var f = this.frame > 0 ? this.m.texts('alonzo_view', [this.handle], ['fills', sheet, win]) : { status: 0, text: t };
+    if (f.status !== 0) return this._answerFailed('Nothing was copied: the view of ' + sheet + '\'s formulas was refused: ' + words(f) + '.');
+    var m = VP().readRecord(t), rows = [], fills = [];
     for (var r = range.top; r <= range.bottom; r++) {
       var line = [];
       for (var c = range.left; c <= range.right; c++) line.push(copiedCell(m.cells.get(r + ',' + c)));
       rows.push(line);
     }
-    return { ok: true, sheet: sheet, range: { top: range.top, left: range.left, bottom: range.bottom, right: range.right }, rows: rows };
+    VP().readForms(f.text).forEach(function (f) {
+      var q = Array.isArray(f) && sym(f[0]) === 'formula' && str(f[2]) !== null && str(f[3]) !== null ? VP().parseRange(str(f[2])) : null;
+      if (q && !q.rows && !q.columns) fills.push({ top: q.top, left: q.left, bottom: q.bottom, right: q.right, text: str(f[3]) });
+    });
+    return { ok: true, sheet: sheet, range: { top: range.top, left: range.left, bottom: range.bottom, right: range.right }, rows: rows, fills: fills };
+  };
+  // A formula's text moved as Excel moves a formula copied dRow rows down and dCol columns right (ENGINE.39's third slice,
+  // decision 13): the language's own mover, through the module's thirteenth export, a part moved off the sheet #REF!. The
+  // text, or null over a module without the export, the double's, whose paste then writes a formula's value, said.
+  Host.prototype.moved = function (text, dRow, dCol) {
+    if (!this.m || typeof this.m.x.alonzo_moved !== 'function') return null;
+    if (!dRow && !dCol) return String(text);
+    var r = this.m.texts('alonzo_moved', [dRow | 0, dCol | 0], [String(text)]);
+    return r.status === 0 ? r.text : null;
   };
   function copiedCell(e) {
     if (!e || e.kind === 'empty') return { shown: '', value: '""', formula: false };

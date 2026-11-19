@@ -192,7 +192,8 @@ sound the frame the grid holds again when it starts.
 | `keyDown(code, key, ev)` / `keyUp(code)` / `releaseKeys()` | the keys held, by `KeyboardEvent.code`; since `ENGINE.25` a command's key runs its command and holds nothing, `ev` the key's event when a listener has one, its Ctrl, Cmd, Alt and repeat |
 | `freshRepeat(ev, own)` / `rested()` | whether a key's repeat may run its command (`ENGINE.39`): nothing of the cartridge's waiting, at a rate no command waiting for its frame and at rate 0 no act waiting or stepping, and the key pressed at or after the last act came to rest; `own`, a command of the page's own, judged by its time alone. `rested()` notes an act come to rest, which the host does for its own steps and a page for a press of its keymap |
 | `paste(p)` | a paste (`ENGINE.39`'s second slice; `docs/SPEC.md` section 7.2): the rows a page wrote from the clipboard's text or its own copy, `p.rows` each `{ row, sheet, address, kind }` with `kind` `value`, `formula` or `empty`, written at the act's frame as one write, all or none, one step at rate 0 standing on `p.place`, and recorded as its rows in its frame as an applied cartridge's are; `p.what` and `p.done` its words, `p.range` the cells it writes on `p.sheet`, `p.move` a cut's move. Refused whole and said, nothing written: no cartridge, a replay playing, a read-only sheet, a value into a game sheet a person writes, and a cell past the sheet's last, a bound sheet's extent or the Screen's window, the first named. `true` where the act waits for its frame or has landed |
-| `cellsOf(sheet, range)` / `extentOf(sheet)` / `sayAct(text, refused)` | a copy's cells (`ENGINE.39`'s second slice): a range's, read through the record the sheet is drawn from, each `{ shown, value, formula }`, the text it shows, its value as a cell row spells it and whether a formula computed it; a sheet's extent from its record, `null` for none; and a page's own act's answer, its copy's and its cut's, said as the host's acts' answers are. An edit, an applied cartridge and a paste that land tell their rows in a `wrote` event, `{ rows, move }` |
+| `cellsOf(sheet, range)` / `extentOf(sheet)` / `sayAct(text, refused)` | a copy's cells (`ENGINE.39`'s second slice): a range's, read through the record the sheet is drawn from, each `{ shown, value, formula }`, the text it shows, its value as a cell row spells it and whether a formula computed it, and since the third slice `fills`, each formula's rectangle in the range and its first cell's text, read through the module's `fills` record; a sheet's extent from its record, `null` for none; and a page's own act's answer, its copy's and its cut's, said as the host's acts' answers are. An edit, an applied cartridge and a paste that land tell their rows in a `wrote` event, `{ rows, move }` |
+| `moved(text, dRow, dCol)` | a formula's text moved as Excel moves a formula copied `dRow` rows down and `dCol` columns right, a part off the sheet `#REF!` (`ENGINE.39`'s third slice): the language's mover through the module's thirteenth export, `alonzo_moved`; `null` over a module without it, the double, whose paste then writes a formula's value and says so |
 | `command(name)` / `commands()` | a version 5 cartridge's own commands (`ENGINE.25`): `command` runs one by its name, waiting for the next frame, one a frame and sixteen at most, written into `Input!B20` for that frame, at rate 0 a step of its own: `{ ok, name }`, or the refusal's sentence, for a cartridge written to 1 to 4, a name its Commands sheet holds no command of, a command that holds not, a replay playing or sixteen waiting; `commands` lists them as the sheet last said them, `{ name, words, holds, key }` in its order, `key` the code or empty |
 | `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer's place as the window's cell under it, 0 when off the canvas, which the Input rows write as the Screen's own cell through the Camera; in grid mode, at a rate above zero, the viewport's cell under the pointer, 0 off the window's cells, and the wheel's notches with its scroll prevented, while a key the Keys sheet binds is taken before the viewport sees it (`ENGINE.8`). Since `ENGINE.14` the wheel is the game's over a cell of the Camera's window alone, where the pointer is, and scrolls over the tabs, the headers, the corner and the scrollbars; the buttons follow the pointer; while another sheet is shown the pointer is 0 and the wheel scrolls, and a bound key stays the game's. Since `ENGINE.18`, for a cartridge written to version 4, the pointer and its buttons over any cell of another sheet shown are the game's too, that sheet's own cell with no Camera added, and the Input sheet's nineteenth row names the sheet shown; the wheel still scrolls there; a cartridge written to 1 to 3 is as before |
 | `runFrameSync()` | one whole frame now, whatever the clock (the blit's instrument) |
@@ -505,15 +506,22 @@ selection on the clipboard as Excel does, each cell's text as it shows, a
 tab between cells and a line end after each row, and the page keeps it, so
 that its paste writes the exact values, 0.3333333333333333 where 0.33 showed,
 tiled over a selection that is a whole multiple of it, one cell filling the
-selection; a formula's value is pasted, said, until a later slice moves a
-formula. A text from elsewhere, Excel's among them, is read as Excel reads
+selection; and since the third slice its formulas, each moved as Excel moves
+a formula copied, by the language's mover, the module's thirteenth export
+(`alonzo_moved`), a fill one fill row. A cut's paste moves its cells once,
+never tiled, and keeps its formulas' references where they pointed, as
+Excel's move does, and every paste of its text after that writes the same
+cells again, as they were cut, so that only a copy moves references; a
+formula reading the cut cells still reads where they stood, which the
+language does not yet move. A text from elsewhere, Excel's among them, is read as Excel reads
 one, each cell as typed: `=` a formula as written, a number, `TRUE` or
 `FALSE`, an empty field emptying its cell, and any other a text, `1,234.50`
 and `12%` among them. A paste is one act, one frame at rate 0, refused whole
 past the sheet's edge, a bound sheet's extent or the Screen's window, on a
 read-only sheet, and on a game's sheet where it would write a value. A cut's
 cells stand until its paste moves them; Escape, another copy, an edit of
-them or a paste of another text lets them stand. From the palette, or a key
+them or a paste of another text lets them stand, and a cut let go by Escape
+or an edit still pastes its cells as they were cut. From the palette, or a key
 of yours that is not the browser's own, a copy writes the clipboard through
 the browser's `writeText` and a paste reads it through `readText`, which a
 browser may ask your leave for or refuse, said.
@@ -1174,8 +1182,8 @@ viewport, not an Excel clone.
   slice), the page's own clipboard card, the browser's clipboard events at the
   grid: a range copied as Excel's text, pasted back exact, tiled, filling and
   at a corner, a text from elsewhere read as typed, edges and sheets refused,
-  a cut moved and let go, the run's replay, and the browser's clipboard's
-  double, Brickwork's Ctrl+X left to Alonzo's own page. Each of the fifteen
+  a cut moved, pasted again as it was cut and let go, the run's replay, and
+  the browser's clipboard's double, Brickwork's Ctrl+X left to Alonzo's own page. Each of the fifteen
   others prints `case <name>: not on this page`, being proven in Alonzo's CI,
   and the last line reads `loop ok cases=19 dpr=1; 15 of Alonzo's own not on
   this page` at a ratio of 1. A replay with no hand is held to its golden alone, counted `alone`

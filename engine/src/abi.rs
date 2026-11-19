@@ -1,11 +1,14 @@
-//! The engine's C surface (ENGINE.1's second slice, 2026-10-09): the twelve
+//! The engine's C surface (ENGINE.1's second slice, 2026-10-09): the thirteen
 //! exports of `docs/SPEC.md` section 4.6, which the host shim calls (`web/host.js`)
-//! and `tools/check_host_exports.ps1` holds name for name: eleven functions
+//! and `tools/check_host_exports.ps1` holds name for name: twelve functions
 //! and the module's memory. Each is a thin door onto `crate::cartridge`, which
 //! is the language's machine with the engine's manifest and devices around
 //! it, except the twelfth, [`alonzo_expand`] (`SPEC.3`'s second slice,
 //! 2026-10-10), a door onto `crate::pass`, which takes no handle and touches
-//! no grid: the pass is an act of its own before any load.
+//! no grid: the pass is an act of its own before any load; and the
+//! thirteenth, [`alonzo_moved`] (`ENGINE.39`'s third slice, 2026-11-19), a door
+//! onto the language's mover, which takes no handle either: a page's paste of
+//! a formula moves its references by it.
 //!
 //! **Memory and the record**, byte for byte as the language's own surface
 //! has them (`vla-lang/src/abi.rs`): the host allocates every input with
@@ -397,6 +400,38 @@ pub unsafe extern "C" fn alonzo_expand(
     }
 }
 
+/// `moved`: a formula's text with every relative reference moved `d_row` rows
+/// down and `d_col` columns right, as Excel moves a formula copied that far,
+/// a part moved off the sheet written `#REF!` (`ENGINE.39`'s third slice,
+/// decision 13): the language's own mover, by which a fill's cells are
+/// written (`vla_lang::refers::shift_a1_references`), reached by a page that
+/// pastes a formula it copied. It takes no handle and touches no grid; a text
+/// that is not UTF-8 is named, status 2. The offsets come first, a number
+/// then a text as `view` takes its handle first.
+///
+/// # Safety
+/// `formula` came from [`alonzo_alloc`] with `formula_len`, or is null with
+/// 0; `out_len` is writable or null.
+#[no_mangle]
+pub unsafe extern "C" fn alonzo_moved(
+    d_row: i32,
+    d_col: i32,
+    formula: *const u8,
+    formula_len: u32,
+    out_len: *mut u32,
+) -> *mut u8 {
+    let formula = match text(
+        unsafe { bytes(formula, formula_len) },
+        "the formula is",
+        out_len,
+    ) {
+        Ok(t) => t,
+        Err(p) => return p,
+    };
+    let moved = vla_lang::refers::shift_a1_references(formula, i64::from(d_row), i64::from(d_col));
+    answer(moved.as_bytes(), out_len)
+}
+
 #[cfg(test)]
 mod tests {
     //! The surface as a host meets it: inputs allocated with the module's
@@ -496,6 +531,39 @@ mod tests {
 
     fn lf(s: &str) -> String {
         s.replace("\r\n", "\n")
+    }
+
+    fn moved(formula: &[u8], d_row: i32, d_col: i32) -> Rec {
+        let f = put(formula);
+        let mut len = 0u32;
+        let p = unsafe { alonzo_moved(d_row, d_col, f.0, f.1, &mut len) };
+        free(f);
+        take(p, len)
+    }
+
+    /// The mover through the surface (`ENGINE.39`'s third slice): Excel's three
+    /// moves measured at the scoping, each the language's answer, a formula
+    /// `=A1+1` copied from A2 into M20 and into M1 and `=$A$1+A1` from C3 into
+    /// M5; no move the text itself; and a text that is not UTF-8 named. It
+    /// takes no handle, so it stands apart from the handle table's one test.
+    #[test]
+    fn the_mover_moves_a_formula_as_excel_moved_it() {
+        for (formula, d_row, d_col, want) in [
+            ("=A1+1", 18, 12, "=M19+1"),
+            ("=A1+1", -1, 12, "=#REF!+1"),
+            ("=$A$1+A1", 2, 10, "=$A$1+K3"),
+            ("=SUM(A1:B2)*$C1", 3, 1, "=SUM(B4:C5)*$C4"),
+            ("=A1+1", 0, 0, "=A1+1"),
+        ] {
+            let r = moved(formula.as_bytes(), d_row, d_col);
+            assert_eq!(
+                (r.status, r.id.as_str(), r.text()),
+                (0, "", want),
+                "{formula} by {d_row}, {d_col}"
+            );
+        }
+        let raw = moved(&[0x3d, 0xff, 0xfe], 1, 1);
+        assert_eq!((raw.status, raw.text()), (2, "the formula is not UTF-8"));
     }
 
     fn view(handle: u32, projection: &str, sheet: &str, window: &str) -> Rec {

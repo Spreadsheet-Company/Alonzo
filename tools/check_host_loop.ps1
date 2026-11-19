@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds three hundred and one mutant pages through tools/build_web.ps1 and runs
+-Control builds three hundred and five mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -602,7 +602,10 @@ And ENGINE.39's second slice five, the grid's copy, cut and paste, each failing 
 as n acts, the page's copy of 10 cells stepping 10 frames, NW; a read-only sheet written, the Ledger's paste taken,
 NX; a cut emptied at the cut, its cells gone before its paste, NY, each over the module; the game's chord taken by
 the page, its Ctrl+C on the Screen pressed where it passes on, NZ; and the last CRLF dropped from Excel's text, OA,
-each needing no module.
+each needing no module. And its third slice four, a formula's references moved, each failing the clipboard case by
+name over the module: a formula pasted unmoved, the copy of L1:M2 at N50 reading A1, OB; a cut's formula moved, the
+cut of L1:L2 at N60 reading C60, OC; a cut's paste tiled, the move over N60:N63 written twice, OD; and, at the owner's
+word at its hand test, a cut's text a copy after its move, its paste again over P60:P63 tiled and moved, OE.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -999,9 +1002,15 @@ $commandsFloors = @{ opened = 1; listed = 1; frames = 40; ran = 3; landed = 24; 
 # (frames 13); the cut standing (cut 1), moved and pasted again (moved 2), and let go thrice (letGo 3); the replay played
 # (replayed 1); a paste at 30 frames a second (rate 1); Brickwork's Wall and Pace (game 2), Alonzo's page alone; and the
 # browser's clipboard's double, a copy written and a paste and a copy refused (api 3).
-$clipboardPageFloors = @{ chords = 15; bindings = 9; text = 3; fields = 9; values = 18; shapes = 7; rows = 3; cells = 6 }
-$clipboardFloors = @{ copied = 2; pasted = 2; exact = 1; tiled = 1; fills = 1; corner = 1; typed = 2; edges = 2; refused = 4; frames = 13; cut = 1; moved = 2; letGo = 3; replayed = 1; rate = 1; game = 2; api = 3 }
-$clipboardGameFloors = @{ copied = 2; pasted = 2; exact = 1; tiled = 1; fills = 1; corner = 1; typed = 2; edges = 2; refused = 4; frames = 13; cut = 1; moved = 2; letGo = 3; replayed = 1; rate = 1; api = 3 }
+# 2026-11-19, ENGINE.39's third slice, a formula's references moved: its page half lays four plans of a paste's formulas
+# (laid 4); over the module, Excel's three moves through the thirteenth export (mover 1), the card's fill and the formula
+# reading it pasted moved and one formula filling a range (formulas 2), a reference moved off the sheet (offSheet 1), a
+# cut's move keeping its references and pasted once (kept 1), and at the owner's word at its hand test the cut's text
+# pasted again as it was cut, once and unmoved (again 1), five pastes more (frames 18), and on Alonzo's page alone a gate
+# of Naught's copied along its room (gate 1).
+$clipboardPageFloors = @{ chords = 15; bindings = 9; text = 3; fields = 9; values = 18; shapes = 7; rows = 3; cells = 6; laid = 4 }
+$clipboardFloors = @{ copied = 2; pasted = 2; exact = 1; tiled = 1; fills = 1; corner = 1; typed = 2; edges = 2; refused = 4; frames = 18; cut = 1; moved = 2; letGo = 3; replayed = 1; rate = 1; game = 2; api = 3; mover = 1; formulas = 2; offSheet = 1; kept = 1; again = 1; gate = 1 }
+$clipboardGameFloors = @{ copied = 2; pasted = 2; exact = 1; tiled = 1; fills = 1; corner = 1; typed = 2; edges = 2; refused = 4; frames = 18; cut = 1; moved = 2; letGo = 3; replayed = 1; rate = 1; api = 3; mover = 1; formulas = 2; offSheet = 1; kept = 1; again = 1 }
 # 2026-10-18, CART.12's viewport slice, a code's text drawn: the twenty-seven cases' counts unchanged but for grid over
 # the module, the grid card's row 16 of codes added, its counts a function of the card: codes 3, the row pinned by name
 # at frames 1, 4 and 5; coded 213, the texts drawn from text rows over the 25 frames, the row's eight constants at the
@@ -1101,6 +1110,8 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # to two hundred and ninety-six (140 applicable without).
 # 2026-11-19, ENGINE.39's second slice: NW to OA, the clipboard case's, NZ and OA needing no module, take it to three
 # hundred and one (142 applicable without).
+# 2026-11-19, ENGINE.39's third slice: OB to OE, the clipboard case's, each over the module, take it to three hundred and
+# five (142 applicable without).
 # 2026-11-18, CART.3's third slice: MO to MR, version 7's: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -2560,12 +2571,24 @@ if ($Control) {
                Want = 'case clipboard.*clipboard: the paste of the page.s copy into Work!A10 stepped 10 frames, where one is due' },
             @{ L = 'nx'; Name = 'a read sheet written'; File = 'host'; Module = $true; Case = 'clipboard'; Anchor = '      if (m.read) { this.c.editsRead++;'; With = '      if (false) { this.c.editsRead++;'
                Want = 'case clipboard.*clipboard: a paste into the read-only Ledger stepped 1 frame' },
-            @{ L = 'ny'; Name = 'a cut emptied at the cut'; File = 'template'; Module = $true; Case = 'clipboard'; Anchor = '    this.kept = { text: text, sheet: sheet, range: range, cells: c.rows, cut: !!cut };'; With = '    this.kept = { text: text, sheet: sheet, range: range, cells: c.rows, cut: !!cut }; if (cut) host.edit(''(cell '' + vlaString(sheet) + '' '' + vlaString(VP.rangeText(range)) + '' "")'');   // emptied at the cut, by the control'
+            @{ L = 'ny'; Name = 'a cut emptied at the cut'; File = 'template'; Module = $true; Case = 'clipboard'; Anchor = '    this.kept = { text: text, sheet: sheet, range: range, cells: c.rows, fills: c.fills || [], cut: !!cut, asCut: !!cut };'; With = '    this.kept = { text: text, sheet: sheet, range: range, cells: c.rows, fills: c.fills || [], cut: !!cut, asCut: !!cut }; if (cut) host.edit(''(cell '' + vlaString(sheet) + '' '' + vlaString(VP.rangeText(range)) + '' "")'');   // emptied at the cut, by the control'
                Want = 'case clipboard.*clipboard: the cut of Work!A30:B30 left Work!A30 holding ""' },
             @{ L = 'nz'; Name = 'the game''s chord taken by the page'; File = 'template'; Case = 'clipboard'; Anchor = '  function clipKeyAct(b, ev) { return b && !b.custom && !b.game && CLIP_ACTS[b.command] && clipboardChord(ev) === b.command ? ''pass'' : ''press''; }'; With = '  function clipKeyAct(b, ev) { return ''press''; }   // every binding pressed, by the control'
                Want = 'case clipboard.*clipboard: the page.s Ctrl\+C on the Screen is copy, pressed, where copy, passed on is due' },
             @{ L = 'oa'; Name = 'the last CRLF dropped'; File = 'template'; Case = 'clipboard'; Anchor = '    return rows.map(function (r) { return r.map(clipField).join(''\t'') + ''\r\n''; }).join('''');'; With = '    return rows.map(function (r) { return r.map(clipField).join(''\t''); }).join(''\r\n'');   // the last CRLF dropped, by the control'
-               Want = 'case clipboard.*clipboard: Excel.s text of the measured range is' }
+               Want = 'case clipboard.*clipboard: Excel.s text of the measured range is' },
+            # OB to OE (ENGINE.39's third slice), the clipboard case's, each by name over the module: a formula pasted unmoved, the
+            # copy of L1:M2 at N50 reading A1; a cut's formula moved, the cut of L1:L2 at N60 reading C60; a cut's paste tiled,
+            # the move over N60:N63 written twice; and a cut's text a copy after its move (the owner's word at its hand test), its
+            # paste again over P60:P63 tiled and moved
+            @{ L = 'ob'; Name = 'a formula pasted unmoved'; File = 'template'; Module = $true; Case = 'clipboard'; Anchor = '    if (fills) rows = rows.concat(pasteFills(sheet, range, h, w, kept.range, fills, asCut ? null : function (t, dr, dc) { return host.moved(t, dr, dc); }));'; With = '    if (fills) rows = rows.concat(pasteFills(sheet, range, h, w, kept.range, fills, null));   // every formula unmoved, by the control'
+               Want = 'case clipboard.*clipboard: the page.s copy of Work!L1:M2 pasted at Work!N50 holds Work!N50 "=A1\*10"' },
+            @{ L = 'oc'; Name = 'a cut''s formula moved'; File = 'template'; Module = $true; Case = 'clipboard'; Anchor = '    if (fills) rows = rows.concat(pasteFills(sheet, range, h, w, kept.range, fills, asCut ? null : function (t, dr, dc) { return host.moved(t, dr, dc); }));'; With = '    if (fills) rows = rows.concat(pasteFills(sheet, range, h, w, kept.range, fills, function (t, dr, dc) { return host.moved(t, dr, dc); }));   // a cut''s formulas moved too, by the control'
+               Want = 'case clipboard.*clipboard: the cut of Work!L1:L2 moved to Work!N60 holds Work!N60 "=C60\*10"' },
+            @{ L = 'od'; Name = 'a cut''s paste tiled'; File = 'template'; Module = $true; Case = 'clipboard'; Anchor = '    var h = block.length, w = maxWidth(block), range = pasteRange(area, h, w, own && !asCut), rows = pasteRows(sheet, range, block), n = 0;'; With = '    var h = block.length, w = maxWidth(block), range = pasteRange(area, h, w, own), rows = pasteRows(sheet, range, block), n = 0;   // a cut tiled too, by the control'
+               Want = 'case clipboard.*clipboard: after the cut.s paste of Work!L1:L2 into Work!N60:N63 the host said ".*to Work!N60:N63' },
+            @{ L = 'oe'; Name = 'a cut''s text a copy after its move'; File = 'template'; Module = $true; Case = 'clipboard'; Anchor = '    if (took && p.move) kept.cut = false;   // the cut spent, its texts kept: the clipboard''s text pastes its cells again as they were cut'; With = '    if (took && p.move) { kept.cut = false; kept.asCut = false; }   // the cut''s text a copy after its move, by the control'
+               Want = 'case clipboard.*clipboard: after the cut.s text pasted again over Work!P60:P63 the host said ".*the paste of four cells into Work!P60:P63\.' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
@@ -3407,7 +3430,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}; {54}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote, $brickworkNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk -and $brickworkOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and one' } else { 'one hundred and forty-two applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and five' } else { 'one hundred and forty-two applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

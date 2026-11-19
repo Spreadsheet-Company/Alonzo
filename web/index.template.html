@@ -2089,6 +2089,30 @@
     return out;
   }
   function maxWidth(block) { var w = 0; for (var i = 0; i < block.length; i++) w = Math.max(w, block[i].length); return w; }
+  // A paste's formulas (the third slice, decision 13): each fill of the page's copy, its rectangle and its first cell's
+  // text, laid over each tile of the range as one fill row, its text moved as far as the tile stands from the copy, so that
+  // every cell's references move as Excel moves a formula copied, a fill writing each cell's own; or, for a cut's move, its
+  // text as it stands, so that every cell's references stay, as Excel's move keeps a moved formula's; and one formula filling
+  // a range, one fill row over it. sheet; range, pasteRange's; h and w, the block's rows and columns; from, the copy's range
+  // on its sheet; fills, the copy's; move(text, rows, columns), the text moved, or null for a cut's move. [{ row, sheet,
+  // address, kind, cells }].
+  function pasteFills(sheet, range, h, w, from, fills, move) {
+    var out = [], at = vlaString(sheet) + ' ';
+    function fill(r, text, dr, dc) {
+      var t = move ? move(text, dr, dc) : text, a = VP.rangeText(r);
+      out.push({ row: '(formula ' + at + vlaString(a) + ' ' + vlaString(t === null ? text : t) + ')', sheet: sheet, address: a, kind: 'formula', cells: (r.bottom - r.top + 1) * (r.right - r.left + 1) });
+    }
+    if (h === 1 && w === 1 && fills.length === 1) { fill(range, fills[0].text, range.top - from.top, range.left - from.left); return out; }
+    for (var tt = range.top; tt <= range.bottom; tt += h) {
+      for (var tl = range.left; tl <= range.right; tl += w) {
+        for (var i = 0; i < fills.length; i++) {
+          var f = fills[i], dr = tt - from.top, dc = tl - from.left;
+          fill({ top: f.top + dr, left: f.left + dc, bottom: f.bottom + dr, right: f.right + dc }, f.text, dr, dc);
+        }
+      }
+    }
+    return out;
+  }
   // A count of cells in words: a word below ten, a number from there.
   var CLIP_COUNTS = ['no cells', 'one cell', 'two cells', 'three cells', 'four cells', 'five cells', 'six cells', 'seven cells', 'eight cells', 'nine cells'];
   function cellsWords(n) { return n < CLIP_COUNTS.length ? CLIP_COUNTS[n] : thousands(n) + ' cells'; }
@@ -2101,14 +2125,15 @@
   }
   // The grid's clipboard (decisions 6 to 12): the page's last copy beside the browser's clipboard, a cut's mark, and the
   // three acts over a viewport. host, the page's host; api, the browser's clipboard for the acts no clipboard event
-  // carries, navigator.clipboard or an oracle's double, null for none. kept: { text, sheet, range, cells, cut }, the
-  // copy's Excel text, its sheet and range, each cell { shown, value, formula } as the host read it, and whether it is a
-  // cut whose cells stand until its paste moves them.
+  // carries, navigator.clipboard or an oracle's double, null for none. kept: { text, sheet, range, cells, fills, cut,
+  // asCut }, the copy's Excel text, its sheet and range, each cell { shown, value, formula } as the host read it, its
+  // formulas' fills, whether it is a cut whose cells stand until its paste moves them, and whether it was cut at all, so
+  // that every paste of its text writes its cells as they were cut (the owner's word at the third slice's hand test).
   function GridClip(host, api) {
     var self = this;
     this.host = host; this.api = api || null; this.kept = null;
     host.on('wrote', function (e) { self.wrote(e); });
-    host.on('load', function () { if (self.kept) self.kept.cut = false; });   // a load's grid holds no cut's cells: its copy stays
+    host.on('load', function () { if (self.kept) self.kept.cut = false; });   // a load's grid holds no cut's cells: its texts stay as cut
   }
   // The browser's clipboard events at a viewport answered (decision 6): a copy and a cut writing Excel's text into the
   // event's data, a paste reading it; the default prevented where the grid took the event, and left to the browser where
@@ -2159,25 +2184,30 @@
     if (!c.ok) return null;
     var text = clipText(c.rows.map(function (r) { return r.map(function (x) { return x.shown; }); }));
     var n = (range.bottom - range.top + 1) * (range.right - range.left + 1), where = sheet + '!' + VP.rangeText(range), them = n === 1 ? 'it' : 'them';
-    this.kept = { text: text, sheet: sheet, range: range, cells: c.rows, cut: !!cut };
+    this.kept = { text: text, sheet: sheet, range: range, cells: c.rows, fills: c.fills || [], cut: !!cut, asCut: !!cut };
     host.sayAct(cut ? 'Cut ' + where + ', ' + cellsWords(n) + ': a paste of ' + them + ' moves ' + them + ', and Escape or another copy lets ' + them + ' stand.'
                     : 'Copied ' + where + ', ' + cellsWords(n) + ', to the clipboard.');
     return text;
   };
-  // A paste of a text into a viewport's selection (decisions 8 to 12): the page's own copy where the text is its text, its
-  // kept values tiled as Excel tiles its own and each formula's value written, said; any other text read as Excel reads
-  // text from elsewhere, the page's copy and a cut's mark let go; and a cut's own paste moving its cells, its range emptied
-  // as Delete empties one in the same act, its copy kept so that the text pastes the values again. True where the host
-  // took the act.
+  // A paste of a text into a viewport's selection (decisions 8 to 13): the page's own copy where the text is its text, its
+  // kept values tiled as Excel tiles its own, and since the third slice its formulas by their fills, each moved as Excel
+  // moves a formula copied, where the module has the mover, else each formula's value, said; any other text read as Excel
+  // reads text from elsewhere, the page's copy and a cut's mark let go; a cut's own paste moving its cells once at the
+  // selection's corner, never tiled, its formulas' references kept, its range emptied as Delete empties one in the same act;
+  // and every paste of a cut's text after its move, or after its mark is let go, writing its cells again as they were cut,
+  // once at the selection's corner, said, so that a cut pastes the same cells wherever it goes and only a copy moves
+  // references (the owner's word at the third slice's hand test). True where the host took the act.
   GridClip.prototype.put = function (vp, text) {
-    var host = this.host, sheet = vp.sheet(), kept = this.kept, own = !!kept && String(text) === kept.text, formulas = 0, block;
+    var host = this.host, sheet = vp.sheet(), kept = this.kept, own = !!kept && String(text) === kept.text, asCut = own && kept.asCut, formulas = 0, block;
     if (!host.cart || !sheet) { host.sayAct('Nothing was pasted: no cartridge is loaded.', true); return false; }
     if (!own) this.kept = null;   // the clipboard holds another text than the page's copy
-    if (own) block = kept.cells.map(function (r) { return r.map(function (x) { if (x.formula) formulas++; return { kind: x.value === '""' ? 'empty' : 'value', spelled: x.value }; }); });
+    var fills = own && kept.fills && kept.fills.length && host.moved(kept.fills[0].text, 0, 0) !== null ? kept.fills : null;   // a module with the mover
+    if (own) block = kept.cells.map(function (r) { return r.map(function (x) { if (x.formula && fills) return null; if (x.formula) formulas++; return { kind: x.value === '""' ? 'empty' : 'value', spelled: x.value }; }); });
     else block = clipFields(text).map(function (r) { return r.map(clipValue); });
     if (!block.length) { host.sayAct('Nothing was pasted: the clipboard holds no text.', true); return false; }
     var sel = vp.selection(), area = selectionCells(sel, sel.kind === 'cells' ? null : host.extentOf(sheet)) || { top: sel.range.top, left: sel.range.left, bottom: sel.range.top, right: sel.range.left };
-    var range = pasteRange(area, block.length, maxWidth(block), own), rows = pasteRows(sheet, range, block), n = 0;
+    var h = block.length, w = maxWidth(block), range = pasteRange(area, h, w, own && !asCut), rows = pasteRows(sheet, range, block), n = 0;
+    if (fills) rows = rows.concat(pasteFills(sheet, range, h, w, kept.range, fills, asCut ? null : function (t, dr, dc) { return host.moved(t, dr, dc); }));
     for (var i = 0; i < rows.length; i++) n += rows[i].cells;
     var where = sheet + '!' + VP.rangeText(range), note = formulas ? ', ' + (formulas === 1 ? 'a formula as its value' : cellsWords(formulas).replace(/cells?$/, 'formulas') + ' as their values') : '';
     var p = { sheet: sheet, range: range, rows: rows, place: { sheet: sheet, col: range.left, row: range.top } };
@@ -2186,19 +2216,21 @@
       p.rows = [{ row: '(cell ' + vlaString(kept.sheet) + ' ' + vlaString(from) + ' "")', sheet: kept.sheet, address: from, kind: 'empty', cells: 0 }].concat(rows);
       p.what = 'the move of ' + src + ' to ' + where + note; p.done = 'moved ' + src + ' to ' + where + note; p.move = true;
     } else {
+      if (asCut) note += n === 1 ? ', as it was cut' : ', as they were cut';
       p.what = 'the paste of ' + cellsWords(n) + ' into ' + where + note; p.done = 'pasted ' + cellsWords(n) + ' into ' + where + note;
     }
     var took = host.paste(p);
-    if (took && p.move) kept.cut = false;   // the cut spent, its copy kept: the clipboard's text pastes the values again, as a copy's does
+    if (took && p.move) kept.cut = false;   // the cut spent, its texts kept: the clipboard's text pastes its cells again as they were cut
     return took;
   };
-  // A cut's mark let go, its cells standing and its copy kept (decision 12): by Escape, and by a person's edit of its cells,
-  // each said; a copy, a load and a paste of another text let it go with no word of their own, the act's answer its own.
+  // A cut's mark let go, its cells standing and its texts kept as they were cut (decision 12): by Escape, and by a person's
+  // edit of its cells, each said; a copy, a load and a paste of another text let it go with no word of their own, the act's
+  // answer its own.
   GridClip.prototype.letGo = function (why) {
     var k = this.kept;
     if (!k || !k.cut) return;
     k.cut = false;
-    this.host.sayAct('The cut of ' + k.sheet + '!' + VP.rangeText(k.range) + ' was let go by ' + why + ': its cells stand, and a paste copies them.');
+    this.host.sayAct('The cut of ' + k.sheet + '!' + VP.rangeText(k.range) + ' was let go by ' + why + ': its cells stand, and a paste writes them as they were cut.');
   };
   GridClip.prototype.wrote = function (e) {
     var k = this.kept;
@@ -8981,8 +9013,9 @@
   // ---- ENGINE.39's second slice: copy, cut and paste in the grid ----
   // The clipboard card, the page's own as the repeats card is, at (spec 6) and rate 0: a Work sheet holding the kinds of the
   // range Excel's copy was measured over, a number, a formula of a third under "0.00", texts holding a tab, a line feed and a
-  // quote, a truth value, the empty text, an error and a text; a Bench, the game's, where a person writes formulas; a Ledger,
-  // read-only; a Board bound to its extent, A1:C3; and a hidden Screen of 8 by 4.
+  // quote, a truth value, the empty text, an error and a text, and since the third slice a fill, L1:L2 =A1*10, and a formula
+  // reading it, M2 =L1+1; a Bench, the game's, where a person writes formulas; a Ledger, read-only; a Board bound to its
+  // extent, A1:C3; and a hidden Screen of 8 by 4.
   var CLIPCARD = { file: 'clipcard.vla',
                    text: '(cartridge "clipcard"\n  (spec 6)\n  (title "A clipboard card")\n  (rate 0)\n  (screen grid 8 4)\n  (seed 1)\n' +
                          '  (bound "Board")\n  (game "Bench")\n  (read "Ledger")\n  (work "Work"))\n' +
@@ -8990,6 +9023,7 @@
                          '(format 1 none "0.00" nowrap)\n' +
                          '(cell "Work" "A1" 1)\n(formula "Work" "B1" "=1/3")\n(style "Work" "B1" 1)\n(cell "Work" "C1" "a\tb")\n(cell "Work" "D1" "line1\nline2")\n(cell "Work" "E1" "say \\"hi\\"")\n' +
                          '(cell "Work" "A2" 2)\n(cell "Work" "B2" true)\n(cell "Work" "C2" "")\n(formula "Work" "D2" "=1/0")\n(cell "Work" "E2" "x")\n' +
+                         '(formula "Work" "L1:L2" "=A1*10")\n(formula "Work" "M2" "=L1+1")\n' +
                          '(cell "Bench" "A1" 0)\n(cell "Ledger" "A1" "kept")\n(cell "Board" "A1:C3" 0)\n(cell "Screen" "A1" "the Screen")\n' };
   // Excel's text of the card's Work!A1:E2 after its first step: its shown texts, 0.33 for the third, as Excel's copy writes them.
   var CLIP_WORK = '1\t0.33\t"a\tb"\t"line1\nline2"\tsay "hi"\r\n2\tTRUE\t\t#DIV/0!\tx\r\n';
@@ -9006,9 +9040,9 @@
   // Wall, the host taking the key the page passed on, and the grid's on its Pace. And the acts no event carries, over a double
   // of the browser's clipboard: a copy written, a paste refused by the browser and a copy refused, each said.
   function caseClipboard() {
-    var P = [], notes = [], k = { chords: 0, bindings: 0, text: 0, fields: 0, values: 0, shapes: 0, rows: 0, cells: 0,
+    var P = [], notes = [], k = { chords: 0, bindings: 0, text: 0, fields: 0, values: 0, shapes: 0, rows: 0, cells: 0, laid: 0,
                                   module: 0, copied: 0, pasted: 0, exact: 0, tiled: 0, fills: 0, corner: 0, typed: 0, edges: 0, refused: 0, frames: 0,
-                                  cut: 0, moved: 0, letGo: 0, replayed: 0, rate: 0, game: 0, api: 0 };
+                                  cut: 0, moved: 0, letGo: 0, replayed: 0, rate: 0, game: 0, api: 0, mover: 0, formulas: 0, offSheet: 0, kept: 0, again: 0, gate: 0 };
     clipPage(k, P);
     var wasm = builtModule();
     if (!wasm) return { counters: k, problems: P };
@@ -9016,7 +9050,8 @@
     k.module = bytes.length;
     clipRun(bytes, k, P);
     clipRate(bytes, k, P);
-    if (OWN) clipGame(bytes, k, P); else notes.push('Brickwork\'s Ctrl+X, the game\'s on its Wall and the grid\'s on its Pace, is held on Alonzo\'s own page, over its own cartridge');
+    if (OWN) { clipGame(bytes, k, P); clipNaught(bytes, k, P); }
+    else notes.push('Brickwork\'s Ctrl+X, the game\'s on its Wall and the grid\'s on its Pace, and a gate of Naught\'s copied along its room are held on Alonzo\'s own page, over its own cartridges');
     return clipApi(bytes, k, P).then(function () { return { counters: k, problems: P, notes: notes }; });
   }
   function clipPage(k, P) {
@@ -9083,6 +9118,16 @@
       var got = x[1].map(function (r) { return r.row; }).join(' '), n = x[1].reduce(function (s, r) { return s + r.cells; }, 0);
       if (got === x[2] && n === x[3]) k.rows++; else P.push('clipboard: ' + x[0] + ' writes ' + JSON.stringify(got) + ', ' + n + ' cells, where ' + JSON.stringify(x[2]) + ', ' + x[3] + ', is due');
     });
+    // a paste's formulas (the third slice): each fill laid over each tile, its text moved as far as the tile stands from the
+    // copy, the mover a stand-in that names the move; one formula over a range one fill row; a cut's move each text as it stands
+    var mark = function (t, dr, dc) { return t + '@' + dr + ',' + dc; }, from = { top: 1, left: 12, bottom: 2, right: 13 }, lm = [{ top: 1, left: 12, bottom: 2, right: 12, text: '=A1*10' }, { top: 2, left: 13, bottom: 2, right: 13, text: '=L1+1' }];
+    [['L1:M2 into N50:O51', pasteFills('Work', { top: 50, left: 14, bottom: 51, right: 15 }, 2, 2, from, lm, mark), '(formula "Work" "N50:N51" "=A1*10@49,2") (formula "Work" "O51" "=L1+1@49,2")', 3],
+     ['L1:M2 tiled over N50:Q53', pasteFills('Work', { top: 50, left: 14, bottom: 53, right: 17 }, 2, 2, from, lm, mark), '(formula "Work" "N50:N51" "=A1*10@49,2") (formula "Work" "O51" "=L1+1@49,2") (formula "Work" "P50:P51" "=A1*10@49,4") (formula "Work" "Q51" "=L1+1@49,4") (formula "Work" "N52:N53" "=A1*10@51,2") (formula "Work" "O53" "=L1+1@51,2") (formula "Work" "P52:P53" "=A1*10@51,4") (formula "Work" "Q53" "=L1+1@51,4")', 12],
+     ['L1 filling N54:O55', pasteFills('Work', { top: 54, left: 14, bottom: 55, right: 15 }, 1, 1, { top: 1, left: 12, bottom: 1, right: 12 }, [{ top: 1, left: 12, bottom: 1, right: 12, text: '=A1*10' }], mark), '(formula "Work" "N54:O55" "=A1*10@53,2")', 4],
+     ['a cut of L1:M2 moved to N60', pasteFills('Work', { top: 60, left: 14, bottom: 61, right: 15 }, 2, 2, from, lm, null), '(formula "Work" "N60:N61" "=A1*10") (formula "Work" "O61" "=L1+1")', 3]].forEach(function (x) {
+      var got = x[1].map(function (r) { return r.row; }).join(' '), n = x[1].reduce(function (s, r) { return s + r.cells; }, 0);
+      if (got === x[2] && n === x[3] && x[1].every(function (r) { return r.kind === 'formula'; })) k.laid++; else P.push('clipboard: ' + x[0] + ' lays ' + JSON.stringify(got) + ', ' + n + ' cells, where ' + JSON.stringify(x[2]) + ', ' + x[3] + ', is due');
+    });
     // a selection's cells: a range as it stands; whole rows, columns and the sheet within the extent; none past it
     var ext = { top: 1, left: 1, bottom: 20, right: 6 };
     [[{ kind: 'cells', range: { top: 2, left: 2, bottom: 3, right: 3 } }, ext, 'B2:C3'], [{ kind: 'rows', range: { top: 2, left: 1, bottom: 3, right: 40 } }, ext, 'A2:F3'],
@@ -9144,11 +9189,11 @@
       else P.push('clipboard: the copy of Work!A1:E2 gave ' + JSON.stringify(c1.text) + (c1.prevented ? '' : ', left to the browser') + ' and said ' + JSON.stringify(said()) + ', where ' + JSON.stringify(CLIP_WORK) + ' is due');
       // the page's copy pasted back: its values exact, the third and the error among them, its formulas said
       at('Work', 'A10');
-      if (paste('the paste of the page\'s copy into Work!A10', CLIP_WORK, 'the paste of 10 cells into Work!A10:E11, two formulas as their values') &&
+      if (paste('the paste of the page\'s copy into Work!A10', CLIP_WORK, 'the paste of 10 cells into Work!A10:E11') &&
           holds('the page\'s copy pasted into A10', 'Work', { A10: '"1"', B10: '"0.3333333333333333"', C10: '"a\\tb"', D10: '"line1\\nline2"', E10: '"say \\"hi\\""', A11: '"2"', B11: '"true"', C11: '""', D11: '"error #DIV/0!"', E11: '"x"' })) { k.pasted++; k.exact++; }
       // tiled into a multiple, one cell filling a range, and the block at the corner of a selection no multiple of it
       at('Work', 'A1:B2'); fire('copy'); at('Work', 'G1:J4');
-      if (paste('the page\'s 2 by 2 copy into Work!G1:J4', '1\t0.33\r\n2\tTRUE\r\n', 'the paste of 16 cells into Work!G1:J4, a formula as its value') &&
+      if (paste('the page\'s 2 by 2 copy into Work!G1:J4', '1\t0.33\r\n2\tTRUE\r\n', 'the paste of 16 cells into Work!G1:J4') &&
           holds('the 2 by 2 copy tiled', 'Work', { G1: '"1"', H1: '"0.3333333333333333"', I1: '"1"', J1: '"0.3333333333333333"', G2: '"2"', H2: '"true"', I2: '"2"', J2: '"true"', G3: '"1"', J4: '"true"' })) k.tiled++;
       at('Work', 'A2'); fire('copy'); at('Work', 'G6:I8');
       var replayBefore = (host.replayText() || '').length;
@@ -9157,7 +9202,7 @@
         else P.push('clipboard: one cell filling Work!G6:I8 was recorded as ' + JSON.stringify((host.replayText() || '').slice(replayBefore, replayBefore + 200)) + ', where one range row is due');
       }
       at('Work', 'A1:B2'); fire('copy'); at('Work', 'G10:I12');
-      if (paste('the page\'s 2 by 2 copy into Work!G10:I12', '1\t0.33\r\n2\tTRUE\r\n', 'the paste of four cells into Work!G10:H11, a formula as its value') &&
+      if (paste('the page\'s 2 by 2 copy into Work!G10:I12', '1\t0.33\r\n2\tTRUE\r\n', 'the paste of four cells into Work!G10:H11') &&
           holds('the block at the corner of G10:I12', 'Work', { G10: '"1"', H11: '"true"', I12: 'nothing' })) k.corner++;
       // a text from elsewhere: split as Excel's, = a formula unmoved, numbers by the reader, a truth value; never tiled
       at('Work', 'A20:D23');
@@ -9191,7 +9236,8 @@
       if (r4.prevented && frame() === f2 && /^The paste of one cell into Bench!A1 was not written: Bench is the game's, where a person writes a formula and no value/.test(said())) k.refused++;
       else P.push('clipboard: a value pasted into the game\'s Bench stepped ' + (frame() - f2) + ' frame(s) and said ' + JSON.stringify(said()) + ', where it is refused, a person writing formulas there');
       if (paste('a formula into the game\'s Bench!A1', '=1+1\r\n', 'the paste of one cell into Bench!A1') && holds('a formula pasted into the Bench', 'Bench', { A1: '"2"' })) k.pasted++;
-      // a cut: its cells standing until its paste, which moves them in one act, its range emptied; its text again a copy
+      // a cut: its cells standing until its paste, which moves them in one act, its range emptied; its text again its cells as
+      // they were cut
       at('Work', 'A30');
       paste('a text into Work!A30', 'p\tq\r\n', 'the paste of two cells into Work!A30:B30');
       at('Work', 'A30:B30');
@@ -9201,22 +9247,68 @@
       at('Work', 'A32');
       if (paste('the cut\'s paste into Work!A32', 'p\tq\r\n', 'the move of Work!A30:B30 to Work!A32:B32') && holds('the cut moved', 'Work', { A30: '""', B30: '""', A32: '"p"', B32: '"q"' }) && !clip.kept.cut) k.moved++;
       at('Work', 'A34');
-      if (paste('the cut\'s text pasted again into Work!A34', 'p\tq\r\n', 'the paste of two cells into Work!A34:B34') && holds('the cut\'s text again a copy', 'Work', { A32: '"p"', A34: '"p"', B34: '"q"' })) k.moved++;
+      if (paste('the cut\'s text pasted again into Work!A34', 'p\tq\r\n', 'the paste of two cells into Work!A34:B34, as they were cut') && holds('the cut\'s text again as it was cut', 'Work', { A32: '"p"', A34: '"p"', B34: '"q"' })) k.moved++;
       // a cut let go: by Escape, said; by an edit of its cells, said; by a paste of another text; each leaving its cells
       at('Work', 'A32:B32'); fire('cut');
       sc.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true }));
       var esc = said();
       at('Work', 'A36');
-      if (esc === 'The cut of Work!A32:B32 was let go by Escape: its cells stand, and a paste copies them.' && paste('the text of a cut let go into Work!A36', 'p\tq\r\n', 'the paste of two cells into Work!A36:B36') && holds('a cut let go by Escape', 'Work', { A32: '"p"', A36: '"p"' })) k.letGo++;
+      if (esc === 'The cut of Work!A32:B32 was let go by Escape: its cells stand, and a paste writes them as they were cut.' && paste('the text of a cut let go into Work!A36', 'p\tq\r\n', 'the paste of two cells into Work!A36:B36, as they were cut') && holds('a cut let go by Escape', 'Work', { A32: '"p"', A36: '"p"' })) k.letGo++;
       else if (esc.indexOf('let go by Escape') < 0) P.push('clipboard: Escape after a cut said ' + JSON.stringify(esc) + ', where the cut let go is due');
       at('Work', 'A36:B36'); fire('cut');
       host.edit('(cell "Work" "A36" "edited")');
       var ed = host.sentences().slice(-2).map(function (s) { return s.text; }).join(' | ');
       at('Work', 'A38');
-      if (/The cut of Work!A36:B36 was let go by an edit of its cells: its cells stand, and a paste copies them\./.test(ed) && paste('the text of a cut let go by an edit into Work!A38', 'p\tq\r\n', 'the paste of two cells into Work!A38:B38') && holds('a cut let go by an edit', 'Work', { A36: '"edited"', B36: '"q"', A38: '"p"' })) k.letGo++;
+      if (/The cut of Work!A36:B36 was let go by an edit of its cells: its cells stand, and a paste writes them as they were cut\./.test(ed) && paste('the text of a cut let go by an edit into Work!A38', 'p\tq\r\n', 'the paste of two cells into Work!A38:B38, as they were cut') && holds('a cut let go by an edit', 'Work', { A36: '"edited"', B36: '"q"', A38: '"p"' })) k.letGo++;
       else if (!/let go by an edit/.test(ed)) P.push('clipboard: an edit of a cut\'s cells said ' + JSON.stringify(ed) + ', where the cut let go is due');
       at('Work', 'A38:B38'); fire('cut'); at('Work', 'A40');
       if (paste('another text over a cut', 'other\r\n', 'the paste of one cell into Work!A40') && holds('a cut let go by another text', 'Work', { A38: '"p"', A40: '"other"' }) && clip.kept === null) k.letGo++;
+      // the third slice: a formula's references moved by the language's mover, through the module's thirteenth export, over
+      // Excel's three moves measured at the scoping
+      var three = [host.moved('=A1+1', 18, 12), host.moved('=A1+1', -1, 12), host.moved('=$A$1+A1', 2, 10)];
+      if (three.join(' ') === '=M19+1 =#REF!+1 =$A$1+K3') k.mover++; else P.push('clipboard: the mover answered ' + JSON.stringify(three) + ', where Excel\'s =M19+1, =#REF!+1 and =$A$1+K3 are due');
+      // the formulas a grid record says of a range, each cell's text by its address
+      function formulasOf(sheet, win) {
+        var out = {};
+        VP.readForms(D.call('alonzo_view', [ld.handle], ['grid', sheet, win]).text).forEach(function (f) { if (Array.isArray(f) && f[0] && f[0].sym === 'formula') out[f[2]] = f[3]; });
+        return out;
+      }
+      function laidAs(what, sheet, win, want) {
+        var got = formulasOf(sheet, win), bad = Object.keys(want).filter(function (a) { return got[a] !== want[a]; });
+        if (bad.length) P.push('clipboard: ' + what + ' holds ' + bad.map(function (a) { return sheet + '!' + a + ' ' + JSON.stringify(got[a] === undefined ? 'no formula' : got[a]); }).join(', ') + ', where ' + bad.map(function (a) { return JSON.stringify(want[a]); }).join(', ') + ' is due');
+        return !bad.length;
+      }
+      // the page's copy of a fill and a formula reading it, pasted: each formula's references moved as far as it went, the
+      // fill written as one fill row, and the empty cell beside them emptying its target
+      at('Work', 'L1:M2'); fire('copy');
+      replayBefore = (host.replayText() || '').length;
+      at('Work', 'N50');
+      if (paste('the page\'s copy of Work!L1:M2 into Work!N50', '10\t\r\n20\t11\r\n', 'the paste of four cells into Work!N50:O51') &&
+          laidAs('the page\'s copy of Work!L1:M2 pasted at Work!N50', 'Work', 'N50:O51', { N50: '=C50*10', N51: '=C51*10', O51: '=N50+1' }) &&
+          holds('the copy of L1:M2 pasted at N50', 'Work', { N50: '"0"', N51: '"0"', O50: '""', O51: '"1"' })) {
+        if ((host.replayText() || '').slice(replayBefore).indexOf('  (formula "Work" "N50:N51" "=C50*10")') >= 0) k.formulas++;
+        else P.push('clipboard: the copy of Work!L1:M2 pasted at Work!N50 was recorded as ' + JSON.stringify((host.replayText() || '').slice(replayBefore, replayBefore + 300)) + ', where its fill is one row');
+      }
+      // one formula filling a range, one fill row, every cell's references its own
+      at('Work', 'L1'); fire('copy'); at('Work', 'N54:O55');
+      if (paste('the page\'s copy of Work!L1 into Work!N54:O55', '10\r\n', 'the paste of four cells into Work!N54:O55') &&
+          laidAs('Work!L1 filling Work!N54:O55', 'Work', 'N54:O55', { N54: '=C54*10', O54: '=D54*10', N55: '=C55*10', O55: '=D55*10' })) k.formulas++;
+      // a reference moved off the sheet, #REF!, as Excel writes it
+      at('Work', 'M2'); fire('copy'); at('Work', 'K1');
+      if (paste('the page\'s copy of Work!M2 into Work!K1', '11\r\n', 'the paste of one cell into Work!K1') &&
+          laidAs('Work!M2 pasted at Work!K1', 'Work', 'K1', { K1: '=#REF!+1' }) && holds('a reference off the sheet', 'Work', { K1: '"error #REF!"' })) k.offSheet++;
+      // a cut's move of a fill: its references kept, as Excel's move keeps a moved formula's, its source emptied, and pasted once
+      // at the selection's corner, never tiled over a multiple
+      at('Work', 'L1:L2'); fire('cut'); at('Work', 'N60:N63');
+      if (paste('the cut\'s paste of Work!L1:L2 into Work!N60:N63', '10\r\n20\r\n', 'the move of Work!L1:L2 to Work!N60:N61') &&
+          laidAs('the cut of Work!L1:L2 moved to Work!N60', 'Work', 'N60:N63', { N60: '=A1*10', N61: '=A2*10' }) &&
+          holds('the cut of L1:L2 moved', 'Work', { L1: '""', L2: '""', N60: '"10"', N61: '"20"', N62: 'nothing', N63: 'nothing' })) k.kept++;
+      // the cut's text pasted again (the owner's word at the third slice's hand test): its cells written as they were cut,
+      // their references kept again, once at the selection's corner and never tiled, the move's cells standing as they are
+      at('Work', 'P60:P63');
+      if (paste('the cut\'s text pasted again over Work!P60:P63', '10\r\n20\r\n', 'the paste of two cells into Work!P60:P61, as they were cut') &&
+          laidAs('the cut of Work!L1:L2 pasted again at Work!P60', 'Work', 'P60:P63', { P60: '=A1*10', P61: '=A2*10' }) &&
+          holds('the cut of L1:L2 pasted again', 'Work', { L1: '""', L2: '""', N60: '"10"', N61: '"20"', P60: '"10"', P61: '"20"', P62: 'nothing', P63: 'nothing' })) k.again++;
       // the run's replay, played on a fresh host: the same cells, a paste one frame of its rows, the move's emptying among them
       var text = host.replayText() || '', M = new HOST({ drive: 'manual', budget: 0, now: frozen }), ex2 = HOST.instantiateSync(bytes), MD = new Driver({ exports: ex2 });
       try {
@@ -9296,6 +9388,36 @@
       if (p.act === 'pass' && !p.prevented) vp.scroller.dispatchEvent(cut);   // the browser's cut, the key unprevented
       if (p.act === 'pass' && !p.prevented && cut.defaultPrevented && clip.kept && clip.kept.cut && clip.kept.sheet === 'Pace' && dt.getData('text/plain').split('\r\n').length === 3) k.game++;
       else P.push('clipboard: Ctrl+X on Brickwork\'s Pace was ' + (p.act === 'pass' ? 'passed on' : 'pressed') + ', its keydown ' + (p.prevented ? 'prevented' : 'unprevented') + ', and the grid\'s cut ' + (clip.kept && clip.kept.cut ? 'took ' + clip.kept.sheet : 'took nothing') + ', where the browser\'s cut is the grid\'s');
+    } finally { host.destroy(); stage.removeChild(box); }
+  }
+  // A gate of Naught's copied along its room (the third slice): on level I, a game sheet where a person writes formulas, two
+  // gates written, =1-A3*A3 in C3 and =1-C3*C3 in D3, and D3 copied and pasted into E3 by the browser's events, the pasted
+  // gate reading the gate before it, =1-D3*D3, as Excel moves a formula copied, and computing 1 from the switch's 0.
+  function clipNaught(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:900px;height:600px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var exports = HOST.instantiateSync(bytes), D = new Driver({ exports: exports }), host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box });
+    try {
+      var ld = host.attach(exports).ok ? host.load(CARTRIDGES.naught.text, CARTRIDGES.naught.file) : { ok: false };
+      if (!ld.ok) { P.push('clipboard: Naught did not load: ' + ld.sentence); return; }
+      var vp = host.vp, sc = vp.scroller, clip = new GridClip(host, null);
+      clip.listen(vp);
+      host.showSheet(vp, 'I NON');
+      host.edit('(formula "I NON" "C3" "=1-A3*A3")');
+      host.edit('(formula "I NON" "D3" "=1-C3*C3")');
+      vp.select('D3');
+      var dt = new DataTransfer(), ce = new ClipboardEvent('copy', { clipboardData: dt, cancelable: true, bubbles: true });
+      sc.dispatchEvent(ce);
+      vp.select('E3');
+      var dt2 = new DataTransfer();
+      dt2.setData('text/plain', dt.getData('text/plain'));
+      var pe = new ClipboardEvent('paste', { clipboardData: dt2, cancelable: true, bubbles: true });
+      sc.dispatchEvent(pe);
+      var grid = D.call('alonzo_view', [ld.handle], ['grid', 'I NON', 'C3:E3']).text, f = {}, v = recordValues(grid);
+      VP.readForms(grid).forEach(function (x) { if (Array.isArray(x) && x[0] && x[0].sym === 'formula') f[x[2]] = x[3]; });
+      if (ce.defaultPrevented && pe.defaultPrevented && f.E3 === '=1-D3*D3' && viewsNum(v.C3) === 1 && viewsNum(v.D3) === 0 && viewsNum(v.E3) === 1) k.gate++;
+      else P.push('clipboard: Naught\'s gate D3 pasted into E3 on I NON holds ' + JSON.stringify(f.E3 === undefined ? 'no formula' : f.E3) + ', its gates computing ' + [v.C3, v.D3, v.E3].map(viewsNum).join(', ') + ', where =1-D3*D3 and 1, 0, 1 are due');
     } finally { host.destroy(); stage.removeChild(box); }
   }
   // The acts no event carries, over a double of the browser's clipboard: a copy from the palette written by writeText; a
