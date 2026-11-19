@@ -94,8 +94,11 @@ fn refused(line: u32, id: &str, slots: &[(&str, &str)]) -> LineRefusal {
 /// decision 66). Version 7 adds no directive, sheet or row: a command's key in the
 /// Commands sheet's column D may hold modifiers, the host's to read (`CART.3`'s
 /// second slice, decision 14), so a cartridge written to 1 to 6 loads and describes
-/// as it did.
-pub const SPECS: [u32; 7] = [1, 2, 3, 4, 5, 6, 7];
+/// as it did. Version 8 adds a column to a layout, the Commands sheet's fifth,
+/// `repeats`, whether a held key's repeat runs its command, the host's to read, which
+/// a cartridge written to it alone has (`ENGINE.39`'s first slice), so that a
+/// cartridge written to 1 to 7 loads and describes as it did.
+pub const SPECS: [u32; 8] = [1, 2, 3, 4, 5, 6, 7, 8];
 /// The most settle steps an act takes, version 6's `(settle K)` (`CART.12`, decision
 /// 57): fifty times the deepest cascade the scoping measured, 1,315 frames.
 pub const MAX_SETTLE: u32 = 65_536;
@@ -544,6 +547,8 @@ pub const DEVICES: [Device; 10] = [
 /// `docs/SPEC.md` section 3.10).
 pub const MAX_COMMANDS: u32 = 100;
 const COMMANDS_LAYOUT: [Rect; 1] = [(1, 1, MAX_COMMANDS + 1, 4)];
+/// The Commands sheet since version 8, its fifth column `repeats` (`ENGINE.39`).
+const COMMANDS_LAYOUT_EIGHT: [Rect; 1] = [(1, 1, MAX_COMMANDS + 1, 5)];
 
 impl Device {
     pub fn name(self) -> &'static str {
@@ -598,7 +603,8 @@ impl Device {
     /// page the cartridge is written to: from version 4 the Input sheet's
     /// nineteenth row, the sheet shown, and the Camera's third, the sheet the
     /// game shows (`ENGINE.18`); from version 5 the Input sheet's twentieth,
-    /// the command that runs, and the Commands sheet (`ENGINE.25`); the
+    /// the command that runs, and the Commands sheet (`ENGINE.25`); from
+    /// version 8 the Commands sheet's fifth column, `repeats` (`ENGINE.39`); the
     /// Screen's window is the manifest's.
     fn layout(self, spec: u32) -> &'static [Rect] {
         match self {
@@ -614,6 +620,7 @@ impl Device {
             Device::Camera if spec >= 4 => &[(1, 1, 3, 2)],
             Device::Camera => &[(1, 1, 2, 2)],
             Device::Write => &[(1, 1, MAX_ROW, 3)],
+            Device::Commands if spec >= 8 => &COMMANDS_LAYOUT_EIGHT,
             Device::Commands => &COMMANDS_LAYOUT,
         }
     }
@@ -1863,18 +1870,18 @@ mod tests {
 
     #[test]
     fn a_later_spec_is_refused_before_its_directives() {
-        let text = small(30).replacen("(spec 2)", "(spec 8)\n  (layers 2)", 1);
+        let text = small(30).replacen("(spec 2)", "(spec 9)\n  (layers 2)", 1);
         let r = load(&text).expect_err("a later page is refused");
         assert_eq!(r.refusal.id, "cart-spec-unsupported");
         assert_eq!(r.line, 2, "the spec's own line");
+        assert!(r.refusal.text.contains("(spec 9)"), "{}", r.refusal.text);
         assert!(r.refusal.text.contains("(spec 8)"), "{}", r.refusal.text);
-        assert!(r.refusal.text.contains("(spec 7)"), "{}", r.refusal.text);
         // Version 3 adds no row and no directive, version 4's rows and version 5's
         // sheet and row are their cartridges' alone, version 6's directive is its
-        // own cartridges', and version 7 adds nothing the engine reads: every
-        // page's loads alike.
+        // own cartridges', version 7 adds nothing the engine reads, and version
+        // 8's column is its own cartridges': every page's loads alike.
         for spec in [
-            "(spec 1)", "(spec 3)", "(spec 4)", "(spec 5)", "(spec 6)", "(spec 7)",
+            "(spec 1)", "(spec 3)", "(spec 4)", "(spec 5)", "(spec 6)", "(spec 7)", "(spec 8)",
         ] {
             assert_eq!(
                 id_of(load(&small(30).replacen("(spec 2)", spec, 1))),
@@ -2074,6 +2081,48 @@ mod tests {
         assert_eq!(c.write("(derived \"Commands\" \"D2\" \"KeyJ\")"), Ok(1));
         let r = c
             .write("(cell \"Commands\" \"E5\" 1)")
+            .expect_err("outside the layout");
+        assert_eq!(r.refusal.id, "cart-device-cell-outside");
+    }
+
+    /// Version 8's column (`ENGINE.39`'s first slice): the Commands sheet's fifth,
+    /// `repeats`, inside the layout of a (spec 8) cartridge alone, `A1:E101`, and
+    /// outside it below, where version 7's sheet ends at D; the sixth column
+    /// outside at 8, and the column the host's to read, a value or a formula.
+    #[test]
+    fn version_eight_s_column_is_a_version_eight_cartridge_s_alone() {
+        let seven = small(30).replacen("(spec 2)", "(spec 7)", 1);
+        let eight = small(30).replacen("(spec 2)", "(spec 8)", 1);
+        let commands = "(cell \"Commands\" \"A1\" \"name\")\n(cell \"Commands\" \"E1\" \"repeats\")\n\
+                        (cell \"Commands\" \"A2\" \"count-up\")\n(cell \"Commands\" \"D2\" \"KeyU\")\n\
+                        (cell \"Commands\" \"E2\" true)\n(cell \"Commands\" \"A3\" \"note\")\n\
+                        (formula \"Commands\" \"E3\" \"=Input!$B$19=\\\"Screen\\\"\")\n";
+        let refused = text_of(load(&format!("{seven}{commands}")));
+        assert!(
+            refused.starts_with("cart-device-cell-outside")
+                && refused.contains("Commands!E1")
+                && refused.contains("Commands!A1:D101"),
+            "{refused}"
+        );
+        let mut c = load(&format!("{eight}{commands}")).expect("a (spec 8) Commands sheet loads");
+        assert!(
+            c.describe()
+                .contains("(device \"Commands\" \"A1:E101\" effect)\n"),
+            "{}",
+            c.describe()
+        );
+        assert_eq!(c.write("(cell \"Commands\" \"E4\" 0)"), Ok(1));
+        let past = text_of(load(&format!(
+            "{eight}{commands}(cell \"Commands\" \"F2\" 1)\n"
+        )));
+        assert!(
+            past.starts_with("cart-device-cell-outside")
+                && past.contains("Commands!F2")
+                && past.contains("Commands!A1:E101"),
+            "{past}"
+        );
+        let r = c
+            .write("(cell \"Commands\" \"F5\" 1)")
             .expect_err("outside the layout");
         assert_eq!(r.refusal.id, "cart-device-cell-outside");
     }

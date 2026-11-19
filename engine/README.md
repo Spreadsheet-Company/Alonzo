@@ -59,6 +59,10 @@ engine is:
   a command's key with modifiers, `Ctrl+ArrowRight`, is the host's to read,
   so a `(spec 7)` cartridge loads, is checked and describes as a `(spec 6)`
   one;
+- since the page's version 8 (`ENGINE.39`'s first slice), the Commands
+  sheet's fifth column, `repeats`, whether a held key's repeat runs a command
+  again, the host's to read: a `(spec 8)` cartridge's sheet is held to
+  `A1:E101` and an earlier one's to `A1:D101`, as before;
 - since 0.4.0, a save read back (`ENGINE.5`): the page's Save writes a
   running game as a cartridge, and the load reads a file one form at a time,
   the language's `each_form`, refusing one over 16 MiB before it reads a

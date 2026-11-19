@@ -143,7 +143,15 @@ key taken as before with Shift either way. The parser and the match are the
 host's, `Host.parseKeys` and `Host.keyMatches`, which the page's keymap calls,
 and `Host.commandKeyOf` reads a Commands sheet's key, so that a page and a
 cartridge spell a key in one language. A cartridge written to 1 to 6 whose
-column D writes modifiers has no key there, said once by its cell. The replay logs
+column D writes modifiers has no key there, said once by its cell. Since
+version 8 (`ENGINE.39`'s first slice) column E, `repeats`, says which commands
+a held key runs again at each repeat, `TRUE` or a number other than 0, none
+by default, a text there said once; the host runs a repeat only when it is
+fresh (`freshRepeat`): nothing of the cartridge's waiting, and the key pressed
+at or after the moment the last act came to rest (`rested`), the event's
+`timeStamp` on the page's clock or a host's own reading (`keyTime`), so that
+a repeat the browser kept behind a long step at rate 0 runs nothing and a key
+let go stops its command at once. The replay logs
 `B20` as every Input cell, and a version 5 cartridge's replay says
 `(spec 5)`. A cartridge written to 1 to 4 has no commands, and a sheet of its
 named Commands is its own.
@@ -182,6 +190,7 @@ sound the frame the grid holds again when it starts.
 | `tick(ts)` | one animation frame's work at its timestamp, what the loop calls |
 | `edit(row)` | a person's edit, one `cell` or `formula` row, issued after the next frame's inputs; at rate 0 it steps once, and for a version 6 cartridge stands on the cell the selection stands on when it is made, and waits for a settle going on, then settles (`CART.12`); while the loop is paused at a rate above 0 it waits for the frame Run brings, and the host says so |
 | `keyDown(code, key, ev)` / `keyUp(code)` / `releaseKeys()` | the keys held, by `KeyboardEvent.code`; since `ENGINE.25` a command's key runs its command and holds nothing, `ev` the key's event when a listener has one, its Ctrl, Cmd, Alt and repeat |
+| `freshRepeat(ev, own)` / `rested()` | whether a key's repeat may run its command (`ENGINE.39`): nothing of the cartridge's waiting, at a rate no command waiting for its frame and at rate 0 no act waiting or stepping, and the key pressed at or after the last act came to rest; `own`, a command of the page's own, judged by its time alone. `rested()` notes an act come to rest, which the host does for its own steps and a page for a press of its keymap |
 | `command(name)` / `commands()` | a version 5 cartridge's own commands (`ENGINE.25`): `command` runs one by its name, waiting for the next frame, one a frame and sixteen at most, written into `Input!B20` for that frame, at rate 0 a step of its own: `{ ok, name }`, or the refusal's sentence, for a cartridge written to 1 to 4, a name its Commands sheet holds no command of, a command that holds not, a replay playing or sixteen waiting; `commands` lists them as the sheet last said them, `{ name, words, holds, key }` in its order, `key` the code or empty |
 | `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer's place as the window's cell under it, 0 when off the canvas, which the Input rows write as the Screen's own cell through the Camera; in grid mode, at a rate above zero, the viewport's cell under the pointer, 0 off the window's cells, and the wheel's notches with its scroll prevented, while a key the Keys sheet binds is taken before the viewport sees it (`ENGINE.8`). Since `ENGINE.14` the wheel is the game's over a cell of the Camera's window alone, where the pointer is, and scrolls over the tabs, the headers, the corner and the scrollbars; the buttons follow the pointer; while another sheet is shown the pointer is 0 and the wheel scrolls, and a bound key stays the game's. Since `ENGINE.18`, for a cartridge written to version 4, the pointer and its buttons over any cell of another sheet shown are the game's too, that sheet's own cell with no Camera added, and the Input sheet's nineteenth row names the sheet shown; the wheel still scrolls there; a cartridge written to 1 to 3 is as before |
 | `runFrameSync()` | one whole frame now, whatever the clock (the blit's instrument) |
@@ -476,7 +485,14 @@ the game's commands (game). Its own key, the sheet's column D, runs it on
 the Screen with no Ctrl, Cmd or Alt, the drawer's note naming it, and the
 list says which binding of yours shadows it; since version 7 a key with
 modifiers runs it with exactly those held, `Ctrl+Left` in the drawer's words,
-and a binding of yours with the same modifiers shadows it.
+and a binding of yours with the same modifiers shadows it. A held key runs a
+command once, but where the command repeats: the page's next and previous
+sheet, and since version 8 a game's command whose Commands sheet says so in
+column E. Say it over the command's own word in a binding,
+`(bind "I" seiyaku.infer (repeat))` walking Seiyaku's inferences while I is
+held, or `(once)`, the list then saying "repeating while held" or
+"once while held"; a repeat runs only when the last act has come to rest,
+so a key let go stops at once (`ENGINE.39`).
 The keymap applied is kept in this browser, the one thing the page writes
 (below), and holds again at the next load; since `ENGINE.5`'s hand test it
 gains, once, the page's keys for commands new since it was kept, each where

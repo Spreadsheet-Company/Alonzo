@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds two hundred and ninety-one mutant pages through tools/build_web.ps1 and runs
+-Control builds two hundred and ninety-six mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -593,6 +593,11 @@ owner's game where it first leaves the engine, over the module: a slide stopping
 frame 409, NM; a cut taking a place in the deal, at the second cut, the Clipboard's brick swapped in, frame 5155, NN;
 a lay's rest restarted by a turn, at a turn of a brick resting, frame 35015, NO; and the pace a power, at the second
 course cleared, frame 2524, NP.
+And ENGINE.39's first slice five, version 8's repeat, each failing the commands case by name, four over the module:
+the Commands sheet's column E unread, every command once, NR; a repeat never taken, NS; a person's (repeat) and (once)
+unread, the column's word taken over the binding's, NT, needing no module; a repeat judged by no time, one pressed
+before its command's frame came to rest run, NU; and a repeat taken while a command waits, NV. Its first slice moved
+DN's anchor to the line where a command's own key judges its repeat.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -969,7 +974,15 @@ $modesGameFloors = @{ described = 2; opened = 1; takes = 5; pressed = 2; passed 
 # count-up's (chordsOlder 6).
 $commandsFloors = @{ opened = 1; listed = 1; frames = 40; ran = 3; landed = 24; emptied = 16; apart = 1; twice = 1; repeats = 1; ctrl = 1; holdsNot = 2; refused = 1;
                      passed = 1; noted = 1; words = 1; waited = 16; dropped = 1; said = 4; replayed = 1; replayFrames = 40; replaySame = 40; during = 1; rate0 = 1;
-                     rate0Empty = 1; rate0Replayed = 1; older = 1; keypad = 2; chords = 14; chordsOlder = 6 }
+                     rate0Empty = 1; rate0Replayed = 1; older = 1; keypad = 2; chords = 14; chordsOlder = 6; repeating = 23 }
+# 2026-11-18, ENGINE.39's first slice: the repeats card at (spec 8), its counts a function of its plan: listed at the load
+# and after the first frame, a formula of column E repeating not until its first value (2), E5's text said once (1), and
+# at 30 frames a second thirteen frames as planned (13), U and its repeat each run, two repeats before one frame run once,
+# a repeat pressed before its command's frame came to rest none, T's and X's repeats none, N's while its formula says so,
+# and at the frame of the two repeats a page's own repeat fresh by its time while a game's waits (1); at rate 0 six acts
+# (6), a repeat at once, a stale one none, T's none, and a repeat handed over after the key's release none (1)
+# (repeating 23). Its page half, pure: eleven bindings' repeats held to the person's word, the column's and the page's list
+# (11), the list's words of each (1), and three refusals (3) (repeatWords 15).
 # 2026-10-18, CART.12's viewport slice, a code's text drawn: the twenty-seven cases' counts unchanged but for grid over
 # the module, the grid card's row 16 of codes added, its counts a function of the card: codes 3, the row pinned by name
 # at frames 1, 4 and 5; coded 213, the texts drawn from text rows over the 25 frames, the row's eight constants at the
@@ -1065,7 +1078,9 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # hundred and sixty-eight (124 applicable without).
 # 2026-11-17 and 2026-11-18, CART.3's third slice: MU to NH, the drawer case's, needing no module, take it to two hundred
 # and eighty-two (138 applicable without).
-# 2026-10-20, CART.9's first slice, Naught the eleventh cartridge: pass's sources and same 11; empty's cartridges,
+# 2026-11-18, ENGINE.39's first slice: NR to NV, version 8's repeats, the commands case's, NT needing no module, take it
+# to two hundred and ninety-six (140 applicable without).
+# 2026-11-18, CART.3's third slice: MO to MR, version 7's: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
 # moved, shown whole in a box grown to hold its extent A1:BI17, A1:BI18 since its labels (grids 4, gridFrames 18, gridEqual 16, gridValues 33,
@@ -1147,7 +1162,7 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # with no key; the keymap naming a game's commands read typed and kept (2); 4 of its refusals; 8 keys held to the binding
 # each presses, a game's command's while it is live and passing on while not; a person's command running a game's twice;
 # 5 of the list's words beside a game's command key; and 5 of the drawer's notes.
-$commandsPageFloors = @{ named = 6; lines = 4; read = 2; refusals = 4; found = 8; steps = 1; shadow = 5; note = 5; order = 5 }
+$commandsPageFloors = @{ named = 6; lines = 4; read = 2; refusals = 4; found = 8; steps = 1; shadow = 5; note = 5; order = 5; repeatWords = 15 }
 # 2026-10-19, ENGINE.26: the twenty-eight cases' counts unchanged, and a twenty-ninth, widths, over the module on both
 # pages, its counts a function of its plan, the same at both ratios under headless Chrome 155 on Windows: the opening
 # on the Desk; a press on a divider that moved nothing raising nothing; 4 drags, each its sheet's own and its event
@@ -2499,7 +2514,21 @@ if ($Control) {
             # NQ (ENGINE.43), the region measured over the canvas again, its last column one wholly under the scrollbar,
             # which the grid case's unbound sheet, the views card's Ledger, fails by name at its last column
             @{ L = 'nq'; Name = 'the region measured over the canvas'; File = 'viewport'; Module = $true; Case = 'grid'; Anchor = '    var seenW = Math.min(g.canvasW, Math.round(this.scroller.clientWidth * g.dpr)), seenH = Math.min(g.canvasH, Math.round(this.scroller.clientHeight * g.dpr));'; With = '    var seenW = g.canvasW, seenH = g.canvasH;'
-               Want = 'case grid.*begins past the scroller.s client area, wholly under its scrollbar' }
+               Want = 'case grid.*begins past the scroller.s client area, wholly under its scrollbar' },
+            # NR to NV (ENGINE.39's first slice), the commands case's repeats card at version 8 and its keymap half, each by
+            # name: column E unread, every command once; a repeat never taken; a person's (repeat) and (once) unread; a
+            # repeat judged by no time, the stale one at frame 5 run; and a repeat taken while a command waits, a game's
+            # repeat fresh at frame 4
+            @{ L = 'nr'; Name = 'the repeats column unread'; File = 'host'; Module = $true; Case = 'commands'; Anchor = '      var repeats = this._eight() ? repeatsOf(cells[''E'' + r]) : false;'; With = '      var repeats = false;   // column E unread, by the control'
+               Want = 'case commands.*commands, version 8: at the load the host lists count-up once' },
+            @{ L = 'ns'; Name = 'a repeat never taken'; File = 'host'; Module = $true; Case = 'commands'; Anchor = '    if (ev && ev.repeat && !(cmd.repeats && this.freshRepeat(ev))) return;'; With = '    if (ev && ev.repeat) return;'
+               Want = 'case commands.*commands, version 8, frame 3: Input!B20 holds "", where the command count-up runs' },
+            @{ L = 'nt'; Name = 'a person''s repeat unread'; File = 'template'; Case = 'commands'; Anchor = '    if (b.repeat !== undefined) return b.repeat;'; With = '    // the person''s word unread, by the control'
+               Want = 'case commands.*commands: U, .once. over the column.s repeat repeats true, where false is due' },
+            @{ L = 'nu'; Name = 'a repeat judged by no time'; File = 'host'; Module = $true; Case = 'commands'; Anchor = '    return t === null || t === undefined || this.restAt === null || t >= this.restAt;'; With = '    return true;   // every repeat fresh by its time, by the control'
+               Want = 'case commands.*commands, version 8, frame 5: Input!B20 holds "count-up", where no command runs and it is empty' },
+            @{ L = 'nv'; Name = 'a repeat taken while a command waits'; File = 'host'; Module = $true; Case = 'commands'; Anchor = '      if (waits) return false;'; With = '      // a command waiting unasked, by the control'
+               Want = 'case commands.*commands, version 8, frame 4: while count-up waits a page.s own repeat is fresh and a game.s fresh' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
@@ -2742,7 +2771,7 @@ if ($Control) {
                Want = 'case commands.*commands: a command while a replay plays was run, where it is refused as an edit is' },
             @{ L = 'dm'; Name = 'a command''s key taken with Ctrl held'; Anchor = '    if (ev && (ev.ctrlKey || ev.metaKey || ev.altKey)) return null;   // a bare key, with no Ctrl, Cmd or Alt held (decision 52)'; With = '    // the bare key taken with Ctrl held, by the control'
                Want = 'case commands.*commands frame 12: Ctrl\+U on the Desk was taken' },
-            @{ L = 'dn'; Name = 'a command''s key run again at its repeat'; Anchor = '    if (cmd) { if (!(ev && ev.repeat)) this.command(cmd.name, ''key''); return true; }'; With = '    if (cmd) { this.command(cmd.name, ''key''); return true; }'
+            @{ L = 'dn'; Name = 'a command''s key run again at its repeat'; Anchor = '    if (ev && ev.repeat && !(cmd.repeats && this.freshRepeat(ev))) return;'; With = '    // every repeat run, by the control'
                Want = 'case commands.*commands frame 11: Input!B20 holds "count-up", where no command runs and it is empty' },
             @{ L = 'do'; Name = 'the twentieth row left at rate 0'; Anchor = '    else if (atRateZero && this._five()) this._writeCommandRow(act.command !== undefined ? act.command : '''');'
                With = '    else if (atRateZero && this._five() && act.command !== undefined) this._writeCommandRow(act.command);'
@@ -3341,7 +3370,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}; {54}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote, $brickworkNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk -and $brickworkOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and ninety-one' } else { 'one hundred and thirty-nine applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'two hundred and ninety-six' } else { 'one hundred and forty applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

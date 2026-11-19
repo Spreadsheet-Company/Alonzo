@@ -159,7 +159,8 @@
   rows last written, and since ENGINE.7 the text of the cartridge the grid
   was last given, and since ENGINE.25 the commands waiting for their frames,
   and since ENGINE.38 the run's work kept, its keyframe's text and the frames
-  since. Every value is the module's.
+  since, and since ENGINE.39 the moment the last act came to rest, which a
+  held key's repeat is judged by. Every value is the module's.
   Every refusal and every event is a sentence, the latest new one in the
   status and the last twenty events in a log, a repeat of an event counted in
   the line it first made rather than pushing the others out (SD-30), and a
@@ -202,7 +203,7 @@
   var HISTORY_LINES = 2000;
   var MAX_SEED = 2147483646;         // the highest seed, so a Park and Miller cell never sticks at 0 (section 3.5)
   var MAX_RATE = 120;                // the highest rate, in frames a second (section 10)
-  var SPEC = 7;                      // the page's version this host implements; a replay's header names its
+  var SPEC = 8;                      // the page's version this host implements; a replay's header names its
                                      // cartridge's, 3 for a cartridge written to 1 to 3 (ENGINE.18, decision 7)
   var MAX_COMMANDS = 100;            // a Commands sheet's rows 2 to 101 (ENGINE.25; docs/SPEC.md section 3.10)
   var COMMANDS_WAITING = 16;         // the commands that may wait for their frames, one a frame: a seventeenth is said
@@ -359,6 +360,15 @@
   // true, or a number other than 0, hold; false and 0 hold not; null for a text or an error, which is no truth value.
   function holdsOf(v) {
     if (v === undefined || v === null || v === '') return true;
+    if (typeof v === 'boolean') return v;
+    if (typeof v === 'number') return v !== 0;
+    return null;
+  }
+  // Whether a command repeats, a Commands sheet's column E at version 8 (ENGINE.39; docs/SPEC.md section 3.10), read as
+  // holds is but for the empty cell: empty, none; TRUE or a number other than 0, a repeat; FALSE or 0, none; a text or an
+  // error, null, said by its cell, and none.
+  function repeatsOf(v) {
+    if (v === undefined || v === null || v === '') return false;
     if (typeof v === 'boolean') return v;
     if (typeof v === 'number') return v !== 0;
     return null;
@@ -841,6 +851,10 @@
     VP();
     this.options = options;
     this.now = options.now || function () { return global.performance.now(); };
+    // The time a key was pressed, on the host's clock (ENGINE.39): an event's own timeStamp, which is the page's clock and so
+    // the host's own where it keeps the page's; a host on a clock of its own is given its own reading (options.keyTime), or
+    // judges no key by its time.
+    this.keyTime = options.keyTime || (options.now ? function () { return null; } : function (ev) { return ev && typeof ev.timeStamp === 'number' ? ev.timeStamp : null; });
     this.canvas = options.canvas || null;
     this.gridEl = options.grid || null;
     this.vp = null;   // grid mode's viewport, made at the first grid load and kept across loads
@@ -904,6 +918,9 @@
     // step in progress; the twentieth row as the host last wrote it at rate 0, null where it does not know; and the
     // rows of the sheet said once, until they change.
     this.commandList = []; this.commandKeys = {}; this.waiting = []; this.commandNow = ''; this.commandRow = null; this.badRows = {};
+    // Version 8's repeat (ENGINE.39): the moment, on the host's clock, the last act came to rest, a repeat pressed before it
+    // being one the browser kept behind a step, null before the first.
+    this.restAt = null;
     // Version 6's settle (CART.12): whether the last step's answer left the grid settling, its word, and the act a settle
     // follows, { what, from }, said when it ends; and an act's rows at rate 0 as the host last knew the Input sheet to hold
     // them, by address, the engine's release mirrored, null where it does not know.
@@ -1422,6 +1439,7 @@
   // ---- the effects (step 5) and the draw (step 6) ----
   Host.prototype._complete = function (n) {
     this.frame = n; this.c.frames++;
+    if (this.cart.rate === 0 || this.commandNow) this.rested();   // an act come to rest, which a repeat is judged by (ENGINE.39)
     this._recordFrame(n);
     var d = this.cart.devices;
     if (d.camera) this._readCamera();
@@ -1696,6 +1714,8 @@
   Host.prototype._five = function () { return !!this.cart && this.cart.spec >= 5; };
   // Whether the cartridge is written to version 7, whose commands' keys may hold modifiers (CART.3's second slice).
   Host.prototype._seven = function () { return !!this.cart && this.cart.spec >= 7; };
+  // Whether the cartridge is written to version 8, whose Commands sheet says which commands repeat (ENGINE.39).
+  Host.prototype._eight = function () { return !!this.cart && this.cart.spec >= 8; };
   // Whether the cartridge is written to version 6 and stands at rate 0, where an act has a place and a press over a cell
   // is an act (CART.12); and whether it settles, (settle K), each act then stepped again while the grid moves.
   Host.prototype._sixAtZero = function () { return !!this.cart && this.cart.spec >= 6 && this.cart.rate === 0; };
@@ -1901,13 +1921,15 @@
   };
   // The Commands sheet (ENGINE.25; docs/SPEC.md section 3.10), a cartridge's written to version 5, read at the load and
   // after each step by its changes: each row from 2 a command, in the sheet's order, its name, its words, whether it
-  // holds now and its key's code. A row the host cannot take is said once, until it changes, and is no command or has
-  // no key: a name that is no name or that a row above holds, a holds that is a text or an error, a key that is no
-  // code. A key goes to the first row holding it now, and before a Keys button of the same code; each said once.
+  // holds now and its key's code, and since version 8 whether a held key's repeat runs it, column E (ENGINE.39), which the
+  // engine holds a cartridge written to 5 to 7 out of. A row the host cannot take is said once, until it changes, and is
+  // no command or has no key: a name that is no name or that a row above holds, a holds that is a text or an error, a key
+  // that is no code; and a repeats that is no truth value is said so and runs once. A key goes to the first row holding
+  // it now, and before a Keys button of the same code; each said once.
   Host.prototype._readCommands = function () {
     var cells = this._cells('Commands') || {}, self = this, before = this.badRows, now = {}, list = [], byName = {}, keys = {}, rows = {}, a, m, i;
     function note(key, text) { now[key] = text; if (before[key] !== text) self._say('frame ' + self.frame + ': ' + text); }
-    for (a in cells) { m = /^([A-D])(\d+)$/.exec(a); if (m && +m[2] >= 2 && +m[2] <= MAX_COMMANDS + 1) rows[m[2]] = true; }
+    for (a in cells) { m = /^([A-E])(\d+)$/.exec(a); if (m && +m[2] >= 2 && +m[2] <= MAX_COMMANDS + 1) rows[m[2]] = true; }
     var order = Object.keys(rows).map(Number).sort(function (x, y) { return x - y; });
     for (i = 0; i < order.length; i++) {
       var r = order[i], name = cells['A' + r], words = cells['B' + r], h = cells['C' + r], key = cells['D' + r];
@@ -1930,7 +1952,10 @@
         else note('D' + r, 'Commands!D' + r + ' holds ' + shownValue(key) + ', whose modifiers this page does not read, ' + ck.error + ', so the ' + commandWords(name) + ' has no key (docs/SPEC.md section 3.10).');
       }
       else if (key !== undefined && key !== null && key !== '') note('D' + r, 'Commands!D' + r + ' holds ' + shownValue(key) + ', which is no key\'s code, so the ' + commandWords(name) + ' has no key (docs/SPEC.md section 3.10).');
-      var cmd = { name: name, words: typeof words === 'string' ? words : (typeof words === 'number' || typeof words === 'boolean' ? String(words) : ''), holds: holds, code: code, chord: chord, row: r };
+      // whether a held key's repeat runs it, version 8's column E (ENGINE.39), none below 8
+      var repeats = this._eight() ? repeatsOf(cells['E' + r]) : false;
+      if (repeats === null) { note('E' + r, 'Commands!E' + r + ' holds ' + shownValue(cells['E' + r]) + ', which is no truth value, so a held key runs the ' + commandWords(name) + ' once (docs/SPEC.md section 3.10).'); repeats = false; }
+      var cmd = { name: name, words: typeof words === 'string' ? words : (typeof words === 'number' || typeof words === 'boolean' ? String(words) : ''), holds: holds, code: code, chord: chord, repeats: repeats, row: r };
       byName[name] = cmd; list.push(cmd);
       if (!code || !holds) continue;
       if (keys[code]) { note('key-' + code, 'Commands!D' + r + ' gives ' + code + ', as D' + keys[code].row + ' does while both hold, so the ' + commandWords(keys[code].name) + ' takes it.'); continue; }
@@ -1943,10 +1968,29 @@
     this.badRows = now; this.commandList = list; this.commandKeys = keys;
   };
   // The cartridge's commands as the Commands sheet last said them (ENGINE.25), in the sheet's order: { name, words,
-  // holds, key }, its key the code or empty; none for a cartridge written to 1 to 4 or without a Commands sheet.
+  // holds, key, repeats }, its key the code or empty, and since version 8 whether a held key's repeat runs it (ENGINE.39);
+  // none for a cartridge written to 1 to 4 or without a Commands sheet.
   Host.prototype.commands = function () {
-    return this.commandList.map(function (x) { return { name: x.name, words: x.words, holds: x.holds, key: x.code }; });
+    return this.commandList.map(function (x) { return { name: x.name, words: x.words, holds: x.holds, key: x.code, repeats: x.repeats }; });
   };
+  // Whether a key's repeat is fresh (ENGINE.39; docs/SPEC.md section 3.10): nothing of the cartridge's waiting, at a rate
+  // no command waiting for its frame and at rate 0 no act waiting or stepping, and the key pressed at or after the moment
+  // the last act came to rest, so that a repeat the browser kept behind a step runs nothing and a key let go stops its
+  // command at once. ev, the key's event; own, a command of the page's own, judged by its time alone. One rule, the
+  // host's, for a command's own key and for every binding a page presses at a repeat.
+  Host.prototype.freshRepeat = function (ev, own) {
+    if (!own && this.cart) {
+      var waits = this.cart.rate > 0
+        ? this.waiting.length + this.edits.filter(function (x) { return x && x.command !== undefined; }).length > 0
+        : this.inFrame || this.edits.length > 0 || this.settling;
+      if (waits) return false;
+    }
+    var t = this.keyTime(ev);
+    return t === null || t === undefined || this.restAt === null || t >= this.restAt;
+  };
+  // An act come to rest (ENGINE.39): the moment a repeat after it is judged by. The host notes its own steps; a page notes a
+  // press of its own commands, whose act is the page's.
+  Host.prototype.rested = function () { this.restAt = this.now(); };
   // A cartridge's command run (ENGINE.25; docs/SPEC.md section 3.10), as a page's palette or a person's binding asks, or
   // its key on the Screen (how 'key'): by its name as the Commands sheet spells it, as the last step left the sheet. It
   // waits for the next frame, one a frame and sixteen at most, and is written into Input!B20 for that frame alone; at
@@ -2236,15 +2280,23 @@
     return true;
   };
   // A key down on the Screen: a command's key (ENGINE.25) runs its command and is no button's and no last key, a repeat
-  // taken and running nothing; any other holds the Keys sheet's buttons it binds and is the frame's last key. ev, the
-  // event, when a listener has one: its Ctrl, Cmd, Alt and repeat.
+  // taken and running nothing but where the command repeats and the repeat is fresh (version 8, ENGINE.39); any other
+  // holds the Keys sheet's buttons it binds and is the frame's last key. ev, the event, when a listener has one: its
+  // Ctrl, Cmd, Alt and repeat.
   Host.prototype.keyDown = function (code, key, ev) {
     if (!code || !this.gameKeysHere()) return false;   // a work or a read sheet's keys are not the game's (SPEC.5)
     var cmd = this._commandKey(code, ev, key);
-    if (cmd) { if (!(ev && ev.repeat)) this.command(cmd.name, 'key'); return true; }
+    if (cmd) { this._keyCommand(cmd, ev); return true; }
     this.held[code] = true;
     this.lastKey = { key: key === undefined ? '' : String(key), code: String(code) };
     return this._bound(code);
+  };
+  // A command's own key pressed (ENGINE.25), its repeat running it only where the Commands sheet says it repeats and the
+  // repeat is fresh (version 8, ENGINE.39), the act noted at rest.
+  Host.prototype._keyCommand = function (cmd, ev) {
+    if (ev && ev.repeat && !(cmd.repeats && this.freshRepeat(ev))) return;
+    this.command(cmd.name, 'key');
+    this.rested();
   };
   // The command a key runs on the Screen (ENGINE.25; docs/SPEC.md section 3.10): the first row holding now whose key is
   // the code, while no Ctrl, Cmd or Alt is held; null for every other key, the game's buttons' or the viewport's. A digit
@@ -2373,7 +2425,7 @@
     this._on(root, 'keydown', function (ev) {
       if (playing()) { if (self.keyDown(ev.code, ev.key, ev)) { ev.preventDefault(); ev.stopPropagation(); } return; }
       var cmd = still() ? self._commandKey(ev.code, ev) : null;
-      if (cmd) { if (!ev.repeat) self.command(cmd.name, 'key'); ev.preventDefault(); ev.stopPropagation(); }
+      if (cmd) { self._keyCommand(cmd, ev); ev.preventDefault(); ev.stopPropagation(); }
     }, true);
     this._on(root, 'keyup', function (ev) { if (playing()) self.keyUp(ev.code); }, true);
     this._on(root, 'focusout', function () { self.releaseKeys(); });

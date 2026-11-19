@@ -612,7 +612,8 @@
   // and every other are the keymap's, a text a person reads and rebinds in the drawer, where a person also writes
   // commands of their own, a mnemonic and a macro of steps (the second slice, the owner's word). The registry's names and
   // words are the page's, a game's page vendoring them; player() gives each name its act, and the loop oracle's palette
-  // and keys cases hold the rest. hidden: no line of the palette's own; repeats: a held key presses it at each repeat.
+  // and keys cases hold the rest. hidden: no line of the palette's own; repeats: a held key presses it at each fresh
+  // repeat (ENGINE.39), unless a person's binding says (once).
   var COMMANDS = [
     { name: 'palette', words: 'open the command palette, or close it', hidden: true },
     { name: 'pick', words: 'pick a cartridge: the picker opened, Enter loading the one chosen' },
@@ -669,7 +670,8 @@
     '; Tab, PageDown, F2, Space) or a key by its place in brackets ([Backquote], the key under Escape). A place: anywhere,',
     '; the default, every place but a box, and a box too for a key held with Ctrl or Cmd; screen; viewer; or a box,',
     '; edit, source, library, cartridge, replay or keys. And a sheet, (on "Portfolio"): the Screen or the drawer\'s',
-    '; sheets while that sheet shows, before a binding of the same key on none. The palette keeps a key, the way to',
+    '; sheets while that sheet shows, before a binding of the same key on none. And (repeat) or (once): whether the key',
+    '; held runs its command again at each repeat, over the command\'s own word. The palette keeps a key, the way to',
     '; every command. A game\'s own command is its cartridge\'s name and its own, (bind "B" buffet.buy-1): it holds',
     '; while that cartridge is loaded and the command holds, its key passing on otherwise (ENGINE.25). And where the',
     '; palette opens, (palette "floating"), away from the cell the selection stands on, or (palette "top") or',
@@ -728,9 +730,19 @@
   function gameName(s) { var m = GAME_COMMAND.exec(String(s)); return m ? { cart: m[1], name: m[2] } : null; }
   // A cartridge's commands as a page lists them: the host's commands(), each named with the cartridge's name, its words
   // or its name, whether it holds now, and its own key, a code, and in words, on the Screen.
+  // Whether a binding's key held presses it again at a repeat (ENGINE.39; docs/SPEC.md section 3.10): the person's (repeat)
+  // or (once), else the command's own word, the page's list's for a command of the page, the loaded cartridge's Commands
+  // sheet's column E for a game's (version 8), and none for a person's own command. b, the binding; commands, the host's
+  // commands(); cart, the loaded cartridge's name. A page takes the repeat only where the host says it is fresh.
+  function bindingRepeats(b, commands, cart) {
+    if (b.repeat !== undefined) return b.repeat;
+    if (b.custom) return false;
+    if (b.game) { var g = gameName(b.command); return !!g && g.cart === cart && (commands || []).some(function (c) { return c.name === g.name && !!c.repeats; }); }
+    return COMMANDS.some(function (c) { return c.name === b.command && !!c.repeats; });
+  }
   function gameCommands(list, cart) {
     return (list || []).map(function (c) {
-      return { name: cart + '.' + c.name, bare: c.name, words: c.words || c.name, holds: !!c.holds, code: c.key || '', own: c.key ? codeWords(c.key) + ' on the Screen' : '' };
+      return { name: cart + '.' + c.name, bare: c.name, words: c.words || c.name, holds: !!c.holds, repeats: !!c.repeats, code: c.key || '', own: c.key ? codeWords(c.key) + ' on the Screen' : '' };
     });
   }
   // Where a command stands in the palette's lines and in the list, the owner's word at ENGINE.25's hand test: a person's own
@@ -833,6 +845,13 @@
       if (gn) { b.game = true; b.cart = gn.cart; }   // a game's command (ENGINE.25), held while its cartridge is loaded and it holds
       for (i = 3; i < d.length; i++) {
         if (typeof d[i] === 'string') { if (cmd !== 'sheet') { problems.push(at + cmd + ' takes nothing after its name'); return; } b.arg = d[i]; continue; }
+        // whether the key held presses it again at each repeat (ENGINE.39): (repeat) or (once), over the command's own word
+        if (head(d[i]) === 'repeat' || head(d[i]) === 'once') {
+          if (d[i].length !== 1) { problems.push(at + '(' + head(d[i]) + ') takes nothing: (bind "' + d[1] + '" ' + cmd + ' (' + head(d[i]) + '))'); return; }
+          if (b.repeat !== undefined) { problems.push(at + 'a binding says once whether its key repeats: (repeat) or (once)'); return; }
+          b.repeat = head(d[i]) === 'repeat';
+          continue;
+        }
         if (head(d[i]) === 'on') {
           var on = d[i].slice(1);
           if (!on.length || on.some(function (n) { return typeof n !== 'string' || !n.trim(); })) { problems.push(at + 'a sheet is named in quotes: (on "Portfolio")'); return; }
@@ -841,7 +860,7 @@
           continue;
         }
         var p = d[i] && d[i].sym;
-        if (!p || !KEY_PLACES[p]) { problems.push(at + 'no place named ' + (p || printForm(d[i])) + ': the places are anywhere, screen, viewer, edit, source, library, cartridge, replay and keys, and a sheet, (on "Portfolio")'); return; }
+        if (!p || !KEY_PLACES[p]) { problems.push(at + 'no place named ' + (p || printForm(d[i])) + ': the places are anywhere, screen, viewer, edit, source, library, cartridge, replay and keys, and a sheet, (on "Portfolio"); and a binding may say (repeat) or (once)'); return; }
         if (p !== 'anywhere') { b.places = b.places || {}; b.places[p] = 1; }
       }
       if (cmd === 'sheet' && b.arg === null) { problems.push(at + 'sheet needs a sheet\'s name: (bind "' + d[1] + '" sheet "Portfolio")'); return; }
@@ -896,6 +915,7 @@
       if (b.command !== name || (arg !== undefined && b.arg !== arg)) return;
       var said = notes ? notes(b) : '', on = b.sheets ? Object.keys(b.sheets).map(function (s) { return b.sheets[s]; }) : null;
       out.push(b.keys.text + (b.places ? ' ' + Object.keys(b.places).map(function (p) { return PLACE_WORDS[p]; }).join(', ') : '') + (on ? ' while ' + (on.length > 1 ? on.slice(0, -1).join(', ') + ' or ' + on[on.length - 1] : on[0]) + ' shows' : '') +
+        (b.repeat === true ? ', repeating while held' : b.repeat === false ? ', once while held' : '') +
         (b.arg && arg === undefined ? ' (' + b.arg + ')' : '') + (said ? ' [' + said + ']' : ''));
     });
     return out.join('; ');
@@ -3005,7 +3025,6 @@
       if (dvp.root.contains(el)) return 'viewer';
       return /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable ? 'box' : 'page';
     }
-    function repeats(name) { return COMMANDS.some(function (c) { return c.name === name && c.repeats; }); }
     document.addEventListener('keydown', function (ev) {
       if (recording) { recordTake(ev); return; }
       if (ev.isComposing) return;
@@ -3018,7 +3037,7 @@
       b = keymapFind(keymap, ev, place, shownIn(place), gameLive);
       if (b) {
         ev.preventDefault(); ev.stopPropagation();
-        if (!ev.repeat || repeats(b.command)) press(b);
+        if (!ev.repeat || (bindingRepeats(b, host.cart ? host.commands() : [], loadedName()) && host.freshRepeat(ev, !b.game && !b.custom))) { press(b); host.rested(); }
         return;
       }
       // a character typed on a cell of the grid opens that cell's edit in the palette, Delete empties the selection's cells
@@ -3576,7 +3595,7 @@
     }
     if (lifeText.split('(rate 30)').length !== 2 || lifeText.split('(spec 2)').length !== 2) P.push('the anchors (rate 30) and (spec 2) are not in the cartridge exactly once');
     expectLoad(host.load(lifeText.replace('(rate 30)', ''), 'life.vla'), 'cart-manifest-invalid');
-    expectLoad(host.load(lifeText.replace('(spec 2)', '(spec 8)'), 'life.vla'), 'cart-spec-unsupported');
+    expectLoad(host.load(lifeText.replace('(spec 2)', '(spec 9)'), 'life.vla'), 'cart-spec-unsupported');
     expectLoad(host.loadBytes(new Uint8Array([0x28, 0xff, 0xfe, 0x29]), 'bad.vla'), 'is not UTF-8');
     var ok = host.load(lifeText, 'life.vla');
     if (!ok.ok) P.push('Life did not load: ' + ok.sentence);
@@ -3779,7 +3798,7 @@
       var D = new Driver({ exports: exports }), out = [];
       function load(text) { return D.call('alonzo_load', [], [text, 'life.vla']); }
       out.push(['a manifest without its rate', load(lifeText.replace('(rate 30)', ''))]);
-      out.push(['a (spec 8)', load(lifeText.replace('(spec 2)', '(spec 8)'))]);
+      out.push(['a (spec 9)', load(lifeText.replace('(spec 2)', '(spec 9)'))]);
       out.push(['bytes that are not UTF-8', D.call('alonzo_load', [], [new Uint8Array([0x28, 0xff, 0xfe, 0x29]), 'bad.vla'])]);
       var L = load(lifeText), m = /^\(cartridge (\d+) /.exec(L.text);
       if (!m) { P.push('Life did not load for the parity: ' + L.id + ' ' + L.text); return out; }
@@ -6791,7 +6810,7 @@
       var C = doubleHost();
       var wrong = [
         ['another cartridge\'s replay', CARTRIDGES.inputcard.replay, 'a replay plays only on the file it was recorded from'],
-        ['a later version\'s replay', text.replace('(spec 3)', '(spec 8)'), 'this host implements versions 1 to 7'],
+        ['a later version\'s replay', text.replace('(spec 3)', '(spec 9)'), 'this host implements versions 1 to 8'],
         ['a derived row', text.replace('(frame 1\n', '(frame 1\n  (derived "State" "B1" 1)\n'), 'holds a derived row'],
         ['frames out of order', text + '(frame 1)\n', 'frames are out of order'],
         ['a row outside a frame', text.replace('(frame 1\n', '(cell "State" "B1" 1)\n(frame 1\n'), 'outside a frame'],
@@ -8200,7 +8219,7 @@
     var P = [], k = { named: 0, lines: 0, read: 0, refusals: 0, found: 0, steps: 0, shadow: 0, note: 0, order: 0,
                       module: 0, opened: 0, listed: 0, frames: 0, ran: 0, landed: 0, emptied: 0, apart: 0, twice: 0, repeats: 0, ctrl: 0, holdsNot: 0, refused: 0,
                       passed: 0, noted: 0, words: 0, waited: 0, dropped: 0, said: 0, replayed: 0, replayFrames: 0, replaySame: 0, during: 0, rate0: 0, rate0Empty: 0,
-                      rate0Replayed: 0, older: 0, keypad: 0, chords: 0, chordsOlder: 0 };
+                      rate0Replayed: 0, older: 0, keypad: 0, chords: 0, chordsOlder: 0, repeating: 0, repeatWords: 0 };
     commandsPage(k, P);
     var wasm = builtModule();
     if (!wasm) return { counters: k, problems: P };
@@ -8209,6 +8228,7 @@
     commandsRun(bytes, k, P);
     commandsOlder(bytes, k, P);
     commandsChords(bytes, k, P);
+    commandsRepeats(bytes, k, P);
     return { counters: k, problems: P };
   }
   // The case's page half (slice 2), pure, needing no module: a game's command as a page names it; the palette's lines of a
@@ -8246,6 +8266,33 @@
      [base + '(bind "U" commandcard.count-up "x")', 'line ' + at + ': commandcard.count-up takes nothing after its name']].forEach(function (x) {
       var r = readKeymap(x[0], COMMANDS), said = r.problems.join('; ');
       if (!r.ok && said.indexOf(x[1]) >= 0) k.refusals++; else P.push('commands: the text ending ' + JSON.stringify(x[0].slice(-50)) + ' was ' + (r.ok ? 'applied' : 'refused in the words ' + JSON.stringify(said)) + ', where it is refused, saying ' + JSON.stringify(x[1]));
+    });
+    // ENGINE.39: a person's (repeat) and (once) in a binding, over the command's own word; the list's words of it; and their
+    // refusals
+    var rm = readKeymap(base + '(bind "U" commandcard.count-up (once))\n(bind "J" commandcard.note (repeat))\n(bind "F7" next-sheet (once))\n(bind "F6" pause (repeat) screen)\n' +
+                        '(command "twice" "count up twice" (commandcard.count-up) (commandcard.count-up))\n(bind "Ctrl+J" twice (repeat))\n(bind "Ctrl+M" twice)\n(bind "W" commandcard.count-up)\n', COMMANDS);
+    if (!rm.ok) P.push('commands: the keymap with (repeat) and (once) was refused: ' + rm.problems.join('; '));
+    else {
+      var bk = function (keys) { return rm.bindings.filter(function (b) { return b.keys.text === keys; })[0]; };
+      var cmdsNow = [{ name: 'count-up', repeats: true }, { name: 'note', repeats: false }];
+      [['U, (once) over the column\'s repeat', bk('U'), cmdsNow, 'commandcard', false], ['J, (repeat) over the column\'s once', bk('J'), cmdsNow, 'commandcard', true],
+       ['W, the column\'s repeat', bk('W'), cmdsNow, 'commandcard', true], ['W, another cartridge loaded', bk('W'), cmdsNow, 'kairos', false],
+       ['W, the column saying once', bk('W'), [{ name: 'count-up', repeats: false }], 'commandcard', false],
+       ['F7, (once) over the next sheet\'s repeat', bk('F7'), [], '', false], ['the page\'s Ctrl+PageDown, the next sheet\'s own repeat', bk('Ctrl+PageDown'), [], '', true],
+       ['F6, (repeat) over pause', bk('F6'), [], '', true], ['the page\'s Ctrl+S, save once', bk('Ctrl+S'), [], '', false],
+       ['Ctrl+J, (repeat) over a person\'s own', bk('Ctrl+J'), [], '', true], ['Ctrl+M, a person\'s own once', bk('Ctrl+M'), [], '', false]].forEach(function (x) {
+        var got = x[1] ? bindingRepeats(x[1], x[2], x[3]) : 'no binding';
+        if (got === x[4]) k.repeatWords++; else P.push('commands: ' + x[0] + ' repeats ' + got + ', where ' + x[4] + ' is due');
+      });
+      var said = commandKeys(rm, 'commandcard.count-up') + ' | ' + commandKeys(rm, 'commandcard.note') + ' | ' + commandKeys(rm, 'pause');
+      if (said === 'U, once while held; W | J, repeating while held | F6 on the Screen, repeating while held') k.repeatWords++;
+      else P.push('commands: the list says the keys ' + JSON.stringify(said) + ', where each binding\'s repeat in words is due');
+    }
+    [[base + '(bind "U" commandcard.count-up (repeat 2))', 'line ' + at + ': (repeat) takes nothing'],
+     [base + '(bind "U" commandcard.count-up (repeat) (once))', 'line ' + at + ': a binding says once whether its key repeats'],
+     [base + '(bind "U" commandcard.count-up repeat)', 'line ' + at + ': no place named repeat']].forEach(function (x) {
+      var r = readKeymap(x[0], COMMANDS), said = r.problems.join('; ');
+      if (!r.ok && said.indexOf(x[1]) >= 0) k.repeatWords++; else P.push('commands: the text ending ' + JSON.stringify(x[0].slice(-50)) + ' was ' + (r.ok ? 'applied' : 'refused in the words ' + JSON.stringify(said)) + ', where it is refused, saying ' + JSON.stringify(x[1]));
     });
     if (!m.ok) return;
     // a binding of a game's command found while live, its key passing on while not
@@ -8566,6 +8613,123 @@
         var b2 = vals('Input', 'B20').B20 || '';
         if (!e1.defaultPrevented && b1 === '') k.chordsOlder++; else P.push('commands, version 6: Ctrl+U was ' + (e1.defaultPrevented ? 'taken' : 'passed on') + ' and Input!B20 holds ' + JSON.stringify(b1) + ', where a key with modifiers is no key below version 7');
         if (e2.defaultPrevented && b2 === 'count-up') k.chordsOlder++; else P.push('commands, version 6: Shift+U was ' + (e2.defaultPrevented ? 'taken' : 'passed on') + ' and Input!B20 holds ' + JSON.stringify(b2) + ', where the bare U is count-up\'s, Shift either way');
+      });
+    } finally { stage.removeChild(box); }
+  }
+  // ---- ENGINE.39's first slice: version 8, a command that repeats ----
+  // The repeats card, at (spec 8): count-up on U repeating (E2 TRUE), count-ten on T once (E3 empty), note on N repeating
+  // while it has noted fewer than two (E4 a formula over the Desk), and bad on X, whose E5 is a text, said once and run
+  // once. The host is given a clock of the case's own and each key's time on it (keyTime), so that a repeat pressed before
+  // the last act came to rest is one the browser kept behind a step. At 30 frames a second: U, then its repeat at the next
+  // frame, run each; two repeats before one frame, one run, the other finding a command waiting; a repeat pressed before
+  // the frame its last command ran at came to rest, none; T's repeat taken and running nothing; X's repeat running
+  // nothing; N's repeats run while the formula says so and not after; and while a command waits, at the frame of the two
+  // repeats, a page's own command's repeat fresh by its time and a game's not. At rate 0: a repeat at once, a stale one running nothing, and after the
+  // key's release a repeat the browser kept, none.
+  var REPEATCARD = { file: 'repeatcard.vla',
+                     text: '(cartridge "repeatcard"\n  (spec 8)\n  (title "A repeats card")\n  (rate 30)\n  (screen grid 20 10)\n  (seed 1))\n' +
+                           '(sheet "Screen" hidden)\n(sheet "Desk" visible)\n(sheet "Commands" visible)\n' +
+                           '(cell "Commands" "A1" "name")\n(cell "Commands" "B1" "words")\n(cell "Commands" "C1" "holds")\n(cell "Commands" "D1" "key")\n(cell "Commands" "E1" "repeats")\n' +
+                           '(cell "Commands" "A2" "count-up")\n(cell "Commands" "D2" "KeyU")\n(cell "Commands" "E2" true)\n' +
+                           '(cell "Commands" "A3" "count-ten")\n(cell "Commands" "D3" "KeyT")\n' +
+                           '(cell "Commands" "A4" "note")\n(cell "Commands" "D4" "KeyN")\n(formula "Commands" "E4" "=Desk!$B$3<2")\n' +
+                           '(cell "Commands" "A5" "bad")\n(cell "Commands" "D5" "KeyX")\n(cell "Commands" "E5" "often")\n' +
+                           '(cell "Desk" "A1" "count")\n(formula "Desk" "B1" "=Desk.last!B1+IF(Input!$B$20=\\"count-up\\",1,0)+IF(Input!$B$20=\\"count-ten\\",10,0)")\n' +
+                           '(cell "Desk" "A3" "noted")\n(formula "Desk" "B3" "=Desk.last!B3+IF(Input!$B$20=\\"note\\",1,0)")\n' +
+                           '(cell "Screen" "A1" "the Screen")\n' };
+  function commandsRepeats(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:640px;height:300px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    function run(rate, each) {
+      var clock = { t: 0 }, exports = HOST.instantiateSync(bytes), D = new Driver({ exports: exports });
+      var host = new HOST({ drive: 'manual', budget: 0, now: function () { return clock.t; }, keyTime: function (ev) { return ev.at; }, grid: box });
+      try {
+        var ld = host.attach(exports).ok ? host.load(REPEATCARD.text.replace('(rate 30)', '(rate ' + rate + ')'), REPEATCARD.file) : { ok: false };
+        if (!ld.ok) { P.push('commands, version 8 at ' + rate + ': the repeats card did not load: ' + ld.sentence); return; }
+        var sc = host.vp.scroller;
+        function press(type, init, at) {
+          var o = { bubbles: true, cancelable: true };
+          for (var x in init) if (Object.prototype.hasOwnProperty.call(init, x)) o[x] = init[x];
+          var ev = new KeyboardEvent(type, o);
+          ev.at = at;
+          sc.dispatchEvent(ev);
+          return ev;
+        }
+        function vals(sheet, win) { return recordValues(D.call('alonzo_view', [ld.handle], ['grid', sheet, win]).text); }
+        each(host, press, vals, clock);
+      } finally { host.destroy(); }
+    }
+    try {
+      run(30, function (host, press, vals, clock) {
+        // at the load a formula of column E has no value until the first step, and repeats not, as an empty cell does
+        function listed() { return host.commands().map(function (c) { return c.name + ' ' + (c.repeats ? 'repeats' : 'once'); }).join(', '); }
+        var atLoad = listed();
+        if (atLoad === 'count-up repeats, count-ten once, note once, bad once') k.repeating++;
+        else P.push('commands, version 8: at the load the host lists ' + atLoad + ', where count-up repeats and the rest run once, note\'s formula holding no value yet');
+        var w = 'Commands!E5 holds "often", which is no truth value', n = host.sentences().filter(function (s) { return s.text.indexOf(w) >= 0; }).length;
+        if (n === 1) k.repeating++; else P.push('commands, version 8: the host said ' + JSON.stringify(w) + ' ' + n + ' time(s), where once is due');
+        // [frame, presses before it, each { init, its time against the last frame's, 1 after it or -1 before }, the command
+        // due, the count and the notes after it]
+        var u = { code: 'KeyU', key: 'u' }, ur = { code: 'KeyU', key: 'u', repeat: true }, nr = { code: 'KeyN', key: 'n', repeat: true }, plan = [
+          [2, [[u, 1]], 'count-up', 1, 0],
+          [3, [[ur, 1]], 'count-up', 2, 0],
+          [4, [[ur, 1], [ur, 2]], 'count-up', 3, 0],
+          [5, [[ur, -5]], '', 3, 0],
+          [6, [[{ code: 'KeyT', key: 't' }, 1]], 'count-ten', 13, 0],
+          [7, [[{ code: 'KeyT', key: 't', repeat: true }, 1]], '', 13, 0],
+          [8, [[{ code: 'KeyX', key: 'x' }, 1]], 'bad', 13, 0],
+          [9, [[{ code: 'KeyX', key: 'x', repeat: true }, 1]], '', 13, 0],
+          [10, [[{ code: 'KeyN', key: 'n' }, 1]], 'note', 13, 1],
+          [11, [[nr, 1]], 'note', 13, 2],
+          [12, [[nr, 1]], '', 13, 2],
+          [13, [[u, 1]], 'count-up', 14, 2]
+        ];
+        var t = 1000;
+        clock.t = t; host.start(); host.tick(t);
+        while (host.counters().frame < 1) { t += 1000 / 30; clock.t = t; host.tick(t); }
+        if (listed() === 'count-up repeats, count-ten once, note repeats, bad once') k.repeating++;
+        else P.push('commands, version 8: after the first frame the host lists ' + listed() + ', where count-up and note repeat and count-ten and bad run once');
+        for (var i = 0; i < plan.length; i++) {
+          var x = plan[i], at = 'commands, version 8, frame ' + x[0], ok = true;
+          while (host.counters().frame < x[0] - 1) { t += 1000 / 30; clock.t = t; host.tick(t); }
+          x[1].forEach(function (pr) {
+            var ev = press('keydown', pr[0], clock.t + pr[1]);
+            if (!ev.defaultPrevented) { ok = false; P.push(at + ': ' + pr[0].code + (pr[0].repeat ? '\'s repeat' : '') + ' was passed on, where it is its command\'s key'); }
+            press('keyup', { code: pr[0].code, key: pr[0].key }, clock.t);
+          });
+          if (x[0] === 4) {
+            var own = host.freshRepeat({ repeat: true, at: clock.t + 1 }, true), game = host.freshRepeat({ repeat: true, at: clock.t + 1 });
+            if (own && !game) k.repeating++; else P.push(at + ': while count-up waits a page\'s own repeat is ' + (own ? 'fresh' : 'stale') + ' and a game\'s ' + (game ? 'fresh' : 'stale') + ', where the page\'s is judged by its time alone');
+          }
+          t += 1000 / 30; clock.t = t; host.tick(t);
+          if (host.counters().frame !== x[0]) { P.push(at + ': after its tick the host is at frame ' + host.counters().frame); break; }
+          var b20 = vals('Input', 'B20').B20, desk = vals('Desk', 'B1:B3');
+          b20 = b20 === undefined ? '' : b20;
+          if (b20 !== x[2]) { ok = false; P.push(at + ': Input!B20 holds ' + JSON.stringify(b20) + ', where ' + (x[2] ? 'the command ' + x[2] + ' runs' : 'no command runs and it is empty')); }
+          else if (viewsNum(desk.B1) !== x[3] || viewsNum(desk.B3) !== x[4]) { ok = false; P.push(at + ': the Desk counts ' + viewsNum(desk.B1) + ' and noted ' + viewsNum(desk.B3) + ', where ' + x[3] + ' and ' + x[4] + ' are due'); }
+          if (ok) k.repeating++;
+        }
+      });
+      run(0, function (host, press, vals, clock) {
+        function count() { return viewsNum(vals('Desk', 'B1').B1); }
+        var u = { code: 'KeyU', key: 'u' }, ur = { code: 'KeyU', key: 'u', repeat: true };
+        // [what, the clock as the step runs, the key's time, the count due after it, the frames due after it]
+        var plan = [['U', 100, 100, 1], ['U\'s repeat after the act came to rest', 200, 150, 2], ['a repeat pressed before the last act came to rest', 210, 199, 2],
+                    ['U\'s next repeat', 300, 250, 3], ['T', 400, 400, 13], ['T\'s repeat', 500, 450, 13]], f0 = host.counters().frame;
+        plan.forEach(function (x, i) {
+          clock.t = x[1];
+          var init = i === 0 ? u : i < 4 ? ur : i === 4 ? { code: 'KeyT', key: 't' } : { code: 'KeyT', key: 't', repeat: true };
+          var ev = press('keydown', init, x[2]);
+          if (ev.defaultPrevented && count() === x[3]) k.repeating++;
+          else P.push('commands, version 8 at rate 0: after ' + x[0] + ' the Desk counts ' + count() + ' and the key was ' + (ev.defaultPrevented ? 'taken' : 'passed on') + ', where ' + x[3] + ' and taken are due');
+        });
+        press('keyup', u, 520);
+        var before = host.counters().frame;
+        clock.t = 600;
+        press('keydown', ur, 290);   // a repeat the browser kept behind the step, handed over after the key went up
+        if (count() === 13 && host.counters().frame === before && before - f0 === 4) k.repeating++;
+        else P.push('commands, version 8 at rate 0: a repeat kept behind the step and handed over after the release left the Desk at ' + count() + ' and ran ' + (host.counters().frame - before) + ' frame(s), ' + (before - f0) + ' before it, where 13, none and four are due');
       });
     } finally { stage.removeChild(box); }
   }
