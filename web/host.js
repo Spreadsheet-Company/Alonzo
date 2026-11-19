@@ -149,6 +149,17 @@
   restore(work) opens the keyframe as a load and plays the frames at once,
   the replay law, and pauses there.
 
+  A paste (ENGINE.39's second slice) is a person's act as an applied
+  cartridge is: paste(p) takes the rows a page wrote from the clipboard's
+  text, or from its own copy, and writes them at the act's frame as one
+  write, all or none, one step at rate 0, each row recorded as a person's
+  edit in its frame; it refuses, saying why, a replay playing, a read-only
+  sheet, a value into a game sheet a person writes and a cell past an edge.
+  cellsOf(sheet, range) answers a range's cells as the sheet is drawn, a
+  copy's, extentOf(sheet) a sheet's extent, and sayAct(text) says a page's
+  own act's answer, its copy's and its cut's; an edit, an applied
+  cartridge and a paste that land tell their rows ('wrote').
+
   What the host holds is SD-23's interface state and nothing else (AD-6):
   the keys held, the pointer's place, the accumulator, the budget's
   measurement, the palette's table, the key map, the Camera's two cells,
@@ -717,10 +728,12 @@
   // A command's name in a sentence, in single quotes (the owner's word at CART.9's fourth slice's hand test).
   function commandWords(name) { return 'command \'' + name + '\''; }
   // An act at rate 0, in words, for the frame's sentence: an edit's row, a command, a press of a button on its cell
-  // (version 6, CART.12), the load's first step of a cartridge that settles, or a rebuilt cartridge applied.
+  // (version 6, CART.12), the load's first step of a cartridge that settles, a paste or a cut's move (ENGINE.39), or a
+  // rebuilt cartridge applied.
   var PRESS_WORDS = ['', 'left', 'right', 'middle'];
   function actWords(a) {
     if (typeof a === 'string') return 'the edit ' + a;
+    if (a.paste) return a.what;
     if (a.row !== undefined) return 'the edit ' + a.row;
     if (a.command !== undefined) return 'the ' + commandWords(a.command);
     if (a.press !== undefined) return 'the ' + PRESS_WORDS[a.press] + ' press on ' + a.place.sheet + '!' + VP().colName(a.place.col) + a.place.row;
@@ -932,7 +945,7 @@
     this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, inputsKept: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, patches: 0, shows: 0, saves: 0, saved: 0,
                sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0, commands: 0, commandsRefused: 0,
                settles: 0, settleSteps: 0, unsettled: 0, presses: 0, playedShown: 0, editsRead: 0, keysRead: 0, keysStray: 0,
-               keyframes: 0, restores: 0 };
+               keyframes: 0, restores: 0, pastes: 0, pastesRefused: 0 };
   };
 
   // The module: its ABI number asked first, then every export the loop calls.
@@ -1324,6 +1337,7 @@
     else if (atRateZero && this._five()) this._writeCommandRow(act.command !== undefined ? act.command : '');
     if (act.command !== undefined) return this._issueCommand(act, atRateZero);
     if (act.press !== undefined || act.load) return true;   // a press, or the load's first step: its rows are the act (CART.12)
+    if (act.paste) return this._issuePaste(act, atRateZero);   // a paste's rows, one write (ENGINE.39)
     if (act.row !== undefined) return this._issueEdit(act.row, atRateZero);
     return typeof act === 'string' ? this._issueEdit(act, atRateZero) : this._issueApplied(act, atRateZero);
   };
@@ -1386,6 +1400,7 @@
         if (editsInput(b.rows[i])) { this.commandRow = null; this.actKnown = null; }   // the twentieth row and the act's rows no longer known (ENGINE.25, CART.12)
       }
       this.given = b.text; this.actRead = null;   // the rebuilt rows read again for an act's place and press
+      this._emit('wrote', { rows: b.rows, move: false });   // the rows that landed, which a page's cut is let go by (ENGINE.39)
       this._answer('frame ' + (this.frame + 1) + ': applied ' + b.file + ' to the running game: ' + appliedWords(b) + ' written, the frame number and every other cell kept.');
       return true;
     }
@@ -1403,11 +1418,36 @@
       if (readsInputRows(row, 11, 15)) this.actRead = true;   // a person's formula reading an act's place or press: a press is an act from here (CART.9)
       if (editsInput(row)) this.inputsLast = null;   // the Input sheet a person wrote: the next frame's rows written whole (ENGINE.19)
       if (editsInput(row)) { this.commandRow = null; this.actKnown = null; }   // and its twentieth row and the act's rows no longer known (ENGINE.25, CART.12)
+      this._emit('wrote', { rows: [row], move: false });   // the row that landed, which a page's cut is let go by (ENGINE.39)
       if (!atRateZero) this._answer('frame ' + (this.frame + 1) + ': the edit ' + row + ' was written.');
       return true;
     }
     this.c.editsRefused++;
     this._answerRefused('frame ' + (this.frame + 1) + ': the edit ' + row + ' was refused: ' + words(r, true) + (atRateZero ? '; no step.' : '.'));
+    return false;
+  };
+  // A paste's rows as one write, all or none (ENGINE.39's second slice, decision 10), in the place of a person's edits, as
+  // a rebuilt cartridge's are. Landed: each row recorded as a person's edit in its frame, so that a replay holds the paste
+  // as the rows of one frame and plays it so; an Input sheet's row making the next frame's Input rows whole; a formula
+  // reading an act's place making a press an act; and its rows told. At a rate its answer said; at rate 0 the step's
+  // sentence says it. Refused: nothing written, the row the write refused named, and at rate 0 no step.
+  Host.prototype._issuePaste = function (act, atRateZero) {
+    var r = this._write(act.rows.join('\n'));
+    if (r.status === 0) {
+      this.c.pastes++;
+      for (var i = 0; i < act.rows.length; i++) {
+        var row = act.rows[i];
+        this._recordEdit(row);
+        if (readsInputRows(row, 11, 15)) this.actRead = true;
+        if (editsInput(row)) { this.inputsLast = null; this.commandRow = null; this.actKnown = null; }
+      }
+      this._emit('wrote', { rows: act.rows, move: !!act.move });
+      if (!atRateZero) this._answer('frame ' + (this.frame + 1) + ': ' + act.done + '.');
+      return true;
+    }
+    this.c.pastesRefused++;
+    var k = r.line >= 1 && r.line <= act.rows.length ? r.line - 1 : -1;
+    this._answerRefused('frame ' + (this.frame + 1) + ': ' + act.what + ' was not written: the write of its rows was refused' + (k >= 0 ? ' at its row ' + shortly(act.rows[k]) : '') + ': ' + words(r, true) + '; nothing was written' + (atRateZero ? ', and no step.' : '.'));
     return false;
   };
   // The Input sheet's eighteen rows (section 3.3): ten buttons for four players through the key map,
@@ -2278,6 +2318,92 @@
     // paused, took an edit and showed nothing).
     else if (this.cart.rate > 0 && !this.running) this._answer('frame ' + this.frame + ': the edit ' + t + ' waits for the next frame, which Run brings: the loop is paused at ' + this.cart.rate + ' frame' + (this.cart.rate === 1 ? '' : 's') + ' a second.');
     return true;
+  };
+  // ---- copy, cut and paste in the grid (ENGINE.39's second slice; docs/SPEC.md section 7.2) ----
+  // The page keeps the clipboard's text, its own copy and a cut's mark, and writes a paste's rows; the host reads the cells a
+  // copy takes, refuses or takes the paste as one act, and says each act's answer.
+  // The cells of a range of a sheet as the sheet is drawn (decision 7): through the values projection after frame 0, and at
+  // frame 0 the grid record, a formula shown as its text until its first value. range, { top, left, bottom, right }. { ok,
+  // sheet, range, rows }, each row an array of { shown, value, formula }: the text the cell shows; its value as a cell row
+  // spells it, exact where its shown text rounds, the empty text for an empty cell; and whether a formula computed it. A
+  // date, which no cell row holds, and a formula with no value yet keep the text they show. Else { ok: false, sentence },
+  // said as the act's refusal.
+  Host.prototype.cellsOf = function (sheet, range) {
+    if (!this.handle || !this.cart) return this._answerFailed('Nothing was copied: no cartridge is loaded.');
+    if (this.inFrame) return this._answerFailed('Nothing was copied: frame ' + (this.frame + 1) + ' is being computed, and a copy takes the cells as a frame left them; copy again once it lands.');
+    var t = this._viewDrawn(sheet, VP().rangeText(range));
+    if (t === null) return { ok: false, sentence: 'The view of ' + sheet + ' was refused.' };
+    var m = VP().readRecord(t), rows = [];
+    for (var r = range.top; r <= range.bottom; r++) {
+      var line = [];
+      for (var c = range.left; c <= range.right; c++) line.push(copiedCell(m.cells.get(r + ',' + c)));
+      rows.push(line);
+    }
+    return { ok: true, sheet: sheet, range: { top: range.top, left: range.left, bottom: range.bottom, right: range.right }, rows: rows };
+  };
+  function copiedCell(e) {
+    if (!e || e.kind === 'empty') return { shown: '', value: '""', formula: false };
+    if (e.kind === 'formula' && !e.valued) return { shown: e.text, value: quote(e.text), formula: true };
+    var v = e.value !== undefined ? e.value : e.text, k = e.vkind, spelled;
+    if (k === 'number') spelled = v;
+    else if (k === 'bool') spelled = v === 'TRUE' ? 'true' : 'false';
+    else if (k === 'error') spelled = '(error ' + quote(v) + ')';
+    else spelled = quote(k === 'date' ? e.text : v);
+    return { shown: e.text, value: spelled, formula: e.kind === 'formula' };
+  }
+  // A sheet's extent as its record says it, { top, left, bottom, right }: the cells it holds, which a selection of whole rows
+  // or columns or of the sheet copies within; null for a sheet holding none, or a view refused.
+  Host.prototype.extentOf = function (sheet) {
+    var t = this._viewDrawn(sheet, LAYOUT_STRIP);
+    return t === null ? null : (VP().readRecord(t).extent || null);
+  };
+  // A page's own act answered (ENGINE.42), its copy's, its cut's and a cut let go (ENGINE.39): said as the host says an act's
+  // answer, so that the bar and the log both hold it. refused, a refusal.
+  Host.prototype.sayAct = function (text, refused) { this._say(String(text), 'event', !!refused, true); };
+  // A paste (decisions 9 to 12): rows a page wrote from the clipboard's text, or from its own copy, written at the act's frame
+  // as one write, all or none, in the place of a person's edits, one step at rate 0, and recorded as its rows in its frame.
+  // p: { sheet, range, rows, what, done, place, move }: rows each { row, sheet, address, kind } with kind 'value', 'formula'
+  // or 'empty', a cell emptied as Delete empties one; range the cells it writes on the sheet; what and done its words before
+  // it lands and after; place the cell an act stands on at rate 0 (version 6), the range's corner; and move whether it moves
+  // a cut's cells, the cut's emptied in the same write. Refused whole and said, nothing written: no cartridge; a replay
+  // playing, as every edit is; a read-only sheet it writes, a cut's among them (SPEC.5); a value into a game sheet a person
+  // writes, where a formula and an emptied cell alone are taken (CART.9's decisions 49 and 50); and a cell past the sheet's
+  // edge, a bound sheet's extent, which a write would grow, or the Screen's window where no Camera places it, the first
+  // named. True where the act waits for its frame or has landed.
+  Host.prototype.paste = function (p) {
+    if (!this.handle || !this.cart) { this._answerRefused('Nothing was pasted: no cartridge is loaded.'); return false; }
+    var what = p.what.charAt(0).toUpperCase() + p.what.slice(1);
+    if (this.player) { this._answerRefused(what + ' was not written: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s edit waits until it ends, so that what plays is the replay alone.'); return false; }
+    var modes = {}, i, x, m;
+    for (i = 0; i < p.rows.length; i++) {
+      x = p.rows[i];
+      m = modes[x.sheet] || (modes[x.sheet] = this.sheetMode(x.sheet));
+      if (m.read) { this.c.editsRead++; this._answerRefused(what + ' was not written: ' + x.sheet + ' is a read-only sheet, named by the manifest\'s (read ...); the cartridge\'s own rows still write it (version 6, docs/SPEC.md section 7.2).'); return false; }
+      if (m.game && x.kind === 'value') { this._answerRefused(what + ' was not written: ' + x.sheet + ' is the game\'s, where a person writes a formula and no value, and ' + x.sheet + '!' + x.address + ' would hold a value (version 6, docs/SPEC.md section 7.2).'); return false; }
+    }
+    var past = this._pastEdge(p.sheet, p.range);
+    if (past) { this._answerRefused(what + ' was not written: ' + past + '.'); return false; }
+    var act = { paste: true, what: p.what, done: p.done, move: !!p.move, rows: p.rows.map(function (y) { return y.row; }) };
+    if (this._sixAtZero()) act.place = p.place;   // the cell the act stands on (CART.12)
+    this.edits.push(act);   // one act, all or none (decision 10)
+    if (this.cart.rate === 0 && !this.inFrame) this._editFrames(this._window());
+    else if (!this.running && this.cart.rate > 0) this._answer('frame ' + this.frame + ': ' + p.what + ' waits for the next frame, which Run brings: the loop is paused at ' + this.cart.rate + ' frame' + (this.cart.rate === 1 ? '' : 's') + ' a second.');
+    return true;
+  };
+  // The first cell of a paste past an edge (decision 9), in words, or the empty text: the Screen's window where no Camera
+  // sheet places it, which the engine refuses too; a bound sheet's extent (version 6), which a write would grow, so that a
+  // board's edge holds; and the sheet's own, 1,048,576 rows by 16,384 columns. r, { top, left, bottom, right }.
+  var SHEET_ROWS = 1048576, SHEET_COLS = 16384;
+  Host.prototype._pastEdge = function (sheet, r) {
+    var c = this.cart, edges = [], ext;
+    if (isScreen(sheet) && !c.devices.camera) edges.push({ rows: c.h, cols: c.w, words: 'the Screen\'s window, ' + rangeOf(1, 1, c.h, c.w) });
+    if (this._bounded(sheet) && (ext = this.extentOf(sheet))) edges.push({ rows: ext.bottom, cols: ext.right, words: 'the extent ' + sheet + ' is bound to, ' + VP().rangeText(ext) });
+    edges.push({ rows: SHEET_ROWS, cols: SHEET_COLS, words: 'the sheet\'s last cell, XFD1048576' });
+    for (var i = 0; i < edges.length; i++) {
+      var e = edges[i], cell = r.right > e.cols ? VP().colName(Math.max(r.left, e.cols + 1)) + r.top : r.bottom > e.rows ? VP().colName(r.left) + Math.max(r.top, e.rows + 1) : '';
+      if (cell) return 'it reaches ' + sheet + '!' + cell + ', past ' + e.words;
+    }
+    return '';
   };
   // A key down on the Screen: a command's key (ENGINE.25) runs its command and is no button's and no last key, a repeat
   // taken and running nothing but where the command repeats and the repeat is fresh (version 8, ENGINE.39); any other

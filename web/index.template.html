@@ -633,6 +633,9 @@
     { name: 'next-sheet', words: 'show the next sheet', repeats: true },
     { name: 'previous-sheet', words: 'show the previous sheet', repeats: true },
     { name: 'hidden-sheets', words: 'show the hidden sheets\' tabs, or hide them' },
+    { name: 'copy', words: 'copy the selection\'s cells to the clipboard as they show, as Excel copies a range' },
+    { name: 'cut', words: 'cut the selection\'s cells: they stand until a paste moves them' },
+    { name: 'paste', words: 'paste the clipboard into the selection, each cell as typed, the page\'s own copy as its values' },
     { name: 'game', words: 'give the game the keys, the Screen\'s place' },
     { name: 'edit', words: 'give the drawer\'s edit row the keys' },
     { name: 'write', words: 'write the edit row\'s row as a person\'s edit at the next frame' },
@@ -660,7 +663,9 @@
   // its windows, matched by the key's place under Escape; never with Shift, Edge keeping Ctrl+Shift+K for a duplicated
   // tab though the page cancels it, nor Ctrl+` alone, Opera's (measured). The next and previous sheet on Excel for the
   // web's Ctrl+Alt+PageDown and Ctrl+Alt+PageUp, the page's in a window, and on Excel's Ctrl+PageDown and Ctrl+PageUp,
-  // the page's in full screen. And ENGINE.22's keys of the drawer's boxes, moved in.
+  // the page's in full screen. And ENGINE.22's keys of the drawer's boxes, moved in. And since ENGINE.39's second slice
+  // the grid's copy, cut and paste on Ctrl+C, Ctrl+X and Ctrl+V, on the Screen and in the drawer's sheets, each key
+  // passing on to the browser's own clipboard event, which the grid answers (clipKeyAct).
   var KEYMAP_DEFAULTS = [
     '; The page\'s keys (ENGINE.23), yours to change and apply: a binding a line, (bind "keys" command [argument]',
     '; [place ...]), and a command of your own, (command "name" "its words" step ...), run from the palette by its name',
@@ -686,6 +691,9 @@
     '(bind "Ctrl+PageUp" previous-sheet)',
     '(bind "Ctrl+S" save)',
     '(bind "Ctrl+O" open)',
+    '(bind "Ctrl+C" copy screen viewer)',
+    '(bind "Ctrl+X" cut screen viewer)',
+    '(bind "Ctrl+V" paste screen viewer)',
     '(bind "Enter" write edit)',
     '(bind "Ctrl+Enter" write edit)',
     '(bind "Ctrl+Enter" build source library)',
@@ -1970,6 +1978,233 @@
     this.select(at, at);
     this.splice(at, 0, ev.dataTransfer.getData('text/plain').replace(/\r\n?/g, '\n'), 'insertFromDrop');
   };
+  // ---- copy, cut and paste in the grid (ENGINE.39's second slice; docs/SPEC.md section 7.2) ----
+  // Commands of the page (decision 6), bound to Ctrl+C, Ctrl+X and Ctrl+V on the Screen and in the drawer's sheets. Their
+  // keydown passes on unprevented, so that the browser fires its own clipboard event at the grid, which answers it: no
+  // permission asked, Cmd on a Mac by the browser's own mapping, Ctrl+Insert, Shift+Insert and Shift+Delete answered too,
+  // and a game's key first wherever the host takes it, its keydown prevented and no event fired. On any other key, or from
+  // the palette, a copy and a cut write the clipboard by the browser's writeText inside the act's gesture, and a paste
+  // reads it by readText at the browser's permission, a refusal said. In a box nothing changes, each keeping its own.
+  var CLIP_ACTS = { copy: 1, cut: 1, paste: 1 };
+  // The act of the clipboard a key's default fires (measured at the scoping in Chrome 157): Ctrl or Cmd, not both, with C, X
+  // or V, a letter matched as the keymap matches one, by the letter the key types or, on a layout typing no Latin letter,
+  // by its place; Ctrl+Insert a copy, Shift+Insert a paste and Shift+Delete a cut; null for any other key.
+  function clipboardChord(ev) {
+    if (!ev || ev.altKey) return null;
+    var key = String(ev.key || ''), low = key.toLowerCase(), code = String(ev.code || '');
+    var letter = /^[a-z]$/.test(low) ? low : /^Key[A-Z]$/.test(code) && !/^[a-z0-9]$/.test(low) ? code.charAt(3).toLowerCase() : '';
+    if (!!ev.ctrlKey !== !!ev.metaKey && !ev.shiftKey) return letter === 'c' || key === 'Insert' ? 'copy' : letter === 'x' ? 'cut' : letter === 'v' ? 'paste' : null;
+    if (!ev.ctrlKey && !ev.metaKey && ev.shiftKey) return key === 'Insert' ? 'paste' : key === 'Delete' ? 'cut' : null;
+    return null;
+  }
+  // What the page makes of a key its keymap bound (decision 6), pure: 'pass' where the binding is the page's copy, cut or
+  // paste and the key the browser's own for that act, the keydown left unprevented and unpressed, so that the browser's
+  // event follows and a game's key goes first; 'press' for any other, the binding pressed as every binding is.
+  function clipKeyAct(b, ev) { return b && !b.custom && !b.game && CLIP_ACTS[b.command] && clipboardChord(ev) === b.command ? 'pass' : 'press'; }
+  // Excel's text of a range (decision 7, measured at the scoping): each cell's shown text, a tab between cells and a CRLF
+  // after every row, the last too; a field holding a tab, a line feed or a carriage return quoted, its quotes doubled, and
+  // any other bare, a quote alone too. rows, an array of rows, each an array of texts.
+  function clipField(s) { s = String(s); return /[\t\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+  function clipText(rows) {
+    return rows.map(function (r) { return r.map(clipField).join('\t') + '\r\n'; }).join('');
+  }
+  // A text read as Excel reads a paste of text from elsewhere (decision 8): rows at CRLF, LF or CR, the last dropped when it
+  // is empty; fields at tabs; a field opening with a quote read to its closing quote, a doubled quote one and its tabs and
+  // line ends kept, the rest of the field after it as written; and a quote never closed read as written. An array of rows,
+  // each an array of texts, a row as long as its fields.
+  function clipFields(text) {
+    var t = String(text), n = t.length, rows = [], row = [], i = 0;
+    for (;;) {
+      var field = '', j, q;
+      if (t.charAt(i) === '"') {
+        for (j = i + 1, q = ''; j < n; j++) {
+          if (t.charAt(j) !== '"') { q += t.charAt(j); continue; }
+          if (t.charAt(j + 1) === '"') { q += '"'; j++; continue; }
+          break;
+        }
+        if (j < n) { field = q; i = j + 1; }   // closed: what follows it to the field's end, as written
+      }
+      var k = i;
+      while (k < n && !/[\t\r\n]/.test(t.charAt(k))) k++;
+      row.push(field + t.slice(i, k));
+      if (k >= n) { rows.push(row); break; }
+      if (t.charAt(k) === '\t') { i = k + 1; continue; }
+      rows.push(row); row = [];
+      i = k + (t.charAt(k) === '\r' && t.charAt(k + 1) === '\n' ? 2 : 1);
+    }
+    var last = rows[rows.length - 1];
+    if (last.length === 1 && last[0] === '') rows.pop();
+    return rows;
+  }
+  // A field as typing it writes (decision 8): =... a formula as written, its references unmoved, Excel's rule for text from
+  // elsewhere; what the page's reader reads as a number, a number as it is spelled; TRUE or FALSE in any case, a truth
+  // value; the empty text, the cell emptied as Delete empties one; and any other, a text, Excel's spellings of a locale
+  // among them, 1,234.50, 12%, $5 and a date, since the locale is the host's (the owner's decision of 2026-10-20). { kind,
+  // spelled }: kind 'formula', 'value' or 'empty', spelled the row's last part.
+  function clipValue(field) {
+    var f = String(field), forms = null;
+    if (f === '') return { kind: 'empty', spelled: '""' };
+    if (f.charAt(0) === '=') return { kind: 'formula', spelled: vlaString(f) };
+    try { forms = VP.readForms(f); } catch (e) { forms = null; }
+    if (forms && forms.length === 1 && forms[0] && forms[0].num !== undefined && forms[0].text !== undefined) return { kind: 'value', spelled: forms[0].text };
+    if (/^(true|false)$/i.test(f.trim())) return { kind: 'value', spelled: f.trim().toLowerCase() };
+    return { kind: 'value', spelled: vlaString(f) };
+  }
+  // A selection's cells (decision 7): a range of cells as it stands; whole rows or columns, or the sheet, their cells within
+  // the sheet's extent; null where they hold none. sel, a viewport's selection, { kind, range }; extent, the sheet's or null.
+  function selectionCells(sel, extent) {
+    var r = sel.range;
+    if (sel.kind === 'cells') return { top: r.top, left: r.left, bottom: r.bottom, right: r.right };
+    if (!extent) return null;
+    var out = { top: sel.kind === 'rows' ? r.top : 1, left: sel.kind === 'columns' ? r.left : 1,
+                bottom: sel.kind === 'rows' ? Math.min(r.bottom, extent.bottom) : extent.bottom, right: sel.kind === 'columns' ? Math.min(r.right, extent.right) : extent.right };
+    return out.top <= out.bottom && out.left <= out.right ? out : null;
+  }
+  // Where a paste writes (decision 9, as Excel pastes its own copy, measured): from the selection's corner; the page's own
+  // copy tiled over a selection that is a whole multiple of it, one cell filling the selection, and its block at the corner
+  // alone over a selection no multiple of it, or smaller; a text from elsewhere never tiled. sel, { top, left, bottom,
+  // right }; h and w, the block's rows and columns; own, whether it is the page's own copy. The range written.
+  function pasteRange(sel, h, w, own) {
+    var sh = sel.bottom - sel.top + 1, sw = sel.right - sel.left + 1;
+    if (own && sh % h === 0 && sw % w === 0) return { top: sel.top, left: sel.left, bottom: sel.bottom, right: sel.right };
+    return { top: sel.top, left: sel.left, bottom: sel.top + h - 1, right: sel.left + w - 1 };
+  }
+  // A paste's rows (decision 10): a row a cell, each the block's cell its place in the range stands at, tiled, a short row
+  // of a text's fields leaving the cells past it as they stand; and one value over a range one range row, the writer's
+  // economy. sheet; range, pasteRange's; block, rows of { kind, spelled }. [{ row, sheet, address, kind, cells }].
+  function pasteRows(sheet, range, block) {
+    var h = block.length, w = maxWidth(block), out = [], at = vlaString(sheet) + ' ', one = h === 1 && w === 1 ? block[0][0] : null;
+    if (one && one.kind !== 'formula' && (range.bottom > range.top || range.right > range.left)) {
+      var whole = VP.rangeText(range);
+      return [{ row: '(cell ' + at + vlaString(whole) + ' ' + one.spelled + ')', sheet: sheet, address: whole, kind: one.kind, cells: (range.bottom - range.top + 1) * (range.right - range.left + 1) }];
+    }
+    for (var r = range.top; r <= range.bottom; r++) {
+      var line = block[(r - range.top) % h];
+      for (var c = range.left; c <= range.right; c++) {
+        var x = line[(c - range.left) % w], a = VP.colName(c) + r;
+        if (!x) continue;   // past a short row of a text's fields: the cell stands
+        out.push({ row: '(' + (x.kind === 'formula' ? 'formula' : 'cell') + ' ' + at + vlaString(a) + ' ' + x.spelled + ')', sheet: sheet, address: a, kind: x.kind, cells: 1 });
+      }
+    }
+    return out;
+  }
+  function maxWidth(block) { var w = 0; for (var i = 0; i < block.length; i++) w = Math.max(w, block[i].length); return w; }
+  // A count of cells in words: a word below ten, a number from there.
+  var CLIP_COUNTS = ['no cells', 'one cell', 'two cells', 'three cells', 'four cells', 'five cells', 'six cells', 'seven cells', 'eight cells', 'nine cells'];
+  function cellsWords(n) { return n < CLIP_COUNTS.length ? CLIP_COUNTS[n] : thousands(n) + ' cells'; }
+  // Whether a row writes into a sheet's range: a cell or formula row's sheet, compared without case, and its cells meeting it.
+  function rowMeets(row, sheet, range) {
+    var f = VP.readForms(String(row))[0], q;
+    if (!Array.isArray(f) || typeof f[1] !== 'string' || typeof f[2] !== 'string' || f[1].toLowerCase() !== String(sheet).toLowerCase() || !(q = VP.parseRange(f[2]))) return false;
+    var bottom = q.rows || q.columns ? (q.rows ? q.bottom : 1048576) : q.bottom, right = q.rows ? 16384 : q.right;
+    return q.top <= range.bottom && bottom >= range.top && q.left <= range.right && right >= range.left;
+  }
+  // The grid's clipboard (decisions 6 to 12): the page's last copy beside the browser's clipboard, a cut's mark, and the
+  // three acts over a viewport. host, the page's host; api, the browser's clipboard for the acts no clipboard event
+  // carries, navigator.clipboard or an oracle's double, null for none. kept: { text, sheet, range, cells, cut }, the
+  // copy's Excel text, its sheet and range, each cell { shown, value, formula } as the host read it, and whether it is a
+  // cut whose cells stand until its paste moves them.
+  function GridClip(host, api) {
+    var self = this;
+    this.host = host; this.api = api || null; this.kept = null;
+    host.on('wrote', function (e) { self.wrote(e); });
+    host.on('load', function () { if (self.kept) self.kept.cut = false; });   // a load's grid holds no cut's cells: its copy stays
+  }
+  // The browser's clipboard events at a viewport answered (decision 6): a copy and a cut writing Excel's text into the
+  // event's data, a paste reading it; the default prevented where the grid took the event, and left to the browser where
+  // nothing was copied. And Escape there letting a cut's mark go, the key passed on (decision 12).
+  GridClip.prototype.listen = function (vp) {
+    var self = this, el = vp.root;
+    el.addEventListener('copy', function (ev) { self.event(ev, vp, 'copy'); });
+    el.addEventListener('cut', function (ev) { self.event(ev, vp, 'cut'); });
+    el.addEventListener('paste', function (ev) { self.event(ev, vp, 'paste'); });
+    el.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !ev.shiftKey) self.letGo('Escape'); });
+  };
+  GridClip.prototype.event = function (ev, vp, kind) {
+    var data = ev.clipboardData;
+    if (!data) return;
+    if (kind === 'paste') { ev.preventDefault(); this.put(vp, data.getData('text/plain')); return; }
+    var text = this.take(vp, kind === 'cut');
+    if (text === null) return;
+    ev.preventDefault();
+    data.setData('text/plain', text);
+  };
+  // The acts no clipboard event carries (decision 6): a copy and a cut from the palette, or from a key of a person's binding
+  // that is not the browser's own, write the clipboard by writeText inside the act's gesture, and a paste reads it by
+  // readText at the browser's permission, which a page opened from a file may never hold; a refusal said. A promise, or
+  // null where nothing was asked of the browser.
+  GridClip.prototype.act = function (vp, kind) {
+    var self = this, api = this.api, host = this.host;
+    function why(e) { return e && e.message ? e.message : String(e); }
+    if (kind === 'paste') {
+      if (!api || !api.readText) { host.sayAct('Nothing was pasted: this browser gives a page the clipboard\'s text only at its own paste, Ctrl+V.', true); return null; }
+      return api.readText().then(function (t) { self.put(vp, t); }, function (e) { host.sayAct('Nothing was pasted: the browser refused the page the clipboard\'s text (' + why(e) + '); Ctrl+V pastes without asking.', true); });
+    }
+    var text = this.take(vp, kind === 'cut');
+    if (text === null) return null;
+    var key = kind === 'cut' ? 'Ctrl+X' : 'Ctrl+C';
+    if (!api || !api.writeText) { this.kept = null; host.sayAct('The ' + kind + ' was not put on the clipboard: this browser lets a page write it only at its own ' + kind + ', ' + key + '.', true); return null; }
+    return api.writeText(text).then(null, function (e) { self.kept = null; host.sayAct('The ' + kind + ' was not put on the clipboard: the browser refused it (' + why(e) + '); ' + key + ' ' + (kind === 'cut' ? 'cuts' : 'copies') + ' without asking.', true); });
+  };
+  // A copy or a cut of a viewport's selection (decisions 7, 11 and 12): Excel's text of its cells as they show, the page's
+  // copy kept and, for a cut, marked, its cells standing until a paste of it moves them; a cut refused on a read-only sheet.
+  // The text, or null where nothing was taken, the host having said why.
+  GridClip.prototype.take = function (vp, cut) {
+    var host = this.host, sheet = vp.sheet(), word = cut ? 'cut' : 'copied';
+    if (!host.cart || !sheet) { host.sayAct('Nothing was ' + word + ': no cartridge is loaded.', true); return null; }
+    if (cut && host.sheetMode(sheet).read) { host.sayAct('Nothing was cut: ' + sheet + ' is a read-only sheet, named by the manifest\'s (read ...), and a cut empties its cells; a copy takes them (version 6, docs/SPEC.md section 7.2).', true); return null; }
+    var sel = vp.selection(), range = selectionCells(sel, sel.kind === 'cells' ? null : host.extentOf(sheet));
+    if (!range) { host.sayAct('Nothing was ' + word + ': ' + sheet + ' holds no cells there.', true); return null; }
+    var c = host.cellsOf(sheet, range);
+    if (!c.ok) return null;
+    var text = clipText(c.rows.map(function (r) { return r.map(function (x) { return x.shown; }); }));
+    var n = (range.bottom - range.top + 1) * (range.right - range.left + 1), where = sheet + '!' + VP.rangeText(range), them = n === 1 ? 'it' : 'them';
+    this.kept = { text: text, sheet: sheet, range: range, cells: c.rows, cut: !!cut };
+    host.sayAct(cut ? 'Cut ' + where + ', ' + cellsWords(n) + ': a paste of ' + them + ' moves ' + them + ', and Escape or another copy lets ' + them + ' stand.'
+                    : 'Copied ' + where + ', ' + cellsWords(n) + ', to the clipboard.');
+    return text;
+  };
+  // A paste of a text into a viewport's selection (decisions 8 to 12): the page's own copy where the text is its text, its
+  // kept values tiled as Excel tiles its own and each formula's value written, said; any other text read as Excel reads
+  // text from elsewhere, the page's copy and a cut's mark let go; and a cut's own paste moving its cells, its range emptied
+  // as Delete empties one in the same act, its copy kept so that the text pastes the values again. True where the host
+  // took the act.
+  GridClip.prototype.put = function (vp, text) {
+    var host = this.host, sheet = vp.sheet(), kept = this.kept, own = !!kept && String(text) === kept.text, formulas = 0, block;
+    if (!host.cart || !sheet) { host.sayAct('Nothing was pasted: no cartridge is loaded.', true); return false; }
+    if (!own) this.kept = null;   // the clipboard holds another text than the page's copy
+    if (own) block = kept.cells.map(function (r) { return r.map(function (x) { if (x.formula) formulas++; return { kind: x.value === '""' ? 'empty' : 'value', spelled: x.value }; }); });
+    else block = clipFields(text).map(function (r) { return r.map(clipValue); });
+    if (!block.length) { host.sayAct('Nothing was pasted: the clipboard holds no text.', true); return false; }
+    var sel = vp.selection(), area = selectionCells(sel, sel.kind === 'cells' ? null : host.extentOf(sheet)) || { top: sel.range.top, left: sel.range.left, bottom: sel.range.top, right: sel.range.left };
+    var range = pasteRange(area, block.length, maxWidth(block), own), rows = pasteRows(sheet, range, block), n = 0;
+    for (var i = 0; i < rows.length; i++) n += rows[i].cells;
+    var where = sheet + '!' + VP.rangeText(range), note = formulas ? ', ' + (formulas === 1 ? 'a formula as its value' : cellsWords(formulas).replace(/cells?$/, 'formulas') + ' as their values') : '';
+    var p = { sheet: sheet, range: range, rows: rows, place: { sheet: sheet, col: range.left, row: range.top } };
+    if (own && kept.cut) {
+      var from = VP.rangeText(kept.range), src = kept.sheet + '!' + from;
+      p.rows = [{ row: '(cell ' + vlaString(kept.sheet) + ' ' + vlaString(from) + ' "")', sheet: kept.sheet, address: from, kind: 'empty', cells: 0 }].concat(rows);
+      p.what = 'the move of ' + src + ' to ' + where + note; p.done = 'moved ' + src + ' to ' + where + note; p.move = true;
+    } else {
+      p.what = 'the paste of ' + cellsWords(n) + ' into ' + where + note; p.done = 'pasted ' + cellsWords(n) + ' into ' + where + note;
+    }
+    var took = host.paste(p);
+    if (took && p.move) kept.cut = false;   // the cut spent, its copy kept: the clipboard's text pastes the values again, as a copy's does
+    return took;
+  };
+  // A cut's mark let go, its cells standing and its copy kept (decision 12): by Escape, and by a person's edit of its cells,
+  // each said; a copy, a load and a paste of another text let it go with no word of their own, the act's answer its own.
+  GridClip.prototype.letGo = function (why) {
+    var k = this.kept;
+    if (!k || !k.cut) return;
+    k.cut = false;
+    this.host.sayAct('The cut of ' + k.sheet + '!' + VP.rangeText(k.range) + ' was let go by ' + why + ': its cells stand, and a paste copies them.');
+  };
+  GridClip.prototype.wrote = function (e) {
+    var k = this.kept;
+    if (!k || !k.cut || e.move) return;
+    for (var i = 0; i < e.rows.length; i++) if (rowMeets(e.rows[i], k.sheet, k.range)) { this.letGo('an edit of its cells'); return; }
+  };
   // A keymap's text with the palette's place (SPEC.5's rider, the owner's food for thought at CART.9's second hand test):
   // every (palette ...) line taken out and, for the top or the bottom, one written at its end; floating writes none, the
   // keymap's default. A comment that names the line is kept.
@@ -2282,6 +2517,10 @@
     // are, every sheet viewed through the cells in view and never whole.
     var dvp = new VP(document.getElementById('eng-grid'));
     var shownAt = -1, shownTime = -1e9, rate = -1, mode = 'plane', items = {}, viewerSheet = 'Clock', choosing = false, cellOpenHeard = false;
+    // The grid's clipboard (ENGINE.39's second slice): the browser's own events answered in the drawer's sheets, and on the
+    // Screen once its viewport is made, at the first grid load
+    var clip = new GridClip(host, navigator.clipboard || null);
+    clip.listen(dvp);
     dvp.on('sheet', function (e) { if (e.loaded && !choosing) viewerSheet = e.name; host.answer(dvp, e); });
     dvp.on('scroll', function () { host.refreshSheet(dvp, true); });
     // The keys go to what shows the Screen: the plane's canvas, or the viewport's scroller.
@@ -2362,7 +2601,7 @@
       // the load having viewed it over a box not yet laid out (ENGINE.18); the Screen is the frame's own
       if (mode === 'grid' && host.vp) { host.vp.redraw(); host.refreshSheet(host.vp); }
       // Enter, F2 or a double click on a cell opens its edit with what it holds (CART.9), heard once the viewport is made
-      if (mode === 'grid' && host.vp && !cellOpenHeard) { cellOpenHeard = true; host.vp.on('cellopen', function () { if (!(rate > 0 && lastKeyRead && host.gameKeysHere())) openCellEdit(null); }); }
+      if (mode === 'grid' && host.vp && !cellOpenHeard) { cellOpenHeard = true; host.vp.on('cellopen', function () { if (!(rate > 0 && lastKeyRead && host.gameKeysHere())) openCellEdit(null); }); clip.listen(host.vp); }
       frameEl.className = 'frame-line';
       // a save opens at its frame (ENGINE.5), its values computed when it was saved
       frameShort.textContent = 'Frame ' + thousands(e.frame || 0);
@@ -2654,6 +2893,9 @@
       'next-sheet': function () { stepSheet(1); },
       'previous-sheet': function () { stepSheet(-1); },
       'hidden-sheets': toggleHidden,
+      copy: function () { clip.act(sheetsViewport(), 'copy'); },
+      cut: function () { clip.act(sheetsViewport(), 'cut'); },
+      paste: function () { clip.act(sheetsViewport(), 'paste'); },
       game: focusScreen,
       edit: function () { give(editEl); },
       write: function () { document.getElementById('eng-write').click(); },
@@ -3005,7 +3247,8 @@
     paletteBtn.addEventListener('click', function () { palette.toggle(mode === 'grid' && host.vp ? host.vp.scroller : planeCv); });
     // The keys, heard on the document in the capture phase before the game, the viewport or a box hear them. Record a key
     // first; the palette's prompt is its own but for the palette's key; then the keymap's binding in the place that has
-    // the keys, a held key pressing it once and the next and previous sheet at each repeat. Then Tab on the Screen while
+    // the keys, a held key pressing it once and the next and previous sheet at each repeat, the page's copy, cut and
+    // paste on the browser's own key passed on unpressed for its clipboard event (ENGINE.39). Then Tab on the Screen while
     // a game runs, the game's, its walk out of the page kept from it (the owner's hand test): the palette's key leads out.
     // And Escape in full screen, locked to the page: the first passes on with a hint, and a second within three seconds
     // leaves full screen.
@@ -3035,6 +3278,8 @@
         return;
       }
       b = keymapFind(keymap, ev, place, shownIn(place), gameLive);
+      // the page's copy, cut and paste on the browser's own key pass on, its clipboard event the grid's (ENGINE.39)
+      if (b && clipKeyAct(b, ev) === 'pass') return;
       if (b) {
         ev.preventDefault(); ev.stopPropagation();
         if (!ev.repeat || (bindingRepeats(b, host.cart ? host.commands() : [], loadedName()) && host.freshRepeat(ev, !b.game && !b.custom))) { press(b); host.rested(); }
@@ -8022,8 +8267,8 @@
   function caseKeys() {
     var P = [], k = { defaults: 0, refused: 0, places: 0, steps: 0, lines: 0, kept: 0, spelled: 0, said: 0, sheets: 0, last: 0, game: 0 };
     var map = readKeymap(KEYMAP_DEFAULTS, COMMANDS);
-    if (map.ok && map.bindings.length === 16 && !map.order.length && map.bindings.some(function (b) { return b.command === 'palette'; })) k.defaults++;
-    else P.push('keys: the page\'s own keymap reads ' + (map.ok ? map.bindings.length + ' binding(s)' : 'refused: ' + map.problems.join('; ')) + ', where 16 bindings, the palette\'s and Save\'s and Open\'s among them, are due');
+    if (map.ok && map.bindings.length === 19 && !map.order.length && ['palette', 'save', 'copy', 'cut', 'paste'].every(function (n) { return map.bindings.some(function (b) { return b.command === n; }); })) k.defaults++;
+    else P.push('keys: the page\'s own keymap reads ' + (map.ok ? map.bindings.length + ' binding(s)' : 'refused: ' + map.problems.join('; ')) + ', where 19 bindings, the palette\'s, Save\'s and Open\'s and since ENGINE.39 the clipboard\'s three among them, are due');
     // every refusal whole, by its line and its words
     var base = KEYMAP_DEFAULTS + '\n', at = base.split('\n').length;
     var noPalette = KEYMAP_DEFAULTS.replace('(bind "Ctrl+K" palette)\n', '').replace('(bind "Control+Shift+[Backquote]" palette)\n', '');
@@ -8732,6 +8977,351 @@
         else P.push('commands, version 8 at rate 0: a repeat kept behind the step and handed over after the release left the Desk at ' + count() + ' and ran ' + (host.counters().frame - before) + ' frame(s), ' + (before - f0) + ' before it, where 13, none and four are due');
       });
     } finally { stage.removeChild(box); }
+  }
+  // ---- ENGINE.39's second slice: copy, cut and paste in the grid ----
+  // The clipboard card, the page's own as the repeats card is, at (spec 6) and rate 0: a Work sheet holding the kinds of the
+  // range Excel's copy was measured over, a number, a formula of a third under "0.00", texts holding a tab, a line feed and a
+  // quote, a truth value, the empty text, an error and a text; a Bench, the game's, where a person writes formulas; a Ledger,
+  // read-only; a Board bound to its extent, A1:C3; and a hidden Screen of 8 by 4.
+  var CLIPCARD = { file: 'clipcard.vla',
+                   text: '(cartridge "clipcard"\n  (spec 6)\n  (title "A clipboard card")\n  (rate 0)\n  (screen grid 8 4)\n  (seed 1)\n' +
+                         '  (bound "Board")\n  (game "Bench")\n  (read "Ledger")\n  (work "Work"))\n' +
+                         '(sheet "Screen" hidden)\n(sheet "Work" visible)\n(sheet "Bench" visible)\n(sheet "Ledger" visible)\n(sheet "Board" visible)\n' +
+                         '(format 1 none "0.00" nowrap)\n' +
+                         '(cell "Work" "A1" 1)\n(formula "Work" "B1" "=1/3")\n(style "Work" "B1" 1)\n(cell "Work" "C1" "a\tb")\n(cell "Work" "D1" "line1\nline2")\n(cell "Work" "E1" "say \\"hi\\"")\n' +
+                         '(cell "Work" "A2" 2)\n(cell "Work" "B2" true)\n(cell "Work" "C2" "")\n(formula "Work" "D2" "=1/0")\n(cell "Work" "E2" "x")\n' +
+                         '(cell "Bench" "A1" 0)\n(cell "Ledger" "A1" "kept")\n(cell "Board" "A1:C3" 0)\n(cell "Screen" "A1" "the Screen")\n' };
+  // Excel's text of the card's Work!A1:E2 after its first step: its shown texts, 0.33 for the third, as Excel's copy writes them.
+  var CLIP_WORK = '1\t0.33\t"a\tb"\t"line1\nline2"\tsay "hi"\r\n2\tTRUE\t\t#DIV/0!\tx\r\n';
+  // The clipboard case (ENGINE.39's second slice; docs/SPEC.md section 7.2). Its page half, pure: the browser's own chords;
+  // the page's keymap passing its copy, cut and paste on to the browser and pressing any other binding; Excel's text of the
+  // measured range to the byte; a text read back as Excel reads one; a field as typed; a paste's shape; its rows; a whole
+  // selection within its extent. Over the module, the clipboard card's events at the grid's scroller: a range copied; the
+  // page's copy pasted back, its third exact; tiled, one cell filling a range, a block at the corner; a text from elsewhere
+  // split, = a formula and numbers by the reader, locale spellings texts; past a bound sheet's extent and the sheet's edge
+  // refused whole; a read sheet's paste and cut and a game sheet's value refused, its formula taken; each paste one frame;
+  // a cut standing until its paste, then moved in one act, and let go by Escape, an edit of its cells and a paste of another
+  // text; the run's replay played on a fresh host to the same cells, a paste one frame of its rows, and a paste refused while
+  // a replay plays. At a rate, a paste waiting for its frame. On Alonzo's own page, Brickwork's Ctrl+X: the game's cut on its
+  // Wall, the host taking the key the page passed on, and the grid's on its Pace. And the acts no event carries, over a double
+  // of the browser's clipboard: a copy written, a paste refused by the browser and a copy refused, each said.
+  function caseClipboard() {
+    var P = [], notes = [], k = { chords: 0, bindings: 0, text: 0, fields: 0, values: 0, shapes: 0, rows: 0, cells: 0,
+                                  module: 0, copied: 0, pasted: 0, exact: 0, tiled: 0, fills: 0, corner: 0, typed: 0, edges: 0, refused: 0, frames: 0,
+                                  cut: 0, moved: 0, letGo: 0, replayed: 0, rate: 0, game: 0, api: 0 };
+    clipPage(k, P);
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm);
+    k.module = bytes.length;
+    clipRun(bytes, k, P);
+    clipRate(bytes, k, P);
+    if (OWN) clipGame(bytes, k, P); else notes.push('Brickwork\'s Ctrl+X, the game\'s on its Wall and the grid\'s on its Pace, is held on Alonzo\'s own page, over its own cartridge');
+    return clipApi(bytes, k, P).then(function () { return { counters: k, problems: P, notes: notes }; });
+  }
+  function clipPage(k, P) {
+    function key(o) { return { key: o.key || '', code: o.code || '', ctrlKey: !!o.ctrl, metaKey: !!o.meta, shiftKey: !!o.shift, altKey: !!o.alt, repeat: false }; }
+    [[{ key: 'c', code: 'KeyC', ctrl: true }, 'copy'], [{ key: 'c', code: 'KeyC', meta: true }, 'copy'], [{ key: 'x', code: 'KeyX', ctrl: true }, 'cut'], [{ key: 'v', code: 'KeyV', ctrl: true }, 'paste'],
+     [{ key: 'Insert', code: 'Insert', ctrl: true }, 'copy'], [{ key: 'Insert', code: 'Insert', shift: true }, 'paste'], [{ key: 'Delete', code: 'Delete', shift: true }, 'cut'],
+     [{ key: 'C', code: 'KeyC', ctrl: true, shift: true }, null], [{ key: 'c', code: 'KeyC', ctrl: true, alt: true }, null], [{ key: 'c', code: 'KeyC', ctrl: true, meta: true }, null],
+     [{ key: 'с', code: 'KeyC', ctrl: true }, 'copy'], [{ key: 'c', code: 'KeyI', ctrl: true }, 'copy'], [{ key: 'j', code: 'KeyC', ctrl: true }, null],
+     [{ key: 'Delete', code: 'Delete' }, null], [{ key: 'c', code: 'KeyC' }, null]].forEach(function (x) {
+      var got = clipboardChord(key(x[0]));
+      if (got === x[1]) k.chords++; else P.push('clipboard: ' + JSON.stringify(x[0]) + ' is the browser\'s ' + got + ', where ' + x[1] + ' is due');
+    });
+    // the page's keymap: its copy, cut and paste on the Screen and in the drawer's sheets, passed on to the browser; none in a
+    // box; Cmd on a Mac by the browser's mapping; a person's binding of copy on another key pressed, and of another command on
+    // Ctrl+C pressed; the list's words; and a keymap kept before the three gaining them once
+    var map = readKeymap(KEYMAP_DEFAULTS, COMMANDS), live = function () { return false; };
+    [['the page\'s Ctrl+C on the Screen', map, { key: 'c', code: 'KeyC', ctrl: true }, 'screen', 'copy', 'pass'], ['the page\'s Ctrl+X in the drawer\'s sheets', map, { key: 'x', code: 'KeyX', ctrl: true }, 'viewer', 'cut', 'pass'],
+     ['the page\'s Ctrl+V on the Screen', map, { key: 'v', code: 'KeyV', ctrl: true }, 'screen', 'paste', 'pass'], ['Cmd+C on the Screen', map, { key: 'c', code: 'KeyC', meta: true }, 'screen', 'copy', 'pass'],
+     ['Ctrl+C in the source\'s box', map, { key: 'c', code: 'KeyC', ctrl: true }, 'source', null, null],
+     ['a person\'s F7 for copy', readKeymap(KEYMAP_DEFAULTS + '(bind "F7" copy)\n', COMMANDS), { key: 'F7', code: 'F7' }, 'screen', 'copy', 'press'],
+     ['a person\'s Ctrl+C for pause', readKeymap(KEYMAP_DEFAULTS.replace('(bind "Ctrl+C" copy screen viewer)', '(bind "Ctrl+C" pause screen)'), COMMANDS), { key: 'c', code: 'KeyC', ctrl: true }, 'screen', 'pause', 'press']].forEach(function (x) {
+      var b = x[1].ok ? keymapFind(x[1], key(x[2]), x[3], null, live) : null, act = b ? clipKeyAct(b, key(x[2])) : null;
+      if ((b ? b.command : null) === x[4] && act === x[5]) k.bindings++;
+      else P.push('clipboard: ' + x[0] + ' is ' + (b ? b.command + ', ' + (act === 'pass' ? 'passed on' : 'pressed') : 'no binding') + ', where ' + (x[4] ? x[4] + ', ' + (x[5] === 'pass' ? 'passed on' : 'pressed') : 'no binding') + ' is due');
+    });
+    var words = commandKeys(map, 'copy') + ' | ' + commandKeys(map, 'paste');
+    if (words === 'Ctrl+C on the Screen, in the drawer\'s sheets | Ctrl+V on the Screen, in the drawer\'s sheets') k.bindings++; else P.push('clipboard: the list says ' + JSON.stringify(words) + ', where Ctrl+C and Ctrl+V on the Screen and in the drawer\'s sheets are due');
+    var before = KEYMAP_DEFAULTS.split('\n').filter(function (l) { return !/^\(bind "Ctrl\+[CXV]" (copy|cut|paste) /.test(l); }).join('\n'), knew = COMMANDS.map(function (c) { return c.name; }).filter(function (n) { return !CLIP_ACTS[n]; });
+    var offered = offeredLines(readKeymap(before, COMMANDS, true), knew, KEYMAP_DEFAULTS, COMMANDS).join(' | ');
+    if (offered === '(bind "Ctrl+C" copy screen viewer) | (bind "Ctrl+X" cut screen viewer) | (bind "Ctrl+V" paste screen viewer)') k.bindings++; else P.push('clipboard: a keymap kept before the clipboard is offered ' + JSON.stringify(offered) + ', where its three bindings are due');
+    // Excel's text, to the byte, of the range measured at the scoping, one cell, and a field with a carriage return and a quote
+    var measured = [['1', '0.33', 'a\tb', 'line1\nline2', 'say "hi"'], ['2', 'TRUE', '', '#DIV/0!', '2023-03-15'], ['1,234.50', '007', '2', '', '12%']];
+    var excel = '1\t0.33\t"a\tb"\t"line1\nline2"\tsay "hi"\r\n2\tTRUE\t\t#DIV/0!\t2023-03-15\r\n1,234.50\t007\t2\t\t12%\r\n';
+    [[measured, excel, 'the measured range'], [[['6']], '6\r\n', 'one cell'], [[['a"\rb', '']], '"a""\rb"\t\r\n', 'a carriage return and a quote']].forEach(function (x) {
+      var got = clipText(x[0]);
+      if (got === x[1]) k.text++; else P.push('clipboard: Excel\'s text of ' + x[2] + ' is ' + JSON.stringify(got) + ', where ' + JSON.stringify(x[1]) + ' is due');
+    });
+    // a text read as Excel reads one: the measured text back to its fields, each line end, the last empty row dropped, quotes
+    [[excel, measured], ['a\tb\nc\rd\r\n', [['a', 'b'], ['c'], ['d']]], ['a\r\n\r\n', [['a'], ['']]], ['"x""y"\tz', [['x"y', 'z']]], ['"ab\tc', [['"ab', 'c']]],
+     ['"a"b\tc', [['ab', 'c']]], ['', []], ['\r\n', [['']]], ['a\t', [['a', '']]]].forEach(function (x) {
+      var got = clipFields(x[0]);
+      if (JSON.stringify(got) === JSON.stringify(x[1])) k.fields++; else P.push('clipboard: ' + JSON.stringify(x[0]) + ' reads as ' + JSON.stringify(got) + ', where ' + JSON.stringify(x[1]) + ' is due');
+    });
+    // a field as typed: a formula unmoved, numbers by the page's reader, truth values in any case, the empty text, and texts
+    [['=A1+1', 'formula', '"=A1+1"'], ['42', 'value', '42'], [' 42 ', 'value', '42'], ['007', 'value', '007'], ['1e3', 'value', '1e3'], ['-0.5', 'value', '-0.5'], ['.5', 'value', '.5'],
+     ['1E+307', 'value', '1E+307'], ['TRUE', 'value', 'true'], ['false', 'value', 'false'], ['', 'empty', '""'], ['1,234.50', 'value', '"1,234.50"'], ['12%', 'value', '"12%"'],
+     ['$5', 'value', '"$5"'], ['2026-11-18', 'value', '"2026-11-18"'], ['1/2', 'value', '"1/2"'], ['say "hi"', 'value', '"say \\"hi\\""'], ['(1', 'value', '"(1"']].forEach(function (x) {
+      var got = clipValue(x[0]);
+      if (got.kind === x[1] && got.spelled === x[2]) k.values++; else P.push('clipboard: the field ' + JSON.stringify(x[0]) + ' is ' + got.kind + ' ' + got.spelled + ', where ' + x[1] + ' ' + x[2] + ' is due');
+    });
+    // a paste's shape, as Excel's paste of its own copy was measured: into a cell the block; into a multiple tiled; into no
+    // multiple the block at the corner; one cell filling a range; into a smaller selection the whole block; a text never tiled
+    var one = { top: 5, left: 3, bottom: 5, right: 3 }, four = { top: 5, left: 3, bottom: 8, right: 6 }, three = { top: 5, left: 3, bottom: 7, right: 5 }, two = { top: 5, left: 3, bottom: 5, right: 4 };
+    [[one, 2, 2, true, 'C5:D6'], [four, 2, 2, true, 'C5:F8'], [three, 2, 2, true, 'C5:D6'], [three, 1, 1, true, 'C5:E7'], [two, 2, 2, true, 'C5:D6'], [four, 2, 2, false, 'C5:D6'], [three, 1, 1, false, 'C5']].forEach(function (x) {
+      var got = VP.rangeText(pasteRange(x[0], x[1], x[2], x[3]));
+      if (got === x[4]) k.shapes++; else P.push('clipboard: a ' + x[1] + ' by ' + x[2] + (x[3] ? ' copy of the page\'s' : ' text') + ' into ' + VP.rangeText(x[0]) + ' writes ' + got + ', where ' + x[4] + ' is due');
+    });
+    // a paste's rows: one value over a range one range row; a block tiled cell by cell; a short row of a text's fields leaving
+    // the cells past it standing
+    var v = function (s) { return { kind: 'value', spelled: s }; };
+    [['one value over C5:E7', pasteRows('Work', three, [[v('7')]]), '(cell "Work" "C5:E7" 7)', 9],
+     ['a 2 by 2 block tiled over C5:F8', pasteRows('Work', four, [[v('1'), v('2')], [v('3'), v('4')]]), '(cell "Work" "C5" 1) (cell "Work" "D5" 2) (cell "Work" "E5" 1) (cell "Work" "F5" 2) (cell "Work" "C6" 3) (cell "Work" "D6" 4) (cell "Work" "E6" 3) (cell "Work" "F6" 4) (cell "Work" "C7" 1) (cell "Work" "D7" 2) (cell "Work" "E7" 1) (cell "Work" "F7" 2) (cell "Work" "C8" 3) (cell "Work" "D8" 4) (cell "Work" "E8" 3) (cell "Work" "F8" 4)', 16],
+     ['a text of a short row', pasteRows('Work', { top: 5, left: 3, bottom: 6, right: 4 }, [[v('"a"'), { kind: 'formula', spelled: '"=C5"' }], [v('"c"')]]), '(cell "Work" "C5" "a") (formula "Work" "D5" "=C5") (cell "Work" "C6" "c")', 3]].forEach(function (x) {
+      var got = x[1].map(function (r) { return r.row; }).join(' '), n = x[1].reduce(function (s, r) { return s + r.cells; }, 0);
+      if (got === x[2] && n === x[3]) k.rows++; else P.push('clipboard: ' + x[0] + ' writes ' + JSON.stringify(got) + ', ' + n + ' cells, where ' + JSON.stringify(x[2]) + ', ' + x[3] + ', is due');
+    });
+    // a selection's cells: a range as it stands; whole rows, columns and the sheet within the extent; none past it
+    var ext = { top: 1, left: 1, bottom: 20, right: 6 };
+    [[{ kind: 'cells', range: { top: 2, left: 2, bottom: 3, right: 3 } }, ext, 'B2:C3'], [{ kind: 'rows', range: { top: 2, left: 1, bottom: 3, right: 40 } }, ext, 'A2:F3'],
+     [{ kind: 'columns', range: { top: 1, left: 2, bottom: 60, right: 3 } }, ext, 'B1:C20'], [{ kind: 'sheet', range: { top: 1, left: 1, bottom: 60, right: 40 } }, ext, 'A1:F20'],
+     [{ kind: 'rows', range: { top: 30, left: 1, bottom: 31, right: 40 } }, ext, 'none'], [{ kind: 'sheet', range: { top: 1, left: 1, bottom: 60, right: 40 } }, null, 'none']].forEach(function (x) {
+      var r = selectionCells(x[0], x[1]), got = r ? VP.rangeText(r) : 'none';
+      if (got === x[2]) k.cells++; else P.push('clipboard: a selection of ' + x[0].kind + ' takes ' + got + ', where ' + x[2] + ' is due');
+    });
+  }
+  // The card over the module at rate 0, its events at the grid's scroller as the browser fires them.
+  function clipRun(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:640px;height:300px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var exports = HOST.instantiateSync(bytes), D = new Driver({ exports: exports }), host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box });
+    try {
+      var ld = host.attach(exports).ok ? host.load(CLIPCARD.text, CLIPCARD.file) : { ok: false };
+      if (!ld.ok) { P.push('clipboard: the clipboard card did not load: ' + ld.sentence); return; }
+      var vp = host.vp, sc = vp.scroller, clip = new GridClip(host, null);
+      clip.listen(vp);
+      function fire(kind, text) {
+        var dt = new DataTransfer();
+        if (text !== undefined) dt.setData('text/plain', text);
+        var ev = new ClipboardEvent(kind, { clipboardData: dt, cancelable: true, bubbles: true });
+        sc.dispatchEvent(ev);
+        return { prevented: ev.defaultPrevented, text: dt.getData('text/plain') };
+      }
+      function at(sheet, sel) { host.showSheet(vp, sheet); vp.select(sel); }
+      function vals(sheet, win) { return recordValues(D.call('alonzo_view', [ld.handle], ['grid', sheet, win]).text); }
+      function said() { var s = host.sentences(); return s.length ? s[s.length - 1].text : ''; }
+      function frame() { return host.counters().frame; }
+      function show(v) { return v === undefined ? 'nothing' : JSON.stringify(v && v.num !== undefined ? v.text : v && v.sym !== undefined ? v.sym : Array.isArray(v) ? v[0].sym + ' ' + v[1] : v); }
+      // a paste through the browser's event: one frame, saying words; true where it was
+      function paste(what, text, words) {
+        var f0 = frame(), e = fire('paste', text), n = frame() - f0;
+        if (!e.prevented) P.push('clipboard: ' + what + ' was left to the browser');
+        else if (n !== 1) P.push('clipboard: ' + what + ' stepped ' + n + ' frames, where one is due');
+        else if (said() !== 'frame ' + frame() + ': stepped once for ' + words + '.') P.push('clipboard: after ' + what + ' the host said ' + JSON.stringify(said()) + ', where "frame ' + frame() + ': stepped once for ' + words + '." is due');
+        else { k.frames++; return true; }
+        return false;
+      }
+      // the cells a range holds, each as the record spells its value, the empty for none
+      function holds(what, sheet, want) {
+        var box = null;
+        Object.keys(want).forEach(function (a) {
+          var q = VP.parseRange(a);
+          box = box ? { top: Math.min(box.top, q.top), left: Math.min(box.left, q.left), bottom: Math.max(box.bottom, q.bottom), right: Math.max(box.right, q.right) } : q;
+        });
+        var got = vals(sheet, VP.rangeText(box)), bad = [];
+        Object.keys(want).forEach(function (a) { if (show(got[a]) !== want[a]) bad.push(sheet + '!' + a + ' holds ' + show(got[a]) + ', where ' + want[a]); });
+        if (bad.length) P.push('clipboard: ' + what + ': ' + bad.join('; '));
+        return !bad.length;
+      }
+      host.edit('(cell "Work" "H20" 0)');   // the first step, the third computed
+      // a range copied: Excel's text of its shown cells, the third shown 0.33
+      at('Work', 'A1:E2');
+      var c1 = fire('copy');
+      if (c1.prevented && c1.text === CLIP_WORK && said() === 'Copied Work!A1:E2, 10 cells, to the clipboard.') k.copied++;
+      else P.push('clipboard: the copy of Work!A1:E2 gave ' + JSON.stringify(c1.text) + (c1.prevented ? '' : ', left to the browser') + ' and said ' + JSON.stringify(said()) + ', where ' + JSON.stringify(CLIP_WORK) + ' is due');
+      // the page's copy pasted back: its values exact, the third and the error among them, its formulas said
+      at('Work', 'A10');
+      if (paste('the paste of the page\'s copy into Work!A10', CLIP_WORK, 'the paste of 10 cells into Work!A10:E11, two formulas as their values') &&
+          holds('the page\'s copy pasted into A10', 'Work', { A10: '"1"', B10: '"0.3333333333333333"', C10: '"a\\tb"', D10: '"line1\\nline2"', E10: '"say \\"hi\\""', A11: '"2"', B11: '"true"', C11: '""', D11: '"error #DIV/0!"', E11: '"x"' })) { k.pasted++; k.exact++; }
+      // tiled into a multiple, one cell filling a range, and the block at the corner of a selection no multiple of it
+      at('Work', 'A1:B2'); fire('copy'); at('Work', 'G1:J4');
+      if (paste('the page\'s 2 by 2 copy into Work!G1:J4', '1\t0.33\r\n2\tTRUE\r\n', 'the paste of 16 cells into Work!G1:J4, a formula as its value') &&
+          holds('the 2 by 2 copy tiled', 'Work', { G1: '"1"', H1: '"0.3333333333333333"', I1: '"1"', J1: '"0.3333333333333333"', G2: '"2"', H2: '"true"', I2: '"2"', J2: '"true"', G3: '"1"', J4: '"true"' })) k.tiled++;
+      at('Work', 'A2'); fire('copy'); at('Work', 'G6:I8');
+      var replayBefore = (host.replayText() || '').length;
+      if (paste('one cell into Work!G6:I8', '2\r\n', 'the paste of nine cells into Work!G6:I8') && holds('one cell filling G6:I8', 'Work', { G6: '"2"', H7: '"2"', I8: '"2"' })) {
+        if ((host.replayText() || '').slice(replayBefore).indexOf('  (cell "Work" "G6:I8" 2)') >= 0) k.fills++;
+        else P.push('clipboard: one cell filling Work!G6:I8 was recorded as ' + JSON.stringify((host.replayText() || '').slice(replayBefore, replayBefore + 200)) + ', where one range row is due');
+      }
+      at('Work', 'A1:B2'); fire('copy'); at('Work', 'G10:I12');
+      if (paste('the page\'s 2 by 2 copy into Work!G10:I12', '1\t0.33\r\n2\tTRUE\r\n', 'the paste of four cells into Work!G10:H11, a formula as its value') &&
+          holds('the block at the corner of G10:I12', 'Work', { G10: '"1"', H11: '"true"', I12: 'nothing' })) k.corner++;
+      // a text from elsewhere: split as Excel's, = a formula unmoved, numbers by the reader, a truth value; never tiled
+      at('Work', 'A20:D23');
+      if (paste('a text from elsewhere into Work!A20:D23', 'x\t=A1*2\r\n 42 \tTRUE\r\n', 'the paste of four cells into Work!A20:B21') &&
+          holds('the text pasted into A20', 'Work', { A20: '"x"', B20: '"2"', A21: '"42"', B21: '"true"', C20: 'nothing', A22: 'nothing' }) &&
+          D.call('alonzo_view', [ld.handle], ['grid', 'Work', 'B20']).text.indexOf('(formula "Work" "B20" "=A1*2")') >= 0) k.typed++;
+      at('Work', 'A25');
+      if (paste('a locale\'s spellings into Work!A25', '1,234.50\t12%\t2026-11-18\r\n', 'the paste of three cells into Work!A25:C25') &&
+          holds('a locale\'s spellings, texts', 'Work', { A25: '"1,234.50"', B25: '"12%"', C25: '"2026-11-18"' })) k.typed++;
+      // past an edge, refused whole and said, its first cell named: a bound sheet's extent, which a write would grow, and the
+      // sheet's own
+      [['Board', 'C3', '1\t2\r\n', 'The paste of two cells into Board!C3:D3 was not written: it reaches Board!D3, past the extent Board is bound to, A1:C3.'],
+       ['Work', 'XFD1', 'a\tb\r\n', 'The paste of two cells into Work!XFD1:XFE1 was not written: it reaches Work!XFE1, past the sheet\'s last cell, XFD1048576.']].forEach(function (x) {
+        at(x[0], x[1]);
+        var f0 = frame(), e = fire('paste', x[2]), ext = host.extentOf('Board');
+        if (e.prevented && frame() === f0 && said() === x[3] && ext && VP.rangeText(ext) === 'A1:C3') k.edges++;
+        else P.push('clipboard: a paste past an edge at ' + x[0] + '!' + x[1] + ' stepped ' + (frame() - f0) + ' frame(s), left Board\'s extent ' + (ext ? VP.rangeText(ext) : 'none') + ' and said ' + JSON.stringify(said()) + ', where none, A1:C3 and ' + JSON.stringify(x[3]) + ' are due');
+      });
+      // a read-only sheet: a paste and a cut refused by its name, a copy taken; a game sheet: a value refused, a formula taken
+      at('Ledger', 'A1');
+      var f1 = frame(), r1 = fire('paste', '5\r\n'), ledger = show(vals('Ledger', 'A1').A1);
+      if (r1.prevented && frame() === f1 && ledger === '"kept"' && /^The paste of one cell into Ledger!A1 was not written: Ledger is a read-only sheet/.test(said())) k.refused++;
+      else P.push('clipboard: a paste into the read-only Ledger stepped ' + (frame() - f1) + ' frame(s), left Ledger!A1 holding ' + ledger + ' and said ' + JSON.stringify(said()) + ', where it is refused by the sheet\'s name');
+      var r2 = fire('cut');
+      if (!r2.prevented && /^Nothing was cut: Ledger is a read-only sheet/.test(said()) && !(clip.kept && clip.kept.cut)) k.refused++;
+      else P.push('clipboard: a cut on the read-only Ledger was ' + (r2.prevented ? 'taken' : 'left to the browser') + ' and said ' + JSON.stringify(said()) + ', where it is refused by the sheet\'s name');
+      var r3 = fire('copy');
+      if (r3.prevented && r3.text === 'kept\r\n') k.copied++; else P.push('clipboard: a copy of the read-only Ledger!A1 gave ' + JSON.stringify(r3.text) + ', where "kept\\r\\n" is due');
+      at('Bench', 'A1');
+      var f2 = frame(), r4 = fire('paste', '5\r\n');
+      if (r4.prevented && frame() === f2 && /^The paste of one cell into Bench!A1 was not written: Bench is the game's, where a person writes a formula and no value/.test(said())) k.refused++;
+      else P.push('clipboard: a value pasted into the game\'s Bench stepped ' + (frame() - f2) + ' frame(s) and said ' + JSON.stringify(said()) + ', where it is refused, a person writing formulas there');
+      if (paste('a formula into the game\'s Bench!A1', '=1+1\r\n', 'the paste of one cell into Bench!A1') && holds('a formula pasted into the Bench', 'Bench', { A1: '"2"' })) k.pasted++;
+      // a cut: its cells standing until its paste, which moves them in one act, its range emptied; its text again a copy
+      at('Work', 'A30');
+      paste('a text into Work!A30', 'p\tq\r\n', 'the paste of two cells into Work!A30:B30');
+      at('Work', 'A30:B30');
+      var f3 = frame(), x1 = fire('cut');
+      if (x1.prevented && x1.text === 'p\tq\r\n' && frame() === f3 && show(vals('Work', 'A30').A30) === '"p"' && clip.kept && clip.kept.cut && said() === 'Cut Work!A30:B30, two cells: a paste of them moves them, and Escape or another copy lets them stand.') k.cut++;
+      else P.push('clipboard: the cut of Work!A30:B30 left Work!A30 holding ' + show(vals('Work', 'A30').A30) + ', stepped ' + (frame() - f3) + ' frame(s) and said ' + JSON.stringify(said()) + ', where its cells stand until its paste');
+      at('Work', 'A32');
+      if (paste('the cut\'s paste into Work!A32', 'p\tq\r\n', 'the move of Work!A30:B30 to Work!A32:B32') && holds('the cut moved', 'Work', { A30: '""', B30: '""', A32: '"p"', B32: '"q"' }) && !clip.kept.cut) k.moved++;
+      at('Work', 'A34');
+      if (paste('the cut\'s text pasted again into Work!A34', 'p\tq\r\n', 'the paste of two cells into Work!A34:B34') && holds('the cut\'s text again a copy', 'Work', { A32: '"p"', A34: '"p"', B34: '"q"' })) k.moved++;
+      // a cut let go: by Escape, said; by an edit of its cells, said; by a paste of another text; each leaving its cells
+      at('Work', 'A32:B32'); fire('cut');
+      sc.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true }));
+      var esc = said();
+      at('Work', 'A36');
+      if (esc === 'The cut of Work!A32:B32 was let go by Escape: its cells stand, and a paste copies them.' && paste('the text of a cut let go into Work!A36', 'p\tq\r\n', 'the paste of two cells into Work!A36:B36') && holds('a cut let go by Escape', 'Work', { A32: '"p"', A36: '"p"' })) k.letGo++;
+      else if (esc.indexOf('let go by Escape') < 0) P.push('clipboard: Escape after a cut said ' + JSON.stringify(esc) + ', where the cut let go is due');
+      at('Work', 'A36:B36'); fire('cut');
+      host.edit('(cell "Work" "A36" "edited")');
+      var ed = host.sentences().slice(-2).map(function (s) { return s.text; }).join(' | ');
+      at('Work', 'A38');
+      if (/The cut of Work!A36:B36 was let go by an edit of its cells: its cells stand, and a paste copies them\./.test(ed) && paste('the text of a cut let go by an edit into Work!A38', 'p\tq\r\n', 'the paste of two cells into Work!A38:B38') && holds('a cut let go by an edit', 'Work', { A36: '"edited"', B36: '"q"', A38: '"p"' })) k.letGo++;
+      else if (!/let go by an edit/.test(ed)) P.push('clipboard: an edit of a cut\'s cells said ' + JSON.stringify(ed) + ', where the cut let go is due');
+      at('Work', 'A38:B38'); fire('cut'); at('Work', 'A40');
+      if (paste('another text over a cut', 'other\r\n', 'the paste of one cell into Work!A40') && holds('a cut let go by another text', 'Work', { A38: '"p"', A40: '"other"' }) && clip.kept === null) k.letGo++;
+      // the run's replay, played on a fresh host: the same cells, a paste one frame of its rows, the move's emptying among them
+      var text = host.replayText() || '', M = new HOST({ drive: 'manual', budget: 0, now: frozen }), ex2 = HOST.instantiateSync(bytes), MD = new Driver({ exports: ex2 });
+      try {
+        var live = cellRows(D.call('alonzo_view', [ld.handle], ['values', 'Work', 'A1:J40']).text);
+        if (!M.attach(ex2).ok || !M.load(CLIPCARD.text, CLIPCARD.file).ok) P.push('clipboard: a fresh host did not load the clipboard card');
+        else {
+          var pm = M.play(text, true), played = cellRows(MD.call('alonzo_view', [M.counters().handle], ['values', 'Work', 'A1:J40']).text);
+          var moveFrame = /\(frame \d+\n(?:  \(cell "Input" [^\n]*\n)*  \(cell "Work" "A30:B30" ""\)\n  \(cell "Work" "A32" "p"\)\n  \(cell "Work" "B32" "q"\)\)/.test(text);
+          if (pm.ok && pm.frames === frame() && played === live && moveFrame) k.replayed++;
+          else P.push('clipboard: the run\'s replay played on a fresh host ' + (pm.ok ? 'to frame ' + pm.frames : 'was refused') + ' of ' + frame() + (played === live ? '' : ', its Work not the live run\'s') + (moveFrame ? '' : ', the move not one frame of its rows'));
+          // a paste refused while a replay plays, as every edit is
+          M.play(text);
+          var pr = M.paste({ sheet: 'Work', range: { top: 50, left: 1, bottom: 50, right: 1 }, rows: [{ row: '(cell "Work" "A50" 1)', sheet: 'Work', address: 'A50', kind: 'value', cells: 1 }], what: 'the paste of one cell into Work!A50', done: 'pasted one cell into Work!A50', place: { sheet: 'Work', col: 1, row: 50 } });
+          var ms = M.sentences(), mlast = ms.length ? ms[ms.length - 1].text : '';
+          if (!pr && /^The paste of one cell into Work!A50 was not written: a replay is playing/.test(mlast)) k.refused++;
+          else P.push('clipboard: a paste while a replay plays was ' + (pr ? 'taken' : 'refused') + ', saying ' + JSON.stringify(mlast) + ', where it is refused as every edit is');
+        }
+      } finally { M.destroy(); }
+      var refusals = host.sentences().filter(function (sn) { return sn.refusal && !/was not written|Nothing was cut/.test(sn.text); });
+      if (refusals.length) P.push('clipboard: the host was refused: ' + refusals[0].text);
+    } finally { host.destroy(); stage.removeChild(box); }
+  }
+  // A record's cell and value rows, each spelled again, the rest left out: what two grids' cells are compared by.
+  function cellRows(text) {
+    return VP.readForms(text).filter(function (f) { return Array.isArray(f) && f[0] && (f[0].sym === 'cell' || f[0].sym === 'value'); })
+      .map(function (f) { return f[0].sym + ' ' + JSON.stringify(f.slice(1)); }).join('\n');
+  }
+  // At a rate a paste waits for its frame, said while the loop is paused, and lands at it, said.
+  function clipRate(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:640px;height:300px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var clock = { t: 1000 }, exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: function () { return clock.t; }, grid: box });
+    try {
+      var ld = host.attach(exports).ok ? host.load(CLIPCARD.text.replace('(rate 0)', '(rate 30)'), CLIPCARD.file) : { ok: false };
+      if (!ld.ok) { P.push('clipboard at 30: the card did not load: ' + ld.sentence); return; }
+      var clip = new GridClip(host, null);
+      host.showSheet(host.vp, 'Work'); host.vp.select('A10');
+      clip.put(host.vp, '7\t8\r\n');
+      var waited = host.sentences().slice(-1)[0].text;
+      host.start(); host.tick(clock.t);
+      for (var i = 0; i < 3 && host.counters().frame < 1; i++) { clock.t += 1000 / 30; host.tick(clock.t); }
+      var landed = host.sentences().filter(function (s) { return /pasted two cells into Work!A10:B10\.$/.test(s.text); }).length;
+      if (waited === 'frame 0: the paste of two cells into Work!A10:B10 waits for the next frame, which Run brings: the loop is paused at 30 frames a second.' && landed === 1 && host.counters().pastes === 1) k.rate++;
+      else P.push('clipboard at 30: a paste while paused said ' + JSON.stringify(waited) + ' and landed ' + landed + ' time(s), where it waits for Run and lands at the next frame');
+    } finally { host.destroy(); stage.removeChild(box); }
+  }
+  // Brickwork's Ctrl+X (CART.3's decision 8): on its Wall, a game and read-only sheet, the page's keymap finds its cut and
+  // passes the key on, and the host takes it as the game's cut, its keydown prevented so that the browser fires no cut; on
+  // its Pace, a work sheet, the key passes the host too and the browser's cut is the grid's.
+  function clipGame(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:900px;height:600px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var clock = { t: 1000 }, exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: function () { return clock.t; }, grid: box });
+    try {
+      var ld = host.attach(exports).ok ? host.load(CARTRIDGES.brickwork.text, CARTRIDGES.brickwork.file) : { ok: false };
+      if (!ld.ok) { P.push('clipboard: Brickwork did not load: ' + ld.sentence); return; }
+      var vp = host.vp, clip = new GridClip(host, null), map = readKeymap(KEYMAP_DEFAULTS, COMMANDS);
+      clip.listen(vp);
+      host.start();
+      for (var i = 0; i < 4; i++) { host.tick(clock.t); clock.t += 1000 / 60; }
+      function ctrlX(sheet) {
+        var ev = new KeyboardEvent('keydown', { key: 'x', code: 'KeyX', ctrlKey: true, bubbles: true, cancelable: true });
+        var b = keymapFind(map, ev, 'screen', sheet, function () { return false; }), act = b ? clipKeyAct(b, ev) : 'none';
+        if (act === 'pass') vp.scroller.dispatchEvent(ev);
+        else if (act === 'press') clip.act(vp, 'cut');   // the page's own press, the key kept from the host
+        return { binding: b ? b.command : null, act: act, prevented: ev.defaultPrevented };
+      }
+      var wall = vp.sheet(), c0 = host.counters().commands, w = ctrlX(wall);
+      for (var j = 0; j < 3; j++) { host.tick(clock.t); clock.t += 1000 / 60; }
+      var ran = host.counters().commands - c0;
+      if (/^wall$/i.test(wall) && w.binding === 'cut' && w.act === 'pass' && w.prevented && ran === 1 && !clip.kept) k.game++;
+      else P.push('clipboard: Ctrl+X on Brickwork\'s ' + wall + ' was the page\'s ' + w.binding + ', ' + (w.act === 'pass' ? 'passed on' : 'pressed') + ', its keydown ' + (w.prevented ? 'prevented' : 'unprevented') + ', ran ' + ran + ' command(s) and left the page\'s cut ' + (clip.kept ? 'taken' : 'none') + ', where the game\'s cut runs');
+      host.showSheet(vp, 'Pace'); vp.select('B1:B2');
+      var p = ctrlX('Pace'), dt = new DataTransfer(), cut = new ClipboardEvent('cut', { clipboardData: dt, cancelable: true, bubbles: true });
+      if (p.act === 'pass' && !p.prevented) vp.scroller.dispatchEvent(cut);   // the browser's cut, the key unprevented
+      if (p.act === 'pass' && !p.prevented && cut.defaultPrevented && clip.kept && clip.kept.cut && clip.kept.sheet === 'Pace' && dt.getData('text/plain').split('\r\n').length === 3) k.game++;
+      else P.push('clipboard: Ctrl+X on Brickwork\'s Pace was ' + (p.act === 'pass' ? 'passed on' : 'pressed') + ', its keydown ' + (p.prevented ? 'prevented' : 'unprevented') + ', and the grid\'s cut ' + (clip.kept && clip.kept.cut ? 'took ' + clip.kept.sheet : 'took nothing') + ', where the browser\'s cut is the grid\'s');
+    } finally { host.destroy(); stage.removeChild(box); }
+  }
+  // The acts no event carries, over a double of the browser's clipboard: a copy from the palette written by writeText; a
+  // paste refused by the browser's readText, said; and a copy the browser refuses, said and not kept.
+  function clipApi(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:640px;height:300px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box }), written = [];
+    function done() { host.destroy(); stage.removeChild(box); }
+    try {
+      if (!host.attach(exports).ok || !host.load(CLIPCARD.text, CLIPCARD.file).ok) { P.push('clipboard: the card did not load for the browser\'s clipboard'); done(); return Promise.resolve(); }
+      host.edit('(cell "Work" "H20" 0)');
+      host.showSheet(host.vp, 'Work'); host.vp.select('A1:B1');
+      var api = { writeText: function (t) { written.push(t); return Promise.resolve(); }, readText: function () { return Promise.reject(new Error('Read permission denied.')); } };
+      var refusing = { writeText: function () { return Promise.reject(new Error('Write permission denied.')); } };
+      var clip = new GridClip(host, api), clip2 = new GridClip(host, refusing);
+      var p1 = clip.act(host.vp, 'copy'), p2 = clip.act(host.vp, 'paste'), p3 = clip2.act(host.vp, 'copy');
+      return Promise.all([p1, p2, p3]).then(function () {
+        var texts = host.sentences().map(function (s) { return s.text; });
+        if (written.length === 1 && written[0] === '1\t0.33\r\n' && clip.kept && clip.kept.text === written[0]) k.api++; else P.push('clipboard: a copy from the palette wrote ' + JSON.stringify(written) + ', where "1\\t0.33\\r\\n" is due');
+        if (texts.indexOf('Nothing was pasted: the browser refused the page the clipboard\'s text (Read permission denied.); Ctrl+V pastes without asking.') >= 0) k.api++; else P.push('clipboard: a paste the browser refused said ' + JSON.stringify(texts.slice(-3)) + ', where the refusal is said');
+        if (clip2.kept === null && texts.indexOf('The copy was not put on the clipboard: the browser refused it (Write permission denied.); Ctrl+C copies without asking.') >= 0) k.api++; else P.push('clipboard: a copy the browser refused said ' + JSON.stringify(texts.slice(-2)) + (clip2.kept ? ' and was kept' : '') + ', where the refusal is said and nothing kept');
+        done();
+      }, function (e) { P.push('clipboard: the browser\'s clipboard\'s double failed: ' + (e && e.message ? e.message : e)); done(); });
+    } catch (e) { done(); throw e; }
   }
   // ---- CART.12: version 6, an act settled ----
   // The settle card, the page's own as the commands card is, written here and never a file, at version 6, so that a game's
@@ -9862,7 +10452,8 @@
     var cases = [['rate30', caseRate30], ['rate0', caseRate0], ['yield', caseYield], ['slice', caseSlice], ['pace', casePace], ['memory', caseMemory], ['abi', caseAbi], ['refusals', caseRefusals],
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
-                 ['continue', caseContinue], ['palette', casePalette], ['drawer', caseDrawer], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths], ['modes', caseModes], ['save', caseSave], ['keep', caseKeep]];
+                 ['continue', caseContinue], ['palette', casePalette], ['drawer', caseDrawer], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths], ['modes', caseModes], ['save', caseSave], ['keep', caseKeep],
+                 ['clipboard', caseClipboard]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -9871,7 +10462,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, drawer: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1, keep: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, drawer: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1, keep: 1, clipboard: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }
