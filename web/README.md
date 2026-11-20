@@ -505,11 +505,13 @@ first, as Brickwork's Ctrl+X on its Wall is its own cut. A copy puts the
 selection on the clipboard as Excel does, each cell's text as it shows, a
 tab between cells and a line end after each row, and the page keeps it, so
 that its paste writes the exact values, 0.3333333333333333 where 0.33 showed,
-tiled over a selection that is a whole multiple of it, one cell filling the
-selection; and since the third slice its formulas, each moved as Excel moves
+tiled in each direction, filling the selection exactly where it is at least
+the block's size and taking the block's own rows or columns where it is
+smaller, the last copies cut at its edge as a fill handle cuts a pattern, one
+cell filling the selection; and since the third slice its formulas, each moved as Excel moves
 a formula copied, by the language's mover, the module's thirteenth export
-(`alonzo_moved`), a fill one fill row. A cut's paste moves its cells once,
-never tiled, and keeps its formulas' references where they pointed, as
+(`alonzo_moved`), a fill one fill row. A cut's paste moves its cells, tiled
+as a copy's is, and keeps its formulas' references where they pointed, as
 Excel's move does, and every paste of its text after that writes the same
 cells again, as they were cut, so that only a copy moves references; a
 formula reading the cut cells still reads where they stood, which the
