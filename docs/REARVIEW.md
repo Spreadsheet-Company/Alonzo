@@ -12204,3 +12204,75 @@ The owner answered the three questions brought the same day, "Yes to all three":
 4. *A cell's edit is its row,* `(cell "Responses" "B7" "...")`, so a curator types between quotes, a quote as `\"` and a backslash twice: a paragraph's break is typed `\\n\\n` in the palette and reads `\n\n` in its cell. `IDE.3`'s buffer is where a text would be edited as a text.
 5. *`ALONZO_BLESS=1 cargo test describe` writes every golden with LF,* where a checkout gives a `.vla` CR LF, so the twelve others stand touched until they are restored.
 6. *A language's tag written in quotes comes back bare* where it is an atom. Afterlife's page for a phone writes `language("en")` and Walter's file `language(en)`, and one cell cannot say which: the writer's one way, said in the hand's own words.
+
+### Its second slice, the page: scoped 2026-11-21
+
+*At the owner's word, "Mint the Control + End finding, then scope slice two of CART.16", with his question: "The three rulings then become how generalized we want this new behavior to be in the Alonzo engine, and whether it's a valuable enough feature to be exposed to cartridge authors. My gut says yes, because it feels like a curious orthogonal feature currently unavailable to spreadsheet users, but I don't know how difficult it will be to abstract/implement." Nothing is built; the decisions at its end are his.*
+
+**What the slice is.** The page opens a reel's file into the cartridge's tabs and saves the tabs as the file, with no command between. The first slice's reader and writer do that work already. The question is whose they are: Afterlife's alone, or any cartridge's.
+
+**What stands**, measured at this scoping.
+- *The page.* Open and Save take `.vla` alone (`personFile` and the open picker's `accept`, `web/index.template.html`), a save is a cartridge (`SPEC.md` §7.5) and the engine loads rows and nothing else (§7.4).
+- *The hand.* `engine/src/afterlife.rs` is 760 lines before its tests. What is the reel's own in it is one table, `TABS`: thirteen relations, each argument's kind and the column it starts at. The reading, the writing, the stops, the comments, the empty lines and the refusals name no relation.
+- *The language*, `vla-lang` 0.14.0. Its formulas compute `MID`, `FIND`, `SEARCH`, `SUBSTITUTE`, `TEXTJOIN`, `CODE` and `UNICHAR`, and `REDUCE`, `SCAN`, `MAP` and `SEQUENCE`; they compute no `TEXTSPLIT`, `TEXTBEFORE` or `TEXTAFTER` and no `REGEX` function. Its expander has one primitive over a text, `characters-expand`, a text split into its characters, and a macro's chain ends at 5,000 applications (`SPEC.md` §10), where Walter's file is 58,824 characters.
+- *The module.* Its exports are thirteen, two of them calls beside the four that take a text and answer one, the pass and the mover (§4.6); the pass is run by the page and by the command line alike.
+- *Excel.* It reads a text one way, by its import of text and by Power Query, and saves one sheet as CSV. Its mapping in both directions is the XML map: cells and tables mapped to a schema's elements, imported and exported, XML alone, at most 65,536 rows, a list inside a list not exported (Microsoft, "Export XML data" and "Issue: Verifying an XML map for export"). Nothing in it maps a workbook both ways onto a text format of the author's choosing.
+- *Outside spreadsheets* the idea has a name and a law. A lens is a `get` and a `put`, held to each other by the round trip (Bohannon, Foster, Pierce, Pilkiewicz and Schmitt, "Boomerang: Resourceful Lenses for String Data", POPL 2008). Augeas lives by it: it shows a configuration file as a tree and writes an edit back, and "works very hard to preserve comments and formatting details such as the number of spaces used to separate fields" (augeas.net). The first slice is such a lens, written for one format, and its law is its test: the golden read and written is the golden.
+
+So the owner's gut is measured right: a spreadsheet that is the editor of a file which stays itself is not on Excel's shelf, and it is Augeas with tabs where Augeas has a tree.
+
+**How general: four designs.**
+1. *Afterlife's alone.* The hand moved into the module as it stands, the engine knowing a reel's thirteen relations. The least code, since the hand is written. But the core learns patterns and never games (the roadmap's note of 2026-10-11), and the page names no game's file (`ENGINE.15`). Refused by the charter.
+2. *Lines.* The host writes a text file's lines into a sheet, a line a row, and saves a column back as a file; the cartridge's formulas split each line into its tabs' cells and print the cells as lines; and after the load the host writes the tabs' computed values over their formulas, so that a person edits words and not `=MID(...)`. The engine's part is three rows of the File sheet. It reaches every format an author can parse in formulas, and that is its cost: with no function that splits a text, `follow(hello, "How are you, Grandpa?", keeping).`, whose text holds a comma, is a walk of the line's characters by `REDUCE`, a formula a column a row, some 3,700 walks at Walter's load, and which tab a line belongs to, a comment going to the fact after it, is a second such program. It hands every author the whole difficulty. The floor to keep in reach, and the wrong place to stop.
+3. *Templates.* A row a kind of line: the sheet it belongs to, and the line written out with holes, a hole a column and a kind, `follow({A:name},{B:text@23},{C:name@64}).`. One template is both directions, matched to read and filled to write, so the round trip holds by construction. The engine's part is a device sheet, one reader of templates in the crate, two exports, and the page's Open and Save. It reaches every file whose each line is one record of a few fixed shapes, a comment or empty: Prolog's facts, Datalog's and clingo's, a `.env` file, `hosts`, VLA's own rows as Buffet's content sheets keep them, a CSV of known columns. It does not reach a record written over several lines, a nested format (JSON, XML, YAML) or a CSV of unknown width, which is a later kind of hole. Afterlife's whole mapping is thirteen rows.
+4. *Programs.* The reader and the writer written in VLA, any format a program can parse. The language has neither a search nor a part of a text at expand time, and its expander was built to lay rows and not to read a file of 59,000 characters. Frazaro's work, a quarter where the others are days. The horizon: a template is the special case it would one day take in.
+
+**The recommendation: templates.** It is the least thing that keeps the engine ignorant of Afterlife and still asks nothing hard of an author. It keeps the floor in reach, since a template of one hole, `{A:rest}`, is a line a cell. And it stands on what is built: the hand's reader and writer become the template's, their table read from the cartridge.
+
+**The template, as proposed.** Literal text and holes. A hole is a column and a kind, `{B:text}`; with a stop, `{B:text@23}`, it is written at that column, spaces before it and one at least, and read after any run of spaces. A column bound to a literal, `{A=reel}`, is read where the literal stands and written by it, which is how six facts share the Summary. The kinds are few: `name`, a lowercase letter and then letters, digits and underscores; `word`, any run without a space; `text`, in double quotes, a quote and a backslash escaped, kept in its cell as the first slice keeps it; `whole`, digits; `rest`, to the line's end; and `note`, the comment at a line's end. Two kinds may share a hole, `{B:name|text}`, written bare where it is a name. A comment line and an empty line are every format's, by a leader said once. Afterlife's cartridge would say:
+
+| sheet | line |
+|---|---|
+| Summary | `{A=reel}({B:whole}).{C:note@49}` |
+| Summary | `{A=speaker}({B:text}).{C:note@49}` |
+| Summary | `{A=about}({B:text}).{C:note@49}` |
+| Summary | `{A=language}({B:name\|text}).{C:note@49}` |
+| Summary | `{A=opening}({B:name}).{C:note@49}` |
+| Summary | `{A=generated}({B:text}).{C:note@49}` |
+| Responses | `response({A:name}, {B:text}).{C:note@49}` |
+| Answers | `answers({A:name},{B:text@24}).{C:note@49}` |
+| Follows | `follow({A:name},{B:text@23},{C:name@64}).{D:note@49}` |
+| Anytime | `ask({A:text},{B:name@48}).{C:note@49}` |
+| Tells | `tells({A:name},{B:name@20}).{C:note@49}` |
+| Needs | `needs({A:name},{B:name@22}).{C:note@49}` |
+| Unknown | `unknown({A:name}).{B:note@49}` |
+
+with the file's type `.pl` and its comment's leader `%`. And two formats that are not Afterlife's, to show the reach: a `.env` file is `{A:word}={B:rest}` under `#`; a file of edges for a solver is `edge({A:name},{B:name}).`.
+
+**The work.**
+- *A device sheet,* `Format`, the page's version 9: its head the file's type and the comment's leader, then a row a kind of line, the sheet and the template. A `(spec 9)` cartridge's alone; a device is a sheet's layout and holds no state that is no cell (`AD-6`), so a person reads the mapping and may change it.
+- *The reader of templates and the two acts, in the crate,* the hand made general: a file's text read by a cartridge's templates into rows; a grid's sheets written by them as the file's text; and the same refusals, by the line and by the sheet and the row. Reading is lenient where the file is loose, a run of spaces where one stands, and writing is one way.
+- *Two exports,* calls beside the four as the pass and the mover are: a file read into a cartridge, answered as the cartridge's text with the file's rows in the place of its sheets' own, which the host loads as it loads any; and a grid's file written. `check_host_exports` at fifteen names.
+- *The host.* Open takes the loaded cartridge's type beside `.vla`; a file opened is a load, a fresh grid at frame 0, the File sheet naming the file. Save writes the file under its name. The cartridge's own save stays, a command of the palette.
+- *The open's check.* The file is written back in memory at once, and where its bytes would change the bar says the first line that would, before a person edits anything: the lens's law asked at every open, so that no file is changed unsaid.
+- *Afterlife's cartridge moved onto it:* the Format sheet's thirteen rows, `(spec 9)`. The hand stays, test-only, as the reference: the general reader with the cartridge's rows is held to it on the golden and on its refusals. The door's `sheet` and `reel` call the same two acts.
+- *The version's own:* `SPEC.md`'s text, `SPECS`, the device's layout in the engine and in `check_cartridge`, the describe golden, the loop oracle's case for a file opened, edited and saved, with its mutants, and the READMEs.
+
+**What it costs (prediction).** `~days`, most of them the page's and not the reader's. The reader is the hand and a template's own parser, some 900 lines with its tests where the hand is 760. The version is the larger part: the specification's text, the device in the engine and in the cartridge check, two exports, Open and Save in the host and the page, and the loop oracle's case and mutants. It is built beside `ENGINE.30`, scoped the same day in the same tree, whose history of acts and this slice's Open both stand in the host: in a worktree, and landed after that item's first slice or before it, at the owner's word.
+
+**The doors that close.** Two, and both small. The template's notation, once a released cartridge writes it, is read by every later version of the page, as every earlier cartridge loads under a later one (§7.2); so it stays this small, and a kind, a guess at a file's templates or a program in a template's place are each added later without moving it. And the sheet's name is a reserved name from then on (§3.11). Everything else, where the reader runs, what Save writes, the check's words, is changed at will.
+
+**Not this slice.** A file opened with no cartridge that knows it, its tabs and its templates guessed from the file: the owner's first thought, a relation a tab with nothing declared, and the natural third slice, since a guess is a Format sheet written by the page. A hole for a CSV's unknown columns. A record over several lines. The diagram.
+
+**The decisions, the owner's.**
+1. *How general:* templates, the third design, over lines, programs or Afterlife's alone.
+2. *Where a cartridge says it:* a device sheet, `Format`, which a person reads and edits, over directives of the manifest.
+3. *Where the reader runs:* in the module, behind two exports, one reader for the command line, the tests and the page, over the host's JavaScript with the hand as its twin.
+4. *What Open and Save mean on such a cartridge:* a file opened is a fresh load; Save writes the file; the cartridge's own save is a command.
+5. *The open's check:* said in the bar before the first edit, over nothing said.
+6. *The kinds and their names:* `name`, `word`, `text`, `whole`, `rest`, `note`, two sharing a hole by `|`; a stop by `@`; a literal by `=`.
+7. *When it is built:* after `ENGINE.30`'s first slice, in a worktree, or beside it.
+
+*Approved 2026-11-21, each as recommended:* "Decisions approved; commit the mint and scoping, then build. ENGINE.30 is itself waiting on KERNEL.46 so it will take a while to land." So the slice is built beside `ENGINE.30` and not after it. With the approval the owner gave three thoughts, on the kinds' names, on where a cartridge says its lines and on how a template is quoted, which the build's record answers.
+
+*Sources for the outside facts.* Microsoft Support, "Export XML data" and "Issue: Verifying an XML map for export". A. Bohannon, J. N. Foster, B. C. Pierce, A. Pilkiewicz and A. Schmitt, "Boomerang: Resourceful Lenses for String Data", POPL 2008, pages 407 to 419. Augeas, augeas.net, its lenses and its FAQ. Each read on 2026-11-21.
