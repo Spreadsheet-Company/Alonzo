@@ -355,8 +355,11 @@ if ($Root -eq '') { $Root = $repoRoot }
 # its rows of inputs and dues, and the Gates' blocks of the six; the other ten's rows unchanged.
 # 2026-11-18, CART.3's third slice (c): Brickwork's replay, the owner's one game to level 81 in 41,129 frames, and
 # its golden, the Tally's A1:B21 at the replay's last frame: eight replays and eight goldens.
-$expectedCartridges = 12
-$expectedSources = 12
+# 2026-11-21, CART.16's first slice: Afterlife, the thirteenth cartridge and the thirteenth source, a tool at rate 0
+# and no game. It has no replay and no golden of a replay's kind: its golden is a reel, walter.pl, which cargo test
+# holds to the cartridge's tabs byte for byte.
+$expectedCartridges = 13
+$expectedSources = 13
 $expectedLibraries = 1
 $expectedReplays = 8
 $expectedGoldens = 8
@@ -395,7 +398,10 @@ $expectedGoldens = 8
 # counts of the Tally; the other eleven's rows unchanged.
 # 2026-11-17, at the second slice's hand test: 820 rows, the marquee's four rules and four formats withdrawn at the
 # owner's word, and the legend's words a column wider; the other eleven's rows unchanged.
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 318; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/brickwork/brickwork.vla' = 820; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4111; 'cartridges/naught/naught.vla' = 1379 }
+# 2026-11-21, CART.16's first slice: Afterlife at 1,552 rows, a reel's 934 lines, each line that holds anything its
+# cells along a row of its tab, under eight tabs' headers, their widths, two formats and a rule a tab; the other
+# twelve's rows unchanged.
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 318; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/brickwork/brickwork.vla' = 820; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4111; 'cartridges/naught/naught.vla' = 1379; 'cartridges/afterlife/afterlife.vla' = 1552 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

@@ -96,6 +96,13 @@ mod seiyaku;
 #[cfg(test)]
 mod naught;
 
+/// Afterlife's sheet by hand (`CART.16`): a reel's facts read into the rows
+/// of eight tabs and written back as the file they were read from, compiled
+/// for the tests alone; the door at the command line includes the same file
+/// by its path.
+#[cfg(test)]
+mod afterlife;
+
 /// SHA-256 in upper-case hex, the digest a replay names its cartridge by,
 /// compiled for the tests alone (`AD-5`); the native runner includes the
 /// same file by its path, to name each rung of the size ladder (`ENGINE.9`).

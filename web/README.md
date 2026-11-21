@@ -323,7 +323,7 @@ host asked for. The record is never written.
 
 The page, `index.template.html` built into `index.html`, is the engine's
 panel, a cartridge running on the host's loop, Life, the glider gun, the
-test card, the input card, the sound card, Sand, the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), Kairos, the stacking game (`CART.4`), Superposition, the large board (`CART.12`), Seiyaku, the number-placement puzzle (`CART.14`), Naught: *Vel et Aut*, the bench of logic gates (`CART.9`), or Brickwork, the falling-block game (`CART.3`), each with its source, which the drawer's Build expands into the
+test card, the input card, the sound card, Sand, the grid card, the first grid cartridge, drawn by the viewport in the plane's place (`ENGINE.8`), Kairos, the stacking game (`CART.4`), Superposition, the large board (`CART.12`), Seiyaku, the number-placement puzzle (`CART.14`), Naught: *Vel et Aut*, the bench of logic gates (`CART.9`), Brickwork, the falling-block game (`CART.3`), or Afterlife, a reel's facts in eight tabs, a tool and no game (`CART.16`), each with its source, which the drawer's Build expands into the
 cartridge in the page, the input card, the sound card, Sand and Kairos each with its replay, which Play the replay plays, the
 Audio sheet heard after Sound on, and
 below it the viewport over nine

@@ -3417,6 +3417,7 @@ mod tests {
         assert_eq!(
             described,
             [
+                "afterlife",
                 "brickwork",
                 "gridcard",
                 "gun",
@@ -9757,5 +9758,146 @@ mod tests {
         assert_eq!(g.kind, shown, "the first brick is the one shown next");
         brickwork_tally_holds(&c, &g);
         assert_eq!(g.games, 1);
+    }
+
+    // ---- CART.16: Afterlife's sheet ----
+
+    use crate::afterlife as af;
+
+    /// Afterlife's cartridge, its source and its golden, Walter Alder's reel,
+    /// read from the repository at run time.
+    fn afterlife() -> Option<(String, String, String)> {
+        Some((
+            crate::repository::read("afterlife/afterlife.vla")?,
+            crate::repository::read("afterlife/afterlife.source.vla")?,
+            crate::repository::read("afterlife/walter.pl")?.replace("\r\n", "\n"),
+        ))
+    }
+
+    /// The reel a grid's tabs say: each tab's `values` record read by the
+    /// hand's reader and written by its writer, as the door at the command
+    /// line writes a save back.
+    fn afterlife_written(c: &Cartridge) -> Result<String, String> {
+        let records: Vec<String> = af::TABS
+            .iter()
+            .map(|tab| match c.view("values", tab.name, None) {
+                Ok(Viewed::Text(record)) => record,
+                other => panic!("{}'s values: {other:?}", tab.name),
+            })
+            .collect();
+        af::write(&af::of_records(&records)?)
+    }
+
+    /// The golden's round trip (`CART.16`'s oracle): Walter Alder's reel, 934
+    /// lines and 559 facts, is written back byte for byte by the reader and
+    /// the writer alone; by the cartridge that holds it, loaded and its tabs
+    /// read; and by a save of that cartridge, loaded in its turn. And the
+    /// source's block is the reel's rows, as the door writes them.
+    #[test]
+    fn afterlife_s_golden_comes_back_from_the_tabs_byte_for_byte() {
+        let Some((text, source, walter)) = afterlife() else {
+            return;
+        };
+        let reel = af::read(&walter).expect("the golden reads");
+        assert_eq!((reel.lines(), reel.facts()), (934, 559));
+        assert_eq!(
+            af::write(&reel).as_deref(),
+            Ok(walter.as_str()),
+            "the reader and the writer alone"
+        );
+        assert_eq!(
+            af::with_block(&source, &af::block(&reel)).as_deref(),
+            Some(source.as_str()),
+            "the source's block is the golden's rows: cargo run --release --example afterlife writes it"
+        );
+        let c = Cartridge::load(&text, "afterlife.vla", text.len()).expect("Afterlife loads");
+        assert_eq!(
+            afterlife_written(&c).as_deref(),
+            Ok(walter.as_str()),
+            "the cartridge's tabs"
+        );
+        let save = save_of(&c, &text);
+        let resumed =
+            Cartridge::load(&save, "afterlife-0.vla", save.len()).expect("the save loads");
+        assert_eq!(
+            afterlife_written(&resumed).as_deref(),
+            Ok(walter.as_str()),
+            "a save's tabs"
+        );
+    }
+
+    /// What a person does in the tabs is what the file says (`CART.16`): a
+    /// response reworded, a line added under the last of its tab, a comment
+    /// typed and a cell emptied are each their line, and no other line moves;
+    /// and a row no line can say is refused by its tab and its row.
+    #[test]
+    fn afterlife_s_edits_are_the_file_s_lines() {
+        let Some((text, _, walter)) = afterlife() else {
+            return;
+        };
+        let reel = af::read(&walter).expect("the golden reads");
+        let mut c = Cartridge::load(&text, "afterlife.vla", text.len()).expect("Afterlife loads");
+        let greeting = "response(hello, \"Hello, kiddo. I'm glad you came by. Sit down a minute. What would you like to know?\").\n";
+        assert_eq!(
+            walter.matches(greeting).count(),
+            1,
+            "the greeting's line, once"
+        );
+
+        // A response reworded: its line alone.
+        assert_eq!(
+            c.write("(cell \"Responses\" \"B7\" \"Hello again.\\\\n\\\\nSit down.\")"),
+            Ok(1)
+        );
+        c.step(0);
+        let reworded = walter.replace(
+            greeting,
+            "response(hello, \"Hello again.\\n\\nSit down.\").\n",
+        );
+        assert_eq!(afterlife_written(&c).as_deref(), Ok(reworded.as_str()));
+
+        // A line added under the last of the Follows, a comment under it, and a comment at its end.
+        let row = reel.tabs[3].len() + 2;
+        let added = format!(
+            "(cell \"Follows\" \"A{row}\" \"hello\")\n(cell \"Follows\" \"B{row}\" \"Are you there?\")\n(cell \"Follows\" \"C{row}\" \"keeping\")\n(cell \"Follows\" \"D{row}\" \"a line of the test's\")\n(cell \"Follows\" \"A{}\" \"% and a comment under it\")",
+            row + 1
+        );
+        assert_eq!(c.write(&added), Ok(5));
+        c.step(0);
+        let last = walter
+            .lines()
+            .rfind(|l| l.starts_with("follow("))
+            .expect("a follow");
+        // Its second argument at column 23 and its third at 64, as the file keeps a follow's;
+        // its comment one space after it, the line standing past column 49.
+        let line = format!(
+            "follow(hello,{}\"Are you there?\",{}keeping). % a line of the test's",
+            " ".repeat(9),
+            " ".repeat(24)
+        );
+        let grown = reworded.replace(
+            &format!("{last}\n"),
+            &format!("{last}\n{line}\n% and a comment under it\n"),
+        );
+        assert_ne!(grown, reworded);
+        assert_eq!(afterlife_written(&c).as_deref(), Ok(grown.as_str()));
+
+        // The comment emptied, as Delete empties a cell: its line is gone.
+        assert_eq!(
+            c.write(&format!("(cell \"Follows\" \"A{}\" \"\")", row + 1)),
+            Ok(1)
+        );
+        c.step(0);
+        let emptied = grown.replace("% and a comment under it\n", "");
+        assert_eq!(afterlife_written(&c).as_deref(), Ok(emptied.as_str()));
+
+        // A name that is no name: refused by its tab and its row, nothing written.
+        assert_eq!(c.write("(cell \"Responses\" \"A7\" \"Hello\")"), Ok(1));
+        c.step(0);
+        let refused = afterlife_written(&c).expect_err("a name with a capital");
+        assert!(
+            refused.starts_with("Responses, row 7: its Name, \"Hello\", is not a name"),
+            "{refused}"
+        );
     }
 }

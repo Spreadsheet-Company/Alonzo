@@ -152,6 +152,17 @@ the wall, its counts, the panel, the Clipboard and the voices, at every frame
 that moves the wall, a lay, a clear, a start or a top-out, at the first and
 at every 64th (`CART.3`'s third slice).
 
+Afterlife, `cartridges/afterlife/`, is a tool and no game (`CART.16`): a
+reel's Prolog facts in eight tabs, a tab a relation, a column an argument and
+a row a line of the file. Its reader and its writer are written by hand,
+`src/afterlife.rs`, compiled for the tests alone, with the tabs, each
+argument's kind and the columns the file aligns them at. A test holds its
+golden, `walter.pl`, written back byte for byte by the reader and the writer
+alone, by the cartridge loaded and its tabs read, and by a save of it;
+another holds a person's edits, each as its line of the file, and a row no
+line can say refused by its tab and its row. `examples/afterlife.rs` is their
+door: a reel made a cartridge, and a save written back as a reel.
+
 Seiyaku, `cartridges/seiyaku/`, the number-placement puzzle (`CART.14`), is
 held to a board written by hand, `src/seiyaku.rs`, compiled for the tests
 alone, which also holds two solvers written apart, backtracking over bits and
