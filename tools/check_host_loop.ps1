@@ -1144,7 +1144,8 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # 2026-11-21, CART.16's second slice: OJ to OO, the file case's, four over the module and OM and OO needing none, take it
 # to three hundred and fifteen (148 applicable without).
 # 2026-11-21, ENGINE.49: OP to OU, the desk's, each needing no module, take it to three hundred and twenty-one (154
-# applicable without); OJ's and OO's anchors moved with their lines, a cartridge's types a list.
+# applicable without); OJ's and OO's anchors moved with their lines, a cartridge's types a list, and back again
+# 2026-11-22 when the list was taken out, the count as it was.
 # 2026-11-18, CART.3's third slice: MO to MR, version 7's: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -1271,7 +1272,7 @@ $keepFloors = @{ cartridges = 8; frames = 52032; restores = 757; held = 757; key
 # 3.11). Pure, the host's and the page's: where two files part, line for line and line ends and all, ten pairs
 # (changes 10) and the words of each difference, a long line cut (words 9); a file's kind by its name, compared without
 # case and never a cartridge's, what Open's picker offers, and what the page's picker says of a file opened, the cartridge
-# and the file it reads, Afterlife (walter.pl), the owner's word at the hand test (kinds 11); over the double, which holds neither call, each
+# and the file it reads, Afterlife (walter.prolog), the owner's word at the hand test (kinds 11); over the double, which holds neither call, each
 # declined in words (double 1). Over the module, a card of one sheet and its Format sheet, a file of settings: its type
 # and the name a file is written under, the cartridge's own before a file is opened and the file's after (named 2); a
 # file read into the cartridge's text, nothing loaded and the grid that runs as it was (read 1); that cartridge loaded
@@ -1281,13 +1282,12 @@ $keepFloors = @{ cartridges = 8; frames = 52032; restores = 757; held = 757; key
 # cartridge each a cartridge still (cartridge 2); a line no template reads refused by its number, nothing loaded
 # (refused 1); a row no line says refused by its cell, nothing handed over (unwritten 1); a card written to version 8
 # saving a cartridge and reading no file (none 1); and, where the load's act still settles, the check and a save each
-# waiting for the grid to rest (waited 2). On Alonzo's own page, Afterlife's reel: its tabs written as a .pl of 934 lines,
+# waiting for the grid to rest (waited 2). On Alonzo's own page, Afterlife's reel: its tabs written as a file of 934 lines,
 # opened under the cartridge and written back byte for byte (golden 1, lines 934). A game's page runs it too, over the
 # card, without Afterlife's.
-# 2026-11-21, ENGINE.49, a save into the file opened, and with it the type, a list: the case grown. Pure: each of a
-# cartridge's types read, what Open offers of several, each kind's words saying its type, "A .prolog file" and "An
-# Alonzo cartridge (.vla)" (the owner's word at the hand test), the name a file is offered under where the page asks
-# for one, its own under the first type, and whether a name is of the types (kinds 26). The desk,
+# 2026-11-21, ENGINE.49, a save into the file opened: the case grown. Pure: each kind's words saying its type, "A
+# .prolog file" and "An Alonzo cartridge (.vla)" (the owner's word at the hand test), in the counter it had
+# (kinds 11). The desk,
 # FileDesk over a double of the browser's file calls and of a file's handle, needing no module: a file opened through
 # the picker and saved, written into it with the browser asked once and no dialog (tied 1, once 1); the browser's
 # question refused, nothing written, the tie kept and asked again (unallowed 1); a file changed on disk refused once,
@@ -1298,14 +1298,15 @@ $keepFloors = @{ cartridges = 8; frames = 52032; restores = 757; held = 757; key
 # and said where it is not, one under another name said, one with no tie downloaded (resting 4); a cartridge's save
 # asking where beside a file tied (plain 1); a save under another entry and one after a load each asking where, the tie
 # its entry's at its load alone (dropped 3); a browser with no dialog (elsewhere 1); the bar's words (said 12). Over
-# the module, a save under another name handed over marked so (saved 2), and a card of two types, .env and then .ini,
-# each said, a file of the later type keeping its name and a name another save gave taken where it is of the types
-# (several 1). On Alonzo's own page, Afterlife's one type, .prolog, at the owner's word at the hand test (2026-11-22,
-# ".pl should be replaced with .prolog across the repos to avoid the duality and the Perl ambiguity"): a name another
-# save gave taken, and a .pl no name of the cartridge's (types 1).
-$filePageFloors = @{ changes = 10; words = 9; kinds = 26; double = 1; tied = 1; once = 1; unallowed = 1; moved = 1; absent = 1; under = 1; first = 1; shut = 1; resting = 4; plain = 1; dropped = 3; elsewhere = 1; said = 12 }
-$fileGameFloors = @{ named = 2; read = 1; opened = 1; same = 1; loose = 1; edited = 1; saved = 2; cartridge = 2; refused = 1; unwritten = 1; none = 1; waited = 2; several = 1 }
-$fileFloors = $fileGameFloors.Clone(); $fileFloors['golden'] = 1; $fileFloors['lines'] = 934; $fileFloors['types'] = 1
+# the module, a save under another name handed over marked so (saved 2), and the name it gave the file's from there on,
+# a name of the card's type taken and any other not (renamed 1).
+# 2026-11-22, the list of types taken out at the owner's word ("remove the types list"; a reel is a .prolog and
+# nothing else, and no cartridge said several): the Format sheet's B1 is one type again, so the counters the list
+# added are gone, kinds from 26 to 11, several and types, the second of which held a name another save gave, now
+# renamed, over the card and on a game's page too.
+$filePageFloors = @{ changes = 10; words = 9; kinds = 11; double = 1; tied = 1; once = 1; unallowed = 1; moved = 1; absent = 1; under = 1; first = 1; shut = 1; resting = 4; plain = 1; dropped = 3; elsewhere = 1; said = 12 }
+$fileGameFloors = @{ named = 2; read = 1; opened = 1; same = 1; loose = 1; edited = 1; saved = 2; cartridge = 2; refused = 1; unwritten = 1; none = 1; waited = 2; renamed = 1 }
+$fileFloors = $fileGameFloors.Clone(); $fileFloors['golden'] = 1; $fileFloors['lines'] = 934
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
     @{ Case = 'rate0';    Min = @{ frames = 4; applied = 3; edits = 4; windows = 3 } },
@@ -2679,7 +2680,7 @@ if ($Control) {
                Want = 'case clipboard.*clipboard: a 2 by 1 copy of the page.s into C5:E5 writes C5:C6, where C5:E6 is due' },
             # CART.16's second slice, the file case's. OJ, over the module: the name a file was opened by forgotten, its
             # save under the cartridge's own name.
-            @{ L = 'oj'; Name = 'a file saved under the cartridge''s name'; File = 'host'; Module = $true; Case = 'file'; Anchor = '    return ofTypes(given, types) ? given : (this._cartName() || ''file'') + types[0];'; With = '    return (this._cartName() || ''file'') + types[0];   // the name it was opened by forgotten, by the control'
+            @{ L = 'oj'; Name = 'a file saved under the cartridge''s name'; File = 'host'; Module = $true; Case = 'file'; Anchor = '    return ofType(given, type) ? given : (this._cartName() || ''file'') + type;'; With = '    return (this._cartName() || ''file'') + type;   // the name it was opened by forgotten, by the control'
                Want = 'case file.*after settings.env is opened its file is saved under "pairs.env"' },
             # OK, over the module: a person's save of a cartridge that reads a file a cartridge still.
             @{ L = 'ok'; Name = 'a person''s save a cartridge still'; File = 'host'; Module = $true; Case = 'file'; Anchor = '    var file = what === ''file'' || (what !== ''cartridge'' && by === ''person'' && !!this.fileType());'; With = '    var file = what === ''file'';   // a person''s save the cartridge, by the control'
@@ -2694,7 +2695,7 @@ if ($Control) {
             @{ L = 'on'; Name = 'a check asked in a settle never said'; File = 'host'; Module = $true; Case = 'file'; Anchor = '    if (w.wait) { this.checkWaiting = { opened: String(opened), name: name }; return { ok: true, waiting: true }; }'; With = '    if (w.wait) return { ok: true, waiting: true };   // the check forgotten, by the control'
                Want = 'case file.*the check was never said' },
             # OO, needing no module: a file's kind judged by its case, WALTER.PROLOG no file of a cartridge that reads .prolog.
-            @{ L = 'oo'; Name = 'a file''s kind by its case'; File = 'template'; Case = 'file'; Anchor = '  function opensAsLines(name, kinds) { return kindsOf(kinds).some(function (kind) { return ofKind(name, kind); }) && !ofKind(name, ''.vla''); }'; With = '  function opensAsLines(name, kinds) { return kindsOf(kinds).some(function (kind) { return ofKind(name, kind) && name.slice(-kind.length) === kind; }) && !ofKind(name, ''.vla''); }   // by its case, by the control'
+            @{ L = 'oo'; Name = 'a file''s kind by its case'; File = 'template'; Case = 'file'; Anchor = '  function opensAsLines(name, kind) { return ofKind(name, kind) && !ofKind(name, ''.vla''); }'; With = '  function opensAsLines(name, kind) { return ofKind(name, kind) && name.slice(-kind.length) === kind; }   // by its case, by the control'
                Want = 'case file.*WALTER.PROLOG under a cartridge that reads .prolog opens as lines: false' },
             # ENGINE.49, the desk's, each needing no module. OP: the tie kept across a pick, another entry's save written
             # into the file tied. The act is the door: no save writes one file's rows into another's.

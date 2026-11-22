@@ -468,27 +468,11 @@
     if (ch.was.replace(/\r$/, '') === ch.now.replace(/\r$/, '')) return 'its line end would be ' + (/\r$/.test(ch.now) ? 'CR LF' : 'LF') + ' where the file has ' + (/\r$/.test(ch.was) ? 'CR LF' : 'LF');
     return cut(ch.now) + ' would be written where the file has ' + cut(ch.was);
   }
-  // Whether a file's name ends with one of a cartridge's types (docs/SPEC.md section 3.11), compared without case, a
-  // name that is a type alone being no such file; and the type it ends with, or ''. Pure.
-  function typeOf(name, types) {
+  // Whether a file's name ends with a cartridge's type (docs/SPEC.md section 3.11), compared without case, a name that
+  // is the type alone being no such file. Pure.
+  function ofType(name, type) {
     name = String(name || '');
-    for (var i = 0; i < (types || []).length; i++) {
-      var t = types[i];
-      if (t && name.length > t.length && name.toLowerCase().slice(-t.length) === t.toLowerCase()) return t;
-    }
-    return '';
-  }
-  function ofTypes(name, types) { return typeOf(name, types) !== ''; }
-  // The name a file is offered under where the page asks for one (ENGINE.49): its own where it is of the first type,
-  // the type a file is written under; else its name with the first type in the place of the type it has, notes.yml
-  // offered as notes.yaml under a cartridge that says .yaml and then .yml, so that a file saved under a new name is of
-  // the type the cartridge writes unless a person types another. A name of none of the types is given the first. Pure.
-  function offeredName(name, types) {
-    name = String(name || '');
-    if (!types || !types.length) return name;
-    var has = typeOf(name, types);
-    if (has && has.toLowerCase() === types[0].toLowerCase()) return name;
-    return (has ? name.slice(0, name.length - has.length) : name) + types[0];
+    return !!type && name.length > type.length && name.toLowerCase().slice(-type.length) === type.toLowerCase();
   }
   function rangeOf(row, col, h, w) { return VP().rangeText({ top: row, left: col, bottom: row + h - 1, right: col + w - 1 }); }
   // A sentence's frame, and the rest of it: the log's key, so that a repeat is the same event at another frame.
@@ -2993,31 +2977,28 @@
   // out with a hole a column, and the module reads a file into the cartridge's sheets and writes them back by it: two
   // exports, alonzo_file_read and alonzo_file_write, asked for at the act and not at the attach, as the pass is, since
   // the fake module holds neither and still drives the loop.
-  // The file's types the cartridge says now, Format!B1: each a dot and then letters and digits, one, or several with a
-  // space between (ENGINE.49's build), the first the type a file is written under and every one of them read; [] where
-  // it says none. Read from the grid at each ask, a person's edit of the cell among its values.
-  Host.prototype.fileTypes = function () {
-    if (!this.m || !this.handle || !this._nine() || !this.cart.devices.format) return [];
+  // The file's type the cartridge says now, Format!B1, a dot and then letters and digits, or '' where it says none:
+  // read from the grid at each ask, a person's edit of the cell among its values.
+  Host.prototype.fileType = function () {
+    if (!this.m || !this.handle || !this._nine() || !this.cart.devices.format) return '';
     var r = this.m.texts('alonzo_view', [this.handle], ['values', 'Format', 'B1']);
-    var m = r.status === 0 ? /^\((?:cell|value) "Format" "B1" "(\.[A-Za-z0-9]{1,15}(?: \.[A-Za-z0-9]{1,15}){0,7})"\)$/m.exec(r.text) : null;
-    return m ? m[1].split(' ') : [];
+    var m = r.status === 0 ? /^\((?:cell|value) "Format" "B1" "(\.[A-Za-z0-9]{1,15})"\)$/m.exec(r.text) : null;
+    return m ? m[1] : '';
   };
-  // The first of them, the type a file is written under, or '' where the cartridge says no file's lines.
-  Host.prototype.fileType = function () { var types = this.fileTypes(); return types.length ? types[0] : ''; };
-  // The name the file is written under: the name this load was given where it is such a file's, of any of the types,
-  // the file a person opened; else the cartridge's own name with the first type.
+  // The name the file is written under: the name this load was given where it is such a file's, the file a person
+  // opened; else the cartridge's own name with the type.
   Host.prototype.fileName = function () {
-    var types = this.fileTypes();
-    if (!types.length) return '';
+    var type = this.fileType();
+    if (!type) return '';
     var given = this.cartFile || '';
-    return ofTypes(given, types) ? given : (this._cartName() || 'file') + types[0];
+    return ofType(given, type) ? given : (this._cartName() || 'file') + type;
   };
-  // The file's name from here on, after a save under another (ENGINE.49): a name of one of the cartridge's types,
-  // which the next save is written under and the work kept is kept under. Nothing of the grid is touched; answers
-  // whether the name was taken.
+  // The file's name from here on, after a save under another (ENGINE.49): a name of the cartridge's type, which the
+  // next save is written under and the work kept is kept under. Nothing of the grid is touched; answers whether the
+  // name was taken.
   Host.prototype.fileNamed = function (name) {
     name = String(name || '');
-    if (!this.handle || !this.cart || !ofTypes(name, this.fileTypes())) return false;
+    if (!this.handle || !this.cart || !ofType(name, this.fileType())) return false;
     this.cartFile = name;
     return true;
   };
@@ -3304,8 +3285,6 @@
   Host.settledWords = settledWords;
   Host.firstChange = firstChange;
   Host.changeWords = changeWords;
-  Host.ofTypes = ofTypes;
-  Host.offeredName = offeredName;
   Host.EXPORTS = EXPORTS;
   Host.ABI = ABI;
   Host.SPEC = SPEC;

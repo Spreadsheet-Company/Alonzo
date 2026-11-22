@@ -2496,22 +2496,16 @@
   // A cartridge written to version 9 may say a file's lines on its Format sheet, and its type in Format!B1, a dot and its
   // letters, which the host reads (fileType). Open then offers that kind of file beside a cartridge, a file of the kind
   // is read into the cartridge's sheets where any other is a cartridge, and Save writes the file under its name.
-  // The types a cartridge reads, a list: Format!B1 may say several since ENGINE.49's build, the first the type a file
-  // is written under; one type's text is a list of one, and none the empty list.
-  function kindsOf(kinds) { return typeof kinds === 'string' ? (kinds ? [kinds] : []) : (kinds || []).slice(); }
-  // A picker's kind of file: the types the loaded cartridge reads, the first the one the picker gives a name typed
-  // without one, or, for none, a cartridge's. Its words are what the system's dialog shows as the type, so each says
-  // its type in them (the owner's word at ENGINE.49's hand test): "A .prolog file", "An Alonzo cartridge (.vla)".
-  function fileKind(kinds) {
-    kinds = kindsOf(kinds);
-    return kinds.length ? { description: 'A ' + kinds.join(' or ') + ' file', accept: { 'text/plain': kinds } } : { description: 'An Alonzo cartridge (.vla)', accept: { 'text/plain': ['.vla'] } };
-  }
-  // What Open's picker offers: the cartridge's kinds of file first, where it reads any, and a cartridge.
-  function openKinds(kinds) { return kindsOf(kinds).length ? [fileKind(kinds), fileKind('')] : [fileKind('')]; }
+  // A picker's kind of file: the type the loaded cartridge reads, or, for none, a cartridge's. Its words are what the
+  // system's dialog shows as the type, so each says its type in them (the owner's word at ENGINE.49's hand test):
+  // "A .prolog file", "An Alonzo cartridge (.vla)".
+  function fileKind(kind) { return kind ? { description: 'A ' + kind + ' file', accept: { 'text/plain': [kind] } } : { description: 'An Alonzo cartridge (.vla)', accept: { 'text/plain': ['.vla'] } }; }
+  // What Open's picker offers: the cartridge's kind of file first, where it reads one, and a cartridge.
+  function openKinds(kind) { return kind ? [fileKind(kind), fileKind('')] : [fileKind('')]; }
   // Whether a file's name ends with a type, compared without case, a name that is the type alone being no such file.
   function ofKind(name, kind) { return !!kind && name.length > kind.length && name.toLowerCase().slice(-kind.length) === kind.toLowerCase(); }
-  // Whether a file opened is read as the cartridge's lines: its name of one of the cartridge's kinds, and never a cartridge's own.
-  function opensAsLines(name, kinds) { return kindsOf(kinds).some(function (kind) { return ofKind(name, kind); }) && !ofKind(name, '.vla'); }
+  // Whether a file opened is read as the cartridge's lines: its name of the cartridge's kind, and never a cartridge's own.
+  function opensAsLines(name, kind) { return ofKind(name, kind) && !ofKind(name, '.vla'); }
   // What the picker says of a file opened: where it was read as a cartridge's lines, the cartridge and the file it is at
   // work on, Afterlife (walter.prolog) (the owner's word at the hand test: the cartridge employs the file); a cartridge or
   // a save opened is the file alone, as it was.
@@ -2546,7 +2540,7 @@
     return handle.createWritable().then(function (w) { return w.write(text).then(function () { return w.close(); }); });
   }
   // A save written. o: entry and load, the picker's entry and the count of loads, which a tie is held to; text; name,
-  // the file's name as the host says it; kinds, the types the cartridge reads, none for a cartridge's own save; ask,
+  // the file's name as the host says it; kind, the type the cartridge reads, none for a cartridge's own save; ask,
   // whether a person's act is at hand, which a dialog and the browser's question each want; as, a save under another
   // name; ties, whether the save is the file a cartridge reads, the one save a tie is made for and written through.
   // Answers a promise of { how, name }: 'tied', written into the tie; 'picked', written where the dialog said, and for
@@ -2581,7 +2575,7 @@
     });
   };
   FileDesk.prototype._under = function (o) {
-    var self = this, files = this.files, kinds = kindsOf(o.kinds);
+    var self = this, files = this.files;
     // no act of a person's at hand: a save under another name wants its dialog, and is said; any other is downloaded,
     // as a save that waited and a cartridge's own always were (ENGINE.5)
     if (!o.ask) {
@@ -2590,9 +2584,9 @@
       return Promise.resolve({ how: 'downloaded', name: o.name });
     }
     // the dialog opens where the file this entry was tied to stands, at this load or an earlier, and in the Downloads
-    // folder where it was tied to none (ENGINE.5's ruling); a file is offered under the type the cartridge writes
+    // folder where it was tied to none (ENGINE.5's ruling); the file is offered under its own name
     var near = this.tie && this.tie.entry === o.entry ? this.tie.handle : null;
-    var asked = files.pickSave({ suggestedName: o.ties ? HOST.offeredName(o.name, kinds) : o.name, startIn: near || 'downloads', types: [fileKind(kinds)] });
+    var asked = files.pickSave({ suggestedName: o.name, startIn: near || 'downloads', types: [fileKind(o.kind)] });
     if (!asked) { files.download(o.text, o.name); return Promise.resolve({ how: 'downloaded', name: o.name }); }
     return asked.then(function (h) {
       return writeInto(h, o.text).then(function () {
@@ -2898,7 +2892,7 @@
     host.on('save', function (e) {
       var entry = current(), ask = e.by === 'person' && !e.waited;
       if (e.kind === 'file') {
-        desk.save({ entry: entry, load: loads, text: e.text, name: e.file, kinds: host.fileTypes(), ask: ask, as: e.as, ties: true }).then(function (r) {
+        desk.save({ entry: entry, load: loads, text: e.text, name: e.file, kind: host.fileType(), ask: ask, as: e.as, ties: true }).then(function (r) {
           var said = fileSavedWords(r, e.lines);
           sayBar(said.text, said.refused);
           if (r.how === 'tied' || r.how === 'picked' || r.how === 'downloaded') keeper.saved();
@@ -2909,7 +2903,7 @@
       // the drawer's boxes typed after the grid's rows, a draft each (ENGINE.40), the whole file held to section 10's
       var kd = keeper.drafts(), text = e.text + draftForms(kd.texts, kd.names), bytes = new TextEncoder().encode(text).length;
       if (bytes > HOST.MAX_CARTRIDGE_BYTES) { sayBar('The save was not written: with the boxes you typed in the drawer it is ' + thousands(bytes) + ' bytes, over the ' + thousands(HOST.MAX_CARTRIDGE_BYTES) + ' (16 MiB) a cartridge may be (docs/SPEC.md section 10), which the engine would not load again.'); return; }
-      desk.save({ entry: entry, load: loads, text: text, name: e.file, kinds: '', ask: ask, as: false, ties: false }).then(function (r) {
+      desk.save({ entry: entry, load: loads, text: text, name: e.file, kind: '', ask: ask, as: false, ties: false }).then(function (r) {
         var where = r.how === 'picked' ? 'where you chose' : (r.how === 'downloaded' ? 'into your downloads' : null);
         sayBar(where ? 'Saved frame ' + thousands(e.frame) + ' as ' + (r.how === 'picked' ? r.name : e.file) + (kd.names.length ? ', with ' + andList(kd.names.map(draftWords)) : '') + ', ' + where + '.' : 'The save was not written: the picker was closed.');
         if (where) keeper.saved(kd.version);   // the work saved, and the typing it carried, unsaved no longer (ENGINE.38, ENGINE.40)
@@ -2919,7 +2913,7 @@
     // above; under, a save under another name, the file's dialog asked whatever the work is tied to.
     function askSave(under) {
       var r = host.save('person', undefined, under);
-      if (r.waiting) sayBar(host.fileTypes().length ? 'The save waits for the act to settle.' : 'The save waits for the act to settle, and is downloaded then.');
+      if (r.waiting) sayBar(host.fileType() ? 'The save waits for the act to settle.' : 'The save waits for the act to settle, and is downloaded then.');
       else if (!r.ok) sayBar(r.words || 'The save was refused, and the log says why.');
     }
     document.getElementById('eng-save').addEventListener('click', function () { askSave(false); });
@@ -2929,11 +2923,11 @@
     // saved.
     var openFileEl = document.getElementById('eng-open-file');
     document.getElementById('eng-open').addEventListener('click', function () {
-      // a file the loaded cartridge reads is offered first, where it reads any, and a cartridge beside it; the handle
+      // a file the loaded cartridge reads is offered first, where it reads one, and a cartridge beside it; the handle
       // the picker gives is kept for the file's tie (ENGINE.49), which the file input, any other browser's way, has none of
-      var kinds = host.fileTypes(), picked = null;
-      var asked = files.pickOpen({ startIn: 'downloads', types: openKinds(kinds) });
-      if (!asked) { openFileEl.accept = '.vla,text/plain' + (kinds.length ? ',' + kinds.join(',') : ''); openFileEl.value = ''; openFileEl.click(); return; }
+      var kind = host.fileType(), picked = null;
+      var asked = files.pickOpen({ startIn: 'downloads', types: openKinds(kind) });
+      if (!asked) { openFileEl.accept = '.vla,text/plain' + (kind ? ',' + kind : ''); openFileEl.value = ''; openFileEl.click(); return; }
       asked.then(function (hs) { picked = hs[0]; return hs[0].getFile(); })
         .then(function (f) { openedFile(f, picked); }, function (e) { if (!(e && e.name === 'AbortError')) sayBar('The file was not opened: ' + (e && e.message ? e.message : e) + '.'); });
     });
@@ -2953,7 +2947,7 @@
         // the cartridge's text, the file's lines in its sheets, which is then the file opened as any cartridge is, under
         // the file's name; and written back at once, the first line a save would change said before anything is edited.
         // A file no line of the cartridge reads is said by the host, and nothing is loaded.
-        var kinds = host.fileTypes(), lines = opensAsLines(f.name, kinds), title = lines && host.cart ? host.cart.title : '';
+        var kind = host.fileType(), lines = opensAsLines(f.name, kind), title = lines && host.cart ? host.cart.title : '';
         if (lines) {
           var read = host.fileRead(whole, f.name);
           if (!read.ok) return;
@@ -7219,11 +7213,11 @@
   // ---- CART.16's second slice: a file opened, edited and saved (docs/SPEC.md section 3.11) ----
   // A card written to a version, one sheet and its Format sheet: a file of settings, a word, an equals sign and a whole
   // number or the rest, its comments led by a number sign, from row 2 under a header, beside a column of the sheet's
-  // own. settle: the card settles its acts. types: what its Format sheet's B1 says, .env where none is given.
-  function fileCard(spec, settle, types) {
+  // own. settle: the card settles its acts.
+  function fileCard(spec, settle) {
     return '(cartridge "pairs"\n  (spec ' + spec + ')\n  (title "Pairs")\n  (rate 0)\n  (screen grid 4 3)\n  (seed 1)' + (settle ? '\n  (settle 4)' : '') + ')\n' +
       '(sheet "Pairs" visible)\n(cell "Pairs" "A1" "Key")\n(cell "Pairs" "B1" "Value")\n(cell "Pairs" "A2" "OLD")\n(cell "Pairs" "B2" "was")\n(formula "Pairs" "C2:C6" "=LEN(B2)")\n' +
-      '(cell "Format" "A1" "type")\n(cell "Format" "B1" "' + (types || '.env') + '")\n(cell "Format" "A2" "comment")\n(cell "Format" "B2" "#")\n(cell "Format" "A3" "first row")\n(cell "Format" "B3" 2)\n' +
+      '(cell "Format" "A1" "type")\n(cell "Format" "B1" ".env")\n(cell "Format" "A2" "comment")\n(cell "Format" "B2" "#")\n(cell "Format" "A3" "first row")\n(cell "Format" "B3" 2)\n' +
       '(cell "Format" "A6" "Pairs")\n(cell "Format" "B6" "{A:word}={B:whole|rest}")\n';
   }
   // Pure, the host's and the page's: where two files part and its words, a file's kind and what Open offers. Over the
@@ -7231,14 +7225,14 @@
   // card: its type and the name a file is written under; a file read into the cartridge's text, the grid that runs left
   // as it was; that cartridge loaded under the file's name, and the open's check, the file written back at once and held
   // to the file, CR LF and all (same), a file written loosely said by its first line that would change (loose); an edit
-  // its line, a person's save the file, under its name, by the event save with its kind, and the cartridge's own save
+  // its line, a person's save the file, under its name, by the event save with its kind, a save under another name
+  // handed over marked so and the name it gave the file's from there on (renamed), and the cartridge's own save
   // and a person's save of the cartridge a cartridge still; a line no template reads refused by its number, nothing
   // loaded; a row no line says refused by its cell, nothing handed to the page; a cartridge that says no file's lines
   // saved and opened as before; and, where the load's act still settles, the check and a save each waiting for the grid
-  // to rest; and a card of several types, each said, a file of a later type keeping its name. On Alonzo's own page,
-  // Afterlife's reel: its tabs written as the file, 934 lines, opened under the cartridge and written back byte for
-  // byte, a .prolog and nothing else. Then the desk (ENGINE.49), which needs no module: the page's saves over a double
-  // of the browser's file calls.
+  // to rest. On Alonzo's own page, Afterlife's reel: its tabs written as the file, a .prolog of 934 lines, opened under
+  // the cartridge and written back byte for byte. Then the desk (ENGINE.49), which needs no module: the page's saves
+  // over a double of the browser's file calls.
   function caseFile() {
     var res = caseFileGrid();
     return fileDeskCase(res.counters, res.problems).then(function () { return res; });
@@ -7248,8 +7242,8 @@
   // the browser's question refused, nothing written, the tie kept and the question asked again (unallowed); a file
   // changed on disk since the page read it refused once, written over at the next save, and refused in its turn when it
   // changes after the page's own write (moved); a file no longer there said where no act is at hand, and a save under a
-  // name where one is (absent); a save under another name, its dialog where the tied file stands and offering the type
-  // the cartridge writes, the file opened left as it was and Save writing there from then on (under); a first save
+  // name where one is (absent); a save under another name, its dialog where the tied file stands and offering the file's
+  // own name under its kind's words, the file opened left as it was and Save writing there from then on (under); a first save
   // asking where and tying, and a dialog closed writing nothing (first, shut); a save that waited for its settle
   // written where the permission is had, said where it is not, a save under another name that waited said, and one with
   // no tie downloaded as it always was (resting); a cartridge's own save asking where beside a file tied, the file left
@@ -7277,54 +7271,54 @@
     function Files() { this.asked = []; this.downloads = []; this.next = null; this.none = false; }
     Files.prototype.pickSave = function (o) { if (this.none) return null; this.asked.push(o); var n = this.next; this.next = null; return n ? Promise.resolve(n) : Promise.reject(named('AbortError')); };
     Files.prototype.download = function (text, file) { this.downloads.push({ text: text, file: file }); };
-    var KINDS = ['.yaml', '.yml'], A = { title: 'an entry of the picker' }, B = { title: 'another' };
+    var KIND = '.prolog', A = { title: 'an entry of the picker' }, B = { title: 'another' };
     function fresh() { var f = new Files(); return { files: f, desk: new FileDesk(f) }; }
     function granted(name, text, at) { var h = new Handle(name, text, at); h.state = 'granted'; return h; }
     function save(d, entry, load, text, name, more) {
-      var o = { entry: entry, load: load, text: text, name: name, kinds: KINDS, ask: true, as: false, ties: true };
+      var o = { entry: entry, load: load, text: text, name: name, kind: KIND, ask: true, as: false, ties: true };
       for (var n in (more || {})) o[n] = more[n];
       return d.desk.save(o);
     }
     var steps = [
       function () {   // tied, once
-        var d = fresh(), h = new Handle('notes.yml', 'old\n', 100);
+        var d = fresh(), h = new Handle('walter.prolog', 'old\n', 100);
         d.desk.tieTo(A, 1, h, 100, 'opened');
-        return save(d, A, 1, 'one\n', 'notes.yml').then(function (r) {
-          if (r.how === 'tied' && r.name === 'notes.yml' && r.by === 'opened' && h.text === 'one\n' && h.asks === 1 && h.writes === 1 && !d.files.asked.length && !d.files.downloads.length) k.tied++;
+        return save(d, A, 1, 'one\n', 'walter.prolog').then(function (r) {
+          if (r.how === 'tied' && r.name === 'walter.prolog' && r.by === 'opened' && h.text === 'one\n' && h.asks === 1 && h.writes === 1 && !d.files.asked.length && !d.files.downloads.length) k.tied++;
           else fail('a file opened through the picker and saved answers ' + JSON.stringify(r) + ', its file holding ' + JSON.stringify(h.text) + ' after ' + h.asks + ' question(s) and ' + d.files.asked.length + ' dialog(s), where it is written into the file opened, the browser asked once and no dialog');
-          return save(d, A, 1, 'two\n', 'notes.yml');
+          return save(d, A, 1, 'two\n', 'walter.prolog');
         }).then(function (r) {
           if (r.how === 'tied' && h.text === 'two\n' && h.asks === 1 && h.writes === 2 && !d.files.asked.length) k.once++;
           else fail('a second save answers ' + JSON.stringify(r) + ' after ' + h.asks + ' question(s), where the browser is asked once a sitting and the file is written again');
         });
       },
       function () {   // unallowed
-        var d = fresh(), h = new Handle('notes.yml', 'old\n', 100), first, kept;
+        var d = fresh(), h = new Handle('walter.prolog', 'old\n', 100), first, kept;
         h.answer = 'denied';
         d.desk.tieTo(A, 1, h, 100, 'opened');
-        return save(d, A, 1, 'one\n', 'notes.yml').then(function (r) {
+        return save(d, A, 1, 'one\n', 'walter.prolog').then(function (r) {
           first = r; kept = d.desk.tieOf(A, 1) !== null && h.writes === 0;
           h.answer = 'granted';
-          return save(d, A, 1, 'two\n', 'notes.yml');
+          return save(d, A, 1, 'two\n', 'walter.prolog');
         }).then(function (r) {
           if (first.how === 'refused' && kept && r.how === 'tied' && h.text === 'two\n' && h.writes === 1 && h.asks === 2 && !d.files.asked.length && !d.files.downloads.length) k.unallowed++;
           else fail('the browser\'s question refused answers ' + JSON.stringify(first) + ' and, allowed at the next save, ' + JSON.stringify(r) + ', the file written ' + h.writes + ' time(s), where a refusal writes nothing, keeps the tie and is asked again');
         });
       },
       function () {   // moved
-        var d = fresh(), h = granted('notes.yml', 'old\n', 100), got = [], untouched;
+        var d = fresh(), h = granted('walter.prolog', 'old\n', 100), got = [], untouched;
         d.desk.tieTo(A, 1, h, 100, 'opened');
         h.text = 'another editor\'s\n'; h.at = 150;   // changed on disk since it was opened
-        return save(d, A, 1, 'one\n', 'notes.yml').then(function (r) {
+        return save(d, A, 1, 'one\n', 'walter.prolog').then(function (r) {
           got.push(r); untouched = h.text === 'another editor\'s\n' && h.writes === 0;
-          return save(d, A, 1, 'one\n', 'notes.yml');
+          return save(d, A, 1, 'one\n', 'walter.prolog');
         }).then(function (r) {
           got.push(r);
-          return save(d, A, 1, 'two\n', 'notes.yml');
+          return save(d, A, 1, 'two\n', 'walter.prolog');
         }).then(function (r) {
           got.push(r);
           h.at += 1000;   // and changed again, after the page's own write
-          return save(d, A, 1, 'three\n', 'notes.yml');
+          return save(d, A, 1, 'three\n', 'walter.prolog');
         }).then(function (r) {
           got.push(r);
           if (got[0].how === 'changed' && got[0].since === 'opened' && untouched && got[1].how === 'tied' && got[2].how === 'tied' && got[3].how === 'changed' && got[3].since === 'saved' && h.text === 'two\n' && h.writes === 2) k.moved++;
@@ -7332,86 +7326,86 @@
         });
       },
       function () {   // absent
-        var d = fresh(), h = granted('notes.yml', 'old\n', 100), h2 = granted('notes.yaml', '', 1), first, quiet;
+        var d = fresh(), h = granted('walter.prolog', 'old\n', 100), h2 = granted('found.prolog', '', 1), first, quiet;
         h.gone = true;
         d.desk.tieTo(A, 1, h, 100, 'opened');
-        return save(d, A, 1, 'one\n', 'notes.yml', { ask: false }).then(function (r) {
+        return save(d, A, 1, 'one\n', 'walter.prolog', { ask: false }).then(function (r) {
           first = r; quiet = !d.files.asked.length && !d.files.downloads.length;
           d.desk.tieTo(A, 1, h, 100, 'opened'); d.files.next = h2;
-          return save(d, A, 1, 'one\n', 'notes.yml');
+          return save(d, A, 1, 'one\n', 'walter.prolog');
         }).then(function (r) {
           var tie = d.desk.tieOf(A, 1);
-          if (first.how === 'gone' && quiet && r.how === 'picked' && r.name === 'notes.yaml' && h2.text === 'one\n' && d.files.asked.length === 1 && d.files.asked[0].startIn === 'downloads' && tie && tie.handle === h2) k.absent++;
+          if (first.how === 'gone' && quiet && r.how === 'picked' && r.name === 'found.prolog' && h2.text === 'one\n' && d.files.asked.length === 1 && d.files.asked[0].startIn === 'downloads' && tie && tie.handle === h2) k.absent++;
           else fail('a file no longer where it was answers ' + JSON.stringify(first) + ' with no act at hand and ' + JSON.stringify(r) + ' with one, where the first is said and the second asks where and is tied there');
         });
       },
       function () {   // under
-        var d = fresh(), h = granted('notes.yml', 'old\n', 100), h3 = granted('notes2.yaml', '', 1), first, dialog, o;
+        var d = fresh(), h = granted('walter.prolog', 'old\n', 100), h3 = granted('walter2.prolog', '', 1), first, dialog, o;
         d.desk.tieTo(A, 1, h, 100, 'opened'); d.files.next = h3;
-        return save(d, A, 1, 'one\n', 'notes.yml', { as: true }).then(function (r) {
+        return save(d, A, 1, 'one\n', 'walter.prolog', { as: true }).then(function (r) {
           first = r; o = d.files.asked[0] || {};
-          dialog = d.files.asked.length === 1 && o.suggestedName === 'notes.yaml' && o.startIn === h && o.types.length === 1 && o.types[0].accept['text/plain'].join() === '.yaml,.yml';
-          return save(d, A, 1, 'two\n', 'notes2.yaml');
+          dialog = d.files.asked.length === 1 && o.suggestedName === 'walter.prolog' && o.startIn === h && o.types.length === 1 && o.types[0].description === 'A .prolog file' && o.types[0].accept['text/plain'].join() === '.prolog';
+          return save(d, A, 1, 'two\n', 'walter2.prolog');
         }).then(function (r) {
-          if (first.how === 'picked' && first.name === 'notes2.yaml' && dialog && r.how === 'tied' && r.by === 'saved' && h3.text === 'two\n' && h.text === 'old\n' && h.writes === 0 && d.files.asked.length === 1) k.under++;
-          else fail('a save under another name answers ' + JSON.stringify(first) + ' through a dialog offering ' + JSON.stringify({ name: o.suggestedName, where: o.startIn === h ? 'the tied file' : o.startIn, types: o.types }) + ', and the next save ' + JSON.stringify(r) + ', where the dialog offers notes.yaml where the tied file stands, the file opened is left as it was, and Save writes there from then on');
+          if (first.how === 'picked' && first.name === 'walter2.prolog' && dialog && r.how === 'tied' && r.by === 'saved' && h3.text === 'two\n' && h.text === 'old\n' && h.writes === 0 && d.files.asked.length === 1) k.under++;
+          else fail('a save under another name answers ' + JSON.stringify(first) + ' through a dialog offering ' + JSON.stringify({ name: o.suggestedName, where: o.startIn === h ? 'the tied file' : o.startIn, types: o.types }) + ', and the next save ' + JSON.stringify(r) + ', where the dialog offers the file\'s own name, walter.prolog, as "A .prolog file" where the tied file stands, the file opened is left as it was, and Save writes there from then on');
         });
       },
       function () {   // shut, first
-        var d = fresh(), h4 = granted('mum.yaml', '', 1), shut, none, first, o;
-        return save(d, A, 1, 'one\n', 'pairs.yaml').then(function (r) {   // the dialog closed
+        var d = fresh(), h4 = granted('mum.prolog', '', 1), shut, none, first, o;
+        return save(d, A, 1, 'one\n', 'afterlife.prolog').then(function (r) {   // the dialog closed
           shut = r; none = d.desk.tieOf(A, 1) === null && !d.files.downloads.length;
           d.files.next = h4;
-          return save(d, A, 1, 'one\n', 'pairs.yaml');
+          return save(d, A, 1, 'one\n', 'afterlife.prolog');
         }).then(function (r) {
           first = r; o = d.files.asked[1] || {};
-          return save(d, A, 1, 'two\n', 'mum.yaml');
+          return save(d, A, 1, 'two\n', 'mum.prolog');
         }).then(function (r) {
           if (shut.how === 'cancelled' && none) k.shut++;
           else fail('a dialog closed answers ' + JSON.stringify(shut) + ', where nothing is written, nothing downloaded and nothing tied');
-          if (first.how === 'picked' && first.name === 'mum.yaml' && o.startIn === 'downloads' && o.suggestedName === 'pairs.yaml' && r.how === 'tied' && h4.text === 'two\n' && d.files.asked.length === 2) k.first++;
+          if (first.how === 'picked' && first.name === 'mum.prolog' && o.startIn === 'downloads' && o.suggestedName === 'afterlife.prolog' && r.how === 'tied' && h4.text === 'two\n' && d.files.asked.length === 2) k.first++;
           else fail('a first save answers ' + JSON.stringify(first) + ' and the next ' + JSON.stringify(r) + ' after ' + d.files.asked.length + ' dialog(s), where the first asks where, in the Downloads folder, and the next is written there');
         });
       },
       function () {   // resting
-        var d = fresh(), h = new Handle('notes.yml', 'old\n', 100), g = granted('granted.yml', 'old\n', 100), got = [], quiet = [];
+        var d = fresh(), h = new Handle('walter.prolog', 'old\n', 100), g = granted('granted.prolog', 'old\n', 100), got = [], quiet = [];
         d.desk.tieTo(A, 1, h, 100, 'opened');
-        return save(d, A, 1, 'one\n', 'notes.yml', { ask: false }).then(function (r) {
+        return save(d, A, 1, 'one\n', 'walter.prolog', { ask: false }).then(function (r) {
           got.push(r); quiet.push(h.asks === 0 && h.writes === 0 && !d.files.asked.length && !d.files.downloads.length);
-          return save(d, A, 1, 'one\n', 'notes.yml', { ask: false, as: true });
+          return save(d, A, 1, 'one\n', 'walter.prolog', { ask: false, as: true });
         }).then(function (r) {
           got.push(r); quiet.push(h.writes === 0 && !d.files.asked.length && !d.files.downloads.length);
           d.desk.tieTo(A, 1, g, 100, 'opened');
-          return save(d, A, 1, 'one\n', 'granted.yml', { ask: false });
+          return save(d, A, 1, 'one\n', 'granted.prolog', { ask: false });
         }).then(function (r) {
           got.push(r);
-          return save(d, B, 1, 'one\n', 'pairs.yaml', { ask: false });
+          return save(d, B, 1, 'one\n', 'afterlife.prolog', { ask: false });
         }).then(function (r) {
           got.push(r);
           if (got[0].how === 'unasked' && quiet[0]) k.resting++; else fail('a save that waited, the browser not yet asked, answers ' + JSON.stringify(got[0]) + ' after ' + h.asks + ' question(s), where nothing is asked with no act at hand and nothing is written');
           if (got[1].how === 'unasked' && got[1].as === true && quiet[1]) k.resting++; else fail('a save under another name that waited answers ' + JSON.stringify(got[1]) + ', where its dialog wants an act at hand and nothing is written');
           if (got[2].how === 'tied' && g.text === 'one\n' && g.asks === 0) k.resting++; else fail('a save that waited, the browser\'s permission already had, answers ' + JSON.stringify(got[2]) + ', where it is written into the file');
-          if (got[3].how === 'downloaded' && d.files.downloads.length === 1 && d.files.downloads[0].file === 'pairs.yaml' && !d.files.asked.length) k.resting++; else fail('a save that waited where no file is tied answers ' + JSON.stringify(got[3]) + ', where it is downloaded as it always was');
+          if (got[3].how === 'downloaded' && d.files.downloads.length === 1 && d.files.downloads[0].file === 'afterlife.prolog' && !d.files.asked.length) k.resting++; else fail('a save that waited where no file is tied answers ' + JSON.stringify(got[3]) + ', where it is downloaded as it always was');
         });
       },
       function () {   // plain
-        var d = fresh(), h = granted('notes.yml', 'old\n', 100), v = granted('pairs-4.vla', '', 1);
+        var d = fresh(), h = granted('walter.prolog', 'old\n', 100), v = granted('afterlife-4.vla', '', 1);
         d.desk.tieTo(A, 1, h, 100, 'opened'); d.files.next = v;
-        return save(d, A, 1, '(cartridge "pairs")\n', 'pairs-4.vla', { kinds: '', ties: false }).then(function (r) {
+        return save(d, A, 1, '(cartridge "afterlife")\n', 'afterlife-4.vla', { kind: '', ties: false }).then(function (r) {
           var o = d.files.asked[0] || {}, tie = d.desk.tieOf(A, 1);
-          if (r.how === 'picked' && v.text === '(cartridge "pairs")\n' && h.writes === 0 && h.text === 'old\n' && tie && tie.handle === h && o.suggestedName === 'pairs-4.vla' && o.types[0].accept['text/plain'].join() === '.vla') k.plain++;
+          if (r.how === 'picked' && v.text === '(cartridge "afterlife")\n' && h.writes === 0 && h.text === 'old\n' && tie && tie.handle === h && o.suggestedName === 'afterlife-4.vla' && o.types[0].accept['text/plain'].join() === '.vla') k.plain++;
           else fail('a cartridge\'s save beside a file tied answers ' + JSON.stringify(r) + ', the file written ' + h.writes + ' time(s), where it asks where as it always did and the file is left as it was, tied still');
         });
       },
       function () {   // dropped
-        var d = fresh(), h = granted('notes.yml', 'old\n', 100), got = [], held = [];
+        var d = fresh(), h = granted('walter.prolog', 'old\n', 100), got = [], held = [];
         d.desk.tieTo(A, 1, h, 100, 'opened');
-        return save(d, B, 1, 'another cartridge\'s rows\n', 'other.yaml').then(function (r) {   // another entry picked: its dialog, closed
+        return save(d, B, 1, 'another cartridge\'s rows\n', 'other.prolog').then(function (r) {   // another entry picked: its dialog, closed
           got.push(r); held.push(h.writes === 0 && d.files.asked.length === 1 && d.files.asked[0].startIn === 'downloads');
-          return save(d, A, 2, 'the file as it was opened\n', 'notes.yml');   // the same entry, loaded again: its dialog, closed
+          return save(d, A, 2, 'the file as it was opened\n', 'walter.prolog');   // the same entry, loaded again: its dialog, closed
         }).then(function (r) {
           got.push(r); held.push(h.writes === 0 && d.files.asked.length === 2 && d.files.asked[1].startIn === h);
-          return save(d, A, 1, 'one\n', 'notes.yml');
+          return save(d, A, 1, 'one\n', 'walter.prolog');
         }).then(function (r) {
           if (got[0].how === 'cancelled' && held[0]) k.dropped++; else fail('a save under another entry of the picker answers ' + JSON.stringify(got[0]) + ', the tied file written ' + h.writes + ' time(s), where no save writes one file\'s rows into another\'s: it asks where');
           if (got[1].how === 'cancelled' && held[1]) k.dropped++; else fail('a save after the entry is loaded again answers ' + JSON.stringify(got[1]) + ', the tied file written ' + h.writes + ' time(s), where a tie is a load\'s and the save asks where, its dialog opening where the file stands');
@@ -7421,8 +7415,8 @@
       function () {   // elsewhere
         var d = fresh();
         d.files.none = true;
-        return save(d, A, 1, 'one\n', 'notes.yml').then(function (r) {
-          if (r.how === 'downloaded' && r.name === 'notes.yml' && d.files.downloads.length === 1 && d.files.downloads[0].file === 'notes.yml' && d.files.downloads[0].text === 'one\n') k.elsewhere++;
+        return save(d, A, 1, 'one\n', 'walter.prolog').then(function (r) {
+          if (r.how === 'downloaded' && r.name === 'walter.prolog' && d.files.downloads.length === 1 && d.files.downloads[0].file === 'walter.prolog' && d.files.downloads[0].text === 'one\n') k.elsewhere++;
           else fail('a browser with no dialog answers ' + JSON.stringify(r) + ', where the file is downloaded under its own name, as it always was');
         });
       }
@@ -7447,7 +7441,7 @@
     return steps.reduce(function (p, step) { return p.then(step); }, Promise.resolve()).then(null, function (e) { fail('the desk\'s case threw: ' + (e && e.message ? e.message : e)); });
   }
   function caseFileGrid() {
-    var P = [], k = { changes: 0, words: 0, kinds: 0, double: 0, named: 0, read: 0, opened: 0, same: 0, loose: 0, edited: 0, saved: 0, cartridge: 0, refused: 0, unwritten: 0, none: 0, waited: 0, several: 0 };
+    var P = [], k = { changes: 0, words: 0, kinds: 0, double: 0, named: 0, read: 0, opened: 0, same: 0, loose: 0, edited: 0, saved: 0, cartridge: 0, refused: 0, unwritten: 0, none: 0, waited: 0, renamed: 0 };
     // ---- pure: where two files part, and its words ----
     var FC = HOST.firstChange, CW = HOST.changeWords, U;
     [['a\nb\n', 'a\nb\n', null, ''],
@@ -7479,21 +7473,6 @@
     var offered = openKinds('.prolog'), plain = openKinds(''), CART = 'An Alonzo cartridge (.vla)';
     if (offered.length === 2 && offered[0].description === 'A .prolog file' && offered[0].accept['text/plain'].join() === '.prolog' && offered[1].description === CART && offered[1].accept['text/plain'].join() === '.vla' && plain.length === 1 && plain[0].description === CART && plain[0].accept['text/plain'].join() === '.vla') k.kinds++;
     else P.push('file: Open offers ' + JSON.stringify(offered) + ' under a cartridge that reads .prolog and ' + JSON.stringify(plain) + ' under one that reads none, where the file\'s kind stands first, "A .prolog file", and a cartridge beside it, "' + CART + '", and a cartridge alone');
-    // several types (ENGINE.49's build): each of them read, the first the one written
-    var TWO = ['.yaml', '.yml'], both = openKinds(TWO);
-    [['notes.yaml', true], ['notes.yml', true], ['NOTES.YAML', true], ['notes.ya', false], ['notes.yaml.vla', false], ['.yaml', false]
-    ].forEach(function (x) {
-      if (opensAsLines(x[0], TWO) === x[1]) k.kinds++; else P.push('file: ' + x[0] + ' under a cartridge that reads .yaml and .yml opens as lines: ' + opensAsLines(x[0], TWO) + ', where ' + x[1] + ' is due');
-    });
-    if (both.length === 2 && both[0].description === 'A .yaml or .yml file' && both[0].accept['text/plain'].join() === '.yaml,.yml' && both[1].accept['text/plain'].join() === '.vla') k.kinds++;
-    else P.push('file: Open offers ' + JSON.stringify(both) + ' under a cartridge that reads .yaml and .yml, where both stand in its first kind, the type a file is written under first, and a cartridge beside it');
-    // the name a file is offered under where the page asks for one: its own under the first type
-    [['notes.yml', TWO, 'notes.yaml'], ['notes.yaml', TWO, 'notes.yaml'], ['NOTES.YML', TWO, 'NOTES.yaml'], ['notes.Yaml', TWO, 'notes.Yaml'], ['afterlife', ['.prolog'], 'afterlife.prolog'], ['settings.env', ['.env'], 'settings.env'], ['a.vla', [], 'a.vla']
-    ].forEach(function (x) {
-      if (HOST.offeredName(x[0], x[1]) === x[2]) k.kinds++; else P.push('file: ' + x[0] + ' under a cartridge that reads ' + (x[1].join(' and ') || 'no file') + ' is offered as "' + HOST.offeredName(x[0], x[1]) + '", where "' + x[2] + '" is due');
-    });
-    if (HOST.ofTypes('notes.yml', TWO) && HOST.ofTypes('NOTES.YAML', TWO) && !HOST.ofTypes('notes.txt', TWO) && !HOST.ofTypes('.yml', TWO) && !HOST.ofTypes('notes.yml', [])) k.kinds++;
-    else P.push('file: a name is of a cartridge\'s types where it ends with one of them, compared without case, and is more than the type alone');
     // what the picker says of a file opened: the cartridge and the file it reads, or the file alone
     [['walter.prolog', 'Afterlife', 'Afterlife (walter.prolog)'], ['afterlife-1.vla', '', 'The file afterlife-1.vla']
     ].forEach(function (x) {
@@ -7552,6 +7531,11 @@
     A.save('person', undefined, true); A.save('cartridge', undefined, true);
     if (plainSave && handed.length === 2 && handed[0].kind === 'file' && handed[0].as === true && handed[0].text === want && handed[1].kind === 'cartridge' && handed[1].as === false) k.saved++;
     else P.push('file: a save under another name handed the page ' + JSON.stringify(handed.map(function (h) { return [h.kind, h.as]; })) + ' after a save marked ' + (plainSave ? 'plainly' : 'as one') + ', where the file is handed over marked as a save under another name, a save is not, and the cartridge\'s own never is');
+    // the file's name after a save under another (ENGINE.49): a name of the card's type is the file's from there on,
+    // the next save written under it, and a name of any other type is not taken
+    var took = A.fileNamed('other.env'), then = A.fileName(), not = A.fileNamed('notes.txt');
+    if (took === true && then === 'other.env' && not === false && A.fileName() === 'other.env') k.renamed++;
+    else P.push('file: the card\'s file named other.env (' + took + ') is written under ' + JSON.stringify(then) + ', and notes.txt taken: ' + not + ', where a name of the card\'s type is taken and any other is not');
     // the cartridge's own save, and a person's save of the cartridge, a cartridge still
     handed.length = 0;
     A.save('cartridge');
@@ -7602,16 +7586,6 @@
       if (mid && ws.waiting === true && wsaved.length === 1 && wsaved[0].kind === 'file' && wsaved[0].waited === true && wsaved[0].text === '# settings\nPORT=1\n') k.waited++;
       else P.push('file: a save asked while an act ' + (mid ? 'settles' : 'rests') + ' answers ' + JSON.stringify(ws.waiting ? 'waiting' : ws) + ' and the page is handed ' + JSON.stringify(wsaved.length ? wsaved[0].kind + ': ' + wsaved[0].text : null) + ', where the file waits for the settle and is handed over at rest');
     } else P.push('file: the card that settles did not open a file: ' + (W ? last(W) : 'no host'));
-    // a card of several types (ENGINE.49's build), over the module: each of them said, the first the one a file is
-    // written under; a file of a later type keeps its name, written back under it; and a name another save gave is the
-    // file's from there on, where it is of the card's types and never otherwise
-    var T = host(), tr = T && T.load(fileCard(9, false, '.env .ini'), 'pairs.vla').ok ? T.fileRead('PORT=8080\n', 'old.ini') : { ok: false };
-    if (T && tr.ok && T.fileTypes().join(' ') === '.env .ini' && T.fileType() === '.env' && T.fileName() === 'pairs.env' && T.load(tr.text, 'old.ini').ok) {
-      rest(T);
-      var asIni = T.fileName(), took = T.fileNamed('new.env'), then = T.fileName(), not = T.fileNamed('notes.txt');
-      if (asIni === 'old.ini' && took === true && then === 'new.env' && not === false && T.fileName() === 'new.env') k.several++;
-      else P.push('file: under a card of the types .env and .ini a file loaded as old.ini is written under ' + JSON.stringify(asIni) + ', and named new.env (' + took + ') under ' + JSON.stringify(then) + ', notes.txt taken: ' + not + ', where a file of a later type keeps its name, a name of the card\'s types is taken and any other is not');
-    } else P.push('file: the card of two types says ' + JSON.stringify(T ? [T.fileTypes(), T.fileName()] : null) + ' and its file ' + (tr.ok ? 'did not load: ' + last(T) : 'was not read: ' + JSON.stringify(tr.sentence || tr)) + ', where .env and .ini, pairs.env and a file read are due');
     // ---- Alonzo's own: Afterlife's reel, its tabs the file and the file its tabs ----
     if (OWN && CARTRIDGES.afterlife) {
       k.golden = 0; k.lines = 0;
@@ -7619,8 +7593,8 @@
       if (G && G.load(ac.text, ac.file).ok) {
         rest(G);
         var reel = G.fileText();
-        // a reel is a .prolog, the cartridge's one type (the owner's word at ENGINE.49's hand test)
-        if (reel.ok && G.fileType() === '.prolog' && G.fileTypes().join(' ') === '.prolog' && reel.file === 'afterlife.prolog') {
+        // a reel is a .prolog, the cartridge's type (the owner's word at ENGINE.49's hand test)
+        if (reel.ok && G.fileType() === '.prolog' && reel.file === 'afterlife.prolog') {
           k.lines = reel.lines;
           var gr = G.fileRead(reel.text, 'walter.prolog');
           if (gr.ok && G.load(gr.text, 'walter.prolog').ok) {
@@ -7628,14 +7602,8 @@
             var gc = G.fileCheck(reel.text, 'walter.prolog'), back = G.fileText();
             if (gc.same === true && back.ok && back.text === reel.text && back.file === 'walter.prolog') k.golden++;
             else P.push('file: Afterlife\'s reel opened under its cartridge is checked ' + JSON.stringify(gc) + ' and written back ' + (back.ok ? back.text.length + ' characters' : back.words) + ', where it comes back byte for byte');
-            // a name another save gave is the reel's from there on, where it is a .prolog; and a .pl, the type a reel
-            // had before, is no name of the cartridge's now, its file written under the cartridge's own
-            k.types = 0;
-            var named = G.fileNamed('mum.prolog'), under = G.fileName(), older = G.fileNamed('reel.pl');
-            if (named === true && under === 'mum.prolog' && older === false && G.fileName() === 'mum.prolog' && G.load(gr.text, 'reel.pl').ok && G.fileName() === 'afterlife.prolog') k.types++;
-            else P.push('file: Afterlife\'s reel named mum.prolog (' + named + ') is written under ' + JSON.stringify(under) + ', reel.pl taken: ' + older + ', and loaded as reel.pl under ' + JSON.stringify(G.fileName()) + ', where a .prolog\'s name is taken and a .pl is no type of the cartridge\'s');
           } else P.push('file: Afterlife\'s reel was not opened under its cartridge: ' + last(G));
-        } else P.push('file: Afterlife\'s tabs were not written as a .prolog file: ' + JSON.stringify(reel.ok ? [G.fileTypes(), reel.file] : reel.words));
+        } else P.push('file: Afterlife\'s tabs were not written as a .prolog file: ' + JSON.stringify(reel.ok ? [G.fileType(), reel.file] : reel.words));
       } else P.push('file: Afterlife did not load over the module');
     }
     return { counters: k, problems: P };

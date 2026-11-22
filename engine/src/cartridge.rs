@@ -10164,7 +10164,6 @@ mod tests {
             ),
             (".prolog", "%", 2)
         );
-        assert_eq!(format.kinds, [".prolog"], "a reel's one type");
         let read = crate::lines::read(&format, &walter).expect("the templates read the golden");
         assert_eq!(read.lines(), reel.lines());
         for ((tab, rows), hand) in format.tabs.iter().zip(&read.tabs).zip(&reel.tabs) {
