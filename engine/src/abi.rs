@@ -1,6 +1,6 @@
-//! The engine's C surface (ENGINE.1's second slice, 2026-10-09): the thirteen
+//! The engine's C surface (ENGINE.1's second slice, 2026-10-09): the fifteen
 //! exports of `docs/SPEC.md` section 4.6, which the host shim calls (`web/host.js`)
-//! and `tools/check_host_exports.ps1` holds name for name: twelve functions
+//! and `tools/check_host_exports.ps1` holds name for name: fourteen functions
 //! and the module's memory. Each is a thin door onto `crate::cartridge`, which
 //! is the language's machine with the engine's manifest and devices around
 //! it, except the twelfth, [`alonzo_expand`] (`SPEC.3`'s second slice,
@@ -8,7 +8,11 @@
 //! no grid: the pass is an act of its own before any load; and the
 //! thirteenth, [`alonzo_moved`] (`ENGINE.39`'s third slice, 2026-11-19), a door
 //! onto the language's mover, which takes no handle either: a page's paste of
-//! a formula moves its references by it.
+//! a formula moves its references by it. The fourteenth and fifteenth,
+//! [`alonzo_file_read`] and [`alonzo_file_write`] (`CART.16`'s second slice,
+//! 2026-11-21), are version 9's: a file's lines read into a cartridge's text
+//! and a grid's sheets written as the file, by the templates the cartridge's
+//! Format sheet says (`crate::lines`), the first taking no handle.
 //!
 //! **Memory and the record**, byte for byte as the language's own surface
 //! has them (`vla-lang/src/abi.rs`): the host allocates every input with
@@ -432,6 +436,65 @@ pub unsafe extern "C" fn alonzo_moved(
     answer(moved.as_bytes(), out_len)
 }
 
+/// `file_read`: a file opened under a cartridge (version 9, `CART.16`'s second
+/// slice; `docs/SPEC.md` section 3.11): the cartridge's text and a file's, and
+/// the answer the cartridge's text with the file's lines in the place of the
+/// cells its sheets held, read by the templates its Format sheet says, which a
+/// host loads as it loads any cartridge. It takes no handle and leaves every
+/// grid as it is: the cartridge is loaded apart, the file's rows laid in it,
+/// and given up once it is saved. Refused by name: a cartridge that says no
+/// file's lines or says them wrongly, `cart-format-invalid`, and a line no
+/// template reads, `cart-file-unread`, the record's line the file's own; and
+/// whatever a load of the cartridge refuses.
+///
+/// # Safety
+/// Each pointer came from [`alonzo_alloc`] with its length, or is null with
+/// 0; `out_len` is writable or null.
+#[no_mangle]
+pub unsafe extern "C" fn alonzo_file_read(
+    cart: *const u8,
+    cart_len: u32,
+    file: *const u8,
+    file_len: u32,
+    out_len: *mut u32,
+) -> *mut u8 {
+    let cart = match text(
+        unsafe { bytes(cart, cart_len) },
+        "the cartridge is",
+        out_len,
+    ) {
+        Ok(t) => t,
+        Err(p) => return p,
+    };
+    let file = match text(unsafe { bytes(file, file_len) }, "the file is", out_len) {
+        Ok(t) => t,
+        Err(p) => return p,
+    };
+    match Cartridge::opened(cart, file) {
+        Ok(opened) => answer(opened.as_bytes(), out_len),
+        Err(e) => refused(e.line, &e.refusal, out_len),
+    }
+}
+
+/// `file_write`: the file a grid's sheets say (version 9; section 3.11), its
+/// rows written by the templates its Format sheet says as the grid holds it
+/// now, a row a line. It changes nothing. Refused by name: a cartridge that
+/// says no file's lines, `cart-format-invalid`, and a row no line says,
+/// `cart-file-unwritten`, by its cell.
+///
+/// # Safety
+/// `out_len` is writable or null.
+#[no_mangle]
+pub unsafe extern "C" fn alonzo_file_write(handle: u32, out_len: *mut u32) -> *mut u8 {
+    CARTRIDGES.with(|c| match c.borrow().get(handle) {
+        Ok(cart) => match cart.file_text() {
+            Ok(file) => answer(file.as_bytes(), out_len),
+            Err(r) => refused(0, &r, out_len),
+        },
+        Err(r) => refused(0, &r, out_len),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     //! The surface as a host meets it: inputs allocated with the module's
@@ -564,6 +627,21 @@ mod tests {
         }
         let raw = moved(&[0x3d, 0xff, 0xfe], 1, 1);
         assert_eq!((raw.status, raw.text()), (2, "the formula is not UTF-8"));
+    }
+
+    fn file_read(cart: &[u8], file: &[u8]) -> Rec {
+        let (c, f) = (put(cart), put(file));
+        let mut len = 0u32;
+        let p = unsafe { alonzo_file_read(c.0, c.1, f.0, f.1, &mut len) };
+        free(c);
+        free(f);
+        take(p, len)
+    }
+
+    fn file_write(handle: u32) -> Rec {
+        let mut len = 0u32;
+        let p = unsafe { alonzo_file_write(handle, &mut len) };
+        take(p, len)
     }
 
     fn view(handle: u32, projection: &str, sheet: &str, window: &str) -> Rec {
@@ -719,5 +797,41 @@ mod tests {
         let small = "(cartridge \"tiny\"\n  (spec 2)\n  (title \"Tiny\")\n  (rate 0)\n  (screen grid 4 3)\n  (seed 1))\n(cell \"Board\" \"A1\" 1)\n";
         let next = load(small.as_bytes(), "tiny.vla");
         assert_eq!(next.text(), "(cartridge 2 \"Tiny\" grid 4 3 0)");
+
+        // Version 9's two calls (CART.16's second slice): a cartridge's text and
+        // a file's in, the cartridge with the file's rows out, no handle taken
+        // and none left behind; then that cartridge loaded, and the file its
+        // grid says.
+        let card = "(cartridge \"pairs\"\n  (spec 9)\n  (title \"Pairs\")\n  (rate 0)\n  (screen grid 4 3)\n  (seed 1))\n(sheet \"Pairs\" visible)\n(cell \"Pairs\" \"A1\" \"Key\")\n(cell \"Format\" \"B1\" \".env\")\n(cell \"Format\" \"B2\" \"#\")\n(cell \"Format\" \"B3\" 2)\n(cell \"Format\" \"A6\" \"Pairs\")\n(cell \"Format\" \"B6\" \"{A:word}={B:whole|rest}\")\n";
+        let file = "# a\nPORT=8080\n";
+        let opened = file_read(card.as_bytes(), file.as_bytes());
+        assert_eq!(
+            (opened.status, opened.id.as_str()),
+            (0, ""),
+            "{}",
+            opened.text()
+        );
+        assert!(
+            opened.text().contains("(cell \"Pairs\" \"B3\" 8080)\n"),
+            "{}",
+            opened.text()
+        );
+        let third = load(&opened.text, "a.env");
+        assert_eq!(third.text(), "(cartridge 3 \"Pairs\" grid 4 3 0)");
+        let back = file_write(3);
+        assert_eq!((back.status, back.text()), (0, file));
+        // A line no template reads, by the file's line; a cartridge that says
+        // no file's lines; a handle not live; and a file that is not UTF-8.
+        let unread = file_read(card.as_bytes(), b"PORT=1\nno equals sign\n");
+        assert_eq!(
+            (unread.status, unread.id.as_str(), unread.line),
+            (1, "cart-file-unread", 2)
+        );
+        let none = file_read(small.as_bytes(), file.as_bytes());
+        assert_eq!((none.status, none.id.as_str()), (1, "cart-format-invalid"));
+        assert_eq!(file_write(2).id, "cart-format-invalid");
+        assert_eq!(file_write(9).id, "grid-handle-unknown");
+        let raw = file_read(card.as_bytes(), &[0xff, 0xfe]);
+        assert_eq!((raw.status, raw.text()), (2, "the file is not UTF-8"));
     }
 }

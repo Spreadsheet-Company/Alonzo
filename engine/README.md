@@ -154,14 +154,23 @@ at every 64th (`CART.3`'s third slice).
 
 Afterlife, `cartridges/afterlife/`, is a tool and no game (`CART.16`): a
 reel's Prolog facts in eight tabs, a tab a relation, a column an argument and
-a row a line of the file. Its reader and its writer are written by hand,
-`src/afterlife.rs`, compiled for the tests alone, with the tabs, each
-argument's kind and the columns the file aligns them at. A test holds its
-golden, `walter.pl`, written back byte for byte by the reader and the writer
-alone, by the cartridge loaded and its tabs read, and by a save of it;
-another holds a person's edits, each as its line of the file, and a row no
-line can say refused by its tab and its row. `examples/afterlife.rs` is their
-door: a reel made a cartridge, and a save written back as a reel.
+a row a line of the file. Since its second slice the cartridge says the
+reel's lines itself, thirteen rows of its Format sheet, each a line written
+out with a hole for each column, and the engine reads and writes the file by
+them: `src/lines.rs`, the reader of templates, which knows no file's format,
+behind `Cartridge::opened`, a file read into a cartridge's text, and
+`Cartridge::file_text`, a grid's sheets written as the file, the page's Open
+and Save (the specification's section 3.11). The first slice's reader and
+writer, written by hand, `src/afterlife.rs`, compiled for the tests alone,
+are its reference: the templates read the golden, `walter.pl`, into the
+hand's rows and refuse every line the hand refuses. Tests hold the golden
+written back byte for byte by the cartridge's tabs, by a save of it and by
+the golden opened under the cartridge, which is the cartridge the pass wrote;
+a person's edits, each its line of the file, a row no line says refused by
+its cell; and a card of another format, a file of settings, opened, edited
+and written back, its line ends kept and a column of the sheet's own left
+standing beside the file's. `examples/afterlife.rs` is the same two acts at
+a command line: a reel made a cartridge, and a save written back as a reel.
 
 Seiyaku, `cartridges/seiyaku/`, the number-placement puzzle (`CART.14`), is
 held to a board written by hand, `src/seiyaku.rs`, compiled for the tests
@@ -296,7 +305,7 @@ names an entry's parts in a loop (`VLA.16`); and reads a raw string,
   is the language's; what can only be measured is the engine's.
 - The engine's imports are the host's functions, named by hand as
   `extern "C"` and held to an allowlist read off the artifact on every
-  push, its exports to the specification's thirteen names; the crate depends
+  push, its exports to the specification's fifteen names; the crate depends
   on the language crate and nothing else, which a check reads off the
   manifests and the lock. It makes no outbound network call, ever.
 - Nothing the browser rents is rebuilt until a measurement says the rent is

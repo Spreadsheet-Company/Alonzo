@@ -42,6 +42,7 @@
 //! `cart` family, read by the language's mechanism; every other id is the
 //! language's.
 
+use std::collections::BTreeMap;
 use std::sync::OnceLock;
 
 use vla_lang::calc::{self, graph::is_formula, library, Env};
@@ -51,6 +52,8 @@ use vla_lang::messages::{self, Catalogue, Refusal};
 use vla_lang::printer::write_datum;
 use vla_lang::reader::{each_form, read_forms};
 use vla_lang::sheet::{number_text, parse_a1_range, A1Range, Content, MAX_ROW};
+
+use crate::lines;
 
 /// The engine's half of the catalog, embedded at build time: no file is
 /// read when the module runs.
@@ -97,8 +100,11 @@ fn refused(line: u32, id: &str, slots: &[(&str, &str)]) -> LineRefusal {
 /// as it did. Version 8 adds a column to a layout, the Commands sheet's fifth,
 /// `repeats`, whether a held key's repeat runs its command, the host's to read, which
 /// a cartridge written to it alone has (`ENGINE.39`'s first slice), so that a
-/// cartridge written to 1 to 7 loads and describes as it did.
-pub const SPECS: [u32; 8] = [1, 2, 3, 4, 5, 6, 7, 8];
+/// cartridge written to 1 to 7 loads and describes as it did. Version 9 adds a
+/// device, the Format sheet, a file's lines said as templates (`CART.16`'s second
+/// slice; `crate::lines`), a cartridge's written to it alone, so that a cartridge
+/// written to 1 to 8 loads and describes as it did, a sheet it names Format its own.
+pub const SPECS: [u32; 9] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 /// The most settle steps an act takes, version 6's `(settle K)` (`CART.12`, decision
 /// 57): fifty times the deepest cascade the scoping measured, 1,315 frames.
 pub const MAX_SETTLE: u32 = 65_536;
@@ -527,10 +533,11 @@ pub enum Device {
     Camera,
     Write,
     Commands,
+    Format,
 }
 
 /// The devices, in the order describe lists them.
-pub const DEVICES: [Device; 10] = [
+pub const DEVICES: [Device; 11] = [
     Device::Screen,
     Device::Palette,
     Device::Input,
@@ -541,6 +548,7 @@ pub const DEVICES: [Device; 10] = [
     Device::Camera,
     Device::Write,
     Device::Commands,
+    Device::Format,
 ];
 
 /// The most commands a Commands sheet holds, its rows 2 to 101 (`ENGINE.25`;
@@ -549,6 +557,10 @@ pub const MAX_COMMANDS: u32 = 100;
 const COMMANDS_LAYOUT: [Rect; 1] = [(1, 1, MAX_COMMANDS + 1, 4)];
 /// The Commands sheet since version 8, its fifth column `repeats` (`ENGINE.39`).
 const COMMANDS_LAYOUT_EIGHT: [Rect; 1] = [(1, 1, MAX_COMMANDS + 1, 5)];
+/// The Format sheet, version 9's (`CART.16`'s second slice; section 3.11): its
+/// head's four rows and its headers', then a kind of line a row, a hundred at most,
+/// each a label or a sheet in column A and a value or a template in column B.
+const FORMAT_LAYOUT: [Rect; 1] = [(1, 1, lines::LAST_ROW, 2)];
 
 impl Device {
     pub fn name(self) -> &'static str {
@@ -563,14 +575,17 @@ impl Device {
             Device::Camera => "Camera",
             Device::Write => "Write",
             Device::Commands => "Commands",
+            Device::Format => "Format",
         }
     }
 
     /// The version of the page that made it a device: the Commands sheet version
-    /// 5's (`ENGINE.25`), every other the first's.
+    /// 5's (`ENGINE.25`), the Format sheet version 9's (`CART.16`), every other the
+    /// first's.
     pub fn since(self) -> u32 {
         match self {
             Device::Commands => 5,
+            Device::Format => 9,
             _ => 1,
         }
     }
@@ -622,6 +637,7 @@ impl Device {
             Device::Write => &[(1, 1, MAX_ROW, 3)],
             Device::Commands if spec >= 8 => &COMMANDS_LAYOUT_EIGHT,
             Device::Commands => &COMMANDS_LAYOUT,
+            Device::Format => &FORMAT_LAYOUT,
         }
     }
 
@@ -768,6 +784,7 @@ fn check_devices(draft: &Draft, m: &Manifest, camera: bool) -> Result<(), LineRe
     if Device::Commands.since() <= m.spec {
         check_commands(draft)?;
     }
+    check_format(draft, m)?;
     // each formula once, a fill's at its first cell, by sheet and place
     for ((si, row, col), text, at) in draft.formulas() {
         if let Some(f) = calc::calls(text)
@@ -878,6 +895,208 @@ fn check_commands(draft: &Draft) -> Result<(), LineRefusal> {
         ));
     }
     Ok(())
+}
+
+/// What a cell of a draft holds, as the reader of a file's lines takes it.
+fn held_of(cell: Drafted<'_>) -> lines::Held {
+    match cell.content() {
+        Content::Text(t) => lines::Held::Text(t),
+        Content::Number(n) => lines::Held::Number(number_text(n).unwrap_or_else(|| n.to_string())),
+        Content::Bool(b) => lines::Held::Truth(b),
+        Content::Error(e) => lines::Held::Error(e),
+        _ => lines::Held::Formula,
+    }
+}
+
+/// What is wrong with the sheet a line of the Format sheet names, or nothing: a
+/// file's lines stand on a sheet of the cartridge's own, which is no device.
+fn line_sheet_flaw(template: &lines::Template, spec: u32, own: bool) -> Option<String> {
+    let (row, sheet) = (template.row, &template.sheet);
+    if Device::of_spec(sheet, spec).is_some() {
+        Some(format!(
+            "The Format sheet's A{row} names {}, a device sheet, and a file's lines stand on a sheet of the cartridge's own",
+            quoted(sheet)
+        ))
+    } else if !own {
+        Some(format!(
+            "The Format sheet's A{row} names {}, a sheet the cartridge does not hold",
+            quoted(sheet)
+        ))
+    } else {
+        None
+    }
+}
+
+/// The Format sheet (version 9, `CART.16`'s second slice; section 3.11) as a
+/// cartridge's rows write it: its head and its lines read by `crate::lines`,
+/// every cell a value, and each line's sheet one the rows hold that is no
+/// device. `None` for a cartridge written to 1 to 8, whose sheet of that name
+/// is its own, and for one that holds none.
+fn check_format(draft: &Draft, m: &Manifest) -> Result<Option<lines::Format>, LineRefusal> {
+    if Device::Format.since() > m.spec {
+        return Ok(None);
+    }
+    let Some(si) = draft.find_sheet("Format") else {
+        return Ok(None);
+    };
+    let line = |row: u32, col: u32| draft.line(si, row, col).unwrap_or(0);
+    let format =
+        lines::Format::of(|row, col| draft.content(si, row, col).map(held_of)).map_err(|f| {
+            refused(
+                line(f.row, f.column),
+                "cart-format-invalid",
+                &[("what", &f.what)],
+            )
+        })?;
+    for template in &format.templates {
+        let own = draft.find_sheet(&template.sheet).is_some();
+        if let Some(what) = line_sheet_flaw(template, m.spec, own) {
+            return Err(refused(
+                line(template.row, 1),
+                "cart-format-invalid",
+                &[("what", &what)],
+            ));
+        }
+    }
+    Ok(Some(format))
+}
+
+/// A file's lines laid in the draft in the place of the cells its sheets held
+/// (`CART.16`'s second slice): read by the Format sheet's templates, each line
+/// a row from the first row the sheet says; a cell the file writes put over
+/// what stood there, its format kept; a cell of a line's columns the file
+/// leaves empty taken out; every other cell of the sheet left as the rows
+/// wrote it, a column beside the file's being the sheet's own. The Format
+/// sheet's line end is the file's from then on.
+fn lay_file(
+    draft: &mut Draft,
+    format: Option<&lines::Format>,
+    file: &str,
+) -> Result<(), LineRefusal> {
+    let Some(format) = format else {
+        return Err(refused(
+            0,
+            "cart-format-invalid",
+            &[(
+                "what",
+                "The cartridge says no file's lines, so no file is read into it",
+            )],
+        ));
+    };
+    let read = lines::read(format, file)
+        .map_err(|u| refused(u.line as u32, "cart-file-unread", &[("what", &u.what)]))?;
+    for (tab, rows) in format.tabs.iter().zip(&read.tabs) {
+        let Some(si) = draft.find_sheet(&tab.name) else {
+            continue;
+        };
+        let mut laid: BTreeMap<(u32, u32), Content> = BTreeMap::new();
+        for (i, row) in rows.iter().enumerate() {
+            for (col, cell) in row {
+                let content = match cell {
+                    lines::Laid::Text(t) if t.is_empty() => continue,
+                    lines::Laid::Text(t) => Content::Text(t.clone()),
+                    lines::Laid::Number(n) => Content::Number(*n),
+                };
+                laid.insert((format.first_row + i as u32, *col), content);
+            }
+        }
+        let stood: Vec<(u32, u32)> = draft
+            .cells(si)
+            .map(|(at, _)| at)
+            .filter(|(row, col)| *row >= format.first_row && tab.columns.contains(col))
+            .collect();
+        for (row, col) in stood {
+            if !laid.contains_key(&(row, col)) {
+                draft.take(si, row, col);
+            }
+        }
+        for ((row, col), content) in laid {
+            draft.put(si, row, col, content);
+        }
+    }
+    if let Some(si) = draft.find_sheet("Format") {
+        let end = if read.crlf { "CRLF" } else { "LF" };
+        draft.put(si, lines::LINE_END_ROW, 2, Content::Text(end.to_string()));
+    }
+    Ok(())
+}
+
+/// A sheet's cells from its `values` record, by row and column from 1: each
+/// `cell` row's value and each formula's `value` row, a range every cell of it.
+/// `within` keeps the cells from a row on in the columns named, a line's, and
+/// none keeps them all.
+fn cells_of_record(
+    record: &str,
+    sheet: &str,
+    within: Option<(u32, &[u32])>,
+) -> Result<lines::Cells, String> {
+    let forms = read_forms(record).map_err(|r| format!("{sheet}: {}", r.text))?;
+    let mut out = lines::Cells::new();
+    for form in &forms {
+        let Form::List(list) = form else { continue };
+        let [Form::Sym(head), Form::Str(name), Form::Str(address), value, ..] =
+            list.items.as_slice()
+        else {
+            continue;
+        };
+        if !matches!(head.as_str(), "cell" | "value") || !name.eq_ignore_ascii_case(sheet) {
+            continue;
+        }
+        let Some(range) = parse_a1_range(address) else {
+            continue;
+        };
+        let held = match value {
+            Form::Str(text) => lines::Held::Text(text.clone()),
+            Form::Sym(word) if word == "true" || word == "false" => {
+                lines::Held::Truth(word == "true")
+            }
+            Form::Sym(number) => lines::Held::Number(number.clone()),
+            Form::List(error) => lines::Held::Error(match error.items.get(1) {
+                Some(Form::Str(name)) => name.clone(),
+                _ => "an error".to_string(),
+            }),
+        };
+        let top = within.map_or(range.top, |(first, _)| range.top.max(first));
+        for row in top..=range.bottom {
+            for col in range.left..=range.right {
+                if within.map_or(true, |(_, columns)| columns.contains(&col)) {
+                    out.insert((row, col), held.clone());
+                }
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// A text's first form as written: to the parenthesis that closes it, a
+/// literal's and a comment's passed over. A save opens on its cartridge's.
+fn first_form_text(text: &str) -> &str {
+    let (mut depth, mut in_text, mut escaped, mut comment) = (0u32, false, false, false);
+    for (i, ch) in text.char_indices() {
+        if comment {
+            comment = ch != '\n';
+        } else if in_text {
+            if escaped {
+                escaped = false;
+            } else if ch == '\\' {
+                escaped = true;
+            } else if ch == '"' {
+                in_text = false;
+            }
+        } else if ch == ';' {
+            comment = true;
+        } else if ch == '"' {
+            in_text = true;
+        } else if ch == '(' {
+            depth += 1;
+        } else if ch == ')' {
+            depth = depth.saturating_sub(1);
+            if depth == 0 {
+                return &text[..=i];
+            }
+        }
+    }
+    text
 }
 
 /// The Input sheet's labels, row by row (section 3.3).
@@ -1115,6 +1334,20 @@ impl Cartridge {
     /// A cartridge's text loaded into a grid, `name` the file's name as the
     /// host gave it and `size` its length in bytes, for the File sheet.
     pub fn load(text: &str, name: &str, size: usize) -> Result<Cartridge, LineRefusal> {
+        Cartridge::load_with(text, name, size, None)
+    }
+
+    /// The load, and with a file its lines laid in the grid before the machine
+    /// is made, in the place of the cells the cartridge's rows held there
+    /// (version 9, `CART.16`'s second slice): the file read by the Format
+    /// sheet's templates, so that the grid is the cartridge's with that file's
+    /// rows, at the frame its rows say, nothing computed.
+    fn load_with(
+        text: &str,
+        name: &str,
+        size: usize,
+        file: Option<&str>,
+    ) -> Result<Cartridge, LineRefusal> {
         // The file's limit (section 10), held here since ENGINE.5, so that a
         // save a host writes under it loads again.
         if text.len() > MAX_CARTRIDGE_BYTES {
@@ -1181,6 +1414,10 @@ impl Cartridge {
         let mut draft = read_rows_each(forms.filter(|form| !is_draft(form)))?;
         let camera = draft.find_sheet("Camera").is_some();
         check_devices(&draft, &manifest, camera)?;
+        if let Some(file) = file {
+            let format = check_format(&draft, &manifest)?;
+            lay_file(&mut draft, format.as_ref(), file)?;
+        }
         let (frame, rate) = make_own_sheets(&mut draft, &manifest, name, size);
         // The keyboard's sheets name sheets the rows hold (version 6, SPEC.5).
         for (sheet, at, text) in &manifest.keyed {
@@ -1473,6 +1710,18 @@ impl Cartridge {
         if head == "cell" && device == Device::Clock {
             check_clock(l.line, sheet, &range, value, self.manifest.settle.is_some())?;
         }
+        if head == "formula" && device == Device::Format {
+            return Err(refused(
+                l.line,
+                "cart-format-invalid",
+                &[(
+                    "what",
+                    &format!(
+                        "A formula cannot go into {target}: a file's lines are said as values, which a file is read by before any frame computes"
+                    ),
+                )],
+            ));
+        }
         Ok(())
     }
 
@@ -1532,6 +1781,102 @@ impl Cartridge {
         window: Option<&str>,
     ) -> Result<Viewed, Refusal> {
         self.machine.view(projection, sheet, window)
+    }
+
+    /// A sheet's `values` record.
+    fn values(&self, sheet: &str) -> Result<String, Refusal> {
+        match self.view("values", sheet, None)? {
+            Viewed::Text(record) => Ok(record),
+            Viewed::Bytes(_) => Ok(String::new()),
+        }
+    }
+
+    /// The Format sheet as the grid holds it now (version 9; section 3.11), a
+    /// person's edits of it among its values, read by `crate::lines`; refused by
+    /// name where the cartridge says no file's lines or says them wrongly.
+    pub fn format(&self) -> Result<lines::Format, Refusal> {
+        let invalid = |what: &str| raise("cart-format-invalid", &[("what", what)]);
+        let spec = self.manifest.spec;
+        if Device::Format.since() > spec {
+            return Err(invalid(&format!(
+                "The cartridge is written to (spec {spec}), which says no file's lines"
+            )));
+        }
+        let own = |name: &str| {
+            self.machine
+                .find_sheet(name)
+                .is_some_and(|si| si < self.machine.sheets())
+        };
+        if !own("Format") {
+            return Err(invalid(
+                "The cartridge holds no Format sheet, so it says no file's lines",
+            ));
+        }
+        let cells =
+            cells_of_record(&self.values("Format")?, "Format", None).map_err(|e| invalid(&e))?;
+        let format = lines::Format::of(|row, col| cells.get(&(row, col)).cloned())
+            .map_err(|f| invalid(&f.what))?;
+        for template in &format.templates {
+            if let Some(what) = line_sheet_flaw(template, spec, own(&template.sheet)) {
+                return Err(invalid(&what));
+            }
+        }
+        Ok(format)
+    }
+
+    /// The file the grid's sheets say (version 9, `CART.16`'s second slice): each
+    /// sheet a line of the Format sheet names, its rows from the first to the
+    /// last that holds anything in a line's columns, written by the templates, a
+    /// row a line; a formula's cell by its value. A row no line says is refused
+    /// by its cell, `cart-file-unwritten`, and nothing is written.
+    pub fn file_text(&self) -> Result<String, Refusal> {
+        let format = self.format()?;
+        let unwritten = |what: &str| raise("cart-file-unwritten", &[("what", what)]);
+        let mut sheets = Vec::with_capacity(format.tabs.len());
+        for tab in &format.tabs {
+            let within = Some((format.first_row, tab.columns.as_slice()));
+            sheets.push(
+                cells_of_record(&self.values(&tab.name)?, &tab.name, within)
+                    .map_err(|e| unwritten(&e))?,
+            );
+        }
+        lines::write(&format, &sheets).map_err(|e| unwritten(&e))
+    }
+
+    /// A save, as a host writes one (section 7.5; `ENGINE.5`): the manifest the
+    /// cartridge was loaded with, the first form of `loaded` as written; every
+    /// sheet that is no twin, its `fills` view whole, in the record's order; and
+    /// then the loaded text's `name` rows, which no view prints and no write
+    /// makes. The host's `saveText` writes the same, which the loop oracle holds.
+    pub fn save_text(&self, loaded: &str) -> Result<String, Refusal> {
+        let loaded = loaded.replace("\r\n", "\n");
+        let mut out = first_form_text(&loaded).to_string();
+        out.push('\n');
+        for i in 0..self.machine.sheets() {
+            let name = self.machine.sheet_name(i).unwrap_or_default().to_string();
+            if let Viewed::Text(fills) = self.view("fills", &name, None)? {
+                out.push_str(&fills);
+            }
+        }
+        for line in loaded.lines().filter(|l| l.starts_with("(name ")) {
+            out.push_str(line);
+            out.push('\n');
+        }
+        Ok(out)
+    }
+
+    /// A file opened under a cartridge (version 9, `CART.16`'s second slice):
+    /// the cartridge's text with the file's lines in the place of the cells its
+    /// sheets held, a cartridge's text in its turn, which a host loads as it
+    /// loads any. The cartridge is loaded apart with the file's rows laid in it
+    /// and saved at once, so the answer is a save at the frame the cartridge's
+    /// rows say, 0 for a cartridge that never ran. A line no template reads is
+    /// refused by its number, `cart-file-unread`, the record's line the file's.
+    pub fn opened(cart: &str, file: &str) -> Result<String, LineRefusal> {
+        let loaded = Cartridge::load_with(cart, "", cart.len(), Some(file))?;
+        loaded
+            .save_text(cart)
+            .map_err(|refusal| LineRefusal { line: 0, refusal })
     }
 }
 
@@ -1789,6 +2134,9 @@ mod tests {
             ("cart-write-clock", vec![("target", "x"), ("what", "x")]),
             ("cart-command-invalid", vec![("what", "x")]),
             ("cart-too-large", vec![("size", "x"), ("limit", "x")]),
+            ("cart-format-invalid", vec![("what", "x")]),
+            ("cart-file-unread", vec![("what", "x")]),
+            ("cart-file-unwritten", vec![("what", "x")]),
         ];
         assert_eq!(catalog().count(), ids.len(), "every entry is raised");
         for (id, slots) in &ids {
@@ -1870,18 +2218,20 @@ mod tests {
 
     #[test]
     fn a_later_spec_is_refused_before_its_directives() {
-        let text = small(30).replacen("(spec 2)", "(spec 9)\n  (layers 2)", 1);
+        let text = small(30).replacen("(spec 2)", "(spec 10)\n  (layers 2)", 1);
         let r = load(&text).expect_err("a later page is refused");
         assert_eq!(r.refusal.id, "cart-spec-unsupported");
         assert_eq!(r.line, 2, "the spec's own line");
+        assert!(r.refusal.text.contains("(spec 10)"), "{}", r.refusal.text);
         assert!(r.refusal.text.contains("(spec 9)"), "{}", r.refusal.text);
-        assert!(r.refusal.text.contains("(spec 8)"), "{}", r.refusal.text);
         // Version 3 adds no row and no directive, version 4's rows and version 5's
         // sheet and row are their cartridges' alone, version 6's directive is its
-        // own cartridges', version 7 adds nothing the engine reads, and version
-        // 8's column is its own cartridges': every page's loads alike.
+        // own cartridges', version 7 adds nothing the engine reads, version 8's
+        // column is its own cartridges', and so is version 9's sheet: every
+        // page's loads alike.
         for spec in [
             "(spec 1)", "(spec 3)", "(spec 4)", "(spec 5)", "(spec 6)", "(spec 7)", "(spec 8)",
+            "(spec 9)",
         ] {
             assert_eq!(
                 id_of(load(&small(30).replacen("(spec 2)", spec, 1))),
@@ -3033,63 +3383,11 @@ mod tests {
         assert_eq!(plane(&resumed), reference(3));
     }
 
-    /// A save as the host writes one (docs/SPEC.md section 7.5; `ENGINE.5`): the
-    /// manifest the cartridge was loaded with, its first form as written; every
-    /// sheet that is no twin, its `fills` view whole, in the record's order; and
-    /// then the loaded text's `name` rows, which no view prints and no write
-    /// makes, so that a formula reading a name reads it in the save. The host's
-    /// `saveText` writes the same, which the loop oracle's save case holds.
+    /// A save as the host writes one (docs/SPEC.md section 7.5; `ENGINE.5`), the
+    /// crate's own since `CART.16`'s second slice, which a file opened is answered
+    /// by: `Cartridge::save_text`.
     fn save_of(c: &Cartridge, loaded: &str) -> String {
-        let loaded = loaded.replace("\r\n", "\n");
-        let mut out = first_form_text(&loaded).to_string();
-        out.push('\n');
-        for i in 0..c.machine().sheets() {
-            let name = c
-                .machine()
-                .sheet_name(i)
-                .expect("a sheet's name")
-                .to_string();
-            match c.view("fills", &name, None) {
-                Ok(Viewed::Text(t)) => out.push_str(&t),
-                other => panic!("{name}'s fills: {other:?}"),
-            }
-        }
-        for line in loaded.lines().filter(|l| l.starts_with("(name ")) {
-            out.push_str(line);
-            out.push('\n');
-        }
-        out
-    }
-
-    /// A text's first form as written: to the parenthesis that closes it, a
-    /// literal's and a comment's passed over.
-    fn first_form_text(text: &str) -> &str {
-        let (mut depth, mut in_text, mut escaped, mut comment) = (0u32, false, false, false);
-        for (i, ch) in text.char_indices() {
-            if comment {
-                comment = ch != '\n';
-            } else if in_text {
-                if escaped {
-                    escaped = false;
-                } else if ch == '\\' {
-                    escaped = true;
-                } else if ch == '"' {
-                    in_text = false;
-                }
-            } else if ch == ';' {
-                comment = true;
-            } else if ch == '"' {
-                in_text = true;
-            } else if ch == '(' {
-                depth += 1;
-            } else if ch == ')' {
-                depth -= 1;
-                if depth == 0 {
-                    return &text[..=i];
-                }
-            }
-        }
-        text
+        c.save_text(loaded).expect("a save's views")
     }
 
     /// Every sheet's `fills` view, the File's name and size apart, which a load
@@ -9774,10 +10072,9 @@ mod tests {
         ))
     }
 
-    /// The reel a grid's tabs say: each tab's `values` record read by the
-    /// hand's reader and written by its writer, as the door at the command
-    /// line writes a save back.
-    fn afterlife_written(c: &Cartridge) -> Result<String, String> {
+    /// The reel a grid's tabs say by the first slice's hand: each tab's `values`
+    /// record read by the hand's reader and written by its writer.
+    fn afterlife_by_hand(c: &Cartridge) -> Result<String, String> {
         let records: Vec<String> = af::TABS
             .iter()
             .map(|tab| match c.view("values", tab.name, None) {
@@ -9786,6 +10083,13 @@ mod tests {
             })
             .collect();
         af::write(&af::of_records(&records)?)
+    }
+
+    /// The reel a grid's tabs say: the engine's act, the Format sheet's
+    /// templates over the tabs (the second slice), which the page's Save and the
+    /// door at the command line take; a refusal by its words.
+    fn afterlife_written(c: &Cartridge) -> Result<String, String> {
+        c.file_text().map_err(|r| format!("{}: {}", r.id, r.text))
     }
 
     /// The golden's round trip (`CART.16`'s oracle): Walter Alder's reel, 934
@@ -9814,7 +10118,12 @@ mod tests {
         assert_eq!(
             afterlife_written(&c).as_deref(),
             Ok(walter.as_str()),
-            "the cartridge's tabs"
+            "the cartridge's tabs, by its Format sheet"
+        );
+        assert_eq!(
+            afterlife_by_hand(&c).as_deref(),
+            Ok(walter.as_str()),
+            "the cartridge's tabs, by the hand"
         );
         let save = save_of(&c, &text);
         let resumed =
@@ -9824,6 +10133,52 @@ mod tests {
             Ok(walter.as_str()),
             "a save's tabs"
         );
+        // The second slice: the golden opened under the cartridge is the cartridge
+        // the pass wrote, every sheet's fills, and so is the golden opened under a
+        // cartridge that held another reel; and the hand's rows are the templates'.
+        let opened = Cartridge::opened(&text, &walter).expect("the golden opens");
+        let again = Cartridge::load(&opened, "walter.pl", opened.len()).expect("it loads");
+        assert_eq!(fills_of(&again), fills_of(&c), "a file opened");
+        assert_eq!(afterlife_written(&again).as_deref(), Ok(walter.as_str()));
+        let other = "% another reel\nreel(1).\nopening(hi).\n\nresponse(hi, \"Hi.\").\nunknown(hi).   % a note\n";
+        let under = Cartridge::opened(&text, other).expect("another reel opens");
+        let small = Cartridge::load(&under, "other.pl", under.len()).expect("it loads");
+        assert_eq!(
+            afterlife_written(&small).as_deref(),
+            Ok("% another reel\nreel(1).\nopening(hi).\n\nresponse(hi, \"Hi.\").\nunknown(hi).                                    % a note\n"),
+            "Walter's rows gone from every tab, and the comment at its column"
+        );
+        let back = Cartridge::opened(&under, &walter).expect("the golden opens over it");
+        let walter_again = Cartridge::load(&back, "walter.pl", back.len()).expect("it loads");
+        assert_eq!(
+            fills_of(&walter_again),
+            fills_of(&c),
+            "the golden over another reel"
+        );
+        let format = c.format().expect("the Format sheet reads");
+        assert_eq!(
+            (
+                format.kind.as_str(),
+                format.comment.as_str(),
+                format.first_row
+            ),
+            (".pl", "%", 2)
+        );
+        let read = crate::lines::read(&format, &walter).expect("the templates read the golden");
+        assert_eq!(read.lines(), reel.lines());
+        for ((tab, rows), hand) in format.tabs.iter().zip(&read.tabs).zip(&reel.tabs) {
+            assert_eq!(rows.len(), hand.len(), "{}", tab.name);
+            for (i, (row, hand)) in rows.iter().zip(hand).enumerate() {
+                let mut cells = vec![String::new(); hand.len()];
+                for (column, cell) in row {
+                    cells[*column as usize - 1] = match cell {
+                        crate::lines::Laid::Text(t) => t.clone(),
+                        crate::lines::Laid::Number(n) => n.to_string(),
+                    };
+                }
+                assert_eq!(&cells, hand, "{}, row {}", tab.name, i + 2);
+            }
+        }
     }
 
     /// What a person does in the tabs is what the file says (`CART.16`): a
@@ -9891,13 +10246,286 @@ mod tests {
         let emptied = grown.replace("% and a comment under it\n", "");
         assert_eq!(afterlife_written(&c).as_deref(), Ok(emptied.as_str()));
 
-        // A name that is no name: refused by its tab and its row, nothing written.
+        // A name that is no name: refused by its cell, nothing written; the hand by its tab and its row.
         assert_eq!(c.write("(cell \"Responses\" \"A7\" \"Hello\")"), Ok(1));
         c.step(0);
         let refused = afterlife_written(&c).expect_err("a name with a capital");
         assert!(
+            refused.starts_with("cart-file-unwritten: The file was not written: Responses!A7 holds \"Hello\", which is not a name"),
+            "{refused}"
+        );
+        let refused = afterlife_by_hand(&c).expect_err("a name with a capital");
+        assert!(
             refused.starts_with("Responses, row 7: its Name, \"Hello\", is not a name"),
             "{refused}"
         );
+    }
+
+    // ---- CART.16's second slice: version 9, a file's lines on the Format sheet ----
+
+    /// A card of one sheet at rate 0, written to a version, with rows after its headers.
+    fn pairs(spec: u32, rows: &str) -> String {
+        format!(
+            "(cartridge \"pairs\"\n  (spec {spec})\n  (title \"Pairs\")\n  (rate 0)\n  (screen grid 4 3)\n  (seed 1))\n(sheet \"Pairs\" visible)\n(cell \"Pairs\" \"A1\" \"Key\")\n(cell \"Pairs\" \"B1\" \"Value\")\n{rows}"
+        )
+    }
+
+    /// Its Format sheet: a file of settings, a word, an equals sign and a whole
+    /// number or the rest, its comments led by a number sign, from row 2.
+    const PAIRS_FORMAT: &str = "(cell \"Format\" \"A1\" \"type\")\n(cell \"Format\" \"B1\" \".env\")\n(cell \"Format\" \"A2\" \"comment\")\n(cell \"Format\" \"B2\" \"#\")\n(cell \"Format\" \"A3\" \"first row\")\n(cell \"Format\" \"B3\" 2)\n(cell \"Format\" \"A6\" \"Pairs\")\n(cell \"Format\" \"B6\" \"{A:word}={B:whole|rest}\")\n";
+
+    fn record_of(c: &Cartridge, sheet: &str) -> String {
+        match c.view("values", sheet, None) {
+            Ok(Viewed::Text(record)) => record,
+            other => panic!("{sheet}'s values: {other:?}"),
+        }
+    }
+
+    /// Version 9's sheet (`CART.16`'s second slice): the Format sheet is a device
+    /// of a (spec 9) cartridge alone, held to `A1:B105` and to values, described
+    /// after the others, and read by `crate::lines` at the load, a defect refused
+    /// by its cell at its row's line. For a cartridge written to 1 to 8 a sheet
+    /// of that name is its own, and it says no file's lines.
+    #[test]
+    fn version_nine_s_sheet_is_a_version_nine_cartridge_s_alone() {
+        let nine = pairs(9, PAIRS_FORMAT);
+        let mut c = load(&nine).expect("a (spec 9) Format sheet loads");
+        assert!(
+            c.describe()
+                .contains("(device \"Format\" \"A1:B105\" effect)\n(budget "),
+            "{}",
+            c.describe()
+        );
+        let format = c.format().expect("the Format sheet reads");
+        assert_eq!(
+            (
+                format.kind.as_str(),
+                format.comment.as_str(),
+                format.first_row,
+                format.crlf
+            ),
+            (".env", "#", 2, false)
+        );
+        assert_eq!(format.tabs[0].columns, [1, 2]);
+        // Written to 8, the sheet is the cartridge's own: any cell, no device row, no file.
+        let eight = pairs(
+            8,
+            &format!("{PAIRS_FORMAT}(formula \"Format\" \"C200\" \"=1\")\n"),
+        );
+        let c8 = load(&eight).expect("a (spec 8) sheet named Format loads");
+        assert!(!c8.describe().contains("(device \"Format\""));
+        let refused = c8
+            .file_text()
+            .expect_err("a (spec 8) cartridge says no file");
+        assert_eq!(refused.id, "cart-format-invalid");
+        assert!(
+            refused
+                .text
+                .starts_with("The cartridge is written to (spec 8), which says no file's lines."),
+            "{}",
+            refused.text
+        );
+        assert_eq!(
+            Cartridge::opened(&eight, "A=1\n")
+                .expect_err("nor reads one")
+                .refusal
+                .id,
+            "cart-format-invalid"
+        );
+        // And a (spec 9) cartridge with no Format sheet says none either.
+        let bare = load(&pairs(9, "")).expect("loads");
+        assert!(bare
+            .file_text()
+            .expect_err("no Format sheet")
+            .text
+            .starts_with("The cartridge holds no Format sheet"));
+        assert!(Cartridge::opened(&pairs(9, ""), "A=1\n")
+            .expect_err("no Format sheet")
+            .refusal
+            .text
+            .starts_with("The cartridge says no file's lines"));
+        // A cell outside the layout, as any device's.
+        let past = load(&pairs(
+            9,
+            &format!("{PAIRS_FORMAT}(cell \"Format\" \"C6\" 1)\n"),
+        ))
+        .expect_err("a cell past the Format sheet's layout");
+        assert_eq!(past.refusal.id, "cart-device-cell-outside");
+        assert!(
+            past.refusal.text.contains("Format!A1:B105"),
+            "{}",
+            past.refusal.text
+        );
+        // A defect at the load, by its cell, at its row's line.
+        for (was, with, why) in [
+            (
+                "\"{A:word}={B:whole|rest}\"",
+                "\"{A:wrod}={B:rest}\"",
+                "The Format sheet's B6, \"{A:wrod}={B:rest}\", holds the hole {A:wrod}, which names the kind \"wrod\"",
+            ),
+            (
+                "(cell \"Format\" \"B6\" \"{A:word}={B:whole|rest}\")",
+                "(formula \"Format\" \"B6\" \"=A6\")",
+                "The Format sheet's B6 holds a formula",
+            ),
+            (
+                "(cell \"Format\" \"A6\" \"Pairs\")",
+                "(cell \"Format\" \"A6\" \"Nowhere\")",
+                "The Format sheet's A6 names \"Nowhere\", a sheet the cartridge does not hold",
+            ),
+            (
+                "(cell \"Format\" \"A6\" \"Pairs\")",
+                "(cell \"Format\" \"A6\" \"Clock\")",
+                "The Format sheet's A6 names \"Clock\", a device sheet",
+            ),
+            (
+                "(cell \"Format\" \"B1\" \".env\")",
+                "(cell \"Format\" \"B1\" \"env\")",
+                "The Format sheet's B1 holds \"env\", where the file's type belongs",
+            ),
+            (
+                "(cell \"Format\" \"B3\" 2)",
+                "(cell \"Format\" \"B3\" 0)",
+                "The Format sheet's B3 holds 0, where the row a sheet's first line stands on belongs",
+            ),
+        ] {
+            let text = pairs(9, &PAIRS_FORMAT.replacen(was, with, 1));
+            let at = text
+                .lines()
+                .position(|l| l.contains(with))
+                .expect("the row is written")
+                + 1;
+            let r = load(&text).expect_err(why);
+            assert_eq!(r.refusal.id, "cart-format-invalid", "{why}");
+            assert_eq!(r.line as usize, at, "{why}: its row's line");
+            assert!(r.refusal.text.starts_with(why), "{}", r.refusal.text);
+            assert!(
+                r.refusal.text.ends_with("(docs/SPEC.md section 3.11)."),
+                "{}",
+                r.refusal.text
+            );
+        }
+        // A formula is no line: refused at a write too. A value is written, and a
+        // wrong one is refused when the lines are next read.
+        let formula = c
+            .write("(formula \"Format\" \"B6\" \"=A6\")")
+            .expect_err("a formula into the Format sheet");
+        assert_eq!(formula.refusal.id, "cart-format-invalid");
+        assert!(
+            formula
+                .refusal
+                .text
+                .starts_with("A formula cannot go into Format!B6"),
+            "{}",
+            formula.refusal.text
+        );
+        assert_eq!(c.write("(cell \"Format\" \"B6\" \"{A:word\")"), Ok(1));
+        let refused = c.file_text().expect_err("a hole not closed");
+        assert_eq!(refused.id, "cart-format-invalid");
+        assert!(
+            refused
+                .text
+                .starts_with("The Format sheet's B6, \"{A:word\", holds a hole that is not closed"),
+            "{}",
+            refused.text
+        );
+    }
+
+    /// A file opened (`CART.16`'s second slice): the cartridge's text with the
+    /// file's lines in the place of the cells its sheets held in the lines'
+    /// columns, the sheet's other cells as its rows wrote them; a cartridge's
+    /// text, at frame 0, whose grid says the file back byte for byte, its line
+    /// ends kept; a person's edit its line; a line no template reads refused by
+    /// its number; and a second file opened over the first replaces it.
+    #[test]
+    fn a_file_opened_is_the_cartridge_with_the_file_s_rows() {
+        let rows = format!(
+            "{PAIRS_FORMAT}(cell \"Pairs\" \"A2\" \"old\")\n(cell \"Pairs\" \"B2\" \"was\")\n(cell \"Pairs\" \"A5:B6\" \"older\")\n(formula \"Pairs\" \"C2:C4\" \"=LEN(B2)\")\n(cell \"Pairs\" \"D5\" \"the sheet's own\")\n"
+        );
+        let cart = pairs(9, &rows);
+        let file = "# settings\r\nPORT=8080\r\nNAME=a b\r\n";
+        let opened = Cartridge::opened(&cart, file).expect("the file is read");
+        let mut c = Cartridge::load(&opened, "settings.env", opened.len()).expect("it loads");
+        assert_eq!(c.machine().frame(), 0, "a cartridge at frame 0");
+        let record = record_of(&c, "Pairs");
+        for row in [
+            "(cell \"Pairs\" \"A1\" \"Key\")\n",
+            "(cell \"Pairs\" \"A2\" \"# settings\")\n",
+            "(cell \"Pairs\" \"A3\" \"PORT\")\n",
+            "(cell \"Pairs\" \"B3\" 8080)\n",
+            "(cell \"Pairs\" \"A4\" \"NAME\")\n",
+            "(cell \"Pairs\" \"B4\" \"a b\")\n",
+            "(cell \"Pairs\" \"D5\" \"the sheet's own\")\n",
+        ] {
+            assert!(record.contains(row), "{row}: {record}");
+        }
+        for gone in [
+            "\"old\"",
+            "\"was\"",
+            "\"older\"",
+            "\"B2\"",
+            "\"A5\"",
+            "\"B6\"",
+        ] {
+            assert!(!record.contains(gone), "{gone}: {record}");
+        }
+        assert!(
+            record_of(&c, "Format").contains("(cell \"Format\" \"B4\" \"CRLF\")\n"),
+            "the file's line end is the Format sheet's"
+        );
+        assert_eq!(c.file_text().as_deref(), Ok(file), "the file comes back");
+        // The sheet's own formula stands beside the file's rows, and computes over them.
+        c.step(0);
+        assert!(record_of(&c, "Pairs").contains("(value \"Pairs\" \"C3\" 4)\n"));
+        // A person's edit is its line, and a row added is a line added.
+        assert_eq!(
+            c.write("(cell \"Pairs\" \"B3\" 9090)\n(cell \"Pairs\" \"A6\" \"LAST\")"),
+            Ok(2)
+        );
+        c.step(0);
+        assert_eq!(
+            c.file_text().as_deref(),
+            Ok("# settings\r\nPORT=9090\r\nNAME=a b\r\n\r\nLAST=\r\n")
+        );
+        // A row no line says is refused by its cell, and nothing is written.
+        assert_eq!(c.write("(cell \"Pairs\" \"A6\" \"TWO WORDS\")"), Ok(1));
+        c.step(0);
+        let unwritten = c.file_text().expect_err("a word with a space");
+        assert_eq!(unwritten.id, "cart-file-unwritten");
+        assert!(
+            unwritten.text.starts_with(
+                "The file was not written: Pairs!A6 holds \"TWO WORDS\", which is not a word"
+            ),
+            "{}",
+            unwritten.text
+        );
+        // A line no template reads: refused by its number, the record's line the file's.
+        let unread = Cartridge::opened(&cart, "PORT=1\n\nno equals sign\n").expect_err("a line");
+        assert_eq!(
+            (unread.refusal.id.as_str(), unread.line),
+            ("cart-file-unread", 3)
+        );
+        assert!(
+            unread
+                .refusal
+                .text
+                .starts_with("The file was not read: line 3 is no line the Format sheet says"),
+            "{}",
+            unread.refusal.text
+        );
+        // A second file opened over the first replaces it, its line end with it.
+        let second = Cartridge::opened(&opened, "ONLY=1\n").expect("a second file");
+        let c2 = Cartridge::load(&second, "only.env", second.len()).expect("it loads");
+        let record = record_of(&c2, "Pairs");
+        assert!(
+            record.contains("(cell \"Pairs\" \"A2\" \"ONLY\")\n"),
+            "{record}"
+        );
+        assert!(
+            !record.contains("PORT") && !record.contains("NAME"),
+            "{record}"
+        );
+        assert!(record_of(&c2, "Format").contains("(cell \"Format\" \"B4\" \"LF\")\n"));
+        assert_eq!(c2.file_text().as_deref(), Ok("ONLY=1\n"));
     }
 }

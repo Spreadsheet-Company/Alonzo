@@ -277,10 +277,10 @@ builds a game's page, from a scratch folder holding Kairos alone, its
 cartridge, source, replay, golden and hand and the library its source
 includes, and runs its loop at a ratio of 1: abi, pass, replay with the
 hand, grid over an empty set, empty and, since ENGINE.17, ENGINE.18,
-ENGINE.19, ENGINE.7, ENGINE.23, ENGINE.25, CART.12, ENGINE.26, SPEC.5, ENGINE.5 and ENGINE.39, still, views,
-changes, continue, palette, drawer, keys, commands, settle, widths, modes, save, keep and clipboard must be OK
+ENGINE.19, ENGINE.7, ENGINE.23, ENGINE.25, CART.12, ENGINE.26, SPEC.5, ENGINE.5, ENGINE.39 and CART.16, still, views,
+changes, continue, palette, drawer, keys, commands, settle, widths, modes, save, keep, clipboard and file must be OK
 at their own floors, each of Alonzo's fifteen other cases must say it is not on this page, and
-the last line must count nineteen cases.
+the last line must count twenty cases.
 
 THE BROWSER, as tools/check_render_oracle.ps1 finds and launches it:
 -Browser, else $env:ALONZO_BROWSER, else Google Chrome, Microsoft Edge or
@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds three hundred and nine mutant pages through tools/build_web.ps1 and runs
+-Control builds three hundred and fifteen mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -611,6 +611,11 @@ formula filling a range as one fill row, each cell's references moved from the f
 its hand test two more, needing no module: whole copies alone, the 2 by 2 copy over C5:E7 at its corner, OG; and a
 fill not cut at the selection's edge, L1:M2 over N50:P52 written past it, OH; and at its second, one more, needing no
 module: a selection smaller in a row taking the block at its corner, the 2 by 1 copy over C5:E5 at C5:C6, OI.
+And CART.16's second slice, the file case's, six. Over the module: a file saved under the cartridge's name and not
+the name it was opened by, OJ; a person's save writing a cartridge still, where the cartridge reads a file, OK; the
+cartridge's own save, File!B3's, writing the file, OL; and the open's check asked while the load's act settles
+forgotten, never said, ON. Needing no module: the check blind to line ends, CR LF beside LF found one file, OM; and
+a file's kind judged by its case, WALTER.PL no .pl file, OO.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -1135,6 +1140,8 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # it to three hundred and eight (145 applicable without).
 # 2026-11-19, the owner's second note at the tiling's hand test, each dimension its own: OG's anchor moved with the line,
 # and OI, needing no module, take it to three hundred and nine (146 applicable without).
+# 2026-11-21, CART.16's second slice: OJ to OO, the file case's, four over the module and OM and OO needing none, take it
+# to three hundred and fifteen (148 applicable without).
 # 2026-11-18, CART.3's third slice: MO to MR, version 7's: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -1257,6 +1264,26 @@ $saveFloors = @{ saves = 8; opened = 8; seeds = 8; resumed = 8; compared = 416; 
 # the grid as the save alone does (draftsLoaded 1). Since CART.3's third slice (c), eight cartridges, Brickwork's game
 # among them: frames 52,032, restores and held 757, keyframes 1,300.
 $keepFloors = @{ cartridges = 8; frames = 52032; restores = 757; held = 757; keyframes = 1300; session = 8; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1; typed = 1; switched = 1; typedSaved = 1; draftsRound = 1; draftsLoaded = 1 }
+# 2026-11-21, CART.16's second slice: the thirty-fifth case, file, a file opened, edited and saved (docs/SPEC.md section
+# 3.11). Pure, the host's and the page's: where two files part, line for line and line ends and all, ten pairs
+# (changes 10) and the words of each difference, a long line cut (words 9); a file's kind by its name, compared without
+# case and never a cartridge's, what Open's picker offers, and what the page's picker says of a file opened, the cartridge
+# and the file it reads, Afterlife (walter.pl), the owner's word at the hand test (kinds 11); over the double, which holds neither call, each
+# declined in words (double 1). Over the module, a card of one sheet and its Format sheet, a file of settings: its type
+# and the name a file is written under, the cartridge's own before a file is opened and the file's after (named 2); a
+# file read into the cartridge's text, nothing loaded and the grid that runs as it was (read 1); that cartridge loaded
+# and the open's check said, the sheet's own formula beside the file's rows (opened 1), a file of CR LF coming back as it
+# is (same 1) and one written loosely said by its first line (loose 1); an edit its line in the file a person's save
+# hands the page (edited 1), under the file's name, said (saved 1); the cartridge's own save and a person's save of the
+# cartridge each a cartridge still (cartridge 2); a line no template reads refused by its number, nothing loaded
+# (refused 1); a row no line says refused by its cell, nothing handed over (unwritten 1); a card written to version 8
+# saving a cartridge and reading no file (none 1); and, where the load's act still settles, the check and a save each
+# waiting for the grid to rest (waited 2). On Alonzo's own page, Afterlife's reel: its tabs written as a .pl of 934 lines,
+# opened under the cartridge and written back byte for byte (golden 1, lines 934). A game's page runs it too, over the
+# card, without Afterlife's.
+$filePageFloors = @{ changes = 10; words = 9; kinds = 11; double = 1 }
+$fileGameFloors = @{ named = 2; read = 1; opened = 1; same = 1; loose = 1; edited = 1; saved = 1; cartridge = 2; refused = 1; unwritten = 1; none = 1; waited = 2 }
+$fileFloors = $fileGameFloors.Clone(); $fileFloors['golden'] = 1; $fileFloors['lines'] = 934
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
     @{ Case = 'rate0';    Min = @{ frames = 4; applied = 3; edits = 4; windows = 3 } },
@@ -1325,17 +1352,19 @@ $floors = @(
     @{ Case = 'modes';    Min = $modesPageFloors; WithModule = $modesFloors },
     @{ Case = 'save';     Min = @{}; WithModule = $saveFloors },
     @{ Case = 'keep';     Min = @{}; WithModule = $keepFloors },
-    @{ Case = 'clipboard'; Min = $clipboardPageFloors; WithModule = $clipboardFloors }
+    @{ Case = 'clipboard'; Min = $clipboardPageFloors; WithModule = $clipboardFloors },
+    @{ Case = 'file';     Min = $filePageFloors; WithModule = $fileFloors }
 )
 $zero = @('live', 'misfrees', 'filled', 'alone')
-$expectedCases = 34
+$expectedCases = 35
 # ENGINE.16: a game's page, built on every run from a scratch folder holding Kairos alone, its cartridge, source,
-# replay, golden and hand and the library its source includes. Its loop runs the nineteen cases that need nothing
+# replay, golden and hand and the library its source includes. Its loop runs the twenty cases that need nothing
 # of Alonzo's own files, over its own blocks, still since ENGINE.17, views since ENGINE.18, changes since
 # ENGINE.19, continue since ENGINE.7, palette and keys since ENGINE.23, commands since ENGINE.25, settle since CART.12,
 # widths since ENGINE.26, modes since SPEC.5, save since ENGINE.5, keep since ENGINE.38, drawer since CART.3's
-# third slice and clipboard since ENGINE.39's second, Brickwork's Ctrl+X its one part left to Alonzo's own page, among
-# them, and each of the fifteen others says it is not on the page.
+# third slice, clipboard since ENGINE.39's second, Brickwork's Ctrl+X its one part left to Alonzo's own page, and file
+# since CART.16's second, Afterlife's reel its one part left to Alonzo's own page, among them, and each of the fifteen
+# others says it is not on the page.
 $gameFloors = @(
     @{ Case = 'abi';    Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
     @{ Case = 'pass';   Min = @{}; WithModule = @{ sources = 1; same = 1 } },
@@ -1355,10 +1384,11 @@ $gameFloors = @(
     @{ Case = 'modes'; Min = $modesPageFloors; WithModule = $modesGameFloors },
     @{ Case = 'save'; Min = @{}; WithModule = @{ saves = 1; opened = 1; seeds = 1; resumed = 1 } },
     @{ Case = 'keep'; Min = @{}; WithModule = @{ cartridges = 1; restores = 1; held = 1; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1; typed = 1; switched = 1; typedSaved = 1; draftsRound = 1; draftsLoaded = 1 } },
-    @{ Case = 'clipboard'; Min = $clipboardPageFloors; WithModule = $clipboardGameFloors }
+    @{ Case = 'clipboard'; Min = $clipboardPageFloors; WithModule = $clipboardGameFloors },
+    @{ Case = 'file'; Min = $filePageFloors; WithModule = $fileGameFloors }
 )
 $gameAbsent = @('rate30', 'rate0', 'yield', 'slice', 'pace', 'memory', 'refusals', 'scale', 'engine', 'parity', 'plane', 'input', 'audio', 'sound', 'tabs')
-$gameCases = 19
+$gameCases = 20
 $gameFiles = @('kairos/kairos.vla', 'kairos/kairos.source.vla', 'kairos/kairos.replay.vla', 'kairos/kairos.golden.vla', 'kairos/kairos.hand.js', 'common.vla')
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
@@ -2624,7 +2654,26 @@ if ($Control) {
             # OI (the owner's second note at the tiling's hand test, each dimension its own), needing no module: a selection
             # smaller in a row taking the block at its corner, the 2 by 1 copy over C5:E5 at C5:C6
             @{ L = 'oi'; Name = 'a smaller selection the block at its corner'; File = 'template'; Case = 'clipboard'; Anchor = '    if (own) return { top: sel.top, left: sel.left, bottom: sel.top + Math.max(sh, h) - 1, right: sel.left + Math.max(sw, w) - 1 };'; With = '    if (own && sh >= h && sw >= w) return { top: sel.top, left: sel.left, bottom: sel.bottom, right: sel.right };   // a smaller selection the block at its corner, by the control'
-               Want = 'case clipboard.*clipboard: a 2 by 1 copy of the page.s into C5:E5 writes C5:C6, where C5:E6 is due' }
+               Want = 'case clipboard.*clipboard: a 2 by 1 copy of the page.s into C5:E5 writes C5:C6, where C5:E6 is due' },
+            # CART.16's second slice, the file case's. OJ, over the module: the name a file was opened by forgotten, its
+            # save under the cartridge's own name.
+            @{ L = 'oj'; Name = 'a file saved under the cartridge''s name'; File = 'host'; Module = $true; Case = 'file'; Anchor = '    return given.length > type.length && given.toLowerCase().slice(-type.length) === type.toLowerCase() ? given : (this._cartName() || ''file'') + type;'; With = '    return (this._cartName() || ''file'') + type;   // the name it was opened by forgotten, by the control'
+               Want = 'case file.*after settings.env is opened its file is saved under "pairs.env"' },
+            # OK, over the module: a person's save of a cartridge that reads a file a cartridge still.
+            @{ L = 'ok'; Name = 'a person''s save a cartridge still'; File = 'host'; Module = $true; Case = 'file'; Anchor = '    var file = what === ''file'' || (what !== ''cartridge'' && by === ''person'' && !!this.fileType());'; With = '    var file = what === ''file'';   // a person''s save the cartridge, by the control'
+               Want = 'case file.*after an edit a person.s save wrote a cartridge' },
+            # OL, over the module: the cartridge's own save, File!B3's, writing the file.
+            @{ L = 'ol'; Name = 'the cartridge''s own save the file'; File = 'host'; Module = $true; Case = 'file'; Anchor = '    var file = what === ''file'' || (what !== ''cartridge'' && by === ''person'' && !!this.fileType());'; With = '    var file = what === ''file'' || (what !== ''cartridge'' && !!this.fileType());   // the cartridge''s own save the file, by the control'
+               Want = 'case file.*the cartridge.s own save handed the page a file' },
+            # OM, needing no module: the check blind to line ends, a file of CR LF found the file written LF.
+            @{ L = 'om'; Name = 'the check blind to line ends'; File = 'host'; Case = 'file'; Anchor = '    var a = fileLines(opened), b = fileLines(written), n = Math.max(a.lines.length, b.lines.length);'; With = '    var a = fileLines(String(opened).replace(/\r/g, '''')), b = fileLines(String(written).replace(/\r/g, '''')), n = Math.max(a.lines.length, b.lines.length);'
+               Want = 'case file.*part at null, where .* is due: files are held to each other line for line, line ends and all' },
+            # ON, over the module: the open's check asked while the load's act settles forgotten, never said.
+            @{ L = 'on'; Name = 'a check asked in a settle never said'; File = 'host'; Module = $true; Case = 'file'; Anchor = '    if (w.wait) { this.checkWaiting = { opened: String(opened), name: name }; return { ok: true, waiting: true }; }'; With = '    if (w.wait) return { ok: true, waiting: true };   // the check forgotten, by the control'
+               Want = 'case file.*the check was never said' },
+            # OO, needing no module: a file's kind judged by its case, WALTER.PL no file of a cartridge that reads .pl.
+            @{ L = 'oo'; Name = 'a file''s kind by its case'; File = 'template'; Case = 'file'; Anchor = '  function opensAsLines(name, kind) { return ofKind(name, kind) && !ofKind(name, ''.vla''); }'; With = '  function opensAsLines(name, kind) { return ofKind(name, kind) && name.slice(-kind.length) === kind; }   // by its case, by the control'
+               Want = 'case file.*WALTER.PL under a cartridge that reads .pl opens as lines: false' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
@@ -3466,7 +3515,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}; {54}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote, $brickworkNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk -and $brickworkOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and nine' } else { 'one hundred and forty-six applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and fifteen' } else { 'one hundred and forty-eight applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -3606,7 +3655,7 @@ try {
 }
 Write-Output ''
 if ($failed.Count -eq 0) {
-    Write-Output "=== CHECK: clean - every case OK, the replay, sound, save and keep cases at the first ratio and every other at both, every count at or above its floor, and the game's page's nineteen cases OK with Alonzo's fifteen said absent ==="
+    Write-Output "=== CHECK: clean - every case OK, the replay, sound, save and keep cases at the first ratio and every other at both, every count at or above its floor, and the game's page's twenty cases OK with Alonzo's fifteen said absent ==="
     exit 0
 }
 Write-Output "=== CHECK: $($failed.Count) problem(s) ==="

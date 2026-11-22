@@ -98,7 +98,7 @@ Life written to (spec 6) bounding its Screen, (bound "Screen"), the grid
 card written to (spec 6), its Screen the game's and read and its Camera read,
 Life written to (spec 6), its Screen read, and Life written to (spec 8) with
 its Commands sheet's fifth column;
-fifty-six mutants must each fail for its own reason, each
+fifty-seven mutants must each fail for its own reason, each
 asserting its anchor once and proving it applied before the check is asked.
 Fifteen are of life.vla: a directive dropped, a rate of 121, a screen 321
 wide, a cell written twice, a cell outside the Screen, a Palette index out
@@ -106,13 +106,13 @@ of order, a color that is not #RRGGBB, NOW() in the rule, a sheet named
 Board.last, the header dropped, an unknown row kind, since ENGINE.37 a
 format saying nothing and a rule of no test, a formula into
 Input!B1, and the file renamed out of its folder's name, which the count
-must catch. Seven are SPEC.3's: a (spec 9) since ENGINE.39's first slice made 8
+must catch. Seven are SPEC.3's: a (spec 10) since CART.16's second slice made 9
 a page this version reads, a macro left in a cartridge,
 an include before a cartridge's manifest, a source whose cartridge is gone,
 a banner naming a source that is not there, a stray .vla in a cartridge's
 folder, and a second library. Nine are ENGINE.3's, of the input card's
 replay and golden: a digest that is not the cartridge's, a replay named for
-another folder, a (spec 9), a seed of 0, frames out of order, a derived row,
+another folder, a (spec 10), a seed of 0, frames out of order, a derived row,
 a row outside a frame, a golden without its window row, and a golden whose
 replay is gone. Three are ENGINE.4's: the sound card's voice 2 written the
 wave "triangel", and Life given an Audio sheet whose voice 1 has the note
@@ -132,7 +132,8 @@ SPEC.5's, the keyboard's sheets: (game "Screen") at (spec 5), (work "Screen")
 in plane mode, a read sheet no row holds, one named twice, a game directive
 naming none, and the grid card's Screen in game and in work. One is
 ENGINE.39's, version 8's column held to its layout: a cell of the Commands
-sheet outside A1:E101 at (spec 8).
+sheet outside A1:E101 at (spec 8). One is CART.16's, version 9's sheet held to
+its layout: a cell of the Format sheet outside A1:B105 at (spec 9).
 
 SINCE ENGINE.18 (2026-10-15; docs/REARVIEW.md, decision 1): (spec 4) is read,
 for a cartridge and for a replay's header, and version 4's two rows, the
@@ -169,6 +170,12 @@ SINCE ENGINE.39'S FIRST SLICE (2026-11-18; docs/REARVIEW.md, decision 2): (spec
 8) is read, for a cartridge and for a replay's header, and version 8's column,
 the Commands sheet's fifth, repeats (A1:E101), is a (spec 8) cartridge's alone;
 a cartridge written to 5 to 7 keeps the sheet at A1:D101.
+
+SINCE CART.16'S SECOND SLICE (2026-11-21; docs/REARVIEW.md): (spec 9) is read,
+for a cartridge and for a replay's header, and version 9's sheet, the Format
+sheet, a file's lines said as templates (A1:B105), is a (spec 9) cartridge's
+alone, a sheet of the cartridge's own before it; what its cells say, the
+file's type and the templates, the engine reads and its tests hold.
 
 SINCE REPO.8 (2026-10-24): within one run a cartridge's verdict is kept by
 its path and its bytes, a replay's by its path, its bytes and its
@@ -401,7 +408,10 @@ $expectedGoldens = 8
 # 2026-11-21, CART.16's first slice: Afterlife at 1,552 rows, a reel's 934 lines, each line that holds anything its
 # cells along a row of its tab, under eight tabs' headers, their widths, two formats and a rule a tab; the other
 # twelve's rows unchanged.
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 318; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/brickwork/brickwork.vla' = 820; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4111; 'cartridges/naught/naught.vla' = 1379; 'cartridges/afterlife/afterlife.vla' = 1552 }
+# 2026-11-21, its second slice: Afterlife at 1,593 rows, written to (spec 9): its Format sheet's 36 cells, the reel's
+# thirteen lines under its head, the sheet hidden and its two columns' widths, and a format and a rule drawing the
+# format's number from the left; the other twelve's rows unchanged.
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 318; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/brickwork/brickwork.vla' = 820; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4111; 'cartridges/naught/naught.vla' = 1379; 'cartridges/afterlife/afterlife.vla' = 1593 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---
@@ -446,6 +456,10 @@ $layouts5 = $layouts4.Clone(); $layouts5['input'] = @((New-Rect 1 1 10 5), (New-
 $hostCells5 = $hostCells4.Clone(); $hostCells5['input'] = @((New-Rect 1 2 10 5), (New-Rect 11 2 20 2))
 # Version 8's (ENGINE.39's first slice), a (spec 8) cartridge's alone: the Commands sheet's fifth column, repeats.
 $layouts8 = $layouts5.Clone(); $layouts8['commands'] = @((New-Rect 1 1 101 5))
+# Version 9's (CART.16's second slice), a (spec 9) cartridge's alone: the Format sheet, a file's lines said as
+# templates, its head's four rows and its headers', then a kind of line a row, a hundred at most, in two columns; a
+# sheet of the cartridge's own before it. What its cells say is the engine's to read (engine/src/lines.rs).
+$layouts9 = $layouts8.Clone(); $layouts9['format'] = @((New-Rect 1 1 105 2))
 $header = '; SPDX-License-Identifier: 0BSD'
 
 # ---- the reader: forms with their lines ----
@@ -573,7 +587,7 @@ function Test-Cartridge([string]$path) {
             switch -CaseSensitive ($dn) {
                 'spec' {
                     if ($args1 -ne 1 -or -not (Test-Whole $d.Items[1])) { $problems.Add("line $($d.Line): cart-manifest-invalid: (spec ...) holds one whole number") }
-                    elseif ([int]$d.Items[1].Text -gt 8 -or [int]$d.Items[1].Text -lt 1) { $problems.Add("line $($d.Line): cart-spec-unsupported: (spec $($d.Items[1].Text)); this version reads 1, 2, 3, 4, 5, 6, 7 and 8") }
+                    elseif ([int]$d.Items[1].Text -gt 9 -or [int]$d.Items[1].Text -lt 1) { $problems.Add("line $($d.Line): cart-spec-unsupported: (spec $($d.Items[1].Text)); this version reads 1, 2, 3, 4, 5, 6, 7, 8 and 9") }
                     else { $specN = [int]$d.Items[1].Text }
                 }
                 'title' { if ($args1 -ne 1 -or -not (Test-Kind $d.Items[1] 'string')) { $problems.Add("line $($d.Line): cart-manifest-invalid: (title `"...`") holds one text") } }
@@ -708,7 +722,7 @@ function Test-Cartridge([string]$path) {
             $vm = [regex]::Match($bare, '(?i)(?<![A-Za-z0-9_.!$])(NOW|TODAY|RANDBETWEEN|RAND)\s*\(')
             if ($vm.Success) { $problems.Add("line $($f.Line): cart-formula-volatile: the formula of $sheet!$($it[2].Value) calls $($vm.Groups[1].Value.ToUpperInvariant()), which reads the wall clock or the dice; the Clock sheet's frame and seed are the only clock and dice (docs/SPEC.md section 3.5)") }
         }
-        $lay = if ($specN -ge 8) { $layouts8 } elseif ($specN -ge 5) { $layouts5 } elseif ($specN -ge 4) { $layouts4 } else { $layouts }; $hosted = if ($specN -ge 5) { $hostCells5 } elseif ($specN -ge 4) { $hostCells4 } else { $hostCells }
+        $lay = if ($specN -ge 9) { $layouts9 } elseif ($specN -ge 8) { $layouts8 } elseif ($specN -ge 5) { $layouts5 } elseif ($specN -ge 4) { $layouts4 } else { $layouts }; $hosted = if ($specN -ge 5) { $hostCells5 } elseif ($specN -ge 4) { $hostCells4 } else { $hostCells }
         if ($lay.ContainsKey($key) -and -not (Test-AllInside $lay[$key] $rect)) { $problems.Add("line $($f.Line): cart-device-cell-outside: $sheet!$($it[2].Value) is outside the layout of the $sheet sheet (docs/SPEC.md section 3)") }
         if ($kind -ceq 'formula' -and $hosted.ContainsKey($key) -and (Test-AnyInside $hosted[$key] $rect)) { $problems.Add("line $($f.Line): cart-device-cell-formula: $sheet!$($it[2].Value) holds a formula where the host writes values") }
         $writes.Add(@{ Key = $key; Sheet = $sheet; Rect = $rect; Line = $f.Line; Text = $it[2].Value; Kind = $kind; Value = $it[3] })
@@ -862,7 +876,7 @@ function Test-Replay([string]$path, [string]$name, [string]$cartridgePath) {
     foreach ($k in @('spec', 'cartridge', 'seed')) { if (-not $given.ContainsKey($k)) { $problems.Add("line $($h.Line): the header has no ($k ...), and a replay's header is $shape") } }
     if ($given.ContainsKey('spec')) {
         $s = $given['spec']
-        if (-not (Test-Whole $s) -or $s.Value -lt 1 -or $s.Value -gt 8) { $problems.Add("line $($h.Line): (spec $(Show-Datum $s)): a replay is written to the page's version 1, 2, 3, 4, 5, 6, 7 or 8") }
+        if (-not (Test-Whole $s) -or $s.Value -lt 1 -or $s.Value -gt 9) { $problems.Add("line $($h.Line): (spec $(Show-Datum $s)): a replay is written to the page's version 1, 2, 3, 4, 5, 6, 7, 8 or 9") }
     }
     if ($given.ContainsKey('cartridge')) {
         $c = $given['cartridge']
@@ -1062,7 +1076,7 @@ if ($Control) {
             @{ Name = 'a formula into Input!B1'; Append = '(formula "Input" "B1" "=1")'; Want = 'cart-device-cell-formula: Input!B1' },
             @{ Name = 'the file renamed out of its folder''s name'; Rename = 'life.txt'; Want = ("found {0} cartridge(s)" -f ($expectedCartridges - 1)) },
             @{ Name = 'Life written to (spec 3)'; Anchor = '(spec 2)'; With = '(spec 3)'; Want = '' },
-            @{ Name = 'a (spec 9)'; Anchor = '(spec 2)'; With = '(spec 9)'; Want = 'cart-spec-unsupported: (spec 9)' },
+            @{ Name = 'a (spec 10)'; Anchor = '(spec 2)'; With = '(spec 10)'; Want = 'cart-spec-unsupported: (spec 10)' },
             # CART.12: version 6's directive, (settle K), a (spec 6) cartridge's at (rate 0) alone
             @{ Name = 'Life written to (spec 6) at rate 0, settling'; Anchor = "(spec 2)`n  (title `"Life`")`n  (rate 30)"; With = "(spec 6)`n  (title `"Life`")`n  (rate 0)`n  (settle 8)"; Want = '' },
             @{ Name = 'a settle at (spec 5)'; Anchor = "(spec 2)`n  (title `"Life`")`n  (rate 30)"; With = "(spec 5)`n  (title `"Life`")`n  (rate 0)`n  (settle 8)"; Want = '(settle ...) is a directive of version 6''s, where the cartridge says (spec 5)' },
@@ -1095,6 +1109,10 @@ if ($Control) {
             # ENGINE.39's first slice: version 8's column, the Commands sheet's fifth, a (spec 8) cartridge's alone
             @{ Name = 'Life written to (spec 8), its Commands sheet''s fifth column'; Anchor = '(spec 2)'; With = '(spec 8)'; Append = "(cell `"Commands`" `"A1`" `"name`")`n(cell `"Commands`" `"A2`" `"count-up`")`n(cell `"Commands`" `"D2`" `"KeyU`")`n(cell `"Commands`" `"E2`" true)"; Want = '' },
             @{ Name = 'a Commands sheet''s cell outside its layout at (spec 8)'; Anchor = '(spec 2)'; With = '(spec 8)'; Append = '(cell "Commands" "F2" 1)'; Want = 'cart-device-cell-outside: Commands!F2' },
+            # CART.16's second slice: version 9's sheet, the Format sheet, a (spec 9) cartridge's alone
+            @{ Name = 'Life written to (spec 9), a file''s lines on its Format sheet'; Anchor = '(spec 2)'; With = '(spec 9)'; Append = "(cell `"Notes`" `"A1`" `"a line`")`n(cell `"Format`" `"A1`" `"type`")`n(cell `"Format`" `"B1`" `".txt`")`n(cell `"Format`" `"B3`" 1)`n(cell `"Format`" `"A6`" `"Notes`")`n(cell `"Format`" `"B6`" `"{A:rest}`")"; Want = '' },
+            @{ Name = 'a Format sheet''s cell outside its layout at (spec 9)'; Anchor = '(spec 2)'; With = '(spec 9)'; Append = '(cell "Format" "C6" 1)'; Want = 'cart-device-cell-outside: Format!C6' },
+            @{ Name = 'Life written to (spec 8) with a sheet named Format of its own'; Anchor = '(spec 2)'; With = '(spec 8)'; Append = '(cell "Format" "C200" 1)'; Want = '' },
             @{ Name = 'an Input sheet''s twentieth row at (spec 4)'; Anchor = '(spec 2)'; With = '(spec 4)'; Append = '(cell "Input" "A20" "command")'; Want = 'cart-device-cell-outside: Input!A20' },
             @{ Name = 'a formula into Input!B20 at (spec 5)'; Anchor = '(spec 2)'; With = '(spec 5)'; Append = '(formula "Input" "B20" "=1")'; Want = 'cart-device-cell-formula: Input!B20' },
             @{ Name = 'a command''s name that is no name'; Anchor = '(spec 2)'; With = '(spec 5)'; Append = '(cell "Commands" "A2" "Buy 1")'; Want = 'cart-command-invalid: Commands!A2 holds "Buy 1"' },
@@ -1108,7 +1126,7 @@ if ($Control) {
             # ENGINE.3's second slice: the input card's replay and its golden
             @{ Name = 'a replay naming another digest'; File = 'inputcard/inputcard.replay.vla'; Pattern = '\(cartridge "[0-9A-F]{64}"\)'; With = ('(cartridge "' + ('0' * 64) + '")'); Want = 'a replay plays only on the file it was recorded from' },
             @{ Name = 'a replay named for another folder'; File = 'inputcard/inputcard.replay.vla'; Anchor = '(replay "inputcard"'; With = '(replay "life"'; Want = 'the header names life, and the replay stands in the folder of inputcard' },
-            @{ Name = 'a replay of a (spec 9)'; File = 'inputcard/inputcard.replay.vla'; Anchor = '(spec 3)'; With = '(spec 9)'; Want = '(spec 9): a replay is written to the page''s version 1, 2, 3, 4, 5, 6, 7 or 8' },
+            @{ Name = 'a replay of a (spec 10)'; File = 'inputcard/inputcard.replay.vla'; Anchor = '(spec 3)'; With = '(spec 10)'; Want = '(spec 10): a replay is written to the page''s version 1, 2, 3, 4, 5, 6, 7, 8 or 9' },
             @{ Name = 'a replay''s seed of 0'; File = 'inputcard/inputcard.replay.vla'; Pattern = '\(seed \d+\)\)'; With = '(seed 0))'; Want = '(seed 0): a seed is a whole number from 1 to 2147483646' },
             @{ Name = 'a replay''s frames out of order'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 3`n"; With = "(frame 30`n"; Want = 'follows (frame 30 ...), and a replay''s frames ascend from 1' },
             @{ Name = 'a derived row in a replay'; File = 'inputcard/inputcard.replay.vla'; Anchor = "(frame 1`n"; With = "(frame 1`n  (derived `"Tally`" `"B20`" 1)`n"; Want = 'a (derived ...) row: the host''s derived writes are re-derived' },
@@ -1168,7 +1186,7 @@ if ($Control) {
             else { $ok = $false; $verdicts.Add("$($mu.Name): PASSED but should fail") }
         }
         foreach ($v in $verdicts) { Write-Output ('control: ' + $v) }
-        if ($ok) { Write-Output 'OK: the check passes the clean copy, Life written to (spec 3), Life written to (spec 4) with its Camera''s third row, Life written to (spec 5) with its Commands sheet, Life written to (spec 4) with a sheet named Commands of its own, Life written to (spec 6) at rate 0, settling, Life written to (spec 6), its Screen bound, the grid card written to (spec 6), its sheets by mode, and Life written to (spec 6), its Screen read, and Life written to (spec 8) with its Commands sheet''s fifth column, and fails each of the fifty-six mutants for its own reason, each proving it applied'; exit 0 }
+        if ($ok) { Write-Output 'OK: the check passes the clean copy, Life written to (spec 3), Life written to (spec 4) with its Camera''s third row, Life written to (spec 5) with its Commands sheet, Life written to (spec 4) with a sheet named Commands of its own, Life written to (spec 6) at rate 0, settling, Life written to (spec 6), its Screen bound, the grid card written to (spec 6), its sheets by mode, and Life written to (spec 6), its Screen read, and Life written to (spec 8) with its Commands sheet''s fifth column, Life written to (spec 9) with a file''s lines on its Format sheet, and Life written to (spec 8) with a sheet named Format of its own, and fails each of the fifty-seven mutants for its own reason, each proving it applied'; exit 0 }
         Write-Output 'FAIL: the control did not behave as the header says'
         exit 1
     } finally {

@@ -202,7 +202,11 @@ sound the frame the grid holds again when it starts.
 | `answer(viewport, event)` | a viewport's `sheet` event answered (`ENGINE.14`; `KERNEL.5`'s decision 6): a sheet the viewport holds no record of is viewed and shown, one it holds is viewed again at once, and in the host's own viewport the Screen's tab gives the Camera's window back. The host answers its own viewport's tabs itself; a page wires a viewer of its own with `viewer.on('sheet', function (e) { host.answer(viewer, e); })`. A tab clicked while a frame is in progress is answered at the frame's end, and the events the host's own calls raise go unanswered |
 | `showSheet(viewport, name)` | a sheet viewed through the region the viewport shows from `A1`, loaded and shown, then viewed again at once when its own widths put more in view: `true`, or `false` when refused. Since `CART.12`'s hand test the sheet's columns are read whole first, its last row viewed across every column, a record of no cell that names every column with a setting and the extent, which the viewport learns (`learn`), so that it lays every column as the sheet sets it, at the load, at a jump of the scroll and when its box grows; and a sheet the cartridge bounds, version 6's `(bound ...)`, is drawn to its extent and no further (`bound`). The record is the values record after frame 0 and the grid record at frame 0, as the Screen's is (`ENGINE.18`) |
 | `refreshSheet(viewport, moved, still)` | the sheet a viewport shows viewed again through the region it shows, its view kept: what the host does at every frame for its own viewport, and a page at its viewer's refresh; `moved` only when the region has left the window the record was viewed through, at a scroll (`viewer.on('scroll', ...)`); `still` (`ENGINE.17`) not loaded again when the record is the one the host last loaded into the viewport and the viewport holds the model it made of it, as a frame does and the player's drawer does. The region and never the sheet whole: a full screen of Sand's Stay is 33 ms natively, its whole record 1.4 s and 34 MB. The record is the values record after frame 0 (`ENGINE.18`), so a still sheet's frame keeps only that view: a sheet of 1,000 formulas views in about 0.35 ms where its grid record took 2. Since `ENGINE.19` a `still` refresh asks the window's changes first: patched in place when they name cells since the record the host holds for that viewport, kept when they name none, viewed whole otherwise, as at a refresh frames apart, the drawer's at a rate above zero |
-| `save(by)` | a save of the running grid (`ENGINE.5`; docs/SPEC.md sections 3.7 and 7.5), `by` `'person'` or `'cartridge'`: taken now at rest and handed to the page by the `save` event, or, inside a frame or an act's settle, held and taken at the end of the frame that rests, `{ ok, waiting }`; a refusal's sentence otherwise. The cartridge's `File!B3` edge asks it at the frame's end |
+| `save(by, what)` | a save of the running grid (`ENGINE.5`; docs/SPEC.md sections 3.7 and 7.5), `by` `'person'` or `'cartridge'`: taken now at rest and handed to the page by the `save` event, or, inside a frame or an act's settle, held and taken at the end of the frame that rests, `{ ok, waiting }`; a refusal's sentence otherwise. The cartridge's `File!B3` edge asks it at the frame's end. Since `CART.16`'s second slice a person's save of a cartridge that says a file's lines writes the file, the event's `kind` `'file'`, its `text` the file's, `file` its name and `lines` its count; the cartridge's own save, and a person's with `what` `'cartridge'`, write the grid as a cartridge, `kind` `'cartridge'` |
+| `fileType()` / `fileName()` | the type of the file the loaded cartridge reads, `Format!B1` as the grid holds it now, a dot and its letters, or `''` where it says no file's lines (`CART.16`'s second slice; docs/SPEC.md section 3.11); and the name the file is written under, the name the load was given where it is such a file's, else the cartridge's own name with the type |
+| `fileRead(text, name)` | a file opened under the loaded cartridge: `{ ok, text }`, the cartridge's text with the file's lines in the place of the cells its sheets held, the module's `alonzo_file_read`, for a page to load under the file's name as it loads any cartridge; nothing is loaded and the grid that runs is left as it is. A file a line of which no template reads, a cartridge that says no lines, or a module without the call, the double, is a failure, said |
+| `fileText()` | the file the grid's sheets say now, the module's `alonzo_file_write`: `{ ok, text, file, lines, bytes }`; `{ ok: false, wait: true }` inside a frame or a settle; a row no line says a refusal's words, by its cell |
+| `fileCheck(opened, name)` | the open's check: the file written back and held to the text it was opened as, line for line and line ends and all, said: `{ ok, same, lines }`, or `{ ok, same: false, line, was, now, lines }`, the first line a save would change; `{ ok, waiting }` where the load's act still settles, said once the grid rests. `HOST.firstChange(opened, written)` and `HOST.changeWords(change)` are its comparison and its words, pure |
 | `saveText()` | the save's text as the host writes one, `{ ok, text, file, frame, bytes }`: the manifest the load took, every sheet that is no twin through its `fills` view whole, then the loaded cartridge's `name` rows; `{ ok: false, wait: true }` inside a frame or a settle, and a refusal over section 10's 16 MiB |
 | `keptWork(since)` | the run's unsaved work for a page to keep (`ENGINE.38`; docs/SPEC.md section 7.9): `null` with no cartridge, or when nothing moved since the version `since`; else `{ version, kf, acted, name, title, file, spec, seed, opens, frame, frames, keyframe }`, the keyframe a cartridge (the one loaded, then a save at rest), `keyframe` its text when newer than `since`, else `null`, and `frames` the run's frames since it to the last frame at rest, a replay's frames numbered from the frame it opens at. A keyframe is taken at a frame's end at rest once the steps since cost a second or twenty times the last keyframe, or the frames pass 1 MiB; `acted` false until a person acts (an edit, a command, a replay played, an Input row but the pointer's place and the sheet shown) |
 | `keyframeNow()` | a keyframe taken now, at rest, where a person acted and a frame stepped since the last: the page's, as its tab hides; whether it took one |
@@ -627,6 +631,18 @@ the sheet's name) and names the sentence that wrote the cell.
 
 Save, Ctrl+S or the bar's Save, writes the running game to a file of yours,
 a cartridge that opens at its frame, and Open, Ctrl+O, opens one (`ENGINE.5`).
+Where the cartridge loaded reads a file (`CART.16`'s second slice; the
+specification's section 3.11), as Afterlife reads a reel's `.pl`, Open offers
+that kind of file beside a cartridge and reads one into the cartridge's
+sheets, a line a row; the picker then reads `Afterlife (walter.pl)`, the
+cartridge and the file it is at work on, and the bar says `Opened walter.pl,
+934 lines: Save writes it back as it is.`, or the first line a save would
+change and what would be written there, before you edit anything. Save then
+writes the file back under its name, and `save-cartridge` in the palette
+saves the grid itself as a cartridge. A file a line of which the cartridge
+does not read is
+said by its line and nothing is loaded; a row no line of the file can say is
+said by its cell at the save, and nothing is written.
 Between saves the page keeps your unsaved work in this browser
 (`ENGINE.38`): close the tab, or let it crash, and open the page again, and
 the line under the bar says `Unsaved work on Sand, frame 1,043, kept at 3:41
@@ -1138,7 +1154,7 @@ viewport, not an Excel clone.
   The page opens on the empty sheet whatever it holds and offers its
   cartridges in the picker, each by its manifest's title, its notes in the
   drawer. A page that does not hold Alonzo's own cartridges and records is
-  a game's (`ENGINE.16`). Its `?loop=1` runs the nineteen cases that need
+  a game's (`ENGINE.16`). Its `?loop=1` runs the twenty cases that need
   nothing of Alonzo's own files, over its own blocks: `abi`; `pass`, every
   source to its cartridge; `replay`, every replay to its golden and its
   recording, every frame to its hand; `grid`, every grid cartridge's drawn
@@ -1185,9 +1201,14 @@ viewport, not an Excel clone.
   grid: a range copied as Excel's text, pasted back exact, tiled, filling and
   at a corner, a text from elsewhere read as typed, edges and sheets refused,
   a cut moved, pasted again as it was cut and let go, the run's replay, and
-  the browser's clipboard's double, Brickwork's Ctrl+X left to Alonzo's own page. Each of the fifteen
+  the browser's clipboard's double, Brickwork's Ctrl+X left to Alonzo's own page;
+  and `file` (`CART.16`'s second slice), a card written in the page that says a
+  file's lines: a file read into the cartridge, loaded and written back, the
+  open's check said, an edit its line, a person's save the file and the
+  cartridge's own a cartridge, a line and a row refused, and the check and a
+  save waiting for a settle, Afterlife's reel left to Alonzo's own page. Each of the fifteen
   others prints `case <name>: not on this page`, being proven in Alonzo's CI,
-  and the last line reads `loop ok cases=19 dpr=1; 15 of Alonzo's own not on
+  and the last line reads `loop ok cases=20 dpr=1; 15 of Alonzo's own not on
   this page` at a ratio of 1. A replay with no hand is held to its golden alone, counted `alone`
   and said in a note under the case. Every other mode of the bench is
   Alonzo's own and says so on a game's page; `?frames=1` and `?blit=1` over

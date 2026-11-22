@@ -263,8 +263,8 @@
     <button type="button" id="eng-pause" data-command="pause">Pause</button>
     <button type="button" id="eng-sound" data-command="sound" aria-pressed="false">Sound on</button>
     <button type="button" id="eng-load" data-command="load" title="the cartridge in the drawer's box, loaded again from frame 0; Ctrl+Enter in that box, Cmd+Enter on a Mac" aria-keyshortcuts="Control+Enter Meta+Enter">Load</button>
-    <button type="button" id="eng-save" data-command="save" title="the running game saved to a file of yours, a cartridge that opens at its frame; Ctrl+S, Cmd+S on a Mac" aria-keyshortcuts="Control+S Meta+S">Save</button>
-    <button type="button" id="eng-open" data-command="open" title="a cartridge or a save opened from a file of yours, and loaded; Ctrl+O, Cmd+O on a Mac" aria-keyshortcuts="Control+O Meta+O">Open</button>
+    <button type="button" id="eng-save" data-command="save" title="the running game saved to a file of yours, a cartridge that opens at its frame; or, where the cartridge reads a file, that file written back; Ctrl+S, Cmd+S on a Mac" aria-keyshortcuts="Control+S Meta+S">Save</button>
+    <button type="button" id="eng-open" data-command="open" title="a cartridge or a save opened from a file of yours, and loaded; or a file the cartridge reads, opened into its sheets; Ctrl+O, Cmd+O on a Mac" aria-keyshortcuts="Control+O Meta+O">Open</button>
     <input type="file" id="eng-open-file" accept=".vla,text/plain" hidden>
     <span id="frame-short" class="frame-short"></span>
     <p id="eng-status" class="status"></p>
@@ -621,8 +621,9 @@
     { name: 'pause', words: 'pause the loop at its frame' },
     { name: 'sound', words: 'turn the sound on, or off' },
     { name: 'load', words: 'load the cartridge in the drawer\'s box again from frame 0' },
-    { name: 'save', words: 'save the running game to a file of yours, a cartridge that opens at its frame' },
-    { name: 'open', words: 'open a cartridge or a save from a file of yours, and load it' },
+    { name: 'save', words: 'save the running game to a file of yours, a cartridge that opens at its frame; where the cartridge reads a file, write that file back' },
+    { name: 'save-cartridge', words: 'save the running game itself to a file of yours, a cartridge that opens at its frame, where Save writes the file the cartridge reads' },
+    { name: 'open', words: 'open a cartridge or a save from a file of yours, and load it; or a file the cartridge reads, into its sheets' },
     { name: 'restore', words: 'restore the unsaved work the line under the bar names, at its frame, paused' },
     { name: 'discard', words: 'discard the unsaved work the line under the bar names from this browser' },
     { name: 'autosave-on', words: 'turn on Autosave: unsaved work kept in this browser until you save or discard it, which a page from a file does only at your word' },
@@ -2489,6 +2490,23 @@
   };
   FullEscape.prototype.reset = function () { this.at = -Infinity; };
 
+  // ---- a file the cartridge reads (CART.16's second slice; docs/SPEC.md section 3.11): the page's own reading of its kind ----
+  // A cartridge written to version 9 may say a file's lines on its Format sheet, and its type in Format!B1, a dot and its
+  // letters, which the host reads (fileType). Open then offers that kind of file beside a cartridge, a file of the kind
+  // is read into the cartridge's sheets where any other is a cartridge, and Save writes the file under its name.
+  // A picker's kind of file: the type the loaded cartridge reads, or, for none, a cartridge's.
+  function fileKind(kind) { return kind ? { description: 'A ' + kind + ' file', accept: { 'text/plain': [kind] } } : { description: 'An Alonzo cartridge', accept: { 'text/plain': ['.vla'] } }; }
+  // What Open's picker offers: the cartridge's kind of file first, where it reads one, and a cartridge.
+  function openKinds(kind) { return kind ? [fileKind(kind), fileKind('')] : [fileKind('')]; }
+  // Whether a file's name ends with a type, compared without case, a name that is the type alone being no such file.
+  function ofKind(name, kind) { return !!kind && name.length > kind.length && name.toLowerCase().slice(-kind.length) === kind.toLowerCase(); }
+  // Whether a file opened is read as the cartridge's lines: its name the cartridge's kind's, and never a cartridge's own.
+  function opensAsLines(name, kind) { return ofKind(name, kind) && !ofKind(name, '.vla'); }
+  // What the picker says of a file opened: where it was read as a cartridge's lines, the cartridge and the file it is at
+  // work on, Afterlife (walter.pl) (the owner's word at the hand test: the cartridge employs the file); a cartridge or
+  // a save opened is the file alone, as it was.
+  function openedTitle(name, into) { return into ? into + ' (' + name + ')' : 'The file ' + name; }
+
   // ---- the player (ENGINE.14; ENGINE.1's panel before it): the host's loop over the module, the window the game's ----
   function bytesOfBase64(s) {
     var bin = atob(s.replace(/\s+/g, ''));
@@ -2730,8 +2748,9 @@
     // folder, which needs no act, so that a cartridge's save (File!B3) and one that waited for its settle are written
     // too. Nothing else on the page writes a file. The picker opens in the Downloads folder every time, startIn with no
     // id, which the File System Access API sets before the folder it last chose (the owner's word at the hand test).
-    // Answers a promise of how it was written.
-    function personFile(text, file, ask) {
+    // Answers a promise of how it was written. kind: the type of a file the cartridge reads (CART.16's second slice), a
+    // dot and its letters, where the file is no cartridge.
+    function personFile(text, file, ask, kind) {
       var blob = new Blob([text], { type: 'text/plain' }), pick = window.showSaveFilePicker;
       function download() {
         var a = document.createElement('a');
@@ -2741,13 +2760,24 @@
         return 'downloaded';
       }
       if (!ask || typeof pick !== 'function') return Promise.resolve(download());
-      return pick.call(window, { suggestedName: file, startIn: 'downloads', types: [{ description: 'An Alonzo cartridge', accept: { 'text/plain': ['.vla'] } }] })
+      return pick.call(window, { suggestedName: file, startIn: 'downloads', types: [fileKind(kind)] })
         .then(function (h) { return h.createWritable(); })
         .then(function (w) { return w.write(blob).then(function () { return w.close(); }); })
         .then(function () { return 'picked'; }, function (e) { return e && e.name === 'AbortError' ? 'cancelled' : download(); });
     }
     // A save the host took, written: through the picker when a person asked and it was taken at once, else downloaded.
     host.on('save', function (e) {
+      // the file the cartridge reads (CART.16's second slice; docs/SPEC.md section 3.11): the module's text as it stands,
+      // under the file's name, no box of the drawer in it; the work it holds is saved, and what was typed in the
+      // drawer stays kept
+      if (e.kind === 'file') {
+        personFile(e.text, e.file, e.by === 'person' && !e.waited, host.fileType()).then(function (how) {
+          var where = how === 'picked' ? 'where you chose' : (how === 'downloaded' ? 'into your downloads' : null);
+          sayBar(where ? 'Saved ' + e.file + ', ' + thousands(e.lines) + ' line' + (e.lines === 1 ? '' : 's') + ', ' + where + '.' : 'The file was not written: the picker was closed.');
+          if (where) keeper.saved();
+        });
+        return;
+      }
       // the drawer's boxes typed after the grid's rows, a draft each (ENGINE.40), the whole file held to section 10's
       var kd = keeper.drafts(), text = e.text + draftForms(kd.texts, kd.names), bytes = new TextEncoder().encode(text).length;
       if (bytes > HOST.MAX_CARTRIDGE_BYTES) { sayBar('The save was not written: with the boxes you typed in the drawer it is ' + thousands(bytes) + ' bytes, over the ' + thousands(HOST.MAX_CARTRIDGE_BYTES) + ' (16 MiB) a cartridge may be (docs/SPEC.md section 10), which the engine would not load again.'); return; }
@@ -2768,9 +2798,10 @@
     // saved.
     var openFileEl = document.getElementById('eng-open-file');
     document.getElementById('eng-open').addEventListener('click', function () {
-      var pickOpen = window.showOpenFilePicker;
-      if (typeof pickOpen !== 'function') { openFileEl.value = ''; openFileEl.click(); return; }
-      pickOpen.call(window, { startIn: 'downloads', types: [{ description: 'An Alonzo cartridge', accept: { 'text/plain': ['.vla'] } }] })
+      // a file the loaded cartridge reads is offered first, where it reads one, and a cartridge beside it
+      var pickOpen = window.showOpenFilePicker, kind = host.fileType();
+      if (typeof pickOpen !== 'function') { openFileEl.accept = '.vla,text/plain' + (kind ? ',' + kind : ''); openFileEl.value = ''; openFileEl.click(); return; }
+      pickOpen.call(window, { startIn: 'downloads', types: openKinds(kind) })
         .then(function (hs) { return hs[0].getFile(); })
         .then(openedFile, function (e) { if (!(e && e.name === 'AbortError')) sayBar('The file was not opened: ' + (e && e.message ? e.message : e) + '.'); });
     });
@@ -2786,13 +2817,23 @@
     }
     function openedFile(f) {
       f.text().then(function (whole) {
-        var taken = takeDrafts(whole), text = taken.text, src = taken.drafts.source;   // the drawer's boxes the file carries (ENGINE.40)
-        opened = { name: '', title: 'The file ' + f.name, file: f.name, path: 'the file ' + f.name + ', opened from your machine', text: text,
+        // A file the loaded cartridge reads (CART.16's second slice; docs/SPEC.md section 3.11): read by the module into
+        // the cartridge's text, the file's lines in its sheets, which is then the file opened as any cartridge is, under
+        // the file's name; and written back at once, the first line a save would change said before anything is edited.
+        // A file no line of the cartridge reads is said by the host, and nothing is loaded.
+        var kind = host.fileType(), lines = opensAsLines(f.name, kind), title = lines && host.cart ? host.cart.title : '';
+        if (lines) {
+          var read = host.fileRead(whole, f.name);
+          if (!read.ok) return;
+        }
+        var taken = lines ? { text: read.text, drafts: {} } : takeDrafts(whole), text = taken.text, src = taken.drafts.source;   // the drawer's boxes the file carries (ENGINE.40)
+        opened = { name: '', title: openedTitle(f.name, title), file: f.name, path: 'the file ' + f.name + ', opened from your machine' + (lines ? ' into ' + (title || 'the cartridge') + ', a cartridge with its lines in its sheets' : ''), text: text,
                    source: src ? src.text : undefined, sourcePath: src ? src.path : undefined,
-                   notes: 'The file ' + f.name + ', opened from your machine: a cartridge loads at frame 0 and a save at the frame it was saved at. Load loads it again from there.' };
+                   notes: lines ? 'The file ' + f.name + ', opened from your machine into ' + (title || 'the cartridge') + ': its lines are the rows of the sheets, Save writes them back as the file, and Load loads it again as it was opened.'
+                                : 'The file ' + f.name + ', opened from your machine: a cartridge loads at frame 0 and a save at the frame it was saved at. Load loads it again from there.' };
         var opt = pickEl.querySelector('option[value="' + OPENED + '"]');
         if (!opt) { opt = document.createElement('option'); opt.value = OPENED; pickEl.appendChild(opt); }
-        opt.textContent = 'The file ' + f.name;
+        opt.textContent = opened.title;
         pickEl.value = OPENED;
         keeper.tick();   // the run's typing written before the boxes take the file's texts (ENGINE.40)
         showTexts(opened);
@@ -2800,6 +2841,7 @@
         keeper.replaced(['source', 'cartridge', 'replay'].concat(Object.keys(taken.drafts)));
         if (host.m) { loadCartridge(); focusScreen(); }
         putBoxes(taken.drafts, 'the file ' + f.name);   // after the load, so that the cartridge's box shows what was typed in it
+        if (lines && host.m) host.fileCheck(whole, f.name);   // the open's check, said in the bar, at once or when the load's act has settled
       }, function () { sayBar('The file ' + f.name + ' could not be read.'); });
     }
     // A text on the clipboard, the button saying so, or the way to copy it by hand when the browser keeps the clipboard closed.
@@ -2921,6 +2963,12 @@
       sound: function () { soundEl.click(); },
       load: function () { document.getElementById('eng-load').click(); },
       save: function () { document.getElementById('eng-save').click(); },
+      // the grid itself as a cartridge, where Save writes the file the cartridge reads (CART.16's second slice)
+      'save-cartridge': function () {
+        var r = host.save('person', 'cartridge');
+        if (r.waiting) sayBar('The save waits for the act to settle, and is downloaded then.');
+        else if (!r.ok) sayBar(r.words || 'The save was refused, and the log says why.');
+      },
       open: function () { document.getElementById('eng-open').click(); },
       restore: function () { keeper.restoreOffer(); },
       discard: function () { keeper.discardOffer(); },
@@ -3879,7 +3927,7 @@
     }
     if (lifeText.split('(rate 30)').length !== 2 || lifeText.split('(spec 2)').length !== 2) P.push('the anchors (rate 30) and (spec 2) are not in the cartridge exactly once');
     expectLoad(host.load(lifeText.replace('(rate 30)', ''), 'life.vla'), 'cart-manifest-invalid');
-    expectLoad(host.load(lifeText.replace('(spec 2)', '(spec 9)'), 'life.vla'), 'cart-spec-unsupported');
+    expectLoad(host.load(lifeText.replace('(spec 2)', '(spec 10)'), 'life.vla'), 'cart-spec-unsupported');
     expectLoad(host.loadBytes(new Uint8Array([0x28, 0xff, 0xfe, 0x29]), 'bad.vla'), 'is not UTF-8');
     var ok = host.load(lifeText, 'life.vla');
     if (!ok.ok) P.push('Life did not load: ' + ok.sentence);
@@ -4082,7 +4130,7 @@
       var D = new Driver({ exports: exports }), out = [];
       function load(text) { return D.call('alonzo_load', [], [text, 'life.vla']); }
       out.push(['a manifest without its rate', load(lifeText.replace('(rate 30)', ''))]);
-      out.push(['a (spec 9)', load(lifeText.replace('(spec 2)', '(spec 9)'))]);
+      out.push(['a (spec 10)', load(lifeText.replace('(spec 2)', '(spec 10)'))]);
       out.push(['bytes that are not UTF-8', D.call('alonzo_load', [], [new Uint8Array([0x28, 0xff, 0xfe, 0x29]), 'bad.vla'])]);
       var L = load(lifeText), m = /^\(cartridge (\d+) /.exec(L.text);
       if (!m) { P.push('Life did not load for the parity: ' + L.id + ' ' + L.text); return out; }
@@ -7030,6 +7078,180 @@
     }
     return { counters: k, problems: P };
   }
+  // ---- CART.16's second slice: a file opened, edited and saved (docs/SPEC.md section 3.11) ----
+  // A card written to a version, one sheet and its Format sheet: a file of settings, a word, an equals sign and a whole
+  // number or the rest, its comments led by a number sign, from row 2 under a header, beside a column of the sheet's
+  // own. settle: the card settles its acts.
+  function fileCard(spec, settle) {
+    return '(cartridge "pairs"\n  (spec ' + spec + ')\n  (title "Pairs")\n  (rate 0)\n  (screen grid 4 3)\n  (seed 1)' + (settle ? '\n  (settle 4)' : '') + ')\n' +
+      '(sheet "Pairs" visible)\n(cell "Pairs" "A1" "Key")\n(cell "Pairs" "B1" "Value")\n(cell "Pairs" "A2" "OLD")\n(cell "Pairs" "B2" "was")\n(formula "Pairs" "C2:C6" "=LEN(B2)")\n' +
+      '(cell "Format" "A1" "type")\n(cell "Format" "B1" ".env")\n(cell "Format" "A2" "comment")\n(cell "Format" "B2" "#")\n(cell "Format" "A3" "first row")\n(cell "Format" "B3" 2)\n' +
+      '(cell "Format" "A6" "Pairs")\n(cell "Format" "B6" "{A:word}={B:whole|rest}")\n';
+  }
+  // Pure, the host's and the page's: where two files part and its words, a file's kind and what Open offers. Over the
+  // double, which holds neither call: a file read and a file written each declined in words. Over the module, the
+  // card: its type and the name a file is written under; a file read into the cartridge's text, the grid that runs left
+  // as it was; that cartridge loaded under the file's name, and the open's check, the file written back at once and held
+  // to the file, CR LF and all (same), a file written loosely said by its first line that would change (loose); an edit
+  // its line, a person's save the file, under its name, by the event save with its kind, and the cartridge's own save
+  // and a person's save of the cartridge a cartridge still; a line no template reads refused by its number, nothing
+  // loaded; a row no line says refused by its cell, nothing handed to the page; a cartridge that says no file's lines
+  // saved and opened as before; and, where the load's act still settles, the check and a save each waiting for the grid
+  // to rest. On Alonzo's own page, Afterlife's reel: its tabs written as the file, 934 lines, opened under the cartridge
+  // and written back byte for byte.
+  function caseFile() {
+    var P = [], k = { changes: 0, words: 0, kinds: 0, double: 0, named: 0, read: 0, opened: 0, same: 0, loose: 0, edited: 0, saved: 0, cartridge: 0, refused: 0, unwritten: 0, none: 0, waited: 0 };
+    // ---- pure: where two files part, and its words ----
+    var FC = HOST.firstChange, CW = HOST.changeWords, U;
+    [['a\nb\n', 'a\nb\n', null, ''],
+     ['', '', null, ''],
+     ['a\nb\n', 'a\nB\n', { line: 2, was: 'b', now: 'B' }, '"B" would be written where the file has "b"'],
+     ['a\r\nb\r\n', 'a\nb\n', { line: 1, was: 'a\r', now: 'a' }, 'its line end would be LF where the file has CR LF'],
+     ['a\nb\n', 'a\r\nb\r\n', { line: 1, was: 'a', now: 'a\r' }, 'its line end would be CR LF where the file has LF'],
+     ['a\nb', 'a\nb\n', { line: 2, was: 'b', now: 'b', end: true }, 'its last line has no line end, and would be given one'],
+     ['a\n', 'a\nb\n', { line: 2, was: U, now: 'b' }, 'a line would be added, "b"'],
+     ['a\n\n\n', 'a\n', { line: 2, was: '', now: U }, 'it ends with an empty line, or more, which would not be written'],
+     ['a\nb\nc\n', 'a\n', { line: 2, was: 'b', now: U }, 'the line "b" and what follows it would not be written'],
+     ['', 'a\n', { line: 1, was: U, now: 'a' }, 'a line would be added, "a"']
+    ].forEach(function (x) {
+      var got = FC(x[0], x[1]), due = x[2];
+      var same = due === null ? got === null : !!got && got.line === due.line && got.was === due.was && got.now === due.now && got.end === due.end;
+      if (same) k.changes++; else P.push('file: ' + JSON.stringify(x[0]) + ' beside ' + JSON.stringify(x[1]) + ' part at ' + JSON.stringify(got) + ', where ' + JSON.stringify(due) + ' is due: files are held to each other line for line, line ends and all');
+      if (due === null) return;
+      if (CW(due) === x[3]) k.words++; else P.push('file: the difference ' + JSON.stringify(due) + ' is said ' + JSON.stringify(CW(due)) + ', where ' + JSON.stringify(x[3]) + ' is due');
+    });
+    var cut = CW({ line: 1, was: 'x'.repeat(100), now: 'y' });
+    if (cut === '"y" would be written where the file has "' + 'x'.repeat(69) + '..."') k.words++; else P.push('file: a line of 100 characters is said ' + JSON.stringify(cut) + ', where it is cut to 69 and three dots');
+    // ---- pure: a file's kind, and what Open offers ----
+    [['walter.pl', '.pl', true], ['WALTER.PL', '.pl', true], ['walter.Pl', '.PL', true], ['.pl', '.pl', false], ['walter.pl.txt', '.pl', false], ['walter.vla', '.pl', false], ['walter.pl', '', false], ['a.vla', '.vla', false]
+    ].forEach(function (x) {
+      if (opensAsLines(x[0], x[1]) === x[2]) k.kinds++; else P.push('file: ' + x[0] + ' under a cartridge that reads ' + (x[1] || 'no file') + ' opens as lines: ' + opensAsLines(x[0], x[1]) + ', where ' + x[2] + ' is due');
+    });
+    var offered = openKinds('.pl'), plain = openKinds('');
+    if (offered.length === 2 && offered[0].description === 'A .pl file' && offered[0].accept['text/plain'].join() === '.pl' && offered[1].accept['text/plain'].join() === '.vla' && plain.length === 1 && plain[0].accept['text/plain'].join() === '.vla') k.kinds++;
+    else P.push('file: Open offers ' + JSON.stringify(offered) + ' under a cartridge that reads .pl and ' + JSON.stringify(plain) + ' under one that reads none, where the file\'s kind stands first and a cartridge beside it, and a cartridge alone');
+    // what the picker says of a file opened: the cartridge and the file it reads, or the file alone
+    [['walter.pl', 'Afterlife', 'Afterlife (walter.pl)'], ['afterlife-1.vla', '', 'The file afterlife-1.vla']
+    ].forEach(function (x) {
+      if (openedTitle(x[0], x[1]) === x[2]) k.kinds++; else P.push('file: ' + x[0] + ' opened' + (x[1] ? ' into ' + x[1] : '') + ' stands in the picker as "' + openedTitle(x[0], x[1]) + '", where "' + x[2] + '" is due');
+    });
+    // ---- over the double: no file's calls, each declined in words ----
+    var D = new HOST({ drive: 'manual', budget: 0, now: frozen });
+    if (D.attach(FAKE.create({}).exports).ok && D.load('(cartridge "tiny"\n  (spec 2)\n  (title "Tiny")\n  (rate 0)\n  (screen grid 4 3)\n  (seed 1))\n(cell "Screen" "A1" 1)\n', 'tiny.vla').ok) {
+      var dread = D.fileRead('A=1\n', 'a.env'), dtext = D.fileText();
+      if (D.fileType() === '' && D.fileName() === '' && !dread.ok && /^a\.env was not opened: the module exports no alonzo_file_read/.test(dread.sentence || '') && !dtext.ok && /^The file was not written: the module exports no alonzo_file_write/.test(dtext.words || '')) k.double++;
+      else P.push('file: over the double the type is ' + JSON.stringify(D.fileType()) + ', a file read answers ' + JSON.stringify(dread.sentence || dread) + ' and a file written ' + JSON.stringify(dtext.words || dtext) + ', where it says no type and each call is declined in words');
+    } else P.push('file: the double did not load a card: ' + (D.sentences().slice(-1)[0] || {}).text);
+    // ---- over the module ----
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm);
+    k.module = bytes.length;
+    function host(opts) { var o = { drive: 'manual', budget: 0, now: frozen }; for (var n in (opts || {})) o[n] = opts[n]; var h = new HOST(o); return h.attach(HOST.instantiateSync(bytes)).ok ? h : null; }
+    function last(h) { var t = h.sentences(); return t.length ? t[t.length - 1].text : ''; }
+    function busy(h) { return h.settling || h.inFrame || h.edits.length > 0; }
+    function rest(h) { var t = 1000; h.start(); for (var i = 0; i < 64 && busy(h); i++) { t += 17; h.tick(t); } }
+    var A = host(), card = fileCard(9, false);
+    if (!A || !A.load(card, 'pairs.vla').ok) { P.push('file: the card did not load over the module: ' + (A ? last(A) : 'no host')); return { counters: k, problems: P }; }
+    var handed = [];
+    A.on('save', function (e) { handed.push(e); });
+    // the type, and the name a file is written under before one is opened: the cartridge's own with the type
+    var own = A.fileText();
+    if (A.fileType() === '.env' && A.fileName() === 'pairs.env' && own.ok && own.text === 'OLD=was\n' && own.lines === 1 && own.file === 'pairs.env') k.named++;
+    else P.push('file: the card says the type ' + JSON.stringify(A.fileType()) + ', its file is saved under ' + JSON.stringify(A.fileName()) + ' and its own rows are written ' + JSON.stringify(own.text || own.words) + ', where .env, pairs.env and OLD=was are due');
+    // a file read into the cartridge's text: nothing loaded, the grid that runs as it was
+    var file = '# settings\r\nPORT=8080\r\nNAME=a b\r\n', was = A.counters().handle, read = A.fileRead(file, 'settings.env');
+    if (read.ok && /^\(cartridge "pairs"/.test(read.text) && read.text.indexOf('(cell "Pairs" "B3" 8080)') > 0 && read.text.indexOf('"OLD"') < 0 && A.counters().handle === was && A.fileText().text === 'OLD=was\n') k.read++;
+    else P.push('file: the file read answers ' + JSON.stringify(read.ok ? read.text.slice(0, 80) : read.sentence) + ' and the grid that runs then writes ' + JSON.stringify(A.fileText().text) + ', where the answer is the cartridge with the file\'s rows and the grid is left as it was');
+    if (!read.ok) return { counters: k, problems: P };
+    // loaded under the file's name, and the open's check: the file written back, CR LF and all
+    if (!A.load(read.text, 'settings.env').ok) { P.push('file: the cartridge the file was read into did not load: ' + last(A)); return { counters: k, problems: P }; }
+    var chk = A.fileCheck(file, 'settings.env');
+    if (A.fileName() === 'settings.env' && A.fileType() === '.env') k.named++; else P.push('file: after settings.env is opened its file is saved under ' + JSON.stringify(A.fileName()) + ', where the name it was opened by is due');
+    if (chk.ok && chk.same === true && chk.lines === 3) k.same++;
+    else P.push('file: the open\'s check of a file whose line ends are CR LF answers ' + JSON.stringify(chk) + ', where the file comes back as it is, line ends and all');
+    var beside = A.viewRecord('Pairs', 'C3');
+    if (last(A) === 'Opened settings.env, 3 lines: Save writes it back as it is.' && /\(formula "Pairs" "C3" "=LEN\(B3\)"\)/.test(beside || '')) k.opened++;
+    else P.push('file: the open\'s check says ' + JSON.stringify(last(A)) + ' and Pairs!C3 holds ' + JSON.stringify(beside) + ', where the file is said opened and the sheet\'s own formula stands beside its rows');
+    // an edit is its line, and a person's save the file, under its name
+    A.edit('(cell "Pairs" "B3" 9090)'); rest(A);
+    handed.length = 0;
+    var sv = A.save('person'), want = '# settings\r\nPORT=9090\r\nNAME=a b\r\n';
+    if (sv.ok && handed.length === 1 && handed[0].kind === 'file' && handed[0].text === want) k.edited++;
+    else P.push('file: after an edit a person\'s save ' + (handed.length && handed[0].kind === 'cartridge' ? 'wrote a cartridge, ' + handed[0].file : 'handed the page ' + JSON.stringify(handed.length ? handed[0].text : sv)) + ', where the file is due with the edit its line');
+    if (handed.length === 1 && handed[0].file === 'settings.env' && handed[0].lines === 3 && handed[0].by === 'person' && last(A) === 'Wrote settings.env: 3 lines, ' + want.length + ' bytes.') k.saved++;
+    else P.push('file: the file is saved under ' + JSON.stringify(handed.length ? handed[0].file : null) + ' and said ' + JSON.stringify(last(A)) + ', where settings.env and its three lines are due');
+    // the cartridge's own save, and a person's save of the cartridge, a cartridge still
+    handed.length = 0;
+    A.save('cartridge');
+    if (handed.length === 1 && handed[0].kind === 'cartridge' && /^pairs-\d+\.vla$/.test(handed[0].file) && /^\(cartridge "pairs"/.test(handed[0].text)) k.cartridge++;
+    else P.push('file: the cartridge\'s own save handed the page ' + (handed.length ? 'a ' + handed[0].kind + ', ' + handed[0].file : 'nothing') + ', where the grid as a cartridge is due, as before');
+    handed.length = 0;
+    A.save('person', 'cartridge');
+    if (handed.length === 1 && handed[0].kind === 'cartridge' && /^pairs-\d+\.vla$/.test(handed[0].file)) k.cartridge++;
+    else P.push('file: a person\'s save of the cartridge handed the page ' + (handed.length ? 'a ' + handed[0].kind + ', ' + handed[0].file : 'nothing') + ', where the grid as a cartridge is due');
+    // a file written loosely: the first line a save would change, said
+    var loose = 'PORT =8080\nNAME=x\n', lr = A.fileRead(loose, 'loose.env');
+    if (lr.ok && A.load(lr.text, 'loose.env').ok) {
+      var lc = A.fileCheck(loose, 'loose.env');
+      if (lc.ok && lc.same === false && lc.line === 1 && last(A) === 'Opened loose.env, 2 lines. Save would change it, first at line 1: "PORT=8080" would be written where the file has "PORT =8080".') k.loose++;
+      else P.push('file: the open\'s check of a file written loosely answers ' + JSON.stringify(lc) + ' and says ' + JSON.stringify(last(A)) + ', where its first line is said');
+    } else P.push('file: a file written loosely was not read: ' + last(A));
+    // a line no template reads: refused by its number, nothing loaded
+    var at = A.counters().handle, bad = A.fileRead('PORT=1\nno equals sign\n', 'bad.env');
+    if (!bad.ok && /^bad\.env was not opened: line 2 is no line the Format sheet says/.test(bad.sentence || '') && /\[cart-file-unread\]\.$/.test(bad.sentence || '') && A.counters().handle === at && A.fileName() === 'loose.env') k.refused++;
+    else P.push('file: a file a line of which no template reads answers ' + JSON.stringify(bad.sentence || bad) + ', where it is refused by its line and nothing is loaded');
+    // a row no line says: refused by its cell, nothing handed to the page
+    A.edit('(cell "Pairs" "A3" "TWO WORDS")'); rest(A);
+    handed.length = 0;
+    var un = A.save('person');
+    if (!un.ok && !handed.length && /^The file was not written: Pairs!A3 holds "TWO WORDS", which is not a word/.test(last(A)) && /\[cart-file-unwritten\]\.$/.test(last(A))) k.unwritten++;
+    else P.push('file: a row no line says is saved as ' + JSON.stringify(handed.length ? handed[0].text : un) + ' and said ' + JSON.stringify(last(A)) + ', where it is refused by its cell and nothing is written');
+    // a cartridge that says no file's lines: saved and opened as before
+    var N = host(), nsaved = [];
+    if (N && N.load(fileCard(8, false), 'pairs.vla').ok) {
+      N.on('save', function (e) { nsaved.push(e); });
+      N.save('person');
+      var nr = N.fileRead('A=1\n', 'a.env');
+      if (N.fileType() === '' && nsaved.length === 1 && nsaved[0].kind === 'cartridge' && !nr.ok && /^a\.env was not opened: .*\[cart-format-invalid\]\.$/.test(nr.sentence || '')) k.none++;
+      else P.push('file: a card written to version 8 says the type ' + JSON.stringify(N.fileType()) + ', its save is ' + (nsaved.length ? 'a ' + nsaved[0].kind : 'not handed over') + ' and a file read answers ' + JSON.stringify(nr.sentence || nr) + ', where it says no file, saves a cartridge and reads none');
+    } else P.push('file: the card written to version 8 did not load');
+    // where the load's act still settles: the check waits for the grid to rest, and so does a save
+    var S0 = host(), slow = '# settings\nPORT=8080\n', sr = S0 && S0.load(fileCard(9, true), 'pairs.vla').ok ? S0.fileRead(slow, 'slow.env') : { ok: false };
+    var W = host({ callsPerTick: 1 }), wsaved = [];
+    if (W && sr.ok && W.load(sr.text, 'slow.env').ok) {
+      W.on('save', function (e) { wsaved.push(e); });
+      var settling = W.settling || W.inFrame, wc = W.fileCheck(slow, 'slow.env'), early = /^Opened slow\.env/.test(last(W));
+      rest(W);
+      if (settling && wc.waiting === true && !early && last(W) === 'Opened slow.env, 2 lines: Save writes it back as it is.') k.waited++;
+      else P.push('file: asked while the load\'s act ' + (settling ? 'settles' : 'rests') + ', the check answers ' + JSON.stringify(wc) + ' and the check ' + (/^Opened slow\.env/.test(last(W)) ? 'was said ' + (early ? 'at once' : 'at rest') : 'was never said') + ': ' + JSON.stringify(last(W)) + ', where it waits and is said once the grid rests');
+      W.edit('(cell "Pairs" "B3" 1)');
+      var mid = W.settling || W.inFrame, ws = W.save('person');
+      rest(W);
+      if (mid && ws.waiting === true && wsaved.length === 1 && wsaved[0].kind === 'file' && wsaved[0].waited === true && wsaved[0].text === '# settings\nPORT=1\n') k.waited++;
+      else P.push('file: a save asked while an act ' + (mid ? 'settles' : 'rests') + ' answers ' + JSON.stringify(ws.waiting ? 'waiting' : ws) + ' and the page is handed ' + JSON.stringify(wsaved.length ? wsaved[0].kind + ': ' + wsaved[0].text : null) + ', where the file waits for the settle and is handed over at rest');
+    } else P.push('file: the card that settles did not open a file: ' + (W ? last(W) : 'no host'));
+    // ---- Alonzo's own: Afterlife's reel, its tabs the file and the file its tabs ----
+    if (OWN && CARTRIDGES.afterlife) {
+      k.golden = 0; k.lines = 0;
+      var G = host(), ac = CARTRIDGES.afterlife;
+      if (G && G.load(ac.text, ac.file).ok) {
+        rest(G);
+        var reel = G.fileText();
+        if (reel.ok && G.fileType() === '.pl' && reel.file === 'afterlife.pl') {
+          k.lines = reel.lines;
+          var gr = G.fileRead(reel.text, 'walter.pl');
+          if (gr.ok && G.load(gr.text, 'walter.pl').ok) {
+            rest(G);
+            var gc = G.fileCheck(reel.text, 'walter.pl'), back = G.fileText();
+            if (gc.same === true && back.ok && back.text === reel.text && back.file === 'walter.pl') k.golden++;
+            else P.push('file: Afterlife\'s reel opened under its cartridge is checked ' + JSON.stringify(gc) + ' and written back ' + (back.ok ? back.text.length + ' characters' : back.words) + ', where it comes back byte for byte');
+          } else P.push('file: Afterlife\'s reel was not opened under its cartridge: ' + last(G));
+        } else P.push('file: Afterlife\'s tabs were not written as a .pl file: ' + JSON.stringify(reel.ok ? [G.fileType(), reel.file] : reel.words));
+      } else P.push('file: Afterlife did not load over the module');
+    }
+    return { counters: k, problems: P };
+  }
   function caseReplay() {
     var P = [], notes = [], k = OWN ? { vectors: 0, liveFrames: 0, doubleSame: 0, doubleRound: 0, paced: 0, stopped: 0, waited: 0, refused: 0 } : { vectors: 0 };
     // ---- the digest ----
@@ -7094,7 +7316,7 @@
       var C = doubleHost();
       var wrong = [
         ['another cartridge\'s replay', CARTRIDGES.inputcard.replay, 'a replay plays only on the file it was recorded from'],
-        ['a later version\'s replay', text.replace('(spec 3)', '(spec 9)'), 'this host implements versions 1 to 8'],
+        ['a later version\'s replay', text.replace('(spec 3)', '(spec 10)'), 'this host implements versions 1 to 9'],
         ['a derived row', text.replace('(frame 1\n', '(frame 1\n  (derived "State" "B1" 1)\n'), 'holds a derived row'],
         ['frames out of order', text + '(frame 1)\n', 'frames are out of order'],
         ['a row outside a frame', text.replace('(frame 1\n', '(cell "State" "B1" 1)\n(frame 1\n'), 'outside a frame'],
@@ -10601,7 +10823,7 @@
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
                  ['continue', caseContinue], ['palette', casePalette], ['drawer', caseDrawer], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths], ['modes', caseModes], ['save', caseSave], ['keep', caseKeep],
-                 ['clipboard', caseClipboard]];
+                 ['clipboard', caseClipboard], ['file', caseFile]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -10610,7 +10832,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, drawer: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1, keep: 1, clipboard: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, drawer: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1, keep: 1, clipboard: 1, file: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }

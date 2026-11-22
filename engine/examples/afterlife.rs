@@ -1,40 +1,45 @@
-//! Afterlife's sheet at the command line (`CART.16`'s first slice;
-//! `docs/REARVIEW.md`): a reel's file read into the cartridge's tabs, and a
-//! save of the cartridge written back as a reel's file, by the reader and the
-//! writer of `engine/src/afterlife.rs`, the engine's tests' own file.
+//! Afterlife's sheet at the command line (`CART.16`; `docs/REARVIEW.md`): a
+//! reel's file read into the cartridge's tabs, and a save of the cartridge
+//! written back as a reel's file, by the two acts the page's Open and Save
+//! take since the second slice, `Cartridge::opened` and
+//! `Cartridge::file_text`, the cartridge's Format sheet saying the reel's
+//! lines (`engine/src/lines.rs`; `docs/SPEC.md` section 3.11).
 //!
 //! ```text
 //! cargo run --release --example afterlife                              # Walter's reel written into the source's block
 //! cargo run --release --example afterlife -- --check                   # the same, compared and written nowhere
 //! cargo run --release --example expand                                 # then the cartridge, as after any edit
-//! cargo run --release --example afterlife -- sheet <reel.pl> <out.vla> # any reel as a cartridge, for the page's Open
+//! cargo run --release --example afterlife -- sheet <reel.pl> <out.vla> # any reel as a cartridge, which the page's Open opens
 //! cargo run --release --example afterlife -- reel <save.vla> <out.pl>  # a save of it, written back as a reel
 //! ```
 //!
 //! With no word, the golden, `cartridges/afterlife/walter.pl`, is read and its
 //! rows are written into the block of `cartridges/afterlife/afterlife.source.vla`
-//! between its two markers, the lines around the block as they stand; the
-//! pass then expands the source into the cartridge. `sheet` does both for any
-//! reel and writes the cartridge where it is told, the repository untouched:
-//! a reel of a person who lived is never committed. `reel` loads a save, or
-//! any cartridge of these tabs, reads each tab's cells and writes the file
-//! they say; a row no line can say is refused by its tab and its row.
+//! between its two markers, the lines around the block as they stand, by the
+//! first slice's hand, `engine/src/afterlife.rs`, the engine's tests' own
+//! file; the pass then expands the source into the cartridge, and `cargo
+//! test` holds that cartridge to the one a file opened makes. `sheet` is the
+//! page's Open: the committed cartridge with any reel's lines in its tabs,
+//! written where it is told, the repository untouched, since a reel of a
+//! person who lived is never committed; it loads what it wrote and writes the
+//! file back, as the page does at an open, and says the first line that would
+//! change. `reel` is the page's Save: a save loaded, or any cartridge of these
+//! tabs, and the file its tabs say written; a row no line says is refused by
+//! its cell.
 //!
 //! Prints `(reel "<file>" (lines <n>) (facts <m>) written|same|differs)`, or
-//! `(sheet "<reel>" "<cartridge>" (lines <n>) (facts <m>) (rows <r>) (loads yes))`,
-//! or `(reel "<save>" "<reel>" (lines <n>) (facts <m>) written)`; a refusal as
+//! `(sheet "<reel>" "<cartridge>" (lines <n>) (loads yes) same|(differs <line>))`,
+//! or `(reel "<save>" "<reel>" (lines <n>) written)`; a refusal as
 //! `(refused "<file>" "<words>")`. Exits 0 when it wrote, or, checking, the
 //! block is the same; 1 when it refused or the block differs; 2 for words it
 //! does not know. `cargo test` holds the golden's round trip, byte for byte.
 
-use std::collections::BTreeSet;
 use std::path::Path;
 use std::process::ExitCode;
 
 use alonzo::cartridge::Cartridge;
-use alonzo::pass::{expand, file_name, folder_of, includes};
+use alonzo::pass::file_name;
 use vla_lang::form::Form;
-use vla_lang::machine::Viewed;
 use vla_lang::printer::write_datum;
 
 #[path = "../src/afterlife.rs"]
@@ -43,6 +48,9 @@ mod afterlife;
 
 /// The source, below the repository's root.
 const SOURCE: &str = "cartridges/afterlife/afterlife.source.vla";
+
+/// The cartridge the pass writes from it, which a reel is opened under.
+const CARTRIDGE: &str = "cartridges/afterlife/afterlife.vla";
 
 /// The golden, Walter Alder's reel.
 const GOLDEN: &str = "cartridges/afterlife/walter.pl";
@@ -55,25 +63,6 @@ fn quoted(text: &str) -> String {
 fn refused(file: &str, why: &str) -> ExitCode {
     println!("(refused {} {})", quoted(file), quoted(why));
     ExitCode::from(1)
-}
-
-/// The texts the source includes, read from the repository under the keys
-/// the pass resolves them by, each once, as `examples/expand.rs` gathers them.
-fn gather(root: &Path, text: &str) -> Vec<(String, String)> {
-    let folder = folder_of(SOURCE).to_string();
-    let mut files = Vec::new();
-    let mut seen = BTreeSet::new();
-    let mut queue = includes(text, &folder);
-    while let Some(key) = queue.pop() {
-        if !seen.insert(key.clone()) {
-            continue;
-        }
-        if let Ok(body) = std::fs::read_to_string(root.join(&key)) {
-            queue.extend(includes(&body, &folder));
-            files.push((key, body));
-        }
-    }
-    files
 }
 
 /// The source with a reel's rows in its block.
@@ -126,51 +115,67 @@ fn golden(root: &Path, check: bool) -> ExitCode {
     }
 }
 
-/// Any reel as a cartridge: its rows in the source's block, the source
-/// expanded by the pass, and the cartridge written where it is told.
+/// The first line, from 1, at which two files part, or none where they are
+/// one file: the page's word at an open (section 3.11).
+fn first_change(file: &str, written: &str) -> Option<usize> {
+    let (mut a, mut b) = (file.split('\n'), written.split('\n'));
+    let mut line = 1;
+    loop {
+        match (a.next(), b.next()) {
+            (None, None) => return None,
+            (x, y) if x == y => line += 1,
+            _ => return Some(line),
+        }
+    }
+}
+
+/// Any reel as a cartridge, the page's Open: the committed cartridge with the
+/// reel's lines in its tabs, written where it is told; then loaded, and the
+/// file written back from it, the first line that would change said.
 fn sheet(root: &Path, from: &str, to: &str) -> ExitCode {
-    let text = match std::fs::read_to_string(from) {
+    let file = match std::fs::read_to_string(from) {
         Ok(text) => text,
         Err(e) => return refused(from, &e.to_string()),
     };
-    let reel = match afterlife::read(&text) {
-        Ok(reel) => reel,
-        Err(why) => return refused(from, &why),
+    let cartridge = match std::fs::read_to_string(root.join(CARTRIDGE)) {
+        Ok(text) => text,
+        Err(e) => return refused(CARTRIDGE, &e.to_string()),
     };
-    let (_, source) = match source_of(root, &reel) {
-        Ok(pair) => pair,
-        Err(why) => return refused(SOURCE, &why),
+    let opened = match Cartridge::opened(&cartridge, &file) {
+        Ok(opened) => opened,
+        Err(r) => return refused(from, &format!("{}: {}", r.refusal.id, r.refusal.text)),
     };
-    let expansion = match expand(&source, SOURCE, &gather(root, &source)) {
-        Ok(expansion) => expansion,
+    let loaded = match Cartridge::load(&opened, file_name(to), opened.len()) {
+        Ok(loaded) => loaded,
         Err(r) => {
             return refused(
-                SOURCE,
+                to,
                 &format!("line {}: {}: {}", r.line, r.refusal.id, r.refusal.text),
             )
         }
     };
-    if let Err(r) = Cartridge::load(&expansion.text, file_name(to), expansion.text.len()) {
-        return refused(
-            to,
-            &format!("line {}: {}: {}", r.line, r.refusal.id, r.refusal.text),
-        );
-    }
-    if let Err(e) = std::fs::write(to, &expansion.text) {
+    let back = match loaded.file_text() {
+        Ok(back) => back,
+        Err(r) => return refused(to, &format!("{}: {}", r.id, r.text)),
+    };
+    if let Err(e) = std::fs::write(to, &opened) {
         return refused(to, &e.to_string());
     }
     println!(
-        "(sheet {} {} (lines {}) (facts {}) (rows {}) (loads yes))",
+        "(sheet {} {} (lines {}) (loads yes) {})",
         quoted(from),
         quoted(to),
-        reel.lines(),
-        reel.facts(),
-        expansion.rows
+        file.lines().count(),
+        match first_change(&file, &back) {
+            None => "same".to_string(),
+            Some(line) => format!("(differs {line})"),
+        }
     );
     ExitCode::SUCCESS
 }
 
-/// A save, or any cartridge of these tabs, written back as a reel's file.
+/// A save, or any cartridge of these tabs, written back as a reel's file: the
+/// page's Save.
 fn reel(from: &str, to: &str) -> ExitCode {
     let text = match std::fs::read_to_string(from) {
         Ok(text) => text,
@@ -185,31 +190,18 @@ fn reel(from: &str, to: &str) -> ExitCode {
             )
         }
     };
-    let mut records = Vec::new();
-    for tab in &afterlife::TABS {
-        match cartridge.view("values", tab.name, None) {
-            Ok(Viewed::Text(record)) => records.push(record),
-            Ok(_) => return refused(from, &format!("{}: its values are no record", tab.name)),
-            Err(r) => return refused(from, &format!("{}: {}: {}", tab.name, r.id, r.text)),
-        }
-    }
-    let read = match afterlife::of_records(&records) {
-        Ok(read) => read,
-        Err(why) => return refused(from, &why),
-    };
-    let written = match afterlife::write(&read) {
+    let written = match cartridge.file_text() {
         Ok(written) => written,
-        Err(why) => return refused(from, &why),
+        Err(r) => return refused(from, &format!("{}: {}", r.id, r.text)),
     };
-    if let Err(e) = std::fs::write(to, written) {
+    if let Err(e) = std::fs::write(to, &written) {
         return refused(to, &e.to_string());
     }
     println!(
-        "(reel {} {} (lines {}) (facts {}) written)",
+        "(reel {} {} (lines {}) written)",
         quoted(from),
         quoted(to),
-        read.lines(),
-        read.facts()
+        written.lines().count()
     );
     ExitCode::SUCCESS
 }

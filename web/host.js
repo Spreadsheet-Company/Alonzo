@@ -216,7 +216,7 @@
   var HISTORY_LINES = 2000;
   var MAX_SEED = 2147483646;         // the highest seed, so a Park and Miller cell never sticks at 0 (section 3.5)
   var MAX_RATE = 120;                // the highest rate, in frames a second (section 10)
-  var SPEC = 8;                      // the page's version this host implements; a replay's header names its
+  var SPEC = 9;                      // the page's version this host implements; a replay's header names its
                                      // cartridge's, 3 for a cartridge written to 1 to 3 (ENGINE.18, decision 7)
   var MAX_COMMANDS = 100;            // a Commands sheet's rows 2 to 101 (ENGINE.25; docs/SPEC.md section 3.10)
   var COMMANDS_WAITING = 16;         // the commands that may wait for their frames, one a frame: a seventeenth is said
@@ -439,6 +439,35 @@
   function namesLine(text, line) { return new RegExp('\\b[Ll]ine ' + line + '\\b').test(text); }
   function words(r, oneRow) { return r.status === 2 ? r.text : r.text + (r.line && !oneRow && !namesLine(r.text, r.line) ? ' (line ' + r.line + ')' : '') + ' [' + r.id + ']'; }
   function first(text, head) { var f = VP().readForms(text)[0]; return Array.isArray(f) && sym(f[0]) === head ? f : null; }
+  // A text's lines, as a file counts them: one a line end, and one more for a last line with none.
+  function lineCount(text) { return text === '' ? 0 : text.split('\n').length - (/\n$/.test(text) ? 1 : 0); }
+  // A file's lines, each without its line feed and with a carriage return it ends on, and whether its last line ends:
+  // a text that ends on a line feed holds no line after it, and the empty text no line at all.
+  function fileLines(text) {
+    var t = String(text);
+    if (t === '') return { lines: [], ends: true };
+    var ends = /\n$/.test(t), a = t.split('\n');
+    if (ends) a.pop();
+    return { lines: a, ends: ends };
+  }
+  // Where two files part (CART.16's second slice): a file as it was opened beside the file a grid says, and the first
+  // line at which they differ, { line, was, now }, a line a file does not have undefined; or, where every line is the
+  // same and only the last line's end is not, that line with end, whether the written file ends it; null where they are
+  // one file, line ends and all. Pure.
+  function firstChange(opened, written) {
+    var a = fileLines(opened), b = fileLines(written), n = Math.max(a.lines.length, b.lines.length);
+    for (var i = 0; i < n; i++) if (a.lines[i] !== b.lines[i]) return { line: i + 1, was: a.lines[i], now: b.lines[i] };
+    return a.ends === b.ends ? null : { line: n, was: a.lines[n - 1], now: b.lines[n - 1], end: b.ends };
+  }
+  // That difference in words, each line cut to what a bar holds.
+  function changeWords(ch) {
+    var cut = function (t) { t = String(t).replace(/\r$/, ''); return '"' + (t.length > 72 ? t.slice(0, 69) + '...' : t) + '"'; };
+    if (ch.end !== undefined) return ch.end ? 'its last line has no line end, and would be given one' : 'its last line would be written with no line end';
+    if (ch.was === undefined) return 'a line would be added, ' + cut(ch.now);
+    if (ch.now === undefined) return /^[ \t\r]*$/.test(ch.was) ? 'it ends with an empty line, or more, which would not be written' : 'the line ' + cut(ch.was) + ' and what follows it would not be written';
+    if (ch.was.replace(/\r$/, '') === ch.now.replace(/\r$/, '')) return 'its line end would be ' + (/\r$/.test(ch.now) ? 'CR LF' : 'LF') + ' where the file has ' + (/\r$/.test(ch.was) ? 'CR LF' : 'LF');
+    return cut(ch.now) + ' would be written where the file has ' + cut(ch.was);
+  }
   function rangeOf(row, col, h, w) { return VP().rangeText({ top: row, left: col, bottom: row + h - 1, right: col + w - 1 }); }
   // A sentence's frame, and the rest of it: the log's key, so that a repeat is the same event at another frame.
   var FRAME_PREFIX = /^frame (\d+): /;
@@ -904,6 +933,7 @@
     this.run = (this.run || 0) + 1;
     this.frame = 0; this.inFrame = false; this.progress = null; this.stepEdit = null; this.stepAct = null;
     this.saveWaiting = null; this.saveAsked = null;   // a save asked for inside a frame or a settle, and the cartridge's, taken at a frame's end (ENGINE.5)
+    this.saveWhat = null; this.checkWaiting = null;   // what a waiting save writes, the file or the cartridge, and a file opened whose check waits for the grid to rest (CART.16)
     this.acc = 0; this.lastTs = null; this.deltas = []; this.interval = DEFAULT_INTERVAL_MS;
     this.cellsPerMs = 0; this.frameCells = 0;
     this.pending = []; this.edits = [];
@@ -1516,7 +1546,9 @@
     // the cartridge's save, taken after the frame's reads, the Clock's among them, at rest or held for the act's settle;
     // and a save asked for inside a frame or a settle, taken now that the grid rests (ENGINE.5)
     if (this.saveAsked) { var by = this.saveAsked; this.saveAsked = null; this.save(by); }
-    else if (this.saveWaiting && !this.settling) { var asked = this.saveWaiting; this.saveWaiting = null; this._saveNow(asked, true); }
+    else if (this.saveWaiting && !this.settling) { var asked = this.saveWaiting, what = this.saveWhat; this.saveWaiting = null; this.saveWhat = null; this._saveNow(asked, true, null, what); }
+    // a file opened, written back and held to the file once the load's act has settled (CART.16's second slice)
+    if (this.checkWaiting && !this.settling) { var cw = this.checkWaiting; this.checkWaiting = null; this._fileChecked(cw.opened, cw.name); }
     // a keyframe of the work kept, at rest and never while a restore plays its frames (ENGINE.38)
     if (this.keep && !this.settling && !(this.player && this.player.restore) && this._keyframeDue()) this._keyframe();
     var p = this.player;
@@ -1758,6 +1790,8 @@
   Host.prototype._seven = function () { return !!this.cart && this.cart.spec >= 7; };
   // Whether the cartridge is written to version 8, whose Commands sheet says which commands repeat (ENGINE.39).
   Host.prototype._eight = function () { return !!this.cart && this.cart.spec >= 8; };
+  // Version 9's Format sheet (CART.16's second slice): a cartridge written to 9 says a file's lines on it.
+  Host.prototype._nine = function () { return !!this.cart && this.cart.spec >= 9; };
   // Whether the cartridge is written to version 6 and stands at rate 0, where an act has a place and a press over a cell
   // is an act (CART.12); and whether it settles, (settle K), each act then stepped again while the grid moves.
   Host.prototype._sixAtZero = function () { return !!this.cart && this.cart.spec >= 6 && this.cart.rate === 0; };
@@ -2894,27 +2928,104 @@
   };
   // A save asked for (ENGINE.5): by a person's command, 'person', or by the cartridge's File!B3 rising, 'cartridge'.
   // Taken now at rest, else held and taken at the end of the frame that rests, the act's settle ended, and said so;
-  // then handed to the page by the event save, { text, file, frame, bytes, by, waited }, which writes it to a file of
-  // the person's. Answers what it did.
-  Host.prototype.save = function (by) {
-    var s = this.saveText();
+  // then handed to the page by the event save, { text, file, frame, bytes, by, waited, kind }, which writes it to a file
+  // of the person's. Answers what it did. Since CART.16's second slice a person's save of a cartridge that says a file's
+  // lines (docs/SPEC.md section 3.11) writes the file, kind 'file', its text the module's and its name the file's; the
+  // cartridge's own save and a person's save of the cartridge itself, what 'cartridge', write the grid as a cartridge,
+  // kind 'cartridge', as before.
+  Host.prototype.save = function (by, what) {
     by = by === 'cartridge' ? 'cartridge' : 'person';
+    var file = what === 'file' || (what !== 'cartridge' && by === 'person' && !!this.fileType());
+    var s = file ? this.fileText() : this.saveText();
     if (s.wait) {
-      this.saveWaiting = by;
+      this.saveWaiting = by; this.saveWhat = file ? 'file' : 'cartridge';
       this._say('The save waits for ' + (this.settling ? 'the act to settle' : 'the frame to end') + ', and is written then.', 'event', false, by === 'person');
       return { ok: true, waiting: true };
     }
-    return this._saveNow(by, false, s);
+    return this._saveNow(by, false, s, file ? 'file' : 'cartridge');
   };
-  Host.prototype._saveNow = function (by, waited, s) {
-    s = s || this.saveText();
-    if (!s.ok) { if (s.wait) { this.saveWaiting = by; return { ok: true, waiting: true }; } this._say(s.words, 'event', true, by === 'person'); return s; }
-    s.by = by; s.waited = waited;
+  Host.prototype._saveNow = function (by, waited, s, what) {
+    var file = what === 'file';
+    s = s || (file ? this.fileText() : this.saveText());
+    if (!s.ok) { if (s.wait) { this.saveWaiting = by; this.saveWhat = file ? 'file' : 'cartridge'; return { ok: true, waiting: true }; } this._say(s.words, 'event', true, by === 'person'); return s; }
+    s.by = by; s.waited = waited; s.kind = file ? 'file' : 'cartridge';
     this.c.saved++;
-    if (this.keep) this.keep.saved = { text: s.text, frame: s.frame, at: this.frame, version: this.keep.version, acts: this.keep.acts };   // for keepSaved (ENGINE.38)
-    this._say('Saved frame ' + s.frame + ' as ' + s.file + ', ' + thousands(s.bytes) + ' bytes' + (by === 'cartridge' ? ', as the cartridge asked' : '') + '.', 'event', false, by === 'person');
+    if (file) {
+      // the work kept takes the grid's own save as its keyframe, as after any save (ENGINE.38): the file is the work
+      var g = this.saveText();
+      s.frame = g.ok ? g.frame : this.frame;
+      if (this.keep) this.keep.saved = g.ok ? { text: g.text, frame: g.frame, at: this.frame, version: this.keep.version, acts: this.keep.acts } : null;
+      this._say('Wrote ' + s.file + ': ' + thousands(s.lines) + ' line' + (s.lines === 1 ? '' : 's') + ', ' + thousands(s.bytes) + ' bytes.', 'event', false, by === 'person');
+    } else {
+      if (this.keep) this.keep.saved = { text: s.text, frame: s.frame, at: this.frame, version: this.keep.version, acts: this.keep.acts };   // for keepSaved (ENGINE.38)
+      this._say('Saved frame ' + s.frame + ' as ' + s.file + ', ' + thousands(s.bytes) + ' bytes' + (by === 'cartridge' ? ', as the cartridge asked' : '') + '.', 'event', false, by === 'person');
+    }
     this._emit('save', s);
     return s;
+  };
+  // ---- a file's lines (CART.16's second slice; docs/SPEC.md section 3.11) ----
+  // A cartridge written to version 9 may say a file's lines on its Format sheet, a kind of line a row, the line written
+  // out with a hole a column, and the module reads a file into the cartridge's sheets and writes them back by it: two
+  // exports, alonzo_file_read and alonzo_file_write, asked for at the act and not at the attach, as the pass is, since
+  // the fake module holds neither and still drives the loop.
+  // The file's type the cartridge says now, Format!B1, a dot and then letters and digits, or '' where it says none:
+  // read from the grid at each ask, a person's edit of the cell among its values.
+  Host.prototype.fileType = function () {
+    if (!this.m || !this.handle || !this._nine() || !this.cart.devices.format) return '';
+    var r = this.m.texts('alonzo_view', [this.handle], ['values', 'Format', 'B1']);
+    var m = r.status === 0 ? /^\((?:cell|value) "Format" "B1" "(\.[A-Za-z0-9]{1,15})"\)$/m.exec(r.text) : null;
+    return m ? m[1] : '';
+  };
+  // The name the file is written under: the name this load was given where it is such a file's, the file a person
+  // opened; else the cartridge's own name with the type.
+  Host.prototype.fileName = function () {
+    var type = this.fileType();
+    if (!type) return '';
+    var given = this.cartFile || '';
+    return given.length > type.length && given.toLowerCase().slice(-type.length) === type.toLowerCase() ? given : (this._cartName() || 'file') + type;
+  };
+  // A file opened under the cartridge loaded: its text handed to the module with the cartridge the grid was last given,
+  // and the answer the cartridge's text with the file's lines in the place of the cells its sheets held, which a page
+  // loads as it loads any cartridge, under the file's name. Nothing is loaded here and the grid that runs is left as it
+  // is, so a file a line of which no template reads changes nothing. Answers { ok, text }, or the failure, said.
+  Host.prototype.fileRead = function (file, name) {
+    var what = name ? String(name) : 'The file';
+    if (!this.m) return this._answerFailed(what + ' was not opened: there is no engine module to read it.');
+    if (!this.handle || !this.cart || !this.cartBytes) return this._answerFailed(what + ' was not opened: no cartridge is loaded to read it by.');
+    if (typeof this.m.x.alonzo_file_read !== 'function') return this._answerFailed(what + ' was not opened: the module exports no alonzo_file_read, so it reads no file\'s lines: the engine\'s module does (docs/SPEC.md section 3.11).');
+    var r = this.m.texts('alonzo_file_read', [], [this._given(), String(file)]);
+    if (r.status !== 0) return this._answerFailed(what + ' was not opened: ' + words(r, true).replace(/^The file was not read: /, '') + '.');
+    return { ok: true, text: r.text };
+  };
+  // The file the grid's sheets say now, by the module's templates: { ok, text, file, lines, bytes }; { ok: false, wait }
+  // inside a frame or a settle, a file being written at rest as a save is; or a refusal's words, a row no line says
+  // named by its cell. It changes nothing.
+  Host.prototype.fileText = function () {
+    if (!this.m || !this.handle || !this.cart) return { ok: false, words: 'There is no file to write: no cartridge is loaded.' };
+    if (this.settling || this.inFrame) return { ok: false, wait: true };   // written at rest, as a save is taken
+    if (typeof this.m.x.alonzo_file_write !== 'function') return { ok: false, words: 'The file was not written: the module exports no alonzo_file_write, so it writes no file\'s lines: the engine\'s module does (docs/SPEC.md section 3.11).' };
+    var r = this.m.call('alonzo_file_write', [this.handle]);
+    if (r.status !== 0) return { ok: false, words: words(r, true) + '.' };
+    return { ok: true, text: r.text, file: this.fileName(), lines: lineCount(r.text), bytes: enc.encode(r.text).length };
+  };
+  // The open's check (the slice's decision 5): a file opened is written back at once, from the cartridge it was read
+  // into, and held to the file as it was opened, line ends and all, so that the first line a save would change is said
+  // before a person edits anything. Asked by a page once that cartridge is loaded; where the load's act still settles,
+  // it waits for the grid to rest and is said then. Answers { ok, same, lines } or { ok, same: false, line, was, now,
+  // lines }, or { ok, waiting }, or the write's refusal, each said.
+  Host.prototype.fileCheck = function (opened, name) {
+    var w = this.fileText();
+    if (w.wait) { this.checkWaiting = { opened: String(opened), name: name }; return { ok: true, waiting: true }; }
+    return this._fileChecked(String(opened), name, w);
+  };
+  Host.prototype._fileChecked = function (opened, name, w) {
+    w = w || this.fileText();
+    var what = name ? String(name) : 'the file';
+    if (!w.ok) { this._answerRefused('Opened ' + what + ', and it cannot be written back as it stands: ' + (w.words || 'the grid is not at rest.')); return w; }
+    var ch = firstChange(opened, w.text), n = thousands(w.lines) + ' line' + (w.lines === 1 ? '' : 's');
+    if (!ch) { this._answer('Opened ' + what + ', ' + n + ': Save writes it back as it is.'); return { ok: true, same: true, lines: w.lines }; }
+    this._answer('Opened ' + what + ', ' + n + '. Save would change it, first at line ' + thousands(ch.line) + ': ' + changeWords(ch) + '.');
+    return { ok: true, same: false, line: ch.line, was: ch.was, now: ch.now, lines: w.lines };
   };
   // The replay of the run since the last load: its header, then each frame that wrote a row, and
   // the last frame however empty, so that a replay names its length; null with no cartridge.
@@ -3154,6 +3265,8 @@
   Host.keyMatches = keyMatches;
   Host.commandKeyOf = commandKeyOf;
   Host.settledWords = settledWords;
+  Host.firstChange = firstChange;
+  Host.changeWords = changeWords;
   Host.EXPORTS = EXPORTS;
   Host.ABI = ABI;
   Host.SPEC = SPEC;

@@ -57,6 +57,10 @@
 
 pub mod abi;
 pub mod cartridge;
+/// A file's lines read into a cartridge's sheets and written back, by the
+/// templates its Format sheet says (`CART.16`'s second slice; `docs/SPEC.md`
+/// section 3.11): the reader of templates, which knows no file's format.
+pub mod lines;
 pub mod pass;
 
 /// Sand by hand (`CART.2`), the reference the engine's tests hold Sand's

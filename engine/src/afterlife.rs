@@ -628,8 +628,10 @@ pub const BLOCK_END: &str = "; ---- the reel's end ----";
 
 /// A reel as the lines of a source's block: a row that holds anything one
 /// call of the source's `line`, its tab, its row and its cells from column A,
-/// a text each, the format's whole number among them, so that every cell of
-/// a tab is drawn from the left.
+/// a text each; but a whole number a number, where a number holds its digits
+/// exactly and writes them back the same, as the page's reader lays one
+/// (`lines.rs`, the second slice), so that the cartridge the pass writes is
+/// the cartridge a file opened makes.
 pub fn block(reel: &Reel) -> Vec<String> {
     let mut out = Vec::new();
     for (tab, rows) in TABS.iter().zip(&reel.tabs) {
@@ -638,10 +640,31 @@ pub fn block(reel: &Reel) -> Vec<String> {
             if cells.is_empty() {
                 continue;
             }
+            let from = usize::from(tab.names_its_relation());
+            let kinds: &[Kind] = if cells[0].starts_with('%') {
+                &[]
+            } else if tab.names_its_relation() {
+                tab.relations
+                    .iter()
+                    .find(|r| r.name == cells[0])
+                    .map_or(&[][..], |r| r.kinds)
+            } else {
+                tab.relations[0].kinds
+            };
             let mut call = format!("(line {} {}", write_datum(&Form::string(tab.name)), i + 2);
-            for cell in cells {
+            for (k, cell) in cells.iter().enumerate() {
+                let whole = k >= from
+                    && kinds.get(k - from) == Some(&Kind::Whole)
+                    && !cell.is_empty()
+                    && cell.len() <= 15
+                    && cell.bytes().all(|b| b.is_ascii_digit())
+                    && (cell == "0" || !cell.starts_with('0'));
                 call.push(' ');
-                call.push_str(&write_datum(&Form::string(cell)));
+                if whole {
+                    call.push_str(cell);
+                } else {
+                    call.push_str(&write_datum(&Form::string(cell)));
+                }
             }
             call.push(')');
             out.push(call);
