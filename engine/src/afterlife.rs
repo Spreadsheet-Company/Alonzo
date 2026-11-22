@@ -127,7 +127,7 @@ pub const TABS: [Tab; 8] = [
     },
     Tab {
         name: "Responses",
-        headers: &["Name", "Said", "Comment"],
+        headers: &["File Name", "Said", "Comment"],
         relations: &[Relation {
             name: "response",
             kinds: &[Kind::Name, Kind::Text],
@@ -136,7 +136,7 @@ pub const TABS: [Tab; 8] = [
     },
     Tab {
         name: "Answers",
-        headers: &["Name", "Question", "Comment"],
+        headers: &["File Name", "Question", "Comment"],
         relations: &[Relation {
             name: "answers",
             kinds: &[Kind::Name, Kind::Text],
@@ -985,12 +985,12 @@ mod tests {
             (
                 1,
                 &["Hello", "Hello."][..],
-                "Responses, row 3: its Name, \"Hello\", is not a name",
+                "Responses, row 3: its File Name, \"Hello\", is not a name",
             ),
             (
                 1,
                 &["", "Hello."][..],
-                "Responses, row 3: its Name is empty",
+                "Responses, row 3: its File Name is empty",
             ),
             (
                 1,
@@ -1032,7 +1032,7 @@ mod tests {
     fn a_grid_s_records_are_read_as_the_tabs_rows() {
         let mut records = vec![String::new(); TABS.len()];
         records[1] = "(sheet \"Responses\" visible)\n\
-            (cell \"Responses\" \"A1\" \"Name\")\n\
+            (cell \"Responses\" \"A1\" \"File Name\")\n\
             (cell \"Responses\" \"B1\" \"Said\")\n\
             (cell \"Responses\" \"A3\" \"hello\")\n\
             (cell \"Responses\" \"B3\" \"Hello.\n\nSit down.\")\n\

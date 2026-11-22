@@ -10256,7 +10256,7 @@ mod tests {
         );
         let refused = afterlife_by_hand(&c).expect_err("a name with a capital");
         assert!(
-            refused.starts_with("Responses, row 7: its Name, \"Hello\", is not a name"),
+            refused.starts_with("Responses, row 7: its File Name, \"Hello\", is not a name"),
             "{refused}"
         );
     }

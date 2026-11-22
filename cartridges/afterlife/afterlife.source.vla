@@ -114,10 +114,13 @@
   ("Unknown"   "unknown({A:name}).{B:note@49}"))
 
 ; Each tab's headers, row 1, which no file holds: the words the reel's own comments give
-; its arguments, and Comment over every tab's last column.
+; its arguments, and Comment over every tab's last column. A response's name is the name
+; of its recording, hello for hello.m4a, so the two tabs where a curator maps a recording
+; to what it says and to the question it answers head that column File Name (the owner's
+; word, 2026-11-22: the sound files are what is being mapped).
 (headers "Summary"   "A1" "Fact" "Value" "Comment")       ; reel, speaker, about, language, opening, generated
-(headers "Responses" "A1" "Name" "Said" "Comment")        ; response(Name, Said): something the speaker says
-(headers "Answers"   "A1" "Name" "Question" "Comment")    ; answers(Name, Question): what that response answered
+(headers "Responses" "A1" "File Name" "Said" "Comment")   ; response(Name, Said): something the speaker says
+(headers "Answers"   "A1" "File Name" "Question" "Comment") ; answers(Name, Question): what that response answered
 (headers "Follows"   "A1" "From" "Asked" "To" "Comment")  ; follow(From, Asked, To): after From, a visitor may say Asked, and hears To
 (headers "Anytime"   "A1" "Asked" "To" "Comment")         ; ask(Asked, To): what may be said at any time
 (headers "Tells"     "A1" "Name" "Thing" "Comment")       ; tells(Name, Thing): hearing Name tells a visitor of Thing
