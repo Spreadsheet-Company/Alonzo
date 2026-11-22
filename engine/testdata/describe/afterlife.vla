@@ -10,7 +10,7 @@
 (work "Summary" "Responses" "Answers" "Follows" "Anytime" "Tells" "Needs" "Unknown")
 (author "Spreadsheet Company")
 (license "0BSD")
-(notes "Afterlife's sheet: a reel's facts in eight tabs, a tab a relation, a column an argument and a row a line of the file. An empty row is an empty line; a row whose first cell starts with a percent sign is a comment line; each tab's last column is the comment at the end of its line. A paragraph's break in a text is typed \\n\\n, as the file writes it. Open takes a reel's file, a .pl, and Save writes the tabs back as that file. Walter Alder is invented.")
+(notes "Afterlife's sheet: a reel's facts in eight tabs, a tab a relation, a column an argument and a row a line of the file. An empty row is an empty line; a row whose first cell starts with a percent sign is a comment line; each tab's last column is the comment at the end of its line. A paragraph's break in a text is typed \\n\\n, as the file writes it. Open takes a reel's file, a .prolog, and Save writes the tabs back into that file. Walter Alder is invented.")
 (device "Screen" "A1" effect)
 (device "Input" "A1:E20" input)
 (device "Clock" "A1:B3" input)

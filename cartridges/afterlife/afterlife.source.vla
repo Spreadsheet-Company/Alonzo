@@ -4,7 +4,7 @@
 ; afterlife.vla beside it, the rows the engine loads (docs/SPEC.md section 7.8): edit this
 ; one, then expand it again with
 ;   cargo run --release --example expand
-; Its reel, the block at its end, is written from walter.pl beside it by
+; Its reel, the block at its end, is written from walter.prolog beside it by
 ;   cargo run --release --example afterlife
 ; and never by hand.
 ;
@@ -28,15 +28,18 @@
 ;     the columns the file keeps them in.
 ;
 ; How a reel comes in and goes out. With this cartridge loaded, the page's Open takes a
-; reel's file, a .pl, and loads the cartridge with that file's lines in the tabs; and its
-; Save writes the tabs back as the file, under its name. The page reads and writes it by
-; the Format sheet below, the last of the tabs: a row of it a kind of line, the line
-; written out with a hole for each column (docs/SPEC.md section 3.11). At an open the
-; page writes the file back in memory and says the first line that would change, before
-; anything is edited. The same two acts at a command line:
-;   cargo run --release --example afterlife -- sheet <reel.pl> <out.vla>
+; reel's file, a .prolog, and loads the cartridge with that file's lines in the tabs; and
+; its Save writes the tabs back into that file, under its name (ENGINE.49). A reel's type
+; is .prolog and no other (the owner's word, 2026-11-22): the type every SWI-Prolog takes
+; for Prolog's, and one no browser asks a second question of, as Chrome does of a Perl
+; script's type. The page reads and writes the file by the Format sheet below, the
+; last of the tabs: a row of it a kind of line, the line written out with a hole for each
+; column (docs/SPEC.md section 3.11). At an open the page writes the file back in memory
+; and says the first line that would change, before anything is edited. The same two acts
+; at a command line:
+;   cargo run --release --example afterlife -- sheet <reel> <out.vla>
 ;     makes a cartridge of any reel, which the page's Open opens as a cartridge;
-;   cargo run --release --example afterlife -- reel <save.vla> <out.pl>
+;   cargo run --release --example afterlife -- reel <save.vla> <out.prolog>
 ;     writes a save of the cartridge back as a reel.
 ; A row that no line can say is refused at the save, by its cell: a name that is not a
 ; lowercase letter and then letters, digits and underscores, an argument left empty. A
@@ -57,7 +60,7 @@
   (work "Summary" "Responses" "Answers" "Follows" "Anytime" "Tells" "Needs" "Unknown")   ; the tabs, every cell a person's to type into
   (author "Spreadsheet Company")    ; who wrote the cartridge; the reel is Afterlife's
   (license "0BSD")                  ; the header's twin
-  (notes "Afterlife's sheet: a reel's facts in eight tabs, a tab a relation, a column an argument and a row a line of the file. An empty row is an empty line; a row whose first cell starts with a percent sign is a comment line; each tab's last column is the comment at the end of its line. A paragraph's break in a text is typed \\n\\n, as the file writes it. Open takes a reel's file, a .pl, and Save writes the tabs back as that file. Walter Alder is invented."))
+  (notes "Afterlife's sheet: a reel's facts in eight tabs, a tab a relation, a column an argument and a row a line of the file. An empty row is an empty line; a row whose first cell starts with a percent sign is a comment line; each tab's last column is the comment at the end of its line. A paragraph's break in a text is typed \\n\\n, as the file writes it. Open takes a reel's file, a .prolog, and Save writes the tabs back into that file. Walter Alder is invented."))
 
 ; The library whose macros this source calls, sheets and headers among them.
 (include "../common.vla")
@@ -84,9 +87,10 @@
 (camera 1 1)                        ; a still Camera, the Screen's window at its first cell
 (cells "Camera" ("A3" "sheet") ("B3" "Summary"))
 
-; The reel's file (docs/SPEC.md section 3.11): a .pl whose comments begin with a percent
-; sign, its lines from row 2 of each tab, under the headers. Then each kind of line: the
-; tab that holds it, and the line written out with a hole for each column. {A:name} is a
+; The reel's file (docs/SPEC.md section 3.11): a .prolog, its one type; its comments begin
+; with a percent sign, and its lines stand from row 2 of each tab, under the headers. Then
+; each kind of line: the tab that holds it, and the line written out with a hole for each
+; column. {A:name} is a
 ; name in column A, {B:text} a text in double quotes in column B, {B:whole} a whole
 ; number, and {B:name|text} a name where the cell holds one and a text otherwise. A hole
 ; with a stop, {B:text@23}, is written at column 23 of its line, which is how the file
@@ -94,7 +98,7 @@
 ; column A, by which the six facts of the Summary each say which they are. And
 ; {C:note@49} is the comment at the end of a line, at column 49. The file is written tab
 ; by tab in this order.
-(file-lines ".pl" "%" 2
+(file-lines ".prolog" "%" 2
   ("Summary"   "{A=reel}({B:whole}).{C:note@49}")
   ("Summary"   "{A=speaker}({B:text}).{C:note@49}")
   ("Summary"   "{A=about}({B:text}).{C:note@49}")
@@ -175,9 +179,9 @@
 (column "Format"    "A" 14 shown none)
 (column "Format"    "B" 64 shown none)
 
-; The reel: Walter Alder's, a line of walter.pl a call, its tab, its row and its cells.
+; The reel: Walter Alder's, a line of walter.prolog a call, its tab, its row and its cells.
 ; An empty line is a row that holds nothing, and so no call.
-; ---- the reel, written by cargo run --release --example afterlife: edit walter.pl, never these lines ----
+; ---- the reel, written by cargo run --release --example afterlife: edit walter.prolog, never these lines ----
 (line "Summary" 2 "% SPDX-License-Identifier: 0BSD")
 (line "Summary" 3 "% The reel of Walter Alder: a long conversation, written by hand, to find out how much like talking")
 (line "Summary" 4 "% a recorded conversation can be. Walter is invented. Every line that is not a comment is a fact,")

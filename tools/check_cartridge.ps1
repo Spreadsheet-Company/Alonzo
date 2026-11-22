@@ -363,7 +363,7 @@ if ($Root -eq '') { $Root = $repoRoot }
 # 2026-11-18, CART.3's third slice (c): Brickwork's replay, the owner's one game to level 81 in 41,129 frames, and
 # its golden, the Tally's A1:B21 at the replay's last frame: eight replays and eight goldens.
 # 2026-11-21, CART.16's first slice: Afterlife, the thirteenth cartridge and the thirteenth source, a tool at rate 0
-# and no game. It has no replay and no golden of a replay's kind: its golden is a reel, walter.pl, which cargo test
+# and no game. It has no replay and no golden of a replay's kind: its golden is a reel, walter.prolog, which cargo test
 # holds to the cartridge's tabs byte for byte.
 $expectedCartridges = 13
 $expectedSources = 13

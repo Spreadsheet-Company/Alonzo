@@ -468,6 +468,28 @@
     if (ch.was.replace(/\r$/, '') === ch.now.replace(/\r$/, '')) return 'its line end would be ' + (/\r$/.test(ch.now) ? 'CR LF' : 'LF') + ' where the file has ' + (/\r$/.test(ch.was) ? 'CR LF' : 'LF');
     return cut(ch.now) + ' would be written where the file has ' + cut(ch.was);
   }
+  // Whether a file's name ends with one of a cartridge's types (docs/SPEC.md section 3.11), compared without case, a
+  // name that is a type alone being no such file; and the type it ends with, or ''. Pure.
+  function typeOf(name, types) {
+    name = String(name || '');
+    for (var i = 0; i < (types || []).length; i++) {
+      var t = types[i];
+      if (t && name.length > t.length && name.toLowerCase().slice(-t.length) === t.toLowerCase()) return t;
+    }
+    return '';
+  }
+  function ofTypes(name, types) { return typeOf(name, types) !== ''; }
+  // The name a file is offered under where the page asks for one (ENGINE.49): its own where it is of the first type,
+  // the type a file is written under; else its name with the first type in the place of the type it has, notes.yml
+  // offered as notes.yaml under a cartridge that says .yaml and then .yml, so that a file saved under a new name is of
+  // the type the cartridge writes unless a person types another. A name of none of the types is given the first. Pure.
+  function offeredName(name, types) {
+    name = String(name || '');
+    if (!types || !types.length) return name;
+    var has = typeOf(name, types);
+    if (has && has.toLowerCase() === types[0].toLowerCase()) return name;
+    return (has ? name.slice(0, name.length - has.length) : name) + types[0];
+  }
   function rangeOf(row, col, h, w) { return VP().rangeText({ top: row, left: col, bottom: row + h - 1, right: col + w - 1 }); }
   // A sentence's frame, and the rest of it: the log's key, so that a repeat is the same event at another frame.
   var FRAME_PREFIX = /^frame (\d+): /;
@@ -934,6 +956,7 @@
     this.frame = 0; this.inFrame = false; this.progress = null; this.stepEdit = null; this.stepAct = null;
     this.saveWaiting = null; this.saveAsked = null;   // a save asked for inside a frame or a settle, and the cartridge's, taken at a frame's end (ENGINE.5)
     this.saveWhat = null; this.checkWaiting = null;   // what a waiting save writes, the file or the cartridge, and a file opened whose check waits for the grid to rest (CART.16)
+    this.saveAs = false;   // whether a waiting save was asked for under another name (ENGINE.49)
     this.acc = 0; this.lastTs = null; this.deltas = []; this.interval = DEFAULT_INTERVAL_MS;
     this.cellsPerMs = 0; this.frameCells = 0;
     this.pending = []; this.edits = [];
@@ -1546,7 +1569,7 @@
     // the cartridge's save, taken after the frame's reads, the Clock's among them, at rest or held for the act's settle;
     // and a save asked for inside a frame or a settle, taken now that the grid rests (ENGINE.5)
     if (this.saveAsked) { var by = this.saveAsked; this.saveAsked = null; this.save(by); }
-    else if (this.saveWaiting && !this.settling) { var asked = this.saveWaiting, what = this.saveWhat; this.saveWaiting = null; this.saveWhat = null; this._saveNow(asked, true, null, what); }
+    else if (this.saveWaiting && !this.settling) { var asked = this.saveWaiting, what = this.saveWhat, under = this.saveAs; this.saveWaiting = null; this.saveWhat = null; this.saveAs = false; this._saveNow(asked, true, null, what, under); }
     // a file opened, written back and held to the file once the load's act has settled (CART.16's second slice)
     if (this.checkWaiting && !this.settling) { var cw = this.checkWaiting; this.checkWaiting = null; this._fileChecked(cw.opened, cw.name); }
     // a keyframe of the work kept, at rest and never while a restore plays its frames (ENGINE.38)
@@ -2932,23 +2955,25 @@
   // of the person's. Answers what it did. Since CART.16's second slice a person's save of a cartridge that says a file's
   // lines (docs/SPEC.md section 3.11) writes the file, kind 'file', its text the module's and its name the file's; the
   // cartridge's own save and a person's save of the cartridge itself, what 'cartridge', write the grid as a cartridge,
-  // kind 'cartridge', as before.
-  Host.prototype.save = function (by, what) {
+  // kind 'cartridge', as before. under (ENGINE.49): a person's save under another name, Save as, which the event
+  // carries as `as` for the page, whose file it is; the host writes nothing itself and knows no file of a person's.
+  Host.prototype.save = function (by, what, under) {
     by = by === 'cartridge' ? 'cartridge' : 'person';
     var file = what === 'file' || (what !== 'cartridge' && by === 'person' && !!this.fileType());
+    var as = !!under && by === 'person';
     var s = file ? this.fileText() : this.saveText();
     if (s.wait) {
-      this.saveWaiting = by; this.saveWhat = file ? 'file' : 'cartridge';
+      this.saveWaiting = by; this.saveWhat = file ? 'file' : 'cartridge'; this.saveAs = as;
       this._say('The save waits for ' + (this.settling ? 'the act to settle' : 'the frame to end') + ', and is written then.', 'event', false, by === 'person');
       return { ok: true, waiting: true };
     }
-    return this._saveNow(by, false, s, file ? 'file' : 'cartridge');
+    return this._saveNow(by, false, s, file ? 'file' : 'cartridge', as);
   };
-  Host.prototype._saveNow = function (by, waited, s, what) {
+  Host.prototype._saveNow = function (by, waited, s, what, as) {
     var file = what === 'file';
     s = s || (file ? this.fileText() : this.saveText());
-    if (!s.ok) { if (s.wait) { this.saveWaiting = by; this.saveWhat = file ? 'file' : 'cartridge'; return { ok: true, waiting: true }; } this._say(s.words, 'event', true, by === 'person'); return s; }
-    s.by = by; s.waited = waited; s.kind = file ? 'file' : 'cartridge';
+    if (!s.ok) { if (s.wait) { this.saveWaiting = by; this.saveWhat = file ? 'file' : 'cartridge'; this.saveAs = !!as; return { ok: true, waiting: true }; } this._say(s.words, 'event', true, by === 'person'); return s; }
+    s.by = by; s.waited = waited; s.kind = file ? 'file' : 'cartridge'; s.as = !!as;
     this.c.saved++;
     if (file) {
       // the work kept takes the grid's own save as its keyframe, as after any save (ENGINE.38): the file is the work
@@ -2968,21 +2993,33 @@
   // out with a hole a column, and the module reads a file into the cartridge's sheets and writes them back by it: two
   // exports, alonzo_file_read and alonzo_file_write, asked for at the act and not at the attach, as the pass is, since
   // the fake module holds neither and still drives the loop.
-  // The file's type the cartridge says now, Format!B1, a dot and then letters and digits, or '' where it says none:
-  // read from the grid at each ask, a person's edit of the cell among its values.
-  Host.prototype.fileType = function () {
-    if (!this.m || !this.handle || !this._nine() || !this.cart.devices.format) return '';
+  // The file's types the cartridge says now, Format!B1: each a dot and then letters and digits, one, or several with a
+  // space between (ENGINE.49's build), the first the type a file is written under and every one of them read; [] where
+  // it says none. Read from the grid at each ask, a person's edit of the cell among its values.
+  Host.prototype.fileTypes = function () {
+    if (!this.m || !this.handle || !this._nine() || !this.cart.devices.format) return [];
     var r = this.m.texts('alonzo_view', [this.handle], ['values', 'Format', 'B1']);
-    var m = r.status === 0 ? /^\((?:cell|value) "Format" "B1" "(\.[A-Za-z0-9]{1,15})"\)$/m.exec(r.text) : null;
-    return m ? m[1] : '';
+    var m = r.status === 0 ? /^\((?:cell|value) "Format" "B1" "(\.[A-Za-z0-9]{1,15}(?: \.[A-Za-z0-9]{1,15}){0,7})"\)$/m.exec(r.text) : null;
+    return m ? m[1].split(' ') : [];
   };
-  // The name the file is written under: the name this load was given where it is such a file's, the file a person
-  // opened; else the cartridge's own name with the type.
+  // The first of them, the type a file is written under, or '' where the cartridge says no file's lines.
+  Host.prototype.fileType = function () { var types = this.fileTypes(); return types.length ? types[0] : ''; };
+  // The name the file is written under: the name this load was given where it is such a file's, of any of the types,
+  // the file a person opened; else the cartridge's own name with the first type.
   Host.prototype.fileName = function () {
-    var type = this.fileType();
-    if (!type) return '';
+    var types = this.fileTypes();
+    if (!types.length) return '';
     var given = this.cartFile || '';
-    return given.length > type.length && given.toLowerCase().slice(-type.length) === type.toLowerCase() ? given : (this._cartName() || 'file') + type;
+    return ofTypes(given, types) ? given : (this._cartName() || 'file') + types[0];
+  };
+  // The file's name from here on, after a save under another (ENGINE.49): a name of one of the cartridge's types,
+  // which the next save is written under and the work kept is kept under. Nothing of the grid is touched; answers
+  // whether the name was taken.
+  Host.prototype.fileNamed = function (name) {
+    name = String(name || '');
+    if (!this.handle || !this.cart || !ofTypes(name, this.fileTypes())) return false;
+    this.cartFile = name;
+    return true;
   };
   // A file opened under the cartridge loaded: its text handed to the module with the cartridge the grid was last given,
   // and the answer the cartridge's text with the file's lines in the place of the cells its sheets held, which a page
@@ -3267,6 +3304,8 @@
   Host.settledWords = settledWords;
   Host.firstChange = firstChange;
   Host.changeWords = changeWords;
+  Host.ofTypes = ofTypes;
+  Host.offeredName = offeredName;
   Host.EXPORTS = EXPORTS;
   Host.ABI = ABI;
   Host.SPEC = SPEC;

@@ -202,8 +202,9 @@ sound the frame the grid holds again when it starts.
 | `answer(viewport, event)` | a viewport's `sheet` event answered (`ENGINE.14`; `KERNEL.5`'s decision 6): a sheet the viewport holds no record of is viewed and shown, one it holds is viewed again at once, and in the host's own viewport the Screen's tab gives the Camera's window back. The host answers its own viewport's tabs itself; a page wires a viewer of its own with `viewer.on('sheet', function (e) { host.answer(viewer, e); })`. A tab clicked while a frame is in progress is answered at the frame's end, and the events the host's own calls raise go unanswered |
 | `showSheet(viewport, name)` | a sheet viewed through the region the viewport shows from `A1`, loaded and shown, then viewed again at once when its own widths put more in view: `true`, or `false` when refused. Since `CART.12`'s hand test the sheet's columns are read whole first, its last row viewed across every column, a record of no cell that names every column with a setting and the extent, which the viewport learns (`learn`), so that it lays every column as the sheet sets it, at the load, at a jump of the scroll and when its box grows; and a sheet the cartridge bounds, version 6's `(bound ...)`, is drawn to its extent and no further (`bound`). The record is the values record after frame 0 and the grid record at frame 0, as the Screen's is (`ENGINE.18`) |
 | `refreshSheet(viewport, moved, still)` | the sheet a viewport shows viewed again through the region it shows, its view kept: what the host does at every frame for its own viewport, and a page at its viewer's refresh; `moved` only when the region has left the window the record was viewed through, at a scroll (`viewer.on('scroll', ...)`); `still` (`ENGINE.17`) not loaded again when the record is the one the host last loaded into the viewport and the viewport holds the model it made of it, as a frame does and the player's drawer does. The region and never the sheet whole: a full screen of Sand's Stay is 33 ms natively, its whole record 1.4 s and 34 MB. The record is the values record after frame 0 (`ENGINE.18`), so a still sheet's frame keeps only that view: a sheet of 1,000 formulas views in about 0.35 ms where its grid record took 2. Since `ENGINE.19` a `still` refresh asks the window's changes first: patched in place when they name cells since the record the host holds for that viewport, kept when they name none, viewed whole otherwise, as at a refresh frames apart, the drawer's at a rate above zero |
-| `save(by, what)` | a save of the running grid (`ENGINE.5`; docs/SPEC.md sections 3.7 and 7.5), `by` `'person'` or `'cartridge'`: taken now at rest and handed to the page by the `save` event, or, inside a frame or an act's settle, held and taken at the end of the frame that rests, `{ ok, waiting }`; a refusal's sentence otherwise. The cartridge's `File!B3` edge asks it at the frame's end. Since `CART.16`'s second slice a person's save of a cartridge that says a file's lines writes the file, the event's `kind` `'file'`, its `text` the file's, `file` its name and `lines` its count; the cartridge's own save, and a person's with `what` `'cartridge'`, write the grid as a cartridge, `kind` `'cartridge'` |
-| `fileType()` / `fileName()` | the type of the file the loaded cartridge reads, `Format!B1` as the grid holds it now, a dot and its letters, or `''` where it says no file's lines (`CART.16`'s second slice; docs/SPEC.md section 3.11); and the name the file is written under, the name the load was given where it is such a file's, else the cartridge's own name with the type |
+| `save(by, what, under)` | a save of the running grid (`ENGINE.5`; docs/SPEC.md sections 3.7 and 7.5), `by` `'person'` or `'cartridge'`: taken now at rest and handed to the page by the `save` event, or, inside a frame or an act's settle, held and taken at the end of the frame that rests, `{ ok, waiting }`; a refusal's sentence otherwise. The cartridge's `File!B3` edge asks it at the frame's end. Since `CART.16`'s second slice a person's save of a cartridge that says a file's lines writes the file, the event's `kind` `'file'`, its `text` the file's, `file` its name and `lines` its count; the cartridge's own save, and a person's with `what` `'cartridge'`, write the grid as a cartridge, `kind` `'cartridge'`. Since `ENGINE.49`, `under` true is a person's save under another name, Save as, carried in the event as `as` for the page, whose dialog and whose file it is: the host writes nothing itself |
+| `fileTypes()` / `fileType()` / `fileName()` | the types of file the loaded cartridge reads, `Format!B1` as the grid holds it now, each a dot and its letters, the first the type a file is written under (`ENGINE.49`'s build; Afterlife says one, `.prolog`), or `[]` where it says no file's lines (`CART.16`'s second slice; docs/SPEC.md section 3.11); the first of them, or `''`; and the name the file is written under, the name the load was given where it is such a file's, of any of the types, else the cartridge's own name with the first |
+| `fileNamed(name)` | the file's name from here on, after a save under another (`ENGINE.49`): a name of one of the cartridge's types, which the next save is written under; `true` where it was taken. Nothing of the grid is touched. `HOST.ofTypes(name, types)` and `HOST.offeredName(name, types)` are its tests, pure: whether a name is of the types, and the name a page offers where it asks for one, the file's own under the first type |
 | `fileRead(text, name)` | a file opened under the loaded cartridge: `{ ok, text }`, the cartridge's text with the file's lines in the place of the cells its sheets held, the module's `alonzo_file_read`, for a page to load under the file's name as it loads any cartridge; nothing is loaded and the grid that runs is left as it is. A file a line of which no template reads, a cartridge that says no lines, or a module without the call, the double, is a failure, said |
 | `fileText()` | the file the grid's sheets say now, the module's `alonzo_file_write`: `{ ok, text, file, lines, bytes }`; `{ ok: false, wait: true }` inside a frame or a settle; a row no line says a refusal's words, by its cell |
 | `fileCheck(opened, name)` | the open's check: the file written back and held to the text it was opened as, line for line and line ends and all, said: `{ ok, same, lines }`, or `{ ok, same: false, line, was, now, lines }`, the first line a save would change; `{ ok, waiting }` where the load's act still settles, said once the grid rests. `HOST.firstChange(opened, written)` and `HOST.changeWords(change)` are its comparison and its words, pure |
@@ -632,17 +633,29 @@ the sheet's name) and names the sentence that wrote the cell.
 Save, Ctrl+S or the bar's Save, writes the running game to a file of yours,
 a cartridge that opens at its frame, and Open, Ctrl+O, opens one (`ENGINE.5`).
 Where the cartridge loaded reads a file (`CART.16`'s second slice; the
-specification's section 3.11), as Afterlife reads a reel's `.pl`, Open offers
-that kind of file beside a cartridge and reads one into the cartridge's
-sheets, a line a row; the picker then reads `Afterlife (walter.pl)`, the
-cartridge and the file it is at work on, and the bar says `Opened walter.pl,
-934 lines: Save writes it back as it is.`, or the first line a save would
-change and what would be written there, before you edit anything. Save then
-writes the file back under its name, and `save-cartridge` in the palette
-saves the grid itself as a cartridge. A file a line of which the cartridge
-does not read is
-said by its line and nothing is loaded; a row no line of the file can say is
-said by its cell at the save, and nothing is written.
+specification's section 3.11), as Afterlife reads a reel, a `.prolog`, Open
+offers that kind of file beside a cartridge, `A .prolog file` and `An Alonzo
+cartridge (.vla)` in its dialog, and reads one into
+the cartridge's sheets, a line a row; the picker then reads `Afterlife
+(walter.prolog)`, the cartridge and the file it is at work on, and the bar
+says `Opened walter.prolog, 934 lines: Save writes it back as it is.`, or the
+first line a save would change and what would be written there, before you
+edit anything. Save then writes into the file you opened (`ENGINE.49`), with
+no dialog: the browser asks once, the first time, whether this page may
+change that file, and the bar says `Saved walter.prolog, 934 lines, into the
+file you opened.` Save as, Ctrl+Shift+S or `save-as` in the palette, asks
+where, in the folder the file stands in, and Save writes there from then on.
+A reel is a `.prolog` and nothing else, a type no browser asks a second
+question of, as Chrome does of a Perl script's. A save after
+another cartridge is picked, another file opened or Load pressed asks where
+again, so that no save writes over a file with rows that are not its own;
+and a file another program has changed since the page read it is said once,
+the next Save writing over it. Where the browser has no file dialogs, as
+Firefox and Safari have none, a file opened is saved as a download.
+`save-cartridge` in the palette saves the grid itself as a cartridge. A file
+a line of which the cartridge does not read is said by its line and nothing
+is loaded; a row no line of the file can say is said by its cell at the
+save, and nothing is written.
 Between saves the page keeps your unsaved work in this browser
 (`ENGINE.38`): close the tab, or let it crash, and open the page again, and
 the line under the bar says `Unsaved work on Sand, frame 1,043, kept at 3:41

@@ -10068,7 +10068,7 @@ mod tests {
         Some((
             crate::repository::read("afterlife/afterlife.vla")?,
             crate::repository::read("afterlife/afterlife.source.vla")?,
-            crate::repository::read("afterlife/walter.pl")?.replace("\r\n", "\n"),
+            crate::repository::read("afterlife/walter.prolog")?.replace("\r\n", "\n"),
         ))
     }
 
@@ -10137,19 +10137,19 @@ mod tests {
         // the pass wrote, every sheet's fills, and so is the golden opened under a
         // cartridge that held another reel; and the hand's rows are the templates'.
         let opened = Cartridge::opened(&text, &walter).expect("the golden opens");
-        let again = Cartridge::load(&opened, "walter.pl", opened.len()).expect("it loads");
+        let again = Cartridge::load(&opened, "walter.prolog", opened.len()).expect("it loads");
         assert_eq!(fills_of(&again), fills_of(&c), "a file opened");
         assert_eq!(afterlife_written(&again).as_deref(), Ok(walter.as_str()));
         let other = "% another reel\nreel(1).\nopening(hi).\n\nresponse(hi, \"Hi.\").\nunknown(hi).   % a note\n";
         let under = Cartridge::opened(&text, other).expect("another reel opens");
-        let small = Cartridge::load(&under, "other.pl", under.len()).expect("it loads");
+        let small = Cartridge::load(&under, "other.prolog", under.len()).expect("it loads");
         assert_eq!(
             afterlife_written(&small).as_deref(),
             Ok("% another reel\nreel(1).\nopening(hi).\n\nresponse(hi, \"Hi.\").\nunknown(hi).                                    % a note\n"),
             "Walter's rows gone from every tab, and the comment at its column"
         );
         let back = Cartridge::opened(&under, &walter).expect("the golden opens over it");
-        let walter_again = Cartridge::load(&back, "walter.pl", back.len()).expect("it loads");
+        let walter_again = Cartridge::load(&back, "walter.prolog", back.len()).expect("it loads");
         assert_eq!(
             fills_of(&walter_again),
             fills_of(&c),
@@ -10162,8 +10162,9 @@ mod tests {
                 format.comment.as_str(),
                 format.first_row
             ),
-            (".pl", "%", 2)
+            (".prolog", "%", 2)
         );
+        assert_eq!(format.kinds, [".prolog"], "a reel's one type");
         let read = crate::lines::read(&format, &walter).expect("the templates read the golden");
         assert_eq!(read.lines(), reel.lines());
         for ((tab, rows), hand) in format.tabs.iter().zip(&read.tabs).zip(&reel.tabs) {

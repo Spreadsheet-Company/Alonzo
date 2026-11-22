@@ -9,11 +9,11 @@
 //! cargo run --release --example afterlife                              # Walter's reel written into the source's block
 //! cargo run --release --example afterlife -- --check                   # the same, compared and written nowhere
 //! cargo run --release --example expand                                 # then the cartridge, as after any edit
-//! cargo run --release --example afterlife -- sheet <reel.pl> <out.vla> # any reel as a cartridge, which the page's Open opens
-//! cargo run --release --example afterlife -- reel <save.vla> <out.pl>  # a save of it, written back as a reel
+//! cargo run --release --example afterlife -- sheet <reel> <out.vla>       # any reel as a cartridge, which the page's Open opens
+//! cargo run --release --example afterlife -- reel <save.vla> <out.prolog> # a save of it, written back as a reel
 //! ```
 //!
-//! With no word, the golden, `cartridges/afterlife/walter.pl`, is read and its
+//! With no word, the golden, `cartridges/afterlife/walter.prolog`, is read and its
 //! rows are written into the block of `cartridges/afterlife/afterlife.source.vla`
 //! between its two markers, the lines around the block as they stand, by the
 //! first slice's hand, `engine/src/afterlife.rs`, the engine's tests' own
@@ -53,7 +53,7 @@ const SOURCE: &str = "cartridges/afterlife/afterlife.source.vla";
 const CARTRIDGE: &str = "cartridges/afterlife/afterlife.vla";
 
 /// The golden, Walter Alder's reel.
-const GOLDEN: &str = "cartridges/afterlife/walter.pl";
+const GOLDEN: &str = "cartridges/afterlife/walter.prolog";
 
 /// A text as a row quotes it.
 fn quoted(text: &str) -> String {
@@ -217,7 +217,7 @@ fn main() -> ExitCode {
         ["reel", from, to] => reel(from, to),
         _ => {
             eprintln!(
-                "afterlife: it takes no word, or --check, or sheet <reel.pl> <out.vla>, or reel <save.vla> <out.pl>"
+                "afterlife: it takes no word, or --check, or sheet <reel> <out.vla>, or reel <save.vla> <out.prolog>"
             );
             ExitCode::from(2)
         }

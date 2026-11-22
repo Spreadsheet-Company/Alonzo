@@ -92,6 +92,14 @@ so these names are set aside before 'url(' is looked for. The promise the
 page states: it writes nothing anywhere but a person's keys, kept in the
 browser, and the files a person saves.
 
+SINCE ENGINE.49 (docs/REARVIEW.md, ENGINE.49): a save of a file a cartridge
+reads is written into the file a person opened, through the handle the
+browser's open picker gave, so that picker is a way to a write too:
+showOpenFilePicker is named once, in personFile(), with the three above, and
+nothing else names it. The promise stands as it is stated: the file written is
+one the person chose, at an open or at a save, and the browser asks before the
+page first changes it.
+
 SINCE ENGINE.38 (docs/REARVIEW.md, ENGINE.38; the owner's word of 2026-10-30):
 the page writes one thing more, a person's unsaved work, kept in the browser's
 database for pages, indexedDB, under Web Locks, navigator.locks, so that a tab
@@ -146,7 +154,8 @@ $storageTokens = @('sessionStorage', 'openDatabase', 'document.cookie', 'cookieS
 $keptStore = 'localStorage'
 # A person's file (ENGINE.5): the save picker and the download's object URL, each named once, in the template's
 # personFile(), and nowhere else; set aside before the code tokens are looked for, an object URL being no address.
-$keptFile = @('showSaveFilePicker', 'createObjectURL', 'revokeObjectURL')
+# Since ENGINE.49 the open picker with them, its handle a way to a write, a save into the file opened.
+$keptFile = @('showSaveFilePicker', 'showOpenFilePicker', 'createObjectURL', 'revokeObjectURL')
 # A person's unsaved work (ENGINE.38): the browser's database for pages and its Web Locks, each named once, in the
 # template's workStore(), and nowhere else.
 $keptWork = @('indexedDB', 'navigator.locks')

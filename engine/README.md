@@ -162,7 +162,7 @@ behind `Cartridge::opened`, a file read into a cartridge's text, and
 `Cartridge::file_text`, a grid's sheets written as the file, the page's Open
 and Save (the specification's section 3.11). The first slice's reader and
 writer, written by hand, `src/afterlife.rs`, compiled for the tests alone,
-are its reference: the templates read the golden, `walter.pl`, into the
+are its reference: the templates read the golden, `walter.prolog`, into the
 hand's rows and refuse every line the hand refuses. Tests hold the golden
 written back byte for byte by the cartridge's tabs, by a save of it and by
 the golden opened under the cartridge, which is the cartridge the pass wrote;

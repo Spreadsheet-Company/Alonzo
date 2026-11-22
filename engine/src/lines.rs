@@ -444,8 +444,12 @@ pub struct Tab {
 /// The Format sheet as read.
 #[derive(Clone, Debug)]
 pub struct Format {
-    /// The file's type, a dot and letters and digits: `.pl`.
+    /// The file's type, a dot and letters and digits: `.prolog`. Where the
+    /// sheet says several, the first, the type a file is written under.
     pub kind: String,
+    /// Every type the sheet says, the first among them: a file of any of
+    /// them is read by these lines.
+    pub kinds: Vec<String>,
     /// The comment's leader, or empty for a file with no comments.
     pub comment: String,
     /// The row a sheet's first line stands on.
@@ -478,6 +482,28 @@ pub fn is_type(text: &str) -> bool {
     })
 }
 
+/// The most types a Format sheet says.
+pub const MAX_TYPES: usize = 8;
+
+/// The types the Format sheet's `B1` says: one, or as many as `MAX_TYPES`
+/// with one space between, no type twice, compared without case. The first
+/// is the type a file is written under; a file of any is read. None where
+/// the text says no such list.
+pub fn types_of(text: &str) -> Option<Vec<String>> {
+    let kinds: Vec<&str> = text.split(' ').collect();
+    if kinds.len() > MAX_TYPES || !kinds.iter().all(|kind| is_type(kind)) {
+        return None;
+    }
+    let twice = kinds
+        .iter()
+        .enumerate()
+        .any(|(i, kind)| kinds[..i].iter().any(|one| one.eq_ignore_ascii_case(kind)));
+    if twice {
+        return None;
+    }
+    Some(kinds.iter().map(|kind| kind.to_string()).collect())
+}
+
 impl Format {
     /// The Format sheet read from its cells, a row and a column from 1, or
     /// the first thing wrong on it.
@@ -496,19 +522,22 @@ impl Format {
                 other => Ok(other),
             }
         };
-        let kind = match value(TYPE_ROW, 2)? {
-            Some(Held::Text(t)) if is_type(&t) => t,
-            other => {
-                return Err(flaw(
-                    TYPE_ROW,
-                    2,
-                    format!(
-                        "The Format sheet's B{TYPE_ROW} holds {}, where the file's type belongs: a dot and then 1 to 15 letters and digits, as .txt is",
-                        shown(&other)
-                    ),
-                ))
-            }
+        let held = value(TYPE_ROW, 2)?;
+        let kinds = match &held {
+            Some(Held::Text(t)) => types_of(t),
+            _ => None,
         };
+        let Some(kinds) = kinds else {
+            return Err(flaw(
+                TYPE_ROW,
+                2,
+                format!(
+                    "The Format sheet's B{TYPE_ROW} holds {}, where the file's type belongs: a dot and then 1 to 15 letters and digits, as .txt is; or as many as {MAX_TYPES} such types with one space between, no type twice, the first the type a file is written under",
+                    shown(&held)
+                ),
+            ));
+        };
+        let kind = kinds[0].clone();
         let comment = match value(COMMENT_ROW, 2)? {
             None => String::new(),
             Some(Held::Text(t))
@@ -660,6 +689,7 @@ impl Format {
         }
         Ok(Format {
             kind,
+            kinds,
             comment,
             first_row,
             crlf,
@@ -1342,7 +1372,7 @@ mod tests {
     ];
 
     pub(crate) fn reel() -> Format {
-        format_of(".pl", "%", &REEL).expect("Afterlife's lines read")
+        format_of(".prolog", "%", &REEL).expect("Afterlife's lines read")
     }
 
     /// What a file's rows are in a grid: each sheet's cells from the first
@@ -1725,7 +1755,7 @@ mod tests {
 
     #[test]
     fn a_format_sheet_is_refused_by_its_cell() {
-        let one = |line: &str| format_of(".pl", "%", &[("Facts", line)]).map(|_| ());
+        let one = |line: &str| format_of(".prolog", "%", &[("Facts", line)]).map(|_| ());
         for (line, why) in [
             ("fact({A:nam}).", "which names the kind \"nam\""),
             ("fact({1:name}).", "which names no column"),
@@ -1769,14 +1799,14 @@ mod tests {
             );
         }
         assert!(
-            format_of(".pl", "", &[("Facts", "fact({A:name}).{B:note}")])
+            format_of(".prolog", "", &[("Facts", "fact({A:name}).{B:note}")])
                 .expect_err("a note with no leader")
                 .what
                 .contains("says no comment's leader")
         );
         // The head.
         let head = |change: &dyn Fn(&mut Cells)| {
-            let mut cells = sheet(".pl", "%", &[("Facts", "fact({A:name}).")]);
+            let mut cells = sheet(".prolog", "%", &[("Facts", "fact({A:name}).")]);
             change(&mut cells);
             Format::of(|row, column| cells.get(&(row, column)).cloned())
                 .map(|_| ())
@@ -1791,6 +1821,47 @@ mod tests {
         assert!(refused
             .2
             .starts_with("The Format sheet's B1 holds \"pl\", where the file's type belongs"));
+        // Several types, the first the one a file is written under: one
+        // space between, no type twice, eight at most.
+        let several =
+            format_of(".yaml .yml", "%", &[("Facts", "fact({A:name}).")]).expect("two types");
+        assert_eq!(several.kind, ".yaml");
+        assert_eq!(several.kinds, [".yaml", ".yml"]);
+        assert_eq!(
+            format_of(".prolog", "%", &[("Facts", "fact({A:name}).")])
+                .expect("one type")
+                .kinds,
+            [".prolog"]
+        );
+        for list in [
+            ".yaml  .yml",
+            ".yaml .yml ",
+            " .yml",
+            ".yml .YML",
+            ".yaml,.yml",
+            ".a .b .c .d .e .f .g .h .i",
+        ] {
+            let refused = head(&|c| {
+                c.insert((TYPE_ROW, 2), Held::Text(list.to_string()));
+            })
+            .expect_err("no list of types");
+            assert_eq!((refused.0, refused.1), (1, 2), "{list:?}");
+            assert!(
+                refused.2.contains("no type twice"),
+                "{list:?}: {}",
+                refused.2
+            );
+        }
+        assert_eq!(
+            head(&|c| {
+                c.insert(
+                    (TYPE_ROW, 2),
+                    Held::Text(".a .b .c .d .e .f .g .h".to_string()),
+                );
+            }),
+            Ok(()),
+            "eight types are the most"
+        );
         let refused = head(&|c| {
             c.insert((COMMENT_ROW, 2), Held::Text("% %".to_string()));
         })
@@ -1840,7 +1911,7 @@ mod tests {
         assert!(refused.2.starts_with("The Format sheet says no line"));
         // A sheet's lines are told apart by a column each binds.
         let two = format_of(
-            ".pl",
+            ".prolog",
             "%",
             &[("Pets", "cat({A:name})."), ("pets", "dog({A:name}).")],
         )
@@ -1850,7 +1921,7 @@ mod tests {
             "The Format sheet's B7 is another line of the Pets sheet, and a sheet's lines are told apart"
         ));
         let same = format_of(
-            ".pl",
+            ".prolog",
             "%",
             &[
                 ("Pets", "{A=cat}({B:name})."),
@@ -1859,7 +1930,7 @@ mod tests {
         );
         assert!(same.is_err(), "the same text twice tells nothing apart");
         let told = format_of(
-            ".pl",
+            ".prolog",
             "%",
             &[
                 ("Pets", "{A=cat}({B:name})."),

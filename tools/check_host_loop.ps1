@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds three hundred and fifteen mutant pages through tools/build_web.ps1 and runs
+-Control builds three hundred and twenty-one mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -615,7 +615,7 @@ And CART.16's second slice, the file case's, six. Over the module: a file saved 
 the name it was opened by, OJ; a person's save writing a cartridge still, where the cartridge reads a file, OK; the
 cartridge's own save, File!B3's, writing the file, OL; and the open's check asked while the load's act settles
 forgotten, never said, ON. Needing no module: the check blind to line ends, CR LF beside LF found one file, OM; and
-a file's kind judged by its case, WALTER.PL no .pl file, OO.
+a file's kind judged by its case, WALTER.PROLOG no .prolog file, OO.
 CART.12 moved one anchor of ENGINE.25's,
 the twentieth row's write at rate 0
 now an else of version 6's act rows: DO's line is anchored where _issueAct holds it. The real page must
@@ -927,8 +927,9 @@ $continueFloors = @{ built = 10; compared = 3; frames = 20; hand = 20; twin = 21
 # palette's lines; the keymap kept, read again, forgotten, a later page's line set aside and a refusing store, 5;
 # and 6 of Record a key's spellings, each read back.
 # 2026-11-16, ENGINE.5's hand test: offered, a kept keymap gaining the page's keys for its commands new since, once, a key
-# taken out staying out and a key held for another command never taken (5).
-$keysFloors = @{ defaults = 1; refused = 18; places = 25; steps = 3; lines = 3; kept = 5; spelled = 6; said = 21; sheets = 14; last = 9; game = 5; offered = 5 }
+# taken out staying out and a key held for another command never taken (5). 2026-11-21, ENGINE.49: the page's own keymap
+# twenty bindings, Save as's Ctrl+Shift+S among them, and a keymap kept before Save as gaining it, once (offered 6).
+$keysFloors = @{ defaults = 1; refused = 18; places = 25; steps = 3; lines = 3; kept = 5; spelled = 6; said = 21; sheets = 14; last = 9; game = 5; offered = 6 }
 # 2026-10-20, CART.9's second slice: the palette case's cell edits, needing no module: 12 rows a cell opens, typed or
 # opened, each with its caret; 6 of where the palette opens, fixed or floating; 7 of a cell's edit in the palette, its
 # prompt and caret, Enter, Tab, Shift+Enter and Shift+Tab each moving the selection once, a refused row, Escape and a
@@ -1142,6 +1143,8 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # and OI, needing no module, take it to three hundred and nine (146 applicable without).
 # 2026-11-21, CART.16's second slice: OJ to OO, the file case's, four over the module and OM and OO needing none, take it
 # to three hundred and fifteen (148 applicable without).
+# 2026-11-21, ENGINE.49: OP to OU, the desk's, each needing no module, take it to three hundred and twenty-one (154
+# applicable without); OJ's and OO's anchors moved with their lines, a cartridge's types a list.
 # 2026-11-18, CART.3's third slice: MO to MR, version 7's: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -1281,9 +1284,28 @@ $keepFloors = @{ cartridges = 8; frames = 52032; restores = 757; held = 757; key
 # waiting for the grid to rest (waited 2). On Alonzo's own page, Afterlife's reel: its tabs written as a .pl of 934 lines,
 # opened under the cartridge and written back byte for byte (golden 1, lines 934). A game's page runs it too, over the
 # card, without Afterlife's.
-$filePageFloors = @{ changes = 10; words = 9; kinds = 11; double = 1 }
-$fileGameFloors = @{ named = 2; read = 1; opened = 1; same = 1; loose = 1; edited = 1; saved = 1; cartridge = 2; refused = 1; unwritten = 1; none = 1; waited = 2 }
-$fileFloors = $fileGameFloors.Clone(); $fileFloors['golden'] = 1; $fileFloors['lines'] = 934
+# 2026-11-21, ENGINE.49, a save into the file opened, and with it the type, a list: the case grown. Pure: each of a
+# cartridge's types read, what Open offers of several, each kind's words saying its type, "A .prolog file" and "An
+# Alonzo cartridge (.vla)" (the owner's word at the hand test), the name a file is offered under where the page asks
+# for one, its own under the first type, and whether a name is of the types (kinds 26). The desk,
+# FileDesk over a double of the browser's file calls and of a file's handle, needing no module: a file opened through
+# the picker and saved, written into it with the browser asked once and no dialog (tied 1, once 1); the browser's
+# question refused, nothing written, the tie kept and asked again (unallowed 1); a file changed on disk refused once,
+# written over at the next save, and refused in its turn after the page's own write (moved 1); a file no longer there
+# said, or saved under a name where an act is at hand (absent 1); a save under another name, its dialog where the tied
+# file stands, the file opened left as it was and Save writing there from then on (under 1); a first save asking where
+# and tying, a dialog closed writing nothing (first 1, shut 1); a save that waited written where the permission is had
+# and said where it is not, one under another name said, one with no tie downloaded (resting 4); a cartridge's save
+# asking where beside a file tied (plain 1); a save under another entry and one after a load each asking where, the tie
+# its entry's at its load alone (dropped 3); a browser with no dialog (elsewhere 1); the bar's words (said 12). Over
+# the module, a save under another name handed over marked so (saved 2), and a card of two types, .env and then .ini,
+# each said, a file of the later type keeping its name and a name another save gave taken where it is of the types
+# (several 1). On Alonzo's own page, Afterlife's one type, .prolog, at the owner's word at the hand test (2026-11-22,
+# ".pl should be replaced with .prolog across the repos to avoid the duality and the Perl ambiguity"): a name another
+# save gave taken, and a .pl no name of the cartridge's (types 1).
+$filePageFloors = @{ changes = 10; words = 9; kinds = 26; double = 1; tied = 1; once = 1; unallowed = 1; moved = 1; absent = 1; under = 1; first = 1; shut = 1; resting = 4; plain = 1; dropped = 3; elsewhere = 1; said = 12 }
+$fileGameFloors = @{ named = 2; read = 1; opened = 1; same = 1; loose = 1; edited = 1; saved = 2; cartridge = 2; refused = 1; unwritten = 1; none = 1; waited = 2; several = 1 }
+$fileFloors = $fileGameFloors.Clone(); $fileFloors['golden'] = 1; $fileFloors['lines'] = 934; $fileFloors['types'] = 1
 $floors = @(
     @{ Case = 'rate30';   Min = @{ frames = 42; inputs = 42; applied = 41; refused = 11; edits = 4; windows = 3; detaches = 100; pointer = 1 } },
     @{ Case = 'rate0';    Min = @{ frames = 4; applied = 3; edits = 4; windows = 3 } },
@@ -2657,7 +2679,7 @@ if ($Control) {
                Want = 'case clipboard.*clipboard: a 2 by 1 copy of the page.s into C5:E5 writes C5:C6, where C5:E6 is due' },
             # CART.16's second slice, the file case's. OJ, over the module: the name a file was opened by forgotten, its
             # save under the cartridge's own name.
-            @{ L = 'oj'; Name = 'a file saved under the cartridge''s name'; File = 'host'; Module = $true; Case = 'file'; Anchor = '    return given.length > type.length && given.toLowerCase().slice(-type.length) === type.toLowerCase() ? given : (this._cartName() || ''file'') + type;'; With = '    return (this._cartName() || ''file'') + type;   // the name it was opened by forgotten, by the control'
+            @{ L = 'oj'; Name = 'a file saved under the cartridge''s name'; File = 'host'; Module = $true; Case = 'file'; Anchor = '    return ofTypes(given, types) ? given : (this._cartName() || ''file'') + types[0];'; With = '    return (this._cartName() || ''file'') + types[0];   // the name it was opened by forgotten, by the control'
                Want = 'case file.*after settings.env is opened its file is saved under "pairs.env"' },
             # OK, over the module: a person's save of a cartridge that reads a file a cartridge still.
             @{ L = 'ok'; Name = 'a person''s save a cartridge still'; File = 'host'; Module = $true; Case = 'file'; Anchor = '    var file = what === ''file'' || (what !== ''cartridge'' && by === ''person'' && !!this.fileType());'; With = '    var file = what === ''file'';   // a person''s save the cartridge, by the control'
@@ -2671,9 +2693,28 @@ if ($Control) {
             # ON, over the module: the open's check asked while the load's act settles forgotten, never said.
             @{ L = 'on'; Name = 'a check asked in a settle never said'; File = 'host'; Module = $true; Case = 'file'; Anchor = '    if (w.wait) { this.checkWaiting = { opened: String(opened), name: name }; return { ok: true, waiting: true }; }'; With = '    if (w.wait) return { ok: true, waiting: true };   // the check forgotten, by the control'
                Want = 'case file.*the check was never said' },
-            # OO, needing no module: a file's kind judged by its case, WALTER.PL no file of a cartridge that reads .pl.
-            @{ L = 'oo'; Name = 'a file''s kind by its case'; File = 'template'; Case = 'file'; Anchor = '  function opensAsLines(name, kind) { return ofKind(name, kind) && !ofKind(name, ''.vla''); }'; With = '  function opensAsLines(name, kind) { return ofKind(name, kind) && name.slice(-kind.length) === kind; }   // by its case, by the control'
-               Want = 'case file.*WALTER.PL under a cartridge that reads .pl opens as lines: false' }
+            # OO, needing no module: a file's kind judged by its case, WALTER.PROLOG no file of a cartridge that reads .prolog.
+            @{ L = 'oo'; Name = 'a file''s kind by its case'; File = 'template'; Case = 'file'; Anchor = '  function opensAsLines(name, kinds) { return kindsOf(kinds).some(function (kind) { return ofKind(name, kind); }) && !ofKind(name, ''.vla''); }'; With = '  function opensAsLines(name, kinds) { return kindsOf(kinds).some(function (kind) { return ofKind(name, kind) && name.slice(-kind.length) === kind; }) && !ofKind(name, ''.vla''); }   // by its case, by the control'
+               Want = 'case file.*WALTER.PROLOG under a cartridge that reads .prolog opens as lines: false' },
+            # ENGINE.49, the desk's, each needing no module. OP: the tie kept across a pick, another entry's save written
+            # into the file tied. The act is the door: no save writes one file's rows into another's.
+            @{ L = 'op'; Name = 'the tie kept across a pick'; File = 'template'; Case = 'file'; Anchor = '    return t && t.entry === entry && t.load === load ? t : null;'; With = '    return t && t.load === load ? t : null;   // the tie any entry''s, by the control'
+               Want = 'case file.*a save under another entry of the picker answers \{"how":"tied"' },
+            # OQ: the tie kept across a load, the entry loaded again and its save written with nothing asked.
+            @{ L = 'oq'; Name = 'the tie kept across a load'; File = 'template'; Case = 'file'; Anchor = '    return t && t.entry === entry && t.load === load ? t : null;'; With = '    return t && t.entry === entry ? t : null;   // the tie any load''s, by the control'
+               Want = 'case file.*a save after the entry is loaded again answers \{"how":"tied"' },
+            # OR: the browser's refusal written through.
+            @{ L = 'or'; Name = 'a refusal written through'; File = 'template'; Case = 'file'; Anchor = '      if (state !== ''granted'') return { how: ''refused'', name: tie.name };'; With = '      if (state === ''never'') return { how: ''refused'', name: tie.name };   // a refusal written through, by the control'
+               Want = 'case file.*the browser.s question refused answers \{"how":"tied"' },
+            # OS: the file's time never held, a file changed on disk written over at once.
+            @{ L = 'os'; Name = 'a file changed on disk written over'; File = 'template'; Case = 'file'; Anchor = '        if (tie.changed !== null && f.lastModified !== tie.changed && !tie.over) { tie.over = true; return { how: ''changed'', name: tie.name, since: tie.wrote ? ''saved'' : ''opened'' }; }'; With = '        if (tie.changed === f.lastModified && tie.over) { tie.over = true; return { how: ''changed'', name: tie.name, since: tie.wrote ? ''saved'' : ''opened'' }; }   // the time never held, by the control'
+               Want = 'case file.*a file changed on disk since it was opened answers \[\{"how":"tied"' },
+            # OT: a save that waited asking the browser's question with no act at hand.
+            @{ L = 'ot'; Name = 'a waited save asking'; File = 'template'; Case = 'file'; Anchor = '      if (!o.ask) return ''unasked'';   // the browser''s question wants a person''s act at hand'; With = '      // a waited save asking, by the control'
+               Want = 'case file.*a save that waited, the browser not yet asked, answers \{"how":"tied".* after 1 question' },
+            # OU: a cartridge's own save written into the file tied.
+            @{ L = 'ou'; Name = 'a cartridge''s save written in place'; File = 'template'; Case = 'file'; Anchor = '    var tie = o.ties && !o.as ? this.tieOf(o.entry, o.load) : null;'; With = '    var tie = !o.as ? this.tieOf(o.entry, o.load) : null;   // a cartridge''s save in place, by the control'
+               Want = 'case file.*a cartridge.s save beside a file tied answers \{"how":"tied"' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
@@ -3515,7 +3556,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}; {54}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote, $brickworkNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk -and $brickworkOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and fifteen' } else { 'one hundred and forty-eight applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and twenty-one' } else { 'one hundred and fifty-four applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

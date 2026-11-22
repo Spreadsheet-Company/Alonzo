@@ -621,7 +621,7 @@ pub fn write(reel: &Reel) -> Result<String, String> {
 // ---- the tabs' rows, in a source and from a grid ------------------------------------
 
 /// The line a source's block begins at, as the source holds it.
-pub const BLOCK_BEGIN: &str = "; ---- the reel, written by cargo run --release --example afterlife: edit walter.pl, never these lines ----";
+pub const BLOCK_BEGIN: &str = "; ---- the reel, written by cargo run --release --example afterlife: edit walter.prolog, never these lines ----";
 
 /// The line it ends at.
 pub const BLOCK_END: &str = "; ---- the reel's end ----";
