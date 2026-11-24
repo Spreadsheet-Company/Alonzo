@@ -631,7 +631,9 @@ spells the selection as the grammar spells it (`B2`, `B2:C3`, `C:C`, `2:2`,
 the sheet's name) and names the sentence that wrote the cell.
 
 Save, Ctrl+S or the bar's Save, writes the running game to a file of yours,
-a cartridge that opens at its frame, and Open, Ctrl+O, opens one (`ENGINE.5`).
+a cartridge that opens at its frame, and Open, Ctrl+O, opens one (`ENGINE.5`),
+going on as the game went, its next frame making the writes its Write sheet
+asked for (`ENGINE.30`'s decision 13).
 Where the cartridge loaded reads a file (`CART.16`'s second slice; the
 specification's section 3.11), as Afterlife reads a reel, a `.prolog`, Open
 offers that kind of file beside a cartridge, `A .prolog file` and `An Alonzo
@@ -1204,9 +1206,12 @@ viewport, not an Excel clone.
   own modes card, a game's key, a character and a person's row on each of
   its sheets, at rate 0 and at a rate; `save` (`ENGINE.5`), the
   page's committed replays each saved at rest by the host's own save,
-  opened at its frame on its seed and played on beside the run; and `keep`
+  opened at its frame on its seed and played on beside the run, and saved
+  again where a derived write waits, the save owing it (`ENGINE.30`'s
+  decision 13); and `keep`
   (`ENGINE.38`), the page's committed replays each played with a keyframe
-  every 37 frames, its tab dropped at frames across it and a fresh page
+  every 37 frames and one where a derived write waits, its tab dropped at
+  frames across it and a fresh page
   over a double of the browser's store restoring it to every sheet, and the
   store's rules, a run watched, a save, Discard, two tabs, a stale and a torn
   record, eight runs and a refused store; and `clipboard` (`ENGINE.39`'s second

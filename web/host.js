@@ -1045,6 +1045,10 @@
     if (c.devices.palette) this._readPalette();
     if (c.devices.keys) this._readKeys();
     if (c.devices.commands) this._readCommands();   // version 5's commands, as loaded (ENGINE.25)
+    // A save loaded past frame 0 owes the derived writes its run made at its next frame (ENGINE.30's decision 13; docs/SPEC.md
+    // section 7.5): its Write sheet read as after a step, so that the page's Open, a restore's keyframe and a replay played on
+    // a save go on as the run went; a cartridge loaded at frame 0 owes none, its formulas having no value yet.
+    if (c.devices.write && this.frame > 0) this._readWrite();
     // The new grid drawn at once, frame 0 with nothing computed (a formula with no value yet reads
     // 0, a value cell its value): a load completes no frame, and without this draw the canvas kept
     // the last run's picture, a grid that no longer exists (the owner's hand test, 2026-10-09).

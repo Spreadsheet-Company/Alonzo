@@ -7123,13 +7123,16 @@
   // ---- ENGINE.5: a save, the host's own, resumes as the run (the replay law's host half) ----
   // Every committed replay the page holds, played on a host over the module to its middle and on to the first frame at
   // rest, a cartridge that settles saved between acts; there the host's own save, saveText, the path Save and File!B3
-  // take. Loaded plainly on a second host, it opens at the Clock's frame with the seed it ran on. Loaded on a third, it
-  // plays the rest of the replay, its frames counted from the save and its header naming the save's digest, frame for
-  // frame beside the first: every sheet's fills the same, the File's name and size apart, at the load, the frame after,
-  // every 64th frame and the last. Where a cartridge settles, a save asked inside an act's settle waits, says so, and is
-  // handed to the page by the event save at the frame the settle ends, at rest.
+  // take. Loaded plainly on a second host, it opens at the Clock's frame with the seed it ran on, owing the derived writes
+  // its run owes there. Loaded on a third, it plays the rest of the replay, its frames counted from the save and its
+  // header naming the save's digest, frame for frame beside the first: every sheet's fills the same, the File's name and
+  // size apart, at the load, the frame after, every 64th frame and the last. Where a cartridge settles, a save asked
+  // inside an act's settle waits, says so, and is handed to the page by the event save at the frame the settle ends, at
+  // rest. And where a cartridge's Write sheet asks a derived write at a frame at rest, the same again at the first such
+  // frame, its save owing the writes (owing) and played on beside the run to its 64th frame after (owed): a save loaded
+  // past frame 0 makes at its next frame the writes its run made (ENGINE.30's decision 13; docs/SPEC.md section 7.5).
   function caseSave() {
-    var P = [], k = { saves: 0, opened: 0, seeds: 0, resumed: 0, compared: 0, frames: 0, waited: 0, kilobytes: 0 };
+    var P = [], k = { saves: 0, opened: 0, seeds: 0, resumed: 0, compared: 0, frames: 0, waited: 0, kilobytes: 0, owing: 0, owed: 0 };
     var wasm = builtModule();
     if (!wasm) return { counters: k, problems: P };
     var bytes = bytesOfBase64(wasm);
@@ -7149,17 +7152,22 @@
       }
       return out.join('\n');
     }
-    for (var cn in CARTRIDGES) {
-      if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn) || !CARTRIDGES[cn].replayPath) continue;
-      var cart = CARTRIDGES[cn], exA = HOST.instantiateSync(bytes), DA = new Driver({ exports: exA }), A = host(exA);
-      if (!A || !A.load(cart.text, cart.file).ok) { P.push(cn + ': a fresh host did not load ' + cart.file + ' over the module'); continue; }
+    // the derived writes a host owes its next frame, as it will issue them (docs/SPEC.md section 3.9)
+    function owedOf(h) { return h.pending.map(function (x) { return x.text; }).join(' '); }
+    // One save of a committed replay's run, opened and played on: at its middle, or, owed, at the first frame at rest where
+    // the run owes a derived write, played on to its 64th frame after. Answers whether the cartridge has a Write sheet.
+    function resume(cn, cart, owed) {
+      var exA = HOST.instantiateSync(bytes), DA = new Driver({ exports: exA }), A = host(exA);
+      if (!A || !A.load(cart.text, cart.file).ok) { P.push(cn + ': a fresh host did not load ' + cart.file + ' over the module'); return false; }
+      var writes = !!A.cart.devices.write;
+      if (owed && !writes) return false;
       var pa = A.play(cart.replay);
-      if (!pa.ok) { P.push(cn + ': its committed replay did not play: ' + (pa.sentence || '')); continue; }
-      var last = pa.frames, settles = A.cart.settle > 0, waitedOn = false;
+      if (!pa.ok) { P.push(cn + ': its committed replay did not play: ' + (pa.sentence || '')); return false; }
+      var last = pa.frames, settles = !owed && A.cart.settle > 0, waitedOn = false;
       // a save asked inside an act's settle: it waits, and the page is handed it at the frame the settle ends
       if (settles) A.on('save', function (e) { if (e.waited && !A.settling) waitedOn = e; });
       var asked = false;
-      while (A.player && (A.counters().frame < Math.floor(last / 2) || A.settling || A.inFrame)) {
+      while (A.player && (A.settling || A.inFrame || (owed ? !owedOf(A) : A.counters().frame < Math.floor(last / 2)))) {
         step(A);
         if (settles && !asked && A.settling) {
           asked = true;
@@ -7171,18 +7179,20 @@
         if (waitedOn && waitedOn.by === 'person' && waitedOn.ok !== false) k.waited++;
         else P.push(cn + ': the save asked inside an act\'s settle was never handed to the page at rest' + (asked ? '' : ' (no settle was met before the middle)'));
       }
-      if (!A.player) { P.push(cn + ': its replay ended before a frame at rest from its middle'); continue; }
+      if (!A.player) { if (!owed) P.push(cn + ': its replay ended before a frame at rest from its middle'); return writes; }   // owed: no frame at rest owes a write
       var at = A.counters().frame, s = A.saveText();
-      if (!s.ok) { P.push(cn + ': the host\'s save at frame ' + at + ' was refused: ' + (s.words || 'it waits')); continue; }
+      if (!s.ok) { P.push(cn + ': the host\'s save at frame ' + at + ' was refused: ' + (s.words || 'it waits')); return writes; }
       k.saves++; k.kilobytes += Math.round(s.bytes / 1024);
-      var before = fillsOf(A, DA), clockFrame = A._clockAt('B1') || 0;
-      // a plain load: the Clock's frame, and the seed it ran on
+      var before = fillsOf(A, DA), clockFrame = A._clockAt('B1') || 0, owes = owedOf(A);
+      // a plain load: the Clock's frame, the seed it ran on, and the derived writes its run owes there
       var exO = HOST.instantiateSync(bytes), DO = new Driver({ exports: exO }), O = host(exO);
-      if (!O || !O.load(s.text, s.file).ok) { P.push(cn + ': the save at frame ' + at + ' did not load: ' + (O ? O.sentences().slice(-1)[0].text : 'no host')); continue; }
+      if (!O || !O.load(s.text, s.file).ok) { P.push(cn + ': the save at frame ' + at + ' did not load: ' + (O ? O.sentences().slice(-1)[0].text : 'no host')); return writes; }
       if (O.counters().frame === clockFrame && fillsOf(O, DO) === before) k.opened++;
       else P.push(cn + ': the save at frame ' + at + ' opens at frame ' + O.counters().frame + ', the Clock saying ' + clockFrame + (fillsOf(O, DO) === before ? '' : ', and its sheets are not the run\'s there'));
       if (O._clockAt('B3') === A._clockAt('B3')) k.seeds++;
       else P.push(cn + ': the save at frame ' + at + ' opens on the seed ' + O._clockAt('B3') + ', and the run\'s is ' + A._clockAt('B3'));
+      if (owedOf(O) !== owes) P.push(cn + ': the save at frame ' + at + ' opens owing ' + (owedOf(O) || 'nothing') + ', where its run owes ' + (owes || 'nothing'));
+      else if (owes) k.owing++;
       // the rest of the replay on a third host, its frames counted from the frame the save opens at
       var rp = A._readReplay(cart.replay), off = at - O.counters().frame, rest = afterComments(cart.replay).split('\n')[0].replace(/\(cartridge "[0-9A-F]{64}"\)/, '(cartridge "' + HOST.sha256(s.text) + '")') + '\n';
       for (var f = at + 1; f <= rp.last; f++) {
@@ -7191,22 +7201,27 @@
         else if (f === rp.last) rest += '(frame ' + (f - off) + ')\n';
       }
       var exB = HOST.instantiateSync(bytes), DB = new Driver({ exports: exB }), B = host(exB);
-      if (!B || !B.load(s.text, s.file).ok) { P.push(cn + ': the save did not load on the third host'); continue; }
+      if (!B || !B.load(s.text, s.file).ok) { P.push(cn + ': the save did not load on the third host'); return writes; }
       var pb = B.play(rest);
-      if (!pb.ok) { P.push(cn + ': the rest of the replay did not play on the save: ' + (pb.sentence || '')); continue; }
+      if (!pb.ok) { P.push(cn + ': the rest of the replay did not play on the save: ' + (pb.sentence || '')); return writes; }
       var bad = '';
       if (fillsOf(B, DB) !== before) bad = 'at its load';
       var j = 0;
-      while (!bad && A.player && B.player) {
+      while (!bad && A.player && B.player && !(owed && j >= 64)) {
         step(A); step(B); j++; k.frames++;
         if (j === 1 || j % 64 === 0 || !A.player) {
           k.compared++;
           if (fillsOf(B, DB) !== fillsOf(A, DA)) bad = 'at frame ' + A.counters().frame;
         }
       }
-      if (!bad && (A.player || B.player)) bad = 'at the end: the run stands at frame ' + A.counters().frame + ' and the save\'s at ' + B.counters().frame;
+      if (!bad && !owed && (A.player || B.player)) bad = 'at the end: the run stands at frame ' + A.counters().frame + ' and the save\'s at ' + B.counters().frame;
       if (bad) P.push(cn + ': the save at frame ' + at + ' played on is not the run ' + bad);
-      else k.resumed++;
+      else { k.resumed++; if (owed) k.owed++; }
+      return writes;
+    }
+    for (var cn in CARTRIDGES) {
+      if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn) || !CARTRIDGES[cn].replayPath) continue;
+      if (resume(cn, CARTRIDGES[cn], false)) resume(cn, CARTRIDGES[cn], true);
     }
     return { counters: k, problems: P };
   }
@@ -10907,7 +10922,7 @@
   };
   WorkDouble.prototype.close = function () { for (var n in this.s.locks) if (this.s.locks[n] === this.tab) delete this.s.locks[n]; };
   function caseKeep() {
-    var P = [], k = { cartridges: 0, frames: 0, restores: 0, held: 0, keyframes: 0, writes: 0, session: 0, watched: 0, saved: 0, discarded: 0, tabs: 0, stale: 0, torn: 0, capped: 0, refused: 0, typed: 0, switched: 0, typedSaved: 0, draftsRound: 0, draftsLoaded: 0, store: 0 };
+    var P = [], k = { cartridges: 0, frames: 0, restores: 0, held: 0, owing: 0, owed: 0, keyframes: 0, writes: 0, session: 0, watched: 0, saved: 0, discarded: 0, tabs: 0, stale: 0, torn: 0, capped: 0, refused: 0, typed: 0, switched: 0, typedSaved: 0, draftsRound: 0, draftsLoaded: 0, store: 0 };
     var wasm = builtModule(), notes = [];
     if (!wasm) return { counters: k, problems: P };
     // one instance of the module for every host of the case, each grid a handle of its own and unloaded when done, since a
@@ -10936,34 +10951,45 @@
       return out.join('\n');
     }
     function records(world) { var n = 0; for (var x in world.work) if (Object.prototype.hasOwnProperty.call(world.work, x)) n++; return n; }
+    // the derived writes a host owes its next frame, as it will issue them (docs/SPEC.md section 3.9)
+    function owedOf(h) { return h.pending.map(function (x) { return x.text; }).join(' '); }
     // The tab dies at a frame at rest: a fresh page over what the browser kept, its locks gone with the tab, opens on the
-    // empty sheet, is offered the newest record, restores it, and stands where the run stood, every sheet's fills.
+    // empty sheet, is offered the newest record, restores it, and stands where the run stood, every sheet's fills, owing
+    // the derived writes the run owes there (ENGINE.30's decision 13). Answers whether it held.
     function closure(name, A, KA, world) {
       KA.tick();
       var at = A.counters().frame, W = workWorld(world), DB = new WorkDouble(W, 'b'), B = host(37), KB = B && keeper(B, DB);
-      if (!B || !B.load(EMPTY.text, EMPTY.file).ok) { P.push(name + ': frame ' + at + ': a fresh page did not open'); return; }
-      if (!KB.offer || KB.offer.run !== KA.run) { P.push(name + ': frame ' + at + ': the page opened offers ' + (KB.offer ? 'the run ' + KB.offer.run + ', not the one kept last, ' + KA.run : 'nothing') + ' (' + records(W) + ' kept)'); return; }
+      if (!B || !B.load(EMPTY.text, EMPTY.file).ok) { P.push(name + ': frame ' + at + ': a fresh page did not open'); return false; }
+      if (!KB.offer || KB.offer.run !== KA.run) { P.push(name + ': frame ' + at + ': the page opened offers ' + (KB.offer ? 'the run ' + KB.offer.run + ', not the one kept last, ' + KA.run : 'nothing') + ' (' + records(W) + ' kept)'); return false; }
       KB.restoreOffer();
       k.restores++;
-      if (B.counters().restores !== 1) { P.push(name + ': frame ' + at + ': the offer was not restored: ' + KB.said.concat(B.sentences().slice(-1).map(function (x) { return x.text; })).join(' | ')); return; }
-      if (fillsOf(B) === fillsOf(A)) k.held++;
+      if (B.counters().restores !== 1) { P.push(name + ': frame ' + at + ': the offer was not restored: ' + KB.said.concat(B.sentences().slice(-1).map(function (x) { return x.text; })).join(' | ')); return false; }
+      var held = fillsOf(B) === fillsOf(A), owes = owedOf(A);
+      if (held) k.held++;
       else P.push(name + ': frame ' + at + ': the work restored is not the run there, restored at frame ' + B.counters().frame);
+      if (owedOf(B) !== owes) { held = false; P.push(name + ': frame ' + at + ': the work restored owes ' + (owedOf(B) || 'nothing') + ', where the run owes ' + (owes || 'nothing')); }
+      else if (owes) k.owing++;
       if (KB.run !== KA.run) P.push(name + ': frame ' + at + ': the restored run is ' + KB.run + ', and it goes on as ' + KA.run);
       B.unload();
+      return held;
     }
     // Each committed replay, played frame by frame at a keyframe every 37 frames; the tab dies at frame 1, every 64th frame
-    // at rest and the last.
+    // at rest and the last. And where its Write sheet asks a derived write at a frame at rest, a keyframe at the first such
+    // frame a person's act has come before, the tab dying there and at the next frame at rest, where the restore makes the
+    // writes the run made (owed).
     for (var cn in CARTRIDGES) {
       if (!Object.prototype.hasOwnProperty.call(CARTRIDGES, cn) || !CARTRIDGES[cn].replayPath) continue;
       var cart = CARTRIDGES[cn], world = workWorld(), DA = new WorkDouble(world, 'a'), A = host(37), KA = A && keeper(A, DA);
       if (!A || !A.load(cart.text, cart.file).ok) { P.push(cn + ': a fresh host did not load ' + cart.file); continue; }
       if (!A.play(cart.replay).ok) { P.push(cn + ': its committed replay did not play'); continue; }
       k.cartridges++;
-      var j = 0;
+      var j = 0, owedAt = 0;
       while (A.player) {
         step(A); j++; k.frames++;
         if (A.settling || A.inFrame) continue;
         KA.tick();
+        if (owedAt > 0) { owedAt = -1; if (closure(cn, A, KA, world)) k.owed++; }
+        else if (owedAt === 0 && A.pending.length && (A.keep.frames === 0 || A.keyframeNow())) { owedAt = A.counters().frame; closure(cn, A, KA, world); }
         if (j === 1 || j % 64 === 0 || !A.player) closure(cn, A, KA, world);
       }
       k.keyframes += A.counters().keyframes; k.writes += KA.c.writes;

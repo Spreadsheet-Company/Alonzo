@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds three hundred and twenty-one mutant pages through tools/build_web.ps1 and runs
+-Control builds three hundred and twenty-two mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -1146,6 +1146,10 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # 2026-11-21, ENGINE.49: OP to OU, the desk's, each needing no module, take it to three hundred and twenty-one (154
 # applicable without); OJ's and OO's anchors moved with their lines, a cartridge's types a list, and back again
 # 2026-11-22 when the list was taken out, the count as it was.
+# 2026-11-24, ENGINE.30's decision 13: OV, the Write sheet unread at a save's load, the save case's over the module, takes
+# it to three hundred and twenty-two (154 applicable without). Its run of this control found mutant AP's words unmoved
+# since CART.16's second slice made Afterlife the thirteenth cartridge, the picker in reverse offering Afterlife second,
+# after the empty sheet, and moved them.
 # 2026-11-18, CART.3's third slice: MO to MR, version 7's: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -1248,7 +1252,11 @@ $scales = @('1', '1.5')
 # after, every 64th frame and the last (compared 93, over 5,315 frames); and a save asked inside an act's settle waiting
 # for it and handed to the page at rest, the three cartridges that settle (waited 3). Since CART.3's third slice (c), eight,
 # Brickwork's game of 41,129 frames among them: saves, opened, seeds and resumed 8, compared 416 over 25,880 frames.
-$saveFloors = @{ saves = 8; opened = 8; seeds = 8; resumed = 8; compared = 416; frames = 25880; waited = 3 }
+# 2026-11-24, ENGINE.30's decision 13: a second save where a cartridge's Write sheet asks a derived write, at the first
+# frame at rest that owes one, the input card's 11 and Kairos's 144: saves, opened, seeds and resumed 10, compared 420
+# over 25,959 frames, each save opening owing its run's writes (owing 2) and played on beside the run to its 64th frame
+# after (owed 2). Mutant OV, the Write sheet unread at a save's load, fails both by name.
+$saveFloors = @{ saves = 10; opened = 10; seeds = 10; resumed = 10; compared = 420; frames = 25959; waited = 3; owing = 2; owed = 2 }
 # 2026-11-16, ENGINE.38: the thirty-second case, keep, over the module and a double of the browser's store: every
 # committed replay the page holds played frame by frame with a keyframe at the first rest past every 37 frames, the run's
 # work written at every frame at rest, and the tab dropped at frame 1, every 64th frame at rest and the last, a fresh page
@@ -1267,7 +1275,10 @@ $saveFloors = @{ saves = 8; opened = 8; seeds = 8; resumed = 8; compared = 416; 
 # box written after a save's rows over a raw string and taken back as typed (draftsRound 1), the file without them loading
 # the grid as the save alone does (draftsLoaded 1). Since CART.3's third slice (c), eight cartridges, Brickwork's game
 # among them: frames 52,032, restores and held 757, keyframes 1,300.
-$keepFloors = @{ cartridges = 8; frames = 52032; restores = 757; held = 757; keyframes = 1300; session = 8; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1; typed = 1; switched = 1; typedSaved = 1; draftsRound = 1; draftsLoaded = 1 }
+# 2026-11-24, ENGINE.30's decision 13: a keyframe at the first frame at rest where a derived write waits and a person has
+# acted, the input card's 11 and Kairos's 144, the tab dying there and at the next frame at rest: restores and held 761,
+# keyframes 1,301, a restore owing the derived writes the run owes (owing 3) and the frame after each held (owed 2).
+$keepFloors = @{ cartridges = 8; frames = 52032; restores = 761; held = 761; owing = 3; owed = 2; keyframes = 1301; session = 8; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1; typed = 1; switched = 1; typedSaved = 1; draftsRound = 1; draftsLoaded = 1 }
 # 2026-11-21, CART.16's second slice: the thirty-fifth case, file, a file opened, edited and saved (docs/SPEC.md section
 # 3.11). Pure, the host's and the page's: where two files part, line for line and line ends and all, ten pairs
 # (changes 10) and the words of each difference, a long line cut (words 9); a file's kind by its name, compared without
@@ -2327,7 +2338,7 @@ if ($Control) {
                Want = 'case empty.*the empty sheet on the double steps at a rate of 30, where it waits at 0 for an edit' },
             @{ L = 'ap'; Name = 'the picker in reverse'; Anchor = '    for (var i = 0; i < ORDER.length; i++) out.push({ value: ORDER[i], label: CARTRIDGES[ORDER[i]].title });'
                With = '    for (var i = ORDER.length - 1; i >= 0; i--) out.push({ value: ORDER[i], label: CARTRIDGES[ORDER[i]].title });'
-               Want = 'case empty.*the picker''s entry 2 is brickwork, and the page''s cartridge block 1 is life' },
+               Want = 'case empty.*the picker''s entry 2 is afterlife, and the page''s cartridge block 1 is life' },
             # HB, HC and HD (ENGINE.14's addendum): the bench's heading painted before the script chooses the player, and the
             # dark Screen before the grid, each by the one rule or attribute that holds it back
             @{ L = 'hb'; Name = 'a body with no mode shown'; Anchor = '  body:not([class]) { visibility: hidden; }'; With = '  /* no rule */'
@@ -2716,6 +2727,10 @@ if ($Control) {
             # OU: a cartridge's own save written into the file tied.
             @{ L = 'ou'; Name = 'a cartridge''s save written in place'; File = 'template'; Case = 'file'; Anchor = '    var tie = o.ties && !o.as ? this.tieOf(o.entry, o.load) : null;'; With = '    var tie = !o.as ? this.tieOf(o.entry, o.load) : null;   // a cartridge''s save in place, by the control'
                Want = 'case file.*a cartridge.s save beside a file tied answers \{"how":"tied"' }
+            # ENGINE.30's decision 13, the save case's over the module. OV: the Write sheet unread at a save's load, so that a
+            # save past frame 0 owes nothing and its next frame never makes the derived writes its run made.
+            @{ L = 'ov'; Name = 'the Write sheet unread at a save''s load'; Module = $true; Case = 'save'; Anchor = '    if (c.devices.write && this.frame > 0) this._readWrite();'; With = '    // the Write sheet unread at a save''s load, by the control'
+               Want = 'case save.*the save at frame \d+ opens owing nothing, where its run owes' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
@@ -3557,7 +3572,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}; {54}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote, $brickworkNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk -and $brickworkOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and twenty-one' } else { 'one hundred and fifty-four applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and twenty-two' } else { 'one hundred and fifty-four applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
