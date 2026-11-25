@@ -905,7 +905,10 @@ page shows opened plainly and what Pages deploys.
   instance. Since `ENGINE.9` it climbs the size ladder too: Life and the
   gun built here by the module's own pass at four and sixteen times the
   window's area, 640 by 400 and 1280 by 800, from their sources with the
-  ladder's definition of their board, `board-size`, after the source's own,
+  ladder's values of their board's two parameters, `board-width` and
+  `board-height`, given as a door's by the module's `alonzo_expand_given`
+  (since the pin to `vla-lang` 0.15.0, where a later definition of
+  `board-size` after the source's own stood before),
   each held over its whole board and named by its cartridge's SHA-256 over
   LF, which the instrument holds to the native runner's; every row carries
   the module's memory after frame 4, a fresh module a fixture, and the slope

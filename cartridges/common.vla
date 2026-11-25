@@ -389,10 +389,10 @@
 ; A board's interior (ENGINE.9): first-frame over every cell of a board but its border,
 ; one cell wide, which stays empty and reads as 0. The board's size comes first, its
 ; width and its height in cells, and not the sheet, so that a source states its board
-; once, as a parameter that hands the size on: (board-size interior sheet start rule)
-; becomes (interior 320 200 sheet start rule). A door builds the source on a larger board
-; by handing the pass a later definition of the parameter (docs/SPEC.md section 7.8), and the
-; same rule covers it. Its sheet is no first argument, so on cannot name it.
+; once, as parameters a macro hands on: (board-size interior sheet start rule) becomes
+; (interior 320 200 sheet start rule). A door builds the source on a larger board by
+; giving those parameters other values (docs/SPEC.md section 7.8), and the same rule
+; covers it. Its sheet is no first argument, so on cannot name it.
 
 (defmacro (interior width height sheet start rule)
   "first-frame over a board width by height cells, less its border: B2 to the cell before its last row and column"

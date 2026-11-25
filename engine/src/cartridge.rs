@@ -1162,33 +1162,34 @@ fn whole_in(cell: Option<Drafted<'_>>, low: f64, high: f64) -> Option<f64> {
 /// Miller cell seeded from it never sticks at 0. A formula or a derived row
 /// there is refused before this, as a cell the host writes. A cartridge that
 /// settles (version 6, `CART.12`) keeps the rate at 0, where an act steps the
-/// grid and no tick does.
+/// grid and no tick does. `value` is `None` for an `empty` row (since
+/// `ENGINE.30`'s pin to `vla-lang` 0.15.0, Frazaro's `KERNEL.46`), a cell given
+/// back to no value, which none of the three may be, an empty rate or seed
+/// being no number in its range.
 fn check_clock(
     line: u32,
     sheet: &str,
     range: &A1Range,
-    value: &Form,
+    value: Option<&Form>,
     settles: bool,
 ) -> Result<(), LineRefusal> {
     if range.left > 2 || range.right < 2 {
         return Ok(());
     }
+    let said = value.map_or_else(|| "an empty cell".to_string(), write_datum);
     for row in range.top.max(1)..=range.bottom.min(3) {
-        let what = match (row, whole(value)) {
+        let what = match (row, value.and_then(whole)) {
             (1, _) => "is the Clock's frame, which the engine writes as the first act of every step, so a write there would be undone unseen: the frame is the only clock".to_string(),
             (2, Some(n)) if n > 0 && settles => format!(
-                "holds the Clock's rate, and the cartridge settles, (settle ...), at rate 0 alone, where an act steps the grid and no tick does, so {} is not one",
-                write_datum(value)
+                "holds the Clock's rate, and the cartridge settles, (settle ...), at rate 0 alone, where an act steps the grid and no tick does, so {said} is not one"
             ),
             (2, Some(n)) if n <= u64::from(MAX_RATE) => continue,
             (2, _) => format!(
-                "holds the Clock's rate, 0 or a whole number of frames a second from 1 to {MAX_RATE}, and {} is not one",
-                write_datum(value)
+                "holds the Clock's rate, 0 or a whole number of frames a second from 1 to {MAX_RATE}, and {said} is not one"
             ),
             (_, Some(n)) if (1..=u64::from(MAX_SEED)).contains(&n) => continue,
             _ => format!(
-                "holds the Clock's seed, a whole number from 1 to {MAX_SEED}, so that a Park and Miller cell never sticks at 0, and {} is not one",
-                write_datum(value)
+                "holds the Clock's seed, a whole number from 1 to {MAX_SEED}, so that a Park and Miller cell never sticks at 0, and {said} is not one"
             ),
         };
         let target = format!("{sheet}!{}", address(row, 2));
@@ -1632,14 +1633,26 @@ impl Cartridge {
     /// a row the machine would refuse whatever its target is left to it.
     /// A row is read by its first four items, so that a word after its value,
     /// the language's `dynamic` since vla-lang 0.13.0, is the machine's to
-    /// read or refuse and never takes a row past these checks.
+    /// read or refuse and never takes a row past these checks. An `empty` row
+    /// (since `ENGINE.30`'s pin to vla-lang 0.15.0, Frazaro's `KERNEL.46`)
+    /// names its target and no value, three items, and meets the checks a
+    /// `cell` row meets at the same place: a Screen cell past the window and a
+    /// device's cell past its layout refused, and the Clock's three, none of
+    /// them a cell a write gives back to no value.
     fn check_row(&self, form: &Form) -> Result<(), LineRefusal> {
         let Form::List(l) = form else { return Ok(()) };
-        let [Form::Sym(head), Form::Str(sheet), Form::Str(addr), value, ..] = l.items.as_slice()
-        else {
-            return Ok(());
+        let (head, sheet, addr, value) = match l.items.as_slice() {
+            [Form::Sym(head), Form::Str(sheet), Form::Str(addr), value, ..] => {
+                (head, sheet, addr, Some(value))
+            }
+            [Form::Sym(head), Form::Str(sheet), Form::Str(addr)] => (head, sheet, addr, None),
+            _ => return Ok(()),
         };
-        if !matches!(head.as_str(), "cell" | "formula" | "derived") {
+        let checked = match value {
+            Some(_) => matches!(head.as_str(), "cell" | "formula" | "derived"),
+            None => head == "empty",
+        };
+        if !checked {
             return Ok(());
         }
         let Some(range) = parse_a1_range(addr) else {
@@ -1707,7 +1720,7 @@ impl Cartridge {
                 ],
             ));
         }
-        if head == "cell" && device == Device::Clock {
+        if device == Device::Clock && matches!(head.as_str(), "cell" | "empty") {
             check_clock(l.line, sheet, &range, value, self.manifest.settle.is_some())?;
         }
         if head == "formula" && device == Device::Format {
@@ -3160,6 +3173,49 @@ mod tests {
         assert_eq!(
             cell_text(&unnamed, "File", "B1"),
             "(cell \"File\" \"B1\" \"the cartridge\")"
+        );
+    }
+
+    /// An `empty` row (`ENGINE.30`'s pin to vla-lang 0.15.0, Frazaro's
+    /// `KERNEL.46`), three items, meets the checks a `cell` row meets at the
+    /// same place, where the checks once read four items and let it pass: a
+    /// Screen cell past the window and a device's cell past its layout
+    /// refused, and the Clock's three, a range over them too, refused, an
+    /// empty rate or seed being no number in its range; a Screen cell and a
+    /// host cell given back land, and an empty row of another shape is the
+    /// machine's to refuse.
+    #[test]
+    fn an_empty_row_meets_the_checks_a_cell_row_meets() {
+        let mut c = load(&small(30)).expect("loads");
+        let cases: [(&str, &str); 6] = [
+            ("(empty \"Clock\" \"B1\")", "cart-write-clock"),
+            ("(empty \"Clock\" \"B2\")", "cart-write-clock"),
+            ("(empty \"Clock\" \"B3\")", "cart-write-clock"),
+            ("(empty \"Clock\" \"A1:B3\")", "cart-write-clock"),
+            ("(empty \"Input\" \"F1\")", "cart-device-cell-outside"),
+            ("(empty \"Screen\" \"A11\")", "cart-screen-outside"),
+        ];
+        for (rows, want) in cases {
+            let r = c.write(rows).expect_err(rows);
+            assert_eq!(r.refusal.id, want, "{rows}: {}", r.refusal.text);
+        }
+        let seed = c.write("(empty \"Clock\" \"B3\")").expect_err("the seed");
+        assert!(
+            seed.refusal.text.contains("Clock!B3") && seed.refusal.text.contains("an empty cell"),
+            "{}",
+            seed.refusal.text
+        );
+        assert_eq!(c.write("(cell \"Screen\" \"B2\" 1)"), Ok(1));
+        assert_eq!(c.write("(empty \"Screen\" \"B2\")"), Ok(1));
+        assert_eq!(c.write("(cell \"Input\" \"B5\" 1)"), Ok(1));
+        assert_eq!(c.write("(empty \"Input\" \"B5\")"), Ok(1));
+        let shaped = c
+            .write("(empty \"Screen\" \"B2\" 1)")
+            .expect_err("a value after an empty row's target");
+        assert!(
+            shaped.refusal.id.starts_with("grid-"),
+            "{}",
+            shaped.refusal.id
         );
     }
 
@@ -5736,20 +5792,19 @@ mod tests {
     }
 
     /// Superposition built by the pass on a lattice of side n, its one
-    /// parameter defined again as the size ladder builds Life (`ENGINE.9`);
-    /// `None` in a package, which holds no `cartridges/`.
+    /// parameter given another value as the size ladder builds Life
+    /// (`ENGINE.9`; a door's value since `ENGINE.30`'s pin to `vla-lang`
+    /// 0.15.0); `None` in a package, which holds no `cartridges/`.
     fn superposition_at(n: u32) -> Option<String> {
         let source = crate::repository::read("superposition/superposition.source.vla")?;
         let library = crate::repository::read("common.vla")?;
         let files = [("cartridges/common.vla".to_string(), library)];
-        let definition = format!(
-            "(defmacro (lattice-side then & args)\r\n  \"the tests' lattice, {n} sites a side\"\r\n  (quasiquote ((unquote then) {n} (unquote-splicing args))))\r\n"
-        );
-        let built = crate::pass::expand_with(
+        let door = format!("(parameter sites-a-side {n})\r\n");
+        let built = crate::pass::expand_given(
             &source,
             "cartridges/superposition/superposition.source.vla",
             &files,
-            &definition,
+            &door,
         )
         .unwrap_or_else(|r| panic!("the lattice of {n}: line {} {}", r.line, r.refusal.text));
         Some(built.text)

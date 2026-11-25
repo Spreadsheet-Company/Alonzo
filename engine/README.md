@@ -17,14 +17,17 @@ whose frame rate is one, and an engine that can draw sixty can draw one.
 
 ## What this crate holds today
 
-The engine's module. Built for `wasm32-unknown-unknown` it exports twelve
+The engine's module. Built for `wasm32-unknown-unknown` it exports sixteen
 names and imports none: `alonzo_load` takes a cartridge's bytes and answers
 a handle; `alonzo_write` takes rows in the one notation; `alonzo_step` takes
 a budget in cells and may yield, so the page never freezes; `alonzo_view`
 answers one window of a sheet as the view record or as the plane, a byte a
 cell; with `alonzo_describe`, `alonzo_unload`, the memory pair, the ABI
-number and the version beside them; and `alonzo_expand`, the pass below,
-which takes no handle. The grid, its rows, the previous
+number and the version beside them; `alonzo_expand`, the pass below, and
+`alonzo_expand_given`, the same with a door's values, neither taking a
+handle; `alonzo_moved`, the language's mover, by which a paste moves a
+formula's references; and `alonzo_file_read` and `alonzo_file_write`, a
+file's lines read into a cartridge and a grid written as the file. The grid, its rows, the previous
 frame's twin sheets, the step in dependency order and the views are the
 language crate's, `vla-lang`'s machine; what this crate adds is what an
 engine is:
@@ -103,7 +106,9 @@ cargo run --release --example expand -- --check      # the same, compared and wr
 
 and in the page it is the module's twelfth export, `alonzo_expand`, which
 the Build in the player's drawer calls and the page's loop oracle holds to the
-command line's bytes. A test holds every cartridge of the repository to its
+command line's bytes; its sixteenth, `alonzo_expand_given`, is the same pass
+with a door's values, by which the frame floors' page builds the size
+ladder's rungs. A test holds every cartridge of the repository to its
 source's expansion, byte for byte. The pass knows no macro by name: the repository's
 library, `cartridges/common.vla`, is a file a cartridge includes, copies or
 outgrows like any other. Since `KIT.1` it holds the kit's first verbs, each a
@@ -305,7 +310,7 @@ names an entry's parts in a loop (`VLA.16`); and reads a raw string,
   is the language's; what can only be measured is the engine's.
 - The engine's imports are the host's functions, named by hand as
   `extern "C"` and held to an allowlist read off the artifact on every
-  push, its exports to the specification's fifteen names; the crate depends
+  push, its exports to the specification's sixteen names; the crate depends
   on the language crate and nothing else, which a check reads off the
   manifests and the lock. It makes no outbound network call, ever.
 - Nothing the browser rents is rebuilt until a measurement says the rent is
@@ -457,9 +462,10 @@ frame, `superposition`, and the deepest cascade, `superposition-cascade`.
 The same runner climbs a size ladder (`ENGINE.9`): Life's soup and the
 glider gun built again on boards of four and sixteen times the window's
 area, 640 by 400 and 1280 by 800 cells. Each source states its board once,
-as a parameter, a macro named `board-size`, and the pass builds it with a
-larger value handed in after the source's own (`pass::expand_with`), so the
-same rule covers the larger board. The window stays the manifest's 320 by
+as two parameters, `board-width` and `board-height`, handed on by a macro
+named `board-size`, and the pass builds it with larger values given as a
+door's (`pass::expand_given`, the language's `parameter` since the pin to
+`vla-lang` 0.15.0), so the same rule covers the larger board. The window stays the manifest's 320 by
 200, placed by a still Camera at the board's top-left, and every frame is
 held to the hand-written Life over the whole board. Each rung's row carries
 the four numbers the ladder reads: the formula cells, the load, the frame,

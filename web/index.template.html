@@ -11466,8 +11466,9 @@
   // twenty steps, the runs went on to about frame 4,000, and each run's last frame was held between
   // the runs, whose Life and view swept a large board's megabytes through the cache before the next.
   // The size ladder (ENGINE.9): Life and the gun at four and sixteen times the window's area, each
-  // built here by the module's own pass from its source with the ladder's definition of board-size
-  // after the source's own, the native runner's text (engine/src/ladder.rs), on a module of its own
+  // built here by the module's own pass from its source with the ladder's values of its board's two
+  // parameters given as a door's by alonzo_expand_given, the native runner's text
+  // (engine/src/ladder.rs), on a module of its own
   // so that no fixture's memory holds the pass; each held over its whole board to this page's Life,
   // and named by its SHA-256 over LF, which tools/bench_frames.ps1 holds to the native runner's.
   // Every fixture's row carries the module's memory after its fourth frame, a fresh module a fixture,
@@ -11500,11 +11501,12 @@
       }
       return g;
     }
-    // The size ladder's definition of a source's board-size, the native runner's own text
-    // (engine/src/ladder.rs): a board of w by h cells under a still Camera at its top-left.
-    function ladderDefinition(w, h) {
-      return '(defmacro (board-size then & args)\r\n  "the size ladder (ENGINE.9): a board of ' + w + ' by ' + h +
-        ' cells under a still Camera at its top-left"\r\n  (quasiquote (begin (camera 1 1) ((unquote then) ' + w + ' ' + h + ' (unquote-splicing args)))))\r\n';
+    // The size ladder's values for a source's board, a door's, the native runner's own text
+    // (engine/src/ladder.rs's door): a board of w by h cells, which the source's own still-camera puts
+    // under a still Camera at its top-left (since ENGINE.30's pin to vla-lang 0.15.0, whose parameter
+    // is Frazaro's VLA.11, where a second definition of board-size after the source's own stood before).
+    function ladderDoor(w, h) {
+      return '(parameter board-width ' + w + ')\r\n(parameter board-height ' + h + ')\r\n';
     }
     // The clock: this page's Life over a fixed workload in two planes it keeps, a generation untimed
     // to warm them, the best of a few batches, milliseconds a generation.
@@ -11550,7 +11552,7 @@
       for (var ri = 0; ri < RUNGS.length; ri++) {
         var mult = RUNGS[ri][0], rw = RUNGS[ri][1], rh = RUNGS[ri][2];
         if (!passer) passer = new Driver({ exports: HOST.instantiateSync(bytes) });
-        var expanded = passer.call('alonzo_expand', [], [base.cart.source + '\n' + ladderDefinition(rw, rh), base.cart.sourcePath, packed.join('\u0000')]);
+        var expanded = passer.call('alonzo_expand_given', [], [base.cart.source, base.cart.sourcePath, packed.join('\u0000'), ladderDoor(rw, rh)]);
         if (expanded.status !== 0) throw new Error(base.name + ': the pass refused the board of ' + rw + ' by ' + rh + ' at line ' + expanded.line + ': ' + expanded.text + ' [' + expanded.id + ']');
         fixtures.push({ name: base.name + '-x' + mult, text: expanded.text, by: 'Life', w: rw, h: rh, next: lifeOn(rw, rh), digest: HOST.sha256(expanded.text.replace(/\r\n/g, '\n')) });
       }

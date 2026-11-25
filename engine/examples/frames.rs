@@ -28,12 +28,14 @@
 //! rule, every frame after the first keeping every grain.
 //!
 //! **The ladder** (`ENGINE.9`, 2026-10-14). A fixture whose source stands
-//! beside it and states its board as a parameter, `board-size`, climbs the
-//! size ladder: the pass builds the source again with the ladder's definition
-//! after its own (`alonzo::pass::expand_with`; `engine/src/ladder.rs`,
-//! included here by its path), on boards of four and sixteen times the
-//! window's area, 640 by 400 and 1280 by 800, each under a still Camera at
-//! its top-left. Each rung is a fixture of its own, `life-x4` and
+//! beside it and states its board as two parameters handed on by
+//! `board-size` climbs the size ladder: the pass builds the source again
+//! with the ladder's values given as a door's (`alonzo::pass::expand_given`;
+//! `engine/src/ladder.rs`, included here by its path; since `ENGINE.30`'s pin
+//! to `vla-lang` 0.15.0, where a definition after the source's own stood
+//! before), on boards of four and sixteen times the window's area, 640 by 400
+//! and 1280 by 800, each under a still Camera at its top-left, the source's
+//! own. Each rung is a fixture of its own, `life-x4` and
 //! `life-x16`, `gun-x4` and `gun-x16`, timed and held as the window's is,
 //! every frame over its whole board, and named by the SHA-256 over LF of the
 //! cartridge the pass wrote (`engine/src/sha256.rs`, included by its path),
@@ -159,7 +161,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Instant;
 
 use alonzo::cartridge::{Cartridge, Manifest, Seed, Settle};
-use alonzo::pass::{expand_with, folder_of, includes};
+use alonzo::pass::{expand, expand_given, folder_of, includes};
 use vla_lang::calc::{Computed, Value, Values};
 use vla_lang::machine::{Step, Viewed, CELLS};
 use vla_lang::reader::read_forms;
@@ -662,7 +664,7 @@ fn fixtures_of(path: &Path) -> Result<Vec<Fixture>, String> {
     let key = source_path.to_string_lossy().replace('\\', "/");
     let files = gather(&key, &source);
     for (times, w, h) in ladder::RUNGS {
-        let e = expand_with(&source, &key, &files, &ladder::definition(w, h)).map_err(|r| {
+        let e = expand_given(&source, &key, &files, &ladder::door(w, h)).map_err(|r| {
             format!(
                 "{key}: the pass refused the board of {w} by {h} at line {}: {}",
                 r.line, r.refusal.text
@@ -1847,7 +1849,7 @@ fn naught_fixtures(path: &Path) -> Result<Vec<Fixture>, String> {
         let laid = naught::Laid::new(&net, lay, naught::Switches::Stimulus, naught::Wiring::Now);
         let built = naught::floors_source(&source, &laid.block())
             .ok_or_else(|| format!("{key}: holds no block for the bench"))?;
-        let e = expand_with(&built, &key, &gather(&key, &built), "").map_err(|r| {
+        let e = expand(&built, &key, &gather(&key, &built)).map_err(|r| {
             format!(
                 "{key}: the pass refused the floors' bench at line {}: {}",
                 r.line, r.refusal.text

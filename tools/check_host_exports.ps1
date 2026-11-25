@@ -1,6 +1,6 @@
 <#
-check_host_exports.ps1 - the engine exports exactly the fifteen names docs/SPEC.md
-section 8.1 gives it, and nothing else: fourteen functions and the memory.
+check_host_exports.ps1 - the engine exports exactly the sixteen names docs/SPEC.md
+section 8.1 gives it, and nothing else: fifteen functions and the memory.
 
 WHY (ENGINE.1's second slice, 2026-10-09): the host can reach into the
 module only through what the module exports, so the export section is the
@@ -27,7 +27,12 @@ one-way door that slice named, an export once added staying. CART.16's second
 slice (2026-11-21) raised it to fifteen with alonzo_file_read and
 alonzo_file_write, a file's lines read into a cartridge's sheets and written
 back by the templates its Format sheet says (docs/SPEC.md section 3.11), two
-exports added and no signature changed, the ABI still 1.
+exports added and no signature changed, the ABI still 1. ENGINE.30's pin to
+vla-lang 0.15.0 (2026-11-24) raised it to sixteen with alonzo_expand_given,
+the pass with a door's values, the language's parameter (Frazaro's VLA.11),
+by which the frame floors' page builds the size ladder's rungs where it once
+appended a second definition to the source, which the language now refuses:
+an export added beside alonzo_expand, whose signature stays, the ABI still 1.
 
 WHAT IT READS: the binary format's section table (magic "\0asm", version 1,
 then sections of id byte, LEB128 size, payload). Section id 7 is the export
@@ -49,14 +54,14 @@ target/, exports its memory alone and fails until the engine is rebuilt.
 -Control proves the reader and the judgment on modules built in memory, each
 a valid module (a type section, a function section, the memory and a global
 where a case asks for them, the export section and the code section): the
-fifteen names pass; the fourteen functions without the memory fail; the
-fifteen with vla_load fail with the c-abi hint; the fifteen less alonzo_step
-fail; the fifteen less alonzo_expand fail; the fifteen less alonzo_moved fail;
-the fifteen less the file's two, the module of the first thirteen, fail; a
-memory exported under a function's name fails on its kind; a global
-__heap_base beside the fifteen fails; a list that disagrees with its count
-fails; an export of an unknown kind fails; bytes that are not a module are
-refused.
+sixteen names pass; the fifteen functions without the memory fail; the
+sixteen with vla_load fail with the c-abi hint; the sixteen less alonzo_step
+fail; the sixteen less alonzo_expand fail; the sixteen less
+alonzo_expand_given, the module of the fifteen, fail; the sixteen less
+alonzo_moved fail; the sixteen less the file's two fail; a memory exported
+under a function's name fails on its kind; a global __heap_base beside the
+sixteen fails; a list that disagrees with its count fails; an export of an
+unknown kind fails; bytes that are not a module are refused.
 Every mutant proves it applied: the reader must name the exports the module
 was built with before the judgment is asked.
 
@@ -83,9 +88,9 @@ $list = @(
     'memory',
     'alonzo_abi_version', 'alonzo_version_text', 'alonzo_alloc', 'alonzo_free',
     'alonzo_load', 'alonzo_describe', 'alonzo_write', 'alonzo_step', 'alonzo_view', 'alonzo_unload',
-    'alonzo_expand', 'alonzo_moved', 'alonzo_file_read', 'alonzo_file_write'
+    'alonzo_expand', 'alonzo_expand_given', 'alonzo_moved', 'alonzo_file_read', 'alonzo_file_write'
 )
-$expectedExports = 15
+$expectedExports = 16
 
 function Read-Leb128([byte[]]$b, [ref]$i) {
     $result = 0; $shift = 0
@@ -220,24 +225,26 @@ if ($Control) {
     }
 
     $functions = @($list | Where-Object { $_ -cne 'memory' } | ForEach-Object { "$($_):func" })
-    $fifteen = @('memory:memory') + $functions
-    $lessStep = @($fifteen | Where-Object { $_ -cne 'alonzo_step:func' })
-    $lessExpand = @($fifteen | Where-Object { $_ -cne 'alonzo_expand:func' })
-    $lessMoved = @($fifteen | Where-Object { $_ -cne 'alonzo_moved:func' })
-    $lessFile = @($fifteen | Where-Object { $_ -cne 'alonzo_file_read:func' -and $_ -cne 'alonzo_file_write:func' })
+    $sixteen = @('memory:memory') + $functions
+    $lessStep = @($sixteen | Where-Object { $_ -cne 'alonzo_step:func' })
+    $lessExpand = @($sixteen | Where-Object { $_ -cne 'alonzo_expand:func' })
+    $lessGiven = @($sixteen | Where-Object { $_ -cne 'alonzo_expand_given:func' })
+    $lessMoved = @($sixteen | Where-Object { $_ -cne 'alonzo_moved:func' })
+    $lessFile = @($sixteen | Where-Object { $_ -cne 'alonzo_file_read:func' -and $_ -cne 'alonzo_file_write:func' })
     $asFunc = @('memory:func') + $functions
     $cases = @(
-        @{ Name = 'the fifteen names';                               Entries = $fifteen;                            Names = $list;          Expected = 15; WantFail = $false; Want = @() },
-        @{ Name = 'the fourteen functions without the memory';       Entries = $functions;                          Names = $list;          Expected = 15; WantFail = $true;  Want = @('missing: memory', 'count: the module exports 14') },
-        @{ Name = 'the fifteen and the language''s vla_load';        Entries = $fifteen + @('vla_load:func');       Names = $list;          Expected = 15; WantFail = $true;  Want = @('unknown: vla_load (func)', "exported only under vla-lang's c-abi feature") },
-        @{ Name = 'the fifteen less alonzo_step';                    Entries = $lessStep;                           Names = $list;          Expected = 15; WantFail = $true;  Want = @('missing: alonzo_step') },
-        @{ Name = 'the fifteen less alonzo_expand';                  Entries = $lessExpand;                         Names = $list;          Expected = 15; WantFail = $true;  Want = @('missing: alonzo_expand', 'count: the module exports 14') },
-        @{ Name = 'the fifteen less alonzo_moved';                   Entries = $lessMoved;                          Names = $list;          Expected = 15; WantFail = $true;  Want = @('missing: alonzo_moved', 'count: the module exports 14') },
-        @{ Name = 'the first thirteen, a module that reads no file'; Entries = $lessFile;                           Names = $list;          Expected = 15; WantFail = $true;  Want = @('missing: alonzo_file_read', 'missing: alonzo_file_write', 'count: the module exports 13') },
-        @{ Name = 'a memory exported under a function''s name';      Entries = $asFunc;                             Names = $list;          Expected = 15; WantFail = $true;  Want = @('kind: memory is exported as a func, where the list has a memory') },
-        @{ Name = 'the fifteen and a global __heap_base';            Entries = $fifteen + @('__heap_base:global');  Names = $list;          Expected = 15; WantFail = $true;  Want = @('unknown: __heap_base (global)', 'count: the module exports 16') },
-        @{ Name = 'the list and its count disagree';                 Entries = $fifteen;                            Names = $list;          Expected = 14; WantFail = $true;  Want = @('the list holds 15 name(s) and $expectedExports is 14') },
-        @{ Name = 'an export of a kind the format does not have';    Entries = $fifteen + @('odd:7');               Names = $list;          Expected = 15; WantFail = $true;  Want = @('unknown: odd (kind 7)') }
+        @{ Name = 'the sixteen names';                               Entries = $sixteen;                            Names = $list;          Expected = 16; WantFail = $false; Want = @() },
+        @{ Name = 'the fifteen functions without the memory';        Entries = $functions;                          Names = $list;          Expected = 16; WantFail = $true;  Want = @('missing: memory', 'count: the module exports 15') },
+        @{ Name = 'the sixteen and the language''s vla_load';        Entries = $sixteen + @('vla_load:func');       Names = $list;          Expected = 16; WantFail = $true;  Want = @('unknown: vla_load (func)', "exported only under vla-lang's c-abi feature") },
+        @{ Name = 'the sixteen less alonzo_step';                    Entries = $lessStep;                           Names = $list;          Expected = 16; WantFail = $true;  Want = @('missing: alonzo_step') },
+        @{ Name = 'the sixteen less alonzo_expand';                  Entries = $lessExpand;                         Names = $list;          Expected = 16; WantFail = $true;  Want = @('missing: alonzo_expand', 'count: the module exports 15') },
+        @{ Name = 'the fifteen, a module that gives no door';        Entries = $lessGiven;                          Names = $list;          Expected = 16; WantFail = $true;  Want = @('missing: alonzo_expand_given', 'count: the module exports 15') },
+        @{ Name = 'the sixteen less alonzo_moved';                   Entries = $lessMoved;                          Names = $list;          Expected = 16; WantFail = $true;  Want = @('missing: alonzo_moved', 'count: the module exports 15') },
+        @{ Name = 'the sixteen less the file''s two';                Entries = $lessFile;                           Names = $list;          Expected = 16; WantFail = $true;  Want = @('missing: alonzo_file_read', 'missing: alonzo_file_write', 'count: the module exports 14') },
+        @{ Name = 'a memory exported under a function''s name';      Entries = $asFunc;                             Names = $list;          Expected = 16; WantFail = $true;  Want = @('kind: memory is exported as a func, where the list has a memory') },
+        @{ Name = 'the sixteen and a global __heap_base';            Entries = $sixteen + @('__heap_base:global');  Names = $list;          Expected = 16; WantFail = $true;  Want = @('unknown: __heap_base (global)', 'count: the module exports 17') },
+        @{ Name = 'the list and its count disagree';                 Entries = $sixteen;                            Names = $list;          Expected = 15; WantFail = $true;  Want = @('the list holds 16 name(s) and $expectedExports is 15') },
+        @{ Name = 'an export of a kind the format does not have';    Entries = $sixteen + @('odd:7');               Names = $list;          Expected = 16; WantFail = $true;  Want = @('unknown: odd (kind 7)') }
     )
 
     $verdicts = New-Object System.Collections.Generic.List[string]
@@ -316,5 +323,5 @@ if ($problems.Count -gt 0) {
     foreach ($p in $problems) { Write-Host "  ! $p" }
     exit 1
 }
-Write-Host "OK: $wasm exports exactly the fifteen names of docs/SPEC.md section 8.1 ($($bytes.Length) bytes, $($exports.Count) exports, pinned at $expectedExports)"
+Write-Host "OK: $wasm exports exactly the sixteen names of docs/SPEC.md section 8.1 ($($bytes.Length) bytes, $($exports.Count) exports, pinned at $expectedExports)"
 exit 0

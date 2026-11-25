@@ -35,7 +35,11 @@ repository = "https://github.com/Spreadsheet-Company/Alonzo"
 
 [workspace.dependencies]
 # The language crate and nothing else (AD-5), pinned to one version on
-# crates.io: vla-lang 0.14.0 (Frazaro's release commit 77516bd, tagged
+# crates.io: vla-lang 0.15.0 (Frazaro's release commit 4072cd6, tagged
+# v0.15.0, 2026-11-24): the row that empties a cell (KERNEL.46), dynamic
+# arrays whole (KERNEL.55), a cell alone read in place (KERNEL.74), functions
+# at expand time (VLA.8) and hygiene by design, a parameter a door gives
+# among it (VLA.11); over 0.14.0 (Frazaro's release commit 77516bd, tagged
 # v0.14.0, 2026-11-17): LET, LAMBDA, a call in place, named functions, the
 # helpers and a room's function row (KERNEL.29), a held column read row by
 # row (KERNEL.73), a loop naming an entry's parts (VLA.16), funcall in the
@@ -94,9 +98,10 @@ repository = "https://github.com/Spreadsheet-Company/Alonzo"
 # 0.8.1 on 2026-10-10, 0.9.0 on 2026-10-11, 0.9.1 and 0.9.2 on 2026-10-12,
 # 0.9.3 on 2026-10-14, 0.9.4 on 2026-10-15, 0.10.0 on 2026-10-17, 0.10.1
 # on 2026-10-18, 0.11.0 on 2026-10-23, 0.12.0 on 2026-10-30, 0.13.0 on
-# 2026-11-15 and 0.14.0 on 2026-11-17, no git rev between them. An exact version and never a range,
+# 2026-11-15, 0.14.0 on 2026-11-17 and 0.15.0 on 2026-11-24, no git rev
+# between them. An exact version and never a range,
 # a rev and never a branch, since a range and a branch move.
-vla-lang = "=0.14.0"
+vla-lang = "=0.15.0"
 
 [profile.release]
 # Fast, deterministic, and without an unwinder: a panic aborts, so the wasm

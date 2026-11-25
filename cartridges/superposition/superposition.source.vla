@@ -77,11 +77,14 @@
 ; Field a site and the Field bound there, n a multiple of 32, the Tally's block. Each layer
 ; is its first row's and first column's formulas and the rest's, so that no reference reads
 ; past the sheet's first row or column. A macro that hands n on, as
-; Life's board-size hands its width and height on (ENGINE.9): a door that defines it again
-; builds this source on another lattice, as the engine's tests build it at 64.
+; Life's board-size hands its width and height on (ENGINE.9): a door that gives the
+; parameter another value builds this source on another lattice, as the engine's tests
+; build it at 64.
+(parameter sites-a-side 512)
+
 (defmacro (lattice-side then & args)
-  "the lattice's side, 512 sites, handed on: (then 512 args...)"
-  (quasiquote ((unquote then) 512 (unquote-splicing args))))
+  "the lattice's side, sites-a-side sites, handed on: (then 512 args...) at the source's own"
+  (quasiquote ((unquote then) sites-a-side (unquote-splicing args))))
 
 ; ---- the sheets, in tab order --------------------------------------------------------
 ; The Field, the Observer and the Constants a person sees; the rest hidden, each a
@@ -279,10 +282,10 @@
 (defmacro (neighbors kind then)
   "the eight neighbors of the fill's first cell, handed on as one list, (then (a b c d e f g h)), a neighbor off the sheet the site itself"
   (cond
-    ((eq? kind "corner") (then ("A1" "A1" "A1" "A1" "B1" "A1" "A2" "B2")))
-    ((eq? kind "top") (then ("B1" "B1" "B1" "A1" "C1" "A2" "B2" "C2")))
-    ((eq? kind "left") (then ("A2" "A1" "B1" "A2" "B2" "A2" "A3" "B3")))
-    (else (then ("A1" "B1" "C1" "A2" "C2" "A3" "B3" "C3")))))
+    ((eq? kind "corner") (call-expand then ("A1" "A1" "A1" "A1" "B1" "A1" "A2" "B2")))
+    ((eq? kind "top") (call-expand then ("B1" "B1" "B1" "A1" "C1" "A2" "B2" "C2")))
+    ((eq? kind "left") (call-expand then ("A2" "A1" "B1" "A2" "B2" "A2" "A3" "B3")))
+    (else (call-expand then ("A1" "B1" "C1" "A2" "C2" "A3" "B3" "C3")))))
 
 (defmacro (was at)
   "a site's last value, a reference into the Field's twin from its address"

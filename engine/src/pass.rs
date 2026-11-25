@@ -262,17 +262,41 @@ pub fn expand(
     path: &str,
     files: &[(String, String)],
 ) -> Result<Expansion, LineRefusal> {
+    expand_given(source, path, files, "")
+}
+
+/// The pass with a door's values (`ENGINE.9`; `docs/SPEC.md` section 7.8;
+/// since `ENGINE.30`'s pin to `vla-lang` 0.15.0, the language's `parameter`,
+/// Frazaro's `VLA.11`): `door` is `(parameter word value)` forms, apart from
+/// the source, each value given to the source's parameter of its word before
+/// the first form expands, of the kind the source's own value is; a word no
+/// parameter of the source declares is refused once it has expanded, and a
+/// form of another shape at once, each on the line past the source's last.
+/// A source states what a door may change as a parameter, and a door builds
+/// it at another value: the size ladder builds Life and the gun on larger
+/// boards by their `board-width` and `board-height` so. A door writes no row
+/// and replaces no macro, since a word names one thing (a macro's second
+/// definition is `vla-defmacro-twice`). The page gives the same values by the
+/// module's `alonzo_expand_given`, and the empty door is the pass itself.
+pub fn expand_given(
+    source: &str,
+    path: &str,
+    files: &[(String, String)],
+    door: &str,
+) -> Result<Expansion, LineRefusal> {
     let mut spliced = Spliced { forms: Vec::new() };
     spliced.walk(source, folder_of(path), files, 0, path, 0)?;
 
+    let past = source.lines().count() as u32 + 1;
     let mut ex = Expander::new();
+    ex.set_parameters(door).map_err(|r| refused(past, r))?;
     let mut body: Vec<(Form, u32)> = Vec::new();
     for (f, at) in spliced.forms {
-        match &f {
-            Form::List(l) if f.head_is("defmacro") => {
-                ex.define_macro(l).map_err(|r| refused(at, r))?;
-            }
-            _ => body.push((f, at)),
+        // Every definition the language takes, by its own entry point: a
+        // macro, and since vla-lang 0.15.0 a function (Frazaro's VLA.8), so
+        // that a definition the language adds later asks nothing of the pass.
+        if !ex.define(&f).map_err(|r| refused(at, r))? {
+            body.push((f, at));
         }
     }
 
@@ -320,37 +344,8 @@ pub fn expand(
             rows += 1;
         }
     }
+    ex.finish_parameters().map_err(|r| refused(past, r))?;
     Ok(Expansion { text: out, rows })
-}
-
-/// The pass with a door's definitions (`ENGINE.9`; `docs/SPEC.md` section 7.8,
-/// the note of 2026-10-14): `definitions`, VLA text, stands after the
-/// source's last line. Every `defmacro` is defined before any form expands,
-/// and the language's expander keeps a name's last definition, so a macro
-/// the definitions define overwrites the source's of the same name wherever
-/// the source calls it. A source states a parameter as a macro with its
-/// value, and a door builds it at another: the size ladder builds Life and
-/// the gun on larger boards by their `board-size` so. The pass still knows
-/// no macro by name. The page does the same act by appending the same text
-/// to the source before the module's `alonzo_expand`, and the empty text is
-/// the pass itself. A refusal of a definition's form stands on its line
-/// counted past the source's last.
-pub fn expand_with(
-    source: &str,
-    path: &str,
-    files: &[(String, String)],
-    definitions: &str,
-) -> Result<Expansion, LineRefusal> {
-    if definitions.is_empty() {
-        return expand(source, path, files);
-    }
-    let mut joined = String::with_capacity(source.len() + definitions.len() + 2);
-    joined.push_str(source);
-    if !source.is_empty() && !source.ends_with('\n') {
-        joined.push_str("\r\n");
-    }
-    joined.push_str(definitions);
-    expand(&joined, path, files)
 }
 
 #[cfg(test)]
@@ -530,27 +525,28 @@ mod tests {
         assert_eq!(r.refusal.id, "cart-manifest-invalid");
     }
 
-    /// A door's definitions (`ENGINE.9`, decision 2): a definition standing
-    /// after the source's own gives the source's parameter another value
-    /// wherever the source calls it; the empty text is the pass itself; a
-    /// source with no line end after its last line still has the
-    /// definitions on lines of their own; and a refusal of a definition's
-    /// form stands on its line counted past the source's last.
+    /// A door's values (`ENGINE.9`, decision 2; since `ENGINE.30`'s pin to
+    /// `vla-lang` 0.15.0, the language's `parameter`): a value given to the
+    /// source's parameter stands wherever the source reads it; the empty door
+    /// is the pass itself; a source with no line end after its last line
+    /// takes the same values; a door writes no row, a form of another shape
+    /// refused, and a word the source declares no parameter for refused, each
+    /// on the line past the source's last; and a source's own function
+    /// (Frazaro's `VLA.8`) is a definition, as a macro is.
     #[test]
-    fn a_door_s_definition_gives_a_source_s_parameter_another_value() {
+    fn a_door_s_value_gives_a_source_s_parameter_another_value() {
         let source = format!(
-            "{MANIFEST}(defmacro (size then & args) (quasiquote ((unquote then) 2 3 (unquote-splicing args))))\n(defmacro (corner width height sheet) (quasiquote (cell (unquote sheet) (unquote (address-expand height width)) 1)))\n(size corner \"S\")\n"
+            "{MANIFEST}(parameter size-width 2)\n(parameter size-height 3)\n(defmacro (size then & args) (quasiquote ((unquote then) size-width size-height (unquote-splicing args))))\n(defmacro (corner width height sheet) (quasiquote (cell (unquote sheet) (unquote (address-expand height width)) 1)))\n(size corner \"S\")\n"
         );
-        let own = expand_with(&source, "t.source.vla", &[], "").expect("expands");
+        let own = expand_given(&source, "t.source.vla", &[], "").expect("expands");
         assert_eq!(own, expand(&source, "t.source.vla", &[]).expect("expands"));
         assert!(
             lf(&own.text).ends_with("(cell \"S\" \"B3\" 1)\n"),
             "{}",
             own.text
         );
-        let wider =
-            "(defmacro (size then & args) (quasiquote ((unquote then) 4 5 (unquote-splicing args))))\n";
-        let e = expand_with(&source, "t.source.vla", &[], wider).expect("expands");
+        let wider = "(parameter size-width 4)\n(parameter size-height 5)\n";
+        let e = expand_given(&source, "t.source.vla", &[], wider).expect("expands");
         assert!(
             lf(&e.text).ends_with("(cell \"S\" \"D5\" 1)\n"),
             "{}",
@@ -559,14 +555,41 @@ mod tests {
         assert_eq!(e.rows, 1);
         let unended = source.trim_end();
         assert_eq!(
-            expand_with(unended, "t.source.vla", &[], wider).expect("expands"),
+            expand_given(unended, "t.source.vla", &[], wider).expect("expands"),
             e
         );
+        // A door writes no row: a form of another shape is refused, and so is
+        // a word no parameter of the source declares, each on the line past
+        // the source's last; a value of another kind than the source's own is
+        // refused on the parameter's own line, the manifest's six before it.
         let lines = source.lines().count() as u32;
         let refused = format!("{wider}(corner 1)\n");
-        let r = expand_with(&source, "t.source.vla", &[], &refused).expect_err("arity");
-        assert_eq!(r.refusal.id, "vla-macro-arity");
-        assert_eq!(r.line, lines + 2);
+        let r = expand_given(&source, "t.source.vla", &[], &refused).expect_err("a row");
+        assert_eq!(r.refusal.id, "vla-define-shape");
+        assert_eq!(r.line, lines + 1);
+        let r = expand_given(&source, "t.source.vla", &[], "(parameter size-depth 1)\n")
+            .expect_err("undeclared");
+        assert_eq!(r.refusal.id, "vla-parameter-undeclared");
+        assert_eq!(r.line, lines + 1);
+        let r = expand_given(
+            &source,
+            "t.source.vla",
+            &[],
+            "(parameter size-width \"4\")\n",
+        )
+        .expect_err("a text for a number");
+        assert_eq!(r.refusal.id, "vla-parameter-kind");
+        assert_eq!(r.line, 7);
+        // A source's own function is a definition, as a macro is.
+        let function = format!(
+            "{MANIFEST}(defexpand (twice n) (*expand n 2))\n(cell \"S\" \"A1\" (twice 3))\n"
+        );
+        let f = expand(&function, "t.source.vla", &[]).expect("expands");
+        assert!(
+            lf(&f.text).ends_with("(cell \"S\" \"A1\" 6)\n"),
+            "{}",
+            f.text
+        );
     }
 
     /// The golden (decision 28): every cartridge of the repository that has
@@ -655,14 +678,18 @@ mod tests {
             };
             let path = format!("cartridges/{name}/{name}.source.vla");
             let source = read(&format!("{name}.source.vla"));
-            assert!(ladder::climbs(&source), "{path} states no board-size");
-            let own = expand_with(&source, &path, &fs, "").expect("expands");
+            assert!(
+                ladder::climbs(&source),
+                "{path} states no board's two parameters"
+            );
+            let own = expand(&source, &path, &fs).expect("expands");
             assert_eq!(lf(&own.text), lf(&read(&format!("{name}.vla"))));
             assert!(!own.text.contains("\"Camera\""), "{name} has a Camera");
             for (times, w, h) in ladder::RUNGS {
-                let e = expand_with(&source, &path, &fs, &ladder::definition(w, h)).unwrap_or_else(
-                    |r| panic!("{name} x{times}: line {}: {}", r.line, r.refusal.text),
-                );
+                let e =
+                    expand_given(&source, &path, &fs, &ladder::door(w, h)).unwrap_or_else(|r| {
+                        panic!("{name} x{times}: line {}: {}", r.line, r.refusal.text)
+                    });
                 let text = lf(&e.text);
                 let interior = format!(
                     "(formula \"Screen\" \"B2:{}{}\" ",
@@ -961,7 +988,7 @@ mod tests {
             ),
             // A defined name in a piece, read as the name it is.
             (
-                r#"(since "Patch" "B8:C8" (= beat 1))"#,
+                r#"(since "Patch" "B8:C8" (= (ref "beat") 1))"#,
                 &[r#"(formula "Patch" "B8:C8" "=IF(beat=1,0,Patch.last!B8+1)")"#],
             ),
             // The Write sheet's row: its target, its address while a test

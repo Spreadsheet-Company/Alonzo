@@ -1159,6 +1159,67 @@ Found:
 - *0.14.0 made the shuffled bench 27% faster natively and 28% lighter,* its steady frame 15.0 ms where 20.6 and its heap 92.7 MB where 128.7, the regularity premium's steady frame 3.1 times where 4; the browser's the same, 20.7 ms where 20.6. Which of its changes, `KERNEL.29`'s shapes or `KERNEL.73`'s run, is not traced here.
 - *0.14.0's library costs the page 180,322 bytes* of module, 8.7%, `LET`, `LAMBDA`, the helpers and a room's compiler whether a cartridge calls them or not (the seventeenth's Found, again).
 
+*The pin at `vla-lang` 0.15.0, 2026-11-24, at the owner's word after `ENGINE.30`'s decision 13 closed, a rehearsal first, "Run step 1, the rehearsal against the tag. 0.15.0 is live on GitHub and crates.io", and then "Build the pin slice from the patch, page side first": the pin `ENGINE.30`'s first slice waits on, as the pin to 0.14.0 and `ENGINE.40`'s second slice went.*
+
+The release is Frazaro's, its release commit `4072cd6`, tagged `v0.15.0`. The crate crates.io serves is the tag's file for file: 100 files byte for byte, and 15 `.vla` that differ only by the CRLF Frazaro's `*.vla eol=crlf` gives every checkout. It holds `KERNEL.46`, the row that empties a cell, which the first slice's undo waits on; `KERNEL.55`, dynamic arrays whole; `KERNEL.74`, a cell alone read in place; `VLA.8`, functions at expand time; and `VLA.11`, hygiene by design, a macro's second definition and a parameter at a list's head refused, `parameter` and `call-expand`, and a bare word in a formula refused.
+
+**The rehearsal.** In a worktree of `e3136fa` with the pin alone, 8 of 129 tests failed and one cartridge's expansion was refused, each by a change the release's notes name: Superposition's `neighbors`, its parameter `then` at four heads (`vla-name-at-a-head`); the size ladder's second `board-size`, the lattice tests' second `lattice-side` and the pass's own test of a door (`vla-defmacro-twice`); and one the notes did not foresee, the kit's test writing a bare `beat` in a formula (`vla-formula-word-free`), the test's own text and no cartridge's. Twelve cartridges expanded to their bytes, Afterlife among them, the thirteenth, which the notes' survey of twelve predates. Two probes found what no test held. An `(empty ...)` row met none of the engine's device checks, which read a row's first four items, so `(empty "Clock" "B3")` was written where `(cell "Clock" "B3" 0)` is `cart-write-clock`, and the seed read empty after it. And a source's own function, `(defexpand (twice n) (*expand n 2))`, was refused at its body, "*expand: expected a number, got 'n'", since the pass defined a `defmacro` alone and handed the expander a function as a form of the body.
+
+**What moved.**
+- `Cargo.toml`'s pin and its comment, and the lock: the checksum `a08a78a5…`, still two packages. `check_engine_deps.ps1`'s baseline and its header.
+- *The door, values and never text* (`SPEC.md` §7.8, corrected). `pass::expand_given`, which was `expand_with`, takes a door of `(parameter word value)` forms, each value given before the first form expands and held to the source's parameters once it has expanded, a refusal of the door standing on the line past the source's last. Life and the gun state their board as `(parameter board-width 320)` and `(parameter board-height 200)`, handed on by `board-size`, and their still Camera as a macro of their own, `still-camera`, `(quote-if (>expand board-width 320) (camera 1 1) (begin))`, the shape Frazaro's `VLA.11` measured in its own copy of this repository; `ladder::door(w, h)` gives the two values, and `ladder::climbs` asks a source for both parameters. Superposition states `(parameter sites-a-side 512)`, which the lattice tests give at 32 and 64, and its `neighbors` calls `then` by `call-expand`. Every cartridge expands to its bytes, and the ladder's rungs to the bytes the later `board-size` wrote, each rung's digest the baseline's.
+- *The page's door*, the module's sixteenth export, `alonzo_expand_given`: `alonzo_expand`'s three texts and then the door's (§4.6), by which the frame floors' page builds the rungs, where it appended a second definition to the source. `alonzo_expand`'s signature stays, so the ABI stays 1. The rehearsal had recommended a fourth argument of `alonzo_expand`; §4.6 keeps the ABI only while no signature changes, so the door is an export of its own, and an export once added stays, the one-way door `ENGINE.39`'s third slice named, laid before the owner at this pin's hand test. `check_host_exports.ps1` holds sixteen names, its control twelve modules, where its words in `run_checks.ps1` said ten since `CART.16`'s second slice made eleven.
+- The pass takes every definition by the language's own entry point, `Expander::define`, a function among them, so that a definition the language adds later asks nothing of the pass.
+- `check_row` reads an `empty` row, three items, at the places a `cell` row is read, a Screen cell past the window and a device's cell past its layout refused, and `check_clock` refuses it the Clock's three cells, an empty rate or seed being no number in its range (§4.3). The page writes no `empty` row yet.
+- The tests: the door's, rewritten for values, a door writing no row, a word no parameter declares and a value of another kind refused, and a source's function a definition; the kit's, `(ref "beat")`; `an_empty_row_meets_the_checks_a_cell_row_meets`; and the surface test's door, its empty door the pass, the ladder's values the native pass's bytes, an undeclared word on the line past the source's last, and a door not UTF-8 named.
+- The frame floors' twenty-first baseline, and the twelve heap ceilings each raised by 11 or 19 bytes (below).
+- Docs: `SPEC.md` §4.3, §4.6 with its table and the exports' note, and §7.8; the three READMEs; `common.vla`'s comment on `interior`, which no cartridge's bytes read.
+- No describe golden, replay or replay digest moved, and no frame: every replay and every session held to its hand stands.
+
+**The oracle, on the day** (*measurement*):
+- `cargo test --release`: 130 tests of the library and the doc test, every cartridge required; `cargo clippy --all-targets` and `cargo fmt --check` clean.
+- `expand -- --check`: thirteen `same`; Afterlife's, Naught's and Seiyaku's blocks `same`.
+- The module: 2,614,098 bytes, 272,087 more than the 2,342,011 at `e3136fa` over 0.14.0, 11.6%, nearly all of it 0.15.0's library (2,606,627 with the pin alone); it imports nothing and exports the sixteen names.
+- `run_checks.ps1 -WithExtras`, once: 13 checks green and 12 of the 13 controls. The loop control failed inside the run, its cause not traced, since `run_checks` keeps a failure's last 20 lines and each of them was a mutant failing as it should; run alone right after over the same tree, it passed, the real page clean and the 322 mutant pages failing by name.
+
+*The floors' twenty-first baseline,* twenty-one runs of `tools/bench_frames.ps1` by this session in its worktree, the machine otherwise idle, both halves opted out of the throttling and on the performance cores: eighteen of 0.15.0, and three of 0.14.0's own build, `e3136fa` in a worktree of its own, alternated with the last three. Fourteen refused themselves, the clock's spread past 10% at one fixture or another, 10.1 to 13.7% and once 80.3%; the block pasted is the third alternated round's. Each of the six blocks of 0.15.0 named rows under their floors, native superposition-act and wasm gun in each: the act's p95 0.38 to 0.49 ms where the twentieth's read 0.3191 and the two before it 0.4249 and 0.4162, its p50 0.249 to 0.269 ms where 0.2516. The alternation tells the machine's day from the language: in the same round 0.14.0's own build read the act's p95 at 0.4003 ms, 1,995,331,002 cells a second, under its floor too, where 0.15.0 read 0.3763, and wasm gun-x16 at 31,839,032,241, under its floor, where 0.15.0 read 33,471,803,154; every other row of the round within 9% either way, wasm gun aside, 0.14.0's 2,178,214,052 where 0.15.0's 1,874,277,204, an idle frame of about 30 microseconds read through the page's clock of a tenth of a millisecond, the spread the 2026-10-18 entry found. So three floors are lowered, each this run's less 10%, with its reason in the entry, at the owner's word, "Lowered floors approved; land it when the run is green"; five are raised; wasm superposition-act stays at 1,020,000,000 (the fifteenth's note). Every value the same, each fixture's frames held to its hand, and every allocation count the ceiling's.
+
+| row | frame p50 | cells a second | floor |
+|---|---|---|---|
+| native life | 2.2 ms | 28,265,398 | 27,800,000, kept |
+| native life-x4 | 8.6 ms | 29,528,965 | 26,500,000, from 26,400,000 |
+| native life-x16 | 35.0 ms | 29,137,984 | 26,600,000, kept |
+| native gun | 0.0199 ms | 3,170,492,526 | 2,850,000,000, from 2,630,000,000 |
+| native gun-x4 | 0.0208 ms | 12,228,093,303 | 11,400,000,000, kept |
+| native gun-x16 | 0.0209 ms | 48,765,374,874 | 46,300,000,000, kept |
+| native sand | 3.0 ms | 62,717,314 | 57,400,000, kept |
+| native superposition | 0.0010 ms | 776,333,770,715 | 748,000,000,000, kept |
+| native superposition-act | 0.2538 ms, p95 0.3763 | 2,122,591,018 | 1,910,000,000, from 2,250,000,000 |
+| native superposition-cascade | 0.1545 ms | 4,912,773,612 | 4,490,000,000, kept |
+| native naught-f | 4.9 ms | 10,685,519 | 9,850,000, kept |
+| native naught-s | 15.3 ms | 3,463,775 | 3,170,000, kept |
+| wasm life | 2.6 ms | 24,216,923 | 21,700,000, from 19,800,000 |
+| wasm life-x4 | 10.5 ms | 24,068,626 | 23,200,000, kept |
+| wasm life-x16 | 42.3 ms | 24,109,787 | 21,600,000, from 21,300,000 |
+| wasm gun | 0.0336 ms | 1,874,277,204 | 1,680,000,000, from 2,130,000,000 |
+| wasm gun-x4 | 0.0273 ms | 9,286,363,429 | 8,860,000,000, kept |
+| wasm gun-x16 | 0.0305 ms | 33,471,803,154 | 30,100,000,000, from 34,500,000,000 |
+| wasm sand | 4.3 ms | 44,521,176 | 40,500,000, kept |
+| wasm superposition | 0.0015 ms | 532,487,333,333 | 513,000,000,000, kept |
+| wasm superposition-act | 0.4000 ms, p95 0.6000 | 1,331,218,313 | 1,020,000,000, kept |
+| wasm superposition-cascade | 0.2000 ms | 3,484,637,771 | 3,280,000,000, kept |
+| wasm naught-f | 6.3 ms | 8,391,270 | 7,790,000, kept |
+| wasm naught-s | 20.4 ms | 2,591,422 | 2,330,000, from 2,300,000 |
+
+The heaps, against the ceilings 0.14.0 set: 11 bytes more for Life's soup and at each of its rungs, at the gun's window and its rungs and for each of Superposition's three, and 19 for Sand and for each of naught's two benches, the same in the instrument's runs and the check's; a constant a load whatever the grid's size, the language's, so the ceilings are raised by those bytes with their note in the check. The browser's memory is its pages'.
+
+Found, none minted:
+- *0.15.0's grid holds 11 or 19 bytes more a load*, whatever its size: which field takes them is not traced.
+- *The page has not learned the record's `spill` row* (Frazaro's `KERNEL.55`): no committed cartridge writes a dynamic or an array formula, and the page writes neither word, so none reaches it; a cartridge or a page that writes `dynamic` meets it.
+- *0.15.0's library costs the page 264,616 bytes of module*, 11.3%, every function and rule kind in it whether a cartridge calls it or not (the seventeenth's Found, again).
+
+*Owner-tested 2026-11-24 and committed at the owner's word, "Hand tests pass; commit, then recommend next steps".* In Chrome at a ratio of 1.5: Superposition played, and built from its source by the drawer's Build the cartridge and loaded, as Life was; `?frames=1` built the ladder's four rungs through `alonzo_expand_given`, each named by the baseline's digest, life-x4 `D841A883…`, life-x16 `944AEF5C…`, gun-x4 `09E2744A…` and gun-x16 `B762A925…`, the page declining its times as a baseline when the clock moved 11.9% in Superposition's idle row, as a page in a foreground browser may; and `?loop=1` OK in every case over the module of 2,614,098 bytes.
+
 ## `ENGINE.2` — the frame path: the plane held to the record of the same window
 
 *Scoped 2026-10-09, at the owner's word, the day `ENGINE.1` closed: the Screen read out of the module's memory as bytes and blitted whole, held equal to the view record of the same window by a test, the record being the oracle (`CHARTER.md` §3), and the window the Camera's (`SPEC.md` §13's two oracles for this item). The scoping finds the path itself already laid, since `ENGINE.1` had to draw something: the host views the plane, copies the bytes out and blits them through the Palette. What is missing is the oracle, a fixture that reaches every arm of the byte's rule, and the cost the second slice measured, which is the language's. So the scoping is mostly a measurement, made before any claim, and its first finding moves the cost to Frazaro.*
@@ -12177,6 +12238,10 @@ The owner answered the three questions brought the same day, "Yes to all three":
 **Its hand test.** A cartridge of the session's, nine rows at rate 0, `(spec 3)`: `Screen!B1` typed into, and the Write sheet's one row writing `=Screen!B1` into `Screen!B2`, so that B2, "Written an act later", shows the value typed an act before. Opened, 5 typed and then 6, saved, the save opened, and 7 typed: B2 reads 6, as the run without the save reads, where the page before the fix reads 5. Then the page's own oracle, `?loop=1&cases=save,keep`, its two lines OK at the counts above.
 
 *Owner-tested 2026-11-24 and committed at the owner's word, "Hand tests pass; commit, then recommend next steps".* In Chrome at a ratio of 1.5: the save, `owed-2.vla`, stood at frame 2 with `Screen!B1` 6, `B2` 5 and the Write sheet's `C2` 6, the write its next frame owed; opened, and 7 typed, B2 read 6. The oracle's two lines read OK at the floors above, the `save` case's save of 2,804 kilobytes, and `loop ok cases=2 dpr=1.5`.
+
+### The pin, 2026-11-24
+
+Recorded with every pin in `ENGINE.1`'s section, *The pin at `vla-lang` 0.15.0*: the release holding Frazaro's `KERNEL.46`, the row that empties a cell, which this item's first slice writes; a door's values given by the language's `parameter` and, in the page, by a sixteenth export, `alonzo_expand_given`; an `empty` row held to the device checks; and the floors' twenty-first baseline. The first slice waits on nothing.
 
 ## `CART.16` — Afterlife, the Studio's sheet: a reel's Prolog facts read into tabs, a relation a tab and an argument a column, edited as a spreadsheet and written back as the file they were read from
 

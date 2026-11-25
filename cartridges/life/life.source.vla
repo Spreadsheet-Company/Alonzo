@@ -51,16 +51,22 @@
   ("#FFFF55" "yellow"))             ; 15
 
 ; The board: the Screen's cells the rule covers, 320 by 200, the window's own size, so
-; that the plane draws all of it. It is this source's one parameter (ENGINE.9), a macro
-; that hands the width and the height on, since a macro's call is no argument of the
-; expand-time arithmetic: (board-size interior ...) becomes (interior 320 200 ...). A
-; door that hands the pass a later definition of it builds this source on another
-; board, and the same rule covers it: the engine's size ladder builds it so at 640 by
-; 400 and at 1280 by 800, each under a still Camera at the board's top-left, since the
-; window stays the manifest's (docs/SPEC.md sections 7.8 and 10).
+; that the plane draws all of it. Its width and its height are this source's two
+; parameters (ENGINE.9), and a macro hands them on: (board-size interior ...) becomes
+; (interior 320 200 ...). A door that gives the parameters other values builds this
+; source on another board, and the same rule covers it: the engine's size ladder builds
+; it so at 640 by 400 and at 1280 by 800, each under a still Camera at the board's
+; top-left, since the window stays the manifest's (docs/SPEC.md sections 7.8 and 10).
+(parameter board-width 320)
+(parameter board-height 200)
+
+(defmacro (still-camera)
+  "a still Camera at the board's top-left where the board is wider than the window's 320 cells, nothing at the window's own size"
+  (quote-if (>expand board-width 320) (camera 1 1) (begin)))
+
 (defmacro (board-size then & args)
-  "the board, 320 by 200 cells, handed on: (then 320 200 args...)"
-  (quasiquote ((unquote then) 320 200 (unquote-splicing args))))
+  "the board, board-width by board-height cells, handed on under a still Camera where it is larger than the window: (then 320 200 args...) at the source's own"
+  (quasiquote (begin (still-camera) ((unquote then) board-width board-height (unquote-splicing args)))))
 
 ; The soup of the first frame, Clock!B1 = 1, as two macros of expressions. Two linear
 ; forms of the seed, ROW() and COLUMN() are reduced modulo the prime P = 2^26 - 5 =

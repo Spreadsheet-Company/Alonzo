@@ -68,13 +68,20 @@
   "............11......................")
 
 ; The board, as life.source.vla's: the Screen's cells the rule covers, 320 by 200, the
-; window's own size, and this source's one parameter (ENGINE.9). The engine's size
-; ladder builds this source on boards of 640 by 400 and 1280 by 800 by handing the pass
-; a later definition of it, each under a still Camera at the board's top-left, and the
+; window's own size, its width and height this source's two parameters (ENGINE.9). The
+; engine's size ladder builds this source on boards of 640 by 400 and 1280 by 800 by
+; giving them other values, each under a still Camera at the board's top-left, and the
 ; gun stands at the same cells on every board.
+(parameter board-width 320)
+(parameter board-height 200)
+
+(defmacro (still-camera)
+  "a still Camera at the board's top-left where the board is wider than the window's 320 cells, nothing at the window's own size"
+  (quote-if (>expand board-width 320) (camera 1 1) (begin)))
+
 (defmacro (board-size then & args)
-  "the board, 320 by 200 cells, handed on: (then 320 200 args...)"
-  (quasiquote ((unquote then) 320 200 (unquote-splicing args))))
+  "the board, board-width by board-height cells, handed on under a still Camera where it is larger than the window: (then 320 200 args...) at the source's own"
+  (quasiquote (begin (still-camera) ((unquote then) board-width board-height (unquote-splicing args)))))
 
 ; The rule, one row over the board's interior, B2:LG199 on this board, which the
 ; library's interior writes through first-frame, every reference relative but the

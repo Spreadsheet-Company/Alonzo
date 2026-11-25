@@ -16,7 +16,12 @@ own contract), shows in the lock and fails here by name.
 THE PIN, the owner's route of 2026-10-09 (docs/REARVIEW.md, ENGINE.1's second
 slice, decision 1): vla-lang by git at a commit of Frazaro's while the
 language's change is unreleased, and the exact registry pin once it is
-released. Since 2026-11-17 it is "=0.14.0" from crates.io, Frazaro's release
+released. Since 2026-11-24 it is "=0.15.0" from crates.io, Frazaro's release
+of KERNEL.46, the row that empties a cell, KERNEL.55, dynamic arrays whole,
+KERNEL.74, a cell alone read in place, VLA.8, functions at expand time, and
+VLA.11, hygiene by design, a parameter a door gives among it (its release
+commit 4072cd6, tagged v0.15.0, the published crate the tag's file for file);
+before it "=0.14.0" (2026-11-17), Frazaro's release
 of KERNEL.29, LET, LAMBDA and named functions, KERNEL.73, a held column read
 row by row, VLA.16, a loop naming an entry's parts, VLA.17, funcall in the
 formula syntax, and VLA.18, the raw string a saved file's drafts are written
@@ -112,7 +117,9 @@ if ($Root -eq '') { $Root = Split-Path -Parent $PSScriptRoot }
 #     raised together. The git pin before this one, for the day one returns:
 #     '{ git = "https://github.com/Spreadsheet-Company/Frazaro", rev = "f5dc344" }',
 #     'git+https://github.com/Spreadsheet-Company/Frazaro?rev=f5dc344#f5dc344aeae5e3efdad03b6a7dbf7b1783e313fe', ''. ---
-# The registry pins before this one, "=0.13.0", checksum
+# The registry pins before this one, "=0.14.0", checksum
+# 21af335ea8503bc3c7a9c3cb96848ef3db208cf61a89307b3c69d5bda47eebe2 (2026-11-17),
+# "=0.13.0", checksum
 # 6096b0f98c82bba10ace1ab57a576ccd689d3f84399d51a68f9df258a42c4d26 (2026-11-15),
 # "=0.12.0", checksum
 # 7e83f2f148db88db662a568c46f304559195fb5b79684d964d62252e8c2868af (2026-10-30),
@@ -134,9 +141,9 @@ if ($Root -eq '') { $Root = Split-Path -Parent $PSScriptRoot }
 # 248b3ecf10365f9acbf2da3a481e53642d90d028ef7155b02e582da480d2d68d (2026-10-11),
 # and "=0.8.1", checksum
 # 3c44ebaf0d769b193a2d31ca0e04abe2332dc743ac50d5c9ef5fb2e0318cd202 (2026-10-10).
-$langSpec = '"=0.14.0"'
+$langSpec = '"=0.15.0"'
 $langSource = 'registry+https://github.com/rust-lang/crates.io-index'
-$langChecksum = '21af335ea8503bc3c7a9c3cb96848ef3db208cf61a89307b3c69d5bda47eebe2'
+$langChecksum = 'a08a78a50fd1b5e8ef1ab6f80da994fc69d1cafce960bd8751d1e57a435dd085'
 
 function Get-Lines([string]$path) {
     $text = [System.IO.File]::ReadAllText($path)

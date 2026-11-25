@@ -1,6 +1,6 @@
-//! The engine's C surface (ENGINE.1's second slice, 2026-10-09): the fifteen
+//! The engine's C surface (ENGINE.1's second slice, 2026-10-09): the sixteen
 //! exports of `docs/SPEC.md` section 4.6, which the host shim calls (`web/host.js`)
-//! and `tools/check_host_exports.ps1` holds name for name: fourteen functions
+//! and `tools/check_host_exports.ps1` holds name for name: fifteen functions
 //! and the module's memory. Each is a thin door onto `crate::cartridge`, which
 //! is the language's machine with the engine's manifest and devices around
 //! it, except the twelfth, [`alonzo_expand`] (`SPEC.3`'s second slice,
@@ -12,7 +12,10 @@
 //! [`alonzo_file_read`] and [`alonzo_file_write`] (`CART.16`'s second slice,
 //! 2026-11-21), are version 9's: a file's lines read into a cartridge's text
 //! and a grid's sheets written as the file, by the templates the cartridge's
-//! Format sheet says (`crate::lines`), the first taking no handle.
+//! Format sheet says (`crate::lines`), the first taking no handle. The
+//! sixteenth, [`alonzo_expand_given`] (`ENGINE.30`'s pin to `vla-lang`
+//! 0.15.0), is the pass with a door's values, by which the frame floors' page
+//! builds the size ladder's rungs; it takes no handle, as the pass does.
 //!
 //! **Memory and the record**, byte for byte as the language's own surface
 //! has them (`vla-lang/src/abi.rs`): the host allocates every input with
@@ -404,6 +407,63 @@ pub unsafe extern "C" fn alonzo_expand(
     }
 }
 
+/// `expand_given`: the pass with a door's values (`docs/SPEC.md` section
+/// 7.8; `ENGINE.30`'s pin to `vla-lang` 0.15.0, Frazaro's `VLA.11`):
+/// [`alonzo_expand`]'s three texts, then the door's, `(parameter word value)`
+/// forms, each value given to the source's parameter of its word before the
+/// first form expands, of the kind the source's own value is, and a word no
+/// parameter of the source declares refused once the source has expanded, on
+/// the line past its last. The frame floors' page builds the size ladder's
+/// rungs by it, Life and the gun at 640 by 400 and 1280 by 800, as the native
+/// runner builds them by [`crate::pass::expand_given`]; the empty door is the
+/// pass itself. An export beside `expand`, whose signature stays, so the ABI
+/// stays 1 (section 4.6).
+///
+/// # Safety
+/// As [`alonzo_expand`]'s: each pointer came from [`alonzo_alloc`] with its
+/// length, or is null with 0; `out_len` is writable or null.
+#[no_mangle]
+pub unsafe extern "C" fn alonzo_expand_given(
+    source: *const u8,
+    source_len: u32,
+    path: *const u8,
+    path_len: u32,
+    files: *const u8,
+    files_len: u32,
+    door: *const u8,
+    door_len: u32,
+    out_len: *mut u32,
+) -> *mut u8 {
+    let source = match text(
+        unsafe { bytes(source, source_len) },
+        "the source is",
+        out_len,
+    ) {
+        Ok(t) => t,
+        Err(p) => return p,
+    };
+    let path = match text(unsafe { bytes(path, path_len) }, "the path is", out_len) {
+        Ok(t) => t,
+        Err(p) => return p,
+    };
+    let files = match text(
+        unsafe { bytes(files, files_len) },
+        "the texts to include are",
+        out_len,
+    ) {
+        Ok(t) => t,
+        Err(p) => return p,
+    };
+    let door = match text(unsafe { bytes(door, door_len) }, "the door is", out_len) {
+        Ok(t) => t,
+        Err(p) => return p,
+    };
+    match pass::expand_given(source, path, &included(files), door) {
+        Ok(e) => answer(e.text.as_bytes(), out_len),
+        Err(e) => refused(e.line, &e.refusal, out_len),
+    }
+}
+
 /// `moved`: a formula's text with every relative reference moved `d_row` rows
 /// down and `d_col` columns right, as Excel moves a formula copied that far,
 /// a part moved off the sheet written `#REF!` (`ENGINE.39`'s third slice,
@@ -592,6 +652,25 @@ mod tests {
         take(r, len)
     }
 
+    /// The pass with a door's values through the surface, the door a text of
+    /// its own beside the three.
+    fn expand_given(source: &[u8], path: &str, files: &[(&str, &str)], door: &[u8]) -> Rec {
+        let joined: Vec<String> = files.iter().map(|(p, t)| format!("{p}\0{t}")).collect();
+        let (s, p, f, d) = (
+            put(source),
+            put(path.as_bytes()),
+            put(joined.join("\0").as_bytes()),
+            put(door),
+        );
+        let mut len = 0u32;
+        let r = unsafe { alonzo_expand_given(s.0, s.1, p.0, p.1, f.0, f.1, d.0, d.1, &mut len) };
+        free(s);
+        free(p);
+        free(f);
+        free(d);
+        take(r, len)
+    }
+
     fn lf(s: &str) -> String {
         s.replace("\r\n", "\n")
     }
@@ -724,6 +803,51 @@ mod tests {
         free(p);
         free(f);
         assert_eq!(unpaired.id, "vla-include-cannot-read");
+
+        // The pass with a door's values (ENGINE.30's pin to vla-lang 0.15.0),
+        // an act of its own too: the empty door is the pass itself; the size
+        // ladder's values build Life's board at 640 by 400, the native pass's
+        // bytes, its still Camera with it; a word Life declares no parameter
+        // for is refused on the line past its last; a door not UTF-8, named.
+        let plain = expand_given(life_source.as_bytes(), LIFE_SOURCE_PATH, &library, b"");
+        assert_eq!((plain.status, plain.text()), (0, built.text()));
+        let door = crate::ladder::door(640, 400);
+        let wide = expand_given(
+            life_source.as_bytes(),
+            LIFE_SOURCE_PATH,
+            &library,
+            door.as_bytes(),
+        );
+        assert_eq!((wide.status, wide.id.as_str()), (0, ""), "{}", wide.text());
+        let native = crate::pass::expand_given(
+            &life_source,
+            LIFE_SOURCE_PATH,
+            &[("cartridges/common.vla".to_string(), common.clone())],
+            &door,
+        )
+        .expect("the native pass builds the rung");
+        assert_eq!(wide.text(), native.text);
+        assert!(
+            wide.text().contains("(cell \"Camera\" \"B1\" 1)\r\n"),
+            "{}",
+            wide.text()
+        );
+        let stray = expand_given(
+            life_source.as_bytes(),
+            LIFE_SOURCE_PATH,
+            &library,
+            b"(parameter board-depth 3)",
+        );
+        assert_eq!(
+            (stray.status, stray.id.as_str()),
+            (1, "vla-parameter-undeclared")
+        );
+        assert_eq!(stray.line as usize, life_source.lines().count() + 1);
+        let raw_door = expand_given(life_source.as_bytes(), LIFE_SOURCE_PATH, &library, &[0xff]);
+        assert_eq!(
+            (raw_door.status, raw_door.text()),
+            (2, "the door is not UTF-8")
+        );
 
         // Life loads under handle 1 and says what it is: the pass took none.
         let l = load(life.as_bytes(), "life.vla");
