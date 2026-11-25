@@ -35,8 +35,9 @@ engine is:
 - the cartridge's manifest, read by the language's own reader and refused
   by name when a directive is missing, doubled, unknown or out of range;
 - the device sheets, Screen, Palette, Input, Keys, Clock, Audio, File,
-  Camera and Write, and since the page's version 5 a cartridge's own
-  Commands, a row a command (`ENGINE.25`), each held to its layout at load
+  Camera and Write, since the page's version 5 a cartridge's own
+  Commands, a row a command (`ENGINE.25`), and since version 9 its Format,
+  the lines of a file it reads (`CART.16`), each held to its layout at load
   and at every write, a
   formula refused where the host writes and a derived write refused where
   the host writes, the volatile functions refused with the Clock named;
@@ -74,6 +75,20 @@ engine is:
   save as a seed the host chose does; and sets aside every `(draft ...)` form, a
   box of the page's drawer that a save carries and the page alone reads back
   (`ENGINE.40`);
+- since the page's version 9 (`CART.16`'s second slice), a file's lines: a
+  `(spec 9)` cartridge's Format sheet says a file's type and each kind of its
+  lines as a template, a hole a column, `follow({A:name},{B:text@23}).`,
+  read by `src/lines.rs`, which knows no file's format; a file of that type
+  read into the cartridge's text (`Cartridge::opened`) and a grid's sheets
+  written as the file (`Cartridge::file_text`, `save_text`), the module's
+  fourteenth and fifteenth exports;
+- since 0.5.0, the language at 0.15.0: an `(empty ...)` row, a cell given
+  back to no value as Excel's ClearContents gives it (Frazaro's
+  `KERNEL.46`), held at a write to the places a `cell` row is and refused
+  the Clock's three cells; and a source's parameter given a door's value
+  (Frazaro's `VLA.11`), `pass::expand_given` and the module's sixteenth
+  export, `alonzo_expand_given`, where a door once appended a second
+  definition, which the language now refuses;
 - `describe`, the manifest, the devices and the budget, and since
   `vla-lang` 0.9.2 the machine's census, the plan as rows, a row for each
   shape with its cells, its levels, its runs and the path each of its reads
@@ -83,13 +98,15 @@ engine is:
   (Frazaro's `KERNEL.30`, laid here; each cartridge's held to a golden in
   `testdata/describe/`, which `ALONZO_BLESS=1 cargo test describe` writes
   again);
-- the engine's own refusals, a catalog of twelve in `data/messages.vla`:
+- the engine's own refusals, a catalog of fifteen in `data/messages.vla`:
   the ninth a cartridge's source handed to the load, which never expands;
   the tenth a file over 16 MiB, `cart-too-large` (`ENGINE.5`); the eleventh
   a person's write into the Clock, its frame, or a rate or a seed outside its
-  range (`ENGINE.3`); and the twelfth a value in a version 5 cartridge's
-  Commands sheet that is no command's name, or a name written twice
-  (`ENGINE.25`).
+  range (`ENGINE.3`), and since 0.5.0 an `empty` row there too; the twelfth a
+  value in a version 5 cartridge's Commands sheet that is no command's name,
+  or a name written twice (`ENGINE.25`); and version 9's three, a defect of
+  the Format sheet by its cell, a line of a file no template reads by its
+  number, and a row no line says by its cell (`CART.16`).
 
 Beside the engine, the pass (`src/pass.rs`, `docs/SPEC.md` section 7.8): a
 cartridge's source, VLA with template macros and `include`s, expanded by the
@@ -324,8 +341,8 @@ loads. Name it and the language it answers in, each pinned exactly:
 
 ```toml
 [dependencies]
-alonzo = "=0.4.0"
-vla-lang = "=0.14.0"
+alonzo = "=0.5.0"
+vla-lang = "=0.15.0"
 ```
 
 A cartridge is rows in the one notation. The engine loads it, steps it and
@@ -535,6 +552,17 @@ natively. The heap holds what 0.12.0's held, Superposition's lattice 10.5
 MB; and Naught's shuffled bench steps in 15.0 ms natively where 0.12.0's
 took 19.3, its heap 92.7 MB where 128.7, the regularity premium's steady
 frame 3.1 times where 3.9.
+
+Over `vla-lang` 0.15.0, the 0.5.0 release's language, the floors'
+twenty-first baseline (the run of the session that moved the pin,
+2026-11-24, on the same machine and the same instrument, alternated with
+0.14.0's own build so that the day's spread is told from the language's)
+read Life's frame at 2.2, 8.6 and 35.0 ms natively and 2.6, 10.5 and 42.3
+in the browser, the gun's idle frame at 0.0199 ms natively and 0.0336 in
+the browser, and Superposition's at a microsecond natively and 1.5 in the
+browser, its act a p95 of 0.38 ms natively where 0.14.0's own build read
+0.40 the same hour. The heap holds 11 bytes more a load than 0.14.0's, 19
+for Sand and Naught's benches, a constant whatever the grid's size.
 
 ## Where it comes from
 
