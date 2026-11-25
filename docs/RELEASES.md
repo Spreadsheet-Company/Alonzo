@@ -24,7 +24,7 @@ The frame floors' twenty-first baseline, the instrument's run over `vla-lang` 0.
 - **The large board.** Superposition's idle frame takes a microsecond natively and 1.5 in the browser where 1.4; an act to its settle's end a p95 of 0.38 ms natively where 0.32, where 0.14.0's own build read 0.40 the same hour, and 0.6 in the browser as it did; the deepest cascade 777 frames in 126 ms natively where 124, and 178 in the browser where 174.
 - **The irregular graph.** Naught's bench of 44,544 gates steps in 4.9 ms natively and 6.3 in the browser laid by fill, where 4.8 and 6.1, and in 15.3 and 20.4 ms shuffled, where 15.0 and 20.7.
 - **The memory** is 0.4.0's and 11 bytes a load, 19 for Sand and Naught's benches: natively Life's soup takes 2.5 MB, at sixteen times its area 21.0 MB, Sand 10.0 MB and Superposition's lattice 10.5 MB; in the browser the module's memory is 3.9 MB for Life, 24.4 MB at sixteen times and 11.7 MB for Sand, a page of 64 KiB more each.
-- **The module** is 2,614,098 bytes as built here, 355,912 more than 0.4.0's as built here: 0.15.0's library and rules, 264,616 of them, every function the language computes whether a cartridge calls it or not, and the mover, a file's lines and the door. The page is 7,294,978 characters as built here, *Afterlife* with its golden among it. CI's builds are shorter by the length of their paths, 80 bytes at 0.4.0.
+- **The module** is 2,614,018 bytes, from 2,258,106: 0.15.0's library and rules, a quarter of a megabyte of it, every function the language computes whether a cartridge calls it or not, and the mover, a file's lines and the door. The page is 7,294,874 characters, from 6,481,906, the module's growth and *Afterlife* with its golden among it.
 
 ### The items in it
 
