@@ -192,8 +192,9 @@ sound the frame the grid holds again when it starts.
 | `keyDown(code, key, ev)` / `keyUp(code)` / `releaseKeys()` | the keys held, by `KeyboardEvent.code`; since `ENGINE.25` a command's key runs its command and holds nothing, `ev` the key's event when a listener has one, its Ctrl, Cmd, Alt and repeat |
 | `freshRepeat(ev, own)` / `rested()` | whether a key's repeat may run its command (`ENGINE.39`): nothing of the cartridge's waiting, at a rate no command waiting for its frame and at rate 0 no act waiting or stepping, and the key pressed at or after the last act came to rest; `own`, a command of the page's own, judged by its time alone. `rested()` notes an act come to rest, which the host does for its own steps and a page for a press of its keymap |
 | `paste(p)` | a paste (`ENGINE.39`'s second slice; `docs/SPEC.md` section 7.2): the rows a page wrote from the clipboard's text or its own copy, `p.rows` each `{ row, sheet, address, kind }` with `kind` `value`, `formula` or `empty`, written at the act's frame as one write, all or none, one step at rate 0 standing on `p.place`, and recorded as its rows in its frame as an applied cartridge's are; `p.what` and `p.done` its words, `p.range` the cells it writes on `p.sheet`, `p.move` a cut's move. Refused whole and said, nothing written: no cartridge, a replay playing, a read-only sheet, a value into a game sheet a person writes, and a cell past the sheet's last, a bound sheet's extent or the Screen's window, the first named. `true` where the act waits for its frame or has landed |
-| `cellsOf(sheet, range)` / `extentOf(sheet)` / `sayAct(text, refused)` | a copy's cells (`ENGINE.39`'s second slice): a range's, read through the record the sheet is drawn from, each `{ shown, value, formula }`, the text it shows, its value as a cell row spells it and whether a formula computed it, and since the third slice `fills`, each formula's rectangle in the range and its first cell's text, read through the module's `fills` record; a sheet's extent from its record, `null` for none; and a page's own act's answer, its copy's and its cut's, said as the host's acts' answers are. An edit, an applied cartridge and a paste that land tell their rows in a `wrote` event, `{ rows, move }` |
+| `cellsOf(sheet, range)` / `extentOf(sheet)` / `sayAct(text, refused)` | a copy's cells (`ENGINE.39`'s second slice): a range's, read through the record the sheet is drawn from, each `{ shown, value, formula, empty }`, the text it shows, its value as a cell row spells it, whether a formula computed it and, since `ENGINE.30`'s first slice, whether it holds nothing, told from the empty text, and since the third slice `fills`, each formula's rectangle in the range and its first cell's text, read through the module's `fills` record; a sheet's extent from its record, `null` for none; and a page's own act's answer, its copy's and its cut's, said as the host's acts' answers are. An edit, an applied cartridge and a paste that land tell their rows in a `wrote` event, `{ rows, move }` |
 | `moved(text, dRow, dCol)` | a formula's text moved as Excel moves a formula copied `dRow` rows down and `dCol` columns right, a part off the sheet `#REF!` (`ENGINE.39`'s third slice): the language's mover through the module's thirteenth export, `alonzo_moved`; `null` over a module without it, the double, whose paste then writes a formula's value and says so |
+| `undo()` / `redo()` | undo and redo, Excel's kind (`ENGINE.30`'s first slice; `docs/SPEC.md` section 7.2): on a work sheet at rate 0 a person's last edit, paste or cut's move taken back as one act, its cells written back as the record of the cells as written held them just before it, an `empty` row over those that held nothing, a step and its settle, recorded as its rows; and the act last taken back written again. `{ ok, sheet, range }`, the sheet and range a page shows and selects (`stepBackShown`), or `{ ok: false }`, said: nothing to undo or redo, a rate, a replay playing, an act still computing, a cell the cartridge has written since the act left it, or an act past 262,144 cells. An edit after an undo lets the edits undone go, said in its frame's sentence; the line holds 100 and a load empties it |
 | `command(name)` / `commands()` | a version 5 cartridge's own commands (`ENGINE.25`): `command` runs one by its name, waiting for the next frame, one a frame and sixteen at most, written into `Input!B20` for that frame, at rate 0 a step of its own: `{ ok, name }`, or the refusal's sentence, for a cartridge written to 1 to 4, a name its Commands sheet holds no command of, a command that holds not, a replay playing or sixteen waiting; `commands` lists them as the sheet last said them, `{ name, words, holds, key }` in its order, `key` the code or empty |
 | `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer's place as the window's cell under it, 0 when off the canvas, which the Input rows write as the Screen's own cell through the Camera; in grid mode, at a rate above zero, the viewport's cell under the pointer, 0 off the window's cells, and the wheel's notches with its scroll prevented, while a key the Keys sheet binds is taken before the viewport sees it (`ENGINE.8`). Since `ENGINE.14` the wheel is the game's over a cell of the Camera's window alone, where the pointer is, and scrolls over the tabs, the headers, the corner and the scrollbars; the buttons follow the pointer; while another sheet is shown the pointer is 0 and the wheel scrolls, and a bound key stays the game's. Since `ENGINE.18`, for a cartridge written to version 4, the pointer and its buttons over any cell of another sheet shown are the game's too, that sheet's own cell with no Camera added, and the Input sheet's nineteenth row names the sheet shown; the wheel still scrolls there; a cartridge written to 1 to 3 is as before |
 | `runFrameSync()` | one whole frame now, whatever the clock (the blit's instrument) |
@@ -410,11 +411,12 @@ text, and any other character a text in quotes; Enter, F2 or a double click
 opens what the cell holds, its formula among it. Enter writes the row and moves
 the selection down, Tab moves it right, Shift moves them back, and Escape
 leaves the cell as it was. Delete empties the selection's cells at once, one
-row over its range, and Backspace opens the cell emptied, `(cell "Bench" "A3"
-"")`, the caret between the quotes. The language the page runs writes no empty
-cell yet, so a cell emptied holds the empty text, which a formula reading it as
-a number reads as `#VALUE!`, as Excel reads `=""`: Frazaro's `KERNEL.46` is the
-row that empties a cell. A key the game takes stays the game's: a command's
+row over its range, `(empty "Bench" "A3:B4")`, each cell given back to no value
+as Excel's Delete gives it, so that a formula reading it reads a cell never
+written, `=A3+1` being 1 (`ENGINE.30`'s first slice, over Frazaro's
+`KERNEL.46`); and Backspace opens the cell emptied, `(cell "Bench" "A3" "")`,
+the caret between the quotes, which writes the empty text when it is entered,
+read as a number as `#VALUE!`, as Excel reads `=""`. A key the game takes stays the game's: a command's
 key, a key its Keys sheet binds at a rate, and every key where it reads the last
 one pressed. A cartridge of version 6 may say whose each sheet's keys are
 (`SPEC.5`, `docs/SPEC.md` section 7.2): `(game "I NON")` names a sheet whose
@@ -531,7 +533,20 @@ them or a paste of another text lets them stand, and a cut let go by Escape
 or an edit still pastes its cells as they were cut. From the palette, or a key
 of yours that is not the browser's own, a copy writes the clipboard through
 the browser's `writeText` and a paste reads it through `readText`, which a
-browser may ask your leave for or refuse, said.
+browser may ask your leave for or refuse, said. A cell the page's copy found
+empty empties its cell when pasted, and one holding the empty text writes it.
+Undo and redo are the grid's too (`ENGINE.30`'s first slice), commands of the
+page on Ctrl+Z, and on Ctrl+Y and Ctrl+Shift+Z, and Cmd on a Mac, as
+Excel's: on a work sheet at rate 0 undo takes back your last edit, a Delete, a
+paste or a cut's move whole, writing back the cells it replaced as one act, a
+frame at rate 0 with its settle, and shows its sheet with its cells selected;
+redo writes it again. An edit after an undo lets the edits undone go, and its
+line says so. A game is never undone: an act on a game's sheet or a read-only
+one, a press, a command and a game's time stay as they are, and at a rate
+undo and redo do nothing, said. An undo over a cell the cartridge has written
+since is refused and says which; the page keeps Excel's 100 edits, an act of
+more than 262,144 cells lands but cannot be undone, said, and a load starts
+the history again. In a box the keys stay the box's own history.
 The keymap applied is kept in this browser, the one thing the page writes
 (below), and holds again at the next load; since `ENGINE.5`'s hand test it
 gains, once, the page's keys for commands new since it was kept, each where
@@ -1172,7 +1187,7 @@ viewport, not an Excel clone.
   The page opens on the empty sheet whatever it holds and offers its
   cartridges in the picker, each by its manifest's title, its notes in the
   drawer. A page that does not hold Alonzo's own cartridges and records is
-  a game's (`ENGINE.16`). Its `?loop=1` runs the twenty cases that need
+  a game's (`ENGINE.16`). Its `?loop=1` runs the twenty-one cases that need
   nothing of Alonzo's own files, over its own blocks: `abi`; `pass`, every
   source to its cartridge; `replay`, every replay to its golden and its
   recording, every frame to its hand; `grid`, every grid cartridge's drawn
@@ -1227,9 +1242,15 @@ viewport, not an Excel clone.
   file's lines: a file read into the cartridge, loaded and written back, the
   open's check said, an edit its line, a person's save the file and the
   cartridge's own a cartridge, a line and a row refused, and the check and a
-  save waiting for a settle, Afterlife's reel left to Alonzo's own page. Each of the fifteen
+  save waiting for a settle, Afterlife's reel left to Alonzo's own page; and
+  `undo` (`ENGINE.30`'s first slice), the page's own undo card: a work sheet's
+  edit, Delete, a paste and a cut's move each undone and redone, the sheet
+  shown and the cells selected, a game's move leaving the line standing, the
+  edits undone let go, the cartridge's write and an act past the keeping each
+  refusing an undo, the run's replay, a load emptying the line, the card
+  settling and at a rate. Each of the fifteen
   others prints `case <name>: not on this page`, being proven in Alonzo's CI,
-  and the last line reads `loop ok cases=20 dpr=1; 15 of Alonzo's own not on
+  and the last line reads `loop ok cases=21 dpr=1; 15 of Alonzo's own not on
   this page` at a ratio of 1. A replay with no hand is held to its golden alone, counted `alone`
   and said in a note under the case. Every other mode of the bench is
   Alonzo's own and says so on a game's page; `?frames=1` and `?blit=1` over

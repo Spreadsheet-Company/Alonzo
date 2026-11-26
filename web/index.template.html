@@ -638,6 +638,8 @@
     { name: 'copy', words: 'copy the selection\'s cells to the clipboard as they show, as Excel copies a range' },
     { name: 'cut', words: 'cut the selection\'s cells: they stand until a paste moves them' },
     { name: 'paste', words: 'paste the clipboard into the selection, each cell as typed, the page\'s own copy as its values' },
+    { name: 'undo', words: 'take back the last edit of a work sheet at rate 0, a paste or a cut\'s move whole; a game is never undone', repeats: true },
+    { name: 'redo', words: 'put back the edit last taken back', repeats: true },
     { name: 'game', words: 'give the game the keys, the Screen\'s place' },
     { name: 'edit', words: 'give the drawer\'s edit row the keys' },
     { name: 'write', words: 'write the edit row\'s row as a person\'s edit at the next frame' },
@@ -697,6 +699,9 @@
     '(bind "Ctrl+C" copy screen viewer)',
     '(bind "Ctrl+X" cut screen viewer)',
     '(bind "Ctrl+V" paste screen viewer)',
+    '(bind "Ctrl+Z" undo)',
+    '(bind "Ctrl+Y" redo)',
+    '(bind "Ctrl+Shift+Z" redo)',
     '(bind "Enter" write edit)',
     '(bind "Ctrl+Enter" write edit)',
     '(bind "Ctrl+Enter" build source library)',
@@ -1598,15 +1603,24 @@
     if (cell.vkind === 'bool') return row('cell', String(cell.value).toUpperCase() === 'TRUE' ? 'true' : 'false', false);
     return row('cell', vlaString(cell.value), true);
   }
-  // The row Delete writes over the selection (CART.9's hand test, 2026-10-20): the empty text over the selection's cells,
-  // one row and one edit, the selection kept. The language this page runs writes no empty cell, so a cell emptied holds
-  // the empty text, which a formula reading it as a number reads as #VALUE!, as Excel reads ="" (Frazaro's KERNEL.46 is
-  // the row that empties a cell). null, Delete writing nothing: a selection of whole rows, columns or the sheet, and a
-  // single cell already empty. sel, the viewport's selection, { kind, text, focus }.
+  // The row Delete writes over the selection (CART.9's hand test, 2026-10-20): the selection's cells emptied, one row and
+  // one edit, the selection kept. Since ENGINE.30's first slice, over vla-lang 0.15.0, the row that empties a cell
+  // (Frazaro's KERNEL.46), as Excel's ClearContents empties one: a formula reading it reads a cell never written, =A1+1
+  // being 1, where the empty text it wrote before read as #VALUE!. null, Delete writing nothing: a selection of whole
+  // rows, columns or the sheet, and a single cell already empty. sel, the viewport's selection, { kind, text, focus }.
   function cellClearRow(sheet, sel) {
     if (!sel || sel.kind !== 'cells' || !sel.text) return null;
     if (sel.text.indexOf(':') < 0 && (!sel.focus || sel.focus.kind === 'empty')) return null;
-    return '(cell ' + vlaString(sheet) + ' ' + vlaString(sel.text) + ' "")';
+    return '(empty ' + vlaString(sheet) + ' ' + vlaString(sel.text) + ')';
+  }
+  // A step back's sheet shown and its cells selected (ENGINE.30's decision 6, as answered): the sheet the edit taken back or
+  // put back stood on, shown in vp by show(vp, name) where vp shows another, and its range selected, so that a person sees
+  // what came back. r, the host's undo's or redo's answer; nothing where it took nothing.
+  function stepBackShown(vp, r, show) {
+    if (!r || !r.ok || !vp) return;
+    var shown = vp.sheet();
+    if (!shown || String(shown).toLowerCase() !== String(r.sheet).toLowerCase()) show(vp, r.sheet);
+    vp.select(VP.rangeText(r.range));
   }
   // a printable character, alone or with Shift, no Ctrl, Cmd or Alt, while no input method composes
   function cellEditKey(ev) { return !ev.ctrlKey && !ev.metaKey && !ev.altKey && !ev.isComposing && typeof ev.key === 'string' && ev.key.length === 1 && ev.key >= ' '; }
@@ -2083,14 +2097,16 @@
     var h = block.length, w = maxWidth(block), out = [], at = vlaString(sheet) + ' ', one = h === 1 && w === 1 ? block[0][0] : null;
     if (one && one.kind !== 'formula' && (range.bottom > range.top || range.right > range.left)) {
       var whole = VP.rangeText(range);
-      return [{ row: '(cell ' + at + vlaString(whole) + ' ' + one.spelled + ')', sheet: sheet, address: whole, kind: one.kind, cells: (range.bottom - range.top + 1) * (range.right - range.left + 1) }];
+      return [{ row: one.kind === 'empty' ? '(empty ' + at + vlaString(whole) + ')' : '(cell ' + at + vlaString(whole) + ' ' + one.spelled + ')', sheet: sheet, address: whole, kind: one.kind, cells: (range.bottom - range.top + 1) * (range.right - range.left + 1) }];
     }
     for (var r = range.top; r <= range.bottom; r++) {
       var line = block[(r - range.top) % h];
       for (var c = range.left; c <= range.right; c++) {
         var x = line[(c - range.left) % w], a = VP.colName(c) + r;
         if (!x) continue;   // past a short row of a text's fields: the cell stands
-        out.push({ row: '(' + (x.kind === 'formula' ? 'formula' : 'cell') + ' ' + at + vlaString(a) + ' ' + x.spelled + ')', sheet: sheet, address: a, kind: x.kind, cells: 1 });
+        // an empty field, or a cell the page's own copy took empty, written as the row that empties a cell (ENGINE.30's first
+        // slice, over vla-lang 0.15.0), as Excel's paste of an empty cell empties it
+        out.push({ row: x.kind === 'empty' ? '(empty ' + at + vlaString(a) + ')' : '(' + (x.kind === 'formula' ? 'formula' : 'cell') + ' ' + at + vlaString(a) + ' ' + x.spelled + ')', sheet: sheet, address: a, kind: x.kind, cells: 1 });
       }
     }
     return out;
@@ -2212,7 +2228,7 @@
     if (!host.cart || !sheet) { host.sayAct('Nothing was pasted: no cartridge is loaded.', true); return false; }
     if (!own) this.kept = null;   // the clipboard holds another text than the page's copy
     var fills = own && kept.fills && kept.fills.length && host.moved(kept.fills[0].text, 0, 0) !== null ? kept.fills : null;   // a module with the mover
-    if (own) block = kept.cells.map(function (r) { return r.map(function (x) { if (x.formula && fills) return null; if (x.formula) formulas++; return { kind: x.value === '""' ? 'empty' : 'value', spelled: x.value }; }); });
+    if (own) block = kept.cells.map(function (r) { return r.map(function (x) { if (x.formula && fills) return null; if (x.formula) formulas++; return { kind: x.empty ? 'empty' : 'value', spelled: x.value }; }); });   // an empty cell emptying its target, the empty text written (ENGINE.30's first slice)
     else block = clipFields(text).map(function (r) { return r.map(clipValue); });
     if (!block.length) { host.sayAct('Nothing was pasted: the clipboard holds no text.', true); return false; }
     var sel = vp.selection(), area = selectionCells(sel, sel.kind === 'cells' ? null : host.extentOf(sheet)) || { top: sel.range.top, left: sel.range.left, bottom: sel.range.top, right: sel.range.left };
@@ -2223,7 +2239,7 @@
     var p = { sheet: sheet, range: range, rows: rows, place: { sheet: sheet, col: range.left, row: range.top } };
     if (own && kept.cut) {
       var from = VP.rangeText(kept.range), src = kept.sheet + '!' + from;
-      p.rows = [{ row: '(cell ' + vlaString(kept.sheet) + ' ' + vlaString(from) + ' "")', sheet: kept.sheet, address: from, kind: 'empty', cells: 0 }].concat(rows);
+      p.rows = [{ row: '(empty ' + vlaString(kept.sheet) + ' ' + vlaString(from) + ')', sheet: kept.sheet, address: from, kind: 'empty', cells: 0 }].concat(rows);   // the cut's cells emptied as Excel's cut leaves them (ENGINE.30's first slice)
       p.what = 'the move of ' + src + ' to ' + where + note; p.done = 'moved ' + src + ' to ' + where + note; p.move = true;
     } else {
       if (asCut) note += n === 1 ? ', as it was cut' : ', as they were cut';
@@ -3062,6 +3078,8 @@
     // A sheet shown as its tab shows it: its tab pressed, the strip's box of hidden sheets ticked first for a hidden one, as
     // a click would tick it; else viewed by the host, the Screen in the host's own viewport through the Camera's window,
     // as its tab gives it back.
+    // A step back's sheet shown and its cells selected, in the viewport the sheets show in (stepBackShown)
+    function steppedBack(r) { stepBackShown(sheetsViewport(), r, showSheetIn); }
     function showSheetIn(vp, name) {
       if (vp === dvp) openDrawer();
       var tab = tabOf(vp, name), box = vp.tabs.querySelector('input[type="checkbox"]');
@@ -3115,6 +3133,8 @@
       copy: function () { clip.act(sheetsViewport(), 'copy'); },
       cut: function () { clip.act(sheetsViewport(), 'cut'); },
       paste: function () { clip.act(sheetsViewport(), 'paste'); },
+      undo: function () { steppedBack(host.undo()); },
+      redo: function () { steppedBack(host.redo()); },
       game: focusScreen,
       edit: function () { give(editEl); },
       write: function () { document.getElementById('eng-write').click(); },
@@ -8616,8 +8636,9 @@
       var bs = cellEditRow('Bench', C2, '');
       if (bs.text === '(cell "Bench" "C2" "")' && bs.caret === 20) k.clears++;
       else P.push('palette: Backspace on the gate C2 opens ' + JSON.stringify(bs.text) + ', the caret at ' + bs.caret + ', where the cell emptied, "(cell \\"Bench\\" \\"C2\\" \\"\\")" at 20, is due');
-      [[{ kind: 'cells', text: 'A2', focus: { kind: 'cell' } }, '(cell "Bench" "A2" "")'], [{ kind: 'cells', text: 'C2', focus: { kind: 'formula' } }, '(cell "Bench" "C2" "")'],
-       [{ kind: 'cells', text: 'A2:B3', focus: { kind: 'empty' } }, '(cell "Bench" "A2:B3" "")'], [{ kind: 'cells', text: 'H2', focus: { kind: 'empty' } }, null],
+      // since ENGINE.30's first slice the row that empties a cell (vla-lang 0.15.0), where the empty text was written
+      [[{ kind: 'cells', text: 'A2', focus: { kind: 'cell' } }, '(empty "Bench" "A2")'], [{ kind: 'cells', text: 'C2', focus: { kind: 'formula' } }, '(empty "Bench" "C2")'],
+       [{ kind: 'cells', text: 'A2:B3', focus: { kind: 'empty' } }, '(empty "Bench" "A2:B3")'], [{ kind: 'cells', text: 'H2', focus: { kind: 'empty' } }, null],
        [{ kind: 'columns', text: 'C:C', focus: { kind: 'formula' } }, null]].forEach(function (x) {
         var got = cellClearRow('Bench', x[0]);
         if (got === x[1]) k.clears++; else P.push('palette: Delete over the selection ' + JSON.stringify(x[0]) + ' writes ' + JSON.stringify(got) + ', where ' + JSON.stringify(x[1]) + ' is due');
@@ -8899,8 +8920,8 @@
   function caseKeys() {
     var P = [], k = { defaults: 0, refused: 0, places: 0, steps: 0, lines: 0, kept: 0, spelled: 0, said: 0, sheets: 0, last: 0, game: 0 };
     var map = readKeymap(KEYMAP_DEFAULTS, COMMANDS);
-    if (map.ok && map.bindings.length === 20 && !map.order.length && ['palette', 'save', 'save-as', 'copy', 'cut', 'paste'].every(function (n) { return map.bindings.some(function (b) { return b.command === n; }); })) k.defaults++;
-    else P.push('keys: the page\'s own keymap reads ' + (map.ok ? map.bindings.length + ' binding(s)' : 'refused: ' + map.problems.join('; ')) + ', where 20 bindings, the palette\'s, Save\'s and Open\'s, since ENGINE.39 the clipboard\'s three and since ENGINE.49 Save as\'s among them, are due');
+    if (map.ok && map.bindings.length === 23 && !map.order.length && ['palette', 'save', 'save-as', 'copy', 'cut', 'paste', 'undo', 'redo'].every(function (n) { return map.bindings.some(function (b) { return b.command === n; }); })) k.defaults++;
+    else P.push('keys: the page\'s own keymap reads ' + (map.ok ? map.bindings.length + ' binding(s)' : 'refused: ' + map.problems.join('; ')) + ', where 23 bindings, the palette\'s, Save\'s and Open\'s, since ENGINE.39 the clipboard\'s three, since ENGINE.49 Save as\'s and since ENGINE.30 undo\'s and redo\'s three among them, are due');
     // every refusal whole, by its line and its words
     var base = KEYMAP_DEFAULTS + '\n', at = base.split('\n').length;
     var noPalette = KEYMAP_DEFAULTS.replace('(bind "Ctrl+K" palette)\n', '').replace('(bind "Control+Shift+[Backquote]" palette)\n', '');
@@ -8927,14 +8948,15 @@
       else P.push('keys: the text ending ' + JSON.stringify(x[0].slice(-40)) + ' was ' + (r.ok ? 'applied' : 'refused in the words ' + JSON.stringify(said)) + ', where it is refused whole, saying ' + JSON.stringify(x[1]));
     });
     // the command a key presses in each place: a person's own lines over the page's
-    var mine = base + '(bind "J" run)\n(bind "Ctrl+Z" pause)\n(bind "F2" drawer)\n(bind "Ctrl+1" sheet "Portfolio")\n(command "p" "the Portfolio" (sheet "Portfolio"))\n' +
+    // Ctrl+Z the page's own undo since ENGINE.30, a binding with no place, which never holds in a box
+    var mine = base + '(bind "J" run)\n(bind "F2" drawer)\n(bind "Ctrl+1" sheet "Portfolio")\n(command "p" "the Portfolio" (sheet "Portfolio"))\n' +
                '(command "pr" (p) (run) (write (cell "Screen" "A1" 1)))\n(bind "Alt+Shift+P" pr)\n';
     var m = readKeymap(mine, COMMANDS);
     if (!m.ok) P.push('keys: a person\'s own lines were refused: ' + m.problems.join('; '));
     else {
       function press(init, place) { var b = keymapFind(m, init, place); return b ? b.command + (b.arg ? ' ' + b.arg : '') : 'nothing'; }
       [[{ key: 'j', code: 'KeyJ' }, 'screen', 'run'], [{ key: 'j', code: 'KeyJ' }, 'page', 'run'], [{ key: 'j', code: 'KeyJ' }, 'source', 'nothing'],
-       [{ ctrlKey: true, key: 'z', code: 'KeyZ' }, 'screen', 'pause'], [{ ctrlKey: true, key: 'z', code: 'KeyZ' }, 'source', 'nothing'], [{ key: 'F2', code: 'F2' }, 'source', 'drawer'],
+       [{ ctrlKey: true, key: 'z', code: 'KeyZ' }, 'screen', 'undo'], [{ ctrlKey: true, key: 'z', code: 'KeyZ' }, 'source', 'nothing'], [{ key: 'F2', code: 'F2' }, 'source', 'drawer'],
        [{ ctrlKey: true, key: 'Enter', code: 'Enter' }, 'source', 'build'], [{ ctrlKey: true, key: 'Enter', code: 'Enter' }, 'library', 'build'],
        [{ ctrlKey: true, key: 'Enter', code: 'Enter' }, 'cartridge', 'load'], [{ ctrlKey: true, key: 'Enter', code: 'Enter' }, 'edit', 'write'],
        [{ ctrlKey: true, key: 'Enter', code: 'Enter' }, 'replay', 'play-replay'], [{ ctrlKey: true, key: 'Enter', code: 'Enter' }, 'keys', 'apply-keys'],
@@ -8991,6 +9013,11 @@
     var beforeAs = readKeymap(KEYMAP_DEFAULTS.split('\n').filter(function (l) { return l !== '(bind "Ctrl+Shift+S" save-as)'; }).join('\n'), COMMANDS, true);
     var o5 = offeredLines(beforeAs, names.filter(function (n) { return n !== 'save-as'; }), KEYMAP_DEFAULTS, COMMANDS), o6 = offeredLines(beforeAs, names, KEYMAP_DEFAULTS, COMMANDS);
     if (JSON.stringify(o5) === JSON.stringify(['(bind "Ctrl+Shift+S" save-as)']) && o6.length === 0) k.offered++; else P.push('keys: a keymap kept before Save as is offered ' + JSON.stringify(o5) + ', and ' + JSON.stringify(o6) + ' once it has been offered it, where Ctrl+Shift+S alone and then nothing are due');
+    // ENGINE.30: a keymap kept before undo gains Ctrl+Z, Ctrl+Y and Ctrl+Shift+Z, once
+    var undoLines = ['(bind "Ctrl+Z" undo)', '(bind "Ctrl+Y" redo)', '(bind "Ctrl+Shift+Z" redo)'];
+    var beforeUndo = readKeymap(KEYMAP_DEFAULTS.split('\n').filter(function (l) { return undoLines.indexOf(l) < 0; }).join('\n'), COMMANDS, true);
+    var o7 = offeredLines(beforeUndo, names.filter(function (n) { return n !== 'undo' && n !== 'redo'; }), KEYMAP_DEFAULTS, COMMANDS), o8 = offeredLines(beforeUndo, names, KEYMAP_DEFAULTS, COMMANDS);
+    if (JSON.stringify(o7) === JSON.stringify(undoLines) && o8.length === 0) k.offered++; else P.push('keys: a keymap kept before undo is offered ' + JSON.stringify(o7) + ', and ' + JSON.stringify(o8) + ' once it has been offered them, where Ctrl+Z, Ctrl+Y and Ctrl+Shift+Z and then nothing are due');
     store.keep(mine, KEYMAP_DEFAULTS); store.know(names);
     var knownBack = store.known();
     store.keep(KEYMAP_DEFAULTS, KEYMAP_DEFAULTS);
@@ -9011,7 +9038,7 @@
       if (x[1] ? w.indexOf(x[1]) >= 0 : w === '') k.said++; else P.push('keys: the list says of ' + x[0] + ' ' + JSON.stringify(w) + ', where ' + (x[1] ? 'it names "' + x[1] + '"' : 'nothing') + ' is due');
     });
     var codes = ['KeyZ', 'Numpad2', 'Space', 'ArrowUp'];
-    [['(bind "Z" run)', true], ['(bind "Ctrl+Z" run)', false], ['(bind "Z" run source)', false], ['(bind "Z" run screen)', true], ['(bind "2" run)', true], ['(bind "Space" pause)', true],
+    [['(bind "Z" run)', true], ['(bind "Ctrl+Space" run)', false], ['(bind "Z" run source)', false], ['(bind "Z" run screen)', true], ['(bind "2" run)', true], ['(bind "Space" pause)', true],
      ['(bind "Shift+Up" pause)', true], ['(bind "J" run)', false]].forEach(function (x) {
       var r = readKeymap(base + x[0] + '\n', COMMANDS), b = r.ok ? r.bindings[r.bindings.length - 1] : null, said = b ? bindingNotes(b, codes) : 'refused';
       if (b && (said.indexOf('shadows the game\'s button on the Screen') >= 0) === x[1]) k.said++; else P.push('keys: the list says of ' + x[0] + ' beside a game\'s Z, pad 2, Space and Up ' + JSON.stringify(said) + ', where ' + (x[1] ? 'the game\'s button shadowed' : 'no shadow') + ' is due');
@@ -9721,7 +9748,10 @@
     [['one value over C5:E7', pasteRows('Work', three, [[v('7')]]), '(cell "Work" "C5:E7" 7)', 9],
      ['a 2 by 2 block tiled over C5:F8', pasteRows('Work', four, [[v('1'), v('2')], [v('3'), v('4')]]), '(cell "Work" "C5" 1) (cell "Work" "D5" 2) (cell "Work" "E5" 1) (cell "Work" "F5" 2) (cell "Work" "C6" 3) (cell "Work" "D6" 4) (cell "Work" "E6" 3) (cell "Work" "F6" 4) (cell "Work" "C7" 1) (cell "Work" "D7" 2) (cell "Work" "E7" 1) (cell "Work" "F7" 2) (cell "Work" "C8" 3) (cell "Work" "D8" 4) (cell "Work" "E8" 3) (cell "Work" "F8" 4)', 16],
      ['a text of a short row', pasteRows('Work', { top: 5, left: 3, bottom: 6, right: 4 }, [[v('"a"'), { kind: 'formula', spelled: '"=C5"' }], [v('"c"')]]), '(cell "Work" "C5" "a") (formula "Work" "D5" "=C5") (cell "Work" "C6" "c")', 3],
-     ['a 2 by 1 block cut at C7', pasteRows('Work', { top: 5, left: 3, bottom: 7, right: 3 }, [[v('1')], [v('2')]]), '(cell "Work" "C5" 1) (cell "Work" "C6" 2) (cell "Work" "C7" 1)', 3]].forEach(function (x) {
+     ['a 2 by 1 block cut at C7', pasteRows('Work', { top: 5, left: 3, bottom: 7, right: 3 }, [[v('1')], [v('2')]]), '(cell "Work" "C5" 1) (cell "Work" "C6" 2) (cell "Work" "C7" 1)', 3],
+     // an empty field empties its cell, as Excel's paste of an empty cell does (ENGINE.30's first slice, over KERNEL.46's row)
+     ['an empty field beside a value', pasteRows('Work', { top: 5, left: 3, bottom: 5, right: 4 }, [[v('1'), { kind: 'empty', spelled: '""' }]]), '(cell "Work" "C5" 1) (empty "Work" "D5")', 2],
+     ['one empty field over C5:E7', pasteRows('Work', three, [[{ kind: 'empty', spelled: '""' }]]), '(empty "Work" "C5:E7")', 9]].forEach(function (x) {
       var got = x[1].map(function (r) { return r.row; }).join(' '), n = x[1].reduce(function (s, r) { return s + r.cells; }, 0);
       if (got === x[2] && n === x[3]) k.rows++; else P.push('clipboard: ' + x[0] + ' writes ' + JSON.stringify(got) + ', ' + n + ' cells, where ' + JSON.stringify(x[2]) + ', ' + x[3] + ', is due');
     });
@@ -9861,7 +9891,7 @@
       if (x1.prevented && x1.text === 'p\tq\r\n' && frame() === f3 && show(vals('Work', 'A30').A30) === '"p"' && clip.kept && clip.kept.cut && said() === 'Cut Work!A30:B30, two cells: a paste of them moves them, and Escape or another copy lets them stand.') k.cut++;
       else P.push('clipboard: the cut of Work!A30:B30 left Work!A30 holding ' + show(vals('Work', 'A30').A30) + ', stepped ' + (frame() - f3) + ' frame(s) and said ' + JSON.stringify(said()) + ', where its cells stand until its paste');
       at('Work', 'A32');
-      if (paste('the cut\'s paste into Work!A32', 'p\tq\r\n', 'the move of Work!A30:B30 to Work!A32:B32') && holds('the cut moved', 'Work', { A30: '""', B30: '""', A32: '"p"', B32: '"q"' }) && !clip.kept.cut) k.moved++;
+      if (paste('the cut\'s paste into Work!A32', 'p\tq\r\n', 'the move of Work!A30:B30 to Work!A32:B32') && holds('the cut moved', 'Work', { A30: 'nothing', B30: 'nothing', A32: '"p"', B32: '"q"' }) && !clip.kept.cut) k.moved++;
       at('Work', 'A34');
       if (paste('the cut\'s text pasted again into Work!A34', 'p\tq\r\n', 'the paste of two cells into Work!A34:B34, as they were cut') && holds('the cut\'s text again as it was cut', 'Work', { A32: '"p"', A34: '"p"', B34: '"q"' })) k.moved++;
       // a cut let go: by Escape, said; by an edit of its cells, said; by a paste of another text; each leaving its cells
@@ -9901,7 +9931,7 @@
       at('Work', 'N50');
       if (paste('the page\'s copy of Work!L1:M2 into Work!N50', '10\t\r\n20\t11\r\n', 'the paste of four cells into Work!N50:O51') &&
           laidAs('the page\'s copy of Work!L1:M2 pasted at Work!N50', 'Work', 'N50:O51', { N50: '=C50*10', N51: '=C51*10', O51: '=N50+1' }) &&
-          holds('the copy of L1:M2 pasted at N50', 'Work', { N50: '"0"', N51: '"0"', O50: '""', O51: '"1"' })) {
+          holds('the copy of L1:M2 pasted at N50', 'Work', { N50: '"0"', N51: '"0"', O50: 'nothing', O51: '"1"' })) {
         if ((host.replayText() || '').slice(replayBefore).indexOf('  (formula "Work" "N50:N51" "=C50*10")') >= 0) k.formulas++;
         else P.push('clipboard: the copy of Work!L1:M2 pasted at Work!N50 was recorded as ' + JSON.stringify((host.replayText() || '').slice(replayBefore, replayBefore + 300)) + ', where its fill is one row');
       }
@@ -9918,20 +9948,20 @@
       at('Work', 'L1:L2'); fire('cut'); at('Work', 'N60:N63');
       if (paste('the cut\'s paste of Work!L1:L2 into Work!N60:N63', '10\r\n20\r\n', 'the move of Work!L1:L2 to Work!N60:N63') &&
           laidAs('the cut of Work!L1:L2 moved to Work!N60', 'Work', 'N60:N63', { N60: '=A1*10', N61: '=A2*10', N62: '=A1*10', N63: '=A2*10' }) &&
-          holds('the cut of L1:L2 moved', 'Work', { L1: '""', L2: '""', N60: '"10"', N61: '"20"', N62: '"10"', N63: '"20"' })) k.kept++;
+          holds('the cut of L1:L2 moved', 'Work', { L1: 'nothing', L2: 'nothing', N60: '"10"', N61: '"20"', N62: '"10"', N63: '"20"' })) k.kept++;
       // the cut's text pasted again (the owner's word at the third slice's hand test): its cells written as they were cut,
       // their references kept again, tiled the same way and the last copy cut at the selection's edge, the move's cells
       // standing as they are
       at('Work', 'P60:P64');
       if (paste('the cut\'s text pasted again over Work!P60:P64', '10\r\n20\r\n', 'the paste of five cells into Work!P60:P64, as they were cut') &&
           laidAs('the cut of Work!L1:L2 pasted again at Work!P60', 'Work', 'P60:P64', { P60: '=A1*10', P61: '=A2*10', P62: '=A1*10', P63: '=A2*10', P64: '=A1*10' }) &&
-          holds('the cut of L1:L2 pasted again', 'Work', { L1: '""', L2: '""', N60: '"10"', N61: '"20"', P60: '"10"', P61: '"20"', P62: '"10"', P63: '"20"', P64: '"10"' })) k.again++;
+          holds('the cut of L1:L2 pasted again', 'Work', { L1: 'nothing', L2: 'nothing', N60: '"10"', N61: '"20"', P60: '"10"', P61: '"20"', P62: '"10"', P63: '"20"', P64: '"10"' })) k.again++;
       // one cell of a cut filling a range: every cell its text as it was cut, a row a cell, where a fill row would move each
       // cell's references from the first's (found by real keys before the commit)
       at('Work', 'N60'); fire('cut'); at('Work', 'R60:S61');
       if (paste('the cut\'s paste of Work!N60 over Work!R60:S61', '10\r\n', 'the move of Work!N60 to Work!R60:S61') &&
           laidAs('the cut of Work!N60 filling Work!R60:S61', 'Work', 'R60:S61', { R60: '=A1*10', S60: '=A1*10', R61: '=A1*10', S61: '=A1*10' }) &&
-          holds('the cut of N60 filling R60:S61', 'Work', { N60: '""', R60: '"10"', S60: '"10"', R61: '"10"', S61: '"10"' })) k.kept++;
+          holds('the cut of N60 filling R60:S61', 'Work', { N60: 'nothing', R60: '"10"', S60: '"10"', R61: '"10"', S61: '"10"' })) k.kept++;
       // the run's replay, played on a fresh host: the same cells, a paste one frame of its rows, the move's emptying among them
       var text = host.replayText() || '', M = new HOST({ drive: 'manual', budget: 0, now: frozen }), ex2 = HOST.instantiateSync(bytes), MD = new Driver({ exports: ex2 });
       try {
@@ -9939,7 +9969,7 @@
         if (!M.attach(ex2).ok || !M.load(CLIPCARD.text, CLIPCARD.file).ok) P.push('clipboard: a fresh host did not load the clipboard card');
         else {
           var pm = M.play(text, true), played = cellRows(MD.call('alonzo_view', [M.counters().handle], ['values', 'Work', 'A1:J40']).text);
-          var moveFrame = /\(frame \d+\n(?:  \(cell "Input" [^\n]*\n)*  \(cell "Work" "A30:B30" ""\)\n  \(cell "Work" "A32" "p"\)\n  \(cell "Work" "B32" "q"\)\)/.test(text);
+          var moveFrame = /\(frame \d+\n(?:  \(cell "Input" [^\n]*\n)*  \(empty "Work" "A30:B30"\)\n  \(cell "Work" "A32" "p"\)\n  \(cell "Work" "B32" "q"\)\)/.test(text);
           if (pm.ok && pm.frames === frame() && played === live && moveFrame) k.replayed++;
           else P.push('clipboard: the run\'s replay played on a fresh host ' + (pm.ok ? 'to frame ' + pm.frames : 'was refused') + ' of ' + frame() + (played === live ? '' : ', its Work not the live run\'s') + (moveFrame ? '' : ', the move not one frame of its rows'));
           // a paste refused while a replay plays, as every edit is
@@ -10067,6 +10097,227 @@
         done();
       }, function (e) { P.push('clipboard: the browser\'s clipboard\'s double failed: ' + (e && e.message ? e.message : e)); done(); });
     } catch (e) { done(); throw e; }
+  }
+  // ---- ENGINE.30's first slice: undo and redo, Excel's kind ----
+  // The undo card, the page's own, written here and never a file, so that a game's page runs the case too (ENGINE.16): a
+  // (spec 6) card at rate 0 whose Work and Sums are work sheets, Sums named by neither game nor read, Bench a game's and
+  // Ledger read-only; Work!B1 a formula, Work!C1 the empty text and Sums!A1 a sum over Work's column A; and a Write row that
+  // writes Work!F1 100 once Bench!A1 is 1, the cartridge's own write over a person's cell.
+  var UNDOCARD = { file: 'undocard.vla',
+                   text: '(cartridge "undocard"\n  (spec 6)\n  (title "An undo card")\n  (rate 0)\n  (screen grid 8 4)\n  (seed 1)\n' +
+                         '  (game "Bench")\n  (read "Ledger")\n  (work "Work"))\n' +
+                         '(sheet "Screen" hidden)\n(sheet "Work" visible)\n(sheet "Sums" visible)\n(sheet "Bench" visible)\n(sheet "Ledger" visible)\n(sheet "Write" visible)\n' +
+                         '(cell "Work" "A1" 1)\n(formula "Work" "B1" "=A1*10")\n(cell "Work" "C1" "")\n(cell "Work" "A2" 2)\n(formula "Sums" "A1" "=SUM(Work!A1:A9)")\n' +
+                         '(cell "Bench" "A1" 0)\n(cell "Ledger" "A1" "kept")\n(cell "Screen" "A1" "the Screen")\n' +
+                         '(cell "Write" "A1" "sheet")\n(cell "Write" "B1" "address")\n(cell "Write" "C1" "value")\n' +
+                         '(cell "Write" "A2" "Work")\n(formula "Write" "B2" "=IF(AND(Bench!A1=1,Work!F1<>100),\\"F1\\",\\"\\")")\n(cell "Write" "C2" 100)\n' };
+  // The undo case (ENGINE.30's first slice; docs/SPEC.md section 7.2), over the module, the undo card's acts made at its host
+  // and through the page's own copy, cut and step back: an edit of a work sheet undone and redone, each one act and one
+  // frame, said, the grid's rows as they were, the cell that held nothing emptied; a value, a formula and the empty text
+  // written back; a sheet named by neither; Delete's row undone, redone and undone again; a paste and a cut's move, each
+  // taken back whole and put back, the cut's source standing again; the sheet shown and the cells selected; a game's move
+  // leaving the line standing; the edits undone let go by an edit, said, and redo then nothing; the cartridge's own write over
+  // a person's cell refusing the undo, said; a range past the keeping refusing its, said; the host's counts; the replay
+  // holding each undo as the writes it made, played on a fresh host to the same cells; and a load emptying the line. On the
+  // card settling, an undo one act with its settle, and the cartridge's write in an act's settle refusing an undo. At a
+  // rate, nothing taken back or put back, said.
+  function caseUndo() {
+    var P = [], k = { undone: 0, redone: 0, values: 0, neither: 0, deleted: 0, pasted: 0, shown: 0, moved: 0, standing: 0, letGo: 0,
+                      refused: 0, unkept: 0, counted: 0, replayed: 0, loaded: 0, settled: 0, rated: 0 };
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm);
+    undoRun(bytes, k, P);
+    undoSettled(bytes, k, P);
+    undoRated(bytes, k, P);
+    return { counters: k, problems: P };
+  }
+  // The rows of a range as the record of the cells as written prints them, each cell's own: what a step back is held to.
+  function writtenRows(D, handle, sheet, win) {
+    return D.call('alonzo_view', [handle], ['grid', sheet, win]).text.split('\n').map(function (l) { return l.trim(); })
+      .filter(function (l) { return /^\((?:cell|formula) /.test(l); }).join('\n');
+  }
+  function undoRun(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:640px;height:300px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var exports = HOST.instantiateSync(bytes), D = new Driver({ exports: exports }), host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box });
+    try {
+      var ld = host.attach(exports).ok ? host.load(UNDOCARD.text, UNDOCARD.file) : { ok: false };
+      if (!ld.ok) { P.push('undo: the undo card did not load: ' + ld.sentence); return; }
+      var vp = host.vp, clip = new GridClip(host, null), W = 'A1:H40';
+      function said() { var s = host.sentences(); return s.length ? s[s.length - 1].text : ''; }
+      function frame() { return host.counters().frame; }
+      function at(sheet, sel) { host.showSheet(vp, sheet); vp.select(sel); }
+      function written(sheet, win) { return writtenRows(D, ld.handle, sheet, win); }
+      function show(v, name) { host.showSheet(v, name); }
+      // an act at the host, one frame and its sentence; its answer, or true, where it was
+      function act(what, fn, words) {
+        var f0 = frame(), r = fn(), n = frame() - f0, want = 'frame ' + frame() + ': stepped once for ' + words + '.';
+        if (n !== 1) P.push('undo: ' + what + ' stepped ' + n + ' frames, where one is due, saying ' + JSON.stringify(said()));
+        else if (said() !== want) P.push('undo: after ' + what + ' the host said ' + JSON.stringify(said()) + ', where ' + JSON.stringify(want) + ' is due');
+        else return r || true;
+        return null;
+      }
+      function undo(what, words) { return act(what, function () { return host.undo(); }, 'the undo of ' + words); }
+      function redo(what, words) { return act(what, function () { return host.redo(); }, 'the redo of ' + words); }
+      function edit(row, tail) { return act('the edit ' + row, function () { return host.edit(row); }, 'the edit ' + row + (tail || '')); }
+      // a range's rows held to what they were
+      function same(what, sheet, win, was) {
+        var now = written(sheet, win);
+        if (now === was) return true;
+        P.push('undo: ' + what + ' left ' + sheet + '!' + win + ' holding ' + JSON.stringify(now) + ', where ' + JSON.stringify(was) + ' is due');
+        return false;
+      }
+      // a step back refused: no frame, its words said, the range as it stood
+      function refused(what, fn, want, sheet, win) {
+        var f0 = frame(), was = written(sheet, win), r = fn();
+        if (!r.ok && frame() === f0 && said() === want && written(sheet, win) === was) return true;
+        P.push('undo: ' + what + ' was ' + (r.ok ? 'taken' : 'refused') + ', stepped ' + (frame() - f0) + ' frame(s) and said ' + JSON.stringify(said()) + ', where it is refused, saying ' + JSON.stringify(want));
+        return false;
+      }
+      // an edit undone and redone, the cell that held nothing emptied, and the step back's answer its sheet and range
+      var w0 = written('Work', W);
+      edit('(cell "Work" "A3" 7)');
+      var w1 = written('Work', W), u1 = undo('the undo of Work!A3', 'the edit (cell "Work" "A3" 7)');
+      if (u1 && (u1.sheet !== 'Work' || VP.rangeText(u1.range) !== 'A3')) P.push('undo: the undo of Work!A3 answered ' + JSON.stringify(u1) + ', where Work and A3 are due');
+      else if (u1 && same('the undo of Work!A3', 'Work', W, w0)) k.undone++;
+      if (redo('the redo of Work!A3', 'the edit (cell "Work" "A3" 7)') && same('the redo of Work!A3', 'Work', W, w1)) k.redone++;
+      // a formula, the empty text and a value, each written back as it was, an edit after an undo letting the edit undone go
+      var LET1 = '; the edit undone was let go';
+      [['(cell "Work" "B1" 5)', 'Work!B1, a formula', ''], ['(cell "Work" "C1" "x")', 'Work!C1, the empty text', LET1], ['(formula "Work" "A1" "=2+2")', 'Work!A1, a value', LET1]].forEach(function (x) {
+        var was = written('Work', W);
+        if (edit(x[0], x[2]) && undo('the undo over ' + x[1], 'the edit ' + x[0]) && same('the undo over ' + x[1], 'Work', W, was)) k.values++;
+      });
+      // a sheet named by neither game nor read, a work sheet too
+      var s0 = written('Sums', 'A1:D4');
+      if (edit('(cell "Sums" "B2" 3)', LET1) && undo('the undo of Sums!B2', 'the edit (cell "Sums" "B2" 3)') && same('the undo of Sums!B2', 'Sums', 'A1:D4', s0)) k.neither++;
+      // Delete's row, KERNEL.46's: undone, redone and undone again, each cell back as it was
+      var d0 = written('Work', W);
+      if (edit('(empty "Work" "A1:C2")', LET1)) {
+        var d1 = written('Work', W);
+        if (/"[ABC][12]"/.test(d1)) P.push('undo: Delete over Work!A1:C2 left ' + JSON.stringify(d1) + ', where its cells hold nothing');
+        else if (undo('the undo of Delete', 'the edit (empty "Work" "A1:C2")') && same('the undo of Delete', 'Work', W, d0) &&
+                 redo('the redo of Delete', 'the edit (empty "Work" "A1:C2")') && same('the redo of Delete', 'Work', W, d1) &&
+                 undo('the undo of Delete again', 'the edit (empty "Work" "A1:C2")') && same('the undo of Delete again', 'Work', W, d0)) k.deleted++;
+      }
+      // a paste, one act taken back whole and put back, its sheet shown and its cells selected from another sheet
+      var p0 = written('Work', W);
+      at('Work', 'D5');
+      var took = clip.put(vp, '1\t2\r\n3\t4\r\n');
+      var p1 = written('Work', W);
+      if (!took || said() !== 'frame ' + frame() + ': stepped once for the paste of four cells into Work!D5:E6' + LET1 + '.') P.push('undo: the paste into Work!D5 said ' + JSON.stringify(said()) + ', where the edit undone is let go');
+      [['undo', p0], ['redo', p1]].forEach(function (x) {
+        at('Sums', 'C3');
+        var r = (x[0] === 'undo' ? undo : redo)('the ' + x[0] + ' of the paste', 'the paste of four cells into Work!D5:E6');
+        if (!r) return;
+        stepBackShown(vp, r, show);
+        var sel = vp.selection();
+        if (String(vp.sheet()) === 'Work' && sel && sel.text === 'D5:E6') k.shown++;
+        else P.push('undo: after the ' + x[0] + ' of the paste the viewport shows ' + vp.sheet() + '!' + (sel ? sel.text : 'nothing') + ', where Work!D5:E6 is due');
+        if (same('the ' + x[0] + ' of the paste', 'Work', W, x[1])) k.pasted++;
+      });
+      // a cut's move, one act: undone, its source standing again and its target as it was; redone
+      edit('(cell "Work" "A30" "p")'); edit('(cell "Work" "B30" "q")');
+      var c0 = written('Work', 'A28:D34');
+      at('Work', 'A30:B30');
+      var text = clip.take(vp, true);
+      at('Work', 'A32');
+      clip.put(vp, text);
+      var c1 = written('Work', 'A28:D34');
+      if (said() !== 'frame ' + frame() + ': stepped once for the move of Work!A30:B30 to Work!A32:B32.') P.push('undo: the cut\'s move said ' + JSON.stringify(said()));
+      else if (undo('the undo of the cut\'s move', 'the move of Work!A30:B30 to Work!A32:B32') && same('the undo of the cut\'s move', 'Work', 'A28:D34', c0) &&
+               redo('the redo of the cut\'s move', 'the move of Work!A30:B30 to Work!A32:B32') && same('the redo of the cut\'s move', 'Work', 'A28:D34', c1)) k.moved++;
+      // a game's move at rate 0 leaves the line standing: the undo after it takes back the edit before it, the move standing
+      edit('(cell "Work" "G2" 1)');
+      var b0 = written('Bench', 'A1:B4');
+      edit('(formula "Bench" "A2" "=1+1")');
+      var b1 = written('Bench', 'A1:B4');
+      if (b1 === b0) P.push('undo: a game\'s move on Bench!A2 left the Bench as it was');
+      else if (undo('the undo after a game\'s move', 'the edit (cell "Work" "G2" 1)') && same('the undo after a game\'s move', 'Bench', 'A1:B4', b1)) k.standing++;
+      // the edits undone let go by an edit, said: the one the game's move left, then two; and redo then nothing, said
+      if (edit('(cell "Work" "G3" 1)', LET1)) k.letGo++;
+      edit('(cell "Work" "G4" 1)');
+      undo('the undo of Work!G4', 'the edit (cell "Work" "G4" 1)');
+      undo('the undo of Work!G3', 'the edit (cell "Work" "G3" 1)');
+      if (edit('(cell "Work" "G5" 1)', '; the two edits undone were let go')) k.letGo++;
+      if (refused('a redo after an edit', function () { return host.redo(); }, 'Nothing to redo: no edit taken back waits, and an edit after an undo lets the edits undone go.', 'Work', W)) k.letGo++;
+      // the cartridge's own write over a person's cell: an edit of Work!F1, a game's move asking the Write sheet's write, and
+      // the next act's frame making it before its own; the undo refused, said, the cell the cartridge's
+      edit('(cell "Work" "F1" 5)');
+      edit('(formula "Bench" "A1" "=1")');
+      edit('(formula "Bench" "A3" "=3")');
+      var f1 = written('Work', 'F1');
+      if (f1 !== '(cell "Work" "F1" 100)') P.push('undo: the cartridge\'s write left Work!F1 holding ' + JSON.stringify(f1) + ', where (cell "Work" "F1" 100) is due');
+      else if (refused('an undo over the cartridge\'s write', function () { return host.undo(); }, 'Undo of the edit (cell "Work" "F1" 5) was refused: Work!F1 holds 100, where 5 stood when the edit left it, so the cartridge has written it since, and writing back what the edit replaced would lose that.', 'Work', 'F1')) k.refused++;
+      // a range past the keeping, landing, its undo refused and said, never passed over to the edit before it
+      if (edit('(empty "Work" "A100:Z20000")') && refused('an undo of a range past the keeping', function () { return host.undo(); }, 'Undo of the edit (empty "Work" "A100:Z20000") was refused: it reaches 517,426 cells, more than the 262,144 a step back keeps.', 'Work', 'F1')) k.unkept++;
+      // the host's counts: twelve undos and four redos landed, two refused, eight edits undone let go (one each by the edits
+      // of C1, A1, Sums!B2 and Delete, the paste and G3, two by G5), and the two pastes counted apart
+      var c = host.counters();
+      if (c.undos === 12 && c.redos === 4 && c.undosRefused === 2 && c.letGo === 8 && c.pastes === 2) k.counted++;
+      else P.push('undo: the host counted ' + JSON.stringify({ undos: c.undos, redos: c.redos, undosRefused: c.undosRefused, letGo: c.letGo, pastes: c.pastes }) + ', where 12 undos, 4 redos, 2 refused, 8 let go and 2 pastes are due');
+      // the run's replay: the undo of the edit of Work!A3 its (empty ...) row in its frame, the undo over Work!B1 its formula
+      // row; played on a fresh host, the same cells
+      var rt = host.replayText() || '', M = new HOST({ drive: 'manual', budget: 0, now: frozen }), ex2 = HOST.instantiateSync(bytes), MD = new Driver({ exports: ex2 });
+      var undoRows = /\(frame \d+\n(?:  \(cell "Input" [^\n]*\n)*  \(empty "Work" "A3"\)\)/.test(rt) && /\(frame \d+\n(?:  \(cell "Input" [^\n]*\n)*  \(formula "Work" "B1" "=A1\*10"\)\)/.test(rt);
+      try {
+        var live = cellRows(D.call('alonzo_view', [ld.handle], ['values', 'Work', 'A1:H40']).text) + '\n' + cellRows(D.call('alonzo_view', [ld.handle], ['values', 'Sums', 'A1:D4']).text);
+        if (!M.attach(ex2).ok || !M.load(UNDOCARD.text, UNDOCARD.file).ok) P.push('undo: a fresh host did not load the undo card');
+        else {
+          var pm = M.play(rt, true), mh = M.counters().handle;
+          var played = cellRows(MD.call('alonzo_view', [mh], ['values', 'Work', 'A1:H40']).text) + '\n' + cellRows(MD.call('alonzo_view', [mh], ['values', 'Sums', 'A1:D4']).text);
+          if (pm.ok && pm.frames === frame() && played === live && undoRows) k.replayed++;
+          else P.push('undo: the run\'s replay played on a fresh host ' + (pm.ok ? 'to frame ' + pm.frames : 'was refused') + ' of ' + frame() + (played === live ? '' : ', its Work and Sums not the live run\'s') + (undoRows ? '' : ', an undo not recorded as the rows it wrote'));
+        }
+      } finally { M.destroy(); }
+      // the unexpected refusals: none but the undos the case refuses
+      var others = host.sentences().filter(function (sn) { return sn.refusal && !/^Undo of .* was refused: /.test(sn.text); });
+      if (others.length) P.push('undo: the host was refused: ' + others[0].text);
+      // a load empties the line
+      var re = host.load(UNDOCARD.text, UNDOCARD.file), fl = frame(), rl = re.ok ? host.undo() : { ok: false };
+      if (re.ok && !rl.ok && frame() === fl && said() === 'Nothing to undo: no edit of a work sheet since An undo card was loaded.') k.loaded++;
+      else P.push('undo: after a load the undo ' + (rl.ok ? 'was taken' : 'said ' + JSON.stringify(said())) + ', where "Nothing to undo: no edit of a work sheet since An undo card was loaded." is due');
+    } finally { host.destroy(); stage.removeChild(box); }
+  }
+  // On the undo card settling, (settle 8): an undo one act, its frames to rest, its rows as they were; and the cartridge's
+  // write in a game's move's own settle refusing the undo of the edit it wrote over.
+  function undoSettled(bytes, k, P) {
+    var exports = HOST.instantiateSync(bytes), D = new Driver({ exports: exports }), host = new HOST({ drive: 'manual', budget: 0, now: frozen });
+    try {
+      var ld = host.attach(exports).ok ? host.load(UNDOCARD.text.replace('(rate 0)', '(rate 0)\n  (settle 8)'), UNDOCARD.file) : { ok: false };
+      if (!ld.ok) { P.push('undo, settling: the card did not load: ' + ld.sentence); return; }
+      function said() { var s = host.sentences(); return s.length ? s[s.length - 1].text : ''; }
+      function frame() { return host.counters().frame; }
+      var w0 = writtenRows(D, ld.handle, 'Work', 'A1:H40');
+      host.edit('(cell "Work" "A3" 7)');
+      var f0 = frame(), r = host.undo(), n = frame() - f0;
+      if (r.ok && n >= 2 && !host.counters().settling && /^frame \d+: the undo of the edit \(cell "Work" "A3" 7\) settled in /.test(said()) && writtenRows(D, ld.handle, 'Work', 'A1:H40') === w0) k.settled++;
+      else P.push('undo, settling: the undo of Work!A3 stepped ' + n + ' frame(s), ' + (host.counters().settling ? 'still settling, ' : '') + 'said ' + JSON.stringify(said()) + ' and left Work ' + (writtenRows(D, ld.handle, 'Work', 'A1:H40') === w0 ? 'as it was' : 'changed') + ', where one act, its frames to rest, is due');
+      host.edit('(cell "Work" "F1" 5)');
+      host.edit('(formula "Bench" "A1" "=1")');
+      var f1 = writtenRows(D, ld.handle, 'Work', 'F1'), g0 = frame(), u = host.undo();
+      var want = 'Undo of the edit (cell "Work" "F1" 5) was refused: Work!F1 holds 100, where 5 stood when the edit left it, so the cartridge has written it since, and writing back what the edit replaced would lose that.';
+      if (f1 === '(cell "Work" "F1" 100)' && !u.ok && frame() === g0 && said() === want) k.settled++;
+      else P.push('undo, settling: after a game\'s move whose settle wrote Work!F1, Work!F1 holds ' + JSON.stringify(f1) + ' and the undo ' + (u.ok ? 'was taken' : 'said ' + JSON.stringify(said())) + ', where (cell "Work" "F1" 100) and ' + JSON.stringify(want) + ' are due');
+    } finally { host.destroy(); }
+  }
+  // At a rate the page's undo takes nothing back and its redo puts nothing back, each said, a game being never undone.
+  function undoRated(bytes, k, P) {
+    var clock = { t: 1000 }, exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: function () { return clock.t; } });
+    try {
+      var ld = host.attach(exports).ok ? host.load(UNDOCARD.text.replace('(rate 0)', '(rate 30)'), UNDOCARD.file) : { ok: false };
+      if (!ld.ok) { P.push('undo at 30: the card did not load: ' + ld.sentence); return; }
+      host.edit('(cell "Work" "A3" 7)');
+      host.start(); host.tick(clock.t);
+      for (var i = 0; i < 3 && host.counters().frame < 1; i++) { clock.t += 1000 / 30; host.tick(clock.t); }
+      [['undo', 'Nothing was undone: undo takes back'], ['redo', 'Nothing was redone: redo puts back']].forEach(function (x) {
+        var r = host[x[0]](), s = host.sentences(), last = s.length ? s[s.length - 1] : { text: '' };
+        var want = x[1] + ' a person\'s edits of work sheets at rate 0, and An undo card runs at 30 frames a second, where a game is never undone.';
+        if (!r.ok && last.refusal && last.text === want) k.rated++;
+        else P.push('undo at 30: ' + x[0] + ' answered ' + JSON.stringify(r) + ' and said ' + JSON.stringify(last.text) + ', where ' + JSON.stringify(want) + ' is due');
+      });
+    } finally { host.destroy(); }
   }
   // ---- CART.12: version 6, an act settled ----
   // The settle card, the page's own as the commands card is, written here and never a file, at version 6, so that a game's
@@ -11209,7 +11460,7 @@
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
                  ['continue', caseContinue], ['palette', casePalette], ['drawer', caseDrawer], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths], ['modes', caseModes], ['save', caseSave], ['keep', caseKeep],
-                 ['clipboard', caseClipboard], ['file', caseFile]];
+                 ['clipboard', caseClipboard], ['file', caseFile], ['undo', caseUndo]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -11218,7 +11469,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, drawer: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1, keep: 1, clipboard: 1, file: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, drawer: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1, keep: 1, clipboard: 1, file: 1, undo: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }

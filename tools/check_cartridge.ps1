@@ -895,7 +895,8 @@ function Test-Replay([string]$path, [string]$name, [string]$cartridgePath) {
             if ($named -match '^\d+$' -and [double]$named -ne $s.Value) { $problems.Add("line $($h.Line): (seed $($s.Text)), and $name.vla's manifest says (seed $named): a replay of it holds its manifest's seed") }
         }
     }
-    # the frames ascending from 1, each one form holding cell and formula rows alone
+    # the frames ascending from 1, each one form holding cell, formula and empty rows alone (an empty row since ENGINE.30's
+    # first slice, Frazaro's KERNEL.46: Delete, a paste's empty field, a cut's source and an undo give a cell back to no value)
     $frame = 0
     for ($i = 1; $i -lt $forms.Count; $i++) {
         $f = $forms[$i]
@@ -911,7 +912,13 @@ function Test-Replay([string]$path, [string]$name, [string]$cartridgePath) {
             $rowHead = ''
             if ((Test-Kind $row 'list') -and $row.Items.Count -ge 1 -and (Test-Kind $row.Items[0] 'symbol')) { $rowHead = $row.Items[0].Text }
             if ($rowHead -ceq 'derived') { $problems.Add("line $($row.Line): a (derived ...) row: the host's derived writes are re-derived as a replay plays and never logged (docs/SPEC.md section 7.6)"); continue }
-            if ($rowHead -cne 'cell' -and $rowHead -cne 'formula') { $problems.Add("line $($row.Line): $(if ($rowHead) { "($rowHead ...)" } else { Show-Datum $row }) in frame $frame, and a frame holds cell and formula rows alone"); continue }
+            if ($rowHead -cne 'cell' -and $rowHead -cne 'formula' -and $rowHead -cne 'empty') { $problems.Add("line $($row.Line): $(if ($rowHead) { "($rowHead ...)" } else { Show-Datum $row }) in frame $frame, and a frame holds cell, formula and empty rows alone"); continue }
+            if ($rowHead -ceq 'empty') {
+                $ok = ($row.Items.Count -eq 3) -and (Test-Kind $row.Items[1] 'string') -and (Test-Kind $row.Items[2] 'string') -and ($null -ne (Get-Rect $row.Items[2].Value))
+                if (-not $ok) { $problems.Add("line $($row.Line): the row is not (empty `"sheet`" `"address`")"); continue }
+                $result.Rows++
+                continue
+            }
             $ok = ($row.Items.Count -eq 4) -and (Test-Kind $row.Items[1] 'string') -and (Test-Kind $row.Items[2] 'string') -and ($null -ne (Get-Rect $row.Items[2].Value)) -and (Test-Value $row.Items[3])
             if ($ok -and $rowHead -ceq 'formula') { $ok = (Test-Kind $row.Items[3] 'string') -and $row.Items[3].Value.StartsWith('=') }
             if (-not $ok) { $problems.Add("line $($row.Line): the row is not ($rowHead `"sheet`" `"address`" value)"); continue }

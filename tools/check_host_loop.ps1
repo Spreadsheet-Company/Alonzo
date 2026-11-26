@@ -277,10 +277,10 @@ builds a game's page, from a scratch folder holding Kairos alone, its
 cartridge, source, replay, golden and hand and the library its source
 includes, and runs its loop at a ratio of 1: abi, pass, replay with the
 hand, grid over an empty set, empty and, since ENGINE.17, ENGINE.18,
-ENGINE.19, ENGINE.7, ENGINE.23, ENGINE.25, CART.12, ENGINE.26, SPEC.5, ENGINE.5, ENGINE.39 and CART.16, still, views,
-changes, continue, palette, drawer, keys, commands, settle, widths, modes, save, keep, clipboard and file must be OK
-at their own floors, each of Alonzo's fifteen other cases must say it is not on this page, and
-the last line must count twenty cases.
+ENGINE.19, ENGINE.7, ENGINE.23, ENGINE.25, CART.12, ENGINE.26, SPEC.5, ENGINE.5, ENGINE.39, CART.16 and ENGINE.30, still,
+views, changes, continue, palette, drawer, keys, commands, settle, widths, modes, save, keep, clipboard, file and undo
+must be OK at their own floors, each of Alonzo's fifteen other cases must say it is not on this page, and
+the last line must count twenty-one cases.
 
 THE BROWSER, as tools/check_render_oracle.ps1 finds and launches it:
 -Browser, else $env:ALONZO_BROWSER, else Google Chrome, Microsoft Edge or
@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds three hundred and twenty-two mutant pages through tools/build_web.ps1 and runs
+-Control builds three hundred and thirty-two mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -929,7 +929,9 @@ $continueFloors = @{ built = 10; compared = 3; frames = 20; hand = 20; twin = 21
 # 2026-11-16, ENGINE.5's hand test: offered, a kept keymap gaining the page's keys for its commands new since, once, a key
 # taken out staying out and a key held for another command never taken (5). 2026-11-21, ENGINE.49: the page's own keymap
 # twenty bindings, Save as's Ctrl+Shift+S among them, and a keymap kept before Save as gaining it, once (offered 6).
-$keysFloors = @{ defaults = 1; refused = 18; places = 25; steps = 3; lines = 3; kept = 5; spelled = 6; said = 21; sheets = 14; last = 9; game = 5; offered = 6 }
+# 2026-11-24, ENGINE.30's first slice: the page's own keymap twenty-three bindings, Ctrl+Z undo and Ctrl+Y and
+# Ctrl+Shift+Z redo among them, and a keymap kept before undo gaining the three, once (offered 7).
+$keysFloors = @{ defaults = 1; refused = 18; places = 25; steps = 3; lines = 3; kept = 5; spelled = 6; said = 21; sheets = 14; last = 9; game = 5; offered = 7 }
 # 2026-10-20, CART.9's second slice: the palette case's cell edits, needing no module: 12 rows a cell opens, typed or
 # opened, each with its caret; 6 of where the palette opens, fixed or floating; 7 of a cell's edit in the palette, its
 # prompt and caret, Enter, Tab, Shift+Enter and Shift+Tab each moving the selection once, a refused row, Escape and a
@@ -1030,9 +1032,23 @@ $commandsFloors = @{ opened = 1; listed = 1; frames = 40; ran = 3; landed = 24; 
 # 2026-11-19, the owner's second note at the tiling's hand test, each dimension its own: two shapes more, a 2 by 1 copy
 # over a row and a 2 by 2 over a column (shapes 9); over the module the 2 by 2 copy over G14:J14 tiled across it, its
 # rows kept (across 1, in the place of corner).
-$clipboardPageFloors = @{ chords = 15; bindings = 9; text = 3; fields = 9; values = 18; shapes = 9; rows = 4; cells = 6; laid = 7 }
+# 2026-11-24, ENGINE.30's first slice: an empty field empties its cell, KERNEL.46's (empty ...) row, beside a value and
+# over a range (rows 6); over the module a cut's source and an empty cell of the page's copy hold nothing after a paste,
+# and the cell holding the empty text pasted as it.
+$clipboardPageFloors = @{ chords = 15; bindings = 9; text = 3; fields = 9; values = 18; shapes = 9; rows = 6; cells = 6; laid = 7 }
 $clipboardFloors = @{ copied = 2; pasted = 2; exact = 1; tiled = 1; fills = 1; partial = 1; across = 1; typed = 2; edges = 2; refused = 4; frames = 20; cut = 1; moved = 2; letGo = 3; replayed = 1; rate = 1; game = 2; api = 3; mover = 1; formulas = 2; offSheet = 1; kept = 2; again = 1; gate = 1 }
 $clipboardGameFloors = @{ copied = 2; pasted = 2; exact = 1; tiled = 1; fills = 1; partial = 1; across = 1; typed = 2; edges = 2; refused = 4; frames = 20; cut = 1; moved = 2; letGo = 3; replayed = 1; rate = 1; api = 3; mover = 1; formulas = 2; offSheet = 1; kept = 2; again = 1 }
+# 2026-11-24, ENGINE.30's first slice, undo and redo, Excel's kind: a thirty-sixth case, undo, on both pages over the
+# module and the undo card the page writes, its counts a function of its plan: an edit of Work!A3 undone, the cell that
+# held nothing emptied, and redone; a formula, the empty text and a value written back (values 3); a sheet named by
+# neither; Delete's row undone, redone and undone again; a paste taken back and put back, each from another sheet, its
+# sheet shown and its cells selected (pasted 2, shown 2); a cut's move taken back and put back; a game's move leaving
+# the line standing; the edits undone let go by an edit, one and then two, and redo then nothing, said (letGo 3); the
+# cartridge's own write refusing an undo; a range past the 262,144 cells kept refusing its; the host's counts; the run's
+# replay holding the undos' rows and played to the same cells; a load emptying the line; on the card settling, an undo
+# one act with its settle and the cartridge's write in a move's settle refusing one (settled 2); and at 30 frames a
+# second undo and redo each said to take nothing (rated 2).
+$undoFloors = @{ undone = 1; redone = 1; values = 3; neither = 1; deleted = 1; pasted = 2; shown = 2; moved = 1; standing = 1; letGo = 3; refused = 1; unkept = 1; counted = 1; replayed = 1; loaded = 1; settled = 2; rated = 2 }
 # 2026-10-18, CART.12's viewport slice, a code's text drawn: the twenty-seven cases' counts unchanged but for grid over
 # the module, the grid card's row 16 of codes added, its counts a function of the card: codes 3, the row pinned by name
 # at frames 1, 4 and 5; coded 213, the texts drawn from text rows over the 25 frames, the row's eight constants at the
@@ -1150,6 +1166,10 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # it to three hundred and twenty-two (154 applicable without). Its run of this control found mutant AP's words unmoved
 # since CART.16's second slice made Afterlife the thirteenth cartridge, the picker in reverse offering Afterlife second,
 # after the empty sheet, and moved them.
+# 2026-11-24, ENGINE.30's first slice: OW to PD, the undo case's over the module, and PE and PF, the palette's and the
+# clipboard's needing none, take it to three hundred and thirty-two (156 applicable without); FE's and EE's anchors
+# moved with the lines they break, Delete's row and the unsettled sentence, and CZ's and DB's words with what they
+# fail by, Ctrl+Z the page's undo.
 # 2026-11-18, CART.3's third slice: MO to MR, version 7's: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -1387,18 +1407,19 @@ $floors = @(
     @{ Case = 'save';     Min = @{}; WithModule = $saveFloors },
     @{ Case = 'keep';     Min = @{}; WithModule = $keepFloors },
     @{ Case = 'clipboard'; Min = $clipboardPageFloors; WithModule = $clipboardFloors },
-    @{ Case = 'file';     Min = $filePageFloors; WithModule = $fileFloors }
+    @{ Case = 'file';     Min = $filePageFloors; WithModule = $fileFloors },
+    @{ Case = 'undo';     Min = @{}; WithModule = $undoFloors }
 )
 $zero = @('live', 'misfrees', 'filled', 'alone')
-$expectedCases = 35
+$expectedCases = 36
 # ENGINE.16: a game's page, built on every run from a scratch folder holding Kairos alone, its cartridge, source,
-# replay, golden and hand and the library its source includes. Its loop runs the twenty cases that need nothing
+# replay, golden and hand and the library its source includes. Its loop runs the twenty-one cases that need nothing
 # of Alonzo's own files, over its own blocks, still since ENGINE.17, views since ENGINE.18, changes since
 # ENGINE.19, continue since ENGINE.7, palette and keys since ENGINE.23, commands since ENGINE.25, settle since CART.12,
 # widths since ENGINE.26, modes since SPEC.5, save since ENGINE.5, keep since ENGINE.38, drawer since CART.3's
 # third slice, clipboard since ENGINE.39's second, Brickwork's Ctrl+X its one part left to Alonzo's own page, and file
-# since CART.16's second, Afterlife's reel its one part left to Alonzo's own page, among them, and each of the fifteen
-# others says it is not on the page.
+# since CART.16's second, Afterlife's reel its one part left to Alonzo's own page, and undo since ENGINE.30's first
+# slice, among them, and each of the fifteen others says it is not on the page.
 $gameFloors = @(
     @{ Case = 'abi';    Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
     @{ Case = 'pass';   Min = @{}; WithModule = @{ sources = 1; same = 1 } },
@@ -1419,10 +1440,11 @@ $gameFloors = @(
     @{ Case = 'save'; Min = @{}; WithModule = @{ saves = 1; opened = 1; seeds = 1; resumed = 1 } },
     @{ Case = 'keep'; Min = @{}; WithModule = @{ cartridges = 1; restores = 1; held = 1; watched = 1; saved = 1; discarded = 1; tabs = 2; stale = 2; torn = 1; capped = 1; refused = 1; typed = 1; switched = 1; typedSaved = 1; draftsRound = 1; draftsLoaded = 1 } },
     @{ Case = 'clipboard'; Min = $clipboardPageFloors; WithModule = $clipboardGameFloors },
-    @{ Case = 'file'; Min = $filePageFloors; WithModule = $fileGameFloors }
+    @{ Case = 'file'; Min = $filePageFloors; WithModule = $fileGameFloors },
+    @{ Case = 'undo'; Min = @{}; WithModule = $undoFloors }
 )
 $gameAbsent = @('rate30', 'rate0', 'yield', 'slice', 'pace', 'memory', 'refusals', 'scale', 'engine', 'parity', 'plane', 'input', 'audio', 'sound', 'tabs')
-$gameCases = 20
+$gameCases = 21
 $gameFiles = @('kairos/kairos.vla', 'kairos/kairos.source.vla', 'kairos/kairos.replay.vla', 'kairos/kairos.golden.vla', 'kairos/kairos.hand.js', 'common.vla')
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
@@ -2730,7 +2752,34 @@ if ($Control) {
             # ENGINE.30's decision 13, the save case's over the module. OV: the Write sheet unread at a save's load, so that a
             # save past frame 0 owes nothing and its next frame never makes the derived writes its run made.
             @{ L = 'ov'; Name = 'the Write sheet unread at a save''s load'; Module = $true; Case = 'save'; Anchor = '    if (c.devices.write && this.frame > 0) this._readWrite();'; With = '    // the Write sheet unread at a save''s load, by the control'
-               Want = 'case save.*the save at frame \d+ opens owing nothing, where its run owes' }
+               Want = 'case save.*the save at frame \d+ opens owing nothing, where its run owes' },
+            # OW to PD (ENGINE.30's first slice), the undo case's over the module, each by name: the line kept across a load, the
+            # undo after it taking back the last run's; the cartridge's writes unseen, an undo over its write taken; the edits
+            # undone kept after an edit, unsaid; an undo at a rate, said as nothing to undo; a step back's sheet unshown, its
+            # cells selected on the sheet shown; the cells that held nothing left as the act wrote them; a game's move joining
+            # the line, the undo after it taking back the move; and an undo's rows unrecorded, its replay parting from the run.
+            # PE and PF, needing no module: Delete writing the empty text again, the palette's; and a paste's empty field
+            # written as the empty text, the clipboard's.
+            @{ L = 'ow'; Name = 'the line kept across a load'; File = 'host'; Module = $true; Case = 'undo'; Anchor = '    this.undoLine = { done: [], undone: [] }; this.undoWaiting = null; this.stepLetGo = 0;'; With = '    this.undoLine = this.undoLine || { done: [], undone: [] }; this.undoWaiting = null; this.stepLetGo = 0;   // the line kept across a load, by the control'
+               Want = 'case undo.*undo: after a load the undo said "Undo of the edit' },
+            @{ L = 'ox'; Name = 'the cartridge''s writes unseen'; File = 'host'; Module = $true; Case = 'undo'; Anchor = '    var moved = heldDiff(now, left);'; With = '    var moved = '''';   // the cartridge''s writes unseen, by the control'
+               Want = 'case undo.*undo: an undo over the cartridge.s write was taken' },
+            @{ L = 'oy'; Name = 'the edits undone kept after an edit'; File = 'host'; Module = $true; Case = 'undo'; Anchor = '    if (u.undone.length) { act.letGo = u.undone.length; this.c.letGo += u.undone.length; u.undone = []; }'; With = '    // the edits undone kept after an edit, by the control'
+               Want = 'case undo.*undo: after the edit \(cell "Work" "C1" "x"\) the host said' },
+            @{ L = 'oz'; Name = 'an undo at a rate'; File = 'host'; Module = $true; Case = 'undo'; Anchor = '    if (this.cart.rate !== 0) return ''Nothing was '' + what'; With = '    if (false) return ''Nothing was '' + what'
+               Want = 'case undo.*undo at 30: undo answered' },
+            @{ L = 'pa'; Name = 'a step back''s sheet unshown'; File = 'template'; Module = $true; Case = 'undo'; Anchor = '    if (!shown || String(shown).toLowerCase() !== String(r.sheet).toLowerCase()) show(vp, r.sheet);'; With = '    // the sheet unshown, by the control'
+               Want = 'case undo.*undo: after the undo of the paste the viewport shows Sums' },
+            @{ L = 'pb'; Name = 'the cells that held nothing left'; File = 'host'; Module = $true; Case = 'undo'; Anchor = '      if (lines.length < areaOf(s.range)) rows.push(''(empty '' + quote(s.sheet) + '' '' + quote(VP().rangeText(s.range)) + '')'');'; With = '      // the cells that held nothing left as the act wrote them, by the control'
+               Want = 'case undo.*undo: the undo of Work!A3 (left|stepped)' },
+            @{ L = 'pc'; Name = 'a game''s move joining the line'; File = 'host'; Module = $true; Case = 'undo'; Anchor = '      if (mode.game || mode.read) return null;   // a game''s sheet or a read-only one: never the page''s to undo'; With = '      if (mode.read) return null;   // a game''s sheet joining the line, by the control'
+               Want = 'case undo.*undo: after the undo after a game.s move the host said' },
+            @{ L = 'pd'; Name = 'an undo''s rows unrecorded'; File = 'host'; Module = $true; Case = 'undo'; Anchor = '        this._recordEdit(row);'; With = '        if (!act.undoOp) this._recordEdit(row);   // an undo''s rows unrecorded, by the control'
+               Want = 'case undo.*undo: the run.s replay played on a fresh host' },
+            @{ L = 'pe'; Name = 'Delete the empty text'; File = 'template'; Case = 'palette'; Anchor = '    return ''(empty '' + vlaString(sheet) + '' '' + vlaString(sel.text) + '')'';'; With = '    return ''(cell '' + vlaString(sheet) + '' '' + vlaString(sel.text) + '' "")'';   // Delete the empty text, by the control'
+               Want = 'case palette.*palette: Delete over the selection .*writes "\(cell ' },
+            @{ L = 'pf'; Name = 'a paste''s empty field the empty text'; File = 'template'; Case = 'clipboard'; Anchor = 'row: one.kind === ''empty'' ? ''(empty '' + at + vlaString(whole) + '')'' : ''(cell '' + at + vlaString(whole) + '' '' + one.spelled + '')'''; With = 'row: ''(cell '' + at + vlaString(whole) + '' '' + one.spelled + '')'''
+               Want = 'case clipboard.*clipboard: one empty field over C5:E7 writes "\(cell ' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
@@ -2853,8 +2902,8 @@ if ($Control) {
             @{ L = 'fd'; Name = 'Backspace''s emptied cell forgotten'; Anchor = '    if (typed === '''') return row(''cell'', ''""'', true);'
                With = '    // Backspace''s emptied cell forgotten, by the control'
                Want = 'case palette.*palette: Backspace on the gate C2 opens' },
-            @{ L = 'fe'; Name = 'Delete over the first cell alone'; Anchor = '    return ''(cell '' + vlaString(sheet) + '' '' + vlaString(sel.text) + '' "")'';'
-               With = '    return ''(cell '' + vlaString(sheet) + '' '' + vlaString(sel.text.split('':'')[0]) + '' "")'';'
+            @{ L = 'fe'; Name = 'Delete over the first cell alone'; Anchor = '    return ''(empty '' + vlaString(sheet) + '' '' + vlaString(sel.text) + '')'';'
+               With = '    return ''(empty '' + vlaString(sheet) + '' '' + vlaString(sel.text.split('':'')[0]) + '')'';'
                Want = 'case palette.*palette: Delete over the selection \{"kind":"cells","text":"A2:B3"' },
             @{ L = 'ff'; Name = 'the window''s blur shutting the palette'; Anchor = "    input.addEventListener('blur', function () { if (self._pageFocused()) self.close(false); });"
                With = "    input.addEventListener('blur', function () { self.close(false); });"
@@ -2917,12 +2966,12 @@ if ($Control) {
                Want = 'case keys.*keys: a kept keymap naming a later page''s command was refused' },
             @{ L = 'cz'; Name = 'a box''s editing keys taken'; Anchor = '    if (k.mod && !k.alt && /^(a|c|v|x|y|z|arrowleft|arrowright|arrowup|arrowdown|home|end|backspace|delete)$/.test(k.value.toLowerCase())) return false;'
                With = '    // a box''s editing keys open to every binding, by the control'
-               Want = 'case keys.*in the place source presses pause, where nothing is due' },
+               Want = 'case keys.*in the place source presses undo, where nothing is due' },
             @{ L = 'da'; Name = 'a window''s browser''s keys unsaid'; Anchor = "    if (!k.alt && ((ctrl && /^(t|n|w|tab)$/.test(v)) || (k.mod === 'meta' && /^(t|n|w)$/.test(v)) || (ctrl && !k.shift && /^(f4|pagedown|pageup)$/.test(v)))) out.push('the browser\'s in a window, the page\'s in full screen');"
                With = '    // a window''s browser''s keys unsaid, by the control'
                Want = 'case keys.*keys: the list says of Ctrl\+W "", where it names' },
             @{ L = 'db'; Name = 'a shadow said of a key held with Ctrl'; Anchor = 'screen = !b.keys.mod && place'; With = 'screen = place'
-               Want = 'case keys.*keys: the list says of \(bind "Ctrl\+Z" run\) beside a game''s Z.*where no shadow is due' },
+               Want = 'case keys.*keys: the list says of \(bind "Ctrl\+Space" run\) beside a game''s Z.*where no shadow is due' },
             @{ L = 'dc'; Name = 'a binding on a sheet held on every sheet'; Anchor = '      return shown !== null && shown !== undefined && !!b.sheets[String(shown).toLowerCase()];'; With = '      return true;'
                Want = 'case keys.*keys: P in the place screen showing Day presses pause, where run is due' },
             @{ L = 'dd'; Name = 'a binding on no sheet pressed first'; Anchor = '    for (i = 0; i < map.bindings.length; i++) { b = map.bindings[i]; if (b.sheets && holdsIn(b, place, shown) && keyMatches(b.keys, ev)) return b; }'
@@ -3077,7 +3126,7 @@ if ($Control) {
             @{ L = 'ef'; Name = 'a press read after the viewport''s own'; Module = $true; Anchor = "    this._on(root, 'mousedown', function (ev) { if (still() && self._pressActs()) self._pressAct(ev); }, true);"
                With = "    this._on(root, 'mousedown', function (ev) { if (still() && self._pressActs()) self._pressAct(ev); });"
                Want = 'case settle.*settle: a press on E2 left frame \d+' },
-            @{ L = 'ee'; Name = 'an unsettled act unsaid'; Anchor = "        this._answer('frame ' + n + ': ' + sa.what + ' did not settle in ' + countWords(steps + 1) + ' frames, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5).');"
+            @{ L = 'ee'; Name = 'an unsettled act unsaid'; Anchor = "        this._answer('frame ' + n + ': ' + sa.what + ' did not settle in ' + countWords(steps + 1) + ' frames, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5)' + letGoWords(sa.letGo) + '.');"
                With = '        // the unsettled act unsaid, by the control'
                Want = 'case settle.*settle, the double: the host said "the load did not settle in nine frames" 0 time' },
             # CART.9's fourth slice, decision 51: a settled act's frames and what each was for, and a command's name quoted
@@ -3572,7 +3621,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}; {54}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote, $brickworkNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk -and $brickworkOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and twenty-two' } else { 'one hundred and fifty-four applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and thirty-two' } else { 'one hundred and fifty-six applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -3712,7 +3761,7 @@ try {
 }
 Write-Output ''
 if ($failed.Count -eq 0) {
-    Write-Output "=== CHECK: clean - every case OK, the replay, sound, save and keep cases at the first ratio and every other at both, every count at or above its floor, and the game's page's twenty cases OK with Alonzo's fifteen said absent ==="
+    Write-Output "=== CHECK: clean - every case OK, the replay, sound, save and keep cases at the first ratio and every other at both, every count at or above its floor, and the game's page's twenty-one cases OK with Alonzo's fifteen said absent ==="
     exit 0
 }
 Write-Output "=== CHECK: $($failed.Count) problem(s) ==="

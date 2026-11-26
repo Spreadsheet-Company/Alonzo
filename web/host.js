@@ -938,6 +938,11 @@
     // (the rider of CART.9's third slice and the owner's word after it)
     this.run = (this.run || 0) + 1;
     this.frame = 0; this.inFrame = false; this.progress = null; this.stepEdit = null; this.stepAct = null;
+    // the run's line of a person's edits of work sheets at rate 0 (ENGINE.30's first slice; decision 5, the history a line):
+    // done, the edits a person can take back, the last last; undone, those taken back that redo puts back, the last taken
+    // back last; and the entry whose rest is waited for, the cells its act left read then. A load empties it, and nothing
+    // else does.
+    this.undoLine = { done: [], undone: [] }; this.undoWaiting = null; this.stepLetGo = 0;
     this.saveWaiting = null; this.saveAsked = null;   // a save asked for inside a frame or a settle, and the cartridge's, taken at a frame's end (ENGINE.5)
     this.saveWhat = null; this.checkWaiting = null;   // what a waiting save writes, the file or the cartridge, and a file opened whose check waits for the grid to rest (CART.16)
     this.saveAs = false;   // whether a waiting save was asked for under another name (ENGINE.49)
@@ -984,7 +989,7 @@
     this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, inputsKept: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, patches: 0, shows: 0, saves: 0, saved: 0,
                sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0, commands: 0, commandsRefused: 0,
                settles: 0, settleSteps: 0, unsettled: 0, presses: 0, playedShown: 0, editsRead: 0, keysRead: 0, keysStray: 0,
-               keyframes: 0, restores: 0, pastes: 0, pastesRefused: 0 };
+               keyframes: 0, restores: 0, pastes: 0, pastesRefused: 0, undos: 0, redos: 0, undosRefused: 0, letGo: 0 };
   };
 
   // The module: its ABI number asked first, then every export the loop calls.
@@ -1268,6 +1273,7 @@
       var row = this.edits.shift();
       if (!this._issueAct(row, true)) { this.inFrame = false; this.progress = null; continue; }
       this.stepEdit = actWords(row); this.stepAct = row;
+      this.stepLetGo = row && typeof row === 'object' && row.letGo ? row.letGo : 0;   // the edits undone it let go (ENGINE.30)
       if (!this._continue(win)) return;
     }
   };
@@ -1381,8 +1387,8 @@
     if (act.command !== undefined) return this._issueCommand(act, atRateZero);
     if (act.press !== undefined || act.load) return true;   // a press, or the load's first step: its rows are the act (CART.12)
     if (act.paste) return this._issuePaste(act, atRateZero);   // a paste's rows, one write (ENGINE.39)
-    if (act.row !== undefined) return this._issueEdit(act.row, atRateZero);
-    return typeof act === 'string' ? this._issueEdit(act, atRateZero) : this._issueApplied(act, atRateZero);
+    if (act.row !== undefined) return this._issueEdit(act.row, atRateZero, act);
+    return typeof act === 'string' ? this._issueEdit(act, atRateZero, null) : this._issueApplied(act, atRateZero);
   };
   // An act's rows at rate 0 (version 6, CART.12; docs/SPEC.md section 3.3), before its step: the sheet shown and the cell
   // the act stands on, the press, and the command, as one write of the rows that differ from the Input sheet as the host
@@ -1453,10 +1459,11 @@
     this._answerRefused('frame ' + (this.frame + 1) + ': ' + b.file + ' was not applied: the write of its rows was refused' + where + ': ' + r.text + ' [' + r.id + ']; nothing was written, and the game runs on under the rules it had. Load starts the rebuilt cartridge from frame 0' + (atRateZero ? '; no step.' : '.'));
     return false;
   };
-  Host.prototype._issueEdit = function (row, atRateZero) {
-    var r = this._write(row);
+  Host.prototype._issueEdit = function (row, atRateZero, act) {
+    var before = this._undoBefore(act), r = this._write(row);
     if (r.status === 0) {
       this.c.edits++;
+      if (before !== undefined) this._undoLanded(act, before);   // the edit joins the run's line (ENGINE.30's first slice)
       this._recordEdit(row);   // the replay logs a person's edit that landed, in its frame (section 7.6)
       if (readsInputRows(row, 11, 15)) this.actRead = true;   // a person's formula reading an act's place or press: a press is an act from here (CART.9)
       if (editsInput(row)) this.inputsLast = null;   // the Input sheet a person wrote: the next frame's rows written whole (ENGINE.19)
@@ -1475,9 +1482,10 @@
   // reading an act's place making a press an act; and its rows told. At a rate its answer said; at rate 0 the step's
   // sentence says it. Refused: nothing written, the row the write refused named, and at rate 0 no step.
   Host.prototype._issuePaste = function (act, atRateZero) {
-    var r = this._write(act.rows.join('\n'));
+    var before = this._undoBefore(act), r = this._write(act.rows.join('\n'));
     if (r.status === 0) {
-      this.c.pastes++;
+      if (act.undoOp === 'undo') this.c.undos++; else if (act.undoOp === 'redo') this.c.redos++; else this.c.pastes++;
+      if (before !== undefined) this._undoLanded(act, before);   // a paste joins the run's line, and an undo or a redo moves in it (ENGINE.30)
       for (var i = 0; i < act.rows.length; i++) {
         var row = act.rows[i];
         this._recordEdit(row);
@@ -1540,20 +1548,22 @@
     // an act's sentence: stepped once for it; for a cartridge that settles (CART.12), said when its settle ends, with its
     // frames and what each was for, or that K stopped it with the grid still moving (SD-30)
     if (this.stepEdit) {
-      if (this.settling) this.settleAct = { what: this.stepEdit, act: this.stepAct, from: n };
-      else this._answer('frame ' + n + ': stepped once for ' + this.stepEdit + '.');
-      this.stepEdit = null;
+      if (this.settling) this.settleAct = { what: this.stepEdit, act: this.stepAct, from: n, letGo: this.stepLetGo };
+      else this._answer('frame ' + n + ': stepped once for ' + this.stepEdit + letGoWords(this.stepLetGo) + '.');
+      this.stepEdit = null; this.stepLetGo = 0;
     } else if (this.settleAct && !this.settling) {
       var sa = this.settleAct, steps = n - sa.from;
       this.settleAct = null;
       if (this.settleWord === 'unsettled') {
         this.c.unsettled++;
-        this._answer('frame ' + n + ': ' + sa.what + ' did not settle in ' + countWords(steps + 1) + ' frames, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5).');
+        this._answer('frame ' + n + ': ' + sa.what + ' did not settle in ' + countWords(steps + 1) + ' frames, the most its (settle ' + this.cart.settle + ') allows: the grid still moves, and waits for the next act (docs/SPEC.md section 5)' + letGoWords(sa.letGo) + '.');
       } else {
         this.c.settles++;
-        this._answer('frame ' + n + ': ' + sa.what + ' settled in ' + settledWords(sa.act, steps) + '.');
+        this._answer('frame ' + n + ': ' + sa.what + ' settled in ' + settledWords(sa.act, steps) + letGoWords(sa.letGo) + '.');
       }
     }
+    // the cells an act of the line left, read once it rests: what an undo or a redo holds the grid to (ENGINE.30)
+    if (this.undoWaiting && !this.settling) { var uw = this.undoWaiting; this.undoWaiting = null; uw.entry[uw.slot] = this._heldAll(uw.entry.targets); }
     // the cartridge's save, taken after the frame's reads, the Clock's among them, at rest or held for the act's settle;
     // and a save asked for inside a frame or a settle, taken now that the grid rests (ENGINE.5)
     if (this.saveAsked) { var by = this.saveAsked; this.saveAsked = null; this.save(by); }
@@ -2348,7 +2358,7 @@
   Host.prototype.edit = function (row) {
     var t = String(row || '').trim(), forms = VP().readForms(t);
     var head = forms.length === 1 && Array.isArray(forms[0]) ? sym(forms[0][0]) : null;
-    if (head !== 'cell' && head !== 'formula') { this._answerRefused('An edit is one cell or formula row, as (cell "Palette" "B1" "#FF8800"); ' + (t || 'an empty line') + ' is not one.'); return false; }
+    if (head !== 'cell' && head !== 'formula' && head !== 'empty') { this._answerRefused('An edit is one cell, formula or empty row, as (cell "Palette" "B1" "#FF8800") or (empty "Work" "A1:B2"); ' + (t || 'an empty line') + ' is not one.'); return false; }
     if (!this.handle) { this._answerRefused('No cartridge is loaded to edit.'); return false; }
     var into = str(forms[0][1]);
     if (into !== null && this.sheetMode(into).read) {   // a read-only sheet (SPEC.5), its cartridge's rows and the Write sheet's still writing it
@@ -2357,8 +2367,11 @@
       return false;
     }
     if (this.player) { this._answerRefused('The edit ' + t + ' was not written: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s edit waits until it ends, so that what plays is the replay alone.'); return false; }
-    // at rate 0 a version 6 cartridge's edit stands on the cell the selection stands on when it is made (CART.12)
-    this.edits.push(this._sixAtZero() ? { row: t, place: this._place() } : t);
+    // at rate 0 a version 6 cartridge's edit stands on the cell the selection stands on when it is made (CART.12); and an edit
+    // of a work sheet at rate 0 joins the run's line (ENGINE.30's first slice)
+    var entry = this._undoEntry([t], null, 'the edit ' + t), act = this._sixAtZero() ? { row: t, place: this._place() } : entry ? { row: t } : t;
+    if (entry) act.undoEntry = entry;
+    this.edits.push(act);
     if (this.cart.rate === 0 && !this.inFrame) this._editFrames(this._window());
     // At a rate above zero the edit is written at the next frame, which a paused loop does not bring until Run:
     // said, so that an edit is never silent (the owner's hand test of ENGINE.8, 2026-10-12: the grid card,
@@ -2375,8 +2388,10 @@
   // formula row printed once over each of its rectangles in the range, so that a board of one fill copies one formula and
   // not one a cell (its values are runs, which the viewport's reader takes no row of, so the values projection gives them),
   // and at frame 0 the grid record's own, a cell's each. range, { top, left, bottom, right }. { ok, sheet, range, rows,
-  // fills }: each row an array of { shown, value, formula }, the text the cell shows, its value as a cell row spells it,
-  // exact where its shown text rounds, the empty text for an empty cell, and whether a formula computed it; and fills, each
+  // fills }: each row an array of { shown, value, formula, empty }, the text the cell shows, its value as a cell row spells
+  // it, exact where its shown text rounds, the empty text for an empty cell, whether a formula computed it, and since
+  // ENGINE.30's first slice whether the cell holds nothing, which a paste empties, told from one holding the empty text,
+  // which a paste writes (an empty cell's empty true, a cell's absent); and fills, each
   // formula's rectangle in the range and the text of its first cell, { top, left, bottom, right, text }. A date, which no
   // cell row holds, and a formula with no value yet keep the text they show. Else { ok: false, sentence }, said as the act's
   // refusal.
@@ -2409,7 +2424,7 @@
     return r.status === 0 ? r.text : null;
   };
   function copiedCell(e) {
-    if (!e || e.kind === 'empty') return { shown: '', value: '""', formula: false };
+    if (!e || e.kind === 'empty') return { shown: '', value: '""', formula: false, empty: true };
     if (e.kind === 'formula' && !e.valued) return { shown: e.text, value: quote(e.text), formula: true };
     var v = e.value !== undefined ? e.value : e.text, k = e.vkind, spelled;
     if (k === 'number') spelled = v;
@@ -2452,6 +2467,8 @@
     if (past) { this._answerRefused(what + ' was not written: ' + past + '.'); return false; }
     var act = { paste: true, what: p.what, done: p.done, move: !!p.move, rows: p.rows.map(function (y) { return y.row; }) };
     if (this._sixAtZero()) act.place = p.place;   // the cell the act stands on (CART.12)
+    var entry = this._undoEntry(act.rows, { sheet: p.sheet, range: p.range }, p.what);   // ENGINE.30's first slice: one act, one step back
+    if (entry) act.undoEntry = entry;
     this.edits.push(act);   // one act, all or none (decision 10)
     if (this.cart.rate === 0 && !this.inFrame) this._editFrames(this._window());
     else if (!this.running && this.cart.rate > 0) this._answer('frame ' + this.frame + ': ' + p.what + ' waits for the next frame, which Run brings: the loop is paused at ' + this.cart.rate + ' frame' + (this.cart.rate === 1 ? '' : 's') + ' a second.');
@@ -2471,6 +2488,189 @@
       if (cell) return 'it reaches ' + sheet + '!' + cell + ', past ' + e.words;
     }
     return '';
+  };
+
+  // ---- undo and redo, Excel's kind (ENGINE.30's first slice; docs/SPEC.md section 7.2) ----
+  // The owner's rule: a game is never undone. A person's edit of a work sheet at rate 0, a sheet the manifest names work or
+  // names neither game nor read, a paste and a cut's move each one, keeps the cells it replaced, read as the grid holds them
+  // just before its write; undo writes them back as one new act, the cells that held nothing emptied by an (empty ...) row,
+  // recorded in the replay as the writes it made, and redo writes the act again. A game's move at rate 0 leaves the line
+  // standing; an undo or a redo over a cell the cartridge has written since is refused and said; an edit after an undo lets
+  // the edits undone go, said; and at a rate undo takes nothing back, said. No keyframe and no snapshot of the grid: the
+  // line is the acts' rows and the cells they replaced.
+  // The line's length, Excel's 100 levels, the oldest let go silently past it; and the cells an act may reach and be kept, a
+  // lattice of 512 by 512, a larger act landing with its undo refused and said.
+  var UNDO_DEPTH = 100, UNDO_CELLS = 262144;
+  function areaOf(r) { return (r.bottom - r.top + 1) * (r.right - r.left + 1); }
+  function joinOf(a, b) { return { top: Math.min(a.top, b.top), left: Math.min(a.left, b.left), bottom: Math.max(a.bottom, b.bottom), right: Math.max(a.right, b.right) }; }
+  // A row's rectangle joined to a target of its sheet where their join is at most twice the two, else a target of its own:
+  // a paste's cells one rectangle, and a cut's source another where it stands far from them.
+  function undoTarget(targets, sheet, q) {
+    for (var i = 0; i < targets.length; i++) {
+      var t = targets[i];
+      if (t.sheet.toLowerCase() !== sheet.toLowerCase()) continue;
+      var j = joinOf(t.range, q);
+      if (areaOf(j) <= 2 * (areaOf(t.range) + areaOf(q))) { t.range = j; return; }
+    }
+    targets.push({ sheet: sheet, range: { top: q.top, left: q.left, bottom: q.bottom, right: q.right } });
+  }
+  // The line's entry for an act's rows, or null where the act is none of a person's edits of a work sheet at rate 0: targets,
+  // the rectangles its rows reach; select, the sheet and range a step back shows and selects, the act's own range by
+  // default; words, the act in a sentence; rows, what a redo writes again; and unkept, why its undo is refused where the line
+  // cannot keep it, more than UNDO_CELLS, so that an undo never passes over it to the one before. Whole rows or columns are
+  // none, the engine refusing them in a row (vla-lang's parse_a1_range).
+  Host.prototype._undoEntry = function (rows, select, words) {
+    if (!this.cart || this.cart.rate !== 0 || this.player) return null;
+    var targets = [], cells = 0, i;
+    for (i = 0; i < rows.length; i++) {
+      var f = VP().readForms(String(rows[i]))[0], head = Array.isArray(f) ? sym(f[0]) : null;
+      var sheet = head ? str(f[1]) : null, q = sheet !== null && str(f[2]) !== null ? VP().parseRange(str(f[2])) : null;
+      if ((head !== 'cell' && head !== 'formula' && head !== 'empty') || !q || q.rows || q.columns) return null;
+      var mode = this.sheetMode(sheet);
+      if (mode.game || mode.read) return null;   // a game's sheet or a read-only one: never the page's to undo
+      undoTarget(targets, sheet, q);
+    }
+    if (!targets.length) return null;
+    for (i = 0; i < targets.length; i++) cells += areaOf(targets[i].range);
+    var unkept = cells > UNDO_CELLS ? 'it reaches ' + thousands(cells) + ' cells, more than the ' + thousands(UNDO_CELLS) + ' a step back keeps' : '';
+    return { words: words, rows: rows.slice(), targets: unkept ? [] : targets, unkept: unkept,
+             select: select || { sheet: targets[0].sheet, range: targets[0].range }, before: null, after: null, restored: null };
+  };
+  // The cells of a range as the grid holds them, read through the record of the cells as written, the grid projection,
+  // whatever frame it is: each cell's own row, a value as written or a formula's text, keyed by its row and column, and
+  // no row for a cell that holds nothing. A row the record prints over a range makes the snapshot none, as a refused view
+  // does. Read between a frame's writes and its step too, the module stepping nothing then.
+  Host.prototype._heldNow = function (sheet, range) {
+    if (!this.m || !this.handle) return null;
+    var r = this.m.texts('alonzo_view', [this.handle], ['grid', sheet, VP().rangeText(range)]);
+    if (r.status !== 0) return null;
+    var held = {}, lines = r.text.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (line.charAt(0) !== '(') continue;
+      var f = VP().readForms(line)[0], head = Array.isArray(f) ? sym(f[0]) : null;
+      if (head !== 'cell' && head !== 'formula') continue;
+      var q = str(f[2]) !== null ? VP().parseRange(str(f[2])) : null;
+      if (!q || q.rows || q.columns || q.top !== q.bottom || q.left !== q.right) return null;
+      if (q.top < range.top || q.top > range.bottom || q.left < range.left || q.left > range.right) continue;
+      held[q.top + ',' + q.left] = line;
+    }
+    return { sheet: sheet, range: range, held: held };
+  };
+  Host.prototype._heldAll = function (targets) {
+    var out = [];
+    for (var i = 0; i < targets.length; i++) {
+      var s = this._heldNow(targets[i].sheet, targets[i].range);
+      if (!s) return null;
+      out.push(s);
+    }
+    return out;
+  };
+  // The rows that write snapshots back: an (empty ...) row over a snapshot's range where any of its cells held nothing, then
+  // each held cell's own row as the record printed it, so that one write of them leaves the range as the snapshot found it.
+  function heldRows(snaps) {
+    var rows = [];
+    snaps.forEach(function (s) {
+      var lines = [], k;
+      for (k in s.held) if (Object.prototype.hasOwnProperty.call(s.held, k)) lines.push(s.held[k]);
+      if (lines.length < areaOf(s.range)) rows.push('(empty ' + quote(s.sheet) + ' ' + quote(VP().rangeText(s.range)) + ')');
+      for (var i = 0; i < lines.length; i++) rows.push(lines[i]);
+    });
+    return rows;
+  }
+  // What a row holds, in a sentence: a value as written, or a formula's text; nothing for no row.
+  function heldWords(line) {
+    if (!line) return 'nothing';
+    var f = VP().readForms(line)[0];
+    return sym(f[0]) === 'formula' ? 'the formula ' + str(f[3]) : line.replace(/^\(cell\s+"(?:[^"\\]|\\.)*"\s+"[^"]*"\s+/, '').replace(/\)\s*$/, '');
+  }
+  // The first cell whose row differs between two snapshots of the same targets, in words, or the empty text.
+  function heldDiff(now, was) {
+    for (var i = 0; i < was.length; i++) {
+      var s = was[i], R = s.range, n = now[i];
+      for (var r = R.top; r <= R.bottom; r++) for (var c = R.left; c <= R.right; c++) {
+        var k = r + ',' + c, a = n.held[k], b = s.held[k];
+        if (a !== b) return s.sheet + '!' + VP().colName(c) + r + ' holds ' + heldWords(a) + ', where ' + heldWords(b) + ' stood';
+      }
+    }
+    return '';
+  }
+  function letGoWords(n) { return n ? '; ' + (n === 1 ? 'the edit undone was let go' : 'the ' + countWords(n) + ' edits undone were let go') : ''; }
+  // The cells as an act found them, read just before its write, the frame's derived writes already made: an entry's
+  // snapshot, or null where its view was refused or the line cannot keep it, its undo then refused; true for an undo's or a
+  // redo's, whose rows the line wrote; undefined for an act the line keeps nothing of.
+  Host.prototype._undoBefore = function (act) {
+    if (!act || typeof act !== 'object' || !act.undoEntry) return undefined;
+    if (act.undoOp) return true;
+    return act.undoEntry.unkept ? null : this._heldAll(act.undoEntry.targets);
+  };
+  // An act of the line landed: an edit or a paste joins it, letting the edits undone go, said in its frame's sentence, and
+  // the oldest past UNDO_DEPTH; an undo moves its entry to the undone and a redo back; and the cells it left are read at its
+  // rest (_complete).
+  Host.prototype._undoLanded = function (act, before) {
+    var u = this.undoLine, e = act.undoEntry;
+    if (act.undoOp === 'undo') { u.done.pop(); u.undone.push(e); this.undoWaiting = { entry: e, slot: 'restored' }; return; }
+    if (act.undoOp === 'redo') { u.undone.pop(); u.done.push(e); this.undoWaiting = { entry: e, slot: 'after' }; return; }
+    e.before = before;
+    if (!before && !e.unkept) e.unkept = 'its cells could not be read before it wrote them';
+    if (u.undone.length) { act.letGo = u.undone.length; this.c.letGo += u.undone.length; u.undone = []; }
+    u.done.push(e);
+    if (u.done.length > UNDO_DEPTH) u.done.shift();
+    if (!e.unkept) this.undoWaiting = { entry: e, slot: 'after' };
+  };
+  // Why a step back cannot be taken now, or the empty text.
+  Host.prototype._undoBusy = function (what) {
+    if (!this.handle || !this.cart) return 'Nothing was ' + what + ': no cartridge is loaded.';
+    if (this.cart.rate !== 0) return 'Nothing was ' + what + ': ' + (what === 'undone' ? 'undo takes back' : 'redo puts back') + ' a person\'s edits of work sheets at rate 0, and ' + (this.cart.title || 'the cartridge') + ' runs at ' + this.cart.rate + ' frame' + (this.cart.rate === 1 ? '' : 's') + ' a second, where a game is never undone.';
+    if (this.player) return 'Nothing was ' + what + ': a replay is playing, frame ' + this.frame + ' of ' + this.player.last + '.';
+    if (this.inFrame || this.settling || this.edits.length || this.undoWaiting) return 'Nothing was ' + what + ' yet: frame ' + (this.frame + 1) + ' is still being computed for the last act; press again once it rests.';
+    return '';
+  };
+  // Why an entry cannot be stepped over now, or the empty text: the line cannot keep it, its cells cannot be read, or one of
+  // them holds what the act that last wrote it did not leave there, the cartridge having written it since.
+  Host.prototype._undoRefusal = function (e, left, verb, when, writing) {
+    if (e.unkept) return verb + ' of ' + e.words + ' was refused: ' + e.unkept + '.';
+    var now = this._heldAll(e.targets);
+    if (!now || !left) return verb + ' of ' + e.words + ' was refused: its cells could not be read.';
+    var moved = heldDiff(now, left);
+    return moved ? verb + ' of ' + e.words + ' was refused: ' + moved + ' when ' + when + ', so the cartridge has written it since, and ' + writing + ' would lose that.' : '';
+  };
+  // Undo (decision 6 as answered): the last edit of a work sheet taken back, its cells written back as one act. Answers
+  // { ok, sheet, range }, the sheet and range a page shows and selects, or { ok: false }, said.
+  Host.prototype.undo = function () {
+    var busy = this._undoBusy('undone');
+    if (busy) { this.c.undosRefused++; this._answerRefused(busy); return { ok: false }; }
+    var u = this.undoLine, n = u.undone.length;
+    if (!u.done.length) {
+      this._answer('Nothing to undo: ' + (!n ? 'no edit of a work sheet since ' + (this.cart.title || 'the cartridge') + ' was loaded' : n === 1 ? 'the edit kept is taken back, and redo puts it back' : 'the ' + countWords(n) + ' edits kept are taken back, and redo puts them back') + '.');
+      return { ok: false };
+    }
+    var e = u.done[u.done.length - 1], refused = this._undoRefusal(e, e.after, 'Undo', 'the edit left it', 'writing back what the edit replaced');
+    if (refused) { this.c.undosRefused++; this._answerRefused(refused); return { ok: false }; }
+    return this._stepBack(e, 'undo', heldRows(e.before));
+  };
+  // Redo: the edit last taken back written again, as it was written.
+  Host.prototype.redo = function () {
+    var busy = this._undoBusy('redone');
+    if (busy) { this.c.undosRefused++; this._answerRefused(busy); return { ok: false }; }
+    var u = this.undoLine;
+    if (!u.undone.length) { this._answer('Nothing to redo: no edit taken back waits' + (u.done.length ? ', and an edit after an undo lets the edits undone go' : '') + '.'); return { ok: false }; }
+    var e = u.undone[u.undone.length - 1], refused = this._undoRefusal(e, e.restored, 'Redo', 'the undo left it', 'writing the edit again');
+    if (refused) { this.c.undosRefused++; this._answerRefused(refused); return { ok: false }; }
+    return this._stepBack(e, 'redo', e.rows.slice());
+  };
+  // An undo or a redo as one act, a paste's: its rows one write at its frame, all or none, each recorded as a person's edit,
+  // and the line moved as it lands. Answers { ok, sheet, range }.
+  Host.prototype._stepBack = function (e, op, rows) {
+    var act = { paste: true, what: 'the ' + op + ' of ' + e.words, done: (op === 'undo' ? 'undid ' : 'redid ') + e.words, move: false, rows: rows, undoEntry: e, undoOp: op };
+    if (this._sixAtZero()) act.place = this._actPlace(e);
+    this.edits.push(act);
+    this._editFrames(this._window());
+    return { ok: true, sheet: e.select.sheet, range: e.select.range };
+  };
+  // The cell a step back stands on at rate 0 (version 6, CART.12): the act's range's corner on its sheet.
+  Host.prototype._actPlace = function (e) {
+    return { sheet: e.select.sheet, row: e.select.range.top, col: e.select.range.left };
   };
   // A key down on the Screen: a command's key (ENGINE.25) runs its command and is no button's and no last key, a repeat
   // taken and running nothing but where the command repeats and the repeat is fresh (version 8, ENGINE.39); any other
@@ -3064,7 +3264,7 @@
     return out;
   };
   // A replay's text read whole before anything plays: the header, then frames ascending from 1, each
-  // one form holding its cell and formula rows; a refusal in words, and nothing loaded.
+  // one form holding its cell, formula and empty rows; a refusal in words, and nothing loaded.
   Host.prototype._readReplay = function (text) {
     var forms = VP().readForms(text), h = forms[0];
     var shape = 'A replay begins with its header, (replay "<name>" (spec <n>) (cartridge "<SHA-256>") (seed <n>))';
@@ -3091,7 +3291,9 @@
       for (var j = 2; j < f.length; j++) {
         var row = f[j], head = Array.isArray(row) ? sym(row[0]) : null;
         if (head === 'derived') return { error: 'The replay holds a derived row, ' + spellForm(row) + ', in frame ' + n + ': the host\'s derived writes are re-derived as a replay plays and never logged (docs/SPEC.md section 7.6).' };
-        if (head !== 'cell' && head !== 'formula') return { error: 'The replay holds ' + spellForm(row).slice(0, 60) + ' in frame ' + n + ', and a frame holds cell and formula rows.' };
+        // since ENGINE.30's first slice an empty row too, KERNEL.46's: Delete, a paste's empty field, a cut's source and an undo
+        // giving a cell back to no value
+        if (head !== 'cell' && head !== 'formula' && head !== 'empty') return { error: 'The replay holds ' + spellForm(row).slice(0, 60) + ' in frame ' + n + ', and a frame holds cell, formula and empty rows.' };
         (rp.frames[n] = rp.frames[n] || []).push(spellForm(row));
       }
     }
