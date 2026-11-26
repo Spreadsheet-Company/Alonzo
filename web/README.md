@@ -410,7 +410,9 @@ number written bare, `(cell "Bench" "A3" 1)`, since a number in quotes is a
 text, and any other character a text in quotes; Enter, F2 or a double click
 opens what the cell holds, its formula among it. Enter writes the row and moves
 the selection down, Tab moves it right, Shift moves them back, and Escape
-leaves the cell as it was. Delete empties the selection's cells at once, one
+leaves the cell as it was; what Enter, F2 or a double click opened, entered as
+it opened, is a look at the cell and writes nothing, so that no frame steps and
+undo has nothing to take back (`ENGINE.30`'s first slice, at its hand test). Delete empties the selection's cells at once, one
 row over its range, `(empty "Bench" "A3:B4")`, each cell given back to no value
 as Excel's Delete gives it, so that a formula reading it reads a cell never
 written, `=A3+1` being 1 (`ENGINE.30`'s first slice, over Frazaro's

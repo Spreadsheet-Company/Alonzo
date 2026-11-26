@@ -2350,6 +2350,7 @@
     var d = document, self = this;
     this.opts = opts; this.n = ++paletteCount; this.lines = []; this.sel = 0; this.history = []; this.at = -1; this.recent = []; this.before = null; this.handlers = [];
     this.edit = null;   // a cell's edit opened (CART.9's second slice): after(direction), told where the selection goes once its row is written
+    this.opened = null;   // a cell's own row as its edit opened it, by Enter, F2 or a double click, which entered unchanged writes nothing (ENGINE.30)
     var root = this.root = d.createElement('div');
     root.className = 'palette'; root.hidden = true;
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'the command palette');
@@ -2394,11 +2395,14 @@
     this.input.focus();
   };
   // A cell's edit (CART.9's second slice): the prompt holding text, the caret at caret, and after(direction) told, once
-  // the row is written, where the selection goes: Enter down, Tab right, and with Shift up and left.
-  Palette.prototype.openWith = function (text, caret, back, after) {
+  // the row is written, where the selection goes: Enter down, Tab right, and with Shift up and left. observed, true where
+  // text is the cell's own row, opened by Enter, F2 or a double click: entered as it opened, it is a look at the cell and
+  // no act, nothing written (ENGINE.30's first slice, the owner's word at its hand test).
+  Palette.prototype.openWith = function (text, caret, back, after, observed) {
     if (this.isOpen()) this.close(false);
     this.before = back || document.activeElement;
     this.edit = after || null;
+    this.opened = observed && after ? text : null;
     this._place();
     this.root.hidden = false;
     this.input.value = text; this.at = -1;
@@ -2416,7 +2420,7 @@
   Palette.prototype.close = function (restore) {
     if (!this.isOpen()) return;
     this.root.hidden = true;
-    this.edit = null;
+    this.edit = null; this.opened = null;
     var b = this.before;
     this.before = null;
     if (restore !== false && b && b.focus && b !== this.input) { try { b.focus(); } catch (e) { /* an element gone */ } }
@@ -2467,6 +2471,9 @@
   // and Tab right as a spreadsheet moves it (CART.9's second slice).
   Palette.prototype._run = function (direction) {
     var after = this.edit, line = this.lines[this.sel];
+    // a cell's own row entered as it opened: a look at the cell, no act, so nothing written, no frame and nothing for undo
+    // to take back; the palette shut and the selection moved as an edit's (ENGINE.30's first slice)
+    if (after && this.opened !== null && line && line.kind === 'row' && this.input.value === this.opened) { this.close(true); after(direction); return; }
     if (this.runLine(this.sel) && after && line && line.kind === 'row') after(direction);
   };
   // A line run: remembered, the palette shut and the focus given back, then the line's act, which may move the focus.
@@ -3440,7 +3447,7 @@
       var e = cellEditRow(vp.sheet(), cell, typed);
       palette.openWith(e.text, e.caret, vp.scroller, function (direction) {
         moveSelectionTo(s.focus.row + (direction === 'down' ? 1 : direction === 'up' ? -1 : 0), s.focus.col + (direction === 'right' ? 1 : direction === 'left' ? -1 : 0));
-      });
+      }, typed === null);   // the cell's own row, a look at it until it changes (ENGINE.30)
       return true;
     }
     // The selection moved to a cell, as Enter and Tab move it: inside the rows and columns the sheet lays, as the arrows
@@ -8513,7 +8520,7 @@
   // dispatched as a browser reports a keyboard's and every line run counted by a stand-in; and Escape in full screen, its
   // rule over a clock of the case's own. It needs no file, so a game's page runs it, holding the vendored template there.
   function casePalette() {
-    var P = [], k = { commands: 0, keyed: 0, lines: 0, opened: 0, ran: 0, chosen: 0, rows: 0, recalled: 0, closed: 0, restored: 0, held: 0, passed: 0, clicked: 0, escapes: 0, edits: 0, sides: 0, boxes: 0, cellEdits: 0, placed: 0, clears: 0, kept: 0 };
+    var P = [], k = { commands: 0, keyed: 0, lines: 0, opened: 0, ran: 0, chosen: 0, rows: 0, recalled: 0, closed: 0, restored: 0, held: 0, passed: 0, clicked: 0, escapes: 0, edits: 0, sides: 0, boxes: 0, cellEdits: 0, placed: 0, clears: 0, kept: 0, looked: 0 };
     var seen = {};
     COMMANDS.forEach(function (c) {
       if (!/^[a-z]+(-[a-z]+)*$/.test(c.name) || !c.words || seen[c.name]) P.push('palette: the command ' + JSON.stringify(c.name) + ' is ill-named, without words or named twice');
@@ -8713,6 +8720,28 @@
         key(pal2.input, { key: 'Enter', code: 'Enter' });
         if (tabbed && !moved.length && rows2[rows2.length - 1] === '(cell "Bench" "A3" 1)') k.cellEdits++;
         else P.push('palette: a row the palette was opened for by its key ' + (tabbed ? '' : 'shut at Tab, and ') + 'moved the selection ' + JSON.stringify(moved) + ', where Tab keeps the prompt and Enter writes the row and moves nothing');
+        // a cell's own row, opened by Enter, F2 or a double click (ENGINE.30's first slice, the owner's word at its hand
+        // test): entered as it opened, by Enter or by Tab, a look at the cell and no act, nothing written, the selection
+        // moved and the focus given back; changed, written; and the same row opened as no cell's own, as Backspace's and a
+        // typed key's are, written as before
+        var own = '(cell "Bench" "A2" 7)';
+        [['Enter', 'down'], ['Tab', 'right']].forEach(function (x) {
+          moved = []; var was = rows2.length;
+          pal2.openWith(own, own.length - 1, before, function (d) { moved.push(d); }, true);
+          key(pal2.input, { key: x[0], code: x[0] });
+          if (rows2.length === was && moved.join(',') === x[1] && !pal2.isOpen() && document.activeElement === before) k.looked++;
+          else P.push('palette: a cell\'s own row entered by ' + x[0] + ' as it opened wrote ' + (rows2.length - was) + ' row(s) and moved the selection ' + JSON.stringify(moved) + ', where nothing written and ' + x[1] + ' once are due, the palette shut and the focus given back');
+        });
+        moved = []; var was2 = rows2.length;
+        pal2.openWith(own, own.length - 1, before, function (d) { moved.push(d); }, true);
+        pal2.input.value = '(cell "Bench" "A2" 8)'; pal2.input.dispatchEvent(new Event('input', { bubbles: true }));
+        key(pal2.input, { key: 'Enter', code: 'Enter' });
+        var changedOwn = rows2.length === was2 + 1 && rows2[rows2.length - 1] === '(cell "Bench" "A2" 8)' && moved.join(',') === 'down';
+        moved = [];
+        pal2.openWith(own, own.length - 1, before, function (d) { moved.push(d); });
+        key(pal2.input, { key: 'Enter', code: 'Enter' });
+        if (changedOwn && rows2.length === was2 + 2 && rows2[rows2.length - 1] === own && moved.join(',') === 'down') k.looked++;
+        else P.push('palette: a cell\'s own row changed, and a row opened as no cell\'s own, entered as it opened, wrote ' + JSON.stringify(rows2.slice(was2)) + ', where (cell "Bench" "A2" 8) and ' + own + ' are due, each written');
       } finally {
         pal2.destroy();
       }

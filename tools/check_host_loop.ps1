@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds three hundred and thirty-two mutant pages through tools/build_web.ps1 and runs
+-Control builds three hundred and thirty-three mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -956,7 +956,10 @@ $keysFloors = @{ defaults = 1; refused = 18; places = 25; steps = 3; lines = 3; 
 # start and at its end (merged 2); a paste of 1,200 lines (pasted 1); a copy and a cut (copied 2); the history's seven
 # steps and a value written forgetting it (undone 8); and the page's own edits told (told 1).
 $drawerFloors = @{ contained = 1; buttons = 22; summaries = 4; boxes = 9; pressed = 6; regions = 5; blocks = 1; read = 11; caret = 4; breaks = 3; merged = 2; pasted = 1; copied = 2; undone = 8; told = 1 }
-$paletteFloors = @{ commands = 33; keyed = 11; lines = 10; opened = 1; ran = 1; chosen = 1; rows = 1; recalled = 1; closed = 3; restored = 1; held = 1; passed = 1; clicked = 1; escapes = 5; edits = 12; sides = 8; boxes = 3; cellEdits = 7; placed = 5; clears = 6; kept = 2 }
+# 2026-11-26, ENGINE.30's first slice, the owner's word at its hand test: a cell's own row, opened by Enter, F2 or a
+# double click, entered as it opened by Enter and by Tab writing nothing, the selection moved, and changed or opened as
+# no cell's own written (looked 3).
+$paletteFloors = @{ commands = 33; keyed = 11; lines = 10; opened = 1; ran = 1; chosen = 1; rows = 1; recalled = 1; closed = 3; restored = 1; held = 1; passed = 1; clicked = 1; escapes = 5; edits = 12; sides = 8; boxes = 3; cellEdits = 7; placed = 5; clears = 6; kept = 2; looked = 3 }
 # 2026-10-20, SPEC.5: the twenty-nine cases' counts unchanged but the palette's commands, and a thirtieth, modes, on both
 # pages, its counts a function of its plan. Its page half, pure: 34 keys of SPEC.5's table, each mode's sheet given a
 # game's key, a character, Delete, Backspace and an arrow, and since the hand test Enter and Tab, each moving the
@@ -1169,7 +1172,8 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # 2026-11-24, ENGINE.30's first slice: OW to PD, the undo case's over the module, and PE and PF, the palette's and the
 # clipboard's needing none, take it to three hundred and thirty-two (156 applicable without); FE's and EE's anchors
 # moved with the lines they break, Delete's row and the unsettled sentence, and CZ's and DB's words with what they
-# fail by, Ctrl+Z the page's undo.
+# fail by, Ctrl+Z the page's undo. 2026-11-26, at the owner's word at its hand test: PL, a cell's own row written as
+# it opened, the palette's, needing no module, takes it to three hundred and thirty-three (157 applicable without).
 # 2026-11-18, CART.3's third slice: MO to MR, version 7's: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -2779,7 +2783,12 @@ if ($Control) {
             @{ L = 'pe'; Name = 'Delete the empty text'; File = 'template'; Case = 'palette'; Anchor = '    return ''(empty '' + vlaString(sheet) + '' '' + vlaString(sel.text) + '')'';'; With = '    return ''(cell '' + vlaString(sheet) + '' '' + vlaString(sel.text) + '' "")'';   // Delete the empty text, by the control'
                Want = 'case palette.*palette: Delete over the selection .*writes "\(cell ' },
             @{ L = 'pf'; Name = 'a paste''s empty field the empty text'; File = 'template'; Case = 'clipboard'; Anchor = 'row: one.kind === ''empty'' ? ''(empty '' + at + vlaString(whole) + '')'' : ''(cell '' + at + vlaString(whole) + '' '' + one.spelled + '')'''; With = 'row: ''(cell '' + at + vlaString(whole) + '' '' + one.spelled + '')'''
-               Want = 'case clipboard.*clipboard: one empty field over C5:E7 writes "\(cell ' }
+               Want = 'case clipboard.*clipboard: one empty field over C5:E7 writes "\(cell ' },
+            # PL (ENGINE.30's first slice, the owner's word at its hand test), the palette's, needing no module: a cell's own
+            # row, opened by Enter, F2 or a double click and entered as it opened, written as any row, an undo then taking back
+            # a look.
+            @{ L = 'pl'; Name = 'a cell''s own row written as it opened'; File = 'template'; Case = 'palette'; Anchor = '    if (after && this.opened !== null && line && line.kind === ''row'' && this.input.value === this.opened) { this.close(true); after(direction); return; }'; With = '    // a cell''s own row written as any, by the control'
+               Want = 'case palette.*palette: a cell.s own row entered by Enter as it opened wrote 1 row' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
@@ -3621,7 +3630,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}; {54}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote, $brickworkNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk -and $brickworkOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and thirty-two' } else { 'one hundred and fifty-six applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and thirty-three' } else { 'one hundred and fifty-seven applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
