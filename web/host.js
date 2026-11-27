@@ -1538,11 +1538,11 @@
   // row, the sheet the host shows, a plane's being the Screen, and its pointer over any other sheet is that
   // sheet's own cell, the Camera added on the Screen alone.
   Host.prototype._inputRows = function () {
-    var out = [], km = this.keymap, held = this.held, pt = this.pointer, k = this.lastKey, cam = pt.sheetCell ? { col: 1, row: 1 } : this.camera;
+    var out = [], km = this.keymap, pt = this.pointer, k = this.lastKey, cam = pt.sheetCell ? { col: 1, row: 1 } : this.camera;
     for (var b = 0; b < 10; b++) {
       for (var p = 0; p < 4; p++) {
         var code = km ? km[b][p] : '';
-        out.push('(cell "Input" "' + PLAYERS[p] + (b + 1) + '" ' + (code && held[code] ? 1 : 0) + ')');
+        out.push('(cell "Input" "' + PLAYERS[p] + (b + 1) + '" ' + (code && this._heldKey(code) ? 1 : 0) + ')');
       }
     }
     var on = pt.col > 0 && pt.row > 0;
@@ -2836,14 +2836,17 @@
   // the code, while no Ctrl, Cmd or Alt is held; null for every other key, the game's buttons' or the viewport's. A digit
   // of the keypad, Num Lock on so that its key is the digit, runs the command of the digit row's key when no row holding
   // names the keypad's own, as a spreadsheet takes the keypad's digits for the row's and the page's keymap does (CART.14's
-  // hand test, 2026-10-19); Num Lock off, its arrows, Home and End stay the viewport's. key, the event's KeyboardEvent.key
-  // where a caller has no event.
+  // hand test, 2026-10-19); Num Lock off, its arrows, Home and End stay the viewport's. The keypad's Enter runs the command
+  // whose key is Enter the same way, Num Lock on or off, unless the cartridge names NumpadEnter, a Keys cell or a holding
+  // command's key, which makes it a key of its own (CART.17's second look, 2026-11-26). key, the event's
+  // KeyboardEvent.key where a caller has no event.
   // Since version 7 a key with modifiers is taken with exactly its modifiers held, as the keymap takes a binding, before a
   // bare key of the same code, and a bare key is taken as before, Shift either way (CART.3's second slice, decision 14).
   Host.prototype._commandKey = function (code, ev, key) {
     if (!this._five()) return null;
     if (!this.gameKeysHere()) return null;   // no command's key holds on a work or a read sheet (SPEC.5)
     var row = keypadDigit(code, key !== undefined ? key : (ev ? ev.key : undefined)), name, c;
+    if (!row) row = this._standsFor(code);   // the keypad's Enter runs Enter's command
     if (ev && this._seven()) {
       for (name in this.commandKeys) {
         c = this.commandKeys[name];
@@ -2860,6 +2863,20 @@
     var m = /^Numpad([0-9])$/.exec(String(code || ''));
     return m && String(key) === m[1] ? 'Digit' + m[1] : null;
   }
+  // The key a keypad's Enter stands for, Enter (CART.17's second look, 2026-11-26; docs/SPEC.md sections 3.4 and 3.10): a
+  // keyboard has two Enter keys and a person one, so to a cartridge that names no NumpadEnter of its own the keypad's holds
+  // the button Enter holds and runs the command Enter runs, as it is Enter to the page's keymap; null for any other key.
+  function keypadEnter(code) { return code === 'NumpadEnter' ? 'Enter' : null; }
+  // The key a key stands for to the cartridge loaded: Enter for the keypad's Enter, unless the cartridge names NumpadEnter
+  // itself, which is then a key of its own; null for any other key.
+  Host.prototype._standsFor = function (code) { var key = keypadEnter(code); return key && !this._names(code) ? key : null; };
+  // Whether the cartridge names a code as a key of its own: a cell of its Keys sheet, or the key of a command that holds
+  // now, with modifiers or without.
+  Host.prototype._names = function (code) {
+    if (this._binds(code)) return true;
+    for (var text in this.commandKeys) { var chord = this.commandKeys[text].chord; if (chord && chord.value === code) return true; }
+    return false;
+  };
   // Whether a key on the grid is the game's (CART.9's second slice): a holding command's key at any rate, and at a rate
   // above zero a key the Keys sheet binds. A page asks before it takes a key typed on a cell for an edit of its own.
   Host.prototype.takesKey = function (code, key, ev) {
@@ -2911,11 +2928,20 @@
   };
   Host.prototype.keyUp = function (code) { delete this.held[code]; };
   Host.prototype.releaseKeys = function () { this.held = Object.create(null); };
-  Host.prototype._bound = function (code) {
+  // Whether a key is a Keys button's, the game's to take before the viewport sees it: a code the Keys sheet names, and the
+  // keypad's Enter where the sheet names Enter and the cartridge no NumpadEnter of its own.
+  Host.prototype._bound = function (code) { var key = this._standsFor(code); return this._binds(code) || (!!key && this._binds(key)); };
+  // Whether the Keys sheet names a code, in any button's cell of any player's.
+  Host.prototype._binds = function (code) {
     var km = this.keymap;
     if (!km) return false;
     for (var b = 0; b < km.length; b++) for (var p = 0; p < km[b].length; p++) if (km[b][p] === code) return true;
     return false;
+  };
+  // Whether a Keys button's key is held: the key itself, and for Enter the keypad's Enter too, unless the cartridge names
+  // NumpadEnter, which then holds its own button alone.
+  Host.prototype._heldKey = function (code) {
+    return !!this.held[code] || (code === 'Enter' && !!this.held.NumpadEnter && this._standsFor('NumpadEnter') === 'Enter');
   };
   Host.prototype.pointerAt = function (col, row) { this.pointer.col = col | 0; this.pointer.row = row | 0; this.pointer.sheetCell = false; };
   Host.prototype.pointerButtons = function (left, right, middle) { this.pointer.left = left ? 1 : 0; this.pointer.right = right ? 1 : 0; this.pointer.middle = middle ? 1 : 0; };

@@ -135,7 +135,11 @@ the command's alone, holding no button and naming no last key. Since `CART.12`
 it is taken on the grid's viewport at rate 0 too, before the viewport sees it,
 every other key staying the viewport's. Since `CART.14`'s hand test a digit of
 the keypad, Num Lock on, runs the command of the digit row's key, `Numpad7`
-the one of `Digit7`, unless a command names the keypad's own. Since version
+the one of `Digit7`, unless a command names the keypad's own. Since `CART.17`'s
+second look the keypad's Enter is Enter to a cartridge: it holds the Keys
+button `Enter` holds and runs the command whose key is `Enter`, with modifiers
+as without, unless the cartridge names `NumpadEnter` itself, a Keys cell or a
+holding command's key, and the last key keeps its own code. Since version
 7 (`CART.3`'s second slice) a key may carry modifiers as the page's keymap
 spells them, `Ctrl+ArrowRight`, Ctrl meaning Ctrl or Cmd: taken with exactly
 those held, before a bare key of its code, its repeat running nothing, a bare

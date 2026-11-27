@@ -9187,7 +9187,7 @@
     var P = [], k = { named: 0, lines: 0, read: 0, refusals: 0, found: 0, steps: 0, shadow: 0, note: 0, order: 0,
                       module: 0, opened: 0, listed: 0, frames: 0, ran: 0, landed: 0, emptied: 0, apart: 0, twice: 0, repeats: 0, ctrl: 0, holdsNot: 0, refused: 0,
                       passed: 0, noted: 0, words: 0, waited: 0, dropped: 0, said: 0, replayed: 0, replayFrames: 0, replaySame: 0, during: 0, rate0: 0, rate0Empty: 0,
-                      rate0Replayed: 0, older: 0, keypad: 0, chords: 0, chordsOlder: 0, repeating: 0, repeatWords: 0 };
+                      rate0Replayed: 0, older: 0, keypad: 0, chords: 0, chordsOlder: 0, enters: 0, repeating: 0, repeatWords: 0 };
     commandsPage(k, P);
     var wasm = builtModule();
     if (!wasm) return { counters: k, problems: P };
@@ -9196,6 +9196,7 @@
     commandsRun(bytes, k, P);
     commandsOlder(bytes, k, P);
     commandsChords(bytes, k, P);
+    commandsEnters(bytes, k, P);
     commandsRepeats(bytes, k, P);
     return { counters: k, problems: P };
   }
@@ -9582,6 +9583,69 @@
         if (!e1.defaultPrevented && b1 === '') k.chordsOlder++; else P.push('commands, version 6: Ctrl+U was ' + (e1.defaultPrevented ? 'taken' : 'passed on') + ' and Input!B20 holds ' + JSON.stringify(b1) + ', where a key with modifiers is no key below version 7');
         if (e2.defaultPrevented && b2 === 'count-up') k.chordsOlder++; else P.push('commands, version 6: Shift+U was ' + (e2.defaultPrevented ? 'taken' : 'passed on') + ' and Input!B20 holds ' + JSON.stringify(b2) + ', where the bare U is count-up\'s, Shift either way');
       });
+    } finally { stage.removeChild(box); }
+  }
+  // ---- CART.17's second look: the keypad's Enter is Enter ----
+  // The Enter card, at (spec 7): the Keys sheet's start on Enter for player 1, and launch on Ctrl+Enter. A keyboard has two
+  // Enter keys and a person one, so to a cartridge that names no NumpadEnter of its own the keypad's is Enter: held, it holds
+  // the button Enter holds and is taken, the last key keeping its own code; with Ctrl it runs the command Ctrl+Enter runs.
+  // Then the card naming the keypad's own, player 2's start on NumpadEnter: the keypad's holds that button alone, and with
+  // Ctrl runs nothing. Then launch on a bare Enter: the command's by either key while it holds, and no button's.
+  var ENTERCARD = { file: 'entercard.vla',
+                    text: '(cartridge "entercard"\n  (spec 7)\n  (title "An Enter card")\n  (rate 30)\n  (screen grid 20 10)\n  (seed 1))\n' +
+                          '(sheet "Screen" hidden)\n(sheet "Desk" visible)\n(sheet "Commands" visible)\n(sheet "Keys" visible)\n' +
+                          '(cell "Commands" "A1" "name")\n(cell "Commands" "B1" "words")\n(cell "Commands" "C1" "holds")\n(cell "Commands" "D1" "key")\n' +
+                          '(cell "Commands" "A2" "launch")\n(cell "Commands" "D2" "Ctrl+Enter")\n(cell "Keys" "A9" "start")\n(cell "Keys" "B9" "Enter")\n' +
+                          '(cell "Desk" "A1" "launched")\n(formula "Desk" "B1" "=Desk.last!B1+IF(Input!$B$20=\\"launch\\",1,0)")\n' +
+                          '(cell "Desk" "A2" "start held")\n(formula "Desk" "B2" "=Desk.last!B2+Input!$B$9")\n' +
+                          '(cell "Desk" "A3" "player 2\'s start held")\n(formula "Desk" "B3" "=Desk.last!B3+Input!$C$9")\n' +
+                          '(cell "Screen" "A1" "the Screen")\n' };
+  function commandsEnters(bytes, k, P) {
+    var stage = document.getElementById('stage'), box = document.createElement('div');
+    box.style.cssText = 'width:640px;height:300px;position:relative;background:#fff;';
+    stage.appendChild(box);
+    var enter = { code: 'Enter', key: 'Enter' }, pad = { code: 'NumpadEnter', key: 'Enter' };
+    function withCtrl(init) { return { code: init.code, key: init.key, ctrlKey: true }; }
+    function wordsOf(init) { return (init.ctrlKey ? 'Ctrl and ' : '') + (init.code === 'NumpadEnter' ? 'the keypad\'s Enter' : 'Enter'); }
+    // a card played by its plan, a row a frame: [frame, the key held over it or null, the command due, launched, start held,
+    // player 2's start held, the last key's code where the row holds it]
+    function play(what, text, plan) {
+      var exports = HOST.instantiateSync(bytes), host = new HOST({ drive: 'manual', budget: 0, now: frozen, grid: box }), D = new Driver({ exports: exports });
+      try {
+        var ld = host.attach(exports).ok ? host.load(text, ENTERCARD.file) : { ok: false };
+        if (!ld.ok) { P.push('commands, the Enter card, ' + what + ': it did not load: ' + ld.sentence); return; }
+        var sc = host.vp.scroller, t = 1000;
+        function key(type, init) {
+          var o = { bubbles: true, cancelable: true, code: init.code, key: init.key, ctrlKey: !!init.ctrlKey }, pressed = new KeyboardEvent(type, o);
+          sc.dispatchEvent(pressed);
+          return pressed;
+        }
+        function vals(sheet, win) { return recordValues(D.call('alonzo_view', [ld.handle], ['grid', sheet, win]).text); }
+        host.start(); host.tick(t);
+        for (var i = 0; i < plan.length; i++) {
+          var x = plan[i], at = 'commands, the Enter card, ' + what + ', frame ' + x[0], ok = true;
+          while (host.counters().frame < x[0] - 1) { t += 1000 / 30; host.tick(t); }
+          var down = x[1] ? key('keydown', x[1]) : null;
+          if (down && !down.defaultPrevented) { ok = false; P.push(at + ': ' + wordsOf(x[1]) + ' was passed on, where it is the game\'s and taken'); }
+          t += 1000 / 30; host.tick(t);
+          if (x[1]) key('keyup', x[1]);
+          if (host.counters().frame !== x[0]) { P.push(at + ': after its tick the host is at frame ' + host.counters().frame); break; }
+          var inp = vals('Input', 'B18:B20'), desk = vals('Desk', 'B1:B3'), b20 = inp.B20 === undefined ? '' : inp.B20, got = [viewsNum(desk.B1), viewsNum(desk.B2), viewsNum(desk.B3)];
+          if (b20 !== x[2]) { ok = false; P.push(at + ': after ' + (x[1] ? wordsOf(x[1]) : 'no key') + ' Input!B20 holds ' + JSON.stringify(b20) + ', where ' + (x[2] ? 'the command ' + x[2] + ' runs' : 'no command runs and it is empty')); }
+          else if (got[0] !== x[3] || got[1] !== x[4] || got[2] !== x[5]) { ok = false; P.push(at + ': after ' + (x[1] ? wordsOf(x[1]) : 'no key') + ' the Desk counts ' + got[0] + ' launched, start held ' + got[1] + ' and player 2\'s start held ' + got[2] + ', where ' + x[3] + ', ' + x[4] + ' and ' + x[5] + ' are due'); }
+          else if (x[6] !== undefined && inp.B18 !== x[6]) { ok = false; P.push(at + ': the last key\'s code is ' + JSON.stringify(inp.B18) + ', where the key\'s own, ' + x[6] + ', is due'); }
+          if (ok) k.enters++;
+        }
+      } finally { host.destroy(); }
+    }
+    try {
+      play('as written', ENTERCARD.text, [
+        [2, enter, '', 0, 1, 0, 'Enter'], [3, pad, '', 0, 2, 0, 'NumpadEnter'], [4, null, '', 0, 2, 0],
+        [5, withCtrl(enter), 'launch', 1, 2, 0], [6, withCtrl(pad), 'launch', 2, 2, 0]]);
+      play('naming the keypad\'s own', ENTERCARD.text + '(cell "Keys" "C9" "NumpadEnter")\n', [
+        [2, pad, '', 0, 0, 1, 'NumpadEnter'], [3, enter, '', 0, 1, 1, 'Enter'], [4, withCtrl(pad), '', 0, 1, 2]]);
+      play('its command on a bare Enter', ENTERCARD.text.replace('"Ctrl+Enter"', '"Enter"'), [
+        [2, enter, 'launch', 1, 0, 0], [3, pad, 'launch', 2, 0, 0]]);
     } finally { stage.removeChild(box); }
   }
   // ---- ENGINE.39's first slice: version 8, a command that repeats ----
