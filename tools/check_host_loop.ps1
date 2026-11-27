@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds three hundred and thirty-nine mutant pages through tools/build_web.ps1 and runs
+-Control builds three hundred and forty mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -1062,7 +1062,7 @@ $undoFloors = @{ undone = 1; redone = 1; values = 3; neither = 1; deleted = 1; p
 # (unwatched 2); a load keeping the keymap's watch alone (loaded 1); and at rate 0 a watch said at an edit's frame,
 # nothing paused (rateZero 1), and a watch set while its cell holds the value holding only when it comes to hold it
 # again (edge 1).
-$watchFloors = @{ lines = 1; refused = 6; named = 2; engine = 1; paused = 2; ticks = 1; atOnce = 1; once = 1; unwatched = 2; loaded = 1; rateZero = 1; edge = 1 }
+$watchFloors = @{ lines = 1; refused = 6; named = 2; engine = 1; paused = 2; ticks = 1; atOnce = 1; once = 1; unwatched = 2; loaded = 1; rateZero = 1; edge = 1; unread = 4 }
 # 2026-10-18, CART.12's viewport slice, a code's text drawn: the twenty-seven cases' counts unchanged but for grid over
 # the module, the grid card's row 16 of codes added, its counts a function of the card: codes 3, the row pinned by name
 # at frames 1, 4 and 5; coded 213, the texts drawn from text rows over the 25 frames, the row's eight constants at the
@@ -1186,7 +1186,8 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # fail by, Ctrl+Z the page's undo. 2026-11-26, at the owner's word at its hand test: PL, a cell's own row written as
 # it opened, the palette's, needing no module, takes it to three hundred and thirty-three (157 applicable without).
 # 2026-11-26, ENGINE.30's second slice: PM to PQ, the watch case's over the module, and PR, needing none, take it to
-# three hundred and thirty-nine (158 applicable without).
+# three hundred and thirty-nine (158 applicable without). 2026-11-26, after its hand test: PS, a watch that reads
+# nothing said nowhere, over the module, takes it to three hundred and forty (158 applicable without).
 # 2026-11-18, CART.3's third slice: MO to MR, version 7's: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -2808,6 +2809,7 @@ if ($Control) {
             # a frame after each frame the hand names; a tick's later frames stepped past a stop, so that no watch holds inside
             # a tick that owed four frames; a run at once past the watch; the command's watch kept after it holds; and a watch
             # with no baseline, held at the first frame; each over the module. PR, needing none: a watch's number read as a text.
+            # PS, after the slice's hand test, over the module: a watch that reads nothing said nowhere.
             @{ L = 'pm'; Name = 'a watch read a frame late'; File = 'host'; Module = $true; Case = 'watch'; Anchor = '      if (holds) held.push({ w: w, was: w.last, now: now });'; With = '      if (w.late) held.push(w.late); w.late = holds ? { w: w, was: w.last, now: now } : null;   // a watch read a frame late, by the control'
                Want = 'case watch.*watch: \(watch "State" "B1" 4\) paused Kairos.s replay at frames' },
             @{ L = 'pn'; Name = 'a tick''s later frames stepped past a stop'; File = 'host'; Module = $true; Case = 'watch'; Anchor = '      if (!this.running) return;  // a frame of this tick ended a replay, or a replay''s refused rows stopped it'; With = '      // the tick''s later frames stepped past a stop, by the control'
@@ -2819,7 +2821,9 @@ if ($Control) {
             @{ L = 'pq'; Name = 'a watch with no baseline'; File = 'host'; Module = $true; Case = 'watch'; Anchor = '      if (w.last === undefined) { if (!this.settling && now.k !== ''unvalued'') w.last = now; continue; }   // its baseline, at the first rest'; With = '      if (w.last === undefined) w.last = { k: ''none'', v: null };   // no baseline, by the control'
                Want = 'case watch.*watch: the command.s watch on State!B1 said .*, paused at frame 1 saying' },
             @{ L = 'pr'; Name = 'a watch''s number read as a text'; File = 'template'; Case = 'watch'; Anchor = '          else if (wv && wv.num !== undefined && isFinite(+wv.num)) value = +wv.num;'; With = '          else if (wv && wv.num !== undefined && isFinite(+wv.num)) value = String(wv.num);   // a number read as a text, by the control'
-               Want = 'case watch.*watch: the keymap.s four watch lines read' }
+               Want = 'case watch.*watch: the keymap.s four watch lines read' },
+            @{ L = 'ps'; Name = 'a watch that reads nothing said nowhere'; File = 'host'; Module = $true; Case = 'watch'; Anchor = '    if (!unread.length) return '''';'; With = '    return '''';   // a watch that reads nothing said nowhere, by the control'
+               Want = 'case watch.*watch: a load with \(watch "Stat" "B1" 4\) said' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
@@ -3661,7 +3665,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}; {54}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote, $brickworkNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk -and $brickworkOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and thirty-nine' } else { 'one hundred and fifty-eight applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and forty' } else { 'one hundred and fifty-eight applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'

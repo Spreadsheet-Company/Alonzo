@@ -3388,11 +3388,12 @@
       if (!r.ok) { sayKeysLine('The keys were not applied, and nothing changed: ' + r.problems.join('; ') + '.', true); return; }
       keymap = r;
       host.setWatches(r.watches);   // its watches standing in the place of the keymap's before (ENGINE.30's second slice)
+      var unread = host.unreadWatches();   // a watch whose sheet the cartridge loaded lacks, said with the keys (its hand test)
       var own = keysEl.value === KEYMAP_DEFAULTS, kept = store.keep(keysEl.value, KEYMAP_DEFAULTS), mine = r.order.length;
       if (kept && !own) store.know(COMMANDS.map(function (c) { return c.name; }));   // the commands this keymap has been offered (ENGINE.5)
       sayKeys();
       sayKeysLine((typeof lead === 'string' ? lead + '; the keys applied: ' : 'The keys applied: ') + r.bindings.length + ' binding' + (r.bindings.length === 1 ? '' : 's') + (mine ? ' and ' + mine + ' command' + (mine === 1 ? '' : 's') + ' of your own' : '') +
-        (own ? ', the page\'s own, no keymap kept in this browser' : kept ? ', kept in this browser' : ', which this browser will not keep, so a reload brings back the page\'s own') + '.', false);
+        (own ? ', the page\'s own, no keymap kept in this browser' : kept ? ', kept in this browser' : ', which this browser will not keep, so a reload brings back the page\'s own') + (unread ? '; ' + unread : '') + '.', false);
     }
     // The palette's place as a command (SPEC.5's rider, the owner's food for thought at CART.9's second hand test): the
     // keymap applied with its (palette ...) line rewritten, put in the keys' box and applied, so that the box stays the one
@@ -10390,7 +10391,7 @@
   // edit's frame and nothing paused, and a watch set while its cell holds its value holding only when it comes to hold it
   // again.
   function caseWatch() {
-    var P = [], k = { lines: 0, refused: 0, named: 0, engine: 0, paused: 0, ticks: 0, atOnce: 0, once: 0, unwatched: 0, loaded: 0, rateZero: 0, edge: 0 };
+    var P = [], k = { lines: 0, refused: 0, named: 0, engine: 0, paused: 0, ticks: 0, atOnce: 0, once: 0, unwatched: 0, loaded: 0, rateZero: 0, edge: 0, unread: 0 };
     watchLines(k, P);
     var wasm = builtModule();
     if (!wasm) return { counters: k, problems: P };
@@ -10402,6 +10403,7 @@
     watchEngine(bytes, kc, named, k, P);
     watchKairos(bytes, kc, named, k, P);
     watchCommand(bytes, kc, named, k, P);
+    watchUnread(bytes, kc, named, k, P);
     watchRateZero(bytes, k, P);
     return { counters: k, problems: P };
   }
@@ -10532,6 +10534,34 @@
       var kept = H.load(kc.text, kc.file).ok ? H.watches() : [];
       if (kept.length === 1 && kept[0].sheet === 'State' && kept[0].address === 'B1' && kept[0].value === 4 && !kept[0].once) k.loaded++;
       else P.push('watch: a load left the watches ' + JSON.stringify(kept) + ', where the keymap\'s on State!B1 alone stands');
+    } finally { H.destroy(); }
+  }
+  // A watch that reads nothing, said (the owner's hand test of the second slice, where a replay played through a watch and
+  // nothing said why): (watch "Stat" "B1" 4) over Kairos, whose sheets hold no Stat, said by a load, in the words the keys'
+  // apply takes, and by a replay's play in its own sentence alone, the replay played through with no pause; and
+  // (watch "state" "B1" 4), its sheet in other letters, read as State is, said nowhere and stopping a run at once at the
+  // first frame the hand names.
+  function watchUnread(bytes, kc, named, k, P) {
+    var h = watchHost(bytes, P, 'a watch that reads nothing');
+    if (!h) return;
+    var H = h.H, words = 'the watch on Stat!B1 reads nothing, as the cartridge loaded has no sheet named Stat';
+    var count = function () { return H.sentences().filter(function (s) { return s.text.indexOf('Stat!B1 reads nothing') >= 0; }).length; };
+    try {
+      H.setWatches([{ sheet: 'Stat', address: 'B1', value: 4 }]);
+      var loaded = H.load(kc.text, kc.file).ok, loadSaid = lastSaid(H);
+      if (loaded && loadSaid === 'The watch on Stat!B1 reads nothing, as the cartridge loaded has no sheet named Stat.') k.unread++;
+      else P.push('watch: a load with (watch "Stat" "B1" 4) said ' + JSON.stringify(loadSaid) + ', where "T' + words.slice(1) + '." is due');
+      var applied = H.unreadWatches();
+      if (applied === words) k.unread++;
+      else P.push('watch: the words the keys\' apply takes for (watch "Stat" "B1" 4) are ' + JSON.stringify(applied) + ', where ' + JSON.stringify(words) + ' is due');
+      var before = count(), run = H.play(kc.replay, true), playing = H.sentences().filter(function (s) { return s.text.indexOf('Playing the replay of ') === 0; }).pop();
+      var playSaid = playing ? playing.text : '';
+      if (run.ok && run.watched === null && H.counters().watchPauses === 0 && playSaid.slice(-(words.length + 3)) === '; ' + words + '.' && count() === before + 1) k.unread++;
+      else P.push('watch: Kairos\'s replay with (watch "Stat" "B1" 4) played to frame ' + H.counters().frame + ', paused ' + H.counters().watchPauses + ' time(s), said ' + JSON.stringify(playSaid) + ' and the words ' + (count() - before) + ' time(s), where its end, no pause, and its play\'s sentence alone ending "; ' + words + '." are due');
+      H.setWatches([{ sheet: 'state', address: 'B1', value: 4 }]);
+      var other = H.unreadWatches(), run2 = H.play(kc.replay, true);
+      if (other === '' && run2.watched === named.overs[0]) k.unread++;
+      else P.push('watch: (watch "state" "B1" 4) read ' + JSON.stringify(other) + ' and stopped a run at once at ' + run2.watched + ', where nothing said and ' + named.overs[0] + ' are due');
     } finally { H.destroy(); }
   }
   // At rate 0, the undo card: a watch on Work!A1 said at an edit's frame, nothing paused; and (watch "Work" "A1" 5) set while

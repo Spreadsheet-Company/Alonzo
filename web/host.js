@@ -1087,6 +1087,9 @@
     // with its settle as an act at rate 0 is, at once and on the ticks after; a replay's player steps it itself.
     var loadSettles = this._settles() && c.rate === 0 && this.playSeed === undefined && this.frame === 0;
     this._watchBaselines(!loadSettles);   // each watch read as the load leaves its cell, or at the load's act's rest (ENGINE.30)
+    // a watch whose sheet this cartridge lacks said, since it never holds; a replay's play says it in its own sentence
+    var unread = this.playSeed === undefined ? this.unreadWatches() : '';
+    if (unread) this._answer(unread.charAt(0).toUpperCase() + unread.slice(1) + '.');
     if (loadSettles) { this.edits.push({ load: true }); this._editFrames(this._window()); }   // a save rests as it was saved (ENGINE.5)
     return { ok: true, handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate };
   };
@@ -2777,6 +2780,18 @@
   Host.prototype.watches = function () {
     return this.watched.map(function (w) { return { sheet: w.sheet, address: w.address, value: w.has ? w.value.v : undefined, once: w.once, last: w.last ? w.last.v : undefined }; });
   };
+  // The words for the watches that read nothing, '' where none: a watch whose sheet the cartridge loaded lacks never holds,
+  // so it is said where a person waits on it, at a load, at a replay's play and at the keys' apply (the owner's hand test
+  // of the second slice, where a replay played through a watch and nothing said why). A sheet's name compared without case.
+  Host.prototype.unreadWatches = function () {
+    if (!this.handle || !this.watched.length) return '';
+    var self = this, unread = this.watched.filter(function (w) { return self._sheetNamed(w.sheet) === null; }), sheets = [];
+    if (!unread.length) return '';
+    unread.forEach(function (w) { if (sheets.indexOf(w.sheet) < 0) sheets.push(w.sheet); });
+    var cells = unread.map(function (w) { return w.sheet + '!' + w.address; });
+    return (unread.length === 1 ? 'the watch on ' + cells[0] + ' reads' : 'the watches on ' + seriesWords(cells, 'and') + ' read') + ' nothing, as the cartridge loaded has no sheet named ' + seriesWords(sheets, 'or');
+  };
+  function seriesWords(list, word) { return list.length < 2 ? list.join('') : list.slice(0, -1).join(', ') + ' ' + word + ' ' + list[list.length - 1]; }
   // A frame's end: each watch read, those that hold said, the command's let go, and the run paused at a rate or a replay.
   Host.prototype._watchFrame = function (n) {
     var held = [], i;
@@ -3445,7 +3460,8 @@
     if (this.cart.seed !== rp.seed) return this._answerFailed('The cartridge loaded again holds the seed ' + this.cart.seed + ', and the replay names ' + rp.seed + ': the replay is not played.');
     if (rp.last === 0) { this._answer('The replay of ' + name + ' holds no frame: the cartridge stands at frame 0, loaded again from the seed ' + rp.seed + '.'); return { ok: true, frames: 0 }; }
     this.player = { frames: rp.frames, last: rp.last };
-    this._answer('Playing the replay of ' + name + ': ' + rp.last + ' frame' + (rp.last === 1 ? '' : 's') + ' from the seed ' + rp.seed + (all ? ', all at once' : ', at the cartridge\'s rate') + '; a person\'s edits wait until it ends.');
+    var unread = this.unreadWatches();   // a watch that reads nothing, which never pauses it (ENGINE.30)
+    this._answer('Playing the replay of ' + name + ': ' + rp.last + ' frame' + (rp.last === 1 ? '' : 's') + ' from the seed ' + rp.seed + (all ? ', all at once' : ', at the cartridge\'s rate') + '; a person\'s edits wait until it ends' + (unread ? '; ' + unread : '') + '.');
     if (!all) { this.start(); return { ok: true, frames: rp.last }; }
     var win = { used: 0, limit: 0x7fffffff, deadline: Infinity };
     while (this.player && this.handle && this.watchStop === null) {   // a run to the watch stops where a watch holds (ENGINE.30)
