@@ -365,8 +365,11 @@ if ($Root -eq '') { $Root = $repoRoot }
 # 2026-11-21, CART.16's first slice: Afterlife, the thirteenth cartridge and the thirteenth source, a tool at rate 0
 # and no game. It has no replay and no golden of a replay's kind: its golden is a reel, walter.prolog, which cargo test
 # holds to the cartridge's tabs byte for byte.
-$expectedCartridges = 13
-$expectedSources = 13
+# 2026-11-25, CART.17's first slice: Cycles, the fourteenth cartridge and the fourteenth source, the arcade's first
+# game against an opponent. No replay and no golden yet: its replay is its third slice's, recorded once its rules
+# settle; cargo test holds every frame of three sessions to the game and the Mind by hand.
+$expectedCartridges = 14
+$expectedSources = 14
 $expectedLibraries = 1
 $expectedReplays = 8
 $expectedGoldens = 8
@@ -411,7 +414,15 @@ $expectedGoldens = 8
 # 2026-11-21, its second slice: Afterlife at 1,593 rows, written to (spec 9): its Format sheet's 36 cells, the reel's
 # thirteen lines under its head, the sheet hidden and its two columns' widths, and a format and a rule drawing the
 # format's number from the left; the other twelve's rows unchanged.
-$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 318; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/brickwork/brickwork.vla' = 820; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4111; 'cartridges/naught/naught.vla' = 1379; 'cartridges/afterlife/afterlife.vla' = 1593 }
+# 2026-11-25, CART.17's first slice: Cycles at 473 rows: the Arena's frame, its one fill and five rules, the panel;
+# the State's 58 named cells; the Mind's seven sentences, a form each, and its workings; the four waves, seven sheets
+# and seven fills each; the Layout's sizes and the Tally; the other thirteen's rows unchanged.
+# 2026-11-25, at its hand test: Cycles 473 -> 475, a wall the Layout gives drawn gray, its word "wall" and no longer
+# the frame's "#": a format of a fill alone and the look that lays it over the cell; the other thirteen's unchanged.
+# The same day, at the owner's word ("The Arena should be larger"): Cycles 475 -> 531, its sheet 40 by 40 where 40 by 20
+# and a wave nine layers where seven: eight more hidden sheets, a sheet row and a fill each, and twenty more rows'
+# heights on the Arena and on the Layout.
+$rowFloors = @{ 'cartridges/life/life.vla' = 51; 'cartridges/gun/gun.vla' = 88; 'cartridges/testcard/testcard.vla' = 112; 'cartridges/inputcard/inputcard.vla' = 136; 'cartridges/soundcard/soundcard.vla' = 117; 'cartridges/sand/sand.vla' = 87; 'cartridges/gridcard/gridcard.vla' = 318; 'cartridges/kairos/kairos.vla' = 378; 'cartridges/brickwork/brickwork.vla' = 820; 'cartridges/superposition/superposition.vla' = 636; 'cartridges/seiyaku/seiyaku.vla' = 4111; 'cartridges/naught/naught.vla' = 1379; 'cartridges/afterlife/afterlife.vla' = 1593; 'cartridges/cycles/cycles.vla' = 531 }
 $waves = @('square', 'triangle', 'sawtooth', 'sine')   # the OscillatorNode's own words, a voice's wave (docs/SPEC.md section 3.6)
 
 # --- section 7 and section 3, as data ---

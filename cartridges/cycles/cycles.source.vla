@@ -1,0 +1,706 @@
+; SPDX-License-Identifier: 0BSD
+; cycles.source.vla - Cycles, one person against the house on one sheet (CART.17): the
+; arcade's first opponent, a Mind of three rows that anyone can open and read. The pass
+; expands this file into cycles.vla beside it, the rows the engine loads (docs/SPEC.md
+; section 7.8): edit this one, then expand it again with
+;   cargo run --release --example expand
+;
+; How to play. Two cursors cross one sheet, yours from the left and the house's from the
+; right, each a cell a step, twelve steps a second. A cursor writes every cell it enters
+; with the step's number, so that its trail is a series, yours counted up from 1 and the
+; house's down from -1. The arrows steer yours, as they move a spreadsheet's cursor; a
+; press against the way it is heading does nothing. A cursor that enters a written cell,
+; or the frame round the sheet, has closed a circle, and loses the round; both into one
+; cell, and the round is played again. Enter or Space begins a round, and P pauses it.
+;
+; The house is the Mind sheet. Its cursor has three doors, ahead, left and right, a row
+; each, and a column a sentence of the genre's guide, each written below as one form:
+;   A written cell is the end.           A rule: a door whose cell is written is taken last.
+;   Keep a way ahead.                    The empty cells straight on through the door, to 8.
+;   Keep a wall beside you.              The written cells round the door's cell, 0 to 3.
+;   Do not cut your own room in two.     Two ways out of the door's cell that do not meet.
+;   Take the door with the most room.    The cells its wave reaches sooner than yours.
+;   Hold your course.                    A point for straight on, so that a tie goes ahead.
+;   Leave the other's cell alone.        A rule: a cell you can enter at the same step.
+; A door's points are its counts times the weights under them, and the house takes the
+; door with the most, a whim of the dice under half a point telling left from right at a
+; tie. Every count, every weight and the choice is a cell of the Mind, in the open.
+;
+; Its sight. The room through a door is counted by a wave. A wave's cell holds a stamp,
+; 64 a step, less its steps from the wave's source: the source the stamp itself, any
+; other cell one less than the greatest of its four neighbors, and a written cell 0. A
+; wave is nine sheets, its layers, each spreading the layer before it a cell further
+; and the first reading the last layer's last frame, so a wave spreads nine cells a
+; frame and 44 in the five frames a step has, and a sight of 42 steps crosses the sheet.
+; Three waves start at the house's doors and one at your cursor, at every step; a newer
+; stamp overwrites an older wherever it arrives, and nothing is ever cleared. The house
+; reads nothing of the step it chooses in: its choice is the frame before's.
+;
+; The sheets: the Arena, the game; the Mind, read-only; the Layout, a person's to type
+; into, where any cell filled is a wall from the next round; and hidden, the State, the
+; game in named cells; the waves, Ahead, Left, Right and Yours, nine sheets each; the
+; Tally; and the devices: the Screen, the Camera, the Commands and the Keys.
+;
+; What a rule costs (docs/SPEC.md section 2), and how this source keeps it:
+;   - The sheet's cells read the cursors' places, which move at a step alone, so the
+;     sheet computes at a step and at no other frame.
+;   - A wave's cell reads its own four neighbors and the sheet's cell under it: a frame
+;     computes the cells a wave's front passed, and none behind it.
+;   - A door's room is one formula over a wave's last layer, three a frame.
+
+(cartridge "cycles"
+  (spec 7)                          ; the version of docs/SPEC.md this cartridge is written to
+  (title "Cycles")                  ; what the host shows
+  (rate 60)                         ; frames a second: a step is five of them
+  (screen grid 40 40)               ; the Screen, hidden: the Camera shows the Arena in its place
+  (seed host)                       ; the host's seed, the house's whims from it
+  (bound "Arena")                   ; the Arena drawn to its extent and no further
+  (game "Arena")                    ; the game's keys on the Arena
+  (read "Arena" "Mind")             ; read-only: no key or row of a person's writes either
+  (work "Layout")                   ; data already in the sheet, a person's to type
+  (author "Spreadsheet Company")    ; who wrote it
+  (license "0BSD")                  ; the header's twin: copy this file to start a game of your own
+  (notes "Cycles: one person against the house. The arrows steer your cursor, which writes every cell it enters; a cursor that enters a written cell has closed a circle and loses the round. Enter or Space begins a round, P pauses. The house's every reason is a cell of the Mind sheet. A cell filled on the Layout sheet is a wall from the next round."))
+
+; The library whose macros this source calls: sheets, labels and headers; names, at and
+; devices; on, cells, rule and rules; first-frame, pressed and count; priority; camera;
+; button-labels; and widths and heights.
+(include "../common.vla")
+
+; ---- the sheet's size, its layers and its cells' -------------------------------------------
+; The sheet is 40 columns by 40 rows, its cells B2 to AO41 of the Arena inside a frame a
+; cell wide, A1 to AP42: as wide as a window of 1,280 pixels shows without scrolling
+; sideways, and as tall as it is wide. A wave is nine layers, since the house's sight
+; must cross the sheet, about half its width and its height together, and a wave reaches
+; its layers times the five frames of a step, less one. Each is one line here; the sight
+; itself is the Mind's, below, and moves with them.
+(parameter sheet-width 40)
+(parameter sheet-height 40)
+(parameter wave-layers 9)
+
+(define sheet-cells                 ; the sheet's cells, B2:AO41
+  (&expand "B2:" (column-letters-expand (+expand sheet-width 1)) (+expand sheet-height 1)))
+(define sheet-cells-fixed           ; the same, anchored: $B$2:$AO$41
+  (&expand "$B$2:$" (column-letters-expand (+expand sheet-width 1)) "$" (+expand sheet-height 1)))
+(define the-sheet                   ; the sheet with its frame, Arena!$A$1:$AP$42
+  (ref "Arena" (&expand "$A$1:$" (column-letters-expand (+expand sheet-width 2)) "$" (+expand sheet-height 2))))
+
+; ---- the sheets, in tab order ---------------------------------------------------------------
+; The Arena, the Mind and the Layout a person sees; the rest hidden. A wave's sheets are
+; written with its layers, below.
+(sheets "Arena" "Mind" "Layout")
+(sheet "State" hidden)
+(sheet "Tally" hidden)
+(sheet "Screen" hidden)
+(sheet "Camera" hidden)
+(sheet "Commands" hidden)
+(sheet "Keys" hidden)
+
+; ---- the looks: the family's night, and a spreadsheet's ---------------------------------------
+; The sheet's cells are midnight plum, their lines a shade lighter, with no gridlines on
+; the sheet and its column letters and row numbers kept. Your series is white and the
+; house's Lovelace Lavender, each a rule over the number its cell holds; each cursor is
+; outlined as a spreadsheet outlines the active cell, yours in the deep lavender and the
+; house's in white. The frame is the canvas's gray, the headers' own, and a wall the
+; Layout gives the sheet is a gray of its own, darker than your white and lighter than
+; the sheet, a look of its word laid over the cell. A cell's number is hidden by the
+; code ;;; while a round runs, and shown small at its end.
+; These come before the arrows are named, since left and right are an edge's words in a
+; border.
+
+(defmacro (lines color)
+  "a cell's four edges, thin, in a color"
+  (border (left thin color) (right thin color) (top thin color) (bottom thin color)))
+
+(defmacro (outline color)
+  "a cell's four edges, medium, in a color: the active cell's outline"
+  (border (left medium color) (right medium color) (top medium color) (bottom medium color)))
+
+(format 1 (fill "FFFFFF"))                          ; your series: white
+(format 2 (fill "A080E0"))                          ; the house's series: Lovelace Lavender
+(format 3 (outline "6B4FC8"))                       ; your cursor: the deep lavender
+(format 4 (outline "FFFFFF"))                       ; the house's cursor: white
+(format 5 "2E2645" ";;;" nowrap (lines "3B3159"))   ; the sheet's cells: midnight plum, their lines a shade lighter
+(format 6 "F3F3EE" ";;;" nowrap)                    ; the frame: the canvas's gray
+(format 14 (fill "808080"))                         ; a wall the Layout gives: gray
+(format 7 "F3F3EE" general nowrap (font 12))        ; the panel: the canvas's gray
+(format 8 "F3F3EE" general nowrap (font bold 14))   ; the title
+(format 9 "F3F3EE" general nowrap (font bold 12) (align center middle))   ; a key, bold and centered
+(format 10 (number "0;0;;") (font 7 "2E2645") (align center middle))      ; a series' numbers, small, at a round's end
+(format 11 "FFFFFF" general nowrap (font bold 11 "2E2645") (align center middle) (outline "6B4FC8"))   ; the legend's cursor, yours
+(format 12 "A080E0" general nowrap (font bold 11 "FFFFFF") (align center middle) (outline "FFFFFF"))   ; the legend's cursor, the house's
+(on "Arena"
+  (look "#" 6)
+  (look "wall" 14)
+  (gridlines off))
+
+; ---- the devices --------------------------------------------------------------------------
+; The buttons the game reads: the four arrows steer, and Enter or Space begins a round;
+; the arrows take longer words, since left and right are an edge's.
+(devices start select-button command frame seed)
+(define arrow-up Input!B1)          ; the up arrow, held
+(define arrow-down Input!B2)        ; the down arrow, held
+(define arrow-left Input!B3)        ; the left arrow, held
+(define arrow-right Input!B4)       ; the right arrow, held
+
+(button-labels "Keys")
+(cells "Keys"                       ; player 1's keys; the face buttons left unbound
+  ("B1" "ArrowUp")                  ; up: steer up
+  ("B2" "ArrowDown")                ; down: steer down
+  ("B3" "ArrowLeft")                ; left: steer left
+  ("B4" "ArrowRight")               ; right: steer right
+  ("B9" "Enter")                    ; start: begin a round
+  ("B10" "Space"))                  ; select: begin a round
+
+(camera 1 1)
+(cells "Camera" ("A3" "sheet") ("B3" "Arena"))
+
+(headers "Commands" "A1" "name" "words" "holds" "key")
+(cells "Commands"
+  ("A2" "pause") ("B2" "pause the round, or resume it") ("D2" "KeyP"))
+
+; ---- the ways a cursor heads ----------------------------------------------------------------
+; A heading is a number, 0 up, 1 right, 2 down and 3 left, so that a turn is a sum: one
+; more is a turn to the right, three more a turn to the left, two more the way back.
+(define heading-up 0)
+(define heading-right 1)
+(define heading-down 2)
+(define heading-left 3)
+(define no-turn -1)                 ; no turn kept
+
+(defmacro (row-step way)
+  "the rows a step moves: one up for a heading of 0, one down for 2, none sideways"
+  (choose (+ way 1) -1 0 1 0))
+
+(defmacro (column-step way)
+  "the columns a step moves: one right for a heading of 1, one left for 3, none up or down"
+  (choose (+ way 1) 0 1 0 -1))
+
+(defmacro (turned-right way)
+  "the heading a turn to the right gives"
+  (mod (+ way 1) 4))
+
+(defmacro (turned-left way)
+  "the heading a turn to the left gives"
+  (mod (+ way 3) 4))
+
+(defmacro (turned-back way)
+  "the heading against a heading"
+  (mod (+ way 2) 4))
+
+(defmacro (inside-rows a-row)
+  "a row held inside the sheet and its frame, so that no lookup reads past them"
+  (max 1 (min (+expand sheet-height 2) a-row)))
+
+(defmacro (inside-columns a-column)
+  "a column held inside the sheet and its frame"
+  (max 1 (min (+expand sheet-width 2) a-column)))
+
+(defmacro (stands-at a-row a-column)
+  "this cell is the one a row and a column name"
+  (and (= (row) (absolute a-row)) (= (column) (absolute a-column))))
+
+(defmacro (empty-at a-row a-column)
+  "1 where the sheet's cell at a row and a column is empty, 0 where it is written, the frame or data"
+  (if (= (index the-sheet (inside-rows a-row) (inside-columns a-column)) 0) 1 0))
+
+; ---- the State: the game in named cells --------------------------------------------------
+; The phase is waiting, the countdown, running, or over. A cursor is its row, its column
+; and its heading. A press is kept as the turn to come, and a second behind it. Every
+; fifth frame is a step: each cursor takes its heading and its next cell is read as the
+; frame began, then both move.
+(define waiting 0)                  ; the phases: before a round,
+(define the-countdown 1)            ;   the frames before its first step,
+(define running 2)                  ;   the cursors moving,
+(define over 3)                     ;   and a circle closed
+
+(names "State" "A1"
+  ("frames a step" frames-a-step) ("frames of the countdown" countdown-length)
+  ("your start, the row" start-row) ("the column" start-column)
+  ("the house's start, the row" house-start-row) ("the column" house-start-column)
+  ("begin held" begin-held) ("begin key" begin-key) paused go playing
+  ("up pressed" press-up) ("right pressed" press-right) ("down pressed" press-down) ("left pressed" press-left)
+  ("the way pressed" pressed-way) ("judged against" aimed) ("the press counts" press-counts)
+  ("the turn kept, after the press" kept-now) ("the one behind it" behind-now)
+  starts fresh step
+  ("the turn kept" turn-kept) ("the one behind it" turn-behind) ("since the step" since-step)
+  phase ("since the phase" since-phase) round ("the round's step" round-step)
+  ("the waves' serial" serial) stamp
+  ("your heading" heading) ("the house's heading" house-heading)
+  ("your next row" next-row) ("your next column" next-column)
+  ("the house's next row" house-next-row) ("the house's next column" house-next-column)
+  ("your way is written" blocked) ("the house's way is written" house-blocked) ("one cell for both" same-cell)
+  ("you close a circle" closes) ("the house closes a circle" house-closes)
+  ("you move" moves) ("the house moves" house-moves)
+  ("your row" cursor-row) ("your column" cursor-column)
+  ("the house's row" house-row) ("the house's column" house-column)
+  result ("the circle's row" circle-row) ("the circle's column" circle-column)
+  ("the first die" die-1) ("the second die" die-2) ("the third die" die-3)
+  words hint ("the round is" verdict))
+
+; The Mind's own words stand here, before the State's rules, since a rule reads a word
+; only after it is named: the heading the house chose in the frame before is its heading
+; at a step. The Mind's rows are written with it, below.
+(names "Mind" "A8"
+  ("the sight, in steps" sight)
+  ("the choice, its row" choice-row)
+  ("the choice, its heading" choice))
+
+(define ahead-row Mind!C2)          ; the door ahead: its cell's row,
+(define ahead-column Mind!D2)       ;   its column,
+(define ahead-open Mind!E2)         ;   and whether it is open
+(define left-row Mind!C3)           ; the door to the left
+(define left-column Mind!D3)
+(define left-open Mind!E3)
+(define right-row Mind!C4)          ; the door to the right
+(define right-column Mind!D4)
+(define right-open Mind!E4)
+
+; the pace and the countdown, and where each cursor starts: you a quarter of the way in
+; from the left on the middle row, the house at your half turn
+(at frames-a-step (cell 5))
+(at countdown-length (cell 90))
+(at start-row (cell (+expand 2 (quotient-expand sheet-height 2))))
+(at start-column (cell (+expand 2 (quotient-expand sheet-width 4))))
+(at house-start-row (cell (+expand 1 (-expand sheet-height (quotient-expand sheet-height 2)))))
+(at house-start-column (cell (+expand 1 (-expand sheet-width (quotient-expand sheet-width 4)))))
+
+; the keys: Enter or Space, a rising edge; P, a command; each arrow, a rising edge, and
+; the way the frame's press names, up before right before down before left
+(at begin-held (rule (max start select-button)))
+(at begin-key (pressed begin-held))
+(at paused
+  (first-frame
+    0
+    (if (and (= command "pause") (or (= (last phase) the-countdown) (= (last phase) running)))
+        (- 1 (last paused))
+        (last paused))))
+(at go (rule (- 1 paused)))
+(at playing
+  (rule (if (and (= go 1) (or (= (last phase) the-countdown) (= (last phase) running))) 1 0)))
+(at press-up (pressed arrow-up))
+(at press-right (pressed arrow-right))
+(at press-down (pressed arrow-down))
+(at press-left (pressed arrow-left))
+(at pressed-way
+  (rule
+    (priority
+      ((= press-up 1) heading-up)
+      ((= press-right 1) heading-right)
+      ((= press-down 1) heading-down)
+      ((= press-left 1) heading-left)
+      (else no-turn))))
+
+; the turns kept: a press is judged against the turn already kept, or against the
+; heading; one that names the same way or the way back does nothing; the first is kept
+; as the turn to come and the next behind it, a later one taking the place behind
+(at aimed (rule (if (>= (last turn-kept) 0) (last turn-kept) (last heading))))
+(at press-counts
+  (rule
+    (if (and (= playing 1)
+             (>= pressed-way 0)
+             (<> pressed-way aimed)
+             (<> pressed-way (turned-back aimed)))
+        1 0)))
+(at kept-now
+  (rule (if (and (= press-counts 1) (< (last turn-kept) 0)) pressed-way (last turn-kept))))
+(at behind-now
+  (rule (if (and (= press-counts 1) (>= (last turn-kept) 0)) pressed-way (last turn-behind))))
+
+; a round starts at Enter or Space while the sheet waits or a round is over, never at the
+; first frame; the sheet is laid afresh then, and at the first frame; a step is every
+; fifth frame of a round running
+(at starts
+  (rule (if (and (> frame 1) (= begin-key 1) (or (= (last phase) waiting) (= (last phase) over))) 1 0)))
+(at fresh (rule (if (or (= frame 1) (= starts 1)) 1 0)))
+(at step
+  (rule (if (and (= go 1) (= (last phase) running) (>= (+ (last since-step) 1) frames-a-step)) 1 0)))
+(at turn-kept
+  (first-frame no-turn (if (= fresh 1) no-turn (if (= step 1) behind-now kept-now))))
+(at turn-behind
+  (first-frame no-turn (if (= fresh 1) no-turn (if (= step 1) no-turn behind-now))))
+(at since-step
+  (first-frame
+    0
+    (if (or (= fresh 1) (= step 1))
+        0
+        (if (and (= go 1) (= (last phase) running)) (+ (last since-step) 1) (last since-step)))))
+
+; the phase, and the frames since it began, which a pause holds; the rounds begun; the
+; round's step, the number a cursor writes, 1 at its start; and the waves' serial, one
+; more at every step and every start, the stamp 64 times it
+(at phase
+  (first-frame
+    waiting
+    (priority
+      ((= starts 1) the-countdown)
+      ((> (+ closes house-closes) 0) over)
+      ((and (= go 1) (= (last phase) the-countdown) (>= (+ (last since-phase) 1) countdown-length)) running)
+      (else (last phase)))))
+(at since-phase
+  (first-frame 0 (if (<> phase (last phase)) 0 (if (= go 1) (+ (last since-phase) 1) (last since-phase)))))
+(at round (count starts))
+(at round-step
+  (first-frame 1 (if (= fresh 1) 1 (if (= step 1) (+ (last round-step) 1) (last round-step)))))
+(at serial
+  (first-frame 1 (if (or (= starts 1) (= step 1)) (+ (last serial) 1) (last serial))))
+(at stamp (rule (* serial 64)))
+
+; the headings: yours the turn kept, at a step; the house's the Mind's choice of the
+; frame before
+(at heading
+  (first-frame
+    heading-right
+    (if (= fresh 1) heading-right (if (and (= step 1) (>= kept-now 0)) kept-now (last heading)))))
+(at house-heading
+  (first-frame
+    heading-left
+    (if (= fresh 1) heading-left (if (= step 1) (last choice) (last house-heading)))))
+
+; the cell ahead of each cursor, and whether it is written as the frame began; a cursor
+; closes a circle at a step into a written cell, or into the cell the other enters too
+(at next-row (rule (inside-rows (+ (last cursor-row) (row-step heading)))))
+(at next-column (rule (inside-columns (+ (last cursor-column) (column-step heading)))))
+(at house-next-row (rule (inside-rows (+ (last house-row) (row-step house-heading)))))
+(at house-next-column (rule (inside-columns (+ (last house-column) (column-step house-heading)))))
+(at blocked (rule (if (= (index (last the-sheet) next-row next-column) 0) 0 1)))
+(at house-blocked (rule (if (= (index (last the-sheet) house-next-row house-next-column) 0) 0 1)))
+(at same-cell
+  (rule (if (and (= next-row house-next-row) (= next-column house-next-column)) 1 0)))
+(at closes (rule (if (and (= step 1) (> (+ blocked same-cell) 0)) 1 0)))
+(at house-closes (rule (if (and (= step 1) (> (+ house-blocked same-cell) 0)) 1 0)))
+(at moves (rule (if (and (= step 1) (= closes 0)) 1 0)))
+(at house-moves (rule (if (and (= step 1) (= house-closes 0)) 1 0)))
+
+; where each cursor stands as the frame leaves it
+(at cursor-row
+  (first-frame start-row (if (= fresh 1) start-row (if (= moves 1) next-row (last cursor-row)))))
+(at cursor-column
+  (first-frame start-column (if (= fresh 1) start-column (if (= moves 1) next-column (last cursor-column)))))
+(at house-row
+  (first-frame
+    house-start-row
+    (if (= fresh 1) house-start-row (if (= house-moves 1) house-next-row (last house-row)))))
+(at house-column
+  (first-frame
+    house-start-column
+    (if (= fresh 1) house-start-column (if (= house-moves 1) house-next-column (last house-column)))))
+
+; a round's result: 1 you closed a circle, 2 the house did, 3 both; and the cell it
+; closed at, yours where both did
+(at result
+  (first-frame
+    0
+    (if (= fresh 1) 0 (if (> (+ closes house-closes) 0) (+ closes (* 2 house-closes)) (last result)))))
+(at circle-row
+  (first-frame
+    0
+    (if (= fresh 1)
+        0
+        (if (= closes 1) next-row (if (= house-closes 1) house-next-row (last circle-row))))))
+(at circle-column
+  (first-frame
+    0
+    (if (= fresh 1)
+        0
+        (if (= closes 1) next-column (if (= house-closes 1) house-next-column (last circle-column))))))
+
+; the dice: three at every step, Park and Miller's, the first after the seed at the first
+; frame and after the third since; a door's whim is its die's last three digits under 500
+(defmacro (next-die die)
+  "Park and Miller's next number after a die"
+  (mod (* die 16807) 2147483647))
+
+(at die-1
+  (rule (if (= frame 1) (next-die seed) (if (= step 1) (next-die (last die-3)) (last die-1)))))
+(at die-2 (rule (if (or (= frame 1) (= step 1)) (next-die die-1) (last die-2))))
+(at die-3 (rule (if (or (= frame 1) (= step 1)) (next-die die-2) (last die-3))))
+
+; the words the Arena shows beside the sheet
+(at words
+  (rule
+    (priority
+      ((= phase waiting) "Enter or Space begins a round.")
+      ((= paused 1) "Paused: P resumes.")
+      ((= phase the-countdown) "Ready.")
+      ((= result 1) (& "You closed a circle at " (address circle-row circle-column 4) "."))
+      ((= result 2) (& "The house closed a circle at " (address circle-row circle-column 4) "."))
+      ((= result 3) (& "Both closed a circle at " (address circle-row circle-column 4) "."))
+      (else ""))))
+(at verdict
+  (rule
+    (priority
+      ((= result 1) "The round is the house's.")
+      ((= result 2) "The round is yours.")
+      ((= result 3) "The round is nobody's.")
+      (else ""))))
+(at hint (rule (if (= phase over) "Enter or Space begins the next round." "")))
+
+; ---- the Arena: the sheet, its frame and its panel -------------------------------------------
+; The frame is data, a # a cell, one cell wide round the sheet. Each cell of the sheet is
+; laid afresh at a round's start, 1 where you start, -1 where the house does, the word
+; wall where the Layout's cell is filled, and else 0; after that it keeps what it holds,
+; and an empty cell takes the round's step where a cursor enters it, yours above 0 and
+; the house's below. A wall and the frame end a cursor alike; their two words are two
+; looks, so that a wall is told from your series at a glance.
+(cells "Arena"
+  ((&expand "A1:" (column-letters-expand (+expand sheet-width 2)) 1) "#")
+  ((&expand "A" (+expand sheet-height 2) ":" (column-letters-expand (+expand sheet-width 2)) (+expand sheet-height 2)) "#")
+  ((&expand "A2:A" (+expand sheet-height 1)) "#")
+  ((&expand (column-letters-expand (+expand sheet-width 2)) 2 ":" (column-letters-expand (+expand sheet-width 2)) (+expand sheet-height 1)) "#"))
+
+(defmacro (laid-afresh)
+  "a cell as a round begins: your start, the house's, empty, or a wall where the Layout's cell is filled"
+  (priority
+    ((stands-at start-row start-column) 1)
+    ((stands-at house-start-row house-start-column) -1)
+    ((isblank Layout!B2) 0)
+    (else "wall")))
+
+(defmacro (entered)
+  "an empty cell as a step leaves it: the round's step where you enter, its negative where the house does, or 0"
+  (priority
+    ((and (= (absolute moves) 1) (stands-at next-row next-column)) (absolute round-step))
+    ((and (= (absolute house-moves) 1) (stands-at house-next-row house-next-column)) (- 0 (absolute round-step)))
+    (else 0)))
+
+(rule "Arena" sheet-cells
+  (if (= (absolute fresh) 1)
+      (laid-afresh)
+      (if (= Arena.last!B2 0) (entered) Arena.last!B2)))
+(style "Arena" sheet-cells 5)
+(conditional "Arena" 1 sheet-cells (formula-expand (and (isnumber B2) (> B2 0))) 1)
+(conditional "Arena" 2 sheet-cells (formula-expand (and (isnumber B2) (< B2 0))) 2)
+(conditional "Arena" 3 sheet-cells (formula-expand (stands-at cursor-row cursor-column)) 3)
+(conditional "Arena" 4 sheet-cells (formula-expand (stands-at house-row house-column)) 4)
+(conditional "Arena" 5 sheet-cells (formula-expand (and (= (absolute phase) over) (isnumber B2) (<> B2 0))) 10)
+
+; The panel, right of the frame: the title, the words, whose cursor is whose, and the
+; keys, on the canvas's gray. Its type fits the sheet's rows, 20 pixels.
+(defmacro (the-panel w h)
+  "the panel's cells and the Arena's columns and rows"
+  (cell "Arena" (address-expand 2 (+expand w 4)) "Cycles")
+  (style "Arena" (address-expand 2 (+expand w 4)) 8)
+  (rule "Arena" (address-expand 4 (+expand w 4)) (absolute words))
+  (rule "Arena" (address-expand 5 (+expand w 4)) (absolute verdict))
+  (rule "Arena" (address-expand 6 (+expand w 4)) (absolute hint))
+  (style "Arena" (&expand (address-expand 4 (+expand w 4)) ":" (address-expand 6 (+expand w 4))) 7)
+  (cell "Arena" (address-expand 8 (+expand w 4)) "you")
+  (style "Arena" (address-expand 8 (+expand w 4)) 11)
+  (cell "Arena" (address-expand 9 (+expand w 4)) "the house")
+  (style "Arena" (address-expand 9 (+expand w 4)) 12)
+  (labels "Arena" (address-expand 11 (+expand w 4)) "← ↑ → ↓" "Enter Space" "P" "Ctrl+K")
+  (labels "Arena" (address-expand 11 (+expand w 5))
+    "steer your cursor"
+    "begin a round"
+    "pause, or resume"
+    "every command, by its name")
+  (style "Arena" (&expand (address-expand 11 (+expand w 4)) ":" (address-expand 14 (+expand w 4))) 9)
+  (style "Arena" (&expand (address-expand 11 (+expand w 5)) ":" (address-expand 14 (+expand w 5))) 7)
+  (on "Arena"
+    (column "A" 2.86 shown 6)
+    (column (column-letters-expand (+expand w 2)) 2.86 shown 6)
+    (column (column-letters-expand (+expand w 3)) 2 shown 6)
+    (column (column-letters-expand (+expand w 4)) 14 shown 6)
+    (column (column-letters-expand (+expand w 5)) 30 shown 6)
+    (row 1 15 shown)
+    (row (+expand h 2) 15 shown))
+  (cell-size "Arena" w h))
+
+; Each cell is 20 pixels square, a column 2.86 characters wide and a row 15 points tall,
+; the frame's cells with the sheet's, so that the sheet and its panel are no wider than a
+; window of 1,280 pixels shows: a sheet in play is never scrolled sideways. It is taller
+; than a short window, 880 pixels with its headers, and a window under about 950 shows
+; its upper rows alone. The frame's rows are the cells' height and not half of it because
+; a row lower than the rest at a sheet's first or last row leaves the page's region a row
+; short for a frame when the sheet is scrolled (docs/REARVIEW.md, CART.17, its Found).
+; The Layout's cells are the Arena's, so that a wall typed there stands where it will.
+(defmacro (cell-size sheet w h)
+  "a sheet's rows and its square columns, each 20 pixels"
+  (heights sheet 2 (+expand h 1) 15)
+  (widths sheet 2 (+expand w 1) 2.86 none))
+
+(the-panel sheet-width sheet-height)
+
+; ---- the Layout: data already in the sheet ---------------------------------------------------
+; A cell of the sheet's, B2 to AO41, that a person fills, with anything, is a wall in the
+; Arena's cell of the same address from the next round. A cursor's start is never a wall.
+; The line under the cells says so, its last address the sheet's own.
+(cell-size "Layout" sheet-width sheet-height)
+(cell "Layout" (address-expand (+expand sheet-height 3) 2)
+  (&expand "Fill any cell above, B2 to " (column-letters-expand (+expand sheet-width 1)) (+expand sheet-height 1)
+    ", with anything: it is a wall from the next round."))
+
+; ---- the Mind: a row a door, a column a sentence ---------------------------------------------
+; The doors are ahead, left and right of the house's heading, rows 2 to 4: each holds the
+; door's heading and its cell. Then a column a sentence of the guide, its words at the
+; column's head, its count at each door, and under the doors its weight, row 6. A door's
+; points are its counts times the weights; its order is its points and its whim, and the
+; house chooses the greatest. Two sentences are rules and weigh nothing: a door whose cell
+; is written is last in the order, and one whose cell you can enter too is last but for
+; those. The workings stand to the right: the seven cells straight on past the door's
+; cell, each empty while every cell before it is; the cells to its left and right, and
+; the two corners ahead of them; and the door's whim.
+(headers "Mind" "A1" "door" "heading" "row" "column")
+(labels "Mind" "A2" "ahead" "left" "right")
+(cell "Mind" "A6" "weighs")
+(headers "Mind" "L1" "points" "order" "chosen")
+(headers "Mind" "P1" "past 1" "past 2" "past 3" "past 4" "past 5" "past 6" "past 7"
+  "to its left" "to its right" "the left corner" "the right corner" "whim")
+
+; the level's sight, the seventh of the scoping's ladder: room to 42 steps, which crosses
+; the sheet and stays inside what a wave reaches in a step, 44
+(at sight (cell 42))
+
+(defmacro (past-the-door steps)
+  "1 where the cell a number of steps straight on past this row's door is empty"
+  (empty-at (+ $C2 (* steps (row-step $B2))) (+ $D2 (* steps (column-step $B2)))))
+
+(defmacro (beside-the-door side-way forward)
+  "1 where the cell beside this row's door is empty: a step to a side, and a number of steps forward, 0 or 1"
+  (empty-at (+ $C2 (row-step side-way) (* forward (row-step $B2)))
+            (+ $D2 (column-step side-way) (* forward (column-step $B2)))))
+
+(defmacro (ways-out)
+  "the ways out of this row's door's cell: straight on, to its left and to its right, each 1 where empty"
+  (+ $P2 $W2 $X2))
+
+(defmacro (room-through wave)
+  "the cells a door's wave reached within the sight, sooner than your wave"
+  (sumproduct
+    (* (>= (ref (&expand wave wave-layers) sheet-cells-fixed) (- (absolute stamp) (absolute sight)))
+       (> (ref (&expand wave wave-layers) sheet-cells-fixed) (ref (&expand "Yours" wave-layers) sheet-cells-fixed)))))
+
+; A sentence of the guide is one form: its words, the column it stands in, what it
+; weighs, and what it counts at a door, written as the first door's row reads it.
+
+(defmacro (sentence-heads saying in weighs)
+  "a sentence's words at the head of its column, and its weight under the doors"
+  (cell "Mind" (&expand in 1) saying)
+  (cell "Mind" (&expand in 6) weighs))
+
+(defmacro (sentence saying (in) (weighs) (counts))
+  "A sentence of the guide: its words head a column of the Mind, its weight stands under the doors, and its count is one formula a door."
+  (sentence-heads saying in weighs)
+  (rule "Mind" (&expand in "2:" in "4") counts))
+
+(defmacro (sentence-a-door saying (in) (weighs) (ahead) (to-the-left) (to-the-right))
+  "A sentence whose count is a formula of its own at each door."
+  (sentence-heads saying in weighs)
+  (rule "Mind" (&expand in 2) ahead)
+  (rule "Mind" (&expand in 3) to-the-left)
+  (rule "Mind" (&expand in 4) to-the-right))
+
+(sentence "A written cell is the end."
+  (in "E")
+  (weighs "a rule")
+  (counts (empty-at $C2 $D2)))
+
+(sentence "Keep a way ahead."
+  (in "F")
+  (weighs 3)
+  (counts (if (= $E2 1) (+ 1 (sum $P2:$V2)) 0)))
+
+(sentence "Keep a wall beside you."
+  (in "G")
+  (weighs 2)
+  (counts (if (= $E2 1) (- 3 (ways-out)) 0)))
+
+(sentence "Do not cut your own room in two."
+  (in "H")
+  (weighs -60)
+  (counts (if (and (= $E2 1) (>= (- (ways-out) (* $P2 $W2 $Y2) (* $P2 $X2 $Z2)) 2)) 1 0)))
+
+(sentence-a-door "Take the door with the most room."
+  (in "I")
+  (weighs 10)
+  (ahead (if (= $E2 1) (room-through "Ahead") 0))
+  (to-the-left (if (= $E3 1) (room-through "Left") 0))
+  (to-the-right (if (= $E4 1) (room-through "Right") 0)))
+
+(sentence "Hold your course."
+  (in "J")
+  (weighs 1)
+  (counts (if (= (row) 2) 1 0)))
+
+(sentence "Leave the other's cell alone."
+  (in "K")
+  (weighs "a rule")
+  (counts
+    (if (and (= $E2 1)
+             (= (+ (abs (- $C2 (absolute cursor-row))) (abs (- $D2 (absolute cursor-column)))) 1))
+        1 0)))
+
+(rules "Mind"
+  ("B2" house-heading)
+  ("B3" (turned-left house-heading))
+  ("B4" (turned-right house-heading))
+  ("C2:C4" (+ (absolute house-row) (row-step $B2)))
+  ("D2:D4" (+ (absolute house-column) (column-step $B2)))
+  ("L2:L4" (sumproduct $F2:$J2 Mind!$F$6:$J$6))
+  ("M2:M4" (if (= $E2 1) (+ (* (- $L2 (* 1000000 $K2)) 1000) $AA2) -1000000000000))
+  ("N2:N4" (if (= (row) (+ (absolute choice-row) 1)) 1 0))
+  ("P2:P4" (if (= $E2 1) (past-the-door 1) 0))
+  ("Q2:V4" (if (= P2 1) (past-the-door (- (column) 15)) 0))
+  ("W2:W4" (beside-the-door (turned-left $B2) 0))
+  ("X2:X4" (beside-the-door (turned-right $B2) 0))
+  ("Y2:Y4" (beside-the-door (turned-left $B2) 1))
+  ("Z2:Z4" (beside-the-door (turned-right $B2) 1))
+  ("AA2" (mod die-1 500))
+  ("AA3" (mod die-2 500))
+  ("AA4" (mod die-3 500)))
+(at choice-row (rule (match (max Mind!$M$2:$M$4) Mind!$M$2:$M$4 0)))
+(at choice (rule (index Mind!$B$2:$B$4 choice-row)))
+
+; The Mind's columns: a sentence's words wrap at its column's head.
+(format 13 none general wrap (font bold) (align center bottom))   ; a sentence's words
+(style "Mind" "A1:AA1" 13)
+(on "Mind"
+  (column "A" 22 shown none)
+  (row 1 62 shown))
+(widths "Mind" 5 11 16 none)
+
+; ---- the waves: nine layers each, a cell a layer --------------------------------------------
+; A wave's first layer reads its last layer's last frame, and each layer after it the
+; layer before, in this frame: nine rounds a frame. Its source holds the stamp; a
+; written cell 0; any other cell one less than the greatest of its four neighbors in the
+; layer before, and never less than 0.
+
+(defmacro (spread before)
+  "a cell a layer further: one less than the greatest of its four neighbors in the layer before, and 0 at least"
+  (max 0 (- (max (ref before "B1") (ref before "A2") (ref before "C2") (ref before "B3")) 1)))
+
+(defmacro (wave-cell is-source before)
+  "a wave's cell: the stamp at its source, 0 where the sheet is written, and else the layer before spread a cell"
+  (if is-source
+      (absolute stamp)
+      (if (= Arena!B2 0) (spread before) 0)))
+
+(defmacro (wave-layer wave layer is-source)
+  "one layer of a wave: a hidden sheet, its cells the layer before spread a cell, the first layer's the last layer's last frame"
+  (sheet (&expand wave layer) hidden)
+  (quote-if (>expand layer 1)
+    (rule (&expand wave layer) sheet-cells (wave-cell is-source (&expand wave (-expand layer 1))))
+    (rule (&expand wave layer) sheet-cells (wave-cell is-source (&expand wave wave-layers ".last")))))
+
+(defmacro (wave-from wave layer is-source)
+  "a wave's layers from one to the last, each a sheet"
+  (quote-if (>expand layer wave-layers)
+    (begin)
+    (begin
+      (wave-layer wave layer is-source)
+      (quasiquote (wave-from (unquote wave) (unquote (+expand layer 1)) (unquote is-source))))))
+
+(wave-from "Ahead" 1 (and (stands-at ahead-row ahead-column) (= (absolute ahead-open) 1)))
+(wave-from "Left" 1 (and (stands-at left-row left-column) (= (absolute left-open) 1)))
+(wave-from "Right" 1 (and (stands-at right-row right-column) (= (absolute right-open) 1)))
+(wave-from "Yours" 1 (stands-at cursor-row cursor-column))
+
+; ---- the Tally: the rounds' counts, a replay's golden ----------------------------------------
+(labels "Tally" "A1" "rounds" "yours" "the house's" "nobody's" "steps")
+(on "Tally"
+  (count "B1" starts)
+  (count "B2" (if (and (= house-closes 1) (= closes 0)) 1 0))
+  (count "B3" (if (and (= closes 1) (= house-closes 0)) 1 0))
+  (count "B4" (if (and (= closes 1) (= house-closes 1)) 1 0))
+  (count "B5" step))

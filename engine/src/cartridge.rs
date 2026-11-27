@@ -3773,6 +3773,7 @@ mod tests {
             [
                 "afterlife",
                 "brickwork",
+                "cycles",
                 "gridcard",
                 "gun",
                 "inputcard",
@@ -10111,6 +10112,498 @@ mod tests {
         assert_eq!(g.kind, shown, "the first brick is the one shown next");
         brickwork_tally_holds(&c, &g);
         assert_eq!(g.games, 1);
+    }
+
+    // ---- CART.17: Cycles, one person against the house ----
+
+    /// Cycles (CART.17): the duel on one sheet and the house's Mind, read
+    /// from the repository at run time.
+    fn cycles() -> Option<String> {
+        crate::repository::read("cycles/cycles.vla")
+    }
+
+    use crate::cycles as cy;
+
+    /// One frame's Input rows as the host writes them at a rate to a
+    /// cartridge of version 7: the arrows, Enter and Space player 1 holds,
+    /// the sheet shown and the command run.
+    fn cycles_inputs(k: &cy::Keys) -> String {
+        let mut held = Vec::new();
+        for (on, button) in [
+            (k.up, 0),
+            (k.down, 1),
+            (k.left, 2),
+            (k.right, 3),
+            (k.start, 8),
+            (k.select, 9),
+        ] {
+            if on {
+                held.push((button, 0));
+            }
+        }
+        let mut rows = input_rows(&held, (0, 0), [0, 0, 0], 0, ("", ""));
+        rows.push_str("(cell \"Input\" \"B19\" \"Arena\")\n");
+        rows.push_str(&format!("(cell \"Input\" \"B20\" {})\n", quoted(k.command)));
+        rows
+    }
+
+    /// A truth as the cells hold it, 1 or 0.
+    fn bit(b: bool) -> f64 {
+        f64::from(u8::from(b))
+    }
+
+    /// One frame of Cycles held to the game by hand: every cell of the State
+    /// the hand computes; every cell of the sheet and its frame, with the
+    /// rules lit at each; the words beside it; the Mind's three rows, every
+    /// count and working, and its choice; and the Tally.
+    fn cycles_holds(c: &Cartridge, g: &cy::Game, frame: u32) {
+        let st = record_cells(c, "values", "State", "B1:B58");
+        let text = |a: &str| st.get(a).cloned().unwrap_or_default();
+        let num = |a: &str| text(a).parse::<f64>().unwrap_or(f64::NAN);
+        let held = [
+            ("B7, begin held", num("B7"), bit(g.begin_held)),
+            ("B8, the begin key", num("B8"), bit(g.begin_key)),
+            ("B9, paused", num("B9"), bit(g.paused)),
+            ("B10, go", num("B10"), bit(g.go())),
+            ("B11, playing", num("B11"), bit(g.playing)),
+            ("B16, the way pressed", num("B16"), f64::from(g.pressed_way)),
+            ("B17, judged against", num("B17"), f64::from(g.aimed)),
+            ("B18, the press counts", num("B18"), bit(g.press_counts)),
+            (
+                "B19, the turn kept, after the press",
+                num("B19"),
+                f64::from(g.kept_now),
+            ),
+            (
+                "B20, the one behind it",
+                num("B20"),
+                f64::from(g.behind_now),
+            ),
+            ("B21, starts", num("B21"), bit(g.starts)),
+            ("B22, fresh", num("B22"), bit(g.fresh)),
+            ("B23, step", num("B23"), bit(g.step)),
+            ("B24, the turn kept", num("B24"), f64::from(g.turn_kept)),
+            (
+                "B25, the one behind it",
+                num("B25"),
+                f64::from(g.turn_behind),
+            ),
+            ("B26, since the step", num("B26"), f64::from(g.since_step)),
+            ("B27, the phase", num("B27"), f64::from(g.phase.code())),
+            ("B28, since the phase", num("B28"), f64::from(g.since_phase)),
+            ("B29, the round", num("B29"), f64::from(g.round)),
+            ("B30, the round's step", num("B30"), f64::from(g.round_step)),
+            ("B31, the waves' serial", num("B31"), g.serial as f64),
+            ("B32, the stamp", num("B32"), g.stamp() as f64),
+            ("B33, your heading", num("B33"), f64::from(g.heading)),
+            (
+                "B34, the house's heading",
+                num("B34"),
+                f64::from(g.house_heading),
+            ),
+            ("B35, your next row", num("B35"), f64::from(g.next.0)),
+            ("B36, your next column", num("B36"), f64::from(g.next.1)),
+            (
+                "B37, the house's next row",
+                num("B37"),
+                f64::from(g.house_next.0),
+            ),
+            (
+                "B38, the house's next column",
+                num("B38"),
+                f64::from(g.house_next.1),
+            ),
+            ("B39, your way is written", num("B39"), bit(g.blocked)),
+            (
+                "B40, the house's way is written",
+                num("B40"),
+                bit(g.house_blocked),
+            ),
+            ("B41, one cell for both", num("B41"), bit(g.same_cell)),
+            ("B42, you close a circle", num("B42"), bit(g.closes)),
+            (
+                "B43, the house closes a circle",
+                num("B43"),
+                bit(g.house_closes),
+            ),
+            ("B44, you move", num("B44"), bit(g.moves)),
+            ("B45, the house moves", num("B45"), bit(g.house_moves)),
+            ("B46, your row", num("B46"), f64::from(g.cursor.0)),
+            ("B47, your column", num("B47"), f64::from(g.cursor.1)),
+            ("B48, the house's row", num("B48"), f64::from(g.house.0)),
+            ("B49, the house's column", num("B49"), f64::from(g.house.1)),
+            ("B50, the result", num("B50"), f64::from(g.result)),
+            ("B51, the circle's row", num("B51"), f64::from(g.circle.0)),
+            (
+                "B52, the circle's column",
+                num("B52"),
+                f64::from(g.circle.1),
+            ),
+            ("B53, the first die", num("B53"), g.dice[0] as f64),
+            ("B54, the second die", num("B54"), g.dice[1] as f64),
+            ("B55, the third die", num("B55"), g.dice[2] as f64),
+        ];
+        for (what, got, want) in held {
+            assert!(
+                got == want,
+                "frame {frame}: State!{what} is {got}, the game by hand's {want}"
+            );
+        }
+        assert_eq!(text("B56"), g.words(), "frame {frame}: the words");
+        assert_eq!(text("B57"), g.hint(), "frame {frame}: the hint");
+        assert_eq!(
+            text("B58"),
+            g.verdict(),
+            "frame {frame}: whose round it was"
+        );
+
+        // the sheet and its frame, a cell at a time, and the rules lit at each
+        let window = format!("A1:AS{}", cy::ROWS);
+        let Ok(Viewed::Text(record)) = c.view("values", "Arena", Some(&window)) else {
+            panic!("the Arena's record");
+        };
+        let (mut cells, mut lit) = (
+            std::collections::HashMap::new(),
+            std::collections::HashMap::new(),
+        );
+        for line in record.lines() {
+            if let Some((addr, rest)) = line
+                .strip_prefix("(lit \"Arena\" \"")
+                .and_then(|r| r.split_once("\" "))
+            {
+                let rules: Vec<u32> = rest
+                    .trim_end_matches(')')
+                    .split_whitespace()
+                    .filter_map(|n| n.parse().ok())
+                    .collect();
+                lit.insert(addr.to_string(), rules);
+                continue;
+            }
+            for head in ["(value \"Arena\" \"", "(cell \"Arena\" \""] {
+                if let Some((addr, v)) = line
+                    .strip_prefix(head)
+                    .and_then(|rest| rest.split_once("\" "))
+                {
+                    let v = v.trim_end_matches(')').trim_matches('"');
+                    cells.insert(addr.to_string(), v.to_string());
+                }
+            }
+        }
+        for row in 1..=cy::ROWS {
+            for column in 1..=cy::COLUMNS {
+                let addr = address(row as u32, column as u32);
+                // The frame's word and a wall's are two, a look each: the hand
+                // holds one marker for both, and the place tells which.
+                let inside = (2..cy::ROWS).contains(&row) && (2..cy::COLUMNS).contains(&column);
+                let want = match g.sheet[row][column] {
+                    cy::DATA if inside => "wall".to_string(),
+                    cy::DATA => "#".to_string(),
+                    n => n.to_string(),
+                };
+                let got = cells.get(&addr).cloned().unwrap_or_default();
+                assert!(
+                    got == want,
+                    "frame {frame}: Arena!{addr} holds {got:?}, the game by hand's {want:?} (you at {:?}, the house at {:?}, step {})",
+                    g.cursor,
+                    g.house,
+                    g.round_step
+                );
+                let want = if inside {
+                    g.lit(row, column)
+                } else {
+                    Vec::new()
+                };
+                let got = lit.get(&addr).cloned().unwrap_or_default();
+                assert!(
+                    got == want,
+                    "frame {frame}: Arena!{addr} is lit by {got:?}, the game by hand's {want:?}"
+                );
+            }
+        }
+        let shown = |addr: &str| cells.get(addr).cloned().unwrap_or_default();
+        assert_eq!(
+            shown("AR4"),
+            g.words(),
+            "frame {frame}: the words beside the sheet"
+        );
+        assert_eq!(
+            shown("AR5"),
+            g.verdict(),
+            "frame {frame}: whose round it was, under them"
+        );
+        assert_eq!(shown("AR6"), g.hint(), "frame {frame}: the hint under that");
+
+        // the Mind: a row a door, a column a sentence, and the choice
+        let mind = record_cells(c, "values", "Mind", "A1:AA10");
+        let at = |a: &str| {
+            mind.get(a)
+                .and_then(|v| v.parse::<f64>().ok())
+                .unwrap_or(f64::NAN)
+        };
+        for (place, door) in g.doors.iter().enumerate() {
+            let row = place + 2;
+            let mut held = vec![
+                ("B, its heading", format!("B{row}"), f64::from(door.heading)),
+                ("C, its cell's row", format!("C{row}"), f64::from(door.row)),
+                (
+                    "D, its cell's column",
+                    format!("D{row}"),
+                    f64::from(door.column),
+                ),
+                (
+                    "E, a written cell is the end",
+                    format!("E{row}"),
+                    bit(door.open),
+                ),
+                ("F, keep a way ahead", format!("F{row}"), door.way as f64),
+                (
+                    "G, keep a wall beside you",
+                    format!("G{row}"),
+                    door.wall as f64,
+                ),
+                (
+                    "H, do not cut your own room in two",
+                    format!("H{row}"),
+                    bit(door.split),
+                ),
+                (
+                    "I, take the door with the most room",
+                    format!("I{row}"),
+                    door.room as f64,
+                ),
+                ("J, hold your course", format!("J{row}"), bit(place == 0)),
+                (
+                    "K, leave the other's cell alone",
+                    format!("K{row}"),
+                    bit(door.others),
+                ),
+                ("L, points", format!("L{row}"), door.points as f64),
+                ("M, order", format!("M{row}"), door.order as f64),
+                ("N, chosen", format!("N{row}"), bit(door.chosen)),
+                ("W, to its left", format!("W{row}"), bit(door.left)),
+                ("X, to its right", format!("X{row}"), bit(door.right)),
+                (
+                    "Y, the left corner",
+                    format!("Y{row}"),
+                    bit(door.left_corner),
+                ),
+                (
+                    "Z, the right corner",
+                    format!("Z{row}"),
+                    bit(door.right_corner),
+                ),
+                ("AA, its whim", format!("AA{row}"), door.whim as f64),
+            ];
+            for (index, cell) in door.past.iter().enumerate() {
+                held.push((
+                    "P to V, the cells past it",
+                    address(row as u32, 16 + index as u32),
+                    bit(*cell),
+                ));
+            }
+            for (what, addr, want) in held {
+                let got = at(&addr);
+                assert!(
+                    got == want,
+                    "frame {frame}: Mind!{addr} ({what}) is {got}, the game by hand's {want} (the house at {:?} heading {}, you at {:?}, the wave's reach {})",
+                    g.house,
+                    g.house_heading,
+                    g.cursor,
+                    g.reach()
+                );
+            }
+        }
+        for (addr, want) in [
+            ("F6", 3.0),
+            ("G6", 2.0),
+            ("H6", -60.0),
+            ("I6", 10.0),
+            ("J6", 1.0),
+        ] {
+            assert!(
+                at(addr) == want,
+                "frame {frame}: Mind!{addr}, a sentence's weight, is {}, the hand's {want}",
+                at(addr)
+            );
+        }
+        assert!(
+            at("B8") == f64::from(cy::SIGHT),
+            "frame {frame}: the sight is {}, the hand's {}",
+            at("B8"),
+            cy::SIGHT
+        );
+        assert!(
+            at("B9") == g.choice_row as f64 && at("B10") == f64::from(g.choice),
+            "frame {frame}: the Mind chooses row {} and heading {}, the game by hand's {} and {}",
+            at("B9"),
+            at("B10"),
+            g.choice_row,
+            g.choice
+        );
+
+        // the Tally
+        let tally = record_cells(c, "values", "Tally", "B1:B5");
+        for (index, want) in g.tally.iter().enumerate() {
+            let addr = format!("B{}", index + 1);
+            let got = tally.get(&addr).cloned().unwrap_or_default();
+            assert!(
+                got == want.to_string(),
+                "frame {frame}: Tally!{addr} is {got}, the game by hand's {want}"
+            );
+        }
+    }
+
+    /// What a person types into the Layout before a frame, by the frame:
+    /// each a cell's row and column, filled.
+    type CyclesTyping<'a> = &'a dyn Fn(u32) -> Vec<(usize, usize)>;
+
+    /// Cycles played over a cartridge's text for a number of frames, the
+    /// host's seed written at the load, what a person types into the Layout
+    /// written before its frame, the keys those a player gives for each
+    /// frame, and every frame held to the game by hand.
+    fn cycles_session(
+        text: &str,
+        seed: u64,
+        frames: u32,
+        player: &mut dyn FnMut(&cy::Game) -> cy::Keys,
+        typing: CyclesTyping,
+    ) -> cy::Game {
+        let mut c = Cartridge::load(text, "cycles.vla", text.len()).expect("Cycles loads");
+        assert_eq!(
+            c.write(&format!("(cell \"Clock\" \"B3\" {seed})")),
+            Ok(1),
+            "the host's seed"
+        );
+        let mut g = cy::Game::load(seed);
+        for frame in 1..=frames {
+            for (row, column) in typing(frame) {
+                let addr = address(row as u32, column as u32);
+                c.write(&format!("(cell \"Layout\" \"{addr}\" \"x\")"))
+                    .unwrap_or_else(|e| panic!("frame {frame}: Layout!{addr} typed: {e:?}"));
+                g.layout[row][column] = true;
+            }
+            let keys = player(&g);
+            c.write(&cycles_inputs(&keys))
+                .expect("the Input sheet takes the host's rows");
+            assert!(c.step(0).done, "frame {frame} completes");
+            g.step(keys);
+            cycles_holds(&c, &g, frame);
+        }
+        g
+    }
+
+    /// A session of Cycles, every frame held to the game by hand: a player
+    /// who reads room and fumbles as a person does, the way back pressed and
+    /// the way already headed, a second turn kept behind the first, P
+    /// pressed and pressed again; rounds begun by Enter and by Space; and
+    /// rounds lost to the house.
+    #[test]
+    fn a_session_of_cycles_holds_every_frame_to_the_game_by_hand() {
+        let Some(text) = cycles() else {
+            return;
+        };
+        let mut reader = cy::Reader::new(31);
+        reader.quirks = true;
+        let mut pauses = 0u32;
+        let g = cycles_session(
+            &text,
+            12345,
+            2400,
+            &mut |g| {
+                let keys = reader.decide(g);
+                pauses += u32::from(keys.command == "pause");
+                keys
+            },
+            &|_| Vec::new(),
+        );
+        assert!(g.tally[0] >= 3, "rounds begun: {:?}", g.tally);
+        assert!(g.tally[2] >= 1, "a round the house took: {:?}", g.tally);
+        assert!(g.two_kept >= 1, "a second turn kept behind the first");
+        assert!(pauses >= 2, "a pause, and its resume: {pauses}");
+    }
+
+    /// A round the player takes, every frame held to the game by hand. The
+    /// house wins most rounds against the reader of room, so the hand alone
+    /// first finds a reader whose first round the house loses, the game the
+    /// same whether the room is searched at every frame or where it is read;
+    /// then that round is played over the cartridge.
+    #[test]
+    fn a_round_the_house_loses_holds_every_frame_too() {
+        let Some(text) = cycles() else {
+            return;
+        };
+        let seed = 2026;
+        let found = (1..400u64).find_map(|reader_seed| {
+            let mut g = cy::Game::load(seed);
+            g.every_frame = false;
+            let mut reader = cy::Reader::new(reader_seed);
+            while g.tally[1] + g.tally[2] + g.tally[3] == 0 && g.frame < 1200 {
+                let keys = reader.decide(&g);
+                g.step(keys);
+            }
+            (g.tally[1] == 1).then_some((reader_seed, g.frame))
+        });
+        let (reader_seed, frames) = found.expect("a reader of room that takes its first round");
+        let mut reader = cy::Reader::new(reader_seed);
+        let g = cycles_session(&text, seed, frames + 10, &mut |g| reader.decide(g), &|_| {
+            Vec::new()
+        });
+        assert_eq!(g.result, 2, "the house closed a circle: {:?}", g.tally);
+        assert_eq!(&g.tally[..4], &[1, 1, 0, 0], "the player's round");
+    }
+
+    /// Data already in the sheet, and both cursors into one cell: walls typed
+    /// into the Layout before the round leave the house one way, along its
+    /// own row, and the player steers down, across and up to enter the cell
+    /// the house enters at the same step. Both close a circle, the round is
+    /// nobody's, and every frame is held to the game by hand.
+    #[test]
+    fn both_into_one_cell_is_nobody_s_round() {
+        let Some(text) = cycles() else {
+            return;
+        };
+        let walls = |frame: u32| {
+            if frame != 2 {
+                return Vec::new();
+            }
+            // the row above the house's, 21, and the player's own, 22, past its first cell
+            let above = (13..=31).map(|column| (20, column));
+            let below = (14..=31).map(|column| (22, column));
+            above.chain(below).collect()
+        };
+        // the player's steps of the round: eight down, one right, then up
+        let way_at = |step: i32| match step {
+            1..=8 => cy::DOWN,
+            9 => cy::RIGHT,
+            _ => cy::UP,
+        };
+        let g = cycles_session(
+            &text,
+            77,
+            320,
+            &mut |g| match g.phase {
+                cy::Phase::Waiting => cy::Keys {
+                    start: g.frame == 3,
+                    ..cy::Keys::default()
+                },
+                cy::Phase::Running if g.since_step == 0 => {
+                    let way = way_at(g.round_step);
+                    if way == g.heading {
+                        cy::Keys::default()
+                    } else {
+                        cy::Keys::arrow(way)
+                    }
+                }
+                _ => cy::Keys::default(),
+            },
+            &walls,
+        );
+        assert_eq!(g.sheet[20][13], cy::DATA, "a wall typed into the Layout");
+        assert_eq!(g.result, 3, "both closed a circle: {:?}", g.tally);
+        assert_eq!(g.circle, (21, 13));
+        assert_eq!(g.words(), "Both closed a circle at M21.");
+        assert_eq!(g.verdict(), "The round is nobody's.");
+        assert_eq!(&g.tally[..4], &[1, 0, 0, 1]);
     }
 
     // ---- CART.16: Afterlife's sheet ----

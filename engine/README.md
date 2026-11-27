@@ -174,6 +174,23 @@ the wall, its counts, the panel, the Clipboard and the voices, at every frame
 that moves the wall, a lay, a clear, a start or a top-out, at the first and
 at every 64th (`CART.3`'s third slice).
 
+Cycles, `cartridges/cycles/`, is one person against the house (`CART.17`),
+the first cartridge with an opponent. It is held to the game and the house's
+Mind written by hand, `src/cycles.rs`, compiled for the tests alone, which
+share no predicate with the cartridge: where its cells count the room through
+a door by a wave, a stamp less its steps spread a cell a layer through nine
+sheets, the hand searches by a queue and counts the cells within the wave's
+reach at that frame. Three sessions hold every frame to it, every cell of the
+State, the sheet with the rules lit at each cell, the Mind's three rows with
+every count and working, the choice and the Tally: a player who reads room
+and fumbles as a person does, the way back pressed, a second turn kept behind
+the first, P pressed and pressed again; a round the house loses, which the
+hand alone finds first; and walls typed into the Layout that leave both
+cursors one cell to enter, nobody's round. The hand's own tests hold the
+turns kept, a wave's reach frame by frame, the same game played whether the
+room is searched at every frame or where it is read, and the house as an
+opponent, sixty rounds against each of two stand-ins.
+
 Afterlife, `cartridges/afterlife/`, is a tool and no game (`CART.16`): a
 reel's Prolog facts in eight tabs, a tab a relation, a column an argument and
 a row a line of the file. Since its second slice the cartridge says the

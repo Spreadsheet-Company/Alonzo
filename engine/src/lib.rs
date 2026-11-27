@@ -79,6 +79,12 @@ mod kairos;
 #[cfg(test)]
 mod brickwork;
 
+/// Cycles by hand (`CART.17`), the reference the engine's tests hold the
+/// duel's frames and the house's Mind to, with the stand-ins that play it,
+/// compiled for the tests alone.
+#[cfg(test)]
+mod cycles;
+
 /// Superposition by hand (`CART.12`), the reference the engine's tests hold
 /// the large board's frames to, compiled for the tests alone; the native
 /// runner and the playtest session include the same file by its path.

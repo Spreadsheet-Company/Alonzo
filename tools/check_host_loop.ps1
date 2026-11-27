@@ -1183,8 +1183,11 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # 2026-11-24, ENGINE.30's first slice: OW to PD, the undo case's over the module, and PE and PF, the palette's and the
 # clipboard's needing none, take it to three hundred and thirty-two (156 applicable without); FE's and EE's anchors
 # moved with the lines they break, Delete's row and the unsettled sentence, and CZ's and DB's words with what they
-# fail by, Ctrl+Z the page's undo. 2026-11-26, at the owner's word at its hand test: PL, a cell's own row written as
-# it opened, the palette's, needing no module, takes it to three hundred and thirty-three (157 applicable without).
+# fail by, Ctrl+Z the page's undo.
+# 2026-11-25, CART.17's first slice: Cycles the fourteenth cartridge, so mutant AP's words moved, the picker in
+# reverse offering Cycles second, after the empty sheet; tried alone, its page built and the empty case run.
+# 2026-11-26, at the owner's word at ENGINE.30's first slice's hand test: PL, a cell's own row written as it
+# opened, the palette's, needing no module, takes it to three hundred and thirty-three (157 applicable without).
 # 2026-11-26, ENGINE.30's second slice: PM to PQ, the watch case's over the module, and PR, needing none, take it to
 # three hundred and thirty-nine (158 applicable without). 2026-11-26, after its hand test: PS, a watch that reads
 # nothing said nowhere, over the module, takes it to three hundred and forty (158 applicable without).
@@ -2380,7 +2383,7 @@ if ($Control) {
                Want = 'case empty.*the empty sheet on the double steps at a rate of 30, where it waits at 0 for an edit' },
             @{ L = 'ap'; Name = 'the picker in reverse'; Anchor = '    for (var i = 0; i < ORDER.length; i++) out.push({ value: ORDER[i], label: CARTRIDGES[ORDER[i]].title });'
                With = '    for (var i = ORDER.length - 1; i >= 0; i--) out.push({ value: ORDER[i], label: CARTRIDGES[ORDER[i]].title });'
-               Want = 'case empty.*the picker''s entry 2 is afterlife, and the page''s cartridge block 1 is life' },
+               Want = 'case empty.*the picker''s entry 2 is cycles, and the page''s cartridge block 1 is life' },
             # HB, HC and HD (ENGINE.14's addendum): the bench's heading painted before the script chooses the player, and the
             # dark Screen before the grid, each by the one rule or attribute that holds it back
             @{ L = 'hb'; Name = 'a body with no mode shown'; Anchor = '  body:not([class]) { visibility: hidden; }'; With = '  /* no rule */'

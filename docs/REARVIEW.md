@@ -12679,3 +12679,385 @@ The designs: (a) `.pl` kept, Chrome's question left at a Save as, which with thi
 ### The roadmap's line, as it stood at the close
 
 **`ENGINE.49` — a save into the file opened: Save writes a file a cartridge reads back into the file it was opened from, the browser asking once a sitting whether the page may change it, and Save as asks where, as an editor's two commands do.** Minted 2026-11-21 at the owner's word, "Mint the save-in-place finding, then scope it", from `CART.16`'s hand test: "Saving walter.pl popped a warning modal" (`REARVIEW.md`, `CART.16`, Found 13). What stands: every save a person asks for opens the system's dialog (`personFile`, `web/index.template.html`; `SPEC.md` §3.7, `ENGINE.5`), which is right of a game's save, a new file named for its frame, `<name>-<frame>.vla`, and wrong of a file a person opened to edit, which since `CART.16`'s second slice a save writes back under its own name: a reel saved is the system's dialog, its question whether to replace the file, and, at a `.pl`, Chrome's own, "This file of type (.pl) can be dangerous", three answers a save. The handle the open's picker gives is dropped once the file is read. Measured in the list this machine's Chrome holds, 414 types: `pl` is listed at the level `py` and `exe` carry, and `pro` and `prolog` are not listed. Read in Chromium's source, in summary and not verbatim: the question is asked of a file chosen in the save picker, and a write through a handle already held checks the permission to write and nothing of the file's type. No test presses Chrome's own prompts, so a probe by hand is the item's first act, with its stop rule. *The work:* the file a work is tied to, the one opened through the picker or the one the last Save as chose, kept with the load and dropped at any other; Save writing into it, Chrome's permission asked once; `save-as`, a command and a key, asking where and moving the tie; a file changed on disk since it was read refused once; and a save where no file is tied, or no handle can be had, as it is today. A cartridge's own save and `save-cartridge` are never written into a file opened. *Depends on:* nothing. *Oracle:* a case over a double of the browser's file calls: a file opened, edited and saved with no dialog asked, its text the file's; the permission asked once, granted and refused; a file changed on disk, and one gone; Save as, the tie and the name moved; no tie, the dialog as today; a save that waited for its settle; another cartridge picked and the tie dropped, so that no save writes one file's rows into another's; mutant pages; `check_web_offline`, the write's names once each in the page's one place; and the owner's hand test in Chrome, whose prompts are its own. *Scoped 2026-11-21 (`REARVIEW.md`), its seven decisions approved the same day, each as recommended:* in place the file a cartridge reads, alone; `save-as`, with Ctrl+Shift+S, its dialog where the tied file stands; Chrome's question refused, nothing written; a file changed on disk refused once; a save that waited written where the permission is had; the words; and the tie across a reload left outside. *One thing the scoping left outside is pulled into the build, at the owner's word,* "I would pull forward the .prolog rename to avoid the warning modal ASAP": the type, the Format sheet's `B1` a list of types and Afterlife's `.prolog` first. The probe, as he ran it: Chrome asked for the permission at the first write, granted for the session. *Built 2026-11-21 and awaiting the owner's hand test (`REARVIEW.md`), the one place Chrome's own prompts are seen:* the desk, `FileDesk`, the tie kept with its entry of the picker and its load, Save written through it, a refusal and a file changed on disk each writing nothing, `save-as` and Ctrl+Shift+S, the name offered under the first type; the host's `save` carrying a save under another name, `fileTypes` and `fileNamed`; the type a list in the engine, `types_of`, Afterlife's `.prolog .pl` and its golden `walter.prolog`; the specification's §3.7, §3.11 and decisions 87 to 93; the `file` case grown by the desk over a double of the browser's calls, with six mutants, OP to OU; and, in Afterlife's own repository, its reader taking `reel.prolog` or `reel.pl`. One thing the build changed against the scoping: a tie is a load's, a save after a load asking where, since a load brings back the rows as opened. `~days`
+
+## `CART.17` — *Cycles*: one person against the house on one sheet, each cursor writing the cell it enters and the first to enter a written cell the loser, the house a Mind of three rows whose sight is a wave through each door
+
+*Scoped 2026-11-25 at the owner's word of the night before. He asked for two arcade genres as cartridges, the trail duel and the fixed shooter, both to be minted and the duel scoped first, and he gave the duel its rule, its first questions and its name: "It's just two-player snake, for crying out loud. Obstacles? Weapons?", and "Let's call it... "Cycles"." With them he asked what would make the game its own, which this record answers first. A second word came while the scoping ran, on the players: "No, not two players on one keyboard. This is the first human vs. computer game. We need to ideate an AI opponent in the same way the Backgammon, Chess, and Go cartridges were planning a declarative AI opponent." The item and `CART.18` were minted with this record (`ROADMAP.md`). Nothing is built.*
+
+**The first question, answered first.** What keeps the game its own is what kept Brickwork its own (`CHARTER.md` §6; `CART.3`'s decisions 2 to 4 and 9): a genre's rule is free, and a game's name, its look, its words and its sounds are its own (*Tetris Holding v. Xio Interactive*, D.N.J. 2012). The rule here is as old as the arcade. Gremlin's *Blockade* (1976) is two arrows that each leave a wall behind, the first to hit one losing, and Atari's *Surround* (1977) copied it within a year (*exhibits*, Sources). So the rule is taken, and nothing else of any game or of any other work: no name, no thing or character, no word, no look and no music. And three things are the game's own. Its name, read as the circle a spreadsheet warns of. A sheet's look: column letters, row numbers, cells filled flat in the family's colors, a cursor drawn as a spreadsheet draws the active cell, and no vehicle anywhere. And its opponent. In the genre the other side is a second person, or a machine whose mind is closed; here the machine's mind is a sheet the person opens, reads and types into (`AD-6`). That is the difference the owner's second word names, and it is a difference of the idea and not of the paint. (*recommendation*; the sitting's reading and no lawyer's: decisions 1 and 2.)
+
+**Substrate, verified.** Read on the day, by file.
+- *The pre-flight.* `HEAD` at `1fd5ec2`, the release of 0.5.0, level with `origin/main`; `ENGINE.30`'s first slice stands uncommitted in nine files, and this record and the roadmap's lines are written beside its hunks in two of them; `vla-lang` pinned `=0.15.0`. The page stands at version 9, and nothing Cycles spells asks for a tenth.
+- *A grid game at a rate.* Brickwork is the one in the arcade: `(spec 7)`, `(rate 60)`, its Wall bound, the game's and read-only, its Pace a work sheet (`cartridges/brickwork/brickwork.source.vla`). Every rate in `cartridges/` is 0, 30 or 60, though the page allows 1 to 120 (`SPEC.md` §10).
+- *The keys.* One seat's ten buttons through the Keys sheet (§3.3, §3.4). The Input sheet holds four seats, the input card alone reads a second, and the owner's word leaves Cycles one. A command's key may carry Ctrl since version 7 (§3.10); commands run one a frame, which one person's hands never meet.
+- *The language at 0.15.0* computes `INDEX`, `MAX`, `MOD`, `ADDRESS` and `SUMPRODUCT` over a comparison of two ranges, which Brickwork and Seiyaku already write, `(sumproduct (* (<> ...) 1))`, so the cells one wave reaches before another are one formula.
+- *A fixed point.* A frame is one round. `(settle K)` steps a grid to the language's fixed point inside an act at rate 0 alone, and a settling cartridge is refused a rate (`SPEC.md` §5, §3.5). `docs/ALGEBRA.md` §11.1 names the two ways left at a rate: a round a frame through the twin, or the rounds "unrolled within one frame, a fixed number of layers, at the price of cells".
+- *The opponent's shape.* `docs/ALGEBRA.md` §11 is the sitting the owner cites, under its one rule, the opponent is cells: a candidate a row of a Mind sheet, a heuristic a template macro and a column, a weight a cell, the level the row of weights read, ties in a fixed order and variety from the seed, the reasons the chosen row's (§11.6); lookahead by width and not depth (§11.2); legible, and not strong. No cartridge has a Mind: `CART.6` to `CART.8` and `KIT.4` are unbuilt, and so is `CART.15`'s second rung, noughts and crosses against the house.
+- *The trail.* `CART.15`'s fifth rung, Snake, names it, "the one-formula body", each cell a formula of its own last value and of where the head lands; unbuilt.
+- *What the horizon said.* `docs/ALGEBRA.md` §12.2 skips Snake among the games that "hold too little state". That is true of the trail, 800 cells of which two change a step. What Cycles holds is its opponent, and it is ordered by the owner's love, as Sudoku was.
+- *The word.* The language refuses formulas that "read one another in a circle" (`calc-cycle`, `vla-lang/data/messages.vla`), so a circle is the house's own word for the game's one fault.
+
+**The probe, measured.** *Measurement*, 2026-11-24 and 25, on the owner's machine under Node 24, a scratch script of the session's that is not kept in the tree. Whether a house written in cells is an opponent at all decides the item, so stand-ins played it before anything was recommended. Both cursors step at once; a cursor into a written cell or off the sheet loses, and both lose where both enter one cell. The player starts at a place and heading drawn by lot in the left half, the house at its half turn. Each entry is the house's rounds won of 100, over 300 rounds; a round both lose is neither's, 0 to 4 in 100 where nothing else is said. Three points is one standard error, so six either way is noise.
+
+The stand-ins, the weakest first. *A casual player* takes the door whose next cell has the longest runs ahead and to its sides, sees the house two steps late, and wanders three steps in a hundred. *A sharp player* counts at every step, over the whole sheet, the cells it reaches before the house less the cells the house reaches first, takes the door that leaves the most, and wanders two steps in a hundred; it sees the house 4, 2 or 0 steps late, what the house did inside that reaction taken as more of the same, straight on. Both keep off a cell the house may enter at the same step.
+
+The house reads the three doors of its cursor, ahead, left and right, by decision 5's sentences. Its *sight* is how many steps the wave through a door has spread when it chooses.
+
+| the house's sight, in steps | casual | sharp, 4 late | sharp, 2 late | sharp, at once |
+|---|---|---|---|---|
+| *48 by 24:* none, the reflexes alone | 67 | 39 | 26 | 8 |
+| 4 | 77 | 33 | 18 | 13 |
+| 9 | 66 | 43 | 26 | 15 |
+| 18 | 57 | 36 | 30 | 15 |
+| 24 | 88 | 50 | 30 | 15 |
+| 32 | 97 | 74 | 47 | 36 |
+| 48 | 99 | 88 | 69 | 61 |
+| the whole sheet | 92 | 91 | 82 | 70 |
+| *40 by 20:* 9 | 57 | 51 | 34 | 22 |
+| 18 | 64 | 60 | 31 | 17 |
+| 24 | 97 | 64 | 34 | 20 |
+| 32 | 99 | 83 | 69 | 57 |
+| the whole sheet | 86 | 96 | 77 | 85 |
+| *32 by 20:* 9 | 53 | 49 | 33 | 14 |
+| 18 | 78 | 59 | 51 | 28 |
+| 24 | 99 | 73 | 52 | 41 |
+| 32 | 100 | 87 | 60 | 54 |
+| the whole sheet | 88 | 94 | 71 | 87 |
+
+The ladder of decision 7, a sentence or a sight more at each level, at 40 by 20, and under it two rows that are no level. At I and II the house has no sentence about a cell the player can take, and both lose 2 to 29 rounds in 100.
+
+| the level | casual | sharp, 4 late | sharp, 2 late | sharp, at once |
+|---|---|---|---|---|
+| I, the way ahead | 54 | 28 | 28 | 15 |
+| II, and a wall beside it, and its room not cut in two | 64 | 30 | 30 | 12 |
+| III, and the other's cell left alone | 58 | 37 | 32 | 8 |
+| IV, and room, to 9 steps | 57 | 51 | 34 | 22 |
+| V, room to 18 | 64 | 60 | 31 | 17 |
+| VI, room to 24 | 97 | 64 | 34 | 20 |
+| VII, room to 32 | 99 | 83 | 69 | 57 |
+| *no level:* VII with the room left the other, at half weight | 97 | 83 | 69 | 57 |
+| *no level:* room to 32 and no other sentence | 95 | 74 | 42 | 20 |
+
+Data already in the sheet (decision 14), the same under a half turn so that neither side is favored, at 40 by 20 against level VII.
+
+| the data | casual | sharp, 4 late | sharp, 2 late | sharp, at once |
+|---|---|---|---|---|
+| none | 99 | 83 | 69 | 57 |
+| 24 cells by lot | 96 | 75 | 64 | 56 |
+| a cell every fifth row and sixth column | 94 | 70 | 55 | 44 |
+| a block of 4 by 8 in the middle | 99 | 45 | 38 | 34 |
+| two walls three quarters of the sheet's height, one from each long side | 100 | 26 | 19 | 17 |
+
+The run to the edge (decision 15), the player's alone, a sharp player taking one where it keeps 12 cells of room more than its best step does, against level VII at 40 by 20. With none, one, two and three runs a round the house wins 83, 78, 83 and 77 of 100 against the player 4 steps late; 69, 61, 61 and 68 against the player 2 late; and 57, 57, 49 and 54 against the player at once.
+
+The first design tried, and dropped. Two sheets of steps, one from each cursor, each cell one more than the least of its four neighbors in the last frame, relaxed a round a frame, and a third sheet naming the doors a cell's shortest ways pass through. At 48 by 24 against the sharp player at once, before the head-on was a rule, by the rounds relaxed a step, 1, 2, 3, 5, 10 and 20: the house won 38, 4, 39, 28, 16 and 18, and 42 at its fixed point. About a third of its 3,456 cells changed at every round at 5 rounds a step. A source that moves changes every cell's distance; the last frame's cells hold one another up wherever a distance must grow; and the door sheet reads equalities that hold only at rest. So it is never at rest, and more rounds do not make it better.
+
+What it says:
+- *Room is the opponent.* On its reflexes alone the house beats a casual player two rounds in three and a sharp one 8 to 39 in 100.
+- *The sight must cross the sheet.* A short sight adds nothing to the reflexes: 4, 9 and 18 steps at 48 by 24 do no better than none. The house turns into an opponent where its sight reaches about half the sheet's width and height added together, 30 steps at 40 by 20, where 32 does and 24 does not.
+- *So a round a frame is not enough.* At twelve steps a second a step has five frames, and a wave a frame has a sight of 4 (decision 6).
+- *The reflexes stay.* Room to 32 with no other sentence wins 20 against the sharp player at once, where 57 with them.
+- *The room left the other adds nothing* at half the room's weight, the row under VII, so it is the one sentence left out of the first build (decision 5).
+- *Data favors whoever reads past the house's sight.* Two long walls make every way longer than 32 steps: the house falls to 17 to 26 against a sharp player and still beats the casual one every round. Data is the player's ally against this house, and a level's to use.
+- *The run is no weapon in a counting player's hands:* its every figure is within the noise. A person's planned cut is the playtest pass's to measure.
+- *The length of a round.* Against level VII at 40 by 20 a round's median is 77 to 207 steps by stand-in and its 90th percentile 145 to 250: 6 to 17 seconds and 12 to 21 at twelve steps a second (*derived*).
+- *What a stand-in is not.* It reads room exactly and plans nothing; a person plans, reads roughly and tires. The numbers rank the designs and the levels, and a person's difficulty is the playtest pass's.
+
+**The twists, weighed.** The owner asked what makes it different: obstacles, weapons. Five are recommended, each a decision below, and none is a power-up.
+1. *The mind in the open* (decisions 5 and 13). The house's every candidate, count, weight and reason is a cell beside the sheet, and its last reason stands in words. A person plays against a thing they can read, and a person who types a weight has taught it.
+2. *The ladder teaches the guide* (decision 7). Each level is the house with one sentence more of the genre's guide, or a longer sight, so that a person learns the game's strategy by seeing what the house just learned.
+3. *The trail a series* (decision 11). A cell holds the step that wrote it, so that each side's trail is a filled series and the cell where it ends names the circle.
+4. *Data already in the sheet* (decision 14; the owner's obstacles). A sheet somebody has worked in: a work sheet where a person types walls, read at the next round.
+5. *Ctrl+Arrow, the run to the edge of the region* (decision 15; the owner's weapons, answered by a spreadsheet's verb). The cursor runs through the empty cells to the last before a written one, in one step, writing each, as Excel's selection jumps there and as Brickwork's brick slides.
+
+Weighed and set aside, each with its cost:
+- *A thing thrown,* a shot: it is another genre's rule and not this one's; a body in flight is the composite's, unbuilt (`SPEC.7`), or a cursor's worth of state a shot; and it is a power-up by the owner's own rule for Brickwork, "fundamental game mechanic orthogonal shifts are more stimulating than power-ups".
+- *Delete,* a written cell cleared ahead of the cursor: a wall is no longer final, the genre's one law gone, as Brickwork declined any closed cavity filled. The playtest pass's candidate, a number beside it.
+- *A second person at the keyboard:* the owner's word. The Input sheet's second seat stays the input card's.
+- *Speed on a key:* the pace is the cartridge's and never a control (the owner's rule for Buffet of 2026-10-19, kept here).
+- *A trail that fades:* Snake's, which `CART.15`'s fifth rung is.
+- *Numbers in the cells,* a round scored by a sum: a puzzle bolted onto the genre, as Brickwork declined.
+- *A sheet with no edge,* a cursor off one side entering the other: a sheet has edges, and a wave would need them joined.
+
+**The design, as recommended.** `(spec 7)`; `(rate 60)`; `(screen grid 40 20)`, the Screen hidden and the Camera's third row naming the Arena; `(seed host)`; `(bound "Arena")`; `(game "Arena")`; `(read "Arena" "Mind")`; `(work "Levels" "Layout")`. The sheets, the views first:
+- `Arena`, the game: the sheet, 40 columns by 20 rows inside a frame a cell wide, `B2:AO21`, a cell holding 0, the step that wrote it, the player's above 0 and the house's below, or data; and beside it the level, the lives, the Mind's three rows with its reason, and the keys' legend.
+- `Mind`, read-only: a row a door, ahead, left and right; a column a sentence, its count and the count times the level's weight; the total; the choice; and the reason's words.
+- `Levels`, a work sheet in the open, as Brickwork's Pace is: a row a level, its frames a step, its sight and a weight a sentence, each held inside its bounds whatever a person types.
+- `Layout`, a work sheet: 40 by 20, blank; a cell a person fills is data in the Arena from the next round.
+- `State`, hidden: the game in named cells: the phase (waiting, the countdown, running, paused, a round over, the game over); the round, the step and its stamp; each cursor's row, column and heading; the turn kept and the one behind it; each door's cell and whether it is open; who closed a circle and where; the level and the lives.
+- The waves, hidden: `Ahead`, `Left`, `Right` and `Yours`, seven sheets each, their layers.
+- `Tally`, for the golden; and the Keys, the Commands, the Camera, the Audio and the Screen.
+
+The frame, in cells. The press first, in `State`: an arrow's edge is kept as the turn to come and a second behind it, and a press against the heading is dropped. Every fifth frame is a step. At a step each cursor takes its heading, the player's from the turn kept and the house's from the Mind's choice of the frame before, and the cell ahead of it is read: written, or off the sheet, and it has closed a circle; both into one cell, and both have. Each Arena cell is its own last value, or the step where a cursor enters it, so that the 800 compute at a step and at no other frame. Then the waves. A wave's cell holds the step's stamp less its steps from the wave's source, 64 to a stamp, or 0 where the Arena is written: the source holds the stamp, and every other cell one less than the greatest of its four neighbors in the layer before it, the first layer reading the last layer's twin. So a wave spreads seven cells a frame, a newer stamp overwrites an older wherever it arrives, and nothing is ever cleared. Three waves start at the house's three doors and one at the player's cursor, at every step, and by the fifth frame each has spread 34 steps. The Mind counts, a formula a door: the cells the door's wave reached within the level's sight and sooner than the player's wave, a `SUMPRODUCT` over the two last layers. The other sentences read the cells round the door's cell by `INDEX`. A row's total is its counts times the level's weights, and the choice is the best total, ahead before left before right at a tie but for a whim of the dice. The house reads nothing of the step it chooses in: its sheets are the frame before's.
+
+Its own look (`CHARTER.md` §6): its own name; a sheet with its headers and no arena; cursors a spreadsheet's, and no vehicle; flat cells in the family's plum, white and lavender, and no line of light; a series where the genre draws a wall; an opponent that says why; and at a round's end the sheet left standing, its last cell named.
+
+**Predictions, written before any cell.** *Prediction*, 2026-11-25; the inputs are Brickwork's and Kairos's sizes and the floors' cost of a cell.
+1. *The cartridge:* 400 to 700 rows and 20 to 45 KB (Brickwork is 835 rows and 38 KB, a fill one row whatever its cells); the source 450 to 750 lines; the Rust hand 500 to 900 and the JavaScript one 200 to 350.
+2. *The formula cells:* about 28,000: the waves' 22,400, the Arena's 800, six rules' answers over it 4,800, the series' two colors and a cursor's four edges, and the State's and the Mind's a few hundred.
+3. *A frame,* natively: at most 1.1 ms between steps, where every wave cell computes, by Life's 46 ns a cell (*derived*, the charter's tenth baseline); a step's frame, the Arena, its rules and the State with it, under 1.5 ms. In the browser under 3 ms: sixty frames a second with five sixths of the frame to spare.
+4. *The memory:* about 13 MB natively, by the size ladder's 460 bytes a formula cell.
+5. *The play:* through the cartridge, level VII wins more than half its rounds against the session's sharp stand-in at once, as the probe's 57.
+
+**The census.** What Cycles needs, against what stands. Each was read in the code that decides it, and none is built around.
+
+| what it needs | what stands | what is open |
+|---|---|---|
+| two cursors on a spreadsheet's grid at 60 frames a second | grid mode at a rate, Brickwork's; the viewport patching the cells a frame changed (`ENGINE.19`, `ENGINE.20`) | nothing; measured at slice 1 |
+| a trail a formula a cell | a cell's own last value (`X.last`) | nothing |
+| a wave to a sight of 32 inside a step's five frames | a frame is one round; layers at the price of cells (`docs/ALGEBRA.md` §11.1) | nothing for layers; a settle at a rate would be a version of the page (decision 6, Found 1) |
+| the cells one wave reaches before another, counted | `SUMPRODUCT` over a comparison of two ranges | nothing |
+| the cells round a door's cell, read at a computed place | `INDEX` | nothing |
+| a Mind | `docs/ALGEBRA.md` §11.6's shape, unbuilt; `KIT.4` | Cycles' own macros; the kit at the second cartridge that writes one |
+| the levels and the weights typed by a person | Brickwork's Pace, each setting held inside its bounds | nothing |
+| a cursor drawn as the active cell, a series in two colors | rules folded edge by edge (`ENGINE.37`), looks | nothing |
+| a cell's address in the reason's words | `ADDRESS` | nothing |
+| a pause on a key, and Ctrl+Arrow | a command's key, with Ctrl since version 7 | nothing |
+| the hand | Brickwork's shape | Cycles', in Rust and JavaScript |
+
+**The work**, by slice.
+
+| file | what it is | slice; decisions |
+|---|---|---|
+| `cartridges/cycles/cycles.source.vla`, `cycles.vla` | the source over the kit; the pass's output | 1, 2, 3; 4 to 17 |
+| `engine/src/cycles.rs`, `engine/src/lib.rs` | test-only: the game and the Mind by hand, the stand-ins and their session, the exam | 1, 2; 18 |
+| `engine/src/cartridge.rs`, `engine/testdata/describe/cycles.vla` | the tests; the describe golden | 1; 18 |
+| `tools/build_web.ps1`, `tools/check_cartridge.ps1`, `tools/check_host_loop.ps1` | the page's order; the counts and the row floor; the control's mutant `AP`'s words | 1 |
+| `engine/examples/play.rs` | the playtest session | 3; 19 |
+| `cartridges/cycles/cycles.hand.js`, `cycles.replay.vla`, `cycles.golden.vla`, `tools/check_host_loop.ps1` | the hand in JavaScript; the owner's session and the Tally's record at its end; the replay case | 3; 19 |
+| `README.md`, `engine/README.md`, `web/README.md`, `Delta/CLAUDE.md` | the rows and the map | each |
+| `docs/ROADMAP.md`, `docs/REARVIEW.md`, `docs/RELEASES.md` | the line; this record; the note | each |
+
+**The decisions, the owner's.** Each with the recommendation and the alternatives it declines. Two are one-way doors and are deliberated as such, the first two: a name and a look once published under the company's. Every other is a line of a source no replay pins until the last slice.
+
+1. **The name, the place and the words.** *Cycles*, the owner's, in `cartridges/cycles/` beside the other games and 0BSD as they are, until `REPO.5` decides where the arcade's games live. A cycle here is a circle of references: the language's own refusal says formulas "read one another in a circle" (`calc-cycle`), a spreadsheet's person knows the warning, and no vehicle is drawn or named. The words a person reads are a spreadsheet's, a sheet, a cell, a cursor, a series, a circle, and the house for the opponent, as `CART.15`'s second rung has it; no other work's. *Alternatives:* a name with no vehicle in it at all, *Circular* or *Series*, at the cost of the owner's own; a subtitle in the family's manner. Recommended: Cycles, read as the circle.
+2. **What is taken, and what is left** (the first question). Taken: the rule, *Blockade*'s of 1976, two movers each leaving a wall and the first into a wall the loser. Left, all of it: every game's and every other work's name, the names of its things, its characters, its words, its look and its music. *Alternative:* a homage, the look of a best-known work of the genre at a glance: a look is what the court protected in a genre's best-known game (*Tetris Holding*, above), and a name is its owner's. Recommended: the game its own in every part a person sees or hears.
+3. **One person against the house** (the owner's word). No second seat and no network; the opponent is a Mind in cells (decision 5). Nothing declined here is recommended.
+4. **The sheet: 40 columns by 20 rows** (the probe). A round of 6 to 17 seconds at its median; a sight of 32 crosses it, so seven layers a wave and 22,400 cells; 960 by 480 pixels at a cell of 24 and 800 by 400 at 20. Its size is one line of the source, `sheet-size`, and its cell another, `cell-size`. Which cell a window of 1,280 by 585 shows whole, the Mind beside the sheet, is measured on the page's own scroller at the look, before a size is proposed (the owner's rule of 2026-11-21): a sheet in play cannot be scrolled. *Alternatives:* 32 by 20, where a sight of 24 does what 32 does here, five layers and 12,800 cells, and rounds are a third shorter and cramped; 48 by 24, the genre's wider field, which wants a sight of 44 or so, nine layers and 41,472 cells, about 1.9 ms a frame natively where 1.0 (*derived*). Recommended: 40 by 20.
+5. **The house is a Mind** (`docs/ALGEBRA.md` §11.6's shape, the owner's word). Three rows, the doors of its cursor: ahead, left and right. A column a sentence, each a template macro of the cartridge's own whose words read as the guide's, expanded by the pass into one formula a door:
+   - *A written cell is the end.* A door whose cell is written, or off the sheet, is taken only when all three are. A rule, and no weight.
+   - *Keep a way ahead.* The empty cells straight on through the door, counted to 8.
+   - *Keep a wall beside you.* The written cells round the door's cell, 0 to 3: a cursor that hugs fills its room and wastes none.
+   - *Do not cut your own room in two.* The door's cell has two ways out that do not meet at the corner between them.
+   - *Leave the other's cell alone.* The door's cell is one the player can enter at the same step. A rule from the level that learns it.
+   - *Take the door with the most room.* The cells the door's wave reaches within the sight, sooner than the player's wave.
+
+   A row of weights is the level's (decision 7). The choice is the best total; a tie goes ahead, then left, then right, but for a whim drawn from the dice, so that a seed typed into `Clock!B3` plays the same house again and a replay replays it. The reason is the chosen row's largest term, in words (decision 13). The sentences are the published ideas of the genre's programs and no program's code or tables (§11.5's caution): the room counted is the winner's of the Google AI Challenge of 2010, "for each spot on the map, find whether player 1 can reach it before player 2 does or vice versa"; the cut room is its "Avoid cut vertices", read off a cell's neighbors; the wall beside is its "space with the most walls for neighbors", and Warnsdorff's rule of 1823 before it (Sources). A seventh was tried and left out, the room left the other, which the probe found to add nothing. The macro is `sentence`, the cartridge's own; `KIT.4` takes the shape at its second writing, by the ratchet, and is not built here. *Alternatives:* a search two steps deep, nine rows and a wave each, two and a half times the cells for a narrow second ply, which §11.2 defers until a width is shown to fall short; the choice by a table of positions, which no person reads a reason from. Recommended: the three rows and the six sentences.
+6. **The sight: seven layers a wave, 34 steps at twelve steps a second** (the probe; the one fork that decides whether the house is an opponent). The designs, each with what it costs and what the probe gave it against the casual player and the sharp one at once:
+   - *No wave,* the reflexes alone: no cell; 67 and 8 (at 48 by 24). A house anyone who reads room beats.
+   - *A wave a frame,* one sheet a wave: 3,200 cells and a sight of 4; 77 and 13 (at 48 by 24). No better than none, for a seventh of the layers' cells.
+   - *A field relaxed across frames,* which needs no restart: 2,400 cells; never at rest, 4 to 39 against the sharp player by no rule of the rounds. Dropped.
+   - *Layers,* seven sheets a wave, the wave unrolled seven rounds inside each frame: 22,400 cells, at most 1.0 ms a frame natively (*derived*); a sight of 34; 99 and 57.
+   - *The rate at 120,* four layers and ten frames a step: 12,800 cells and a sight of 39 for twice the frames, each with the host's own cost; no cartridge has run above 60 (Found 2).
+   - *A settle at a rate,* a version of the page: the engine stepping a frame again until its waves stand, one sheet a wave, 3,200 cells and the whole sheet seen. The foundation rather than the layers, and a one-way door: a promise to every cartridge written to that version, `~days` to `~weeks` in the engine, the host and their oracles, with `CART.8`'s groups its second client (Found 1). Filled later, it would turn 28 sheets into 4 and change no play.
+
+   Recommended: the layers, their number one line of the source. The sight is the frames a step times the layers, less one, so the engine's rate and the game's pace are what the house sees by: a house that reads further than its pace allows is not built.
+7. **The ladder: seven levels, a row each on `Levels`.** A level states its frames a step, its sight and a weight a sentence, in the open, and a person may type any of them. As recommended, each is the house with one thing more: I, the way ahead; II, the wall beside it and its room not cut; III, the other's cell left alone; IV, room, to 9 steps; V, to 18; VI, to 24; VII, to 32. The probe's table stands beside them: a casual stand-in meets its match from I to V, and a sharp one at VII. *Alternatives:* one house at full strength, a wall a newcomer meets at once; levels by pace alone, Kairos's way, the house the same and the game faster, which teaches nothing, and a quicker pace shortens the house's sight besides (decision 6); a level that handicaps by whim, the house choosing worse by the dice, a strength nobody can read. Recommended: the ladder, its rows the playtest pass's to tune.
+8. **The step and the keys** (keyboard-first). Rate 60, a step every five frames, twelve a second; the pace is the level's and never a control. The arrows steer by direction, as a spreadsheet's arrows move a cursor, and a press against the heading does nothing, said once in the legend. Two presses are kept, the turn to come and one behind it, so that the genre's tight turn, two quick presses, is two steps' turns and neither is lost. Enter or Space begins a round and the next; P pauses and resumes, a command, every count held and the words saying so. The buttons are the Keys sheet's `up`, `down`, `left`, `right`, `start` and `select`. *Alternatives:* two keys that turn left and right of the heading, the genre's other steering, which reverses under a person's hands whenever the cursor comes toward them; one press kept, a tight turn then a matter of luck. Recommended: these.
+9. **The rules.**
+   - *The step:* both cursors move in one frame, each by what stood the frame before.
+   - *The circle:* a cursor that enters a written cell, the frame or data has closed a circle and loses the round. Both into one cell, or each into the other's, and both have: the round is played again.
+   - *The start:* the player a quarter of the way in from the left on the middle row, heading right; the house at its half turn. *Alternative:* a start by the dice, as the probe's were, variety a person does not need.
+   - *The countdown:* 90 frames between Enter and the first step, for a person to find both cursors; the waves have spread long before it ends.
+   - *The end of a round:* at once, the sheet left standing, the cell named in words, "The house closed a circle at K9." *Alternative:* the survivor playing on to fill what is left, scored by cells, a second game after the first is decided.
+10. **The match: three lives, a level a round won, and the level the score.** A round lost costs a life; the seventh level won is played again, the rounds won counted on. *Alternatives:* no lives, a round lost a level down, a ladder that finds the level a person holds and never ends, which gives up a game's stake, the risk the owner named on 2026-11-21 (`ENGINE.30`'s approval); first to three rounds a level, a climb three times as long. Recommended: three lives.
+11. **The trail a series.** A cell holds the step that wrote it, above 0 the player's and below 0 the house's, hidden in play by its format's code and shown small at a round's end, so that the sheet then reads as two series and who was first to any cell is a subtraction. It costs no cell. *Alternative:* a 1 and a 2, a wall and nothing more. Recommended: the series.
+12. **The look: the family's night, and a spreadsheet's.** The sheet midnight plum, `2E2645`, its lines a shade lighter, as Brickwork's wall; the column letters and row numbers kept and the gridlines off; the player's series white and the house's Lovelace Lavender, `A080E0`; each cursor outlined as a spreadsheet outlines the active cell, a medium edge by four rules; data in the canvas's gray; the panel on the canvas's gray, as Brickwork's. No glow, no vehicle, and no color outside the family's. *Alternatives:* a daylight sheet, white cells and gray gridlines with lavender against deep plum, the plainest, the white gridded sheet the owner found tiring before Buffet's playtest (2026-11-19); the player lavender and the house white. Recommended: the night, its shades and the cell's pixels the hand test's.
+13. **The Mind shown, and its reason said.** Beside the sheet, the three doors' rows, each sentence's count and the total, the chosen row lit; under them the house's last reason, a sentence in its own person kept until its next turn: "Left: 212 cells through that door, 31 ahead." The `Mind` and `Levels` sheets are tabs; the waves stay behind the box of hidden sheets, where a person may open one and watch the house's sight spread. *Alternatives:* the Mind on its tab alone, nothing beside the play, the item's own point out of sight; a wave dressed in bands as a tab of its own, the look's candidate at slice 2. Recommended: the panel and the reason.
+14. **Data already in the sheet** (the owner's obstacles). The `Layout` work sheet from the first slice, blank: a cell a person fills is a wall from the next round, a spreadsheet's own level editor, and the exam's positions are written there too (decision 18). The probe says data favors whoever reads past the house's sight, so a level that names a layout is a lever the playtest pass holds. *Alternatives:* none, an empty sheet always; a set of layouts a level now, content before anyone has played. Recommended: the sheet, blank.
+15. **Ctrl+Arrow, the run to the edge, in the third slice** (the owner's weapons, a spreadsheet's verb). Ctrl+→ runs the cursor through the empty cells to the last before a written one, in one step, writing each, as Excel's Ctrl+Arrow jumps to the edge of the region and Brickwork's slides a brick; three a round, counted beside the sheet; commands at `(spec 7)`, `run-up`, `run-down`, `run-left` and `run-right`. The house has none: its waves begin again at the next step from whatever the run wrote. *Alternatives:* none; the house running too, three rows more and a wave each, 16,800 cells; no count, a run at every step. Recommended: the player's three, kept or dropped by the playtest pass, since the probe could give it no figure a person's hands would recognize.
+16. **No weapon.** Nothing is thrown and nothing is picked up, for the three costs above; Delete waits as the playtest pass's candidate. Recommended.
+17. **The sound.** The Audio sheet's four voices, in Kairos's shape: a tick at the player's turn and a lower one at the house's, a falling note at a circle, a chord at a level won; quiet until the page's Sound. Recommended.
+18. **The hand, the exam and the oracle.** The game and the Mind by hand in Rust, `engine/src/cycles.rs`, test-only: the hand's room is a search by a queue where the cells' is a wave, two computations of one answer. A scripted session, the probe's stand-ins moved into the hand's file as Brickwork's bot was, writes the Input rows as the host writes them and holds every frame's State and Arena and the Mind's rows at every step. The exam, §11.6's: a dozen positions typed into the Layout, each with the door the guide takes, a dead end ahead, a pocket beside the open sheet, a cell both can take, the larger of two rooms through a gap inside the sight, and the same gap past it, which the house is expected to miss and the exam to say so; the agreements are a floor that never goes down. The describe golden. *Alternative:* the session alone, with no exam, the weights then tuned by feel. Recommended: all three.
+19. **Three slices, a commit each, at the owner's word.** (1) The duel: the sheet, the cursors, the keys, the waves and the Mind entire at the seventh level's row, the Layout, the look, every rule; the hand and its session; the owner's hand test. (2) The ladder and the dress: the Levels and the lives, the Mind beside the sheet with its reason, the sound, the countdown's words, the exam. (3) The run at the owner's word, the playtest pass, `CART.1`'s route over a played session, its findings a slice of their own, then the owner's session as the replay with its golden and the hand in JavaScript, recorded once the rules settle, since a replay pins its cartridge's digest. *Alternative:* the reflexes first and the waves second, a playable game a slice sooner with the item's one risk left for later. Recommended: the Mind entire in the first.
+
+**Found.** Unminted.
+1. *A fixed point at a rate.* `(settle K)` is rate 0's alone, so a game at a rate that needs a fixed point inside a frame unrolls it in layers, seven sheets where one would do. A settle at a rate would be a version of the page; `CART.8`'s groups, liberties and influence are the same wave and would be its second client. Not asked for by Cycles, whose layers cost a millisecond.
+2. *No cartridge runs above 60 frames a second,* though the page allows 120 (`SPEC.md` §10), so no game has shown the loop at two frames a tick.
+3. *`KIT.4` says it comes with `CART.6`.* Built first here at three rows, the Mind is written twice by the time backgammon's is, and the ratchet's hoist then has its two writings; the line is left as it stands.
+
+**The catch.** Foreseen by reading.
+- The sight is the frames a step times the layers, less one. A level that quickens the pace shortens the house's sight, and the Levels sheet holds a sight typed past it at what the pace gives.
+- A wave's stamp is 64 a step, exact in a double for longer than any sitting, and a sight is held under 64.
+- A wave is never cleared: an older stamp's cells stand until a newer arrives, and the Mind counts a cell only at this step's stamp.
+- The player's wave runs through the house's three doors' cells, since it cannot know the door taken, so a door's count is a cell or two short where the cursors are close.
+- A door whose cell is written starts no wave, and its row is the rule's.
+- The house's choice is the frame before's, so a turn pressed in a step's own frame is never read by it, and a test holds that.
+- A cell of the Arena written by a person would lose its formula; the Arena is read-only, and the Layout is where a person writes.
+- A replay pins its cartridge's digest, so it is recorded only after the playtest pass settles the rules (decision 19).
+
+**Oracle.** On the owner's machine under Windows PowerShell 5.1, then on both jobs.
+- `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings` and `cargo test --workspace`: the describe golden; the session, every frame's State and Arena and the Mind's rows at every step held to the hand; the hand's own tests of the circle, the turns kept and the sentences; from slice 2 the exam and its floor.
+- `cargo run --release --example expand -- --check`.
+- `tools/check_cartridge.ps1`, `tools/check_web_offline.ps1` and `tools/check_spdx.ps1` with their controls; at slice 3 the loop oracle's `commands` case with the runs and `tools/check_host_loop.ps1`'s replay case with the hand; `tools/run_checks.ps1 -WithExtras`.
+- The owner's hand test at each slice.
+
+**Size.** `~days` a slice (*prediction*): slice 1 two to four days, slice 2 two to three, slice 3 two to three and its pass.
+
+**Sources.**
+- *Tetris Holding, LLC v. Xio Interactive, Inc.*, 863 F. Supp. 2d 394 (D.N.J. 2012), the charter's.
+- *Blockade* (Gremlin, 1976; Lane Hauck), two players' arrows each leaving a trail, the first of the genre; *Surround* (Atari, 1977), among its copies.
+- a1k0n, "Google AI Challenge post-mortem", 4 March 2010 (a1k0n.net), the winning entry's account: the territory counted, the cut vertices avoided, the walls for neighbors; its search several moves deep is not taken.
+- H. C. von Warnsdorf, 1823: the knight moved to the square with the fewest onward moves.
+- Microsoft, "Keyboard shortcuts in Excel": Ctrl+Arrow key moves "to the edge of the current data region in a worksheet".
+- `docs/ALGEBRA.md` §11, the textbook opponent, and its sources.
+
+*Scoped 2026-11-25; the nineteen decisions await the owner.*
+
+*Approved 2026-11-25 by the owner, all nineteen as recommended: "Decisions approved; proceed with slice 1". And while the slice was built: "Feel free to request Mind-oriented VLA features from Frazaro/VLA. The world is our oyster."*
+
+### Its first slice, the duel: built 2026-11-25
+
+*Built over `1fd5ec2` in an isolated copy of the head commit, since another session's `ENGINE.30` slice and its `ENGINE.50` to `ENGINE.54` stood uncommitted in the tree and a cartridge's folder fails that session's page and its describe test until every registration lands with it; then landed in the tree by content, beside those hunks, in one piece. Uncommitted, awaiting the owner's hand test.*
+
+**What it is.** `cartridges/cycles/`: the source, 689 lines, and the cartridge the pass writes from it, 473 rows and 27 KB. The Arena, the sheet `B2:AO21` inside a frame of data a cell wide, each cell one formula of its own last value and of where a cursor enters, with five rules: your series white, the house's Lovelace Lavender, each cursor outlined as the active cell, and a series' numbers shown small at a round's end. The State, 58 named cells. The Mind, a row a door and seven sentences, each one `sentence` form of the source, its words at the head of its column and its weight under the doors:
+
+```text
+(sentence "Keep a wall beside you."
+  (in "G")
+  (weighs 2)
+  (counts (if (= $E2 1) (- 3 (ways-out)) 0)))
+```
+
+The four waves, `Ahead`, `Left`, `Right` and `Yours`, seven sheets each, written by one macro that walks the layers. The Layout, a work sheet whose filled cells are walls from the next round. The Tally. And `engine/src/cycles.rs`, 1,199 lines, test-only: the game and the Mind by hand, two stand-ins, and seven tests of its own.
+
+**What the build settled, against the scoping.**
+1. *The cell is 20 pixels* (decision 4, measured as it asks; the table below). At 24 the sheet and its panel were 1,404 by 530 in a scroller of 1,265 by 503, a window of 1,280 by 585: both ways over.
+2. *Seven sentences, and two of them rules* (decision 5). "Hold your course." is a sentence of its own, a point for the door ahead, which is what "a tie goes ahead" meant in the probe; "A written cell is the end." and "Leave the other's cell alone." weigh nothing and stand in the order. A door's points are `SUMPRODUCT` of its counts and the weights under them, so that slice 2's level is that one row read from the Levels.
+3. *The order is whole numbers:* a door's points times a thousand and its whim, the last three digits of its die under 500; three dice a step, Park and Miller's. No fraction, so the hand in JavaScript will compare what the cells compare.
+4. *A door's room counts the door's own cell,* a cell more at every open door, and the player's wave runs on the sheet as it stands, through the doors' cells, as the scoping's catch foresaw.
+5. *A series starts at 1,* yours, and -1, the house's, their starts; the first step writes 2.
+6. *A press that names the turn already kept does nothing,* as one against it does; a third press takes the place behind the first.
+7. *The words are three lines:* what happened and where, whose round it was, and the key that begins the next.
+8. *The weights stand on the Mind,* row 6, and the sight in `Mind!B8`, until slice 2's Levels sheet: the Mind is read-only, so a person types neither yet.
+9. *The hand holds the Mind at every frame,* where the scoping said at every step. A wave's reach is known at any frame, seven cells for each frame since its stamp changed and six for the last layer, so the hand's search, cut at that reach, is the wave's cells at that frame.
+10. *The sheet's size and the layers are three lines,* `sheet-width`, `sheet-height` and `wave-layers`, the language's parameters, where decision 4 said one.
+
+**Measured.** *Measurement*, 2026-11-25, the owner's machine; natively by a scratch runner of the session's, not kept; in the browser on the tree's page in headless Chrome.
+
+| | predicted | measured |
+|---|---|---|
+| the cartridge | 400 to 700 rows, 20 to 45 KB | 473 rows, 27 KB |
+| the source | 450 to 750 lines | 689 |
+| the Rust hand | 500 to 900 lines | 1,199, its stand-ins and tests with it: over |
+| the formula cells | about 28,000 | 27,337, the rows' own 23,337, which at 60 frames is 1,400,220 a second of the charter's 2,000,000 (`describe`) |
+| the load, natively | none written | 5.5 ms |
+| a frame, natively | at most 1.1 ms between steps, under 1.5 at a step | 0.66 ms at its mean over 600 frames; 2.45 at its worst, a step's: over |
+| a frame of the countdown, the waves at rest | none written | 0.003 ms |
+| in the browser | under 3 ms | 60.2 frames a second presented, 250 frames in 4.16 s; the frame's own time not taken |
+| the memory | about 13 MB | not taken |
+| the house against the reader of room | more than half | 52 rounds of 60, the reader 7, one nobody's; against the wanderer 58 of 60 |
+
+The house's 52 of 60 is from the fixed start of decision 9, where the probe's 57 of 100 was from starts by lot: against one opening a stand-in that reads room finds one line of play, and loses it. A person is no stand-in, but the seventh level is strong, and it is the only one until slice 2.
+
+The page's own scroller with Cycles shown, the cell 20 pixels, by the owner's five windows:
+
+| the window | the scroller | what it shows | scrolls |
+|---|---|---|---|
+| 1,280 by 585 | 1,280 by 518 | 1,280 by 518 | neither way |
+| 1,366 by 633 | 1,366 by 566 | 1,366 by 566 | neither way |
+| 1,536 by 729 | 1,536 by 662 | 1,536 by 662 | neither way |
+| 1,920 by 945 | 1,920 by 878 | 1,920 by 878 | neither way |
+| 2,508 by 1,350 | 2,508 by 1,283 | 2,508 by 1,283 | neither way |
+
+The sheet with its headers and its panel is 1,182 by 460. A larger window is the browser's zoom.
+
+**Oracle, as run.** In the tree, beside the other session's work, on the owner's machine.
+- `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` under `ALONZO_REQUIRE_CARTRIDGES`: 141 tests and the doc test, the other session's among them.
+- Three sessions over the cartridge, every frame held to the hand: every cell of the State; every cell of the sheet and its frame, with the rules lit at each; the words; the Mind's three rows, each count and working, the weights and the choice; and the Tally. A player who reads room and fumbles, 2,400 frames, rounds begun by Enter and by Space, the way back pressed, a second turn kept behind the first, P and P again. A round the house loses, which the hand alone first finds, the game the same whether the room is searched at every frame or where it is read. And walls typed into the Layout that leave both cursors one cell, `M11`, nobody's round.
+- Two breaks of the cartridge, in the copy, each caught at a named cell: the sight typed 31, `Mind!J2` 144 where the hand's 151 at frame 138; a wave's fourth layer reading its second, 58 where 82 at frame 1.
+- `cargo run --release --example expand -- --check`, fourteen `same`.
+- `tools/run_checks.ps1`, the thirteen green; `check_frame_floors` only after `cargo build --release --examples`, the tree's runner being a week old (Found 1). `check_spdx` again over a copy of the index holding the new files, since the check reads the tracked tree. Mutant `AP` tried alone, its page built and the empty case run: "the picker's entry 2 is cycles".
+- Not run: `tools/run_checks.ps1 -WithExtras`, the controls' 334 pages, CI's nightly and a release's.
+- The owner's hand test, to come.
+
+**Asked of the language, at the owner's word.** Minted in Frazaro's roadmap 2026-11-25, at his word after the hand test ("Mint the language requests before suggesting next steps"): `KERNEL.75`, `KERNEL.76`, `VLA.20` and `PORT.17`, in the order below. Each stands here as it was written that morning, the sheet then 40 by 20 and a wave seven layers.
+1. *A fixed point inside a frame.* A wave is seven sheets because a frame is one round. A sheet the machine computes K rounds a step, each round reading the round before where a formula reads its own sheet's last, would write the four waves as four fills, 3,200 cells where 22,400, the same evaluations and a seventh of the memory, and the source's three macros that walk the layers gone. It is Excel's iterative calculation, kept to a sheet. `CART.8`'s groups, liberties and influence are its second client, Seiyaku's propagation and Naught's depth its third and fourth. The engine's half, should the whole grid settle instead, is the scoping's Found 1.
+2. *`REDUCE` at a fill's price.* The language already says a wave in one formula, `REDUCE` over the rounds and `MAKEARRAY` over the sheet, a `LAMBDA` a cell: it loads and computes at 0.15.0. *Measurement*, the same machine, natively: 34 rounds over 800 cells in 34.1 ms, 7 in 7.3, about 1.25 microseconds a cell a round, where the layers compute all four waves in the 0.66 ms of a frame. Four such waves a step are 137 ms in a step of 83. A call kept per cell is the price (`KERNEL.29`'s slice 3c); a `MAKEARRAY` or a `MAP` whose `LAMBDA` is lowered once and run over lanes would make the language's own idiom the Mind's, with no new row. Twenty-five times is the gap.
+3. *A word read before its form.* The house's heading reads the Mind's choice of the frame before, and the Mind reads the State, so each sheet's rules name the other's cells; a word is bound only for the forms after its own, so the Mind's names stand in the source before the State's rules, away from the Mind (`vla-reference-expected` where they did not). A `names` block bound for the whole source would let a sheet's words stand with its sheet.
+4. *Rules, with their proofs.* The house's reason is the chosen row's greatest term, read off cells. Its reasoning as rules, a room reached, a door that cuts, and the reason a derivation the language prints, is `DATALOG` with its proofs, which lives in the VBA reference and Frazaro's core, where no cartridge reaches (`AD-1`; `docs/ALGEBRA.md` §11.1's question for `PORT.9`). The far one, and the one the owner's first word for the board games named.
+
+**Found.** Unminted.
+1. *A runner a week old fails the frame floors without saying why.* `target/release/examples/frames.exe` was of 2026-11-17, older than the pin to 0.15.0; the check said "the runner's check failed (exit 1)" under a page of passing lines. A line that the runner is older than its sources would have said it.
+2. *The fixed start may favor the house.* 52 of 60 against the reader of room, where 57 of 100 by lot. The ladder's rows and the start are the playtest pass's.
+3. *A step's frame is 2.45 ms at its worst natively,* where 1.5 was predicted: every wave cell reads the stamp, so all 22,400 compute at a step, with the sheet and its rules. A seventh of a frame's budget; a source cell that alone reads the stamp would take it off.
+4. *A page from a file shows its Autosave notice to a browser that has not answered it,* about 80 pixels under the bar, and the sheet then scrolls down by 20 in a window 585 tall until the notice is answered. The owner's browser has answered it.
+5. *The viewport's selection shows on the Arena* after a click, a gray cell among the series, as on every game sheet at a rate.
+
+**What remains.** The owner's hand test, then the commit at the owner's word; `docs/RELEASES.md` takes its note in the section of the release that carries it, which is not written yet. Slice 2, the ladder and the dress: the Levels and the lives, the Mind beside the sheet with its reason, the sound, the countdown's words and the exam. Slice 3, at the owner's word: the run to the edge, the playtest pass, the hand in JavaScript and the replay.
+
+### After the hand test, 2026-11-25: the walls gray, the sheet 40 by 40, the asks minted
+
+*The owner, the same day, with the Mind's tab in a screenshot: "Great first draft! Hand tests pass. Filled cells in Arena inherited from Layout should be gray, so as to distinguish them from the player's white. The Arena should be larger. Maybe doubling the heigth alone will be enough, or we just introduce the concept of auto-scroll in game cartridges where the spreadsheet scrolls on its own to allow for larger maps? Mint the language requests before suggesting next steps." Built in the isolated copy and landed by content, as the slice was; his second look the next day, below.*
+
+**The walls.** A wall the Layout gave and the frame held one text, `#`, and so one look, the canvas's gray, `F3F3EE`, which on the sheet's plum reads as the player's white. A wall's text is now `wall` and its look a format of a fill alone, `808080`, laid over the cell's own, so that its lines stay the sheet's; the frame keeps `#` and the canvas's gray. The hand keeps one marker for both, and the sessions tell them by place. Judged from Chrome's own capture, walls typed into the Layout and a round played over them: a gray between the white and the plum, apart from the lavender by its hue.
+
+**The sheet, 40 by 40: his first thought, and what the measurements answer.** *Measurement*, 2026-11-25, the owner's machine.
+
+What a larger sheet asks of the house, by the scoping's probe: starts by lot, 200 rounds a row, the house's share of the rounds against each stand-in, and a round's length against the last of them.
+
+| the sheet | the sight | a casual player | sharp, reaction 4 | reaction 2 | reaction 0 | steps at the median |
+|---|---|---|---|---|---|---|
+| 40 by 20 | 32 | 98.5 | 83.0 | 69.5 | 58.0 | 207 |
+| 40 by 30 | 32 | 99.5 | 78.0 | 49.0 | 36.5 | 254 |
+| 40 by 30 | 37 | 100.0 | 83.5 | 56.5 | 54.5 | 275 |
+| 40 by 40 | 32 | 99.0 | 80.5 | 66.0 | 17.0 | 275 |
+| 40 by 40 | 42 | 100.0 | 83.0 | 74.0 | 63.5 | 316 |
+| 60 by 30 | 32 | 94.5 | 56.5 | 44.0 | 21.5 | 289 |
+| 60 by 30 | 47 | 99.5 | 90.0 | 71.0 | 62.0 | 389 |
+| 80 by 40 | 32 | 90.5 | 42.0 | 23.5 | 8.5 | 347 |
+| 80 by 40 | 62 | 99.0 | 91.5 | 86.5 | 69.5 | 577 |
+
+The sight must cross the sheet, half its width and its height together and two more: at the sight it had, the house on a sheet twice as tall loses 83 rounds of 100 to the stand-in that reads room at once. From the cartridge's own fixed start the same: at 40 by 40 and a sight of 32 the house takes 41.0 of 100 from that stand-in and 14.5 from the one two steps slower; at 42, 52.5 and 68.0.
+
+What the sight costs. A wave reaches its layers times the five frames of a step, less one, so the layers are the sight and three over five, rounded up. Natively by a scratch runner of the session's, the source expanded at each size by a door's values (`pass::expand_given`) and 1,800 frames stepped; in the browser, headless Chrome at 2,508 by 1,350, the time between the browser's frames over three rounds.
+
+| the sheet | layers | the sight | formula cells a frame | at 60 frames, beside the charter's 2,000,000 | a frame natively: mean, 99th percentile, worst | in the browser |
+|---|---|---|---|---|---|---|
+| 40 by 20 | 7 | 32 | 23,337 | 1,400,220 | 0.56, 1.63, 2.29 ms | 60 a second, no gap over 17 ms |
+| 40 by 30 | 8 | 37 | 39,737 | 2,384,220 | 1.04, 2.80, 10.42 | not taken |
+| 40 by 40 | 9 | 42 | 59,337 | 3,560,220 | 1.42, 3.97, 4.87 | 60 a second, none over 17 |
+| 60 by 30 | 10 | 47 | 73,937 | 4,436,220 | 1.74, 4.32, 4.77 | 60 a second, none over 17 |
+| 80 by 40 | 13 | 62 | 169,737 | 10,184,220 | 5.40, 18.26, 23.34 | 60 a second, one or two gaps of 33 to 50 ms a round |
+
+What a window shows of it, the cell 20 pixels and the frame a cell wide: the sheet with its headers and its panel is 1,202 by 860.
+
+| the window | the scroller | scrolls |
+|---|---|---|
+| 1,280 by 585 | 1,265 by 518 | down, never sideways |
+| 1,366 by 633 | 1,351 by 566 | down |
+| 1,536 by 729 | 1,521 by 662 | down |
+| 1,920 by 945 | 1,920 by 878 | neither way |
+| 2,508 by 1,350 | 2,508 by 1,283 | neither way |
+
+**What was built, and what waits for his word.** The height is the reversible half and is built: three lines of the source, `sheet-height` 40, `wave-layers` 9 and the sight 42, the Layout's line saying its own last address; the hand's `HEIGHT`, `LAYERS` and `SIGHT`, the starts its tests pin, `L22` where `L12`, and the third session's walls and its cell, `M21` where `M11`. The width stays 40, since 1,202 pixels is what a window of 1,280 shows without scrolling sideways, the dress's rule. 531 rows where 475; `describe` prints 67,337 formula cells, the rows' own 59,337. The house against the hand's reader of room, sixty rounds from the fixed start: 39 to 21, where 52 to 7 on twenty rows; against the wanderer 54 to 4 and two nobody's, where 58 to 2. A person has more of a chance on the taller sheet, and the house is still the stronger.
+
+The scroll is the one-way half and is not built (Found 6). And a map of several windows is not the window's to give: it is the Mind's cost, the sheet's cells times the sight, which at 80 by 40 is over a frame natively (Found 8).
+
+**The frame, a cell wide.** Its rows were half a cell, 7.5 points, and its columns half a column. With the sheet taller than the loop oracle's box, the `grid` case failed at both ratios: "the viewport shows Arena!A1:AS34, past the record's window A1:AS33", and at the last row `A9:AS42` past `A10:AS42`. The page lays a row at the default height until a record names it, so a region computed before a short row's record lands is a row short once it has (Found 9). The frame's rows are now the cells' height and its columns the cells' width, which is what the source's own words said, a frame a cell wide; 20 pixels more each way.
+
+**Oracle, as run.** In the tree, beside the other session's work.
+- The copy first, at each step: the pass, the describe golden blessed there and copied alone, the hand's seven tests and the three sessions, the loop check whole.
+- In the tree: `cargo fmt --check`; the hand's tests, the three sessions and the describe test; `cargo run --release --example expand -- --check`, fourteen `same`; the examples and the module built, the page built over them; `tools/run_checks.ps1`, the thirteen green, the loop check's `grid` case among them after the frame's change and failing before it, as above.
+- `cargo clippy --workspace --all-targets -- -D warnings` and `cargo test --workspace` under `ALONZO_REQUIRE_CARTRIDGES`, once, at the end: 141 tests and the doc test.
+- The describe golden given its neighbors' line ends by its bytes, the bless having written it LF, and the describe test run again over it.
+- Frazaro's `tools/check_id_registry.ps1` after the mints: no collision, no duplicate, no retired ID minted again.
+- Not run: the controls, `-WithExtras`.
+
+**Found.** Unminted, numbered on from the slice's five.
+6. *A sheet taller than the window, and his "auto-scroll".* A window under about 950 pixels tall shows the sheet's upper rows alone, and a cursor below them is out of sight until a person turns the wheel: the keys are the game's. The engine has half the answer: in grid mode the Camera's two cells scroll the Screen sheet, and "never scroll another sheet" (`SPEC.md` §3.8), which a sheet the Camera's third row shows is. A cartridge cannot know a person's window, so what it can say is a cell to keep in view, as a spreadsheet keeps its active cell: the page scrolls the least that shows it, and not at all where the sheet fits. A version of the page, an item of the engine's and one of the specification's, `~days` with its oracle; a one-way door, as any version is. Until then a short window plays Cycles under the browser's own zoom or in Full screen.
+7. *The charter's line.* `describe` prints 3,560,220 formula cells a second beside the charter's 2,000,000, the first cartridge over it. Printed and never refused (`SPEC.md`, decision 24), and the frame measured is 4 ms at its 99th percentile natively; the line stands for a slower machine, which no measurement here does.
+8. *The ceiling is the Mind's.* The room's cost is the sheet's cells times the sight. At 60 by 30 it holds; at 80 by 40 it is 169,737 cells a frame and 18 ms at the 99th percentile natively. A larger map waits for Frazaro's `KERNEL.75`, or for a house that reads less, one wave where four.
+9. *A short row at a scrolled sheet's first or last row.* The host's region is a row short for a frame after such a row's record lands (`web/host.js`, `regionOf` and `carried`, which carries a region past its window at the height of its last row alone; a column has no such case, the host reading a sheet's columns whole before it shows it). A frame at a rate, and until the next act at rate 0. The cartridge stepped round it; the engine's mend is to read a sheet's rows whole as it reads its columns, or to view again when a record's landing moves the region.
+10. *The Mind's `order` column draws `#######` at a closed door,* its -1,000,000,000,000 wider than its column; in the owner's screenshot. A column's width, slice 2's dress.
+
+### Its second look, 2026-11-26, and the commit
+
+*The owner, with the sheet at 40 by 40 and four gray walls on it in one screenshot and the Mind in another, its sight 42: "Interestingly, the 10-key pad Enter key doesn't register as Enter. I'm sure they're different keycodes, but both Enter keys should register as Enter. Hand tests pass. Commit before reccomending next steps."*
+
+Committed at that word, the slice as he tested it and no more: Cycles' own files, and its lines alone in the files it shares, taken by content from beside two other sessions' uncommitted work (`ENGINE.50` to `ENGINE.53`; `REPO.13` and `ENGINE.54`), over `ef13982`, where `ENGINE.30`'s first two slices had been committed since the slice was built. Verified once as the commit stands, in a worktree of its own, as CI's three jobs run it: `cargo fmt --check`; `cargo clippy --workspace --all-targets -- -D warnings`; `cargo test --workspace` on the dev profile at opt-level 3, its overflow checks on, under `ALONZO_REQUIRE_CARTRIDGES`, 140 tests and the doc test; `expand -- --check`, fourteen `same`; the runners and the module built and the page built over them; `tools/run_checks.ps1`, the thirteen green; and the crate's package, its 140 tests run unoptimized from its own tarball with no cartridge beside it. Not run: the controls, `-WithExtras`.
+
+**Found at the second look.**
+11. *The keypad's Enter is no Enter to a cartridge.* A Keys sheet's button is held by the one `KeyboardEvent.code` its cell names (`SPEC.md` §3.4), and the keypad's Enter is `NumpadEnter`, so Cycles' `start`, bound to `Enter`, never heard it; a command's key the same (§3.10). The page's own keymap already takes both for a binding to Enter, and a keypad's digit already runs the digit row's command (`CART.14`'s hand test). His word is the rule, both are Enter: the host's, built after this commit, with its own record below.
+
+**What remains.** The keypad's Enter (Found 11). His word on the scroll (Found 6). Then slice 2 as it stood.
