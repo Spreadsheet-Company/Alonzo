@@ -162,6 +162,20 @@
   says a page's own act's answer, its copy's and its cut's. An edit, an
   applied cartridge and a paste that land tell their rows ('wrote').
 
+  Undo and redo (ENGINE.30's first slice) are Excel's, on work sheets at
+  rate 0: undo() takes back a person's last edit, paste or cut's move, its
+  cells written back as one act as the record of the cells as written held
+  them just before it, and redo() writes the act again; each answers the
+  sheet and range a page shows and selects, or refuses, saying why: a rate,
+  a replay playing, an act still computing, a cell the cartridge has written
+  since. The watches (its second slice) are a debugger's watchpoints:
+  setWatches(list) the keymap's, each a cell and maybe a value, standing;
+  watch(sheet, address) the command's, the cell's next change, once; and
+  unwatch() forgets the command's. At every frame's end each watched cell is
+  read, and a watch that holds is said, the run paused at that frame at a
+  rate or while a replay plays, never a frame late, and a replay played at
+  once stopping there.
+
   What the host holds is SD-23's interface state and nothing else (AD-6):
   the keys held, the pointer's place, the accumulator, the budget's
   measurement, the palette's table, the key map, the Camera's two cells,
@@ -173,7 +187,9 @@
   was last given, and since ENGINE.25 the commands waiting for their frames,
   and since ENGINE.38 the run's work kept, its keyframe's text and the frames
   since, and since ENGINE.39 the moment the last act came to rest, which a
-  held key's repeat is judged by. Every value is the module's.
+  held key's repeat is judged by, and since ENGINE.30 the run's line of a
+  person's acts at rate 0, each with the cells it replaced, and the watches
+  with each one's last value. Every value is the module's.
   Every refusal and every event is a sentence, the latest new one in the
   status and the last twenty events in a log, a repeat of an event counted in
   the line it first made rather than pushing the others out (SD-30), and a
@@ -928,6 +944,7 @@
       this.snd.ctx = actx; this.snd.injected = true; this.snd.on = true;
       this.snd.now = options.audioNow || function () { return actx.currentTime; };
     }
+    this.watched = [];   // the watches (ENGINE.30's second slice), the keymap's standing and the command's once, kept across loads
     this._reset();
     if (this.canvas) this._listenCanvas();
     this._listenPage();
@@ -943,6 +960,11 @@
     // back last; and the entry whose rest is waited for, the cells its act left read then. A load empties it, and nothing
     // else does.
     this.undoLine = { done: [], undone: [] }; this.undoWaiting = null; this.stepLetGo = 0;
+    // the watches across a load (ENGINE.30's second slice): the keymap's kept, each to be read again as the load leaves its
+    // cell, and the command's, the run's, let go; and the frame a watch paused the run at, which Run clears
+    this.watched = this.watched.filter(function (w) { return !w.once; });
+    for (var wi = 0; wi < this.watched.length; wi++) this.watched[wi].last = undefined;
+    this.watchStop = null;
     this.saveWaiting = null; this.saveAsked = null;   // a save asked for inside a frame or a settle, and the cartridge's, taken at a frame's end (ENGINE.5)
     this.saveWhat = null; this.checkWaiting = null;   // what a waiting save writes, the file or the cartridge, and a file opened whose check waits for the grid to rest (CART.16)
     this.saveAs = false;   // whether a waiting save was asked for under another name (ENGINE.49)
@@ -989,7 +1011,8 @@
     this.c = { frames: 0, calls: 0, yields: 0, inputs: 0, inputsKept: 0, derivedApplied: 0, derivedRefused: 0, edits: 0, editsRefused: 0, windows: 0, draws: 0, stills: 0, patches: 0, shows: 0, saves: 0, saved: 0,
                sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0, commands: 0, commandsRefused: 0,
                settles: 0, settleSteps: 0, unsettled: 0, presses: 0, playedShown: 0, editsRead: 0, keysRead: 0, keysStray: 0,
-               keyframes: 0, restores: 0, pastes: 0, pastesRefused: 0, undos: 0, redos: 0, undosRefused: 0, letGo: 0 };
+               keyframes: 0, restores: 0, pastes: 0, pastesRefused: 0, undos: 0, redos: 0, undosRefused: 0, letGo: 0,
+               watchesHeld: 0, watchPauses: 0 };
   };
 
   // The module: its ABI number asked first, then every export the loop calls.
@@ -1062,7 +1085,9 @@
     this._emit('load', { handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate, window: this.window, scale: this.scale || 0, frame: this.frame });
     // A cartridge that settles opens on computed values (CART.12; docs/SPEC.md section 5): the load's act, frame 1, stepped
     // with its settle as an act at rate 0 is, at once and on the ticks after; a replay's player steps it itself.
-    if (this._settles() && c.rate === 0 && this.playSeed === undefined && this.frame === 0) { this.edits.push({ load: true }); this._editFrames(this._window()); }   // a save rests as it was saved (ENGINE.5)
+    var loadSettles = this._settles() && c.rate === 0 && this.playSeed === undefined && this.frame === 0;
+    this._watchBaselines(!loadSettles);   // each watch read as the load leaves its cell, or at the load's act's rest (ENGINE.30)
+    if (loadSettles) { this.edits.push({ load: true }); this._editFrames(this._window()); }   // a save rests as it was saved (ENGINE.5)
     return { ok: true, handle: this.handle, title: c.title, mode: c.mode, w: c.w, h: c.h, rate: c.rate };
   };
   // The host's seed (ENGINE.3, decision 1): a cartridge whose manifest says (seed host) loads with
@@ -1183,7 +1208,7 @@
   // ---- the loop (section 5) ----
   Host.prototype.start = function () {
     if (this.running || !this.handle) return;
-    this.running = true; this.lastTs = null;
+    this.running = true; this.lastTs = null; this.watchStop = null;   // Run goes on past a watch that paused it (ENGINE.30)
     this._resound();   // the frame the grid holds sounds again with the loop (ENGINE.4, decision 6)
     if (this.options.drive === 'manual' || !global.requestAnimationFrame) return;
     var self = this;
@@ -1575,6 +1600,7 @@
     var p = this.player;
     this._emit('frame', { frame: n, window: this.window, scale: this.scale || 0, rate: this.cart.rate, replay: p ? p.last : 0 });
     if (p && p === this.player && n >= p.last) this._endReplay(n);
+    if (this.watched.length) this._watchFrame(n);   // each watch read at the frame's end, never a frame late (ENGINE.30's second slice)
   };
   Host.prototype._record = function (sheet) {
     var r = this.m.texts('alonzo_view', [this.handle], ['grid', sheet, '']);
@@ -2672,6 +2698,106 @@
   Host.prototype._actPlace = function (e) {
     return { sheet: e.select.sheet, row: e.select.range.top, col: e.select.range.left };
   };
+
+  // ---- the watches, a debugger's watchpoint (ENGINE.30's second slice, decision 12; docs/SPEC.md section 7.2) ----
+  // A watch is a cell and maybe a value: the keymap's, (watch "State" "B1" 4), standing, or the command's, watch, the
+  // selection's cell at its next change, once. At every frame's end the host reads each watched cell, one cell of a values
+  // view, and a watch holds at the frame whose cell comes to hold its value, where the frame before's held another, or,
+  // with no value, at the frame whose cell's value differs from the frame before's. Its first read, as a load leaves the
+  // cell or as it is set, is its baseline and holds nothing, a formula with no value yet read again at the first rest. A
+  // watch held is said with its frame; at a rate, or while a replay plays, the run pauses at that frame, never a frame
+  // late: the tick steps no frame after it, and a replay played at once stops there. At rate 0 an act steps on, the watch
+  // said. Host state and never a cell, so that no replay moves; a watch on a sheet the cartridge lacks reads nothing.
+  // A value as a watch compares it: { k, v }, k 'none', 'unvalued' (a formula with no value yet), 'number', 'bool',
+  // 'error' or 'text'; a record's cell, or a keymap's value, a number, a text or true or false.
+  function watchValueOf(e) {
+    if (!e || e.kind === 'empty') return { k: 'none', v: null };
+    if (e.kind === 'formula' && !e.valued) return { k: 'unvalued', v: null };
+    var v = e.value !== undefined ? e.value : e.text, kind = e.vkind;
+    if (kind === 'number') return { k: 'number', v: Number(v) };
+    if (kind === 'bool') return { k: 'bool', v: String(v).toUpperCase() === 'TRUE' };
+    if (kind === 'error') return { k: 'error', v: String(v) };
+    return { k: 'text', v: String(kind === 'date' ? e.text : v) };
+  }
+  function watchGiven(v) { return typeof v === 'number' ? { k: 'number', v: v } : typeof v === 'boolean' ? { k: 'bool', v: v } : { k: 'text', v: String(v) }; }
+  function sameWatched(a, b) { return !!a && !!b && a.k === b.k && a.v === b.v; }
+  function watchedWords(a) { return !a ? 'unread' : a.k === 'none' || a.k === 'unvalued' ? 'nothing' : a.k === 'text' ? quote(a.v) : a.k === 'bool' ? (a.v ? 'TRUE' : 'FALSE') : String(a.v); }
+  function watchName(w) { return w.sheet + '!' + w.address + (w.has ? ' = ' + watchedWords(w.value) : ''); }
+  // A watch's cell read now, or null where its view is refused, a sheet the cartridge lacks among them.
+  Host.prototype._watchedValue = function (w) {
+    if (!this.m || !this.handle) return null;
+    var r = this.m.texts('alonzo_view', [this.handle], [this.frame > 0 ? 'values' : 'grid', w.sheet, w.address]);
+    if (r.status !== 0) return null;
+    var q = VP().parseRange(w.address);
+    return watchValueOf(VP().readRecord(r.text).cells.get(q.top + ',' + q.left));
+  };
+  // Each watch's baseline taken again: read now where read, else at the first rest.
+  Host.prototype._watchBaselines = function (read) {
+    for (var i = 0; i < this.watched.length; i++) this.watched[i].last = read ? this._watchBase(this.watched[i]) : undefined;
+  };
+  Host.prototype._watchBase = function (w) {
+    if (!this.handle || this.inFrame || this.settling) return undefined;
+    var v = this._watchedValue(w);
+    return v && v.k !== 'unvalued' ? v : undefined;
+  };
+  // The keymap's watches (decision 12's (a)), each { sheet, address, value } with value undefined for any change: they
+  // replace the keymap's before them, the command's standing beside them. Answers how many watches stand.
+  Host.prototype.setWatches = function (list) {
+    var self = this, own = this.watched.filter(function (w) { return w.once; });
+    this.watched = (list || []).map(function (x) {
+      var has = x.value !== undefined && x.value !== null, w = { sheet: String(x.sheet), address: String(x.address).toUpperCase(), once: false, has: has, value: has ? watchGiven(x.value) : null, last: undefined };
+      w.last = self._watchBase(w);
+      return w;
+    }).concat(own);
+    return this.watched.length;
+  };
+  // The command's watch (decision 12's (c)): the selection's cell, sheet and address, watched for its next change, once,
+  // said. True where it was set.
+  Host.prototype.watch = function (sheet, address) {
+    if (!this.handle || !this.cart) { this._answerRefused('Nothing is watched: no cartridge is loaded.'); return false; }
+    var q = VP().parseRange(String(address || ''));
+    if (!sheet || !q || q.rows || q.columns || q.top !== q.bottom || q.left !== q.right) { this._answerRefused('Nothing is watched: a watch is one cell, and the selection is ' + (address || 'none') + '; select one cell, then watch.'); return false; }
+    var a = VP().colName(q.left) + q.top, key = String(sheet).toLowerCase() + '!' + a;
+    if (this.watched.some(function (w) { return w.once && (w.sheet.toLowerCase() + '!' + w.address) === key; })) { this._answer(sheet + '!' + a + ' is watched already: the run pauses at its next change.'); return true; }
+    var w = { sheet: String(sheet), address: a, once: true, has: false, value: null, last: undefined };
+    w.last = this._watchBase(w);
+    this.watched.push(w);
+    this._answer('Watching ' + sheet + '!' + a + (w.last ? ', which holds ' + watchedWords(w.last) : '') + ': ' + (this.cart.rate > 0 ? 'the run pauses at the frame it next changes' : 'the frame it next changes is said') + '; unwatch forgets it.');
+    return true;
+  };
+  // The command's watches forgotten, said; the keymap's stand, its lines being the keys'. Answers how many were forgotten.
+  Host.prototype.unwatch = function () {
+    var gone = this.watched.filter(function (w) { return w.once; }), left = this.watched.length - gone.length;
+    this.watched = this.watched.filter(function (w) { return !w.once; });
+    var standing = left ? '; the keymap\'s ' + (left === 1 ? 'watch stands' : countWords(left) + ' watches stand') + ', its lines the keys\'' : '';
+    this._answer(gone.length ? 'Forgot the watch' + (gone.length === 1 ? '' : 'es') + ' on ' + gone.map(watchName).join(', ') + standing + '.' : 'No watch of the watch command waits' + standing + '.');
+    return gone.length;
+  };
+  // The watches standing, each { sheet, address, value, once, last }: for a page and an oracle.
+  Host.prototype.watches = function () {
+    return this.watched.map(function (w) { return { sheet: w.sheet, address: w.address, value: w.has ? w.value.v : undefined, once: w.once, last: w.last ? w.last.v : undefined }; });
+  };
+  // A frame's end: each watch read, those that hold said, the command's let go, and the run paused at a rate or a replay.
+  Host.prototype._watchFrame = function (n) {
+    var held = [], i;
+    for (i = 0; i < this.watched.length; i++) {
+      var w = this.watched[i], now = this._watchedValue(w);
+      if (now === null) continue;
+      if (w.last === undefined) { if (!this.settling && now.k !== 'unvalued') w.last = now; continue; }   // its baseline, at the first rest
+      var holds = w.has ? sameWatched(now, w.value) && !sameWatched(w.last, w.value) : !sameWatched(now, w.last);
+      if (holds) held.push({ w: w, was: w.last, now: now });
+      w.last = now;
+    }
+    if (!held.length) return;
+    this.c.watchesHeld += held.length;
+    this.watched = this.watched.filter(function (w) { return !(w.once && held.some(function (h) { return h.w === w; })); });
+    var pause = this.cart.rate > 0 || !!this.player;
+    if (pause) { this.watchStop = n; this.c.watchPauses++; }
+    this._answer('frame ' + n + ': ' + held.map(function (h) {
+      return h.w.has ? h.w.sheet + '!' + h.w.address + ' holds ' + watchedWords(h.now) + ', as its watch asks' : h.w.sheet + '!' + h.w.address + ' changed from ' + watchedWords(h.was) + ' to ' + watchedWords(h.now);
+    }).join('; ') + (pause ? '; paused at the watch, and Run goes on.' : '.'));
+    if (pause && this.running) this.stop();
+  };
   // A key down on the Screen: a command's key (ENGINE.25) runs its command and is no button's and no last key, a repeat
   // taken and running nothing but where the command repeats and the repeat is fresh (version 8, ENGINE.39); any other
   // holds the Keys sheet's buttons it binds and is the frame's last key. ev, the event, when a listener has one: its
@@ -3322,11 +3448,11 @@
     this._answer('Playing the replay of ' + name + ': ' + rp.last + ' frame' + (rp.last === 1 ? '' : 's') + ' from the seed ' + rp.seed + (all ? ', all at once' : ', at the cartridge\'s rate') + '; a person\'s edits wait until it ends.');
     if (!all) { this.start(); return { ok: true, frames: rp.last }; }
     var win = { used: 0, limit: 0x7fffffff, deadline: Infinity };
-    while (this.player && this.handle) {
+    while (this.player && this.handle && this.watchStop === null) {   // a run to the watch stops where a watch holds (ENGINE.30)
       this._begin();
       if (!this.inFrame || !this._continue(win)) break;
     }
-    return { ok: this.frame === rp.last, frames: this.frame };
+    return { ok: this.frame === rp.last, frames: this.frame, watched: this.watchStop };
   };
   // A replay's frame (section 7.6, decision 8): its rows as one write, after the derived writes and in
   // place of the live Input rows and edits, landing as the live writes did, since a write applies its

@@ -640,6 +640,8 @@
     { name: 'paste', words: 'paste the clipboard into the selection, each cell as typed, the page\'s own copy as its values' },
     { name: 'undo', words: 'take back the last edit of a work sheet at rate 0, a paste or a cut\'s move whole; a game is never undone', repeats: true },
     { name: 'redo', words: 'put back the edit last taken back', repeats: true },
+    { name: 'watch', words: 'watch the selected cell: the run pauses at the frame it next changes, a debugger\'s watchpoint; at rate 0 that frame is said' },
+    { name: 'unwatch', words: 'forget the watches watch set; a (watch ...) line of the keymap stands' },
     { name: 'game', words: 'give the game the keys, the Screen\'s place' },
     { name: 'edit', words: 'give the drawer\'s edit row the keys' },
     { name: 'write', words: 'write the edit row\'s row as a person\'s edit at the next frame' },
@@ -794,7 +796,7 @@
       if (c === '"') { for (i++; i < s.length && s.charAt(i) !== '"'; i++) { if (s.charAt(i) === '\\') i++; else if (s.charAt(i) === '\n') line++; } if (i >= s.length) return { error: 'line ' + line + ': a string that never closes' }; continue; }
       if (c === '(') { if (depth === 0) { start = i; startLine = line; } depth++; continue; }
       if (c === ')') { if (depth === 0) return { error: 'line ' + line + ': a ) that closes nothing' }; depth--; if (depth === 0) out.push({ line: startLine, text: s.slice(start, i + 1) }); continue; }
-      if (depth === 0 && !/\s/.test(c)) return { error: 'line ' + line + ': words outside a form, where a keymap holds bind, command and palette lines' };
+      if (depth === 0 && !/\s/.test(c)) return { error: 'line ' + line + ': words outside a form, where a keymap holds bind, command, palette and watch lines' };
     }
     if (depth > 0) return { error: 'line ' + startLine + ': a form that never closes' };
     return { forms: out };
@@ -803,7 +805,7 @@
   // whole, nothing applied. lenient: a kept keymap read at the load, whose lines naming a command this page lacks, a later
   // page's, are set aside with a note rather than refusing the rest.
   function readKeymap(text, commands, lenient) {
-    var top = topForms(text), problems = [], notes = [], bindings = [], customs = {}, order = [], builtin = {}, place = null, i;
+    var top = topForms(text), problems = [], notes = [], bindings = [], customs = {}, order = [], builtin = {}, place = null, watches = [], watchKeys = {}, i;
     if (top.error) return { ok: false, problems: [top.error], notes: [] };
     commands.forEach(function (c) { builtin[c.name] = c; });
     var forms = top.forms.map(function (f) { return { line: f.line, d: (VP.readForms(f.text) || [])[0] }; });
@@ -846,7 +848,27 @@
         place = d[1];
         return;
       }
-      if (h !== 'bind') { problems.push(at + (h ? 'no form named ' + h : 'no form') + ': a keymap holds bind, command and palette lines'); return; }
+      // a watch (ENGINE.30's second slice, decision 12's (a)): (watch "State" "B1" 4), the run paused at the frame its cell
+      // comes to hold the value, a number, a text in quotes, true or false; or (watch "State" "B1"), at each change
+      if (h === 'watch') {
+        var ws = d[1], wa = d[2], wv = d[3], wq = typeof wa === 'string' ? VP.parseRange(wa.trim()) : null;
+        if (typeof ws !== 'string' || !ws.trim()) { problems.push(at + 'a watch names its sheet and its cell in quotes: (watch "State" "B1" 4)'); return; }
+        if (!wq || wq.rows || wq.columns || wq.top !== wq.bottom || wq.left !== wq.right || wq.bottom > 1048576 || wq.right > 16384) { problems.push(at + 'a watch is one cell, written as A1 is written: (watch "' + ws + '" "B1" 4)'); return; }
+        var wcell = VP.colName(wq.left) + wq.top, value;
+        if (d.length > 4) { problems.push(at + 'a watch holds a sheet, a cell and at most one value: (watch "' + ws + '" "' + wcell + '" 4)'); return; }
+        if (d.length === 4) {
+          if (typeof wv === 'string') value = wv;
+          else if (wv && wv.num !== undefined && isFinite(+wv.num)) value = +wv.num;
+          else if (wv && (wv.sym === 'true' || wv.sym === 'false')) value = wv.sym === 'true';
+          else { problems.push(at + 'a watch\'s value is a number, a text in quotes, true or false: (watch "' + ws + '" "' + wcell + '" 4)'); return; }
+        }
+        var wkey = ws.toLowerCase() + '!' + wcell + (value === undefined ? '' : ' ' + typeof value + ' ' + String(value));
+        if (watchKeys[wkey]) { problems.push(at + 'the watch on ' + ws + '!' + wcell + (value === undefined ? '' : ' for ' + printForm(wv)) + ' is written twice'); return; }
+        watchKeys[wkey] = 1;
+        watches.push({ sheet: ws.trim(), address: wcell, value: value, line: f.line });
+        return;
+      }
+      if (h !== 'bind') { problems.push(at + (h ? 'no form named ' + h : 'no form') + ': a keymap holds bind, command, palette and watch lines'); return; }
       if (typeof d[1] !== 'string') { problems.push(at + 'a binding begins with its keys in quotes: (bind "Ctrl+K" palette)'); return; }
       var k = parseKeys(d[1]);
       if (k.error) { problems.push(at + '"' + d[1] + '": ' + k.error); return; }
@@ -910,7 +932,7 @@
     });
     if (!bindings.some(function (b) { return b.command === 'palette'; })) problems.push('the palette keeps a key: no line binds palette, the way to every command');
     if (problems.length) return { ok: false, problems: problems, notes: notes };
-    return { ok: true, problems: [], notes: notes, bindings: bindings, customs: customs, order: order, place: place || 'floating', text: String(text) };
+    return { ok: true, problems: [], notes: notes, bindings: bindings, customs: customs, order: order, place: place || 'floating', watches: watches, text: String(text) };
   }
   // A command of a person's own run: its steps in order, a command of the page by its act, one of the person's by its own
   // steps, a row of VLA written as a person's edit. act(name, arg, row) runs a step of the page's.
@@ -3142,6 +3164,12 @@
       paste: function () { clip.act(sheetsViewport(), 'paste'); },
       undo: function () { steppedBack(host.undo()); },
       redo: function () { steppedBack(host.redo()); },
+      // the selection's cell watched (ENGINE.30's second slice, decision 12's (c)), in the viewport the sheets show in
+      watch: function () {
+        var vp = sheetsViewport(), f = vp && vp.sheet() ? vp.selection().focus : null;
+        host.watch(vp && vp.sheet(), f && f.row ? VP.colName(f.col) + f.row : '');
+      },
+      unwatch: function () { host.unwatch(); },
       game: focusScreen,
       edit: function () { give(editEl); },
       write: function () { document.getElementById('eng-write').click(); },
@@ -3287,6 +3315,7 @@
       if (r.notes.length) keptSaid = (gained ? gained + ' ' : '') + 'The keymap this browser kept is applied, ' + r.notes.length + ' of its lines set aside: ' + r.notes.join('; ') + '.';
     })();
     keysEl.value = keymap.text;
+    host.setWatches(keymap.watches);   // the keymap's watches, the host's to read at every frame's end (ENGINE.30's second slice)
     // Every command's keys said: the list in the drawer, describe-bindings, with what keeps a key from the page and a
     // game's button a binding shadows, drawn again at every apply and every load; and each button's title and
     // aria-keyshortcuts, so that a rebound key moves its words.
@@ -3358,6 +3387,7 @@
       var r = readKeymap(keysEl.value, COMMANDS);
       if (!r.ok) { sayKeysLine('The keys were not applied, and nothing changed: ' + r.problems.join('; ') + '.', true); return; }
       keymap = r;
+      host.setWatches(r.watches);   // its watches standing in the place of the keymap's before (ENGINE.30's second slice)
       var own = keysEl.value === KEYMAP_DEFAULTS, kept = store.keep(keysEl.value, KEYMAP_DEFAULTS), mine = r.order.length;
       if (kept && !own) store.know(COMMANDS.map(function (c) { return c.name; }));   // the commands this keymap has been offered (ENGINE.5)
       sayKeys();
@@ -10348,6 +10378,185 @@
       });
     } finally { host.destroy(); }
   }
+  // ---- ENGINE.30's second slice: the watchpoint ----
+  // The watch case (decision 12; docs/SPEC.md section 7.2). Its page half, pure: the keymap's watch lines read, a value a
+  // number, a text, true or false or none, and refused by their line, a sheet unquoted, a range, a value of another kind,
+  // a second value and a watch written twice. Over the module and Kairos's committed replay, on a game's page too, its
+  // hand naming the frames a game ends, its phase turning over, 4: (watch "State" "B1" 4) pausing the replay played at 60
+  // frames a second at each of them, never a frame late though every other tick owes four frames, and Run going on to the
+  // next; the engine's own frames the hand's; a run to the watch, the replay played at once, stopping at the first; the
+  // command's watch, once, pausing at its cell's next change and then forgotten, the replay going on to its end; unwatch;
+  // a load letting the command's watches go and keeping the keymap's. At rate 0, on the undo card, a watch said at an
+  // edit's frame and nothing paused, and a watch set while its cell holds its value holding only when it comes to hold it
+  // again.
+  function caseWatch() {
+    var P = [], k = { lines: 0, refused: 0, named: 0, engine: 0, paused: 0, ticks: 0, atOnce: 0, once: 0, unwatched: 0, loaded: 0, rateZero: 0, edge: 0 };
+    watchLines(k, P);
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm), kc = CARTRIDGES.kairos, Hand = HANDS.kairos;
+    if (!kc || !kc.replay || typeof Hand !== 'function') { P.push('watch: the page holds no Kairos with its committed replay and its hand'); return { counters: k, problems: P }; }
+    var named = kairosPhases(Hand, kc.replay);
+    if (named.overs.length < 2) { P.push('watch: Kairos\'s hand names ' + named.overs.length + ' game(s) ending in its replay, where two at least are due'); return { counters: k, problems: P }; }
+    k.named = named.overs.length;
+    watchEngine(bytes, kc, named, k, P);
+    watchKairos(bytes, kc, named, k, P);
+    watchCommand(bytes, kc, named, k, P);
+    watchRateZero(bytes, k, P);
+    return { counters: k, problems: P };
+  }
+  // The keymap's watch lines (decision 12's (a)): four read, each its sheet, its cell as A1 is written and its value; and
+  // six refused, each by its line and its words.
+  function watchLines(k, P) {
+    var base = KEYMAP_DEFAULTS + '\n', at = base.split('\n').length;
+    var r = readKeymap(base + '(watch "State" "B1" 4)\n(watch "Screen" "A1")\n(watch "Work" "c3" "over")\n(watch "Work" "D4" true)\n', COMMANDS);
+    var want = [['State', 'B1', 4], ['Screen', 'A1', undefined], ['Work', 'C3', 'over'], ['Work', 'D4', true]];
+    if (r.ok && r.watches.length === 4 && want.every(function (w, i) { var x = r.watches[i]; return x.sheet === w[0] && x.address === w[1] && x.value === w[2] && x.line === at + i; })) k.lines++;
+    else P.push('watch: the keymap\'s four watch lines read ' + (r.ok ? JSON.stringify(r.watches) : 'refused: ' + JSON.stringify(r.problems)) + ', where ' + JSON.stringify(want) + ' from line ' + at + ' is due');
+    [['(watch State "B1" 4)', 'a watch names its sheet and its cell in quotes'],
+     ['(watch "State" "B1:B2" 4)', 'a watch is one cell'],
+     ['(watch "State")', 'a watch is one cell'],
+     ['(watch "State" "B1" 4 5)', 'a watch holds a sheet, a cell and at most one value'],
+     ['(watch "State" "B1" (cell))', 'a watch\'s value is a number, a text in quotes, true or false'],
+     ['(watch "State" "B1" 4)\n(watch "state" "b1" 4)', 'is written twice']].forEach(function (x) {
+      var rr = readKeymap(base + x[0] + '\n', COMMANDS), line = 'line ' + (at + x[0].split('\n').length - 1) + ': ';
+      if (!rr.ok && rr.problems.some(function (p) { return p.indexOf(line) === 0 && p.indexOf(x[1]) >= 0; })) k.refused++;
+      else P.push('watch: the keymap line ' + JSON.stringify(x[0]) + ' was ' + (rr.ok ? 'read' : 'refused with ' + JSON.stringify(rr.problems)) + ', where it is refused at ' + line + '"' + x[1] + '"');
+    });
+  }
+  // What Kairos's hand names over its committed replay: the frames whose phase turns over, 4, from another (overs), the
+  // frames whose phase changes at all (changes), each after the first frame, with the first change's two phases (from,
+  // to), and the replay's last frame.
+  function kairosPhases(Hand, replay) {
+    var seed = /\(seed (\d+)\)\)/.exec(replay), hand = new Hand(seed ? +seed[1] : 0), rows = replayForms(replay), last = 0, f, was, out = { overs: [], changes: [], from: null, to: null, last: 0 };
+    for (f in rows) if (Object.prototype.hasOwnProperty.call(rows, f) && +f > last) last = +f;
+    out.last = last;
+    for (f = 1; f <= last; f++) {
+      hand.frame(f, rows[f] || []);
+      if (f > 1 && hand.phase !== was) {
+        if (!out.changes.length) { out.from = was; out.to = hand.phase; }
+        out.changes.push(f);
+        if (hand.phase === 4) out.overs.push(f);
+      }
+      was = hand.phase;
+    }
+    return out;
+  }
+  // A host over the module for the case, with a clock of its own: { H, D, clock }.
+  function watchHost(bytes, P, what) {
+    var clock = { t: 1000 }, ex = HOST.instantiateSync(bytes), H = new HOST({ drive: 'manual', budget: 0, now: function () { return clock.t; } });
+    if (!H.attach(ex).ok) { P.push('watch: ' + what + ': the module did not attach'); H.destroy(); return null; }
+    return { H: H, D: new Driver({ exports: ex }), clock: clock };
+  }
+  function lastSaid(H) { var s = H.sentences(); return s.length ? s[s.length - 1].text : ''; }
+  // The engine's own: Kairos's replay played at once with no watch, State!B1 read at every frame, its turns to over the
+  // frames the hand names.
+  function watchEngine(bytes, kc, named, k, P) {
+    var h = watchHost(bytes, P, 'the engine\'s run');
+    if (!h) return;
+    try {
+      if (!h.H.load(kc.text, kc.file).ok) { P.push('watch: Kairos did not load for the engine\'s run'); return; }
+      var overs = [], was = null;
+      h.H.on('frame', function (e) {
+        var v = recordValues(h.D.call('alonzo_view', [h.H.counters().handle], ['values', 'State', 'B1']).text).B1, phase = v && v.num !== undefined ? +v.num : null;
+        if (e.frame > 1 && phase === 4 && was !== 4) overs.push(e.frame);
+        was = phase;
+      });
+      var pr = h.H.play(kc.replay, true);
+      if (pr.ok && overs.join(',') === named.overs.join(',')) k.engine++;
+      else P.push('watch: the engine ' + (pr.ok ? 'turned State!B1 over at frames ' + overs.join(', ') : 'did not play Kairos\'s replay') + ', where the hand names ' + named.overs.join(', '));
+    } finally { h.H.destroy(); }
+  }
+  // (watch "State" "B1" 4) over Kairos's replay through the loop at 60 frames a second, a tick owing one frame and the
+  // next four by turns: paused at each frame the hand names, said, and Run going on; then a run to the watch, at once.
+  function watchKairos(bytes, kc, named, k, P) {
+    var h = watchHost(bytes, P, 'the loop');
+    if (!h) return;
+    var H = h.H, clock = h.clock;
+    try {
+      if (!H.load(kc.text, kc.file).ok) { P.push('watch: Kairos did not load'); return; }
+      H.setWatches([{ sheet: 'State', address: 'B1', value: 4 }]);
+      if (!H.play(kc.replay).ok) { P.push('watch: Kairos\'s replay was refused: ' + lastSaid(H)); return; }
+      var stops = [], words = [], ticks = 0, guard = 0, early = 0;
+      for (var round = 0; round <= named.overs.length + 1 && H.player; round++) {
+        if (round > 0) H.start();   // Run goes on from the watch's frame
+        while (H.running && guard++ < 40000) {
+          var f0 = H.counters().frame, owed = ticks % 2 ? 4 : 1;
+          ticks++; clock.t += owed * 1000 / 60; H.tick(clock.t);
+          if (!H.running && H.player && H.counters().frame - f0 < owed) early++;   // the watch held inside a tick that owed more frames
+        }
+        if (H.counters().watchPauses > stops.length) { stops.push(H.counters().frame); words.push(lastSaid(H)); }
+      }
+      var want = named.overs.filter(function (f) { return f < named.last; });
+      var said = words.every(function (w, i) { return w === 'frame ' + stops[i] + ': State!B1 holds 4, as its watch asks; paused at the watch, and Run goes on.'; });
+      if (stops.join(',') === want.join(',') && said && H.counters().frame === named.last) k.paused = stops.length;
+      else P.push('watch: (watch "State" "B1" 4) paused Kairos\'s replay at frames ' + stops.join(', ') + (said ? '' : ', saying ' + JSON.stringify(words[0])) + ' and ended at frame ' + H.counters().frame + ', where the frames the hand names, ' + want.join(', ') + ', each said, then the replay\'s end, ' + named.last + ', are due');
+      if (early > 0) k.ticks++;
+      else P.push('watch: no watch held inside a tick that owed four frames, so nothing proved a tick steps no frame after it');
+      // a run to the watch: the replay played at once stopping at the first frame the hand names
+      var run = H.play(kc.replay, true);
+      if (run.watched === named.overs[0] && H.counters().frame === named.overs[0] && !run.ok) k.atOnce++;
+      else P.push('watch: Kairos\'s replay played at once with the watch stopped at ' + run.watched + ', the frame ' + H.counters().frame + ', where ' + named.overs[0] + ' is due');
+    } finally { H.destroy(); }
+  }
+  // The command's watch (decision 12's (c)): State!B1 at its next change, once, pausing at the first frame the hand names a
+  // change, then forgotten, the replay going on to its end; unwatch, with one waiting and with none; and a load letting
+  // the command's watch go and keeping the keymap's.
+  function watchCommand(bytes, kc, named, k, P) {
+    var h = watchHost(bytes, P, 'the command');
+    if (!h) return;
+    var H = h.H, clock = h.clock;
+    try {
+      if (!H.load(kc.text, kc.file).ok || !H.play(kc.replay).ok) { P.push('watch: Kairos\'s replay did not play for the command\'s watch'); return; }
+      var set = H.watch('State', 'B1'), setSaid = lastSaid(H), guard = 0, pausedAt = null, pausedSaid = '', left = null;
+      while (H.player && guard++ < 40000) {
+        if (!H.running) {
+          if (pausedAt !== null) break;
+          pausedAt = H.counters().frame; pausedSaid = lastSaid(H); left = H.watches().length;
+          H.start();
+        }
+        clock.t += 1000 / 60; H.tick(clock.t);
+      }
+      var want = named.changes[0], wantSaid = 'frame ' + want + ': State!B1 changed from ' + named.from + ' to ' + named.to + '; paused at the watch, and Run goes on.';
+      if (set && setSaid === 'Watching State!B1: the run pauses at the frame it next changes; unwatch forgets it.' && pausedAt === want && pausedSaid === wantSaid && left === 0 &&
+          H.counters().watchPauses === 1 && H.counters().frame === named.last) k.once++;
+      else P.push('watch: the command\'s watch on State!B1 said ' + JSON.stringify(setSaid) + ', paused at frame ' + pausedAt + ' saying ' + JSON.stringify(pausedSaid) + ', left ' + left + ' watch(es) and paused ' + H.counters().watchPauses + ' time(s) before frame ' + H.counters().frame + ', where ' + JSON.stringify(wantSaid) + ', once, then forgotten, and the replay\'s end, ' + named.last + ', are due');
+      H.watch('State', 'B3');
+      var gone = H.unwatch(), goneSaid = lastSaid(H), none = H.unwatch(), noneSaid = lastSaid(H);
+      if (gone === 1 && goneSaid === 'Forgot the watch on State!B3.' && H.watches().length === 0) k.unwatched++;
+      else P.push('watch: unwatch forgot ' + gone + ', saying ' + JSON.stringify(goneSaid) + ', where the watch on State!B3 is due');
+      if (none === 0 && noneSaid === 'No watch of the watch command waits.') k.unwatched++;
+      else P.push('watch: unwatch with none waiting said ' + JSON.stringify(noneSaid));
+      H.setWatches([{ sheet: 'State', address: 'B1', value: 4 }]);
+      H.watch('State', 'B2');
+      var kept = H.load(kc.text, kc.file).ok ? H.watches() : [];
+      if (kept.length === 1 && kept[0].sheet === 'State' && kept[0].address === 'B1' && kept[0].value === 4 && !kept[0].once) k.loaded++;
+      else P.push('watch: a load left the watches ' + JSON.stringify(kept) + ', where the keymap\'s on State!B1 alone stands');
+    } finally { H.destroy(); }
+  }
+  // At rate 0, the undo card: a watch on Work!A1 said at an edit's frame, nothing paused; and (watch "Work" "A1" 5) set while
+  // A1 holds 5, holding only when A1 comes to hold 5 again.
+  function watchRateZero(bytes, k, P) {
+    var h = watchHost(bytes, P, 'rate 0');
+    if (!h) return;
+    var H = h.H;
+    try {
+      if (!H.load(UNDOCARD.text, UNDOCARD.file).ok) { P.push('watch: the undo card did not load'); return; }
+      H.setWatches([{ sheet: 'Work', address: 'A1' }]);
+      H.edit('(cell "Work" "A1" 5)');
+      if (lastSaid(H) === 'frame 1: Work!A1 changed from 1 to 5.' && H.counters().watchesHeld === 1 && H.counters().watchPauses === 0) k.rateZero++;
+      else P.push('watch: at rate 0 an edit of a watched Work!A1 said ' + JSON.stringify(lastSaid(H)) + ', where "frame 1: Work!A1 changed from 1 to 5." and nothing paused are due');
+      H.setWatches([{ sheet: 'Work', address: 'A1', value: 5 }]);
+      var heard = [];
+      [['(cell "Work" "A1" 5)', false], ['(cell "Work" "A1" 6)', false], ['(cell "Work" "A1" 5)', true]].forEach(function (x) {
+        var before = H.counters().watchesHeld;
+        H.edit(x[0]);
+        heard.push(H.counters().watchesHeld > before);
+      });
+      if (heard.join(',') === 'false,false,true' && lastSaid(H) === 'frame 4: Work!A1 holds 5, as its watch asks.') k.edge++;
+      else P.push('watch: (watch "Work" "A1" 5) set while A1 held 5 held at the edits of 5, 6 and 5 ' + JSON.stringify(heard) + ', saying ' + JSON.stringify(lastSaid(H)) + ', where only the last, "frame 4: Work!A1 holds 5, as its watch asks.", is due');
+    } finally { H.destroy(); }
+  }
   // ---- CART.12: version 6, an act settled ----
   // The settle card, the page's own as the commands card is, written here and never a file, at version 6, so that a game's
   // page runs the case too (ENGINE.16): at rate 0 with (settle 64), a Screen of 12 by 4 whose row 2, B2:K2, spills a cell a
@@ -11489,7 +11698,7 @@
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
                  ['continue', caseContinue], ['palette', casePalette], ['drawer', caseDrawer], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths], ['modes', caseModes], ['save', caseSave], ['keep', caseKeep],
-                 ['clipboard', caseClipboard], ['file', caseFile], ['undo', caseUndo]];
+                 ['clipboard', caseClipboard], ['file', caseFile], ['undo', caseUndo], ['watch', caseWatch]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -11498,7 +11707,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, drawer: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1, keep: 1, clipboard: 1, file: 1, undo: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, drawer: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1, keep: 1, clipboard: 1, file: 1, undo: 1, watch: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }

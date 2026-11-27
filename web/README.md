@@ -195,6 +195,7 @@ sound the frame the grid holds again when it starts.
 | `cellsOf(sheet, range)` / `extentOf(sheet)` / `sayAct(text, refused)` | a copy's cells (`ENGINE.39`'s second slice): a range's, read through the record the sheet is drawn from, each `{ shown, value, formula, empty }`, the text it shows, its value as a cell row spells it, whether a formula computed it and, since `ENGINE.30`'s first slice, whether it holds nothing, told from the empty text, and since the third slice `fills`, each formula's rectangle in the range and its first cell's text, read through the module's `fills` record; a sheet's extent from its record, `null` for none; and a page's own act's answer, its copy's and its cut's, said as the host's acts' answers are. An edit, an applied cartridge and a paste that land tell their rows in a `wrote` event, `{ rows, move }` |
 | `moved(text, dRow, dCol)` | a formula's text moved as Excel moves a formula copied `dRow` rows down and `dCol` columns right, a part off the sheet `#REF!` (`ENGINE.39`'s third slice): the language's mover through the module's thirteenth export, `alonzo_moved`; `null` over a module without it, the double, whose paste then writes a formula's value and says so |
 | `undo()` / `redo()` | undo and redo, Excel's kind (`ENGINE.30`'s first slice; `docs/SPEC.md` section 7.2): on a work sheet at rate 0 a person's last edit, paste or cut's move taken back as one act, its cells written back as the record of the cells as written held them just before it, an `empty` row over those that held nothing, a step and its settle, recorded as its rows; and the act last taken back written again. `{ ok, sheet, range }`, the sheet and range a page shows and selects (`stepBackShown`), or `{ ok: false }`, said: nothing to undo or redo, a rate, a replay playing, an act still computing, a cell the cartridge has written since the act left it, or an act past 262,144 cells. An edit after an undo lets the edits undone go, said in its frame's sentence; the line holds 100 and a load empties it |
+| `setWatches(list)` / `watch(sheet, address)` / `unwatch()` / `watches()` | the watchpoint (`ENGINE.30`'s second slice; `docs/SPEC.md` section 7.2): the keymap's watches, each `{ sheet, address, value }`, `value` a number, a text or a truth value, or none for any change, standing and kept across loads; the command's, a cell's next change, once, let go at a load; `unwatch()` forgets the command's, said. At every frame's end each watched cell is read; a watch holds where its cell comes to hold its value, or with none changes, its first read a baseline, and is said, the run paused at a rate or while a replay plays, never a frame late; a replay played at once stops there, `play`'s answer naming the frame (`watched`). `watches()` lists them, each with its last value read |
 | `command(name)` / `commands()` | a version 5 cartridge's own commands (`ENGINE.25`): `command` runs one by its name, waiting for the next frame, one a frame and sixteen at most, written into `Input!B20` for that frame, at rate 0 a step of its own: `{ ok, name }`, or the refusal's sentence, for a cartridge written to 1 to 4, a name its Commands sheet holds no command of, a command that holds not, a replay playing or sixteen waiting; `commands` lists them as the sheet last said them, `{ name, words, holds, key }` in its order, `key` the code or empty |
 | `pointerAt(col, row)` / `pointerButtons(left, right, middle)` / `wheel(notches)` | the pointer's place as the window's cell under it, 0 when off the canvas, which the Input rows write as the Screen's own cell through the Camera; in grid mode, at a rate above zero, the viewport's cell under the pointer, 0 off the window's cells, and the wheel's notches with its scroll prevented, while a key the Keys sheet binds is taken before the viewport sees it (`ENGINE.8`). Since `ENGINE.14` the wheel is the game's over a cell of the Camera's window alone, where the pointer is, and scrolls over the tabs, the headers, the corner and the scrollbars; the buttons follow the pointer; while another sheet is shown the pointer is 0 and the wheel scrolls, and a bound key stays the game's. Since `ENGINE.18`, for a cartridge written to version 4, the pointer and its buttons over any cell of another sheet shown are the game's too, that sheet's own cell with no Camera added, and the Input sheet's nineteenth row names the sheet shown; the wheel still scrolls there; a cartridge written to 1 to 3 is as before |
 | `runFrameSync()` | one whole frame now, whatever the clock (the blit's instrument) |
@@ -549,6 +550,16 @@ undo and redo do nothing, said. An undo over a cell the cartridge has written
 since is refused and says which; the page keeps Excel's 100 edits, an act of
 more than 262,144 cells lands but cannot be undone, said, and a load starts
 the history again. In a box the keys stay the box's own history.
+Watch a cell, a debugger's watchpoint (`ENGINE.30`'s second slice): a line of
+your keymap, `(watch "State" "B1" 4)`, pauses the run at the frame
+`State!B1` comes to hold 4, and `(watch "State" "B1")` at each frame it
+changes, kept and applied with the keys; or select a cell and run `watch`
+from the palette, which pauses at its next change once, and `unwatch` forgets
+it. A watch that holds is said in the bar with its frame, the run paused
+there at a rate or while a replay plays, never a frame late, and Run goes on;
+at rate 0 an act steps on and the watch is said. A replay played with a watch
+stops at it, so that Kairos's replay with `(watch "State" "B1" 4)` stops at
+each frame a game ends, its phase turning over.
 The keymap applied is kept in this browser, the one thing the page writes
 (below), and holds again at the next load; since `ENGINE.5`'s hand test it
 gains, once, the page's keys for commands new since it was kept, each where
@@ -1189,7 +1200,7 @@ viewport, not an Excel clone.
   The page opens on the empty sheet whatever it holds and offers its
   cartridges in the picker, each by its manifest's title, its notes in the
   drawer. A page that does not hold Alonzo's own cartridges and records is
-  a game's (`ENGINE.16`). Its `?loop=1` runs the twenty-one cases that need
+  a game's (`ENGINE.16`). Its `?loop=1` runs the twenty-two cases that need
   nothing of Alonzo's own files, over its own blocks: `abi`; `pass`, every
   source to its cartridge; `replay`, every replay to its golden and its
   recording, every frame to its hand; `grid`, every grid cartridge's drawn
@@ -1250,9 +1261,13 @@ viewport, not an Excel clone.
   shown and the cells selected, a game's move leaving the line standing, the
   edits undone let go, the cartridge's write and an act past the keeping each
   refusing an undo, the run's replay, a load emptying the line, the card
-  settling and at a rate. Each of the fifteen
+  settling and at a rate; and `watch` (`ENGINE.30`'s second slice), the
+  keymap's watch lines read and refused, and over Kairos's committed replay
+  `(watch "State" "B1" 4)` pausing at each frame its hand names a game's end,
+  never a frame late, a run to the watch at once, the command's watch once,
+  unwatch, a load, and at rate 0 a watch said. Each of the fifteen
   others prints `case <name>: not on this page`, being proven in Alonzo's CI,
-  and the last line reads `loop ok cases=21 dpr=1; 15 of Alonzo's own not on
+  and the last line reads `loop ok cases=22 dpr=1; 15 of Alonzo's own not on
   this page` at a ratio of 1. A replay with no hand is held to its golden alone, counted `alone`
   and said in a note under the case. Every other mode of the bench is
   Alonzo's own and says so on a game's page; `?frames=1` and `?blit=1` over
