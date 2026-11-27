@@ -188,8 +188,10 @@
   and since ENGINE.38 the run's work kept, its keyframe's text and the frames
   since, and since ENGINE.39 the moment the last act came to rest, which a
   held key's repeat is judged by, and since ENGINE.30 the run's line of a
-  person's acts at rate 0, each with the cells it replaced, and the watches
-  with each one's last value. Every value is the module's.
+  person's acts at rate 0, each with the cells it replaced, the watches
+  with each one's last value, and the run's past, its keyframes and every
+  frame's rows, with the look back showing one, its second grid and the run's
+  state set aside. Every value is the module's.
   Every refusal and every event is a sentence, the latest new one in the
   status and the last twenty events in a log, a repeat of an event counted in
   the line it first made rather than pushing the others out (SD-30), and a
@@ -245,6 +247,11 @@
                                      // keyframe costs at most a twentieth of the stepping and a restore plays about a
                                      // second of steps; Superposition's save of 176 ms, its steps 3.5 s (measured)
   var KEEP_FRAMES_CAP = 1048576;     // or once the frames kept since it pass 1 MiB of text
+  var PAST_STEPS_MS = 100;           // the look back (ENGINE.30's third slice, decision 3 again): a keyframe at rest once the
+  var PAST_COST_TIMES = 20;          // steps since the last cost a tenth of a second, or twenty times its own cost if more, so
+                                     // that keyframes cost a twentieth of the stepping at most and a stop is a load and that much
+  var PAST_KEYS_CAP = 64 * 1048576;  // stepping; the keyframes thinned past 64 MiB, every other one of the older half let go,
+  var PAST_FRAMES_CAP = 64 * 1048576;   // and the run's frames past 64 MiB letting the oldest keyframe and its frames go
   var KEPT_NOT_ACTS = { B11: true, B12: true, B19: true };   // the Input rows no person's act: the pointer's place, and the
                                      // sheet shown, which a cartridge's Camera moves too (ENGINE.38, decision 4)
   // ---- the sound's rules, as ENGINE.4's scoping states them (decisions 1 to 4) ----
@@ -964,7 +971,7 @@
     // cell, and the command's, the run's, let go; and the frame a watch paused the run at, which Run clears
     this.watched = this.watched.filter(function (w) { return !w.once; });
     for (var wi = 0; wi < this.watched.length; wi++) this.watched[wi].last = undefined;
-    this.watchStop = null;
+    this.watchStop = null; this.watchHeld = null; this.watchHeldAt = null;
     this.saveWaiting = null; this.saveAsked = null;   // a save asked for inside a frame or a settle, and the cartridge's, taken at a frame's end (ENGINE.5)
     this.saveWhat = null; this.checkWaiting = null;   // what a waiting save writes, the file or the cartridge, and a file opened whose check waits for the grid to rest (CART.16)
     this.saveAs = false;   // whether a waiting save was asked for under another name (ENGINE.49)
@@ -991,6 +998,9 @@
     this.shownName = null; this.cameraSheet = null; this.sheetsList = null; this.showWanted = null;
     this.rec = null; this.player = null;   // the replay recorded since the load, and one playing
     this.keep = null;   // the run's work kept since the load (ENGINE.38): its keyframe and the frames since
+    // the run's past (ENGINE.30's third slice): its keyframes and every frame's rows since the load, which a look back draws a
+    // past frame from; and the look back showing, null at the present, its second grid's host and the run's state set aside
+    this.past = null; this.look = null;
     this.given = null;   // the text of the cartridge the grid was last given by a continue, null for the bytes loaded (ENGINE.7)
     // Version 5's commands (ENGINE.25): the Commands sheet as last read, each { name, words, holds, code, row }, and the
     // codes of the commands that hold now; the commands waiting for their frames, one a frame; the one that runs at the
@@ -1012,7 +1022,7 @@
                sounded: 0, restarts: 0, skipped: 0, silences: 0, applied: 0, appliedRefused: 0, commands: 0, commandsRefused: 0,
                settles: 0, settleSteps: 0, unsettled: 0, presses: 0, playedShown: 0, editsRead: 0, keysRead: 0, keysStray: 0,
                keyframes: 0, restores: 0, pastes: 0, pastesRefused: 0, undos: 0, redos: 0, undosRefused: 0, letGo: 0,
-               watchesHeld: 0, watchPauses: 0 };
+               watchesHeld: 0, watchPauses: 0, pastKeys: 0, looks: 0, lookStops: 0, lookLoads: 0, lookSteps: 0, lookEnds: 0, lookRefused: 0 };
   };
 
   // The module: its ABI number asked first, then every export the loop calls.
@@ -1035,6 +1045,7 @@
   Host.prototype.load = function (text, name) { return this.loadBytes(enc.encode(String(text)), name); };
   Host.prototype.loadBytes = function (bytes, name) {
     if (!this.m) return this._answerFailed('There is no engine module to load a cartridge into.');
+    if (this.look) this._lookEnd(true);   // a look back ends first, the run's own grid put back to be unloaded (ENGINE.30)
     this.stop();
     if (this.handle) this.unload();
     this._reset();
@@ -1069,6 +1080,7 @@
     else if (c.seed === 'host') this._seed();
     this._startReplay();   // the replay of this load's run, from frame 0 (section 7.6)
     this._startKeep();     // and the work kept, the cartridge loaded its first keyframe (ENGINE.38)
+    this._startPast();     // and the run's past, the cartridge loaded its first keyframe too (ENGINE.30's third slice)
     if (c.devices.camera) this._readCamera('load');
     if (c.devices.palette) this._readPalette();
     if (c.devices.keys) this._readKeys();
@@ -1135,6 +1147,7 @@
     }
   };
   Host.prototype.unload = function () {
+    if (this.look) this._lookEnd(true);   // the run's own grid put back, the second grid let go (ENGINE.30)
     if (!this.m || !this.handle) return;
     this.stop();
     this._release();   // the oscillators stopped after the silence, the next load making its own (ENGINE.4, decision 6)
@@ -1185,6 +1198,7 @@
     if (!this.m) return this._answerFailed('There is no engine module to apply a cartridge to.');
     if (!this.handle || !this.cart || !this.cartBytes) return this._answerFailed('No cartridge is loaded to apply a rebuilt one to: Load starts one from frame 0.');
     var file = name || this.cartFile || 'the cartridge', next = String(text || '');
+    if (this.look) { this.c.lookRefused++; return this._answerFailed('The rebuilt ' + file + ' was not applied: ' + this._lookingWhy()); }   // a look back (ENGINE.30)
     if (this.player) return this._answerFailed('The rebuilt ' + file + ' was not applied: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s edits wait until it ends, so that what plays is the replay alone.');
     var cmp = compareCartridges(this._given(), next), at = 'frame ' + this.frame + ': ';
     if (cmp.why.length) return this._answerFailed(at + file + ' cannot be applied to the running game: ' + cmp.why[0] + (cmp.why.length > 1 ? ', and ' + (cmp.why.length - 1) + ' more' : '') + '. Load starts it from frame 0.');
@@ -1210,6 +1224,7 @@
 
   // ---- the loop (section 5) ----
   Host.prototype.start = function () {
+    if (this.look) this._lookEnd();   // Run returns to the present first, drawn, where the run goes on (ENGINE.30's third slice)
     if (this.running || !this.handle) return;
     this.running = true; this.lastTs = null; this.watchStop = null;   // Run goes on past a watch that paused it (ENGINE.30)
     this._resound();   // the frame the grid holds sounds again with the loop (ENGINE.4, decision 6)
@@ -1236,7 +1251,7 @@
   };
   // One animation frame's work, at its timestamp: the step 1 of section 5.
   Host.prototype.tick = function (ts) {
-    if (!this.running || !this.handle || this.hidden || !this.cart) return;
+    if (!this.running || !this.handle || this.hidden || !this.cart || this.look) return;
     var c = this.cart, win;
     if (c.rate === 0) {   // no tick at rate zero: a frame an edit began continues here, and the edits waiting follow it
       win = this._window();
@@ -1327,6 +1342,7 @@
     var ms = Math.max(this.now() - t0, TIMER_FLOOR_MS);
     win.used++; this.c.calls++;
     if (this.keep) this.keep.steps += ms;   // the steps since the keyframe, which time the next (ENGINE.38)
+    if (this.past) this.past.steps += ms;   // and the past's (ENGINE.30's third slice)
     var f = r.status === 0 ? first(r.text, 'step') : null;
     if (!f) {
       this.inFrame = false; this.progress = null; this.stop();
@@ -1600,6 +1616,8 @@
     if (this.checkWaiting && !this.settling) { var cw = this.checkWaiting; this.checkWaiting = null; this._fileChecked(cw.opened, cw.name); }
     // a keyframe of the work kept, at rest and never while a restore plays its frames (ENGINE.38)
     if (this.keep && !this.settling && !(this.player && this.player.restore) && this._keyframeDue()) this._keyframe();
+    // and a keyframe of the run's past, at rest, by its cost (ENGINE.30's third slice, decision 3 again)
+    if (this.past && !this.settling && !(this.player && this.player.restore) && this._pastKeyDue()) this._pastKey();
     var p = this.player;
     this._emit('frame', { frame: n, window: this.window, scale: this.scale || 0, rate: this.cart.rate, replay: p ? p.last : 0 });
     if (p && p === this.player && n >= p.last) this._endReplay(n);
@@ -2126,6 +2144,7 @@
     var n = String(name === undefined || name === null ? '' : name), c = this.cart, cmd = null, i, self = this;
     function no(why) { self.c.commandsRefused++; return self._fail('The ' + commandWords(n || '(no name)') + ' was not run: ' + why); }
     if (!this.handle || !c) return no('no cartridge is loaded.');
+    if (this.look) { this.c.lookRefused++; return no(this._lookingWhy()); }   // a look back (ENGINE.30's third slice)
     if (!this._five()) return no('the cartridge is written to the page\'s version ' + (c.spec || 1) + ', and a cartridge\'s own commands are version 5\'s (docs/SPEC.md section 3.10).');
     for (i = 0; i < this.commandList.length; i++) if (this.commandList[i].name === n) { cmd = this.commandList[i]; break; }
     if (!cmd) return no('the Commands sheet names no such command' + (this.commandList.length ? '; its commands are ' + this.commandList.map(function (x) { return x.name; }).join(', ') : '') + '.');
@@ -2389,6 +2408,7 @@
     var head = forms.length === 1 && Array.isArray(forms[0]) ? sym(forms[0][0]) : null;
     if (head !== 'cell' && head !== 'formula' && head !== 'empty') { this._answerRefused('An edit is one cell, formula or empty row, as (cell "Palette" "B1" "#FF8800") or (empty "Work" "A1:B2"); ' + (t || 'an empty line') + ' is not one.'); return false; }
     if (!this.handle) { this._answerRefused('No cartridge is loaded to edit.'); return false; }
+    if (this.look) { this.c.lookRefused++; this._answerRefused('The edit ' + t + ' was not written: ' + this._lookingWhy()); return false; }   // a look back (ENGINE.30)
     var into = str(forms[0][1]);
     if (into !== null && this.sheetMode(into).read) {   // a read-only sheet (SPEC.5), its cartridge's rows and the Write sheet's still writing it
       this.c.editsRead++;
@@ -2484,6 +2504,7 @@
   Host.prototype.paste = function (p) {
     if (!this.handle || !this.cart) { this._answerRefused('Nothing was pasted: no cartridge is loaded.'); return false; }
     var what = p.what.charAt(0).toUpperCase() + p.what.slice(1);
+    if (this.look) { this.c.lookRefused++; this._answerRefused(what + ' was not written: ' + this._lookingWhy()); return false; }   // a look back (ENGINE.30)
     if (this.player) { this._answerRefused(what + ' was not written: a replay is playing, frame ' + this.frame + ' of ' + this.player.last + ', and a person\'s edit waits until it ends, so that what plays is the replay alone.'); return false; }
     var modes = {}, i, x, m;
     for (i = 0; i < p.rows.length; i++) {
@@ -2650,6 +2671,7 @@
   // Why a step back cannot be taken now, or the empty text.
   Host.prototype._undoBusy = function (what) {
     if (!this.handle || !this.cart) return 'Nothing was ' + what + ': no cartridge is loaded.';
+    if (this.look) return 'Nothing was ' + what + ': ' + this._lookingWhy();   // a look back, where nothing is done (ENGINE.30)
     if (this.cart.rate !== 0) return 'Nothing was ' + what + ': ' + (what === 'undone' ? 'undo takes back' : 'redo puts back') + ' a person\'s edits of work sheets at rate 0, and ' + (this.cart.title || 'the cartridge') + ' runs at ' + this.cart.rate + ' frame' + (this.cart.rate === 1 ? '' : 's') + ' a second, where a game is never undone.';
     if (this.player) return 'Nothing was ' + what + ': a replay is playing, frame ' + this.frame + ' of ' + this.player.last + '.';
     if (this.inFrame || this.settling || this.edits.length || this.undoWaiting) return 'Nothing was ' + what + ' yet: frame ' + (this.frame + 1) + ' is still being computed for the last act; press again once it rests.';
@@ -2726,10 +2748,12 @@
   function sameWatched(a, b) { return !!a && !!b && a.k === b.k && a.v === b.v; }
   function watchedWords(a) { return !a ? 'unread' : a.k === 'none' || a.k === 'unvalued' ? 'nothing' : a.k === 'text' ? quote(a.v) : a.k === 'bool' ? (a.v ? 'TRUE' : 'FALSE') : String(a.v); }
   function watchName(w) { return w.sheet + '!' + w.address + (w.has ? ' = ' + watchedWords(w.value) : ''); }
-  // A watch's cell read now, or null where its view is refused, a sheet the cartridge lacks among them.
+  // A watch's cell read now, or null where its view is refused, a sheet the cartridge lacks among them. A watch is the
+  // run's: read in the run's own grid at its own frame while a look back shows a past one (ENGINE.30's third slice).
   Host.prototype._watchedValue = function (w) {
-    if (!this.m || !this.handle) return null;
-    var r = this.m.texts('alonzo_view', [this.handle], [this.frame > 0 ? 'values' : 'grid', w.sheet, w.address]);
+    var live = this.look ? this.look.live : this, handle = live.handle, frame = live.frame;
+    if (!this.m || !handle) return null;
+    var r = this.m.texts('alonzo_view', [handle], [frame > 0 ? 'values' : 'grid', w.sheet, w.address]);
     if (r.status !== 0) return null;
     var q = VP().parseRange(w.address);
     return watchValueOf(VP().readRecord(r.text).cells.get(q.top + ',' + q.left));
@@ -2805,20 +2829,26 @@
     }
     if (!held.length) return;
     this.c.watchesHeld += held.length;
+    this.watchHeld = held; this.watchHeldAt = n;   // the watches that held last, and where: a look back's run to the watch's (ENGINE.30)
     this.watched = this.watched.filter(function (w) { return !(w.once && held.some(function (h) { return h.w === w; })); });
     var pause = this.cart.rate > 0 || !!this.player;
     if (pause) { this.watchStop = n; this.c.watchPauses++; }
-    this._answer('frame ' + n + ': ' + held.map(function (h) {
-      return h.w.has ? h.w.sheet + '!' + h.w.address + ' holds ' + watchedWords(h.now) + ', as its watch asks' : h.w.sheet + '!' + h.w.address + ' changed from ' + watchedWords(h.was) + ' to ' + watchedWords(h.now);
-    }).join('; ') + (pause ? '; paused at the watch, and Run goes on.' : '.'));
+    this._answer('frame ' + n + ': ' + heldWatchWords(held) + (pause ? '; paused at the watch, and Run goes on.' : '.'));
     if (pause && this.running) this.stop();
   };
+  // The watches that held, said: "State!B1 holds 4, as its watch asks" or "State!B1 changed from 1 to 2", joined by "; ".
+  function heldWatchWords(held) {
+    return held.map(function (h) {
+      return h.w.has ? h.w.sheet + '!' + h.w.address + ' holds ' + watchedWords(h.now) + ', as its watch asks' : h.w.sheet + '!' + h.w.address + ' changed from ' + watchedWords(h.was) + ' to ' + watchedWords(h.now);
+    }).join('; ');
+  }
   // A key down on the Screen: a command's key (ENGINE.25) runs its command and is no button's and no last key, a repeat
   // taken and running nothing but where the command repeats and the repeat is fresh (version 8, ENGINE.39); any other
   // holds the Keys sheet's buttons it binds and is the frame's last key. ev, the event, when a listener has one: its
   // Ctrl, Cmd, Alt and repeat.
   Host.prototype.keyDown = function (code, key, ev) {
     if (!code || !this.gameKeysHere()) return false;   // a work or a read sheet's keys are not the game's (SPEC.5)
+    if (this.look) { this._sayOnce('look-key', 'A key is no act while a look back shows: ' + this._lookingWhy(), false); return false; }   // (ENGINE.30)
     var cmd = this._commandKey(code, ev, key);
     if (cmd) { this._keyCommand(cmd, ev); return true; }
     this.held[code] = true;
@@ -3020,7 +3050,8 @@
     if (!this.vp || !this.handle || ev.button > 2) return false;
     var at = this._pointerCellAt(ev);
     if (!at) return false;
-    if (this.player) { this._sayOnce('press-replay', 'A press over a cell is no act while a replay plays: what plays is the replay alone.', false); return false; }
+    if (this.look) { this._sayOnce('look-press', 'A press over a cell is no act while a look back shows: ' + this._lookingWhy(), false); return false; }   // (ENGINE.30)
+    if (this.player) { this._sayOnce('press-replay','A press over a cell is no act while a replay plays: what plays is the replay alone.', false); return false; }
     var col = at.sheet ? at.col : this.camera.col + at.col - 1, row = at.sheet ? at.row : this.camera.row + at.row - 1;
     if (ev.button !== 0) this.vp.select(VP().colName(col) + row);
     this.c.presses++;
@@ -3126,6 +3157,7 @@
     var rec = this.rec;
     if (!rec || (rec.full && !this.keep)) return;
     if (this.keep) this._keepFrame(n, rec.rows);
+    if (this.past) this._pastFrame(n, rec.rows);   // every frame's rows, uncapped, a look back's (ENGINE.30's third slice)
     if (rec.full) { rec.rows = []; return; }
     if (rec.rows.length) {
       var block = '(frame ' + n + '\n  ' + rec.rows.join('\n  ') + ')\n';
@@ -3194,7 +3226,7 @@
   // last, else none.
   Host.prototype.keyframeNow = function () {
     var k = this.keep;
-    if (!k || !k.acted || !this.handle || this.inFrame || this.settling || (this.player && this.player.restore) || !k.frames) return false;
+    if (!k || !k.acted || !this.handle || this.look || this.inFrame || this.settling ||(this.player && this.player.restore) || !k.frames) return false;
     return this._keyframe();
   };
   // Whether a person acted in the run since its load, or since a save written with no act after it (decision 4); and the
@@ -3266,6 +3298,257 @@
     }
     return { ok: this.frame === rp.last, frame: this.frame, played: this.frame - opened, opened: opened };
   };
+
+  // ---- the look back (ENGINE.30's third slice; docs/SPEC.md section 7.2) ----
+  // The run's past: keyframes, saves at rest taken by their cost (decision 3 again), the first the cartridge as loaded, and
+  // every frame's rows as the recorder logged them, uncapped. A look back draws a past frame from a second grid of the same
+  // module (decision 4 again): a scratch host over the run's module loads the newest keyframe at or before the frame and
+  // plays the run's own frames to it, as a restore plays the work kept (ENGINE.38); while it shows, the run's grid, its frame
+  // and what a draw reads of them are set aside and the second grid's are drawn in their place, and Run puts them back as
+  // they stood. A keyframe's frames are numbered from its Clock's frame, the host's less its off, as the work kept's are, a
+  // settling cartridge's Clock counting its acts. Nothing branches and no game walks back: while a look back shows, every act
+  // is refused and said, a save among them, a past frame saved being a run begun from it.
+  Host.prototype._startPast = function () {
+    this.past = { keys: [{ at: this.frame, off: 0, text: null, bytes: 0 }], frames: [], bytes: 0, keyBytes: 0, steps: 0, cost: 0,
+                  first: this.frame, unsaved: false, dropped: false };
+  };
+  Host.prototype._pastFrame = function (n, rows) {
+    var p = this.past;
+    if (rows.length) { var t = rows.join('\n  '); p.frames.push({ n: n, rows: t }); p.bytes += t.length + 16; }
+    if (p.bytes > PAST_FRAMES_CAP) this._pastDrop();
+  };
+  // A keyframe of the past due: at rest once the steps since the last cost the larger of a tenth of a second and twenty times
+  // that keyframe's own cost, or every lookEvery frames where a caller names it, the oracle.
+  Host.prototype._pastKeyDue = function () {
+    var p = this.past, every = this.options.lookEvery;
+    if (p.unsaved) return false;
+    if (every) return this.frame - p.keys[p.keys.length - 1].at >= every;
+    return p.steps >= Math.max(PAST_STEPS_MS, PAST_COST_TIMES * p.cost);
+  };
+  // A save at rest kept as a keyframe of the past, the work kept's own where it was taken at this very frame (ENGINE.38).
+  Host.prototype._pastKey = function () {
+    var p = this.past, k = this.keep, t0 = this.now(), shared = !!(k && k.text !== null && k.opens + k.off === this.frame);
+    if (p.keys[p.keys.length - 1].at === this.frame) { p.steps = 0; return false; }
+    var s = shared ? { ok: true, text: k.text, frame: k.opens } : this.saveText();
+    if (!s.ok) {
+      if (!s.wait) { p.unsaved = true; this._say('frame ' + this.frame + ': the look back takes no more keyframes: ' + s.words.replace(/^The save was not written: /, '') + ' A look back plays its frames from the last.'); }
+      return false;
+    }
+    p.keys.push({ at: this.frame, off: this.frame - s.frame, text: s.text, bytes: s.text.length });
+    p.keyBytes += s.text.length; p.steps = 0;
+    p.cost = shared ? Math.max(k.cost, TIMER_FLOOR_MS) : Math.max(this.now() - t0, TIMER_FLOOR_MS);
+    this.c.pastKeys++;
+    if (p.keyBytes > PAST_KEYS_CAP) this._pastThin();
+    return true;
+  };
+  // The keyframes thinned past their cap: every other one of the older half let go, the first kept always.
+  Host.prototype._pastThin = function () {
+    var p = this.past, half = Math.floor(p.keys.length / 2), kept = [p.keys[0]];
+    for (var i = 1; i < p.keys.length; i++) {
+      if (i < half && i % 2 === 1) { p.keyBytes -= p.keys[i].bytes; continue; }
+      kept.push(p.keys[i]);
+    }
+    p.keys = kept;
+  };
+  // The frames past their cap: the oldest keyframe let go with the frames to the next, said once.
+  Host.prototype._pastDrop = function () {
+    var p = this.past;
+    while (p.bytes > PAST_FRAMES_CAP && p.keys.length > 1) {
+      var next = p.keys[1].at, i = 0;
+      while (i < p.frames.length && p.frames[i].n <= next) { p.bytes -= p.frames[i].rows.length + 16; i++; }
+      p.frames.splice(0, i); p.keyBytes -= p.keys[0].bytes; p.keys.shift(); p.first = p.keys[0].at;
+      if (!p.dropped) { p.dropped = true; this._say('frame ' + this.frame + ': the run\'s frames passed 64 MiB, and the look back lets its oldest go: it reaches back to frame ' + p.first + '.'); }
+    }
+  };
+  // The newest keyframe at or before frame n, its index.
+  Host.prototype._pastKeyAt = function (n) {
+    var keys = this.past.keys, lo = 0, hi = keys.length - 1;
+    while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (keys[mid].at <= n) lo = mid; else hi = mid - 1; }
+    return lo;
+  };
+  // The run's frames after frame from to frame to, as a replay's frames numbered for a keyframe whose off is off, the last
+  // named however empty, so that they name their length (the work kept's form, ENGINE.38).
+  Host.prototype._pastFrames = function (from, to, off) {
+    var fr = this.past.frames, lo = 0, hi = fr.length, out = [], last = from;
+    while (lo < hi) { var mid = (lo + hi) >> 1; if (fr[mid].n <= from) lo = mid + 1; else hi = mid; }
+    for (var i = lo; i < fr.length && fr[i].n <= to; i++) { out.push('(frame ' + (fr[i].n - off) + '\n  ' + fr[i].rows + ')\n'); last = fr[i].n; }
+    if (last < to) out.push('(frame ' + (to - off) + ')\n');
+    return out.join('');
+  };
+  // The frames a look back reaches, for a page's scrubber: { first, present, at, looking }, or null with no cartridge.
+  Host.prototype.lookRange = function () {
+    if (!this.past || !this.cart) return null;
+    var L = this.look;
+    return { first: this.past.first, present: L ? L.present : this.frame, at: L ? L.at : this.frame, looking: !!L };
+  };
+  Host.prototype._lookingWhy = function () {
+    var L = this.look;
+    return 'frame ' + L.at + ' is a look back, and Run returns to the present, frame ' + L.present + ', where a person acts.';
+  };
+  Host.prototype._lookWhyNot = function () {
+    if (!this.m || !this.handle || !this.cart || !this.past) return 'There is nothing to look back at: no cartridge is loaded.';
+    if (this.inFrame) return 'Frame ' + (this.frame + 1) + ' is still being computed: a look back waits for it to end' + (this.running ? '.' : ', which Run brings.');
+    if (this.settling || this.edits.length || this.undoWaiting) return 'The last act still settles: a look back waits for its rest.';
+    return '';
+  };
+  // A look back at frame n (decision 10's (c) as answered): the run paused, and n, from the first frame the past keeps,
+  // drawn as it stood; n at or past the present returns to it. Answers { ok, at, present }.
+  Host.prototype.lookAt = function (n) {
+    var why = this._lookWhyNot();
+    if (why) { this.c.lookRefused++; this._answerRefused(why); return { ok: false }; }
+    var L = this.look, p = this.past, present = L ? L.present : this.frame, want = Math.floor(Number(n));
+    if (!isFinite(want)) { this._answerRefused('A look back is at a frame, a whole number from ' + p.first + ' to ' + present + '.'); return { ok: false }; }
+    if (want >= present) return this._lookPresent();
+    if (want < p.first) want = p.first;
+    var t0 = this.now();
+    if (!L) this._lookBegin();
+    var r = this._lookStep(want);
+    if (!r.ok) { this._lookEnd(); this._answerFailed('frame ' + want + ' was not drawn, and the look back ended: ' + r.why); return { ok: false }; }
+    this._lookShow();
+    this.c.lookStops++;
+    this._answer('frame ' + want + ': a look back at the run, its present frame ' + present + '; Run returns to the present.');
+    this._emit('look', { at: want, present: present, first: p.first, ms: this.now() - t0 });
+    return { ok: true, at: want, present: present };
+  };
+  // A frame back, the run paused at a rate: from the present, or from the frame a look back shows.
+  Host.prototype.stepBack = function () {
+    var r = this.lookRange();
+    if (!r) return this.lookAt(0);
+    if (r.at <= r.first) { this._answer('frame ' + r.at + ': the first frame the run keeps, ' + (r.looking ? 'and a look back reaches no further.' : 'so there is none to look back at.')); return { ok: false, at: r.at }; }
+    return this.lookAt(r.at - 1);
+  };
+  // A frame forward, toward the present, from the frame a look back shows; at the present, nothing.
+  Host.prototype.stepForward = function () {
+    var r = this.lookRange();
+    if (!r) return this.lookAt(0);
+    if (!r.looking) { this._answer('frame ' + r.present + ': the present; a step forward goes toward it from a frame a look back shows.'); return { ok: false, at: r.present }; }
+    return this.lookAt(r.at + 1);
+  };
+  // The present, from a look back, the run paused at a rate and at rate 0 waiting for the next act.
+  Host.prototype.lookEnd = function () { return this._lookPresent(); };
+  Host.prototype._lookPresent = function () {
+    var was = !!this.look;
+    if (was) this._lookEnd();
+    this._answer('frame ' + this.frame + ': the present' + (was ? ', the look back ended' : '') + (this.cart && this.cart.rate > 0 ? '; Run goes on from it.' : '; the next act steps it.'));
+    return { ok: true, at: this.frame, present: this.frame };
+  };
+  // From the frame a look back shows, the run's frames played on to the first a watch holds, shown as a look; or said that
+  // none holds before the present, the frame shown kept (decision 12's run to the watch from a frame shown). A watch holding
+  // at the present returns to it. Answers { ok, at }.
+  Host.prototype.toWatch = function () {
+    var L = this.look;
+    if (!L) { this._answerRefused('A run to the watch goes forward from a frame a look back shows: step back, or take the scrubber back, first.'); return { ok: false }; }
+    if (!this.watched.length) { this._answerRefused('No watch stands: the watch command, or a watch line of the keymap, sets one.'); return { ok: false }; }
+    var B = L.host, key = this.past.keys[L.key], from = L.at, present = L.present, t0 = this.now();
+    B.watched = this.watched.map(function (w) { return { sheet: w.sheet, address: w.address, once: false, has: w.has, value: w.value, last: undefined }; });
+    B._watchBaselines(true);
+    var r = B._playOn(this._pastFrames(from, present, key.off), present - key.off), heldWords = r.watched !== null ? heldWatchWords(B.watchHeld) : '';
+    B.watched = [];
+    if (!r.ok) { this._lookEnd(); this._answerFailed('The run to the watch stopped, and the look back ended: ' + r.why); return { ok: false }; }
+    var at = r.watched !== null ? r.watched + key.off : null;
+    if (at !== null && at >= present) { this._lookEnd(); this._answer('frame ' + present + ': ' + heldWords + '; the present, the look back ended.'); return { ok: true, at: present }; }
+    L.at = present;   // the second grid played to where it stopped
+    if (at === null) {
+      var back = this._lookStep(from);
+      if (!back.ok) { this._lookEnd(); this._answerFailed('frame ' + from + ' was not drawn again, and the look back ended: ' + back.why); return { ok: false }; }
+      this._lookShow();
+      this._answer('frame ' + from + ': no frame after it holds a watch before the present, frame ' + present + '; the look back stays here.');
+      return { ok: false, at: from };
+    }
+    L.at = at;
+    this._lookShow();
+    this.c.lookStops++;
+    this._answer('frame ' + at + ': ' + heldWords + '; a look back at the run, its present frame ' + present + '; Run returns to the present.');
+    this._emit('look', { at: at, present: present, first: this.past.first, ms: this.now() - t0 });
+    return { ok: true, at: at };
+  };
+  // The save's text of the frame a look back shows, for an oracle: never a page's Save, which a look back refuses.
+  Host.prototype.lookText = function () {
+    if (!this.look) return null;
+    var s = this.look.host.saveText();
+    return s.ok ? s.text : null;
+  };
+  // A look back begun: the scratch host whose grid is the past, over the run's module, and the run's state a draw reads set
+  // aside; the run paused, at rate 0 its waiting for acts kept to be taken up again at the return.
+  Host.prototype._lookBegin = function () {
+    var B = new Host({ drive: 'manual', budget: 0 });
+    B.m = this.m; B.version = this.version;
+    this.look = { host: B, at: this.frame, present: this.frame, key: -1, waits: this.running && this.cart.rate === 0,
+                  live: { handle: this.handle, frame: this.frame, window: this.window, camera: this.camera, cameraSheet: this.cameraSheet,
+                          cameraKey: this.cameraKey, showWanted: this.showWanted, table: this.table, paletteText: this.paletteText,
+                          paletteCount: this.paletteCount, plane: this.plane, record: this.record, kept: this.kept, badCamera: this.badCamera } };
+    if (this.running) this.stop();
+    this.c.looks++;
+  };
+  // The second grid brought to frame n: on from the frame it shows where no newer keyframe stands at or before n, else the
+  // newest keyframe at or before n loaded and the run's frames played to n. Answers { ok, why }.
+  Host.prototype._lookStep = function (n) {
+    var L = this.look, B = L.host, p = this.past, k = this._pastKeyAt(n), key = p.keys[k];
+    if (!(L.key === k && L.at <= n && B.handle)) {
+      var text = key.text !== null ? key.text : dec.decode(this.cartBytes).replace(/\r\n/g, '\n');
+      var r = B.restore({ keyframe: text, frames: '', seed: typeof this.cart.seed === 'number' ? this.cart.seed : null, file: this.cartFile || 'kept.vla' });
+      if (!r || !r.ok) return { ok: false, why: 'its keyframe at frame ' + key.at + ' was refused: ' + (B.history.length ? B.history[B.history.length - 1].text : '') };
+      L.key = k; L.at = key.at; this.c.lookLoads++;
+    }
+    if (n > L.at) {
+      var played = B._playOn(this._pastFrames(L.at, n, key.off), n - key.off);
+      if (!played.ok) return { ok: false, why: played.why };
+      this.c.lookSteps += n - L.at;
+    }
+    L.at = n;
+    return { ok: true };
+  };
+  // The frame a look back shows drawn: the second grid's handle and frame the host's, with the window, the Camera and the
+  // Palette its last frame read; every draw whole, no record held being the past's (ENGINE.19's changes).
+  Host.prototype._lookShow = function () {
+    var L = this.look, B = L.host;
+    this.handle = B.handle; this.frame = L.at;
+    this.window = B.window; this.camera = B.camera; this.cameraSheet = B.cameraSheet; this.cameraKey = B.cameraKey; this.showWanted = null;
+    if (B.table) { this.table = B.table; this.paletteText = B.paletteText; this.paletteCount = B.paletteCount; }
+    this.kept = {}; this.loads = [];
+    if (this.cart.mode === 'plane') this._drawPlane(); else this._drawGrid(false, false);
+  };
+  // A look back ended: the run's state put back as it stood and its grid drawn, the second grid let go; quiet, a load's or
+  // Run's, draws nothing, the next frame or the load drawing it. At rate 0 the run waits for acts again.
+  Host.prototype._lookEnd = function (quiet) {
+    var L = this.look;
+    if (!L) return false;
+    var s = L.live;
+    this.look = null;
+    this.handle = s.handle; this.frame = s.frame; this.window = s.window; this.camera = s.camera; this.cameraSheet = s.cameraSheet;
+    this.cameraKey = s.cameraKey; this.showWanted = s.showWanted; this.table = s.table; this.paletteText = s.paletteText;
+    this.paletteCount = s.paletteCount; this.plane = s.plane; this.record = s.record; this.kept = s.kept; this.badCamera = s.badCamera;
+    this.loads = [];   // the viewports hold the past's records: the present drawn whole
+    L.host.destroy();   // the second grid unloaded, its memory the module's again
+    this.c.lookEnds++;
+    if (!quiet && this.cart) { if (this.cart.mode === 'plane') this._drawPlane(); else this._drawGrid(false, false); }
+    this._emit('look', { at: null, present: this.frame, first: this.past ? this.past.first : this.frame });
+    if (L.waits && !quiet) this.start();
+    return true;
+  };
+  // A grid's frames played on at once from the frame it stands at, as a restore plays the work kept's (ENGINE.38), nothing
+  // drawn or sounded on the way: a look back's second grid (ENGINE.30's third slice). frames, a replay's frames numbered past
+  // the grid's; last, the frame to stop at. A watch of the grid's own that holds stops it there (decision 12). Answers { ok,
+  // frame, watched, why }, watched the frame a watch held at, else null.
+  Host.prototype._playOn = function (frames, last) {
+    var seed = typeof this.cart.seed === 'number' ? this.cart.seed : 1;
+    var rp = this._readReplay('(replay ' + quote(this._cartName() || '') + ' (spec ' + SPEC + ') (cartridge "' + this._cartDigest() + '") (seed ' + seed + '))\n' + frames);
+    if (rp.error) return { ok: false, frame: this.frame, watched: null, why: rp.error };
+    this.watchStop = null; this.watchHeld = null; this.watchHeldAt = null;
+    if (rp.last > this.frame) {
+      this.player = { frames: rp.frames, last: rp.last, restore: { from: this.frame, t0: this.now() } };
+      var win = { used: 0, limit: 0x7fffffff, deadline: Infinity };
+      while (this.player && this.handle && this.watchStop === null) {
+        this._begin();
+        if (!this.inFrame || !this._continue(win)) break;
+      }
+      this.player = null;
+    }
+    var watched = this.watchStop !== null ? this.watchStop : this.watchHeldAt;
+    this.watchStop = null;
+    var ok = watched !== null || this.frame === last;
+    return { ok: ok, frame: this.frame, watched: watched, why: ok ? '' : 'its frames stopped at frame ' + this.frame + ' of ' + last + (this.history.length ? ': ' + this.history[this.history.length - 1].text : '.') };
+  };
   Host.prototype._cartName = function () {
     var c = this.cart;
     if (c.name === null) c.name = manifestName(dec.decode(this.cartBytes));
@@ -3286,6 +3569,7 @@
   // Answers { ok, text, file, frame, bytes }, or { ok: false, wait: true } inside a frame or a settle, or a refusal.
   Host.prototype.saveText = function () {
     if (!this.m || !this.handle || !this.cart) return { ok: false, words: 'There is nothing to save: no cartridge is loaded.' };
+    if (this.look) return { ok: false, words: 'The save was not written: ' + this._lookingWhy() };   // the run's grid set aside (ENGINE.30)
     if (this.inFrame || this.settling) return { ok: false, wait: true };
     var loaded = dec.decode(this.cartBytes).replace(/\r\n/g, '\n'), out = [firstForm(loaded) + '\n'];
     var list = this._sheets(), named = {}, i;
@@ -3314,6 +3598,11 @@
   // carries as `as` for the page, whose file it is; the host writes nothing itself and knows no file of a person's.
   Host.prototype.save = function (by, what, under) {
     by = by === 'cartridge' ? 'cartridge' : 'person';
+    if (this.look) {   // a look back saves nothing: a past frame saved would be a run begun from it (ENGINE.30's third slice)
+      var lw = 'The save was not written: ' + this._lookingWhy();
+      this.c.lookRefused++; this._say(lw, 'event', true, by === 'person');
+      return { ok: false, words: lw };
+    }
     var file = what === 'file' || (what !== 'cartridge' && by === 'person' && !!this.fileType());
     var as = !!under && by === 'person';
     var s = file ? this.fileText() : this.saveText();
@@ -3538,7 +3827,7 @@
   // ---- what a page asks of the host ----
   // One complete frame now, whatever the clock: the blit's instrument times it (?blit=1).
   Host.prototype.runFrameSync = function () {
-    if (!this.handle || this.inFrame || !this.cart || this.cart.rate === 0) return false;
+    if (!this.handle || this.inFrame || !this.cart || this.cart.rate === 0 || this.look) return false;
     this._begin();
     return this._continue({ used: 0, limit: 0x7fffffff, deadline: Infinity });
   };
@@ -3577,6 +3866,8 @@
     for (var k in this.c) if (Object.prototype.hasOwnProperty.call(this.c, k)) o[k] = this.c[k];
     o.frame = this.frame; o.handle = this.handle; o.window = this.window; o.scale = this.scale || 0; o.said = this.said;
     o.settling = this.settling;   // the last step's answer left the grid settling (CART.12)
+    o.look = this.look ? this.look.at : null;   // the frame a look back shows, frame its own while it shows (ENGINE.30)
+    o.present = this.look ? this.look.present : this.frame;
     return o;
   };
   Host.prototype.sentences = function () { return this.history.slice(); };
@@ -3587,6 +3878,7 @@
     return this.order.map(function (e) { return { id: e.id, text: entryText(e), key: e.key, count: e.count, first: e.first, last: e.last, refusal: e.refusal }; });
   };
   Host.prototype.destroy = function () {
+    if (this.look) this._lookEnd(true);   // the second grid let go with the host (ENGINE.30's third slice)
     this.stop();
     if (this.handle) this.unload();
     for (var i = 0; i < this.handlers.length; i++) { var h = this.handlers[i]; h[0].removeEventListener(h[1], h[2], h[3]); }

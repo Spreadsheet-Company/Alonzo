@@ -191,6 +191,7 @@
   .player-bar .brand { font-weight: 700; color: var(--lavender-deep); margin-right: 4px; }
   .player-bar select { font: inherit; font-size: 13px; color: #1d1d1b; padding: 2px 4px; border: 1px solid #c8c8c0; border-radius: 3px; background: #fff; }
   .player-bar .frame-short { color: #6b6b66; white-space: nowrap; font-variant-numeric: tabular-nums; margin-left: 6px; }
+  .player-bar .scrub { flex: 0 1 180px; min-width: 80px; margin: 0 4px; }
   .player-bar .status { flex: 1 1 160px; min-width: 0; min-height: 0; margin: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .player-bar button[aria-pressed="true"], .player-bar button[aria-expanded="true"] { background: var(--lavender); border-color: var(--lavender-deep); }
   .player-body { flex: 1 1 auto; min-height: 0; display: flex; }
@@ -267,6 +268,7 @@
     <button type="button" id="eng-open" data-command="open" title="a cartridge or a save opened from a file of yours, and loaded; or a file the cartridge reads, opened into its sheets; Ctrl+O, Cmd+O on a Mac" aria-keyshortcuts="Control+O Meta+O">Open</button>
     <input type="file" id="eng-open-file" accept=".vla,text/plain" hidden>
     <span id="frame-short" class="frame-short"></span>
+    <input type="range" id="eng-scrub" class="scrub" min="0" max="0" step="1" value="0" aria-label="the scrubber: the frames played, a look back at each, Run returning to the present" hidden>
     <p id="eng-status" class="status"></p>
     <button type="button" id="eng-palette" data-command="palette" title="the command palette: every act of the page by its name, a sheet by its name, a row of VLA written as a person's edit; Ctrl+K, Cmd+K on a Mac, or Ctrl+Shift+`" aria-keyshortcuts="Control+K Meta+K Control+Shift+`">Commands</button>
     <button type="button" id="eng-full" data-command="full-screen" aria-pressed="false">Full screen</button>
@@ -642,6 +644,10 @@
     { name: 'redo', words: 'put back the edit last taken back', repeats: true },
     { name: 'watch', words: 'watch the selected cell: the run pauses at the frame it next changes, a debugger\'s watchpoint; at rate 0 that frame is said' },
     { name: 'unwatch', words: 'forget the watches watch set; a (watch ...) line of the keymap stands' },
+    { name: 'scrubber', words: 'the scrubber given the keys: the frames played, a look back at each, the run paused and Run returning to the present' },
+    { name: 'step-back', words: 'a look back a frame, the run paused; Run returns to the present' },
+    { name: 'step-forward', words: 'a look a frame forward from the frame a look back shows, toward the present' },
+    { name: 'to-watch', words: 'from the frame a look back shows, the frames played on to the first a watch holds' },
     { name: 'game', words: 'give the game the keys, the Screen\'s place' },
     { name: 'edit', words: 'give the drawer\'s edit row the keys' },
     { name: 'write', words: 'write the edit row\'s row as a person\'s edit at the next frame' },
@@ -800,6 +806,20 @@
     }
     if (depth > 0) return { error: 'line ' + startLine + ': a form that never closes' };
     return { forms: out };
+  }
+  // The frame a key of the scrubber takes a look back to (ENGINE.30's third slice, decision 11): the arrows a frame, PageUp
+  // and PageDown a tenth of the frames kept, at least one, Home and End their ends, each held between the first frame kept
+  // and the present; null for any other key, which stays the page's.
+  function scrubTarget(key, at, first, present) {
+    var tenth = Math.max(1, Math.round((present - first) / 10)), to;
+    if (key === 'ArrowLeft' || key === 'ArrowDown') to = at - 1;
+    else if (key === 'ArrowRight' || key === 'ArrowUp') to = at + 1;
+    else if (key === 'PageDown') to = at - tenth;
+    else if (key === 'PageUp') to = at + tenth;
+    else if (key === 'Home') to = first;
+    else if (key === 'End') to = present;
+    else return null;
+    return Math.max(first, Math.min(present, to));
   }
   // The keymap read: its bindings, the commands of a person's own and the text, or every problem by its line, refused
   // whole, nothing applied. lenient: a kept keymap read at the load, whose lines naming a command this page lacks, a later
@@ -2796,12 +2816,55 @@
       // edit (found in the owner's hand test, 2026-10-09: the sheet lagged the edits)
       var now = performance.now();
       if (rate === 0 || now - shownTime >= 200 || e.frame < shownAt) { shownAt = e.frame; shownTime = now; refreshViewer(); }
+      if (rate === 0) scrubShow(); else if (scrubEl && !scrubEl.hidden && host.running) scrubEl.hidden = true;   // the scrubber's while paused (ENGINE.30)
       refreshGameKeys(false);   // a Keys sheet that binds by formula, a view's key or a phase's (ENGINE.24)
     });
     // When the loop stops (Pause, a replay's end, a refused step), the sheet is drawn at the frame it
     // stopped at, so that it and the frame line say one frame: the refresh above had left it up to
     // 200 ms behind (found in the owner's hand test of ENGINE.4, 2026-10-10, frame 234 under frame 240).
-    host.on('stop', function (e) { if (e.frame !== shownAt) { shownAt = e.frame; shownTime = performance.now(); refreshViewer(); } });
+    host.on('stop', function (e) { if (e.frame !== shownAt) { shownAt = e.frame; shownTime = performance.now(); refreshViewer(); } scrubShow(); });
+    // The scrubber (ENGINE.30's third slice, decision 11's (b)): in the bar at the frame's number while the loop is paused at
+    // a rate, or at rate 0 between acts, a range over the frames the run keeps, each a look back (decision 10's (c) as
+    // answered), Run returning to the present. Its keys are its own once it holds them (scrubTarget); a drag's stops
+    // coalesce, the latest winning, so that a stop that takes a third of a second never queues the ones a drag passed.
+    var scrubEl = document.getElementById('eng-scrub'), scrubWanted = null, scrubTimer = 0, scrubDragging = false;
+    function scrubShow() {
+      if (!scrubEl) return;   // a frame of the page's first load, before the bar's scrubber is found
+      var r = host.lookRange(), show =!!r && r.present > r.first && (r.looking || !host.running || rate === 0);
+      scrubEl.hidden = !show;
+      if (!show) return;
+      scrubEl.min = String(r.first); scrubEl.max = String(r.present);
+      if (scrubWanted === null && !scrubDragging) scrubEl.value = String(r.at);
+      scrubEl.setAttribute('aria-valuetext', r.looking ? 'frame ' + r.at + ' of ' + r.present + ', a look back' : 'frame ' + r.present + ', the present');
+    }
+    function scrubTo(n) {
+      scrubWanted = n;
+      if (scrubTimer) return;
+      scrubTimer = setTimeout(function () { scrubTimer = 0; var w = scrubWanted; scrubWanted = null; if (w !== null) host.lookAt(w); }, 0);
+    }
+    scrubEl.addEventListener('input', function () { scrubTo(+scrubEl.value); });
+    scrubEl.addEventListener('pointerdown', function () { scrubDragging = true; });
+    scrubEl.addEventListener('pointerup', function () { scrubDragging = false; });
+    scrubEl.addEventListener('pointercancel', function () { scrubDragging = false; });
+    scrubEl.addEventListener('keydown', function (ev) {
+      var r = host.lookRange(), to = r && !ev.ctrlKey && !ev.metaKey && !ev.altKey ? scrubTarget(ev.key, r.at, r.first, r.present) : null;
+      if (to === null) return;
+      ev.preventDefault(); ev.stopPropagation();
+      scrubEl.value = String(to);
+      scrubTo(to);
+    });
+    // A look back stopped at a frame, or ended at the present: the bar's number and the drawer's line say which, and the
+    // drawer's sheet is drawn at the frame shown.
+    host.on('look', function (e) {
+      var at = e.at, looking = at !== null;
+      frameShort.textContent = looking ? 'Frame ' + thousands(at) + ' of ' + thousands(e.present) : 'Frame ' + thousands(e.present);
+      frameEl.className = 'frame-line';
+      frameEl.textContent = looking
+        ? 'Frame ' + thousands(at) + ', a look back at the run, its present frame ' + thousands(e.present) + (e.ms !== undefined ? ', drawn in ' + Math.round(e.ms) + ' ms' : '') + ': every sheet reads as it stood, nothing acts, and Run returns to the present.'
+        : 'Frame ' + thousands(e.present) + ', the present.';
+      shownAt = -1; shownTime = performance.now(); refreshViewer();
+      scrubShow();
+    });
     // A load is frame 0, drawn at once, nothing computed; the line says so until the first frame lands.
     host.on('load', function (e) {
       shownAt = -1; shownTime = -1e9; rate = e.rate; mode = e.mode;
@@ -2818,6 +2881,7 @@
       frameShort.textContent = 'Frame ' + thousands(e.frame || 0);
       frameEl.textContent = 'Frame ' + thousands(e.frame || 0) + ', the window ' + e.window + ', ' + (mode === 'grid' ? 'drawn by the viewport' : (e.scale ? e.scale + ' device pixels a cell' : 'no canvas')) + (e.frame ? ': the save as it was saved, ' : ': the cartridge as loaded, nothing computed until ') + (e.frame ? (e.rate ? 'running on at the next step.' : 'an edit stepping it on.') : (e.rate ? 'the first step.' : 'an edit steps it.'));
       refreshGameKeys(true);   // the game's keys said and the list's words of them, the cartridge's Keys sheet now read
+      scrubShow();   // a new run keeps no frame past its first: the scrubber hidden until one is played (ENGINE.30)
     });
     // A load leaves the Screen the keys it had, a press on Load keeping them there (CART.3's third slice), though a grid
     // loaded after a plane, or a plane after a grid, draws in the other box.
@@ -3170,6 +3234,17 @@
         host.watch(vp && vp.sheet(), f && f.row ? VP.colName(f.col) + f.row : '');
       },
       unwatch: function () { host.unwatch(); },
+      // the look back (ENGINE.30's third slice): the scrubber given the keys, the run paused at a rate; and a frame back or
+      // forward, or on to the first frame a watch holds, from the frame shown
+      scrubber: function () {
+        if (host.running && rate > 0) host.stop();
+        scrubShow();
+        if (!scrubEl.hidden) scrubEl.focus();
+        else sayBar('The scrubber shows once a frame is played past the first the run keeps.');
+      },
+      'step-back': function () { host.stepBack(); },
+      'step-forward': function () { host.stepForward(); },
+      'to-watch': function () { host.toWatch(); },
       game: focusScreen,
       edit: function () { give(editEl); },
       write: function () { document.getElementById('eng-write').click(); },
@@ -10651,6 +10726,148 @@
       else P.push('watch: (watch "Work" "A1" 5) set while A1 held 5 held at the edits of 5, 6 and 5 ' + JSON.stringify(heard) + ', saying ' + JSON.stringify(lastSaid(H)) + ', where only the last, "frame 4: Work!A1 holds 5, as its watch asks.", is due');
     } finally { H.destroy(); }
   }
+  // ---- ENGINE.30's third slice: the look back ----
+  // The scrubber's keys, needing no module; then over the module Kairos's committed replay played at once, a keyframe every
+  // 500 frames and the run's own save taken at each frame a look stops at, every stop's save held to it, the File's two rows
+  // apart (a load writes its own text's); the run untouched after; an edit, a paste, an undo and a save refused while a look
+  // shows; Run returning to the present; and a run to the watch from frame 1 to each frame the hand names a game ending,
+  // then to none. On Alonzo's own page also Seiyaku's, settling at rate 0, its Clock counting acts, so that its keyframes'
+  // frames are numbered apart from the host's, at every third rest; and Sand's, its keyframes taken by their cost.
+  function caseLook() {
+    var P = [], k = { scrubKeys: 0, range: 0, stops: 0, keyframes: 0, refused: 0, untouched: 0, returned: 0, toWatch: 0, settling: 0, sand: 0 };
+    lookKeys(k, P);
+    var wasm = builtModule();
+    if (!wasm) return { counters: k, problems: P };
+    var bytes = bytesOfBase64(wasm), kc = CARTRIDGES.kairos, Hand = HANDS.kairos;
+    if (!kc || !kc.replay || typeof Hand !== 'function') { P.push('look: the page holds no Kairos with its committed replay and its hand'); return { counters: k, problems: P }; }
+    lookKairos(bytes, kc, kairosPhases(Hand, kc.replay), k, P);
+    if (CARTRIDGES.seiyaku && CARTRIDGES.seiyaku.replay) lookSettling(bytes, CARTRIDGES.seiyaku, k, P);
+    if (CARTRIDGES.sand && CARTRIDGES.sand.replay) lookSand(bytes, CARTRIDGES.sand, k, P);
+    return { counters: k, problems: P };
+  }
+  // The scrubber's keys (decision 11): the arrows a frame, PageUp and PageDown a tenth, Home and End the ends, each held
+  // between the first frame kept and the present, and any other key the page's.
+  function lookKeys(k, P) {
+    [['ArrowLeft', 50, 0, 100, 49], ['ArrowRight', 50, 0, 100, 51], ['ArrowDown', 50, 0, 100, 49], ['ArrowUp', 50, 0, 100, 51],
+     ['PageDown', 50, 0, 100, 40], ['PageUp', 50, 0, 100, 60], ['Home', 50, 0, 100, 0], ['End', 50, 0, 100, 100],
+     ['a', 50, 0, 100, null], ['ArrowLeft', 0, 0, 100, 0], ['PageUp', 10, 10, 13, 11]].forEach(function (x) {
+      var got = scrubTarget(x[0], x[1], x[2], x[3]);
+      if (got === x[4]) k.scrubKeys++;
+      else P.push('look: the scrubber\'s key ' + x[0] + ' at frame ' + x[1] + ' of ' + x[2] + ' to ' + x[3] + ' went to ' + got + ', where ' + x[4] + ' is due');
+    });
+  }
+  // A host over the module for the case: a keyframe every `every` frames, or by its cost where none is named, on the page's
+  // own clock then.
+  function lookHost(bytes, P, what, every) {
+    var ex = HOST.instantiateSync(bytes), opts = { drive: 'manual', budget: 0 };
+    if (every) { opts.lookEvery = every; opts.now = function () { return 1000; }; }
+    var H = new HOST(opts);
+    if (!H.attach(ex).ok) { P.push('look: ' + what + ': the module did not attach'); H.destroy(); return null; }
+    return H;
+  }
+  // Two saves the same, the File's two rows apart, which a load writes for its own text.
+  function lookSame(a, b) {
+    if (typeof a !== 'string' || typeof b !== 'string') return false;
+    if (a === b) return true;
+    var x = a.split('\n'), y = b.split('\n'), file = /^\(cell "File" "B[12]" /;
+    if (x.length !== y.length) return false;
+    for (var i = 0; i < x.length; i++) if (x[i] !== y[i] && !(file.test(x[i]) && file.test(y[i]))) return false;
+    return true;
+  }
+  // A replay played at once, the run's own save taken at every frame at rest that `want` names (all where it is null).
+  function lookPlayed(H, replay, want) {
+    var refs = {}, rests = [];
+    H.on('frame', function (e) {
+      if (H.counters().settling) return;
+      rests.push(e.frame);
+      if (want === null || want[e.frame]) { var s = H.saveText(); if (s.ok) refs[e.frame] = s.text; }
+    });
+    var pr = H.play(replay, true);
+    return { ok: pr.ok, refs: refs, rests: rests };
+  }
+  function lookKairos(bytes, kc, named, k, P) {
+    var H = lookHost(bytes, P, 'Kairos', 500);
+    if (!H) return;
+    try {
+      if (!H.load(kc.text, kc.file).ok) { P.push('look: Kairos did not load'); return; }
+      var o = named.overs, stops = [1, 2, 499, 500, 501, o[0] - 1, o[0], o[0] + 1, 2000, o[1], named.last - 1, 3, 1000], want = {};
+      stops.forEach(function (n) { want[n] = true; });
+      var run = lookPlayed(H, kc.replay, want);
+      if (!run.ok) { P.push('look: Kairos\'s replay did not play'); return; }
+      var present = H.counters().frame, before = H.saveText().text, replay = H.replayText(), r0 = H.lookRange();
+      k.keyframes = H.counters().pastKeys;
+      if (r0 && r0.first === 0 && r0.present === present && r0.at === present && !r0.looking) k.range++;
+      else P.push('look: Kairos\'s range at its present read ' + JSON.stringify(r0) + ', where frames 0 to ' + present + ' at the present are due');
+      stops.forEach(function (n) {
+        var r = H.lookAt(n), c = H.counters(), t = H.lookText(), said = lastSaid(H);
+        if (r.ok && c.look === n && c.frame === n && lookSame(t, run.refs[n]) && said === 'frame ' + n + ': a look back at the run, its present frame ' + present + '; Run returns to the present.') k.stops++;
+        else P.push('look: Kairos looked back at frame ' + n + (r.ok ? ', its save ' + (t === null ? 'unread' : lookSame(t, run.refs[n]) ? 'the run\'s' : 'not the run\'s') + ' at frame ' + c.frame + ', saying ' + JSON.stringify(said) : ', refused: ' + said) + ', where the run\'s own save there is due');
+      });
+      // refused while a look shows, each said with the frame shown and the present
+      var at = H.counters().look, why = ': frame ' + at + ' is a look back, and Run returns to the present, frame ' + present + ', where a person acts.';
+      var edit = H.edit('(cell "Screen" "A1" 1)'), editSaid = lastSaid(H);
+      if (edit === false && editSaid === 'The edit (cell "Screen" "A1" 1) was not written' + why) k.refused++;
+      else P.push('look: an edit while a look back shows ' + (edit === false ? 'said ' + JSON.stringify(editSaid) : 'was taken') + ', where its refusal "...' + why + '" is due');
+      var paste = H.paste({ what: 'the paste of A1', rows: [] }), pasteSaid = lastSaid(H);
+      if (paste === false && pasteSaid === 'The paste of A1 was not written' + why) k.refused++;
+      else P.push('look: a paste while a look back shows said ' + JSON.stringify(pasteSaid));
+      var undo = H.undo(), undoSaid = lastSaid(H);
+      if (undo && !undo.ok && undoSaid === 'Nothing was undone' + why) k.refused++;
+      else P.push('look: undo while a look back shows said ' + JSON.stringify(undoSaid));
+      var save = H.save(), saveSaid = lastSaid(H);
+      if (save && save.ok === false && saveSaid === 'The save was not written' + why) k.refused++;
+      else P.push('look: a save while a look back shows said ' + JSON.stringify(saveSaid));
+      // the present again: the run's save, its replay and its frame as they stood before the look back
+      H.lookEnd();
+      if (H.counters().look === null && H.counters().frame === present && H.saveText().text === before && H.replayText() === replay) k.untouched++;
+      else P.push('look: the run after the look back stands at frame ' + H.counters().frame + ', its save ' + (H.saveText().text === before ? 'as before' : 'moved') + ' and its replay ' + (H.replayText() === replay ? 'as before' : 'moved') + ', where the present untouched is due');
+      // Run from a look back returns to the present and runs from it
+      H.lookAt(100); H.start();
+      var c1 = H.counters(), running = H.running;
+      H.stop();
+      if (c1.look === null && c1.frame === present && running && H.saveText().text === before) k.returned++;
+      else P.push('look: Run from a look back at frame 100 left the look at ' + c1.look + ', frame ' + c1.frame + (running ? ', running' : ', not running') + ', where the present, running, is due');
+      // a run to the watch from frame 1: each frame the hand names a game ending, then none before the present
+      H.setWatches([{ sheet: 'State', address: 'B1', value: 4 }]);
+      H.lookAt(1);
+      var w1 = H.toWatch(), w2 = H.toWatch(), w3 = H.toWatch(), s3 = lastSaid(H);
+      if (w1.at === o[0] && w2.at === o[1] && !w3.ok && w3.at === o[1] && H.counters().look === o[1] && s3 === 'frame ' + o[1] + ': no frame after it holds a watch before the present, frame ' + present + '; the look back stays here.') k.toWatch++;
+      else P.push('look: a run to the watch from frame 1 stopped at ' + w1.at + ', then ' + w2.at + ', then ' + w3.at + ' saying ' + JSON.stringify(s3) + ', where ' + o[0] + ', ' + o[1] + ' and none are due');
+      H.lookEnd(); H.setWatches([]);
+    } finally { H.destroy(); }
+  }
+  function lookSettling(bytes, sc, k, P) {
+    var H = lookHost(bytes, P, 'Seiyaku', 20);
+    if (!H) return;
+    try {
+      if (!H.load(sc.text, sc.file).ok) { P.push('look: Seiyaku did not load'); return; }
+      var run = lookPlayed(H, sc.replay, null);
+      if (!run.ok) { P.push('look: Seiyaku\'s replay did not play'); return; }
+      if (!H.past.keys.some(function (x) { return x.off !== 0; })) P.push('look: no keyframe of Seiyaku\'s past counts its Clock apart from its frames, so nothing held a keyframe\'s off');
+      run.rests.filter(function (f, i) { return i % 3 === 0 && run.refs[f]; }).forEach(function (n) {
+        var r = H.lookAt(n), t = H.lookText();
+        if (r.ok && H.counters().look === n && lookSame(t, run.refs[n])) k.settling++;
+        else P.push('look: Seiyaku looked back at its rest at frame ' + n + (r.ok ? ', its save ' + (t === null ? 'unread' : 'not the run\'s') : ', refused: ' + lastSaid(H)) + ', where the run\'s own save there is due');
+      });
+      H.lookEnd();
+    } finally { H.destroy(); }
+  }
+  function lookSand(bytes, sc, k, P) {
+    var H = lookHost(bytes, P, 'Sand', 0);
+    if (!H) return;
+    try {
+      if (!H.load(sc.text, sc.file).ok) { P.push('look: Sand did not load'); return; }
+      var want = { 1000: true, 2000: true }, run = lookPlayed(H, sc.replay, want);
+      if (!run.ok) { P.push('look: Sand\'s replay did not play'); return; }
+      if (H.counters().pastKeys < 1) P.push('look: Sand\'s run of ' + H.counters().frame + ' frames took no keyframe by its cost');
+      [2000, 1000].forEach(function (n) {
+        var r = H.lookAt(n);
+        if (r.ok && lookSame(H.lookText(), run.refs[n])) k.sand++;
+        else P.push('look: Sand looked back at frame ' + n + (r.ok ? ', its save not the run\'s' : ', refused: ' + lastSaid(H)) + ', where the run\'s own save there is due');
+      });
+      H.lookEnd();
+    } finally { H.destroy(); }
+  }
   // ---- CART.12: version 6, an act settled ----
   // The settle card, the page's own as the commands card is, written here and never a file, at version 6, so that a game's
   // page runs the case too (ENGINE.16): at rate 0 with (settle 64), a Screen of 12 by 4 whose row 2, B2:K2, spills a cell a
@@ -11792,7 +12009,7 @@
                  ['scale', caseScale], ['engine', caseEngine], ['parity', caseParity], ['plane', casePlane], ['pass', casePass], ['input', caseInput], ['replay', caseReplay],
                  ['audio', caseAudio], ['sound', caseSound], ['grid', caseGrid], ['tabs', caseTabs], ['empty', caseEmpty], ['still', caseStill], ['views', caseViews], ['changes', caseChanges],
                  ['continue', caseContinue], ['palette', casePalette], ['drawer', caseDrawer], ['keys', caseKeys], ['commands', caseCommands], ['settle', caseSettle], ['widths', caseWidths], ['modes', caseModes], ['save', caseSave], ['keep', caseKeep],
-                 ['clipboard', caseClipboard], ['file', caseFile], ['undo', caseUndo], ['watch', caseWatch]];
+                 ['clipboard', caseClipboard], ['file', caseFile], ['undo', caseUndo], ['watch', caseWatch], ['look', caseLook]];
     if (asked) {
       var unknown = asked.filter(function (n) { return !cases.some(function (c) { return c[0] === n; }); });
       if (unknown.length) { out.push('loop failed: the cases asked name no case: ' + unknown.join(', ')); document.getElementById('loop').textContent = out.join('\n'); return; }
@@ -11801,7 +12018,7 @@
     // On a game's page (ENGINE.16) a case runs when it needs nothing of Alonzo's own files, over the page's own
     // blocks; every other case is Alonzo's own, proven in Alonzo's CI for the release the page was built from,
     // and says so in one line.
-    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, drawer: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1, keep: 1, clipboard: 1, file: 1, undo: 1, watch: 1 }, absent = 0;
+    var GAME_CASES = { abi: 1, pass: 1, replay: 1, grid: 1, empty: 1, still: 1, views: 1, changes: 1, 'continue': 1, palette: 1, drawer: 1, keys: 1, commands: 1, settle: 1, widths: 1, modes: 1, save: 1, keep: 1, clipboard: 1, file: 1, undo: 1, watch: 1, look: 1 }, absent = 0;
     function failed(e) { return { counters: { error: 1 }, problems: ['error: ' + (e && e.message ? e.message : e)] }; }
     // a case's notes, each a line of its own under it, say what it ran without (a replay held without a hand)
     function record(name, res) { out.push(loopLine(name, res.counters, res.problems)); (res.notes || []).forEach(function (n) { out.push('  note: ' + n); }); if (!res.problems.length) ok++; }

@@ -279,8 +279,8 @@ includes, and runs its loop at a ratio of 1: abi, pass, replay with the
 hand, grid over an empty set, empty and, since ENGINE.17, ENGINE.18,
 ENGINE.19, ENGINE.7, ENGINE.23, ENGINE.25, CART.12, ENGINE.26, SPEC.5, ENGINE.5, ENGINE.39, CART.16 and ENGINE.30, still,
 views, changes, continue, palette, drawer, keys, commands, settle, widths, modes, save, keep, clipboard, file, undo and
-watch must be OK at their own floors, each of Alonzo's fifteen other cases must say it is not on this page, and
-the last line must count twenty-two cases.
+watch and look must be OK at their own floors, each of Alonzo's fifteen other cases must say it is not on this page,
+and the last line must count twenty-three cases.
 
 THE BROWSER, as tools/check_render_oracle.ps1 finds and launches it:
 -Browser, else $env:ALONZO_BROWSER, else Google Chrome, Microsoft Edge or
@@ -297,7 +297,7 @@ SKIPPED with exit 0
 without a built page or without a browser: CI builds the page before the
 runner and has the browser.
 
--Control builds three hundred and forty-two mutant pages through tools/build_web.ps1 and runs
+-Control builds three hundred and forty-eight mutant pages through tools/build_web.ps1 and runs
 each: a host whose accumulator cap is 2,500 ms and not 250, whose header
 proves the mutant applied by printing cap=2500 and whose stall must fail;
 a host that issues the derived writes after the inputs, whose edit of
@@ -1069,6 +1069,18 @@ $undoFloors = @{ undone = 1; redone = 1; values = 3; neither = 1; deleted = 1; p
 # nothing paused (rateZero 1), and a watch set while its cell holds the value holding only when it comes to hold it
 # again (edge 1).
 $watchFloors = @{ lines = 1; refused = 6; named = 2; engine = 1; paused = 2; ticks = 1; atOnce = 1; once = 1; unwatched = 2; loaded = 1; rateZero = 1; edge = 1; unread = 4 }
+# 2026-11-26, ENGINE.30's third slice, the look back: a thirty-eighth case, look, on both pages, its counts a function
+# of its plan: the scrubber's eleven keys, needing no module (scrubKeys 11, never keys, which PowerShell reads as a
+# hashtable's Keys); over the module and Kairos's committed replay
+# played at once, a keyframe every 500 frames (keyframes 6), its range at the present (range 1), and thirteen stops,
+# each the run's own save at its frame, the File's two rows apart, said (stops 13); an edit, a paste, an undo and a save
+# refused while a look shows, each said (refused 4); the run's save, replay and frame as they stood after it (untouched
+# 1); Run from a look back returning to the present and running (returned 1); and a run to the watch from frame 1 to
+# each frame the hand names a game ending, then to none (toWatch 1). On Alonzo's own page also Seiyaku's every third
+# rest, its keyframes' frames numbered by its Clock (settling 9), and Sand's two stops, its keyframes taken by cost
+# (sand 2); a game's page holds neither.
+$lookFloors = @{ range = 1; stops = 13; keyframes = 6; refused = 4; untouched = 1; returned = 1; toWatch = 1; settling = 9; sand = 2 }
+$lookGameFloors = @{ range = 1; stops = 13; keyframes = 6; refused = 4; untouched = 1; returned = 1; toWatch = 1 }
 # 2026-10-18, CART.12's viewport slice, a code's text drawn: the twenty-seven cases' counts unchanged but for grid over
 # the module, the grid card's row 16 of codes added, its counts a function of the card: codes 3, the row pinned by name
 # at frames 1, 4 and 5; coded 213, the texts drawn from text rows over the 25 frames, the row's eight constants at the
@@ -1200,6 +1212,8 @@ $settleDoubleFloors = @{ fakeWords = 8; fakeLoad = 1; fakeActs = 1; fakePress = 
 # 2026-11-26, CART.17's second look, the owner's word that both Enter keys are Enter: PT, the keypad's Enter holding no
 # button, and PU, running no command, the commands case's over the module, take it to three hundred and forty-two
 # (158 applicable without).
+# 2026-11-26, ENGINE.30's third slice: QA to QE, the look case's over the module, and QF, needing none, take it to
+# three hundred and forty-eight (159 applicable without).
 # 2026-11-18, CART.3's third slice: MO to MR, version 7's: pass's sources and same 11; empty's cartridges,
 # ordered and titled 11, and mutant AP's words moved, the picker in reverse offering Naught second, after the empty
 # sheet; grid's game half over four grid cartridges, the Bench loaded at rate 0 and settled, two frames, and
@@ -1439,18 +1453,20 @@ $floors = @(
     @{ Case = 'clipboard'; Min = $clipboardPageFloors; WithModule = $clipboardFloors },
     @{ Case = 'file';     Min = $filePageFloors; WithModule = $fileFloors },
     @{ Case = 'undo';     Min = @{}; WithModule = $undoFloors },
-    @{ Case = 'watch';    Min = @{}; WithModule = $watchFloors }
+    @{ Case = 'watch';    Min = @{}; WithModule = $watchFloors },
+    @{ Case = 'look';     Min = @{ scrubKeys = 11 }; WithModule = $lookFloors }
 )
 $zero = @('live', 'misfrees', 'filled', 'alone')
-$expectedCases = 37
+$expectedCases = 38
 # ENGINE.16: a game's page, built on every run from a scratch folder holding Kairos alone, its cartridge, source,
-# replay, golden and hand and the library its source includes. Its loop runs the twenty-two cases that need nothing
+# replay, golden and hand and the library its source includes. Its loop runs the twenty-three cases that need nothing
 # of Alonzo's own files, over its own blocks, still since ENGINE.17, views since ENGINE.18, changes since
 # ENGINE.19, continue since ENGINE.7, palette and keys since ENGINE.23, commands since ENGINE.25, settle since CART.12,
 # widths since ENGINE.26, modes since SPEC.5, save since ENGINE.5, keep since ENGINE.38, drawer since CART.3's
 # third slice, clipboard since ENGINE.39's second, Brickwork's Ctrl+X its one part left to Alonzo's own page, and file
 # since CART.16's second, Afterlife's reel its one part left to Alonzo's own page, undo since ENGINE.30's first
-# slice and watch since its second, among them, and each of the fifteen others says it is not on the page.
+# slice, watch since its second and look since its third, among them, and each of the fifteen others says it is not on
+# the page.
 $gameFloors = @(
     @{ Case = 'abi';    Min = @{ refused = 3 }; WithModule = @{ attached = 1 } },
     @{ Case = 'pass';   Min = @{}; WithModule = @{ sources = 1; same = 1 } },
@@ -1473,10 +1489,11 @@ $gameFloors = @(
     @{ Case = 'clipboard'; Min = $clipboardPageFloors; WithModule = $clipboardGameFloors },
     @{ Case = 'file'; Min = $filePageFloors; WithModule = $fileGameFloors },
     @{ Case = 'undo'; Min = @{}; WithModule = $undoFloors },
-    @{ Case = 'watch'; Min = @{}; WithModule = $watchFloors }
+    @{ Case = 'watch'; Min = @{}; WithModule = $watchFloors },
+    @{ Case = 'look'; Min = @{ scrubKeys = 11 }; WithModule = $lookGameFloors }
 )
 $gameAbsent = @('rate30', 'rate0', 'yield', 'slice', 'pace', 'memory', 'refusals', 'scale', 'engine', 'parity', 'plane', 'input', 'audio', 'sound', 'tabs')
-$gameCases = 22
+$gameCases = 23
 $gameFiles = @('kairos/kairos.vla', 'kairos/kairos.source.vla', 'kairos/kairos.replay.vla', 'kairos/kairos.golden.vla', 'kairos/kairos.hand.js', 'common.vla')
 # The engine's artifact: a page built beside it must hold it.
 $artifact = Join-Path $repoRoot 'target/wasm32-unknown-unknown/release/alonzo.wasm'
@@ -2843,7 +2860,23 @@ if ($Control) {
             @{ L = 'pt'; Name = 'the keypad''s Enter holds no button'; File = 'host'; Module = $true; Case = 'commands'; Anchor = '    return !!this.held[code] || (code === ''Enter'' && !!this.held.NumpadEnter && this._standsFor(''NumpadEnter'') === ''Enter'');'; With = '    return !!this.held[code];   // the keypad''s Enter no Enter, by the control'
                Want = 'case commands.*commands, the Enter card, as written, frame 3: after the keypad.s Enter the Desk counts 0 launched, start held 1 ' },
             @{ L = 'pu'; Name = 'the keypad''s Enter runs no command'; File = 'host'; Module = $true; Case = 'commands'; Anchor = '    if (!row) row = this._standsFor(code);   // the keypad''s Enter runs Enter''s command'; With = '    // the keypad''s Enter no command''s key, by the control'
-               Want = 'case commands.*commands, the Enter card, as written, frame 6: after Ctrl and the keypad.s Enter Input!B20 holds "", where the command launch runs' }
+               Want = 'case commands.*commands, the Enter card, as written, frame 6: after Ctrl and the keypad.s Enter Input!B20 holds "", where the command launch runs' },
+            # QA to QE (ENGINE.30's third slice), the look case's, each by name over the module: a stop a frame short; the run's
+            # grid not put back at the look back's end; an edit landing while a look back shows; a keyframe's frames numbered
+            # without its off, which a settling cartridge's Clock counting its acts sets apart; and Run not returning to the
+            # present. QF, needing none: the scrubber's PageUp a frame, not a tenth.
+            @{ L = 'qa'; Name = 'a stop a frame short'; File = 'host'; Module = $true; Case = 'look'; Anchor = '      var played = B._playOn(this._pastFrames(L.at, n, key.off), n - key.off);'; With = '      var played = B._playOn(this._pastFrames(L.at, n - 1, key.off), n - 1 - key.off);   // a stop a frame short, by the control'
+               Want = 'case look.*look: Kairos looked back at frame' },
+            @{ L = 'qb'; Name = 'the run''s grid not put back'; File = 'host'; Module = $true; Case = 'look'; Anchor = '    this.handle = s.handle; this.frame = s.frame; this.window = s.window; this.camera = s.camera; this.cameraSheet = s.cameraSheet;'; With = '    this.frame = s.frame; this.window = s.window; this.camera = s.camera; this.cameraSheet = s.cameraSheet;   // the run''s grid not put back, by the control'
+               Want = 'case look.*look: the run after the look back' },
+            @{ L = 'qc'; Name = 'an edit landing while a look back shows'; File = 'host'; Module = $true; Case = 'look'; Anchor = '    if (this.look) { this.c.lookRefused++; this._answerRefused(''The edit '' + t + '' was not written: '' + this._lookingWhy()); return false; }   // a look back (ENGINE.30)'; With = '    // an edit landing while a look back shows, by the control'
+               Want = 'case look.*look: an edit while a look back shows' },
+            @{ L = 'qd'; Name = 'a keyframe''s frames numbered without its off'; File = 'host'; Module = $true; Case = 'look'; Anchor = "    for (var i = lo; i < fr.length && fr[i].n <= to; i++) { out.push('(frame ' + (fr[i].n - off) + '"; With = "    for (var i = lo; i < fr.length && fr[i].n <= to; i++) { out.push('(frame ' + (fr[i].n) + '"
+               Want = 'case look.*look: Seiyaku looked back' },
+            @{ L = 'qe'; Name = 'Run not returning to the present'; File = 'host'; Module = $true; Case = 'look'; Anchor = '    if (this.look) this._lookEnd();   // Run returns to the present first, drawn, where the run goes on (ENGINE.30''s third slice)'; With = '    // Run not returning to the present, by the control'
+               Want = 'case look.*look: Run from a look back' },
+            @{ L = 'qf'; Name = 'the scrubber''s PageUp a frame'; File = 'template'; Case = 'look'; Anchor = '    else if (key === ''PageUp'') to = at + tenth;'; With = '    else if (key === ''PageUp'') to = at + 1;   // PageUp a frame, by the control'
+               Want = 'case look.*look: the scrubber.s key PageUp' }
         )
         $changesNotes = New-Object System.Collections.Generic.List[string]
         $changesJudged = New-Object System.Collections.Generic.List[object]
@@ -3685,7 +3718,7 @@ if ($Control) {
         Write-Output ("control: the ladder's mutants in Seiyaku's hand: " + $ladderNote)
         Write-Output ("control: the real page has {0} problem(s); the raised cap applied ({1}) and failed the stall ({2}); the swapped writes applied ({3}) and lost the edit ({4}); the cut element left no block ({5}); the survival rule changed: {6}; the frame-0 draw cut applied ({7}) and failed the reload ({8}); the clear cut applied ({9}) and failed the refused load ({10}); the refusal's mark cut applied ({11}) and failed rate30 ({12}); the Camera read late applied ({13}) and failed the plane ({14}); the masked blit applied ({15}) and failed the pixels ({16}); the double's old 255 applied ({17}) and failed the plane ({18}); the library changed: {19}; the pointer without the Camera applied ({20}) and failed rate30 ({21}) and the input case ({22}); {23}; {24}; {25}; {26}; {27}; {28}; {29}; {30}; {31}; {32}; {33}; {34}; {35}; {36}; {37}; {38}; {39}; {40}; {41}; {42}; {43}; {44}; {45}; {46}; {47}; {48}; {49}; {50}; {51}; {52}; {53}; {54}" -f @($j0.Problems).Count, $aApplied, $aStall, $bApplied, $bLost, $cNoBlock, $dNote, $eApplied, $eFailed, $fApplied, $fFailed, $gApplied, $gFailed, $hApplied, $hFailed, $iApplied, $iFailed, $jApplied, $jFailed, $kNote, $lApplied, $lFailed, $lInput, $mnNote, $pqrNote, $sndNote, $xNote, $yNote, $zNote, $aaNote, $abNote, $gridNote, $aiNote, $tabsNote, $emptyNote, $stillNote, $viewsNote, $changesNote, $continueNote, $paletteNote, $keysNote, $commandsNote, $pageNote, $settleNote, $gameNote, $egNote, $ehNote, $elNote, $widthsNote, $etNote, $ezNote, $fhNote, $modesNote, $naughtNote, $brickworkNote)
         if (@($j0.Problems).Count -eq 0 -and $aApplied -and $aStall -ge 1 -and $bApplied -and $bLost -ge 1 -and $cNoBlock -and $dOk -and $eApplied -and $eFailed -ge 1 -and $fApplied -and $fFailed -ge 1 -and $gApplied -and $gFailed -ge 1 -and $hApplied -and $hFailed -ge 1 -and $iApplied -and $iFailed -ge 1 -and $jApplied -and $jFailed -ge 1 -and $kOk -and $lOk -and $mnOk -and $pqrOk -and $sndOk -and $xOk -and $yOk -and $zOk -and $aaOk -and $abOk -and $gridOk -and $aiOk -and $tabsOk -and $emptyOk -and $stillOk -and $viewsOk -and $changesOk -and $continueOk -and $paletteOk -and $keysOk -and $commandsOk -and $pageOk -and $settleOk -and $gameOk -and $egOk -and $ehOk -and $elOk -and $widthsOk -and $etOk -and $ladderOk -and $ezOk -and $fhOk -and $modesOk -and $naughtOk -and $brickworkOk) {
-            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and forty-two' } else { 'one hundred and fifty-eight applicable' }) + ' mutants for its own reason, each proving it applied')
+            Write-Output ('OK: the check passes the real page and the game''s page, and fails each of the ' + $(if ($moduleReal -gt 0) { 'three hundred and forty-eight' } else { 'one hundred and fifty-nine applicable' }) + ' mutants for its own reason, each proving it applied')
             exit 0
         }
         Write-Output 'FAIL: the control did not behave as the header says'
@@ -3825,7 +3858,7 @@ try {
 }
 Write-Output ''
 if ($failed.Count -eq 0) {
-    Write-Output "=== CHECK: clean - every case OK, the replay, sound, save and keep cases at the first ratio and every other at both, every count at or above its floor, and the game's page's twenty-two cases OK with Alonzo's fifteen said absent ==="
+    Write-Output "=== CHECK: clean - every case OK, the replay, sound, save and keep cases at the first ratio and every other at both, every count at or above its floor, and the game's page's twenty-three cases OK with Alonzo's fifteen said absent ==="
     exit 0
 }
 Write-Output "=== CHECK: $($failed.Count) problem(s) ==="
